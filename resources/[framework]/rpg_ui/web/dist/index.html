@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RPG Framework</title>
+    <script type="module" crossorigin src="/assets/index-DCotUfeF.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-vA-v1QUQ.css">
+  </head>
+  <body>
+    <main id="app">
+      <section id="auth" class="screen hidden" aria-label="Account authentication">
+        <div class="auth-atmosphere"></div>
+        <article class="auth-card">
+          <header>
+            <span class="eyebrow">LOS SANTOS · ARRIVALS</span>
+            <h1>Begin your story.</h1>
+            <p id="auth-subtitle">Sign in to continue to the city.</p>
+          </header>
+          <nav class="tabs" aria-label="Authentication mode">
+            <button type="button" class="tab active" data-mode="login">Sign in</button>
+            <button type="button" class="tab" data-mode="register">Register</button>
+          </nav>
+          <form id="login-form" autocomplete="off">
+            <label>Username<input name="username" minlength="3" maxlength="24" autocomplete="username" required /></label>
+            <label>Password<input name="password" type="password" minlength="10" maxlength="128" autocomplete="current-password" required /></label>
+            <button class="primary" type="submit">Enter Los Santos</button>
+          </form>
+          <form id="register-form" class="hidden" autocomplete="off">
+            <label>Username<input name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required /></label>
+            <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required /></label>
+            <label>Password<input name="password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required /></label>
+            <fieldset><legend>Sex</legend><label class="choice"><input type="radio" name="sex" value="male" checked /> Male</label><label class="choice"><input type="radio" name="sex" value="female" /> Female</label></fieldset>
+            <button class="primary" type="submit">Create account</button>
+          </form>
+          <p id="auth-error" class="form-error" role="alert"></p>
+        </article>
+      </section>
+
+      <section id="cinematic" class="cinematic hidden" aria-live="polite">
+        <div class="cinematic-copy"><span id="cinematic-kicker">WELCOME</span><h2 id="cinematic-title"></h2><p id="cinematic-description"></p></div>
+        <div class="cinematic-progress"><i id="cinematic-progress-bar"></i></div>
+      </section>
+
+      <section id="chat" class="chat hidden" aria-label="Chat">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form"><span class="prompt">›</span><input id="chat-input" maxlength="280" autocomplete="off" spellcheck="true" aria-label="Chat message" /></form>
+      </section>
+
+      <aside id="notifications" class="notifications" aria-live="polite"></aside>
+    </main>
+  </body>
+</html>
+
