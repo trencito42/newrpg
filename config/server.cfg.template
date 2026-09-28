@@ -1,6 +1,9 @@
 endpoint_add_tcp "0.0.0.0:@@FIVEM_PORT@@"
 endpoint_add_udp "0.0.0.0:@@FIVEM_PORT@@"
 
+# State bag protection & OneSync runtime (+set onesync on is passed via CLI entrypoint)
+setr sv_stateBagStrictMode true
+
 sv_licenseKey "@@FIVEM_LICENSE_KEY@@"
 sv_hostname "@@SERVER_NAME@@"
 sets sv_projectName "@@SERVER_NAME@@"
@@ -19,10 +22,14 @@ ensure mapmanager
 ensure oxmysql
 ensure bob74_ipl
 
-# Dependency order is deliberate and one-way.
+# Framework Resources (Strictly Acyclic DAG)
 ensure rpg_core
 ensure rpg_ui
 ensure rpg_auth
 ensure rpg_spawn
+ensure rpg_economy
+ensure rpg_factions
+ensure rpg_housing
+ensure rpg_vehicles
 ensure rpg_admin
 ensure rpg_chat

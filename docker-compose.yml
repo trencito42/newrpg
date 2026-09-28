@@ -49,9 +49,4 @@ services:
       start_period: 30s
     volumes:
       - ./config:/opt/rpg/config:ro
-      - ./resources/[framework]/rpg_core:/opt/cfx-server-data/resources/[framework]/rpg_core:ro
-      - ./resources/[framework]/rpg_auth:/opt/cfx-server-data/resources/[framework]/rpg_auth:ro
-      - ./resources/[framework]/rpg_ui:/opt/cfx-server-data/resources/[framework]/rpg_ui:ro
-      - ./resources/[framework]/rpg_chat:/opt/cfx-server-data/resources/[framework]/rpg_chat:ro
-      - ./resources/[framework]/rpg_admin:/opt/cfx-server-data/resources/[framework]/rpg_admin:ro
-      - ./resources/[framework]/rpg_spawn:/opt/cfx-server-data/resources/[framework]/rpg_spawn:ro
+      - ./resources/[framework]:/opt/cfx-server-data/resources/[framework]:ro

@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blaze Roleplay - Auth</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <title>RPG Framework - Authentication</title>
   </head>
   <body>
     <main id="app">
@@ -22,10 +20,10 @@
                   <stop offset="100%" stop-color="#9A3412" />
                 </linearGradient>
               </defs>
-              <path class="logo-flame" d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" />
+              <path class="logo-flame" d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" fill="url(#orange-gradient)" />
               <path d="M36,20 C36,20 28,35 28,50 C28,58 33,65 33,65 C33,65 30,58 32,52 C32,52 24,60 21,70 C18,80 28,79 36,79 C44,79 54,80 51,70 C48,60 40,52 40,52 C42,58 39,65 39,65 C39,65 44,58 44,50 C44,35 36,20 36,20 Z" fill="#0a0a0c" opacity="0.6"/>
             </svg>
-            <h1 class="auth-brand-title">BLAZE</h1>
+            <h1 class="auth-brand-title">RPG</h1>
             <p class="auth-brand-subtitle">AUTHENTICATION</p>
           </div>
 
@@ -35,7 +33,7 @@
             <div id="login-view" class="auth-view active-view">
               <div class="view-header">
                 <h2>Welcome Back</h2>
-                <p>Enter your details to access the city.</p>
+                <p>Enter your credentials to enter the server.</p>
               </div>
 
               <form id="login-form" autocomplete="off">
@@ -43,7 +41,9 @@
                 <div class="form-group">
                   <label for="login-username">Username</label>
                   <div class="input-wrap">
-                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+                    <span class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
                     <input type="text" id="login-username" name="username" class="input-field" placeholder="Enter your username" minlength="3" maxlength="24" autocomplete="username" required />
                   </div>
                 </div>
@@ -52,19 +52,24 @@
                 <div class="form-group">
                   <label for="login-password">Password</label>
                   <div class="input-wrap">
-                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="login-password" name="password" class="input-field" placeholder="••••••••" minlength="6" maxlength="128" autocomplete="current-password" required />
+                    <span class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" id="login-password" name="password" class="input-field" placeholder="••••••••••" minlength="10" maxlength="128" autocomplete="current-password" required />
                   </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn-primary" id="login-submit-btn">
-                  <span class="btn-text">Login</span>
+                <button type="submit" class="btn btn-primary">
+                  <span class="btn-text">SIGN IN</span>
+                  <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
               </form>
 
+              <!-- Footer Switch -->
               <div class="view-footer">
-                <p>Don't have an account? <button type="button" class="switch-link" id="switch-to-register">Register here</button></p>
+                <span>New player?</span>
+                <button type="button" id="switch-to-register" class="link-btn">Create an Account</button>
               </div>
             </div>
 
@@ -72,7 +77,7 @@
             <div id="register-view" class="auth-view hidden-view">
               <div class="view-header">
                 <h2>Create Account</h2>
-                <p>Join Blaze Roleplay today.</p>
+                <p>Register your character profile to begin.</p>
               </div>
 
               <form id="register-form" autocomplete="off">
@@ -80,8 +85,10 @@
                 <div class="form-group">
                   <label for="reg-username">Username</label>
                   <div class="input-wrap">
-                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
-                    <input type="text" id="reg-username" name="username" class="input-field" placeholder="Choose a username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required />
+                    <span class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" id="reg-username" name="username" class="input-field" placeholder="3-24 characters" minlength="3" maxlength="24" autocomplete="username" required />
                   </div>
                 </div>
 
@@ -89,8 +96,10 @@
                 <div class="form-group">
                   <label for="reg-email">Email Address</label>
                   <div class="input-wrap">
-                    <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
-                    <input type="email" id="reg-email" name="email" class="input-field" placeholder="your@email.com" maxlength="254" autocomplete="email" required />
+                    <span class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </span>
+                    <input type="email" id="reg-email" name="email" class="input-field" placeholder="name@example.com" maxlength="254" autocomplete="email" required />
                   </div>
                 </div>
 
@@ -98,68 +107,83 @@
                 <div class="form-group">
                   <label for="reg-password">Password</label>
                   <div class="input-wrap">
-                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="reg-password" name="password" class="input-field" placeholder="Create a password" minlength="6" maxlength="128" autocomplete="new-password" required />
+                    <span class="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" id="reg-password" name="password" class="input-field" placeholder="10-128 characters" minlength="10" maxlength="128" autocomplete="new-password" required />
                   </div>
                 </div>
 
-                <!-- Character Sex -->
+                <!-- Sex Selection -->
                 <div class="form-group">
-                  <label class="section-label">Character Sex</label>
-                  <div class="sex-options">
-                    <label class="radio-label">
-                      <input type="radio" name="sex" value="male" class="radio-custom" checked />
-                      <span>Male</span>
+                  <label>Character Gender</label>
+                  <div class="gender-selector">
+                    <label class="gender-option">
+                      <input type="radio" name="sex" value="male" checked required />
+                      <div class="gender-card">
+                        <span class="gender-icon">♂</span>
+                        <span class="gender-label">Male</span>
+                      </div>
                     </label>
-                    <label class="radio-label">
-                      <input type="radio" name="sex" value="female" class="radio-custom" />
-                      <span>Female</span>
+                    <label class="gender-option">
+                      <input type="radio" name="sex" value="female" required />
+                      <div class="gender-card">
+                        <span class="gender-icon">♀</span>
+                        <span class="gender-label">Female</span>
+                      </div>
                     </label>
                   </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn-primary" id="register-submit-btn">
-                  <span class="btn-text">Register</span>
+                <button type="submit" class="btn btn-primary">
+                  <span class="btn-text">CREATE ACCOUNT</span>
+                  <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
               </form>
 
+              <!-- Footer Switch -->
               <div class="view-footer">
-                <p>Already have an account? <button type="button" class="switch-link" id="switch-to-login">Login here</button></p>
+                <span>Already have an account?</span>
+                <button type="button" id="switch-to-login" class="link-btn">Log In</button>
               </div>
             </div>
 
             <!-- Error Banner -->
-            <div id="auth-error" class="auth-error-banner hidden" role="alert">
-              <i class="fa-solid fa-triangle-exclamation"></i>
+            <div id="auth-error" class="auth-error-banner hidden">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               <span id="auth-error-text"></span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- CINEMATIC OVERLAY -->
-      <section id="cinematic" class="cinematic hidden" aria-live="polite">
-        <div class="cinematic-copy">
-          <span id="cinematic-kicker">WELCOME</span>
-          <h2 id="cinematic-title"></h2>
-          <p id="cinematic-description"></p>
-        </div>
-        <div class="cinematic-progress"><i id="cinematic-progress-bar"></i></div>
-      </section>
-
-      <!-- CHAT INTERFACE -->
-      <section id="chat" class="chat hidden" aria-label="Chat">
+      <!-- CHAT COMPONENT -->
+      <section id="chat" class="hidden" aria-label="Game chat">
         <div id="chat-messages" class="chat-messages"></div>
-        <form id="chat-form" class="chat-form">
-          <span class="prompt">›</span>
-          <input id="chat-input" maxlength="280" autocomplete="off" spellcheck="true" aria-label="Chat message" />
+        <form id="chat-form" class="chat-form" autocomplete="off">
+          <input id="chat-input" type="text" maxlength="280" placeholder="Type a message or /command..." />
         </form>
       </section>
 
-      <!-- TOAST NOTIFICATIONS -->
-      <aside id="notifications" class="notifications" aria-live="polite"></aside>
+      <!-- NOTIFICATIONS -->
+      <aside id="notifications" aria-live="polite"></aside>
+
+      <!-- ONBOARDING CINEMATIC -->
+      <section id="cinematic" class="hidden" aria-label="Cinematic onboarding">
+        <div class="cinematic-overlay">
+          <div class="cinematic-content">
+            <span id="cinematic-kicker" class="cinematic-kicker">LOS SANTOS</span>
+            <h2 id="cinematic-title" class="cinematic-title">WELCOME</h2>
+            <p id="cinematic-description" class="cinematic-description"></p>
+            <div class="cinematic-progress">
+              <div id="cinematic-progress-bar" class="cinematic-progress-bar"></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

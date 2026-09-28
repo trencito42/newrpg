@@ -17,8 +17,8 @@ test('scrypt hashes are salted and verify safely', () => {
 
 test('password length policy is enforced by hashing boundary', () => {
   assert.equal(hashPassword('short'), null);
-  assert.equal(hashPassword('12345'), null);
-  assert.notEqual(hashPassword('123456'), null);
+  assert.equal(hashPassword('123456789'), null);
+  assert.notEqual(hashPassword('1234567890'), null);
   assert.equal(hashPassword('x'.repeat(129)), null);
 });
 

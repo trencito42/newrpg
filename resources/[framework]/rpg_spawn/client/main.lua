@@ -36,7 +36,7 @@ local function runCinematic()
         SetCamActive(camera, true)
         RenderScriptCams(true, true, 1000, true, false)
 
-        SetEntityCoordsNoOffset(ped, scene.target.x, scene.target.y, scene.target.z, false, false, false)
+        -- Request collision and stream focus around the camera scene rather than moving the ped
         RequestCollisionAtCoord(scene.target.x, scene.target.y, scene.target.z)
         SetFocusPosAndVel(scene.camera.x, scene.camera.y, scene.camera.z, 0.0, 0.0, 0.0)
 
@@ -58,27 +58,29 @@ local function runCinematic()
     return true
 end
 
-local function performSpawn(overrideCoords)
-    local payload, err = exports.rpg_core:Await('spawn.prepare')
-    if not payload then
-        notify(err or 'Spawn preparation failed.')
-        TriggerEvent('rpg:core:releaseProtection')
-        DoScreenFadeIn(500)
+local function performSpawn(token, overrideCoords)
+    if not token then
+        notify('Spawn authorization token missing.')
         return false
     end
+
+    local payload, err = exports.rpg_core:Await('spawn.prepare', token)
+    if not payload then
+        notify(err or 'Spawn preparation failed.')
+        -- Keep gameplay protection intact on failure!
+        return false
+    end
+
     local model = GetHashKey(payload.model)
     if not IsModelInCdimage(model) or not IsModelValid(model) then
         notify('Your configured player model is invalid.')
-        TriggerEvent('rpg:core:releaseProtection')
-        DoScreenFadeIn(500)
         return false
     end
+
     RequestModel(model)
     if not waitUntil(function() return HasModelLoaded(model) end, RPGSpawn.modelTimeoutMs) then
         SetModelAsNoLongerNeeded(model)
         notify('The player model could not be loaded. Reconnect to retry.')
-        TriggerEvent('rpg:core:releaseProtection')
-        DoScreenFadeIn(500)
         return false
     end
 
@@ -88,9 +90,6 @@ local function performSpawn(overrideCoords)
     SetPlayerModel(PlayerId(), model)
     SetModelAsNoLongerNeeded(model)
     local ped = PlayerPedId()
-    SetEntityVisible(ped, true, false)
-    SetEntityInvincible(ped, false)
-    FreezeEntityPosition(ped, false)
 
     local targetPos = overrideCoords or payload.spawn
     RequestCollisionAtCoord(targetPos.x, targetPos.y, targetPos.z)
@@ -102,10 +101,6 @@ local function performSpawn(overrideCoords)
     ClearPedBloodDamage(ped)
 
     ped = PlayerPedId()
-    SetEntityVisible(ped, true, false)
-    SetEntityInvincible(ped, false)
-    FreezeEntityPosition(ped, false)
-
     local collisionDeadline = GetGameTimer() + 3000
     while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < collisionDeadline do
         RequestCollisionAtCoord(targetPos.x, targetPos.y, targetPos.z)
@@ -117,9 +112,10 @@ local function performSpawn(overrideCoords)
     ClearFocus()
     SetFocusEntity(ped)
 
-    local active, activeError = exports.rpg_core:Await('spawn.activate')
+    local active, activeError = exports.rpg_core:Await('spawn.activate', token)
     if not active then
-        notify(activeError or 'Spawn activation warning.', 'warning')
+        notify(activeError or 'Spawn activation error.', 'error')
+        return false
     end
 
     TriggerScreenblurFadeOut(0)
@@ -150,6 +146,8 @@ local function handleDeath()
     revived = false
     exports.rpg_ui:Notify('You are critically injured. Transporting to Pillbox Hill Hospital...', 'error', 5000)
 
+    TriggerServerEvent('rpg:core:playerDied')
+
     -- Death loop and countdown
     local respawnAt = GetGameTimer() + (RPGSpawn.respawnDelayMs or 5000)
     while GetGameTimer() < respawnAt do
@@ -165,27 +163,21 @@ local function handleDeath()
         isDead = false
         return
     end
+end
 
-    -- Hospital Respawn
+RegisterNetEvent('rpg:spawn:readyToRespawn', function(token)
+    if not isDead then return end
+    spawning = true
     DoScreenFadeOut(800)
     Wait(900)
 
     local hospital = RPGSpawn.hospital or RPGSpawn.airport
-    RequestCollisionAtCoord(hospital.x, hospital.y, hospital.z)
-    NetworkResurrectLocalPlayer(hospital.x, hospital.y, hospital.z, hospital.heading or 0.0, true, true, false)
-    
-    local newPed = PlayerPedId()
-    ClearPedTasksImmediately(newPed)
-    SetEntityHealth(newPed, 200)
-    ClearPedBloodDamage(newPed)
-    SetEntityCoordsNoOffset(newPed, hospital.x, hospital.y, hospital.z, false, false, false)
-    SetEntityHeading(newPed, hospital.heading or 0.0)
+    performSpawn(token, hospital)
 
-    Wait(300)
-    DoScreenFadeIn(800)
     exports.rpg_ui:Notify('You have been discharged from Pillbox Hill Medical Center.', 'info', 4000)
     isDead = false
-end
+    spawning = false
+end)
 
 -- Continuous Death Monitoring Thread
 CreateThread(function()
@@ -214,14 +206,31 @@ RegisterNetEvent('rpg:spawn:begin', function(profile)
     if spawning or type(profile) ~= 'table' then return end
     spawning = true
     TriggerEvent('rpg:core:restoreProtection')
+    
+    local spawnToken = nil
+
     if not profile.tutorialCompleted then
         local onboardingSession, err = exports.rpg_core:Await('spawn.beginOnboarding')
         if not onboardingSession then notify(err or 'Onboarding could not start.') spawning = false return end
         runCinematic()
-        local completed, completeError = exports.rpg_core:Await('spawn.completeOnboarding', onboardingSession.token)
-        if not completed then notify(completeError or 'Onboarding progress could not be saved.') spawning = false return end
+        local completedResult, completeError = exports.rpg_core:Await('spawn.completeOnboarding', onboardingSession.token)
+        if not completedResult or not completedResult.ok then
+            notify(completeError or 'Onboarding progress could not be saved.')
+            spawning = false
+            return
+        end
+        spawnToken = completedResult.spawnToken
+    else
+        local entitlementResult, entError = exports.rpg_core:Await('spawn.requestEntitlement')
+        if not entitlementResult or not entitlementResult.spawnToken then
+            notify(entError or 'Spawn entitlement denied.')
+            spawning = false
+            return
+        end
+        spawnToken = entitlementResult.spawnToken
     end
-    performSpawn()
+
+    performSpawn(spawnToken)
     spawning = false
 end)
 
@@ -231,10 +240,10 @@ AddEventHandler('onClientResourceStop', function(resource)
     DestroyAllCams(true)
 end)
 
-RegisterNetEvent('rpg:spawn:adminRespawn', function()
+RegisterNetEvent('rpg:spawn:adminRespawn', function(token)
     if spawning then return end
     spawning = true
     TriggerEvent('rpg:core:restoreProtection')
-    performSpawn(RPGSpawn.hospital)
+    performSpawn(token, RPGSpawn.hospital)
     spawning = false
 end)

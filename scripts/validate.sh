@@ -11,6 +11,7 @@ npm test
 while IFS= read -r -d '' file; do .tools/lua/bin/luac -p "$file"; done < <(find 'resources/[framework]' -name '*.lua' -print0)
 .tools/lua/bin/lua tests/lua/command_spec.lua
 .tools/lua/bin/lua tests/lua/rpc_spec.lua
+.tools/lua/bin/lua tests/lua/lifecycle_spec.lua
 
 npm --prefix 'resources/[framework]/rpg_ui/web' install --ignore-scripts --no-audit --no-fund
 npm --prefix 'resources/[framework]/rpg_ui/web' run build

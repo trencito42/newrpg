@@ -2,15 +2,31 @@ local connections = {}
 local bootAt = os.time()
 local peakPlayers = 0
 
+-- OneSync Startup Validation
+CreateThread(function()
+    local onesync = GetConvar('onesync', 'off')
+    if onesync == 'off' then
+        RPG.Log('FATAL', 'OneSync is REQUIRED for this framework. Server will not run correctly without onesync enabled in server.cfg.', {})
+    end
+end)
+
 RegisterNetEvent('rpg:core:clientReady', function()
     local src = source
     if GetAccountId(src) then return end
+    local privateBucket = 10000 + src
+
     if connections[src] and connections[src].state == 'authenticating' then
+        SetPlayerRoutingBucket(src, privateBucket)
+        SetRoutingBucketPopulationEnabled(privateBucket, false)
+        SetRoutingBucketEntityLockdownMode(privateBucket, 'strict')
         TriggerClientEvent('rpg:auth:show', src)
         return
     end
-    connections[src] = { state = 'authenticating', connectedAt = os.time(), lastActivityAt = os.time() }
-    SetPlayerRoutingBucket(src, 0)
+
+    connections[src] = { state = 'authenticating', connectedAt = os.time(), lastActivityAt = os.time(), privateBucket = privateBucket }
+    SetPlayerRoutingBucket(src, privateBucket)
+    SetRoutingBucketPopulationEnabled(privateBucket, false)
+    SetRoutingBucketEntityLockdownMode(privateBucket, 'strict')
     TriggerClientEvent('rpg:auth:show', src)
 end)
 
@@ -32,7 +48,7 @@ end, { allowUnauthenticated = true, windowMs = 10000, maximum = 3 })
 RPG.RegisterCommand({
     name = 'fixscreen',
     aliases = { 'fixui' },
-    description = 'Fix screen blackouts, reset cameras and UI panels.',
+    description = 'Fix screen blackouts, reset cameras and UI panels without granting unauthorized gameplay freedom.',
     usage = '/fixscreen',
     handler = function(src, _, reply)
         TriggerClientEvent('rpg:ui:fixscreen', src)
@@ -60,8 +76,8 @@ RPG.RegisterCommand({
         if not stats then return false, 'You are not authenticated.' end
         local hours = math.floor(stats.totalPlaytimeSeconds / 3600)
         local minutes = math.floor((stats.totalPlaytimeSeconds % 3600) / 60)
-        reply(src, ('ID %d | %s | %s | Level %d | XP %d | Money $%d | RP %d | Playtime %dh %dm | Created %s | Last login %s'):format(
-            stats.id, stats.username, stats.sex, stats.level, stats.xp, stats.money, stats.respectPoints, hours, minutes,
+        reply(src, ('ID %d | %s | %s | Level %d | XP %d | Playtime %dh %dm | Created %s | Last login %s'):format(
+            stats.id, stats.username, stats.sex, stats.level, stats.xp, hours, minutes,
             stats.createdAt or 'unknown', stats.lastLoginAt or 'first session'
         ), 'info')
         return true
@@ -77,8 +93,8 @@ RegisterCommand('framework', function(source, args)
         for _, raw in ipairs(GetPlayers()) do
             local src = tonumber(raw)
             local player = GetPlayer(src)
-            print(('[RPG][FRAMEWORK] source=%d account=%s username=%s state=%s ping=%d'):format(
-                src, player and tostring(player.accountId) or '-', player and player.username or '-', player and player.state or 'unauthenticated', GetPlayerPing(src)
+            print(('[RPG][FRAMEWORK] source=%d account=%s username=%s state=%s ping=%d bucket=%d'):format(
+                src, player and tostring(player.accountId) or '-', player and player.username or '-', player and player.state or 'unauthenticated', GetPlayerPing(src), GetPlayerRoutingBucket(src)
             ))
         end
     elseif mode == 'sessions' then
@@ -99,6 +115,7 @@ RegisterCommand('framework', function(source, args)
     ))
 end, true)
 
+-- Main server initialization and staggered autosave loop
 CreateThread(function()
     math.randomseed(os.time() + GetGameTimer())
     while GetResourceState('oxmysql') ~= 'started' do Wait(100) end
@@ -115,13 +132,26 @@ CreateThread(function()
                          WHERE ended_at IS NULL]])
     RPG.Log('INFO', 'Core ready', { databaseLatencyMs = latency })
 
+    -- Staggered periodic saves: distribute saves over the 300-second window
     while true do
-        Wait(300000)
-        for _, raw in ipairs(GetPlayers()) do
-            local src = tonumber(raw)
-            if src and GetAccountId(src) then
-                local callOk, saved, err = pcall(SavePlayer, src, 'periodic')
-                if not callOk or not saved then RPG.Log('ERROR', 'Periodic save failed', { source = src, error = callOk and err or saved }) end
+        Wait(10000) -- Check every 10 seconds
+        local players = GetPlayers()
+        local count = #players
+        if count > 0 then
+            local now = os.time()
+            for _, raw in ipairs(players) do
+                local src = tonumber(raw)
+                local player = src and GetPlayer(src)
+                if player and player.state == 'active' then
+                    -- If player has not been saved in 300 seconds, save now
+                    if (now - (player.lastPersistedAt or 0)) >= 300 then
+                        local callOk, saved, err = pcall(SavePlayer, src, 'periodic_staggered')
+                        if not callOk or not saved then
+                            RPG.Log('ERROR', 'Periodic save failed', { source = src, error = callOk and err or saved })
+                        end
+                        Wait(50) -- Micro-yield between player saves to prevent DB spikes
+                    end
+                end
             end
         end
     end
@@ -135,7 +165,11 @@ CreateThread(function()
 end)
 
 AddEventHandler('playerDropped', function()
-    connections[source] = nil
+    local src = source
+    local privateBucket = 10000 + src
+    SetRoutingBucketPopulationEnabled(privateBucket, true)
+    SetRoutingBucketEntityLockdownMode(privateBucket, 'inactive')
+    connections[src] = nil
 end)
 
 AddEventHandler('onResourceStop', function(resource)

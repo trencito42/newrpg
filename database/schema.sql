@@ -24,7 +24,7 @@ CREATE TABLE `account_identifiers` (
   UNIQUE KEY `uq_account_identifier` (`account_id`,`identifier_type`,`identifier_value`),
   KEY `idx_identifier_lookup` (`identifier_type`,`identifier_value`),
   CONSTRAINT `fk_identifiers_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `accounts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -49,7 +49,7 @@ CREATE TABLE `accounts` (
   UNIQUE KEY `uq_accounts_email_normalized` (`email_normalized`),
   CONSTRAINT `chk_accounts_admin_level` CHECK (`admin_level` between 0 and 6),
   CONSTRAINT `chk_accounts_helper_level` CHECK (`helper_level` between 0 and 3)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `admin_actions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -70,7 +70,7 @@ CREATE TABLE `admin_actions` (
   KEY `idx_admin_actions_action` (`action`,`created_at`),
   CONSTRAINT `fk_admin_actions_actor` FOREIGN KEY (`actor_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_admin_actions_target` FOREIGN KEY (`target_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `factions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -132,7 +132,7 @@ CREATE TABLE `newbie_questions` (
   KEY `fk_questions_handler` (`handled_by_account_id`),
   CONSTRAINT `fk_questions_asker` FOREIGN KEY (`asker_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_questions_handler` FOREIGN KEY (`handled_by_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `player_reports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -157,7 +157,7 @@ CREATE TABLE `player_reports` (
   KEY `fk_reports_closer` (`closed_by_account_id`),
   CONSTRAINT `fk_reports_closer` FOREIGN KEY (`closed_by_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_reports_reporter` FOREIGN KEY (`reporter_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `players`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -220,6 +220,8 @@ CREATE TABLE `sanctions` (
   `expires_at` timestamp(6) NULL DEFAULT NULL,
   `revoked_at` timestamp(6) NULL DEFAULT NULL,
   `revoked_by_account_id` bigint(20) unsigned DEFAULT NULL,
+  `consumed_by_sanction_id` bigint(20) unsigned DEFAULT NULL,
+  `resolved_at` timestamp(6) NULL DEFAULT NULL,
   `revoke_reason` varchar(500) DEFAULT NULL,
   `created_at` timestamp(6) NOT NULL DEFAULT current_timestamp(6),
   PRIMARY KEY (`id`),
@@ -227,10 +229,13 @@ CREATE TABLE `sanctions` (
   KEY `idx_sanctions_active_ban` (`target_account_id`,`sanction_type`,`revoked_at`,`expires_at`),
   KEY `fk_sanctions_actor` (`actor_account_id`),
   KEY `fk_sanctions_revoker` (`revoked_by_account_id`),
+  KEY `fk_sanctions_consumed_by` (`consumed_by_sanction_id`),
+  KEY `idx_sanctions_active_warning` (`target_account_id`,`sanction_type`,`revoked_at`,`consumed_by_sanction_id`,`expires_at`),
   CONSTRAINT `fk_sanctions_actor` FOREIGN KEY (`actor_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sanctions_consumed_by` FOREIGN KEY (`consumed_by_sanction_id`) REFERENCES `sanctions` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sanctions_revoker` FOREIGN KEY (`revoked_by_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sanctions_target` FOREIGN KEY (`target_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `schema_migrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

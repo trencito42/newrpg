@@ -1,52 +1,69 @@
 # Architecture
 
-## Dependency direction
+## Dependency Direction (Acyclic DAG)
 
 ```text
-oxmysql -> rpg_core -> rpg_ui -> rpg_auth
-                     -> rpg_spawn -> rpg_admin -> rpg_chat
+oxmysql -> bob74_ipl -> rpg_core -> rpg_ui -> rpg_auth -> rpg_spawn
+                                                          |
+                      +-------------------+---------------+-------------------+
+                      |                   |               |                   |
+                      v                   v               v                   v
+                 rpg_economy         rpg_factions    rpg_housing         rpg_vehicles
+                      |                   |               |                   |
+                      +-------------------+---------------+-------------------+
+                                                  |
+                                                  v
+                                              rpg_admin
+                                                  |
+                                                  v
+                                              rpg_chat
 ```
 
-`rpg_core` owns infrastructure and the small base profile: authoritative registry, identity, lifecycle, RPC, command authorization, base stats/currency, session finalization, and logs. Staff support and provisional world administration live in `rpg_admin` until full gameplay resources replace those boundaries.
+`rpg_core` owns infrastructure and the base player lifecycle profile: authoritative registry, identity, lifecycle state machine, RPC engine, command authorization, base level/XP stats, session finalization, and logging.
 
-Resources register stable callbacks and commands through exports. Server-internal lifecycle broadcasts use `AddEventHandler`/`TriggerEvent`, not network events. Network events exist only where a client must send intent or receive presentation instructions.
+Domain operations are decoupled into minimal canonical domain services:
+- `rpg_economy`: Authoritative money and respect points mutation/query APIs.
+- `rpg_factions`: Authoritative faction leadership management and in-memory leader state cache.
+- `rpg_housing`: Authoritative house creation and query services.
+- `rpg_vehicles`: Server-created vehicles, entity orphan modes, occupancy verification, and safe respawn loops.
+- `rpg_admin`: Staff permissions, duty toggles, sanctions, support tickets/questions, spectator/teleport management, consuming domain APIs without owning gameplay tables directly.
 
-## Player lifecycle
+## Player Lifecycle & Private Routing Context
 
 ```text
-connected -> authenticating -> authenticated -> onboarding -> spawning -> active
-                                      |              ^          |
-                                      +--------------+----------+
+connected (private bucket) -> authenticating -> authenticated -> onboarding -> spawning -> active (bucket 0)
+                                                                    |              ^          |
+                                                                    +--------------+----------+
 any state -> disconnecting
 ```
 
-Transitions are checked server-side. Login/onboarding uses a private OneSync routing bucket with strict entity lockdown and population disabled. The server changes the player to bucket 0 only after profile/tutorial eligibility is established.
+- When a player connects, `rpg_core` isolates the client in a private routing bucket (`10000 + src`) with population disabled (`SetRoutingBucketPopulationEnabled(bucket, false)`) and strict entity lockdown (`SetRoutingBucketEntityLockdownMode(bucket, 'strict')`).
+- Unauthenticated and onboarding players do not exist in the public world (bucket 0), cannot see or interact with active players, and onboarding cinematic camera movements do not replicate entity coordinates into the public instance.
+- Moving to public routing bucket 0 occurs strictly upon server-authorized `spawn.activate`.
 
-## Authoritative registry
+## Spawn Entitlement Authority
 
-The registry is indexed separately by server source and account ID. Public snapshots are copies; modules cannot mutate internal tables. Account ID is never confused with the ephemeral source ID. Only small flags such as active state, staff duty, sleep, and tracking immunity use state bags.
+- Spawning requires a server-issued, single-use, time-limited entitlement token.
+- Entitlement reasons: `initial_spawn`, `login_spawn`, `death_respawn`, `admin_respawn`.
+- A client in `active` state cannot arbitrarily invoke `spawn.prepare` without a valid server entitlement.
+- `spawn.prepare(token)` validates the entitlement, transitions state to `spawning`, and supplies verified coordinates.
+- `spawn.activate(token)` consumes the entitlement token, transitions state to `active`, and moves the player to routing bucket 0.
 
-## Session invariants
+## Authoritative Registry & Persistence
 
-- One generated-column unique key permits at most one open DB session per account.
-- A process-local account lock serializes simultaneous login attempts.
-- Duplicate login persists and closes the old session before it removes memory or drops the old client.
-- `playerDropped` finalization is idempotent and clears every source-indexed cache.
-- Resource start closes DB sessions left open by a prior crash/restart.
-- Periodic saves add playtime atomically rather than overwriting totals from stale cache.
+- The player registry is indexed separately by server source and account ID.
+- Public snapshots are copies; external resources cannot mutate internal tables directly.
+- Position persistence authoritative fix: Authoritative ped coordinates and heading from `GetEntityCoords` and `GetEntityHeading` update `player.position` before persistence to the database, guarding against (0,0,0) overwrite during streaming transit.
+- Periodic saves are staggered across the autosave window to prevent synchronous database spikes.
 
-## RPC
+## RPC Engine & In-Flight Guards
 
-One request/response bus supplies unique IDs, client timeout cleanup, missing-callback errors, exception isolation, global and per-RPC windows, authentication gates, metrics, and standardized responses. Broadcast state changes use events instead.
+- Unique request IDs with client-side timeout cleanup and server-side exception isolation.
+- Per-source in-flight operation protection prevents concurrent duplicate mutation invocations (e.g. rapid double login/register or double spawn activation).
+- Standardized response envelope `{ ok: boolean, data?: any, error?: string, code?: string }`.
 
-## Command contract
+## UI & Focus Exclusivity
 
-All player-facing commands are registered in `rpg_core`. Definitions include name, aliases, description, usage, separate admin/helper requirements, argument policy, console policy, audit policy, resource owner, and handler. Unknown, denied, invalid, missing-player, exception, and domain rejection paths always return feedback.
-
-## UI and focus
-
-`rpg_ui` is the only resource that calls `SetNuiFocus`. Focus has exactly one owner (`auth`, `chat`, or future modal). NUI renders all untrusted text with `textContent`; no chat/admin value is inserted as HTML.
-
-## Extension rule
-
-A future full gameplay module should take ownership of its tables and server state through a new migration and explicit API boundary. It may call documented core exports and register callbacks/commands, but must not import implementation files or introduce a reverse/circular dependency.
+- `rpg_ui` exclusively manages `SetNuiFocus` and `SetNuiFocusKeepInput`.
+- Focus has strict ownership exclusivity (`AcquireFocus(owner)`, `ReleaseFocus(owner)`, `ForceResetFocus(reason)`).
+- `/fixscreen` resets visual state (NUI focus, blur, cameras, timecycles) but preserves gameplay protection (freeze, invulnerability, visibility, input disabling) if the client is not server-side `active`.

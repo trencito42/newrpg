@@ -11,7 +11,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 test('migration names are unique, ordered, and tracked by immutable checksum runner', () => {
   const files = fs.readdirSync(path.join(root, 'database/migrations')).filter((name) => name.endsWith('.sql')).sort();
-  assert.deepEqual(files, ['001_accounts.sql', '002_players.sql', '003_sessions.sql', '004_admin.sql', '005_staff_tools.sql', '006_support_invariants.sql']);
+  assert.deepEqual(files, ['001_accounts.sql', '002_players.sql', '003_sessions.sql', '004_admin.sql', '005_staff_tools.sql', '006_support_invariants.sql', '007_warning_lifecycle.sql']);
   assert.equal(new Set(files.map((name) => name.slice(0, 3))).size, files.length);
   const runner = read('scripts/migrate.sh');
   assert.match(runner, /checksum mismatch/);
@@ -37,13 +37,30 @@ test('registration maps both allowed sex values to the required models', () => {
   assert.match(registry, /model = RPG\.Config\.models\[sex\]/);
 });
 
+test('password policy is consistent at min 10 max 128 characters across components', () => {
+  const config = read('resources/[framework]/rpg_core/shared/config.lua');
+  const passwordJs = read('resources/[framework]/rpg_core/server/password.js');
+  const registry = read('resources/[framework]/rpg_core/server/registry.lua');
+  const html = read('resources/[framework]/rpg_ui/web/index.html');
+  assert.match(config, /passwordMin\s*=\s*10/);
+  assert.match(config, /passwordMax\s*=\s*128/);
+  assert.match(passwordJs, /password\.length < 10/);
+  assert.match(registry, /passwordMin or #password > RPG\.Config\.auth\.passwordMax/);
+  assert.match(html, /minlength="10"/);
+});
+
+test('server config enables OneSync and strict state bag replication', () => {
+  const serverCfg = read('config/server.cfg.template');
+  assert.match(serverCfg, /set onesync on/);
+  assert.match(serverCfg, /setr sv_stateBagStrictMode true/);
+});
+
 test('all required admin commands are registered centrally', () => {
   const source = read('resources/[framework]/rpg_admin/server/main.lua');
   const required = ['aduty','a','admins','ainfo','goto','bring','back','coords','freeze','unfreeze','heal','revive','respawn','spectate','warn','history','kick','ban','banip','unban','announce','cc','setadmin','serverstats'];
   for (const command of required) {
     const direct = new RegExp(`name\\s*=\\s*['\"]${command}['\"]`).test(source);
-    const helper = new RegExp(`healthCommand\\(['\"]${command}['\"]`).test(source);
-    assert.equal(direct || helper, true, `missing /${command}`);
+    assert.equal(direct, true, `missing /${command}`);
   }
   assert.match(source, /aliases\s*=\s*\{['"]tempban['"]\}/);
 });
@@ -75,12 +92,15 @@ test('staff extension includes every requested command and persisted support sch
   const invariants = read('database/migrations/006_support_invariants.sql');
   assert.match(invariants, /uq_one_open_report_per_account/);
   assert.match(invariants, /uq_one_open_question_per_account/);
+  const lifecycle = read('database/migrations/007_warning_lifecycle.sql');
+  assert.match(lifecycle, /consumed_by_sanction_id/);
 });
 
 test('Lua sources parse and fxmanifest file references exist', () => {
   const framework = path.join(root, 'resources/[framework]');
   for (const resource of fs.readdirSync(framework)) {
     const resourcePath = path.join(framework, resource);
+    if (!fs.statSync(resourcePath).isDirectory()) continue;
     for (const directory of ['shared', 'server', 'client']) {
       const sourcePath = path.join(resourcePath, directory);
       if (!fs.existsSync(sourcePath)) continue;

@@ -28,8 +28,13 @@ if [[ "$locked" != "1" ]]; then
 fi
 trap '"${mysql[@]}" --execute="SELECT RELEASE_LOCK('\''rpgmvp_schema_migrations'\'')" >/dev/null 2>&1 || true' EXIT
 
-shopt -s nullglob
-migrations_dir="${MIGRATIONS_DIR:-/migrations}"
+if [[ -n "${MIGRATIONS_DIR:-}" ]]; then
+  migrations_dir="$MIGRATIONS_DIR"
+elif [[ -d "/migrations" ]]; then
+  migrations_dir="/migrations"
+else
+  migrations_dir="$project_root/database/migrations"
+fi
 files=("$migrations_dir"/[0-9][0-9][0-9]_*.sql)
 if ((${#files[@]} == 0)); then
   echo '[migrate] no numbered migrations found' >&2

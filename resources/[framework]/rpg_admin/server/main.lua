@@ -208,20 +208,20 @@ register({ name = 'ainfo', aliases = {'check'}, description = 'Inspect framework
     local coords = entityCoords(target.source)
     local stats = exports.rpg_core:GetPlayerStats(target.source)
     local email = exports.rpg_core:GetAdminLevel(src) >= 4 and full.email or '[restricted]'
-    reply(src, ('ID %d | Account %d | %s | Email %s | %s/%s | L%d XP%d | $%d RP%d | Playtime %ds | Admin %s | Helper %d | Tutorial %s | Ping %d | HP %d Armor %d | XYZ %.2f %.2f %.2f'):format(
+    reply(src, ('ID %d | Account %d | %s | Email %s | %s/%s | L%d XP%d | Playtime %ds | Admin %s | Helper %d | Tutorial %s | Ping %d | HP %d Armor %d | XYZ %.2f %.2f %.2f'):format(
         target.source, target.accountId, target.username, email, target.sex, target.model, target.level, target.xp,
-        stats.money, stats.respectPoints, stats.totalPlaytimeSeconds, labels[target.adminLevel], target.helperLevel, tostring(target.tutorialCompleted), GetPlayerPing(target.source),
+        stats.totalPlaytimeSeconds, labels[target.adminLevel], target.helperLevel, tostring(target.tutorialCompleted), GetPlayerPing(target.source),
         target.health, target.armor, coords and coords.x or 0, coords and coords.y or 0, coords and coords.z or 0
     ), 'info')
     return true
 end })
 
 register({ name = 'goto', description = 'Teleport to a player.', usage = '/goto [player id]', minimumAdminLevel = 1, minimumHelperLevel = 1, arguments = { { required = true } }, audit = 'important', handler = function(src, args)
-    if exports.rpg_core:GetAdminLevel(src) == 0 then
+    local isHelperOnly = exports.rpg_core:GetAdminLevel(src) == 0
+    if isHelperOnly then
         local now = os.time()
         local availableAt = helperGotoCooldown[src] or 0
         if now < availableAt then return false, ('Helper /goto is available in %d seconds.'):format(availableAt - now) end
-        helperGotoCooldown[src] = now + 180
     end
     local target, err = playerOrError(args[1]); if not target then return false, err end
     if src == target.source then return false, 'You are already at yourself.' end
@@ -229,7 +229,13 @@ register({ name = 'goto', description = 'Teleport to a player.', usage = '/goto 
     if not destination or not origin then return false, 'Player entity is unavailable.' end
     backPositions[src] = origin
     moveRoutingContext(src, destination.bucket)
-    if not teleportAuthoritative(src, destination) then return false,'Your entity became unavailable.' end
+    if not teleportAuthoritative(src, destination) then return false, 'Your entity became unavailable.' end
+    
+    -- Consume cooldown ONLY on successful teleport!
+    if isHelperOnly then
+        helperGotoCooldown[src] = os.time() + 180
+    end
+
     audit('goto', src, target, nil, { from = origin, to = destination })
     return ('Teleported to %s (%d).'):format(target.username, target.source)
 end })
@@ -271,17 +277,29 @@ register({ name = 'unfreeze', description = 'Unfreeze a player.', usage = '/unfr
     local ok,target = setFrozen(src,args,false); if not ok then return false,target end return ('Unfroze %s (%d).'):format(target.username,target.source)
 end })
 
-local function healthCommand(name, minimum, event)
-    register({ name = name, description = name .. ' a player.', usage = '/' .. name .. ' [id]', minimumAdminLevel = minimum, arguments = { { required = true } }, handler = function(src,args)
-        local target,err=playerOrError(args[1]); if not target then return false,err end
-        local allowed,denied=canTarget(src,target,true); if not allowed then return false,denied end
-        if name=='heal' then local ped=GetPlayerPed(target.source); if ped and ped~=0 then SetEntityHealth(ped,200); SetPedArmour(ped,100) end end
-        TriggerClientEvent(event,target.source); return ('%s applied to %s (%d).'):format(name,target.username,target.source)
-    end })
-end
-healthCommand('heal',2,'rpg:admin:heal')
-healthCommand('revive',2,'rpg:admin:revive')
-healthCommand('respawn',2,'rpg:spawn:adminRespawn')
+register({ name = 'heal', description = 'Heal a player.', usage = '/heal [id]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src, args)
+    local target, err = playerOrError(args[1]); if not target then return false, err end
+    local allowed, denied = canTarget(src, target, true); if not allowed then return false, denied end
+    local ped = GetPlayerPed(target.source)
+    if ped and ped ~= 0 then SetEntityHealth(ped, 200); SetPedArmour(ped, 100) end
+    TriggerClientEvent('rpg:admin:heal', target.source)
+    return ('Heal applied to %s (%d).'):format(target.username, target.source)
+end })
+
+register({ name = 'revive', description = 'Revive a player.', usage = '/revive [id]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src, args)
+    local target, err = playerOrError(args[1]); if not target then return false, err end
+    local allowed, denied = canTarget(src, target, true); if not allowed then return false, denied end
+    TriggerClientEvent('rpg:admin:revive', target.source)
+    return ('Revive applied to %s (%d).'):format(target.username, target.source)
+end })
+
+register({ name = 'respawn', description = 'Respawn a player at hospital.', usage = '/respawn [id]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src, args)
+    local target, err = playerOrError(args[1]); if not target then return false, err end
+    local allowed, denied = canTarget(src, target, true); if not allowed then return false, denied end
+    local token = exports.rpg_spawn:IssueSpawnEntitlement(target.source, 'admin_respawn')
+    TriggerClientEvent('rpg:spawn:adminRespawn', target.source, token)
+    return ('Respawn entitlement issued to %s (%d).'):format(target.username, target.source)
+end })
 
 register({ name = 'spectate', aliases = {'spec'}, description = 'Spectate a player or stop spectating.', usage = '/spec [id|off]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src,args)
     if string.lower(args[1]) == 'off' then
@@ -302,21 +320,46 @@ register({ name = 'warn', description = 'Persist a warning.', usage = '/warn [id
     local allowed,denied=canTarget(src,target,false); if not allowed then return false,denied end
     local reason=joinFrom(args,2); if not reason or #reason>500 then return false,'Usage: /warn [id] [reason] (maximum 500 characters)' end
     local id=sanction('warning',src,target,reason,nil); if not id then return false,'Warning could not be saved.' end; TriggerClientEvent('rpg:chat:message',target.source,('Warning #%d: %s'):format(id,reason),'warning')
-    local warningCount=tonumber(MySQL.scalar.await([[SELECT COUNT(*) FROM sanctions WHERE target_account_id=? AND sanction_type='warning' AND revoked_at IS NULL]],{target.accountId})) or 0
+    
+    -- Only count active, unconsumed, unrevoked warnings
+    local warningCount=tonumber(MySQL.scalar.await([[
+        SELECT COUNT(*) FROM sanctions
+        WHERE target_account_id=? AND sanction_type='warning' AND revoked_at IS NULL AND consumed_by_sanction_id IS NULL
+    ]],{target.accountId})) or 0
+    
     if warningCount >= 3 then
         local banId=sanction('ban',src,target,'Automatic account ban: 3/3 warnings',nil)
         if not banId then return false,'Warning saved, but automatic ban could not be persisted.' end
-        exports.rpg_core:SavePlayer(target.source,'three_warnings_ban')
+        
+        -- Resolve/consume the contributing warnings so they do not retrigger bans upon future unbans
+        MySQL.update.await([[
+            UPDATE sanctions SET consumed_by_sanction_id = ?, resolved_at = UTC_TIMESTAMP(6)
+            WHERE target_account_id = ? AND sanction_type = 'warning' AND revoked_at IS NULL AND consumed_by_sanction_id IS NULL
+        ]], { banId, target.accountId })
+
+        local saveOk, saveErr = exports.rpg_core:SavePlayer(target.source,'three_warnings_ban')
+        if not saveOk then
+            print(('[RPG][ERROR] Failed to save player before 3-warning drop: %s'):format(tostring(saveErr)))
+        end
         DropPlayer(target.source,'Banned permanently: 3/3 warnings.')
         return ('Warning #%d issued; %s reached 3/3 and received permanent ban #%d.'):format(id,target.username,banId)
     end
-    return ('Warning #%d issued to %s.'):format(id,target.username)
+    return ('Warning #%d issued to %s (%d/3 active warnings).'):format(id,target.username,warningCount)
 end })
 
 register({ name = 'history', description = 'Show staff history.', usage = '/history [id]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src,args,reply)
     local target,err=playerOrError(args[1]); if not target then return false,err end
-    local rows=MySQL.query.await([[SELECT id,sanction_type,actor_username,reason,created_at,expires_at,revoked_at FROM sanctions WHERE target_account_id=? ORDER BY created_at DESC LIMIT 10]],{target.accountId})
-    if #rows==0 then reply(src,'No sanctions for '..target.username..'.','info') else for _,row in ipairs(rows) do reply(src,('#%d %s by %s: %s (%s)'):format(row.id,row.sanction_type,row.actor_username,row.reason,tostring(row.created_at)),'info') end end
+    local rows=MySQL.query.await([[
+        SELECT id, sanction_type, actor_username, reason, created_at, expires_at, revoked_at, consumed_by_sanction_id, resolved_at
+        FROM sanctions WHERE target_account_id=? ORDER BY created_at DESC LIMIT 10
+    ]],{target.accountId})
+    if #rows==0 then reply(src,'No sanctions for '..target.username..'.','info')
+    else
+        for _,row in ipairs(rows) do
+            local status = row.revoked_at and ' [REVOKED]' or (row.consumed_by_sanction_id and (' [CONSUMED BY BAN #%d]'):format(row.consumed_by_sanction_id) or '')
+            reply(src,('#%d %s by %s: %s (%s)%s'):format(row.id,row.sanction_type,row.actor_username,row.reason,tostring(row.created_at), status),'info')
+        end
+    end
     return true
 end })
 
@@ -324,7 +367,12 @@ register({ name = 'kick', description = 'Kick a player.', usage = '/kick [id] [r
     local target,err=playerOrError(args[1]); if not target then return false,err end
     local allowed,denied=canTarget(src,target,false); if not allowed then return false,denied end
     local reason=joinFrom(args,2); if not reason or #reason>500 then return false,'Usage: /kick [id] [reason]' end
-    local id=sanction('kick',src,target,reason,nil); if not id then return false,'Kick audit could not be saved.' end; exports.rpg_core:SavePlayer(target.source,'admin_kick'); DropPlayer(target.source,'Kicked: '..reason)
+    local id=sanction('kick',src,target,reason,nil); if not id then return false,'Kick audit could not be saved.' end
+    local saveOk, saveErr = exports.rpg_core:SavePlayer(target.source,'admin_kick')
+    if not saveOk then
+        print(('[RPG][ERROR] Failed to save player before kick: %s'):format(tostring(saveErr)))
+    end
+    DropPlayer(target.source,'Kicked: '..reason)
     return ('Kicked %s (%d).'):format(target.username,target.source)
 end })
 
@@ -334,7 +382,12 @@ local function banHandler(src,args)
     local seconds,label=parseDuration(string.lower(args[2] or '')); if seconds==false then return false,label end
     local reason=joinFrom(args,3); if not reason or #reason>500 then return false,'Usage: /ban [id] [duration|perm] [reason]' end
     local expires=seconds and os.date('!%Y-%m-%d %H:%M:%S',os.time()+seconds) or nil
-    local id=sanction('ban',src,target,reason,expires); if not id then return false,'Ban could not be saved.' end; exports.rpg_core:SavePlayer(target.source,'admin_ban'); DropPlayer(target.source,('Banned (%s): %s'):format(label,reason))
+    local id=sanction('ban',src,target,reason,expires); if not id then return false,'Ban could not be saved.' end
+    local saveOk, saveErr = exports.rpg_core:SavePlayer(target.source,'admin_ban')
+    if not saveOk then
+        print(('[RPG][ERROR] Failed to save player before ban: %s'):format(tostring(saveErr)))
+    end
+    DropPlayer(target.source,('Banned (%s): %s'):format(label,reason))
     return ('Ban #%d applied to %s (%s).'):format(id,target.username,label)
 end
 register({ name='ban',aliases={'tempban'},description='Ban a player.',usage='/ban [id] [duration|perm] [reason]',minimumAdminLevel=3,arguments={{required=true},{required=true},{required=true}},audit='important',handler=banHandler })
@@ -344,7 +397,11 @@ register({ name='banip',description='Permanently ban a current IP.',usage='/bani
     local allowed,denied=canTarget(src,target,false); if not allowed then return false,denied end
     local reason=joinFrom(args,2); if not reason or #reason>500 then return false,'Usage: /banip [id] [reason]' end
     local id=sanction('ip_ban',src,target,reason,nil); if not id then return false,'IP ban could not be saved.' end
-    exports.rpg_core:SavePlayer(target.source,'admin_ip_ban'); DropPlayer(target.source,'IP banned permanently: '..reason)
+    local saveOk, saveErr = exports.rpg_core:SavePlayer(target.source,'admin_ip_ban')
+    if not saveOk then
+        print(('[RPG][ERROR] Failed to save player before IP ban: %s'):format(tostring(saveErr)))
+    end
+    DropPlayer(target.source,'IP banned permanently: '..reason)
     return ('IP ban #%d applied to %s.'):format(id,target.username)
 end })
 

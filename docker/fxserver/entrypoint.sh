@@ -9,15 +9,16 @@ for name in "${required[@]}"; do
   fi
 done
 
-sed \
-  -e "s|@@FIVEM_PORT@@|${FIVEM_PORT}|g" \
-  -e "s|@@FIVEM_LICENSE_KEY@@|${FIVEM_LICENSE_KEY}|g" \
-  -e "s|@@SERVER_NAME@@|${SERVER_NAME:-RPG Framework MVP}|g" \
-  -e "s|@@MAX_CLIENTS@@|${MAX_CLIENTS:-48}|g" \
-  -e "s|@@MYSQL_HOST@@|${MYSQL_HOST}|g" \
-  -e "s|@@MYSQL_DATABASE@@|${MYSQL_DATABASE}|g" \
-  -e "s|@@MYSQL_USER@@|${MYSQL_USER}|g" \
-  -e "s|@@MYSQL_PASSWORD@@|${MYSQL_PASSWORD}|g" \
-  /opt/rpg/config/server.cfg.template > /opt/cfx-server-data/server.cfg
+template="$(cat /opt/rpg/config/server.cfg.template)"
+template="${template//@@FIVEM_PORT@@/$FIVEM_PORT}"
+template="${template//@@FIVEM_LICENSE_KEY@@/$FIVEM_LICENSE_KEY}"
+template="${template//@@SERVER_NAME@@/${SERVER_NAME:-RPG Framework MVP}}"
+template="${template//@@MAX_CLIENTS@@/${MAX_CLIENTS:-48}}"
+template="${template//@@MYSQL_HOST@@/$MYSQL_HOST}"
+template="${template//@@MYSQL_DATABASE@@/$MYSQL_DATABASE}"
+template="${template//@@MYSQL_USER@@/$MYSQL_USER}"
+template="${template//@@MYSQL_PASSWORD@@/$MYSQL_PASSWORD}"
 
-exec /opt/fxserver/run.sh +exec server.cfg
+printf '%s\n' "$template" > /opt/cfx-server-data/server.cfg
+
+exec /opt/fxserver/run.sh +set onesync on +exec server.cfg

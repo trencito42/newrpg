@@ -1,30 +1,35 @@
 # Blipmade RPG Framework MVP
 
-A custom, modular FiveM foundation for one account = one persistent player. It intentionally contains no economy, inventory, jobs, factions, housing, vehicles, missions, phone, clans, crime, or other gameplay systems.
+A custom, modular, hardened FiveM RPG framework foundation based on OneSync.
 
-## MVP flow
+## Core Flow
 
-`connect -> login/register -> profile -> first-login cinematic -> LSIA -> chat/commands`
+`connect (private routing bucket) -> login/register -> onboarding cinematic -> server-authorized spawn -> active in public bucket 0 -> chat / commands / admin / persistence`
 
-The server owns identity, lifecycle, permissions, tutorial completion, session history, statistics, sanctions, and spawn entitlement. Clients submit intent only.
+The server owns identity, lifecycle, permissions, spawn entitlement, session history, and persistent statistics. Clients submit intent only.
 
-## Quick start
+## Key Hardened Architecture Principles
 
-1. Set `FIVEM_LICENSE_KEY` in `.env`.
-2. Ensure the `blipmade-rpg` user can access Docker (see `docs/RUNBOOK.md`).
-3. Run `docker compose up -d --build` from this directory.
-4. Inspect `docker compose ps` and `docker compose logs --tail=200 fxserver migrate database`.
-5. Connect with FiveM to `<server-ip>:30120`.
-6. Register, then run `rpg_setowner <username>` in the FXServer console once.
+- **OneSync Foundation**: Explicitly requires and configures OneSync (`set onesync on`, `setr sv_stateBagStrictMode true`).
+- **Auth/Onboarding Isolation**: Connecting players are isolated in a private routing bucket (`10000 + src`) with population disabled and strict entity lockdown until server spawn activation.
+- **Server Spawn Authority**: Clients cannot trigger spawns without a valid single-use server spawn entitlement token.
+- **Position Persistence**: Authoritative ped coordinates and heading update the registry before database writes, guarding against (0,0,0) overwrite.
+- **Central NUI Focus**: `rpg_ui` exclusively manages NUI focus. `/fixscreen` resets visual state but preserves gameplay protection if the client is not server-side active.
+- **Acyclic DAG & Decoupled Domains**: Minimal domain services (`rpg_economy`, `rpg_factions`, `rpg_housing`, `rpg_vehicles`) handle domain state, leaving `rpg_core` focused on infrastructure and `rpg_admin` consuming clean APIs.
+- **High-Performance In-Memory Caches**: Zero database queries per message for `/lc` faction leader chat and global chat mute checks.
+- **Warning Lifecycle**: 3/3 warnings trigger automatic ban and mark contributing warnings as resolved/consumed so future unbans do not immediately trigger another ban on strike 1.
 
-## Validation
+## Quick Start
+
+1. Set `FIVEM_LICENSE_KEY` and database credentials in `.env`.
+2. Run `docker compose up -d --build` from this directory.
+3. Inspect `docker compose ps` and `docker compose logs --tail=200 fxserver migrate`.
+4. Connect with FiveM to `<server-ip>:30120`.
+5. Register, then run `rpg_setowner <username>` in the FXServer console once.
+
+## Automated Validation
 
 ```bash
 bash scripts/validate.sh
 bash scripts/test-database.sh
 ```
-
-The first command checks Lua syntax, JavaScript logic, command/RPC behavior, NUI TypeScript/build, manifests, Compose, migration ordering, secret patterns, SQL patterns, and core boundaries. The second starts an isolated local MariaDB, applies all migrations twice, and tests foreign keys and unique constraints.
-
-See `docs/MVP_SCOPE.md`, `docs/ARCHITECTURE.md`, and `docs/RUNBOOK.md` before extending the framework.
-

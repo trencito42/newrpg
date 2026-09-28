@@ -5,6 +5,7 @@ local AccountSources = {}
 local Finalizing = {}
 local AccountLocks = {}
 local LoginGuards = {}
+local AuthInProgress = {}
 
 local function sourceNumber(value)
     local src = tonumber(value)
@@ -87,17 +88,13 @@ local function hydrate(row, src, sessionId)
         tutorialCompleted = row.tutorial_completed == true or tonumber(row.tutorial_completed) == 1,
         position = {
             x = tonumber(row.last_x), y = tonumber(row.last_y), z = tonumber(row.last_z),
-            heading = tonumber(row.last_heading),
+            heading = tonumber(row.last_heading) or 0.0,
         },
         health = tonumber(row.health) or 200,
         armor = tonumber(row.armor) or 0,
         dead = row.is_dead == true or tonumber(row.is_dead) == 1,
         level = tonumber(row.level) or 1,
         xp = tonumber(row.xp) or 0,
-        money = tonumber(row.money) or 0,
-        respectPoints = tonumber(row.respect_points) or 0,
-        factionId = row.faction_id and tonumber(row.faction_id) or nil,
-        factionLeader = row.faction_leader == true or tonumber(row.faction_leader) == 1,
         totalPlaytimeSeconds = tonumber(row.total_playtime_seconds) or 0,
         createdAt = tostring(row.created_at),
         lastLoginAt = row.last_login_at and tostring(row.last_login_at) or nil,
@@ -127,10 +124,6 @@ local function publicSnapshot(player)
         dead = player.dead,
         level = player.level,
         xp = player.xp,
-        money = player.money,
-        respectPoints = player.respectPoints,
-        factionId = player.factionId,
-        factionLeader = player.factionLeader,
         totalPlaytimeSeconds = player.totalPlaytimeSeconds,
         createdAt = player.createdAt,
         lastLoginAt = player.lastLoginAt,
@@ -195,12 +188,17 @@ function SetLifecycleState(src, nextState)
 end
 
 local function observeIdentifiers(src, accountId)
-    for _, item in ipairs(collectIdentifiers(src)) do
-        MySQL.query.await([[
-            INSERT INTO account_identifiers (account_id, identifier_type, identifier_value)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE last_seen_at = CURRENT_TIMESTAMP(6)
-        ]], { accountId, item.kind, item.value })
+    local ok, err = pcall(function()
+        for _, item in ipairs(collectIdentifiers(src)) do
+            MySQL.query.await([[
+                INSERT INTO account_identifiers (account_id, identifier_type, identifier_value)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE last_seen_at = CURRENT_TIMESTAMP(6)
+            ]], { accountId, item.kind, item.value })
+        end
+    end)
+    if not ok then
+        RPG.Log('WARN', 'Non-critical identifier recording failed', { source = src, accountId = accountId, error = err })
     end
 end
 
@@ -218,6 +216,7 @@ local function activate(src, row)
     local accountId = tonumber(row.id)
     if not acquireAccountLock(accountId) then return nil, 'Authentication is busy. Please try again.' end
 
+    local createdSessionId = nil
     local ok, result, failure = xpcall(function()
         local oldSource = AccountSources[accountId]
         if oldSource and oldSource ~= src then
@@ -234,6 +233,7 @@ local function activate(src, row)
         end
 
         local sessionId = RPG.Util.Uuid()
+        createdSessionId = sessionId
         local transaction = MySQL.transaction.await({
             {
                 query = [[UPDATE sessions SET ended_at = UTC_TIMESTAMP(6), end_reason = 'recovered_stale_session'
@@ -262,10 +262,19 @@ local function activate(src, row)
     end, debug.traceback)
 
     releaseAccountLock(accountId)
-    if not ok then
-        RPG.Log('ERROR', 'Account activation failed', { source = src, accountId = accountId, error = result })
-        return nil, 'Authentication service is temporarily unavailable.'
+
+    if not ok or (ok and result == nil) then
+        -- Explicit Rollback Invariant
+        if Players[src] and Players[src].accountId == accountId then Players[src] = nil end
+        if AccountSources[accountId] == src then AccountSources[accountId] = nil end
+        Player(src).state:set('rpg:active', false, true)
+        if createdSessionId then
+            pcall(MySQL.update.await, "UPDATE sessions SET ended_at = UTC_TIMESTAMP(6), end_reason = 'activation_failed' WHERE id = ? AND ended_at IS NULL", { createdSessionId })
+        end
+        RPG.Log('ERROR', 'Account activation failed - performed clean rollback', { source = src, accountId = accountId, error = ok and failure or result })
+        return nil, failure or 'Authentication service is temporarily unavailable.'
     end
+
     return result, failure
 end
 
@@ -273,30 +282,41 @@ function Authenticate(src, username, password)
     src = sourceNumber(src)
     if not src then return nil, 'Invalid source.' end
     if Players[src] then return nil, 'This connection is already authenticated.' end
-    username = RPG.Util.Normalize(username)
-    if username == '' or type(password) ~= 'string' then return nil, 'Invalid username or password.' end
-    local allowed, key, remaining = checkLoginGuard(src, username)
-    if not allowed then return nil, ('Too many attempts. Try again in %d seconds.'):format(remaining) end
+    if AuthInProgress[src] then return nil, 'Authentication is already in progress.' end
 
-    local ok, row = pcall(MySQL.single.await, [[
-        SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
-               p.health, p.armor, p.is_dead, p.level, p.xp, p.money, p.respect_points,
-               p.faction_id, p.faction_leader, p.total_playtime_seconds
-        FROM accounts a JOIN players p ON p.account_id = a.id
-        WHERE a.username_normalized = ? LIMIT 1
-    ]], { username })
+    AuthInProgress[src] = 'login'
+    local ok, profile, err = pcall(function()
+        username = RPG.Util.Normalize(username)
+        if username == '' or type(password) ~= 'string' then return nil, 'Invalid username or password.' end
+        local allowed, key, remaining = checkLoginGuard(src, username)
+        if not allowed then return nil, ('Too many attempts. Try again in %d seconds.'):format(remaining) end
+
+        local queryOk, row = pcall(MySQL.single.await, [[
+            SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
+                   p.health, p.armor, p.is_dead, p.level, p.xp, p.total_playtime_seconds
+            FROM accounts a JOIN players p ON p.account_id = a.id
+            WHERE a.username_normalized = ? LIMIT 1
+        ]], { username })
+        if not queryOk then
+            RPG.Log('ERROR', 'Login database query failed', { source = src, operation = 'login' })
+            return nil, 'Authentication service is temporarily unavailable.'
+        end
+        if not row or row.status ~= 'active' or not exports.rpg_core:VerifyPassword(password, row.password_hash) then
+            recordLoginFailure(key)
+            return nil, 'Invalid username or password.'
+        end
+        local ban = accountBan(row.id)
+        if ban then return nil, 'This account is banned. Reason: ' .. tostring(ban.reason) end
+        LoginGuards[key] = nil
+        return activate(src, row)
+    end)
+    AuthInProgress[src] = nil
+
     if not ok then
-        RPG.Log('ERROR', 'Login database query failed', { source = src, operation = 'login' })
-        return nil, 'Authentication service is temporarily unavailable.'
+        RPG.Log('ERROR', 'Authenticate exception', { source = src, error = profile })
+        return nil, 'Authentication failed unexpectedly.'
     end
-    if not row or row.status ~= 'active' or not exports.rpg_core:VerifyPassword(password, row.password_hash) then
-        recordLoginFailure(key)
-        return nil, 'Invalid username or password.'
-    end
-    local ban = accountBan(row.id)
-    if ban then return nil, 'This account is banned. Reason: ' .. tostring(ban.reason) end
-    LoginGuards[key] = nil
-    return activate(src, row)
+    return profile, err
 end
 
 local function validateRegistration(data)
@@ -332,42 +352,53 @@ function RegisterAccount(src, data)
     src = sourceNumber(src)
     if not src then return nil, 'Invalid source.' end
     if Players[src] then return nil, 'This connection is already authenticated.' end
-    local clean, validationError = validateRegistration(data)
-    if not clean then return nil, validationError end
-    local hash = exports.rpg_core:HashPassword(clean.password)
-    clean.password = nil
-    if not hash then return nil, 'Password could not be secured.' end
+    if AuthInProgress[src] then return nil, 'Registration is already in progress.' end
 
-    local ok, transaction = pcall(MySQL.transaction.await, {
-        {
-            query = [[INSERT INTO accounts (username, username_normalized, email, email_normalized, password_hash)
-                      VALUES (?, ?, ?, ?, ?)]],
-            values = { clean.username, clean.normalizedUsername, clean.email, clean.normalizedEmail, hash },
-        },
-        {
-            query = [[INSERT INTO players (account_id, sex, model) VALUES (LAST_INSERT_ID(), ?, ?)]],
-            values = { clean.sex, clean.model },
-        },
-    })
-    hash = nil
-    if not ok or not transaction then
-        local duplicateUser = MySQL.scalar.await('SELECT id FROM accounts WHERE username_normalized = ? LIMIT 1', { clean.normalizedUsername })
-        if duplicateUser then return nil, 'That username is already registered.' end
-        local duplicateEmail = MySQL.scalar.await('SELECT id FROM accounts WHERE email_normalized = ? LIMIT 1', { clean.normalizedEmail })
-        if duplicateEmail then return nil, 'That email is already registered.' end
-        RPG.Log('ERROR', 'Registration transaction failed', { source = src, operation = 'register' })
-        return nil, 'Registration could not be completed.'
+    AuthInProgress[src] = 'register'
+    local ok, profile, err = pcall(function()
+        local clean, validationError = validateRegistration(data)
+        if not clean then return nil, validationError end
+        local hash = exports.rpg_core:HashPassword(clean.password)
+        clean.password = nil
+        if not hash then return nil, 'Password could not be secured.' end
+
+        local txOk, transaction = pcall(MySQL.transaction.await, {
+            {
+                query = [[INSERT INTO accounts (username, username_normalized, email, email_normalized, password_hash)
+                          VALUES (?, ?, ?, ?, ?)]],
+                values = { clean.username, clean.normalizedUsername, clean.email, clean.normalizedEmail, hash },
+            },
+            {
+                query = [[INSERT INTO players (account_id, sex, model) VALUES (LAST_INSERT_ID(), ?, ?)]],
+                values = { clean.sex, clean.model },
+            },
+        })
+        hash = nil
+        if not txOk or not transaction then
+            local duplicateUser = MySQL.scalar.await('SELECT id FROM accounts WHERE username_normalized = ? LIMIT 1', { clean.normalizedUsername })
+            if duplicateUser then return nil, 'That username is already registered.' end
+            local duplicateEmail = MySQL.scalar.await('SELECT id FROM accounts WHERE email_normalized = ? LIMIT 1', { clean.normalizedEmail })
+            if duplicateEmail then return nil, 'That email is already registered.' end
+            RPG.Log('ERROR', 'Registration transaction failed', { source = src, operation = 'register' })
+            return nil, 'Registration could not be completed.'
+        end
+
+        local row = MySQL.single.await([[
+            SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
+                   p.health, p.armor, p.is_dead, p.level, p.xp, p.total_playtime_seconds
+            FROM accounts a JOIN players p ON p.account_id = a.id
+            WHERE a.username_normalized = ? LIMIT 1
+        ]], { clean.normalizedUsername })
+        if not row then return nil, 'Registration succeeded but the profile could not be loaded. Reconnect to continue.' end
+        return activate(src, row)
+    end)
+    AuthInProgress[src] = nil
+
+    if not ok then
+        RPG.Log('ERROR', 'RegisterAccount exception', { source = src, error = profile })
+        return nil, 'Registration failed unexpectedly.'
     end
-
-    local row = MySQL.single.await([[
-        SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
-               p.health, p.armor, p.is_dead, p.level, p.xp, p.money, p.respect_points,
-               p.faction_id, p.faction_leader, p.total_playtime_seconds
-        FROM accounts a JOIN players p ON p.account_id = a.id
-        WHERE a.username_normalized = ? LIMIT 1
-    ]], { clean.normalizedUsername })
-    if not row then return nil, 'Registration succeeded but the profile could not be loaded. Reconnect to continue.' end
-    return activate(src, row)
+    return profile, err
 end
 
 function SavePlayer(src, reason)
@@ -377,13 +408,24 @@ function SavePlayer(src, reason)
     local now = os.time()
     local delta = math.max(0, now - player.lastPersistedAt)
     local ped = GetPlayerPed(src)
+
+    -- Authoritative entity position & health update
     if ped and ped ~= 0 and DoesEntityExist(ped) then
         local coords = GetEntityCoords(ped)
+        local heading = GetEntityHeading(ped)
         local health = GetEntityHealth(ped)
+        -- Validate coordinates to prevent corrupting position with (0,0,0) during entity transit
+        if math.abs(coords.x) > 0.01 or math.abs(coords.y) > 0.01 then
+            player.position.x = coords.x
+            player.position.y = coords.y
+            player.position.z = coords.z
+            player.position.heading = heading
+        end
         player.health = RPG.Util.Clamp(health, 0, 200)
         player.armor = RPG.Util.Clamp(GetPedArmour(ped), 0, 100)
         player.dead = health <= 0
     end
+
     local affected = MySQL.update.await([[
         UPDATE players SET last_x = ?, last_y = ?, last_z = ?, last_heading = ?, health = ?, armor = ?,
             is_dead = ?, total_playtime_seconds = total_playtime_seconds + ? WHERE account_id = ?
@@ -395,6 +437,7 @@ function SavePlayer(src, reason)
         RPG.Log('ERROR', 'Player persistence failed', { source = src, accountId = player.accountId, reason = reason })
         return false, 'Player data was not saved.'
     end
+
     player.totalPlaytimeSeconds = player.totalPlaytimeSeconds + delta
     player.lastPersistedAt = now
     player.lastActivityAt = now
@@ -440,6 +483,7 @@ function RPG.FinalizePlayer(src, reason, forceCleanup)
     AccountSources[player.accountId] = nil
     Players[src] = nil
     Finalizing[src] = nil
+    AuthInProgress[src] = nil
     Player(src).state:set('rpg:active', false, true)
     TriggerEvent('rpg:server:playerFinalized', src, player.accountId, reason)
     return saved and closeOk, saveError or (not closeOk and 'Session close failed.' or nil)
@@ -465,10 +509,6 @@ function GetPlayerStats(src)
         sex = player.sex,
         level = player.level,
         xp = player.xp,
-        money = player.money,
-        respectPoints = player.respectPoints,
-        factionId = player.factionId,
-        factionLeader = player.factionLeader,
         totalPlaytimeSeconds = total,
         sessionPlaytimeSeconds = math.max(0, os.time() - player.sessionStartedAt),
         createdAt = player.createdAt,
@@ -477,12 +517,12 @@ function GetPlayerStats(src)
     }
 end
 
-local allowedStats = { xp = true, level = true, money = true, respectPoints = true }
+local allowedStats = { xp = true, level = true }
 function IncrementStat(src, stat, amount)
     local player = Players[sourceNumber(src)]
     amount = tonumber(amount)
     if not player or not allowedStats[stat] or not amount or amount < 0 or amount > 100000000 then return false end
-    local columns = { xp = 'xp', level = 'level', money = 'money', respectPoints = 'respect_points' }
+    local columns = { xp = 'xp', level = 'level' }
     local column = columns[stat]
     local affected = MySQL.update.await(('UPDATE players SET %s = %s + ? WHERE account_id = ?'):format(column, column), { math.floor(amount), player.accountId })
     if affected == 1 then player[stat] = player[stat] + math.floor(amount) return true end
@@ -493,7 +533,7 @@ function SetStat(src, stat, value)
     local player = Players[sourceNumber(src)]
     value = tonumber(value)
     if not player or not allowedStats[stat] or not value or value < (stat == 'level' and 1 or 0) then return false end
-    local columns = { xp = 'xp', level = 'level', money = 'money', respectPoints = 'respect_points' }
+    local columns = { xp = 'xp', level = 'level' }
     local affected = MySQL.update.await(('UPDATE players SET %s = ? WHERE account_id = ?'):format(columns[stat]), { math.floor(value), player.accountId })
     if affected == 1 then player[stat] = math.floor(value) return true end
     return false
@@ -508,7 +548,6 @@ function SetAdminLevel(accountId, level)
     return affected == 1
 end
 
-
 function RPG.RefreshHelperLevel(accountId)
     accountId = tonumber(accountId)
     if not accountId then return nil end
@@ -521,16 +560,12 @@ end
 function RPG.RefreshProfileFields(accountId)
     accountId = tonumber(accountId)
     if not accountId then return nil end
-    local row = MySQL.single.await('SELECT level,xp,money,respect_points,faction_id,faction_leader FROM players WHERE account_id=?', { accountId })
+    local row = MySQL.single.await('SELECT level, xp FROM players WHERE account_id = ?', { accountId })
     local src = AccountSources[accountId]
     local current = src and Players[src] or nil
     if not row or not current then return row ~= nil end
     current.level = tonumber(row.level) or current.level
     current.xp = tonumber(row.xp) or current.xp
-    current.money = tonumber(row.money) or current.money
-    current.respectPoints = tonumber(row.respect_points) or current.respectPoints
-    current.factionId = row.faction_id and tonumber(row.faction_id) or nil
-    current.factionLeader = row.faction_leader == true or tonumber(row.faction_leader) == 1
     return true
 end
 
@@ -555,6 +590,7 @@ end
 
 AddEventHandler('playerDropped', function(reason)
     local src = source
+    AuthInProgress[src] = nil
     if Players[src] then
         local ok, err = xpcall(function() RPG.FinalizePlayer(src, reason or 'player_dropped', true) end, debug.traceback)
         if not ok then RPG.Log('ERROR', 'Disconnect finalization crashed', { source = src, error = err }) end

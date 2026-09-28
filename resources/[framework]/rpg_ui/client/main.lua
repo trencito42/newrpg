@@ -9,6 +9,9 @@ end
 
 function AcquireFocus(owner, cursor, keepInput)
     if type(owner) ~= 'string' or owner == '' then return false, 'Invalid focus owner.' end
+    if focusOwner ~= nil and focusOwner ~= owner then
+        return false, ('Focus is already held by %s.'):format(focusOwner)
+    end
     focusOwner = owner
     SetNuiFocus(true, cursor ~= false)
     SetNuiFocusKeepInput(keepInput == true)
@@ -20,6 +23,14 @@ function ReleaseFocus(owner)
     focusOwner = nil
     SetNuiFocusKeepInput(false)
     SetNuiFocus(false, false)
+    return true
+end
+
+function ForceResetFocus(reason)
+    focusOwner = nil
+    SetNuiFocusKeepInput(false)
+    SetNuiFocus(false, false)
+    send({ action = 'hideAll' })
     return true
 end
 
@@ -47,8 +58,7 @@ end)
 RegisterNUICallback('authRendered', function(_, cb)
     ShutdownLoadingScreen()
     ShutdownLoadingScreenNui()
-    SetNuiFocus(true, true)
-    SetNuiFocusKeepInput(false)
+    AcquireFocus('auth', true, false)
     cb({ ok = true })
 end)
 
@@ -101,32 +111,47 @@ AddEventHandler('onClientResourceStop', function(resource)
     SetNuiFocus(false, false)
 end)
 
-RegisterCommand('fixscreen', function()
-    print('[RPG_UI] Running emergency screen and camera fix...')
+local function resetVisualState()
     Hide('auth')
     Hide('cinematic')
     send({ action = 'hideAll' })
-    ReleaseFocus(focusOwner)
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
+    ForceResetFocus('fixscreen')
     TriggerScreenblurFadeOut(0)
     ClearTimecycleModifier()
     ClearExtraTimecycleModifier()
     RenderScriptCams(false, false, 0, true, false)
     DestroyAllCams(true)
     ClearFocus()
-    local ped = PlayerPedId()
-    if ped and ped ~= 0 then
-        SetFocusEntity(ped)
-        FreezeEntityPosition(ped, false)
-        SetEntityVisible(ped, true, false)
-        SetEntityInvincible(ped, false)
-    end
-    DisplayRadar(true)
-    DisplayHud(true)
-    TriggerEvent('rpg:core:releaseProtection')
     DoScreenFadeIn(500)
-    Notify('Screen, cameras, and UI reset complete.', 'success')
+end
+
+RegisterCommand('fixscreen', function()
+    print('[RPG_UI] Running visual and screen recovery...')
+    resetVisualState()
+    
+    local ped = PlayerPedId()
+    local isActive = LocalPlayer.state['rpg:active'] == true
+    if isActive then
+        if ped and ped ~= 0 then
+            SetFocusEntity(ped)
+            FreezeEntityPosition(ped, false)
+            SetEntityVisible(ped, true, false)
+            SetEntityInvincible(ped, false)
+        end
+        DisplayRadar(true)
+        DisplayHud(true)
+        TriggerEvent('rpg:core:releaseProtection')
+        Notify('Screen, cameras, and UI reset complete.', 'success')
+    else
+        -- Keep gameplay protection intact if player is not server-side active!
+        if ped and ped ~= 0 then
+            FreezeEntityPosition(ped, true)
+            SetEntityVisible(ped, false, false)
+            SetEntityInvincible(ped, true)
+        end
+        DisplayRadar(false)
+        Notify('UI state reset. Please authenticate or wait for spawn.', 'info')
+    end
 end, false)
 
 RegisterNetEvent('rpg:ui:fixscreen', function()
@@ -156,6 +181,7 @@ end, false)
 
 exports('AcquireFocus', AcquireFocus)
 exports('ReleaseFocus', ReleaseFocus)
+exports('ForceResetFocus', ForceResetFocus)
 exports('GetFocusOwner', function() return focusOwner end)
 exports('Show', Show)
 exports('Hide', Hide)

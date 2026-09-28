@@ -1,4 +1,6 @@
-local marks, sleeping, spawnedVehicles = {}, {}, {}
+local marks, sleeping = {}, {}
+local activeMutes = {} -- accountId -> { globalMuteExpiresAt = number, newbieMuteExpiresAt = number }
+
 local weapons = {
     pistol = 'WEAPON_PISTOL', combatpistol = 'WEAPON_COMBATPISTOL', stun = 'WEAPON_STUNGUN',
     smg = 'WEAPON_SMG', carbine = 'WEAPON_CARBINERIFLE', shotgun = 'WEAPON_PUMPSHOTGUN',
@@ -57,16 +59,54 @@ end
 local function eachOnline(callback)
     for _, raw in ipairs(GetPlayers()) do local src = tonumber(raw); if src then callback(src) end end
 end
-local function activeMute(src, channel)
-    local accountId = exports.rpg_core:GetAccountId(src)
-    if not accountId then return nil end
-    local kind = channel == 'newbie' and 'newbie_mute' or 'mute'
-    return MySQL.single.await([[SELECT id,reason,TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(6),expires_at) remaining
-        FROM sanctions WHERE target_account_id=? AND sanction_type=? AND revoked_at IS NULL
-        AND expires_at>UTC_TIMESTAMP(6) ORDER BY expires_at DESC LIMIT 1]], { accountId, kind })
+
+-- Fast Mute Cache
+local function hydrateMuteCache(accountId)
+    accountId = tonumber(accountId)
+    if not accountId then return end
+    local rows = MySQL.query.await([[
+        SELECT sanction_type, UNIX_TIMESTAMP(expires_at) exp
+        FROM sanctions
+        WHERE target_account_id = ? AND sanction_type IN ('mute', 'newbie_mute')
+          AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6))
+    ]], { accountId })
+    local entry = { globalMuteExpiresAt = 0, newbieMuteExpiresAt = 0 }
+    for _, row in ipairs(rows) do
+        local exp = tonumber(row.exp) or (os.time() + 864000)
+        if row.sanction_type == 'mute' then entry.globalMuteExpiresAt = math.max(entry.globalMuteExpiresAt, exp) end
+        if row.sanction_type == 'newbie_mute' then entry.newbieMuteExpiresAt = math.max(entry.newbieMuteExpiresAt, exp) end
+    end
+    activeMutes[accountId] = entry
 end
 
-exports('IsMuted', function(src, channel) return activeMute(tonumber(src), channel or 'global') ~= nil end)
+local function isMutedCached(src, channel)
+    local accountId = exports.rpg_core:GetAccountId(src)
+    if not accountId then return false end
+    local now = os.time()
+    local entry = activeMutes[accountId]
+    if not entry then
+        hydrateMuteCache(accountId)
+        entry = activeMutes[accountId]
+    end
+    if not entry then return false end
+    if channel == 'newbie' then
+        return entry.newbieMuteExpiresAt > now
+    else
+        return entry.globalMuteExpiresAt > now
+    end
+end
+
+exports('IsMuted', function(src, channel)
+    return isMutedCached(tonumber(src), channel or 'global')
+end)
+
+AddEventHandler('rpg:server:authenticated', function(_, profile)
+    if profile and profile.accountId then hydrateMuteCache(profile.accountId) end
+end)
+
+AddEventHandler('rpg:server:playerFinalized', function(_, accountId)
+    if accountId then activeMutes[tonumber(accountId)] = nil end
+end)
 
 register({ name='hduty',description='Toggle helper duty.',usage='/hduty',minimumAdminLevel=1,minimumHelperLevel=1,handler=function(src)
     RPGAdmin.helperDuty[src]=not RPGAdmin.helperDuty[src]
@@ -89,14 +129,19 @@ end })
 register({ name='lc',description='Faction leader chat.',usage='/lc [message]',arguments={{required=true}},handler=function(src,args)
     local staff=exports.rpg_core:GetAdminLevel(src)>0
     local profile=exports.rpg_core:GetPlayer(src)
-    local leader=profile and MySQL.scalar.await('SELECT faction_leader FROM players WHERE account_id=?',{profile.accountId})
-    if not staff and tonumber(leader)~=1 then return false,'Only faction leaders and admins can use /lc.' end
+    local isSenderLeader = profile and exports.rpg_factions:IsPlayerLeader(profile.accountId)
+    if not staff and not isSenderLeader then return false,'Only faction leaders and admins can use /lc.' end
     local text=join(args,1); if not text or #text>280 then return false,'Usage: /lc [message]' end
     local rendered=('[LEADERS] %s (%d): %s'):format(staffName(src),src,text)
+    -- Efficient in-memory broadcast without per-player DB queries
     eachOnline(function(target)
         local targetProfile=exports.rpg_core:GetPlayer(target)
-        local isLeader=targetProfile and tonumber(MySQL.scalar.await('SELECT faction_leader FROM players WHERE account_id=?',{targetProfile.accountId}))==1
-        if exports.rpg_core:GetAdminLevel(target)>0 or isLeader then message(target,rendered,'helper') end
+        if targetProfile then
+            local isTargetLeader = exports.rpg_factions:IsPlayerLeader(targetProfile.accountId)
+            if exports.rpg_core:GetAdminLevel(target)>0 or isTargetLeader then
+                message(target,rendered,'helper')
+            end
+        end
     end)
     return true
 end })
@@ -104,7 +149,8 @@ end })
 register({ name='pm',description='Send a staff private message.',usage='/pm [id] [message]',minimumAdminLevel=1,minimumHelperLevel=1,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end
     local text=join(args,2); if not text or #text>280 then return false,'Usage: /pm [id] [message]' end
-    local rendered=('Admin %s (%d): %s'):format(staffName(src),src,text)
+    local roleLabel = exports.rpg_core:GetAdminLevel(src) >= 1 and 'Admin' or (exports.rpg_core:GetHelperLevel(src) >= 1 and 'Helper' or 'Staff')
+    local rendered=('%s %s (%d): %s'):format(roleLabel, staffName(src),src,text)
     message(target.source,rendered,'private'); message(src,('PM to %s (%d): %s'):format(target.username,target.source,text),'private')
     return true
 end })
@@ -133,7 +179,9 @@ end })
 
 local function submitQuestion(src,args)
     local profile=exports.rpg_core:GetPlayer(src); if not profile then return false,'Authenticate first.' end
-    local mute=activeMute(src,'newbie'); if mute then return false,('You are muted from asking questions for %d more minute(s).'):format(math.max(1,math.ceil((tonumber(mute.remaining) or 0)/60))) end
+    if isMutedCached(src, 'newbie') then
+        return false, 'You are muted from asking questions.'
+    end
     local text=join(args,1); if not text or #text>500 then return false,'Usage: /n [question] (maximum 500 characters)' end
     local existing=MySQL.scalar.await("SELECT id FROM newbie_questions WHERE asker_account_id=? AND status='open' LIMIT 1",{profile.accountId})
     if existing then return false,('You already have open question #%d.'):format(existing) end
@@ -169,9 +217,14 @@ end })
 
 local function mutePlayer(kind,src,target,minutes,reason)
     local actor=exports.rpg_core:GetPlayer(src); local expires=os.date('!%Y-%m-%d %H:%M:%S',os.time()+minutes*60)
-    return MySQL.insert.await([[INSERT INTO sanctions (sanction_type,target_account_id,target_username,actor_account_id,actor_username,reason,expires_at)
+    local id = MySQL.insert.await([[INSERT INTO sanctions (sanction_type,target_account_id,target_username,actor_account_id,actor_username,reason,expires_at)
         VALUES (?,?,?,?,?,?,?)]],{kind,target.accountId,target.username,actor.accountId,actor.username,reason,expires})
+    if id then
+        hydrateMuteCache(target.accountId)
+    end
+    return id
 end
+
 register({ name='mute',description='Mute global chat.',usage='/mute [id] [minutes] [reason]',minimumAdminLevel=2,arguments={{required=true},{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end
     local allowed,denied=canAct(src,target,false); if not allowed then return false,denied end
@@ -179,6 +232,7 @@ register({ name='mute',description='Mute global chat.',usage='/mute [id] [minute
     local id=mutePlayer('mute',src,target,math.floor(minutes),reason); if not id then return false,'Mute could not be saved.' end
     notify(target.source,('You are muted from global chat for %d minutes: %s'):format(minutes,reason),'error'); return ('Mute #%d applied.'):format(id)
 end })
+
 register({ name='nmute',description='Mute newbie questions.',usage='/nmute [id] [reason] [minutes]',minimumAdminLevel=1,minimumHelperLevel=2,arguments={{required=true},{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end
     local allowed,denied=canAct(src,target,false); if not allowed then return false,denied end
@@ -195,44 +249,70 @@ register({ name='gotomark',description='Teleport to saved mark.',usage='/gotomar
     local mark=marks[src]; if not mark then return false,'Use /mark first.' end
     SetPlayerRoutingBucket(src,mark.bucket); TriggerClientEvent('rpg:admin:teleport',src,mark); return 'Teleported to mark.'
 end })
+
 register({ name='disarm',description='Remove all weapons from a player.',usage='/disarm [id]',minimumAdminLevel=2,arguments={{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end TriggerClientEvent('rpg:admin:disarm',target.source); action('disarm',src,target); return ('Disarmed %s.'):format(target.username)
 end })
+
 register({ name='disarmarea',description='Disarm players in range.',usage='/disarmarea [distance]',minimumAdminLevel=3,arguments={{required=true}},handler=function(src,args)
     local radius=tonumber(args[1]); local origin=position(src); if not radius or radius<1 or radius>200 or not origin then return false,'Distance must be 1-200.' end
     local count=0; eachOnline(function(target) if target~=src then local profile=exports.rpg_core:GetPlayer(target); local allowed=profile and canAct(src,profile,false); local p=position(target); if allowed and p and #(vector3(origin.x,origin.y,origin.z)-vector3(p.x,p.y,p.z))<=radius then TriggerClientEvent('rpg:admin:disarm',target); count=count+1 end end end)
     action('disarmarea',src,nil,nil,{radius=radius,count=count}); return ('Disarmed %d player(s).'):format(count)
 end })
+
 register({ name='sethp',description='Set player health.',usage='/sethp [id] [1-200]',minimumAdminLevel=2,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local hp=tonumber(args[2]); if not hp or hp<1 or hp>200 then return false,'HP must be 1-200.' end
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
     SetEntityHealth(GetPlayerPed(target.source),math.floor(hp)); TriggerClientEvent('rpg:admin:setHealth',target.source,math.floor(hp)); action('sethp',src,target,nil,{health=hp}); return ('Set %s HP to %d.'):format(target.username,hp)
 end })
+
 register({ name='sethparea',description='Heal players in range.',usage='/sethparea [distance]',minimumAdminLevel=3,arguments={{required=true}},handler=function(src,args)
     local radius=tonumber(args[1]); local origin=position(src); if not radius or radius<1 or radius>200 or not origin then return false,'Distance must be 1-200.' end
     local count=0; eachOnline(function(target) local profile=exports.rpg_core:GetPlayer(target); local allowed=profile and canAct(src,profile,true); local p=position(target); if allowed and p and #(vector3(origin.x,origin.y,origin.z)-vector3(p.x,p.y,p.z))<=radius then SetEntityHealth(GetPlayerPed(target),200); TriggerClientEvent('rpg:admin:setHealth',target,200); count=count+1 end end)
     action('sethparea',src,nil,nil,{radius=radius,count=count}); return ('Healed %d player(s).'):format(count)
 end })
+
 register({ name='givegun',description='Give a whitelisted weapon.',usage='/givegun [id] [weapon]',minimumAdminLevel=4,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local weapon=weapons[string.lower(args[2])]; if not weapon then return false,'Allowed: '..table.concat({'pistol','combatpistol','stun','smg','carbine','shotgun','bat','knife','flashlight'},', ') end
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
     TriggerClientEvent('rpg:admin:giveWeapon',target.source,weapon); action('givegun',src,target,nil,{weapon=weapon}); return ('Gave %s to %s.'):format(weapon,target.username)
 end })
+
 register({ name='givemoney',description='Give persisted money.',usage='/givemoney [id] [amount]',minimumAdminLevel=4,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local amount=tonumber(args[2]); if not amount or amount<1 or amount>100000000 then return false,'Amount must be 1-100000000.' end
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
-    if not exports.rpg_core:IncrementStat(target.source,'money',math.floor(amount)) then return false,'Money update failed.' end action('givemoney',src,target,nil,{amount=amount}); return ('Gave $%d to %s.'):format(amount,target.username)
+    local ok, updateErr = exports.rpg_economy:AddMoney(target.accountId, math.floor(amount))
+    if not ok then return false, updateErr or 'Money update failed.' end
+    action('givemoney',src,target,nil,{amount=amount}); return ('Gave $%d to %s.'):format(amount,target.username)
 end })
+
 register({ name='giverpall',description='Give Respect Points to online players.',usage='/giverpall [amount]',minimumAdminLevel=5,arguments={{required=true}},handler=function(src,args)
     local amount=tonumber(args[1]); if not amount or amount<1 or amount>1000000 then return false,'Amount must be 1-1000000.' end local count=0
-    eachOnline(function(target) if exports.rpg_core:GetAccountId(target) and exports.rpg_core:IncrementStat(target,'respectPoints',math.floor(amount)) then count=count+1 end end)
+    eachOnline(function(target)
+        local accountId = exports.rpg_core:GetAccountId(target)
+        if accountId and exports.rpg_economy:AddRespectPoints(accountId, math.floor(amount)) then count=count+1 end
+    end)
     action('giverpall',src,nil,nil,{amount=amount,count=count}); return ('Gave %d RP to %d player(s).'):format(amount,count)
 end })
+
 register({ name='setstat',description='Set a whitelisted persisted statistic.',usage='/setstat [id] [money|rp|level|xp] [value]',minimumAdminLevel=5,arguments={{required=true},{required=true},{required=true}},handler=function(src,args)
-    local target,err=player(args[1]); if not target then return false,err end local map={money='money',rp='respectPoints',respect_points='respectPoints',level='level',xp='xp'}; local stat=map[string.lower(args[2])]; local value=tonumber(args[3])
+    local target,err=player(args[1]); if not target then return false,err end
+    local statName = string.lower(args[2] or '')
+    local value=tonumber(args[3])
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
-    if not stat or not value or value<0 or value>1000000000 or (stat=='level' and value<1) then return false,'Usage: /setstat [id] [money|rp|level|xp] [value]' end
-    if not exports.rpg_core:SetStat(target.source,stat,math.floor(value)) then return false,'Stat update failed.' end action('setstat',src,target,nil,{stat=stat,value=value}); return ('Updated %s for %s.'):format(stat,target.username)
+    if not value or value < 0 or value > 1000000000 then return false, 'Invalid value.' end
+
+    if statName == 'money' then
+        if not exports.rpg_economy:SetMoney(target.accountId, math.floor(value)) then return false, 'Money update failed.' end
+    elseif statName == 'rp' or statName == 'respect_points' then
+        if not exports.rpg_economy:SetRespectPoints(target.accountId, math.floor(value)) then return false, 'RP update failed.' end
+    elseif statName == 'level' or statName == 'xp' then
+        if statName == 'level' and value < 1 then return false, 'Level must be >= 1.' end
+        if not exports.rpg_core:SetStat(target.source, statName, math.floor(value)) then return false, 'Stat update failed.' end
+    else
+        return false, 'Usage: /setstat [id] [money|rp|level|xp] [value]'
+    end
+    action('setstat',src,target,nil,{stat=statName,value=value}); return ('Updated %s for %s.'):format(statName,target.username)
 end })
 
 register({ name='setvw',description='Set a player virtual world.',usage='/setvw [id] [world]',minimumAdminLevel=3,arguments={{required=true},{required=true}},handler=function(src,args)
@@ -240,19 +320,23 @@ register({ name='setvw',description='Set a player virtual world.',usage='/setvw 
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
     SetPlayerRoutingBucket(target.source,math.floor(world)); action('setvw',src,target,nil,{world=world}); return ('Moved %s to virtual world %d.'):format(target.username,world)
 end })
+
 register({ name='createhouse',description='Create a persisted house at your position.',usage='/createhouse [level] [price]',minimumAdminLevel=5,arguments={{required=true},{required=true}},handler=function(src,args)
     local level,price=tonumber(args[1]),tonumber(args[2]); local p=position(src); local creator=exports.rpg_core:GetPlayer(src)
     if not level or level%1~=0 or level<1 or level>10 or not price or price%1~=0 or price<1 or not p then return false,'Usage: /createhouse [level 1-10] [price]' end
-    local id=MySQL.insert.await('INSERT INTO houses (level,price,x,y,z,heading,virtual_world,created_by_account_id) VALUES (?,?,?,?,?,?,?,?)',{level,price,p.x,p.y,p.z,p.heading,p.bucket,creator.accountId})
+    local id, createErr = exports.rpg_housing:CreateHouse(creator.accountId, level, price, p)
+    if not id then return false, createErr or 'House creation failed.' end
     action('createhouse',src,nil,nil,{houseId=id,level=level,price=price}); return ('House #%d created.'):format(id)
 end })
+
 register({ name='setleader',description='Set a faction leader.',usage='/setleader [id] [faction name]',minimumAdminLevel=4,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local name=join(args,2); if not name or #name>64 then return false,'Usage: /setleader [id] [faction name]' end
     local allowed,denied=canAct(src,target,true); if not allowed then return false,denied end
-    local normalized=string.lower(name); MySQL.insert.await('INSERT IGNORE INTO factions (name,name_normalized) VALUES (?,?)',{name,normalized}); local factionId=MySQL.scalar.await('SELECT id FROM factions WHERE name_normalized=?',{normalized})
-    local committed=MySQL.transaction.await({{query='UPDATE players SET faction_leader=FALSE WHERE faction_id=?',values={factionId}},{query='UPDATE players SET faction_id=?,faction_leader=TRUE WHERE account_id=?',values={factionId,target.accountId}}})
-    if not committed or not exports.rpg_core:RefreshProfileFields(target.accountId) then return false,'Faction leader update failed.' end action('setleader',src,target,nil,{factionId=factionId,faction=name}); notify(target.source,'You are now leader of '..name,'success'); return ('%s is now leader of %s.'):format(target.username,name)
+    local ok, cleanName, factionId = exports.rpg_factions:SetLeader(target.accountId, name)
+    if not ok then return false, cleanName or 'Faction leader update failed.' end
+    action('setleader',src,target,nil,{factionId=factionId,faction=cleanName}); notify(target.source,'You are now leader of '..cleanName,'success'); return ('%s is now leader of %s.'):format(target.username,cleanName)
 end })
+
 register({ name='sethelper',description='Set helper level.',usage='/sethelper [id] [0-3]',minimumAdminLevel=6,arguments={{required=true},{required=true}},handler=function(src,args)
     local target,err=player(args[1]); if not target then return false,err end local level=tonumber(args[2]); if not level or level%1~=0 or level<0 or level>3 then return false,'Usage: /sethelper [id] [0-3]' end
     local allowed,denied=canAct(src,target,false); if not allowed then return false,denied end
@@ -260,37 +344,34 @@ register({ name='sethelper',description='Set helper level.',usage='/sethelper [i
     action('sethelper',src,target,nil,{level=level}); notify(target.source,('Your helper level is now %d.'):format(level),'success'); return ('%s helper level set to %d.'):format(target.username,level)
 end })
 
-local function spawnVehicle(row)
-    local entity=CreateVehicleServerSetter(GetHashKey(row.model),'automobile',tonumber(row.x),tonumber(row.y),tonumber(row.z),tonumber(row.heading))
-    if not entity or entity==0 then return nil end
-    SetEntityOrphanMode(entity,2); SetEntityRoutingBucket(entity,tonumber(row.virtual_world) or 0); spawnedVehicles[tonumber(row.id)]=entity
-    return entity
-end
 register({ name='spawncar',description='Spawn a persistent server vehicle.',usage='/spawncar [model]',minimumAdminLevel=4,arguments={{required=true}},handler=function(src,args)
     local model=string.lower(args[1]); if not model:match('^[%w_]+$') or #model>64 then return false,'Invalid vehicle model.' end local p=position(src); local creator=exports.rpg_core:GetPlayer(src); if not p then return false,'Your entity is unavailable.' end
-    local id=MySQL.insert.await('INSERT INTO server_vehicles (model,x,y,z,heading,virtual_world,created_by_account_id) VALUES (?,?,?,?,?,?,?)',{model,p.x,p.y,p.z,p.heading,p.bucket,creator.accountId}); local entity=spawnVehicle({id=id,model=model,x=p.x,y=p.y,z=p.z,heading=p.heading,virtual_world=p.bucket})
-    if not entity then MySQL.query.await('DELETE FROM server_vehicles WHERE id=?',{id}); return false,'Vehicle model could not be spawned.' end action('spawncar',src,nil,nil,{vehicleId=id,model=model}); return ('Server vehicle #%d (%s) spawned.'):format(id,model)
+    local id, createErr = exports.rpg_vehicles:CreateServerVehicle(creator.accountId, model, p)
+    if not id then return false, createErr or 'Vehicle could not be created.' end
+    action('spawncar',src,nil,nil,{vehicleId=id,model=model}); return ('Server vehicle #%d (%s) spawned.'):format(id,model)
 end })
+
 register({ name='gotocar',description='Teleport to a server vehicle.',usage='/gotocar [vehicle id]',minimumAdminLevel=2,arguments={{required=true}},handler=function(src,args)
-    local id=tonumber(args[1]); local entity=id and spawnedVehicles[id]; if not entity or not DoesEntityExist(entity) then return false,'Server vehicle not found.' end local c=GetEntityCoords(entity); SetPlayerRoutingBucket(src,GetEntityRoutingBucket(entity)); TriggerClientEvent('rpg:admin:teleport',src,{x=c.x,y=c.y,z=c.z+1.0,heading=GetEntityHeading(entity)}); return ('Teleported to vehicle #%d.'):format(id)
+    local id=tonumber(args[1]); local entity=id and exports.rpg_vehicles:GetVehicleEntity(id); if not entity or not DoesEntityExist(entity) then return false,'Server vehicle not found.' end
+    local c=GetEntityCoords(entity); SetPlayerRoutingBucket(src,GetEntityRoutingBucket(entity)); TriggerClientEvent('rpg:admin:teleport',src,{x=c.x,y=c.y,z=c.z+1.0,heading=GetEntityHeading(entity)}); return ('Teleported to vehicle #%d.'):format(id)
 end })
+
 register({ name='getcar',description='Bring a server vehicle.',usage='/getcar [vehicle id]',minimumAdminLevel=3,arguments={{required=true}},handler=function(src,args)
-    local id=tonumber(args[1]); local entity=id and spawnedVehicles[id]; local p=position(src); if not entity or not DoesEntityExist(entity) or not p then return false,'Server vehicle or your position is unavailable.' end SetEntityRoutingBucket(entity,p.bucket); SetEntityCoords(entity,p.x,p.y,p.z,false,false,false,false); SetEntityHeading(entity,p.heading); action('getcar',src,nil,nil,{vehicleId=id}); return ('Brought vehicle #%d.'):format(id)
+    local id=tonumber(args[1]); local entity=id and exports.rpg_vehicles:GetVehicleEntity(id); local p=position(src); if not entity or not DoesEntityExist(entity) or not p then return false,'Server vehicle or your position is unavailable.' end
+    SetEntityRoutingBucket(entity,p.bucket); SetEntityCoords(entity,p.x,p.y,p.z,false,false,false,false); SetEntityHeading(entity,p.heading); action('getcar',src,nil,nil,{vehicleId=id}); return ('Brought vehicle #%d.'):format(id)
 end })
+
 register({ name='respawncars',description='Respawn all server vehicles.',usage='/respawncars',minimumAdminLevel=3,handler=function(src)
-    local rows=MySQL.query.await('SELECT * FROM server_vehicles'); local count=0
-    for _,row in ipairs(rows) do local old=spawnedVehicles[tonumber(row.id)]; if old and DoesEntityExist(old) then DeleteEntity(old) end; if spawnVehicle(row) then count=count+1 end end action('respawncars',src,nil,nil,{count=count}); return ('Respawned %d server vehicle(s).'):format(count)
+    local respawned, skipped = exports.rpg_vehicles:RespawnAll()
+    action('respawncars',src,nil,nil,{respawned=respawned,skipped=skipped}); return ('Respawned %d vehicle(s) (skipped %d occupied).'):format(respawned, skipped)
 end })
-register({ name='fixveh',description='Repair and refuel current vehicle.',usage='/fixveh',minimumAdminLevel=2,handler=function(src) TriggerClientEvent('rpg:admin:fixVehicle',src); return 'Vehicle repair requested.' end })
+
+register({ name='fixveh',description='Repair current vehicle.',usage='/fixveh',minimumAdminLevel=2,handler=function(src) TriggerClientEvent('rpg:admin:fixVehicle',src); return 'Vehicle repair requested.' end })
 register({ name='entercar',description='Enter nearest vehicle.',usage='/entercar',minimumAdminLevel=1,handler=function(src) TriggerClientEvent('rpg:admin:enterNearestVehicle',src); return true end })
-register({ name='togfind',description='Toggle tracking immunity.',usage='/togfind',minimumAdminLevel=1,handler=function(src) local value=not Player(src).state['rpg:trackingImmune']; Player(src).state:set('rpg:trackingImmune',value,true); return value and 'Tracking immunity enabled.' or 'Tracking immunity disabled.' end })
+register({ name='togfind',description='Toggle tracking immunity (groundwork flag for future tracking modules).',usage='/togfind',minimumAdminLevel=1,handler=function(src)
+    local value=not Player(src).state['rpg:trackingImmune']; Player(src).state:set('rpg:trackingImmune',value,true); return value and 'Tracking immunity enabled.' or 'Tracking immunity disabled.'
+end })
 register({ name='sleep',description='Toggle AFK/sleep state.',usage='/sleep',handler=function(src) sleeping[src]=not sleeping[src]; Player(src).state:set('rpg:sleeping',sleeping[src],true); return sleeping[src] and 'Sleep/AFK enabled.' or 'Sleep/AFK disabled.' end })
 register({ name='afklist',description='List sleeping players.',usage='/afklist',minimumAdminLevel=1,handler=function(src,_,reply) local list={}; for target in pairs(sleeping) do if GetPlayerName(target) then list[#list+1]=('%s (%d)'):format(staffName(target),target) end end reply(src,#list>0 and table.concat(list,', ') or 'No players are sleeping.','info'); return true end })
 
-CreateThread(function()
-    while GetResourceState('oxmysql')~='started' do Wait(100) end
-    Wait(500)
-    for _,row in ipairs(MySQL.query.await('SELECT * FROM server_vehicles')) do spawnVehicle(row) end
-end)
 AddEventHandler('playerDropped',function() marks[source]=nil; sleeping[source]=nil end)
-AddEventHandler('onResourceStop',function(resource) if resource~=GetCurrentResourceName() then return end for _,entity in pairs(spawnedVehicles) do if DoesEntityExist(entity) then DeleteEntity(entity) end end end)

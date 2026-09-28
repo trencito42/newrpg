@@ -15,6 +15,14 @@ dofile('resources/[framework]/rpg_core/server/rpc.lua')
 RegisterCallback('test.echo',function(_,value) return value end)
 RegisterCallback('test.fail',function() error('private failure') end)
 
+local longRunningYield = false
+RegisterCallback('test.long', function()
+    if longRunningYield then
+        return 'done'
+    end
+    return 'in_progress'
+end)
+
 source=8; events['rpg:rpc:request']('id-1','test.echo',table.pack('hello'))
 assert(responses[#responses].payload.ok and responses[#responses].payload.data=='hello')
 events['rpg:rpc:request']('id-2','does.not.exist',table.pack())
@@ -24,4 +32,3 @@ assert(responses[#responses].payload.code=='SERVER_ERROR' and not tostring(respo
 source=9; events['rpg:rpc:request']('id-4','test.echo',table.pack('x'))
 assert(responses[#responses].payload.code=='UNAUTHENTICATED')
 print('rpc_spec: ok')
-

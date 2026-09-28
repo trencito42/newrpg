@@ -2,23 +2,32 @@
 
 ## Configuration
 
-`.env` is deployment-local and ignored. Required values are `FIVEM_LICENSE_KEY`, `FIVEM_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_ROOT_PASSWORD`.
+`.env` is deployment-local and ignored from version control. Required values are:
+- `FIVEM_LICENSE_KEY`
+- `FIVEM_PORT` (default: 30120)
+- `MYSQL_HOST` (e.g. 127.0.0.1 or host IP)
+- `MYSQL_DATABASE`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `SERVER_NAME`
+- `MAX_CLIENTS`
 
-## Start
+## Start & Service Management
 
 ```bash
 cd /home/blipmade-rpg/htdocs/rpg.blipmade.com
 docker compose config --quiet
 docker compose up -d --build
 docker compose ps
-docker compose logs --tail=200 migrate database fxserver
+docker compose logs --tail=200 fxserver migrate
 ```
 
-Expected: MariaDB healthy, migrator exits 0, FXServer remains running, and resources start `oxmysql -> bob74_ipl -> rpg_core -> rpg_ui -> rpg_auth -> rpg_spawn -> rpg_admin -> rpg_chat`.
+Expected output:
+- `migrate` container runs all pending numbered migrations and exits 0.
+- `fxserver` starts and loads resources in exact DAG order:
+  `oxmysql -> bob74_ipl -> rpg_core -> rpg_ui -> rpg_auth -> rpg_spawn -> rpg_economy -> rpg_factions -> rpg_housing -> rpg_vehicles -> rpg_admin -> rpg_chat`.
 
-## Stop/restart
-
-Only manage this project:
+## Stop / Restart
 
 ```bash
 docker compose stop
@@ -26,27 +35,16 @@ docker compose restart fxserver
 docker compose down
 ```
 
-Do not use global prune commands and do not remove the named MariaDB volume.
+## Failure Handling
 
-## Current VPS prerequisite
+- **Missing Cfx Key / DB Env**: Entrypoint halts immediately with a clear missing variable code.
+- **Database Unavailable**: Migrator exits before FXServer starts.
+- **Migration Checksum Mismatch**: Migrator aborts if an already-applied migration file was modified.
+- **Server Restart / Crash**: Open DB sessions are cleanly closed on startup with `server_restart` reason.
 
-The current user cannot access `/var/run/docker.sock`. A root administrator must run:
+## Validation Suite
 
 ```bash
-sudo usermod -aG docker blipmade-rpg
+bash scripts/validate.sh
+bash scripts/test-database.sh
 ```
-
-Then end and recreate the `blipmade-rpg` login session (or reboot). Verify with `docker ps`. This does not stop or modify unrelated containers.
-
-## Failure handling
-
-- Missing Cfx key: entrypoint exits with the exact missing variable.
-- DB unhealthy: Compose does not run migrations/FXServer.
-- Migration mismatch: migrator exits before FXServer.
-- DB loss while online: persistence reports failure; no default profile is fabricated.
-- Core restart: open DB sessions are closed as `server_restart`; live cache is rebuilt only through login.
-
-## Backups
-
-Back up the named volume with an explicit `mariadb-dump` from this Compose project. Test restore into a separate database before relying on it. Never manipulate unrelated CloudPanel/Mailcow databases.
-

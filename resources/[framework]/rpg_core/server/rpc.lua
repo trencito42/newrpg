@@ -3,6 +3,7 @@ RPG = RPG or {}
 local callbacks = {}
 local globalRates = {}
 local namedRates = {}
+local inFlight = {}
 local metrics = { requests = 0, errors = 0, timeouts = 0, rejected = 0 }
 
 local function isCallable(value)
@@ -31,6 +32,7 @@ function RegisterCallback(name, handler, options)
     callbacks[name] = {
         handler = handler,
         allowUnauthenticated = options.allowUnauthenticated == true,
+        guardInFlight = options.guardInFlight ~= false,
         windowMs = tonumber(options.windowMs) or RPG.Config.rpc.defaultWindowMs,
         maximum = tonumber(options.maximum) or RPG.Config.rpc.defaultMax,
         timeoutMs = tonumber(options.timeoutMs) or RPG.Config.rpc.timeoutMs,
@@ -69,10 +71,21 @@ RegisterNetEvent('rpg:rpc:request', function(requestId, name, args)
         return
     end
 
+    local opKey = src .. ':' .. name
+    if definition.guardInFlight and inFlight[opKey] then
+        metrics.rejected = metrics.rejected + 1
+        TriggerClientEvent('rpg:rpc:response', src, requestId, { ok = false, code = 'IN_FLIGHT', error = 'An operation of this type is already processing.' })
+        return
+    end
+    if definition.guardInFlight then
+        inFlight[opKey] = true
+    end
+
     local replied = false
     SetTimeout(definition.timeoutMs, function()
         if replied then return end
         replied = true
+        inFlight[opKey] = nil
         metrics.timeouts = metrics.timeouts + 1
         RPG.Log('WARN', 'RPC handler timed out', { source = src, rpc = name, owner = definition.resource })
         TriggerClientEvent('rpg:rpc:response', src, requestId, { ok = false, code = 'TIMEOUT', error = 'The request timed out.' })
@@ -83,8 +96,12 @@ RegisterNetEvent('rpg:rpc:request', function(requestId, name, args)
         local ok, failure = xpcall(function()
             packed = table.pack(definition.handler(src, table.unpack(args, 1, args.n or #args)))
         end, debug.traceback)
+
+        inFlight[opKey] = nil
+
         if replied then return end
         replied = true
+
         if not ok then
             metrics.errors = metrics.errors + 1
             RPG.Log('ERROR', 'RPC handler exception', { source = src, rpc = name, owner = definition.resource, error = failure })
@@ -107,8 +124,12 @@ function RPG.GetRpcMetrics()
 end
 
 AddEventHandler('playerDropped', function()
-    globalRates[source] = nil
-    namedRates[source] = nil
+    local src = source
+    globalRates[src] = nil
+    namedRates[src] = nil
+    for key in pairs(inFlight) do
+        if key:find('^' .. src .. ':') then inFlight[key] = nil end
+    end
 end)
 
 exports('RegisterCallback', RegisterCallback)
