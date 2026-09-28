@@ -1,39 +1,12 @@
 name: rpgmvp
 
 services:
-  database:
-    image: mariadb:11.8.3
-    restart: unless-stopped
-    environment:
-      MARIADB_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
-      MARIADB_USER: ${MYSQL_USER:?MYSQL_USER is required}
-      MARIADB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
-      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
-      TZ: UTC
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --default-time-zone=+00:00
-      - --transaction-isolation=READ-COMMITTED
-    healthcheck:
-      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-    volumes:
-      - rpgmvp_mariadb:/var/lib/mysql
-    networks:
-      - database_internal
-
   migrate:
     image: mariadb:11.8.3
     restart: "no"
-    depends_on:
-      database:
-        condition: service_healthy
+    network_mode: host
     environment:
-      MYSQL_HOST: database
+      MYSQL_HOST: ${MYSQL_HOST:?MYSQL_HOST is required}
       MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
       MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
@@ -41,8 +14,6 @@ services:
       - ./database/migrations:/migrations:ro
       - ./scripts/migrate.sh:/usr/local/bin/rpg-migrate:ro
     entrypoint: ["/bin/bash", "/usr/local/bin/rpg-migrate"]
-    networks:
-      - database_internal
 
   fxserver:
     build:
@@ -57,9 +28,8 @@ services:
     init: true
     stdin_open: true
     tty: true
+    network_mode: host
     depends_on:
-      database:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     environment:
@@ -67,14 +37,12 @@ services:
       FIVEM_PORT: ${FIVEM_PORT:-30120}
       SERVER_NAME: ${SERVER_NAME:-RPG Framework MVP}
       MAX_CLIENTS: ${MAX_CLIENTS:-48}
+      MYSQL_HOST: ${MYSQL_HOST:?MYSQL_HOST is required}
       MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
       MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
-    ports:
-      - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/tcp"
-      - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/udp"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${FIVEM_PORT}/info.json >/dev/null"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${FIVEM_PORT}/info.json >/dev/null && bash -c '</dev/tcp/'\"$${MYSQL_HOST}\"'/3306'"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -87,17 +55,3 @@ services:
       - ./resources/[framework]/rpg_chat:/opt/cfx-server-data/resources/[framework]/rpg_chat:ro
       - ./resources/[framework]/rpg_admin:/opt/cfx-server-data/resources/[framework]/rpg_admin:ro
       - ./resources/[framework]/rpg_spawn:/opt/cfx-server-data/resources/[framework]/rpg_spawn:ro
-    networks:
-      - database_internal
-      - fxserver_egress
-
-networks:
-  database_internal:
-    name: rpgmvp_internal
-    internal: true
-  fxserver_egress:
-    name: rpgmvp_egress
-
-volumes:
-  rpgmvp_mariadb:
-    name: rpgmvp_mariadb

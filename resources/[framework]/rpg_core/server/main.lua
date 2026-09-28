@@ -10,10 +10,7 @@ RegisterNetEvent('rpg:core:clientReady', function()
         return
     end
     connections[src] = { state = 'authenticating', connectedAt = os.time(), lastActivityAt = os.time() }
-    local bucket = 10000 + src
-    SetRoutingBucketEntityLockdownMode(bucket, 'strict')
-    SetRoutingBucketPopulationEnabled(bucket, false)
-    SetPlayerRoutingBucket(src, bucket)
+    SetPlayerRoutingBucket(src, 0)
     TriggerClientEvent('rpg:auth:show', src)
 end)
 
@@ -31,6 +28,28 @@ RegisterCallback('core.heartbeat', function(src)
     if state then state.lastActivityAt = os.time() end
     return { serverTime = os.time() }
 end, { allowUnauthenticated = true, windowMs = 10000, maximum = 3 })
+
+RPG.RegisterCommand({
+    name = 'fixscreen',
+    aliases = { 'fixui' },
+    description = 'Fix screen blackouts, reset cameras and UI panels.',
+    usage = '/fixscreen',
+    handler = function(src, _, reply)
+        TriggerClientEvent('rpg:ui:fixscreen', src)
+        reply(src, 'Screen and camera reset signal sent to your client.', 'success')
+        return true
+    end,
+})
+
+RPG.RegisterCommand({
+    name = 'debugui',
+    description = 'Show debug information about UI and state.',
+    usage = '/debugui',
+    handler = function(src, _, reply)
+        TriggerClientEvent('rpg:ui:debugui', src)
+        return true
+    end,
+})
 
 RPG.RegisterCommand({
     name = 'stats',

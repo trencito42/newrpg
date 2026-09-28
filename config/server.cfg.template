@@ -9,8 +9,9 @@ sets locale "en-US"
 sets tags "rpg,custom-framework,development"
 sv_maxclients @@MAX_CLIENTS@@
 sv_scriptHookAllowed 0
+setr sv_showBusySpinnerOnLoadingScreen false
 
-set mysql_connection_string "mysql://@@MYSQL_USER@@:@@MYSQL_PASSWORD@@@database/@@MYSQL_DATABASE@@?charset=utf8mb4"
+set mysql_connection_string "user=@@MYSQL_USER@@;password=@@MYSQL_PASSWORD@@;host=@@MYSQL_HOST@@;database=@@MYSQL_DATABASE@@;charset=utf8mb4"
 set mysql_slow_query_warning 250
 set mysql_debug false
 

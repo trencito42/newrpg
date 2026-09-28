@@ -23,51 +23,105 @@ const byId = <T extends HTMLElement>(id: string): T => {
 };
 
 const auth = byId('auth');
+const loginView = byId('login-view');
+const registerView = byId('register-view');
 const loginForm = byId<HTMLFormElement>('login-form');
 const registerForm = byId<HTMLFormElement>('register-form');
 const authError = byId('auth-error');
+const authErrorText = byId('auth-error-text');
+const switchToRegisterBtn = byId<HTMLButtonElement>('switch-to-register');
+const switchToLoginBtn = byId<HTMLButtonElement>('switch-to-login');
+
 const chat = byId('chat');
 const chatForm = byId<HTMLFormElement>('chat-form');
 const chatInput = byId<HTMLInputElement>('chat-input');
 const chatMessages = byId('chat-messages');
 const notifications = byId('notifications');
+
 const history: string[] = [];
 let historyIndex = 0;
 let submitting = false;
 
-function setAuthMode(mode: 'login' | 'register') {
-  loginForm.classList.toggle('hidden', mode !== 'login');
-  registerForm.classList.toggle('hidden', mode !== 'register');
-  document.querySelectorAll<HTMLButtonElement>('.tab').forEach((button) => button.classList.toggle('active', button.dataset.mode === mode));
-  byId('auth-subtitle').textContent = mode === 'login' ? 'Sign in to continue to the city.' : 'One account. One persistent identity.';
-  authError.textContent = '';
-  const first = (mode === 'login' ? loginForm : registerForm).querySelector<HTMLInputElement>('input');
-  requestAnimationFrame(() => first?.focus());
+function showError(message: string) {
+  authErrorText.textContent = message;
+  authError.classList.remove('hidden');
 }
 
-document.querySelectorAll<HTMLButtonElement>('.tab').forEach((button) => {
-  button.addEventListener('click', () => setAuthMode(button.dataset.mode === 'register' ? 'register' : 'login'));
-});
+function clearError() {
+  authErrorText.textContent = '';
+  authError.classList.add('hidden');
+}
+
+function setAuthMode(mode: 'login' | 'register') {
+  clearError();
+  if (mode === 'register') {
+    loginView.classList.remove('active-view');
+    loginView.classList.add('hidden-view');
+    window.setTimeout(() => {
+      registerView.classList.remove('hidden-view');
+      registerView.classList.add('active-view');
+      const first = registerForm.querySelector<HTMLInputElement>('input');
+      first?.focus();
+    }, 120);
+  } else {
+    registerView.classList.remove('active-view');
+    registerView.classList.add('hidden-view');
+    window.setTimeout(() => {
+      loginView.classList.remove('hidden-view');
+      loginView.classList.add('active-view');
+      const first = loginForm.querySelector<HTMLInputElement>('input');
+      first?.focus();
+    }, 120);
+  }
+}
+
+switchToRegisterBtn.addEventListener('click', () => setAuthMode('register'));
+switchToLoginBtn.addEventListener('click', () => setAuthMode('login'));
 
 async function submitAuth(form: HTMLFormElement, eventName: 'authLogin' | 'authRegister') {
   if (submitting) return;
   submitting = true;
-  authError.textContent = '';
-  form.querySelectorAll<HTMLButtonElement>('button').forEach((button) => { button.disabled = true; });
+  clearError();
+
+  const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const btnText = submitBtn?.querySelector<HTMLElement>('.btn-text');
+  const originalHtml = btnText ? btnText.innerHTML : (submitBtn?.innerHTML || 'Submit');
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    if (btnText) {
+      btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+    }
+  }
+
   const values = Object.fromEntries(new FormData(form).entries());
   try {
     const result = await post<{ ok: boolean; error?: string }>(eventName, values);
-    if (!result.ok) authError.textContent = result.error || 'Request failed.';
+    if (!result.ok) {
+      showError(result.error || 'Request failed.');
+    }
   } catch (_) {
-    authError.textContent = 'The interface could not reach the game client.';
+    showError('The interface could not reach the game client.');
   } finally {
     submitting = false;
-    form.querySelectorAll<HTMLButtonElement>('button').forEach((button) => { button.disabled = false; });
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      if (btnText) {
+        btnText.innerHTML = originalHtml;
+      }
+    }
   }
 }
 
-loginForm.addEventListener('submit', (event) => { event.preventDefault(); void submitAuth(loginForm, 'authLogin'); });
-registerForm.addEventListener('submit', (event) => { event.preventDefault(); void submitAuth(registerForm, 'authRegister'); });
+loginForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void submitAuth(loginForm, 'authLogin');
+});
+
+registerForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void submitAuth(registerForm, 'authRegister');
+});
 
 function addChatMessage(data: ChatMessage) {
   const row = document.createElement('div');
@@ -93,12 +147,21 @@ chatForm.addEventListener('submit', (event) => {
 });
 
 chatInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') { event.preventDefault(); chatInput.value = ''; void post('chatClose'); return; }
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    chatInput.value = '';
+    void post('chatClose');
+    return;
+  }
   if (event.key === 'ArrowUp' && history.length) {
-    event.preventDefault(); historyIndex = Math.max(0, historyIndex - 1); chatInput.value = history[historyIndex] || '';
+    event.preventDefault();
+    historyIndex = Math.max(0, historyIndex - 1);
+    chatInput.value = history[historyIndex] || '';
   }
   if (event.key === 'ArrowDown') {
-    event.preventDefault(); historyIndex = Math.min(history.length, historyIndex + 1); chatInput.value = history[historyIndex] || '';
+    event.preventDefault();
+    historyIndex = Math.min(history.length, historyIndex + 1);
+    chatInput.value = history[historyIndex] || '';
   }
 });
 
@@ -114,31 +177,44 @@ function notify(data: Record<string, unknown>) {
 
 window.addEventListener('message', ({ data }: MessageEvent<NuiMessage>) => {
   if (!data || typeof data !== 'object') return;
+  console.log('[RPG_UI] Received NUI message:', JSON.stringify(data));
+
   if (data.action === 'show' && data.panel === 'auth') {
-    auth.classList.remove('hidden'); setAuthMode('login');
+    auth.classList.remove('hidden');
+    setAuthMode('login');
     requestAnimationFrame(() => requestAnimationFrame(() => { void post('authRendered'); }));
   } else if (data.action === 'hide' && data.panel === 'auth') {
     auth.classList.add('hidden');
   } else if (data.action === 'show' && data.panel === 'chat') {
-    chat.classList.remove('hidden'); chat.classList.add('open'); requestAnimationFrame(() => chatInput.focus());
+    chat.classList.remove('hidden');
+    chat.classList.add('open');
+    requestAnimationFrame(() => chatInput.focus());
   } else if (data.action === 'hide' && data.panel === 'chat') {
     chat.classList.remove('open');
   } else if (data.action === 'chatMessage') {
-    addChatMessage((data.data || {}) as ChatMessage); chat.classList.remove('hidden');
+    addChatMessage((data.data || {}) as ChatMessage);
+    chat.classList.remove('hidden');
   } else if (data.action === 'chatClear') {
     chatMessages.replaceChildren();
   } else if (data.action === 'notify') {
     notify(data.data || {});
-  } else if (data.action === 'cinematicScene') {
-    const payload = data.data || {};
-    const cinematic = byId('cinematic'); cinematic.classList.remove('hidden');
+  } else if ((data.action === 'show' && data.panel === 'cinematic') || data.action === 'cinematicScene') {
+    const payload = (data.data || {}) as Record<string, unknown>;
+    const cinematic = byId('cinematic');
+    cinematic.classList.remove('hidden');
     byId('cinematic-kicker').textContent = String(payload.kicker || 'LOS SANTOS');
     byId('cinematic-title').textContent = String(payload.title || '');
     byId('cinematic-description').textContent = String(payload.description || '');
-    const bar = byId('cinematic-progress-bar'); bar.style.animation = 'none'; void bar.offsetWidth;
+    const bar = byId('cinematic-progress-bar');
+    bar.style.animation = 'none';
+    void bar.offsetWidth;
     bar.style.animation = `progress ${Math.max(250, Number(payload.duration) || 4000)}ms linear forwards`;
   } else if (data.action === 'hide' && data.panel === 'cinematic') {
     byId('cinematic').classList.add('hidden');
+  } else if (data.action === 'hideAll') {
+    auth.classList.add('hidden');
+    byId('cinematic').classList.add('hidden');
+    chat.classList.remove('open');
   }
 });
 

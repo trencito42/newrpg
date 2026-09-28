@@ -5,7 +5,7 @@ const KEY_LENGTH = 32;
 const OPTIONS = Object.freeze({ N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
 
 function hashPassword(password) {
-  if (typeof password !== 'string' || password.length < 10 || password.length > 128) return null;
+  if (typeof password !== 'string' || password.length < 6 || password.length > 128) return null;
   const salt = crypto.randomBytes(16);
   const derived = crypto.scryptSync(password, salt, KEY_LENGTH, OPTIONS);
   return `$scrypt$${OPTIONS.N}$${OPTIONS.r}$${OPTIONS.p}$${salt.toString('base64')}$${derived.toString('base64')}`;

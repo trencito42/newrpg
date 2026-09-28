@@ -379,10 +379,10 @@ function SavePlayer(src, reason)
     local ped = GetPlayerPed(src)
     if ped and ped ~= 0 and DoesEntityExist(ped) then
         local coords = GetEntityCoords(ped)
-        player.position = { x = coords.x, y = coords.y, z = coords.z, heading = GetEntityHeading(ped) }
-        player.health = RPG.Util.Clamp(GetEntityHealth(ped), 0, 200)
+        local health = GetEntityHealth(ped)
+        player.health = RPG.Util.Clamp(health, 0, 200)
         player.armor = RPG.Util.Clamp(GetPedArmour(ped), 0, 100)
-        player.dead = IsEntityDead(ped)
+        player.dead = health <= 0
     end
     local affected = MySQL.update.await([[
         UPDATE players SET last_x = ?, last_y = ?, last_z = ?, last_heading = ?, health = ?, armor = ?,

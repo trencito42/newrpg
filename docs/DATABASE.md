@@ -1,6 +1,6 @@
 # Database
 
-MariaDB 11.8 runs without a published host port on the Compose-internal network. All timestamps use UTC and `utf8mb4_unicode_ci`.
+The framework connects to the existing CloudPanel MariaDB configured by `MYSQL_HOST`; Compose does not create a second database. The migrator and FXServer use host networking because the CloudPanel user is reachable through the VPS address while Docker bridge-to-host traffic is filtered. All timestamps use UTC and `utf8mb4_unicode_ci`.
 
 ## Tables
 

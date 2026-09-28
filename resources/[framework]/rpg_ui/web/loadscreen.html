@@ -1,16 +1,408 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#07090b;color:#f3f0e8;font-family:Inter,system-ui,sans-serif}
-    body{display:grid;place-items:center;background:radial-gradient(circle at 70% 35%,#243540 0,#10171c 30%,#07090b 68%)}
-    main{width:min(560px,80vw);text-align:center}.mark{display:inline-block;color:#d6ad62;font-size:11px;font-weight:800;letter-spacing:.28em}
-    h1{margin:14px 0 24px;font:500 48px Georgia,serif}.line{height:2px;background:#24292d;overflow:hidden}.line i{display:block;width:35%;height:100%;background:#d6ad62;animation:travel 1.6s ease-in-out infinite}
-    p{color:#8f969a;font-size:13px;letter-spacing:.08em}@keyframes travel{0%{transform:translateX(-110%)}100%{transform:translateX(400%)}}
-  </style>
-</head>
-<body><main><span class="mark">BLIPMADE RPG</span><h1>Los Santos is preparing.</h1><div class="line"><i></i></div><p>Synchronizing your connection</p></main></body>
-</html>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blaze Roleplay - Loading</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        :root {
+            --blaze-orange: #F97316;
+            --blaze-orange-dark: #EA580C;
+            --blaze-orange-light: #FDBA74;
+            --blaze-dark: #0a0a0c;
+        }
+
+        body {
+            background-color: var(--blaze-dark);
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 60%),
+                              radial-gradient(circle at 80% 20%, rgba(234, 88, 12, 0.03) 0%, transparent 45%);
+            position: relative;
+            user-select: none;
+        }
+
+        /* Center Content: Logo */
+        .center-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: -5rem;
+            z-index: 10;
+        }
+
+        .server-subtitle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            opacity: 0.75;
+            letter-spacing: 0.25em;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #d1d5db;
+        }
+
+        .server-subtitle .line {
+            width: 2rem;
+            height: 1px;
+            background-color: var(--blaze-orange);
+            box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-svg {
+            filter: drop-shadow(0 0 20px rgba(249, 115, 22, 0.45));
+        }
+
+        .logo-flame {
+            fill: url(#orange-gradient);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 6rem;
+            line-height: 1;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.05em;
+            color: #ffffff;
+            text-shadow: 0 0 25px rgba(249, 115, 22, 0.4);
+        }
+
+        .brand-motto {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.875rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+
+        /* Bottom Section: Tips, Links, Loading Bar */
+        .bottom-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 3rem 1.5rem 3rem;
+        }
+
+        /* Left: Tips */
+        .tips-col {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            max-width: 32rem;
+        }
+
+        .tips-icon {
+            margin-top: 0.25rem;
+            color: var(--blaze-orange);
+            opacity: 0.85;
+            font-size: 1.25rem;
+        }
+
+        .tips-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tips-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .tips-text {
+            font-size: 0.875rem;
+            color: #d1d5db;
+            min-height: 40px;
+            line-height: 1.4;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        .tips-text span.key {
+            color: var(--blaze-orange);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 700;
+        }
+
+        /* Right: Links & Percentage */
+        .status-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1.5rem;
+        }
+
+        .discord-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: #d1d5db;
+            text-decoration: none;
+            opacity: 0.75;
+            transition: all 0.2s ease;
+        }
+
+        .discord-link:hover {
+            opacity: 1;
+            color: var(--blaze-orange);
+            text-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+        }
+
+        .discord-link i {
+            font-size: 1.125rem;
+        }
+
+        .progress-meta {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+
+        .progress-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-value {
+            font-size: 1.875rem;
+            font-weight: 900;
+            color: #ffffff;
+            min-width: 4rem;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Full Width Loading Bar */
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background-color: #111827;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #ea580c, #f97316, #eab308);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.6);
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Center Content: Logo -->
+    <div class="center-container">
+        <!-- Server Subtitle -->
+        <div class="server-subtitle">
+            <div class="line"></div>
+            <span>FiveM Roleplay Server</span>
+            <div class="line"></div>
+        </div>
+
+        <!-- Main Logo Area -->
+        <div class="logo-row">
+            <!-- Custom SVG Flame Logo -->
+            <svg class="logo-svg" width="84" height="96" viewBox="0 0 72 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FDBA74" />
+                        <stop offset="50%" stop-color="#F97316" />
+                        <stop offset="100%" stop-color="#9A3412" />
+                    </linearGradient>
+                </defs>
+                <path class="logo-flame" d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" />
+                <path d="M36,20 C36,20 28,35 28,50 C28,58 33,65 33,65 C33,65 30,58 32,52 C32,52 24,60 21,70 C18,80 28,79 36,79 C44,79 54,80 51,70 C48,60 40,52 40,52 C42,58 39,65 39,65 C39,65 44,58 44,50 C44,35 36,20 36,20 Z" fill="#0a0a0c" opacity="0.6" />
+            </svg>
+
+            <div class="brand-text">
+                <h1 class="brand-title">BLAZE</h1>
+                <div class="brand-motto">
+                    <span>PEOPLE</span>
+                    <span>CARS</span>
+                    <span>STORIES</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Tips, Links, Loading Bar -->
+    <div class="bottom-container">
+        <!-- Info Row (Tips & Links) -->
+        <div class="info-row">
+            <!-- Left: Tips -->
+            <div class="tips-col">
+                <div class="tips-icon">
+                    <i class="fa-regular fa-lightbulb"></i>
+                </div>
+                <div class="tips-body">
+                    <span class="tips-label">Tip</span>
+                    <p id="tip-text" class="tips-text">Press <span class="key">M</span> to open your interaction menu.</p>
+                </div>
+            </div>
+
+            <!-- Right: Links & Percentage -->
+            <div class="status-col">
+                <!-- Discord Link -->
+                <a href="#" class="discord-link">
+                    <i class="fa-brands fa-discord"></i>
+                    <span>DISCORD.GG/BLAZE</span>
+                </a>
+                
+                <!-- Loading Percentage Text -->
+                <div class="progress-meta">
+                    <span id="loading-stage" class="progress-label">Loading Assets</span>
+                    <span id="loading-percentage" class="progress-value">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Width Loading Bar -->
+        <div class="progress-track">
+            <div id="loading-bar" class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let progress = 0;
+            let targetProgress = 0;
+            const progressBar = document.getElementById('loading-bar');
+            const percentageText = document.getElementById('loading-percentage');
+            const stageText = document.getElementById('loading-stage');
+
+            function updateUI(val) {
+                const rounded = Math.min(100, Math.max(0, Math.floor(val)));
+                progressBar.style.width = rounded + '%';
+                percentageText.innerText = rounded + '%';
+            }
+
+            // Smooth progress interpolation
+            setInterval(() => {
+                if (progress < targetProgress) {
+                    progress += (targetProgress - progress) * 0.15 + 0.2;
+                    if (progress > targetProgress) progress = targetProgress;
+                    updateUI(progress);
+                }
+            }, 30);
+
+            // Progressive simulation
+            let simProgress = 5;
+            const simInterval = setInterval(() => {
+                simProgress += Math.random() * 4 + 1;
+                if (simProgress > 95) {
+                    clearInterval(simInterval);
+                }
+                if (simProgress > targetProgress) {
+                    targetProgress = Math.min(95, simProgress);
+                }
+            }, 350);
+
+            // FiveM Native Loading Screen Events
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+                if (!data) return;
+
+                if (data.eventName === 'loadProgress') {
+                    const frac = data.loadFraction || 0;
+                    targetProgress = Math.max(targetProgress, Math.floor(frac * 100));
+                    if (targetProgress >= 99) {
+                        targetProgress = 100;
+                        stageText.innerText = 'Finishing Up';
+                    }
+                } else if (data.eventName === 'onLogLine') {
+                    if (stageText && data.message) {
+                        const msg = String(data.message);
+                        if (msg.includes('INIT_SESSION') || msg.includes('session')) {
+                            stageText.innerText = 'Connecting Session';
+                        } else if (msg.includes('dlc') || msg.includes('asset')) {
+                            stageText.innerText = 'Loading Assets';
+                        }
+                    }
+                } else if (data.eventName === 'initFunctionInvoking') {
+                    if (data.name && stageText) {
+                        stageText.innerText = 'Initializing Core';
+                    }
+                }
+            });
+
+            // Tips Rotation Logic
+            const tips = [
+                "Use <span class='key'>/help</span> to see a list of useful commands.",
+                "Visit the City Hall to get your first job and ID.",
+                "Respect the rules of the road. LSPD is always watching.",
+                "Join our Discord to stay updated on server events.",
+                "Need a ride? Use your phone to call a taxi.",
+                "Press <span class='key'>M</span> to open your interaction menu.",
+                "Make sure to eat and drink to maintain your character's health."
+            ];
+
+            let currentTipIndex = 0;
+            const tipElement = document.getElementById('tip-text');
+
+            function rotateTip() {
+                tipElement.style.opacity = '0';
+                setTimeout(() => {
+                    currentTipIndex = (currentTipIndex + 1) % tips.length;
+                    tipElement.innerHTML = tips[currentTipIndex];
+                    tipElement.style.opacity = '1';
+                }, 400);
+            }
+
+            setInterval(rotateTip, 6000);
+        });
+    </script>
+</body>
+</html>

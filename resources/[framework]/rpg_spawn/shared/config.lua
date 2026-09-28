@@ -1,5 +1,7 @@
 RPGSpawn = {
     airport = { x = -1037.74, y = -2737.82, z = 20.17, heading = 329.0 },
+    hospital = { x = 298.66, y = -584.05, z = 43.26, heading = 70.0 },
+    respawnDelayMs = 5000,
     modelTimeoutMs = 10000,
     collisionTimeoutMs = 10000,
     scenes = {
@@ -26,4 +28,3 @@ RPGSpawn = {
         },
     },
 }
-

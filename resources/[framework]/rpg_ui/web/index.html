@@ -3,51 +3,163 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RPG Framework</title>
+    <title>Blaze Roleplay - Auth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   </head>
   <body>
     <main id="app">
+      <!-- AUTHENTICATION SCREEN -->
       <section id="auth" class="screen hidden" aria-label="Account authentication">
-        <div class="auth-atmosphere"></div>
-        <article class="auth-card">
-          <header>
-            <span class="eyebrow">LOS SANTOS · ARRIVALS</span>
-            <h1>Begin your story.</h1>
-            <p id="auth-subtitle">Sign in to continue to the city.</p>
-          </header>
-          <nav class="tabs" aria-label="Authentication mode">
-            <button type="button" class="tab active" data-mode="login">Sign in</button>
-            <button type="button" class="tab" data-mode="register">Register</button>
-          </nav>
-          <form id="login-form" autocomplete="off">
-            <label>Username<input name="username" minlength="3" maxlength="24" autocomplete="username" required /></label>
-            <label>Password<input name="password" type="password" minlength="10" maxlength="128" autocomplete="current-password" required /></label>
-            <button class="primary" type="submit">Enter Los Santos</button>
-          </form>
-          <form id="register-form" class="hidden" autocomplete="off">
-            <label>Username<input name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required /></label>
-            <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required /></label>
-            <label>Password<input name="password" type="password" minlength="10" maxlength="128" autocomplete="new-password" required /></label>
-            <fieldset><legend>Sex</legend><label class="choice"><input type="radio" name="sex" value="male" checked /> Male</label><label class="choice"><input type="radio" name="sex" value="female" /> Female</label></fieldset>
-            <button class="primary" type="submit">Create account</button>
-          </form>
-          <p id="auth-error" class="form-error" role="alert"></p>
-        </article>
+        <div class="auth-wrapper">
+          <!-- Logo Area -->
+          <div class="auth-logo-area">
+            <svg class="auth-flame" width="64" height="74" viewBox="0 0 72 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FDBA74" />
+                  <stop offset="50%" stop-color="#F97316" />
+                  <stop offset="100%" stop-color="#9A3412" />
+                </linearGradient>
+              </defs>
+              <path class="logo-flame" d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" />
+              <path d="M36,20 C36,20 28,35 28,50 C28,58 33,65 33,65 C33,65 30,58 32,52 C32,52 24,60 21,70 C18,80 28,79 36,79 C44,79 54,80 51,70 C48,60 40,52 40,52 C42,58 39,65 39,65 C39,65 44,58 44,50 C44,35 36,20 36,20 Z" fill="#0a0a0c" opacity="0.6"/>
+            </svg>
+            <h1 class="auth-brand-title">BLAZE</h1>
+            <p class="auth-brand-subtitle">AUTHENTICATION</p>
+          </div>
+
+          <!-- Glass Container -->
+          <div class="glass-panel">
+            <!-- LOGIN VIEW -->
+            <div id="login-view" class="auth-view active-view">
+              <div class="view-header">
+                <h2>Welcome Back</h2>
+                <p>Enter your details to access the city.</p>
+              </div>
+
+              <form id="login-form" autocomplete="off">
+                <!-- Username -->
+                <div class="form-group">
+                  <label for="login-username">Username</label>
+                  <div class="input-wrap">
+                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" id="login-username" name="username" class="input-field" placeholder="Enter your username" minlength="3" maxlength="24" autocomplete="username" required />
+                  </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                  <label for="login-password">Password</label>
+                  <div class="input-wrap">
+                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="login-password" name="password" class="input-field" placeholder="••••••••" minlength="6" maxlength="128" autocomplete="current-password" required />
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary" id="login-submit-btn">
+                  <span class="btn-text">Login</span>
+                </button>
+              </form>
+
+              <div class="view-footer">
+                <p>Don't have an account? <button type="button" class="switch-link" id="switch-to-register">Register here</button></p>
+              </div>
+            </div>
+
+            <!-- REGISTER VIEW -->
+            <div id="register-view" class="auth-view hidden-view">
+              <div class="view-header">
+                <h2>Create Account</h2>
+                <p>Join Blaze Roleplay today.</p>
+              </div>
+
+              <form id="register-form" autocomplete="off">
+                <!-- Username -->
+                <div class="form-group">
+                  <label for="reg-username">Username</label>
+                  <div class="input-wrap">
+                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" id="reg-username" name="username" class="input-field" placeholder="Choose a username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" required />
+                  </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                  <label for="reg-email">Email Address</label>
+                  <div class="input-wrap">
+                    <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" id="reg-email" name="email" class="input-field" placeholder="your@email.com" maxlength="254" autocomplete="email" required />
+                  </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                  <label for="reg-password">Password</label>
+                  <div class="input-wrap">
+                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="reg-password" name="password" class="input-field" placeholder="Create a password" minlength="6" maxlength="128" autocomplete="new-password" required />
+                  </div>
+                </div>
+
+                <!-- Character Sex -->
+                <div class="form-group">
+                  <label class="section-label">Character Sex</label>
+                  <div class="sex-options">
+                    <label class="radio-label">
+                      <input type="radio" name="sex" value="male" class="radio-custom" checked />
+                      <span>Male</span>
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" name="sex" value="female" class="radio-custom" />
+                      <span>Female</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary" id="register-submit-btn">
+                  <span class="btn-text">Register</span>
+                </button>
+              </form>
+
+              <div class="view-footer">
+                <p>Already have an account? <button type="button" class="switch-link" id="switch-to-login">Login here</button></p>
+              </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="auth-error" class="auth-error-banner hidden" role="alert">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span id="auth-error-text"></span>
+            </div>
+          </div>
+        </div>
       </section>
 
+      <!-- CINEMATIC OVERLAY -->
       <section id="cinematic" class="cinematic hidden" aria-live="polite">
-        <div class="cinematic-copy"><span id="cinematic-kicker">WELCOME</span><h2 id="cinematic-title"></h2><p id="cinematic-description"></p></div>
+        <div class="cinematic-copy">
+          <span id="cinematic-kicker">WELCOME</span>
+          <h2 id="cinematic-title"></h2>
+          <p id="cinematic-description"></p>
+        </div>
         <div class="cinematic-progress"><i id="cinematic-progress-bar"></i></div>
       </section>
 
+      <!-- CHAT INTERFACE -->
       <section id="chat" class="chat hidden" aria-label="Chat">
         <div id="chat-messages" class="chat-messages"></div>
-        <form id="chat-form"><span class="prompt">›</span><input id="chat-input" maxlength="280" autocomplete="off" spellcheck="true" aria-label="Chat message" /></form>
+        <form id="chat-form" class="chat-form">
+          <span class="prompt">›</span>
+          <input id="chat-input" maxlength="280" autocomplete="off" spellcheck="true" aria-label="Chat message" />
+        </form>
       </section>
 
+      <!-- TOAST NOTIFICATIONS -->
       <aside id="notifications" class="notifications" aria-live="polite"></aside>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-

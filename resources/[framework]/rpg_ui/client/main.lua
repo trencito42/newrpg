@@ -9,9 +9,6 @@ end
 
 function AcquireFocus(owner, cursor, keepInput)
     if type(owner) ~= 'string' or owner == '' then return false, 'Invalid focus owner.' end
-    if focusOwner and focusOwner ~= owner then
-        return false, ('Focus is owned by %s.'):format(focusOwner)
-    end
     focusOwner = owner
     SetNuiFocus(true, cursor ~= false)
     SetNuiFocusKeepInput(keepInput == true)
@@ -19,7 +16,7 @@ function AcquireFocus(owner, cursor, keepInput)
 end
 
 function ReleaseFocus(owner)
-    if focusOwner ~= owner then return false end
+    if owner and focusOwner ~= owner then return false end
     focusOwner = nil
     SetNuiFocusKeepInput(false)
     SetNuiFocus(false, false)
@@ -50,6 +47,8 @@ end)
 RegisterNUICallback('authRendered', function(_, cb)
     ShutdownLoadingScreen()
     ShutdownLoadingScreenNui()
+    SetNuiFocus(true, true)
+    SetNuiFocusKeepInput(false)
     cb({ ok = true })
 end)
 
@@ -101,6 +100,59 @@ AddEventHandler('onClientResourceStop', function(resource)
     SetNuiFocusKeepInput(false)
     SetNuiFocus(false, false)
 end)
+
+RegisterCommand('fixscreen', function()
+    print('[RPG_UI] Running emergency screen and camera fix...')
+    Hide('auth')
+    Hide('cinematic')
+    send({ action = 'hideAll' })
+    ReleaseFocus(focusOwner)
+    SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
+    TriggerScreenblurFadeOut(0)
+    ClearTimecycleModifier()
+    ClearExtraTimecycleModifier()
+    RenderScriptCams(false, false, 0, true, false)
+    DestroyAllCams(true)
+    ClearFocus()
+    local ped = PlayerPedId()
+    if ped and ped ~= 0 then
+        SetFocusEntity(ped)
+        FreezeEntityPosition(ped, false)
+        SetEntityVisible(ped, true, false)
+        SetEntityInvincible(ped, false)
+    end
+    DisplayRadar(true)
+    DisplayHud(true)
+    TriggerEvent('rpg:core:releaseProtection')
+    DoScreenFadeIn(500)
+    Notify('Screen, cameras, and UI reset complete.', 'success')
+end, false)
+
+RegisterNetEvent('rpg:ui:fixscreen', function()
+    ExecuteCommand('fixscreen')
+end)
+
+RegisterCommand('fixui', function()
+    ExecuteCommand('fixscreen')
+end, false)
+
+RegisterNetEvent('rpg:ui:debugui', function()
+    ExecuteCommand('debugui')
+end)
+
+RegisterCommand('debugui', function()
+    local ped = PlayerPedId()
+    local coords = ped ~= 0 and GetEntityCoords(ped) or vector3(0,0,0)
+    local msg = ('[DEBUG] active=%s focus=%s ped=%d coords=%.1f,%.1f,%.1f'):format(
+        tostring(LocalPlayer.state['rpg:active']),
+        tostring(focusOwner),
+        ped,
+        coords.x, coords.y, coords.z
+    )
+    print(msg)
+    Notify(msg, 'info')
+end, false)
 
 exports('AcquireFocus', AcquireFocus)
 exports('ReleaseFocus', ReleaseFocus)

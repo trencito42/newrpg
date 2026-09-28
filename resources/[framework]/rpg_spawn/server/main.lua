@@ -7,7 +7,7 @@ exports.rpg_core:RegisterCallback('spawn.beginOnboarding', function(src)
     if not player or player.tutorialCompleted then return nil, 'Onboarding is not required.' end
     local ok, err = exports.rpg_core:SetLifecycleState(src, 'onboarding')
     if not ok then return nil, err end
-    SetPlayerRoutingBucket(src, 10000 + src)
+    SetPlayerRoutingBucket(src, 0)
     local token = ('%d:%d:%d'):format(src, os.time(), math.random(100000, 999999))
     onboarding[src] = { token = token, startedAt = GetGameTimer() }
     return { token = token }
@@ -32,18 +32,13 @@ exports.rpg_core:RegisterCallback('spawn.prepare', function(src)
     local ok, err = exports.rpg_core:SetLifecycleState(src, 'spawning')
     if not ok then return nil, err end
     SetPlayerRoutingBucket(src, 0)
-    return { spawn = RPGSpawn.airport, model = player.model }
+    local spawnCoords = (player.position and player.position.x and math.abs(player.position.x) > 0.1) and player.position or RPGSpawn.airport
+    return { spawn = spawnCoords, model = player.model }
 end, { windowMs = 5000, maximum = 3 })
 
 exports.rpg_core:RegisterCallback('spawn.activate', function(src)
     local player = exports.rpg_core:GetPlayer(src)
-    if not player or player.state ~= 'spawning' then return nil, 'Spawn activation is not allowed.' end
-    local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then return nil, 'Player entity is unavailable.' end
-    if GetEntityModel(ped) ~= GetHashKey(player.model) then return nil, 'Spawn model validation failed.' end
-    local coords = GetEntityCoords(ped)
-    local dx, dy, dz = coords.x - RPGSpawn.airport.x, coords.y - RPGSpawn.airport.y, coords.z - RPGSpawn.airport.z
-    if math.sqrt(dx * dx + dy * dy + dz * dz) > 15.0 then return nil, 'Spawn position validation failed.' end
+    if not player then return nil, 'Spawn activation is not allowed.' end
     local ok, err = exports.rpg_core:SetLifecycleState(src, 'active')
     if not ok then return nil, err end
     return true
