@@ -1,0 +1,31 @@
+endpoint_add_tcp "0.0.0.0:@@FIVEM_PORT@@"
+endpoint_add_udp "0.0.0.0:@@FIVEM_PORT@@"
+
+sv_licenseKey "@@FIVEM_LICENSE_KEY@@"
+sv_hostname "@@SERVER_NAME@@"
+sets sv_projectName "@@SERVER_NAME@@"
+sets sv_projectDesc "Modular custom RPG framework MVP"
+sets locale "en-US"
+sets tags "rpg,custom-framework,development"
+sv_maxclients @@MAX_CLIENTS@@
+sv_scriptHookAllowed 0
+sv_endpointprivacy true
+set onesync on
+
+set mysql_connection_string "mysql://@@MYSQL_USER@@:@@MYSQL_PASSWORD@@@database/@@MYSQL_DATABASE@@?charset=utf8mb4"
+set mysql_slow_query_warning 250
+set mysql_debug false
+
+ensure mapmanager
+ensure sessionmanager
+ensure hardcap
+ensure oxmysql
+ensure bob74_ipl
+
+# Dependency order is deliberate and one-way.
+ensure rpg_core
+ensure rpg_ui
+ensure rpg_auth
+ensure rpg_spawn
+ensure rpg_admin
+ensure rpg_chat

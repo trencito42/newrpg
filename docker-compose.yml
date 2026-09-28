@@ -1,0 +1,98 @@
+name: rpgmvp
+
+services:
+  database:
+    image: mariadb:11.8.3
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MARIADB_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+00:00
+      - --transaction-isolation=READ-COMMITTED
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - rpgmvp_mariadb:/var/lib/mysql
+    networks:
+      - database_internal
+
+  migrate:
+    image: mariadb:11.8.3
+    restart: "no"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: database
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+    volumes:
+      - ./database/migrations:/migrations:ro
+      - ./scripts/migrate.sh:/usr/local/bin/rpg-migrate:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/rpg-migrate"]
+    networks:
+      - database_internal
+
+  fxserver:
+    build:
+      context: .
+      dockerfile: docker/fxserver/Dockerfile
+      args:
+        FXSERVER_URL: https://runtime.fivem.net/artifacts/fivem/build_proot_linux/master/35245-6efb47dff473c0e2a12fb50b08d74c0eb24a50d5/fx.tar.xz
+        CFX_SERVER_DATA_COMMIT: c6afa3909c763e3327ed76825e78453286c99f05
+        OXMYSQL_VERSION: v2.14.1
+        BOB74_IPL_COMMIT: c229e65d6cd7bbe3942c619c12d8197f89247762
+    restart: unless-stopped
+    init: true
+    depends_on:
+      database:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      FIVEM_LICENSE_KEY: ${FIVEM_LICENSE_KEY:-}
+      FIVEM_PORT: ${FIVEM_PORT:-30120}
+      SERVER_NAME: ${SERVER_NAME:-RPG Framework MVP}
+      MAX_CLIENTS: ${MAX_CLIENTS:-48}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+    ports:
+      - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/tcp"
+      - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/udp"
+    volumes:
+      - ./config:/opt/rpg/config:ro
+      - ./resources/[framework]/rpg_core:/opt/cfx-server-data/resources/[framework]/rpg_core:ro
+      - ./resources/[framework]/rpg_auth:/opt/cfx-server-data/resources/[framework]/rpg_auth:ro
+      - ./resources/[framework]/rpg_ui:/opt/cfx-server-data/resources/[framework]/rpg_ui:ro
+      - ./resources/[framework]/rpg_chat:/opt/cfx-server-data/resources/[framework]/rpg_chat:ro
+      - ./resources/[framework]/rpg_admin:/opt/cfx-server-data/resources/[framework]/rpg_admin:ro
+      - ./resources/[framework]/rpg_spawn:/opt/cfx-server-data/resources/[framework]/rpg_spawn:ro
+      - rpgmvp_cache:/opt/cfx-server-data/cache
+    networks:
+      - database_internal
+      - fxserver_egress
+
+networks:
+  database_internal:
+    name: rpgmvp_internal
+    internal: true
+  fxserver_egress:
+    name: rpgmvp_egress
+
+volumes:
+  rpgmvp_mariadb:
+    name: rpgmvp_mariadb
+  rpgmvp_cache:
+    name: rpgmvp_cache
