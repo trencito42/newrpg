@@ -1,0 +1,289 @@
+/* AUTH SCREEN (ISOLATED COMPONENT) */
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0a0c;
+  background-image: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.06) 0%, transparent 60%),
+                    radial-gradient(circle at 75% 30%, rgba(234, 88, 12, 0.05) 0%, transparent 50%);
+  user-select: none;
+  z-index: 100;
+}
+
+.auth-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.auth-flame {
+  filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.35));
+  margin-bottom: 0.75rem;
+}
+
+.auth-brand-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+}
+
+.auth-brand-subtitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+}
+
+.glass-panel {
+  width: 100%;
+  background: rgba(15, 16, 20, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.auth-view {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  width: 100%;
+}
+
+.hidden-view {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: scale(0.96);
+  visibility: hidden;
+  display: none;
+}
+
+.active-view {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+  transform: scale(1);
+  visibility: visible;
+  display: block;
+}
+
+.view-header {
+  margin-bottom: 1.5rem;
+}
+
+.view-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.view-header p {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label, .section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 0.35rem;
+  margin-left: 0.25rem;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-field {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+  font-size: 0.875rem;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: #F97316;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.gender-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.gender-option input {
+  display: none;
+}
+
+.gender-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.gender-icon {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.gender-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+.gender-option input:checked + .gender-card {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: #F97316;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.2);
+}
+
+.gender-option input:checked + .gender-card .gender-icon,
+.gender-option input:checked + .gender-card .gender-label {
+  color: #F97316;
+}
+
+.btn-primary {
+  width: 100%;
+  background: #F97316;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
+}
+
+.btn-primary:hover {
+  background: #ea580c;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.view-footer {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.view-footer span {
+  color: #9ca3af;
+}
+
+.link-btn {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #F97316 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.link-btn:hover {
+  color: #fb923c !important;
+  background: rgba(249, 115, 22, 0.1) !important;
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+
+.auth-error-banner {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}

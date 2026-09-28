@@ -1,0 +1,67 @@
+/* CINEMATIC ONBOARDING (ISOLATED) */
+.cinematic-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, transparent 45%);
+  z-index: 50;
+  user-select: none;
+}
+
+.cinematic-copy {
+  position: absolute;
+  left: 7vw;
+  bottom: 10vh;
+  max-width: 560px;
+  text-shadow: 0 2px 24px #000;
+}
+
+.cinematic-kicker {
+  color: #F97316;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.cinematic-title {
+  margin: 6px 0;
+  color: #ffffff;
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.cinematic-description {
+  margin: 0;
+  color: #d1d5db;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+.cinematic-progress {
+  position: absolute;
+  left: 7vw;
+  bottom: 7vh;
+  width: min(400px, 60vw);
+  height: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cinematic-progress-bar {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #F97316;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+}
+
+@keyframes cinematicFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}

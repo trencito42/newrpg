@@ -3,189 +3,199 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RPG Framework - Authentication</title>
-    <script type="module" crossorigin>(function(){const t=document.createElement("link").relList;if(t&&t.supports&&t.supports("modulepreload"))return;for(const n of document.querySelectorAll('link[rel="modulepreload"]'))s(n);new MutationObserver(n=>{for(const o of n)if(o.type==="childList")for(const a of o.addedNodes)a.tagName==="LINK"&&a.rel==="modulepreload"&&s(a)}).observe(document,{childList:!0,subtree:!0});function r(n){const o={};return n.integrity&&(o.integrity=n.integrity),n.referrerPolicy&&(o.referrerPolicy=n.referrerPolicy),n.crossOrigin==="use-credentials"?o.credentials="include":n.crossOrigin==="anonymous"?o.credentials="omit":o.credentials="same-origin",o}function s(n){if(n.ep)return;n.ep=!0;const o=r(n);fetch(n.href,o)}})();const M=typeof window.GetParentResourceName=="function"?window.GetParentResourceName():"rpg_ui";async function f(e,t={}){return(await fetch(`https://${M}/${e}`,{method:"POST",headers:{"Content-Type":"application/json; charset=UTF-8"},body:JSON.stringify(t)})).json()}const i=e=>{const t=document.getElementById(e);if(!t)throw new Error(`Missing element #${e}`);return t},g=i("auth"),h=i("login-view"),p=i("register-view"),w=i("login-form"),L=i("register-form"),S=i("auth-error"),E=i("auth-error-text"),C=i("switch-to-register"),N=i("switch-to-login"),m=i("chat"),O=i("chat-form"),d=i("chat-input"),u=i("chat-messages"),A=i("notifications"),c=[];let l=0,v=!1;function b(e){E.textContent=e,S.classList.remove("hidden")}function T(){E.textContent="",S.classList.add("hidden")}function y(e){T(),e==="register"?(h.classList.remove("active-view"),h.classList.add("hidden-view"),window.setTimeout(()=>{p.classList.remove("hidden-view"),p.classList.add("active-view"),L.querySelector("input")?.focus()},120)):(p.classList.remove("active-view"),p.classList.add("hidden-view"),window.setTimeout(()=>{h.classList.remove("hidden-view"),h.classList.add("active-view"),w.querySelector("input")?.focus()},120))}C.addEventListener("click",()=>y("register"));N.addEventListener("click",()=>y("login"));async function x(e,t){if(v)return;v=!0,T();const r=e.querySelector('button[type="submit"]'),s=r?.querySelector(".btn-text"),n=s?s.innerHTML:r?.innerHTML||"Submit";r&&(r.disabled=!0,s&&(s.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>'));const o=Object.fromEntries(new FormData(e).entries());try{const a=await f(t,o);a.ok||b(a.error||"Request failed.")}catch{b("The interface could not reach the game client.")}finally{v=!1,r&&(r.disabled=!1,s&&(s.innerHTML=n))}}w.addEventListener("submit",e=>{e.preventDefault(),x(w,"authLogin")});L.addEventListener("submit",e=>{e.preventDefault(),x(L,"authRegister")});function k(e){const t=document.createElement("div");for(t.className=`chat-line ${String(e.kind||"normal").replace(/[^a-z-]/gi,"")}`,t.textContent=String(e.message||""),u.append(t);u.children.length>100;)u.firstElementChild?.remove();u.scrollTop=u.scrollHeight}O.addEventListener("submit",e=>{e.preventDefault();const t=d.value.trim();t?(c.at(-1)!==t&&c.push(t),c.length>50&&c.shift(),l=c.length,f("chatSubmit",{value:t})):f("chatClose"),d.value=""});d.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault(),d.value="",f("chatClose");return}e.key==="ArrowUp"&&c.length&&(e.preventDefault(),l=Math.max(0,l-1),d.value=c[l]||""),e.key==="ArrowDown"&&(e.preventDefault(),l=Math.min(c.length,l+1),d.value=c[l]||"")});function q(e){const t=document.createElement("div"),r=String(e.kind||"info").replace(/[^a-z-]/gi,"");t.className=`notice ${r}`,t.textContent=String(e.message||""),A.append(t),window.setTimeout(()=>t.classList.add("leaving"),Math.max(1e3,Number(e.duration)||4500)),window.setTimeout(()=>t.remove(),Math.max(1400,Number(e.duration)||4500)+350)}window.addEventListener("message",({data:e})=>{if(!(!e||typeof e!="object"))if(console.log("[RPG_UI] Received NUI message:",JSON.stringify(e)),e.action==="show"&&e.panel==="auth")g.classList.remove("hidden"),y("login"),requestAnimationFrame(()=>requestAnimationFrame(()=>{f("authRendered")}));else if(e.action==="hide"&&e.panel==="auth")g.classList.add("hidden");else if(e.action==="show"&&e.panel==="chat")m.classList.remove("hidden"),m.classList.add("open"),requestAnimationFrame(()=>d.focus());else if(e.action==="hide"&&e.panel==="chat")m.classList.remove("open");else if(e.action==="chatMessage")k(e.data||{}),m.classList.remove("hidden");else if(e.action==="chatClear")u.replaceChildren();else if(e.action==="notify")q(e.data||{});else if(e.action==="show"&&e.panel==="cinematic"||e.action==="cinematicScene"){const t=e.data||{};i("cinematic").classList.remove("hidden"),i("cinematic-kicker").textContent=String(t.kicker||"LOS SANTOS"),i("cinematic-title").textContent=String(t.title||""),i("cinematic-description").textContent=String(t.description||"");const s=i("cinematic-progress-bar");s.style.animation="none",s.offsetWidth,s.style.animation=`progress ${Math.max(250,Number(t.duration)||4e3)}ms linear forwards`}else e.action==="hide"&&e.panel==="cinematic"?i("cinematic").classList.add("hidden"):e.action==="hideAll"&&(g.classList.add("hidden"),i("cinematic").classList.add("hidden"),m.classList.remove("open"))});f("ready");</script>
-    <style rel="stylesheet" crossorigin>:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;--blaze-orange: #F97316;--blaze-orange-dark: #EA580C;--blaze-orange-light: #FDBA74;--blaze-dark: #0a0a0c;--blaze-panel: rgba(15, 16, 20, .94);--blaze-border: rgba(255, 255, 255, .08);--text-main: #ffffff;--text-muted: #9ca3af;--text-dim: #6b7280}*{box-sizing:border-box;margin:0;padding:0}:root,html,body,#app{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:transparent!important;background-color:transparent!important;color:var(--text-main);-webkit-font-smoothing:antialiased}button,input{font:inherit}.hidden{display:none!important}.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background-color:var(--blaze-dark);background-image:radial-gradient(circle at 50% 50%,rgba(249,115,22,.05) 0%,transparent 60%),radial-gradient(circle at 75% 30%,rgba(234,88,12,.04) 0%,transparent 50%);user-select:none;z-index:100}.auth-wrapper{position:relative;width:100%;max-width:440px;padding:1.5rem;display:flex;flex-direction:column;align-items:center}.auth-logo-area{display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:1.75rem}.auth-flame{filter:drop-shadow(0 0 15px rgba(249,115,22,.35));margin-bottom:.75rem}.logo-flame{fill:url(#orange-gradient)}.auth-brand-title{font-size:2.5rem;font-weight:900;font-style:italic;letter-spacing:-.05em;color:#fff;line-height:1;text-shadow:0 0 15px rgba(249,115,22,.3)}.auth-brand-subtitle{font-size:.6875rem;font-weight:700;letter-spacing:.3em;color:#6b7280;margin-top:.25rem;text-transform:uppercase}.glass-panel{width:100%;background:var(--blaze-panel);border:1px solid var(--blaze-border);border-radius:1rem;padding:2rem;position:relative;overflow:hidden;box-shadow:0 25px 50px -12px #000000b3,0 0 0 1px #ffffff08}.auth-view{transition:opacity .25s ease,transform .25s ease;width:100%}.hidden-view{opacity:0;pointer-events:none;position:absolute;transform:scale(.96);visibility:hidden}.active-view{opacity:1;pointer-events:auto;position:relative;transform:scale(1);visibility:visible}.view-header{margin-bottom:1.5rem}.view-header h2{font-size:1.25rem;font-weight:600;color:#fff;margin-bottom:.25rem}.view-header p{font-size:.875rem;color:var(--text-muted)}form{display:flex;flex-direction:column;gap:1rem}.form-group{display:flex;flex-direction:column}.form-group label,.section-label{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.35rem;margin-left:.25rem}.input-wrap{position:relative;display:flex;align-items:center}.input-icon{position:absolute;left:.875rem;color:#6b7280;font-size:.875rem;pointer-events:none;display:flex;align-items:center;justify-content:center}.input-field{width:100%;background:#0006;border:1px solid rgba(255,255,255,.07);border-radius:.5rem;padding:.75rem .875rem .75rem 2.5rem;font-size:.875rem;color:#fff;outline:none;transition:all .2s ease}.input-field::placeholder{color:#4b5563}.input-field:focus{background:#000000a6;border-color:#f9731699;box-shadow:0 0 12px #f9731626}.sex-options{display:flex;gap:1.25rem;padding-top:.25rem}.radio-label{display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;color:#d1d5db;transition:color .2s ease}.radio-label:hover{color:#fff}.radio-custom{appearance:none;-webkit-appearance:none;width:18px;height:18px;border:1px solid rgba(255,255,255,.25);border-radius:50%;outline:none;position:relative;cursor:pointer;background:#00000080;transition:all .2s ease}.radio-custom:checked{border-color:var(--blaze-orange)}.radio-custom:checked:before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;background-color:var(--blaze-orange);border-radius:50%;box-shadow:0 0 6px #f9731699}.btn-primary{background:linear-gradient(to right,#f97316,#ea580c);border:none;border-radius:.5rem;padding:.85rem;font-size:.875rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#fff;cursor:pointer;margin-top:.75rem;position:relative;overflow:hidden;transition:all .3s ease;display:flex;align-items:center;justify-content:center}.btn-primary:after{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(to right,transparent,rgba(255,255,255,.25),transparent);transition:left .5s ease}.btn-primary:hover:after{left:100%}.btn-primary:hover{box-shadow:0 0 20px #f9731673;transform:translateY(-1px)}.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none;box-shadow:none}.view-footer{margin-top:1.5rem;display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.875rem;color:var(--text-muted)}.view-footer span{color:var(--text-muted)}.link-btn,.switch-link{background:transparent!important;background-color:transparent!important;border:none!important;outline:none!important;color:var(--blaze-orange)!important;font-weight:600;font-size:.875rem;cursor:pointer;padding:.25rem .4rem;border-radius:4px;transition:all .2s ease;display:inline-flex;align-items:center;text-decoration:none}.link-btn:hover,.switch-link:hover{color:#fb923c!important;background:#f973161a!important;text-shadow:0 0 8px rgba(249,115,22,.5)}.link-btn:focus,.switch-link:focus{outline:none!important}.auth-error-banner{margin-top:1rem;padding:.75rem 1rem;background:#ef444426;border:1px solid rgba(239,68,68,.35);border-radius:.5rem;color:#fca5a5;font-size:.8125rem;display:flex;align-items:center;gap:.6rem}.auth-error-banner i{color:#ef4444;font-size:.9375rem}.cinematic{position:fixed;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 45%);z-index:50}.cinematic-copy{position:absolute;left:7vw;bottom:10vh;max-width:560px;text-shadow:0 2px 24px #000}#cinematic-kicker{color:var(--blaze-orange);font-size:.75rem;font-weight:800;letter-spacing:.25em;text-transform:uppercase}.cinematic h2{margin:8px 0;color:#fff;font-family:Inter,sans-serif;font-size:2.75rem;font-weight:800;letter-spacing:-.03em}.cinematic p{margin:0;color:#d1d5db;font-size:1.0625rem;line-height:1.5}.cinematic-progress{position:absolute;left:7vw;bottom:7vh;width:min(400px,60vw);height:3px;background:#ffffff26;border-radius:2px;overflow:hidden}.cinematic-progress i{display:block;width:0;height:100%;background:var(--blaze-orange);box-shadow:0 0 10px #f9731699}@keyframes progress{to{width:100%}}.chat{position:fixed;left:20px;top:24px;width:min(540px,45vw);pointer-events:none;z-index:60}.chat-messages{max-height:280px;overflow:hidden;display:flex;flex-direction:column;gap:3px}.chat-line{margin:1px 0;padding:3px 8px;color:#fff;font-size:.875rem;font-weight:500;line-height:1.35;overflow-wrap:anywhere;background:#00000073;border-radius:4px;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.8);width:fit-content;max-width:100%}.chat-line.system,.chat-line.info{color:#93c5fd}.chat-line.success{color:#86efac}.chat-line.warning{color:#fde047}.chat-line.error{color:#fca5a5}.chat-line.admin{color:#ff6b6b;font-weight:700}.chat-line.helper{color:#86efac}.chat-line.private{color:#f59e0b}.chat-form{display:none;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin-top:8px;padding:7px 12px;pointer-events:auto;background:#0c0e12d1;border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--blaze-orange);border-radius:6px;box-shadow:0 8px 24px #00000080}.chat.open .chat-form{display:grid}.chat-form input{margin:0;padding:4px 6px;background:transparent;border:0;outline:none;color:#fff;font-size:.875rem}.prompt{color:var(--blaze-orange);font-size:1.25rem;font-weight:700}.notifications{position:fixed;right:28px;top:34px;display:flex;flex-direction:column;gap:10px;width:min(360px,40vw);z-index:80;pointer-events:none}.notice{padding:12px 16px;color:#f3f4f6;background:#0f1115eb;border:1px solid rgba(255,255,255,.08);border-left:3px solid #60a5fa;border-radius:6px;box-shadow:0 10px 30px #00000080;font-size:.875rem;line-height:1.4;animation:enter .25s cubic-bezier(.2,.8,.2,1);transition:all .3s ease}.notice.success{border-left-color:#22c55e}.notice.warning{border-left-color:#f59e0b}.notice.error{border-left-color:#ef4444}.notice.info{border-left-color:var(--blaze-orange)}.notice.leaving{opacity:0;transform:translate(20px)}@keyframes enter{0%{opacity:0;transform:translate(24px)}}@media(max-width:900px){.auth-wrapper{padding:1rem}.chat{width:calc(100vw - 48px)}}</style>
+    <title>RPG Framework</title>
+    <script type="module" crossorigin>(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const s of document.querySelectorAll('link[rel="modulepreload"]'))i(s);new MutationObserver(s=>{for(const r of s)if(r.type==="childList")for(const o of r.addedNodes)o.tagName==="LINK"&&o.rel==="modulepreload"&&i(o)}).observe(document,{childList:!0,subtree:!0});function t(s){const r={};return s.integrity&&(r.integrity=s.integrity),s.referrerPolicy&&(r.referrerPolicy=s.referrerPolicy),s.crossOrigin==="use-credentials"?r.credentials="include":s.crossOrigin==="anonymous"?r.credentials="omit":r.credentials="same-origin",r}function i(s){if(s.ep)return;s.ep=!0;const r=t(s);fetch(s.href,r)}})();const h=typeof window.GetParentResourceName=="function"?window.GetParentResourceName():"rpg_ui";async function a(n,e={}){try{return await(await fetch(`https://${h}/${n}`,{method:"POST",headers:{"Content-Type":"application/json; charset=UTF-8"},body:JSON.stringify(e)})).json()}catch(t){throw console.warn(`[NUI Bridge] Failed to post to event "${n}":`,t),t}}const c=new Set;function u(n){return c.add(n),()=>c.delete(n)}function m(){window.addEventListener("message",n=>{const e=n.data;if(!(!e||typeof e!="object"))for(const t of c)try{t(e)}catch(i){console.error("[NUI Bridge] Message handler exception:",i)}})}function p(){window.addEventListener("error",n=>{const e={type:"uncaught_error",message:n.message,filename:n.filename,lineno:n.lineno,colno:n.colno,stack:n.error?.stack||null,timestamp:Date.now()};console.error("[NUI Error]",e),a("nuiError",e).catch(()=>{})}),window.addEventListener("unhandledrejection",n=>{const e=n.reason,t={type:"unhandled_rejection",message:typeof e=="object"&&e!==null&&e.message||String(e),stack:typeof e=="object"&&e!==null&&e.stack||null,timestamp:Date.now()};console.error("[NUI Unhandled Rejection]",t),a("nuiError",t).catch(()=>{})})}class v{container;constructor(){let e=document.getElementById("notifications");e||(e=document.createElement("aside"),e.id="notifications",e.className="notifications",e.setAttribute("aria-live","polite"),document.body.appendChild(e)),this.container=e}notify(e){const t=document.createElement("div"),i=String(e.kind||"info").replace(/[^a-z-]/gi,"");t.className=`notice ${i}`,t.textContent=String(e.message||""),this.container.appendChild(t);const s=Math.max(1e3,Number(e.duration)||4500);window.setTimeout(()=>t.classList.add("leaving"),s),window.setTimeout(()=>t.remove(),s+350)}}class g{container;activeId=null;timer=null;constructor(){let e=document.getElementById("progress-root");e||(e=document.createElement("div"),e.id="progress-root",e.className="progress-root hidden",document.body.appendChild(e)),this.container=e,window.addEventListener("keydown",t=>{t.key==="Escape"&&this.activeId&&this.cancel()})}start(e){this.stop();const t=e.id||`prog_${Date.now()}`;this.activeId=t;const i=Math.max(100,Number(e.duration)||3e3),s=e.label||"In progress...";this.container.innerHTML=`
+      <div class="progress-card">
+        <div class="progress-info">
+          <span class="progress-label">${f(s)}</span>
+          ${e.allowCancel?'<span class="progress-cancel-hint">[ESC] Cancel</span>':""}
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" style="animation: progressFill ${i}ms linear forwards;"></div>
+        </div>
+      </div>
+    `,this.container.classList.remove("hidden"),this.timer=window.setTimeout(()=>{this.complete()},i)}cancel(){if(!this.activeId)return;const e=this.activeId;this.stop(),a("progressCancel",{id:e}).catch(()=>{})}complete(){if(!this.activeId)return;const e=this.activeId;this.stop(),a("progressComplete",{id:e}).catch(()=>{})}stop(){this.timer&&(clearTimeout(this.timer),this.timer=null),this.activeId=null,this.container.classList.add("hidden"),this.container.innerHTML=""}}function f(n){return n.replace(/[&<>"']/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[e]||e)}class w{element=null;mode="login";submitting=!1;mount(e){if(this.element)return;const t=document.createElement("section");t.id="auth",t.className="auth-screen hidden",t.setAttribute("aria-label","Account authentication"),t.innerHTML=`
+      <div class="auth-wrapper">
+        \x3C!-- Logo Area -->
+        <div class="auth-logo-area">
+          <svg class="auth-flame" width="64" height="74" viewBox="0 0 72 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="orange-gradient-auth" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FDBA74" />
+                <stop offset="50%" stop-color="#F97316" />
+                <stop offset="100%" stop-color="#9A3412" />
+              </linearGradient>
+            </defs>
+            <path d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" fill="url(#orange-gradient-auth)" />
+            <path d="M36,20 C36,20 28,35 28,50 C28,58 33,65 33,65 C33,65 30,58 32,52 C32,52 24,60 21,70 C18,80 28,79 36,79 C44,79 54,80 51,70 C48,60 40,52 40,52 C42,58 39,65 39,65 C39,65 44,58 44,50 C44,35 36,20 36,20 Z" fill="#0a0a0c" opacity="0.6"/>
+          </svg>
+          <h1 class="auth-brand-title">RPG</h1>
+          <p class="auth-brand-subtitle">AUTHENTICATION</p>
+        </div>
+
+        \x3C!-- Glass Container -->
+        <div class="glass-panel">
+          \x3C!-- LOGIN VIEW -->
+          <div id="login-view" class="auth-view active-view">
+            <div class="view-header">
+              <h2>Welcome Back</h2>
+              <p>Enter your credentials to enter the server.</p>
+            </div>
+
+            <form id="login-form" class="auth-form" autocomplete="off">
+              \x3C!-- Username -->
+              <div class="form-group">
+                <label for="login-username">Username</label>
+                <div class="input-wrap">
+                  <span class="input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </span>
+                  <input type="text" id="login-username" name="username" class="input-field" placeholder="Enter your username" minlength="3" maxlength="24" autocomplete="username" required />
+                </div>
+              </div>
+
+              \x3C!-- Password -->
+              <div class="form-group">
+                <label for="login-password">Password</label>
+                <div class="input-wrap">
+                  <span class="input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  </span>
+                  <input type="password" id="login-password" name="password" class="input-field" placeholder="••••••••••" minlength="10" maxlength="128" autocomplete="current-password" required />
+                </div>
+              </div>
+
+              \x3C!-- Submit Button -->
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">SIGN IN</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </form>
+
+            \x3C!-- Footer Switch -->
+            <div class="view-footer">
+              <span>New player?</span>
+              <button type="button" id="switch-to-register" class="link-btn">Create an Account</button>
+            </div>
+          </div>
+
+          \x3C!-- REGISTER VIEW -->
+          <div id="register-view" class="auth-view hidden-view">
+            <div class="view-header">
+              <h2>Create Account</h2>
+              <p>Register your character profile to begin.</p>
+            </div>
+
+            <form id="register-form" class="auth-form" autocomplete="off">
+              \x3C!-- Username -->
+              <div class="form-group">
+                <label for="reg-username">Username</label>
+                <div class="input-wrap">
+                  <span class="input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </span>
+                  <input type="text" id="reg-username" name="username" class="input-field" placeholder="3-24 characters" minlength="3" maxlength="24" autocomplete="username" required />
+                </div>
+              </div>
+
+              \x3C!-- Email -->
+              <div class="form-group">
+                <label for="reg-email">Email Address</label>
+                <div class="input-wrap">
+                  <span class="input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  </span>
+                  <input type="email" id="reg-email" name="email" class="input-field" placeholder="name@example.com" maxlength="254" autocomplete="email" required />
+                </div>
+              </div>
+
+              \x3C!-- Password -->
+              <div class="form-group">
+                <label for="reg-password">Password</label>
+                <div class="input-wrap">
+                  <span class="input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  </span>
+                  <input type="password" id="reg-password" name="password" class="input-field" placeholder="10-128 characters" minlength="10" maxlength="128" autocomplete="new-password" required />
+                </div>
+              </div>
+
+              \x3C!-- Sex Selection -->
+              <div class="form-group">
+                <label>Character Gender</label>
+                <div class="gender-selector">
+                  <label class="gender-option">
+                    <input type="radio" name="sex" value="male" checked required />
+                    <div class="gender-card">
+                      <span class="gender-icon">♂</span>
+                      <span class="gender-label">Male</span>
+                    </div>
+                  </label>
+                  <label class="gender-option">
+                    <input type="radio" name="sex" value="female" required />
+                    <div class="gender-card">
+                      <span class="gender-icon">♀</span>
+                      <span class="gender-label">Female</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              \x3C!-- Submit Button -->
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">CREATE ACCOUNT</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </form>
+
+            \x3C!-- Footer Switch -->
+            <div class="view-footer">
+              <span>Already have an account?</span>
+              <button type="button" id="switch-to-login" class="link-btn">Log In</button>
+            </div>
+          </div>
+
+          \x3C!-- Error Banner -->
+          <div id="auth-error" class="auth-error-banner hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span id="auth-error-text"></span>
+          </div>
+        </div>
+      </div>
+    `,e.appendChild(t),this.element=t,this.bindEvents()}bindEvents(){if(!this.element)return;const e=this.element.querySelector("#switch-to-register"),t=this.element.querySelector("#switch-to-login"),i=this.element.querySelector("#login-form"),s=this.element.querySelector("#register-form");e?.addEventListener("click",()=>this.setMode("register")),t?.addEventListener("click",()=>this.setMode("login")),i?.addEventListener("submit",r=>{r.preventDefault(),this.submitForm(i,"authLogin")}),s?.addEventListener("submit",r=>{r.preventDefault(),this.submitForm(s,"authRegister")})}setMode(e){if(this.mode=e,this.clearError(),!this.element)return;const t=this.element.querySelector("#login-view"),i=this.element.querySelector("#register-view");e==="login"?(t?.classList.remove("hidden-view"),t?.classList.add("active-view"),i?.classList.remove("active-view"),i?.classList.add("hidden-view")):(i?.classList.remove("hidden-view"),i?.classList.add("active-view"),t?.classList.remove("active-view"),t?.classList.add("hidden-view"))}show(){!this.element&&document.body&&this.mount(document.body),this.setMode("login"),this.element?.classList.remove("hidden"),requestAnimationFrame(()=>{requestAnimationFrame(()=>{a("authRendered").catch(()=>{})})})}hide(){this.element?.classList.add("hidden"),this.clearError()}unmount(){this.element?.remove(),this.element=null}async submitForm(e,t){if(this.submitting)return;this.submitting=!0,this.clearError();const i=e.querySelector('button[type="submit"]'),s=i?.querySelector(".btn-text"),r=s?.textContent||"";i&&(i.disabled=!0,s&&(s.textContent="CONNECTING..."));const o=Object.fromEntries(new FormData(e).entries());try{const l=await a(t,o);l.ok||this.showError(l.error||"Authentication request failed.")}catch{this.showError("The interface could not reach the game client.")}finally{this.submitting=!1,i&&(i.disabled=!1,s&&(s.textContent=r))}}showError(e){if(!this.element)return;const t=this.element.querySelector("#auth-error"),i=this.element.querySelector("#auth-error-text");i&&(i.textContent=e),t?.classList.remove("hidden")}clearError(){if(!this.element)return;const e=this.element.querySelector("#auth-error"),t=this.element.querySelector("#auth-error-text");t&&(t.textContent=""),e?.classList.add("hidden")}}class y{element=null;form=null;input=null;messagesContainer=null;history=[];historyIndex=-1;mount(e){if(this.element)return;const t=document.createElement("section");t.id="chat",t.className="chat-root hidden",t.setAttribute("aria-label","Game chat"),t.innerHTML=`
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <span class="chat-prompt">❯</span>
+        <input id="chat-input" type="text" maxlength="280" placeholder="Type a message or /command..." />
+      </form>
+    `,e.appendChild(t),this.element=t,this.form=t.querySelector("#chat-form"),this.input=t.querySelector("#chat-input"),this.messagesContainer=t.querySelector("#chat-messages"),this.bindEvents()}bindEvents(){!this.form||!this.input||(this.form.addEventListener("submit",e=>{e.preventDefault();const t=this.input?.value.trim()||"";t?(this.history.at(-1)!==t&&this.history.push(t),this.history.length>50&&this.history.shift(),this.historyIndex=this.history.length,a("chatSubmit",{value:t}).catch(()=>{})):a("chatClose").catch(()=>{}),this.input&&(this.input.value="")}),this.input.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault(),this.input&&(this.input.value=""),a("chatClose").catch(()=>{});return}e.key==="ArrowUp"&&this.history.length&&(e.preventDefault(),this.historyIndex=Math.max(0,this.historyIndex-1),this.input&&(this.input.value=this.history[this.historyIndex]||"")),e.key==="ArrowDown"&&(e.preventDefault(),this.historyIndex=Math.min(this.history.length,this.historyIndex+1),this.input&&(this.input.value=this.history[this.historyIndex]||""))}))}show(){!this.element&&document.body&&this.mount(document.body),this.element?.classList.remove("hidden"),this.element?.classList.add("open"),requestAnimationFrame(()=>{this.input?.focus()})}hide(){this.element?.classList.remove("open")}addMessage(e){if(!this.element&&document.body&&this.mount(document.body),this.element?.classList.remove("hidden"),!this.messagesContainer)return;const t=document.createElement("div"),i=String(e.kind||"normal").replace(/[^a-z-]/gi,"");for(t.className=`chat-line ${i}`,t.textContent=String(e.message||""),this.messagesContainer.appendChild(t);this.messagesContainer.children.length>100;)this.messagesContainer.firstElementChild?.remove();this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight}clear(){this.messagesContainer&&(this.messagesContainer.innerHTML="")}unmount(){this.element?.remove(),this.element=null,this.form=null,this.input=null,this.messagesContainer=null}}class b{element=null;kickerEl=null;titleEl=null;descEl=null;barEl=null;mount(e){if(this.element)return;const t=document.createElement("section");t.id="cinematic",t.className="cinematic-root hidden",t.setAttribute("aria-label","Cinematic onboarding"),t.innerHTML=`
+      <div class="cinematic-copy">
+        <span id="cinematic-kicker" class="cinematic-kicker">LOS SANTOS</span>
+        <h2 id="cinematic-title" class="cinematic-title">WELCOME</h2>
+        <p id="cinematic-description" class="cinematic-description"></p>
+      </div>
+      <div class="cinematic-progress">
+        <div id="cinematic-progress-bar" class="cinematic-progress-bar"></div>
+      </div>
+    `,e.appendChild(t),this.element=t,this.kickerEl=t.querySelector("#cinematic-kicker"),this.titleEl=t.querySelector("#cinematic-title"),this.descEl=t.querySelector("#cinematic-description"),this.barEl=t.querySelector("#cinematic-progress-bar")}showScene(e){if(!this.element&&document.body&&this.mount(document.body),this.element?.classList.remove("hidden"),this.kickerEl&&(this.kickerEl.textContent=String(e.kicker||"LOS SANTOS")),this.titleEl&&(this.titleEl.textContent=String(e.title||"")),this.descEl&&(this.descEl.textContent=String(e.description||"")),this.barEl){const t=Math.max(500,Number(e.duration)||4e3);this.barEl.style.animation="none",this.barEl.offsetWidth,this.barEl.style.animation=`cinematicFill ${t}ms linear forwards`}}hide(){this.element?.classList.add("hidden"),this.barEl&&(this.barEl.style.animation="none")}unmount(){this.element?.remove(),this.element=null,this.kickerEl=null,this.titleEl=null,this.descEl=null,this.barEl=null}}class E{element=null;idValEl=null;cashValEl=null;levelValEl=null;mount(e){if(this.element)return;const t=document.createElement("section");t.id="hud",t.className="hud-root hidden",t.setAttribute("aria-label","Player HUD"),t.innerHTML=`
+      <div class="hud-card">
+        <div class="hud-item">
+          <span class="hud-label">ID</span>
+          <span id="hud-id" class="hud-value id">--</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">LVL</span>
+          <span id="hud-level" class="hud-value">1</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">CASH</span>
+          <span id="hud-cash" class="hud-value money">$0</span>
+        </div>
+      </div>
+    `,e.appendChild(t),this.element=t,this.idValEl=t.querySelector("#hud-id"),this.cashValEl=t.querySelector("#hud-cash"),this.levelValEl=t.querySelector("#hud-level")}update(e){!this.element&&document.body&&this.mount(document.body),e.serverId!==void 0&&this.idValEl&&(this.idValEl.textContent=String(e.serverId)),e.cash!==void 0&&this.cashValEl&&(this.cashValEl.textContent=`$${Number(e.cash).toLocaleString()}`),e.level!==void 0&&this.levelValEl&&(this.levelValEl.textContent=String(e.level))}show(){!this.element&&document.body&&this.mount(document.body),this.element?.classList.remove("hidden")}hide(){this.element?.classList.add("hidden")}unmount(){this.element?.remove(),this.element=null,this.idValEl=null,this.cashValEl=null,this.levelValEl=null}}class C{notifications;progress;authFeature=null;chatFeature=null;cinematicFeature=null;hudFeature=null;constructor(){this.notifications=new v,this.progress=new g}init(){u(e=>this.handleMessage(e)),a("ready").catch(()=>{})}getAuth(){return this.authFeature||(this.authFeature=new w,this.authFeature.mount(document.body)),this.authFeature}getChat(){return this.chatFeature||(this.chatFeature=new y,this.chatFeature.mount(document.body)),this.chatFeature}getCinematic(){return this.cinematicFeature||(this.cinematicFeature=new b,this.cinematicFeature.mount(document.body)),this.cinematicFeature}getHud(){return this.hudFeature||(this.hudFeature=new E,this.hudFeature.mount(document.body)),this.hudFeature}handleMessage(e){const t=e.action,i=e.panel,s=e.data||{};switch(t){case"show":i==="auth"?this.getAuth().show():i==="chat"?this.getChat().show():i==="cinematic"?this.getCinematic().showScene(s):i==="hud"&&this.getHud().show();break;case"hide":i==="auth"?this.authFeature?.hide():i==="chat"?this.chatFeature?.hide():i==="cinematic"?this.cinematicFeature?.hide():i==="hud"&&this.hudFeature?.hide();break;case"unmount":i==="auth"&&(this.authFeature?.unmount(),this.authFeature=null);break;case"chatMessage":this.getChat().addMessage(s);break;case"chatClear":this.chatFeature?.clear();break;case"notify":this.notifications.notify(s);break;case"progress":this.progress.start(s);break;case"progressCancel":this.progress.cancel();break;case"cinematicScene":this.getCinematic().showScene(s);break;case"hudUpdate":this.getHud().update(s);break;case"hideAll":this.authFeature?.hide(),this.chatFeature?.hide(),this.cinematicFeature?.hide(),this.progress.stop();break}}}function d(){m(),p(),new C().init()}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",d):d();</script>
+    <style rel="stylesheet" crossorigin>:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;--blaze-orange: #F97316;--blaze-orange-dark: #EA580C;--blaze-orange-light: #FDBA74;--blaze-dark: #0a0a0c;--blaze-panel: rgba(15, 16, 20, .94);--blaze-border: rgba(255, 255, 255, .08);--text-main: #ffffff;--text-muted: #9ca3af;--text-dim: #6b7280}*{box-sizing:border-box;margin:0;padding:0}:root,html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:transparent!important;background-color:transparent!important;color:var(--text-main);-webkit-font-smoothing:antialiased}button,input{font:inherit}.hidden{display:none!important}.notifications{position:fixed;right:28px;top:34px;display:flex;flex-direction:column;gap:10px;width:min(360px,40vw);z-index:80;pointer-events:none;user-select:none}.notice{padding:12px 16px;color:#f3f4f6;background:#0f1115eb;border:1px solid rgba(255,255,255,.08);border-left:3px solid #60a5fa;border-radius:6px;box-shadow:0 10px 30px #00000080;font-size:.875rem;line-height:1.4;animation:noticeEnter .25s cubic-bezier(.2,.8,.2,1);transition:all .3s ease}.notice.success{border-left-color:#22c55e}.notice.warning{border-left-color:#f59e0b}.notice.error{border-left-color:#ef4444}.notice.info{border-left-color:var(--blaze-orange)}.notice.admin{border-left-color:#ef4444;font-weight:600}.notice.helper{border-left-color:#22c55e}.notice.leaving{opacity:0;transform:translate(20px)}@keyframes noticeEnter{0%{opacity:0;transform:translate(24px)}to{opacity:1;transform:translate(0)}}.progress-root{position:fixed;bottom:80px;left:50%;transform:translate(-50%);z-index:90;pointer-events:none;user-select:none}.progress-card{background:#0c0e12eb;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 20px;width:min(340px,80vw);box-shadow:0 12px 32px #0009;display:flex;flex-direction:column;gap:8px}.progress-info{display:flex;justify-content:space-between;align-items:baseline}.progress-label{font-size:.875rem;font-weight:600;color:#fff}.progress-cancel-hint{font-size:.6875rem;font-weight:600;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase}.progress-track{width:100%;height:6px;background:#ffffff1f;border-radius:3px;overflow:hidden}.progress-bar{height:100%;background:var(--blaze-orange);box-shadow:0 0 10px #f97316b3;width:0%}@keyframes progressFill{0%{width:0%}to{width:100%}}.auth-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background-color:#0a0a0c;background-image:radial-gradient(circle at 50% 50%,rgba(249,115,22,.06) 0%,transparent 60%),radial-gradient(circle at 75% 30%,rgba(234,88,12,.05) 0%,transparent 50%);user-select:none;z-index:100}.auth-wrapper{position:relative;width:100%;max-width:440px;padding:1.5rem;display:flex;flex-direction:column;align-items:center}.auth-logo-area{display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:1.75rem}.auth-flame{filter:drop-shadow(0 0 15px rgba(249,115,22,.35));margin-bottom:.75rem}.auth-brand-title{font-size:2.5rem;font-weight:900;font-style:italic;letter-spacing:-.05em;color:#fff;line-height:1;text-shadow:0 0 15px rgba(249,115,22,.3)}.auth-brand-subtitle{font-size:.6875rem;font-weight:700;letter-spacing:.3em;color:#6b7280;margin-top:.25rem;text-transform:uppercase}.glass-panel{width:100%;background:#0f1014f0;border:1px solid rgba(255,255,255,.08);border-radius:1rem;padding:2rem;position:relative;overflow:hidden;box-shadow:0 25px 50px -12px #000000b3,0 0 0 1px #ffffff08}.auth-view{transition:opacity .25s ease,transform .25s ease;width:100%}.hidden-view{opacity:0;pointer-events:none;position:absolute;transform:scale(.96);visibility:hidden;display:none}.active-view{opacity:1;pointer-events:auto;position:relative;transform:scale(1);visibility:visible;display:block}.view-header{margin-bottom:1.5rem}.view-header h2{font-size:1.25rem;font-weight:600;color:#fff;margin-bottom:.25rem}.view-header p{font-size:.875rem;color:#9ca3af}.auth-form{display:flex;flex-direction:column;gap:1rem}.form-group{display:flex;flex-direction:column}.form-group label,.section-label{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:.35rem;margin-left:.25rem}.input-wrap{position:relative;display:flex;align-items:center}.input-icon{position:absolute;left:.875rem;color:#6b7280;font-size:.875rem;pointer-events:none;display:flex;align-items:center;justify-content:center}.input-field{width:100%;background:#0006;border:1px solid rgba(255,255,255,.07);border-radius:.5rem;padding:.75rem .875rem .75rem 2.5rem;font-size:.875rem;color:#fff;outline:none;transition:all .2s ease}.input-field:focus{border-color:#f97316;background:#0009;box-shadow:0 0 0 2px #f9731633}.gender-selector{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.gender-option input{display:none}.gender-card{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem;background:#0000004d;border:1px solid rgba(255,255,255,.06);border-radius:.5rem;cursor:pointer;transition:all .2s ease;user-select:none}.gender-icon{font-size:1.125rem;font-weight:700;color:#9ca3af}.gender-label{font-size:.8125rem;font-weight:500;color:#d1d5db}.gender-option input:checked+.gender-card{background:#f9731626;border-color:#f97316;box-shadow:0 0 12px #f9731633}.gender-option input:checked+.gender-card .gender-icon,.gender-option input:checked+.gender-card .gender-label{color:#f97316}.btn-primary{width:100%;background:#f97316;color:#fff;font-weight:700;font-size:.875rem;letter-spacing:.05em;padding:.875rem 1.5rem;border:none;border-radius:.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s ease;box-shadow:0 4px 14px #f973164d}.btn-primary:hover{background:#ea580c;box-shadow:0 0 20px #f9731673;transform:translateY(-1px)}.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}.view-footer{margin-top:1.5rem;display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.875rem;color:#9ca3af}.view-footer span{color:#9ca3af}.link-btn{background:transparent!important;background-color:transparent!important;border:none!important;outline:none!important;color:#f97316!important;font-weight:600;font-size:.875rem;cursor:pointer;padding:.25rem .4rem;border-radius:4px;transition:all .2s ease;display:inline-flex;align-items:center;text-decoration:none}.link-btn:hover{color:#fb923c!important;background:#f973161a!important;text-shadow:0 0 8px rgba(249,115,22,.5)}.auth-error-banner{margin-top:1rem;padding:.75rem 1rem;background:#ef444426;border:1px solid rgba(239,68,68,.35);border-radius:.5rem;color:#fca5a5;font-size:.8125rem;display:flex;align-items:center;gap:.6rem}.chat-root{position:fixed;left:20px;top:24px;width:min(540px,45vw);pointer-events:none;z-index:60}.chat-messages{max-height:280px;overflow:hidden;display:flex;flex-direction:column;gap:3px}.chat-line{margin:1px 0;padding:3px 8px;color:#fff;font-size:.875rem;font-weight:500;line-height:1.35;overflow-wrap:anywhere;background:#00000073;border-radius:4px;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 4px rgba(0,0,0,.8);width:fit-content;max-width:100%}.chat-line.system,.chat-line.info{color:#93c5fd}.chat-line.success{color:#86efac}.chat-line.warning{color:#fde047}.chat-line.error{color:#fca5a5}.chat-line.admin{color:#ff6b6b;font-weight:700}.chat-line.helper{color:#86efac}.chat-line.private{color:#f59e0b}.chat-form{display:none;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin-top:8px;padding:7px 12px;pointer-events:auto;background:#0c0e12d9;border:1px solid rgba(255,255,255,.1);border-left:3px solid #F97316;border-radius:6px;box-shadow:0 8px 24px #00000080}.chat-root.open .chat-form{display:grid}.chat-form input{margin:0;padding:4px 6px;background:transparent;border:0;outline:none;color:#fff;font-size:.875rem}.chat-prompt{color:#f97316;font-size:1.25rem;font-weight:700;line-height:1}@media(max-width:900px){.chat-root{width:calc(100vw - 48px)}}.cinematic-root{position:fixed;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,transparent 45%);z-index:50;user-select:none}.cinematic-copy{position:absolute;left:7vw;bottom:10vh;max-width:560px;text-shadow:0 2px 24px #000}.cinematic-kicker{color:#f97316;font-size:.75rem;font-weight:800;letter-spacing:.25em;text-transform:uppercase;display:block;margin-bottom:.25rem}.cinematic-title{margin:6px 0;color:#fff;font-size:2.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.1}.cinematic-description{margin:0;color:#d1d5db;font-size:1.0625rem;line-height:1.5}.cinematic-progress{position:absolute;left:7vw;bottom:7vh;width:min(400px,60vw);height:3px;background:#ffffff26;border-radius:2px;overflow:hidden}.cinematic-progress-bar{display:block;width:0;height:100%;background:#f97316;box-shadow:0 0 10px #f9731699}@keyframes cinematicFill{0%{width:0%}to{width:100%}}.hud-root{position:fixed;top:20px;right:24px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;z-index:40;user-select:none}.hud-card{background:#0c0e12d9;border:1px solid rgba(255,255,255,.08);border-right:3px solid #F97316;border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px #0006}.hud-item{display:flex;align-items:baseline;gap:4px}.hud-label{font-size:.6875rem;font-weight:700;color:#9ca3af;letter-spacing:.05em;text-transform:uppercase}.hud-value{font-size:.9375rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}.hud-value.money{color:#22c55e}.hud-value.id{color:#f97316}</style>
   </head>
   <body>
-    <main id="app">
-      <!-- AUTHENTICATION SCREEN -->
-      <section id="auth" class="screen hidden" aria-label="Account authentication">
-        <div class="auth-wrapper">
-          <!-- Logo Area -->
-          <div class="auth-logo-area">
-            <svg class="auth-flame" width="64" height="74" viewBox="0 0 72 84" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#FDBA74" />
-                  <stop offset="50%" stop-color="#F97316" />
-                  <stop offset="100%" stop-color="#9A3412" />
-                </linearGradient>
-              </defs>
-              <path class="logo-flame" d="M36,0 C36,0 20,20 20,40 C20,55 30,65 30,65 C30,65 25,55 28,45 C28,45 15,55 10,70 C5,85 20,84 36,84 C52,84 67,85 62,70 C57,55 44,45 44,45 C47,55 42,65 42,65 C42,65 52,55 52,40 C52,20 36,0 36,0 Z" fill="url(#orange-gradient)" />
-              <path d="M36,20 C36,20 28,35 28,50 C28,58 33,65 33,65 C33,65 30,58 32,52 C32,52 24,60 21,70 C18,80 28,79 36,79 C44,79 54,80 51,70 C48,60 40,52 40,52 C42,58 39,65 39,65 C39,65 44,58 44,50 C44,35 36,20 36,20 Z" fill="#0a0a0c" opacity="0.6"/>
-            </svg>
-            <h1 class="auth-brand-title">RPG</h1>
-            <p class="auth-brand-subtitle">AUTHENTICATION</p>
-          </div>
-
-          <!-- Glass Container -->
-          <div class="glass-panel">
-            <!-- LOGIN VIEW -->
-            <div id="login-view" class="auth-view active-view">
-              <div class="view-header">
-                <h2>Welcome Back</h2>
-                <p>Enter your credentials to enter the server.</p>
-              </div>
-
-              <form id="login-form" autocomplete="off">
-                <!-- Username -->
-                <div class="form-group">
-                  <label for="login-username">Username</label>
-                  <div class="input-wrap">
-                    <span class="input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </span>
-                    <input type="text" id="login-username" name="username" class="input-field" placeholder="Enter your username" minlength="3" maxlength="24" autocomplete="username" required />
-                  </div>
-                </div>
-
-                <!-- Password -->
-                <div class="form-group">
-                  <label for="login-password">Password</label>
-                  <div class="input-wrap">
-                    <span class="input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    </span>
-                    <input type="password" id="login-password" name="password" class="input-field" placeholder="••••••••••" minlength="10" maxlength="128" autocomplete="current-password" required />
-                  </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary">
-                  <span class="btn-text">SIGN IN</span>
-                  <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </button>
-              </form>
-
-              <!-- Footer Switch -->
-              <div class="view-footer">
-                <span>New player?</span>
-                <button type="button" id="switch-to-register" class="link-btn">Create an Account</button>
-              </div>
-            </div>
-
-            <!-- REGISTER VIEW -->
-            <div id="register-view" class="auth-view hidden-view">
-              <div class="view-header">
-                <h2>Create Account</h2>
-                <p>Register your character profile to begin.</p>
-              </div>
-
-              <form id="register-form" autocomplete="off">
-                <!-- Username -->
-                <div class="form-group">
-                  <label for="reg-username">Username</label>
-                  <div class="input-wrap">
-                    <span class="input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </span>
-                    <input type="text" id="reg-username" name="username" class="input-field" placeholder="3-24 characters" minlength="3" maxlength="24" autocomplete="username" required />
-                  </div>
-                </div>
-
-                <!-- Email -->
-                <div class="form-group">
-                  <label for="reg-email">Email Address</label>
-                  <div class="input-wrap">
-                    <span class="input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    </span>
-                    <input type="email" id="reg-email" name="email" class="input-field" placeholder="name@example.com" maxlength="254" autocomplete="email" required />
-                  </div>
-                </div>
-
-                <!-- Password -->
-                <div class="form-group">
-                  <label for="reg-password">Password</label>
-                  <div class="input-wrap">
-                    <span class="input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    </span>
-                    <input type="password" id="reg-password" name="password" class="input-field" placeholder="10-128 characters" minlength="10" maxlength="128" autocomplete="new-password" required />
-                  </div>
-                </div>
-
-                <!-- Sex Selection -->
-                <div class="form-group">
-                  <label>Character Gender</label>
-                  <div class="gender-selector">
-                    <label class="gender-option">
-                      <input type="radio" name="sex" value="male" checked required />
-                      <div class="gender-card">
-                        <span class="gender-icon">♂</span>
-                        <span class="gender-label">Male</span>
-                      </div>
-                    </label>
-                    <label class="gender-option">
-                      <input type="radio" name="sex" value="female" required />
-                      <div class="gender-card">
-                        <span class="gender-icon">♀</span>
-                        <span class="gender-label">Female</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary">
-                  <span class="btn-text">CREATE ACCOUNT</span>
-                  <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </button>
-              </form>
-
-              <!-- Footer Switch -->
-              <div class="view-footer">
-                <span>Already have an account?</span>
-                <button type="button" id="switch-to-login" class="link-btn">Log In</button>
-              </div>
-            </div>
-
-            <!-- Error Banner -->
-            <div id="auth-error" class="auth-error-banner hidden">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <span id="auth-error-text"></span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- CHAT COMPONENT -->
-      <section id="chat" class="chat hidden" aria-label="Game chat">
-        <div id="chat-messages" class="chat-messages"></div>
-        <form id="chat-form" class="chat-form" autocomplete="off">
-          <span class="prompt">❯</span>
-          <input id="chat-input" type="text" maxlength="280" placeholder="Type a message or /command..." />
-        </form>
-      </section>
-
-      <!-- NOTIFICATIONS -->
-      <aside id="notifications" class="notifications" aria-live="polite"></aside>
-
-      <!-- ONBOARDING CINEMATIC -->
-      <section id="cinematic" class="cinematic hidden" aria-label="Cinematic onboarding">
-        <div class="cinematic-overlay">
-          <div class="cinematic-copy">
-            <span id="cinematic-kicker" class="cinematic-kicker">LOS SANTOS</span>
-            <h2 id="cinematic-title" class="cinematic-title">WELCOME</h2>
-            <p id="cinematic-description" class="cinematic-description"></p>
-          </div>
-          <div class="cinematic-progress">
-            <i id="cinematic-progress-bar"></i>
-          </div>
-        </div>
-      </section>
-    </main>
-
+    <main id="app"></main>
   </body>
 </html>

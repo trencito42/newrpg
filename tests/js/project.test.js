@@ -41,17 +41,18 @@ test('password policy is consistent at min 10 max 128 characters across componen
   const config = read('resources/[framework]/rpg_core/shared/config.lua');
   const passwordJs = read('resources/[framework]/rpg_core/server/password.js');
   const registry = read('resources/[framework]/rpg_core/server/registry.lua');
-  const html = read('resources/[framework]/rpg_ui/web/index.html');
+  const authComponent = read('resources/[framework]/rpg_ui/web/src/features/auth/index.ts');
   assert.match(config, /passwordMin\s*=\s*10/);
   assert.match(config, /passwordMax\s*=\s*128/);
   assert.match(passwordJs, /password\.length < 10/);
   assert.match(registry, /passwordMin or #password > RPG\.Config\.auth\.passwordMax/);
-  assert.match(html, /minlength="10"/);
+  assert.match(authComponent, /minlength="10"/);
 });
 
 test('server config enables OneSync and strict state bag replication', () => {
   const serverCfg = read('config/server.cfg.template');
-  assert.match(serverCfg, /set onesync on/);
+  const entrypoint = read('docker/fxserver/entrypoint.sh');
+  assert.match(entrypoint, /\+set onesync on/);
   assert.match(serverCfg, /setr sv_stateBagStrictMode true/);
 });
 

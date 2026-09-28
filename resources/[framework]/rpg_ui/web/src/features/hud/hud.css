@@ -1,0 +1,54 @@
+/* MINIMAL HUD (ISOLATED) */
+.hud-root {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 40;
+  user-select: none;
+}
+
+.hud-card {
+  background: rgba(12, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 3px solid #F97316;
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.hud-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.hud-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #9ca3af;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-value.money {
+  color: #22c55e;
+}
+
+.hud-value.id {
+  color: #F97316;
+}
