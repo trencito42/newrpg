@@ -9,7 +9,7 @@ end
 
 RegisterCommand('rpg_chat_open', function()
     if open or not LocalPlayer.state['rpg:active'] then return end
-    local acquired, err = exports.rpg_ui:AcquireFocus('chat', false, false)
+    local acquired, err = exports.rpg_ui:AcquireFocus('chat', true, false)
     if not acquired then
         exports.rpg_ui:Notify(err or 'Another interface is currently open.', 'warning')
         return
