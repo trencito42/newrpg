@@ -9,16 +9,12 @@ sets locale "en-US"
 sets tags "rpg,custom-framework,development"
 sv_maxclients @@MAX_CLIENTS@@
 sv_scriptHookAllowed 0
-sv_endpointprivacy true
-set onesync on
 
 set mysql_connection_string "mysql://@@MYSQL_USER@@:@@MYSQL_PASSWORD@@@database/@@MYSQL_DATABASE@@?charset=utf8mb4"
 set mysql_slow_query_warning 250
 set mysql_debug false
 
 ensure mapmanager
-ensure sessionmanager
-ensure hardcap
 ensure oxmysql
 ensure bob74_ipl
 

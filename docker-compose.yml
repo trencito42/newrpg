@@ -55,6 +55,8 @@ services:
         BOB74_IPL_COMMIT: c229e65d6cd7bbe3942c619c12d8197f89247762
     restart: unless-stopped
     init: true
+    stdin_open: true
+    tty: true
     depends_on:
       database:
         condition: service_healthy
@@ -71,6 +73,12 @@ services:
     ports:
       - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/tcp"
       - "${FIVEM_PORT:-30120}:${FIVEM_PORT:-30120}/udp"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${FIVEM_PORT}/info.json >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     volumes:
       - ./config:/opt/rpg/config:ro
       - ./resources/[framework]/rpg_core:/opt/cfx-server-data/resources/[framework]/rpg_core:ro
@@ -79,7 +87,6 @@ services:
       - ./resources/[framework]/rpg_chat:/opt/cfx-server-data/resources/[framework]/rpg_chat:ro
       - ./resources/[framework]/rpg_admin:/opt/cfx-server-data/resources/[framework]/rpg_admin:ro
       - ./resources/[framework]/rpg_spawn:/opt/cfx-server-data/resources/[framework]/rpg_spawn:ro
-      - rpgmvp_cache:/opt/cfx-server-data/cache
     networks:
       - database_internal
       - fxserver_egress
@@ -94,5 +101,3 @@ networks:
 volumes:
   rpgmvp_mariadb:
     name: rpgmvp_mariadb
-  rpgmvp_cache:
-    name: rpgmvp_cache

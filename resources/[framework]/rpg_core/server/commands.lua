@@ -4,6 +4,12 @@ local commands = {}
 local aliases = {}
 local rates = {}
 
+local function isCallable(value)
+    if type(value) == 'function' then return true end
+    local meta = getmetatable(value)
+    return meta ~= nil and type(meta.__call) == 'function'
+end
+
 local function reply(src, message, kind)
     if src == 0 then print(('[RPG][COMMAND] %s'):format(message)) return end
     TriggerClientEvent('rpg:ui:notify', src, { message = tostring(message), kind = kind or 'info' })
@@ -20,7 +26,7 @@ function RPG.RegisterCommand(definition)
     assert(type(definition) == 'table', 'command definition must be a table')
     local name = type(definition.name) == 'string' and string.lower(definition.name) or nil
     assert(name and name:match('^[%w_-]+$'), 'invalid command name')
-    assert(type(definition.handler) == 'function', 'command handler must be a function')
+    assert(isCallable(definition.handler), 'command handler must be callable')
     if commands[name] or aliases[name] then error(('command /%s already exists'):format(name)) end
     definition.name = name
     definition.aliases = definition.aliases or {}

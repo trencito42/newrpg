@@ -5,6 +5,12 @@ local globalRates = {}
 local namedRates = {}
 local metrics = { requests = 0, errors = 0, timeouts = 0, rejected = 0 }
 
+local function isCallable(value)
+    if type(value) == 'function' then return true end
+    local meta = getmetatable(value)
+    return meta ~= nil and type(meta.__call) == 'function'
+end
+
 local function allowWindow(store, key, windowMs, maximum)
     local now = GetGameTimer()
     local entry = store[key]
@@ -19,7 +25,7 @@ end
 
 function RegisterCallback(name, handler, options)
     assert(type(name) == 'string' and name:match('^[%w%._:-]+$'), 'invalid callback name')
-    assert(type(handler) == 'function', 'callback handler must be a function')
+    assert(isCallable(handler), 'callback handler must be callable')
     if callbacks[name] then error(('callback %s is already registered'):format(name)) end
     options = options or {}
     callbacks[name] = {
@@ -106,4 +112,3 @@ AddEventHandler('playerDropped', function()
 end)
 
 exports('RegisterCallback', RegisterCallback)
-

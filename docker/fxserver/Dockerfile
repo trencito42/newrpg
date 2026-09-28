@@ -22,10 +22,12 @@ RUN test -n "$CFX_SERVER_DATA_COMMIT" \
     && rm -rf /opt/cfx-server-data/.git
 
 RUN test -n "$OXMYSQL_VERSION" \
-    && mkdir -p '/opt/cfx-server-data/resources/[vendor]/oxmysql' \
     && curl -fL --retry 4 "https://github.com/overextended/oxmysql/releases/download/${OXMYSQL_VERSION}/oxmysql.zip" -o /tmp/oxmysql.zip \
-    && unzip -q /tmp/oxmysql.zip -d '/opt/cfx-server-data/resources/[vendor]/oxmysql' \
-    && rm /tmp/oxmysql.zip
+    && mkdir -p /tmp/oxmysql-release '/opt/cfx-server-data/resources/[vendor]' \
+    && unzip -q /tmp/oxmysql.zip -d /tmp/oxmysql-release \
+    && test -f /tmp/oxmysql-release/oxmysql/fxmanifest.lua \
+    && mv /tmp/oxmysql-release/oxmysql '/opt/cfx-server-data/resources/[vendor]/oxmysql' \
+    && rm -rf /tmp/oxmysql-release /tmp/oxmysql.zip
 
 RUN test -n "$BOB74_IPL_COMMIT" \
     && git clone --filter=blob:none https://github.com/Bob74/bob74_ipl.git '/opt/cfx-server-data/resources/[vendor]/bob74_ipl' \
