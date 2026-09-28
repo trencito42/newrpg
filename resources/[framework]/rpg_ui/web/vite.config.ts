@@ -1,7 +1,12 @@
 import { defineConfig } from 'vite';
+import { viteSingleFile } from 'vite-plugin-singlefile';
 
 export default defineConfig({
-  // FiveM serves NUI files from a resource-scoped URL, so root-relative
-  // /assets paths resolve outside the resource and silently fail.
-  base: './',
+  plugins: [viteSingleFile()],
+  build: {
+    target: 'esnext',
+    assetsInlineLimit: 100000000,
+    chunkSizeWarningLimit: 100000000,
+    cssCodeSplit: false,
+  },
 });

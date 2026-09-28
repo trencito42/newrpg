@@ -159,26 +159,27 @@
       </section>
 
       <!-- CHAT COMPONENT -->
-      <section id="chat" class="hidden" aria-label="Game chat">
+      <section id="chat" class="chat hidden" aria-label="Game chat">
         <div id="chat-messages" class="chat-messages"></div>
         <form id="chat-form" class="chat-form" autocomplete="off">
+          <span class="prompt">❯</span>
           <input id="chat-input" type="text" maxlength="280" placeholder="Type a message or /command..." />
         </form>
       </section>
 
       <!-- NOTIFICATIONS -->
-      <aside id="notifications" aria-live="polite"></aside>
+      <aside id="notifications" class="notifications" aria-live="polite"></aside>
 
       <!-- ONBOARDING CINEMATIC -->
-      <section id="cinematic" class="hidden" aria-label="Cinematic onboarding">
+      <section id="cinematic" class="cinematic hidden" aria-label="Cinematic onboarding">
         <div class="cinematic-overlay">
-          <div class="cinematic-content">
+          <div class="cinematic-copy">
             <span id="cinematic-kicker" class="cinematic-kicker">LOS SANTOS</span>
             <h2 id="cinematic-title" class="cinematic-title">WELCOME</h2>
             <p id="cinematic-description" class="cinematic-description"></p>
-            <div class="cinematic-progress">
-              <div id="cinematic-progress-bar" class="cinematic-progress-bar"></div>
-            </div>
+          </div>
+          <div class="cinematic-progress">
+            <i id="cinematic-progress-bar"></i>
           </div>
         </div>
       </section>

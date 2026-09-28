@@ -12,8 +12,7 @@ ui_page 'web/dist/index.html'
 
 files {
     'web/loadscreen.html',
-    'web/dist/index.html',
-    'web/dist/assets/*'
+    'web/dist/index.html'
 }
 
 client_script 'client/main.lua'
