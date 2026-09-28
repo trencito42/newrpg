@@ -315,27 +315,43 @@ form {
 /* Footer / Switch link */
 .view-footer {
   margin-top: 1.5rem;
-  text-align: center;
-}
-
-.view-footer p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   font-size: 0.875rem;
   color: var(--text-muted);
 }
 
-.switch-link {
-  background: none;
-  border: none;
-  color: var(--blaze-orange);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0 0.25rem;
-  transition: color 0.2s ease;
+.view-footer span {
+  color: var(--text-muted);
 }
 
-.switch-link:hover {
-  color: #fb923c;
-  text-decoration: underline;
+.link-btn, .switch-link {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--blaze-orange) !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.link-btn:hover, .switch-link:hover {
+  color: #fb923c !important;
+  background: rgba(249, 115, 22, 0.1) !important;
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+
+.link-btn:focus, .switch-link:focus {
+  outline: none !important;
 }
 
 /* Error Banner */
