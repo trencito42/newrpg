@@ -40,6 +40,14 @@ if "${client[@]}" -e "INSERT INTO sessions(id,account_id,server_source) VALUES(U
 active_bans="$("${client[@]}" -e "SELECT COUNT(*) FROM sanctions WHERE target_account_id=$account_id AND sanction_type='ban' AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP())")"
 [[ "$active_bans" == '1' ]] || { echo "[db-test] expected one active temporary ban, got $active_bans" >&2; exit 1; }
 
+"${client[@]}" -e "INSERT INTO player_reports(reporter_account_id,open_reporter_account_id,reporter_username,reporter_source,message) VALUES($account_id,$account_id,'Alice',1,'first')"
+if "${client[@]}" -e "INSERT INTO player_reports(reporter_account_id,open_reporter_account_id,reporter_username,reporter_source,message) VALUES($account_id,$account_id,'Alice',1,'second')" >/dev/null 2>&1; then echo '[db-test] duplicate open report was accepted' >&2; exit 1; fi
+"${client[@]}" -e "UPDATE player_reports SET status='closed',open_reporter_account_id=NULL,closed_at=UTC_TIMESTAMP() WHERE reporter_account_id=$account_id; INSERT INTO player_reports(reporter_account_id,open_reporter_account_id,reporter_username,reporter_source,message) VALUES($account_id,$account_id,'Alice',1,'after close')"
+
+"${client[@]}" -e "INSERT INTO newbie_questions(asker_account_id,open_asker_account_id,asker_username,asker_source,question) VALUES($account_id,$account_id,'Alice',1,'first')"
+if "${client[@]}" -e "INSERT INTO newbie_questions(asker_account_id,open_asker_account_id,asker_username,asker_source,question) VALUES($account_id,$account_id,'Alice',1,'second')" >/dev/null 2>&1; then echo '[db-test] duplicate open question was accepted' >&2; exit 1; fi
+"${client[@]}" -e "UPDATE newbie_questions SET status='answered',open_asker_account_id=NULL,handled_at=UTC_TIMESTAMP() WHERE asker_account_id=$account_id; INSERT INTO newbie_questions(asker_account_id,open_asker_account_id,asker_username,asker_source,question) VALUES($account_id,$account_id,'Alice',1,'after answer')"
+
 count="$("${client[@]}" -e 'SELECT COUNT(*) FROM schema_migrations')"
-[[ "$count" == '4' ]] || { echo "[db-test] expected 4 migrations, got $count" >&2; exit 1; }
-echo '[db-test] fresh migrations, repeat safety, FKs, and unique constraints passed'
+[[ "$count" == '6' ]] || { echo "[db-test] expected 6 migrations, got $count" >&2; exit 1; }
+echo '[db-test] fresh migrations, repeat safety, FKs, sessions, bans, and support queue invariants passed'

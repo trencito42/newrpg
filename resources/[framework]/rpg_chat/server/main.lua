@@ -39,6 +39,10 @@ RegisterNetEvent('rpg:chat:submit', function(raw)
         exports.rpg_core:DispatchCommand(src, message)
         return
     end
+    if exports.rpg_admin:IsMuted(src, 'global') then
+        exports.rpg_core:Notify(src, 'You are muted from global chat.', 'error')
+        return
+    end
     local username = exports.rpg_core:GetUsername(src)
     if not username then return end
     local rendered = ('%s (%d): %s'):format(username, src, message)
@@ -51,4 +55,3 @@ RegisterNetEvent('rpg:chat:submit', function(raw)
 end)
 
 AddEventHandler('playerDropped', function() rates[source] = nil end)
-

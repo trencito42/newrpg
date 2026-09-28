@@ -29,15 +29,21 @@ RPG.Config = {
     },
     adminLabels = {
         [0] = 'Player',
-        [1] = 'Helper',
-        [2] = 'Moderator',
-        [3] = 'Admin',
-        [4] = 'Super Admin',
-        [5] = 'Owner',
+        [1] = 'Admin Level 1',
+        [2] = 'Admin Level 2',
+        [3] = 'Admin Level 3',
+        [4] = 'Admin Level 4',
+        [5] = 'Admin Level 5',
+        [6] = 'Admin Level 6',
+    },
+    helperLabels = {
+        [0] = 'Player',
+        [1] = 'Helper Level 1',
+        [2] = 'Helper Level 2',
+        [3] = 'Helper Level 3',
     },
     models = {
         male = 'a_m_m_bevhills_02',
         female = 'u_f_y_taylor',
     },
 }
-

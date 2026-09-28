@@ -7,7 +7,8 @@ version '1.0.0'
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/main.lua'
+    'server/main.lua',
+    'server/extended.lua'
 }
 
 client_script 'client/main.lua'

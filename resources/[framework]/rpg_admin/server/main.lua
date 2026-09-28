@@ -2,8 +2,14 @@ local duty = {}
 local backPositions = {}
 local frozen = {}
 local spectating = {}
+local helperGotoCooldown = {}
 
-local labels = { [0] = 'Player', [1] = 'Helper', [2] = 'Moderator', [3] = 'Admin', [4] = 'Super Admin', [5] = 'Owner' }
+local labels = { [0] = 'Player', [1] = 'Admin Level 1', [2] = 'Admin Level 2', [3] = 'Admin Level 3', [4] = 'Admin Level 4', [5] = 'Admin Level 5', [6] = 'Admin Level 6' }
+local helperLabels = { [0] = 'Player', [1] = 'Helper Level 1', [2] = 'Helper Level 2', [3] = 'Helper Level 3' }
+
+RPGAdmin = RPGAdmin or {}
+RPGAdmin.adminDuty = duty
+RPGAdmin.helperDuty = RPGAdmin.helperDuty or {}
 
 local function register(definition)
     exports.rpg_core:RegisterCommand(definition)
@@ -131,14 +137,18 @@ local function sanction(kind, actor, target, reason, expiresAt)
         })
         id = inserted and inserted.insertId
         if not id then return false end
-        if kind == 'ban' then
+        local identifierCount = 0
+        if kind == 'ban' or kind == 'ip_ban' then
             for _, raw in ipairs(GetPlayerIdentifiers(target.source)) do
                 local identifierType, identifierValue = raw:match('^([^:]+):(.+)$')
-                if identifierType and identifierValue and identifierType ~= 'ip' then
+                local wanted = kind == 'ip_ban' and identifierType == 'ip' or kind == 'ban' and identifierType ~= 'ip'
+                if identifierType and identifierValue and wanted then
                     query('INSERT INTO sanction_identifiers (sanction_id, identifier_type, identifier_value) VALUES (?, ?, ?)', { id, identifierType, identifierValue })
+                    identifierCount = identifierCount + 1
                 end
             end
         end
+        if kind == 'ip_ban' and identifierCount == 0 then return false end
         query([[
             INSERT INTO admin_actions (action, actor_account_id, actor_username, target_account_id, target_username, reason, metadata)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -154,6 +164,14 @@ end
 register({ name = 'aduty', description = 'Toggle staff duty.', usage = '/aduty', minimumAdminLevel = 1, handler = function(src)
     duty[src] = not duty[src]
     Player(src).state:set('rpg:adminDuty', duty[src], true)
+    if duty[src] then
+        for _, row in ipairs(MySQL.query.await("SELECT id,reporter_username,reporter_source,message FROM player_reports WHERE status='open' ORDER BY created_at LIMIT 20")) do
+            TriggerClientEvent('rpg:chat:message', src, ('[REPORT #%d] %s (%d): %s'):format(row.id,row.reporter_username,row.reporter_source,row.message), 'admin')
+        end
+        for _, row in ipairs(MySQL.query.await("SELECT id,asker_username,asker_source,question FROM newbie_questions WHERE status='open' ORDER BY created_at LIMIT 20")) do
+            TriggerClientEvent('rpg:chat:message', src, ('[NEWBIE #%d] %s (%d): %s'):format(row.id,row.asker_username,row.asker_source,row.question), 'helper')
+        end
+    end
     return duty[src] and 'Admin duty enabled.' or 'Admin duty disabled.'
 end })
 
@@ -173,27 +191,38 @@ register({ name = 'admins', description = 'List online staff.', usage = '/admins
     for _, raw in ipairs(GetPlayers()) do
         local target = tonumber(raw)
         local level = exports.rpg_core:GetAdminLevel(target)
-        if level >= 1 then list[#list + 1] = ('%s (%d) — %s%s'):format(exports.rpg_core:GetUsername(target) or '?', target, labels[level], duty[target] and ' [DUTY]' or '') end
+        local helperLevel = exports.rpg_core:GetHelperLevel(target)
+        if level >= 1 then
+            list[#list + 1] = ('%s (%d) — %s%s'):format(exports.rpg_core:GetUsername(target) or '?', target, labels[level], duty[target] and ' [DUTY]' or '')
+        elseif helperLevel >= 1 then
+            list[#list + 1] = ('%s (%d) — %s%s'):format(exports.rpg_core:GetUsername(target) or '?', target, helperLabels[helperLevel], RPGAdmin.helperDuty[target] and ' [DUTY]' or '')
+        end
     end
     reply(src, #list > 0 and table.concat(list, ' | ') or 'No staff are online.', 'info')
     return true
 end })
 
-register({ name = 'ainfo', description = 'Inspect framework player information.', usage = '/ainfo [id]', minimumAdminLevel = 1, arguments = { { required = true } }, handler = function(src, args, reply)
+register({ name = 'ainfo', aliases = {'check'}, description = 'Inspect framework player information.', usage = '/check [id]', minimumAdminLevel = 1, arguments = { { required = true } }, handler = function(src, args, reply)
     local target, err = playerOrError(args[1]); if not target then return false, err end
     local full = MySQL.single.await([[SELECT a.email, a.login_count, p.* FROM accounts a JOIN players p ON p.account_id=a.id WHERE a.id=?]], { target.accountId })
     local coords = entityCoords(target.source)
     local stats = exports.rpg_core:GetPlayerStats(target.source)
     local email = exports.rpg_core:GetAdminLevel(src) >= 4 and full.email or '[restricted]'
-    reply(src, ('ID %d | Account %d | %s | Email %s | %s/%s | L%d XP%d | Playtime %ds | Admin %s | Tutorial %s | Ping %d | HP %d Armor %d | XYZ %.2f %.2f %.2f'):format(
+    reply(src, ('ID %d | Account %d | %s | Email %s | %s/%s | L%d XP%d | $%d RP%d | Playtime %ds | Admin %s | Helper %d | Tutorial %s | Ping %d | HP %d Armor %d | XYZ %.2f %.2f %.2f'):format(
         target.source, target.accountId, target.username, email, target.sex, target.model, target.level, target.xp,
-        stats.totalPlaytimeSeconds, labels[target.adminLevel], tostring(target.tutorialCompleted), GetPlayerPing(target.source),
+        stats.money, stats.respectPoints, stats.totalPlaytimeSeconds, labels[target.adminLevel], target.helperLevel, tostring(target.tutorialCompleted), GetPlayerPing(target.source),
         target.health, target.armor, coords and coords.x or 0, coords and coords.y or 0, coords and coords.z or 0
     ), 'info')
     return true
 end })
 
-register({ name = 'goto', description = 'Teleport to a player.', usage = '/goto [player id]', minimumAdminLevel = 1, arguments = { { required = true } }, audit = 'important', handler = function(src, args)
+register({ name = 'goto', description = 'Teleport to a player.', usage = '/goto [player id]', minimumAdminLevel = 1, minimumHelperLevel = 1, arguments = { { required = true } }, audit = 'important', handler = function(src, args)
+    if exports.rpg_core:GetAdminLevel(src) == 0 then
+        local now = os.time()
+        local availableAt = helperGotoCooldown[src] or 0
+        if now < availableAt then return false, ('Helper /goto is available in %d seconds.'):format(availableAt - now) end
+        helperGotoCooldown[src] = now + 180
+    end
     local target, err = playerOrError(args[1]); if not target then return false, err end
     if src == target.source then return false, 'You are already at yourself.' end
     local destination = entityCoords(target.source); local origin = entityCoords(src)
@@ -205,7 +234,7 @@ register({ name = 'goto', description = 'Teleport to a player.', usage = '/goto 
     return ('Teleported to %s (%d).'):format(target.username, target.source)
 end })
 
-register({ name = 'bring', description = 'Bring a player to you.', usage = '/bring [player id]', minimumAdminLevel = 2, arguments = { { required = true } }, audit = 'important', handler = function(src, args)
+register({ name = 'bring', aliases = {'gethere'}, description = 'Bring a player to you.', usage = '/gethere [player id]', minimumAdminLevel = 2, arguments = { { required = true } }, audit = 'important', handler = function(src, args)
     local target, err = playerOrError(args[1]); if not target then return false, err end
     local allowed, denied = canTarget(src, target, false); if not allowed then return false, denied end
     local destination = entityCoords(src); if not destination then return false, 'Your entity is unavailable.' end
@@ -254,7 +283,7 @@ healthCommand('heal',2,'rpg:admin:heal')
 healthCommand('revive',2,'rpg:admin:revive')
 healthCommand('respawn',2,'rpg:spawn:adminRespawn')
 
-register({ name = 'spectate', description = 'Spectate a player or stop spectating.', usage = '/spectate [id|off]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src,args)
+register({ name = 'spectate', aliases = {'spec'}, description = 'Spectate a player or stop spectating.', usage = '/spec [id|off]', minimumAdminLevel = 2, arguments = { { required = true } }, handler = function(src,args)
     if string.lower(args[1]) == 'off' then
         local saved=spectating[src]; if not saved then return false,'You are not spectating.' end
         spectating[src]=nil; SetPlayerRoutingBucket(src,saved.origin.bucket); TriggerClientEvent('rpg:admin:spectateStop',src,saved.origin)
@@ -273,6 +302,14 @@ register({ name = 'warn', description = 'Persist a warning.', usage = '/warn [id
     local allowed,denied=canTarget(src,target,false); if not allowed then return false,denied end
     local reason=joinFrom(args,2); if not reason or #reason>500 then return false,'Usage: /warn [id] [reason] (maximum 500 characters)' end
     local id=sanction('warning',src,target,reason,nil); if not id then return false,'Warning could not be saved.' end; TriggerClientEvent('rpg:chat:message',target.source,('Warning #%d: %s'):format(id,reason),'warning')
+    local warningCount=tonumber(MySQL.scalar.await([[SELECT COUNT(*) FROM sanctions WHERE target_account_id=? AND sanction_type='warning' AND revoked_at IS NULL]],{target.accountId})) or 0
+    if warningCount >= 3 then
+        local banId=sanction('ban',src,target,'Automatic account ban: 3/3 warnings',nil)
+        if not banId then return false,'Warning saved, but automatic ban could not be persisted.' end
+        exports.rpg_core:SavePlayer(target.source,'three_warnings_ban')
+        DropPlayer(target.source,'Banned permanently: 3/3 warnings.')
+        return ('Warning #%d issued; %s reached 3/3 and received permanent ban #%d.'):format(id,target.username,banId)
+    end
     return ('Warning #%d issued to %s.'):format(id,target.username)
 end })
 
@@ -302,10 +339,19 @@ local function banHandler(src,args)
 end
 register({ name='ban',aliases={'tempban'},description='Ban a player.',usage='/ban [id] [duration|perm] [reason]',minimumAdminLevel=3,arguments={{required=true},{required=true},{required=true}},audit='important',handler=banHandler })
 
+register({ name='banip',description='Permanently ban a current IP.',usage='/banip [id] [reason]',minimumAdminLevel=4,arguments={{required=true},{required=true}},audit='important',handler=function(src,args)
+    local target,err=playerOrError(args[1]); if not target then return false,err end
+    local allowed,denied=canTarget(src,target,false); if not allowed then return false,denied end
+    local reason=joinFrom(args,2); if not reason or #reason>500 then return false,'Usage: /banip [id] [reason]' end
+    local id=sanction('ip_ban',src,target,reason,nil); if not id then return false,'IP ban could not be saved.' end
+    exports.rpg_core:SavePlayer(target.source,'admin_ip_ban'); DropPlayer(target.source,'IP banned permanently: '..reason)
+    return ('IP ban #%d applied to %s.'):format(id,target.username)
+end })
+
 register({ name='unban',description='Revoke an active ban.',usage='/unban [ban id|username] [reason]',minimumAdminLevel=3,arguments={{required=true}},audit='important',handler=function(src,args)
     local needle=args[1]; local row
-    if tonumber(needle) then row=MySQL.single.await([[SELECT * FROM sanctions WHERE id=? AND sanction_type='ban' AND revoked_at IS NULL]],{tonumber(needle)})
-    else row=MySQL.single.await([[SELECT * FROM sanctions WHERE LOWER(target_username)=? AND sanction_type='ban' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1]],{string.lower(needle)}) end
+    if tonumber(needle) then row=MySQL.single.await([[SELECT * FROM sanctions WHERE id=? AND sanction_type IN ('ban','ip_ban') AND revoked_at IS NULL]],{tonumber(needle)})
+    else row=MySQL.single.await([[SELECT * FROM sanctions WHERE LOWER(target_username)=? AND sanction_type IN ('ban','ip_ban') AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1]],{string.lower(needle)}) end
     if not row then return false,'No active ban matched.' end
     local actor=exports.rpg_core:GetPlayer(src); local reason=joinFrom(args,2) or 'Unbanned by staff'
     local committed=MySQL.startTransaction(function(query)
@@ -318,9 +364,10 @@ register({ name='unban',description='Revoke an active ban.',usage='/unban [ban i
     return ('Ban #%d for %s revoked.'):format(row.id,row.target_username)
 end })
 
-register({ name='announce',description='Broadcast a server announcement.',usage='/announce [message]',minimumAdminLevel=3,arguments={{required=true}},handler=function(src,args)
+register({ name='announce',aliases={'anno'},description='Broadcast a server announcement.',usage='/anno [message]',minimumAdminLevel=3,arguments={{required=true}},handler=function(src,args)
     local message=joinFrom(args,1); if not message or #message>280 then return false,'Usage: /announce [message] (maximum 280 characters)' end
-    for _,raw in ipairs(GetPlayers()) do TriggerClientEvent('rpg:chat:message',tonumber(raw),'[ANNOUNCEMENT] '..message,'admin') end
+    local username=exports.rpg_core:GetUsername(src) or 'CONSOLE'
+    for _,raw in ipairs(GetPlayers()) do TriggerClientEvent('rpg:chat:message',tonumber(raw),('ANNOUNCEMENT %s (%d): %s'):format(username,src,message),'admin') end
     return 'Announcement sent.'
 end })
 
@@ -328,10 +375,10 @@ register({ name='cc',description='Clear chat for everyone.',usage='/cc',minimumA
     for _,raw in ipairs(GetPlayers()) do TriggerClientEvent('rpg:chat:clear',tonumber(raw)) end return 'Chat cleared.'
 end })
 
-register({ name='setadmin',description='Set a player admin level.',usage='/setadmin [id] [0-5]',minimumAdminLevel=5,arguments={{required=true},{required=true}},audit='important',handler=function(src,args)
+register({ name='setadmin',description='Set a player admin level.',usage='/setadmin [id] [0-6]',minimumAdminLevel=6,arguments={{required=true},{required=true}},audit='important',handler=function(src,args)
     local target,err=playerOrError(args[1]); if not target then return false,err end
     if target.source==src then return false,'You cannot change your own admin level.' end
-    local level=tonumber(args[2]); if not level or level%1~=0 or level<0 or level>5 then return false,'Usage: /setadmin [id] [0-5]' end
+    local level=tonumber(args[2]); if not level or level%1~=0 or level<0 or level>6 then return false,'Usage: /setadmin [id] [0-6]' end
     if not setAdminLevelAudited(src,target,level,('Set level %d'):format(level)) then return false,'Admin level could not be saved and audited.' end
     TriggerClientEvent('rpg:chat:message',target.source,('Your admin level is now %s (%d).'):format(labels[level],level),'admin')
     return ('%s is now %s (%d).'):format(target.username,labels[level],level)
@@ -351,8 +398,8 @@ RegisterCommand('rpg_setowner',function(source,args)
     local row=MySQL.single.await('SELECT id,username,admin_level FROM accounts WHERE username_normalized=? LIMIT 1',{string.lower(username)})
     if not row then print('[RPG][ADMIN] Account not found: '..username) return end
     local target={accountId=row.id,username=row.username,adminLevel=tonumber(row.admin_level) or 0}
-    if not setAdminLevelAudited(0,target,5,'Console bootstrap owner') then print('[RPG][ADMIN] Failed to save and audit owner level') return end
-    print(('[RPG][ADMIN] %s (account %d) is now Owner'):format(row.username,row.id))
+    if not setAdminLevelAudited(0,target,6,'Console bootstrap owner') then print('[RPG][ADMIN] Failed to save and audit owner level') return end
+    print(('[RPG][ADMIN] %s (account %d) is now Admin Level 6'):format(row.username,row.id))
 end,true)
 
 AddEventHandler('playerConnecting',function(_,_,deferrals)
@@ -362,7 +409,7 @@ AddEventHandler('playerConnecting',function(_,_,deferrals)
         for _,raw in ipairs(GetPlayerIdentifiers(src)) do
             local kind,value=raw:match('^([^:]+):(.+)$')
             if kind and value then
-                result=MySQL.single.await([[SELECT s.id,s.reason,s.expires_at FROM sanctions s JOIN sanction_identifiers si ON si.sanction_id=s.id WHERE si.identifier_type=? AND si.identifier_value=? AND s.sanction_type='ban' AND s.revoked_at IS NULL AND (s.expires_at IS NULL OR s.expires_at>UTC_TIMESTAMP(6)) LIMIT 1]],{kind,value})
+                result=MySQL.single.await([[SELECT s.id,s.reason,s.expires_at FROM sanctions s JOIN sanction_identifiers si ON si.sanction_id=s.id WHERE si.identifier_type=? AND si.identifier_value=? AND ((s.sanction_type='ban' AND ?<>'ip') OR (s.sanction_type='ip_ban' AND ?='ip')) AND s.revoked_at IS NULL AND (s.expires_at IS NULL OR s.expires_at>UTC_TIMESTAMP(6)) LIMIT 1]],{kind,value,kind,kind})
                 if result then break end
             end
         end
@@ -386,7 +433,7 @@ RegisterNetEvent('rpg:admin:spectateFailed',function()
 end)
 
 AddEventHandler('playerDropped',function()
-    local src=source; duty[src]=nil; backPositions[src]=nil; frozen[src]=nil; spectating[src]=nil
+    local src=source; duty[src]=nil; RPGAdmin.helperDuty[src]=nil; helperGotoCooldown[src]=nil; backPositions[src]=nil; frozen[src]=nil; spectating[src]=nil
     for target,actor in pairs(frozen) do if actor==src then frozen[target]=nil; local ped=GetPlayerPed(target); if ped and ped~=0 then FreezeEntityPosition(ped,false) end; TriggerClientEvent('rpg:admin:freeze',target,false) end end
     for admin,state in pairs(spectating) do if state.target==src then stopSpectatingAdmin(admin,'Spectate ended because the target disconnected.') end end
 end)

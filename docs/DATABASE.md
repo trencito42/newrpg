@@ -4,13 +4,15 @@ MariaDB 11.8 runs without a published host port on the Compose-internal network.
 
 ## Tables
 
-- `accounts`: normalized unique username/email, scrypt hash, status, admin level, login metadata.
-- `players`: exactly one row per account, base model/state/stats only.
+- `accounts`: normalized unique username/email, scrypt hash, status, separate admin/helper levels, login metadata.
+- `players`: exactly one row per account, base model/state/stats, money/RP, and provisional faction linkage.
 - `account_identifiers`: observed Cfx identifiers for security/audit; never the login identity.
 - `sessions`: immutable history plus one nullable generated key enforcing one active session per account.
-- `sanctions`: warning/kick/ban/admin-jail history and expiry/revocation state.
+- `sanctions`: warning/kick/account-ban/IP-ban/chat-mute history and expiry/revocation state.
 - `sanction_identifiers`: identifier snapshots supporting pre-login ban enforcement.
 - `admin_actions`: canonical immutable staff audit.
+- `player_reports`, `newbie_questions`: persistent support queues with atomic handler ownership.
+- `factions`, `houses`, `server_vehicles`: minimal persisted foundations required by staff commands.
 - `schema_migrations`: migration filename and SHA-256.
 
 ## Migrations
@@ -32,4 +34,3 @@ The script checks fresh application, second-run safety, username/email uniquenes
 - Update cache only after DB success.
 - Do not report success when a query fails.
 - Never let DB downtime create fake/default persistent state.
-

@@ -41,8 +41,8 @@ RPG.RegisterCommand({
         if not stats then return false, 'You are not authenticated.' end
         local hours = math.floor(stats.totalPlaytimeSeconds / 3600)
         local minutes = math.floor((stats.totalPlaytimeSeconds % 3600) / 60)
-        reply(src, ('ID %d | %s | %s | Level %d | XP %d | Playtime %dh %dm | Created %s | Last login %s'):format(
-            stats.id, stats.username, stats.sex, stats.level, stats.xp, hours, minutes,
+        reply(src, ('ID %d | %s | %s | Level %d | XP %d | Money $%d | RP %d | Playtime %dh %dm | Created %s | Last login %s'):format(
+            stats.id, stats.username, stats.sex, stats.level, stats.xp, stats.money, stats.respectPoints, hours, minutes,
             stats.createdAt or 'unknown', stats.lastLoginAt or 'first session'
         ), 'info')
         return true

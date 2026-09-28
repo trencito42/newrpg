@@ -4,12 +4,10 @@
 
 ```text
 oxmysql -> rpg_core -> rpg_ui -> rpg_auth
-                     -> rpg_spawn
-                     -> rpg_admin
-                     -> rpg_chat
+                     -> rpg_spawn -> rpg_admin -> rpg_chat
 ```
 
-`rpg_core` owns only infrastructure: the authoritative player registry, identity persistence, lifecycle state machine, RPC transport, command registry, base statistics, session finalization, and structured logs. It has no knowledge of future gameplay domains.
+`rpg_core` owns infrastructure and the small base profile: authoritative registry, identity, lifecycle, RPC, command authorization, base stats/currency, session finalization, and logs. Staff support and provisional world administration live in `rpg_admin` until full gameplay resources replace those boundaries.
 
 Resources register stable callbacks and commands through exports. Server-internal lifecycle broadcasts use `AddEventHandler`/`TriggerEvent`, not network events. Network events exist only where a client must send intent or receive presentation instructions.
 
@@ -26,7 +24,7 @@ Transitions are checked server-side. Login/onboarding uses a private OneSync rou
 
 ## Authoritative registry
 
-The registry is indexed separately by server source and account ID. Public snapshots are copies; modules cannot mutate internal tables. Account ID is never confused with the ephemeral source ID. Only the small replicated states `rpg:active` and `rpg:adminDuty` use state bags.
+The registry is indexed separately by server source and account ID. Public snapshots are copies; modules cannot mutate internal tables. Account ID is never confused with the ephemeral source ID. Only small flags such as active state, staff duty, sleep, and tracking immunity use state bags.
 
 ## Session invariants
 
@@ -43,7 +41,7 @@ One request/response bus supplies unique IDs, client timeout cleanup, missing-ca
 
 ## Command contract
 
-All player-facing commands are registered in `rpg_core`. Definitions include name, aliases, description, usage, required admin level, argument policy, console policy, audit policy, resource owner, and handler. Unknown, denied, invalid, missing-player, exception, and domain rejection paths always return feedback.
+All player-facing commands are registered in `rpg_core`. Definitions include name, aliases, description, usage, separate admin/helper requirements, argument policy, console policy, audit policy, resource owner, and handler. Unknown, denied, invalid, missing-player, exception, and domain rejection paths always return feedback.
 
 ## UI and focus
 
@@ -51,5 +49,4 @@ All player-facing commands are registered in `rpg_core`. Definitions include nam
 
 ## Extension rule
 
-A future module owns its tables and server state. It may call documented core exports and register callbacks/commands, but must not import core files, mutate core tables, add gameplay fields to `players`, or introduce a reverse/circular dependency.
-
+A future full gameplay module should take ownership of its tables and server state through a new migration and explicit API boundary. It may call documented core exports and register callbacks/commands, but must not import implementation files or introduce a reverse/circular dependency.

@@ -80,6 +80,7 @@ local function hydrate(row, src, sessionId)
         username = row.username,
         email = row.email,
         adminLevel = tonumber(row.admin_level) or 0,
+        helperLevel = tonumber(row.helper_level) or 0,
         accountStatus = row.status,
         sex = row.sex,
         model = row.model,
@@ -93,6 +94,10 @@ local function hydrate(row, src, sessionId)
         dead = row.is_dead == true or tonumber(row.is_dead) == 1,
         level = tonumber(row.level) or 1,
         xp = tonumber(row.xp) or 0,
+        money = tonumber(row.money) or 0,
+        respectPoints = tonumber(row.respect_points) or 0,
+        factionId = row.faction_id and tonumber(row.faction_id) or nil,
+        factionLeader = row.faction_leader == true or tonumber(row.faction_leader) == 1,
         totalPlaytimeSeconds = tonumber(row.total_playtime_seconds) or 0,
         createdAt = tostring(row.created_at),
         lastLoginAt = row.last_login_at and tostring(row.last_login_at) or nil,
@@ -112,6 +117,7 @@ local function publicSnapshot(player)
         accountId = player.accountId,
         username = player.username,
         adminLevel = player.adminLevel,
+        helperLevel = player.helperLevel,
         sex = player.sex,
         model = player.model,
         tutorialCompleted = player.tutorialCompleted,
@@ -121,6 +127,10 @@ local function publicSnapshot(player)
         dead = player.dead,
         level = player.level,
         xp = player.xp,
+        money = player.money,
+        respectPoints = player.respectPoints,
+        factionId = player.factionId,
+        factionLeader = player.factionLeader,
         totalPlaytimeSeconds = player.totalPlaytimeSeconds,
         createdAt = player.createdAt,
         lastLoginAt = player.lastLoginAt,
@@ -156,6 +166,11 @@ end
 function GetAdminLevel(src)
     local player = Players[sourceNumber(src)]
     return player and player.adminLevel or 0
+end
+
+function GetHelperLevel(src)
+    local player = Players[sourceNumber(src)]
+    return player and player.helperLevel or 0
 end
 
 function HasAdminLevel(src, level)
@@ -265,7 +280,8 @@ function Authenticate(src, username, password)
 
     local ok, row = pcall(MySQL.single.await, [[
         SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
-               p.health, p.armor, p.is_dead, p.level, p.xp, p.total_playtime_seconds
+               p.health, p.armor, p.is_dead, p.level, p.xp, p.money, p.respect_points,
+               p.faction_id, p.faction_leader, p.total_playtime_seconds
         FROM accounts a JOIN players p ON p.account_id = a.id
         WHERE a.username_normalized = ? LIMIT 1
     ]], { username })
@@ -345,7 +361,8 @@ function RegisterAccount(src, data)
 
     local row = MySQL.single.await([[
         SELECT a.*, p.sex, p.model, p.tutorial_completed, p.last_x, p.last_y, p.last_z, p.last_heading,
-               p.health, p.armor, p.is_dead, p.level, p.xp, p.total_playtime_seconds
+               p.health, p.armor, p.is_dead, p.level, p.xp, p.money, p.respect_points,
+               p.faction_id, p.faction_leader, p.total_playtime_seconds
         FROM accounts a JOIN players p ON p.account_id = a.id
         WHERE a.username_normalized = ? LIMIT 1
     ]], { clean.normalizedUsername })
@@ -448,6 +465,10 @@ function GetPlayerStats(src)
         sex = player.sex,
         level = player.level,
         xp = player.xp,
+        money = player.money,
+        respectPoints = player.respectPoints,
+        factionId = player.factionId,
+        factionLeader = player.factionLeader,
         totalPlaytimeSeconds = total,
         sessionPlaytimeSeconds = math.max(0, os.time() - player.sessionStartedAt),
         createdAt = player.createdAt,
@@ -456,12 +477,13 @@ function GetPlayerStats(src)
     }
 end
 
-local allowedStats = { xp = true, level = true }
+local allowedStats = { xp = true, level = true, money = true, respectPoints = true }
 function IncrementStat(src, stat, amount)
     local player = Players[sourceNumber(src)]
     amount = tonumber(amount)
-    if not player or not allowedStats[stat] or not amount or amount < 0 or amount > 1000000 then return false end
-    local column = stat == 'xp' and 'xp' or 'level'
+    if not player or not allowedStats[stat] or not amount or amount < 0 or amount > 100000000 then return false end
+    local columns = { xp = 'xp', level = 'level', money = 'money', respectPoints = 'respect_points' }
+    local column = columns[stat]
     local affected = MySQL.update.await(('UPDATE players SET %s = %s + ? WHERE account_id = ?'):format(column, column), { math.floor(amount), player.accountId })
     if affected == 1 then player[stat] = player[stat] + math.floor(amount) return true end
     return false
@@ -471,18 +493,45 @@ function SetStat(src, stat, value)
     local player = Players[sourceNumber(src)]
     value = tonumber(value)
     if not player or not allowedStats[stat] or not value or value < (stat == 'level' and 1 or 0) then return false end
-    local affected = MySQL.update.await(('UPDATE players SET %s = ? WHERE account_id = ?'):format(stat), { math.floor(value), player.accountId })
+    local columns = { xp = 'xp', level = 'level', money = 'money', respectPoints = 'respect_points' }
+    local affected = MySQL.update.await(('UPDATE players SET %s = ? WHERE account_id = ?'):format(columns[stat]), { math.floor(value), player.accountId })
     if affected == 1 then player[stat] = math.floor(value) return true end
     return false
 end
 
 function SetAdminLevel(accountId, level)
     accountId, level = tonumber(accountId), tonumber(level)
-    if not accountId or not level or level < 0 or level > 5 then return false end
+    if not accountId or not level or level < 0 or level > 6 then return false end
     local affected = MySQL.update.await('UPDATE accounts SET admin_level = ? WHERE id = ?', { level, accountId })
     local src = AccountSources[accountId]
     if affected == 1 and src and Players[src] then Players[src].adminLevel = level end
     return affected == 1
+end
+
+
+function RPG.RefreshHelperLevel(accountId)
+    accountId = tonumber(accountId)
+    if not accountId then return nil end
+    local level = tonumber(MySQL.scalar.await('SELECT helper_level FROM accounts WHERE id = ?', { accountId }))
+    local src = AccountSources[accountId]
+    if level and src and Players[src] then Players[src].helperLevel = level end
+    return level
+end
+
+function RPG.RefreshProfileFields(accountId)
+    accountId = tonumber(accountId)
+    if not accountId then return nil end
+    local row = MySQL.single.await('SELECT level,xp,money,respect_points,faction_id,faction_leader FROM players WHERE account_id=?', { accountId })
+    local src = AccountSources[accountId]
+    local current = src and Players[src] or nil
+    if not row or not current then return row ~= nil end
+    current.level = tonumber(row.level) or current.level
+    current.xp = tonumber(row.xp) or current.xp
+    current.money = tonumber(row.money) or current.money
+    current.respectPoints = tonumber(row.respect_points) or current.respectPoints
+    current.factionId = row.faction_id and tonumber(row.faction_id) or nil
+    current.factionLeader = row.faction_leader == true or tonumber(row.faction_leader) == 1
+    return true
 end
 
 function RPG.RefreshAdminLevel(accountId)
@@ -519,6 +568,7 @@ exports('GetAccountId', GetAccountId)
 exports('GetUsername', GetUsername)
 exports('GetAdminLevel', GetAdminLevel)
 exports('HasAdminLevel', HasAdminLevel)
+exports('GetHelperLevel', GetHelperLevel)
 exports('Authenticate', Authenticate)
 exports('RegisterAccount', RegisterAccount)
 exports('SetLifecycleState', SetLifecycleState)
@@ -529,4 +579,6 @@ exports('IncrementStat', IncrementStat)
 exports('SetStat', SetStat)
 exports('SetAdminLevel', SetAdminLevel)
 exports('RefreshAdminLevel', RPG.RefreshAdminLevel)
+exports('RefreshHelperLevel', RPG.RefreshHelperLevel)
+exports('RefreshProfileFields', RPG.RefreshProfileFields)
 exports('GetHealthSnapshot', GetHealthSnapshot)

@@ -33,6 +33,7 @@ function RPG.RegisterCommand(definition)
     definition.description = definition.description or ''
     definition.usage = definition.usage or ('/' .. name)
     definition.minimumAdminLevel = tonumber(definition.minimumAdminLevel) or 0
+    definition.minimumHelperLevel = definition.minimumHelperLevel and tonumber(definition.minimumHelperLevel) or nil
     definition.arguments = definition.arguments or {}
     definition.consoleAllowed = definition.consoleAllowed == true
     definition.audit = definition.audit or 'none'
@@ -67,10 +68,20 @@ function DispatchCommand(src, line)
     local definition = commands[canonical]
     if not definition then reply(src, ('Unknown command: /%s'):format(enteredName), 'error') return false end
     if src == 0 and not definition.consoleAllowed then reply(src, ('/%s cannot be used from console.'):format(canonical), 'error') return false end
-    local level = src == 0 and 5 or GetAdminLevel(src)
-    if level < definition.minimumAdminLevel then
+    local level = src == 0 and 6 or GetAdminLevel(src)
+    local helperLevel = src == 0 and 3 or GetHelperLevel(src)
+    local permitted
+    if definition.minimumHelperLevel then
+        permitted = level >= math.max(1, definition.minimumAdminLevel) or helperLevel >= definition.minimumHelperLevel
+    else
+        permitted = level >= definition.minimumAdminLevel
+    end
+    if not permitted then
         local required = RPG.Config.adminLabels[definition.minimumAdminLevel] or ('Level ' .. definition.minimumAdminLevel)
-        reply(src, ('No access to /%s. Requires %s (level %d). Your level: %d.'):format(canonical, required, definition.minimumAdminLevel, level), 'error')
+        if definition.minimumHelperLevel then
+            required = ('Admin Level %d or Helper Level %d'):format(math.max(1, definition.minimumAdminLevel), definition.minimumHelperLevel)
+        end
+        reply(src, ('No access to /%s. Requires %s. Your admin/helper levels: %d/%d.'):format(canonical, required, level, helperLevel), 'error')
         return false
     end
     local requiredCount = 0
@@ -95,7 +106,7 @@ end
 function RPG.GetCommandDefinitions()
     local list = {}
     for name, definition in pairs(commands) do
-        list[#list + 1] = { name = name, aliases = definition.aliases, description = definition.description, usage = definition.usage, minimumAdminLevel = definition.minimumAdminLevel }
+        list[#list + 1] = { name = name, aliases = definition.aliases, description = definition.description, usage = definition.usage, minimumAdminLevel = definition.minimumAdminLevel, minimumHelperLevel = definition.minimumHelperLevel }
     end
     table.sort(list, function(a, b) return a.name < b.name end)
     return list

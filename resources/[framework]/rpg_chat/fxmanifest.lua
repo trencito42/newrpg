@@ -10,5 +10,6 @@ client_script 'client/main.lua'
 
 dependencies {
     'rpg_core',
-    'rpg_ui'
+    'rpg_ui',
+    'rpg_admin'
 }

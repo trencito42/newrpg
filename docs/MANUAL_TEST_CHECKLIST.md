@@ -36,12 +36,16 @@ Run with two FiveM clients where a scenario says A/B. Capture client F8 and FXSe
 
 ## Admin
 
-- [ ] Bootstrap owner through console, then test every command at levels 0-5.
+- [ ] Bootstrap Admin 6 through console, then test every command at Admin 0-6 and Helper 0-3.
 - [ ] Hierarchy blocks equal/higher targets and unsafe self-targets.
 - [ ] `/goto`, `/bring`, `/back` with either party in a vehicle and across buckets.
 - [ ] Freeze cleanup when target drops, admin drops, and resource stops.
 - [ ] Spectate off/target drop/admin drop/resource stop always restores visibility, invincibility, freeze, bucket, and coordinates.
-- [ ] Warning/kick/ban/unban/setadmin rows and matching `admin_actions` exist.
+- [ ] Report and newbie queues allow one open item, close atomically, and notify only the same connected account.
+- [ ] Global/newbie mutes affect only their intended channels and expire correctly.
+- [ ] Third warning creates a permanent account ban; IP ban snapshots only the IP identifier.
+- [ ] Warning/kick/ban/unban/setadmin/sethelper rows and matching audit data exist.
+- [ ] Noclip, marks, area actions, persistent houses, factions, and server vehicles survive expected restart boundaries.
 - [ ] Temporary ban blocks before expiry and permits after expiry; permanent ban remains.
 - [ ] Ban is enforced by account after login and by observed identifiers during connection.
 
@@ -51,4 +55,3 @@ Run with two FiveM clients where a scenario says A/B. Capture client F8 and FXSe
 - [ ] Restart each framework resource individually and inspect cleanup/recovery.
 - [ ] Inspect `resmon`, server hitch warnings, DB slow-query output, and NUI console.
 - [ ] Confirm `bob74_ipl` starts without missing dependencies or map collision warnings.
-
