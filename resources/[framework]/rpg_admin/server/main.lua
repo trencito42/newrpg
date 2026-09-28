@@ -448,6 +448,45 @@ register({ name='serverstats',description='Show live server health.',usage='/ser
     return true
 end })
 
+register({ name='commands',aliases={'allcommands','servercommands'},description='List all registered server commands grouped by permission tier.',usage='/commands',minimumAdminLevel=1,minimumHelperLevel=1,consoleAllowed=true,handler=function(src,_,reply)
+    local allDefs=exports.rpg_core:GetCommandDefinitions()
+    local tierPlayer, tierHelper, tierAdmin12, tierAdmin34, tierAdmin56 = {}, {}, {}, {}, {}
+
+    for _, def in ipairs(allDefs) do
+        local item = '/' .. def.name
+        if def.minimumAdminLevel and def.minimumAdminLevel >= 5 then
+            tierAdmin56[#tierAdmin56 + 1] = item
+        elseif def.minimumAdminLevel and def.minimumAdminLevel >= 3 then
+            tierAdmin34[#tierAdmin34 + 1] = item
+        elseif def.minimumAdminLevel and def.minimumAdminLevel >= 1 then
+            tierAdmin12[#tierAdmin12 + 1] = item
+        elseif def.minimumHelperLevel then
+            tierHelper[#tierHelper + 1] = item .. ('(H%d)'):format(def.minimumHelperLevel)
+        else
+            tierPlayer[#tierPlayer + 1] = item
+        end
+    end
+
+    reply(src, ('=== ALL SERVER COMMANDS (%d Registered) ==='):format(#allDefs), 'info')
+    if #tierPlayer > 0 then
+        reply(src, '[Player (L0)] ' .. table.concat(tierPlayer, ', '), 'info')
+    end
+    if #tierHelper > 0 then
+        reply(src, '[Helper (H1-H3)] ' .. table.concat(tierHelper, ', '), 'helper')
+    end
+    if #tierAdmin12 > 0 then
+        reply(src, '[Admin L1-L2] ' .. table.concat(tierAdmin12, ', '), 'admin')
+    end
+    if #tierAdmin34 > 0 then
+        reply(src, '[Admin L3-L4] ' .. table.concat(tierAdmin34, ', '), 'admin')
+    end
+    if #tierAdmin56 > 0 then
+        reply(src, '[Admin L5-L6 (Mgmt)] ' .. table.concat(tierAdmin56, ', '), 'admin')
+    end
+    reply(src, 'Use /help <command> for syntax details.', 'system')
+    return true
+end })
+
 RegisterCommand('rpg_setowner',function(source,args)
     if source~=0 then print('[RPG][ADMIN] rpg_setowner is console-only') return end
     local username=table.concat(args,' '):match('^%s*(.-)%s*$')

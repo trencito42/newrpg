@@ -84,6 +84,73 @@ RPG.RegisterCommand({
     end,
 })
 
+RPG.RegisterCommand({
+    name = 'help',
+    aliases = { 'h', 'cmds' },
+    description = 'View all commands accessible to your rank or inspect a specific command.',
+    usage = '/help [command_name]',
+    handler = function(src, args, reply)
+        local allDefs = RPG.GetCommandDefinitions()
+        local adminLvl = src == 0 and 6 or GetAdminLevel(src)
+        local helperLvl = src == 0 and 3 or GetHelperLevel(src)
+
+        if args[1] then
+            local query = string.lower(args[1]:gsub('^/', ''))
+            for _, def in ipairs(allDefs) do
+                local match = (def.name == query)
+                if not match and def.aliases then
+                    for _, alias in ipairs(def.aliases) do
+                        if alias == query then match = true break end
+                    end
+                end
+                if match then
+                    local permitted = false
+                    if def.minimumHelperLevel then
+                        permitted = adminLvl >= math.max(1, def.minimumAdminLevel) or helperLvl >= def.minimumHelperLevel
+                    else
+                        permitted = adminLvl >= def.minimumAdminLevel
+                    end
+                    if not permitted then
+                        return false, ('You do not have permission to use /%s.'):format(def.name)
+                    end
+                    local aliasStr = (def.aliases and #def.aliases > 0) and (' (aliases: /%s)'):format(table.concat(def.aliases, ', /')) or ''
+                    reply(src, ('[HELP] /%s%s - %s'):format(def.name, aliasStr, def.description ~= '' and def.description or 'No description.'), 'info')
+                    reply(src, ('[USAGE] %s'):format(def.usage), 'info')
+                    return true
+                end
+            end
+            return false, ('Command "/%s" not found.'):format(query)
+        end
+
+        local playerCmds, helperCmds, adminCmds = {}, {}, {}
+        for _, def in ipairs(allDefs) do
+            local isHelper = (def.minimumHelperLevel ~= nil)
+            local isAdmin = (def.minimumAdminLevel > 0)
+
+            if not isHelper and not isAdmin then
+                playerCmds[#playerCmds + 1] = '/' .. def.name
+            elseif isHelper and (helperLvl >= (def.minimumHelperLevel or 1) or adminLvl >= math.max(1, def.minimumAdminLevel)) then
+                helperCmds[#helperCmds + 1] = '/' .. def.name
+            elseif isAdmin and adminLvl >= def.minimumAdminLevel then
+                adminCmds[#adminCmds + 1] = '/' .. def.name
+            end
+        end
+
+        reply(src, '=== AVAILABLE COMMANDS ===', 'info')
+        if #playerCmds > 0 then
+            reply(src, '[Player] ' .. table.concat(playerCmds, ', '), 'info')
+        end
+        if #helperCmds > 0 then
+            reply(src, '[Helper] ' .. table.concat(helperCmds, ', '), 'helper')
+        end
+        if #adminCmds > 0 then
+            reply(src, '[Admin] ' .. table.concat(adminCmds, ', '), 'admin')
+        end
+        reply(src, 'Type /help <command> for detailed usage.', 'system')
+        return true
+    end,
+})
+
 RegisterCommand('framework', function(source, args)
     if source ~= 0 then return end
     local mode = args[1] or 'health'

@@ -58,7 +58,7 @@ test('server config enables OneSync and strict state bag replication', () => {
 
 test('all required admin commands are registered centrally', () => {
   const source = read('resources/[framework]/rpg_admin/server/main.lua');
-  const required = ['aduty','a','admins','ainfo','goto','bring','back','coords','freeze','unfreeze','heal','revive','respawn','spectate','warn','history','kick','ban','banip','unban','announce','cc','setadmin','serverstats'];
+  const required = ['aduty','a','admins','ainfo','goto','bring','back','coords','freeze','unfreeze','heal','revive','respawn','spectate','warn','history','kick','ban','banip','unban','announce','cc','setadmin','serverstats','commands'];
   for (const command of required) {
     const direct = new RegExp(`name\\s*=\\s*['\"]${command}['\"]`).test(source);
     assert.equal(direct, true, `missing /${command}`);
