@@ -1,21 +1,49 @@
--- /glue — attach player ped to the roof of the nearest vehicle (SA-MP style surf)
--- /unglue — detach
+-- /glue — stay at exact position relative to nearest vehicle (SA-MP surf)
+-- Uses manual per-frame teleport instead of AttachEntityToEntity so the
+-- player never snaps — they stay at the exact coords they had when /glue ran.
 
-local glued        = false
-local glueVehicle  = nil
-local glueThread   = nil
+local glued       = false
+local glueVehicle = nil
+local localOffset = nil  -- ped position in vehicle-local space
 
 local function notify(msg, kind)
     exports.sunset_ui:Notify(msg, kind or 'info', 4000)
+end
+
+-- Convert a world position to vehicle-local space (yaw only — ground vehicles).
+local function worldToLocal(veh, worldPos)
+    local epos = GetEntityCoords(veh)
+    local rot  = GetEntityRotation(veh, 2)
+    local dx   = worldPos.x - epos.x
+    local dy   = worldPos.y - epos.y
+    local dz   = worldPos.z - epos.z
+    local rad  = math.rad(-rot.z)
+    return vector3(
+        dx * math.cos(rad) - dy * math.sin(rad),
+        dx * math.sin(rad) + dy * math.cos(rad),
+        dz
+    )
+end
+
+-- Convert vehicle-local position back to world space.
+local function localToWorld(veh, lpos)
+    local epos = GetEntityCoords(veh)
+    local rot  = GetEntityRotation(veh, 2)
+    local rad  = math.rad(rot.z)
+    return vector3(
+        epos.x + lpos.x * math.cos(rad) - lpos.y * math.sin(rad),
+        epos.y + lpos.x * math.sin(rad) + lpos.y * math.cos(rad),
+        epos.z + lpos.z
+    )
 end
 
 local function detach()
     if not glued then return end
     glued       = false
     glueVehicle = nil
+    localOffset = nil
 
     local ped = PlayerPedId()
-    DetachEntity(ped, true, true)
     SetEntityCollision(ped, true, true)
     SetPedCanRagdoll(ped, true)
     ClearPedTasksImmediately(ped)
@@ -27,14 +55,17 @@ local function watchGlue()
             local ped = PlayerPedId()
             local veh = glueVehicle
 
-            -- Auto-detach if vehicle no longer exists or was destroyed
             if not veh or not DoesEntityExist(veh) or IsEntityDead(veh) then
                 detach()
                 notify('Vehicle gone — detached.', 'warning')
                 break
             end
 
-            -- Suppress ragdoll and keep ped invisible controls frozen every frame
+            -- Recompute world position every frame from the saved local offset
+            local target = localToWorld(veh, localOffset)
+            SetEntityCoordsNoOffset(ped, target.x, target.y, target.z, false, false, false)
+
+            SetEntityCollision(ped, false, false)
             SetPedCanRagdoll(ped, false)
             DisableControlAction(0, 23, true)  -- block enter vehicle
             DisableControlAction(0, 75, true)  -- block exit vehicle
@@ -53,7 +84,6 @@ RegisterCommand('glue', function()
     local ped    = PlayerPedId()
     local origin = GetEntityCoords(ped)
 
-    -- Find closest vehicle within 10 m
     local closest, closestDist = nil, 10.0
     for _, veh in ipairs(GetGamePool('CVehicle')) do
         if DoesEntityExist(veh) then
@@ -70,51 +100,13 @@ RegisterCommand('glue', function()
         return
     end
 
-    -- Get vehicle roof bone for attachment point
-    local boneIdx = GetEntityBoneIndexByName(closest, 'roof')
-    if boneIdx < 0 then boneIdx = GetEntityBoneIndexByName(closest, 'chassis') end
-    local boneToUse = boneIdx >= 0 and boneIdx or -1
-
-    -- Offset above the roof so the ped stands on top
-    local offZ = 1.1
-
-    -- Bail out of vehicle without triggering "enter" animation on re-attach
-    if IsPedInAnyVehicle(ped, false) then
-        SetPedIntoVehicle(ped, 0, -1)  -- force-eject via null vehicle
-        ClearPedTasksImmediately(ped)
-        Wait(100)
-    end
-
-    -- Calculate offset from vehicle bone to current ped position so they
-    -- stay exactly where they are standing — no snap to roof centre.
-    local pedPos  = GetEntityCoords(ped)
-    local bonePos = GetWorldPositionOfEntityBone(closest, boneToUse >= 0 and boneToUse or 0)
-    local relX    = pedPos.x - bonePos.x
-    local relY    = pedPos.y - bonePos.y
-    local relZ    = pedPos.z - bonePos.z + 0.05  -- tiny lift so feet don't clip
+    -- Save the ped's position in the vehicle's local space right now.
+    -- The loop will keep them at this exact relative spot as the vehicle moves.
+    localOffset = worldToLocal(closest, origin)
 
     SetEntityCollision(ped, false, false)
     SetPedCanRagdoll(ped, false)
     ClearPedTasksImmediately(ped)
-
-    AttachEntityToEntity(
-        ped, closest,
-        boneToUse,
-        relX, relY, relZ,  -- exact offset from current ped position
-        0.0, 0.0, 0.0,
-        false, false,
-        false, false,      -- isPed=false prevents "enter vehicle" behaviour
-        2, true
-    )
-
-    -- Force idle stand anim so the ped doesn't do enter/exit animations
-    local dict = 'anim@move_m@generic'
-    RequestAnimDict(dict)
-    local deadline = GetGameTimer() + 1000
-    while not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(10) end
-    if HasAnimDictLoaded(dict) then
-        TaskPlayAnim(ped, dict, 'idle', 2.0, 2.0, -1, 1, 0, false, false, false)
-    end
 
     glued       = true
     glueVehicle = closest
@@ -122,7 +114,7 @@ RegisterCommand('glue', function()
 
     local plate = GetVehicleNumberPlateText(closest) or ''
     plate = plate:match('^%s*(.-)%s*$')
-    notify(('Glued to vehicle [%s]. /unglue to detach.'):format(plate ~= '' and plate or '???'), 'success')
+    notify(('Glued to [%s]. /unglue to detach.'):format(plate ~= '' and plate or '???'), 'success')
 end, false)
 
 RegisterCommand('unglue', function()
@@ -134,12 +126,9 @@ RegisterCommand('unglue', function()
     notify('Detached.', 'success')
 end, false)
 
-TriggerEvent('chat:addSuggestion', '/glue',   'Attach yourself to the roof of the nearest vehicle (SA-MP surf style)')
+TriggerEvent('chat:addSuggestion', '/glue',   'Attach yourself to the nearest vehicle at your current position')
 TriggerEvent('chat:addSuggestion', '/unglue', 'Detach from the vehicle you are glued to')
 
--- Clean up on resource stop
 AddEventHandler('onResourceStop', function(res)
-    if res == GetCurrentResourceName() and glued then
-        detach()
-    end
+    if res == GetCurrentResourceName() and glued then detach() end
 end)
