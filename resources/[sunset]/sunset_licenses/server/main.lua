@@ -482,6 +482,22 @@ local function chargeExamFee(source, licenseType)
     return false, fee, nil
 end
 
+local function checkPrerequisites(source, licenseType)
+    local def = SunsetLicenses.Types[licenseType]
+    if not def or not def.prerequisites or #def.prerequisites == 0 then return true end
+    -- FAIL CLOSED: if the licenses resource is somehow unavailable (it IS this
+    -- resource, so this is a self-check guard), deny rather than silently grant.
+    for _, prereqType in ipairs(def.prerequisites) do
+        local prereqDef = SunsetLicenses.Types[prereqType]
+        local ok, _ = HasLicense(source, prereqType)
+        if not ok then
+            local prereqLabel = prereqDef and prereqDef.label or prereqType
+            return false, ('You must hold a valid %s before taking the %s exam.'):format(prereqLabel, def.label)
+        end
+    end
+    return true
+end
+
 local function canStartTest(source, licenseType)
     licenseType = tostring(licenseType or '')
     local def = SunsetLicenses.Types[licenseType]
@@ -491,6 +507,9 @@ local function canStartTest(source, licenseType)
     if ok and err ~= 'test' then
         return false, ('You already hold a valid %s.'):format(def.label)
     end
+    -- Check prerequisites before allowing exam start (e.g. hunting requires weapon license)
+    local prereqOk, prereqErr = checkPrerequisites(source, licenseType)
+    if not prereqOk then return false, prereqErr end
     local facility = SunsetLicenses.Facilities[def.facility]
     if not facility or not near(source, facility.marker, (facility.markerRadius or 3.0) + 2.0) then
         return false, ('Stand at the %s marker to start this exam.'):format(
@@ -821,12 +840,12 @@ function RunInstructorLicenseCommand(source, args)
     local target = tonumber(args[1])
     local licenseType = string.lower(tostring(args[2] or ''))
     if not target or not GetPlayerName(target) then
-        notify(source, 'Usage: /issuelicense [player id] [pilot|boat|weapon]', 'error')
+        notify(source, 'Usage: /issuelicense [player id] [pilot|boat|weapon|hunting]', 'error')
         return true
     end
     local def = SunsetLicenses.Types[licenseType]
     if not def or not def.instructorFaction then
-        notify(source, 'LSSI may conduct tests for: pilot, boat, weapon. Driving tests are self-service.', 'error')
+        notify(source, 'LSSI may conduct tests for: pilot, boat, weapon, hunting. Driving tests are self-service.', 'error')
         return true
     end
     if target == source then

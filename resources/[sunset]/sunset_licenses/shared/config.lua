@@ -229,6 +229,46 @@ SunsetLicenses.Theory = {
             },
         },
     },
+    hunting = {
+        title = 'LSSI Hunting License — Theory',
+        intro = 'Wildlife management requires safe, ethical practice. You need 5/8 correct. Read each question carefully — several have real-world safety implications.',
+        passScore = 5,
+        questions = {
+            {
+                q = 'The first rule when handling a hunting firearm is:',
+                options = { 'Treat every firearm as loaded', 'Point at the sky when unsure', 'Keep finger on trigger for quick reaction', 'Check with others before firing' },
+            },
+            {
+                q = 'Before pulling the trigger you must identify:',
+                options = { 'Your target and what lies beyond it', 'Only that the animal is moving', 'That no one is watching', 'That the animal is large enough' },
+            },
+            {
+                q = 'A safe backdrop means:',
+                options = { 'No roads, structures, or people beyond the target', 'Open sky behind the animal', 'Shooting only downhill', 'Shooting only at dawn' },
+            },
+            {
+                q = 'You should NEVER fire near:',
+                options = { 'Roads, populated areas, or structures', 'Wooded areas during daylight', 'Flat open terrain', 'Hills or ridges' },
+            },
+            {
+                q = 'A legal hunting zone is:',
+                options = { 'A designated wildlife management area away from the city', 'Any area outside Los Santos', 'Anywhere animals are spotted', 'Private land only' },
+            },
+            {
+                q = 'For humane, effective shot placement on large game, aim for:',
+                options = { 'The vital chest region — heart and lungs', 'The head only', 'The legs to slow the animal first', 'The rump for a clean exit' },
+            },
+            {
+                q = 'Correct hunting equipment means:',
+                options = { 'A legal hunting firearm with appropriate caliber for the species', 'Any available weapon including automatics or explosives', 'The largest firearm available', 'Any weapon if the hunter holds a Firearm License' },
+            },
+            {
+                q = 'A protected species means:',
+                options = { 'It may NOT be hunted or harvested under any contract', 'It requires a higher-rank contract', 'It can be hunted only at night', 'It grants bonus trophies if harvested' },
+            },
+        },
+    },
+
     weapon = {
         title = 'Firearm Safety — Theory',
         intro = 'Treat every gun as loaded. Keep the muzzle pointed in a safe direction and only fire at range targets during the practical.',
@@ -370,6 +410,44 @@ SunsetLicenses.Practical = {
         finishRadius = 15.0,
         requireEngineOff = true,
     },
+    hunting = {
+        weapon = 'WEAPON_SNIPERRIFLE',
+        ammo = 15,
+        targetsRequired = 4,
+        avoidTargets = 2,
+        targetRadius = 2.0,
+        maxTimeSec = 240,
+        maxMistakes = 2,
+        briefing = {
+            {
+                title = 'LSSI Hunting Range',
+                message = 'Welcome to the Hunting License practical. Demonstrate safe, accurate wildlife shooting.',
+            },
+            {
+                message = 'Step to the firing position. Press E when you are ready to receive the test rifle and begin.',
+                require = 'ready',
+            },
+            {
+                message = 'Engage all DEER targets (orange markers). Do NOT shoot the PROTECTED animals (red markers). Return to the booth when done.',
+            },
+        },
+        -- Valid targets: deer silhouettes. Avoid targets: protected animal positions.
+        targets = {
+            vector4(2581.0, 3480.0, 56.5, 270.0),
+            vector4(2578.0, 3485.0, 57.0, 280.0),
+            vector4(2583.0, 3491.0, 57.5, 265.0),
+            vector4(2575.0, 3476.0, 56.0, 275.0),
+            vector4(2585.0, 3474.0, 56.5, 260.0),
+        },
+        -- Avoid targets: "protected animals" — shooting these costs a mistake.
+        avoidPositions = {
+            vector4(2571.0, 3483.0, 56.0, 270.0),
+            vector4(2590.0, 3488.0, 57.0, 260.0),
+        },
+        zoneCenter = vector3(2569.0, 3467.0, 56.0),
+        zoneRadius = 60.0,
+    },
+
     weapon = {
         weapon = 'WEAPON_PISTOL',
         ammo = 48,

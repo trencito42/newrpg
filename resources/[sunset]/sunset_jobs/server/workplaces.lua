@@ -18,7 +18,10 @@ local function checkRequirements(source, char, reqs)
         end
     end
 
-    -- 2. License check
+    -- 2. License check — FAIL CLOSED: if the license resource is unavailable
+    -- and this job explicitly declares license requirements, deny access rather
+    -- than silently treating the missing check as "licensed". This prevents
+    -- bypassing the Hunting / Weapon license gate during resource restarts.
     if reqs.licenses and #reqs.licenses > 0 then
         for _, lic in ipairs(reqs.licenses) do
             local hasLic = false
@@ -28,7 +31,8 @@ local function checkRequirements(source, char, reqs)
                 end)
                 hasLic = (ok and res == true)
             else
-                hasLic = true -- permissive fallback if licenses resource not present
+                -- Licensing service is down — deny rather than permit unlicensed access.
+                return false, 'Licensing service unavailable. Try again in a moment.'
             end
 
             if not hasLic then
