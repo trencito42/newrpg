@@ -413,9 +413,6 @@ RegisterCommand('skin', function()
     ExecuteCommand('wardrobe')
 end, false)
 
-RegisterCommand('skins', function()
-    ExecuteCommand('wardrobe')
-end, false)
 
 exports('OpenWardrobe', function(fromHouse)
     local allowed, house, msg = canOpenWardrobe()
