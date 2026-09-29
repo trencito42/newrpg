@@ -94,7 +94,7 @@ local function setZoneBlip(zone)
     EndTextCommandSetBlipName(ZoneBlip)
     -- Also set GPS waypoint so minimap nav activates immediately
     SetNewWaypoint(cx, cy)
-    exports.sunset_ui:Notify(('~b~GPS set to Hunting Zone: %s. ~y~No animal positions shown — track them.'):format(
+    exports.sunset_ui:Notify(('GPS set to Hunting Zone: %s. No animal positions shown — track them.'):format(
         zone.label or zone.id or '?'), 'info', 7000)
 end
 
@@ -201,12 +201,9 @@ end)
 
 -- ── Contract Complete ─────────────────────────────────────────
 RegisterNetEvent('sunset:hunting:contractComplete', function(result)
-    local msg = ('~g~Contract Complete!~s~ Earned ~y~$%d~s~ + ~b~%d XP~s~'):format(
+    local msg = ('Contract Complete! Earned $%d + %d XP'):format(
         result.bonus or 0, result.xp or 0)
-    DisplayHelpTextThisFrame(msg)
-    BeginTextCommandThisFrame('STRING')
-    AddTextComponentSubstringPlayerName(msg)
-    EndTextCommandThisFrame(3, 0, 6000, -1, -1)
+    exports.sunset_ui:Notify(msg, 'success', 6000)
     ContractData = nil
     -- [SECTION 19] Clear zone blip when contract is complete
     clearZoneBlip()
@@ -251,7 +248,7 @@ CreateThread(function()
             CreateThread(function()
                 local info, err = Sunset.AwaitCallback('sunset:jobs:hunter:inspectCarcass', netId)
                 if not info then
-                    exports.sunset_ui:Notify(('~r~%s'):format(err or 'Cannot inspect'), 'error', 4000)
+                    exports.sunset_ui:Notify(err or 'Cannot inspect', 'error', 4000)
                 else
                     -- Show carcass info via playerInteraction (no NUI panel needed)
                     exports.sunset_ui:Send('playerInteractionShow', {
@@ -260,7 +257,7 @@ CreateThread(function()
                         actions = {
                             {
                                 id     = 'hunter_harvest_' .. tostring(netId),
-                                label  = ('Harvest — %s  (~y~%.1f kg~s~)'):format(info.grade or '?', info.weight or 0),
+                                label  = ('Harvest — %s  (%.1f kg)'):format(info.grade or '?', info.weight or 0),
                                 detail = ('Quality: %d%%  ·  Shots: %d  ·  Method: %s'):format(
                                     info.quality or 0, info.shots or 1, info.method or '?'),
                                 group  = 'HARVEST',
@@ -283,12 +280,12 @@ CreateThread(function()
                     if clue and clue.type ~= 'no_tracks' then
                         exports.sunset_ui:Notify(clue.message or 'Tracks spotted nearby.', 'info', 5000)
                     elseif clue then
-                        exports.sunset_ui:Notify('~y~No fresh tracks in range. Move deeper.', 'info', 4000)
+                        exports.sunset_ui:Notify('No fresh tracks in range. Move deeper.', 'info', 4000)
                     end
                 end)
             else
                 local remaining = math.ceil((TrackingCooldownMs - GetGameTimer()) / 1000)
-                exports.sunset_ui:Notify(('~y~Tracking cooldown: %ds'):format(remaining), 'info', 2000)
+                exports.sunset_ui:Notify(('Tracking cooldown: %ds'):format(remaining), 'info', 2000)
             end
         end
 
@@ -309,7 +306,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:harvest', netId)
             if not result then
-                exports.sunset_ui:Notify(('~r~%s'):format(err or 'Harvest failed'), 'error', 5000)
+                exports.sunset_ui:Notify(err or 'Harvest failed', 'error', 5000)
             else
                 -- [SECTION 20] Remove from client registries AFTER successful harvest
                 CarcassMarkers[netId] = nil
@@ -327,7 +324,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     updateShiftHud()
                 end
                 exports.sunset_ui:Notify(
-                    ('~g~Harvested! Grade: ~y~%s~s~ · Quality: ~b~%d%%~s~'):format(
+                    ('Harvested! Grade: %s · Quality: %d%%'):format(
                         result.grade or '?', result.quality or 0),
                     'success', 5000)
             end

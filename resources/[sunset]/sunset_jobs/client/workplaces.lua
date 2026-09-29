@@ -528,7 +528,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 for _, c in ipairs(contracts) do
                     items[#items + 1] = {
                         id = 'workplace_take_contract_' .. c.id,
-                        label = ('%s  ~y~$%d'):format(c.label or c.id, c.pay or 0),
+                        label = ('%s  $%d'):format(c.label or c.id, c.pay or 0),
                         detail = ('Rank %d · Harvest %d × %s'):format(c.minRank, c.requiredHarvests, c.species or '?'),
                         group = 'CONTRACTS',
                     }
@@ -565,7 +565,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     local boatTag = c.requiresBoat and ' · Boat req.' or ''
                     items[#items + 1] = {
                         id = 'workplace_take_dive_contract_' .. c.id,
-                        label = ('%s  ~y~$%d'):format(c.label or c.id, c.pay or 0),
+                        label = ('%s  $%d'):format(c.label or c.id, c.pay or 0),
                         detail = ('Rank %d · %s%s · Recover %d'):format(
                             c.minRank, c.difficulty or 'easy', boatTag, c.requiredSalvage or 3),
                         group = 'CONTRACTS',
@@ -585,9 +585,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             local cfgDiver = Sunset.JobsConfig and Sunset.JobsConfig.diver
             local gear = cfgDiver and cfgDiver.gear or {}
             local items = {
-                { id = 'workplace_gear_basic',    label = 'Basic Gear  ~y~$30',    detail = '2 min O2 · Rank 1', group = 'GEAR' },
-                { id = 'workplace_gear_standard', label = 'Standard Gear  ~y~$60', detail = '3 min O2 · Rank 2', group = 'GEAR' },
-                { id = 'workplace_gear_advanced', label = 'Advanced Gear  ~y~$100',detail = '5 min O2 · Rank 3', group = 'GEAR' },
+                { id = 'workplace_gear_basic',    label = 'Basic Gear  $30',    detail = '2 min O2 · Rank 1', group = 'GEAR' },
+                { id = 'workplace_gear_standard', label = 'Standard Gear  $60', detail = '3 min O2 · Rank 2', group = 'GEAR' },
+                { id = 'workplace_gear_advanced', label = 'Advanced Gear  $100',detail = '5 min O2 · Rank 3', group = 'GEAR' },
                 { id = 'workplace_back', label = '← Back', group = 'NAV' },
             }
             exports.sunset_ui:Send('playerInteractionShow', {

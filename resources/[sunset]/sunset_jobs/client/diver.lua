@@ -49,7 +49,7 @@ local function updateShiftHud()
             -- message was factually wrong. Players must return to Terry for a replacement.
             message  = O2Remaining > 0
                 and ('O2: %ds  — Press {key} on salvage points'):format(O2Remaining)
-                or '~r~O2 depleted — return to Terry for a new tank!',
+                or 'O2 depleted — return to Terry for a new tank!',
             key      = 'E',
             progress = math.floor((rec / req) * 100),
             detail   = ContractData.siteId or '',
@@ -81,7 +81,7 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
         if data.stage == 'return_to_terry' then
             TerryHandoffReady = true
             SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
-            exports.sunset_ui:Notify('~b~All salvage recovered! Return to Terry at the waterfront.', 'info', 8000)
+            exports.sunset_ui:Notify('All salvage recovered! Return to Terry at the waterfront.', 'info', 8000)
         else
             TerryHandoffReady = false
         end
@@ -300,7 +300,7 @@ local function setSiteBlip(result)
 
     -- Set GPS waypoint to dive entry (not exact salvage — sonar handles that)
     SetNewWaypoint(bx, by)
-    exports.sunset_ui:Notify('~b~Dive site marked on map. Use sonar to locate salvage underwater.', 'info', 6000)
+    exports.sunset_ui:Notify('Dive site marked on map. Use sonar to locate salvage underwater.', 'info', 6000)
 end
 
 -- ── Salvage Marker Management ─────────────────────────────────
@@ -347,7 +347,7 @@ CreateThread(function()
                 -- [SECTION 33-34] Phase 1: request hold token from server
                 local beginResult, beginErr = Sunset.AwaitCallback('sunset:jobs:diver:beginSalvage', nearest.idx)
                 if not beginResult then
-                    exports.sunset_ui:Notify(('~r~%s'):format(beginErr or 'Cannot begin salvage'), 'error', 4000)
+                    exports.sunset_ui:Notify(beginErr or 'Cannot begin salvage', 'error', 4000)
                 else
                     -- Phase 2: show 4-second progress bar; cancel if player moves away
                     local token       = beginResult.token
@@ -376,13 +376,13 @@ CreateThread(function()
                     exports.sunset_ui:Send('progressBarHide', {})
 
                     if cancelled then
-                        exports.sunset_ui:Notify('~r~Salvage cancelled — you moved away.', 'error', 3000)
+                        exports.sunset_ui:Notify('Salvage cancelled — you moved away.', 'error', 3000)
                     else
                         -- Phase 2: complete salvage
                         local result, err = Sunset.AwaitCallback(
                             'sunset:jobs:diver:completeSalvage', nearest.idx, token)
                         if not result then
-                            exports.sunset_ui:Notify(('~r~%s'):format(err or 'Salvage failed'), 'error', 4000)
+                            exports.sunset_ui:Notify(err or 'Salvage failed', 'error', 4000)
                         else
                             nearest.claimed = true
                             if ContractData then
@@ -390,7 +390,7 @@ CreateThread(function()
                                 updateShiftHud()
                             end
                             exports.sunset_ui:Notify(
-                                ('~g~Salvaged: ~y~%s~s~ (~b~%s~s~, $%d)'):format(
+                                ('Salvaged: %s (%s, $%d)'):format(
                                     result.item or '?', result.condition or '?', result.value or 0),
                                 'success', 4000)
                             -- result.completed → server sends returnToTerry event
@@ -479,7 +479,7 @@ end)
 RegisterNetEvent('sunset:diving:returnToTerry', function()
     TerryHandoffReady = true
     SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
-    exports.sunset_ui:Notify('~b~All salvage recovered! Return to Terry at the Vespucci waterfront.', 'info', 8000)
+    exports.sunset_ui:Notify('All salvage recovered! Return to Terry at the Vespucci waterfront.', 'info', 8000)
 end)
 
 -- Terry handoff proximity thread
@@ -499,11 +499,11 @@ CreateThread(function()
                 CreateThread(function()
                     local result, err = Sunset.AwaitCallback('sunset:jobs:diver:handoff')
                     if not result then
-                        exports.sunset_ui:Notify(('~r~%s'):format(err or 'Handoff failed'), 'error', 5000)
+                        exports.sunset_ui:Notify(err or 'Handoff failed', 'error', 5000)
                         TerryHandoffReady = true  -- re-enable if failed
                     else
                         exports.sunset_ui:Notify(
-                            ('~g~Contract complete! Terry paid ~y~$%d~s~ + ~b~%d XP~s~'):format(
+                            ('Contract complete! Terry paid $%d + %d XP'):format(
                                 result.total or 0, result.xp or 0),
                             'success', 7000)
                     end

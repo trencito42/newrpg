@@ -851,7 +851,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:track', function(source
         type      = clue,
         direction = dirLabel,
         distance  = fuzzyDist,
-        message   = ('Fresh sign found. Direction: ~b~%s~s~  ~y~≈%dm'):format(dirLabel, fuzzyDist),
+        message   = ('Fresh sign found. Direction: %s  ≈%dm'):format(dirLabel, fuzzyDist),
     }
 end)
 
