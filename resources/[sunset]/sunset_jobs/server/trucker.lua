@@ -149,25 +149,28 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
-    if not session then return nil, err end
-    if session.data.stage ~= 'to_pickup' then return nil, 'Not heading to pickup' end
+    if not session then print('[TRUCKER] atPickup FAIL session: ' .. tostring(err)) return nil, err end
+    if session.data.stage ~= 'to_pickup' then print('[TRUCKER] atPickup FAIL stage: ' .. tostring(session.data.stage)) return nil, 'Not heading to pickup' end
 
     local cfg = Sunset.GetJobConfig('trucker')
-    if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0) then
-        return nil, 'Use your assigned work truck'
-    end
+    local vehOk, vehErr = SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0)
+    if not vehOk then print('[TRUCKER] atPickup FAIL vehicle: ' .. tostring(vehErr)) return nil, 'Use your assigned work truck' end
     if session.data.hasTrailer then
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
-        if not trailerOk then return nil, trailerErr end
+        if not trailerOk then print('[TRUCKER] atPickup FAIL trailer: ' .. tostring(trailerErr)) return nil, trailerErr end
     end
     local route = cfg.routes[session.data.routeIndex]
-    if not route then return nil, 'Route data is missing' end
+    if not route then print('[TRUCKER] atPickup FAIL no route idx=' .. tostring(session.data.routeIndex)) return nil, 'Route data is missing' end
     if not validateTruckerCoords(source, route.pickup, cfg) then
+        local ped = GetPlayerPed(source)
+        local pos = GetEntityCoords(ped)
+        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x,pos.y,pos.z,route.pickup.x,route.pickup.y,route.pickup.z))
         return nil, 'Not at pickup location — drive into the loading dock marker'
     end
 
     session.data.stage = 'to_delivery'
     SunsetJobs_SetState(source, 'ACTIVE')
+    print('[TRUCKER] atPickup OK src=' .. tostring(source))
     return session.data
 end)
 

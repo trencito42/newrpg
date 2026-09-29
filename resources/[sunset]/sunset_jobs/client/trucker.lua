@@ -280,6 +280,7 @@ local function startTrucker(selectedRouteIdx)
                             busy = true
                             local result, pickErr = Sunset.AwaitCallback('sunset:jobs:trucker:atPickup')
                             busy = false
+                            print('[TRUCKER] atPickup result=' .. tostring(result) .. ' err=' .. tostring(pickErr))
                             if result then
                                 JC.sessionData.stage = result.stage or 'to_delivery'
                                 local delivery = vector3(result.delivery.x, result.delivery.y, result.delivery.z)
