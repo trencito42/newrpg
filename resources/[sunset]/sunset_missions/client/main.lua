@@ -44,13 +44,16 @@ local function spawnContact(id, data)
         Wait(100)
     end
 
-    -- Retry CreatePed up to 3 times with a brief wait between attempts.
-    -- Spawn 2 units above the configured Z so the ped isn't fighting geometry
-    -- on the first frame; FreezeEntityPosition locks the final settled position.
-    local spawnZ = data.coords.z + 2.0
+    -- Find the actual ground Z so FreezeEntityPosition locks the ped ON the floor.
+    local groundZ = data.coords.z
+    local ok, gz = GetGroundZFor_3dCoord(data.coords.x, data.coords.y, data.coords.z + 5.0, false)
+    if ok and gz > 0 then
+        groundZ = gz
+    end
+
     local ped = 0
     for attempt = 1, 3 do
-        ped = CreatePed(4, hash, data.coords.x, data.coords.y, spawnZ, data.coords.w, false, false)
+        ped = CreatePed(4, hash, data.coords.x, data.coords.y, groundZ, data.coords.w, false, false)
         if ped ~= 0 then break end
         print(('[missions] CreatePed attempt %d failed for %s — retrying in 2s'):format(attempt, id))
         Wait(2000)
@@ -60,8 +63,8 @@ local function spawnContact(id, data)
         SetModelAsNoLongerNeeded(hash)
         return
     end
-    -- Let physics settle the ped on the ground before freezing.
-    Wait(500)
+    -- One frame for the ped to register before freezing at ground level.
+    Wait(100)
 
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)

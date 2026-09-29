@@ -11,7 +11,7 @@ SunsetMissions.Contacts = {
         name     = 'Hank',
         subtitle = 'Dock Worker',
         model    = 's_m_m_dockwork_01',
-        coords   = vector4(814.88, -2981.22, 4.0, 269.78),
+        coords   = vector4(814.88, -2981.22, 5.0, 269.78),
         scenario = 'WORLD_HUMAN_CLIPBOARD',
         missions = { 'container_47' },
     },
