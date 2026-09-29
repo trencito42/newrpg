@@ -1,5 +1,7 @@
 'use strict';
 
+const PED_IMG_BASE = 'https://docs-backend.fivem.net/peds/';
+
 let allSkins      = [];
 let activeFilter  = 'all';
 let pendingAction = false;
@@ -43,7 +45,7 @@ function renderGrid() {
 
         // Badge
         let badge = '';
-        if (skin.owned)      badge = '<span class="skin-badge badge-owned">Owned</span>';
+        if (skin.owned)           badge = '<span class="skin-badge badge-owned">Owned</span>';
         else if (skin.battlepass) badge = '<span class="skin-badge badge-bp">Battlepass</span>';
 
         // Price row
@@ -68,12 +70,21 @@ function renderGrid() {
         }
 
         card.innerHTML = `
-            <div class="skin-label">${skin.label}</div>
-            <div class="skin-model">${skin.model}</div>
-            <div class="skin-cat">${skin.category}</div>
-            ${badge}
-            ${prices}
-            <div class="skin-actions">${actions}</div>`;
+            <div class="skin-preview">
+                <img src="${PED_IMG_BASE}${skin.model}.webp"
+                     alt="${skin.label}"
+                     loading="lazy"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+                <div class="skin-preview-fallback" style="display:none">?</div>
+            </div>
+            <div class="skin-info">
+                <div class="skin-label">${skin.label}</div>
+                <div class="skin-model">${skin.model}</div>
+                <div class="skin-cat">${skin.category}</div>
+                ${badge}
+                ${prices}
+                <div class="skin-actions">${actions}</div>
+            </div>`;
         grid.appendChild(card);
     });
 }
@@ -101,13 +112,11 @@ async function handleAction(btn) {
     pendingAction = false;
 }
 
-// Delegated click handler on grid
 grid.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (btn) handleAction(btn);
 });
 
-// Filter buttons
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -117,17 +126,14 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
-// Close button
 closeBtn.addEventListener('click', () => nuiPost('close'));
 
-// Keyboard ESC to close
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
         nuiPost('close');
     }
 });
 
-// Messages from Lua
 window.addEventListener('message', e => {
     const data = e.data;
     if (!data || !data.action) return;
