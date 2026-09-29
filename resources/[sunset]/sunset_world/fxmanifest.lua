@@ -25,6 +25,7 @@ client_scripts {
     'client/main.lua',
     'client/elevators.lua',
     'client/fib_interior.lua',
+    'client/glue.lua',
 }
 
 server_scripts {
