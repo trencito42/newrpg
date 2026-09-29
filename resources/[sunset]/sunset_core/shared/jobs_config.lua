@@ -107,14 +107,16 @@ Sunset.JobsConfig = {
 
     courier = {
         label = 'Courier',
-        help = 'Spawn your van, load all packages at the warehouse, then deliver them door-to-door without returning between stops.',
+        help = 'Spawn your van, load all packages at the warehouse loading dock, then deliver them door-to-door without returning between stops.',
         warehouse = {
-            coords = vector3(78.45, 112.22, 81.17),
+            coords = vector3(112.48, 103.98, 81.15),
             blip = { sprite = 478, color = 3, scale = 0.85 },
         },
-        -- Van spawns just outside the warehouse loading dock
-        vehicleModel = 'speedo2',
-        vehicleSpawn = vector4(74.0, 118.0, 81.17, 180.0),
+        packagePickup = vector4(112.48, 103.98, 81.15, 346.18),
+        loadingBay = vector4(118.0, 99.5, 80.7, 251.6),
+        -- Van spawns at the parking lot
+        vehicleModel = 'speedo',
+        vehicleSpawn = vector4(62.8, 123.7, 78.9, 161.0),
         deliveries = {
             { coords = vector3(-47.22, -1758.45, 29.42),  label = 'Davis Ave' },
             { coords = vector3(213.88, -810.45, 30.73),   label = 'Legion Square' },
@@ -125,11 +127,13 @@ Sunset.JobsConfig = {
             { coords = vector3(-540.22, -183.55, 37.65),  label = 'Rockford Hills' },
         },
         packageProp = 'prop_cs_cardbox_01',
-        packagesPerRun = 5,
+        packagesPerRun = 6,
         payPerPackage = 90,
         xpPerPackage = 18,
         deliveryRadius = 3.0,
-        loadingRadius = 6.0,
+        loadingRadius = 3.5,
+        vanRearOffset = -3.2,
+        dumpRadius = 3.8,
         pickupZTolerance = 5.0,
         timeoutSec = 1500,
     },

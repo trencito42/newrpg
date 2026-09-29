@@ -103,26 +103,47 @@ local function attachPackage(cfg)
     return true
 end
 
+local function getWorkVan()
+    local van = JC.vehicles[1]
+    if van and DoesEntityExist(van) then return van end
+    return nil
+end
+
+local function getVanRearCoords(van, cfg)
+    local offset = (cfg and cfg.vanRearOffset) or -3.2
+    return GetOffsetFromEntityInWorldCoords(van, 0.0, offset, 0.0)
+end
+
 local function updateObjective(cfg, data)
     if not data then return end
-    local total = data.total or 1
+    local total = data.total or 6
     local delivered = data.delivered or 0
+    local loaded = data.loaded or 0
     local pct = math.floor((delivered / math.max(total, 1)) * 100)
     local idx = math.min(data.deliveryIndex or (delivered + 1), total)
 
     if data.stage == 'loading' then
-        showCourierUi('route', {
-            counter = ('%d packages'):format(total),
-            message = 'Load the van at the warehouse',
-            detail = 'Go to the loading dock and press E',
-            progress = 0,
-        })
+        if data.carryingPackage then
+            showCourierUi('working', {
+                counter = ('Loading %d/%d'):format(loaded + 1, total),
+                message = 'Carry package to your van',
+                detail = 'Go to the rear doors and press [E]',
+                progress = math.floor((loaded / total) * 100),
+            })
+        else
+            showCourierUi('route', {
+                counter = ('Loaded %d/%d'):format(loaded, total),
+                message = 'Pick up parcel from loading dock',
+                detail = 'Go to the package stack and press [E]',
+                progress = math.floor((loaded / total) * 100),
+            })
+        end
     elseif data.stage == 'delivering' then
         local target = data.deliveries and data.deliveries[idx]
         showCourierUi('route', {
             counter = ('Package %d/%d'):format(delivered + 1, total),
-            message = 'Follow GPS to delivery',
-            detail = target and target.label or 'Delivery address',
+            message = 'Follow GPS to delivery address',
+            detail = target and target.label or 'Customer location',
             progress = pct,
         })
     end
@@ -141,8 +162,8 @@ local function startCourier()
     JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, 'Courier Depot')
     JC.sessionData = data
 
-    -- Spawn delivery van near the warehouse
-    local vehicleModel = cfg.vehicleModel or 'speedo2'
+    -- Spawn delivery van at parking lot
+    local vehicleModel = cfg.vehicleModel or 'speedo'
     local vehicleSpawn = cfg.vehicleSpawn or cfg.warehouse.coords
     local van = JC.spawnVehicle(vehicleModel, vehicleSpawn, true)
     if not van then
@@ -159,66 +180,97 @@ local function startCourier()
     end
     JC.monitorVehicles()
 
-    -- Point player to warehouse loading dock to load packages
-    JC.setWaypoint(cfg.warehouse.coords)
-    setCourierCheckpoint(cfg.warehouse.coords, 255, 180, 0)
+    -- Point player to loading bay
+    local pickupPos = cfg.packagePickup or cfg.warehouse.coords
+    local pickupV3 = type(pickupPos) == 'vector4' and vector3(pickupPos.x, pickupPos.y, pickupPos.z) or pickupPos
+    JC.setWaypoint(pickupV3)
+    setCourierCheckpoint(pickupV3, 255, 180, 0)
     updateObjective(cfg, data)
-    JC.notify(('Load all %d packages at the warehouse, then deliver them'):format(data.total or 0), 'info')
+    JC.notify(('Load all %d parcels into your van at the loading dock.'):format(data.total or 6), 'info')
 
     CreateThread(function()
         local busy = false
         while JC.jobId == 'courier' and JC.state ~= 'IDLE' do
             local session = JC.sessionData
             local stage = session and session.stage
+            local carrying = session and session.carryingPackage
 
-            -- Stage 1: load all packages at warehouse
+            -- Stage 1: Load packages at warehouse loading dock
             if stage == 'loading' then
-                local warehousePos = cfg.warehouse.coords
-                local loadRadius = cfg.loadingRadius or 6.0
-                JC.drawMarker(warehousePos, 255, 180, 0)
                 local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
-                local nearWarehouse = JC.isNear(warehousePos, loadRadius)
-                if nearWarehouse and onFoot then
-                    draw3DText(warehousePos, '[E] Load Packages')
-                    if not busy and IsControlJustPressed(0, 38) then
-                        busy = true
-                        showCourierUi('working', {
-                            counter = ('%d packages'):format(session.total or 0),
-                            message = 'Loading packages into the van',
-                            detail = 'Preparing delivery manifest',
-                            progress = 0,
-                        }, true)
-                        JC.playAnim('anim@heists@box_carry@', 'idle', 2500)
-                        local newData, err2 = Sunset.AwaitCallback('sunset:jobs:courier:loadPackages')
-                        busy = false
-                        if newData then
-                            JC.sessionData = newData
-                            -- Attach package prop on the player
-                            attachPackage(cfg)
-                            -- Point to first delivery
-                            local firstTarget = newData.deliveries and newData.deliveries[1]
-                            if firstTarget then
-                                pointToDelivery(cfg, firstTarget, 'Delivery 1: ' .. (firstTarget.label or ''))
+
+                if not carrying then
+                    -- Sub-step A: Pick up parcel from pallet / stack
+                    JC.drawMarker(pickupV3, 255, 180, 0)
+                    local nearPickup = JC.isNear(pickupV3, cfg.loadingRadius or 3.5)
+                    if nearPickup and onFoot then
+                        draw3DText(pickupV3, ('[E] Pick Up Package (%d/%d loaded)'):format(session.loaded or 0, session.total or 6))
+                        if not busy and IsControlJustPressed(0, 38) then
+                            busy = true
+                            JC.playAnim('anim@heists@box_carry@', 'idle', 1200)
+                            local newData, err2 = Sunset.AwaitCallback('sunset:jobs:courier:pickupWarehousePackage')
+                            busy = false
+                            if newData then
+                                JC.sessionData = newData
+                                attachPackage(cfg)
+                                updateObjective(cfg, newData)
+                                JC.notify('Take the parcel to the back doors of your van.', 'info')
+                            else
+                                JC.notify(err2 or 'Could not pick up package', 'error')
                             end
-                            updateObjective(cfg, newData)
-                            JC.notify(('Van loaded! Deliver all %d packages.'):format(newData.total or 0), 'success')
-                        else
-                            JC.notify(err2 or 'Could not load packages', 'error')
-                            courierUiKey = nil
                         end
+                    elseif nearPickup and not onFoot then
+                        showCourierUi('blocked', {
+                            counter = ('%d/%d'):format(session.loaded or 0, session.total or 6),
+                            message = 'Exit the vehicle',
+                            detail = 'Pick up packages on foot',
+                            progress = 0,
+                        })
+                    else
+                        updateObjective(cfg, session)
                     end
-                elseif nearWarehouse and not onFoot then
-                    showCourierUi('blocked', {
-                        counter = ('%d packages'):format(session and session.total or 0),
-                        message = 'Exit the vehicle',
-                        detail = 'Load the packages on foot',
-                        progress = 0,
-                    })
+
                 else
-                    updateObjective(cfg, session)
+                    -- Sub-step B: Load carried parcel into rear of van
+                    local workVan = getWorkVan()
+                    if workVan then
+                        local rearPos = getVanRearCoords(workVan, cfg)
+                        JC.drawMarker(rearPos, 46, 204, 113)
+                        local nearRear = JC.isNear(rearPos, cfg.dumpRadius or 3.8)
+                        if nearRear and onFoot then
+                            draw3DText(rearPos, '[E] Load Package into Van')
+                            if not busy and IsControlJustPressed(0, 38) then
+                                busy = true
+                                JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 1500)
+                                local vanNetId = NetworkGetNetworkIdFromEntity(workVan)
+                                local newData, err2 = Sunset.AwaitCallback('sunset:jobs:courier:loadPackageIntoVan', vanNetId)
+                                busy = false
+                                if newData then
+                                    JC.sessionData = newData
+                                    detachPackage()
+                                    if newData.stage == 'delivering' then
+                                        clearCourierCheckpoint()
+                                        local firstTarget = newData.deliveries and newData.deliveries[1]
+                                        if firstTarget then
+                                            pointToDelivery(cfg, firstTarget, 'Delivery 1: ' .. (firstTarget.label or ''))
+                                        end
+                                        updateObjective(cfg, newData)
+                                        JC.notify(('Van fully loaded with %d packages! Drive to delivery locations.'):format(newData.total or 6), 'success')
+                                    else
+                                        updateObjective(cfg, newData)
+                                        JC.notify(('Package loaded (%d/%d). Pick up the next package.'):format(newData.loaded or 0, newData.total or 6), 'success')
+                                    end
+                                else
+                                    JC.notify(err2 or 'Could not load package into van', 'error')
+                                end
+                            end
+                        end
+                    else
+                        JC.notify('Your delivery van is missing', 'error')
+                    end
                 end
 
-            -- Stage 2: deliver each package
+            -- Stage 2: Deliver each package to customer addresses
             elseif stage == 'delivering' then
                 local idx = session.deliveryIndex or 1
                 local target = session.deliveries and session.deliveries[idx]
@@ -234,7 +286,6 @@ local function startCourier()
                     if onFoot and session.hasPackage then
                         attachPackage(cfg)
                     elseif not onFoot then
-                        -- Detach while driving (prop would clip through car)
                         detachPackage()
                     end
 

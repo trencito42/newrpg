@@ -52,6 +52,15 @@ SunsetLicenses.Types = {
         instructorFaction = true,
         vehicleClasses = {},
     },
+    hunting = {
+        label = 'Hunting License',
+        short = 'Hunting',
+        facility = 'hunting_range',
+        instructorFaction = true,
+        vehicleClasses = {},
+        -- Must hold a valid Firearm License before attempting this exam.
+        prerequisites = { 'weapon' },
+    },
 }
 
 SunsetLicenses.Facilities = {

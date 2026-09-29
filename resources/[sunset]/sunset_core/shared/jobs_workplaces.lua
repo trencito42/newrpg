@@ -160,14 +160,14 @@ Sunset.JobWorkplaces = {
         },
         secondaryLocation = {
             label = 'Loading Dock',
-            coords = vector4(74.0, 118.0, 81.17, 180.0),
+            coords = vector4(112.48, 103.98, 81.15, 346.18),
         },
         guide = {
             title = 'Courier Career Guide',
             steps = {
                 '1. Apply with Dispatcher Artie at the Post OP warehouse.',
-                '2. Start your delivery run to spawn your company Speedo van.',
-                '3. Load all assigned packages at the warehouse loading bay.',
+                '2. Start your delivery run to spawn your delivery van.',
+                '3. Park at the loading bay, pick up packages [E] and load them into the back of your van.',
                 '4. Follow GPS to each recipient address and deliver the package on foot.',
                 '5. Complete all assigned drop-offs to earn your delivery commission.'
             }

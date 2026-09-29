@@ -35,7 +35,45 @@ local function validateWarehouseCoords(source, cfg)
     return math.abs(pos.z - t.z) <= (cfg.pickupZTolerance or 5.0)
 end
 
--- Start: initialise session with all deliveries queued, stage=loading
+local function resolveWorkVan(session, cfg, vehicleNetId)
+    if not session or not cfg then return nil end
+
+    local netId = tonumber(vehicleNetId) or session.vehicleNetId
+    if not netId then return nil end
+
+    local entity = NetworkGetEntityFromNetworkId(netId)
+    if not entity or entity == 0 or not DoesEntityExist(entity) then return nil end
+
+    session.vehicleNetId = netId
+    return entity
+end
+
+local function getVanRearCoords(entity, offsetY)
+    local coords = GetEntityCoords(entity)
+    local heading = math.rad(GetEntityHeading(entity))
+    local off = offsetY or -3.2
+    local forwardX = -math.sin(heading)
+    local forwardY = math.cos(heading)
+    return vector3(
+        coords.x + forwardX * off,
+        coords.y + forwardY * off,
+        coords.z
+    )
+end
+
+local function validateVanRear(source, cfg, vehicleNetId)
+    local session = SunsetJobs_GetSession(source)
+    local entity = resolveWorkVan(session, cfg, vehicleNetId)
+    if not entity then return false, 'Your assigned delivery van must be nearby' end
+
+    local rear = getVanRearCoords(entity, cfg.vanRearOffset or -3.2)
+    if not SunsetJobs_ValidateCoords(source, rear, cfg.dumpRadius or 3.8) then
+        return false, 'Go to the back of your delivery van'
+    end
+    return true
+end
+
+-- Start: initialise session with all deliveries queued, stage=loading, loaded=0
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:start', function(source)
     local cfg = Sunset.GetJobConfig('courier')
     local queue = buildDeliveryQueue(cfg)
@@ -45,6 +83,8 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:start', function(sourc
         delivered    = 0,
         total        = #queue,
         stage        = 'loading',
+        loaded       = 0,
+        carryingPackage = false,
         hasPackage   = false,
         deliveryIndex = 1,
     })
@@ -52,31 +92,60 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:start', function(sourc
     return session.data
 end)
 
--- Load all packages at once from the warehouse loading dock
-exports.sunset_core:RegisterCallback('sunset:jobs:courier:loadPackages', function(source)
+-- Step 1: Pick up a single package from the warehouse stack
+exports.sunset_core:RegisterCallback('sunset:jobs:courier:pickupWarehousePackage', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE', 'STARTING' })
     if not session then return nil, err end
-    if session.data.stage ~= 'loading' then return nil, 'Packages already loaded' end
+    if session.data.stage ~= 'loading' then return nil, 'All packages already loaded' end
+    if session.data.carryingPackage then return nil, 'You are already carrying a package' end
+    if (session.data.loaded or 0) >= (session.data.total or 6) then return nil, 'Van is fully loaded' end
 
     if not playerOnFoot(source) then
-        return nil, 'Load packages on foot'
+        return nil, 'Pick up packages on foot'
     end
 
     local cfg = Sunset.GetJobConfig('courier')
-    if not validateWarehouseCoords(source, cfg) then
-        return nil, 'Go to the warehouse loading dock'
+    local pickupPos = cfg.packagePickup or vector3(112.48, 103.98, 81.15)
+    local pPos = type(pickupPos) == 'vector4' and vector3(pickupPos.x, pickupPos.y, pickupPos.z) or pickupPos
+    if not SunsetJobs_ValidateCoords(source, pPos, cfg.loadingRadius or 3.5) then
+        return nil, 'Go to the package stack at the loading dock'
     end
 
     if session.state == 'STARTING' then
         SunsetJobs_SetState(source, 'ACTIVE')
     end
 
-    session.data.stage    = 'delivering'
-    session.data.hasPackage = true
+    session.data.carryingPackage = true
     return session.data
 end)
 
--- Deliver current package; stay in delivering stage for the next one
+-- Step 2: Load the carried package into the back of the van
+exports.sunset_core:RegisterCallback('sunset:jobs:courier:loadPackageIntoVan', function(source, vehicleNetId)
+    local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
+    if not session then return nil, err end
+    if session.data.stage ~= 'loading' then return nil, 'All packages already loaded' end
+    if not session.data.carryingPackage then return nil, 'Pick up a package from the dock first' end
+
+    if not playerOnFoot(source) then
+        return nil, 'Load packages on foot'
+    end
+
+    local cfg = Sunset.GetJobConfig('courier')
+    local ok, rearErr = validateVanRear(source, cfg, vehicleNetId)
+    if not ok then return nil, rearErr or 'Go to the back doors of your delivery van' end
+
+    session.data.carryingPackage = false
+    session.data.loaded = (session.data.loaded or 0) + 1
+
+    if session.data.loaded >= session.data.total then
+        session.data.stage = 'delivering'
+        session.data.hasPackage = true
+    end
+
+    return session.data
+end)
+
+-- Step 3: Deliver package at customer address
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:deliver', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
     if not session then return nil, err end
@@ -107,7 +176,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:deliver', function(sou
         return { pay = pay, completed = true }
     end
 
-    -- Next package comes from the van — stay in delivering stage, no warehouse trip
+    -- Next package comes from the van
     session.data.hasPackage = true
     return { pay = pay, completed = false, data = session.data }
 end)
