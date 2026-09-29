@@ -69,12 +69,10 @@ end
 AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if not data then return end
     if data.contractId and data.zoneId then
-        local zones = SunsetJobRoutes.GetRoutes and SunsetJobRoutes.GetRoutes('hunting') or {}
-        for _, z in ipairs(zones) do
-            if z.id == data.zoneId then CurrentZone = z break end
-        end
         ContractData = data
-    else
+        -- Zone object is embedded in data by server (startContract response)
+        CurrentZone = data.zone or CurrentZone
+    elseif data.stage == 'idle' or not data.contractId then
         CurrentZone = nil
         ContractData = nil
     end
@@ -159,11 +157,7 @@ RegisterNetEvent('sunset:hunting:animalDown', function(netId, coords, isOwner)
             ClearPedTasks(animal.ped)
         end
     end
-    -- Report weapon used to server for quality scoring
-    local weaponHash, _ = GetCurrentPedWeapon(PlayerPedId(), true)
-    if weaponHash and weaponHash ~= 0 then
-        TriggerServerEvent('sunset:hunting:reportKillWeapon', netId, weaponHash)
-    end
+    -- reportKillWeapon removed: weapon tracked server-side via weaponDamageEvent
     -- Mark as harvestable
     CarcassMarkers[netId] = { coords = coords, isOwner = isOwner }
 end)
@@ -214,34 +208,48 @@ CreateThread(function()
         -- Harvest prompt interaction
         if HarvestPromptNetId and IsControlJustPressed(0, 38) then -- E key
             local netId = HarvestPromptNetId
-            -- Inspect first
-            local info, err = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:inspectCarcass', netId)
-            if not info then
-                exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Cannot inspect'))
-            else
-                -- Show carcass inspection panel
-                SendNuiMessage(json.encode({
-                    type    = 'SHOW_CARCASS_PANEL',
-                    payload = info,
-                }))
-                SetNuiFocus(true, true)
-            end
+            HarvestPromptNetId = nil  -- prevent double-trigger
+            CreateThread(function()
+                local info, err = Sunset.AwaitCallback('sunset:jobs:hunter:inspectCarcass', netId)
+                if not info then
+                    exports.sunset_ui:Notify(('~r~%s'):format(err or 'Cannot inspect'), 'error', 4000)
+                else
+                    -- Show carcass info via playerInteraction (no NUI panel needed)
+                    exports.sunset_ui:Send('playerInteractionShow', {
+                        menuTitle = 'Carcass Inspection',
+                        target = { name = info.label or (info.species or 'Animal'), id = '' },
+                        actions = {
+                            {
+                                id     = 'hunter_harvest_' .. tostring(netId),
+                                label  = ('Harvest — %s  (~y~%.1f kg~s~)'):format(info.grade or '?', info.weight or 0),
+                                detail = ('Quality: %d%%  ·  Shots: %d  ·  Method: %s'):format(
+                                    info.quality or 0, info.shots or 1, info.method or '?'),
+                                group  = 'HARVEST',
+                            },
+                            { id = 'hunter_cancel_inspect', label = '← Close', group = 'NAV' },
+                        },
+                    })
+                    exports.sunset_ui:SetFocus(true, true)
+                end
+            end)
         end
 
-        -- Tracking clue (hold B or custom keybind)
-        if ContractData and IsControlJustPressed(0, 30) then -- B key (INPUT_DUCK maps differently)
+        -- Tracking clue (B key)
+        if ContractData and IsControlJustPressed(0, 30) then
             local now = GetGameTimer()
             if now > TrackingCooldownMs then
                 TrackingCooldownMs = now + TRACK_INTERVAL_MS
-                local clue, clueErr = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:track')
-                if clue and clue.type ~= 'no_tracks' then
-                    ShowFloatingHelpNotification(clue.message or 'Tracks spotted nearby.')
-                elseif clue then
-                    ShowFloatingHelpNotification('~y~No fresh tracks in range. Move deeper.')
-                end
+                CreateThread(function()
+                    local clue, clueErr = Sunset.AwaitCallback('sunset:jobs:hunter:track')
+                    if clue and clue.type ~= 'no_tracks' then
+                        exports.sunset_ui:Notify(clue.message or 'Tracks spotted nearby.', 'info', 5000)
+                    elseif clue then
+                        exports.sunset_ui:Notify('~y~No fresh tracks in range. Move deeper.', 'info', 4000)
+                    end
+                end)
             else
                 local remaining = math.ceil((TrackingCooldownMs - GetGameTimer()) / 1000)
-                exports.sunset_core:ShowNotification(('~y~Tracking cooldown: %ds'):format(remaining))
+                exports.sunset_ui:Notify(('~y~Tracking cooldown: %ds'):format(remaining), 'info', 2000)
             end
         end
 
@@ -249,26 +257,37 @@ CreateThread(function()
     end
 end)
 
--- ── NUI Callbacks ─────────────────────────────────────────────
-RegisterNUICallback('hunter:harvest', function(data, cb)
-    local netId = tonumber(data and data.netId)
-    if not netId then cb({ ok = false, error = 'Invalid' }) return end
-    local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:harvest', netId)
-    if not result then
-        cb({ ok = false, error = err or 'Harvest failed' })
-    else
-        CarcassMarkers[netId] = nil
-        if ContractData then
-            ContractData.harvested = result.contractProgress or ContractData.harvested
-            updateShiftHud()
-        end
-        cb({ ok = true, items = result.items, quality = result.quality, grade = result.grade })
-    end
-end)
+-- ── playerInteraction Handler (carcass harvest) ───────────────
+AddEventHandler('sunset:nui:playerInteractionAction', function(data)
+    if not data or not data.action then return end
+    local action = data.action
 
-RegisterNUICallback('hunter:closePanel', function(_, cb)
-    SetNuiFocus(false, false)
-    cb({})
+    if action:find('^hunter_harvest_') then
+        local netId = tonumber(action:gsub('^hunter_harvest_', ''))
+        if not netId then return end
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        CreateThread(function()
+            local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:harvest', netId)
+            if not result then
+                exports.sunset_ui:Notify(('~r~%s'):format(err or 'Harvest failed'), 'error', 5000)
+            else
+                CarcassMarkers[netId] = nil
+                if ContractData then
+                    ContractData.harvested = result.contractProgress or ContractData.harvested
+                    updateShiftHud()
+                end
+                exports.sunset_ui:Notify(
+                    ('~g~Harvested! Grade: ~y~%s~s~ · Quality: ~b~%d%%~s~'):format(
+                        result.grade or '?', result.quality or 0),
+                    'success', 5000)
+            end
+        end)
+
+    elseif action == 'hunter_cancel_inspect' then
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+    end
 end)
 
 -- Special actions handled in workplaces.lua
@@ -281,15 +300,20 @@ AddEventHandler('sunset:hunting:contractStarted', function(result)
     updateShiftHud()
 end)
 
--- ── Shift Start/End ───────────────────────────────────────────
-AddEventHandler('sunset:jobs:shiftStarted', function(jobId)
+-- ── Shift Start/End (canonical session events) ───────────────
+AddEventHandler('sunset:jobs:sessionStarted', function(jobId, session)
     if jobId ~= 'hunter' then return end
     ShiftActive = true
     refreshCfg()
+    -- Restore contract state from session on reconnect/reload
+    if session and session.data and session.data.contractId then
+        ContractData = session.data
+        CurrentZone  = session.data.zone or nil
+    end
     updateShiftHud()
 end)
 
-AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
+AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     if jobId ~= 'hunter' then return end
     ShiftActive = false
     ContractData = nil
@@ -307,15 +331,24 @@ AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
 end)
 
 -- ── Position Sync Thread ──────────────────────────────────────
--- Keeps server updated with animal positions (for tracking clue accuracy)
+-- Keeps server updated with animal positions (for tracking clue accuracy).
+-- Also reports deaths to server for validation.
 CreateThread(function()
     while true do
         Wait(3000)
         if not ShiftActive then goto continue end
         for netId, animal in pairs(ManagedAnimals) do
-            if animal.ped and DoesEntityExist(animal.ped) and animal.alive then
-                local pos = GetEntityCoords(animal.ped)
-                TriggerServerEvent('sunset:hunting:updateAnimalPos', netId, pos.x, pos.y, pos.z)
+            if animal.ped and DoesEntityExist(animal.ped) then
+                if animal.alive then
+                    -- Check if the entity is actually dead
+                    if GetEntityHealth(animal.ped) <= 0 then
+                        -- Report to server — server validates and processes exactly once
+                        TriggerServerEvent('sunset:hunting:reportAnimalDead', netId)
+                    else
+                        local pos = GetEntityCoords(animal.ped)
+                        TriggerServerEvent('sunset:hunting:updateAnimalPos', netId, pos.x, pos.y, pos.z)
+                    end
+                end
             end
         end
         ::continue::
