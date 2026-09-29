@@ -70,7 +70,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:getWorkplaceState', function(s
     local isShiftActive = false
     if SunsetJobs_GetSession then
         local sess = SunsetJobs_GetSession(source)
-        if sess and sess.job == jobId and sess.state ~= 'IDLE' and sess.state ~= 'COMPLETED' and sess.state ~= 'CANCELLED' then
+        if sess and sess.jobId == jobId and sess.state ~= 'IDLE' and sess.state ~= 'COMPLETED' and sess.state ~= 'CANCELLED' then
             isShiftActive = true
         end
     end

@@ -378,6 +378,24 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             Sunset.Jobs.StartCourier()
         elseif wp.jobId == 'fisherman' and Sunset.Jobs and Sunset.Jobs.StartFisherman then
             Sunset.Jobs.StartFisherman()
+        elseif wp.jobId == 'hunter' then
+            CreateThread(function()
+                local data, err = Sunset.AwaitCallback('sunset:jobs:hunter:start')
+                if not data then
+                    exports.sunset_ui:Notify(err or 'Could not start Hunter shift.', 'error', 5000)
+                else
+                    exports.sunset_ui:Notify('Hunter shift started. Visit Mason to pick a contract.', 'success', 5000)
+                end
+            end)
+        elseif wp.jobId == 'diver' then
+            CreateThread(function()
+                local data, err = Sunset.AwaitCallback('sunset:jobs:diver:start')
+                if not data then
+                    exports.sunset_ui:Notify(err or 'Could not start Diver shift.', 'error', 5000)
+                else
+                    exports.sunset_ui:Notify('Diver shift started. Rent gear and pick a contract with Terry.', 'success', 5000)
+                end
+            end)
         end
 
     elseif action == 'workplace_open_laptop' then
@@ -417,7 +435,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
 
     elseif action:find('^workplace_special_') then
         local specId = action:gsub('^workplace_special_', '')
-        local jobId = currentContext and currentContext.workplace and currentContext.workplace.jobId
+        -- NOTE: wp was captured before closeWorkplaceMenu() cleared currentContext
 
         if specId == 'open_laptop' then
             TriggerEvent('sunset:jobs:trucker:openLaptop')
@@ -433,7 +451,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             end
 
         -- ── Hunter special actions ──────────────────────────────
-        elseif specId == 'contracts' and jobId == 'hunter' then
+        elseif specId == 'contracts' and wp.jobId == 'hunter' then
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:hunter:getContracts')
             if not contracts or #contracts == 0 then
                 exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
@@ -457,7 +475,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 menuOpen = true
             end
 
-        elseif specId == 'sell_harvest' and jobId == 'hunter' then
+        elseif specId == 'sell_harvest' and wp.jobId == 'hunter' then
             local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:sellHarvest')
             if not result then
                 exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
@@ -465,11 +483,11 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 exports.sunset_ui:Notify(('Sold %d items for $%d!'):format(result.count, result.total), 'success', 6000)
             end
 
-        elseif specId == 'equipment' and jobId == 'hunter' then
+        elseif specId == 'equipment' and wp.jobId == 'hunter' then
             exports.sunset_ui:Notify('Required: Bolt-action Rifle + Hunting Knife. Available at Ammu-Nation.', 'info', 7000)
 
         -- ── Diver special actions ───────────────────────────────
-        elseif specId == 'contracts' and jobId == 'diver' then
+        elseif specId == 'contracts' and wp.jobId == 'diver' then
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:diver:getContracts')
             if not contracts or #contracts == 0 then
                 exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
@@ -495,7 +513,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 menuOpen = true
             end
 
-        elseif specId == 'rent_gear' and jobId == 'diver' then
+        elseif specId == 'rent_gear' and wp.jobId == 'diver' then
             local cfgDiver = Sunset.JobsConfig and Sunset.JobsConfig.diver
             local gear = cfgDiver and cfgDiver.gear or {}
             local items = {
@@ -512,13 +530,13 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             exports.sunset_ui:SetFocus(true, true)
             menuOpen = true
 
-        elseif specId == 'rent_boat' and jobId == 'diver' then
+        elseif specId == 'rent_boat' and wp.jobId == 'diver' then
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentBoat')
             if not result then
                 exports.sunset_ui:Notify(err or 'Cannot rent boat.', 'error', 5000)
             end
 
-        elseif specId == 'sell' and jobId == 'diver' then
+        elseif specId == 'sell' and wp.jobId == 'diver' then
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:sell')
             if not result then
                 exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
@@ -535,6 +553,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
         else
             exports.sunset_ui:Notify(('Contract accepted: travel to %s'):format(result.zone and result.zone.label or contractId), 'success', 6000)
+            TriggerEvent('sunset:hunting:contractStarted', result)
             exports.sunset_ui:Send('playerInteractionHide', {})
             exports.sunset_ui:SetFocus(false, false)
             menuOpen = false
@@ -560,6 +579,8 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
         else
             exports.sunset_ui:Notify(('Gear rented: %s · O2: %ds'):format(tier, result.o2Duration or 120), 'success', 6000)
+            -- Notify diver.lua to reset O2 to the new gear's duration
+            TriggerEvent('sunset:diving:gearRented', result.o2Duration or 120)
             exports.sunset_ui:Send('playerInteractionHide', {})
             exports.sunset_ui:SetFocus(false, false)
             menuOpen = false
