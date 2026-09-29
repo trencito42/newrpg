@@ -141,7 +141,8 @@ function MSN_SpawnGuards(guardDefs, onAlert)
             local player = PlayerPedId()
             for _, g in ipairs(guardPeds) do
                 if DoesEntityExist(g.ped) then
-                    if HasEntitySpottedEntity(g.ped, player, false) and alertLevel < 3 then
+                    local dist = #(GetEntityCoords(g.ped) - GetEntityCoords(player))
+                    if dist < 18.0 and alertLevel < 3 then
                         MSN_RaiseAlert(1, true)
                     end
                 end

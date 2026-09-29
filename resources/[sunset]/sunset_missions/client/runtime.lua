@@ -150,7 +150,7 @@ local function runVehicleRecovery(session)
     clearBlips()
     addBlip(def.deliveryCoords, 1, 2, 'Delivery Point', 0.8)
     MSN_NUI_UpdateHUD('Deliver the vehicle — avoid damage', variant.vehicleLabel, { plate = variant.vehiclePlate })
-    SetGpsPlayerWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
+    SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     notify('Deliver the vehicle to Rico!', 'info')
 
     -- PURSUIT — spawns 5 seconds after entering vehicle
@@ -251,7 +251,7 @@ local function runContainer47(session)
     -- ENTER_PORT
     setStage('ENTER_PORT')
     addBlip(def.portEnterCoords, 1, 5, 'Enter Port', 0.8)
-    SetGpsPlayerWaypoint(def.portEnterCoords.x, def.portEnterCoords.y)
+    SetNewWaypoint(def.portEnterCoords.x, def.portEnterCoords.y)
     MSN_NUI_ShowHUD('Enter the terminal port', nil, { row = variant.targetRow, id = '???47' })
 
     while activeSession and activeSession.state == 'ENTER_PORT' do
@@ -355,7 +355,7 @@ local function runContainer47(session)
     local exitIdx = math.random(#def.exitPoints)
     local exit    = def.exitPoints[exitIdx]
     addBlip(exit.coords, 1, 1, exit.label, 0.8)
-    SetGpsPlayerWaypoint(exit.coords.x, exit.coords.y)
+    SetNewWaypoint(exit.coords.x, exit.coords.y)
     MSN_NUI_UpdateHUD(('Escape via %s'):format(exit.label), 'Leave the port with the cargo')
 
     while activeSession and activeSession.state == 'ESCAPE' do
@@ -369,7 +369,7 @@ local function runContainer47(session)
     -- DELIVER
     clearBlips()
     addBlip(def.deliveryCoords, 1, 2, 'Delivery', 0.8)
-    SetGpsPlayerWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
+    SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     MSN_NUI_UpdateHUD('Deliver the cargo to Hank', nil)
 
     while activeSession do
@@ -393,7 +393,6 @@ end
 AddEventHandler('sunset:missions:complete', function(data)
     MSN_NUI_ShowComplete(data)
     clearBlips()
-    ClearGpsPlayerWaypoint()
     MSN_StopPursuit()
     MSN_CleanupGuards()
     if cargoObject then MSN_DeleteEntity(cargoObject) cargoObject = nil end
@@ -428,7 +427,6 @@ function MSN_AbortMission(reason)
     if not activeSession then return end
     Sunset.AwaitCallback('sunset:missions:abandon')
     clearBlips()
-    ClearGpsPlayerWaypoint()
     MSN_StopPursuit()
     MSN_CleanupGuards()
     MSN_CleanupAllEntities()

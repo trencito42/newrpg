@@ -8,6 +8,24 @@ local function showHelp(text)
     EndTextCommandDisplayHelp(0, false, true, -1)
 end
 
+local function showContactTooltip(id, ped, data)
+    if GetResourceState('sunset_world') ~= 'started' then return end
+    pcall(function()
+        exports.sunset_world:NpcShowTooltip('msn_contact_' .. id, ped, {
+            badge     = 'MISSION',
+            icon      = 'ph-briefcase',
+            title     = data.name,
+            desc      = data.subtitle,
+            key       = 'E',
+        })
+    end)
+end
+
+local function hideContactTooltip(id)
+    if GetResourceState('sunset_world') ~= 'started' then return end
+    pcall(function() exports.sunset_world:NpcHideTooltip('msn_contact_' .. id) end)
+end
+
 local function spawnContact(id, data)
     local hash = GetHashKey(data.model)
     RequestModel(hash)
@@ -37,6 +55,8 @@ local function spawnContact(id, data)
 
     contactPeds[id]  = ped
     contactBlips[id] = blip
+
+    showContactTooltip(id, ped, data)
 end
 
 AddEventHandler('onClientResourceStart', function(res)
@@ -50,6 +70,7 @@ end)
 AddEventHandler('onClientResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for id, ped in pairs(contactPeds) do
+        hideContactTooltip(id)
         if DoesEntityExist(ped) then
             SetEntityAsMissionEntity(ped, false, true)
             DeleteEntity(ped)
@@ -125,6 +146,14 @@ end)
 RegisterCommand('abandonmission', function()
     if MSN_ActiveSession() then
         MSN_AbortMission('Mission abandoned')
+    else
+        exports.sunset_ui:Notify('No active mission', 'warning')
+    end
+end, false)
+
+RegisterCommand('cancelmission', function()
+    if MSN_ActiveSession() then
+        MSN_AbortMission('Mission cancelled')
     else
         exports.sunset_ui:Notify('No active mission', 'warning')
     end
