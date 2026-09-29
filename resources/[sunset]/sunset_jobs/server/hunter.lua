@@ -898,6 +898,9 @@ end)
 local PosUpdateRate = {}  -- [source:netId] = last_update_time
 
 -- Update last known position of an animal (from owning client)
+-- [SECTION 22] Only the current network-entity-owner for this animal may update
+-- its position. Any other client sending this event is rejected — this prevents
+-- a hunter from teleporting another player's animal to a convenient location.
 RegisterNetEvent('sunset:hunting:updateAnimalPos', function(netId, x, y, z)
     local src = source
     netId = tonumber(netId)
@@ -910,6 +913,24 @@ RegisterNetEvent('sunset:hunting:updateAnimalPos', function(netId, x, y, z)
     if not session or session.jobId ~= 'hunter' then return end
     if tostring(session.data.zoneId) ~= tostring(animal.zoneId) then return end
 
+    -- [SECTION 22] Verify sender is the current network owner of the entity.
+    -- If the entity has migrated to another player, reject updates from the old owner.
+    local entity = NetworkGetEntityFromNetworkId(netId)
+    if entity and entity ~= 0 and DoesEntityExist(entity) then
+        local ownerSrc = NetworkGetEntityOwner(entity)
+        if ownerSrc and ownerSrc ~= src then
+            dlog('rejected pos update for netId=%d from src=%d (owner is %d)', netId, src, ownerSrc)
+            return
+        end
+        -- Prefer authoritative server coords when entity is accessible
+        local serverPos = GetEntityCoords(entity)
+        if serverPos then
+            animal.lastPos = { x = serverPos.x, y = serverPos.y, z = serverPos.z }
+            return
+        end
+    end
+
+    -- Entity not accessible from server — accept client-reported coords with validation
     -- Rate limit: 1 update per second per animal
     local rateKey = ('%d:%d'):format(src, netId)
     local now = os.time()
@@ -1008,6 +1029,20 @@ CreateThread(function()
                 if sess and sess.jobId == 'hunter' and sess.data.zoneId then
                     activeZones[sess.data.zoneId] = now
                 end
+            end
+        end
+        -- [SECTION 21] Clean up ALL animals in zones that have no active hunters.
+        -- Alive animals in abandoned zones would otherwise persist indefinitely,
+        -- wasting entity slots and confusing respawn population counts.
+        for netId, animal in pairs(Animals) do
+            if not activeZones[animal.zoneId] then
+                -- Zone has no hunters — remove animal unconditionally
+                local ent = NetworkGetEntityFromNetworkId(netId)
+                if ent and ent ~= 0 and DoesEntityExist(ent) then
+                    DeleteEntity(ent)
+                end
+                Animals[netId] = nil
+                HarvestOwner[netId] = nil
             end
         end
         -- Clean up harvested/dead animals older than 2 minutes
