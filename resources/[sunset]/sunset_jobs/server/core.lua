@@ -619,7 +619,8 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
             dlog(('trailer model mismatch: entity=%s expected=%s'):format(GetEntityModel(trailer), tostring(joaat(expectedTrailer))))
             return nil, 'Invalid work trailer'
         end
-        if #(GetEntityCoords(entity) - GetEntityCoords(trailer)) > 20.0 then
+        local maxTrailerDist = (session.jobId == 'trucker' and session.data and session.data.stage == 'to_pickup') and 250.0 or 45.0
+        if #(GetEntityCoords(entity) - GetEntityCoords(trailer)) > maxTrailerDist then
             session.trailerNetId = nil
             dlog('trailer too far from truck')
             return nil, 'Work trailer is too far from the truck'
