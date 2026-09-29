@@ -341,23 +341,61 @@ CreateThread(function()
             DrawMarker(2, nearest.coords.x, nearest.coords.y, nearest.coords.z + 0.3,
                 0, 0, 0, 0, 0, 0, 0.4, 0.4, 0.4,
                 30, 180, 255, 200, false, true, 2, false, nil, nil, false)
-            DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to recover salvage')
+            DisplayHelpTextThisFrame('Hold ~INPUT_CONTEXT~ to recover salvage')
 
             if IsControlJustPressed(0, 38) then -- E
-                local result, err = Sunset.AwaitCallback('sunset:jobs:diver:salvage', nearest.idx)
-                if not result then
-                    exports.sunset_ui:Notify(('~r~%s'):format(err or 'Salvage failed'), 'error', 4000)
+                -- [SECTION 33-34] Phase 1: request hold token from server
+                local beginResult, beginErr = Sunset.AwaitCallback('sunset:jobs:diver:beginSalvage', nearest.idx)
+                if not beginResult then
+                    exports.sunset_ui:Notify(('~r~%s'):format(beginErr or 'Cannot begin salvage'), 'error', 4000)
                 else
-                    nearest.claimed = true
-                    if ContractData then
-                        ContractData.recovered = result.recovered
-                        updateShiftHud()
+                    -- Phase 2: show 4-second progress bar; cancel if player moves away
+                    local token       = beginResult.token
+                    local holdSec     = beginResult.minDuration or 4
+                    local holdMs      = holdSec * 1000
+                    local startTime   = GetGameTimer()
+                    local cancelled   = false
+                    local startPos    = GetEntityCoords(PlayerPedId())
+
+                    exports.sunset_ui:Send('progressBarShow', {
+                        label    = 'Recovering salvage...',
+                        duration = holdMs,
+                    })
+
+                    -- Wait for hold duration; cancel if player moves >1.5m
+                    while GetGameTimer() - startTime < holdMs do
+                        Wait(100)
+                        local curPos = GetEntityCoords(PlayerPedId())
+                        local moved  = #(curPos - startPos)
+                        if moved > 1.5 then
+                            cancelled = true
+                            break
+                        end
                     end
-                    exports.sunset_ui:Notify(
-                        ('~g~Salvaged: ~y~%s~s~ (~b~%s~s~, $%d)'):format(
-                            result.item or '?', result.condition or '?', result.value or 0),
-                        'success', 4000)
-                    -- result.completed means all salvage recovered; server will send returnToTerry event
+
+                    exports.sunset_ui:Send('progressBarHide', {})
+
+                    if cancelled then
+                        exports.sunset_ui:Notify('~r~Salvage cancelled — you moved away.', 'error', 3000)
+                    else
+                        -- Phase 2: complete salvage
+                        local result, err = Sunset.AwaitCallback(
+                            'sunset:jobs:diver:completeSalvage', nearest.idx, token)
+                        if not result then
+                            exports.sunset_ui:Notify(('~r~%s'):format(err or 'Salvage failed'), 'error', 4000)
+                        else
+                            nearest.claimed = true
+                            if ContractData then
+                                ContractData.recovered = result.recovered
+                                updateShiftHud()
+                            end
+                            exports.sunset_ui:Notify(
+                                ('~g~Salvaged: ~y~%s~s~ (~b~%s~s~, $%d)'):format(
+                                    result.item or '?', result.condition or '?', result.value or 0),
+                                'success', 4000)
+                            -- result.completed → server sends returnToTerry event
+                        end
+                    end
                 end
             end
         end
@@ -367,8 +405,9 @@ CreateThread(function()
 end)
 
 -- ── Boat Management ───────────────────────────────────────────
--- Server asks client to spawn the boat, then client reports back netId
-RegisterNetEvent('sunset:diving:spawnBoat', function(model, spawnCoords, cost)
+-- [SECTION 32] Server asks client to spawn the boat; client echoes back token+netId
+-- so the server can validate the spawn before registering it.
+RegisterNetEvent('sunset:diving:spawnBoat', function(model, spawnCoords, cost, serverToken)
     local hash = GetHashKey(model)
     RequestModel(hash)
     local t = 0
@@ -387,7 +426,8 @@ RegisterNetEvent('sunset:diving:spawnBoat', function(model, spawnCoords, cost)
     SetEntityAsMissionEntity(boat, true, true)
     SetModelAsNoLongerNeeded(hash)
     BoatNetId = VehicleToNet(boat)
-    TriggerServerEvent('sunset:diving:boatSpawned', BoatNetId)
+    -- Echo the server-issued token back so the server can validate this spawn
+    TriggerServerEvent('sunset:diving:boatSpawned', BoatNetId, serverToken)
     exports.sunset_core:ShowNotification(('~g~Work boat rented for ~y~$%d~g~. Good luck!'):format(cost))
 end)
 

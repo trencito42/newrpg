@@ -32,6 +32,19 @@ local ClaimedPoints = {}
 -- Rented boats: RentedBoats[source] = netId
 local RentedBoats = {}
 
+-- [SECTION 31] Pending boat rentals: PendingBoatRentals[source] = {token, expectedModelHash, expectedSpawn, cost, createdAt}
+local PendingBoatRentals = {}
+local BOAT_TOKEN_EXPIRY_SEC = 30
+
+-- [SECTION 33] Salvage hold tokens: SalvageTokens[source] = {token, pointIndex, issuedAt, minDuration=4}
+local SalvageTokens = {}
+local SALVAGE_MIN_HOLD_SEC = 4
+
+-- Token generator (replay-attack prevention)
+local function genToken()
+    return ('%x%x%x'):format(math.random(0xFFFF), math.random(0xFFFF), math.random(0xFFFF))
+end
+
 -- ── Helpers ──────────────────────────────────────────────────
 local function getChar(source)
     return exports.sunset_core:GetCharacter(source)
@@ -277,28 +290,137 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentBoat', function(sour
         if site and site.boatSpawn then spawnCoords = site.boatSpawn end
     end
 
-    -- Ask the client to spawn the boat entity and report back the netId
-    -- (boats are physical entities best spawned on client-side)
+    -- [SECTION 31] Generate token AFTER charging. Store pending rental so boatSpawned
+    -- can validate the spawn is legitimate before registering the boat.
     exports.sunset_core:RefreshMoney(source)
-    TriggerClientEvent('sunset:diving:spawnBoat', source, model, spawnCoords, cost)
+    local token            = genToken()
+    local expectedModelHash = GetHashKey(model)
+    PendingBoatRentals[source] = {
+        token             = token,
+        expectedModelHash = expectedModelHash,
+        expectedSpawn     = spawnCoords,
+        cost              = cost,
+        createdAt         = os.time(),
+    }
+    -- Send token alongside model+spawn so the client can echo it back in boatSpawned
+    TriggerClientEvent('sunset:diving:spawnBoat', source, model, spawnCoords, cost, token)
     return { spawning = true, model = model, spawnCoords = spawnCoords }
 end)
 
--- Client reports back boat netId after spawning
-RegisterNetEvent('sunset:diving:boatSpawned', function(netId)
+-- [SECTION 32] Client reports back token+netId after spawning.
+-- Server validates token, expiry, entity type, model hash, and proximity before registering.
+RegisterNetEvent('sunset:diving:boatSpawned', function(netId, clientToken)
     local src = source
     netId = tonumber(netId)
     if not netId or netId == 0 then return end
-    -- Validate entity is a vehicle
+
+    local pending = PendingBoatRentals[src]
+    if not pending then
+        dlog('boatSpawned: no pending rental for src=%d — ignoring', src)
+        return
+    end
+
+    -- Always consume the pending slot (one-shot token)
+    PendingBoatRentals[src] = nil
+
+    local function refundAndDelete(reason)
+        dlog('boatSpawned REJECTED (%s) src=%d — refunding $%d', reason, src, pending.cost)
+        exports.sunset_core:AddMoney(src, 'cash', pending.cost, 'boat_rental_refund')
+        exports.sunset_core:RefreshMoney(src)
+        local ent = NetworkGetEntityFromNetworkId(netId)
+        if ent and ent ~= 0 and DoesEntityExist(ent) then DeleteEntity(ent) end
+        TriggerClientEvent('sunset:client:notify', src,
+            ('Boat rental invalid (%s). Your $%d has been refunded.'):format(reason, pending.cost),
+            'error', 6000)
+    end
+
+    -- Token exact match
+    if tostring(clientToken) ~= tostring(pending.token) then
+        return refundAndDelete('token_mismatch')
+    end
+
+    -- Expiry check (30 seconds)
+    if os.time() - pending.createdAt > BOAT_TOKEN_EXPIRY_SEC then
+        return refundAndDelete('token_expired')
+    end
+
+    -- Entity must exist and be a vehicle
     local ent = NetworkGetEntityFromNetworkId(netId)
-    if not ent or ent == 0 or not DoesEntityExist(ent) or GetEntityType(ent) ~= 2 then return end
+    if not ent or ent == 0 or not DoesEntityExist(ent) or GetEntityType(ent) ~= 2 then
+        return refundAndDelete('entity_invalid')
+    end
+
+    -- Model hash must match what the server told the client to spawn
+    local actualHash = GetEntityModel(ent)
+    if actualHash ~= pending.expectedModelHash then
+        return refundAndDelete('model_mismatch')
+    end
+
+    -- Entity must be within 30m of expected spawn position
+    local epos = GetEntityCoords(ent)
+    local esp  = pending.expectedSpawn
+    local dist = math.sqrt((epos.x - esp.x)^2 + (epos.y - esp.y)^2 + (epos.z - esp.z)^2)
+    if dist > 30.0 then
+        return refundAndDelete('out_of_range')
+    end
+
+    -- All checks passed — register boat
     RentedBoats[src] = netId
-    dlog('char %s boat registered netId=%d', charId(src), netId)
+    dlog('char %s boat registered netId=%d model=%d dist=%.1f', charId(src), netId, actualHash, dist)
 end)
 
--- ── Salvage Item ──────────────────────────────────────────────
-exports.sunset_core:RegisterCallback('sunset:jobs:diver:salvage', function(source, pointIndex)
-    if not checkRate(source, 'salvage') then return nil, 'Too many requests' end
+-- ── Salvage Phase 1: Begin Salvage (issues token, does NOT claim) ─────────────
+-- [SECTION 33] Phase 1: server validates player+point, issues a hold token.
+-- The point is NOT claimed yet — that happens in completeSalvage after minDuration.
+exports.sunset_core:RegisterCallback('sunset:jobs:diver:beginSalvage', function(source, pointIndex)
+    if not checkRate(source, 'beginSalvage') then return nil, 'Too many requests' end
+    local session = SunsetJobs_RequireSession(source, 'diver', nil)
+    if not session then return nil, 'No active Diver shift' end
+
+    local snap = Snapshots[source]
+    if not snap then return nil, 'No active contract — choose a contract first' end
+
+    -- Gear revalidation (player must still have a valid gear tier in session)
+    if not session.data.gearTier then return nil, 'No diving gear — return to Terry first' end
+
+    pointIndex = tonumber(pointIndex)
+    if not pointIndex then return nil, 'Invalid loot point index' end
+
+    local pt = snap.lootPoints[pointIndex]
+    if not pt then return nil, 'Loot point not found' end
+    if pt.claimed then return nil, 'Already salvaged' end
+    if ClaimedPoints[source] and ClaimedPoints[source][pointIndex] then
+        return nil, 'Already salvaged'
+    end
+
+    -- Player must be alive
+    local ped = GetPlayerPed(source)
+    if IsEntityDead(ped) then return nil, 'Cannot salvage while dead' end
+
+    -- Proximity check at begin (server-side)
+    if not SunsetJobs_ValidateCoords(source,
+        vector3(pt.x, pt.y, pt.z),
+        Sunset.JobsConfig.diver.salvageRadius or 4.0) then
+        return nil, 'Move closer to the salvage point'
+    end
+
+    -- Issue token — one per player at a time
+    local token = genToken()
+    SalvageTokens[source] = {
+        token       = token,
+        pointIndex  = pointIndex,
+        issuedAt    = os.time(),
+        minDuration = SALVAGE_MIN_HOLD_SEC,
+    }
+    dlog('char %s beginSalvage pointIndex=%d token=%s', charId(source), pointIndex, token)
+    return { token = token, minDuration = SALVAGE_MIN_HOLD_SEC }
+end)
+
+-- ── Salvage Phase 2: Complete Salvage (validates hold, claims point) ──────────
+-- [SECTION 34] Phase 2: validates token, elapsed time, point still unclaimed,
+-- session active, gear still valid, player alive, proximity. THEN claims.
+exports.sunset_core:RegisterCallback('sunset:jobs:diver:completeSalvage', function(source, pointIndex, clientToken)
+    if not checkRate(source, 'completeSalvage') then return nil, 'Too many requests' end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
     if not session then return nil, 'No active Diver shift' end
 
@@ -308,20 +430,47 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:salvage', function(sourc
     pointIndex = tonumber(pointIndex)
     if not pointIndex then return nil, 'Invalid loot point index' end
 
+    -- Token validation
+    local hold = SalvageTokens[source]
+    if not hold then return nil, 'No salvage in progress — hold E on a point first' end
+    if tostring(clientToken) ~= tostring(hold.token) then
+        SalvageTokens[source] = nil
+        return nil, 'Salvage token invalid'
+    end
+    if hold.pointIndex ~= pointIndex then
+        SalvageTokens[source] = nil
+        return nil, 'Salvage point mismatch'
+    end
+
+    -- Elapsed time check
+    local elapsed = os.time() - hold.issuedAt
+    if elapsed < (hold.minDuration or SALVAGE_MIN_HOLD_SEC) then
+        SalvageTokens[source] = nil
+        return nil, ('Hold the point for %d seconds'):format(hold.minDuration or SALVAGE_MIN_HOLD_SEC)
+    end
+
+    -- Consume token (one-shot)
+    SalvageTokens[source] = nil
+
     local pt = snap.lootPoints[pointIndex]
     if not pt then return nil, 'Loot point not found' end
     if pt.claimed then return nil, 'Already salvaged' end
-
-    -- Idempotency: also check per-source claim table
     if ClaimedPoints[source] and ClaimedPoints[source][pointIndex] then
         return nil, 'Already salvaged'
     end
 
-    -- Proximity check
+    -- Gear revalidation (must still have a valid gear tier in session)
+    if not session.data.gearTier then return nil, 'Gear missing — return to Terry' end
+
+    -- Player must be alive
+    local ped = GetPlayerPed(source)
+    if IsEntityDead(ped) then return nil, 'Cannot salvage while dead' end
+
+    -- Proximity re-check at completion
     if not SunsetJobs_ValidateCoords(source,
         vector3(pt.x, pt.y, pt.z),
         Sunset.JobsConfig.diver.salvageRadius or 4.0) then
-        return nil, 'Move closer to the salvage point'
+        return nil, 'Moved too far from the salvage point'
     end
 
     -- Mark claimed BEFORE inventory add (idempotency guard)
@@ -577,6 +726,8 @@ RegisterNetEvent('sunset:diving:abandonContract', function()
     local src = source
     Snapshots[src]     = nil
     ClaimedPoints[src] = nil
+    SalvageTokens[src] = nil
+    PendingBoatRentals[src] = nil
     local session = SunsetJobs_GetSession(src)
     if session and session.jobId == 'diver' then
         session.data.contractId = nil
@@ -607,8 +758,10 @@ AddEventHandler('sunset:jobs:sessionEnded', function(src, jobId)
         exports.sunset_inventory:RemoveItem(src, sess.data.rentedGearItem, 1)
         sess.data.rentedGearItem = nil
     end
-    Snapshots[src]     = nil
-    ClaimedPoints[src] = nil
+    Snapshots[src]          = nil
+    ClaimedPoints[src]      = nil
+    SalvageTokens[src]      = nil
+    PendingBoatRentals[src] = nil
 end)
 
 AddEventHandler('playerDropped', function()
@@ -619,9 +772,11 @@ AddEventHandler('playerDropped', function()
         if ent and ent ~= 0 and DoesEntityExist(ent) then DeleteEntity(ent) end
         RentedBoats[src] = nil
     end
-    Snapshots[src]     = nil
-    ClaimedPoints[src] = nil
-    RateLimit[src]     = nil
+    Snapshots[src]          = nil
+    ClaimedPoints[src]      = nil
+    SalvageTokens[src]      = nil
+    PendingBoatRentals[src] = nil
+    RateLimit[src]          = nil
 end)
 
 AddEventHandler('onResourceStop', function(resource)
@@ -630,7 +785,9 @@ AddEventHandler('onResourceStop', function(resource)
         local ent = NetworkGetEntityFromNetworkId(netId)
         if ent and ent ~= 0 and DoesEntityExist(ent) then DeleteEntity(ent) end
     end
-    Snapshots     = {}
-    ClaimedPoints = {}
-    RentedBoats   = {}
+    Snapshots          = {}
+    ClaimedPoints      = {}
+    RentedBoats        = {}
+    SalvageTokens      = {}
+    PendingBoatRentals = {}
 end)
