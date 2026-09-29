@@ -31,7 +31,7 @@ Sunset.JobsConfig = {
             -- ── Fuel (Phantom + tanker — all pickup from depot trailer yard) ─
             { category = 'fuel', pay = 650,
               pickup   = vector3(1223.0, -3083.0, 4.9),
-              delivery = vector3(-1437.55, -276.48, 46.51),
+              delivery = vector4(-1434.1, -250.7, 48.0, 131.9),
               label    = 'Depot → West Eclipse Gas Station' },
             { category = 'fuel', pay = 700,
               pickup   = vector3(1223.0, -3083.0, 4.9),
@@ -52,8 +52,8 @@ Sunset.JobsConfig = {
         },
         xpPerDelivery = 45,
         timeoutSec = 1800,
-        deliveryRadius = 25.0,
-        deliveryZTolerance = 8.0,
+        deliveryRadius = 85.0,
+        deliveryZTolerance = 15.0,
         manualParkingRadius = 4.5,
         manualParkingAngleTolerance = 35.0,
         manualParkingBonusMultiplier = 2.0, -- 2x pay & xp for manual docking
