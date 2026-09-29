@@ -229,9 +229,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentGear', function(sour
         return nil, 'Inventory full — could not add gear'
     end
 
-    -- Store gear tier and O2 in session so contract start is server-authoritative
-    session.data.gearTier = tierName
-    session.data.o2Max    = gearCfg.o2Duration or 120
+    -- Store gear tier and O2 in session so contract start is server-authoritative.
+    -- [SECTIONS 27-28] o2Remaining is set to full at rental time — this is the ONLY
+    -- server-side event that grants a full tank. Reconnects read o2Remaining, not o2Max.
+    local o2Full = gearCfg.o2Duration or 120
+    session.data.gearTier    = tierName
+    session.data.o2Max       = o2Full
+    session.data.o2Remaining = o2Full
     -- Mark rental item so it can be cleaned up on shift end
     session.data.rentedGearItem = item
 
@@ -432,6 +436,23 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
     exports.sunset_core:RefreshMoney(source)
     dlog('char %d sold %d salvage items for $%d', charId(source), #sold, totalValue)
     return { total = totalValue, count = #sold }
+end)
+
+-- ── O2 State Persistence ─────────────────────────────────────
+-- [SECTIONS 27-28] O2 belongs to the rented tank. The client reports its
+-- current O2 remaining when surfacing (and every 15s while diving) so the
+-- server can persist it to session.data. On reconnect the client reads
+-- session.data.o2Remaining instead of resetting to o2Max (free refill bug).
+RegisterNetEvent('sunset:diving:reportO2', function(o2Remaining)
+    local src = source
+    if not checkRate(src, 'reportO2') then return end
+    local session = SunsetJobs_GetSession(src)
+    if not session or session.jobId ~= 'diver' then return end
+    -- Clamp to [0, o2Max] — never allow client to inflate O2 above the rented max
+    local o2Max = session.data.o2Max or 120
+    o2Remaining = math.max(0, math.min(o2Max, tonumber(o2Remaining) or 0))
+    session.data.o2Remaining = o2Remaining
+    dlog('char %s reported o2Remaining=%d', charId(src), o2Remaining)
 end)
 
 -- ── Start Shift ───────────────────────────────────────────────

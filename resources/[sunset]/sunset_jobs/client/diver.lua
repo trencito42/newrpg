@@ -121,11 +121,17 @@ local function deactivateScuba(reason)
     elseif reason == 'surfaced' then
         exports.sunset_core:ShowNotification('~b~Scuba gear deactivated — surfaced')
     end
+    -- [SECTIONS 27-28] Persist O2 remaining to server on every surface event so
+    -- reconnects restore the correct (partially-used) value instead of resetting to max.
+    if ShiftActive then
+        TriggerServerEvent('sunset:diving:reportO2', O2Remaining)
+    end
 end
 
 -- ── O2 + Scuba Thread ────────────────────────────────────────
 -- Gear presence is determined by O2Max > 0 (set at rental/contract start — server-authoritative).
 -- O2 persists across surface/dive cycles; it only resets at gear rental.
+local _o2ReportTimer = 0
 CreateThread(function()
     while true do
         Wait(1000)
@@ -147,10 +153,18 @@ CreateThread(function()
                     -- Damage player for remaining underwater without O2
                     ApplyDamageToPed(ped, 10, false)
                 end
+                -- [SECTIONS 27-28] Periodic O2 report while diving so server stays current.
+                -- Every 15s while submerged — avoids chat spam on every second.
+                _o2ReportTimer = (_o2ReportTimer or 0) + 1
+                if _o2ReportTimer >= 15 then
+                    _o2ReportTimer = 0
+                    TriggerServerEvent('sunset:diving:reportO2', O2Remaining)
+                end
             end
         elseif not underwater and ScubaActive then
             deactivateScuba('surfaced')
             -- O2Remaining intentionally NOT reset here — persists across surface/dive cycles
+            _o2ReportTimer = 0
         end
 
         ::continue::
@@ -419,9 +433,16 @@ AddEventHandler('sunset:jobs:sessionStarted', function(jobId, session)
     if session and session.data then
         local sdata = session.data
         if sdata.gearTier and sdata.o2Max then
-            -- Gear was rented; restore O2 state (player may have partially used it)
-            O2Max = sdata.o2Max
-            if O2Remaining <= 0 then O2Remaining = O2Max end
+            -- [SECTIONS 27-28] Restore O2 from server-persisted value.
+            -- sdata.o2Remaining is updated by the server whenever the player surfaces
+            -- or the periodic report fires. Using sdata.o2Max here would give a free
+            -- full tank on every reconnect, bypassing the tank consumption mechanic.
+            O2Max       = sdata.o2Max
+            O2Remaining = sdata.o2Remaining or 0
+            -- If server has no persisted value yet (first login this shift), start at max.
+            if O2Remaining <= 0 and not sdata.o2Remaining then
+                O2Remaining = O2Max
+            end
         end
         if sdata.siteId and sdata.contractId then
             ContractData = sdata
