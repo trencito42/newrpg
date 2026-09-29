@@ -299,7 +299,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     local action = data.action
 
     if action:find('^hunter_harvest_') then
-        local netId = tonumber(action:gsub('^hunter_harvest_', ''))
+        local netId = tonumber((action:gsub('^hunter_harvest_', '')))
         if not netId then return end
         exports.sunset_ui:Send('playerInteractionHide', {})
         exports.sunset_ui:SetFocus(false, false)
