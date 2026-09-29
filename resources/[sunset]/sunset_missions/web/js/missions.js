@@ -31,7 +31,7 @@ const Missions = (() => {
         const logo = $('#offer-logo');
         if (logo) {
             if (data.logo) {
-                logo.src = `web/assets/${data.logo}`;
+                logo.src = `assets/${data.logo}`;
                 logo.classList.remove('hidden');
             } else {
                 logo.classList.add('hidden');
