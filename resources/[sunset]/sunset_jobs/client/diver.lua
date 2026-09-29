@@ -13,6 +13,7 @@ local BoatNetId    = nil     -- rented boat
 
 local SalvageMarkers = {}    -- { idx, coords, claimed }
 local NearestSalvage = nil   -- { idx, dist }
+local SiteBlip       = nil   -- map blip for the active dive site
 
 local SALVAGE_INTERACT_RADIUS = 3.0
 local DETECTOR_UPDATE_MS  = 500
@@ -257,6 +258,51 @@ CreateThread(function()
     end
 end)
 
+-- ── Site Navigation Blip (Section 36) ────────────────────────
+-- Shows a blip at the dive entry/search-zone centroid so the player can
+-- navigate to the site. No exact salvage positions are shown — the sonar
+-- detector is the in-world mechanic for locating individual points.
+local function clearSiteBlip()
+    if SiteBlip and DoesBlipExist(SiteBlip) then RemoveBlip(SiteBlip) end
+    SiteBlip = nil
+end
+
+local function setSiteBlip(result)
+    clearSiteBlip()
+    if not result then return end
+
+    -- Prefer diveEntry (exact water entry point) over search zone centroid
+    local bx, by, bz = nil, nil, 0
+    if result.diveEntry then
+        bx = result.diveEntry.x
+        by = result.diveEntry.y
+        bz = result.diveEntry.z or 0
+    elseif result.searchZone and result.searchZone.polygon and #result.searchZone.polygon >= 1 then
+        -- Compute centroid of search zone polygon
+        local cx, cy = 0, 0
+        local pts = result.searchZone.polygon
+        for _, p in ipairs(pts) do cx = cx + p.x; cy = cy + p.y end
+        bx = cx / #pts
+        by = cy / #pts
+        bz = result.searchZone.minZ or 0
+    end
+
+    if not bx then return end
+
+    SiteBlip = AddBlipForCoord(bx, by, bz)
+    SetBlipSprite(SiteBlip, 442)    -- anchor/dive icon
+    SetBlipColour(SiteBlip, 3)      -- blue
+    SetBlipScale(SiteBlip, 0.9)
+    SetBlipAsShortRange(SiteBlip, false)
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(('Dive Site: %s'):format(result.siteId or '?'))
+    EndTextCommandSetBlipName(SiteBlip)
+
+    -- Set GPS waypoint to dive entry (not exact salvage — sonar handles that)
+    SetNewWaypoint(bx, by)
+    exports.sunset_ui:Notify('~b~Dive site marked on map. Use sonar to locate salvage underwater.', 'info', 6000)
+end
+
 -- ── Salvage Marker Management ─────────────────────────────────
 -- Populate markers from contract snapshot (called on contract start)
 local function buildSalvageMarkers(lootPoints)
@@ -360,6 +406,8 @@ RegisterNetEvent('sunset:diving:contractComplete', function(result)
     ContractData   = nil
     SalvageMarkers = {}
     NearestSalvage = nil
+    -- [SECTION 36] Clear dive site blip on contract complete
+    clearSiteBlip()
     -- Deactivate scuba on contract complete
     deactivateScuba('surfaced')
 end)
@@ -382,6 +430,8 @@ AddEventHandler('sunset:diving:contractStarted', function(result)
     if result.o2Duration and result.o2Duration > 0 then
         resetO2(result.o2Duration)
     end
+    -- [SECTION 36] Show dive site blip + GPS waypoint
+    setSiteBlip(result)
     updateShiftHud()
 end)
 
@@ -446,9 +496,15 @@ AddEventHandler('sunset:jobs:sessionStarted', function(jobId, session)
         end
         if sdata.siteId and sdata.contractId then
             ContractData = sdata
+            -- [SECTION 36] Re-establish site blip on reconnect (no lootPoints in session
+            -- data so we pass a minimal stub; sonar will handle underwater navigation)
+            if sdata.stage ~= 'return_to_terry' then
+                setSiteBlip({ siteId = sdata.siteId, searchZone = sdata.searchZone, diveEntry = sdata.diveEntry })
+            end
         end
         if sdata.stage == 'return_to_terry' then
             TerryHandoffReady = true
+            SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
         end
     end
     updateShiftHud()
@@ -463,6 +519,7 @@ AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     TerryHandoffReady = false
     O2Max            = 0
     O2Remaining      = 0
+    clearSiteBlip()
     deactivateScuba('surfaced')
     exports.sunset_ui:Send('jobShiftHide', {})
     -- Return boat if still rented
