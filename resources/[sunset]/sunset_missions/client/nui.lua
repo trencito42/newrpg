@@ -41,10 +41,11 @@ function MSN_NUI_HideOffer()
 end
 
 function MSN_NUI_ShowHUD(objective, sub, extra)
-    send('hudShow', { objective = objective, sub = sub, extra = extra or {} })
+    send('hudShow', { objective = objective, sub = sub or '', extra = extra or {} })
 end
 
 function MSN_NUI_UpdateHUD(objective, sub, extra)
+    -- nil objective means "don't change it"; pass through whatever was given
     send('hudUpdate', { objective = objective, sub = sub, extra = extra or {} })
 end
 

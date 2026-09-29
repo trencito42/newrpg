@@ -6,102 +6,84 @@
 <title>Sunset Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,700;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,900;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,700;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/missions.css">
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     MISSION OFFER
-════════════════════════════════════════════════════════════════ -->
-<div id="mission-offer" class="ms-screen hidden">
-    <div class="ms-vignette"></div>
-    <div class="ms-offer-layout">
+<!-- ══════════════════════════════════════════════════════
+     MISSION OFFER  — right-side panel (matches playerInteraction)
+═══════════════════════════════════════════════════════ -->
+<div id="mission-offer" class="ms-offer-root hidden">
+    <div class="ms-offer-panel">
+        <div class="ms-panel-title" id="offer-contact-label">MISSION OFFER</div>
 
-        <!-- left: logo + contact -->
-        <div class="ms-offer-left">
-            <div class="ms-offer-logo-wrap">
-                <img id="offer-logo" class="ms-offer-logo" src="" alt="">
+        <div class="ms-panel-items">
+            <!-- Mission name -->
+            <div class="ms-panel-mission-name" id="offer-mission-name"></div>
+
+            <!-- Details group -->
+            <div class="ms-panel-details" id="offer-details">
+                <div class="ms-panel-detail" id="offer-area-row">
+                    <span class="ms-detail-key">AREA</span>
+                    <span class="ms-detail-val" id="offer-area"></span>
+                </div>
+                <div class="ms-panel-detail">
+                    <span class="ms-detail-key">PAYOUT</span>
+                    <span class="ms-detail-val ms-detail-money" id="offer-payout"></span>
+                </div>
+                <div class="ms-panel-detail" id="offer-rep-row">
+                    <span class="ms-detail-key">REP</span>
+                    <span class="ms-detail-val" id="offer-rep"></span>
+                </div>
+                <div class="ms-panel-detail ms-detail-warn hidden" id="offer-cooldown-row">
+                    <span class="ms-detail-key">COOLDOWN</span>
+                    <span class="ms-detail-val" id="offer-cooldown"></span>
+                </div>
             </div>
-            <div class="ms-offer-contact-block">
-                <div class="ms-offer-contact-name" id="offer-contact-name"></div>
-                <div class="ms-offer-contact-sub"  id="offer-contact-sub"></div>
-            </div>
+
+            <!-- Actions -->
+            <button class="ms-panel-item ms-item-accept" id="btn-accept">ACCEPT</button>
+            <button class="ms-panel-item ms-item-danger" id="btn-decline">DECLINE</button>
         </div>
-
-        <!-- right: mission card -->
-        <div class="ms-offer-card">
-            <div class="ms-offer-header">
-                <div class="ms-offer-tag">INCOMING OFFER</div>
-                <div class="ms-offer-title" id="offer-title"></div>
-                <div class="ms-offer-desc"  id="offer-desc">You've been contacted for a job.</div>
-            </div>
-
-            <div class="ms-offer-stats">
-                <div class="ms-stat-row">
-                    <span class="ms-stat-label">AREA</span>
-                    <span class="ms-stat-value" id="offer-area"></span>
-                </div>
-                <div class="ms-stat-row">
-                    <span class="ms-stat-label">ESTIMATED PAYOUT</span>
-                    <span class="ms-stat-value ms-stat-money" id="offer-payout"></span>
-                </div>
-                <div class="ms-stat-row" id="offer-rep-row">
-                    <span class="ms-stat-label">REP</span>
-                    <span class="ms-stat-value" id="offer-rep"></span>
-                </div>
-                <div class="ms-stat-row" id="offer-cooldown-row" style="display:none">
-                    <span class="ms-stat-label">COOLDOWN</span>
-                    <span class="ms-stat-value ms-stat-warn" id="offer-cooldown"></span>
-                </div>
-            </div>
-
-            <div class="ms-offer-actions">
-                <button class="ms-btn ms-btn-decline" id="btn-decline">DECLINE</button>
-                <button class="ms-btn ms-btn-accept"  id="btn-accept">ACCEPT</button>
-            </div>
-        </div>
-
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     OBJECTIVE HUD
-════════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════
+     OBJECTIVE HUD  — top-right strip
+═══════════════════════════════════════════════════════ -->
 <div id="mission-hud" class="ms-hud hidden">
-    <div class="ms-hud-label" id="hud-label"></div>
+    <div class="ms-hud-label">ACTIVE MISSION</div>
     <div class="ms-hud-objective" id="hud-objective"></div>
     <div class="ms-hud-sub" id="hud-sub"></div>
     <div class="ms-hud-extras" id="hud-extras"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════
      LOCKPICK MINIGAME
-════════════════════════════════════════════════════════════════ -->
-<div id="lockpick" class="ms-screen ms-minigame-screen hidden">
-    <div class="ms-vignette"></div>
-    <div class="ms-minigame-card">
-        <div class="ms-minigame-title">PICK THE LOCK</div>
-        <div class="ms-minigame-hint">Click when the pick reaches the <span class="ms-accent">green zone</span></div>
+═══════════════════════════════════════════════════════ -->
+<div id="lockpick" class="ms-mg-root hidden">
+    <div class="ms-mg-card">
+        <div class="ms-mg-label">PICK THE LOCK</div>
+        <div class="ms-mg-hint">Click when the pick reaches the <em>green zone</em></div>
         <div class="lp-track">
             <div class="lp-zone" id="lp-zone"></div>
             <div class="lp-pick" id="lp-pick"></div>
         </div>
         <div class="lp-pins" id="lp-pins"></div>
         <div class="lp-attempts" id="lp-attempts"></div>
-        <button class="ms-btn ms-btn-pick" id="btn-pick">PICK</button>
-        <div class="ms-feedback" id="lp-feedback"></div>
+        <button class="ms-mg-btn" id="btn-pick">PICK</button>
+        <div class="ms-mg-feedback" id="lp-feedback"></div>
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════
      SEAL MINIGAME
-════════════════════════════════════════════════════════════════ -->
-<div id="seal-game" class="ms-screen ms-minigame-screen hidden">
-    <div class="ms-vignette"></div>
-    <div class="ms-minigame-card">
-        <div class="ms-minigame-title">CUT THE SEAL</div>
-        <div class="ms-minigame-hint">Hold <span class="ms-accent">HOLD</span> steady — don't let pressure drop</div>
+═══════════════════════════════════════════════════════ -->
+<div id="seal-game" class="ms-mg-root hidden">
+    <div class="ms-mg-card">
+        <div class="ms-mg-label">CUT THE SEAL</div>
+        <div class="ms-mg-hint">Hold steady — keep pressure in the <em>green zone</em></div>
         <div class="sl-bar-wrap">
             <div class="sl-bar-track">
                 <div class="sl-zone-good"></div>
@@ -111,28 +93,27 @@
                 <div class="sl-progress" id="sl-progress"></div>
             </div>
         </div>
-        <div class="sl-pressure-label">PRESSURE</div>
-        <button class="ms-btn ms-btn-hold" id="btn-seal" onmousedown="SealGame.onPress()" onmouseup="SealGame.onRelease()">HOLD</button>
-        <div class="ms-feedback" id="sl-feedback"></div>
+        <button class="ms-mg-btn" id="btn-seal"
+            onmousedown="SealGame.onPress()" onmouseup="SealGame.onRelease()">HOLD</button>
+        <div class="ms-mg-feedback" id="sl-feedback"></div>
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════
      MISSION COMPLETE
-════════════════════════════════════════════════════════════════ -->
-<div id="mission-complete" class="ms-screen hidden">
-    <div class="ms-vignette"></div>
-    <div class="ms-complete-card">
+═══════════════════════════════════════════════════════ -->
+<div id="mission-complete" class="ms-complete-root hidden">
+    <div class="ms-complete-panel">
         <div class="ms-complete-tag">MISSION COMPLETE</div>
-        <div class="ms-complete-title" id="complete-title"></div>
+        <div class="ms-complete-mission" id="complete-mission-name"></div>
         <div class="ms-complete-divider"></div>
-        <div class="ms-reward-rows" id="complete-rewards"></div>
+        <div class="ms-complete-rows" id="complete-rewards"></div>
         <div class="ms-complete-total-row">
-            <span>TOTAL</span>
+            <span>TOTAL EARNED</span>
             <span class="ms-complete-total" id="complete-total"></span>
         </div>
-        <div class="ms-rep-gained" id="complete-rep"></div>
-        <button class="ms-btn ms-btn-accept" id="btn-complete">CONTINUE</button>
+        <div class="ms-complete-rep" id="complete-rep"></div>
+        <button class="ms-panel-item ms-item-accept ms-complete-close" id="btn-complete">CONTINUE</button>
     </div>
 </div>
 

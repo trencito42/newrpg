@@ -12,8 +12,10 @@ const Missions = (() => {
         }).catch(() => {});
     }
 
-    function fmt(n) {
-        return '$' + Number(n).toLocaleString('en-US');
+    function fmt(n) { return '$' + Number(n).toLocaleString('en-US'); }
+    function fmtTime(sec) {
+        if (sec < 60) return `${sec}s`;
+        return `${Math.floor(sec / 60)}m ${sec % 60}s`;
     }
 
     // ── Mission Offer ─────────────────────────────────────────────
@@ -21,44 +23,58 @@ const Missions = (() => {
         const el = $('#mission-offer');
         if (!el) return;
 
-        const logo = $('#offer-logo');
-        if (logo) logo.src = data.logo ? `assets/${data.logo}` : '';
+        // Panel header: "RICO — MISSION OFFER"
+        const hdr = $('#offer-contact-label');
+        if (hdr) hdr.textContent = (data.contact ? data.contact + ' — ' : '') + 'MISSION OFFER';
 
-        const t = $('#offer-title');    if (t) t.textContent = data.label || '';
-        const c = $('#offer-contact-name'); if (c) c.textContent = data.contact || '';
-        const s = $('#offer-contact-sub');  if (s) s.textContent = data.subtitle || '';
-        const a = $('#offer-area');         if (a) a.textContent = data.area || '';
-        const p = $('#offer-payout');
-        if (p) p.textContent = data.rewards
+        // Large mission name
+        const mn = $('#offer-mission-name');
+        if (mn) mn.textContent = data.label || '';
+
+        // Area
+        const areaRow = $('#offer-area-row');
+        const areaVal = $('#offer-area');
+        if (data.area) {
+            if (areaVal) areaVal.textContent = data.area;
+            if (areaRow) areaRow.style.display = '';
+        } else {
+            if (areaRow) areaRow.style.display = 'none';
+        }
+
+        // Payout
+        const payout = $('#offer-payout');
+        if (payout) payout.textContent = data.rewards
             ? `${fmt(data.rewards.min)} — ${fmt(data.rewards.max)}`
             : '';
 
+        // Rep
         const repRow = $('#offer-rep-row');
         const repVal = $('#offer-rep');
         if (data.stats && data.stats.rep !== undefined) {
             if (repVal) repVal.textContent = data.stats.rep + ' REP';
-            if (repRow) repRow.style.display = 'flex';
+            if (repRow) repRow.style.display = '';
         } else {
             if (repRow) repRow.style.display = 'none';
         }
 
+        // Cooldown
         const cdRow = $('#offer-cooldown-row');
         const cdVal = $('#offer-cooldown');
         const acceptBtn = $('#btn-accept');
         if (data.cooldown && data.cooldown > 0) {
-            const mins = Math.ceil(data.cooldown / 60);
-            if (cdVal) cdVal.textContent = `${mins} min remaining`;
-            if (cdRow) cdRow.style.display = 'flex';
-            if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.style.opacity = '0.4'; }
+            if (cdVal) cdVal.textContent = fmtTime(data.cooldown) + ' remaining';
+            if (cdRow) cdRow.classList.remove('hidden');
+            if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.style.opacity = '0.35'; }
         } else {
-            if (cdRow) cdRow.style.display = 'none';
-            if (acceptBtn) { acceptBtn.disabled = false; acceptBtn.style.opacity = '1'; }
+            if (cdRow) cdRow.classList.add('hidden');
+            if (acceptBtn) { acceptBtn.disabled = false; acceptBtn.style.opacity = ''; }
         }
 
+        // Buttons
         const acc = $('#btn-accept');
         const dec = $('#btn-decline');
-        if (acc) acc.onclick = () => post('missionAccept', { missionId: data.missionId });
-        if (dec) dec.onclick = () => post('missionDecline', {});
+        if (acc) acc.onclick = () => { post('missionAccept', { missionId: data.missionId }); };
+        if (dec) dec.onclick = () => { post('missionDecline', {}); };
 
         el.classList.remove('hidden');
     }
@@ -78,13 +94,9 @@ const Missions = (() => {
 
     function updateHUD(data) {
         if (!data) return;
-        if (data.label !== undefined) {
-            const lbl = $('#hud-label');
-            if (lbl) lbl.textContent = data.label || 'MISSION';
-        }
         if (data.objective !== undefined) {
             const obj = $('#hud-objective');
-            if (obj) obj.textContent = data.objective || '';
+            if (obj && data.objective !== null) obj.textContent = data.objective;
         }
         if (data.sub !== undefined) {
             const sub = $('#hud-sub');
@@ -93,42 +105,38 @@ const Missions = (() => {
         if (data.extra) {
             const ext = $('#hud-extras');
             if (ext) {
+                // rebuild extras
                 ext.innerHTML = '';
                 if (data.extra.condition !== undefined) {
                     const row = document.createElement('div');
-                    row.className = 'ms-hud-extra-row';
-                    row.innerHTML = `<span class="ms-hud-extra-key">CONDITION</span>
-                        <span class="ms-hud-extra-val">${data.extra.condition}%</span>`;
-                    ext.appendChild(row);
-                    const bar = document.createElement('div');
-                    bar.className = 'ms-hud-cond-bar';
-                    const fill = document.createElement('div');
-                    fill.className = 'ms-hud-cond-fill';
-                    fill.style.width = data.extra.condition + '%';
+                    row.className = 'ms-hud-extra';
                     const pct = data.extra.condition;
-                    fill.style.background = pct > 60 ? '#00ffcc' : pct > 30 ? '#fbbf24' : '#f87171';
-                    bar.appendChild(fill);
-                    ext.appendChild(bar);
+                    const col = pct > 60 ? '#00ffcc' : pct > 30 ? '#fbbf24' : '#f87171';
+                    row.innerHTML = `CONDITION <span style="color:${col}">${pct}%</span>`;
+                    ext.appendChild(row);
                 }
                 if (data.extra.plate) {
                     const row = document.createElement('div');
-                    row.className = 'ms-hud-extra-row';
-                    row.innerHTML = `<span class="ms-hud-extra-key">PLATE</span>
-                        <span class="ms-hud-extra-val">${data.extra.plate}</span>`;
+                    row.className = 'ms-hud-extra';
+                    row.innerHTML = `PLATE <span>${data.extra.plate}</span>`;
                     ext.appendChild(row);
                 }
                 if (data.extra.color) {
                     const row = document.createElement('div');
-                    row.className = 'ms-hud-extra-row';
-                    row.innerHTML = `<span class="ms-hud-extra-key">COLOR</span>
-                        <span class="ms-hud-extra-val">${data.extra.color}</span>`;
+                    row.className = 'ms-hud-extra';
+                    row.innerHTML = `COLOR <span>${data.extra.color}</span>`;
                     ext.appendChild(row);
                 }
                 if (data.extra.row) {
                     const row = document.createElement('div');
-                    row.className = 'ms-hud-extra-row';
-                    row.innerHTML = `<span class="ms-hud-extra-key">ROW</span>
-                        <span class="ms-hud-extra-val">${data.extra.row}</span>`;
+                    row.className = 'ms-hud-extra';
+                    row.innerHTML = `ROW <span>${data.extra.row}</span>`;
+                    ext.appendChild(row);
+                }
+                if (data.extra.id) {
+                    const row = document.createElement('div');
+                    row.className = 'ms-hud-extra';
+                    row.innerHTML = `CONTAINER <span>${data.extra.id}</span>`;
                     ext.appendChild(row);
                 }
             }
@@ -165,34 +173,34 @@ const Missions = (() => {
         const el = $('#mission-complete');
         if (!el) return;
 
-        const title = $('#complete-title');
-        const rows  = $('#complete-rewards');
-        const total = $('#complete-total');
-        const rep   = $('#complete-rep');
+        const missionName = $('#complete-mission-name');
+        if (missionName) missionName.textContent = data.mission
+            ? data.mission.replace(/_/g, ' ').toUpperCase() : '';
 
-        if (title) title.textContent = data.mission ? data.mission.replace(/_/g,' ').toUpperCase() : 'MISSION';
-
-        const reward = data.reward || {};
+        const reward = (data.reward) || {};
+        const rows = $('#complete-rewards');
         if (rows) {
             rows.innerHTML = '';
-            const fields = [
-                ['Base Pay',           reward.base],
-                ['Condition Bonus',    reward.conditionBonus],
-                ['Escape Bonus',       reward.escapeBonus],
-                ['Reputation Bonus',   reward.reputationBonus],
-            ];
-            fields.forEach(([label, val]) => {
+            [
+                ['Base Pay',         reward.base],
+                ['Condition Bonus',  reward.conditionBonus],
+                ['Escape Bonus',     reward.escapeBonus],
+                ['Reputation Bonus', reward.reputationBonus],
+            ].forEach(([label, val]) => {
                 if (!val) return;
                 const row = document.createElement('div');
-                row.className = 'ms-reward-row';
-                row.innerHTML = `<span class="ms-reward-row-label">${label}</span>
-                    <span class="ms-reward-row-val">+${fmt(val)}</span>`;
+                row.className = 'ms-complete-row';
+                row.innerHTML = `<span class="ms-complete-row-label">${label}</span>
+                    <span class="ms-complete-row-val positive">+${fmt(val)}</span>`;
                 rows.appendChild(row);
             });
         }
 
+        const total = $('#complete-total');
         if (total) total.textContent = fmt(reward.total || 0);
-        if (rep)   rep.textContent   = '+25 REP';
+
+        const rep = $('#complete-rep');
+        if (rep) rep.textContent = '+25 REP with contact';
 
         const btn = $('#btn-complete');
         if (btn) btn.onclick = () => post('missionCompleteClose', {});
@@ -206,10 +214,8 @@ const Missions = (() => {
     }
 
     function hideAll() {
-        ['mission-offer','mission-hud','lockpick','seal-game','mission-complete'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
-        });
+        ['mission-offer', 'mission-hud', 'lockpick', 'seal-game', 'mission-complete']
+            .forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hidden'); });
     }
 
     // ── NUI message router ────────────────────────────────────────
@@ -217,19 +223,15 @@ const Missions = (() => {
         const { action, data } = e.data;
         if (!action) return;
         switch (action) {
-            case 'missionOffer':        showOffer(data); break;
-            case 'missionOfferHide':    hideOffer(); break;
-            case 'hudShow':
-                showHUD({ label: 'MISSION', objective: data.objective, sub: data.sub, extra: data.extra });
-                break;
-            case 'hudUpdate':
-                updateHUD({ objective: data.objective, sub: data.sub, extra: data.extra });
-                break;
-            case 'hudHide':             hideHUD(); break;
-            case 'lockpickShow':        showLockpick(); break;
-            case 'sealShow':            showSeal(); break;
-            case 'missionComplete':     showComplete(data); break;
-            case 'hideAll':             hideAll(); break;
+            case 'missionOffer':     showOffer(data);   break;
+            case 'missionOfferHide': hideOffer();       break;
+            case 'hudShow':          showHUD(data);     break;
+            case 'hudUpdate':        updateHUD(data);   break;
+            case 'hudHide':          hideHUD();         break;
+            case 'lockpickShow':     showLockpick();    break;
+            case 'sealShow':         showSeal();        break;
+            case 'missionComplete':  showComplete(data); break;
+            case 'hideAll':          hideAll();         break;
         }
     });
 

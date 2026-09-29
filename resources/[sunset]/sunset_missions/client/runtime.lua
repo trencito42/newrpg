@@ -1,11 +1,15 @@
--- Active mission state machine
-local activeSession   = nil
-local activeBlips     = {}
-local activeZoneBlip  = nil
-local cargoObject     = nil
-local missionVehicle  = nil
-local conditionPct    = 100
-local escaped         = false
+local activeSession  = nil
+local activeBlips    = {}
+local activeZoneBlip = nil
+local cargoObject    = nil
+local missionVehicle = nil
+local conditionPct   = 100
+
+local function showHelp(text)
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayHelp(0, false, true, -1)
+end
 
 local function addBlip(coords, sprite, color, name, scale)
     local b = AddBlipForCoord(coords.x, coords.y, coords.z)
@@ -26,33 +30,42 @@ local function clearBlips()
     if activeZoneBlip then RemoveBlip(activeZoneBlip) activeZoneBlip = nil end
 end
 
-local function notify(msg, kind)
-    exports.sunset_ui:Notify(msg, kind or 'info')
-end
+local function notify(msg, kind) exports.sunset_ui:Notify(msg, kind or 'info') end
 
 local function setStage(stage)
     if not activeSession then return end
     local ok, err = Sunset.AwaitCallback('sunset:missions:setStage', { mission = activeSession.missionId, stage = stage })
-    if ok then
-        activeSession.state = stage
-    else
-        print('[sunset_missions] setStage fail: ' .. tostring(err))
-    end
+    if ok then activeSession.state = stage
+    else print('[sunset_missions] setStage fail: ' .. tostring(err)) end
 end
 
--- ── Hot Wheels / vehicle_recovery ────────────────────────────────────────────
+-- Spawn target vehicle on the closest road node inside the search zone
+local function spawnTargetVehicle(def, variant)
+    local zone     = def.searchZones[variant.searchZone]
+    local angle    = math.random() * 2 * math.pi
+    local r        = math.random(30, math.floor(zone.radius * 0.7))
+    local sx, sy   = zone.center.x + r * math.cos(angle), zone.center.y + r * math.sin(angle)
+    local found, nx, ny, nz, nh = GetClosestVehicleNodeWithHeading(sx, sy, zone.center.z, 0, 3.0, 0)
+    if not found then nx, ny, nz, nh = sx, sy, zone.center.z, math.random(0, 359) end
+
+    local veh = MSN_SpawnVehicle(variant.vehicleModel, { x = nx, y = ny, z = nz, w = nh }, variant.vehicleColor)
+    if veh then
+        SetVehicleNumberPlateText(veh, variant.vehiclePlate)
+        -- Lock vehicle so lockpick is required
+        SetVehicleDoorsLocked(veh, 2)
+    end
+    return veh, vector3(nx, ny, nz)
+end
+
+-- ── Hot Wheels ────────────────────────────────────────────────────────────────
 local function runVehicleRecovery(session)
     local def     = SunsetMissions.GetMission('vehicle_recovery')
     local variant = session.variant
     local zone    = def.searchZones[variant.searchZone]
 
-    -- SEARCH_AREA
     setStage('SEARCH_AREA')
-    local spawnCoords = variant.spawnCoords
-    missionVehicle = MSN_SpawnVehicle(variant.vehicleModel, spawnCoords, variant.vehicleColor)
-    if missionVehicle then
-        SetVehicleNumberPlateText(missionVehicle, variant.vehiclePlate)
-    end
+    local spawnedVeh, spawnCoords = spawnTargetVehicle(def, variant)
+    missionVehicle = spawnedVeh
 
     activeZoneBlip = AddBlipForRadius(zone.center.x, zone.center.y, zone.center.z, zone.radius)
     SetBlipColour(activeZoneBlip, 83)
@@ -64,41 +77,75 @@ local function runVehicleRecovery(session)
         { plate = ('...%s'):format(variant.vehiclePlate:sub(-3)), color = variant.vehicleColor.name }
     )
 
-    -- wait for player to get near vehicle
-    local located = false
-    while not located do
+    -- Wait for player to get within detect radius
+    while activeSession do
         Wait(500)
-        if not activeSession then return end
         if missionVehicle and DoesEntityExist(missionVehicle) then
-            local pPos  = GetEntityCoords(PlayerPedId())
-            local vPos  = GetEntityCoords(missionVehicle)
-            if #(pPos - vPos) < SunsetMissions.Config.vehicleDetectRadius then
-                located = true
-            end
+            local pPos = GetEntityCoords(PlayerPedId())
+            local vPos = GetEntityCoords(missionVehicle)
+            if #(pPos - vPos) < SunsetMissions.Config.vehicleDetectRadius then break end
         end
     end
+    if not activeSession then return end
 
     -- LOCATE_VEHICLE
     setStage('LOCATE_VEHICLE')
-    RemoveBlip(activeZoneBlip)
-    activeZoneBlip = nil
+    RemoveBlip(activeZoneBlip) activeZoneBlip = nil
     addBlip(GetEntityCoords(missionVehicle), 225, 1, variant.vehicleLabel, 0.7)
     MSN_NUI_UpdateHUD('Vehicle located — steal it', variant.vehicleLabel,
         { plate = variant.vehiclePlate, color = variant.vehicleColor.name })
     notify('Vehicle located!', 'success')
 
-    -- STEAL_VEHICLE — wait for player to enter vehicle
+    -- STEAL_VEHICLE — wait near vehicle, trigger lockpick, then enter
     setStage('STEAL_VEHICLE')
+    MSN_NUI_UpdateHUD('Break in and steal the vehicle', variant.vehicleLabel)
+
+    -- Lockpick phase: player must approach and use E
+    local lockpickDone = false
+    local lockpickSuccess = false
+
+    while activeSession and not lockpickDone do
+        Wait(0)
+        if missionVehicle and DoesEntityExist(missionVehicle) then
+            local pPos  = GetEntityCoords(PlayerPedId())
+            local vPos  = GetEntityCoords(missionVehicle)
+            local dist  = #(pPos - vPos)
+            if dist < 4.0 then
+                showHelp('Press ~INPUT_CONTEXT~ to pick the lock')
+                if IsControlJustReleased(0, 38) then
+                    -- pause world updates and show minigame
+                    MSN_NUI_ShowLockpick(function(success)
+                        lockpickSuccess = success
+                        lockpickDone    = true
+                        if success then
+                            SetVehicleDoorsLocked(missionVehicle, 1)
+                            notify('Lock picked! Get in the vehicle.', 'success')
+                        else
+                            -- Lockpick failed → alarm
+                            SetVehicleAlarm(missionVehicle, true)
+                            StartVehicleAlarm(missionVehicle)
+                            notify('Lockpick failed — alarm triggered!', 'error')
+                            SetVehicleDoorsLocked(missionVehicle, 1)
+                            lockpickDone = true
+                        end
+                    end)
+                end
+            end
+        end
+    end
+    if not activeSession then return end
+
+    -- Wait for player to enter the vehicle
     local inVehicle = false
-    while not inVehicle do
+    while activeSession and not inVehicle do
         Wait(300)
-        if not activeSession then return end
         local ped    = PlayerPedId()
         local curVeh = GetVehiclePedIsIn(ped, false)
         if curVeh ~= 0 and curVeh == missionVehicle then
             inVehicle = true
         end
     end
+    if not activeSession then return end
 
     clearBlips()
     addBlip(def.deliveryCoords, 1, 2, 'Delivery Point', 0.8)
@@ -106,18 +153,18 @@ local function runVehicleRecovery(session)
     SetGpsPlayerWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     notify('Deliver the vehicle to Rico!', 'info')
 
-    -- PURSUIT after 5 seconds
+    -- PURSUIT — spawns 5 seconds after entering vehicle
+    setStage('PURSUIT')
     local pursuitDef = { pursuitVehicle = def.pursuitVehicle, pursuitPeds = def.pursuitPeds, pursuitCount = def.pursuitCount }
     CreateThread(function()
         Wait(5000)
-        if activeSession and activeSession.state == 'PURSUIT' then
+        if activeSession and (activeSession.state == 'PURSUIT' or activeSession.state == 'DELIVER') then
             MSN_StartPursuit(pursuitDef, variant)
             MSN_NUI_UpdateHUD('Deliver the vehicle — lose the tail!', variant.vehicleLabel)
         end
     end)
-    setStage('PURSUIT')
 
-    -- condition monitor
+    -- Condition monitor
     CreateThread(function()
         while activeSession and (activeSession.state == 'PURSUIT' or activeSession.state == 'DELIVER') do
             Wait(2000)
@@ -130,44 +177,36 @@ local function runVehicleRecovery(session)
         end
     end)
 
-    -- wait near delivery
-    local delivered = false
-    while not delivered do
+    -- Wait until player is near delivery
+    while activeSession do
         Wait(500)
-        if not activeSession then return end
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-        local dst = #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z))
-        if dst < SunsetMissions.Config.deliveryRadius + 10 then
-            delivered = true
+        local pos = GetEntityCoords(PlayerPedId())
+        if #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z)) < SunsetMissions.Config.deliveryRadius + 10 then
+            break
         end
     end
+    if not activeSession then return end
 
-    -- DELIVER
     setStage('DELIVER')
-    MSN_NUI_UpdateHUD('Park the vehicle inside the marker', nil, { condition = conditionPct })
-    escaped = not MSN_StopPursuit and true or true
+    MSN_NUI_UpdateHUD('Park inside the marker and deliver', nil, { condition = conditionPct })
 
-    -- E to confirm
     while activeSession and activeSession.state == 'DELIVER' do
-        Wait(100)
+        Wait(0)
         local ped    = PlayerPedId()
         local curVeh = GetVehiclePedIsIn(ped, false)
-        if curVeh ~= 0 and curVeh == missionVehicle then
-            local pos = GetEntityCoords(ped)
-            local dst = #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z))
-            if dst < SunsetMissions.Config.deliveryRadius + 10 then
-                exports.sunset_ui:Notify('[E] Deliver vehicle', 'info')
-                if IsControlJustReleased(0, 38) then
-                    local ok, err = Sunset.AwaitCallback('sunset:missions:vr:deliver', { condition = conditionPct, escaped = escaped })
-                    if not ok then
-                        notify(err or 'Could not confirm delivery', 'error')
-                    end
-                    break
-                end
+        local pos    = GetEntityCoords(ped)
+        local dst    = #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z))
+        if curVeh ~= 0 and curVeh == missionVehicle and dst < SunsetMissions.Config.deliveryRadius + 10 then
+            showHelp('Press ~INPUT_CONTEXT~ to deliver the vehicle')
+            if IsControlJustReleased(0, 38) then
+                -- escaped = pursuit was spawned AND all pursuers are gone
+                local wasEscaped = MSN_PursuitEscaped()
+                local ok, err = Sunset.AwaitCallback('sunset:missions:vr:deliver',
+                    { condition = conditionPct, escaped = wasEscaped })
+                if not ok then notify(err or 'Could not confirm delivery', 'error') end
+                break
             end
         end
-        Wait(0)
     end
 end
 
@@ -177,20 +216,34 @@ local function runContainer47(session)
     local variant = session.variant
     local alertShown = 0
 
-    -- Spawn guards
     MSN_SpawnGuards(def.guardPatrols, function(level)
         Sunset.AwaitCallback('sunset:missions:c47:updateAlert', level)
         if level > alertShown then
             alertShown = level
-            local msgs = {
-                [1] = '~y~Guards are suspicious',
-                [2] = '~o~Guards are investigating',
-                [3] = '~r~ALERT — combat!',
-                [4] = '~r~REINFORCEMENTS incoming!',
-            }
+            local msgs = { [1]='~y~Guards are suspicious', [2]='~o~Guards are investigating',
+                           [3]='~r~ALERT — combat!', [4]='~r~REINFORCEMENTS incoming!' }
             notify(msgs[level] or '', 'warning')
             if level == 4 then
-                MSN_SpawnVehicle(def.reinforcementVehicle, def.reinforcementCoords)
+                local rveh = MSN_SpawnVehicle(def.reinforcementVehicle, def.reinforcementCoords)
+                if rveh then
+                    -- spawn 2 armed cops inside
+                    for seat = -1, 0 do
+                        local pHash = GetHashKey('s_m_y_sheriff_01')
+                        RequestModel(pHash)
+                        local t = 0
+                        while not HasModelLoaded(pHash) do Wait(50) t=t+50 if t>5000 then break end end
+                        local cp = CreatePedInsideVehicle(rveh, 4, pHash, seat, false, false)
+                        if cp ~= 0 then
+                            SetEntityAsMissionEntity(cp, true, true)
+                            GiveWeaponToPed(cp, GetHashKey('WEAPON_CARBINERIFLE'), 200, false, true)
+                            SetCurrentPedWeapon(cp, GetHashKey('WEAPON_CARBINERIFLE'), true)
+                            if seat ~= -1 then
+                                TaskVehicleShootAtPed(cp, PlayerPedId(), 5.0)
+                            end
+                        end
+                        SetModelAsNoLongerNeeded(pHash)
+                    end
+                end
             end
         end
     end)
@@ -203,37 +256,30 @@ local function runContainer47(session)
 
     while activeSession and activeSession.state == 'ENTER_PORT' do
         Wait(400)
-        local pos = GetEntityCoords(PlayerPedId())
-        if #(pos - def.portEnterCoords) < def.portEnterRadius then
-            setStage('SEARCH')
-            break
+        if #(GetEntityCoords(PlayerPedId()) - def.portEnterCoords) < def.portEnterRadius then
+            setStage('SEARCH') break
         end
     end
+    if not activeSession then return end
 
-    -- SEARCH — inspect containers
+    -- SEARCH
     clearBlips()
-    MSN_NUI_UpdateHUD(
-        ('Find container in row %s'):format(variant.targetRow),
-        ('Plate ending: ...%s'):format(variant.targetId and variant.targetId:sub(-2) or '47'),
-        { row = variant.targetRow }
-    )
+    MSN_NUI_UpdateHUD(('Find container in row %s'):format(variant.targetRow), nil, { row = variant.targetRow })
 
-    local containerPeds = {}
+    local containerPoints = {}
     for _, loc in ipairs(def.containerLocations) do
         addBlip(vector3(loc.coords.x, loc.coords.y, loc.coords.z), 1, 4, loc.id, 0.5)
-        containerPeds[#containerPeds+1] = { coords = loc.coords, id = loc.id }
+        containerPoints[#containerPoints+1] = { coords = loc.coords, id = loc.id }
     end
 
     local identified = false
-    while not identified do
-        Wait(100)
-        if not activeSession then return end
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-        for _, cp in ipairs(containerPeds) do
+    while activeSession and not identified do
+        Wait(0)
+        local pos = GetEntityCoords(PlayerPedId())
+        for _, cp in ipairs(containerPoints) do
             local dst = #(pos - vector3(cp.coords.x, cp.coords.y, cp.coords.z))
             if dst < 2.5 then
-                exports.sunset_ui:Notify(('[E] Inspect container %s'):format(cp.id), 'info')
+                showHelp(('Press ~INPUT_CONTEXT~ to inspect %s'):format(cp.id))
                 if IsControlJustReleased(0, 38) then
                     if cp.id == variant.targetContainer then
                         identified = true
@@ -242,71 +288,66 @@ local function runContainer47(session)
                         clearBlips()
                         MSN_RaiseAlert(1)
                     else
-                        notify(cp.id .. ' — Not a match', 'warning')
+                        notify(cp.id .. ' — not a match', 'warning')
                         MSN_RaiseAlert(1)
                     end
                 end
             end
         end
     end
+    if not activeSession then return end
 
     -- BREAK_SEAL
-    MSN_NUI_UpdateHUD('Break the container seal', variant.targetContainer)
-    exports.sunset_ui:Notify('[E] Cut the seal', 'info')
+    MSN_NUI_UpdateHUD('Cut the container seal', variant.targetContainer)
+    local tgtCoords = vector3(variant.targetCoords.x, variant.targetCoords.y, variant.targetCoords.z)
     local waitingSeal = true
-    while waitingSeal do
-        Wait(100)
-        if not activeSession then return end
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-        local tgt = vector3(variant.targetCoords.x, variant.targetCoords.y, variant.targetCoords.z)
-        if #(pos - tgt) < 3.5 then
+    while activeSession and waitingSeal do
+        Wait(0)
+        if #(GetEntityCoords(PlayerPedId()) - tgtCoords) < 3.5 then
+            showHelp('Press ~INPUT_CONTEXT~ to cut the seal')
             if IsControlJustReleased(0, 38) then
                 setStage('BREAK_SEAL')
+                waitingSeal = false
                 MSN_NUI_ShowSeal(function(success)
                     if success then
-                        TriggerEvent('sunset:missions:client:sealBroken')
+                        notify('Seal cut — take the cargo!', 'success')
                     else
                         MSN_RaiseAlert(2)
                         notify('Seal broken noisily — guards alerted!', 'error')
-                        TriggerEvent('sunset:missions:client:sealBroken')
                     end
+                    TriggerEvent('sunset:missions:client:sealBroken')
                 end)
-                waitingSeal = false
             end
         end
     end
 
-    -- wait for seal result
     local sealDone = false
-    AddEventHandler('sunset:missions:client:sealBroken', function()
-        sealDone = true
-    end)
-    while not sealDone do Wait(200) end
+    AddEventHandler('sunset:missions:client:sealBroken', function() sealDone = true end)
+    while activeSession and not sealDone do Wait(200) end
+    if not activeSession then return end
 
     -- TAKE_CARGO
     setStage('TAKE_CARGO')
     MSN_NUI_UpdateHUD('Take the cargo', variant.targetContainer)
-    local tgtCoords = vector3(variant.targetCoords.x, variant.targetCoords.y, variant.targetCoords.z)
 
     local cargoTaken = false
-    while not cargoTaken do
-        Wait(100)
-        if not activeSession then return end
+    while activeSession and not cargoTaken do
+        Wait(0)
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         if #(pos - tgtCoords) < 3.5 then
-            exports.sunset_ui:Notify('[E] Take cargo', 'info')
+            showHelp('Press ~INPUT_CONTEXT~ to take the cargo')
             if IsControlJustReleased(0, 38) then
                 cargoObject = MSN_SpawnProp(def.cargoModel, vector3(pos.x, pos.y, pos.z + 1.0))
                 if cargoObject then MSN_AttachCargo(cargoObject, ped) end
                 MSN_RaiseAlert(2)
                 setStage('ALERT')
                 cargoTaken = true
-                notify('Cargo taken — get out!', 'warning')
+                notify('Cargo taken — get out now!', 'warning')
             end
         end
     end
+    if not activeSession then return end
 
     -- ESCAPE
     setStage('ESCAPE')
@@ -319,40 +360,36 @@ local function runContainer47(session)
 
     while activeSession and activeSession.state == 'ESCAPE' do
         Wait(400)
-        local pos = GetEntityCoords(PlayerPedId())
-        if #(pos - exit.coords) < 18.0 then
-            setStage('DELIVER')
-            break
+        if #(GetEntityCoords(PlayerPedId()) - exit.coords) < 18.0 then
+            setStage('DELIVER') break
         end
     end
+    if not activeSession then return end
 
-    -- DELIVER cargo
+    -- DELIVER
     clearBlips()
     addBlip(def.deliveryCoords, 1, 2, 'Delivery', 0.8)
     SetGpsPlayerWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     MSN_NUI_UpdateHUD('Deliver the cargo to Hank', nil)
 
-    local delivered47 = false
-    while not delivered47 do
-        Wait(200)
-        if not activeSession then return end
+    while activeSession do
+        Wait(0)
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         if #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z)) < SunsetMissions.Config.deliveryRadius + 10 then
-            exports.sunset_ui:Notify('[E] Deliver cargo', 'info')
+            showHelp('Press ~INPUT_CONTEXT~ to deliver the cargo')
             if IsControlJustReleased(0, 38) then
                 local ok, err = Sunset.AwaitCallback('sunset:missions:c47:deliver', {})
                 if not ok then
                     notify(err or 'Could not confirm delivery', 'error')
-                else
-                    delivered47 = true
                 end
+                break
             end
         end
     end
 end
 
--- ── Mission complete event (from server) ──────────────────────────────────────
+-- ── Mission complete (from server) ────────────────────────────────────────────
 AddEventHandler('sunset:missions:complete', function(data)
     MSN_NUI_ShowComplete(data)
     clearBlips()
@@ -373,10 +410,10 @@ AddEventHandler('sunset:missions:client:completeClose', function()
     MSN_CleanupAllEntities()
 end)
 
--- ── Public: start session from main ──────────────────────────────────────────
 function MSN_StartMissionRuntime(missionId, sessionData)
     if activeSession then return end
     activeSession = { missionId = missionId, state = 'BRIEFING', variant = sessionData.variant }
+    conditionPct  = 100
 
     CreateThread(function()
         if missionId == 'vehicle_recovery' then
@@ -396,7 +433,9 @@ function MSN_AbortMission(reason)
     MSN_CleanupGuards()
     MSN_CleanupAllEntities()
     MSN_NUI_HideAll()
-    activeSession = nil
+    activeSession  = nil
+    missionVehicle = nil
+    cargoObject    = nil
     exports.sunset_ui:Notify(reason or 'Mission abandoned', 'error')
 end
 

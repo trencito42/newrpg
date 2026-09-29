@@ -2,6 +2,12 @@ local contactPeds  = {}
 local contactBlips = {}
 local nearContact  = nil
 
+local function showHelp(text)
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayHelp(0, false, true, -1)
+end
+
 local function spawnContact(id, data)
     local hash = GetHashKey(data.model)
     RequestModel(hash)
@@ -33,7 +39,6 @@ local function spawnContact(id, data)
     contactBlips[id] = blip
 end
 
--- spawn all contacts on resource start
 AddEventHandler('onClientResourceStart', function(res)
     if res ~= GetCurrentResourceName() then return end
     Wait(2000)
@@ -42,7 +47,6 @@ AddEventHandler('onClientResourceStart', function(res)
     end
 end)
 
--- cleanup on resource stop
 AddEventHandler('onClientResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for id, ped in pairs(contactPeds) do
@@ -57,10 +61,10 @@ AddEventHandler('onClientResourceStop', function(res)
     MSN_NUI_HideAll()
 end)
 
--- interaction proximity loop
+-- Proximity loop — runs every frame only when near a contact to show native hint.
+-- Uses BeginTextCommandDisplayHelp (per-frame, no stack) instead of Notify.
 CreateThread(function()
     while true do
-        Wait(200)
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         nearContact = nil
@@ -71,11 +75,14 @@ CreateThread(function()
                 if #(pos - cpos) < SunsetMissions.Config.interactionRadius then
                     nearContact = id
                     local data = SunsetMissions.Contacts[id]
-                    exports.sunset_ui:Notify(('[E] Talk to %s'):format(data.name), 'info')
+                    showHelp(('Press ~INPUT_CONTEXT~ to talk to %s'):format(data.name))
                     break
                 end
             end
         end
+
+        -- far from all contacts → slow poll; near one → per-frame for smooth hint
+        if nearContact then Wait(0) else Wait(400) end
     end
 end)
 
@@ -85,19 +92,17 @@ CreateThread(function()
         Wait(0)
         if nearContact and IsControlJustReleased(0, 38) then
             if MSN_ActiveSession() then
-                exports.sunset_ui:Notify('Already on a mission', 'warning')
+                exports.sunset_ui:Notify('You are already on a mission', 'warning')
             else
                 local contactId = nearContact
                 local contact   = SunsetMissions.Contacts[contactId]
                 if not contact then goto continue end
 
-                -- fetch stats + cooldowns
-                local stats, _     = Sunset.AwaitCallback('sunset:missions:getStats')
-                local cooldowns, _ = Sunset.AwaitCallback('sunset:missions:getCooldowns')
-
-                -- pick first available mission for this contact
                 local missionId = contact.missions and contact.missions[1]
                 if not missionId then goto continue end
+
+                local stats, _     = Sunset.AwaitCallback('sunset:missions:getStats')
+                local cooldowns, _ = Sunset.AwaitCallback('sunset:missions:getCooldowns')
 
                 MSN_NUI_ShowOffer(missionId, contactId, {}, stats, cooldowns)
                 ::continue::
@@ -106,19 +111,17 @@ CreateThread(function()
     end
 end)
 
--- accept from NUI
 AddEventHandler('sunset:missions:client:accept', function(missionId)
-    local ok, result = Sunset.AwaitCallback('sunset:missions:accept', missionId)
-    if not ok then
-        exports.sunset_ui:Notify(result or 'Could not start mission', 'error')
+    local data, err = Sunset.AwaitCallback('sunset:missions:accept', missionId)
+    if not data then
+        exports.sunset_ui:Notify(err or 'Could not start mission', 'error')
         return
     end
-    exports.sunset_ui:Notify('Mission started!', 'success')
+    exports.sunset_ui:Notify('Mission accepted', 'success')
     MSN_NUI_HideOffer()
-    MSN_StartMissionRuntime(missionId, result)
+    MSN_StartMissionRuntime(missionId, data)
 end)
 
--- /abandonment command
 RegisterCommand('abandonmission', function()
     if MSN_ActiveSession() then
         MSN_AbortMission('Mission abandoned')

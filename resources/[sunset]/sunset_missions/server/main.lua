@@ -141,13 +141,5 @@ end)
 exports.sunset_core:RegisterCallback('sunset:missions:getCooldowns', function(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return {} end
-    local rows = MySQL.query.await(
-        'SELECT mission, last_mission FROM sunset_mission_reputation WHERE character_id = ?',
-        { char.id }
-    )
-    local result = {}
-    for _, row in ipairs(rows or {}) do
-        if row.mission then result[row.mission] = row.last_mission end
-    end
-    return result
+    return MSN_GetCooldowns(char.id)
 end)
