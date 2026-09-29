@@ -127,9 +127,10 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function
         end
     end
 
-    -- Check player has scuba gear
-    local gearCount = exports.sunset_inventory:GetItemCount(source, 'scuba_gear')
-    if not gearCount or gearCount < 1 then
+    -- Check player has scuba gear (also accept advanced_tank)
+    local hasScuba  = exports.sunset_inventory:HasItem(source, 'scuba_gear', 1)
+    local hasAdv    = exports.sunset_inventory:HasItem(source, 'advanced_tank', 1)
+    if not hasScuba and not hasAdv then
         return nil, 'You need Diving Gear. Rent from Terry first.'
     end
 
@@ -152,19 +153,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function
         activePts[i] = { x = allPoints[i].x, y = allPoints[i].y, z = allPoints[i].z, claimed = false }
     end
 
-    -- Get current gear tier from inventory (basic/standard/advanced)
-    local gearTier = 'basic'
-    local cfgDiver = Sunset.JobsConfig.diver
-    if cfgDiver and cfgDiver.gear then
-        if exports.sunset_inventory:GetItemCount(source, 'advanced_tank') > 0 then
-            gearTier = 'advanced'
-        elseif exports.sunset_inventory:GetItemCount(source, 'scuba_gear') > 0 then
-            gearTier = 'standard'
-        end
-    end
-    local o2Duration = 120
+    -- Use gear tier stored in session at rental time (server-authoritative)
+    local cfgDiver   = Sunset.JobsConfig.diver
+    local gearTier   = session.data.gearTier or 'basic'
+    local o2Duration = session.data.o2Max or 120
     if cfgDiver and cfgDiver.gear and cfgDiver.gear[gearTier] then
-        o2Duration = cfgDiver.gear[gearTier].o2Duration or 120
+        o2Duration = cfgDiver.gear[gearTier].o2Duration or o2Duration
     end
 
     Snapshots[source] = {
@@ -185,6 +179,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function
     session.data.siteId       = siteId
     session.data.recovered    = 0
     session.data.required     = required
+    session.data.o2Duration   = o2Duration
     session.data.stage        = 'diving'
     SunsetJobs_SetState(source, 'ACTIVE')
     TriggerClientEvent('sunset:jobs:stateChanged', source, 'ACTIVE', session.data)
@@ -233,6 +228,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentGear', function(sour
         exports.sunset_core:AddMoney(source, 'cash', cost, 'gear_rental_refund')
         return nil, 'Inventory full — could not add gear'
     end
+
+    -- Store gear tier and O2 in session so contract start is server-authoritative
+    session.data.gearTier = tierName
+    session.data.o2Max    = gearCfg.o2Duration or 120
+    -- Mark rental item so it can be cleaned up on shift end
+    session.data.rentedGearItem = item
+
     exports.sunset_inventory:ReloadInventory(source)
     exports.sunset_core:RefreshMoney(source)
     dlog('char %s rented %s gear for $%d', charId(source), tierName, cost)
@@ -353,30 +355,16 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:salvage', function(sourc
 
     snap.recovered = snap.recovered + 1
     session.data.recovered = snap.recovered
-    TriggerClientEvent('sunset:jobs:stateChanged', source, session.state, session.data)
-
     SunsetJobs_AddJobXP(source, 'diver', cfgDiver and cfgDiver.xpPerSalvage or 25)
 
-    -- Contract complete?
-    local completed = snap.recovered >= snap.required
-    if completed then
-        local bonus = snap.pay or 0
-        local xpBonus = (cfgDiver and cfgDiver.xpPerContract) or 80
-        local paid = exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')
-        if paid then
-            SunsetJobs_AddJobProgress(source, 'diver', xpBonus, 1, bonus)
-            exports.sunset_core:RefreshMoney(source)
-        end
-        Snapshots[source]  = nil
-        ClaimedPoints[source] = nil
-        session.data.contractId = nil
-        session.data.recovered  = 0
-        session.data.stage      = 'idle'
-        TriggerClientEvent('sunset:diving:contractComplete', source, {
-            siteId = snap.siteId,
-            bonus  = bonus,
-            xp     = xpBonus,
-        })
+    -- All salvage recovered? Move to return-to-Terry stage instead of paying immediately.
+    local allRecovered = snap.recovered >= snap.required
+    if allRecovered then
+        session.data.stage = 'return_to_terry'
+        TriggerClientEvent('sunset:jobs:stateChanged', source, session.state, session.data)
+        TriggerClientEvent('sunset:diving:returnToTerry', source)
+    else
+        TriggerClientEvent('sunset:jobs:stateChanged', source, session.state, session.data)
     end
 
     dlog('char %s salvaged %d/%d at site %s', charId(source), snap.recovered, snap.required, snap.siteId)
@@ -386,7 +374,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:salvage', function(sourc
         value      = itemMeta.value,
         recovered  = snap.recovered,
         required   = snap.required,
-        completed  = completed,
+        completed  = allRecovered,
     }
 end)
 
@@ -418,12 +406,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
 
     if #sold == 0 then return nil, 'No salvage items to sell. Go dive first.' end
 
+    -- Pay FIRST: if payment fails, items are never removed (atomicity guard)
+    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
+    if not paid then return nil, 'Payment failed — no items were removed. Try again.' end
+
     for _, s in ipairs(sold) do
         exports.sunset_inventory:RemoveItem(source, s.item, 1)
     end
-
-    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
-    if not paid then return nil, 'Payment failed. Items returned — try again.' end
 
     SunsetJobs_AddJobProgress(source, 'diver', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
     exports.sunset_inventory:ReloadInventory(source)
@@ -464,10 +453,72 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:endShift', function(sour
         RentedBoats[source] = nil
     end
 
+    -- Remove rented gear item on shift end
+    local session = SunsetJobs_GetSession(source)
+    if session and session.data and session.data.rentedGearItem then
+        exports.sunset_inventory:RemoveItem(source, session.data.rentedGearItem, 1)
+    end
+
     Snapshots[source]     = nil
     ClaimedPoints[source] = nil
     SunsetJobs_ClearSession(source, 'COMPLETED', 'Shift ended by player')
     return true
+end)
+
+-- ── Terry Handoff (contract completion) ──────────────────────
+-- Called when player returns to Terry with recovered salvage.
+local TERRY_COORDS = { x = -812.0, y = -1282.0, z = 5.0 }
+local TERRY_HANDOFF_RADIUS = 15.0
+
+exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(source)
+    if not checkRate(source, 'handoff') then return nil, 'Too many requests' end
+
+    local session = SunsetJobs_RequireSession(source, 'diver', nil)
+    if not session then return nil, 'No active Diver shift' end
+
+    local snap = Snapshots[source]
+    if not snap then return nil, 'No active contract — choose a contract first' end
+
+    if session.data.stage ~= 'return_to_terry' then
+        return nil, 'Nothing to hand off yet. Recover all salvage first.'
+    end
+
+    if snap.recovered < snap.required then
+        return nil, ('Recover all salvage first (%d/%d).'):format(snap.recovered, snap.required)
+    end
+
+    -- Proximity check to Terry NPC
+    if not SunsetJobs_ValidateCoords(source,
+        vector3(TERRY_COORDS.x, TERRY_COORDS.y, TERRY_COORDS.z),
+        TERRY_HANDOFF_RADIUS) then
+        return nil, 'Return to Terry at the Vespucci waterfront to hand off the salvage.'
+    end
+
+    -- Pay out the contract bonus
+    local cfgDiver = Sunset.JobsConfig.diver
+    local bonus  = snap.pay or 0
+    local xpBonus = (cfgDiver and cfgDiver.xpPerContract) or 80
+
+    local paid = exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')
+    if paid then
+        SunsetJobs_AddJobProgress(source, 'diver', xpBonus, 1, bonus)
+        exports.sunset_core:RefreshMoney(source)
+    end
+
+    local siteId = snap.siteId
+    Snapshots[source]     = nil
+    ClaimedPoints[source] = nil
+    session.data.contractId = nil
+    session.data.recovered  = 0
+    session.data.stage      = 'idle'
+    TriggerClientEvent('sunset:diving:contractComplete', source, {
+        siteId = siteId,
+        bonus  = bonus,
+        xp     = xpBonus,
+    })
+
+    dlog('char %s completed handoff at Terry, site=%s bonus=$%d', charId(source), siteId, bonus)
+    return { total = bonus, xp = xpBonus, siteId = siteId }
 end)
 
 -- ── Return Boat ───────────────────────────────────────────────
@@ -493,8 +544,8 @@ RegisterNetEvent('sunset:diving:abandonContract', function()
         session.data.contractId = nil
         session.data.recovered  = 0
         session.data.stage      = 'idle'
-        SunsetJobs_SetState(src, 'ON_SHIFT')
-        TriggerClientEvent('sunset:jobs:stateChanged', src, 'ON_SHIFT', session.data)
+        SunsetJobs_SetState(src, 'ACTIVE')
+        TriggerClientEvent('sunset:jobs:stateChanged', src, 'ACTIVE', session.data)
     end
 end)
 
