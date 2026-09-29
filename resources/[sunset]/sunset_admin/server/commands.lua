@@ -1740,6 +1740,23 @@ registerServerCommand('dl', function(source)
     TriggerClientEvent('sunset:admin:toggleVehicleDebugLabels', source)
 end)
 
+-- /dlp — prop / object debug labels (aceeasi arhitectura ca /dl dar pt obiecte + vehicule statice)
+registerServerCommand('dlp', function(source)
+    if source == 0 then
+        return print('[SunsetAdmin] /dlp is client-only')
+    end
+    if not requirePerm(source, 'dlp') then return end
+    TriggerClientEvent('sunset:admin:togglePropDebugLabels', source)
+end)
+
+-- Client poate apela si prin TriggerServerEvent (RegisterCommand fara restrictie de nivel)
+RegisterNetEvent('sunset:admin:requestTogglePropDebug', function()
+    local source = source
+    if not source or source == 0 then return end
+    if not requirePerm(source, 'dlp') then return end
+    TriggerClientEvent('sunset:admin:togglePropDebugLabels', source)
+end)
+
 -- ═══ REPORT & HELPME TICKETING SYSTEM ═══
 local ActiveReports = {}
 local ReportSeq = 0

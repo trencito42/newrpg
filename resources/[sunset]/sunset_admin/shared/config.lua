@@ -109,6 +109,7 @@ SunsetAdmin.Commands = {
     god = 1,
     coords = 1,
     dl = 1,
+    dlp = 1,
     reports = 1,
     history = 1,
     pullout = 1,

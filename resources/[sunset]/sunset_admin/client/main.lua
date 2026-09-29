@@ -185,6 +185,13 @@ local DL_RADIUS = 45.0
 local DL_MAX_VEHICLES = 32
 local DL_REFRESH_MS = 250
 
+-- /dlp — prop / object debug labels (xray)
+local DLP_RADIUS      = 30.0
+local DLP_MAX_OBJECTS = 64
+local DLP_REFRESH_MS  = 400
+local propDebugLabels  = false
+local debugLabelProps  = {}
+
 local function trimPlate(value)
     value = tostring(value or '')
     return (value:gsub('^%s+', ''):gsub('%s+$', ''))
@@ -778,6 +785,131 @@ RegisterNetEvent('sunset:admin:toggleVehicleDebugLabels', function()
         'info'
     )
 end)
+
+-- ═══ /dlp — PROP / OBJECT DEBUG LABELS ═══
+local function drawPropDebugLabel(obj, distance, isVehicle)
+    if obj == 0 or not DoesEntityExist(obj) then return end
+
+    local objCoords = GetEntityCoords(obj)
+    local visible, sx, sy = World3dToScreen2d(objCoords.x, objCoords.y, objCoords.z + 0.4)
+    if not visible then return end
+
+    local model = GetEntityModel(obj)
+    local modelHex = ('0x%08X'):format(model & 0xFFFFFFFF)
+
+    -- Incearca sa gaseasca un nume mai frumos
+    local modelName = modelHex
+    pcall(function()
+        local display = GetDisplayNameFromVehicleModel(model)
+        if display and display ~= '' and display ~= 'NULL' then
+            modelName = display
+        end
+    end)
+
+    local netId   = NetworkGetEntityIsNetworked(obj) and NetworkGetNetworkIdFromEntity(obj) or 0
+    local entType = isVehicle and '~r~VEH~s~' or '~b~OBJ~s~'
+
+    local line1 = ('%s ~y~%s~s~  E:%d N:%s'):format(
+        entType, modelName, obj,
+        netId > 0 and tostring(netId) or '-'
+    )
+    local line2 = ('~o~%.1f, %.1f, %.1f~s~  ~w~%.1fm'):format(
+        objCoords.x, objCoords.y, objCoords.z, distance)
+
+    local scale = math.max(0.22, math.min(0.32, 0.36 - distance * 0.004))
+    SetTextFont(0)
+    SetTextScale(scale, scale)
+    SetTextCentre(true)
+    SetTextColour(255, 255, 255, 230)
+    SetTextDropshadow(1, 0, 0, 0, 200)
+    SetTextOutline()
+
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(line1)
+    EndTextCommandDisplayText(sx, sy)
+
+    SetTextScale(math.max(0.19, scale - 0.025), math.max(0.19, scale - 0.025))
+    SetTextColour(200, 220, 200, 210)
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(line2)
+    EndTextCommandDisplayText(sx, sy + 0.016)
+end
+
+local function refreshPropDebugCache()
+    local ped    = PlayerPedId()
+    local myVeh  = GetVehiclePedIsIn(ped, false)
+    local origin = GetEntityCoords(ped)
+    local candidates = {}
+
+    -- Obiecte de mapping (CObject)
+    for _, obj in ipairs(GetGamePool('CObject')) do
+        if DoesEntityExist(obj) then
+            local d = #(origin - GetEntityCoords(obj))
+            if d <= DLP_RADIUS then
+                candidates[#candidates + 1] = { obj = obj, dist = d, isVehicle = false }
+            end
+        end
+    end
+
+    -- Vehicule statice / remorci (exceptie vehiculul propriu)
+    for _, v in ipairs(GetGamePool('CVehicle')) do
+        if DoesEntityExist(v) and v ~= myVeh then
+            local d = #(origin - GetEntityCoords(v))
+            if d <= DLP_RADIUS then
+                candidates[#candidates + 1] = { obj = v, dist = d, isVehicle = true }
+            end
+        end
+    end
+
+    table.sort(candidates, function(a, b) return a.dist < b.dist end)
+    debugLabelProps = {}
+    for i = 1, math.min(#candidates, DLP_MAX_OBJECTS) do
+        debugLabelProps[i] = candidates[i]
+    end
+end
+
+RegisterNetEvent('sunset:admin:togglePropDebugLabels', function()
+    propDebugLabels = not propDebugLabels
+    if not propDebugLabels then debugLabelProps = {} end
+    exports.sunset_ui:Notify(
+        propDebugLabels and ('Prop debug labels ON (%dm radius, max %d)'):format(DLP_RADIUS, DLP_MAX_OBJECTS)
+            or 'Prop debug labels OFF',
+        'info'
+    )
+end)
+
+CreateThread(function()
+    local nextRefresh = 0
+    while true do
+        if propDebugLabels then
+            local now = GetGameTimer()
+            if now >= nextRefresh then
+                refreshPropDebugCache()
+                nextRefresh = now + DLP_REFRESH_MS
+            end
+            local ped    = PlayerPedId()
+            local origin = GetEntityCoords(ped)
+            for i = #debugLabelProps, 1, -1 do
+                local entry = debugLabelProps[i]
+                if entry.obj == 0 or not DoesEntityExist(entry.obj) then
+                    table.remove(debugLabelProps, i)
+                else
+                    local d = #(origin - GetEntityCoords(entry.obj))
+                    if d <= DLP_RADIUS then
+                        drawPropDebugLabel(entry.obj, d, entry.isVehicle)
+                    end
+                end
+            end
+            Wait(0)
+        else
+            Wait(500)
+        end
+    end
+end)
+
+RegisterCommand('dlp', function()
+    TriggerServerEvent('sunset:admin:requestTogglePropDebug')
+end, false)
 
 CreateThread(function()
     local nextRefresh = 0
