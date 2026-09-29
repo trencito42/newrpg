@@ -512,6 +512,166 @@ end, false)
 
 TriggerEvent('chat:addSuggestion', '/recovertrailer', 'Right and reattach your assigned Trucker trailer')
 
+-- ═══ TRUCK & TRAILER TELEPORT TOOL (ADMIN / DEBUG) ═══
+local function teleportRig(targetArg)
+    local cfg = Sunset.GetJobConfig('trucker')
+    local session = JC.sessionData
+    local ped = PlayerPedId()
+    local truck = GetVehiclePedIsIn(ped, false)
+    if truck == 0 or not DoesEntityExist(truck) then
+        truck = JC.vehicles[1]
+    end
+
+    if not truck or truck == 0 or not DoesEntityExist(truck) then
+        return JC.notify('You must be inside a truck or have an active work truck', 'error')
+    end
+
+    local destCoords = nil
+    local destHeading = GetEntityHeading(truck)
+    local offsetDist = 0.0
+    local label = 'Location'
+
+    local lowerArg = string.lower(tostring(targetArg or ''))
+    local routeNum = tonumber(targetArg)
+
+    if routeNum and cfg and cfg.routes and cfg.routes[routeNum] then
+        local r = cfg.routes[routeNum]
+        destCoords = vector3(r.delivery.x, r.delivery.y, r.delivery.z)
+        destHeading = (r.delivery and (r.delivery.w or r.delivery.heading)) or 0.0
+        offsetDist = 30.0
+        label = 'Route #' .. routeNum .. ' (' .. (r.label or 'Delivery') .. ')'
+    elseif lowerArg == 'wp' or lowerArg == 'waypoint' then
+        local blip = GetFirstBlipInfoId(8)
+        if not DoesBlipExist(blip) then
+            return JC.notify('No GPS waypoint set on map. Place a waypoint first.', 'error')
+        end
+        local wp = GetBlipInfoIdCoord(blip)
+        destCoords = vector3(wp.x, wp.y, wp.z)
+        label = 'GPS Waypoint'
+    elseif lowerArg == 'depot' and cfg and cfg.depot then
+        destCoords = cfg.depot.coords
+        destHeading = (cfg.depot.spawn and cfg.depot.spawn.w) or 270.0
+        offsetDist = 0.0
+        label = 'Trucker Depot'
+    elseif lowerArg == 'pickup' and session and session.pickup then
+        destCoords = vector3(session.pickup.x, session.pickup.y, session.pickup.z)
+        destHeading = session.pickup.heading or session.pickup.w or 0.0
+        label = 'Trailer Yard / Pickup'
+    elseif lowerArg == 'delivery' and session and session.delivery then
+        destCoords = vector3(session.delivery.x, session.delivery.y, session.delivery.z)
+        destHeading = (session.delivery and (session.delivery.w or session.delivery.heading)) or 0.0
+        offsetDist = 30.0
+        label = 'Delivery Destination'
+    elseif session and session.stage then
+        if session.stage == 'to_pickup' then
+            local p = session.pickup or (cfg and cfg.depot and cfg.depot.trailerSpawn)
+            destCoords = p and vector3(p.x, p.y, p.z)
+            destHeading = (p and (p.w or p.heading)) or 0.0
+            label = 'Trailer Yard'
+        elseif session.stage == 'to_delivery' then
+            local d = session.delivery
+            destCoords = d and vector3(d.x, d.y, d.z)
+            destHeading = (d and (d.w or d.heading)) or 0.0
+            offsetDist = 30.0
+            label = 'Delivery Destination (30m approach)'
+        elseif session.stage == 'return_depot' and cfg and cfg.depot then
+            destCoords = cfg.depot.coords
+            destHeading = (cfg.depot.spawn and cfg.depot.spawn.w) or 270.0
+            label = 'Trucker Depot'
+        end
+    end
+
+    if not destCoords then
+        local blip = GetFirstBlipInfoId(8)
+        if DoesBlipExist(blip) then
+            local wp = GetBlipInfoIdCoord(blip)
+            destCoords = vector3(wp.x, wp.y, wp.z)
+            label = 'Map Waypoint'
+        else
+            return JC.notify('No active trucker objective or waypoint found. Usage: /tptruck [wp|1-5|pickup|delivery|depot]', 'error')
+        end
+    end
+
+    TriggerServerEvent('sunset:anticheat:markLegitLocal', 'trucker_tp', 20)
+
+    -- Detect attached trailer
+    local hasTr, trailer = GetVehicleTrailerVehicle(truck)
+    if not hasTr or trailer == 0 or not DoesEntityExist(trailer) then
+        if JC.vehicles[2] and DoesEntityExist(JC.vehicles[2]) then
+            trailer = JC.vehicles[2]
+            hasTr = true
+        end
+    end
+
+    local hRad = math.rad(destHeading)
+    local forward = vector3(-math.sin(hRad), math.cos(hRad), 0.0)
+
+    local truckPos = destCoords
+    if offsetDist > 0.0 then
+        truckPos = destCoords - (forward * offsetDist)
+    end
+
+    local groundPos = getGroundCoords(truckPos)
+
+    if GetVehiclePedIsIn(ped, false) ~= truck then
+        TaskWarpPedIntoVehicle(ped, truck, -1)
+    end
+
+    -- Stop momentum & freeze entities
+    SetVehicleHandbrake(truck, true)
+    SetEntityVelocity(truck, 0.0, 0.0, 0.0)
+    FreezeEntityPosition(truck, true)
+
+    if hasTr and trailer ~= 0 and DoesEntityExist(trailer) then
+        requestControl(trailer)
+        SetEntityVelocity(trailer, 0.0, 0.0, 0.0)
+        DetachVehicleFromTrailer(truck)
+        FreezeEntityPosition(trailer, true)
+    end
+
+    -- Teleport truck
+    SetEntityCoordsNoOffset(truck, groundPos.x, groundPos.y, groundPos.z + 1.2, false, false, false)
+    SetEntityHeading(truck, destHeading)
+    SetEntityRotation(truck, 0.0, 0.0, destHeading, 2, true)
+    SetVehicleOnGroundProperly(truck)
+    FreezeEntityPosition(truck, false)
+
+    -- Position trailer ~10.5m directly behind truck
+    if hasTr and trailer ~= 0 and DoesEntityExist(trailer) then
+        Wait(100)
+        local trailerTarget = GetOffsetFromEntityInWorldCoords(truck, 0.0, -10.5, 0.5)
+        SetEntityCoordsNoOffset(trailer, trailerTarget.x, trailerTarget.y, trailerTarget.z, false, false, false)
+        SetEntityHeading(trailer, destHeading)
+        SetEntityRotation(trailer, 0.0, 0.0, destHeading, 2, true)
+        SetVehicleOnGroundProperly(trailer)
+        FreezeEntityPosition(trailer, false)
+
+        Wait(150)
+        AttachVehicleToTrailer(truck, trailer, 1.0)
+    end
+
+    SetVehicleHandbrake(truck, false)
+    SetVehicleEngineOn(truck, true, true, false)
+    JC.notify(('Teleported rig & trailer to %s!'):format(label), 'success', 7000)
+end
+
+RegisterNetEvent('sunset:jobs:trucker:teleportRig', function(targetArg)
+    teleportRig(targetArg)
+end)
+
+RegisterCommand('tptruck', function(_, args)
+    teleportRig(args and args[1])
+end, false)
+
+RegisterCommand('trucktp', function(_, args)
+    teleportRig(args and args[1])
+end, false)
+
+TriggerEvent('chat:addSuggestion', '/tptruck', 'Teleport truck & trailer to active trucker contract, route, or waypoint', {
+    { name = 'target', help = '[optional] wp | route 1-5 | pickup | delivery | depot' }
+})
+TriggerEvent('chat:addSuggestion', '/trucktp', 'Teleport truck & trailer to active trucker contract, route, or waypoint')
+
 RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     if jobId == 'trucker' or not jobId then
         clearTruckerCheckpoint()

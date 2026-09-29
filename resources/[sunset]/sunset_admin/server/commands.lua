@@ -1770,6 +1770,21 @@ registerServerCommand('spawntrailer', function(source, args)
     TriggerClientEvent('sunset:admin:spawnTrailerGizmo', source, model)
 end)
 
+-- /tptruck [wp|routeIdx|pickup|delivery|depot] — safely teleport truck + trailer to objective or waypoint
+registerServerCommand('tptruck', function(source, args)
+    if source == 0 then return print('[SunsetAdmin] /tptruck is in-game only') end
+    if not requirePerm(source, 'tptruck') then return end
+    local targetArg = args and args[1] and tostring(args[1])
+    TriggerClientEvent('sunset:jobs:trucker:teleportRig', source, targetArg)
+end)
+
+registerServerCommand('trucktp', function(source, args)
+    if source == 0 then return print('[SunsetAdmin] /trucktp is in-game only') end
+    if not requirePerm(source, 'trucktp') then return end
+    local targetArg = args and args[1] and tostring(args[1])
+    TriggerClientEvent('sunset:jobs:trucker:teleportRig', source, targetArg)
+end)
+
 RegisterNetEvent('sunset:admin:saveGizmoCoords', function(payload)
     local source = source
     if not source or source == 0 then return end

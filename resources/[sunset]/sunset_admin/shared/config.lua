@@ -126,6 +126,8 @@ SunsetAdmin.Commands = {
     moveveh = 1,
     vehfree = 1,
     spawntrailer = 1,
+    tptruck = 1,
+    trucktp = 1,
 }
 
 -- Commands accessible to helpers (level 1-3). Admins automatically pass.

@@ -151,6 +151,8 @@ Sunset.CommandUsage = {
     moveveh = { usage = '/moveveh — 3D free move/rotate vehicle/trailer gizmo (admin 1+)', minArgs = 0 },
     vehfree = { usage = '/vehfree — 3D free move/rotate vehicle/trailer gizmo (admin 1+)', minArgs = 0 },
     spawntrailer = { usage = '/spawntrailer [tanker|trailers|tr2...] — spawn trailer & start 3D positioner (admin 1+)', minArgs = 0 },
+    tptruck = { usage = '/tptruck [wp|1-5|pickup|delivery|depot] — teleport truck & trailer safely', minArgs = 0 },
+    trucktp = { usage = '/trucktp [wp|1-5|pickup|delivery|depot] — teleport truck & trailer safely', minArgs = 0 },
     hudexport = { usage = '/hudexport', minArgs = 0 },
     setcp = { usage = '/setcp [name]', minArgs = 1 },
     delcp = { usage = '/delcp [name]', minArgs = 1 },
