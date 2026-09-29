@@ -125,6 +125,7 @@ Sunset.Shops = {
     ammunation = {
         label = 'Ammunation',
         coords = vector3(22.56, -1106.24, 29.80),
+        blip = { sprite = 110, color = 1, scale = 0.75 },
         items = {
             { item = 'weapon_flashlight', price = 120, maxAmount = 1 },
             { item = 'weapon_bat', price = 450, maxAmount = 1 },
@@ -278,14 +279,15 @@ Sunset.JobCenters = {
     },
 }
 
--- Blip presets for world map
+-- Blip presets for world map (GTA V / FiveM standard references)
 Sunset.WorldBlips = {
-    shop = { sprite = 52, color = 2, scale = 0.75 },
+    shop = { sprite = 52, color = 2, scale = 0.70 },
+    ammunation = { sprite = 110, color = 1, scale = 0.75 },
     atm = { sprite = 108, color = 2, scale = 0.65 },
     garage = { sprite = 357, color = 3, scale = 0.75 },
-    clothing = { sprite = 73, color = 47, scale = 0.7 },
-    barber = { sprite = 71, color = 47, scale = 0.7 },
-    property = { sprite = 40, color = 5, scale = 0.75 },
+    clothing = { sprite = 73, color = 47, scale = 0.70 },
+    barber = { sprite = 71, color = 47, scale = 0.70 },
+    property = { sprite = 374, color = 5, scale = 0.75 },
     jobcenter = { sprite = 407, color = 2, scale = 0.85 },
-    gas = { sprite = 361, color = 1, scale = 0.75 },
+    gas = { sprite = 361, color = 1, scale = 0.70 },
 }

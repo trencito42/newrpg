@@ -57,7 +57,7 @@ SunsetLicenses.Types = {
 SunsetLicenses.Facilities = {
     driving_school = {
         label = 'Driving School',
-        blip = { sprite = 225, color = 5, scale = 0.85 },
+        blip = { sprite = 525, color = 5, scale = 0.85 },
         marker = vector3(240.12, -1379.35, 33.74),
         markerRadius = 2.5,
         license = 'driver',
@@ -73,7 +73,7 @@ SunsetLicenses.Facilities = {
     },
     marina = {
         label = 'Boat School — Marina',
-        blip = { sprite = 410, color = 2, scale = 0.85 },
+        blip = { sprite = 410, color = 3, scale = 0.85 },
         marker = vector3(-794.5, -1510.2, 1.6),
         markerRadius = 3.0,
         license = 'boat',
@@ -82,7 +82,7 @@ SunsetLicenses.Facilities = {
     },
     range = {
         label = 'LSSI Weapon Range — Sandy Shores',
-        blip = { sprite = 313, color = 2, scale = 0.85 },
+        blip = { sprite = 313, color = 1, scale = 0.85 },
         marker = vector3(1690.5, 3748.8, 34.7),
         markerRadius = 2.5,
         license = 'weapon',

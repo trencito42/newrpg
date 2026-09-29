@@ -122,8 +122,9 @@ CreateThread(function()
     local presets = Sunset.WorldBlips or {}
 
     for id, shop in pairs(Sunset.Shops or {}) do
-        addBlip(shop.coords, presets.shop or {}, shop.label, true)
         if id ~= 'twentyfour7' then
+            local preset = shop.blip or presets[id] or presets.shop or {}
+            addBlip(shop.coords, preset, shop.label, true)
             zones[#zones + 1] = registerZone('shop:' .. id, shop.coords, shop.zoneRadius or 2.5,
                 '[E] ' .. shop.label, { 46, 204, 113 }, function()
                     TriggerEvent('sunset:world:openShop', id, shop)

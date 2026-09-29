@@ -181,7 +181,7 @@ Sunset.JobsConfig = {
         help = 'Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.',
         depot = {
             coords = vector3(-347.45, -133.22, 39.01),
-            blip = { sprite = 446, color = 5, scale = 0.85 },
+            blip = { sprite = 402, color = 47, scale = 0.85 },
         },
         repairRadius = 6.0,
         repairDurationMs = 12000,

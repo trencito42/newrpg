@@ -47,9 +47,9 @@ CreateThread(function()
     Wait(3000)
     if hubBlip and DoesBlipExist(hubBlip) then RemoveBlip(hubBlip) end
     hubBlip = AddBlipForCoord(Cfg.raceHub.x, Cfg.raceHub.y, Cfg.raceHub.z)
-    SetBlipSprite(hubBlip, 562)
-    SetBlipColour(hubBlip, 0)
-    SetBlipScale(hubBlip, 0.8)
+    SetBlipSprite(hubBlip, 315) -- Checkered Race Flag
+    SetBlipColour(hubBlip, 5)   -- Yellow
+    SetBlipScale(hubBlip, 0.85)
     SetBlipAsShortRange(hubBlip, true)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentString('Race Hub')

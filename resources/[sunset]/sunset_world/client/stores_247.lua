@@ -131,8 +131,19 @@ end
 
 CreateThread(function()
     Wait(1500)
+    local shopPreset = (Sunset.WorldBlips and Sunset.WorldBlips.shop) or { sprite = 52, color = 2, scale = 0.70 }
     for index, store in ipairs(Sunset.TwentyFourSevenStores or {}) do
         spawnCashier(store, index)
+        if store.coords then
+            local blip = AddBlipForCoord(store.coords.x, store.coords.y, store.coords.z)
+            SetBlipSprite(blip, shopPreset.sprite or 52)
+            SetBlipColour(blip, shopPreset.color or 2)
+            SetBlipScale(blip, shopPreset.scale or 0.70)
+            SetBlipAsShortRange(blip, true)
+            BeginTextCommandSetBlipName('STRING')
+            AddTextComponentSubstringPlayerName(store.label or '24/7 Store')
+            EndTextCommandSetBlipName(blip)
+        end
     end
 end)
 

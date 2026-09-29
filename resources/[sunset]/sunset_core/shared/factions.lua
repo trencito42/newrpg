@@ -63,7 +63,7 @@ Sunset.Factions = {
         duty = true,
         hq = vector3(441.15, -981.95, 30.69),
         hqHint = '[E] LSPD HQ — members: toggle duty | applications: Discord/site',
-        blip = { sprite = 60, color = 29, scale = 0.9 },
+        blip = { sprite = 60, color = 38, scale = 0.9 },
         marker = { 0, 100, 200 },
         depot = {
             label = 'MRPD Fleet Garage',
@@ -97,7 +97,7 @@ Sunset.Factions = {
         hq = vector3(369.23, -1607.72, 29.29),
         hqHeading = 323.63,
         hqHint = '[E] Sheriff Station — members: toggle duty | robbery response unit',
-        blip = { sprite = 60, color = 46, scale = 0.9 },
+        blip = { sprite = 58, color = 46, scale = 0.9 },
         marker = { 160, 110, 40 },
         depot = {
             label = 'Sheriff Fleet Garage',
@@ -128,7 +128,7 @@ Sunset.Factions = {
         hq = vector3(105.52, -745.12, 45.75),
         hqRadius = 2.0,
         hqHint = '[E] FIB HQ — toggle duty | walk in, lift to motor pool',
-        blip = { sprite = 60, color = 0, scale = 0.85 },
+        blip = { sprite = 419, color = 0, scale = 0.85 },
         marker = { 20, 20, 20 },
         depot = {
             label = 'FIB Motor Pool',
@@ -254,7 +254,7 @@ Sunset.Factions = {
         duty = true,
         hq = vector3(-337.52, -136.57, 39.01),
         hqHint = '[E] LS Customs — repair $250 or ECU tuning | members: toggle duty',
-        blip = { sprite = 446, color = 47, scale = 0.85 },
+        blip = { sprite = 402, color = 47, scale = 0.85 },
         marker = { 255, 140, 0 },
         depot = {
             label = 'Tow Fleet',

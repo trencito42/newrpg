@@ -1,25 +1,17 @@
 (() => {
-    const root = document.getElementById('player-interaction');
-    const worldTarget = document.getElementById('pi-world-target');
-    const targetNameEl = document.getElementById('pi-target-name');
-    const keyLetterEl = document.getElementById('pi-key-letter');
-    const progressRing = document.getElementById('pi-progress-ring');
-    const screenMenu = document.getElementById('pi-screen-menu');
-    const menuTitleEl = document.getElementById('pi-menu-title');
-    const menuItemsEl = document.getElementById('pi-menu-items');
-    const inputPanel = document.getElementById('pi-input-panel');
-    const inputLabel = document.getElementById('pi-input-label');
-    let inputField = document.getElementById('pi-input-field');
-    const inputSubmit = document.getElementById('pi-input-submit');
-
-    // [DIAG] Trace init state so we can see in server logs if elements are missing
-    try {
-        fetch(`https://${GetParentResourceName()}/nuiTrace`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ line: `[PlayerInteraction] init root=${!!root} menu=${!!screenMenu} items=${!!menuItemsEl} input=${!!inputPanel}` }),
-        }).catch(() => {});
-    } catch (_) {}
+    let root = null;
+    let worldTarget = null;
+    let targetNameEl = null;
+    let keyLetterEl = null;
+    let progressRing = null;
+    let screenMenu = null;
+    let menuTitleEl = null;
+    let menuItemsEl = null;
+    let inputPanel = null;
+    let inputLabel = null;
+    let inputField = null;
+    let inputSubmit = null;
+    let isInitialized = false;
 
     const RING_RADIUS = 16;
     const HOLD_MS = 800;
@@ -31,10 +23,27 @@
     let isHolding = false;
     let screenMenuOpen = false;
 
-    if (progressRing) {
-        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
-        progressRing.style.strokeDashoffset = String(circumference);
+    function ensureElements() {
+        root = document.getElementById('player-interaction');
+        worldTarget = document.getElementById('pi-world-target');
+        targetNameEl = document.getElementById('pi-target-name');
+        keyLetterEl = document.getElementById('pi-key-letter');
+        progressRing = document.getElementById('pi-progress-ring');
+        screenMenu = document.getElementById('pi-screen-menu');
+        menuTitleEl = document.getElementById('pi-menu-title');
+        menuItemsEl = document.getElementById('pi-menu-items');
+        inputPanel = document.getElementById('pi-input-panel');
+        inputLabel = document.getElementById('pi-input-label');
+        inputField = document.getElementById('pi-input-field');
+        inputSubmit = document.getElementById('pi-input-submit');
+
+        if (progressRing) {
+            progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        }
+        return !!root;
     }
+
+    ensureElements();
 
     const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
@@ -96,6 +105,7 @@
     };
 
     function setProgress(progress) {
+        if (!progressRing && !ensureElements()) return;
         if (!progressRing) return;
         const clamped = Math.max(0, Math.min(1, Number(progress) || 0));
         const offset = circumference - clamped * circumference;
@@ -258,6 +268,7 @@
 
     function showPrompt(payload) {
         payload = payload || {};
+        if (!root && !ensureElements()) return;
         if (!root) return;
 
         if (payload.visible === false) {
@@ -316,6 +327,7 @@
     }
 
     function show(payload) {
+        if (!root && !ensureElements()) return;
         if (!root) return;
         renderMenu(payload);
         root.classList.remove('hidden');
@@ -324,6 +336,7 @@
     }
 
     function hide() {
+        if (!root) ensureElements();
         closeScreenMenu();
         worldTarget?.classList.add('hidden');
         root?.classList.add('hidden');

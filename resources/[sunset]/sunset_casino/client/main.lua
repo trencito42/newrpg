@@ -79,8 +79,8 @@ CreateThread(function()
     Wait(5000) -- wait for world to load
     if casinoBlip and DoesBlipExist(casinoBlip) then RemoveBlip(casinoBlip) end
     casinoBlip = AddBlipForCoord(Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z)
-    SetBlipSprite(casinoBlip, 617) -- casino chip icon
-    SetBlipColour(casinoBlip, 5)   -- yellow
+    SetBlipSprite(casinoBlip, 679) -- Diamond Casino icon
+    SetBlipColour(casinoBlip, 0)   -- White / Silver Diamond
     SetBlipScale(casinoBlip, 0.9)
     SetBlipAsShortRange(casinoBlip, true)
     BeginTextCommandSetBlipName('STRING')
