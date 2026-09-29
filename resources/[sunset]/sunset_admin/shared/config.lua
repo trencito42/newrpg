@@ -60,6 +60,11 @@ SunsetAdmin.Commands = {
     slap = 2,
 
     -- Admin rank 1+
+    speed = 1,
+    setcp = 1,
+    delcp = 1,
+    gotocp = 1,
+    gotoloc = 1,
     noclip = 1,
     aduty = 1,
     a = 1,
