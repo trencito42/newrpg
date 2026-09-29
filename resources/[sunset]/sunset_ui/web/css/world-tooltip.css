@@ -41,6 +41,7 @@
 }
 
 .world-tooltip-3d .wt-badge.npc { background: #f59e0b; }
+.world-tooltip-3d .wt-badge.mission { background: #eab308; color: #000; }
 .world-tooltip-3d .wt-badge.gas { background: #00ffcc; color: #000; }
 .world-tooltip-3d .wt-badge.fishing { background: #38bdf8; color: #000; }
 .world-tooltip-3d .wt-badge.trucker { background: #f97316; color: #000; }
@@ -59,6 +60,7 @@
 }
 
 .world-tooltip-3d .wt-body.npc { border-left-color: #f59e0b; }
+.world-tooltip-3d .wt-body.mission { border-left-color: #eab308; }
 .world-tooltip-3d .wt-body.gas { border-left-color: #00ffcc; }
 .world-tooltip-3d .wt-body.fishing { border-left-color: #38bdf8; }
 .world-tooltip-3d .wt-body.trucker { border-left-color: #f97316; }

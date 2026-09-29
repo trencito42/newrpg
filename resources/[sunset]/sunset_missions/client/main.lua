@@ -1,6 +1,10 @@
-local contactPeds  = {}
-local contactBlips = {}
-local nearContact  = nil
+local contactPeds   = {}
+local contactBlips  = {}
+local groundedPeds  = {}
+local tooltipShown  = {}
+local nearContact   = nil
+
+local PROMPT_DIST = 8.0
 
 local function showHelp(text)
     BeginTextCommandDisplayHelp('STRING')
@@ -12,11 +16,14 @@ local function showContactTooltip(id, ped, data)
     if GetResourceState('sunset_world') ~= 'started' then return end
     pcall(function()
         exports.sunset_world:NpcShowTooltip('msn_contact_' .. id, ped, {
-            badge     = 'MISSION',
-            icon      = 'ph-briefcase',
-            title     = data.name,
-            desc      = data.subtitle,
-            key       = 'E',
+            badge      = 'MISSION',
+            badgeClass = 'mission',
+            bodyClass  = 'mission',
+            icon       = 'ph-briefcase',
+            title      = data.name,
+            desc       = data.subtitle or 'Mission Contact',
+            offsetZ    = 0.45,
+            key        = 'E',
         })
     end)
 end
@@ -38,13 +45,13 @@ local function spawnContact(id, data)
         return
     end
 
-    -- Pump collision streaming at the contact position a few frames before spawning.
-    for _ = 1, 10 do
+    -- Pump collision streaming at the contact position before spawning.
+    for _ = 1, 5 do
         RequestCollisionAtCoord(data.coords.x, data.coords.y, data.coords.z)
-        Wait(100)
+        Wait(50)
     end
 
-    -- Find the actual ground Z so FreezeEntityPosition locks the ped ON the floor.
+    -- Find the actual ground Z so ped is placed on the floor.
     local groundZ = data.coords.z
     local ok, gz = GetGroundZFor_3dCoord(data.coords.x, data.coords.y, data.coords.z + 5.0, false)
     if ok and gz > 0 then
@@ -63,8 +70,9 @@ local function spawnContact(id, data)
         SetModelAsNoLongerNeeded(hash)
         return
     end
-    -- One frame for the ped to register before freezing at ground level.
-    Wait(100)
+
+    PlaceObjectOnGroundProperly(ped)
+    Wait(50)
 
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)
@@ -86,13 +94,11 @@ local function spawnContact(id, data)
 
     contactPeds[id]  = ped
     contactBlips[id] = blip
-
-    showContactTooltip(id, ped, data)
 end
 
 AddEventHandler('onClientResourceStart', function(res)
     if res ~= GetCurrentResourceName() then return end
-    Wait(2000)
+    Wait(1500)
     for id, data in pairs(SunsetMissions.Contacts) do
         spawnContact(id, data)
     end
@@ -110,31 +116,67 @@ AddEventHandler('onClientResourceStop', function(res)
     end
     contactPeds  = {}
     contactBlips = {}
+    groundedPeds = {}
+    tooltipShown = {}
     MSN_NUI_HideAll()
 end)
 
--- Proximity loop — runs every frame only when near a contact to show native hint.
--- Uses BeginTextCommandDisplayHelp (per-frame, no stack) instead of Notify.
+-- Proximity loop — updates ground snapping when player approaches and renders overhead 3D tooltips
 CreateThread(function()
     while true do
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         nearContact = nil
+        local nearestDist = 999.0
 
         for id, cped in pairs(contactPeds) do
             if DoesEntityExist(cped) then
+                local data = SunsetMissions.Contacts[id]
                 local cpos = GetEntityCoords(cped)
-                if #(pos - cpos) < SunsetMissions.Config.interactionRadius then
+                local dist = #(pos - cpos)
+                if dist < nearestDist then nearestDist = dist end
+
+                -- Ground adjustment once player is close and map collision is loaded
+                if not groundedPeds[id] and dist < 45.0 and data then
+                    RequestCollisionAtCoord(data.coords.x, data.coords.y, data.coords.z)
+                    local ok, gz = GetGroundZFor_3dCoord(data.coords.x, data.coords.y, data.coords.z + 5.0, false)
+                    if ok and gz > 0 then
+                        FreezeEntityPosition(cped, false)
+                        SetEntityCoordsNoOffset(cped, data.coords.x, data.coords.y, gz, false, false, false)
+                        SetEntityHeading(cped, data.coords.w)
+                        PlaceObjectOnGroundProperly(cped)
+                        FreezeEntityPosition(cped, true)
+                        groundedPeds[id] = true
+                    end
+                end
+
+                -- World tooltip above head while within PROMPT_DIST
+                if data then
+                    if dist <= PROMPT_DIST then
+                        showContactTooltip(id, cped, data)
+                        tooltipShown[id] = true
+                    elseif tooltipShown[id] then
+                        hideContactTooltip(id)
+                        tooltipShown[id] = nil
+                    end
+                end
+
+                if dist < SunsetMissions.Config.interactionRadius then
                     nearContact = id
-                    local data = SunsetMissions.Contacts[id]
-                    showHelp(('Press ~INPUT_CONTEXT~ to talk to %s'):format(data.name))
-                    break
+                    if data then
+                        showHelp(('Press ~INPUT_CONTEXT~ to talk to %s'):format(data.name))
+                    end
                 end
             end
         end
 
-        -- far from all contacts → slow poll; near one → per-frame for smooth hint
-        if nearContact then Wait(0) else Wait(400) end
+        if nearestDist <= PROMPT_DIST then
+            Wait(0)
+        elseif nearestDist <= 35.0 then
+            Wait(200)
+        else
+            Wait(600)
+        end
     end
 end)
 
