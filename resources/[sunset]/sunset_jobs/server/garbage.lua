@@ -1,17 +1,3 @@
-local function shuffleBins(bins, count)
-    local copy = {}
-    for i, v in ipairs(bins) do copy[i] = v end
-    for i = #copy, 2, -1 do
-        local j = math.random(1, i)
-        copy[i], copy[j] = copy[j], copy[i]
-    end
-    local out = {}
-    for i = 1, math.min(count or #copy, #copy) do
-        out[i] = { x = copy[i].x, y = copy[i].y, z = copy[i].z }
-    end
-    return out
-end
-
 local function resolveWorkTruck(session, cfg, vehicleNetId)
     if not session or not cfg then return nil end
 
@@ -52,18 +38,64 @@ local function validateTruckRear(source, cfg, vehicleNetId)
     return true
 end
 
-exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(source)
+exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(source, selectedRouteId)
     local cfg = Sunset.GetJobConfig('garbage')
-    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 20.0) then return nil, 'Go to the garbage depot to start work' end
-    local routeBins = shuffleBins(cfg.bins, cfg.capacity + 2)
+    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 20.0) then
+        return nil, 'Go to the garbage depot to start work'
+    end
+
+    local routesList = SunsetJobRoutes.GetRoutes('garbage')
+    local route = nil
+
+    if selectedRouteId and type(selectedRouteId) == 'string' then
+        for _, r in ipairs(routesList) do
+            if r.id == selectedRouteId then
+                route = r
+                break
+            end
+        end
+    end
+
+    if not route then
+        if routesList and #routesList > 0 then
+            route = routesList[math.random(#routesList)]
+        else
+            -- Fallback
+            local fallbackBins = {}
+            if cfg and cfg.bins then
+                for _, b in ipairs(cfg.bins) do
+                    fallbackBins[#fallbackBins + 1] = { x = b.x, y = b.y, z = b.z }
+                end
+            end
+            route = {
+                id = 'legacy_south_ls',
+                label = 'South Los Santos Loop',
+                bins = fallbackBins,
+            }
+        end
+    end
+
+    if not route.bins or #route.bins == 0 then
+        return nil, 'No bins available on route'
+    end
+
+    -- Preserve the authored order in the immutable session snapshot
+    local routeBins = {}
+    for i, b in ipairs(route.bins) do
+        routeBins[#routeBins + 1] = { x = b.x, y = b.y, z = b.z }
+    end
+
+    local routeCapacity = math.min(#routeBins, cfg.capacity or 8)
 
     local session, err = SunsetJobs_StartSession(source, 'garbage', {
-        bins = routeBins,
+        routeId   = route.id,
+        label     = route.label or 'Garbage Route',
+        bins      = routeBins,
         collected = 0,
-        capacity = cfg.capacity or 8,
-        stage = 'collecting',
-        binIndex = 1,
-        carrying = false,
+        capacity  = routeCapacity,
+        stage     = 'collecting',
+        binIndex  = 1,
+        carrying  = false,
     })
     if not session then return nil, err end
     return session.data
@@ -80,7 +112,8 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:pickupBin', function(s
     local bin = session.data.bins[idx]
     if not bin then return nil, 'No more bins on route' end
 
-    if not SunsetJobs_ValidateCoords(source, bin, cfg.collectRadius or 3.0) then
+    local binPos = vector3(bin.x, bin.y, bin.z)
+    if not SunsetJobs_ValidateCoords(source, binPos, cfg.collectRadius or 3.0) then
         return nil, 'Not at the bin'
     end
 
@@ -92,7 +125,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(sou
     local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
     if not session then return nil, err or 'No active garbage shift' end
     if session.data.stage ~= 'collecting' then return nil, 'Unload at depot first' end
-    if not session.data.carrying then return nil, 'Pick up trash from the bin first' end
+    if session.data.carrying then return nil, 'Pick up trash from the bin first' end
 
     local cfg = Sunset.GetJobConfig('garbage')
     if not cfg then return nil, 'Garbage job is not configured' end
@@ -103,8 +136,8 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(sou
     session.data.carrying = false
     session.data.collected = (session.data.collected or 0) + 1
     session.data.binIndex = (session.data.binIndex or 1) + 1
-    SunsetJobs_PayReward(source, 'garbage', cfg.payPerBin or 60, 'garbage_bin', false)
-    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerBin or 10)
+    SunsetJobs_PayReward(source, 'garbage', cfg.payPerBin or 48, 'garbage_bin', false)
+    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerBin or 12)
 
     if session.data.collected >= session.data.capacity then
         session.data.stage = 'return_unload'
@@ -127,9 +160,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:unload', function(sour
         return nil, 'Drive to the depot unload point'
     end
 
-    local bonus = cfg.payPerUnload or 150
+    local bonus = cfg.payPerUnload or 120
     SunsetJobs_PayReward(source, 'garbage', bonus, 'garbage_unload', true)
-    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerUnload or 25)
+    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerUnload or 30)
 
     SunsetJobs_ClearSession(source, 'COMPLETED', 'Route complete')
     return { bonus = bonus }

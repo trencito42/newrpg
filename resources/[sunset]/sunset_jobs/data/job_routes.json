@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "trucker": [
+    {
+      "id": "fuel_west_eclipse",
+      "label": "Depot → West Eclipse Gas Station",
+      "category": "fuel",
+      "pay": 650,
+      "pickup": {
+        "x": 1234.3,
+        "y": -3104.2,
+        "z": 4.8,
+        "h": 3.5
+      },
+      "delivery": {
+        "x": -1434.9,
+        "y": -298.1,
+        "z": 45.1,
+        "h": 311.2
+      },
+      "parkingBay": {
+        "x": -1434.1,
+        "y": -250.7,
+        "z": 48.0,
+        "h": 131.9
+      }
+    },
+    {
+      "id": "fuel_sandy_shores",
+      "label": "Depot → Sandy Shores Gas Station",
+      "category": "fuel",
+      "pay": 700,
+      "pickup": {
+        "x": 1219.3,
+        "y": -3104.1,
+        "z": 4.8,
+        "h": 3.5
+      },
+      "delivery": {
+        "x": 1181.2,
+        "y": 2671.5,
+        "z": 37.9,
+        "h": 0.0
+      },
+      "parkingBay": {
+        "x": 1181.2,
+        "y": 2671.5,
+        "z": 37.9,
+        "h": 0.0
+      }
+    },
+    {
+      "id": "fuel_paleto_bay",
+      "label": "Depot → Paleto Bay Gas Station",
+      "category": "fuel",
+      "pay": 750,
+      "pickup": {
+        "x": 1178.8,
+        "y": -3135.6,
+        "z": 4.6,
+        "h": 89.4
+      },
+      "delivery": {
+        "x": 1702.55,
+        "y": 6416.12,
+        "z": 32.76,
+        "h": 0.0
+      },
+      "parkingBay": {
+        "x": 1702.55,
+        "y": 6416.12,
+        "z": 32.76,
+        "h": 0.0
+      }
+    },
+    {
+      "id": "fuel_sandy_refinery",
+      "label": "Depot → Sandy Shores Refinery",
+      "category": "fuel",
+      "pay": 800,
+      "pickup": {
+        "x": 1178.8,
+        "y": -3148.8,
+        "z": 4.6,
+        "h": 89.4
+      },
+      "delivery": {
+        "x": 2747.32,
+        "y": 3472.88,
+        "z": 55.67,
+        "h": 0.0
+      },
+      "parkingBay": {
+        "x": 2747.32,
+        "y": 3472.88,
+        "z": 55.67,
+        "h": 0.0
+      }
+    },
+    {
+      "id": "fuel_grapeseed",
+      "label": "Depot → Grapeseed Gas Station",
+      "category": "fuel",
+      "pay": 900,
+      "pickup": {
+        "x": 1178.8,
+        "y": -3155.9,
+        "z": 4.6,
+        "h": 89.4
+      },
+      "delivery": {
+        "x": -1710.29,
+        "y": 4924.05,
+        "z": 42.06,
+        "h": 0.0
+      },
+      "parkingBay": {
+        "x": -1710.29,
+        "y": 4924.05,
+        "z": 42.06,
+        "h": 0.0
+      }
+    }
+  ],
+  "garbage": [
+    {
+      "id": "legacy_south_ls",
+      "label": "South Los Santos Loop",
+      "bins": [
+        { "x": -128.45, "y": -1415.22, "z": 29.35 },
+        { "x": 45.12, "y": -1398.55, "z": 29.35 },
+        { "x": 180.88, "y": -1315.45, "z": 29.22 },
+        { "x": 295.45, "y": -1270.12, "z": 29.45 },
+        { "x": -55.22, "y": -1755.88, "z": 29.42 },
+        { "x": 120.55, "y": -1688.22, "z": 29.30 },
+        { "x": 380.12, "y": -1512.45, "z": 29.28 },
+        { "x": 510.88, "y": -1455.22, "z": 29.28 },
+        { "x": -200.45, "y": -1605.12, "z": 33.48 },
+        { "x": -350.22, "y": -1470.88, "z": 30.55 }
+      ]
+    }
+  ]
+}

@@ -90,20 +90,9 @@ local function setTruckerCheckpoint(coords, r, g, b)
 end
 
 local function drawTruckerMarker(coords, r, g, b)
-    if not coords then return end
-    local pos = getGroundCoords(coords)
-    r = r or 46
-    g = g or 204
-    b = b or 113
-    -- Ground cylinder
-    DrawMarker(1, pos.x, pos.y, pos.z - 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        6.0, 6.0, 1.5, r, g, b, 160, false, false, 2, false, nil, nil, false)
-    -- Tall beacon column beam visible from far away
-    DrawMarker(1, pos.x, pos.y, pos.z - 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        2.5, 2.5, 30.0, r, g, b, 70, false, false, 2, false, nil, nil, false)
-    -- Floating chevron marker
-    DrawMarker(0, pos.x, pos.y, pos.z + 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        2.0, 2.0, 1.5, r, g, b, 200, false, false, 2, false, nil, nil, false)
+    if SunsetJobVisuals and SunsetJobVisuals.DrawTruckerDeliveryPreview then
+        SunsetJobVisuals.DrawTruckerDeliveryPreview(coords, true)
+    end
 end
 
 local function getAngleDiff(a1, a2)
@@ -113,6 +102,9 @@ local function getAngleDiff(a1, a2)
 end
 
 local function drawParkingBay3D(coords, heading, isDocked)
+    if SunsetJobVisuals and SunsetJobVisuals.DrawTruckerParkingBayPreview then
+        return SunsetJobVisuals.DrawTruckerParkingBayPreview(coords, heading, isDocked)
+    end
     local hRad = math.rad(heading or 0.0)
     local cosH = math.cos(hRad)
     local sinH = math.sin(hRad)

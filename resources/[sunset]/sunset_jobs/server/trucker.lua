@@ -104,18 +104,23 @@ end)
 
 -- Returns all routes (no locking — all available; rank only affects pay bonus).
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRoutes', function(source)
-    local cfg = Sunset.GetJobConfig('trucker')
-    if not cfg or not cfg.routes then return {} end
+    local routesList = SunsetJobRoutes.GetRoutes('trucker')
+    if not routesList or #routesList == 0 then
+        local cfg = Sunset.GetJobConfig('trucker')
+        routesList = cfg and cfg.routes or {}
+    end
     local level = SunsetJobs_GetJobLevel(source, 'trucker')
     local bonus = TRUCKER_RANK_BONUS[level] or 0
     local routes = {}
-    for i, route in ipairs(cfg.routes) do
-        local effectivePay = math.floor((route.pay or 500) * (1 + bonus))
+    for i, route in ipairs(routesList) do
+        local basePay = tonumber(route.pay) or 500
+        local effectivePay = math.floor(basePay * (1 + bonus))
         routes[#routes + 1] = {
+            id         = route.id or ('route_' .. i),
             index      = i,
-            label      = route.label,
+            label      = route.label or ('Route ' .. i),
             category   = route.category or 'general',
-            basePay    = route.pay,
+            basePay    = basePay,
             pay        = effectivePay,   -- pay with rank bonus already applied
             bonusPct   = math.floor(bonus * 100),
         }
@@ -126,7 +131,7 @@ end)
 local function safeHeading(v)
     if not v then return 0.0 end
     if type(v) == 'vector4' then return v.w end
-    if type(v) == 'table' then return v.w or v.heading or 0.0 end
+    if type(v) == 'table' then return v.w or v.h or v.heading or 0.0 end
     return 0.0
 end
 
@@ -141,10 +146,14 @@ local function safeVec3(v)
     return vector3(0.0, 0.0, 0.0)
 end
 
-exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(source, selectedRouteIdx)
-    print(('[TRUCKER SERVER] start callback called by src=%s routeIdx=%s'):format(tostring(source), tostring(selectedRouteIdx)))
+exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(source, selectedRouteParam)
+    print(('[TRUCKER SERVER] start callback called by src=%s routeParam=%s'):format(tostring(source), tostring(selectedRouteParam)))
     local cfg = Sunset.GetJobConfig('trucker')
-    if not cfg or not cfg.routes or #cfg.routes == 0 then
+    local routesList = SunsetJobRoutes.GetRoutes('trucker')
+    if not routesList or #routesList == 0 then
+        routesList = cfg and cfg.routes or {}
+    end
+    if not routesList or #routesList == 0 then
         print('[TRUCKER SERVER] FAIL: no routes')
         return nil, 'No routes configured'
     end
@@ -162,13 +171,28 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         SunsetJobs_ClearSession(source, 'CANCELLED', 'Restarted shift from laptop')
     end
 
-    local routeIdx
-    if selectedRouteIdx and tonumber(selectedRouteIdx) then
-        routeIdx = math.max(1, math.min(#cfg.routes, tonumber(selectedRouteIdx)))
-    else
-        routeIdx = math.random(1, #cfg.routes)
+    -- Resolve route by ID or numeric index
+    local route = nil
+    local routeIdx = 1
+    if type(selectedRouteParam) == 'string' and selectedRouteParam ~= '' and not tonumber(selectedRouteParam) then
+        for i, r in ipairs(routesList) do
+            if r.id == selectedRouteParam then
+                route = r
+                routeIdx = i
+                break
+            end
+        end
     end
-    local route = cfg.routes[routeIdx]
+    if not route then
+        local numericIdx = tonumber(selectedRouteParam)
+        if numericIdx then
+            routeIdx = math.max(1, math.min(#routesList, numericIdx))
+            route = routesList[routeIdx]
+        else
+            routeIdx = math.random(1, #routesList)
+            route = routesList[routeIdx]
+        end
+    end
     if not route then return nil, 'Selected route does not exist' end
 
     -- Pick truck model for this route's category
@@ -192,18 +216,21 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local bayHeading = safeHeading(route.parkingBay or route.delivery)
 
     -- Player spawns in truck; trailer is pre-parked at the selected trailer bay
+    -- Session stores an IMMUTABLE snapshot of the route data
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
+        routeId       = route.id or ('route_' .. routeIdx),
         routeIndex    = routeIdx,
         pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = pickupHeading, w = pickupHeading },
-        delivery      = { x = delivCoords.x, y = delivCoords.y, z = delivCoords.z, w = delivHeading },
-        parkingBay    = { x = bayCoords.x, y = bayCoords.y, z = bayCoords.z, w = bayHeading },
-        pay           = route.pay,
+        delivery      = { x = delivCoords.x, y = delivCoords.y, z = delivCoords.z, heading = delivHeading, w = delivHeading },
+        parkingBay    = { x = bayCoords.x, y = bayCoords.y, z = bayCoords.z, heading = bayHeading, w = bayHeading },
+        pay           = tonumber(route.pay) or 500,
         label         = route.label,
+        category      = route.category or 'general',
         stage         = 'to_pickup',
         truckModel    = truckModel,
         hasTrailer    = hasTrailer,
         trailerModel  = trailerModel,
-        trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, w = pickupHeading },
+        trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = pickupHeading, w = pickupHeading },
     })
     if not session then return nil, err end
     return session.data
@@ -221,13 +248,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
         if not trailerOk then print('[TRUCKER] atPickup FAIL trailer: ' .. tostring(trailerErr)) return nil, trailerErr end
     end
-    local route = cfg.routes[session.data.routeIndex]
-    if not route then print('[TRUCKER] atPickup FAIL no route idx=' .. tostring(session.data.routeIndex)) return nil, 'Route data is missing' end
-    local pickupTarget = session.data.pickup and vector3(session.data.pickup.x, session.data.pickup.y, session.data.pickup.z) or route.pickup
-    if not validateTruckerCoords(source, pickupTarget, cfg) then
+
+    -- Validate against the immutable session snapshot
+    local pickupTarget = session.data.pickup and vector3(session.data.pickup.x, session.data.pickup.y, session.data.pickup.z)
+    if not pickupTarget or not validateTruckerCoords(source, pickupTarget, cfg) then
         local ped = GetPlayerPed(source)
         local pos = GetEntityCoords(ped)
-        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x,pos.y,pos.z,pickupTarget.x,pickupTarget.y,pickupTarget.z))
+        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, pickupTarget and pickupTarget.x or 0, pickupTarget and pickupTarget.y or 0, pickupTarget and pickupTarget.z or 0))
         return nil, 'Not at pickup location — drive into the loading dock marker'
     end
 
@@ -250,17 +277,18 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 35.0)
         if not trailerOk then return nil, trailerErr end
     end
-    local route = cfg.routes[session.data.routeIndex]
-    if not route then return nil, 'Route data is missing' end
-    if not validateTruckerCoords(source, route, cfg) then
+
+    -- Validate delivery against immutable session snapshot
+    local delivTarget = {
+        delivery = session.data.delivery and vector3(session.data.delivery.x, session.data.delivery.y, session.data.delivery.z),
+        parkingBay = session.data.parkingBay and vector3(session.data.parkingBay.x, session.data.parkingBay.y, session.data.parkingBay.z),
+    }
+    if not validateTruckerCoords(source, delivTarget, cfg) then
         return nil, 'Not at delivery location — drive into the loading dock marker'
     end
 
-    -- [AUDIT P2-SESSIONS] Scenario 14: flip the stage SYNCHRONOUSLY before any
-    -- yielding payout call.
+    -- Flip stage synchronously before any yielding payout
     session.data.stage = 'return_depot'
-    -- Trailer was unloaded at delivery — clear netId so the server monitor
-    -- doesn't treat the client-side delete as "trailer destroyed" and respawn one.
     session.trailerNetId = nil
     local delivered = session.data.deliveredAt
     if delivered then return nil, 'Cargo already delivered on this route.' end
@@ -269,7 +297,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     -- Apply rank bonus to pay (rank 1 = +0%, rank 5 = +5%)
     local level = SunsetJobs_GetJobLevel(source, 'trucker')
     local bonus = TRUCKER_RANK_BONUS[level] or 0
-    local basePay = route.pay or 500
+    local basePay = tonumber(session.data.pay) or 500
 
     -- Manual Parking 2x Bonus
     local manualMult = 1.0
