@@ -38,6 +38,12 @@ local function spawnContact(id, data)
         return
     end
 
+    -- Pump collision streaming at the contact position a few frames before spawning.
+    for _ = 1, 10 do
+        RequestCollisionAtCoord(data.coords.x, data.coords.y, data.coords.z)
+        Wait(100)
+    end
+
     -- Retry CreatePed up to 3 times with a brief wait between attempts.
     -- Spawn 2 units above the configured Z so the ped isn't fighting geometry
     -- on the first frame; FreezeEntityPosition locks the final settled position.

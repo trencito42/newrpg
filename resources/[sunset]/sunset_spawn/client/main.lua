@@ -34,7 +34,7 @@ local function streamSpawnArea(ped, pos)
     SetEntityCoordsNoOffset(ped, pos.x, pos.y, pos.z + 0.15, false, false, false)
     SetEntityHeading(ped, pos.w)
 
-    local deadline = GetGameTimer() + 8000
+    local deadline = GetGameTimer() + 18000
     local loaded = false
     while GetGameTimer() < deadline do
         RequestCollisionAtCoord(pos.x, pos.y, pos.z)
@@ -129,7 +129,7 @@ local function spawnPlayer(char, spawnPosition)
     -- Recover before a bad position can be persisted as the next last location.
     local safePos = pos
     CreateThread(function()
-        local deadline = GetGameTimer() + 8000
+        local deadline = GetGameTimer() + 14000
         while GetGameTimer() < deadline do
             Wait(250)
             local current = GetEntityCoords(ped)
