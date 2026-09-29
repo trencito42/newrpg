@@ -127,6 +127,8 @@ ensure sunset_events
 ensure sunset_marriage
 ensure sunset_fishing_tournament
 ensure sunset_missions
+ensure sunset_devtools
+setr sunset_devtools_enabled true
 
 add_ace group.admin command allow
 add_ace group.admin command.quit deny

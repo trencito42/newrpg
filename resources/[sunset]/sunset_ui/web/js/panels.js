@@ -445,32 +445,35 @@ const Panels = {
             } catch (_) { /* ignore */ }
             clearHover();
 
-            if (state.moved) {
+            if (!state.moved) {
+                if (state.row && state.cell) {
+                    this.selectInventoryItem(state.row, state.cell);
+                }
+            } else {
                 this._suppressInventoryClick = true;
                 window.setTimeout(() => {
                     this._suppressInventoryClick = false;
                 }, 0);
-                const stack = document.elementsFromPoint(x, y);
-                const el = stack[0] || null;
-                const offerZone = el?.closest('#inventory-my-offer');
-                const dropBtn = el?.closest('#inventory-drop-selected');
-                // [DROP ZONE] trash bin: drag any item onto it to drop it on the ground.
-                const trashZone = el?.closest('#inventory-trash-zone');
-                const slot = el?.closest('.inv-slot') || el?.closest('.premium-slot');
+                const stack = document.elementsFromPoint(x, y) || [];
+                const offerZone = stack.find((node) => node.closest?.('#inventory-my-offer'))?.closest('#inventory-my-offer');
+                const dropBtn = stack.find((node) => node.closest?.('#inventory-drop-selected'))?.closest('#inventory-drop-selected');
+                const trashZone = stack.find((node) => node.closest?.('#inventory-trash-zone'))?.closest('#inventory-trash-zone');
+                const slot = stack.find((node) => node.closest?.('.inv-slot, .premium-slot'))?.closest('.inv-slot, .premium-slot');
+                const isInsideInventory = stack.some((node) => node.closest?.('#inventory'));
 
                 if (offerZone && this._inventoryTrade) {
                     if (state.cash) this.openCashOfferModal(this._inventoryCash, (amount) => this._offerTradeCash(amount));
-                    else this._offerInventoryRow(state.row);
+                    else if (state.row) this._offerInventoryRow(state.row);
                 } else if (trashZone && !this._inventoryTrade && !state.cash && state.row) {
                     this._dropInventoryRow(state.row);
                 } else if (dropBtn) {
                     if (this._inventoryTrade) {
                         if (state.cash) this.openCashOfferModal(this._inventoryCash, (amount) => this._offerTradeCash(amount));
-                        else this._offerInventoryRow(state.row);
-                    } else if (!state.cash) {
+                        else if (state.row) this._offerInventoryRow(state.row);
+                    } else if (!state.cash && state.row) {
                         this._dropInventoryRow(state.row);
                     }
-                } else if (slot && !this._inventoryTrade) {
+                } else if (slot && !this._inventoryTrade && state.row) {
                     const toGrid = slot.dataset.grid || 'grid-player';
                     const fromGrid = state.cell?.dataset.grid || 'grid-player';
                     const toSlot = Number(slot.dataset.slot) || 0;
@@ -478,11 +481,8 @@ const Panels = {
                     if (toGrid === 'grid-player' && fromGrid === 'grid-player' && toSlot && fromSlot && toSlot !== fromSlot) {
                         post('inventoryMoveSlot', { fromSlot, toSlot });
                     }
-                } else if (!this._inventoryTrade && !state.cash && state.row
-                    && !el?.closest('#inventory')) {
-                    // [DROP FIX] Dragging an item OUTSIDE the inventory panel and
-                    // releasing it drops it on the ground (expected behaviour that
-                    // was missing - only the DROP button worked).
+                } else if (!this._inventoryTrade && !state.cash && state.row && !isInsideInventory) {
+                    // Releasing outside inventory drops the item
                     this._dropInventoryRow(state.row);
                 }
             }
@@ -526,18 +526,23 @@ const Panels = {
             }
 
             clearHover();
-            const el = document.elementFromPoint(e.clientX, e.clientY);
-            if (el?.closest('#inventory-my-offer') && this._inventoryTrade) {
+            const stack = document.elementsFromPoint(e.clientX, e.clientY) || [];
+            const isOffer = stack.some((n) => n.closest?.('#inventory-my-offer'));
+            const isCashBadge = stack.some((n) => n.closest?.('#inventory-cash-badge'));
+            const isDrop = stack.some((n) => n.closest?.('#inventory-drop-selected'));
+            const isTrash = stack.some((n) => n.closest?.('#inventory-trash-zone'));
+            const targetSlot = stack.find((n) => n.closest?.('.inv-slot, .premium-slot'))?.closest('.inv-slot, .premium-slot');
+
+            if (isOffer && this._inventoryTrade) {
                 $('#inventory-my-offer')?.classList.add('is-dragover');
-            } else if (el?.closest('#inventory-cash-badge') && this._inventoryTrade) {
+            } else if (isCashBadge && this._inventoryTrade) {
                 $('#inventory-cash-badge')?.classList.add('is-dragover');
-            } else if (el?.closest('#inventory-drop-selected')) {
+            } else if (isDrop) {
                 $('#inventory-drop-selected')?.classList.add('is-dragover');
-            } else if (el?.closest('#inventory-trash-zone')) {
+            } else if (isTrash) {
                 $('#inventory-trash-zone')?.classList.add('is-dragover');
-            } else {
-                const slot = el?.closest('.inv-slot') || el?.closest('.premium-slot');
-                if (slot && !this._inventoryTrade) slot.classList.add('is-drop-target');
+            } else if (targetSlot && !this._inventoryTrade) {
+                targetSlot.classList.add('is-drop-target');
             }
         }, { passive: false });
 
@@ -549,7 +554,6 @@ const Panels = {
             if (!this._inventoryTrade || event.button !== 0) return;
             const available = Math.max(0, Math.floor(Number(this._inventoryCash) || 0));
             if (available <= 0) return;
-            event.preventDefault();
             try {
                 cashBadge.setPointerCapture(event.pointerId);
             } catch (_) { /* ignore */ }
@@ -573,7 +577,6 @@ const Panels = {
     },
 
     _startInventoryPointerDrag(row, cell, itemEl, event) {
-        event.preventDefault();
         try {
             itemEl.setPointerCapture(event.pointerId);
         } catch (_) { /* ignore */ }

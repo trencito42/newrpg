@@ -152,18 +152,18 @@ Sunset.JobsConfig = {
         -- Rectangle: x -1620..-1578, y 5195..5268.
         -- Refine with /fishdebug in-game if the shoreline needs tightening.
         fishZone = {
-            { x = -1620.00, y = 5195.00 },
-            { x = -1578.00, y = 5195.00 },
-            { x = -1578.00, y = 5268.00 },
-            { x = -1620.00, y = 5268.00 },
+            { x = -1660.00, y = 5175.00 },
+            { x = -1560.00, y = 5175.00 },
+            { x = -1560.00, y = 5295.00 },
+            { x = -1660.00, y = 5295.00 },
         },
-        fishZoneMinZ = -5.0,   -- include barca pe apa
-        fishZoneMaxZ = 12.0,   -- include pontoon/dig ridicat
+        fishZoneMinZ = -10.0,   -- include barca pe apa
+        fishZoneMaxZ = 25.0,   -- include pontoon/dig ridicat/catwalk
         biteDelayMinMs = 2500,
         biteDelayMaxMs = 6500,
         reactionWindowMs = 1500,
-        catchRadius    = 50.0,   -- fallback daca fishZone lipseste
-        catchZTolerance = 8.0,   -- fallback Z tolerance
+        catchRadius    = 60.0,   -- fallback daca fishZone lipseste
+        catchZTolerance = 15.0,  -- fallback Z tolerance
         markerSize     = 2.0,    -- visible water marker at the fishing spot
         markerDrawRadius = 80.0, -- draw it while approaching on shift
         -- [FIX] sellPoint was missing — cfg.sellPoint.coords crashed on

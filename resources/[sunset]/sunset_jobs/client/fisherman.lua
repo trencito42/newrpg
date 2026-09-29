@@ -290,7 +290,19 @@ end
 local function attemptFish()
     if fishing then return JC.notify('Your line is already cast', 'warning') end
     if not isFishermanShift() then
-        return JC.notify('Start a fisherman shift with /work first', 'error')
+        local jobId = JC.getCharacterJob()
+        if jobId == 'fisherman' then
+            local data, err = Sunset.AwaitCallback('sunset:jobs:fisherman:start')
+            if data then
+                JC.jobId = 'fisherman'
+                JC.state = 'ACTIVE'
+                applyShiftBlips()
+            else
+                return JC.notify(err or 'Could not start shift.', 'error')
+            end
+        else
+            return JC.notify('You must be a Fisherman. Speak with Billy Ray at Paleto Bay.', 'error')
+        end
     end
     local spotIdx = nearestSpotIndex()
     if not atFishingSpot() then

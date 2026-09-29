@@ -6,14 +6,18 @@ local function inFishZone(source, cfg)
     if not ped or ped == 0 then return false end
     local pos = GetEntityCoords(ped)
     local zone = cfg and cfg.fishZone
-    if not zone or #zone < 3 then
-        -- fallback la radius daca nu exista polygon
-        local spot = cfg and cfg.spots and cfg.spots[1]
-        if not spot then return false end
-        return SunsetJobs_ValidateCoordsCylinder(source, spot.coords, cfg.catchRadius or 50.0, cfg.catchZTolerance or 8.0)
+    local spot = cfg and cfg.spots and cfg.spots[1]
+
+    -- Fallback/inclusive check on spot cylinder
+    if spot and SunsetJobs_ValidateCoordsCylinder(source, spot.coords, cfg.catchRadius or 60.0, cfg.catchZTolerance or 20.0) then
+        return true
     end
-    local minZ = cfg.fishZoneMinZ or -5.0
-    local maxZ = cfg.fishZoneMaxZ or 12.0
+
+    if not zone or #zone < 3 then
+        return false
+    end
+    local minZ = cfg.fishZoneMinZ or -10.0
+    local maxZ = cfg.fishZoneMaxZ or 25.0
     if pos.z < minZ or pos.z > maxZ then return false end
     local inside = false
     local j = #zone
@@ -196,7 +200,19 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(source, spotIndex)
     local session, err = SunsetJobs_RequireSession(source, 'fisherman', { 'ACTIVE', 'STARTING' })
-    if not session then return nil, err end
+    if not session then
+        local char = exports.sunset_core:GetCharacter(source)
+        if char and char.job == 'fisherman' then
+            local lv = fishLevel(source)
+            session, err = SunsetJobs_StartSession(source, 'fisherman', {
+                catches      = 0,
+                pendingValue = 0,
+                level        = lv,
+                stage        = 'fishing',
+            })
+        end
+    end
+    if not session then return nil, err or 'No active fisherman shift' end
 
     local cfg = Sunset.GetJobConfig('fisherman')
     spotIndex = tonumber(spotIndex) or 1

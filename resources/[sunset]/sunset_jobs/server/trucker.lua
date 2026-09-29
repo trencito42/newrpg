@@ -146,7 +146,7 @@ local function safeVec3(v)
     return vector3(0.0, 0.0, 0.0)
 end
 
-exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(source, selectedRouteParam)
+local function handleTruckerStart(source, selectedRouteParam)
     print(('[TRUCKER SERVER] start callback called by src=%s routeParam=%s'):format(tostring(source), tostring(selectedRouteParam)))
     local cfg = Sunset.GetJobConfig('trucker')
     local routesList = SunsetJobRoutes.GetRoutes('trucker')
@@ -157,11 +157,23 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         print('[TRUCKER SERVER] FAIL: no routes')
         return nil, 'No routes configured'
     end
-    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 45.0) then
+
+    -- Validate player is in the trucker depot area (120m radius)
+    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 120.0) then
         local ped = GetPlayerPed(source)
-        local pos = GetEntityCoords(ped)
+        local pos = ped and ped ~= 0 and GetEntityCoords(ped) or vector3(0, 0, 0)
         print(('[TRUCKER SERVER] FAIL coords: player=(%.1f,%.1f,%.1f) depot=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, cfg.depot.coords.x, cfg.depot.coords.y, cfg.depot.coords.z))
         return nil, 'Go to the trucker depot to start work'
+    end
+
+    -- Auto-hire as trucker if not currently employed as trucker
+    local char = exports.sunset_core:GetCharacter(source)
+    if char then
+        local curJob = select(1, Sunset.GetCharacterJob(char))
+        if curJob ~= 'trucker' then
+            print(('[TRUCKER SERVER] auto-hiring src=%s (curJob=%s) as trucker'):format(tostring(source), tostring(curJob)))
+            exports.sunset_core:SetJob(source, 'trucker', 0)
+        end
     end
 
     -- Automatically clear any leftover or stuck session so route selection always works
@@ -232,9 +244,15 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         trailerModel  = trailerModel,
         trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = pickupHeading, w = pickupHeading },
     })
-    if not session then return nil, err end
+    if not session then
+        print(('[TRUCKER SERVER] SunsetJobs_StartSession FAIL: %s'):format(tostring(err)))
+        return nil, err or 'Could not create trucker session'
+    end
     return session.data
-end)
+end
+
+exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', handleTruckerStart)
+exports.sunset_core:RegisterCallback('sunset:jobs:trucker:startShift', handleTruckerStart)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
