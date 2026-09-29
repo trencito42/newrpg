@@ -41,13 +41,17 @@ end
 function MSN_ValidateRequirements(source, mission)
     local req = mission.requirements
     if not req then return true end
+    local char = nil
+    if (req.level and req.level > 0) or (req.reputation and req.reputation > 0) then
+        char = exports.sunset_core:GetCharacter(source)
+        if not char then return false, 'Not logged in' end
+    end
     if req.level and req.level > 0 then
-        -- Placeholder: extend when a global level system exists
-        -- For now we allow all levels to prevent silent blocks
+        if (char.level or 1) < req.level then
+            return false, ('Requires level %d'):format(req.level)
+        end
     end
     if req.reputation and req.reputation > 0 then
-        local char = exports.sunset_core:GetCharacter(source)
-        if not char then return false, 'Not logged in' end
         local rep = MSN_GetReputation(char.id, mission.contact)
         if rep < req.reputation then
             return false, ('Need %d reputation with %s'):format(req.reputation, mission.contact)

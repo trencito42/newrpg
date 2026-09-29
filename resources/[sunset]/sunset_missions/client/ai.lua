@@ -1,5 +1,6 @@
 local pursuitActive   = false
 local pursuitVehicles = {}
+local pursuitPeds     = {}
 local pursuitDefeated = false   -- true when all pursuers despawned/destroyed
 local guardPeds       = {}
 local alertLevel      = 0
@@ -25,6 +26,7 @@ function MSN_StartPursuit(def, variant)
     pursuitActive   = true
     pursuitDefeated = false
     pursuitVehicles = {}
+    pursuitPeds     = {}
     local Cfg    = SunsetMissions.Config
     local player = PlayerPedId()
 
@@ -61,6 +63,7 @@ function MSN_StartPursuit(def, variant)
                             -- passengers shoot
                             TaskVehicleShootAtPed(ped, player, 5.0)
                         end
+                        pursuitPeds[#pursuitPeds+1] = ped
                     end
                     SetModelAsNoLongerNeeded(pHash)
                 end
@@ -69,7 +72,7 @@ function MSN_StartPursuit(def, variant)
         end
     end
 
-    -- Monitor pursuit — track if player escapes
+    -- Monitor pursuit -- track if player escapes
     CreateThread(function()
         local Cfg2 = SunsetMissions.Config
         while pursuitActive do
@@ -105,8 +108,12 @@ function MSN_StopPursuit()
     for _, pv in ipairs(pursuitVehicles) do
         MSN_DeleteEntity(pv)
     end
+    for _, pp in ipairs(pursuitPeds) do
+        MSN_DeleteEntity(pp)
+    end
     pursuitVehicles = {}
-    -- not setting pursuitDefeated — caller checks it before calling StopPursuit
+    pursuitPeds     = {}
+    -- not setting pursuitDefeated -- caller checks it before calling StopPursuit
 end
 
 -- ── Guard system (Container 47) ───────────────────────────────────────────────
@@ -129,21 +136,30 @@ function MSN_SpawnGuards(guardDefs, onAlert)
                 end
                 -- Guards carry pistols but don't draw until alert >= 2
                 GiveWeaponToPed(ped, GetHashKey('WEAPON_PISTOL'), 120, false, false)
-                guardPeds[#guardPeds+1] = { ped = ped, state = 'PATROL', baseCoords = gd.coords }
+                guardPeds[#guardPeds+1] = { ped = ped, state = 'PATROL', baseCoords = gd.coords, suspicion = 0 }
             end
             SetModelAsNoLongerNeeded(hash)
         end
     end
 
+    -- Guard detection: LOS-based with dwell timer to prevent instant escalation
+    -- Each tick (800ms): increment suspicion on LOS, decay when out of sight
+    -- 3 ticks (~2.4s) in LOS triggers alert raise
     CreateThread(function()
         while #guardPeds > 0 do
-            Wait(600)
+            Wait(800)
             local player = PlayerPedId()
             for _, g in ipairs(guardPeds) do
                 if DoesEntityExist(g.ped) then
-                    local dist = #(GetEntityCoords(g.ped) - GetEntityCoords(player))
-                    if dist < 18.0 and alertLevel < 3 then
-                        MSN_RaiseAlert(1, true)
+                    local dist   = #(GetEntityCoords(g.ped) - GetEntityCoords(player))
+                    local canSee = dist < 20.0 and HasEntityClearLosToEntity(g.ped, player, 17)
+                    if canSee then
+                        g.suspicion = g.suspicion + 1
+                        if g.suspicion >= 3 and alertLevel < 3 then
+                            MSN_RaiseAlert(1)
+                        end
+                    else
+                        g.suspicion = math.max(0, g.suspicion - 1)
                     end
                 end
             end

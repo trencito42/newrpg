@@ -33,12 +33,15 @@ SunsetMissions.RegisterMission('container_47', {
     portEnterCoords = vector3(1102.0, -3002.0, 5.0),
     portEnterRadius = 30.0,
 
-    containerLocations = {
-        { coords = vector4(1204.0, -3069.0, 5.1, 270.0), row = 'D', id = 'LS-7193' },
-        { coords = vector4(1218.0, -3069.0, 5.1, 270.0), row = 'D', id = 'LS-8124' },
-        { coords = vector4(1232.0, -3069.0, 5.1, 270.0), row = 'D', id = 'LS-0047' },
-        { coords = vector4(1246.0, -3069.0, 5.1, 270.0), row = 'D', id = 'LS-3319' },
+    -- Physical slot positions -- IDs are assigned randomly each run by the server
+    containerSlots = {
+        { coords = vector4(1204.0, -3069.0, 5.1, 270.0), row = 'D' },
+        { coords = vector4(1218.0, -3069.0, 5.1, 270.0), row = 'D' },
+        { coords = vector4(1232.0, -3069.0, 5.1, 270.0), row = 'D' },
+        { coords = vector4(1246.0, -3069.0, 5.1, 270.0), row = 'D' },
     },
+    containerIds = { 'LS-7193', 'LS-8124', 'LS-0047', 'LS-3319' },
+    targetId     = 'LS-0047',
 
     cargoModel   = 'prop_box_ammo05a',
     deliveryCoords = vector4(1092.0, -3006.0, 5.0, 270.0),

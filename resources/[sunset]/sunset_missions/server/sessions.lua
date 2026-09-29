@@ -3,6 +3,7 @@ local sessions = {}
 function MSN_CreateSession(source, missionId, variant)
     if sessions[source] then return nil, 'already_in_mission' end
     local id = ('msn_%d_%d'):format(source, math.floor(os.clock() * 1000) % 1000000)
+    local char = exports.sunset_core:GetCharacter(source)
     sessions[source] = {
         id       = id,
         player   = source,
@@ -14,6 +15,7 @@ function MSN_CreateSession(source, missionId, variant)
         entities = { guards = {}, vehicles = {}, props = {} },
         completedObjectives = {},
         rewardClaimed = false,
+        charId   = char and char.id or nil,
     }
     return sessions[source]
 end
@@ -43,16 +45,28 @@ end
 function MSN_EndSession(source, result, reward, meta)
     local s = sessions[source]
     if not s then return end
-    local char = exports.sunset_core:GetCharacter(source)
-    if char then
+    local charId = s.charId
+    if not charId then
+        local char = exports.sunset_core:GetCharacter(source)
+        charId = char and char.id or nil
+    end
+    if charId then
         MySQL.insert.await(
             'INSERT INTO sunset_mission_history (character_id, mission, started_at, completed_at, result, reward, variant) VALUES (?,?,?,?,?,?,?)',
-            { char.id, s.mission, s.startedAt, os.time(), result or 'abandoned', reward or 0, json.encode(s.data) }
+            { charId, s.mission, s.startedAt, os.time(), result or 'abandoned', reward or 0, json.encode(s.data) }
         )
     end
     sessions[source] = nil
 end
 
 function MSN_CleanupPlayer(source)
+    local s = sessions[source]
+    if s and s.charId then
+        -- fire-and-forget: player already dropped, no await needed
+        MySQL.insert(
+            'INSERT INTO sunset_mission_history (character_id, mission, started_at, completed_at, result, reward, variant) VALUES (?,?,?,?,?,?,?)',
+            { s.charId, s.mission, s.startedAt, os.time(), 'disconnected', 0, json.encode(s.data or {}) }
+        )
+    end
     sessions[source] = nil
 end

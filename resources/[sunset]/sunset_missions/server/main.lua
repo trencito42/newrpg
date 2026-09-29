@@ -47,13 +47,25 @@ exports.sunset_core:RegisterCallback('sunset:missions:accept', function(source, 
             w = math.random(0, 359),
         }
     elseif missionId == 'container_47' then
-        local locs    = def.containerLocations
-        local target  = locs[math.random(#locs)]
+        -- Shuffle IDs across physical slots (Fisher-Yates)
+        local ids = {}
+        for _, id in ipairs(def.containerIds) do ids[#ids+1] = id end
+        for i = #ids, 2, -1 do
+            local j = math.random(i)
+            ids[i], ids[j] = ids[j], ids[i]
+        end
+        -- Locate which slot received the target ID
+        local targetSlot = nil
+        for i, id in ipairs(ids) do
+            if id == def.targetId then targetSlot = i break end
+        end
+        local tgtSlot = def.containerSlots[targetSlot]
         variant = {
-            targetContainer = target.id,
-            targetRow       = target.row,
-            targetCoords    = { x = target.coords.x, y = target.coords.y, z = target.coords.z, w = target.coords.w },
-            alertLevel      = 0,
+            slotMapping  = ids,        -- slot index -> container ID (client sees IDs on inspect)
+            targetSlot   = targetSlot, -- server-only: which slot is the target
+            targetRow    = tgtSlot.row,
+            targetCoords = { x = tgtSlot.coords.x, y = tgtSlot.coords.y, z = tgtSlot.coords.z, w = tgtSlot.coords.w },
+            alertLevel   = 0,
         }
     end
 
@@ -83,6 +95,14 @@ exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source
     return true
 end)
 
+-- ── vehicle_recovery: vehicle entered -> transition to PURSUIT ─────────────────
+exports.sunset_core:RegisterCallback('sunset:missions:vr:vehicleEntered', function(source)
+    local s, err = MSN_RequireSession(source, 'vehicle_recovery', { 'STEAL_VEHICLE' })
+    if not s then return nil, err end
+    MSN_SetState(source, 'PURSUIT')
+    return true
+end)
+
 -- ── vehicle_recovery: confirm delivery ───────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(source, data)
     local s, err = MSN_RequireSession(source, 'vehicle_recovery', { 'DELIVER' })
@@ -95,8 +115,24 @@ exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(sour
 
     local cond = math.max(0, math.min(100, data.condition or 0))
     local total, details = MSN_PayReward(source, s, cond, data.escaped)
-    TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'vehicle_recovery' })
+    TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'vehicle_recovery', xp = details.xp })
     return true
+end)
+
+-- ── container_47: identify container (server validates slot) ─────────────────
+exports.sunset_core:RegisterCallback('sunset:missions:c47:identify', function(source, data)
+    local s, err = MSN_RequireSession(source, 'container_47', { 'SEARCH' })
+    if not s then return nil, err end
+    local slotIndex = tonumber(data and data.slotIndex)
+    if not slotIndex then return nil, 'Invalid slot' end
+    if slotIndex == s.data.targetSlot then
+        MSN_SetState(source, 'IDENTIFY')
+        return true
+    else
+        -- wrong container: raise alert on server side
+        s.data.alertLevel = math.min(4, (s.data.alertLevel or 0) + 1)
+        return false, 'wrong_container'
+    end
 end)
 
 -- ── container_47: stage updates ───────────────────────────────────────────────
@@ -119,7 +155,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(sou
     local cond    = 100
     local escaped = (s.data.alertLevel or 0) < 3
     local total, details = MSN_PayReward(source, s, cond, escaped)
-    TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'container_47' })
+    TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'container_47', xp = details.xp })
     return true
 end)
 

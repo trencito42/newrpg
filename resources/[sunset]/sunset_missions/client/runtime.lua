@@ -101,7 +101,7 @@ local function runVehicleRecovery(session)
     MSN_NUI_UpdateHUD('Break in and steal the vehicle', variant.vehicleLabel)
 
     -- Lockpick phase: player must approach and use E
-    local lockpickDone = false
+    local lockpickDone    = false
     local lockpickSuccess = false
 
     while activeSession and not lockpickDone do
@@ -121,12 +121,11 @@ local function runVehicleRecovery(session)
                             SetVehicleDoorsLocked(missionVehicle, 1)
                             notify('Lock picked! Get in the vehicle.', 'success')
                         else
-                            -- Lockpick failed → alarm
+                            -- Lockpick failed → alarm + vehicle stays enterable
                             SetVehicleAlarm(missionVehicle, true)
                             StartVehicleAlarm(missionVehicle)
-                            notify('Lockpick failed — alarm triggered!', 'error')
                             SetVehicleDoorsLocked(missionVehicle, 1)
-                            lockpickDone = true
+                            notify('Lockpick failed — alarm triggered!', 'error')
                         end
                     end)
                 end
@@ -153,11 +152,15 @@ local function runVehicleRecovery(session)
     SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     notify('Deliver the vehicle to Rico!', 'info')
 
-    -- PURSUIT — spawns 5 seconds after entering vehicle
-    setStage('PURSUIT')
+    -- Server-authoritative PURSUIT stage transition
+    Sunset.AwaitCallback('sunset:missions:vr:vehicleEntered')
+    if activeSession then activeSession.state = 'PURSUIT' end
+
+    -- Pursuit starts immediately if lockpick failed (alarm), else 5-second grace period
+    local pursuitDelay = lockpickSuccess and 5000 or 0
     local pursuitDef = { pursuitVehicle = def.pursuitVehicle, pursuitPeds = def.pursuitPeds, pursuitCount = def.pursuitCount }
     CreateThread(function()
-        Wait(5000)
+        Wait(pursuitDelay)
         if activeSession and (activeSession.state == 'PURSUIT' or activeSession.state == 'DELIVER') then
             MSN_StartPursuit(pursuitDef, variant)
             MSN_NUI_UpdateHUD('Deliver the vehicle — lose the tail!', variant.vehicleLabel)
@@ -177,9 +180,13 @@ local function runVehicleRecovery(session)
         end
     end)
 
-    -- Wait until player is near delivery
+    -- Wait until player is near delivery (check vehicle still exists)
     while activeSession do
         Wait(500)
+        if missionVehicle and not DoesEntityExist(missionVehicle) then
+            MSN_AbortMission('Mission failed — vehicle was destroyed')
+            return
+        end
         local pos = GetEntityCoords(PlayerPedId())
         if #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z)) < SunsetMissions.Config.deliveryRadius + 10 then
             break
@@ -192,6 +199,11 @@ local function runVehicleRecovery(session)
 
     while activeSession and activeSession.state == 'DELIVER' do
         Wait(0)
+        -- Check vehicle still exists
+        if missionVehicle and not DoesEntityExist(missionVehicle) then
+            MSN_AbortMission('Mission failed — vehicle was destroyed')
+            return
+        end
         local ped    = PlayerPedId()
         local curVeh = GetVehiclePedIsIn(ped, false)
         local pos    = GetEntityCoords(ped)
@@ -252,7 +264,7 @@ local function runContainer47(session)
     setStage('ENTER_PORT')
     addBlip(def.portEnterCoords, 1, 5, 'Enter Port', 0.8)
     SetNewWaypoint(def.portEnterCoords.x, def.portEnterCoords.y)
-    MSN_NUI_ShowHUD('Enter the terminal port', nil, { row = variant.targetRow, id = '???47' })
+    MSN_NUI_ShowHUD('Enter the terminal port', nil, { row = variant.targetRow, id = '???' })
 
     while activeSession and activeSession.state == 'ENTER_PORT' do
         Wait(400)
@@ -262,34 +274,41 @@ local function runContainer47(session)
     end
     if not activeSession then return end
 
-    -- SEARCH
+    -- SEARCH — all containers shown as ??? until inspected; server validates identification
     clearBlips()
     MSN_NUI_UpdateHUD(('Find container in row %s'):format(variant.targetRow), nil, { row = variant.targetRow })
 
     local containerPoints = {}
-    for _, loc in ipairs(def.containerLocations) do
-        addBlip(vector3(loc.coords.x, loc.coords.y, loc.coords.z), 1, 4, loc.id, 0.5)
-        containerPoints[#containerPoints+1] = { coords = loc.coords, id = loc.id }
+    for i, slot in ipairs(def.containerSlots) do
+        addBlip(vector3(slot.coords.x, slot.coords.y, slot.coords.z), 1, 4, '???', 0.5)
+        containerPoints[#containerPoints+1] = { coords = slot.coords, slotIndex = i }
     end
 
     local identified = false
+    local c47Cooldowns = {}  -- per-slot inspect cooldown to prevent spam (ms)
     while activeSession and not identified do
         Wait(0)
         local pos = GetEntityCoords(PlayerPedId())
         for _, cp in ipairs(containerPoints) do
             local dst = #(pos - vector3(cp.coords.x, cp.coords.y, cp.coords.z))
             if dst < 2.5 then
-                showHelp(('Press ~INPUT_CONTEXT~ to inspect %s'):format(cp.id))
+                -- Reveal actual ID from slot mapping on approach
+                local revealed = (variant.slotMapping and variant.slotMapping[cp.slotIndex]) or '???'
+                showHelp(('Press ~INPUT_CONTEXT~ to inspect %s'):format(revealed))
                 if IsControlJustReleased(0, 38) then
-                    if cp.id == variant.targetContainer then
-                        identified = true
-                        notify('Match found — ' .. cp.id, 'success')
-                        setStage('IDENTIFY')
-                        clearBlips()
-                        MSN_RaiseAlert(1)
-                    else
-                        notify(cp.id .. ' — not a match', 'warning')
-                        MSN_RaiseAlert(1)
+                    local now = GetGameTimer()
+                    if not c47Cooldowns[cp.slotIndex] or (now - c47Cooldowns[cp.slotIndex]) > 3000 then
+                        c47Cooldowns[cp.slotIndex] = now
+                        -- Server validates: only server knows which slot is the target
+                        local ok, err = Sunset.AwaitCallback('sunset:missions:c47:identify', { slotIndex = cp.slotIndex })
+                        if ok then
+                            identified = true
+                            notify('Match found — ' .. revealed, 'success')
+                            clearBlips()
+                        elseif err == 'wrong_container' then
+                            MSN_RaiseAlert(1)
+                            notify(revealed .. ' — not a match', 'warning')
+                        end
                     end
                 end
             end
@@ -298,8 +317,8 @@ local function runContainer47(session)
     if not activeSession then return end
 
     -- BREAK_SEAL
-    MSN_NUI_UpdateHUD('Cut the container seal', variant.targetContainer)
     local tgtCoords = vector3(variant.targetCoords.x, variant.targetCoords.y, variant.targetCoords.z)
+    MSN_NUI_UpdateHUD('Cut the container seal', 'LS-0047')
     local waitingSeal = true
     while activeSession and waitingSeal do
         Wait(0)
@@ -328,7 +347,7 @@ local function runContainer47(session)
 
     -- TAKE_CARGO
     setStage('TAKE_CARGO')
-    MSN_NUI_UpdateHUD('Take the cargo', variant.targetContainer)
+    MSN_NUI_UpdateHUD('Take the cargo', 'LS-0047')
 
     local cargoTaken = false
     while activeSession and not cargoTaken do
@@ -409,10 +428,33 @@ AddEventHandler('sunset:missions:client:completeClose', function()
     MSN_CleanupAllEntities()
 end)
 
+-- ── Resource stop cleanup ────────────────────────────────────────────────────
+AddEventHandler('onClientResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if activeSession then
+        MSN_AbortMission('Resource stopped')
+    end
+end)
+
 function MSN_StartMissionRuntime(missionId, sessionData)
     if activeSession then return end
     activeSession = { missionId = missionId, state = 'BRIEFING', variant = sessionData.variant }
     conditionPct  = 100
+
+    -- Death detection: fail the mission if player dies during it
+    CreateThread(function()
+        while activeSession do
+            Wait(1000)
+            local ped = PlayerPedId()
+            if IsEntityDead(ped) or IsPedDeadOrDying(ped, true) then
+                Wait(2000)  -- let death screen appear first
+                if activeSession then
+                    MSN_AbortMission('Mission failed — you died')
+                end
+                break
+            end
+        end
+    end)
 
     CreateThread(function()
         if missionId == 'vehicle_recovery' then

@@ -178,6 +178,7 @@ const Missions = (() => {
             ? data.mission.replace(/_/g, ' ').toUpperCase() : '';
 
         const reward = (data.reward) || {};
+        const xp = data.xp || reward.xp || 0;
         const rows = $('#complete-rewards');
         if (rows) {
             rows.innerHTML = '';
@@ -194,6 +195,13 @@ const Missions = (() => {
                     <span class="ms-complete-row-val positive">+${fmt(val)}</span>`;
                 rows.appendChild(row);
             });
+            if (xp > 0) {
+                const xpRow = document.createElement('div');
+                xpRow.className = 'ms-complete-row';
+                xpRow.innerHTML = `<span class="ms-complete-row-label">XP</span>
+                    <span class="ms-complete-row-val positive">+${xp} XP</span>`;
+                rows.appendChild(xpRow);
+            }
         }
 
         const total = $('#complete-total');
