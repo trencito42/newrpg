@@ -179,11 +179,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local hasTrailer   = catData.hasTrailer ~= false   -- default true if unset
     local trailerModel = catData.trailerModel or cfg.trailerModel or 'tanker'
 
-    -- Pick a trailer bay dynamically from available trailer bays
+    -- Pick a trailer bay dynamically from route pickup, trailerBays pool, or default
     local bays = (cfg.depot and cfg.depot.trailerBays) or { cfg.depot.trailerSpawn }
-    local chosenBay = bays[math.random(#bays)] or cfg.depot.trailerSpawn
+    local chosenBay = route.trailerSpawn or route.pickup or bays[routeIdx] or bays[math.random(#bays)] or cfg.depot.trailerSpawn
     local pickupCoords = safeVec3(chosenBay)
-    local bayHeading = safeHeading(chosenBay)
+    local pickupHeading = safeHeading(chosenBay)
 
     local delivCoords = safeVec3(route.delivery)
     local delivHeading = safeHeading(route.delivery)
@@ -194,7 +194,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     -- Player spawns in truck; trailer is pre-parked at the selected trailer bay
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
-        pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = bayHeading },
+        pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = pickupHeading, w = pickupHeading },
         delivery      = { x = delivCoords.x, y = delivCoords.y, z = delivCoords.z, w = delivHeading },
         parkingBay    = { x = bayCoords.x, y = bayCoords.y, z = bayCoords.z, w = bayHeading },
         pay           = route.pay,
@@ -203,7 +203,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         truckModel    = truckModel,
         hasTrailer    = hasTrailer,
         trailerModel  = trailerModel,
-        trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, w = bayHeading },
+        trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, w = pickupHeading },
     })
     if not session then return nil, err end
     return session.data
