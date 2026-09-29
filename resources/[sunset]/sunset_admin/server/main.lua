@@ -135,21 +135,23 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
         return
     end
 
-    -- [BAN HARDENING] Also check hardware tokens: a banned player switching
-    -- to a fresh license on the same PC still trips this (sql/47 ban_tokens).
+    -- [BAN HARDENING] Check all hardware tokens in parallel (one JOIN query)
+    -- instead of 5 sequential awaits — reduces connect latency by ~4 round trips.
     local tokenBan
     pcall(function()
+        local tokens = {}
         for i = 0, 4 do
-            local token = GetPlayerToken(src, i)
-            if token and token ~= '' then
-                tokenBan = MySQL.single.await([[
-                    SELECT b.reason FROM ban_tokens bt
-                    JOIN bans b ON b.id = bt.ban_id
-                    WHERE bt.token = ? AND (b.expires_at IS NULL OR b.expires_at > NOW())
-                    LIMIT 1
-                ]], { token })
-                if tokenBan then break end
-            end
+            local t = GetPlayerToken(src, i)
+            if t and t ~= '' then tokens[#tokens + 1] = t end
+        end
+        if #tokens > 0 then
+            local placeholders = string.rep('?,', #tokens):sub(1, -2)
+            tokenBan = MySQL.single.await(([[
+                SELECT b.reason FROM ban_tokens bt
+                JOIN bans b ON b.id = bt.ban_id
+                WHERE bt.token IN (%s) AND (b.expires_at IS NULL OR b.expires_at > NOW())
+                LIMIT 1
+            ]]):format(placeholders), tokens)
         end
     end)
     if tokenBan then

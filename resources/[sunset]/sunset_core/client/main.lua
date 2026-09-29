@@ -37,6 +37,10 @@ exports('SetBootState', SetBootState)
 exports('GetBootState', function() return bootState end)
 
 CreateThread(function()
+    -- During LOADSCREEN the game's own loading screen blocks input; no need
+    -- to burn a per-frame native call. Start suppressing controls only once
+    -- the loadscreen hands off to the auth UI.
+    while bootState == 'LOADSCREEN' do Wait(200) end
     while bootState ~= 'GAMEPLAY' do
         DisableAllControlActions(0)
         -- NUI receives keyboard/mouse independently; keep only push-to-talk alive.
