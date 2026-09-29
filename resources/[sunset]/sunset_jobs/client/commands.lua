@@ -147,6 +147,42 @@ AddEventHandler('sunset:nui:jobsCancelWork', function()
     exports.sunset_ui:Send('jobsHide', {})
 end)
 
+-- DEV: spawn a phantom+tanker at your position for coord testing
+RegisterCommand('spawntruck', function()
+    local ped    = PlayerPedId()
+    local pos    = GetEntityCoords(ped)
+    local h      = GetEntityHeading(ped)
+
+    local function loadModel(name)
+        local hash = joaat(name)
+        RequestModel(hash)
+        local t = GetGameTimer() + 5000
+        while not HasModelLoaded(hash) and GetGameTimer() < t do Wait(50) end
+        return HasModelLoaded(hash) and hash or nil
+    end
+
+    local truckHash = loadModel('phantom')
+    if not truckHash then exports.sunset_ui:Notify('Could not load phantom model', 'error', 3000) return end
+    local truck = CreateVehicle(truckHash, pos.x, pos.y, pos.z, h, true, false)
+    SetEntityAsMissionEntity(truck, true, true)
+    TaskWarpPedIntoVehicle(ped, truck, -1)
+    SetModelAsNoLongerNeeded(truckHash)
+
+    Wait(300)
+    local trailerHash = loadModel('tanker')
+    if not trailerHash then exports.sunset_ui:Notify('Could not load tanker model', 'error', 3000) return end
+    local rear = GetOffsetFromEntityInWorldCoords(truck, 0.0, -10.5, 0.5)
+    local trailer = CreateVehicle(trailerHash, rear.x, rear.y, rear.z, h, true, false)
+    SetEntityAsMissionEntity(trailer, true, true)
+    SetEntityHeading(trailer, h)
+    SetVehicleOnGroundProperly(trailer)
+    Wait(200)
+    AttachVehicleToTrailer(truck, trailer, 1.1)
+    SetModelAsNoLongerNeeded(trailerHash)
+    exports.sunset_ui:Notify('Spawned phantom+tanker. /dl pentru coords+heading.', 'success', 4000)
+end, false)
+
+TriggerEvent('chat:addSuggestion', '/spawntruck', '[DEV] Spawn phantom+tanker la tine pentru testare coords')
 TriggerEvent('chat:addSuggestion', '/jobs', 'Open jobs panel')
 TriggerEvent('chat:addSuggestion', '/work', 'Start your civilian job shift', {
     { name = 'cancel', help = 'Cancel current shift' },

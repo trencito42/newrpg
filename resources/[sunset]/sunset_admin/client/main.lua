@@ -719,7 +719,8 @@ local function drawVehicleDebugLabel(veh, distance)
         body,
         ownerSid and ('#' .. ownerSid) or '-'
     )
-    local line3 = ('~o~%.1f, %.1f, %.1f'):format(vpos.x, vpos.y, vpos.z)
+    local vheading = GetEntityHeading(veh)
+    local line3 = ('~o~%.1f, %.1f, %.1f  h=%.1f'):format(vpos.x, vpos.y, vpos.z, vheading)
 
     local scale = math.max(0.24, math.min(0.34, 0.38 - distance * 0.003))
     SetTextFont(0)
