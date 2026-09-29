@@ -133,6 +133,8 @@ local function spawnWorkplaceNpc(key, workplace)
     elseif workplace.jobId == 'garbage' then sprite = 318
     elseif workplace.jobId == 'courier' then sprite = 478
     elseif workplace.jobId == 'fisherman' then sprite = 68
+    elseif workplace.jobId == 'hunter' then sprite = 153
+    elseif workplace.jobId == 'diver' then sprite = 64
     end
     SetBlipSprite(blip, sprite)
     SetBlipColour(blip, 5)
