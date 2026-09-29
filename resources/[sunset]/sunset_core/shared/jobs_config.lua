@@ -9,7 +9,8 @@ Sunset.JobsConfig = {
             coords = vector3(1208.77, -3114.84, 5.54),
             -- Road spawn just outside the terminal gate (confirmed open road).
             spawn        = vector4(1220.0, -3076.0, 5.54, 180.0),
-            trailerSpawn = vector4(1220.0, -3091.0, 5.54, 180.0),
+            -- Trailer pre-parked at the yard (mapping props are here).
+            trailerSpawn = vector4(1223.0, -3083.0, 4.9, 180.0),
             blip = { sprite = 477, color = 5, scale = 0.85 },
         },
         -- Truck model pool per delivery category.
@@ -20,6 +21,27 @@ Sunset.JobsConfig = {
         truckModel   = 'phantom',
         trailerModel = 'tanker',
         routes = {
+            -- ── Fuel (Phantom + tanker — all pickup from depot trailer yard) ─
+            { category = 'fuel', pay = 650,
+              pickup   = vector3(1223.0, -3083.0, 4.9),
+              delivery = vector3(-1437.55, -276.48, 46.51),
+              label    = 'Depot → West Eclipse Gas Station' },
+            { category = 'fuel', pay = 700,
+              pickup   = vector3(1223.0, -3083.0, 4.9),
+              delivery = vector3(1181.2, 2671.5, 37.9),
+              label    = 'Depot → Sandy Shores Gas Station' },
+            { category = 'fuel', pay = 750,
+              pickup   = vector3(1223.0, -3083.0, 4.9),
+              delivery = vector3(1702.55, 6416.12, 32.76),
+              label    = 'Depot → Paleto Bay Gas Station' },
+            { category = 'fuel', pay = 800,
+              pickup   = vector3(1223.0, -3083.0, 4.9),
+              delivery = vector3(2747.32, 3472.88, 55.67),
+              label    = 'Depot → Sandy Shores Refinery' },
+            { category = 'fuel', pay = 900,
+              pickup   = vector3(1223.0, -3083.0, 4.9),
+              delivery = vector3(-1710.29, 4924.05, 42.06),
+              label    = 'Depot → Grapeseed Gas Station' },
         },
         xpPerDelivery = 45,
         timeoutSec = 1800,

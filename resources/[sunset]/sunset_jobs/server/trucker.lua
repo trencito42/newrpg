@@ -131,13 +131,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local hasTrailer   = catData.hasTrailer ~= false   -- default true if unset
     local trailerModel = catData.trailerModel or cfg.trailerModel or 'trailers2'
 
-    -- Skip the pickup step: cargo is loaded at spawn, player goes straight to delivery.
+    -- Player spawns in truck; trailer is pre-parked at the trailer yard (to_pickup stage).
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
+        pickup        = { x = route.pickup.x, y = route.pickup.y, z = route.pickup.z },
         delivery      = { x = route.delivery.x, y = route.delivery.y, z = route.delivery.z },
         pay           = route.pay,
         label         = route.label,
-        stage         = 'to_delivery',
+        stage         = 'to_pickup',
         truckModel    = truckModel,
         hasTrailer    = hasTrailer,
         trailerModel  = trailerModel,
@@ -239,3 +240,144 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function
     SunsetJobs_ClearSession(source, 'COMPLETED', 'Route complete')
     return true
 end)
+
+-- ═══ ADMIN TRUCKER ROUTE MANAGEMENT ═══
+-- /aaddroute [categorie] [plata] [label]
+--   Admin trebuie sa fie la locul de ridicare. Destinatia se seteaza cu /aaddroute delivery dupa ce ia ruta.
+--
+-- Doua moduri de utilizare:
+--   MODUL 1 — ruta completa dintr-o comanda (pickup = pozitia ta, delivery = coords manual):
+--     /aaddroute [categorie] [plata] [dest_x] [dest_y] [dest_z] [label]
+--   MODUL 2 — doi pasi (pickup = pozitia ta cand dai prima comanda, delivery = pozitia ta cand dai a doua):
+--     Pasul 1: /aaddroute [categorie] [plata] [label]   (salveaza pickup = pozitia ta)
+--     Pasul 2: /aaddroute delivery                      (salveaza delivery = pozitia ta)
+
+local AdminRoutePending = {}  -- [source] = { category, pay, label, pickup }
+
+RegisterCommand('aaddroute', function(source, args)
+    if source == 0 then print('[trucker] aaddroute is player-only') return end
+    if not exports.sunset_admin:IsAdmin(source, 3) then
+        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 3.', 'error', 4000)
+        return
+    end
+
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 then
+        TriggerClientEvent('sunset:client:notify', source, 'Pozitia ta nu a putut fi determinata.', 'error') return
+    end
+    local pos = GetEntityCoords(ped)
+
+    -- Pasul 2: /aaddroute delivery
+    if tostring(args[1] or ''):lower() == 'delivery' then
+        local pending = AdminRoutePending[source]
+        if not pending then
+            TriggerClientEvent('sunset:client:notify', source, 'Nu ai nicio ruta in asteptare. Incepe cu /aaddroute [categorie] [plata] [label]', 'error', 5000)
+            return
+        end
+        local cfg = Sunset.GetJobConfig('trucker')
+        cfg.routes[#cfg.routes + 1] = {
+            category = pending.category,
+            pay      = pending.pay,
+            label    = pending.label,
+            pickup   = pending.pickup,
+            delivery = vector3(pos.x, pos.y, pos.z),
+        }
+        AdminRoutePending[source] = nil
+        local idx = #cfg.routes
+        TriggerClientEvent('sunset:client:notify', source,
+            ('Ruta #%d "%s" adaugata! Pickup=(%.0f,%.0f,%.0f) Delivery=(%.0f,%.0f,%.0f)'):format(
+                idx, pending.label, pending.pickup.x, pending.pickup.y, pending.pickup.z,
+                pos.x, pos.y, pos.z), 'success', 8000)
+        return
+    end
+
+    -- Pasul 1 (sau ruta completa cu coords)
+    local category = tostring(args[1] or 'general'):lower()
+    local pay      = tonumber(args[2])
+    if not pay or pay < 1 then
+        TriggerClientEvent('sunset:client:notify', source,
+            'Usage: /aaddroute [categorie] [plata] [label]\nDupa asta vino la destinatie si fa /aaddroute delivery\nSau: /aaddroute [categorie] [plata] [dest_x] [dest_y] [dest_z] [label]',
+            'error', 8000)
+        return
+    end
+
+    -- Detectam daca sunt trimise si coordonatele destinatiei direct (6 argumente)
+    local dx, dy, dz = tonumber(args[3]), tonumber(args[4]), tonumber(args[5])
+    if dx and dy and dz then
+        -- Ruta completa: /aaddroute category pay dest_x dest_y dest_z label...
+        local label = table.concat(args, ' ', 6)
+        if #label < 3 then
+            TriggerClientEvent('sunset:client:notify', source, 'Adauga un label pentru ruta (minim 3 caractere).', 'error', 4000) return
+        end
+        local cfg = Sunset.GetJobConfig('trucker')
+        cfg.routes[#cfg.routes + 1] = {
+            category = category,
+            pay      = math.floor(pay),
+            label    = label,
+            pickup   = vector3(pos.x, pos.y, pos.z),
+            delivery = vector3(dx, dy, dz),
+        }
+        local idx = #cfg.routes
+        TriggerClientEvent('sunset:client:notify', source,
+            ('Ruta #%d "%s" adaugata! Pickup=pozitia ta, Delivery=(%.0f,%.0f,%.0f)'):format(idx, label, dx, dy, dz), 'success', 7000)
+    else
+        -- Doi pasi: salveaza pickup, asteapta /aaddroute delivery
+        local label = table.concat(args, ' ', 3)
+        if #label < 3 then
+            TriggerClientEvent('sunset:client:notify', source, 'Adauga un label pentru ruta (minim 3 caractere).', 'error', 4000) return
+        end
+        AdminRoutePending[source] = {
+            category = category,
+            pay      = math.floor(pay),
+            label    = label,
+            pickup   = vector3(pos.x, pos.y, pos.z),
+        }
+        TriggerClientEvent('sunset:client:notify', source,
+            ('Pickup salvat la (%.0f,%.0f,%.0f). Du-te la destinatie si fa /aaddroute delivery'):format(pos.x, pos.y, pos.z), 'info', 7000)
+    end
+end, false)
+
+RegisterCommand('alistroutes', function(source)
+    if source == 0 then
+        local cfg = Sunset.GetJobConfig('trucker')
+        if not cfg or #cfg.routes == 0 then print('[trucker] No routes.') return end
+        for i, r in ipairs(cfg.routes) do
+            print(('[trucker] #%d [%s] "%s" $%d | del=(%.0f,%.0f,%.0f)'):format(
+                i, r.category or '?', r.label or '?', r.pay or 0,
+                (r.delivery and r.delivery.x) or 0, (r.delivery and r.delivery.y) or 0, (r.delivery and r.delivery.z) or 0))
+        end
+        return
+    end
+    if not exports.sunset_admin:IsAdmin(source, 1) then
+        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 1.', 'error', 4000) return
+    end
+    local cfg = Sunset.GetJobConfig('trucker')
+    if not cfg or #cfg.routes == 0 then
+        TriggerClientEvent('sunset:client:notify', source, 'Nu exista nicio ruta de trucker configurata.', 'info', 4000) return
+    end
+    local lines = {'=== Rute Trucker ==='}
+    for i, r in ipairs(cfg.routes) do
+        lines[#lines + 1] = ('#%d [%s] "%s" $%d | del=(%.0f,%.0f,%.0f)'):format(
+            i, r.category or '?', r.label or '?', r.pay or 0,
+            (r.delivery and r.delivery.x) or 0, (r.delivery and r.delivery.y) or 0, (r.delivery and r.delivery.z) or 0)
+    end
+    TriggerClientEvent('sunset:client:notify', source, table.concat(lines, '\n'), 'info', 15000)
+end, false)
+
+RegisterCommand('adelroute', function(source, args)
+    if source == 0 then print('[trucker] adelroute is player-only') return end
+    if not exports.sunset_admin:IsAdmin(source, 3) then
+        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 3.', 'error', 4000) return
+    end
+    local idx = tonumber(args[1])
+    local cfg = Sunset.GetJobConfig('trucker')
+    if not idx or not cfg or not cfg.routes[idx] then
+        local count = cfg and #cfg.routes or 0
+        TriggerClientEvent('sunset:client:notify', source,
+            ('Usage: /adelroute [nr]. Exista %d rute. Vezi /alistroutes.'):format(count), 'error', 5000)
+        return
+    end
+    local removed = table.remove(cfg.routes, idx)
+    TriggerClientEvent('sunset:client:notify', source,
+        ('Ruta #%d "%s" stearsa. Au ramas %d rute.'):format(idx, removed.label or '?', #cfg.routes), 'success', 5000)
+end, false)

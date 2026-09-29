@@ -220,6 +220,27 @@ function JobClient.spawnVehicle(model, spawn, warp)
     return veh
 end
 
+-- Spawn a vehicle (usually a trailer) at a fixed position WITHOUT attaching it.
+-- Useful when the player needs to drive to the vehicle and hook it themselves.
+function JobClient.spawnVehicleOnly(model, pos)
+    local hash = JobClient.loadModel(model)
+    if not hash then return nil end
+    TriggerServerEvent('sunset:anticheat:markLegitLocal', 'vehicle_spawn', 15)
+    local veh = CreateVehicle(hash, pos.x, pos.y, pos.z, pos.w or 0.0, true, false)
+    if veh == 0 then SetModelAsNoLongerNeeded(hash) return nil end
+    SetEntityAsMissionEntity(veh, true, true)
+    SetVehicleHasBeenOwnedByPlayer(veh, true)
+    protectJobVehicle(veh)
+    SetEntityHeading(veh, pos.w or 0.0)
+    SetVehicleOnGroundProperly(veh)
+    SetModelAsNoLongerNeeded(hash)
+    if not ensureNetworked(veh) then
+        dlog(('spawnVehicleOnly: entity %d never became networked'):format(veh))
+    end
+    JobClient.vehicles[#JobClient.vehicles + 1] = veh
+    return veh
+end
+
 function JobClient.attachTrailer(truck, trailerModel, spawn)
     local thash = JobClient.loadModel(trailerModel)
     if not thash then return nil end

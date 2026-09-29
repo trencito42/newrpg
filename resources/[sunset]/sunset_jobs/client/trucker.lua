@@ -185,7 +185,8 @@ local function startTrucker(selectedRouteIdx)
 
     if data.hasTrailer then
         local trailerModel = data.trailerModel or cfg.trailerModel
-        local trailer = JC.attachTrailer(truck, trailerModel, cfg.depot.trailerSpawn)
+        -- Spawn trailer unattached at the trailer yard — player must drive to hook it up.
+        local trailer = JC.spawnVehicleOnly(trailerModel, cfg.depot.trailerSpawn)
         if not trailer then
             JC.deleteVehicles()
             Sunset.AwaitCallback('sunset:jobs:cancelWork')
@@ -236,25 +237,68 @@ local function startTrucker(selectedRouteIdx)
         end
     end)
 
-    -- Cargo is loaded at spawn — go straight to delivery
-    local delivery = vector3(data.delivery.x, data.delivery.y, data.delivery.z)
+    -- Stage: to_pickup — show waypoint to trailer yard
+    local pickup = data.pickup and vector3(data.pickup.x, data.pickup.y, data.pickup.z)
+                   or vector3(cfg.depot.trailerSpawn.x, cfg.depot.trailerSpawn.y, cfg.depot.trailerSpawn.z)
     JC.clearBlips()
-    local delivBlip = JC.addBlip(delivery, { sprite = 478, color = 2, scale = 0.95 }, 'Delivery: ' .. (data.label or 'Cargo'))
-    SetBlipRoute(delivBlip, true)
-    SetBlipRouteColour(delivBlip, 2)
-    JC.setWaypoint(data.delivery)
-    setTruckerCheckpoint(delivery, 46, 204, 113)
-    JC.showObjective('Deliver cargo', 'Follow the GPS to: ' .. (data.label or 'destination'), 30)
-    JC.notify('Deliver to: ' .. (data.label or 'destination') .. '. Follow the map.', 'info', 8000)
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')
+    local pickupBlip = JC.addBlip(pickup, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard')
+    SetBlipRoute(pickupBlip, true)
+    SetBlipRouteColour(pickupBlip, 5)
+    JC.setWaypoint(pickup)
+    setTruckerCheckpoint(pickup, 255, 165, 0)
+    JC.showObjective('Pick up your trailer', 'Drive to the trailer yard and back up to attach the tanker', 30)
+    JC.notify('Drive to the trailer yard and hook up your tanker trailer.', 'info', 8000)
 
-    -- Job loop: delivery → return depot
+    -- Job loop: pickup → delivery → return depot
     CreateThread(function()
         local busy = false
         while JC.jobId == 'trucker' and JC.state ~= 'IDLE' do
             local session = JC.sessionData
             local stage = session and session.stage
 
-            if stage == 'to_delivery' then
+            if stage == 'to_pickup' then
+                local p = pickup
+                local truck = JC.vehicles[1]
+                if p and truck and DoesEntityExist(truck) then
+                    local ppos = GetEntityCoords(PlayerPedId())
+                    local distToPickup = #(ppos - p)
+                    if distToPickup <= 350.0 then
+                        drawTruckerMarker(p, 255, 165, 0)
+                        if distToPickup <= 45.0 then
+                            local attached = IsVehicleAttachedToTrailer(truck)
+                            if attached then
+                                draw3DText(p, '[E] Confirm — Trailer Attached')
+                            else
+                                draw3DText(p, 'Back up to attach the trailer')
+                            end
+                        end
+                    end
+                    if isNearTruckerPoint(p, cfg) and inWorkTruck() and IsVehicleAttachedToTrailer(truck) and not busy then
+                        JC.showHelp('Press ~INPUT_CONTEXT~ to confirm trailer attached')
+                        if IsControlJustPressed(0, 38) then
+                            busy = true
+                            local result, pickErr = Sunset.AwaitCallback('sunset:jobs:trucker:atPickup')
+                            busy = false
+                            if result then
+                                JC.sessionData.stage = result.stage or 'to_delivery'
+                                local delivery = vector3(result.delivery.x, result.delivery.y, result.delivery.z)
+                                JC.clearBlips()
+                                JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')
+                                local delivBlip = JC.addBlip(delivery, { sprite = 478, color = 2, scale = 0.95 }, 'Delivery: ' .. (result.label or 'Cargo'))
+                                SetBlipRoute(delivBlip, true)
+                                SetBlipRouteColour(delivBlip, 2)
+                                JC.setWaypoint(result.delivery)
+                                setTruckerCheckpoint(delivery, 46, 204, 113)
+                                JC.showObjective('Deliver cargo', 'Follow the GPS to: ' .. (result.label or 'destination'), 30)
+                                JC.notify('Trailer attached! Deliver to: ' .. (result.label or 'destination') .. '. Follow the map.', 'success', 8000)
+                            else
+                                JC.notify(pickErr or 'Could not confirm pickup', 'error')
+                            end
+                        end
+                    end
+                end
+            elseif stage == 'to_delivery' then
                 local d = routePoint(session, 'delivery')
                 if d then
                     local ppos = GetEntityCoords(PlayerPedId())
@@ -334,7 +378,16 @@ RegisterCommand('truckroute', function()
     local cfg = Sunset.GetJobConfig('trucker')
     local session = JC.sessionData
     local stage = session and session.stage
-    if stage == 'to_delivery' then
+    if stage == 'to_pickup' and cfg and cfg.depot then
+        local p = session.pickup and vector3(session.pickup.x, session.pickup.y, session.pickup.z)
+                  or vector3(cfg.depot.trailerSpawn.x, cfg.depot.trailerSpawn.y, cfg.depot.trailerSpawn.z)
+        JC.clearBlips()
+        JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard')
+        SetBlipRoute(JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard'), true)
+        JC.setWaypoint(p)
+        setTruckerCheckpoint(p, 255, 165, 0)
+        JC.notify('GPS refreshed to trailer yard.', 'success')
+    elseif stage == 'to_delivery' then
         local d = routePoint(session, 'delivery')
         if d then
             JC.clearBlips()
