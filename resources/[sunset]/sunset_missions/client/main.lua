@@ -39,10 +39,12 @@ local function spawnContact(id, data)
     end
 
     -- Retry CreatePed up to 3 times with a brief wait between attempts.
-    -- CreatePed can return 0 if the world hasn't finished streaming at that position.
+    -- Spawn 2 units above the configured Z so the ped isn't fighting geometry
+    -- on the first frame; FreezeEntityPosition locks the final settled position.
+    local spawnZ = data.coords.z + 2.0
     local ped = 0
     for attempt = 1, 3 do
-        ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.coords.w, false, false)
+        ped = CreatePed(4, hash, data.coords.x, data.coords.y, spawnZ, data.coords.w, false, false)
         if ped ~= 0 then break end
         print(('[missions] CreatePed attempt %d failed for %s — retrying in 2s'):format(attempt, id))
         Wait(2000)
@@ -52,6 +54,8 @@ local function spawnContact(id, data)
         SetModelAsNoLongerNeeded(hash)
         return
     end
+    -- Let physics settle the ped on the ground before freezing.
+    Wait(500)
 
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)
