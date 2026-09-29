@@ -183,5 +183,100 @@ Sunset.JobWorkplaces = {
             guide = true,
             quitJob = true,
         },
-    }
+    },
+
+    hunter = {
+        jobId = 'hunter',
+        jobLabel = 'Hunter',
+        locationLabel = 'Sandy Shores Hunting Lodge',
+        address = 'Hunting Lodge, Sandy Shores, Blaine County',
+        description = 'Take on wildlife management contracts across Blaine County. Requires a valid Firearm License and Hunting License.',
+        npc = {
+            id = 'mason_hunter',
+            name = 'Mason',
+            title = 'Hunting Guide',
+            model = 's_m_m_highsec_01',
+            coords = vector4(1838.0, 3673.0, 34.2, 290.0),
+            scenario = 'WORLD_HUMAN_SMOKING',
+            icon = 'ph-target',
+            badgeClass = 'hunter',
+            badge = 'HUNTING LODGE',
+        },
+        guide = {
+            title = 'Hunter Career Guide',
+            steps = {
+                '1. Ensure you hold a valid Firearm License and Hunting License (from LSSI).',
+                '2. Apply as Hunter with Mason at the Hunting Lodge.',
+                '3. Start a shift and choose a Hunting Contract from the board.',
+                '4. Travel to the assigned zone. No exact animal GPS — track them.',
+                '5. Shoot humanely with an approved firearm (bolt-action rifle preferred).',
+                '6. Inspect the carcass, then Harvest to collect meat, hide, and trophies.',
+                '7. Return to Mason to Sell Harvest and complete the contract.',
+            },
+        },
+        requirements = {
+            minLevel = 1,
+            licenses = { 'weapon', 'hunting' },
+        },
+        actions = {
+            apply = true,
+            startShift = true,
+            stopShift = true,
+            guide = true,
+            quitJob = true,
+            special = {
+                { id = 'contracts',    label = 'Hunting Contracts',  icon = 'ph-list-bullets' },
+                { id = 'equipment',    label = 'Equipment',           icon = 'ph-backpack'     },
+                { id = 'sell_harvest', label = 'Sell Harvest',        icon = 'ph-currency-dollar' },
+            },
+        },
+    },
+
+    diver = {
+        jobId = 'diver',
+        jobLabel = 'Marine Salvage Diver',
+        locationLabel = 'Vespucci Marine Salvage',
+        address = 'Vespucci Canals Waterfront, South LS',
+        description = 'Recover submerged cargo, electronics, and artifacts from coastal wrecks.',
+        npc = {
+            id = 'terry_diver',
+            name = 'Terry',
+            title = 'Dive Contractor',
+            model = 's_m_m_dockwork_01',
+            coords = vector4(-812.0, -1282.0, 5.0, 270.0),
+            scenario = 'WORLD_HUMAN_CLIPBOARD',
+            icon = 'ph-waves',
+            badgeClass = 'diver',
+            badge = 'MARINE SALVAGE',
+        },
+        guide = {
+            title = 'Marine Salvage Career Guide',
+            steps = {
+                '1. Apply as Diver with Terry at the Vespucci waterfront.',
+                '2. Rent Diving Gear (required before diving).',
+                '3. Start a shift and choose a Salvage Contract.',
+                '4. Travel to the search area — no exact marker, use your detector underwater.',
+                '5. Dive, locate cargo with the sonar detector, and recover salvage.',
+                '6. Return to Terry with your salvage to complete the contract and sell.',
+                '7. Offshore sites require a Boat License and a rented work boat.',
+            },
+        },
+        requirements = {
+            minLevel = 1,
+            licenses = {},  -- No baseline license; boat license checked per-contract
+        },
+        actions = {
+            apply = true,
+            startShift = true,
+            stopShift = true,
+            guide = true,
+            quitJob = true,
+            special = {
+                { id = 'contracts',  label = 'Salvage Contracts',  icon = 'ph-anchor'       },
+                { id = 'rent_gear',  label = 'Rent Diving Gear',   icon = 'ph-waves'        },
+                { id = 'rent_boat',  label = 'Rent Work Boat',     icon = 'ph-boat'         },
+                { id = 'sell',       label = 'Sell Salvage',       icon = 'ph-currency-dollar' },
+            },
+        },
+    },
 }

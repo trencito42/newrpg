@@ -42,6 +42,20 @@ Sunset.CivilianJobs = {
         grades = { [0] = { label = 'Apprentice', salary = 420, perms = {} } },
         npcCoords = { x = -347.45, y = -133.22 },
     },
+    hunter = {
+        label = 'Hunter',
+        type = 'civilian',
+        description = 'Hunt wildlife under licensed contract. Requires Firearm and Hunting Licenses.',
+        grades = { [0] = { label = 'Novice Hunter', salary = 0, perms = {} } },
+        npcCoords = { x = 1838.0, y = 3673.0 },
+    },
+    diver = {
+        label = 'Marine Salvage Diver',
+        type = 'civilian',
+        description = 'Dive and recover submerged cargo from wrecks across the coast.',
+        grades = { [0] = { label = 'Trainee Diver', salary = 0, perms = {} } },
+        npcCoords = { x = -812.0, y = -1282.0 },
+    },
     lockpicking = {
         label = 'Lockpicking',
         type = 'criminal',

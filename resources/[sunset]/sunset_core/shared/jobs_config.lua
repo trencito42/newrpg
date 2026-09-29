@@ -185,6 +185,206 @@ Sunset.JobsConfig = {
         timeoutSec = 900,
     },
 
+    hunter = {
+        label = 'Hunter',
+        help = 'Choose a hunting contract, travel to the zone, track and harvest wildlife. Requires Firearm and Hunting Licenses.',
+        timeoutSec = 7200,
+
+        -- Licensed hunting firearms (reward quality penalty for others)
+        approvedWeapons = {
+            ['WEAPON_SNIPERRIFLE']     = { tier = 'hunting',   qualityBonus = 5  },
+            ['WEAPON_MARKSMANRIFLE']   = { tier = 'hunting',   qualityBonus = 0  },
+            ['WEAPON_MARKSMANRIFLE_MK2'] = { tier = 'hunting', qualityBonus = 0  },
+            ['WEAPON_HEAVYSNIPER']     = { tier = 'heavy',     qualityBonus = -5 },
+            ['WEAPON_HEAVYSNIPER_MK2'] = { tier = 'heavy',     qualityBonus = -5 },
+            ['WEAPON_PUMPSHOTGUN']     = { tier = 'shotgun',   qualityBonus = -10 },
+        },
+
+        species = {
+            deer = {
+                model = 'a_c_deer',
+                label = 'Deer',
+                minRank = 1,
+                protected = false,
+                weightMin = 55.0,
+                weightMax = 110.0,
+                meatItem = 'venison',
+                hideItem = 'animal_hide',
+                trophyItem = 'antlers',
+                trophyMinQuality = 70,
+                meatYieldMin = 8.0,
+                meatYieldMax = 22.0,
+                baseValue = 12,
+            },
+            boar = {
+                model = 'a_c_boar',
+                label = 'Wild Boar',
+                minRank = 2,
+                protected = false,
+                weightMin = 40.0,
+                weightMax = 95.0,
+                meatItem = 'boar_meat',
+                hideItem = 'animal_hide',
+                trophyItem = nil,
+                meatYieldMin = 6.0,
+                meatYieldMax = 18.0,
+                baseValue = 10,
+            },
+            coyote = {
+                model = 'a_c_coyote',
+                label = 'Coyote',
+                minRank = 3,
+                protected = false,
+                weightMin = 10.0,
+                weightMax = 22.0,
+                meatItem = nil,
+                hideItem = 'coyote_pelt',
+                trophyItem = nil,
+                meatYieldMin = 0,
+                meatYieldMax = 0,
+                baseValue = 18,
+            },
+        },
+
+        -- Rank thresholds and unlock descriptions
+        ranks = {
+            [1] = { label = 'Novice',        xpRequired = 0,    unlocks = 'Deer contracts, Paleto Forest zone' },
+            [2] = { label = 'Tracker',        xpRequired = 200,  unlocks = 'Boar contracts, Alamo Sea Hills zone' },
+            [3] = { label = 'Marksman',       xpRequired = 500,  unlocks = 'Coyote contracts, night-time zone access' },
+            [4] = { label = 'Guide',          xpRequired = 1000, unlocks = 'Trophy contracts, premium payout multiplier' },
+            [5] = { label = 'Master Hunter',  xpRequired = 2000, unlocks = 'Rare high-difficulty hunts' },
+        },
+
+        contracts = {
+            {
+                id = 'deer_paleto_01',
+                label = 'Paleto Deer Control',
+                description = 'Manage deer population in Paleto Forest.',
+                species = 'deer',
+                requiredHarvests = 3,
+                minRank = 1,
+                zoneId = 'paleto_forest_01',
+                pay = 320,
+                xp = 90,
+            },
+            {
+                id = 'boar_alamo_01',
+                label = 'Alamo Boar Control',
+                description = 'Control the wild boar numbers in the Alamo Sea hills.',
+                species = 'boar',
+                requiredHarvests = 3,
+                minRank = 2,
+                zoneId = 'alamo_hills_01',
+                pay = 420,
+                xp = 120,
+            },
+            {
+                id = 'coyote_blaine_01',
+                label = 'Blaine Coyote Control',
+                description = 'Reduce predator numbers in the Sandy Shores area.',
+                species = 'coyote',
+                requiredHarvests = 2,
+                minRank = 3,
+                zoneId = 'sandy_shores_01',
+                pay = 560,
+                xp = 160,
+            },
+            {
+                id = 'deer_trophy_01',
+                label = 'Trophy Buck',
+                description = 'Harvest one high-quality qualifying deer. Shot discipline matters.',
+                species = 'deer',
+                requiredHarvests = 1,
+                minRank = 4,
+                zoneId = 'paleto_forest_01',
+                pay = 850,
+                xp = 250,
+                trophyRequired = true,
+            },
+        },
+
+        -- Quality calculation weights
+        qualityBaseScore  = 100,
+        qualityPenaltyExtraShot = 15,
+        qualityPenaltyHeadshot  = 10,
+        qualityPenaltyBadWeapon = 25,
+        qualityPenaltyVehicle   = 100,
+        qualityPenaltyFire      = 100,
+        qualityPenaltyExplosive = 100,
+
+        -- Sell price multipliers by grade
+        gradeMultiplier = {
+            pristine  = 1.00,
+            good      = 0.75,
+            fair      = 0.50,
+            poor      = 0.25,
+        },
+
+        harvestRadius = 4.0,
+        harvestOwnerWindowSec = 60,
+        animalPopCap = 6,
+        animalRespawnSec = 180,
+        trackingClueRadius = 80.0,
+        xpPerHarvest = 30,
+        xpPerContract = 60,
+    },
+
+    diver = {
+        label = 'Marine Salvage Diver',
+        help = 'Pick a salvage contract, dive to the search area, use the detector to locate cargo, and return to sell.',
+        timeoutSec = 5400,
+
+        ranks = {
+            [1] = { label = 'Snorkeler',      xpRequired = 0,    unlocks = 'Nearshore sites, basic scuba gear' },
+            [2] = { label = 'Open Water',     xpRequired = 200,  unlocks = 'Offshore sites (requires Boat License)' },
+            [3] = { label = 'Advanced Diver', xpRequired = 500,  unlocks = 'Deeper wrecks, improved detector' },
+            [4] = { label = 'Rescue Diver',   xpRequired = 1000, unlocks = 'Aircraft / cargo wrecks' },
+            [5] = { label = 'Master Diver',   xpRequired = 2000, unlocks = 'Rare deep salvage contracts' },
+        },
+
+        -- Scuba gear tiers (rented at workplace)
+        gear = {
+            basic    = { label = 'Basic Scuba Set',    o2Seconds = 120, minRank = 1, rentCost = 30  },
+            standard = { label = 'Standard Tank',      o2Seconds = 200, minRank = 2, rentCost = 60  },
+            advanced = { label = 'Advanced Tank',      o2Seconds = 320, minRank = 3, rentCost = 100 },
+        },
+
+        -- Detector radius at which each pulse tier activates
+        detectorFar    = 30.0,  -- slow pulse
+        detectorMid    = 15.0,  -- medium pulse
+        detectorClose  = 5.0,   -- fast pulse + world highlight
+        detectorItemHash = 'WEAPON_FLASHLIGHT',  -- equip anim only
+
+        boatModel = 'dinghy',
+        boatRentCost = 80,
+        salvageRadius = 4.0,   -- max distance to interact with loot point
+        lootPerContract = 4,   -- active loot points selected from site's authored pool
+
+        xpPerSalvage = 25,
+        xpPerContract = 80,
+
+        -- Loot table per site difficulty
+        lootTables = {
+            easy   = {
+                { item = 'salvage_parts',      weight = 50, value = 120 },
+                { item = 'sealed_cargo',        weight = 35, value = 200 },
+                { item = 'marine_electronics',  weight = 15, value = 350 },
+            },
+            medium = {
+                { item = 'salvage_parts',      weight = 35, value = 160 },
+                { item = 'sealed_cargo',        weight = 35, value = 280 },
+                { item = 'marine_electronics',  weight = 20, value = 450 },
+                { item = 'marine_artifact',     weight = 10, value = 650 },
+            },
+            hard   = {
+                { item = 'sealed_cargo',        weight = 30, value = 320 },
+                { item = 'marine_electronics',  weight = 30, value = 550 },
+                { item = 'marine_artifact',     weight = 30, value = 800 },
+                { item = 'marine_artifact',     weight = 10, value = 1200 },
+            },
+        },
+    },
+
     mechanic = {
         label = 'Roadside Mechanic',
         help = 'Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.',

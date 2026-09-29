@@ -14,6 +14,8 @@ local CURRENT_SCHEMA_VERSION = 1
 local Cache = {
     trucker = {},
     garbage = {},
+    hunting = {},
+    diving  = {},
 }
 
 -- ═══════════════════════════════════════════════════════════════
@@ -88,6 +90,88 @@ local function normalizeGarbageRoute(raw, index)
     }
 end
 
+local function normalizeHuntingZone(raw, index)
+    if type(raw) ~= 'table' then return nil end
+    local id = raw.id and tostring(raw.id):gsub('[^%w_%-]', '') or ('hunting_zone_%d'):format(index or 1)
+    if id == '' then id = ('hunting_zone_%d'):format(index or 1) end
+
+    local polygon = {}
+    if type(raw.polygon) == 'table' then
+        for _, pt in ipairs(raw.polygon) do
+            local v = toVec3(pt)
+            polygon[#polygon + 1] = { x = v.x, y = v.y, z = v.z }
+        end
+    end
+
+    local spawnPoints = {}
+    if type(raw.spawnPoints) == 'table' then
+        for _, pt in ipairs(raw.spawnPoints) do
+            local v = toVec4(pt)
+            spawnPoints[#spawnPoints + 1] = { x = v.x, y = v.y, z = v.z, h = v.w }
+        end
+    end
+
+    local species = {}
+    if type(raw.species) == 'table' then
+        for k, v in pairs(raw.species) do
+            species[tostring(k)] = tonumber(v) or 1
+        end
+    end
+
+    return {
+        id          = id,
+        label       = tostring(raw.label or ('Hunting Zone ' .. id)):sub(1, 100),
+        minRank     = math.max(1, math.min(5, math.floor(tonumber(raw.minRank) or 1))),
+        polygon     = polygon,
+        minZ        = tonumber(raw.minZ) or -100.0,
+        maxZ        = tonumber(raw.maxZ) or 500.0,
+        spawnPoints = spawnPoints,
+        species     = species,
+        maxAlive    = math.max(1, math.min(12, math.floor(tonumber(raw.maxAlive) or 6))),
+        respawnSec  = math.max(30, math.floor(tonumber(raw.respawnSec) or 180)),
+    }
+end
+
+local function normalizeDiveSite(raw, index)
+    if type(raw) ~= 'table' then return nil end
+    local id = raw.id and tostring(raw.id):gsub('[^%w_%-]', '') or ('dive_site_%d'):format(index or 1)
+    if id == '' then id = ('dive_site_%d'):format(index or 1) end
+
+    local lootPoints = {}
+    if type(raw.lootPoints) == 'table' then
+        for _, pt in ipairs(raw.lootPoints) do
+            local v = toVec3(pt)
+            lootPoints[#lootPoints + 1] = { x = v.x, y = v.y, z = v.z }
+        end
+    end
+
+    local searchZone = raw.searchZone and {
+        x = tonumber(raw.searchZone.x) or 0.0,
+        y = tonumber(raw.searchZone.y) or 0.0,
+        z = tonumber(raw.searchZone.z) or 0.0,
+        radius = math.max(20.0, tonumber(raw.searchZone.radius) or 80.0),
+    } or nil
+
+    local boatSpawn = raw.boatSpawn and toVec4(raw.boatSpawn) or nil
+    local diveEntry = raw.diveEntry and toVec3(raw.diveEntry) or nil
+    local returnPoint = raw.returnPoint and toVec3(raw.returnPoint) or nil
+
+    return {
+        id           = id,
+        label        = tostring(raw.label or ('Dive Site ' .. id)):sub(1, 100),
+        minRank      = math.max(1, math.min(5, math.floor(tonumber(raw.minRank) or 1))),
+        requiresBoat = raw.requiresBoat == true,
+        difficulty   = tostring(raw.difficulty or 'easy'):sub(1, 20),
+        searchZone   = searchZone,
+        boatSpawn    = boatSpawn and { x = boatSpawn.x, y = boatSpawn.y, z = boatSpawn.z, h = boatSpawn.w } or nil,
+        diveEntry    = diveEntry and { x = diveEntry.x, y = diveEntry.y, z = diveEntry.z } or nil,
+        lootPoints   = lootPoints,
+        returnPoint  = returnPoint and { x = returnPoint.x, y = returnPoint.y, z = returnPoint.z } or nil,
+        requiredSalvage = math.max(1, math.min(8, math.floor(tonumber(raw.requiredSalvage) or 4))),
+        pay          = math.max(50, math.min(100000, math.floor(tonumber(raw.pay) or 400))),
+    }
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  Load & Parse
 -- ═══════════════════════════════════════════════════════════════
@@ -123,10 +207,29 @@ function SunsetJobRoutes.Load()
         end
     end
 
+    local huntingList = {}
+    if type(parsed.hunting) == 'table' then
+        for i, r in ipairs(parsed.hunting) do
+            local normalized = normalizeHuntingZone(r, i)
+            if normalized then huntingList[#huntingList + 1] = normalized end
+        end
+    end
+
+    local divingList = {}
+    if type(parsed.diving) == 'table' then
+        for i, r in ipairs(parsed.diving) do
+            local normalized = normalizeDiveSite(r, i)
+            if normalized then divingList[#divingList + 1] = normalized end
+        end
+    end
+
     Cache.trucker = truckerList
     Cache.garbage = garbageList
+    Cache.hunting = huntingList
+    Cache.diving  = divingList
 
-    print(('^2[sunset_jobs:route_store]^7 Loaded %d trucker routes, %d garbage routes from canonical store.^7'):format(#Cache.trucker, #Cache.garbage))
+    print(('^2[sunset_jobs:route_store]^7 Loaded %d trucker, %d garbage, %d hunting zones, %d dive sites from canonical store.^7'):format(
+        #Cache.trucker, #Cache.garbage, #Cache.hunting, #Cache.diving))
     return true
 end
 
@@ -209,6 +312,22 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
             seenIds[norm.id] = true
             normalizedList[#normalizedList + 1] = norm
         end
+    elseif jobName == 'hunting' then
+        for i, r in ipairs(routesList) do
+            local norm = normalizeHuntingZone(r, i)
+            if not norm then return false, ('Malformed hunting zone at index %d'):format(i) end
+            if seenIds[norm.id] then return false, ('Duplicate zone ID: %s'):format(norm.id) end
+            seenIds[norm.id] = true
+            normalizedList[#normalizedList + 1] = norm
+        end
+    elseif jobName == 'diving' then
+        for i, r in ipairs(routesList) do
+            local norm = normalizeDiveSite(r, i)
+            if not norm then return false, ('Malformed dive site at index %d'):format(i) end
+            if seenIds[norm.id] then return false, ('Duplicate site ID: %s'):format(norm.id) end
+            seenIds[norm.id] = true
+            normalizedList[#normalizedList + 1] = norm
+        end
     else
         return false, 'Unsupported job name: ' .. tostring(jobName)
     end
@@ -221,6 +340,8 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
         schemaVersion = CURRENT_SCHEMA_VERSION,
         trucker = Cache.trucker,
         garbage = Cache.garbage,
+        hunting = Cache.hunting,
+        diving  = Cache.diving,
     }
 
     local resourceName = GetCurrentResourceName()

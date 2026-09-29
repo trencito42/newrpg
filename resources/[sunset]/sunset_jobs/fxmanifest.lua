@@ -34,6 +34,8 @@ client_scripts {
     'client/courier.lua',
     'client/fisherman.lua',
     'client/mechanic.lua',
+    'client/hunter.lua',
+    'client/diver.lua',
     'client/commands.lua',
     'client/main.lua',
 }
@@ -48,6 +50,8 @@ server_scripts {
     'server/courier.lua',
     'server/fisherman.lua',
     'server/mechanic.lua',
+    'server/hunter.lua',
+    'server/diver.lua',
     'server/main.lua',
 }
 

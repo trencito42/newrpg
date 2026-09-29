@@ -68,6 +68,26 @@ Sunset.Items = {
     weapon_pistol = { label = 'Pistol', weight = 1.2, usable = false, weapon = 'WEAPON_PISTOL', category = 'handguns', icon = 'weapon_trigger' },
     weapon_vintagepistol = { label = 'Vintage Pistol', weight = 1.25, usable = false, weapon = 'WEAPON_VINTAGEPISTOL', category = 'handguns', icon = 'weapon_trigger' },
     weapon_pumpshotgun = { label = 'Pump Shotgun', weight = 3.4, usable = false, weapon = 'WEAPON_PUMPSHOTGUN', category = 'shotguns', icon = 'weapon_barrel' },
+    weapon_sniperrifle = { label = 'Hunting Rifle', weight = 4.5, usable = false, weapon = 'WEAPON_SNIPERRIFLE', category = 'rifles', icon = 'weapon_barrel' },
+    -- ═══ HUNTER JOB ITEMS ═══
+    -- Harvest items carry metadata: species, weight, quality (0-100), grade, harvestedAt, animalId.
+    -- Do NOT stack items with different metadata automatically (see inventory stacking behavior).
+    venison     = { label = 'Venison',      weight = 1.0, usable = false, category = 'food',      icon = 'cooked_fish',      metaDisplay = {'species','weight','quality'} },
+    boar_meat   = { label = 'Boar Meat',    weight = 1.0, usable = false, category = 'food',      icon = 'cooked_fish',      metaDisplay = {'species','weight','quality'} },
+    animal_hide = { label = 'Animal Hide',  weight = 0.8, usable = false, category = 'materials', icon = 'cloth',            metaDisplay = {'species','grade'} },
+    coyote_pelt = { label = 'Coyote Pelt',  weight = 0.6, usable = false, category = 'materials', icon = 'cloth',            metaDisplay = {'species','grade'} },
+    antlers     = { label = 'Antlers',      weight = 1.2, usable = false, category = 'misc',      icon = 'filled_evidence_bag', metaDisplay = {'species','quality'} },
+    hunting_knife = { label = 'Hunting Knife', weight = 0.35, usable = false, weapon = 'WEAPON_KNIFE', category = 'melee', icon = 'weapon_trigger' },
+    ammo_rifle  = { label = 'Rifle Ammo (10)', weight = 0.6, usable = true, category = 'ammo', icon = 'shotgun_ammo',
+                    ammoRounds = 10, ammoWeapons = { 'WEAPON_SNIPERRIFLE', 'WEAPON_MARKSMANRIFLE', 'WEAPON_MARKSMANRIFLE_MK2', 'WEAPON_HEAVYSNIPER', 'WEAPON_HEAVYSNIPER_MK2' } },
+    -- ═══ DIVER JOB ITEMS ═══
+    -- Salvage items carry metadata: siteId, condition (0-100), rarity, recoveredAt.
+    salvage_parts      = { label = 'Salvage Parts',       weight = 2.0, usable = false, category = 'materials', icon = 'metalscrap',           metaDisplay = {'condition','rarity'} },
+    marine_electronics = { label = 'Marine Electronics',  weight = 1.2, usable = false, category = 'materials', icon = 'phone',                metaDisplay = {'condition','rarity'} },
+    sealed_cargo       = { label = 'Sealed Cargo',        weight = 3.0, usable = false, category = 'misc',      icon = 'filled_evidence_bag',  metaDisplay = {'condition','rarity'} },
+    marine_artifact    = { label = 'Marine Artifact',     weight = 0.8, usable = false, category = 'misc',      icon = 'filled_evidence_bag',  metaDisplay = {'condition','rarity'} },
+    scuba_gear         = { label = 'Basic Scuba Set',     weight = 4.0, usable = false, category = 'tools',     icon = 'backpack' },
+    advanced_tank      = { label = 'Advanced Dive Tank',  weight = 5.5, usable = false, category = 'tools',     icon = 'backpack' },
     ammo_9mm = {
         label = '9mm Ammo Box (24)', weight = 0.4, usable = true, category = 'ammo', icon = 'pistol_ammo',
         ammoRounds = 24, ammoWeapons = { 'WEAPON_SNSPISTOL', 'WEAPON_PISTOL', 'WEAPON_VINTAGEPISTOL' },
