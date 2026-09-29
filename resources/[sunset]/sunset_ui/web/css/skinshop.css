@@ -104,10 +104,10 @@
 .skinshop-forza .sk-list-panel {
     display: flex;
     flex-direction: column;
-    width: 360px;
+    width: 440px;
     flex-shrink: 0;
     background: rgba(0, 0, 0, 0.45);
-    padding: 30px 20px 30px 28px;
+    padding: 30px 18px 30px 22px;
     backdrop-filter: blur(4px);
     border-left:  1px solid rgba(255, 255, 255, 0.06);
     border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -116,47 +116,52 @@
 .skinshop-forza .sk-skin-list {
     flex: 1;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    align-content: start;
 }
 .skinshop-forza .sk-skin-list::-webkit-scrollbar { width: 3px; }
 .skinshop-forza .sk-skin-list::-webkit-scrollbar-thumb {
     background: var(--sk-accent);
     border-radius: 2px;
 }
+
+/* Card layout */
 .skinshop-forza .sk-skin-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 10px;
+    flex-direction: column;
     cursor: pointer;
-    border-left: 3px solid transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
     transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
 }
 .skinshop-forza .sk-skin-row:hover {
+    border-color: rgba(0, 255, 204, 0.45);
     background: rgba(0, 255, 204, 0.05);
-    border-left-color: rgba(0, 255, 204, 0.4);
-    padding-left: 14px;
 }
 .skinshop-forza .sk-skin-row.is-active {
+    border-color: var(--sk-accent);
     background: rgba(0, 255, 204, 0.1);
-    border-left-color: var(--sk-accent);
-    padding-left: 14px;
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.15);
 }
 .skinshop-forza .sk-skin-thumb {
-    width: 42px;
-    height: 54px;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    height: auto;
     object-fit: cover;
     object-position: top center;
-    background: rgba(255, 255, 255, 0.04);
-    flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    display: block;
 }
-.skinshop-forza .sk-skin-row-info { flex: 1; min-width: 0; }
+.skinshop-forza .sk-skin-row-info {
+    padding: 6px 7px 7px;
+    background: rgba(0, 0, 0, 0.55);
+}
 .skinshop-forza .sk-skin-row-name {
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 800;
     color: #fff;
     text-transform: uppercase;
@@ -166,21 +171,24 @@
     text-overflow: ellipsis;
 }
 .skinshop-forza .sk-skin-row-price {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--sk-accent);
     font-weight: 700;
-    margin-top: 3px;
+    margin-top: 2px;
 }
 .skinshop-forza .sk-skin-row-badge {
-    font-size: 9px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 8px;
     font-weight: 800;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 3px;
-    flex-shrink: 0;
 }
-.skinshop-forza .badge-owned { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-.skinshop-forza .badge-bp    { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+.skinshop-forza .badge-owned { background: rgba(46, 204, 113, 0.85); color: #000; }
+.skinshop-forza .badge-bp    { background: rgba(230, 126, 34, 0.85);  color: #000; }
 .skinshop-forza .sk-empty {
+    grid-column: 1 / -1;
     color: var(--sk-muted);
     font-size: 12px;
     font-weight: 700;
@@ -390,6 +398,6 @@
 
 @media (max-width: 1400px) {
     .skinshop-forza .sk-ui-layer { padding: 60px 50px; }
-    .skinshop-forza .sk-detail-panel { width: 320px; }
-    .skinshop-forza .sk-list-panel { width: 300px; }
+    .skinshop-forza .sk-detail-panel { width: 300px; }
+    .skinshop-forza .sk-list-panel { width: 360px; }
 }

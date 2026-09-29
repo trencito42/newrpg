@@ -85,6 +85,11 @@ end)
 RegisterNetEvent('sunset:skins:applyModel')
 AddEventHandler('sunset:skins:applyModel', function(model)
     applyModel(model)
+    -- SetPlayerModel resets NUI focus; re-apply it if the shop is still open
+    if shopOpen then
+        Wait(100)
+        exports.sunset_ui:SetFocus(true, true, false, 'skinshop')
+    end
 end)
 
 -- Server → client: generic notification (giveskin, battlepass)
