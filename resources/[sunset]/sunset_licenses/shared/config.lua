@@ -96,6 +96,16 @@ SunsetLicenses.Facilities = {
         markerRadius = 2.5,
         license = 'weapon',
     },
+    -- [SECTION 8] Hunting license exam facility. Located at the LSSI outdoor shooting range
+    -- in Blaine County, near the hunting contract zones. Both the exam booth marker and the
+    -- range targets are in this area.
+    hunting_range = {
+        label = 'LSSI Hunting Range — Blaine County',
+        blip = { sprite = 153, color = 2, scale = 0.85 },
+        marker = vector3(2569.0, 3465.0, 56.0),
+        markerRadius = 3.0,
+        license = 'hunting',
+    },
 }
 
 SunsetLicenses.MeleeWeapons = {

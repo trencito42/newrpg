@@ -211,10 +211,15 @@ local function openWorkplaceMenu(workplace)
         local npcDef = workplace.npc or {}
 
         -- 1. Apply Action
+        -- [SECTION 3] Show specific missing-license error in apply label so player
+        -- knows exactly which license they need without having to click Apply first.
         if not state.isEmployed then
             local applyLabel = ('Apply as %s'):format(workplace.jobLabel)
             if not state.requirementsMet and state.requirementError then
-                applyLabel = applyLabel .. ' [Missing License]'
+                -- Trim long messages for label display; full message shows on apply attempt.
+                local errShort = state.requirementError
+                if #errShort > 60 then errShort = errShort:sub(1, 57) .. '...' end
+                applyLabel = applyLabel .. (' [%s]'):format(errShort)
             end
             actions[#actions + 1] = {
                 id = 'workplace_apply',

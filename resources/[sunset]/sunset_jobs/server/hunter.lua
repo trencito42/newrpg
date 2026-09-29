@@ -9,6 +9,43 @@ local function dlog(fmt, ...)
     if DEBUG then print(('^3[hunter]^7 ' .. fmt):format(...)) end
 end
 
+-- [SECTION 14] Canonical weapon hash → name reverse-lookup.
+-- Built from joaat() of approved and common weapon names. weaponDamageEvent sends the
+-- integer hash; GetHashKey(tostring(hash)) DOES NOT reverse-lookup — it re-hashes the
+-- digit string, giving a completely wrong weapon name. Use this table instead.
+-- Normalized to signed 32-bit integers (weaponDamageEvent may send unsigned).
+local function normalizeHash(h)
+    h = tonumber(h) or 0
+    if h > 2147483647 then h = h - 4294967296 end
+    return h
+end
+local _weaponNames = {
+    'WEAPON_PISTOL', 'WEAPON_PISTOL_MK2', 'WEAPON_COMBATPISTOL', 'WEAPON_APPISTOL',
+    'WEAPON_STUNGUN', 'WEAPON_MICROSMG', 'WEAPON_SMG', 'WEAPON_SMG_MK2',
+    'WEAPON_ASSAULTSMG', 'WEAPON_ASSAULTRIFLE', 'WEAPON_ASSAULTRIFLE_MK2',
+    'WEAPON_CARBINERIFLE', 'WEAPON_CARBINERIFLE_MK2', 'WEAPON_ADVANCEDRIFLE',
+    'WEAPON_SPECIALCARBINE', 'WEAPON_SPECIALCARBINE_MK2', 'WEAPON_BULLPUPRIFLE',
+    'WEAPON_BULLPUPRIFLE_MK2', 'WEAPON_COMPACTRIFLE',
+    'WEAPON_MG', 'WEAPON_COMBATMG', 'WEAPON_COMBATMG_MK2',
+    'WEAPON_PUMPSHOTGUN', 'WEAPON_PUMPSHOTGUN_MK2', 'WEAPON_SAWNOFFSHOTGUN',
+    'WEAPON_ASSAULTSHOTGUN', 'WEAPON_BULLPUPSHOTGUN', 'WEAPON_MUSKET',
+    'WEAPON_HEAVYSHOTGUN', 'WEAPON_DBSHOTGUN', 'WEAPON_AUTOSHOTGUN',
+    'WEAPON_SNIPERRIFLE', 'WEAPON_HEAVYSNIPER', 'WEAPON_HEAVYSNIPER_MK2',
+    'WEAPON_MARKSMANRIFLE', 'WEAPON_MARKSMANRIFLE_MK2',
+    'WEAPON_RPGROCKET', 'WEAPON_GRENADELAUNCHER', 'WEAPON_MINIGUN',
+    'WEAPON_GRENADE', 'WEAPON_STICKYBOMB', 'WEAPON_PROXMINE',
+    'WEAPON_KNIFE', 'WEAPON_NIGHTSTICK', 'WEAPON_HAMMER',
+    'WEAPON_BAT', 'WEAPON_CROWBAR', 'WEAPON_BOTTLE',
+    'WEAPON_UNARMED',
+}
+SunsetHunterWeaponNames = {}
+for _, name in ipairs(_weaponNames) do
+    local h = normalizeHash(GetHashKey(name))
+    SunsetHunterWeaponNames[h] = name
+    -- also map the unsigned form so both representations resolve
+    if h < 0 then SunsetHunterWeaponNames[h + 4294967296] = name end
+end
+
 -- ── Rate Limits ──────────────────────────────────────────────
 local RateLimit = {}
 local RATE_LIMIT_SEC = 2
@@ -224,20 +261,23 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
     local char = getChar(source)
     if not char then return nil, 'Character not loaded' end
 
-    -- Collect all harvest items in inventory
+    -- [SECTION 23] Atomic sell: snapshot → validate → remove → verify → pay.
+    -- If payment fails, restore the exact item + metadata snapshot so the player
+    -- does not lose items without receiving money. GetInventory is the only server
+    -- API that exposes per-slot metadata needed to restore items faithfully.
     local harvestItems = { 'venison', 'boar_meat', 'animal_hide', 'coyote_pelt', 'antlers' }
     local totalValue = 0
-    local sold = {}
+    local sold = {}       -- items to remove
+    local snapshots = {}  -- full slot snapshot for restore-on-failure
 
     local inv = exports.sunset_inventory:GetInventory(source)
     if not inv then return nil, 'Could not load inventory' end
 
+    local harvestSet = {}
+    for _, hi in ipairs(harvestItems) do harvestSet[hi] = true end
+
     for _, slot in ipairs(inv) do
-        local isHarvest = false
-        for _, hi in ipairs(harvestItems) do
-            if slot.item == hi then isHarvest = true break end
-        end
-        if isHarvest then
+        if harvestSet[slot.item] then
             -- Server determines value from metadata — never trust client
             local meta = type(slot.metadata) == 'table' and slot.metadata or {}
             local quality = tonumber(meta.quality) or 50
@@ -251,6 +291,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
             local itemVal = math.floor(baseVal * weight * gradeM)
             totalValue = totalValue + itemVal
             sold[#sold + 1] = { item = slot.item, slot = slot.slot, value = itemVal }
+            -- Full snapshot for potential restore (preserves all metadata)
+            snapshots[#snapshots + 1] = {
+                item     = slot.item,
+                count    = slot.count or 1,
+                metadata = meta,
+            }
         end
     end
 
@@ -258,14 +304,21 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
         return nil, 'No harvest items to sell. Go hunt first.'
     end
 
-    -- Pay FIRST: if payment fails, items are never removed (atomicity guard)
-    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')
-    if not paid then
-        return nil, 'Payment failed — no items were removed. Please try again.'
-    end
-
+    -- Remove items FIRST (before payment). Items are locked; payment failure
+    -- triggers an item restore so the player loses nothing.
     for _, s in ipairs(sold) do
         exports.sunset_inventory:RemoveItem(source, s.item, 1)
+    end
+
+    -- Pay after items are removed.
+    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')
+    if not paid then
+        -- Payment failed — restore exact items with all metadata.
+        for _, snap in ipairs(snapshots) do
+            exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
+        end
+        exports.sunset_inventory:ReloadInventory(source)
+        return nil, 'Payment failed — your items have been returned. Please try again.'
     end
 
     SunsetJobs_AddJobProgress(source, 'hunter', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
@@ -422,7 +475,12 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
     if session.data.zoneId ~= animal.zoneId then return end
 
     local weaponHash = tonumber(data.weaponType) or 0
-    local weaponName = GetHashKey and GetHashKey(tostring(weaponHash)) or ('0x%X'):format(weaponHash)
+    -- [SECTION 14] GetHashKey(tostring(number)) is wrong — it hashes the string "12345" not the
+    -- weapon. Use a reverse-lookup table built from joaat() of known weapon names.
+    -- Normalize to signed 32-bit int first (weaponDamageEvent may send unsigned).
+    if weaponHash > 2147483647 then weaponHash = weaponHash - 4294967296 end
+    local weaponName = SunsetHunterWeaponNames and SunsetHunterWeaponNames[weaponHash]
+        or ('0x%X'):format(weaponHash < 0 and weaponHash + 4294967296 or weaponHash)
 
     -- Detect damage method
     local method = 'firearm'
@@ -490,11 +548,15 @@ RegisterNetEvent('sunset:hunting:reportAnimalDead', function(netId)
     end
     animal.fatalShooterId = bestCharId
 
-    -- Record kill weapon from the fatal shooter's last tracked damage event
+    -- Record kill weapon from the fatal shooter's last tracked damage event.
+    -- [SECTION 15] Do NOT default to WEAPON_SNIPERRIFLE — that would silently give
+    -- quality bonuses for unknown weapons. Use 'UNKNOWN' so calcKillQuality applies
+    -- the qualityPenaltyBadWeapon penalty (conservative/correct).
     if bestCharId and animal.shooters[bestCharId] then
-        animal.killWeapon = string.upper(animal.shooters[bestCharId].lastWeaponName or 'WEAPON_SNIPERRIFLE')
+        local rawName = animal.shooters[bestCharId].lastWeaponName or ''
+        animal.killWeapon = rawName ~= '' and string.upper(rawName) or 'UNKNOWN'
     else
-        animal.killWeapon = 'WEAPON_SNIPERRIFLE'
+        animal.killWeapon = 'UNKNOWN'
     end
 
     -- Determine owner and grant exclusive harvest window
@@ -672,11 +734,25 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     exports.sunset_inventory:ReloadInventory(source)
 
     -- Contract progress
+    -- [SECTION 16] trophyRequired contracts only count harvests that include a trophy item
+    -- (i.e. quality >= trophyMinQuality). If the quality was too low the player harvested
+    -- the carcass but did NOT make progress — notify them and let them keep trying.
     local contract = HunterContracts[source]
-    if contract and contract.zoneId == animal.zoneId then
+    local countsForProgress = true
+    if contract and session.data.trophyRequired then
+        local speciesCfg = cfg.species[animal.species or '']
+        local minQ = speciesCfg and speciesCfg.trophyMinQuality or 70
+        if quality < minQ then
+            countsForProgress = false
+            TriggerClientEvent('sunset:client:notify', source,
+                ('Trophy contract: quality %d is below minimum %d. Take a cleaner shot next time.'):format(
+                    quality, minQ), 'warning', 7000)
+        end
+    end
+
+    if contract and contract.zoneId == animal.zoneId and countsForProgress then
         contract.harvested = (contract.harvested or 0) + 1
         session.data.harvested = contract.harvested
-
         TriggerClientEvent('sunset:jobs:stateChanged', source, session.state, session.data)
 
         -- Contract complete?

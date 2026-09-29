@@ -342,11 +342,14 @@ Sunset.JobsConfig = {
             [5] = { label = 'Master Diver',   xpRequired = 2000, unlocks = 'Rare deep salvage contracts' },
         },
 
-        -- Scuba gear tiers (rented at workplace)
+        -- Scuba gear tiers (rented at workplace).
+        -- [SECTION 25] Key is o2Duration (seconds) everywhere in code — do NOT rename to o2Seconds.
+        -- server/diver.lua reads gearCfg.o2Duration; changing the key here without changing
+        -- server reads caused all tiers to silently fall back to 120s (basic tier only).
         gear = {
-            basic    = { label = 'Basic Scuba Set',    o2Seconds = 120, minRank = 1, rentCost = 30  },
-            standard = { label = 'Standard Tank',      o2Seconds = 200, minRank = 2, rentCost = 60  },
-            advanced = { label = 'Advanced Tank',      o2Seconds = 320, minRank = 3, rentCost = 100 },
+            basic    = { label = 'Basic Scuba Set',    o2Duration = 120, minRank = 1, rentCost = 30  },
+            standard = { label = 'Standard Tank',      o2Duration = 200, minRank = 2, rentCost = 60  },
+            advanced = { label = 'Advanced Tank',      o2Duration = 320, minRank = 3, rentCost = 100 },
         },
 
         -- Detector radius at which each pulse tier activates

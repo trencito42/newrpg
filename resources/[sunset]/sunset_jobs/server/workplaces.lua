@@ -22,22 +22,39 @@ local function checkRequirements(source, char, reqs)
     -- and this job explicitly declares license requirements, deny access rather
     -- than silently treating the missing check as "licensed". This prevents
     -- bypassing the Hunting / Weapon license gate during resource restarts.
+    -- [SECTIONS 2-3] Check ALL required licenses and report EACH missing one by
+    -- its proper label (from SunsetLicenses.Types) rather than the raw key.
+    -- This gives players actionable information: "Missing: Firearm License, Hunting License"
+    -- instead of the generic "[Missing License]".
     if reqs.licenses and #reqs.licenses > 0 then
+        if GetResourceState('sunset_licenses') ~= 'started' then
+            return false, 'Licensing service unavailable. Try again in a moment.'
+        end
+        local missing = {}
         for _, lic in ipairs(reqs.licenses) do
-            local hasLic = false
-            if GetResourceState('sunset_licenses') == 'started' then
-                local ok, res = pcall(function()
-                    return exports.sunset_licenses:HasLicense(source, lic)
-                end)
-                hasLic = (ok and res == true)
-            else
-                -- Licensing service is down — deny rather than permit unlicensed access.
-                return false, 'Licensing service unavailable. Try again in a moment.'
-            end
-
+            local ok, res = pcall(function()
+                return exports.sunset_licenses:HasLicense(source, lic)
+            end)
+            local hasLic = (ok and res == true)
             if not hasLic then
-                local licLabel = lic:gsub('^%l', string.upper)
-                return false, ('Requires a valid %s License. Visit the DMV / LSSI Office.'):format(licLabel)
+                -- Use the proper label from SunsetLicenses.Types if available,
+                -- fall back to capitalizing the raw key.
+                local licLabel
+                local licTypes = SunsetLicenses and SunsetLicenses.Types
+                if licTypes and licTypes[lic] and licTypes[lic].label then
+                    licLabel = licTypes[lic].label
+                else
+                    licLabel = lic:sub(1,1):upper() .. lic:sub(2)
+                end
+                missing[#missing + 1] = licLabel
+            end
+        end
+        if #missing > 0 then
+            if #missing == 1 then
+                return false, ('Requires a valid %s. Visit the DMV / LSSI Office.'):format(missing[1])
+            else
+                return false, ('Missing licenses: %s. Visit the DMV / LSSI Office.'):format(
+                    table.concat(missing, ', '))
             end
         end
     end

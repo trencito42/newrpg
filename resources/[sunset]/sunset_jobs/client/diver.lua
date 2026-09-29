@@ -23,6 +23,13 @@ local function getCfg()
     return Sunset.JobsConfig and Sunset.JobsConfig.diver
 end
 
+-- [SECTION 26] Forward-declare resetO2 BEFORE the stateChanged handler so the
+-- closure captures the correct upvalue. The function body is assigned below.
+-- Without this declaration, the stateChanged handler at line ~62 would resolve
+-- resetO2 from the global table (nil), causing a "attempt to call nil" error
+-- the first time a dive contract was accepted.
+local resetO2
+
 local function isUnderwater()
     local ped = PlayerPedId()
     return IsPedSwimmingUnderWater(ped)
@@ -36,9 +43,12 @@ local function updateShiftHud()
         exports.sunset_ui:Send('jobShiftShow', {
             title    = 'Marine Salvage',
             counter  = ('Salvage %d / %d'):format(rec, req),
+            -- [SECTION 42] Surfacing does NOT refill O2 — O2 is tied to the tank and only
+            -- resets when a new tank is rented from Terry. The old "Surface to refill O2!"
+            -- message was factually wrong. Players must return to Terry for a replacement.
             message  = O2Remaining > 0
                 and ('O2: %ds  — Press {key} on salvage points'):format(O2Remaining)
-                or 'Surface to refill O2!',
+                or '~r~O2 depleted — return to Terry for a new tank!',
             key      = 'E',
             progress = math.floor((rec / req) * 100),
             detail   = ContractData.siteId or '',
@@ -94,7 +104,9 @@ local function activateScuba()
 end
 
 -- Called when gear is rented or a new contract starts — this is the only place O2 resets to full.
-local function resetO2(maxDuration)
+-- [SECTION 26] Body assigned here; the variable was forward-declared above so the stateChanged
+-- handler closure can capture the correct upvalue slot.
+resetO2 = function(maxDuration)
     O2Max = maxDuration or 120
     O2Remaining = O2Max
 end
@@ -104,7 +116,8 @@ local function deactivateScuba(reason)
     ScubaActive = false
     SetPedDiesInWater(PlayerPedId(), true)
     if reason == 'depleted' then
-        exports.sunset_core:ShowNotification('~r~O2 depleted! Surface immediately!')
+        -- [SECTION 42] Surfacing does NOT refill O2. Player must return to Terry.
+        exports.sunset_core:ShowNotification('~r~O2 depleted! Surface and return to Terry for a new tank.')
     elseif reason == 'surfaced' then
         exports.sunset_core:ShowNotification('~b~Scuba gear deactivated — surfaced')
     end
