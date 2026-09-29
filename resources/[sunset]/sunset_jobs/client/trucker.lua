@@ -19,10 +19,28 @@ local function isNearTruckerPoint(coords, cfg)
     return math.abs(p.z - t.z) <= (cfg.deliveryZTolerance or 8.0)
 end
 
+local function safeHeading(v)
+    if not v then return 0.0 end
+    if type(v) == 'vector4' then return v.w end
+    if type(v) == 'table' then return v.w or v.heading or 0.0 end
+    return 0.0
+end
+
+local function safeVec3(v)
+    if not v then return vector3(0.0, 0.0, 0.0) end
+    if type(v) == 'vector3' or type(v) == 'vector4' then
+        return vector3(v.x, v.y, v.z)
+    end
+    if type(v) == 'table' then
+        return vector3(v.x or 0.0, v.y or 0.0, v.z or 0.0)
+    end
+    return vector3(0.0, 0.0, 0.0)
+end
+
 local function routePoint(session, key)
     local point = session and session[key]
     if not point then return nil end
-    return vector3(point.x, point.y, point.z)
+    return safeVec3(point)
 end
 
 local function draw3DText(coords, text)
@@ -365,7 +383,7 @@ local function startTrucker(selectedRouteIdx)
                         end
                     end
 
-                    local targetH = (session.delivery and (session.delivery.w or session.delivery.heading)) or 0.0
+                    local targetH = safeHeading(session.delivery)
                     local targetRadius = cfg.manualParkingRadius or 4.5
                     local angleTolerance = cfg.manualParkingAngleTolerance or 35.0
 

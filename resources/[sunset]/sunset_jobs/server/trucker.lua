@@ -110,10 +110,34 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRoutes', function(s
     return routes
 end)
 
+local function safeHeading(v)
+    if not v then return 0.0 end
+    if type(v) == 'vector4' then return v.w end
+    if type(v) == 'table' then return v.w or v.heading or 0.0 end
+    return 0.0
+end
+
+local function safeVec3(v)
+    if not v then return vector3(0.0, 0.0, 0.0) end
+    if type(v) == 'vector3' or type(v) == 'vector4' then
+        return vector3(v.x, v.y, v.z)
+    end
+    if type(v) == 'table' then
+        return vector3(v.x or 0.0, v.y or 0.0, v.z or 0.0)
+    end
+    return vector3(0.0, 0.0, 0.0)
+end
+
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(source, selectedRouteIdx)
     local cfg = Sunset.GetJobConfig('trucker')
     if not cfg or not cfg.routes or #cfg.routes == 0 then return nil, 'No routes configured' end
     if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 45.0) then return nil, 'Go to the trucker depot to start work' end
+
+    -- Automatically clear any leftover or stuck session so route selection always works
+    local currentSession = SunsetJobs_GetSession(source)
+    if currentSession then
+        SunsetJobs_ClearSession(source, 'CANCELLED', 'Restarted shift from laptop')
+    end
 
     local routeIdx
     if selectedRouteIdx and tonumber(selectedRouteIdx) then
@@ -122,6 +146,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         routeIdx = math.random(1, #cfg.routes)
     end
     local route = cfg.routes[routeIdx]
+    if not route then return nil, 'Selected route does not exist' end
 
     -- Pick truck model for this route's category
     local catTrucks    = cfg.categoryTrucks or {}
@@ -134,20 +159,24 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     -- Pick a trailer bay dynamically from available trailer bays
     local bays = (cfg.depot and cfg.depot.trailerBays) or { cfg.depot.trailerSpawn }
     local chosenBay = bays[math.random(#bays)] or cfg.depot.trailerSpawn
-    local pickupCoords = vector3(chosenBay.x, chosenBay.y, chosenBay.z)
+    local pickupCoords = safeVec3(chosenBay)
+    local bayHeading = safeHeading(chosenBay)
+
+    local delivCoords = safeVec3(route.delivery)
+    local delivHeading = safeHeading(route.delivery)
 
     -- Player spawns in truck; trailer is pre-parked at the selected trailer bay
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
-        pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = chosenBay.w },
-        delivery      = { x = route.delivery.x, y = route.delivery.y, z = route.delivery.z, w = route.delivery.w or (type(route.delivery) == 'vector4' and route.delivery.w) or 0.0 },
+        pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = bayHeading },
+        delivery      = { x = delivCoords.x, y = delivCoords.y, z = delivCoords.z, w = delivHeading },
         pay           = route.pay,
         label         = route.label,
         stage         = 'to_pickup',
         truckModel    = truckModel,
         hasTrailer    = hasTrailer,
         trailerModel  = trailerModel,
-        trailerSpawn  = { x = chosenBay.x, y = chosenBay.y, z = chosenBay.z, w = chosenBay.w },
+        trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, w = bayHeading },
     })
     if not session then return nil, err end
     return session.data
