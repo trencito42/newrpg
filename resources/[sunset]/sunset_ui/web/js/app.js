@@ -387,6 +387,32 @@
                 return;
             }
 
+            // Check if Trucker Laptop is open
+            const truckerEl = document.getElementById('trucker-laptop');
+            if (truckerEl && !truckerEl.classList.contains('hidden')) {
+                if (window.TruckerLaptop && typeof window.TruckerLaptop.close === 'function') {
+                    window.TruckerLaptop.close();
+                } else {
+                    truckerEl.classList.add('hidden');
+                    truckerEl.setAttribute('aria-hidden', 'true');
+                    post('truckerLaptopClose', {});
+                }
+                return;
+            }
+
+            // Check if Player Interaction is open
+            const piEl = document.getElementById('player-interaction');
+            if (piEl && !piEl.classList.contains('hidden')) {
+                if (window.PlayerInteraction && typeof window.PlayerInteraction.hide === 'function') {
+                    window.PlayerInteraction.hide();
+                } else {
+                    piEl.classList.add('hidden');
+                    piEl.setAttribute('aria-hidden', 'true');
+                    post('playerInteractionClose', {});
+                }
+                return;
+            }
+
             // Check if any open modal/panel can be closed
             if (window.Menu && typeof Menu.close === 'function') Menu.close();
             if (window.Phone && typeof Phone.close === 'function') Phone.close();

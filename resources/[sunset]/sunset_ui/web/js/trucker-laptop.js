@@ -28,6 +28,16 @@ const TruckerLaptop = {
         if (this._acceptBtn) {
             this._acceptBtn.addEventListener('click', () => this._acceptRoute());
         }
+        const closeBtn = document.getElementById('trucker-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.close());
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this._el && !this._el.classList.contains('hidden')) {
+                e.preventDefault();
+                this.close();
+            }
+        });
     },
 
     open(data) {

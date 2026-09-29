@@ -57,9 +57,39 @@ end
 
 -- ── Spawn & Cleanup Workplace NPCs ────────────────────────────
 
+local function deleteNearbyGhostPeds(coords, modelHash)
+    local playerPed = PlayerPedId()
+    local targetV3 = vector3(coords.x, coords.y, coords.z)
+    local peds = GetGamePool('CPed')
+    for _, p in ipairs(peds) do
+        if p ~= playerPed and DoesEntityExist(p) then
+            local pPos = GetEntityCoords(p)
+            local dist = #(pPos - targetV3)
+            if dist < 2.5 then
+                local pModel = GetEntityModel(p)
+                if pModel == modelHash or dist < 1.0 then
+                    SetEntityAsMissionEntity(p, false, true)
+                    DeleteEntity(p)
+                end
+            end
+        end
+    end
+end
+
 local function spawnWorkplaceNpc(key, workplace)
     local npcDef = workplace.npc
     if not npcDef or not npcDef.coords then return end
+
+    -- Clean existing entry for this key if present
+    if spawnedNpcs[key] then
+        if spawnedNpcs[key].ped and DoesEntityExist(spawnedNpcs[key].ped) then
+            DeleteEntity(spawnedNpcs[key].ped)
+        end
+        if spawnedNpcs[key].blip and DoesBlipExist(spawnedNpcs[key].blip) then
+            RemoveBlip(spawnedNpcs[key].blip)
+        end
+        spawnedNpcs[key] = nil
+    end
 
     local modelHash = joaat(npcDef.model or 'mp_m_shopkeep_01')
     RequestModel(modelHash)
@@ -71,6 +101,10 @@ local function spawnWorkplaceNpc(key, workplace)
     end
 
     local c = npcDef.coords
+
+    -- Clear any ghost / duplicate peds lingering at the exact spawn point
+    deleteNearbyGhostPeds(c, modelHash)
+
     local ped = CreatePed(4, modelHash, c.x, c.y, c.z - 1.0, c.w or c.h or 0.0, false, true)
     if not ped or ped == 0 or not DoesEntityExist(ped) then
         SetModelAsNoLongerNeeded(modelHash)
@@ -128,7 +162,10 @@ local function cleanupWorkplaceNpcs()
     spawnedNpcs = {}
 end
 
+local isInitializing = false
 local function initWorkplaces()
+    if isInitializing then return end
+    isInitializing = true
     cleanupWorkplaceNpcs()
     for key, wp in pairs(Sunset.JobWorkplaces or {}) do
         -- Skip fisherman if sunset_fishingshop is running and owns Billy Ray directly
@@ -138,6 +175,7 @@ local function initWorkplaces()
             spawnWorkplaceNpc(key, wp)
         end
     end
+    isInitializing = false
 end
 
 -- ── Menu Interactions ─────────────────────────────────────────

@@ -77,13 +77,15 @@ local function captureTrailerEntity()
         local vehicles = GetGamePool('CVehicle')
         local closestDist = 25.0
         for _, v in ipairs(vehicles) do
-            local model = GetEntityModel(v)
-            -- Check trailer model or trailer vehicle class (11)
-            if GetVehicleClass(v) == 11 or model == joaat('tanker') or model == joaat('trailers') then
-                local dist = #(pCoords - GetEntityCoords(v))
-                if dist < closestDist then
-                    closestDist = dist
-                    trailer = v
+            if DoesEntityExist(v) and IsEntityAVehicle(v) then
+                local model = GetEntityModel(v)
+                -- Check trailer model or trailer vehicle class (11)
+                if GetVehicleClass(v) == 11 or model == joaat('tanker') or model == joaat('trailers') then
+                    local dist = #(pCoords - GetEntityCoords(v))
+                    if dist < closestDist then
+                        closestDist = dist
+                        trailer = v
+                    end
                 end
             end
         end

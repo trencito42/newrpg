@@ -40,8 +40,11 @@ end
 
 -- Bounding box lines around an entity
 function DevViz.entityBox(ent, r, g, b)
-    if not DoesEntityExist(ent) then return end
-    local min, max = GetModelDimensions(GetEntityModel(ent))
+    if not ent or ent == 0 or not DoesEntityExist(ent) then return end
+    local ok, model = pcall(GetEntityModel, ent)
+    if not ok or not model then return end
+    local okDim, min, max = pcall(GetModelDimensions, model)
+    if not okDim or not min or not max then return end
     local corners = {
         GetOffsetFromEntityInWorldCoords(ent, min.x, min.y, min.z),
         GetOffsetFromEntityInWorldCoords(ent, max.x, min.y, min.z),

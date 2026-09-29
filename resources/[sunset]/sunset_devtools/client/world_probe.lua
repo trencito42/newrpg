@@ -57,10 +57,14 @@ local function drawProbeHUD(hit, hitCoords, entityHit, groundZ, devHeading)
     local entityLabel = 'WORLD'
     if entityHit and entityHit ~= 0 and DoesEntityExist(entityHit) then
         local tp = GetEntityType(entityHit)
-        local tLabel = ({[1]='PED', [2]='VEHICLE', [3]='OBJECT'})[tp] or 'ENTITY'
-        local mHash  = GetEntityModel(entityHit)
-        local mName  = modelName(mHash) or ('0x%X'):format(mHash)
-        entityLabel  = ('%s  model=%s'):format(tLabel, mName)
+        if tp == 1 or tp == 2 or tp == 3 then
+            local tLabel = ({[1]='PED', [2]='VEHICLE', [3]='OBJECT'})[tp] or 'ENTITY'
+            local ok, mHash = pcall(GetEntityModel, entityHit)
+            if ok and mHash then
+                local mName = modelName(mHash) or ('0x%X'):format(mHash)
+                entityLabel = ('%s  model=%s'):format(tLabel, mName)
+            end
+        end
     end
     DevViz.text2d(X, Y+G*4.0, ('Entity: ~y~%s~s~'):format(entityLabel), 0.28)
 

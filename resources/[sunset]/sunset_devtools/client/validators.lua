@@ -8,6 +8,17 @@ DevValidate = {}
 
 local Cfg = SunsetDevTools.Config
 
+local function safeGetEntityModel(ent)
+    if not ent or ent == 0 then return nil end
+    if not DoesEntityExist(ent) then return nil end
+    local tp = GetEntityType(ent)
+    if tp == 1 or tp == 2 or tp == 3 then -- Ped, Vehicle, Object
+        local ok, model = pcall(GetEntityModel, ent)
+        if ok and model then return model end
+    end
+    return nil
+end
+
 -- Ground probe: probe downward from (x, y, z + offset).
 -- Returns { found, groundZ, delta, surfaceEntity, surfaceModel }.
 function DevValidate.groundProbe(x, y, z, offsetUp)
@@ -15,7 +26,7 @@ function DevValidate.groundProbe(x, y, z, offsetUp)
     local probeZ = z + offsetUp
 
     -- Request collision at probe point
-    RequestCollisionAtCoord(x, y, probeZ)
+    pcall(RequestCollisionAtCoord, x, y, probeZ)
 
     local found, gz = GetGroundZFor_3dCoord(x, y, probeZ, false)
     if found and gz and gz > 0 then
@@ -23,8 +34,9 @@ function DevValidate.groundProbe(x, y, z, offsetUp)
         local handle = StartShapeTestRay(x, y, probeZ, x, y, gz - 0.5, 1 | 2 | 4 | 8 | 16, 0, 0)
         local result, hit, endCoords, _normal, entityHit = GetShapeTestResult(handle)
         local surfModel = nil
-        if result == 2 and hit and DoesEntityExist(entityHit) and entityHit ~= 0 then
-            surfModel = string.format('0x%X', GetEntityModel(entityHit))
+        if result == 2 and hit and entityHit and entityHit ~= 0 then
+            local m = safeGetEntityModel(entityHit)
+            if m then surfModel = string.format('0x%X', m) end
         end
         return {
             found        = true,
@@ -42,8 +54,9 @@ function DevValidate.groundProbe(x, y, z, offsetUp)
     if result == 2 and hit then
         local gz2 = endCoords.z
         local surfModel = nil
-        if DoesEntityExist(entityHit) and entityHit ~= 0 then
-            surfModel = string.format('0x%X', GetEntityModel(entityHit))
+        if entityHit and entityHit ~= 0 then
+            local m = safeGetEntityModel(entityHit)
+            if m then surfModel = string.format('0x%X', m) end
         end
         return {
             found        = true,
@@ -73,8 +86,9 @@ function DevValidate.headClearance(x, y, z, headOffset, castDist)
     if result == 2 and hit then
         local clearance = math.floor((endCoords.z - (z + headOffset)) * 100 + 0.5) / 100
         local blockModel = nil
-        if DoesEntityExist(entityHit) and entityHit ~= 0 then
-            blockModel = string.format('0x%X', GetEntityModel(entityHit))
+        if entityHit and entityHit ~= 0 then
+            local m = safeGetEntityModel(entityHit)
+            if m then blockModel = string.format('0x%X', m) end
         end
         return {
             clearance  = clearance,
