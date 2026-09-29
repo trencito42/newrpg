@@ -173,6 +173,13 @@ local function dlog(msg)
     end
 end
 
+local function getSpawnHeading(v)
+    if not v then return 0.0 end
+    if type(v) == 'vector4' then return v.w end
+    if type(v) == 'table' then return v.w or v.heading or 0.0 end
+    return 0.0
+end
+
 function JobClient.spawnVehicle(model, spawn, warp)
     local hash = JobClient.loadModel(model)
     if not hash then
@@ -183,9 +190,10 @@ function JobClient.spawnVehicle(model, spawn, warp)
     local s = spawn
     local slot = #JobClient.vehicles
     local ox = (slot % 3) * 4.2
+    local heading = getSpawnHeading(s)
     -- [ANTICHEAT] whitelist for the vehspawn ledger detector
     TriggerServerEvent('sunset:anticheat:markLegitLocal', 'vehicle_spawn', 15)
-    local veh = CreateVehicle(hash, s.x + ox, s.y, s.z, s.w or 0.0, true, false)
+    local veh = CreateVehicle(hash, s.x + ox, s.y, s.z, heading, true, false)
     if veh == 0 then
         SetModelAsNoLongerNeeded(hash)
         return nil
@@ -225,13 +233,14 @@ end
 function JobClient.spawnVehicleOnly(model, pos)
     local hash = JobClient.loadModel(model)
     if not hash then return nil end
+    local heading = getSpawnHeading(pos)
     TriggerServerEvent('sunset:anticheat:markLegitLocal', 'vehicle_spawn', 15)
-    local veh = CreateVehicle(hash, pos.x, pos.y, pos.z, pos.w or 0.0, true, false)
+    local veh = CreateVehicle(hash, pos.x, pos.y, pos.z, heading, true, false)
     if veh == 0 then SetModelAsNoLongerNeeded(hash) return nil end
     SetEntityAsMissionEntity(veh, true, true)
     SetVehicleHasBeenOwnedByPlayer(veh, true)
     protectJobVehicle(veh)
-    SetEntityHeading(veh, pos.w or 0.0)
+    SetEntityHeading(veh, heading)
     SetVehicleOnGroundProperly(veh)
     SetModelAsNoLongerNeeded(hash)
     if not ensureNetworked(veh) then

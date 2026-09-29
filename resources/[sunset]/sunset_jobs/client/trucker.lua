@@ -217,7 +217,9 @@ local function recoverTrailer()
 end
 
 local function startTrucker(selectedRouteIdx)
+    print(('[TRUCKER CLIENT] startTrucker called routeIdx=%s'):format(tostring(selectedRouteIdx)))
     local data, err = Sunset.AwaitCallback('sunset:jobs:trucker:start', selectedRouteIdx)
+    print(('[TRUCKER CLIENT] callback returned data=%s err=%s'):format(tostring(data and json.encode(data) or 'nil'), tostring(err)))
     if not data then
         JC.notify(err or 'Could not start trucker shift', 'error')
         return

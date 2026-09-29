@@ -129,13 +129,23 @@ local function safeVec3(v)
 end
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(source, selectedRouteIdx)
+    print(('[TRUCKER SERVER] start callback called by src=%s routeIdx=%s'):format(tostring(source), tostring(selectedRouteIdx)))
     local cfg = Sunset.GetJobConfig('trucker')
-    if not cfg or not cfg.routes or #cfg.routes == 0 then return nil, 'No routes configured' end
-    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 45.0) then return nil, 'Go to the trucker depot to start work' end
+    if not cfg or not cfg.routes or #cfg.routes == 0 then
+        print('[TRUCKER SERVER] FAIL: no routes')
+        return nil, 'No routes configured'
+    end
+    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 45.0) then
+        local ped = GetPlayerPed(source)
+        local pos = GetEntityCoords(ped)
+        print(('[TRUCKER SERVER] FAIL coords: player=(%.1f,%.1f,%.1f) depot=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, cfg.depot.coords.x, cfg.depot.coords.y, cfg.depot.coords.z))
+        return nil, 'Go to the trucker depot to start work'
+    end
 
     -- Automatically clear any leftover or stuck session so route selection always works
     local currentSession = SunsetJobs_GetSession(source)
     if currentSession then
+        print(('[TRUCKER SERVER] clearing existing session for src=%s'):format(tostring(source)))
         SunsetJobs_ClearSession(source, 'CANCELLED', 'Restarted shift from laptop')
     end
 

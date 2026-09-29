@@ -391,16 +391,12 @@ end)
 
 -- Route picked from laptop
 AddEventHandler('sunset:nui:truckerPickRoute', function(data)
+    print('[TRUCKER NUI] truckerPickRoute received: ' .. json.encode(data or {}))
     if not data or not data.routeIndex then return end
     laptopOpen = false
-    -- Belt-and-suspenders: export + direct native to guarantee focus is released.
-    -- The export goes through sunset_ui state tracking; the native call is
-    -- unconditional so a stale flag or async race can never leave the player frozen.
     exports.sunset_ui:SetFocus(false, false)
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
-    -- Clear any task/animation on the player ped (e.g. look-around idle from
-    -- standing near the laptop) so the vehicle warp doesn't fight a running task.
     ClearPedTasksImmediately(PlayerPedId())
     armGrace(2000)
     local routeIdx = data.routeIndex
@@ -408,6 +404,8 @@ AddEventHandler('sunset:nui:truckerPickRoute', function(data)
         Wait(200)  -- let the browser fully close the overlay before spawning
         if Sunset.Jobs and Sunset.Jobs.StartTrucker then
             Sunset.Jobs.StartTrucker(routeIdx)
+        else
+            print('[TRUCKER NUI] ERR: Sunset.Jobs.StartTrucker is nil')
         end
     end)
 end)
