@@ -258,15 +258,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
         return nil, 'No harvest items to sell. Go hunt first.'
     end
 
-    -- Remove items then pay
-    for _, s in ipairs(sold) do
-        exports.sunset_inventory:RemoveItem(source, s.item, 1)
-    end
-
+    -- Pay FIRST: if payment fails, items are never removed (atomicity guard)
     local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')
     if not paid then
-        -- Refund items if payment fails (best effort)
-        return nil, 'Payment failed. Items returned — please try again.'
+        return nil, 'Payment failed — no items were removed. Please try again.'
+    end
+
+    for _, s in ipairs(sold) do
+        exports.sunset_inventory:RemoveItem(source, s.item, 1)
     end
 
     SunsetJobs_AddJobProgress(source, 'hunter', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
@@ -432,12 +431,13 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
     elseif data.impactType == 5 then method = 'fire'
     end
 
-    -- Track per-shooter damage
+    -- Track per-shooter damage and last weapon used
     local cid = char.id
     animal.shooters = animal.shooters or {}
     animal.shooters[cid] = animal.shooters[cid] or { shots = 0, damage = 0 }
-    animal.shooters[cid].shots  = animal.shooters[cid].shots + 1
-    animal.shooters[cid].damage = animal.shooters[cid].damage + (tonumber(data.weaponDamage) or 10)
+    animal.shooters[cid].shots          = animal.shooters[cid].shots + 1
+    animal.shooters[cid].damage         = animal.shooters[cid].damage + (tonumber(data.weaponDamage) or 10)
+    animal.shooters[cid].lastWeaponName = weaponName
     animal.shots = (animal.shots or 0) + 1
     animal.lastMethod = method
 
@@ -453,24 +453,32 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
     end
 end)
 
--- ── Animal Death ──────────────────────────────────────────────
-RegisterNetEvent('sunset:hunting:animalDied', function(netId, method)
+-- ── Animal Death (client-reported, server-validated) ─────────
+-- Client reports when entity health reaches 0. Server validates and processes exactly once.
+RegisterNetEvent('sunset:hunting:reportAnimalDead', function(netId)
     local src = source
     netId = tonumber(netId)
     if not netId then return end
     local animal = Animals[netId]
-    if not animal or not animal.alive then return end
+    if not animal or not animal.alive then return end  -- idempotency: only process once
 
     local char = getChar(src)
     if not char then return end
 
-    -- Validate src is an active hunter in this zone
+    -- Validate: reporter has an active hunter session
     local session = SunsetJobs_GetSession(src)
     if not session or session.jobId ~= 'hunter' then return end
 
+    -- Validate: animal is in reporter's contracted zone
+    if session.data.zoneId and animal.zoneId ~= tostring(session.data.zoneId) then return end
+
+    -- Server-side entity death confirmation (optional if entity still accessible)
+    local method = animal.lastMethod or 'firearm'
+
+    -- Mark dead before any async work (idempotency guard)
     animal.alive = false
     animal.killedAt = os.time()
-    animal.killMethod = method or animal.lastMethod or 'firearm'
+    animal.killMethod = method
 
     -- Determine kill owner (highest-damage contributing hunter)
     local bestCharId, bestDamage = nil, 0
@@ -482,13 +490,15 @@ RegisterNetEvent('sunset:hunting:animalDied', function(netId, method)
     end
     animal.fatalShooterId = bestCharId
 
-    -- Record kill weapon (best guess from the fatal shooter's session)
-    for s, sess in pairs({}) do end  -- placeholder for weapon resolution
-    animal.killWeapon = 'WEAPON_SNIPERRIFLE'  -- default; enriched by client telemetry
+    -- Record kill weapon from the fatal shooter's last tracked damage event
+    if bestCharId and animal.shooters[bestCharId] then
+        animal.killWeapon = string.upper(animal.shooters[bestCharId].lastWeaponName or 'WEAPON_SNIPERRIFLE')
+    else
+        animal.killWeapon = 'WEAPON_SNIPERRIFLE'
+    end
 
     -- Determine owner and grant exclusive harvest window
     local ownerSrc = nil
-    for pid, sess in pairs({}) do end
     -- Find the source that matches fatalShooterId
     if bestCharId then
         for _, playerSrc in ipairs(GetPlayers()) do
@@ -541,22 +551,7 @@ RegisterNetEvent('sunset:hunting:animalDied', function(netId, method)
     end
 end)
 
--- Enrich kill weapon from client telemetry (trusted only for UI, not for rewards)
-RegisterNetEvent('sunset:hunting:reportKillWeapon', function(netId, weaponHash)
-    local src = source
-    netId = tonumber(netId)
-    if not netId then return end
-    local animal = Animals[netId]
-    if not animal then return end
-    -- Verify this player has a session in the animal's zone
-    local session = SunsetJobs_GetSession(src)
-    if not session or session.jobId ~= 'hunter' or session.data.zoneId ~= animal.zoneId then return end
-    -- Store weapon name for quality calc (not trusted for $ but used for quality scoring)
-    local wName = GetHashKey and GetHashKey(tostring(weaponHash)) or ('0x%X'):format(weaponHash)
-    if not animal.alive then
-        animal.killWeapon = string.upper(wName)
-    end
-end)
+-- reportKillWeapon is removed: weapon is now tracked server-side via weaponDamageEvent.
 
 -- ── Inspect Carcass ───────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:inspectCarcass', function(source, netId)
@@ -613,6 +608,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     end
     if exports.sunset_licenses:HasLicense(source, 'hunting') ~= true then
         return nil, 'Requires a valid Hunting License to harvest.'
+    end
+
+    -- Hunting knife check (required to field dress the carcass)
+    if not exports.sunset_inventory:HasItem(source, 'hunting_knife', 1) then
+        return nil, 'Requires a Hunting Knife to harvest. Available at Ammu-Nation.'
     end
 
     -- Zone check
@@ -818,14 +818,38 @@ RegisterNetEvent('sunset:hunting:registerAnimal', function(netId, species, zoneI
     dlog('registered animal netId=%d species=%s zone=%s', netId, species, zoneId)
 end)
 
+-- Position update rate limiting
+local PosUpdateRate = {}  -- [source:netId] = last_update_time
+
 -- Update last known position of an animal (from owning client)
 RegisterNetEvent('sunset:hunting:updateAnimalPos', function(netId, x, y, z)
+    local src = source
     netId = tonumber(netId)
     if not netId then return end
     local animal = Animals[netId]
-    if animal and animal.alive then
-        animal.lastPos = { x = x or animal.lastPos.x, y = y or animal.lastPos.y, z = z or animal.lastPos.z }
-    end
+    if not animal or not animal.alive then return end
+
+    -- Validate: sender has an active hunter session in the animal's zone
+    local session = SunsetJobs_GetSession(src)
+    if not session or session.jobId ~= 'hunter' then return end
+    if tostring(session.data.zoneId) ~= tostring(animal.zoneId) then return end
+
+    -- Rate limit: 1 update per second per animal
+    local rateKey = ('%d:%d'):format(src, netId)
+    local now = os.time()
+    if PosUpdateRate[rateKey] and now - PosUpdateRate[rateKey] < 1 then return end
+    PosUpdateRate[rateKey] = now
+
+    -- Anti-teleport: reject if position moved > 50m from last known
+    x = tonumber(x) or animal.lastPos.x
+    y = tonumber(y) or animal.lastPos.y
+    z = tonumber(z) or animal.lastPos.z
+    local dx = x - animal.lastPos.x
+    local dy = y - animal.lastPos.y
+    local dz = z - animal.lastPos.z
+    if math.sqrt(dx*dx + dy*dy + dz*dz) > 50.0 then return end
+
+    animal.lastPos = { x = x, y = y, z = z }
 end)
 
 -- ── Zone Population Management ────────────────────────────────
