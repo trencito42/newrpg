@@ -32,7 +32,7 @@ local function validateTruckRear(source, cfg, vehicleNetId)
     if not entity then return false, 'Your assigned trash truck must be nearby' end
 
     local rear = getTruckRearCoords(entity, cfg.truckRearOffset or -4.5)
-    if not SunsetJobs_ValidateCoords(source, rear, cfg.dumpRadius or 3.5) then
+    if not SunsetJobs_ValidateCoords(source, rear, cfg.dumpRadius or 4.5) then
         return false, 'Go to the back of your trash truck'
     end
     return true
@@ -125,7 +125,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(sou
     local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
     if not session then return nil, err or 'No active garbage shift' end
     if session.data.stage ~= 'collecting' then return nil, 'Unload at depot first' end
-    if session.data.carrying then return nil, 'Pick up trash from the bin first' end
+    if not session.data.carrying then return nil, 'Pick up trash from the bin first' end
 
     local cfg = Sunset.GetJobConfig('garbage')
     if not cfg then return nil, 'Garbage job is not configured' end
