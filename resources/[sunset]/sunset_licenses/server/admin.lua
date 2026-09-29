@@ -22,11 +22,11 @@ local function runGiveLicense(source, args)
         licenseType = string.lower(tostring(args[2] or ''))
     end
     if not target then
-        notify(source, 'Usage: /agivelicense [player id] [driver|pilot|boat|weapon]', 'error')
+        notify(source, 'Usage: /agivelicense [player id] [driver|pilot|boat|weapon|hunting]', 'error')
         return
     end
     if not SunsetLicenses.Types[licenseType] then
-        notify(source, 'License types: driver, pilot, boat, weapon', 'error')
+        notify(source, 'License types: driver, pilot, boat, weapon, hunting', 'error')
         return
     end
     local issuer = source ~= 0 and exports.sunset_core:GetCharacter(source)
@@ -42,11 +42,11 @@ local function runRevokeLicense(source, args)
     local target = resolveTarget(source, args[1])
     local licenseType = string.lower(tostring(args[2] or ''))
     if not target then
-        notify(source, 'Usage: /revokelicense [player id] [driver|pilot|boat|weapon]', 'error')
+        notify(source, 'Usage: /revokelicense [player id] [driver|pilot|boat|weapon|hunting]', 'error')
         return
     end
     if not SunsetLicenses.Types[licenseType] then
-        notify(source, 'License types: driver, pilot, boat, weapon', 'error')
+        notify(source, 'License types: driver, pilot, boat, weapon, hunting', 'error')
         return
     end
     RevokeLicense(target, licenseType)

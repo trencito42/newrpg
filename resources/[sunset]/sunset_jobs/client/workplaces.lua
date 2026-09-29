@@ -417,17 +417,158 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
 
     elseif action:find('^workplace_special_') then
         local specId = action:gsub('^workplace_special_', '')
+        local jobId = currentContext and currentContext.workplace and currentContext.workplace.jobId
+
         if specId == 'open_laptop' then
             TriggerEvent('sunset:jobs:trucker:openLaptop')
+
         elseif specId == 'open_bait_shop' then
             if GetResourceState('sunset_fishingshop') == 'started' then
                 exports.sunset_fishingshop:OpenShop()
             end
+
         elseif specId == 'sell_fish' then
             if GetResourceState('sunset_fishingshop') == 'started' then
                 exports.sunset_fishingshop:OpenSellMenu()
             end
+
+        -- ── Hunter special actions ──────────────────────────────
+        elseif specId == 'contracts' and jobId == 'hunter' then
+            local contracts, err = Sunset.AwaitCallback('sunset:jobs:hunter:getContracts')
+            if not contracts or #contracts == 0 then
+                exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
+            else
+                local items = {}
+                for _, c in ipairs(contracts) do
+                    items[#items + 1] = {
+                        id = 'workplace_take_contract_' .. c.id,
+                        label = ('%s  ~y~$%d'):format(c.label or c.id, c.pay or 0),
+                        detail = ('Rank %d · Harvest %d × %s'):format(c.minRank, c.requiredHarvests, c.species or '?'),
+                        group = 'CONTRACTS',
+                    }
+                end
+                items[#items + 1] = { id = 'workplace_back', label = '← Back', group = 'NAV' }
+                exports.sunset_ui:Send('playerInteractionShow', {
+                    menuTitle = 'Hunting Contracts',
+                    target = { name = 'Mason', id = '' },
+                    actions = items,
+                })
+                exports.sunset_ui:SetFocus(true, true)
+                menuOpen = true
+            end
+
+        elseif specId == 'sell_harvest' and jobId == 'hunter' then
+            local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:sellHarvest')
+            if not result then
+                exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
+            else
+                exports.sunset_ui:Notify(('Sold %d items for $%d!'):format(result.count, result.total), 'success', 6000)
+            end
+
+        elseif specId == 'equipment' and jobId == 'hunter' then
+            exports.sunset_ui:Notify('Required: Bolt-action Rifle + Hunting Knife. Available at Ammu-Nation.', 'info', 7000)
+
+        -- ── Diver special actions ───────────────────────────────
+        elseif specId == 'contracts' and jobId == 'diver' then
+            local contracts, err = Sunset.AwaitCallback('sunset:jobs:diver:getContracts')
+            if not contracts or #contracts == 0 then
+                exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
+            else
+                local items = {}
+                for _, c in ipairs(contracts) do
+                    local boatTag = c.requiresBoat and ' · Boat req.' or ''
+                    items[#items + 1] = {
+                        id = 'workplace_take_dive_contract_' .. c.id,
+                        label = ('%s  ~y~$%d'):format(c.label or c.id, c.pay or 0),
+                        detail = ('Rank %d · %s%s · Recover %d'):format(
+                            c.minRank, c.difficulty or 'easy', boatTag, c.requiredSalvage or 3),
+                        group = 'CONTRACTS',
+                    }
+                end
+                items[#items + 1] = { id = 'workplace_back', label = '← Back', group = 'NAV' }
+                exports.sunset_ui:Send('playerInteractionShow', {
+                    menuTitle = 'Salvage Contracts',
+                    target = { name = 'Terry', id = '' },
+                    actions = items,
+                })
+                exports.sunset_ui:SetFocus(true, true)
+                menuOpen = true
+            end
+
+        elseif specId == 'rent_gear' and jobId == 'diver' then
+            local cfgDiver = Sunset.JobsConfig and Sunset.JobsConfig.diver
+            local gear = cfgDiver and cfgDiver.gear or {}
+            local items = {
+                { id = 'workplace_gear_basic',    label = 'Basic Gear  ~y~$30',    detail = '2 min O2 · Rank 1', group = 'GEAR' },
+                { id = 'workplace_gear_standard', label = 'Standard Gear  ~y~$60', detail = '3 min O2 · Rank 2', group = 'GEAR' },
+                { id = 'workplace_gear_advanced', label = 'Advanced Gear  ~y~$100',detail = '5 min O2 · Rank 3', group = 'GEAR' },
+                { id = 'workplace_back', label = '← Back', group = 'NAV' },
+            }
+            exports.sunset_ui:Send('playerInteractionShow', {
+                menuTitle = 'Rent Diving Gear',
+                target = { name = 'Terry', id = '' },
+                actions = items,
+            })
+            exports.sunset_ui:SetFocus(true, true)
+            menuOpen = true
+
+        elseif specId == 'rent_boat' and jobId == 'diver' then
+            local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentBoat')
+            if not result then
+                exports.sunset_ui:Notify(err or 'Cannot rent boat.', 'error', 5000)
+            end
+
+        elseif specId == 'sell' and jobId == 'diver' then
+            local result, err = Sunset.AwaitCallback('sunset:jobs:diver:sell')
+            if not result then
+                exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
+            else
+                exports.sunset_ui:Notify(('Sold %d items for $%d!'):format(result.count, result.total), 'success', 6000)
+            end
         end
+
+    -- ── Sub-menu action handlers ─────────────────────────────────
+    elseif action:find('^workplace_take_contract_') then
+        local contractId = action:gsub('^workplace_take_contract_', '')
+        local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:startContract', contractId)
+        if not result then
+            exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+        else
+            exports.sunset_ui:Notify(('Contract accepted: travel to %s'):format(result.zone and result.zone.label or contractId), 'success', 6000)
+            exports.sunset_ui:Send('playerInteractionHide', {})
+            exports.sunset_ui:SetFocus(false, false)
+            menuOpen = false
+        end
+
+    elseif action:find('^workplace_take_dive_contract_') then
+        local siteId = action:gsub('^workplace_take_dive_contract_', '')
+        local result, err = Sunset.AwaitCallback('sunset:jobs:diver:startContract', siteId)
+        if not result then
+            exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+        else
+            exports.sunset_ui:Notify(('Dive contract accepted: %s · $%d'):format(siteId, result.pay or 0), 'success', 6000)
+            TriggerEvent('sunset:diving:contractStarted', result)
+            exports.sunset_ui:Send('playerInteractionHide', {})
+            exports.sunset_ui:SetFocus(false, false)
+            menuOpen = false
+        end
+
+    elseif action:find('^workplace_gear_') then
+        local tier = action:gsub('^workplace_gear_', '')
+        local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentGear', tier)
+        if not result then
+            exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
+        else
+            exports.sunset_ui:Notify(('Gear rented: %s · O2: %ds'):format(tier, result.o2Duration or 120), 'success', 6000)
+            exports.sunset_ui:Send('playerInteractionHide', {})
+            exports.sunset_ui:SetFocus(false, false)
+            menuOpen = false
+        end
+
+    elseif action == 'workplace_back' then
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        menuOpen = false
     end
 end)
 

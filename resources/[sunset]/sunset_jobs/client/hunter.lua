@@ -41,6 +41,30 @@ local function closeEnough(coords, radius)
     return #(vector3(pos.x, pos.y, pos.z) - vector3(coords.x, coords.y, coords.z)) <= radius
 end
 
+local function updateShiftHud()
+    if not ShiftActive then return end
+    if ContractData and ContractData.contractId then
+        local harvested = ContractData.harvested or 0
+        local required  = ContractData.requiredHarvests or 1
+        exports.sunset_ui:Send('jobShiftShow', {
+            title    = 'Hunter',
+            counter  = ('Harvest %d / %d'):format(harvested, required),
+            message  = 'Shoot {key} and harvest carcasses in the zone.',
+            key      = 'E',
+            progress = math.floor((harvested / required) * 100),
+            detail   = ContractData.contractId or '',
+        })
+    else
+        exports.sunset_ui:Send('jobShiftShow', {
+            title   = 'Hunter',
+            counter = 'No active contract',
+            message = 'Visit Mason and select a contract.',
+            detail  = '',
+            progress = 0,
+        })
+    end
+end
+
 -- ── State Changes ─────────────────────────────────────────────
 AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if not data then return end
@@ -54,6 +78,7 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
         CurrentZone = nil
         ContractData = nil
     end
+    updateShiftHud()
 end)
 
 -- ── Animal Spawn Request (from server) ───────────────────────
@@ -160,22 +185,6 @@ CreateThread(function()
         if not ShiftActive then Wait(1000) goto continue end
         Wait(0)
 
-        -- Contract progress bar
-        if ContractData and ContractData.contractId then
-            local harvested = ContractData.harvested or 0
-            local required  = ContractData.requiredHarvests or 1
-            local pct = math.min(1.0, harvested / required)
-            -- Draw a simple progress bar at top of screen
-            DrawRect(0.5, 0.04, 0.22, 0.022, 0, 0, 0, 160)
-            DrawRect(0.5 - 0.11 + pct * 0.11, 0.04, pct * 0.22, 0.022, 34, 139, 34, 200)
-            SetTextFont(4); SetTextScale(0.0, 0.32)
-            SetTextColour(255, 255, 255, 230)
-            SetTextCentre(true); SetTextOutline()
-            BeginTextCommandDisplayText('STRING')
-            AddTextComponentSubstringPlayerName(('Contract: %d / %d'):format(harvested, required))
-            EndTextCommandDisplayText(0.5, 0.031)
-        end
-
         -- Harvest prompts for nearby carcasses
         HarvestPromptNetId = nil
         local ped = PlayerPedId()
@@ -251,6 +260,7 @@ RegisterNUICallback('hunter:harvest', function(data, cb)
         CarcassMarkers[netId] = nil
         if ContractData then
             ContractData.harvested = result.contractProgress or ContractData.harvested
+            updateShiftHud()
         end
         cb({ ok = true, items = result.items, quality = result.quality, grade = result.grade })
     end
@@ -261,49 +271,14 @@ RegisterNUICallback('hunter:closePanel', function(_, cb)
     cb({})
 end)
 
--- ── Workplace Special Actions ─────────────────────────────────
-AddEventHandler('sunset:workplace:specialAction', function(jobId, actionId)
-    if jobId ~= 'hunter' then return end
-    refreshCfg()
+-- Special actions handled in workplaces.lua
 
-    if actionId == 'contracts' then
-        local contracts, err = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:getContracts')
-        if not contracts then
-            exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Failed to load contracts'))
-            return
-        end
-        SendNuiMessage(json.encode({ type = 'SHOW_CONTRACTS', payload = contracts }))
-        SetNuiFocus(true, true)
-
-    elseif actionId == 'sell_harvest' then
-        local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:sellHarvest')
-        if not result then
-            exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Nothing to sell'))
-        else
-            exports.sunset_core:ShowNotification(
-                ('~g~Sold %d items for ~y~$%d~g~!'):format(result.count, result.total))
-        end
-
-    elseif actionId == 'equipment' then
-        SendNuiMessage(json.encode({ type = 'SHOW_SHOP', category = 'hunting_equipment' }))
-        SetNuiFocus(true, true)
-    end
-end)
-
-RegisterNUICallback('hunter:startContract', function(data, cb)
-    local cId = data and data.contractId
-    if not cId then cb({ ok = false }) return end
-    local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:hunter:startContract', cId)
-    if not result then
-        cb({ ok = false, error = err })
-    else
-        ContractData = result
-        CurrentZone  = result.zone
-        SetNuiFocus(false, false)
-        exports.sunset_core:ShowNotification(
-            ('~g~Contract accepted.~s~ Travel to ~b~%s'):format(result.zone and result.zone.label or '?'))
-        cb({ ok = true })
-    end
+-- Contract start now goes through workplaces.lua sub-menu handler
+AddEventHandler('sunset:hunting:contractStarted', function(result)
+    if not result then return end
+    ContractData = result
+    CurrentZone  = result.zone
+    updateShiftHud()
 end)
 
 -- ── Shift Start/End ───────────────────────────────────────────
@@ -311,6 +286,7 @@ AddEventHandler('sunset:jobs:shiftStarted', function(jobId)
     if jobId ~= 'hunter' then return end
     ShiftActive = true
     refreshCfg()
+    updateShiftHud()
 end)
 
 AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
@@ -318,6 +294,7 @@ AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
     ShiftActive = false
     ContractData = nil
     CurrentZone  = nil
+    exports.sunset_ui:Send('jobShiftHide', {})
     -- Clean up all spawned animals
     for netId, animal in pairs(ManagedAnimals) do
         if animal.ped and DoesEntityExist(animal.ped) then

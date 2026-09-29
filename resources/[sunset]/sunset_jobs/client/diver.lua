@@ -28,6 +28,32 @@ local function isUnderwater()
     return IsPedSwimmingUnderWater(ped)
 end
 
+local function updateShiftHud()
+    if not ShiftActive then return end
+    if ContractData and ContractData.siteId then
+        local rec = ContractData.recovered or 0
+        local req = ContractData.required  or 1
+        exports.sunset_ui:Send('jobShiftShow', {
+            title    = 'Marine Salvage',
+            counter  = ('Salvage %d / %d'):format(rec, req),
+            message  = O2Remaining > 0
+                and ('O2: %ds  — Press {key} on salvage points'):format(O2Remaining)
+                or 'Surface to refill O2!',
+            key      = 'E',
+            progress = math.floor((rec / req) * 100),
+            detail   = ContractData.siteId or '',
+        })
+    else
+        exports.sunset_ui:Send('jobShiftShow', {
+            title    = 'Marine Salvage',
+            counter  = 'No active contract',
+            message  = 'Visit Terry and select a salvage contract.',
+            detail   = '',
+            progress = 0,
+        })
+    end
+end
+
 -- ── State Changes ─────────────────────────────────────────────
 AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if not data then return end
@@ -38,6 +64,7 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
         SalvageMarkers = {}
         NearestSalvage = nil
     end
+    updateShiftHud()
 end)
 
 -- ── Scuba System ──────────────────────────────────────────────
@@ -98,45 +125,14 @@ CreateThread(function()
 end)
 
 -- ── O2 HUD Thread ─────────────────────────────────────────────
+-- Updates jobShiftShow every second while diving (O2 countdown in message)
 CreateThread(function()
     while true do
-        Wait(0)
-        if not ShiftActive or not ScubaActive then Wait(200); goto continue end
-
-        -- Draw O2 bar (bottom right)
-        local pct   = math.max(0, O2Remaining / O2Max)
-        local barW  = 0.12
-        local barH  = 0.018
-        local barX  = 0.88
-        local barY  = 0.90
-
-        local r = math.floor(255 * (1.0 - pct))
-        local g = math.floor(255 * pct)
-
-        DrawRect(barX, barY, barW + 0.004, barH + 0.006, 0, 0, 0, 160)
-        DrawRect(barX - barW/2 + pct * barW/2, barY, pct * barW, barH, r, g, 180, 220)
-
-        SetTextFont(4); SetTextScale(0.0, 0.28)
-        SetTextColour(255, 255, 255, 230); SetTextOutline()
-        SetTextRightJustify(true)
-        BeginTextCommandDisplayText('STRING')
-        AddTextComponentSubstringPlayerName(('O2: %ds'):format(math.max(0, O2Remaining)))
-        EndTextCommandDisplayText(barX + barW / 2, barY - 0.009)
-
-        -- Contract progress
-        if ContractData then
-            local rec  = ContractData.recovered or 0
-            local req  = ContractData.required  or 1
-            local cpct = math.min(1.0, rec / req)
-            DrawRect(0.5, 0.04, 0.22, 0.022, 0, 0, 0, 160)
-            DrawRect(0.5 - 0.11 + cpct * 0.11, 0.04, cpct * 0.22, 0.022, 30, 120, 200, 200)
-            SetTextFont(4); SetTextScale(0.0, 0.32)
-            SetTextColour(255, 255, 255, 230); SetTextCentre(true); SetTextOutline()
-            BeginTextCommandDisplayText('STRING')
-            AddTextComponentSubstringPlayerName(('Salvage: %d / %d'):format(rec, req))
-            EndTextCommandDisplayText(0.5, 0.031)
+        Wait(1000)
+        if not ShiftActive then goto continue end
+        if ScubaActive or ContractData then
+            updateShiftHud()
         end
-
         ::continue::
     end
 end)
@@ -261,7 +257,10 @@ CreateThread(function()
                     exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Salvage failed'))
                 else
                     nearest.claimed = true
-                    if ContractData then ContractData.recovered = result.recovered end
+                    if ContractData then
+                        ContractData.recovered = result.recovered
+                        updateShiftHud()
+                    end
                     exports.sunset_core:ShowNotification(
                         ('~g~Salvaged: ~y~%s~s~ (~b~%s~s~, $%d)'):format(
                             result.item or '?', result.condition or '?', result.value or 0))
@@ -320,75 +319,23 @@ RegisterNetEvent('sunset:diving:contractComplete', function(result)
     deactivateScuba('surfaced')
 end)
 
--- ── Workplace Special Actions ─────────────────────────────────
-AddEventHandler('sunset:workplace:specialAction', function(jobId, actionId)
-    if jobId ~= 'diver' then return end
+-- Special actions handled in workplaces.lua
 
-    if actionId == 'contracts' then
-        local contracts, err = exports.sunset_jobs:CallCallback('sunset:jobs:diver:getContracts')
-        if not contracts then
-            exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Failed to load contracts'))
-            return
-        end
-        SendNuiMessage(json.encode({ type = 'SHOW_DIVE_CONTRACTS', payload = contracts }))
-        SetNuiFocus(true, true)
+-- Contract + gear selection handled via workplaces.lua sub-menu (no NUI panels needed)
 
-    elseif actionId == 'rent_gear' then
-        SendNuiMessage(json.encode({ type = 'SHOW_GEAR_SHOP' }))
-        SetNuiFocus(true, true)
-
-    elseif actionId == 'rent_boat' then
-        local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:diver:rentBoat')
-        if not result then
-            exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Cannot rent boat'))
-        end
-
-    elseif actionId == 'sell' then
-        local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:diver:sell')
-        if not result then
-            exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Nothing to sell'))
-        else
-            exports.sunset_core:ShowNotification(
-                ('~g~Sold %d items for ~y~$%d~g~!'):format(result.count, result.total))
-        end
-    end
-end)
-
-RegisterNUICallback('diver:startContract', function(data, cb)
-    local siteId = data and data.siteId
-    if not siteId then cb({ ok = false }) return end
-    local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:diver:startContract', siteId)
-    if not result then
-        cb({ ok = false, error = err })
-    else
-        ContractData = result
-        buildSalvageMarkers(result.lootPoints)
-        SetNuiFocus(false, false)
-        exports.sunset_core:ShowNotification(
-            ('~g~Contract accepted.~s~ Travel to ~b~%s'):format(result.siteId or '?'))
-        cb({ ok = true })
-    end
-end)
-
-RegisterNUICallback('diver:rentGear', function(data, cb)
-    local tier = data and data.tier or 'basic'
-    local result, err = exports.sunset_jobs:CallCallback('sunset:jobs:diver:rentGear', tier)
-    if not result then
-        cb({ ok = false, error = err })
-    else
-        cb({ ok = true, tier = result.tier, o2Duration = result.o2Duration })
-    end
-end)
-
-RegisterNUICallback('diver:closePanel', function(_, cb)
-    SetNuiFocus(false, false)
-    cb({})
+-- Contract started event (from workplaces sub-menu handler)
+AddEventHandler('sunset:diving:contractStarted', function(result)
+    if not result then return end
+    ContractData = result
+    buildSalvageMarkers(result.lootPoints)
+    updateShiftHud()
 end)
 
 -- ── Shift Start/End ───────────────────────────────────────────
 AddEventHandler('sunset:jobs:shiftStarted', function(jobId)
     if jobId ~= 'diver' then return end
     ShiftActive = true
+    updateShiftHud()
 end)
 
 AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
@@ -398,6 +345,7 @@ AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
     SalvageMarkers = {}
     NearestSalvage = nil
     deactivateScuba('surfaced')
+    exports.sunset_ui:Send('jobShiftHide', {})
     -- Return boat if still rented
     if BoatNetId then
         TriggerServerEvent('sunset:diving:returnBoat')
