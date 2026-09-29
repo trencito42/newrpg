@@ -129,12 +129,17 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local models       = catData.models or { cfg.truckModel or 'phantom' }
     local truckModel   = models[math.random(#models)]
     local hasTrailer   = catData.hasTrailer ~= false   -- default true if unset
-    local trailerModel = catData.trailerModel or cfg.trailerModel or 'trailers2'
+    local trailerModel = catData.trailerModel or cfg.trailerModel or 'tanker'
 
-    -- Player spawns in truck; trailer is pre-parked at the trailer yard (to_pickup stage).
+    -- Pick a trailer bay dynamically from available trailer bays
+    local bays = (cfg.depot and cfg.depot.trailerBays) or { cfg.depot.trailerSpawn }
+    local chosenBay = bays[math.random(#bays)] or cfg.depot.trailerSpawn
+    local pickupCoords = vector3(chosenBay.x, chosenBay.y, chosenBay.z)
+
+    -- Player spawns in truck; trailer is pre-parked at the selected trailer bay
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
-        pickup        = { x = route.pickup.x, y = route.pickup.y, z = route.pickup.z },
+        pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = chosenBay.w },
         delivery      = { x = route.delivery.x, y = route.delivery.y, z = route.delivery.z },
         pay           = route.pay,
         label         = route.label,
@@ -142,6 +147,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
         truckModel    = truckModel,
         hasTrailer    = hasTrailer,
         trailerModel  = trailerModel,
+        trailerSpawn  = { x = chosenBay.x, y = chosenBay.y, z = chosenBay.z, w = chosenBay.w },
     })
     if not session then return nil, err end
     return session.data
@@ -161,10 +167,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
     end
     local route = cfg.routes[session.data.routeIndex]
     if not route then print('[TRUCKER] atPickup FAIL no route idx=' .. tostring(session.data.routeIndex)) return nil, 'Route data is missing' end
-    if not validateTruckerCoords(source, route.pickup, cfg) then
+    local pickupTarget = session.data.pickup and vector3(session.data.pickup.x, session.data.pickup.y, session.data.pickup.z) or route.pickup
+    if not validateTruckerCoords(source, pickupTarget, cfg) then
         local ped = GetPlayerPed(source)
         local pos = GetEntityCoords(ped)
-        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x,pos.y,pos.z,route.pickup.x,route.pickup.y,route.pickup.z))
+        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x,pos.y,pos.z,pickupTarget.x,pickupTarget.y,pickupTarget.z))
         return nil, 'Not at pickup location — drive into the loading dock marker'
     end
 

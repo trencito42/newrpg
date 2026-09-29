@@ -7,10 +7,17 @@ Sunset.JobsConfig = {
         help = 'Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.',
         depot = {
             coords = vector3(1208.77, -3114.84, 5.54),
-            -- Spawn confirmat in-game la depou (h=359 = nord).
+            -- Spawn camion Phantom la depou (h=359 = nord).
             spawn        = vector4(1204.5, -3116.4, 5.6, 359.0),
-            -- Remorca pre-parcata la yard (pozitia originala).
-            trailerSpawn = vector4(1223.0, -3083.0, 4.9, 180.0),
+            -- Locatii de spawn pentru remorci (bays)
+            trailerBays  = {
+                vector4(1234.3, -3104.2, 4.8, 3.5),
+                vector4(1219.3, -3104.1, 4.8, 3.5),
+                vector4(1178.8, -3135.6, 4.6, 89.4),
+                vector4(1178.8, -3148.8, 4.6, 89.4),
+                vector4(1178.8, -3155.9, 4.6, 89.4),
+            },
+            trailerSpawn = vector4(1234.3, -3104.2, 4.8, 3.5),
             blip = { sprite = 477, color = 5, scale = 0.85 },
         },
         -- Truck model pool per delivery category.

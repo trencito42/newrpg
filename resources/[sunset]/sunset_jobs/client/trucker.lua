@@ -185,8 +185,10 @@ local function startTrucker(selectedRouteIdx)
 
     if data.hasTrailer then
         local trailerModel = data.trailerModel or cfg.trailerModel
-        -- Spawn trailer unattached at the trailer yard — player must drive to hook it up.
-        local trailer = JC.spawnVehicleOnly(trailerModel, cfg.depot.trailerSpawn)
+        -- Spawn trailer unattached at the selected trailer bay — player must drive to hook it up.
+        local trailerSpawnVec = (data.trailerSpawn and vector4(data.trailerSpawn.x, data.trailerSpawn.y, data.trailerSpawn.z, data.trailerSpawn.w or 0.0))
+            or cfg.depot.trailerSpawn
+        local trailer = JC.spawnVehicleOnly(trailerModel, trailerSpawnVec)
         if not trailer then
             JC.deleteVehicles()
             Sunset.AwaitCallback('sunset:jobs:cancelWork')
@@ -428,3 +430,44 @@ AddEventHandler('onResourceStop', function(res)
         clearTruckerCheckpoint()
     end
 end)
+
+-- ═══ TRUCKER DEPOT: HIDE STATIC MAPPING TRAILER PROPS ═══
+-- Removes the 5 static map trailers (model 0x44AEA99C) so the bays are clean for job spawning.
+local DEPOT_STATIC_TRAILERS = {
+    { coords = vector3(1234.3, -3104.2, 4.8), model = 0x44AEA99C },
+    { coords = vector3(1219.3, -3104.1, 4.8), model = 0x44AEA99C },
+    { coords = vector3(1178.8, -3135.6, 4.6), model = 0x44AEA99C },
+    { coords = vector3(1178.8, -3148.8, 4.6), model = 0x44AEA99C },
+    { coords = vector3(1178.8, -3155.9, 4.6), model = 0x44AEA99C },
+}
+
+CreateThread(function()
+    for _, prop in ipairs(DEPOT_STATIC_TRAILERS) do
+        CreateModelHide(prop.coords.x, prop.coords.y, prop.coords.z, 10.0, prop.model, true)
+        CreateModelHideExcludingScriptObjects(prop.coords.x, prop.coords.y, prop.coords.z, 10.0, prop.model, true)
+    end
+
+    while true do
+        local ped = PlayerPedId()
+        local pos = GetEntityCoords(ped)
+        -- Only scan when player is within 300m of the trucker depot
+        if #(pos - vector3(1208.77, -3114.84, 5.54)) < 300.0 then
+            for _, obj in ipairs(GetGamePool('CObject')) do
+                if DoesEntityExist(obj) and (GetEntityModel(obj) & 0xFFFFFFFF) == (0x44AEA99C & 0xFFFFFFFF) then
+                    local objCoords = GetEntityCoords(obj)
+                    for _, prop in ipairs(DEPOT_STATIC_TRAILERS) do
+                        if #(objCoords - prop.coords) < 8.0 then
+                            SetEntityAsMissionEntity(obj, true, true)
+                            DeleteObject(obj)
+                            SetEntityCoords(obj, 0.0, 0.0, -500.0, false, false, false, false)
+                        end
+                    end
+                end
+            end
+            Wait(1000)
+        else
+            Wait(5000)
+        end
+    end
+end)
+
