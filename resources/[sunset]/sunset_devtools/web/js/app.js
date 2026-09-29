@@ -22,6 +22,8 @@
         routes: {
             trucker: [],
             garbage: [],
+            hunting: [],
+            diving: [],
         },
         selectedRouteId: null,
         isDirty: false,
@@ -90,6 +92,25 @@
                                 if (!isNaN(idx) && r.bins) {
                                     r.bins[idx] = msg.coords;
                                 }
+                            }
+                        } else if (State.activeAdapter === 'hunting') {
+                            if (msg.stageKey === 'polygonPoint') {
+                                r.polygon = r.polygon || [];
+                                r.polygon.push(msg.coords);
+                            } else if (msg.stageKey === 'spawnPoint') {
+                                r.spawnPoints = r.spawnPoints || [];
+                                r.spawnPoints.push(msg.coords);
+                            }
+                        } else if (State.activeAdapter === 'diving') {
+                            if (msg.stageKey === 'lootPoint') {
+                                r.lootPoints = r.lootPoints || [];
+                                r.lootPoints.push(msg.coords);
+                            } else if (msg.stageKey === 'searchZoneCenter') {
+                                r.searchZone = r.searchZone || {};
+                                r.searchZone.center = msg.coords;
+                            } else {
+                                // Named single-coord fields: diveEntry, returnPoint, boatSpawn
+                                r[msg.stageKey] = msg.coords;
                             }
                         }
                         markDirty();
@@ -191,6 +212,13 @@
             } else if (State.activeAdapter === 'garbage') {
                 const binCount = (r.bins && r.bins.length) || 0;
                 metaHtml = `<span class="rc-tag">${binCount} BINS</span> <span>Ordered</span>`;
+            } else if (State.activeAdapter === 'hunting') {
+                const ptCount = (r.polygon && r.polygon.length) || 0;
+                const spCount = (r.spawnPoints && r.spawnPoints.length) || 0;
+                metaHtml = `<span class="rc-tag">Rank ${r.minRank || 1}</span> <span>${ptCount} pts / ${spCount} spawns</span>`;
+            } else if (State.activeAdapter === 'diving') {
+                const lpCount = (r.lootPoints && r.lootPoints.length) || 0;
+                metaHtml = `<span class="rc-tag">${r.difficulty || 'easy'}</span> <span>$${r.pay || 0} / ${lpCount} loot pts</span>`;
             }
 
             card.innerHTML = `
@@ -240,6 +268,10 @@
             renderTruckerInspector(body, route);
         } else if (State.activeAdapter === 'garbage') {
             renderGarbageInspector(body, route);
+        } else if (State.activeAdapter === 'hunting') {
+            renderHunterInspector(body, route);
+        } else if (State.activeAdapter === 'diving') {
+            renderDiverInspector(body, route);
         }
 
         renderValidation(route);
@@ -437,6 +469,258 @@
         container.appendChild(card);
     }
 
+    // ── Hunter Inspector Sub-renderer ─────────────────────────────
+
+    function renderHunterInspector(container, route) {
+        // Config card: minRank, minZ, maxZ, maxAlive, species
+        const cfgCard = document.createElement('div');
+        cfgCard.className = 'rc-field-card';
+        const speciesVal = (route.species || []).join(', ');
+        cfgCard.innerHTML = `
+            <div class="rc-field-header"><span class="rc-field-title">ZONE CONFIGURATION</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div><label class="rc-coord-lbl">Min Rank</label>
+                     <input type="number" class="rc-input-hero" id="rc-h-minrank" style="font-size:12px;padding:4px 8px;" value="${route.minRank || 1}"></div>
+                <div><label class="rc-coord-lbl">Min Z</label>
+                     <input type="number" class="rc-input-hero" id="rc-h-minz" style="font-size:12px;padding:4px 8px;" value="${route.minZ || 0}"></div>
+                <div><label class="rc-coord-lbl">Max Z</label>
+                     <input type="number" class="rc-input-hero" id="rc-h-maxz" style="font-size:12px;padding:4px 8px;" value="${route.maxZ || 300}"></div>
+                <div><label class="rc-coord-lbl">Max Alive</label>
+                     <input type="number" class="rc-input-hero" id="rc-h-maxalive" style="font-size:12px;padding:4px 8px;" value="${route.maxAlive || 8}"></div>
+            </div>
+            <div><label class="rc-coord-lbl">Species (comma-separated)</label>
+                 <input type="text" class="rc-input-hero" id="rc-h-species" style="font-size:12px;padding:4px 8px;width:100%;box-sizing:border-box;" value="${escapeHtml(speciesVal)}"></div>
+        `;
+        container.appendChild(cfgCard);
+        cfgCard.querySelector('#rc-h-minrank').addEventListener('input', e => { route.minRank = Number(e.target.value) || 1; markDirty(); });
+        cfgCard.querySelector('#rc-h-minz').addEventListener('input', e => { route.minZ = Number(e.target.value) || 0; markDirty(); });
+        cfgCard.querySelector('#rc-h-maxz').addEventListener('input', e => { route.maxZ = Number(e.target.value) || 300; markDirty(); });
+        cfgCard.querySelector('#rc-h-maxalive').addEventListener('input', e => { route.maxAlive = Number(e.target.value) || 8; markDirty(); });
+        cfgCard.querySelector('#rc-h-species').addEventListener('input', e => {
+            route.species = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+            markDirty();
+        });
+
+        // Polygon points card
+        const polyCard = document.createElement('div');
+        polyCard.className = 'rc-field-card';
+        const polyPts = route.polygon || [];
+        polyCard.innerHTML = `
+            <div class="rc-bins-header">
+                <span class="rc-field-title">POLYGON BOUNDARY (${polyPts.length} pts)</span>
+                <button type="button" class="rc-btn rc-btn--primary rc-btn--tiny" id="rc-h-add-poly">+ Add Point at Player</button>
+            </div>
+            <div class="rc-bins-list" id="rc-h-poly-list"></div>
+        `;
+        const polyList = polyCard.querySelector('#rc-h-poly-list');
+        polyPts.forEach((pt, idx) => {
+            const row = document.createElement('div');
+            row.className = 'rc-bin-row';
+            row.innerHTML = `
+                <span class="rc-bin-num">#${idx + 1}</span>
+                <span class="rc-bin-coords">${pt.x.toFixed(2)}, ${pt.y.toFixed(2)}</span>
+                <button type="button" class="rc-btn rc-btn--secondary rc-btn--tiny btn-goto-poly" title="Go to">📍</button>
+                <button type="button" class="rc-btn rc-btn--danger-soft rc-btn--tiny btn-del-poly" title="Delete">✕</button>
+            `;
+            row.querySelector('.btn-goto-poly').addEventListener('click', () => {
+                post('teleportToCoords', { coords: { x: pt.x, y: pt.y, z: (route.minZ || 0) + 2 } });
+            });
+            row.querySelector('.btn-del-poly').addEventListener('click', () => {
+                polyPts.splice(idx, 1);
+                markDirty(); renderInspector(); renderRouteList();
+            });
+            polyList.appendChild(row);
+        });
+        polyCard.querySelector('#rc-h-add-poly').addEventListener('click', () => {
+            post('capturePlayerPosAsPolygonPoint', { adapter: 'hunting', routeId: route.id });
+        });
+        container.appendChild(polyCard);
+
+        // Spawn points card
+        const spawnCard = document.createElement('div');
+        spawnCard.className = 'rc-field-card';
+        const spawnPts = route.spawnPoints || [];
+        spawnCard.innerHTML = `
+            <div class="rc-bins-header">
+                <span class="rc-field-title">ANIMAL SPAWN POINTS (${spawnPts.length} pts)</span>
+                <button type="button" class="rc-btn rc-btn--primary rc-btn--tiny" id="rc-h-add-spawn">+ Add Spawn at Player</button>
+            </div>
+            <div class="rc-bins-list" id="rc-h-spawn-list"></div>
+        `;
+        const spawnList = spawnCard.querySelector('#rc-h-spawn-list');
+        spawnPts.forEach((pt, idx) => {
+            const row = document.createElement('div');
+            row.className = 'rc-bin-row';
+            row.innerHTML = `
+                <span class="rc-bin-num">#${idx + 1}</span>
+                <span class="rc-bin-coords">${pt.x.toFixed(2)}, ${pt.y.toFixed(2)}, ${pt.z.toFixed(2)} h:${(pt.h||0).toFixed(1)}°</span>
+                <button type="button" class="rc-btn rc-btn--secondary rc-btn--tiny btn-goto-spawn" title="Teleport">📍</button>
+                <button type="button" class="rc-btn rc-btn--danger-soft rc-btn--tiny btn-del-spawn" title="Delete">✕</button>
+            `;
+            row.querySelector('.btn-goto-spawn').addEventListener('click', () => {
+                post('teleportToCoords', { coords: pt });
+            });
+            row.querySelector('.btn-del-spawn').addEventListener('click', () => {
+                spawnPts.splice(idx, 1);
+                markDirty(); renderInspector(); renderRouteList();
+            });
+            spawnList.appendChild(row);
+        });
+        spawnCard.querySelector('#rc-h-add-spawn').addEventListener('click', () => {
+            post('capturePlayerPosAsSpawnPoint', { adapter: 'hunting', routeId: route.id });
+        });
+        container.appendChild(spawnCard);
+    }
+
+    // ── Diver Inspector Sub-renderer ───────────────────────────────
+
+    function renderDiverInspector(container, route) {
+        // Config card
+        const cfgCard = document.createElement('div');
+        cfgCard.className = 'rc-field-card';
+        cfgCard.innerHTML = `
+            <div class="rc-field-header"><span class="rc-field-title">DIVE SITE CONFIGURATION</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div><label class="rc-coord-lbl">Min Rank</label>
+                     <input type="number" class="rc-input-hero" id="rc-d-minrank" style="font-size:12px;padding:4px 8px;" value="${route.minRank || 1}"></div>
+                <div><label class="rc-coord-lbl">Pay ($)</label>
+                     <input type="number" class="rc-input-hero" id="rc-d-pay" style="font-size:12px;padding:4px 8px;" value="${route.pay || 200}"></div>
+                <div><label class="rc-coord-lbl">Req. Salvage</label>
+                     <input type="number" class="rc-input-hero" id="rc-d-reqsalvage" style="font-size:12px;padding:4px 8px;" value="${route.requiredSalvage || 3}"></div>
+                <div><label class="rc-coord-lbl">Requires Boat</label>
+                     <select class="rc-input-hero" id="rc-d-reqboat" style="font-size:12px;padding:4px 8px;">
+                         <option value="false" ${!route.requiresBoat ? 'selected' : ''}>No</option>
+                         <option value="true" ${route.requiresBoat ? 'selected' : ''}>Yes</option>
+                     </select></div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <label class="rc-coord-lbl">Difficulty</label>
+                <select class="rc-input-hero" id="rc-d-difficulty" style="font-size:12px;padding:4px 8px;">
+                    <option value="easy" ${route.difficulty === 'easy' ? 'selected' : ''}>Easy</option>
+                    <option value="medium" ${route.difficulty === 'medium' ? 'selected' : ''}>Medium</option>
+                    <option value="hard" ${route.difficulty === 'hard' ? 'selected' : ''}>Hard</option>
+                </select>
+            </div>
+        `;
+        container.appendChild(cfgCard);
+        cfgCard.querySelector('#rc-d-minrank').addEventListener('input', e => { route.minRank = Number(e.target.value) || 1; markDirty(); });
+        cfgCard.querySelector('#rc-d-pay').addEventListener('input', e => { route.pay = Number(e.target.value) || 0; markDirty(); renderRouteList(); });
+        cfgCard.querySelector('#rc-d-reqsalvage').addEventListener('input', e => { route.requiredSalvage = Number(e.target.value) || 3; markDirty(); });
+        cfgCard.querySelector('#rc-d-reqboat').addEventListener('change', e => { route.requiresBoat = e.target.value === 'true'; markDirty(); });
+        cfgCard.querySelector('#rc-d-difficulty').addEventListener('change', e => { route.difficulty = e.target.value; markDirty(); renderRouteList(); });
+
+        // Single-coord fields (boatSpawn, diveEntry, returnPoint)
+        const singleCoords = [
+            { key: 'boatSpawn',    label: 'BOAT SPAWN',     hasHeading: true  },
+            { key: 'diveEntry',    label: 'DIVE ENTRY',     hasHeading: false },
+            { key: 'returnPoint',  label: 'RETURN POINT',   hasHeading: false },
+        ];
+        singleCoords.forEach(sc => {
+            const val = route[sc.key] || {};
+            const card = document.createElement('div');
+            card.className = 'rc-field-card';
+            const xv = (val.x || 0).toFixed(2);
+            const yv = (val.y || 0).toFixed(2);
+            const zv = (val.z || 0).toFixed(2);
+            const hv = sc.hasHeading ? (val.h || 0).toFixed(1) : null;
+            card.innerHTML = `
+                <div class="rc-field-header"><span class="rc-field-title">${sc.label}</span></div>
+                <div class="rc-coord-grid">
+                    <div class="rc-coord-box"><span class="rc-coord-lbl">X</span><span class="rc-coord-val">${xv}</span></div>
+                    <div class="rc-coord-box"><span class="rc-coord-lbl">Y</span><span class="rc-coord-val">${yv}</span></div>
+                    <div class="rc-coord-box"><span class="rc-coord-lbl">Z</span><span class="rc-coord-val">${zv}</span></div>
+                    ${hv !== null ? `<div class="rc-coord-box"><span class="rc-coord-lbl">Heading</span><span class="rc-coord-val">${hv}°</span></div>` : ''}
+                </div>
+                <div class="rc-field-actions">
+                    <button type="button" class="rc-btn rc-btn--secondary rc-btn--tiny btn-goto">📍 Go To</button>
+                    <button type="button" class="rc-btn rc-btn--primary rc-btn--tiny btn-capture">+ Capture at Player</button>
+                </div>
+            `;
+            card.querySelector('.btn-goto').addEventListener('click', () => {
+                if (val.x) post('teleportToCoords', { coords: val });
+            });
+            card.querySelector('.btn-capture').addEventListener('click', () => {
+                post('capturePlayerPosAsField', {
+                    adapter: 'diving', routeId: route.id,
+                    field: sc.key, hasHeading: sc.hasHeading, groundSnap: false,
+                });
+            });
+            container.appendChild(card);
+        });
+
+        // Loot points card
+        const lootCard = document.createElement('div');
+        lootCard.className = 'rc-field-card';
+        const lootPts = route.lootPoints || [];
+        lootCard.innerHTML = `
+            <div class="rc-bins-header">
+                <span class="rc-field-title">LOOT POINTS (${lootPts.length} pts)</span>
+                <button type="button" class="rc-btn rc-btn--primary rc-btn--tiny" id="rc-d-add-loot">+ Add Loot Point at Player</button>
+            </div>
+            <div class="rc-bins-list" id="rc-d-loot-list"></div>
+        `;
+        const lootList = lootCard.querySelector('#rc-d-loot-list');
+        lootPts.forEach((pt, idx) => {
+            const row = document.createElement('div');
+            row.className = 'rc-bin-row';
+            row.innerHTML = `
+                <span class="rc-bin-num">#${idx + 1}</span>
+                <span class="rc-bin-coords">${pt.x.toFixed(2)}, ${pt.y.toFixed(2)}, ${pt.z.toFixed(2)}</span>
+                <button type="button" class="rc-btn rc-btn--secondary rc-btn--tiny btn-goto-loot" title="Go to">📍</button>
+                <button type="button" class="rc-btn rc-btn--danger-soft rc-btn--tiny btn-del-loot" title="Delete">✕</button>
+            `;
+            row.querySelector('.btn-goto-loot').addEventListener('click', () => {
+                post('teleportToCoords', { coords: pt });
+            });
+            row.querySelector('.btn-del-loot').addEventListener('click', () => {
+                lootPts.splice(idx, 1);
+                markDirty(); renderInspector(); renderRouteList();
+            });
+            lootList.appendChild(row);
+        });
+        lootCard.querySelector('#rc-d-add-loot').addEventListener('click', () => {
+            post('capturePlayerPosAsLootPoint', { adapter: 'diving', routeId: route.id });
+        });
+        container.appendChild(lootCard);
+
+        // Search zone (center + radius) card
+        const szCard = document.createElement('div');
+        szCard.className = 'rc-field-card';
+        const sz = route.searchZone || {};
+        const szCenter = sz.center || {};
+        szCard.innerHTML = `
+            <div class="rc-field-header"><span class="rc-field-title">SEARCH ZONE</span></div>
+            <div class="rc-coord-grid" style="margin-bottom:8px;">
+                <div class="rc-coord-box"><span class="rc-coord-lbl">X</span><span class="rc-coord-val">${(szCenter.x || 0).toFixed(2)}</span></div>
+                <div class="rc-coord-box"><span class="rc-coord-lbl">Y</span><span class="rc-coord-val">${(szCenter.y || 0).toFixed(2)}</span></div>
+                <div class="rc-coord-box"><span class="rc-coord-lbl">Z</span><span class="rc-coord-val">${(szCenter.z || 0).toFixed(2)}</span></div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <label class="rc-coord-lbl">Radius (m)</label>
+                <input type="number" class="rc-input-hero" id="rc-d-sz-radius" style="font-size:12px;padding:4px 8px;width:100px;" value="${sz.radius || 50}">
+            </div>
+            <div class="rc-field-actions">
+                <button type="button" class="rc-btn rc-btn--secondary rc-btn--tiny btn-goto-sz">📍 Go To</button>
+                <button type="button" class="rc-btn rc-btn--primary rc-btn--tiny btn-capture-sz">+ Capture Center at Player</button>
+            </div>
+        `;
+        szCard.querySelector('#rc-d-sz-radius').addEventListener('input', e => {
+            route.searchZone = route.searchZone || {};
+            route.searchZone.radius = Number(e.target.value) || 50;
+            markDirty();
+        });
+        szCard.querySelector('.btn-goto-sz').addEventListener('click', () => {
+            if (szCenter.x) post('teleportToCoords', { coords: szCenter });
+        });
+        szCard.querySelector('.btn-capture-sz').addEventListener('click', () => {
+            post('capturePlayerPosAsField', {
+                adapter: 'diving', routeId: route.id,
+                field: 'searchZoneCenter', hasHeading: false, groundSnap: false,
+            });
+        });
+        container.appendChild(szCard);
+    }
+
     // ── Validation Section ─────────────────────────────────────────
 
     function renderValidation(route) {
@@ -470,6 +754,29 @@
             if (count === 0) results.push({ status: 'FAIL', message: 'Route has no bins' });
             else if (count < 8) results.push({ status: 'WARNING', message: `Route has ${count}/8 bins` });
             else results.push({ status: 'PASS', message: `${count} collection stops configured` });
+        } else if (State.activeAdapter === 'hunting') {
+            const polyCount = (route.polygon && route.polygon.length) || 0;
+            if (polyCount < 3) results.push({ status: 'FAIL', message: `Polygon needs ≥3 points (has ${polyCount})` });
+            else results.push({ status: 'PASS', message: `Polygon: ${polyCount} vertices` });
+            const spawnCount = (route.spawnPoints && route.spawnPoints.length) || 0;
+            if (spawnCount === 0) results.push({ status: 'FAIL', message: 'No spawn points defined' });
+            else results.push({ status: 'PASS', message: `${spawnCount} spawn point(s)` });
+            const speciesCount = (route.species && route.species.length) || 0;
+            if (speciesCount === 0) results.push({ status: 'WARNING', message: 'No species defined — will use job defaults' });
+            else results.push({ status: 'PASS', message: `Species: ${route.species.join(', ')}` });
+        } else if (State.activeAdapter === 'diving') {
+            const lpCount = (route.lootPoints && route.lootPoints.length) || 0;
+            const reqSalvage = route.requiredSalvage || 3;
+            if (lpCount === 0) results.push({ status: 'FAIL', message: 'No loot points defined' });
+            else if (lpCount < reqSalvage) results.push({ status: 'WARNING', message: `${lpCount} loot pts < ${reqSalvage} required salvage` });
+            else results.push({ status: 'PASS', message: `${lpCount} loot point(s) configured` });
+            if (!route.diveEntry || !route.diveEntry.x) results.push({ status: 'WARNING', message: 'Dive entry not set' });
+            else results.push({ status: 'PASS', message: `Dive entry set` });
+            if (!route.searchZone || !route.searchZone.center || !route.searchZone.center.x)
+                results.push({ status: 'WARNING', message: 'Search zone center not set' });
+            else results.push({ status: 'PASS', message: `Search zone radius: ${route.searchZone.radius || 50}m` });
+            if (!route.pay || route.pay <= 0) results.push({ status: 'FAIL', message: 'Pay must be > $0' });
+            else results.push({ status: 'PASS', message: `Contract pay: $${route.pay}` });
         }
 
         results.forEach(res => {
@@ -541,6 +848,44 @@
                 });
                 list.appendChild(btn);
             });
+        } else if (State.activeAdapter === 'hunting') {
+            (route.spawnPoints || []).forEach((pt, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'rc-btn rc-btn--secondary';
+                btn.textContent = `Teleport to Spawn Point #${idx + 1}`;
+                btn.addEventListener('click', () => {
+                    post('testTeleport', { type: 'ped_spawn', coords: pt });
+                });
+                list.appendChild(btn);
+            });
+        } else if (State.activeAdapter === 'diving') {
+            const previewActions = [
+                { label: 'Teleport to Dive Entry', coords: route.diveEntry },
+                { label: 'Teleport to Boat Spawn', coords: route.boatSpawn },
+                { label: 'Teleport to Return Point', coords: route.returnPoint },
+            ];
+            previewActions.forEach(act => {
+                if (!act.coords || !act.coords.x) return;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'rc-btn rc-btn--secondary';
+                btn.textContent = act.label;
+                btn.addEventListener('click', () => {
+                    post('testTeleport', { type: 'ped_coord', coords: act.coords });
+                });
+                list.appendChild(btn);
+            });
+            (route.lootPoints || []).forEach((pt, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'rc-btn rc-btn--accent';
+                btn.textContent = `Teleport to Loot Point #${idx + 1}`;
+                btn.addEventListener('click', () => {
+                    post('testTeleport', { type: 'ped_coord', coords: pt });
+                });
+                list.appendChild(btn);
+            });
         }
 
         $('#rc-test-modal').classList.remove('hidden');
@@ -594,11 +939,38 @@
                 delivery: { x: 1181.2, y: 2671.5, z: 37.9, h: 0.0, w: 0.0 },
                 parkingBay: { x: 1181.2, y: 2671.5, z: 37.9, h: 0.0, w: 0.0 },
             };
-        } else {
+        } else if (State.activeAdapter === 'garbage') {
             newRoute = {
                 id: `garbage_custom_${timestamp}`,
                 label: `New Garbage Route ${timestamp}`,
                 bins: [],
+            };
+        } else if (State.activeAdapter === 'hunting') {
+            newRoute = {
+                id: `hunt_zone_${timestamp}`,
+                label: `New Hunt Zone ${timestamp}`,
+                minRank: 1,
+                minZ: 0,
+                maxZ: 300,
+                maxAlive: 8,
+                species: ['a_c_deer'],
+                polygon: [],
+                spawnPoints: [],
+            };
+        } else {
+            newRoute = {
+                id: `dive_site_${timestamp}`,
+                label: `New Dive Site ${timestamp}`,
+                minRank: 1,
+                difficulty: 'easy',
+                requiredSalvage: 3,
+                pay: 200,
+                requiresBoat: false,
+                searchZone: { center: { x: 0, y: 0, z: -20 }, radius: 50 },
+                boatSpawn: { x: 0, y: 0, z: 0, h: 0 },
+                diveEntry: { x: 0, y: 0, z: -5 },
+                returnPoint: { x: 0, y: 0, z: 0 },
+                lootPoints: [],
             };
         }
         State.routes[State.activeAdapter].push(newRoute);

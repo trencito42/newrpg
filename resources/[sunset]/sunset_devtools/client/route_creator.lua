@@ -324,6 +324,88 @@ RegisterNUICallback('capturePlayerPosAsBin', function(data, cb)
     cb({ ok = true, coords = bin })
 end)
 
+-- [SECTION 37-39] Hunter: capture player position as polygon boundary point
+RegisterNUICallback('capturePlayerPosAsPolygonPoint', function(data, cb)
+    local ped    = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local pt = {
+        x = math.floor(coords.x * 100 + 0.5) / 100,
+        y = math.floor(coords.y * 100 + 0.5) / 100,
+    }
+    notify(('Added polygon point at (%.1f, %.1f)'):format(pt.x, pt.y), 'success')
+    SendNUIMessage({
+        action   = 'updateFieldCoords',
+        routeId  = data.routeId,
+        stageKey = 'polygonPoint', -- handled in updateFieldCoords (hunting adapter branch)
+        coords   = pt,
+    })
+    cb({ ok = true, coords = pt })
+end)
+
+-- [SECTION 37-39] Hunter: capture player position as animal spawn point (with heading)
+RegisterNUICallback('capturePlayerPosAsSpawnPoint', function(data, cb)
+    local ped    = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+    local pt = {
+        x = math.floor(coords.x * 100 + 0.5) / 100,
+        y = math.floor(coords.y * 100 + 0.5) / 100,
+        z = math.floor(coords.z * 100 + 0.5) / 100,
+        h = math.floor(heading * 10 + 0.5) / 10,
+    }
+    notify(('Added spawn point at (%.1f, %.1f, %.1f) h=%.1f°'):format(pt.x, pt.y, pt.z, pt.h), 'success')
+    SendNUIMessage({
+        action   = 'updateFieldCoords',
+        routeId  = data.routeId,
+        stageKey = 'spawnPoint',
+        coords   = pt,
+    })
+    cb({ ok = true, coords = pt })
+end)
+
+-- [SECTION 37-39] Diver: capture player position as loot point (no ground snap — may be underwater)
+RegisterNUICallback('capturePlayerPosAsLootPoint', function(data, cb)
+    local ped    = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local pt = {
+        x = math.floor(coords.x * 100 + 0.5) / 100,
+        y = math.floor(coords.y * 100 + 0.5) / 100,
+        z = math.floor(coords.z * 100 + 0.5) / 100,
+    }
+    notify(('Added loot point at (%.1f, %.1f, %.1f)'):format(pt.x, pt.y, pt.z), 'success')
+    SendNUIMessage({
+        action   = 'updateFieldCoords',
+        routeId  = data.routeId,
+        stageKey = 'lootPoint',
+        coords   = pt,
+    })
+    cb({ ok = true, coords = pt })
+end)
+
+-- [SECTION 37-39] Diver: capture a named single-coord field at player position
+-- groundSnap=false for dive/loot points (may be underwater)
+RegisterNUICallback('capturePlayerPosAsField', function(data, cb)
+    local ped    = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local heading = data.hasHeading and (math.floor(GetEntityHeading(ped) * 10 + 0.5) / 10) or nil
+
+    local pt = {
+        x = math.floor(coords.x * 100 + 0.5) / 100,
+        y = math.floor(coords.y * 100 + 0.5) / 100,
+        z = math.floor(coords.z * 100 + 0.5) / 100,
+    }
+    if heading then pt.h = heading end
+
+    notify(('Captured %s at (%.1f, %.1f, %.1f)'):format(data.field or '?', pt.x, pt.y, pt.z), 'success')
+    SendNUIMessage({
+        action   = 'updateFieldCoords',
+        routeId  = data.routeId,
+        stageKey = data.field,
+        coords   = pt,
+    })
+    cb({ ok = true, coords = pt })
+end)
+
 RegisterNUICallback('previewRouteInWorld', function(data, cb)
     previewRoute = data.route
     isWorldPreviewing = true
@@ -470,8 +552,8 @@ RegisterCommand('devroute', function(src, args)
     DevRouteCreator.Open(adapter, routeId)
 end, false)
 
-TriggerEvent('chat:addSuggestion', '/devroutes', 'Visual Job Route Creator (Trucker & Garbage)', {
-    { name = 'adapter', help = 'trucker | garbage' },
+TriggerEvent('chat:addSuggestion', '/devroutes', 'Visual Job Route Creator (Trucker, Garbage, Hunter, Diver)', {
+    { name = 'adapter', help = 'trucker | garbage | hunting | diving' },
     { name = 'routeId', help = 'Optional route ID' },
 })
 
