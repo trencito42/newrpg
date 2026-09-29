@@ -876,12 +876,16 @@ RegisterNetEvent('sunset:hunting:registerAnimal', function(netId, species, zoneI
     if GetEntityType(entity) ~= 1 then return end
 
     local pos = GetEntityCoords(entity)
+    -- [SECTION 43] Server generates weight from config range — never trust client value.
+    -- Client sends weight as a convenience but it is ignored here; a cheating client
+    -- could inflate weight to increase sell value.
+    local serverWeight = speciesCfg.weightMin + math.random() * (speciesCfg.weightMax - speciesCfg.weightMin)
     Animals[netId] = {
         netId     = netId,
         species   = tostring(species),
         zoneId    = tostring(zoneId),
         spawnedAt = os.time(),
-        weight    = tonumber(weight) or (speciesCfg.weightMin + math.random() * (speciesCfg.weightMax - speciesCfg.weightMin)),
+        weight    = serverWeight,
         alive     = true,
         harvested = false,
         shots     = 0,
