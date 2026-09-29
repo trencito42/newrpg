@@ -94,27 +94,31 @@ Sunset.JobsConfig = {
 
     courier = {
         label = 'Courier',
-        help = 'Pick up packages at the warehouse and deliver them on foot.',
+        help = 'Spawn your van, load all packages at the warehouse, then deliver them door-to-door without returning between stops.',
         warehouse = {
             coords = vector3(78.45, 112.22, 81.17),
             blip = { sprite = 478, color = 3, scale = 0.85 },
         },
+        -- Van spawns just outside the warehouse loading dock
+        vehicleModel = 'speedo2',
+        vehicleSpawn = vector4(74.0, 118.0, 81.17, 180.0),
         deliveries = {
-            { coords = vector3(-47.22, -1758.45, 29.42), label = 'Davis Ave' },
-            { coords = vector3(213.88, -810.45, 30.73), label = 'Legion Square' },
-            { coords = vector3(-706.22, -914.55, 19.22), label = 'Little Seoul' },
-            { coords = vector3(373.45, -828.22, 29.28), label = 'Pillbox Hill' },
+            { coords = vector3(-47.22, -1758.45, 29.42),  label = 'Davis Ave' },
+            { coords = vector3(213.88, -810.45, 30.73),   label = 'Legion Square' },
+            { coords = vector3(-706.22, -914.55, 19.22),  label = 'Little Seoul' },
+            { coords = vector3(373.45, -828.22, 29.28),   label = 'Pillbox Hill' },
             { coords = vector3(-1288.45, -1115.22, 6.99), label = 'Vespucci Canals' },
-            { coords = vector3(127.55, -1298.88, 29.22), label = 'Strawberry' },
+            { coords = vector3(127.55, -1298.88, 29.22),  label = 'Strawberry' },
+            { coords = vector3(-540.22, -183.55, 37.65),  label = 'Rockford Hills' },
         },
         packageProp = 'prop_cs_cardbox_01',
-        packagesPerRun = 4,
-        payPerPackage = 75,
+        packagesPerRun = 5,
+        payPerPackage = 90,
         xpPerPackage = 18,
-        deliveryRadius = 2.5,
-        pickupRadius = 3.5,
+        deliveryRadius = 3.0,
+        loadingRadius = 6.0,
         pickupZTolerance = 5.0,
-        timeoutSec = 1200,
+        timeoutSec = 1500,
     },
 
     fisherman = {

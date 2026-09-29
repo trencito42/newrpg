@@ -3,6 +3,36 @@ local JC = Sunset.JobClient
 local bagProp = nil
 local worldBag = nil
 local carryAnimActive = false
+local currentGarbageCheckpoint = nil
+
+local function clearGarbageCheckpoint()
+    if currentGarbageCheckpoint then
+        DeleteCheckpoint(currentGarbageCheckpoint)
+        currentGarbageCheckpoint = nil
+    end
+end
+
+local function setGarbageCheckpoint(coords, r, g, b)
+    clearGarbageCheckpoint()
+    if not coords then return end
+    local pos = vector3(coords.x, coords.y, coords.z)
+    r, g, b = r or 46, g or 204, b or 113
+    currentGarbageCheckpoint = CreateCheckpoint(47, pos.x, pos.y, pos.z, pos.x, pos.y, pos.z, 4.0, r, g, b, 180, 0)
+    SetCheckpointCylinderHeight(currentGarbageCheckpoint, 5.0, 5.0, 4.0)
+end
+
+local function draw3DText(coords, text)
+    local onScreen, sx, sy = World3dToScreen2d(coords.x, coords.y, coords.z + 1.2)
+    if not onScreen then return end
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextProportional(1)
+    SetTextColour(255, 255, 255, 220)
+    SetTextEntry('STRING')
+    SetTextCentre(1)
+    AddTextComponentString(text)
+    DrawText(sx, sy)
+end
 
 local function spawnWorldBag(pos)
     if worldBag and DoesEntityExist(worldBag) then
@@ -25,6 +55,7 @@ local function pointToBin(cfg, bin, label)
     JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
     JC.addBlip(pos, { sprite = 318, color = 2, scale = 0.8 }, label or 'Trash Bin')
     JC.setWaypoint(pos)
+    setGarbageCheckpoint(pos, 46, 204, 113)
 end
 
 local function getWorkTruck()
@@ -153,10 +184,12 @@ local function startGarbage()
                     if not worldBag or not DoesEntityExist(worldBag) then
                         spawnWorldBag(pos)
                     end
-                    if JC.isNear(pos, cfg.collectRadius or 3.0)
-                        and not IsPedInAnyVehicle(PlayerPedId(), false)
-                        and not busy
-                        and IsControlJustPressed(0, 38) then
+                    local nearBin = JC.isNear(pos, cfg.collectRadius or 3.0)
+                    local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
+                    if nearBin and onFoot then
+                        draw3DText(pos, '[E] Pick Up Trash')
+                    end
+                    if nearBin and onFoot and not busy and IsControlJustPressed(0, 38) then
                         busy = true
                         JC.playAnim('anim@heists@narcotics@trash', 'pickup', 2500)
                         local newData, err2 = Sunset.AwaitCallback('sunset:jobs:garbage:pickupBin')
@@ -164,6 +197,11 @@ local function startGarbage()
                         if newData then
                             JC.sessionData = newData
                             attachBag()
+                            clearGarbageCheckpoint()
+                            if worldBag and DoesEntityExist(worldBag) then
+                                DeleteObject(worldBag)
+                                worldBag = nil
+                            end
                             updateObjective(cfg, newData)
                             JC.notify('Take the bag to the back of your truck', 'info')
                         else
@@ -176,10 +214,12 @@ local function startGarbage()
                 if truck then
                     local dumpPos = getTruckDumpPos(truck, cfg)
                     JC.drawMarker(dumpPos, 255, 180, 0)
-                    if JC.isNear(dumpPos, cfg.dumpRadius or 3.5)
-                        and not IsPedInAnyVehicle(PlayerPedId(), false)
-                        and not busy
-                        and IsControlJustPressed(0, 38) then
+                    local nearDump = JC.isNear(dumpPos, cfg.dumpRadius or 3.5)
+                    local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
+                    if nearDump and onFoot then
+                        draw3DText(dumpPos, '[E] Dump Trash')
+                    end
+                    if nearDump and onFoot and not busy and IsControlJustPressed(0, 38) then
                         busy = true
                         JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 2000)
                         local truckNetId = NetworkGetNetworkIdFromEntity(truck)
@@ -192,9 +232,11 @@ local function startGarbage()
                                 newData.collected, newData.capacity, cfg.payPerBin or 65), 'success')
                             updateObjective(cfg, newData)
                             if newData.stage == 'return_unload' then
+                                local unload = cfg.depot.unload or cfg.depot.coords
                                 JC.clearBlips()
                                 JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
-                                JC.setWaypoint(cfg.depot.unload or cfg.depot.coords)
+                                JC.setWaypoint(unload)
+                                setGarbageCheckpoint(unload, 52, 152, 219)
                                 JC.notify('Truck full — return to depot to unload', 'info')
                             else
                                 local nextBin = newData.bins and newData.bins[newData.binIndex or 1]
@@ -210,11 +252,15 @@ local function startGarbage()
             elseif stage == 'return_unload' then
                 local unload = cfg.depot.unload or cfg.depot.coords
                 JC.drawMarker(unload, 52, 152, 219)
+                if JC.isNear(unload, 8.0) and IsPedInAnyVehicle(PlayerPedId(), false) then
+                    draw3DText(unload, 'Drive In to Unload')
+                end
                 if JC.isNear(unload, 8.0) and IsPedInAnyVehicle(PlayerPedId(), false) and not busy then
                     busy = true
                     local result, err2 = Sunset.AwaitCallback('sunset:jobs:garbage:unload')
                     busy = false
                     if result then
+                        clearGarbageCheckpoint()
                         detachBag()
                         JC.deleteVehicles()
                         JC.notify(('Shift complete! Unload bonus +$%s'):format(result.bonus or 0), 'success')
@@ -226,8 +272,15 @@ local function startGarbage()
             end
             Wait(0)
         end
+        clearGarbageCheckpoint()
         detachBag()
     end)
 end
+
+RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
+    if jobId ~= 'garbage' then return end
+    clearGarbageCheckpoint()
+    detachBag()
+end)
 
 Sunset.Jobs.StartGarbage = startGarbage
