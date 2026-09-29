@@ -30,10 +30,28 @@ local function spawnContact(id, data)
     local hash = GetHashKey(data.model)
     RequestModel(hash)
     local t = 0
-    while not HasModelLoaded(hash) do Wait(50) t=t+50 if t>10000 then break end end
+    while not HasModelLoaded(hash) do Wait(50) t=t+50 if t>15000 then break end end
 
-    local ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.coords.w, false, false)
-    if ped == 0 then SetModelAsNoLongerNeeded(hash) return end
+    if not HasModelLoaded(hash) then
+        print(('[missions] model %s failed to load for contact %s'):format(data.model, id))
+        SetModelAsNoLongerNeeded(hash)
+        return
+    end
+
+    -- Retry CreatePed up to 3 times with a brief wait between attempts.
+    -- CreatePed can return 0 if the world hasn't finished streaming at that position.
+    local ped = 0
+    for attempt = 1, 3 do
+        ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.coords.w, false, false)
+        if ped ~= 0 then break end
+        print(('[missions] CreatePed attempt %d failed for %s — retrying in 2s'):format(attempt, id))
+        Wait(2000)
+    end
+    if ped == 0 then
+        print(('[missions] CreatePed gave up for contact %s at %s,%s,%s'):format(id, data.coords.x, data.coords.y, data.coords.z))
+        SetModelAsNoLongerNeeded(hash)
+        return
+    end
 
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)
