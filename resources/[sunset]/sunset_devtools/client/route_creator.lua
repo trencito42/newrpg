@@ -303,7 +303,7 @@ end)
 RegisterNUICallback('capturePlayerPosAsBin', function(data, cb)
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
-    local ground = SunsetJobVisuals.GetGroundCoords(coords)
+    local ground = (SunsetJobVisuals and SunsetJobVisuals.GetGroundCoords and SunsetJobVisuals.GetGroundCoords(coords)) or coords
 
     local bin = {
         x = math.floor(ground.x * 100 + 0.5) / 100,

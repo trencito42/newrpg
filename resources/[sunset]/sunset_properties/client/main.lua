@@ -178,20 +178,10 @@ RegisterNetEvent('sunset:client:propertyInterior', function(data)
     local targetZ = data.interior.z
     local heading = data.interior.w or 0.0
 
-    RequestCollisionAtCoord(targetX, targetY, targetZ)
-    local intId = GetInteriorAtCoords(targetX, targetY, targetZ)
-    if intId ~= 0 then
-        LoadInterior(intId)
-        PinInteriorInMemory(intId)
-        local tWait = GetGameTimer() + 2000
-        while not IsInteriorReady(intId) and GetGameTimer() < tWait do
-            Wait(50)
-        end
-    end
-
     SetEntityCoordsNoOffset(ped, targetX, targetY, targetZ, false, false, false)
     SetEntityHeading(ped, heading)
     FreezeEntityPosition(ped, true)
+    RequestCollisionAtCoord(targetX, targetY, targetZ)
 
     local timeout = GetGameTimer() + 3000
     while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do

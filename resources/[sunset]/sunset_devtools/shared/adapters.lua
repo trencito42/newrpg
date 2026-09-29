@@ -198,26 +198,29 @@ register('trucker', {
 
     visualize = function(route, isPreview, selStage)
         if not route then return end
+        local viz = (SunsetJobVisuals and SunsetJobVisuals.DrawTruckerPickupPreview and SunsetJobVisuals)
+            or (GetResourceState('sunset_jobs') == 'started' and exports.sunset_jobs) or nil
+        if not viz then return end
 
         local pCoords = route.pickup
         local dCoords = route.delivery
         local bCoords = route.parkingBay
 
         -- 1. Pickup Bay
-        if pCoords then
-            SunsetJobVisuals.DrawTruckerPickupPreview(pCoords, pCoords.h or pCoords.w or pCoords.heading,
+        if pCoords and viz.DrawTruckerPickupPreview then
+            viz.DrawTruckerPickupPreview(pCoords, pCoords.h or pCoords.w or pCoords.heading,
                 selStage == 'pickup' and '~y~[EDITING] Trailer Pickup' or 'Trailer Pickup')
         end
 
         -- 2. Delivery Entrance
-        if dCoords then
-            SunsetJobVisuals.DrawTruckerDeliveryPreview(dCoords, selStage == 'delivery',
+        if dCoords and viz.DrawTruckerDeliveryPreview then
+            viz.DrawTruckerDeliveryPreview(dCoords, selStage == 'delivery',
                 selStage == 'delivery' and '~y~[EDITING] Delivery Entrance' or 'Delivery Entrance')
         end
 
         -- 3. Parking Bay
-        if bCoords then
-            SunsetJobVisuals.DrawTruckerParkingBayPreview(bCoords, bCoords.h or bCoords.w or bCoords.heading,
+        if bCoords and viz.DrawTruckerParkingBayPreview then
+            viz.DrawTruckerParkingBayPreview(bCoords, bCoords.h or bCoords.w or bCoords.heading,
                 selStage == 'parkingBay',
                 selStage == 'parkingBay' and '~y~[EDITING] Parking Bay' or 'Manual Parking Bay')
         end
@@ -274,17 +277,21 @@ register('garbage', {
 
     visualize = function(route, isPreview, selIndex)
         if not route or not route.bins then return end
+        local viz = (SunsetJobVisuals and SunsetJobVisuals.DrawGarbageBinPreview and SunsetJobVisuals)
+            or (GetResourceState('sunset_jobs') == 'started' and exports.sunset_jobs) or nil
+        if not viz or not viz.DrawGarbageBinPreview then return end
+
         local bins = route.bins
         local cfg = Sunset.JobsConfig and Sunset.JobsConfig.garbage or {}
 
         -- Draw depot unload marker
         if cfg.depot and cfg.depot.unload then
-            SunsetJobVisuals.DrawGarbageBinPreview(cfg.depot.unload, 0, false, true)
+            viz.DrawGarbageBinPreview(cfg.depot.unload, 0, false, true)
         end
 
         for i, b in ipairs(bins) do
             local isCurrent = (i == selIndex)
-            SunsetJobVisuals.DrawGarbageBinPreview(b, i, isCurrent, false)
+            viz.DrawGarbageBinPreview(b, i, isCurrent, false)
 
             -- Draw line to next bin
             if i < #bins then

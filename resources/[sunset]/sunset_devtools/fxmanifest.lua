@@ -24,6 +24,7 @@ shared_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_jobs/client/visual_shared.lua',
     'client/visualizers.lua',
     'client/validators.lua',
     'client/gizmo.lua',
