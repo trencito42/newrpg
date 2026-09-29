@@ -86,8 +86,8 @@ const SkinShopUI = (() => {
             row.innerHTML = `
                 <img class="sk-skin-thumb"
                      src="${PED_BASE}${skin.model}.webp"
-                     alt="${skin.label}"
-                     onerror="this.style.opacity='0.08'"/>
+                     alt=""
+                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'%2300ffcc\\' stroke-width=\\'1.5\\' opacity=\\'0.35\\'><path d=\\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\\'/><circle cx=\\'12\\' cy=\\'7\\' r=\\'4\\'/></svg>';"/>
                 <div class="sk-skin-row-info">
                     <div class="sk-skin-row-name">${skin.label}</div>
                     <div class="sk-skin-row-price">${priceText}</div>
