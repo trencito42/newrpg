@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunset Route Creator</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="route-creator-app" class="rc-app hidden">
+        <!-- Main Panel -->
+        <div class="rc-container">
+            <!-- Left Column: Adapters -->
+            <div class="rc-col rc-col--sidebar">
+                <div class="rc-header">
+                    <div class="rc-brand">
+                        <span class="rc-brand__icon">⚡</span>
+                        <div>
+                            <h1 class="rc-brand__title">ROUTE CREATOR</h1>
+                            <span class="rc-brand__subtitle">SUNSET DEVTOOLS v2.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rc-section-title">JOB ADAPTERS</div>
+                <div class="rc-adapter-list" id="rc-adapter-list">
+                    <button type="button" class="rc-adapter-item active" data-adapter="trucker">
+                        <span class="rc-adapter-icon">🚚</span>
+                        <div class="rc-adapter-info">
+                            <span class="rc-adapter-name">Trucker</span>
+                            <span class="rc-adapter-sub">Pickup, delivery &amp; parking bay</span>
+                        </div>
+                    </button>
+                    <button type="button" class="rc-adapter-item" data-adapter="garbage">
+                        <span class="rc-adapter-icon">🗑️</span>
+                        <div class="rc-adapter-info">
+                            <span class="rc-adapter-name">Garbage</span>
+                            <span class="rc-adapter-sub">Ordered bin collection stops</span>
+                        </div>
+                    </button>
+                    <div class="rc-adapter-item disabled" title="Architecture ready — not yet active">
+                        <span class="rc-adapter-icon">🚌</span>
+                        <div class="rc-adapter-info">
+                            <span class="rc-adapter-name">Bus Routes</span>
+                            <span class="rc-adapter-sub">Extensible adapter</span>
+                        </div>
+                    </div>
+                    <div class="rc-adapter-item disabled" title="Architecture ready — not yet active">
+                        <span class="rc-adapter-icon">📦</span>
+                        <div class="rc-adapter-info">
+                            <span class="rc-adapter-name">Courier</span>
+                            <span class="rc-adapter-sub">Extensible adapter</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rc-sidebar-footer">
+                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-reload">
+                        <span>🔄</span> Reload From Disk
+                    </button>
+                    <button type="button" class="rc-btn rc-btn--danger" id="rc-btn-close">
+                        <span>✕</span> Close [ESC]
+                    </button>
+                </div>
+            </div>
+
+            <!-- Middle Column: Route List -->
+            <div class="rc-col rc-col--list">
+                <div class="rc-list-header">
+                    <div class="rc-search-wrap">
+                        <input type="text" id="rc-search-input" placeholder="Search routes..." autocomplete="off">
+                    </div>
+                    <button type="button" class="rc-btn rc-btn--primary" id="rc-btn-new-route">
+                        <span>+</span> New Route
+                    </button>
+                </div>
+
+                <div class="rc-route-count">
+                    <span id="rc-route-count-text">0 Routes Configured</span>
+                    <span class="rc-save-badge saved" id="rc-global-save-status">SAVED</span>
+                </div>
+
+                <div class="rc-route-list" id="rc-route-list">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+
+            <!-- Right Column: Route Inspector -->
+            <div class="rc-col rc-col--inspector" id="rc-inspector-pane">
+                <div class="rc-empty-state" id="rc-empty-inspector">
+                    <div class="rc-empty-icon">📍</div>
+                    <h3>Select or Create a Route</h3>
+                    <p>Select a route from the middle list or create a new route to inspect and visually position gameplay elements.</p>
+                </div>
+
+                <div class="rc-inspector-content hidden" id="rc-inspector-content">
+                    <!-- Inspector Header -->
+                    <div class="rc-insp-header">
+                        <div class="rc-insp-title-row">
+                            <input type="text" id="rc-insp-label" class="rc-input-hero" placeholder="Route Name">
+                            <span class="rc-save-badge saved" id="rc-route-dirty-badge">SAVED</span>
+                        </div>
+                        <div class="rc-insp-id-row">
+                            <label>ID:</label>
+                            <input type="text" id="rc-insp-id" class="rc-input-inline" placeholder="unique_route_id">
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Fields / Stages Container -->
+                    <div class="rc-insp-body" id="rc-insp-body">
+                        <!-- Populated by Adapter (Trucker or Garbage) -->
+                    </div>
+
+                    <!-- Live Validation Section -->
+                    <div class="rc-validation-section">
+                        <div class="rc-section-title">ROUTE VALIDATION</div>
+                        <div class="rc-validation-list" id="rc-validation-list">
+                            <!-- Injected by adapter.validate() -->
+                        </div>
+                    </div>
+
+                    <!-- Inspector Action Bar -->
+                    <div class="rc-insp-footer">
+                        <div class="rc-footer-actions">
+                            <button type="button" class="rc-btn rc-btn--accent" id="rc-btn-preview-world">
+                                <span>👁️</span> Preview in World
+                            </button>
+                            <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-test-route">
+                                <span>🎮</span> Test Mode
+                            </button>
+                            <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-duplicate-route">
+                                <span>📋</span> Duplicate
+                            </button>
+                            <button type="button" class="rc-btn rc-btn--danger-soft" id="rc-btn-delete-route">
+                                <span>🗑️</span> Delete
+                            </button>
+                        </div>
+                        <button type="button" class="rc-btn rc-btn--success rc-btn--save" id="rc-btn-save-routes">
+                            <span>💾</span> Save All Routes to Disk
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div class="rc-modal-overlay hidden" id="rc-modal">
+            <div class="rc-modal-card">
+                <h3 class="rc-modal-title" id="rc-modal-title">Confirm Action</h3>
+                <p class="rc-modal-msg" id="rc-modal-msg">Are you sure?</p>
+                <div class="rc-modal-actions">
+                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-modal-cancel">Cancel</button>
+                    <button type="button" class="rc-btn rc-btn--danger" id="rc-modal-confirm">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Route Modal -->
+        <div class="rc-modal-overlay hidden" id="rc-test-modal">
+            <div class="rc-modal-card rc-modal-card--test">
+                <h3 class="rc-modal-title">🎮 Route Test Mode (Dev Only)</h3>
+                <p class="rc-modal-msg">Teleport your ped or work vehicle to any route checkpoint for collision &amp; layout validation. No economy rewards.</p>
+                <div class="rc-test-actions" id="rc-test-actions-list">
+                    <!-- Dynamic per adapter -->
+                </div>
+                <div class="rc-modal-actions">
+                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-test-modal-close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating HUD while in Gizmo or World Preview mode -->
+    <div id="rc-world-hud" class="rc-world-hud hidden">
+        <div class="rc-world-hud__glass">
+            <div class="rc-world-hud__header">
+                <span class="rc-world-hud__tag" id="rc-wh-tag">WORLD PREVIEW</span>
+                <span class="rc-world-hud__title" id="rc-wh-title">Route Name</span>
+            </div>
+            <div class="rc-world-hud__coords" id="rc-wh-coords">X: 0.00 | Y: 0.00 | Z: 0.00</div>
+            <div class="rc-world-hud__controls" id="rc-wh-controls">
+                <span>[ESC / M] Return to Editor Menu</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

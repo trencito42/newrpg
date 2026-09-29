@@ -4,12 +4,16 @@ lua54 'yes'
 
 name 'sunset_devtools'
 author 'SunsetMP'
-description 'DEV-ONLY: in-game placement studio and route editor. Disabled by default.'
-version '1.0.0'
+description 'DEV-ONLY: in-game placement studio and visual route creator. Disabled by default.'
+version '2.0.0'
 
--- NOT ensured in production server.cfg. Enabled explicitly by devs:
---   ensure sunset_devtools
---   setr sunset_devtools_enabled true
+ui_page 'web/index.html'
+
+files {
+    'web/index.html',
+    'web/css/style.css',
+    'web/js/app.js',
+}
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
@@ -24,6 +28,7 @@ client_scripts {
     'client/gizmo.lua',
     'client/world_probe.lua',
     'client/placement.lua',
+    'client/route_creator.lua',
     'client/route_editor.lua',
     'client/main.lua',
 }
@@ -31,7 +36,8 @@ client_scripts {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/drafts.lua',
+    'server/routes.lua',
     'server/main.lua',
 }
 
-dependencies { 'sunset_core', 'sunset_admin' }
+dependencies { 'sunset_core', 'sunset_admin', 'sunset_jobs' }
