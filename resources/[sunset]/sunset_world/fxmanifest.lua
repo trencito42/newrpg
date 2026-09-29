@@ -26,6 +26,7 @@ client_scripts {
     'client/elevators.lua',
     'client/fib_interior.lua',
     'client/glue.lua',
+    'client/zonemarker.lua',
 }
 
 server_scripts {

@@ -78,24 +78,43 @@ RegisterCommand('glue', function()
     -- Offset above the roof so the ped stands on top
     local offZ = 1.1
 
-    -- Force player out of any vehicle first
+    -- Bail out of vehicle without triggering "enter" animation on re-attach
     if IsPedInAnyVehicle(ped, false) then
-        TaskLeaveVehicle(ped, GetVehiclePedIsIn(ped, false), 4160)
-        Wait(400)
+        SetPedIntoVehicle(ped, 0, -1)  -- force-eject via null vehicle
+        ClearPedTasksImmediately(ped)
+        Wait(100)
     end
+
+    -- Calculate offset from vehicle bone to current ped position so they
+    -- stay exactly where they are standing — no snap to roof centre.
+    local pedPos  = GetEntityCoords(ped)
+    local bonePos = GetWorldPositionOfEntityBone(closest, boneToUse >= 0 and boneToUse or 0)
+    local relX    = pedPos.x - bonePos.x
+    local relY    = pedPos.y - bonePos.y
+    local relZ    = pedPos.z - bonePos.z + 0.05  -- tiny lift so feet don't clip
 
     SetEntityCollision(ped, false, false)
     SetPedCanRagdoll(ped, false)
+    ClearPedTasksImmediately(ped)
 
     AttachEntityToEntity(
         ped, closest,
         boneToUse,
-        0.0, 0.0, offZ,   -- forward, right, up offset
-        0.0, 0.0, 0.0,    -- rotation
+        relX, relY, relZ,  -- exact offset from current ped position
+        0.0, 0.0, 0.0,
         false, false,
-        false, false,
+        false, false,      -- isPed=false prevents "enter vehicle" behaviour
         2, true
     )
+
+    -- Force idle stand anim so the ped doesn't do enter/exit animations
+    local dict = 'anim@move_m@generic'
+    RequestAnimDict(dict)
+    local deadline = GetGameTimer() + 1000
+    while not HasAnimDictLoaded(dict) and GetGameTimer() < deadline do Wait(10) end
+    if HasAnimDictLoaded(dict) then
+        TaskPlayAnim(ped, dict, 'idle', 2.0, 2.0, -1, 1, 0, false, false, false)
+    end
 
     glued       = true
     glueVehicle = closest
