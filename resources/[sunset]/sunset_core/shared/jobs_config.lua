@@ -7,8 +7,9 @@ Sunset.JobsConfig = {
         help = 'Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.',
         depot = {
             coords = vector3(1208.77, -3114.84, 5.54),
-            -- Spawn camion Phantom la depou (h=270.4).
-            spawn        = vector4(1195.3, -3099.1, 5.9, 270.4),
+            -- Spawn & Return camion Phantom la depou (h=266.29).
+            spawn        = vector4(1195.16, -3099.54, 5.93, 266.29),
+            returnCoords = vector4(1195.16, -3099.54, 5.93, 266.29),
             -- Locatii de spawn pentru remorci (bays)
             trailerBays  = {
                 vector4(1234.3, -3104.2, 4.8, 3.5),

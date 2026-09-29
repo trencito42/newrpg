@@ -301,7 +301,8 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function
         return nil, 'Return your assigned work truck'
     end
     -- Trailer was already left at the delivery point; no trailer check needed here.
-    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, cfg.returnRadius or 25.0) then
+    local retPoint = (cfg.depot.returnCoords and vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)) or (cfg.depot.spawn and vector3(cfg.depot.spawn.x, cfg.depot.spawn.y, cfg.depot.spawn.z)) or cfg.depot.coords
+    if not (SunsetJobs_ValidateCoords(source, retPoint, cfg.returnRadius or 30.0) or SunsetJobs_ValidateCoords(source, cfg.depot.coords, cfg.returnRadius or 30.0)) then
         return nil, 'Return the truck to the depot'
     end
 
