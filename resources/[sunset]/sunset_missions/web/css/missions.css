@@ -51,6 +51,16 @@ body {
     to   { opacity:1; transform: translateY(-50%) translateX(0); }
 }
 
+/* Logo */
+.ms-offer-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 4px;
+    align-self: flex-end;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+}
+
 /* Title row — "MISSION OFFER ——" */
 .ms-panel-title {
     font-size: 11px;

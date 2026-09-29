@@ -27,6 +27,17 @@ const Missions = (() => {
         const hdr = $('#offer-contact-label');
         if (hdr) hdr.textContent = (data.contact ? data.contact + ' — ' : '') + 'MISSION OFFER';
 
+        // Logo
+        const logo = $('#offer-logo');
+        if (logo) {
+            if (data.logo) {
+                logo.src = `web/assets/${data.logo}`;
+                logo.classList.remove('hidden');
+            } else {
+                logo.classList.add('hidden');
+            }
+        }
+
         // Large mission name
         const mn = $('#offer-mission-name');
         if (mn) mn.textContent = data.label || '';
