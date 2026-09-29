@@ -29,7 +29,13 @@ local function refreshSoon()
     end)
 end
 
-AddEventHandler('sunset:client:playerSpawned', function() Wait(1500); refreshProperties() end)
+AddEventHandler('sunset:client:playerSpawned', function()
+    insideProperty = nil
+    Wait(1500)
+    refreshProperties()
+end)
+RegisterNetEvent('sunset:client:respawn', function() insideProperty = nil end)
+RegisterNetEvent('sunset:death:forceHospital', function() insideProperty = nil end)
 RegisterNetEvent('sunset:client:propertiesChanged', refreshSoon)
 RegisterNetEvent('sunset:client:propertyMessage', function(text, kind) exports.sunset_ui:Notify(text or 'House update', kind or 'info', 6500) end)
 
@@ -164,12 +170,41 @@ RegisterNetEvent('sunset:client:propertyInterior', function(data)
     if not data or not data.interior then return end
     insideProperty = data
     local ped = PlayerPedId()
-    DoScreenFadeOut(400); Wait(500)
-    SetEntityCoordsNoOffset(ped, data.interior.x, data.interior.y, data.interior.z, false, false, false)
-    SetEntityHeading(ped, data.interior.w or 0.0)
+    DoScreenFadeOut(400)
+    Wait(500)
+
+    local targetX = data.interior.x
+    local targetY = data.interior.y
+    local targetZ = data.interior.z
+    local heading = data.interior.w or 0.0
+
+    RequestCollisionAtCoord(targetX, targetY, targetZ)
+    local intId = GetInteriorAtCoords(targetX, targetY, targetZ)
+    if intId ~= 0 then
+        LoadInterior(intId)
+        PinInteriorInMemory(intId)
+        local tWait = GetGameTimer() + 2000
+        while not IsInteriorReady(intId) and GetGameTimer() < tWait do
+            Wait(50)
+        end
+    end
+
+    SetEntityCoordsNoOffset(ped, targetX, targetY, targetZ, false, false, false)
+    SetEntityHeading(ped, heading)
+    FreezeEntityPosition(ped, true)
+
+    local timeout = GetGameTimer() + 3000
+    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
+        RequestCollisionAtCoord(targetX, targetY, targetZ)
+        Wait(50)
+    end
+
+    Wait(250)
+    FreezeEntityPosition(ped, false)
     DisplayRadar(false)
     DoScreenFadeIn(500)
-    local helpText = ('Inside %s — press E to exit.'):format(data.label or 'house')
+
+    local helpText = ('Inside %s — press E near the door to exit.'):format(data.label or 'house')
     if data.isOwnerOrRenter then
         helpText = helpText .. ' Use /wardrobe to change clothes.'
     end
@@ -177,23 +212,53 @@ RegisterNetEvent('sunset:client:propertyInterior', function(data)
 end)
 
 RegisterNetEvent('sunset:client:propertyExited', function(data)
-    if not data or not data.entry then return end
     insideProperty = nil
+    if not data or not data.entry then return end
     local ped = PlayerPedId()
-    DoScreenFadeOut(400); Wait(500)
-    SetEntityCoordsNoOffset(ped, data.entry.x, data.entry.y, data.entry.z, false, false, false)
-    SetEntityHeading(ped, data.entry.w or 0.0)
+    DoScreenFadeOut(400)
+    Wait(500)
+
+    local targetX = data.entry.x
+    local targetY = data.entry.y
+    local targetZ = data.entry.z
+    local heading = data.entry.w or 0.0
+
+    RequestCollisionAtCoord(targetX, targetY, targetZ)
+    SetEntityCoordsNoOffset(ped, targetX, targetY, targetZ, false, false, false)
+    SetEntityHeading(ped, heading)
+    FreezeEntityPosition(ped, true)
+
+    local timeout = GetGameTimer() + 2500
+    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
+        RequestCollisionAtCoord(targetX, targetY, targetZ)
+        Wait(50)
+    end
+
+    Wait(200)
+    FreezeEntityPosition(ped, false)
     DisplayRadar(true)
     DoScreenFadeIn(500)
 end)
 
 CreateThread(function()
     while true do
-        if insideProperty then
-            DisplayRadar(false)
-            if IsControlJustReleased(0, 38) and not IsNuiFocused() then TriggerServerEvent('sunset:server:exitProperty') end
-            Wait(0)
-        else Wait(500) end
+        if insideProperty and insideProperty.interior then
+            local ped = PlayerPedId()
+            local pPos = GetEntityCoords(ped)
+            local iPos = vector3(insideProperty.interior.x, insideProperty.interior.y, insideProperty.interior.z)
+            local dist = #(pPos - iPos)
+            if dist <= 3.5 then
+                DisplayRadar(false)
+                if IsControlJustReleased(0, 38) and not IsNuiFocused() then
+                    TriggerServerEvent('sunset:server:exitProperty')
+                end
+                Wait(0)
+            else
+                Wait(300)
+            end
+        else
+            Wait(500)
+        end
     end
 end)
 

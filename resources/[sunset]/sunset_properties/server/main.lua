@@ -642,10 +642,13 @@ end)
 exports('LeaveProperty', function(src)
     src = tonumber(src)
     if not src or not Inside[src] then return false end
+    local id = Inside[src]
+    local prop = property(id)
     Inside[src] = nil
     SetPlayerRoutingBucket(src, 0)
     if GetPlayerName(src) then
         Player(src).state:set('sunsetPropertyExit', nil, false)
+        TriggerClientEvent('sunset:client:propertyExited', src, prop and {id=prop.id, entry=decodePos(prop.exit_pos) or decodePos(prop.entry)} or {})
     end
     return true
 end)
