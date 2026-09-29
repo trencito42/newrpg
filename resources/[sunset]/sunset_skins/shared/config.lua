@@ -25,15 +25,21 @@ SunsetSkins.Skins = {
     { model = 'a_f_y_skater_01',   label = 'Skater Girl',     category = 'civilian', priceCash = 5000,  pricePP = 50  },
     { model = 'a_f_y_hipster_01',  label = 'Hipster Girl',    category = 'civilian', priceCash = 5000,  pricePP = 50  },
     { model = 'a_f_m_business_02', label = 'Business Woman',  category = 'civilian', priceCash = 8000,  pricePP = 80  },
-    -- ── Special ──────────────────────────────────────────────────────────────
-    { model = 's_m_m_doctor_01',   label = 'Doctor',          category = 'special',  priceCash = 15000, pricePP = 150 },
-    { model = 's_m_m_chef_01',     label = 'Chef',            category = 'special',  priceCash = 12000, pricePP = 120 },
-    { model = 's_m_m_security_01', label = 'Security Guard',  category = 'special',  priceCash = 12000, pricePP = 120 },
-    { model = 's_f_y_nurse_01',    label = 'Nurse',           category = 'special',  priceCash = 15000, pricePP = 150 },
+    -- ── Special & Story Characters ───────────────────────────────────────────
+    { model = 'player_zero',       label = 'Michael De Santa', category = 'special',  priceCash = 50000, pricePP = 500 },
+    { model = 'player_one',        label = 'Franklin Clinton', category = 'special',  priceCash = 50000, pricePP = 500 },
+    { model = 'player_two',        label = 'Trevor Philips',   category = 'special',  priceCash = 50000, pricePP = 500 },
+    { model = 'ig_lamardavis',     label = 'Lamar Davis',      category = 'special',  priceCash = 35000, pricePP = 350 },
+    { model = 'ig_lestercrest',    label = 'Lester Crest',     category = 'special',  priceCash = 35000, pricePP = 350 },
+    { model = 'ig_davenorton',     label = 'Dave Norton',      category = 'special',  priceCash = 30000, pricePP = 300 },
+    { model = 's_m_m_doctor_01',   label = 'Doctor',           category = 'special',  priceCash = 15000, pricePP = 150 },
+    { model = 's_m_m_chef_01',     label = 'Chef',             category = 'special',  priceCash = 12000, pricePP = 120 },
+    { model = 's_m_m_security_01', label = 'Security Guard',   category = 'special',  priceCash = 12000, pricePP = 120 },
+    { model = 's_f_y_nurse_01',    label = 'Nurse',            category = 'special',  priceCash = 15000, pricePP = 150 },
     -- ── Premium ──────────────────────────────────────────────────────────────
-    { model = 'ig_bankman',        label = 'Bank Manager',    category = 'premium',  priceCash = 25000, pricePP = 250 },
-    { model = 'csb_burgerdrug',    label = 'Cook',            category = 'premium',  priceCash = 20000, pricePP = 200 },
+    { model = 'ig_bankman',        label = 'Bank Manager',     category = 'premium',  priceCash = 25000, pricePP = 250 },
+    { model = 'csb_burgerdrug',    label = 'Cook',             category = 'premium',  priceCash = 20000, pricePP = 200 },
     -- ── Battlepass exclusive ─────────────────────────────────────────────────
-    { model = 's_m_y_swat_01',      label = 'SWAT',           category = 'exclusive', battlepass = true },
-    { model = 'u_m_m_streetart_01', label = 'Street Artist',  category = 'exclusive', battlepass = true },
+    { model = 's_m_y_swat_01',      label = 'SWAT',            category = 'exclusive', battlepass = true },
+    { model = 'u_m_m_streetart_01', label = 'Street Artist',   category = 'exclusive', battlepass = true },
 }

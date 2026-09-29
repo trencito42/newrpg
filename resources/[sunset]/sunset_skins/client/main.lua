@@ -32,7 +32,7 @@ local function applyModel(model)
 end
 
 -- Open the skin shop via sunset_ui
-local function openShop()
+local function openShop(defaultCat)
     if shopOpen then return end
     local skins, err = Sunset.AwaitCallback('skins:getAll')
     if not skins then
@@ -40,7 +40,7 @@ local function openShop()
         return
     end
     shopOpen = true
-    exports.sunset_ui:Send('skinShopShow', { skins = skins })
+    exports.sunset_ui:Send('skinShopShow', { skins = skins, defaultCat = defaultCat or 'owned' })
     exports.sunset_ui:SetFocus(true, true, false, 'skinshop')
 end
 
@@ -69,7 +69,11 @@ AddEventHandler('sunset:nui:skinShopEquip', function(data)
     data = type(data) == 'table' and data or {}
     local result, err = Sunset.AwaitCallback('skins:equip', data.model)
     if result then
-        exports.sunset_ui:Notify('Skin equipped!', 'success', 3000)
+        if data.model == 'default' or data.model == '' then
+            exports.sunset_ui:Notify('Restored original character appearance!', 'success', 3000)
+        else
+            exports.sunset_ui:Notify('Skin equipped!', 'success', 3000)
+        end
     else
         exports.sunset_ui:Notify(err or 'Equip failed', 'error', 5000)
     end
@@ -98,15 +102,17 @@ AddEventHandler('sunset:skins:notify', function(msg)
     exports.sunset_ui:Notify(msg or '', 'success', 5500)
 end)
 
--- /skins — opens skin shop from an owned/rented property (wardrobe access)
+-- /skins & /myskins — opens wardrobe showing owned skins
 RegisterCommand('skins', function()
-    local inHouse = exports.sunset_properties:CanAccessWardrobe()
-    if not inHouse then
-        exports.sunset_ui:Notify('You can only change your skin from your home.', 'error', 4000)
-        return
-    end
-    openShop()
+    openShop('owned')
 end, false)
+
+RegisterCommand('myskins', function()
+    openShop('owned')
+end, false)
+
+TriggerEvent('chat:addSuggestion', '/skins', 'Open wardrobe to view and equip your owned skins')
+TriggerEvent('chat:addSuggestion', '/myskins', 'Open wardrobe to view and equip your owned skins')
 
 -- Spawn NPC at the configured location
 CreateThread(function()

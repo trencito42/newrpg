@@ -222,6 +222,8 @@ Sunset.CommandUsage = {
     declineclan = { usage = '/declineclan', minArgs = 0 },
     dealership = { usage = '/dealership', minArgs = 0 },
     relook = { usage = '/relook', minArgs = 0 },
+    skins = { usage = '/skins — open wardrobe to equip owned skins', minArgs = 0 },
+    myskins = { usage = '/myskins — open wardrobe to equip owned skins', minArgs = 0 },
     hudedit = { usage = '/hudedit', minArgs = 0 },
     hudreset = { usage = '/hudreset', minArgs = 0 },
     rob = { usage = '/rob', minArgs = 0 },

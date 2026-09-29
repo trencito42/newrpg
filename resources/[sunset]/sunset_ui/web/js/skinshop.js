@@ -5,6 +5,7 @@ const SkinShopUI = (() => {
     const PED_BASE = 'https://docs-backend.fivem.net/peds/';
 
     const CATEGORIES = [
+        { id: 'owned',     label: 'My Skins'   },
         { id: 'all',       label: 'All Skins'  },
         { id: 'civilian',  label: 'Civilian'   },
         { id: 'special',   label: 'Special'    },
@@ -13,7 +14,7 @@ const SkinShopUI = (() => {
     ];
 
     let allSkins      = [];
-    let activeCat     = 'all';
+    let activeCat     = 'owned';
     let selectedSkin  = null;
     let ready         = false;
 
@@ -22,10 +23,11 @@ const SkinShopUI = (() => {
     function show(data) {
         init();
         allSkins     = (data && data.skins) || [];
-        activeCat    = 'all';
+        const startCat = (data && data.defaultCat) || 'owned';
+        activeCat    = startCat;
         selectedSkin = null;
 
-        selectCategory('all');
+        selectCategory(startCat);
         clearDetail();
 
         const el = $('#skinshop');
@@ -61,14 +63,24 @@ const SkinShopUI = (() => {
         if (!list) return;
         list.innerHTML = '';
 
-        const filtered = activeCat === 'all'
-            ? allSkins
-            : allSkins.filter(s => s.category === activeCat);
+        let filtered = [];
+        if (activeCat === 'owned') {
+            filtered = allSkins.filter(s => s.owned);
+            // Include default character reset option
+            filtered = [
+                { model: 'default', label: 'Default Character (Reset)', category: 'owned', owned: true, isDefault: true },
+                ...filtered
+            ];
+        } else if (activeCat === 'all') {
+            filtered = allSkins;
+        } else {
+            filtered = allSkins.filter(s => s.category === activeCat);
+        }
 
         if (!filtered.length) {
             const empty = document.createElement('div');
             empty.className = 'sk-empty';
-            empty.textContent = 'No skins in this category';
+            empty.textContent = activeCat === 'owned' ? 'You do not own any skins yet' : 'No skins in this category';
             list.appendChild(empty);
             return;
         }
@@ -78,14 +90,16 @@ const SkinShopUI = (() => {
             row.className = 'sk-skin-row' + (selectedSkin?.model === skin.model ? ' is-active' : '');
             row.dataset.model = skin.model;
 
-            const priceText = skin.battlepass ? 'Battlepass' : `$${(skin.priceCash || 0).toLocaleString()}`;
+            const priceText = skin.isDefault ? 'Original Outfit' : (skin.battlepass ? 'Battlepass' : (skin.owned ? 'Owned' : `$${(skin.priceCash || 0).toLocaleString()}`));
             let badge = '';
-            if (skin.owned)           badge = '<span class="sk-skin-row-badge badge-owned">✓</span>';
+            if (skin.isDefault)       badge = '<span class="sk-skin-row-badge badge-owned">★</span>';
+            else if (skin.owned)      badge = '<span class="sk-skin-row-badge badge-owned">✓</span>';
             else if (skin.battlepass) badge = '<span class="sk-skin-row-badge badge-bp">BP</span>';
 
+            const thumbSrc = skin.isDefault ? '' : `${PED_BASE}${skin.model}.webp`;
             row.innerHTML = `
                 <img class="sk-skin-thumb"
-                     src="${PED_BASE}${skin.model}.webp"
+                     src="${thumbSrc}"
                      alt=""
                      onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'%2300ffcc\\' stroke-width=\\'1.5\\' opacity=\\'0.35\\'><path d=\\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\\'/><circle cx=\\'12\\' cy=\\'7\\' r=\\'4\\'/></svg>';"/>
                 <div class="sk-skin-row-info">
@@ -134,10 +148,24 @@ const SkinShopUI = (() => {
         const btnPP    = $('#sk-detail-btn-pp');
         const btnEquip = $('#sk-detail-btn-equip');
 
-        if (skin.owned) {
+        if (skin.isDefault) {
             btnCash?.classList.add('hidden');
             btnPP?.classList.add('hidden');
-            if (btnEquip) { btnEquip.classList.remove('hidden'); btnEquip.disabled = false; }
+            if (priceBlock) priceBlock.classList.add('hidden');
+            if (btnEquip) {
+                btnEquip.classList.remove('hidden');
+                btnEquip.disabled = false;
+                btnEquip.textContent = 'Reset to Original Outfit';
+            }
+        } else if (skin.owned) {
+            btnCash?.classList.add('hidden');
+            btnPP?.classList.add('hidden');
+            if (priceBlock) priceBlock.classList.add('hidden');
+            if (btnEquip) {
+                btnEquip.classList.remove('hidden');
+                btnEquip.disabled = false;
+                btnEquip.textContent = 'Equip Skin';
+            }
         } else if (skin.battlepass) {
             btnCash?.classList.add('hidden');
             btnPP?.classList.add('hidden');

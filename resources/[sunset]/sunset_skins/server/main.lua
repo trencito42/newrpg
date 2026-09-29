@@ -19,10 +19,12 @@ exports.sunset_core:RegisterCallback('skins:getAll', function(source)
 
     local rows = MySQL.query.await('SELECT model FROM player_skins WHERE player_id = ?', { player.id })
     local owned = {}
+    local knownModels = {}
     for _, r in ipairs(rows or {}) do owned[r.model] = true end
 
     local result = {}
     for _, s in ipairs(SunsetSkins.Skins) do
+        knownModels[s.model] = true
         result[#result + 1] = {
             model      = s.model,
             label      = s.label,
@@ -33,6 +35,23 @@ exports.sunset_core:RegisterCallback('skins:getAll', function(source)
             owned      = owned[s.model] or false,
         }
     end
+
+    -- Dynamically append any custom/admin skins owned by the player that aren't in config
+    for model, _ in pairs(owned) do
+        if not knownModels[model] then
+            local formattedLabel = model:gsub('^%l', string.upper):gsub('_', ' ')
+            result[#result + 1] = {
+                model      = model,
+                label      = formattedLabel,
+                category   = 'special',
+                priceCash  = 0,
+                pricePP    = 0,
+                battlepass = false,
+                owned      = true,
+            }
+        end
+    end
+
     return result
 end)
 
