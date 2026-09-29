@@ -48,7 +48,7 @@ local function closeShop()
     if not shopOpen then return end
     shopOpen = false
     exports.sunset_ui:Send('skinShopHide', {})
-    exports.sunset_ui:SetFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'skinshop')
 end
 
 -- sunset_ui NUI bridge: buy

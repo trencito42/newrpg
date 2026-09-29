@@ -263,7 +263,7 @@ forward('skinShopBuy')
 forward('skinShopEquip')
 forward('skinShopClose')
 AddEventHandler('sunset:nui:skinShopClose', function()
-    SetFocus(false, false)
+    SetFocus(false, false, false, 'skinshop')
 end)
 
 RegisterNUICallback('licenseQuizAnswer', function(data, cb)
