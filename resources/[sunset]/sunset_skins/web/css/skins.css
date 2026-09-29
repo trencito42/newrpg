@@ -1,0 +1,185 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: transparent;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+}
+#overlay.hidden { display: none; }
+
+#panel {
+    background: #13131f;
+    border: 1px solid #2a2a45;
+    border-radius: 14px;
+    width: 860px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+}
+
+/* ── Header ── */
+#header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid #2a2a45;
+    flex-shrink: 0;
+}
+#title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #d8d8ff;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+#closeBtn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+#closeBtn:hover { background: #c0392b; color: #fff; }
+
+/* ── Filters ── */
+#filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #1e1e35;
+    background: #0f0f1c;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.filter-btn {
+    background: #1e1e35;
+    border: 1px solid #35355a;
+    color: #999;
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.filter-btn.active,
+.filter-btn:hover {
+    background: #4242a0;
+    border-color: #6060c0;
+    color: #fff;
+}
+
+/* ── Grid ── */
+#grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 18px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+#grid::-webkit-scrollbar { width: 5px; }
+#grid::-webkit-scrollbar-track { background: transparent; }
+#grid::-webkit-scrollbar-thumb { background: #2a2a45; border-radius: 4px; }
+
+/* ── Cards ── */
+.skin-card {
+    background: #1a1a30;
+    border: 1px solid #282848;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    transition: border-color 0.15s, transform 0.1s;
+}
+.skin-card:hover {
+    border-color: #5050a0;
+    transform: translateY(-2px);
+}
+.skin-card.owned { border-color: #27ae60; }
+.skin-card.bp    { border-color: #e67e22; }
+
+.skin-label {
+    font-size: 0.97rem;
+    font-weight: 600;
+    color: #e0e0ff;
+}
+.skin-model {
+    font-size: 0.68rem;
+    color: #555;
+    font-family: monospace;
+    word-break: break-all;
+}
+.skin-cat {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #666;
+}
+
+.skin-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 10px;
+    width: fit-content;
+}
+.badge-owned { background: #1a4d2e; color: #2ecc71; }
+.badge-bp    { background: #4d2d00; color: #e67e22; }
+
+.skin-prices {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+}
+.price-cash { color: #27ae60; font-weight: 600; }
+.price-pp   { color: #9b59b6; font-weight: 600; }
+.price-sep  { color: #333; }
+
+.skin-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+}
+.btn {
+    flex: 1;
+    padding: 7px 8px;
+    border-radius: 7px;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s, transform 0.1s;
+}
+.btn:hover  { opacity: 0.82; transform: scale(0.97); }
+.btn:active { transform: scale(0.94); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-cash  { background: #27ae60; color: #fff; }
+.btn-pp    { background: #8e44ad; color: #fff; }
+.btn-equip { background: #2980b9; color: #fff; }
+
+.no-skins {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #555;
+    padding: 40px;
+    font-size: 0.9rem;
+}

@@ -120,6 +120,8 @@ SunsetAdmin.Commands = {
     givelicense = 1,
     agivelicense = 1,
     revokelicense = 1,
+    giveskin = 3,
+    setskin = 1,
 }
 
 -- Commands accessible to helpers (level 1-3). Admins automatically pass.
