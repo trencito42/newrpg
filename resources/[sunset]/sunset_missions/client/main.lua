@@ -1,6 +1,5 @@
 local contactPeds   = {}
 local contactBlips  = {}
-local groundedPeds  = {}
 local tooltipShown  = {}
 local nearContact   = nil
 
@@ -45,22 +44,9 @@ local function spawnContact(id, data)
         return
     end
 
-    -- Pump collision streaming at the contact position before spawning.
-    for _ = 1, 5 do
-        RequestCollisionAtCoord(data.coords.x, data.coords.y, data.coords.z)
-        Wait(50)
-    end
-
-    -- Find the actual ground Z so ped is placed on the floor.
-    local groundZ = data.coords.z
-    local ok, gz = GetGroundZFor_3dCoord(data.coords.x, data.coords.y, data.coords.z + 5.0, false)
-    if ok and gz > 0 then
-        groundZ = gz
-    end
-
     local ped = 0
     for attempt = 1, 3 do
-        ped = CreatePed(4, hash, data.coords.x, data.coords.y, groundZ, data.coords.w, false, false)
+        ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.coords.w, false, false)
         if ped ~= 0 then break end
         print(('[missions] CreatePed attempt %d failed for %s — retrying in 2s'):format(attempt, id))
         Wait(2000)
@@ -71,9 +57,7 @@ local function spawnContact(id, data)
         return
     end
 
-    PlaceObjectOnGroundProperly(ped)
-    Wait(50)
-
+    Wait(100)
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)
     SetEntityInvincible(ped, true)
@@ -116,12 +100,11 @@ AddEventHandler('onClientResourceStop', function(res)
     end
     contactPeds  = {}
     contactBlips = {}
-    groundedPeds = {}
     tooltipShown = {}
     MSN_NUI_HideAll()
 end)
 
--- Proximity loop — updates ground snapping when player approaches and renders overhead 3D tooltips
+-- Proximity loop — renders overhead 3D tooltips and interaction hint
 CreateThread(function()
     while true do
         local ped = PlayerPedId()
@@ -135,20 +118,6 @@ CreateThread(function()
                 local cpos = GetEntityCoords(cped)
                 local dist = #(pos - cpos)
                 if dist < nearestDist then nearestDist = dist end
-
-                -- Ground adjustment once player is close and map collision is loaded
-                if not groundedPeds[id] and dist < 45.0 and data then
-                    RequestCollisionAtCoord(data.coords.x, data.coords.y, data.coords.z)
-                    local ok, gz = GetGroundZFor_3dCoord(data.coords.x, data.coords.y, data.coords.z + 5.0, false)
-                    if ok and gz > 0 then
-                        FreezeEntityPosition(cped, false)
-                        SetEntityCoordsNoOffset(cped, data.coords.x, data.coords.y, gz, false, false, false)
-                        SetEntityHeading(cped, data.coords.w)
-                        PlaceObjectOnGroundProperly(cped)
-                        FreezeEntityPosition(cped, true)
-                        groundedPeds[id] = true
-                    end
-                end
 
                 -- World tooltip above head while within PROMPT_DIST
                 if data then
