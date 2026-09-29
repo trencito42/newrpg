@@ -1,0 +1,638 @@
+/* ═══════════════════════════════════════════════════════════════
+   Sunset Missions — design system matching server UI
+════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --ms-accent:     #00ffcc;
+    --ms-accent-dim: rgba(0, 255, 204, 0.15);
+    --ms-accent-glow:rgba(0, 255, 204, 0.35);
+    --ms-bg:         rgba(8, 8, 10, 0.0);
+    --ms-panel:      rgba(10, 10, 14, 0.88);
+    --ms-border:     rgba(255, 255, 255, 0.08);
+    --ms-border-hi:  rgba(255, 255, 255, 0.16);
+    --ms-text:       #fff5eb;
+    --ms-muted:      rgba(255, 245, 235, 0.45);
+    --ms-success:    #4ade80;
+    --ms-warn:       #fbbf24;
+    --ms-error:      #f87171;
+    --ms-blur:       blur(20px);
+    --font-d:        'Chakra Petch', sans-serif;
+    --font-b:        'Montserrat', sans-serif;
+    --ease:          cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html, body {
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    background: transparent;
+    font-family: var(--font-b);
+    color: var(--ms-text);
+}
+
+.ms-accent { color: var(--ms-accent); }
+
+.hidden { display: none !important; }
+
+.ms-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+.ms-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(0,0,0,0.92) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.ms-btn {
+    font-family: var(--font-b);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    padding: 14px 32px;
+    transition: all 0.15s var(--ease);
+    outline: none;
+}
+
+.ms-btn-accept {
+    background: var(--ms-accent);
+    color: #000;
+}
+.ms-btn-accept:hover {
+    background: #fff;
+    box-shadow: 0 0 24px var(--ms-accent-glow);
+}
+
+.ms-btn-decline {
+    background: transparent;
+    color: var(--ms-muted);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.ms-btn-decline:hover {
+    color: var(--ms-text);
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.05);
+}
+
+/* ── Mission Offer ─────────────────────────────────────────────── */
+.ms-offer-layout {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+    padding: 60px;
+    animation: ms-fade-up 0.45s var(--ease) both;
+}
+
+@keyframes ms-fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* left column */
+.ms-offer-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    flex-shrink: 0;
+}
+
+.ms-offer-logo-wrap {
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ms-offer-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 30px var(--ms-accent-glow));
+}
+
+.ms-offer-contact-block {
+    text-align: center;
+}
+.ms-offer-contact-name {
+    font-family: var(--font-d);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ms-text);
+}
+.ms-offer-contact-sub {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ms-accent);
+    margin-top: 4px;
+}
+
+/* right: card */
+.ms-offer-card {
+    background: var(--ms-panel);
+    border: 1px solid var(--ms-border-hi);
+    backdrop-filter: var(--ms-blur);
+    -webkit-backdrop-filter: var(--ms-blur);
+    padding: 40px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.ms-offer-header { display: flex; flex-direction: column; gap: 8px; }
+
+.ms-offer-tag {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ms-accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ms-offer-tag::before {
+    content: '';
+    width: 20px;
+    height: 2px;
+    background: var(--ms-accent);
+    display: inline-block;
+}
+
+.ms-offer-title {
+    font-family: var(--font-d);
+    font-size: 36px;
+    font-weight: 700;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--ms-text);
+}
+
+.ms-offer-desc {
+    font-size: 13px;
+    color: var(--ms-muted);
+    line-height: 1.5;
+}
+
+/* stats */
+.ms-offer-stats { display: flex; flex-direction: column; gap: 12px; }
+
+.ms-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--ms-border);
+    padding-bottom: 10px;
+}
+.ms-stat-row:last-child { border-bottom: none; }
+
+.ms-stat-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ms-muted);
+}
+
+.ms-stat-value {
+    font-family: var(--font-d);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ms-text);
+}
+
+.ms-stat-money {
+    font-size: 22px;
+    font-style: italic;
+    color: var(--ms-success);
+}
+
+.ms-stat-warn { color: var(--ms-warn); }
+
+/* action buttons */
+.ms-offer-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+.ms-offer-actions .ms-btn { flex: 1; }
+
+/* ── Objective HUD ─────────────────────────────────────────────── */
+.ms-hud {
+    position: fixed;
+    top: 80px;
+    right: 30px;
+    z-index: 5000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 280px;
+    max-width: 340px;
+    animation: ms-fade-up 0.3s var(--ease) both;
+}
+
+.ms-hud-label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ms-accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ms-hud-label::before {
+    content: '';
+    width: 16px; height: 2px;
+    background: var(--ms-accent);
+    display: inline-block;
+}
+
+.ms-hud-objective {
+    font-family: var(--font-d);
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ms-text);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+}
+
+.ms-hud-sub {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ms-muted);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+}
+
+.ms-hud-extras {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.ms-hud-extra-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.55);
+    border-left: 2px solid var(--ms-accent);
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.ms-hud-extra-key { color: var(--ms-muted); }
+.ms-hud-extra-val { color: var(--ms-text); }
+
+.ms-hud-cond-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    margin-top: 2px;
+    overflow: hidden;
+}
+.ms-hud-cond-fill {
+    height: 100%;
+    background: var(--ms-accent);
+    transition: width 0.5s ease;
+}
+
+/* ── Minigame base ─────────────────────────────────────────────── */
+.ms-minigame-screen {
+    pointer-events: auto;
+}
+
+.ms-minigame-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    background: var(--ms-panel);
+    border: 1px solid var(--ms-border-hi);
+    backdrop-filter: var(--ms-blur);
+    -webkit-backdrop-filter: var(--ms-blur);
+    padding: 40px 48px;
+    min-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: ms-fade-up 0.3s var(--ease) both;
+}
+
+.ms-minigame-title {
+    font-family: var(--font-d);
+    font-size: 22px;
+    font-weight: 700;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--ms-text);
+}
+
+.ms-minigame-hint {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ms-muted);
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.ms-feedback {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    min-height: 18px;
+    transition: color 0.2s;
+}
+
+/* ── Lockpick ──────────────────────────────────────────────────── */
+.lp-track {
+    width: 300px;
+    height: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--ms-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.lp-zone {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: rgba(0, 255, 204, 0.25);
+    border-left:  2px solid var(--ms-accent);
+    border-right: 2px solid var(--ms-accent);
+    transition: left 0.1s;
+}
+
+.lp-pick {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
+
+.lp-pins {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    height: 40px;
+}
+
+.lp-pin {
+    width: 18px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid var(--ms-border);
+    border-bottom: none;
+    transition: height 0.2s var(--ease), background 0.2s;
+    border-radius: 2px 2px 0 0;
+}
+.lp-pin.set {
+    background: var(--ms-accent);
+    border-color: var(--ms-accent);
+    box-shadow: 0 0 10px var(--ms-accent-glow);
+}
+
+.lp-attempts {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ms-muted);
+}
+
+.ms-btn-pick {
+    background: transparent;
+    color: var(--ms-text);
+    border: 1px solid var(--ms-border-hi);
+    font-family: var(--font-b);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 40px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ms-btn-pick:hover {
+    background: var(--ms-accent-dim);
+    border-color: var(--ms-accent);
+    color: var(--ms-accent);
+}
+.ms-btn-pick:active { transform: scale(0.97); }
+
+/* ── Seal minigame ─────────────────────────────────────────────── */
+.sl-bar-wrap { display: flex; flex-direction: column; gap: 12px; width: 280px; }
+
+.sl-bar-track {
+    height: 22px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--ms-border);
+    position: relative;
+    overflow: hidden;
+}
+.sl-zone-good {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 35%; width: 30%;
+    background: rgba(0,255,204,0.2);
+    border-left:  2px solid var(--ms-accent);
+    border-right: 2px solid var(--ms-accent);
+}
+.sl-indicator {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 4px;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    transition: left 0.05s linear;
+    left: 10%;
+}
+
+.sl-progress-wrap {
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--ms-border);
+    overflow: hidden;
+}
+.sl-progress {
+    height: 100%;
+    width: 0%;
+    background: var(--ms-accent);
+    box-shadow: 0 0 12px var(--ms-accent-glow);
+    transition: width 0.2s ease;
+}
+
+.sl-pressure-label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ms-muted);
+    align-self: flex-start;
+}
+
+.ms-btn-hold {
+    background: rgba(0,255,204,0.1);
+    color: var(--ms-accent);
+    border: 1px solid var(--ms-accent);
+    font-family: var(--font-b);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 14px 48px;
+    cursor: pointer;
+    transition: all 0.1s;
+    user-select: none;
+}
+.ms-btn-hold:active, .ms-btn-hold.pressing {
+    background: var(--ms-accent);
+    color: #000;
+    box-shadow: 0 0 20px var(--ms-accent-glow);
+}
+
+/* ── Mission Complete ──────────────────────────────────────────── */
+.ms-complete-card {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    background: var(--ms-panel);
+    border: 1px solid var(--ms-border-hi);
+    backdrop-filter: var(--ms-blur);
+    -webkit-backdrop-filter: var(--ms-blur);
+    padding: 48px 52px;
+    min-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: ms-complete-pop 0.5s var(--ease) both;
+}
+
+@keyframes ms-complete-pop {
+    from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.ms-complete-tag {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ms-accent);
+    align-self: flex-start;
+    display: flex; align-items: center; gap: 8px;
+}
+.ms-complete-tag::before {
+    content: '';
+    width: 16px; height: 2px;
+    background: var(--ms-accent);
+    display: inline-block;
+}
+
+.ms-complete-title {
+    font-family: var(--font-d);
+    font-size: 30px;
+    font-weight: 700;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--ms-text);
+    align-self: flex-start;
+}
+
+.ms-complete-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--ms-border-hi);
+    align-self: stretch;
+}
+
+.ms-reward-rows {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ms-reward-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+.ms-reward-row-label {
+    font-weight: 600;
+    color: var(--ms-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 10px;
+}
+.ms-reward-row-val {
+    font-family: var(--font-d);
+    font-weight: 700;
+    color: var(--ms-text);
+}
+
+.ms-complete-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    width: 100%;
+    border-top: 1px solid var(--ms-border-hi);
+    padding-top: 14px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ms-muted);
+}
+
+.ms-complete-total {
+    font-family: var(--font-d);
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--ms-success);
+    text-shadow: 0 0 20px rgba(74,222,128,0.4);
+}
+
+.ms-rep-gained {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ms-accent);
+}

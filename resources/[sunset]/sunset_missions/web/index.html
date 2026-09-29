@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunset Missions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,700;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,900;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/missions.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MISSION OFFER
+════════════════════════════════════════════════════════════════ -->
+<div id="mission-offer" class="ms-screen hidden">
+    <div class="ms-vignette"></div>
+    <div class="ms-offer-layout">
+
+        <!-- left: logo + contact -->
+        <div class="ms-offer-left">
+            <div class="ms-offer-logo-wrap">
+                <img id="offer-logo" class="ms-offer-logo" src="" alt="">
+            </div>
+            <div class="ms-offer-contact-block">
+                <div class="ms-offer-contact-name" id="offer-contact-name"></div>
+                <div class="ms-offer-contact-sub"  id="offer-contact-sub"></div>
+            </div>
+        </div>
+
+        <!-- right: mission card -->
+        <div class="ms-offer-card">
+            <div class="ms-offer-header">
+                <div class="ms-offer-tag">INCOMING OFFER</div>
+                <div class="ms-offer-title" id="offer-title"></div>
+                <div class="ms-offer-desc"  id="offer-desc">You've been contacted for a job.</div>
+            </div>
+
+            <div class="ms-offer-stats">
+                <div class="ms-stat-row">
+                    <span class="ms-stat-label">AREA</span>
+                    <span class="ms-stat-value" id="offer-area"></span>
+                </div>
+                <div class="ms-stat-row">
+                    <span class="ms-stat-label">ESTIMATED PAYOUT</span>
+                    <span class="ms-stat-value ms-stat-money" id="offer-payout"></span>
+                </div>
+                <div class="ms-stat-row" id="offer-rep-row">
+                    <span class="ms-stat-label">REP</span>
+                    <span class="ms-stat-value" id="offer-rep"></span>
+                </div>
+                <div class="ms-stat-row" id="offer-cooldown-row" style="display:none">
+                    <span class="ms-stat-label">COOLDOWN</span>
+                    <span class="ms-stat-value ms-stat-warn" id="offer-cooldown"></span>
+                </div>
+            </div>
+
+            <div class="ms-offer-actions">
+                <button class="ms-btn ms-btn-decline" id="btn-decline">DECLINE</button>
+                <button class="ms-btn ms-btn-accept"  id="btn-accept">ACCEPT</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     OBJECTIVE HUD
+════════════════════════════════════════════════════════════════ -->
+<div id="mission-hud" class="ms-hud hidden">
+    <div class="ms-hud-label" id="hud-label"></div>
+    <div class="ms-hud-objective" id="hud-objective"></div>
+    <div class="ms-hud-sub" id="hud-sub"></div>
+    <div class="ms-hud-extras" id="hud-extras"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LOCKPICK MINIGAME
+════════════════════════════════════════════════════════════════ -->
+<div id="lockpick" class="ms-screen ms-minigame-screen hidden">
+    <div class="ms-vignette"></div>
+    <div class="ms-minigame-card">
+        <div class="ms-minigame-title">PICK THE LOCK</div>
+        <div class="ms-minigame-hint">Click when the pick reaches the <span class="ms-accent">green zone</span></div>
+        <div class="lp-track">
+            <div class="lp-zone" id="lp-zone"></div>
+            <div class="lp-pick" id="lp-pick"></div>
+        </div>
+        <div class="lp-pins" id="lp-pins"></div>
+        <div class="lp-attempts" id="lp-attempts"></div>
+        <button class="ms-btn ms-btn-pick" id="btn-pick">PICK</button>
+        <div class="ms-feedback" id="lp-feedback"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SEAL MINIGAME
+════════════════════════════════════════════════════════════════ -->
+<div id="seal-game" class="ms-screen ms-minigame-screen hidden">
+    <div class="ms-vignette"></div>
+    <div class="ms-minigame-card">
+        <div class="ms-minigame-title">CUT THE SEAL</div>
+        <div class="ms-minigame-hint">Hold <span class="ms-accent">HOLD</span> steady — don't let pressure drop</div>
+        <div class="sl-bar-wrap">
+            <div class="sl-bar-track">
+                <div class="sl-zone-good"></div>
+                <div class="sl-indicator" id="sl-indicator"></div>
+            </div>
+            <div class="sl-progress-wrap">
+                <div class="sl-progress" id="sl-progress"></div>
+            </div>
+        </div>
+        <div class="sl-pressure-label">PRESSURE</div>
+        <button class="ms-btn ms-btn-hold" id="btn-seal" onmousedown="SealGame.onPress()" onmouseup="SealGame.onRelease()">HOLD</button>
+        <div class="ms-feedback" id="sl-feedback"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MISSION COMPLETE
+════════════════════════════════════════════════════════════════ -->
+<div id="mission-complete" class="ms-screen hidden">
+    <div class="ms-vignette"></div>
+    <div class="ms-complete-card">
+        <div class="ms-complete-tag">MISSION COMPLETE</div>
+        <div class="ms-complete-title" id="complete-title"></div>
+        <div class="ms-complete-divider"></div>
+        <div class="ms-reward-rows" id="complete-rewards"></div>
+        <div class="ms-complete-total-row">
+            <span>TOTAL</span>
+            <span class="ms-complete-total" id="complete-total"></span>
+        </div>
+        <div class="ms-rep-gained" id="complete-rep"></div>
+        <button class="ms-btn ms-btn-accept" id="btn-complete">CONTINUE</button>
+    </div>
+</div>
+
+<script src="js/minigames.js"></script>
+<script src="js/missions.js"></script>
+</body>
+</html>
