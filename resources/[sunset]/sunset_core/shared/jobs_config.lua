@@ -31,9 +31,10 @@ Sunset.JobsConfig = {
         routes = {
             -- ── Fuel (Phantom + tanker — all pickup from depot trailer yard) ─
             { category = 'fuel', pay = 650,
-              pickup   = vector3(1223.0, -3083.0, 4.9),
-              delivery = vector4(-1434.1, -250.7, 48.0, 131.9),
-              label    = 'Depot → West Eclipse Gas Station' },
+              pickup     = vector3(1223.0, -3083.0, 4.9),
+              delivery   = vector4(-1434.9, -298.1, 45.1, 311.2),
+              parkingBay = vector4(-1434.1, -250.7, 48.0, 131.9),
+              label      = 'Depot → West Eclipse Gas Station' },
             { category = 'fuel', pay = 700,
               pickup   = vector3(1223.0, -3083.0, 4.9),
               delivery = vector3(1181.2, 2671.5, 37.9),

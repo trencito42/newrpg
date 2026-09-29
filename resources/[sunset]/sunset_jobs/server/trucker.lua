@@ -1,11 +1,24 @@
-local function validateTruckerCoords(source, target, cfg)
+local function checkCoordNear(pos, target, radius, zTol)
+    if not target then return false end
+    local t = type(target) == 'vector3' and target or vector3(target.x, target.y, target.z)
+    local dx, dy = pos.x - t.x, pos.y - t.y
+    if math.sqrt(dx * dx + dy * dy) > radius then return false end
+    return math.abs(pos.z - t.z) <= zTol
+end
+
+local function validateTruckerCoords(source, targetOrRoute, cfg)
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then return false end
     local pos = GetEntityCoords(ped)
-    local t = type(target) == 'vector3' and target or vector3(target.x, target.y, target.z)
-    local dx, dy = pos.x - t.x, pos.y - t.y
-    if math.sqrt(dx * dx + dy * dy) > (cfg.deliveryRadius or 25.0) then return false end
-    return math.abs(pos.z - t.z) <= (cfg.deliveryZTolerance or 8.0)
+    local rad = cfg.deliveryRadius or 85.0
+    local zTol = cfg.deliveryZTolerance or 15.0
+
+    if type(targetOrRoute) == 'table' and (targetOrRoute.delivery or targetOrRoute.parkingBay) then
+        if checkCoordNear(pos, targetOrRoute.delivery, rad, zTol) then return true end
+        if checkCoordNear(pos, targetOrRoute.parkingBay, rad, zTol) then return true end
+        return false
+    end
+    return checkCoordNear(pos, targetOrRoute, rad, zTol)
 end
 
 -- Pay bonus per rank (level): rank 1 = +0%, rank 5 = +5%
@@ -175,11 +188,15 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local delivCoords = safeVec3(route.delivery)
     local delivHeading = safeHeading(route.delivery)
 
+    local bayCoords = safeVec3(route.parkingBay or route.delivery)
+    local bayHeading = safeHeading(route.parkingBay or route.delivery)
+
     -- Player spawns in truck; trailer is pre-parked at the selected trailer bay
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
         pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = bayHeading },
         delivery      = { x = delivCoords.x, y = delivCoords.y, z = delivCoords.z, w = delivHeading },
+        parkingBay    = { x = bayCoords.x, y = bayCoords.y, z = bayCoords.z, w = bayHeading },
         pay           = route.pay,
         label         = route.label,
         stage         = 'to_pickup',
@@ -235,7 +252,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     end
     local route = cfg.routes[session.data.routeIndex]
     if not route then return nil, 'Route data is missing' end
-    if not validateTruckerCoords(source, route.delivery, cfg) then
+    if not validateTruckerCoords(source, route, cfg) then
         return nil, 'Not at delivery location — drive into the loading dock marker'
     end
 
