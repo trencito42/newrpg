@@ -7,8 +7,8 @@
 local ShiftActive  = false
 local ContractData = nil     -- { siteId, lootPoints, required, recovered, o2Duration, searchZone }
 local ScubaActive  = false   -- true while underwater with gear equipped
-local O2Remaining  = 0       -- seconds remaining
-local O2Max        = 120
+local O2Remaining  = 0       -- seconds remaining; persists across surface/dive cycles, only reset at gear rental
+local O2Max        = 0       -- max O2 from current gear rental; 0 = no gear rented
 local BoatNetId    = nil     -- rented boat
 
 local SalvageMarkers = {}    -- { idx, coords, claimed }
@@ -54,28 +54,49 @@ local function updateShiftHud()
     end
 end
 
+-- Terry handoff proximity state
+local TerryHandoffReady = false
+local TERRY_COORDS = { x = -812.0, y = -1282.0, z = 5.0 }
+
 -- ── State Changes ─────────────────────────────────────────────
 AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if not data then return end
     if data.siteId then
         ContractData = data
+        -- Reset O2 when new contract starts (o2Duration comes from server session)
+        if data.o2Duration and data.o2Duration > 0 then
+            resetO2(data.o2Duration)
+        end
+        if data.stage == 'return_to_terry' then
+            TerryHandoffReady = true
+            SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
+            exports.sunset_ui:Notify('~b~All salvage recovered! Return to Terry at the waterfront.', 'info', 8000)
+        else
+            TerryHandoffReady = false
+        end
     elseif data.stage == 'idle' or not data.contractId then
         ContractData = nil
         SalvageMarkers = {}
         NearestSalvage = nil
+        TerryHandoffReady = false
     end
     updateShiftHud()
 end)
 
 -- ── Scuba System ──────────────────────────────────────────────
--- Activates when player enters water with scuba_gear in inventory
-local function activateScuba(gearDuration)
+-- O2 is set once at gear rental/contract start (server-authoritative).
+-- activateScuba only enables the dive mode; it does NOT reset O2 (persists across surface/dive cycles).
+local function activateScuba()
     if ScubaActive then return end
     ScubaActive = true
-    O2Max = gearDuration or 120
-    O2Remaining = O2Max
     SetPedDiesInWater(PlayerPedId(), false)
-    exports.sunset_core:ShowNotification('~b~Scuba gear active. O2: ' .. O2Max .. 's')
+    exports.sunset_core:ShowNotification('~b~Scuba gear active. O2: ' .. math.max(0, O2Remaining) .. 's')
+end
+
+-- Called when gear is rented or a new contract starts — this is the only place O2 resets to full.
+local function resetO2(maxDuration)
+    O2Max = maxDuration or 120
+    O2Remaining = O2Max
 end
 
 local function deactivateScuba(reason)
@@ -90,6 +111,8 @@ local function deactivateScuba(reason)
 end
 
 -- ── O2 + Scuba Thread ────────────────────────────────────────
+-- Gear presence is determined by O2Max > 0 (set at rental/contract start — server-authoritative).
+-- O2 persists across surface/dive cycles; it only resets at gear rental.
 CreateThread(function()
     while true do
         Wait(1000)
@@ -97,16 +120,13 @@ CreateThread(function()
 
         local ped = PlayerPedId()
         local underwater = IsPedSwimmingUnderWater(ped)
-        local inWater    = IsPedInWater(ped)
 
-        -- Check gear
-        local hasGear = exports.sunset_inventory:GetItemCount('scuba_gear') > 0
-            or exports.sunset_inventory:GetItemCount('advanced_tank') > 0
+        -- Gear check: use session-authoritative O2Max rather than inventory sniffing
+        local hasGear = O2Max > 0
 
         if underwater and hasGear and ContractData then
             if not ScubaActive then
-                local dur = ContractData.o2Duration or 120
-                activateScuba(dur)
+                activateScuba()
             else
                 O2Remaining = O2Remaining - 1
                 if O2Remaining <= 0 then
@@ -117,7 +137,7 @@ CreateThread(function()
             end
         elseif not underwater and ScubaActive then
             deactivateScuba('surfaced')
-            -- Partial O2 carries over within same dive
+            -- O2Remaining intentionally NOT reset here — persists across surface/dive cycles
         end
 
         ::continue::
@@ -251,22 +271,20 @@ CreateThread(function()
             DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to recover salvage')
 
             if IsControlJustPressed(0, 38) then -- E
-                local result, err = exports.sunset_jobs:CallCallback(
-                    'sunset:jobs:diver:salvage', nearest.idx)
+                local result, err = Sunset.AwaitCallback('sunset:jobs:diver:salvage', nearest.idx)
                 if not result then
-                    exports.sunset_core:ShowNotification(('~r~%s'):format(err or 'Salvage failed'))
+                    exports.sunset_ui:Notify(('~r~%s'):format(err or 'Salvage failed'), 'error', 4000)
                 else
                     nearest.claimed = true
                     if ContractData then
                         ContractData.recovered = result.recovered
                         updateShiftHud()
                     end
-                    exports.sunset_core:ShowNotification(
+                    exports.sunset_ui:Notify(
                         ('~g~Salvaged: ~y~%s~s~ (~b~%s~s~, $%d)'):format(
-                            result.item or '?', result.condition or '?', result.value or 0))
-                    if result.completed then
-                        -- Handled by contractComplete event
-                    end
+                            result.item or '?', result.condition or '?', result.value or 0),
+                        'success', 4000)
+                    -- result.completed means all salvage recovered; server will send returnToTerry event
                 end
             end
         end
@@ -323,27 +341,94 @@ end)
 
 -- Contract + gear selection handled via workplaces.lua sub-menu (no NUI panels needed)
 
+-- Gear rented — reset O2 to full for the new tank (the only place O2 resets to full)
+AddEventHandler('sunset:diving:gearRented', function(o2Duration)
+    resetO2(o2Duration or 120)
+end)
+
 -- Contract started event (from workplaces sub-menu handler)
 AddEventHandler('sunset:diving:contractStarted', function(result)
     if not result then return end
     ContractData = result
     buildSalvageMarkers(result.lootPoints)
+    -- Reset O2 when a new contract starts (server-authoritative duration)
+    if result.o2Duration and result.o2Duration > 0 then
+        resetO2(result.o2Duration)
+    end
     updateShiftHud()
 end)
 
--- ── Shift Start/End ───────────────────────────────────────────
-AddEventHandler('sunset:jobs:shiftStarted', function(jobId)
+-- Server signals all salvage is recovered — show GPS back to Terry
+RegisterNetEvent('sunset:diving:returnToTerry', function()
+    TerryHandoffReady = true
+    SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
+    exports.sunset_ui:Notify('~b~All salvage recovered! Return to Terry at the Vespucci waterfront.', 'info', 8000)
+end)
+
+-- Terry handoff proximity thread
+CreateThread(function()
+    while true do
+        Wait(500)
+        if not ShiftActive or not TerryHandoffReady then goto continue_handoff end
+
+        local ped = PlayerPedId()
+        local pos = GetEntityCoords(ped)
+        local d = #(vector3(pos.x, pos.y, pos.z) - vector3(TERRY_COORDS.x, TERRY_COORDS.y, TERRY_COORDS.z))
+
+        if d <= 10.0 then
+            DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to hand off salvage to Terry')
+            if IsControlJustPressed(0, 38) then -- E
+                TerryHandoffReady = false
+                CreateThread(function()
+                    local result, err = Sunset.AwaitCallback('sunset:jobs:diver:handoff')
+                    if not result then
+                        exports.sunset_ui:Notify(('~r~%s'):format(err or 'Handoff failed'), 'error', 5000)
+                        TerryHandoffReady = true  -- re-enable if failed
+                    else
+                        exports.sunset_ui:Notify(
+                            ('~g~Contract complete! Terry paid ~y~$%d~s~ + ~b~%d XP~s~'):format(
+                                result.total or 0, result.xp or 0),
+                            'success', 7000)
+                    end
+                end)
+            end
+        end
+
+        ::continue_handoff::
+    end
+end)
+
+-- ── Shift Start/End (canonical session events) ───────────────
+AddEventHandler('sunset:jobs:sessionStarted', function(jobId, session)
     if jobId ~= 'diver' then return end
     ShiftActive = true
+    -- Restore state from session on reconnect/reload
+    if session and session.data then
+        local sdata = session.data
+        if sdata.gearTier and sdata.o2Max then
+            -- Gear was rented; restore O2 state (player may have partially used it)
+            O2Max = sdata.o2Max
+            if O2Remaining <= 0 then O2Remaining = O2Max end
+        end
+        if sdata.siteId and sdata.contractId then
+            ContractData = sdata
+        end
+        if sdata.stage == 'return_to_terry' then
+            TerryHandoffReady = true
+        end
+    end
     updateShiftHud()
 end)
 
-AddEventHandler('sunset:jobs:shiftEnded', function(jobId)
+AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     if jobId ~= 'diver' then return end
-    ShiftActive    = false
-    ContractData   = nil
-    SalvageMarkers = {}
-    NearestSalvage = nil
+    ShiftActive      = false
+    ContractData     = nil
+    SalvageMarkers   = {}
+    NearestSalvage   = nil
+    TerryHandoffReady = false
+    O2Max            = 0
+    O2Remaining      = 0
     deactivateScuba('surfaced')
     exports.sunset_ui:Send('jobShiftHide', {})
     -- Return boat if still rented
