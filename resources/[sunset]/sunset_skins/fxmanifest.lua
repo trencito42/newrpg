@@ -20,11 +20,3 @@ client_scripts {
     '@sunset_core/client/callbacks.lua',
     'client/main.lua',
 }
-
-ui_page 'web/index.html'
-
-files {
-    'web/index.html',
-    'web/css/skins.css',
-    'web/js/skins.js',
-}

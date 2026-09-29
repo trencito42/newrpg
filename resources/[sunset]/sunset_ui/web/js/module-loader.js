@@ -84,6 +84,11 @@
             css: ['css/wardrobe-forza.css'],
             js: ['js/wardrobe.js']
         },
+        skinshop: {
+            html: 'modules/skinshop/index.html',
+            css: ['css/skinshop.css'],
+            js: ['js/skinshop.js']
+        },
         atm: {
             html: 'modules/atm/index.html',
             css: ['css/atm.css', 'css/fleeca-bank.css'],

@@ -1,0 +1,395 @@
+.skinshop-forza {
+    --sk-accent:  #00ffcc;
+    --sk-muted:   rgba(255, 255, 255, 0.4);
+    --sk-shadow:  0 4px 12px rgba(0, 0, 0, 0.9);
+    --sk-glow:    0 0 20px rgba(0, 255, 204, 0.4);
+    position: fixed;
+    inset: 0;
+    z-index: 50000;
+    pointer-events: auto;
+    font-family: 'Montserrat', sans-serif;
+}
+.skinshop-forza.hidden { display: none; }
+
+/* Vignette — identical to wardrobe */
+.skinshop-forza .sk-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.88) 100%);
+    pointer-events: none;
+}
+
+/* Layout */
+.skinshop-forza .sk-ui-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    padding: 80px 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 0;
+}
+
+/* Section title — same glyph/weight as wardrobe */
+.skinshop-forza .sk-section-title {
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--sk-accent);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 25px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.skinshop-forza .sk-section-title::before {
+    content: '';
+    width: 24px;
+    height: 2px;
+    background: var(--sk-accent);
+    flex-shrink: 0;
+}
+
+/* ── Left: categories ── */
+.skinshop-forza .sk-categories-panel {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex-shrink: 0;
+}
+.skinshop-forza .sk-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+}
+.skinshop-forza .sk-cat-list::-webkit-scrollbar { width: 0; }
+.skinshop-forza .sk-cat-item {
+    font-size: 22px;
+    font-weight: 900;
+    font-style: italic;
+    color: var(--sk-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 10px 0;
+    border-left: 0 solid transparent;
+    text-shadow: var(--sk-shadow);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    text-align: left;
+    width: 100%;
+}
+.skinshop-forza .sk-cat-item:hover,
+.skinshop-forza .sk-cat-item.is-active {
+    color: #fff;
+    padding-left: 18px;
+    border-left: 6px solid var(--sk-accent);
+    text-shadow: var(--sk-glow), var(--sk-shadow);
+    transform: translateX(8px);
+}
+.skinshop-forza .sk-cat-item.is-active { color: var(--sk-accent); }
+
+/* ── Center: skin list ── */
+.skinshop-forza .sk-list-panel {
+    display: flex;
+    flex-direction: column;
+    width: 360px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 30px 20px 30px 28px;
+    backdrop-filter: blur(4px);
+    border-left:  1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.skinshop-forza .sk-skin-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.skinshop-forza .sk-skin-list::-webkit-scrollbar { width: 3px; }
+.skinshop-forza .sk-skin-list::-webkit-scrollbar-thumb {
+    background: var(--sk-accent);
+    border-radius: 2px;
+}
+.skinshop-forza .sk-skin-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.15s;
+}
+.skinshop-forza .sk-skin-row:hover {
+    background: rgba(0, 255, 204, 0.05);
+    border-left-color: rgba(0, 255, 204, 0.4);
+    padding-left: 14px;
+}
+.skinshop-forza .sk-skin-row.is-active {
+    background: rgba(0, 255, 204, 0.1);
+    border-left-color: var(--sk-accent);
+    padding-left: 14px;
+}
+.skinshop-forza .sk-skin-thumb {
+    width: 42px;
+    height: 54px;
+    object-fit: cover;
+    object-position: top center;
+    background: rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.skinshop-forza .sk-skin-row-info { flex: 1; min-width: 0; }
+.skinshop-forza .sk-skin-row-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.skinshop-forza .sk-skin-row-price {
+    font-size: 11px;
+    color: var(--sk-accent);
+    font-weight: 700;
+    margin-top: 3px;
+}
+.skinshop-forza .sk-skin-row-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.skinshop-forza .badge-owned { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.skinshop-forza .badge-bp    { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+.skinshop-forza .sk-empty {
+    color: var(--sk-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 20px 0;
+}
+
+/* ── Right: detail ── */
+.skinshop-forza .sk-detail-panel {
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 40px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    gap: 14px;
+    overflow: hidden;
+}
+.skinshop-forza .sk-detail-name {
+    font-size: 28px;
+    font-weight: 900;
+    font-style: italic;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: var(--sk-shadow);
+    line-height: 1.1;
+    flex-shrink: 0;
+}
+.skinshop-forza .sk-preview-wrap {
+    width: 100%;
+    aspect-ratio: 3/4;
+    max-height: 200px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.skinshop-forza .sk-preview-wrap img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    object-position: top;
+    transition: opacity 0.2s;
+}
+.skinshop-forza .sk-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.skinshop-forza .sk-model-code {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+    font-family: monospace;
+    flex: 1;
+}
+.skinshop-forza .sk-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.skinshop-forza .sk-badge.owned { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.skinshop-forza .sk-badge.bp    { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+.skinshop-forza .hidden { display: none !important; }
+
+.skinshop-forza .sk-price-block { flex-shrink: 0; }
+.skinshop-forza .sk-price-label {
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--sk-accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+}
+.skinshop-forza .sk-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+}
+.skinshop-forza .sk-price-cash {
+    font-size: 38px;
+    font-weight: 900;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 0.9;
+    text-shadow: var(--sk-shadow);
+}
+.skinshop-forza .sk-price-pp {
+    font-size: 18px;
+    font-weight: 700;
+    color: #9b59b6;
+}
+
+.skinshop-forza .sk-action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 16px;
+}
+.skinshop-forza .sk-action-btn {
+    width: 100%;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 900;
+    font-style: italic;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: 'Montserrat', sans-serif;
+}
+.skinshop-forza .sk-action-btn:hover:not(:disabled) {
+    border-color: var(--sk-accent);
+    color: var(--sk-accent);
+    text-shadow: var(--sk-glow);
+}
+.skinshop-forza .sk-action-btn.pp-btn:hover:not(:disabled) {
+    border-color: #9b59b6;
+    color: #9b59b6;
+    text-shadow: none;
+}
+.skinshop-forza .sk-action-btn.equip-btn:hover:not(:disabled) {
+    border-color: #3498db;
+    color: #3498db;
+    text-shadow: none;
+}
+.skinshop-forza .sk-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.skinshop-forza .sk-key {
+    background: #fff;
+    color: #000;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 900;
+    margin-right: 8px;
+}
+
+/* Bottom hint bar */
+.skinshop-forza .sk-hint-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(5px);
+    z-index: 20;
+}
+.skinshop-forza .sk-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--sk-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.skinshop-forza .sk-hint .sk-key {
+    background: #fff;
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 900;
+    margin-right: 0;
+}
+.skinshop-forza .sk-close-line {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+    z-index: 25;
+}
+
+@media (max-width: 1400px) {
+    .skinshop-forza .sk-ui-layer { padding: 60px 50px; }
+    .skinshop-forza .sk-detail-panel { width: 320px; }
+    .skinshop-forza .sk-list-panel { width: 300px; }
+}

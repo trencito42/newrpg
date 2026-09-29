@@ -259,6 +259,13 @@ AddEventHandler('sunset:nui:battlepassClose', function()
     SetFocus(false, false)
 end)
 
+forward('skinShopBuy')
+forward('skinShopEquip')
+forward('skinShopClose')
+AddEventHandler('sunset:nui:skinShopClose', function()
+    SetFocus(false, false)
+end)
+
 RegisterNUICallback('licenseQuizAnswer', function(data, cb)
     data = type(data) == 'table' and data or {}
     local licenseType = data.licenseType

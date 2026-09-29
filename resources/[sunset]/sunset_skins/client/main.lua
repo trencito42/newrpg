@@ -5,7 +5,6 @@ local shopNPC  = nil
 local function applyModel(model)
     local hash
     if not model or model == '' then
-        -- reset to default civilian (matches spawn default)
         hash = joaat('a_m_y_business_01')
     else
         hash = joaat(model)
@@ -32,7 +31,7 @@ local function applyModel(model)
     SetModelAsNoLongerNeeded(hash)
 end
 
--- Open the skin shop NUI
+-- Open the skin shop via sunset_ui
 local function openShop()
     if shopOpen then return end
     local skins, err = Sunset.AwaitCallback('skins:getAll')
@@ -41,46 +40,45 @@ local function openShop()
         return
     end
     shopOpen = true
-    SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', skins = skins })
+    exports.sunset_ui:Send('skinShopShow', { skins = skins })
+    exports.sunset_ui:SetFocus(true, true, false, 'skinshop')
 end
 
 local function closeShop()
     if not shopOpen then return end
     shopOpen = false
-    SetNuiFocus(false, false)
-    SendNUIMessage({ action = 'close' })
+    exports.sunset_ui:Send('skinShopHide', {})
+    exports.sunset_ui:SetFocus(false, false)
 end
 
--- NUI: buy a skin (currency = 'cash' | 'pp')
-RegisterNUICallback('buy', function(data, cb)
+-- sunset_ui NUI bridge: buy
+AddEventHandler('sunset:nui:skinShopBuy', function(data)
+    data = type(data) == 'table' and data or {}
     local result, err = Sunset.AwaitCallback('skins:buy', data.model, data.currency)
     if result then
         exports.sunset_ui:Notify('Skin purchased!', 'success', 4000)
         local skins = Sunset.AwaitCallback('skins:getAll')
-        cb({ success = true, skins = skins })
+        exports.sunset_ui:Send('skinShopUpdate', { skins = skins or {} })
     else
         exports.sunset_ui:Notify(err or 'Purchase failed', 'error', 5000)
-        cb({ success = false, err = err })
     end
 end)
 
--- NUI: equip an owned skin
-RegisterNUICallback('equip', function(data, cb)
+-- sunset_ui NUI bridge: equip
+AddEventHandler('sunset:nui:skinShopEquip', function(data)
+    data = type(data) == 'table' and data or {}
     local result, err = Sunset.AwaitCallback('skins:equip', data.model)
     if result then
         exports.sunset_ui:Notify('Skin equipped!', 'success', 3000)
-        cb({ success = true })
     else
         exports.sunset_ui:Notify(err or 'Equip failed', 'error', 5000)
-        cb({ success = false, err = err })
     end
 end)
 
--- NUI: close button
-RegisterNUICallback('close', function(_, cb)
-    closeShop()
-    cb({})
+-- sunset_ui NUI bridge: close (SetFocus handled by nui_bridge.lua forward)
+AddEventHandler('sunset:nui:skinShopClose', function()
+    if not shopOpen then return end
+    shopOpen = false
 end)
 
 -- Server → client: apply model (used by /setskin and battlepass unlock)

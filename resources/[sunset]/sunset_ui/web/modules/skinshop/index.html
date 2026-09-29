@@ -1,0 +1,53 @@
+<div id="skinshop" class="skinshop-forza hidden" aria-hidden="true">
+    <div class="sk-vignette"></div>
+    <div class="sk-ui-layer">
+        <!-- Left: category list -->
+        <div class="sk-categories-panel">
+            <div class="sk-section-title">Skin Shop</div>
+            <div class="sk-cat-list" id="sk-cat-list"></div>
+        </div>
+
+        <!-- Center: skins list for selected category -->
+        <div class="sk-list-panel">
+            <div class="sk-section-title" id="sk-list-title">All Skins</div>
+            <div class="sk-skin-list" id="sk-skin-list"></div>
+        </div>
+
+        <!-- Right: selected skin detail -->
+        <div class="sk-detail-panel">
+            <div class="sk-section-title" style="color:var(--sk-muted)">Selected</div>
+            <div class="sk-detail-name" id="sk-detail-name">—</div>
+            <div class="sk-preview-wrap">
+                <img id="sk-preview-img" src="" alt="" style="opacity:0"/>
+            </div>
+            <div class="sk-detail-meta">
+                <span class="sk-model-code" id="sk-detail-model"></span>
+                <span class="sk-badge owned hidden" id="sk-owned-badge">✓ Owned</span>
+                <span class="sk-badge bp hidden" id="sk-bp-badge">Battlepass</span>
+            </div>
+            <div class="sk-price-block hidden" id="sk-price-block">
+                <div class="sk-price-label">Price</div>
+                <div class="sk-price-row">
+                    <span class="sk-price-cash" id="sk-price-cash">$0</span>
+                    <span class="sk-price-pp" id="sk-price-pp">0 PP</span>
+                </div>
+            </div>
+            <div class="sk-action-group">
+                <button type="button" class="sk-action-btn hidden" id="sk-detail-btn-cash" disabled>
+                    <span class="sk-key">ENTER</span> Buy Cash
+                </button>
+                <button type="button" class="sk-action-btn pp-btn hidden" id="sk-detail-btn-pp" disabled>
+                    Buy with PP
+                </button>
+                <button type="button" class="sk-action-btn equip-btn hidden" id="sk-detail-btn-equip">
+                    <span class="sk-key">ENTER</span> Equip
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sk-hint-bar">
+        <div class="sk-hint"><div class="sk-key">ESC</div> Close</div>
+    </div>
+    <div class="sk-close-line">Press ESC to close</div>
+</div>

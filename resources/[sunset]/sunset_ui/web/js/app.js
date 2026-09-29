@@ -177,6 +177,11 @@
         wardrobeHide: 'wardrobe',
         wardrobeUpdate: 'wardrobe',
         clothingShow: 'wardrobe',
+
+        // Skin Shop
+        skinShopShow: 'skinshop',
+        skinShopHide: 'skinshop',
+        skinShopUpdate: 'skinshop',
         clothingHide: 'wardrobe',
 
         // ATM
@@ -376,6 +381,7 @@
             if (window.MDC && typeof MDC.close === 'function') MDC.close();
             if (window.ClanPanels && typeof ClanPanels.close === 'function') ClanPanels.close();
             if (window.WardrobeShop && typeof WardrobeShop.close === 'function') WardrobeShop.close();
+            if (window.SkinShopUI && !document.getElementById('skinshop')?.classList.contains('hidden')) { post('skinShopClose', {}); }
         },
 
         notify(message, kind = 'info', duration = 4000) {
@@ -544,7 +550,7 @@
                 return;
             }
             if (action === 'sessionForceClose') {
-                document.querySelectorAll('.overlay-panel, .store-forza, .atm-modal, .mdc, .phone-device, .wardrobe-forza, .dealership-forza, .player-interaction, .appearance-studio').forEach((root) => {
+                document.querySelectorAll('.overlay-panel, .store-forza, .atm-modal, .mdc, .phone-device, .wardrobe-forza, .skinshop-forza, .dealership-forza, .player-interaction, .appearance-studio').forEach((root) => {
                     root.classList.add('hidden');
                     root.setAttribute('aria-hidden', 'true');
                 });
@@ -808,6 +814,10 @@
                 case 'wardrobeShow': window.WardrobeUI?.show?.(payload); return;
                 case 'wardrobeUpdate': window.WardrobeUI?.update?.(payload); return;
                 case 'wardrobeHide': window.WardrobeUI?.hide?.(); return;
+
+                case 'skinShopShow': window.SkinShopUI?.show?.(payload); return;
+                case 'skinShopHide': window.SkinShopUI?.hide?.(); return;
+                case 'skinShopUpdate': window.SkinShopUI?.refresh?.(payload?.skins); return;
                 case 'weaponAmmoUpdate': window.HotbarUI?.renderWeaponAmmo?.(payload); return;
                 case 'emoteWheelShow': window.HotbarUI?.showEmoteWheel?.(payload.emotes || []); return;
                 case 'emoteWheelHide': window.HotbarUI?.hideEmoteWheel?.(); return;
