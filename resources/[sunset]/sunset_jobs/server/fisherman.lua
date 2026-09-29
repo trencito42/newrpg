@@ -312,8 +312,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:reel', function(sour
     if GetResourceState('sunset_pass') == 'started' then
         exports.sunset_pass:AddMissionProgress(source, 'fish_catch', 1)
     end
-    -- [FISHING TOURNAMENT] Notify the tournament tracker
-    TriggerEvent('sunset:fishing:caught', source)
+    -- [FISHING TOURNAMENT] Authoritative server catch hook (emitted only after AddItem succeeds)
+    TriggerEvent('sunset:fishing:caught', source, {
+        item     = fishItem,
+        weight   = fishKg,
+        value    = value,
+        caughtAt = os.time(),
+    })
     TriggerClientEvent('sunset:jobs:stateChanged', source, session.state, session.data)
     return {
         value        = value,

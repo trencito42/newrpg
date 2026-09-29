@@ -1,0 +1,411 @@
+/* ═══════════════════════════════════════════════════════════════
+   SUNSETMP — Fishing Tournament HUD & Results (fishing-tournament.css)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Live Compact Tournament HUD ── */
+.ft-hud {
+    position: fixed;
+    top: 130px;
+    right: 28px;
+    z-index: 9200;
+    width: 280px;
+    background: linear-gradient(145deg, rgba(12, 11, 10, 0.94), rgba(7, 7, 7, 0.9));
+    border-left: 3px solid #38bdf8;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    animation: ftHudSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ftHudSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.ft-hud.hidden {
+    display: none !important;
+}
+
+.ft-hud__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 6px;
+}
+
+.ft-hud__badge {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #38bdf8;
+    text-transform: uppercase;
+}
+
+.ft-hud__timer {
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+
+.ft-hud__score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 2px;
+}
+
+.ft-hud__rank {
+    font-size: 26px;
+    font-weight: 900;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+.ft-hud__weight {
+    font-size: 24px;
+    font-weight: 900;
+    color: #00ffcc;
+    font-variant-numeric: tabular-nums;
+}
+
+.ft-hud__unit {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ft-hud__status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    gap: 8px;
+}
+
+.ft-hud__qual-badge {
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.ft-hud__qual-badge.qualified {
+    background: #22c55e;
+    color: #000;
+}
+
+.ft-hud__qual-badge.unqualified {
+    background: #f59e0b;
+    color: #000;
+}
+
+.ft-hud__leader {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+}
+
+.ft-hud__meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 5px;
+}
+
+.ft-hud__mini-board {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 6px;
+}
+
+.ft-hud__board-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 3px 6px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ft-hud__board-row.is-me {
+    background: rgba(56, 189, 248, 0.15);
+    border-left: 2px solid #38bdf8;
+    color: #fff;
+    font-weight: 800;
+}
+
+.ft-hud__board-rank {
+    font-weight: 800;
+    width: 24px;
+    color: #38bdf8;
+}
+
+.ft-hud__board-row:nth-child(1) .ft-hud__board-rank { color: #eab308; }
+.ft-hud__board-row:nth-child(2) .ft-hud__board-rank { color: #94a3b8; }
+.ft-hud__board-row:nth-child(3) .ft-hud__board-rank { color: #b45309; }
+
+.ft-hud__board-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 6px;
+}
+
+.ft-hud__board-kg {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #00ffcc;
+}
+
+/* Catch Toast Micro-Animation */
+.ft-hud__catch-toast {
+    position: absolute;
+    top: -24px;
+    right: 0;
+    font-size: 14px;
+    font-weight: 900;
+    color: #00ffcc;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+    animation: ftToastFly 1.6s ease-out forwards;
+}
+
+@keyframes ftToastFly {
+    0% { opacity: 0; transform: translateY(8px) scale(0.9); }
+    20% { opacity: 1; transform: translateY(0) scale(1.1); }
+    80% { opacity: 1; transform: translateY(-10px); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ── Results Modal ── */
+.ft-results-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: ftModalFadeIn 0.3s ease;
+}
+
+@keyframes ftModalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.ft-results-modal.hidden {
+    display: none !important;
+}
+
+.ft-results-panel {
+    width: 480px;
+    background: linear-gradient(145deg, rgba(14, 13, 12, 0.96), rgba(8, 8, 8, 0.92));
+    border-top: 3px solid #38bdf8;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
+    animation: ftPanelPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ftPanelPop {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.ft-results-header {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+}
+
+.ft-results-badge {
+    display: inline-block;
+    background: #38bdf8;
+    color: #000;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+}
+
+.ft-results-title {
+    font-size: 22px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.ft-results-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+}
+
+.ft-podium {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ft-podium-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #64748b;
+}
+
+.ft-podium-card.ft-rank-1 {
+    border-left-color: #eab308;
+    background: rgba(234, 179, 8, 0.08);
+}
+
+.ft-podium-card.ft-rank-2 {
+    border-left-color: #94a3b8;
+    background: rgba(148, 163, 184, 0.08);
+}
+
+.ft-podium-card.ft-rank-3 {
+    border-left-color: #b45309;
+    background: rgba(180, 83, 9, 0.08);
+}
+
+.ft-podium-rank {
+    font-size: 18px;
+    font-weight: 900;
+    font-style: italic;
+    width: 35px;
+}
+
+.ft-podium-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0 8px;
+}
+
+.ft-podium-weight {
+    font-size: 15px;
+    font-weight: 900;
+    color: #00ffcc;
+    padding: 0 8px;
+}
+
+.ft-podium-fish {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0 8px;
+}
+
+.ft-podium-reward {
+    font-size: 13px;
+    font-weight: 800;
+    color: #22c55e;
+}
+
+.ft-no-winners {
+    text-align: center;
+    padding: 16px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ft-user-box {
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    text-align: center;
+}
+
+.ft-user-box.is-winner {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.ft-user-badge {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ft-user-rank {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.ft-user-stats {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ft-user-prize {
+    font-size: 14px;
+    font-weight: 800;
+    color: #22c55e;
+    margin-top: 4px;
+}
+
+.ft-results-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.ft-results-close-btn {
+    background: #38bdf8;
+    color: #000;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ft-results-close-btn:hover {
+    background: #0ea5e9;
+}

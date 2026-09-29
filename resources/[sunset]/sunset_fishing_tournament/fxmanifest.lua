@@ -3,12 +3,16 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_fishing_tournament'
-description 'Fishing tournament — periodic competition, most fish wins'
-version '1.0.0'
+description 'Authoritative server fishing tournament system'
+version '2.0.0'
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
     'shared/config.lua',
+}
+
+client_scripts {
+    'client/main.lua',
 }
 
 server_scripts {
@@ -16,4 +20,4 @@ server_scripts {
     'server/main.lua',
 }
 
-dependencies { 'sunset_core', 'sunset_events' }
+dependencies { 'sunset_core', 'sunset_events', 'sunset_ui' }

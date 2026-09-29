@@ -38,11 +38,13 @@ RegisterNetEvent('sunset:events:end', function(data)
     end
 end)
 
--- ── Event marker + join (NON-race events only) ──
--- For race_night, sunset_racing owns the marker at the race hub.
+-- ── Event marker + join (Generic NON-specialized events only, e.g. car_meet) ──
+-- race_night is owned by sunset_racing, fishing_tournament is owned by sunset_fishing_tournament.
+local SPECIALIZED = { race_night = true, fishing_tournament = true }
+
 CreateThread(function()
     while true do
-        if eventData and eventData.location and eventData.type ~= 'race_night' then
+        if eventData and eventData.location and not SPECIALIZED[eventData.type] then
             local ped = PlayerPedId()
             local coords = GetEntityCoords(ped)
             local loc = eventData.location

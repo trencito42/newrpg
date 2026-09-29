@@ -168,3 +168,74 @@
         <div class="radar-alert__stats"><div class="radar-alert__stat"><span class="radar-alert__stat-label">Speed</span><span class="radar-alert__stat-value" id="radar-alert-stat-speed"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label">Limit</span><span class="radar-alert__stat-value" id="radar-alert-stat-limit"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label">Over</span><span class="radar-alert__stat-value" id="radar-alert-stat-over"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label" id="radar-alert-stat-fine-label">Fine</span><span class="radar-alert__stat-value" id="radar-alert-stat-fine"></span></div></div>
         <div class="radar-alert__progress"><div class="radar-alert__progress-fill" id="radar-alert-progress"></div></div>
     </div></div>
+
+    <!-- Fishing Tournament Live Compact HUD -->
+    <div id="fishing-tournament-hud" class="ft-hud hidden" aria-live="polite">
+        <div class="ft-hud__glass">
+            <div class="ft-hud__top">
+                <div class="ft-hud__brand">
+                    <span class="ft-hud__icon">🎣</span>
+                    <span class="ft-hud__title">TOURNAMENT</span>
+                </div>
+                <div class="ft-hud__status-badge" id="ft-hud-status-badge">0/3 QUALIFY</div>
+                <div class="ft-hud__timer" id="ft-hud-timer">00:00</div>
+            </div>
+
+            <div class="ft-hud__main">
+                <div class="ft-hud__metric ft-hud__metric--hero">
+                    <div class="ft-hud__rank-tag">RANK</div>
+                    <div class="ft-hud__rank-val" id="ft-hud-rank">#--</div>
+                </div>
+                <div class="ft-hud__metric ft-hud__metric--weight">
+                    <div class="ft-hud__metric-lbl">TOTAL CATCH</div>
+                    <div class="ft-hud__metric-val"><span id="ft-hud-weight">0.0</span> <span class="ft-hud__unit">KG</span></div>
+                </div>
+            </div>
+
+            <div class="ft-hud__stats">
+                <div class="ft-hud__stat">
+                    <span class="ft-hud__stat-lbl">Leader</span>
+                    <span class="ft-hud__stat-val ft-hud__stat-val--leader" id="ft-hud-leader-name">—</span>
+                    <span class="ft-hud__stat-sub" id="ft-hud-leader-weight">0.0 KG</span>
+                </div>
+                <div class="ft-hud__stat">
+                    <span class="ft-hud__stat-lbl">Catches</span>
+                    <span class="ft-hud__stat-val" id="ft-hud-fish-count">0</span>
+                </div>
+                <div class="ft-hud__stat">
+                    <span class="ft-hud__stat-lbl">Biggest</span>
+                    <span class="ft-hud__stat-val" id="ft-hud-biggest">—</span>
+                </div>
+            </div>
+
+            <div class="ft-hud__feedback hidden" id="ft-hud-feedback">
+                <span class="ft-fb-text"></span>
+                <span class="ft-fb-sub"></span>
+            </div>
+
+            <div class="ft-hud__mini-lb hidden" id="ft-hud-leaderboard-list"></div>
+        </div>
+    </div>
+
+    <!-- Fishing Tournament Results Modal -->
+    <div id="fishing-tournament-results" class="ft-results-modal hidden" aria-modal="true" role="dialog">
+        <div class="ft-results-card">
+            <div class="ft-results-header">
+                <div class="ft-results-badge">OFFICIAL RESULTS</div>
+                <h2 class="ft-results-title" id="ft-results-title">FISHING TOURNAMENT</h2>
+                <p class="ft-results-sub" id="ft-results-subtitle">Event Completed</p>
+            </div>
+
+            <div class="ft-podium" id="ft-podium">
+                <!-- Injected dynamically by JS -->
+            </div>
+
+            <div class="ft-player-summary" id="ft-player-summary">
+                <!-- Injected dynamically by JS -->
+            </div>
+
+            <div class="ft-results-footer">
+                <button type="button" class="ft-results-close-btn" id="ft-results-close-btn">CLOSE</button>
+            </div>
+        </div>
+    </div>

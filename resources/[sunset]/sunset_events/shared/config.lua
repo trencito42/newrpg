@@ -22,10 +22,10 @@ SunsetEvents.Config = {
     },
 
     -- Rewards
+    -- Generic non-specialized event reward (e.g. car_meet).
+    -- Specialized events (race_night, fishing_tournament) own their placement rewards.
     rewards = {
         car_meet = { cash = 5000, xp = 200 },
-        race_night = { cash = 10000, xp = 300 },
-        fishing_tournament = { cash = 7500, xp = 250 },
     },
 
     -- Announcement interval (seconds)

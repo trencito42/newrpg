@@ -203,6 +203,12 @@
         fishingShopShow: 'fishing',
         fishingHudShow: 'fishing',
         fishingHudUpdate: 'fishing',
+        fishingTournamentHudShow: 'hud_core',
+        fishingTournamentHudUpdate: 'hud_core',
+        fishingTournamentHudHide: 'hud_core',
+        fishingTournamentResultsShow: 'hud_core',
+        fishingTournamentResultsHide: 'hud_core',
+        fishingTournamentCatchFeedback: 'hud_core',
 
         // Jobcenter
         jobCenterShow: 'jobcenter',
@@ -350,6 +356,7 @@
                 'emotes-close': 'emotesClose', 'clothing-close': 'clothingClose', 'documents-close': 'documentsClose',
                 'crafting-close': 'craftingClose', 'dealership-close': 'dealershipClose',
                 'dispatch-112-cancel': 'close112Modal',
+                'ft-results-close-btn': 'fishingTournamentCloseResults',
             };
             document.addEventListener('click', (event) => {
                 const control = event.target?.closest?.('[id]');
@@ -362,6 +369,13 @@
         },
 
         handleEscape() {
+            // Check if fishing tournament results modal is open
+            if (!$('#fishing-tournament-results')?.classList.contains('hidden')) {
+                window.FishingTournamentUI?.hideResults?.();
+                post('fishingTournamentCloseResults', {});
+                return;
+            }
+
             // Check if 112 emergency dispatch modal is open
             if (!$('#dispatch-112-modal')?.classList.contains('hidden')) {
                 if (window.MdcTablet?.close112) {
@@ -775,6 +789,12 @@
                 case 'fishingShow': window.Fishing?.show?.(payload); return;
                 case 'fishingUpdate': window.Fishing?.update?.(payload); return;
                 case 'fishingHide': window.Fishing?.hide?.(); return;
+                case 'fishingTournamentHudShow': window.FishingTournamentUI?.showHud?.(payload); return;
+                case 'fishingTournamentHudUpdate': window.FishingTournamentUI?.updateHud?.(payload); return;
+                case 'fishingTournamentHudHide': window.FishingTournamentUI?.hideHud?.(); return;
+                case 'fishingTournamentResultsShow': window.FishingTournamentUI?.showResults?.(payload); return;
+                case 'fishingTournamentResultsHide': window.FishingTournamentUI?.hideResults?.(); return;
+                case 'fishingTournamentCatchFeedback': window.FishingTournamentUI?.showCatchFeedback?.(payload); return;
                 case 'fuelPumpShow': window.FuelPump?.show?.(payload); return;
                 case 'fuelPumpUpdate': window.FuelPump?.update?.(payload); return;
                 case 'fuelPumpHide': window.FuelPump?.hide?.(); return;

@@ -18,8 +18,8 @@
         },
         hud_core: {
             html: 'modules/hud/index.html',
-            css: ['css/hud.css', 'css/premium-hud.css', 'css/premium-wanted.css', 'css/gameplay_glass.css', 'css/world-tooltip.css', 'css/fuel_pump.css', 'css/fuel-pump-forza.css', 'css/fishing.css'],
-            js: ['js/forza_speedometer.js', 'js/hud.js', 'js/hud_editor.js', 'js/overlays.js', 'js/player_identity.js', 'js/world-tooltip.js', 'js/fuel_pump.js', 'js/job_icons.js', 'js/fishing.js']
+            css: ['css/hud.css', 'css/premium-hud.css', 'css/premium-wanted.css', 'css/gameplay_glass.css', 'css/world-tooltip.css', 'css/fuel_pump.css', 'css/fuel-pump-forza.css', 'css/fishing.css', 'css/fishing-tournament.css'],
+            js: ['js/forza_speedometer.js', 'js/hud.js', 'js/hud_editor.js', 'js/overlays.js', 'js/player_identity.js', 'js/world-tooltip.js', 'js/fuel_pump.js', 'js/job_icons.js', 'js/fishing.js', 'js/fishing_tournament.js']
         },
         radar: {
             css: ['css/radar.css'],
