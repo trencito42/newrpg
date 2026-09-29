@@ -785,6 +785,74 @@ RegisterNetEvent('sunset:licenses:weaponProgress', function(hits, required)
     })
 end)
 
+-- [SECTION 9-13] Hunting practical test client
+
+local function runHuntingTest(cfg)
+    -- Ask the server to spawn peds and issue us the weapon
+    local result, err = Sunset.AwaitCallback('sunset:license:startHuntingExam')
+    if not result then return failTest(err or 'Could not start hunting exam.') end
+
+    huntingServerHits    = 0
+    huntingServerMistakes = 0
+
+    local targetsRequired = result.targetsRequired or cfg.targetsRequired or 3
+    local maxMistakes     = result.maxMistakes     or cfg.maxMistakes     or 1
+
+    ShowLicenseTestHud({
+        licenseType      = 'hunting',
+        state            = 'hunting',
+        title            = 'LSSI Hunting Range',
+        targetsHit       = 0,
+        targetsRequired  = targetsRequired,
+        message          = ('Shoot %d deer. Do NOT shoot protected animals.'):format(targetsRequired),
+        progress         = 0,
+    })
+end
+
+RegisterNetEvent('sunset:licenses:giveHuntingWeapon', function(weaponName, ammo)
+    huntingWeaponName = weaponName
+    GiveWeaponToPed(PlayerPedId(), joaat(weaponName), ammo or 15, false, true)
+end)
+
+RegisterNetEvent('sunset:licenses:removeHuntingWeapon', function()
+    if huntingWeaponName then
+        RemoveWeaponFromPed(PlayerPedId(), joaat(huntingWeaponName))
+        huntingWeaponName = nil
+    end
+end)
+
+RegisterNetEvent('sunset:licenses:huntingProgress', function(hits, required)
+    huntingServerHits = tonumber(hits) or 0
+    UpdateLicenseTestHud({
+        licenseType     = 'hunting',
+        state           = 'hunting',
+        title           = 'LSSI Hunting Range',
+        targetsHit      = huntingServerHits,
+        targetsRequired = tonumber(required) or 3,
+        message         = ('Legal targets hit: %d/%d'):format(huntingServerHits, tonumber(required) or 3),
+        progress        = math.floor((huntingServerHits / math.max(tonumber(required) or 3, 1)) * 100),
+    })
+end)
+
+RegisterNetEvent('sunset:licenses:huntingMistake', function(mistakes, maxAllowed)
+    huntingServerMistakes = tonumber(mistakes) or 0
+    notify(('Warning: protected animal hit! (%d/%d mistakes)'):format(huntingServerMistakes, tonumber(maxAllowed) or 1), 'error')
+    UpdateLicenseTestHud({
+        licenseType     = 'hunting',
+        state           = 'hunting',
+        title           = 'LSSI Hunting Range',
+        targetsHit      = huntingServerHits,
+        targetsRequired = 3,
+        message         = ('MISTAKE %d/%d — do NOT shoot protected animals!'):format(huntingServerMistakes, tonumber(maxAllowed) or 1),
+        progress        = math.floor((huntingServerHits / 3) * 100),
+    })
+end)
+
+RegisterNetEvent('sunset:licenses:huntingAllDown', function()
+    -- All required legal targets are down — auto-complete the practical
+    completeTest('hunting')
+end)
+
 local function runCheckpointTest(licenseType, cfg, facility)
     local cpIndex = 1
     refreshCheckpointNavigation(cfg, 1, 2)
@@ -868,6 +936,8 @@ function StartPracticalTest(licenseType, payload)
     if not cfg then return failTest('Practical test not configured.') end
     if licenseType == 'weapon' then
         runWeaponTest(cfg)
+    elseif licenseType == 'hunting' then
+        runHuntingTest(cfg)
     elseif licenseType == 'driver' then
         runDriverTest(cfg)
     else
