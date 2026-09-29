@@ -35,10 +35,6 @@ local function spawnContact(id, data)
     local ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.coords.w, false, false)
     if ped == 0 then SetModelAsNoLongerNeeded(hash) return end
 
-    -- Snap to ground so NPC doesn't float on containers/structures
-    SetEntityCoordsNoOffset(ped, data.coords.x, data.coords.y, data.coords.z, false, false, false)
-    PlaceObjectOnGroundProperly(ped)
-
     SetEntityAsMissionEntity(ped, true, true)
     FreezeEntityPosition(ped, true)
     SetEntityInvincible(ped, true)
