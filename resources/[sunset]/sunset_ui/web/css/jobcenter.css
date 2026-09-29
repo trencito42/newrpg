@@ -307,6 +307,41 @@
     border-radius: 8px;
 }
 
+.jobcenter-details__workplace-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(0, 255, 204, 0.12);
+    border: 1px solid rgba(0, 255, 204, 0.35);
+    border-radius: 6px;
+    color: #00ffcc;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.jobcenter-details__supervisor {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: 4px 0;
+}
+
+.jobcenter-details__address {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 2px 0 8px 0;
+}
+
+.jobcenter-details__apply-hint {
+    font-size: 0.82rem;
+    color: #fbbf24;
+    padding: 8px 12px;
+    background: rgba(251, 191, 36, 0.08);
+    border-left: 3px solid #fbbf24;
+    border-radius: 4px;
+    margin: 8px 0 0 0;
+}
+
 /* ── Footer Actions ── */
 .jobcenter-footer {
     display: flex;

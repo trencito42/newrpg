@@ -19,12 +19,18 @@ local function buildJobCenterJobs(center, source)
     -- The classic civilian jobs are the only authoritative job catalogue.
     for jobId, def in pairs(Sunset.CivilianJobs or {}) do
         if jobId ~= 'unemployed' and (def.type == 'civilian' or not def.type) and not seen[jobId] then
+            local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId]
+            local coords = (wp and wp.npc and wp.npc.coords and { x = wp.npc.coords.x, y = wp.npc.coords.y, z = wp.npc.coords.z }) or def.npcCoords
             add({
                 id = jobId,
-                label = def.label or jobId,
-                description = def.description or '',
+                label = (wp and wp.jobLabel) or def.label or jobId,
+                description = (wp and wp.description) or def.description or '',
                 salary = def.grades and def.grades[0] and def.grades[0].salary,
-                npcCoords = def.npcCoords,
+                locationLabel = wp and wp.locationLabel or 'San Andreas',
+                address = wp and wp.address or '',
+                supervisorName = wp and wp.npc and wp.npc.name or 'Supervisor',
+                hasPhysicalWorkplace = (wp ~= nil),
+                npcCoords = coords,
             })
         end
     end
@@ -34,12 +40,18 @@ local function buildJobCenterJobs(center, source)
         if j.id == 'unemployed' or seen[j.id] then goto continue end
         local def = Sunset.CivilianJobs[j.id]
         if def and def.type == 'civilian' then
+            local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[j.id]
+            local coords = (wp and wp.npc and wp.npc.coords and { x = wp.npc.coords.x, y = wp.npc.coords.y, z = wp.npc.coords.z }) or def.npcCoords
             add({
                 id = j.id,
-                label = j.label or def.label or j.id,
-                description = def.description or '',
+                label = j.label or (wp and wp.jobLabel) or def.label or j.id,
+                description = (wp and wp.description) or def.description or '',
                 salary = def.grades and def.grades[0] and def.grades[0].salary,
-                npcCoords = def.npcCoords,
+                locationLabel = wp and wp.locationLabel or 'San Andreas',
+                address = wp and wp.address or '',
+                supervisorName = wp and wp.npc and wp.npc.name or 'Supervisor',
+                hasPhysicalWorkplace = (wp ~= nil),
+                npcCoords = coords,
             })
         end
         ::continue::
@@ -76,7 +88,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:jobs:getJobCenterJobs', function(source, centerId)
     local center = Sunset.JobCenters and Sunset.JobCenters[centerId]
-    if not center then return nil, 'Unknown job center.' end
+    if not center then return nil, 'Unknown employment office.' end
     return buildJobCenterJobs(center, source)
 end)
 
@@ -97,7 +109,21 @@ local function hireCivilianJob(source, jobId)
     end
 
     if jobId == 'unemployed' then
-        return quitCivilianJob(source, 'Resigned at Job Center')
+        return quitCivilianJob(source, 'Resigned at Employment Office')
+    end
+
+    -- If this job has a physical workplace, direct hiring via employment office is disabled.
+    local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId]
+    if wp then
+        local ped = GetPlayerPed(source)
+        local playerCoords = ped and ped ~= 0 and GetEntityCoords(ped)
+        local npcCoords = wp.npc and wp.npc.coords and vector3(wp.npc.coords.x, wp.npc.coords.y, wp.npc.coords.z)
+        local dist = (playerCoords and npcCoords) and #(playerCoords - npcCoords) or 999.0
+
+        if dist > 12.0 then
+            return nil, ('%s requires in-person application at %s (%s). Use "Set GPS" to navigate.'):format(
+                wp.jobLabel or jobId, wp.locationLabel or 'its workplace', wp.npc and wp.npc.name or 'Supervisor')
+        end
     end
 
     if currentJob == jobId then
@@ -124,9 +150,8 @@ local function hireCivilianJob(source, jobId)
 
     local hiredLabel = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
     exports.sunset_core:CommandReply(source,
-        ('Hired as %s. Use /work to start.'):format(hiredLabel), 'success')
+        ('Hired as %s. Speak to your supervisor or use /work to start.'):format(hiredLabel), 'success')
     TriggerClientEvent('sunset:jobs:waypointToWork', source, jobId)
-    -- [QUESTS] onboarding chain: first hire completes the objective.
     TriggerEvent('sunset:quest:progress', char.id, 'job_hired', 1, { jobId = jobId })
     return true
 end

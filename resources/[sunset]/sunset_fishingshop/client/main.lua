@@ -102,6 +102,8 @@ local FISHING_ACTIONS = {
     start_fishing_shift = true,
     end_fishing_shift = true,
     upgrade_fishing_rod = true,
+    fishing_guide = true,
+    quit_fisherman_job = true,
     sell_fish_247 = true,
     open_shop_247 = true,
     buy_business = true,
@@ -349,6 +351,10 @@ local function buildBillyRayActions(job)
             actions[#actions + 1] = { id = 'start_fishing_shift', label = 'Start Shift', group = 'FISHING' }
         end
         actions[#actions + 1] = { id = 'upgrade_fishing_rod', label = 'Upgrade Fishing Rod', group = 'FISHING' }
+        actions[#actions + 1] = { id = 'fishing_guide', label = 'Fisherman Guide', group = 'INFO' }
+        actions[#actions + 1] = { id = 'quit_fisherman_job', label = 'Resign as Fisherman', group = 'CIVILIAN' }
+    else
+        actions[#actions + 1] = { id = 'fishing_guide', label = 'Fisherman Guide', group = 'INFO' }
     end
 
     return actions
@@ -659,6 +665,27 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 exports.sunset_ui:Notify(msg or 'Rod upgraded!', 'success', 6000)
             else
                 exports.sunset_ui:Notify(msg or 'Could not upgrade rod.', 'error')
+            end
+            SetTimeout(2000, function() inCooldown = false end)
+        end)
+
+    elseif action == 'fishing_guide' then
+        local guide = Sunset.JobWorkplaces and Sunset.JobWorkplaces.fisherman and Sunset.JobWorkplaces.fisherman.guide
+        if guide and guide.steps then
+            exports.sunset_ui:Notify(('=== %s ===\n%s'):format(guide.title or 'Fisherman Guide', table.concat(guide.steps, '\n')), 'info', 12000)
+        else
+            exports.sunset_ui:Notify('Fisherman Guide: Buy bait from Billy Ray, stand at the Paleto pontoon, press [E] to fish, and sell your catch!', 'info', 8000)
+        end
+
+    elseif action == 'quit_fisherman_job' then
+        inCooldown = true
+        CreateThread(function()
+            local ok, err = Sunset.AwaitCallback('sunset:quitCivilianJob')
+            if ok then
+                syncLocalJob('unemployed', 0)
+                exports.sunset_ui:Notify('You have resigned as a Fisherman.', 'info', 6000)
+            else
+                exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)

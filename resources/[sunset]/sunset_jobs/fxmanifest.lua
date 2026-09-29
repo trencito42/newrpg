@@ -13,6 +13,7 @@ files {
 shared_scripts {
     '@sunset_core/shared/config.lua',
     '@sunset_core/shared/jobs_civilian.lua',
+    '@sunset_core/shared/jobs_workplaces.lua',
     '@sunset_core/shared/jobs_config.lua',
     '@sunset_core/shared/job_session.lua',
     '@sunset_core/shared/profile.lua',
@@ -26,6 +27,7 @@ client_scripts {
     '@sunset_core/client/callbacks.lua',
     'client/core.lua',
     'client/visual_shared.lua',
+    'client/workplaces.lua',
     'client/trucker.lua',
     'client/trucker_npc.lua',
     'client/garbage.lua',
@@ -40,6 +42,7 @@ server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/core.lua',
     'server/route_store.lua',
+    'server/workplaces.lua',
     'server/trucker.lua',
     'server/garbage.lua',
     'server/courier.lua',

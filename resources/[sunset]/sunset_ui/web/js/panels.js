@@ -1530,7 +1530,7 @@ const Panels = {
     showJobCenter(data) {
         this.init();
         const jobs = data.jobs || [];
-        $('#jobcenter-title').textContent = (data.label || 'JOB CENTER').toUpperCase();
+        $('#jobcenter-title').textContent = (data.label || 'EMPLOYMENT OFFICE').toUpperCase();
 
         const list = $('#jobcenter-list');
         const detailEl = $('#jobcenter-details');
@@ -1546,18 +1546,38 @@ const Panels = {
             list.querySelectorAll('.jobcenter-job-item').forEach(li => li.classList.remove('is-selected'));
             el.classList.add('is-selected');
             sideTitle.textContent = job.label;
-            const salaryText = job.salary ? `$${job.salary} / week` : 'Unpaid';
+            const salaryText = job.salary ? `$${job.salary} / week` : 'Standard Pay';
+            const locationText = job.locationLabel ? `📍 ${job.locationLabel}` : '📍 San Andreas';
+            const supervisorText = job.supervisorName ? `👤 Supervisor: ${job.supervisorName}` : '';
+            const addressText = job.address ? `<p class="jobcenter-details__address">${job.address}</p>` : '';
+
             detailEl.innerHTML = `
+                <div class="jobcenter-details__workplace-badge">${locationText}</div>
                 <p class="jobcenter-details__salary">${salaryText}</p>
-                ${job.isCurrent ? '<p class="jobcenter-details__current">✓ You currently work this job. Use /work to start your shift.</p>' : ''}
+                ${supervisorText ? `<p class="jobcenter-details__supervisor">${supervisorText}</p>` : ''}
+                ${addressText}
+                ${job.isCurrent ? '<p class="jobcenter-details__current">✓ You are currently employed in this career.</p>' : ''}
                 ${job.description ? `<p class="jobcenter-details__desc">${job.description}</p>` : ''}
+                ${job.hasPhysicalWorkplace && !job.isCurrent ? '<p class="jobcenter-details__apply-hint">💡 Visit the workplace supervisor in person to apply for this job.</p>' : ''}
             `;
-            hireBtn.disabled = !!job.isCurrent;
-            hireBtn.textContent = job.isCurrent ? 'CURRENT JOB' : 'HIRE';
+
             if (job.npcCoords) {
                 waypointBtn.classList.remove('hidden');
+                waypointBtn.textContent = 'SET GPS TO WORKPLACE';
             } else {
                 waypointBtn.classList.add('hidden');
+            }
+
+            if (job.id === 'unemployed') {
+                hireBtn.classList.remove('hidden');
+                hireBtn.disabled = !!job.isCurrent;
+                hireBtn.textContent = job.isCurrent ? 'UNEMPLOYED' : 'RESIGN ALL JOBS';
+            } else if (job.hasPhysicalWorkplace) {
+                hireBtn.classList.add('hidden');
+            } else {
+                hireBtn.classList.remove('hidden');
+                hireBtn.disabled = !!job.isCurrent;
+                hireBtn.textContent = job.isCurrent ? 'CURRENT JOB' : 'HIRE';
             }
         };
 
@@ -1571,10 +1591,10 @@ const Panels = {
         });
 
         // Reset side panel
-        sideTitle.textContent = 'JOB DETAILS';
-        detailEl.innerHTML = '<p class="jobcenter-details__hint">Select a job from the list</p>';
+        sideTitle.textContent = 'CAREER OPPORTUNITY';
+        detailEl.innerHTML = '<p class="jobcenter-details__hint">Select a career opportunity to view details and set GPS navigation.</p>';
+        hireBtn.classList.add('hidden');
         hireBtn.disabled = true;
-        hireBtn.textContent = 'HIRE';
         waypointBtn.classList.add('hidden');
 
         hireBtn.onclick = () => {

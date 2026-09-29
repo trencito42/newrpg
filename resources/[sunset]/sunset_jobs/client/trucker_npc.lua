@@ -1,36 +1,13 @@
 -- sunset_jobs · client/trucker_npc.lua
--- Dispatcher NPC + laptop route selector.
--- NPC interaction mirrors sunset_fishingshop (Billy Ray) exactly.
+-- Laptop route selector & terminal interaction for Trucker job.
 
-local JC = Sunset.JobClient
+local LAPTOP_COORDS = vector4(1207.92, -3114.87, 5.54, 259.54)
+local LAPTOP_DIST   = 2.5
+local INTERACT_KEY  = 38   -- E
 
-local NPC_COORDS      = vector4(1200.59, -3107.89, 6.03, 312.11)
-local NPC_PROMPT_DIST = 4.5
-local NPC_MENU_DIST   = 2.15
-local LAPTOP_COORDS   = vector4(1207.92, -3114.87, 5.54, 259.54)
-local LAPTOP_DIST     = 2.5
-local INTERACT_KEY    = 38   -- E
-
-local truckerNpc          = nil
-local nearNpc             = false
-local nearLaptop          = false
-local npcMenuOpen         = false
-local laptopOpen          = false
-local inCooldown          = false
-local npcMenuCloseArmed   = false
-local npcTooltipVisible   = false
-local truckerUnlockAt     = 0   -- 0 = unlocked immediately (no 60s dead-zone bug)
-
-local TRUCKER_ACTIONS = {
-    hire_trucker      = true,
-    end_trucker_shift = true,
-}
-
--- ── Helpers ───────────────────────────────────────────────────
-
-local function npcCenter()
-    return vector3(NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z)
-end
+local nearLaptop        = false
+local laptopOpen        = false
+local truckerUnlockAt   = 0
 
 local function laptopCenter()
     return vector3(LAPTOP_COORDS.x, LAPTOP_COORDS.y, LAPTOP_COORDS.z)
@@ -43,59 +20,7 @@ local function truckerInteractionsReady()
 end
 
 local function armGrace(ms)
-    truckerUnlockAt = GetGameTimer() + (ms or 3000)
-end
-
--- ── Cross-resource tooltip helpers ────────────────────────────
-
-local function worldShowTooltip(id, ped, meta)
-    if GetResourceState('sunset_world') ~= 'started' then return false end
-    local ok, shown = pcall(function()
-        return exports.sunset_world:NpcShowTooltip(id, ped, meta)
-    end)
-    return ok and shown == true
-end
-
-local function worldHideTooltip(id)
-    if GetResourceState('sunset_world') ~= 'started' then return end
-    pcall(function() exports.sunset_world:NpcHideTooltip(id) end)
-end
-
--- ── NPC tooltip ───────────────────────────────────────────────
-
-local function showNpcTooltip()
-    if not truckerNpc or not DoesEntityExist(truckerNpc) then return end
-    local shown = worldShowTooltip('trucker_dispatcher', truckerNpc, {
-        badge      = 'TRUCKER JOB',
-        badgeClass = 'trucker',
-        icon       = 'ph-truck',
-        title      = 'Dispatcher',
-        desc       = 'Interaction / Trucker Job',
-        key        = 'E',
-    })
-    npcTooltipVisible = shown == true
-    if not shown then
-        BeginTextCommandDisplayHelp('STRING')
-        AddTextComponentSubstringPlayerName('~INPUT_CONTEXT~ — Dispatcher')
-        EndTextCommandDisplayHelp(0, false, true, 100)
-    end
-end
-
-local function hideNpcTooltip()
-    if not npcTooltipVisible then return end
-    npcTooltipVisible = false
-    worldHideTooltip('trucker_dispatcher')
-end
-
--- ── Close menus ───────────────────────────────────────────────
-
-local function closeNpcMenu()
-    if not npcMenuOpen then return end
-    npcMenuOpen = false
-    npcMenuCloseArmed = false
-    hideNpcTooltip()
-    exports.sunset_ui:Send('playerInteractionHide', {})
-    exports.sunset_ui:SetFocus(false, false)
+    truckerUnlockAt = GetGameTimer() + (ms or 2000)
 end
 
 -- ── Open laptop UI ────────────────────────────────────────────
@@ -116,108 +41,13 @@ local function openLaptopUi()
     end)
 end
 
--- ── Open NPC menu ─────────────────────────────────────────────
-
-local function openTruckerNpcMenu()
-    if npcMenuOpen or not truckerInteractionsReady() then return end
-    CreateThread(function()
-        local data, err = Sunset.AwaitCallback('sunset:jobs:trucker:getNpcMenu')
-        if not data then
-            if err then exports.sunset_ui:Notify(err, 'error', 5000) end
-            return
-        end
-        -- Do NOT re-run truckerInteractionsReady() here — an async callback
-        -- can temporarily leave IsNuiFocused true and silently kill the menu.
-        if npcMenuOpen then return end
-
-        local actions = {}
-        if data.job ~= 'trucker' then
-            actions[#actions + 1] = { id = 'hire_trucker', label = 'Become a Trucker', group = 'CIVILIAN' }
-        elseif data.onShift then
-            actions[#actions + 1] = { id = 'end_trucker_shift', label = 'End Shift', group = 'TRUCKER' }
-        else
-            -- Hired trucker not on shift: redirect to the laptop.
-            exports.sunset_ui:Notify('Head to the Route Laptop to pick a delivery.', 'info', 5000)
-            SetNewWaypoint(LAPTOP_COORDS.x, LAPTOP_COORDS.y)
-            return
-        end
-        if #actions == 0 then return end
-
-        npcMenuCloseArmed = false
-        hideNpcTooltip()
-        exports.sunset_ui:Send('playerInteractionShow', {
-            menuTitle = 'Trucker Actions',
-            target    = { name = 'Dispatcher', id = '' },
-            actions   = actions,
-        })
-        exports.sunset_ui:SetFocus(true, true)
-        npcMenuOpen = true
-    end)
-end
-
--- ── Reset on spawn / character flow ──────────────────────────
-
-local function resetTruckerUiOnEntry()
-    armGrace(3500)
-    npcMenuOpen     = false
-    laptopOpen      = false
-    inCooldown      = false
-    npcMenuCloseArmed = false
-    hideNpcTooltip()
-    exports.sunset_ui:Send('playerInteractionHide', {})
-    exports.sunset_ui:SetFocus(false, false)
-end
-
-AddEventHandler('sunset:client:playerSpawned', resetTruckerUiOnEntry)
-AddEventHandler('sunset:client:characterFlowComplete', function()
-    armGrace(3500)
+RegisterNetEvent('sunset:jobs:trucker:openLaptop', function()
+    openLaptopUi()
 end)
 
--- ── Spawn NPC ─────────────────────────────────────────────────
+-- ── Spawn Laptop Blip ─────────────────────────────────────────
 
 CreateThread(function()
-    local hash = GetHashKey('g_m_y_strpunk_02')
-    RequestModel(hash)
-    local timeout = GetGameTimer() + 20000
-    while not HasModelLoaded(hash) and GetGameTimer() < timeout do Wait(200) end
-    if not HasModelLoaded(hash) then
-        print('[sunset_jobs] ERR: trucker NPC model failed to load')
-        return
-    end
-    Wait(500)
-    -- Subtract 1.0 from z so the NPC stands on the ground at the correct height.
-    truckerNpc = CreatePed(4,
-        hash,
-        NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z - 1.0,
-        NPC_COORDS.w,
-        false, true)
-    if not truckerNpc or not DoesEntityExist(truckerNpc) then
-        SetModelAsNoLongerNeeded(hash)
-        return
-    end
-    SetEntityAsMissionEntity(truckerNpc, true, true)
-    FreezeEntityPosition(truckerNpc, true)
-    SetEntityInvincible(truckerNpc, true)
-    SetBlockingOfNonTemporaryEvents(truckerNpc, true)
-    SetEntityCanBeDamaged(truckerNpc, false)
-    SetPedCanRagdoll(truckerNpc, false)
-    SetPedComponentVariation(truckerNpc, 3, 5,  0, 0)
-    SetPedComponentVariation(truckerNpc, 4, 24, 0, 0)
-    SetPedComponentVariation(truckerNpc, 6, 24, 0, 0)
-    SetPedPropIndex(truckerNpc, 0, 14, 0, true)
-    TaskStartScenarioInPlace(truckerNpc, 'WORLD_HUMAN_CLIPBOARD', 0, true)
-    SetModelAsNoLongerNeeded(hash)
-
-    local blip = AddBlipForCoord(NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z)
-    SetBlipSprite(blip, 477)
-    SetBlipColour(blip, 5)
-    SetBlipScale(blip, 0.85)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString('Trucker Dispatcher')
-    EndTextCommandSetBlipName(blip)
-
-    -- Laptop blip (sprite 521 = radar_laptop)
     local lapBlip = AddBlipForCoord(LAPTOP_COORDS.x, LAPTOP_COORDS.y, LAPTOP_COORDS.z)
     SetBlipSprite(lapBlip, 521)
     SetBlipColour(lapBlip, 5)
@@ -228,148 +58,40 @@ CreateThread(function()
     EndTextCommandSetBlipName(lapBlip)
 end)
 
--- ── Proximity loop (tooltip + laptop marker + auto-close) ─────
+-- ── Proximity loop for Laptop Terminal ────────────────────────
 
 CreateThread(function()
     while true do
-        local pos   = GetEntityCoords(PlayerPedId())
-        local dNpc  = (truckerNpc and DoesEntityExist(truckerNpc)) and #(pos - npcCenter()) or 999
-        local dLap  = #(pos - laptopCenter())
-        local wasNpc = nearNpc
-        nearNpc     = dNpc  < NPC_PROMPT_DIST
-        nearLaptop  = dLap  < LAPTOP_DIST
+        local pos  = GetEntityCoords(PlayerPedId())
+        local dLap = #(pos - laptopCenter())
+        nearLaptop = dLap < LAPTOP_DIST
 
-        -- Auto-close NPC menu when walking away
-        if wasNpc and not nearNpc and npcMenuOpen then
-            closeNpcMenu()
-        end
-
-        -- NPC tooltip (mirrors fisherman shouldShowBillyRayPrompt)
-        if nearNpc and truckerInteractionsReady() and not npcMenuOpen and not laptopOpen then
-            showNpcTooltip()
-        else
-            hideNpcTooltip()
-        end
-
-        -- Laptop marker + native help
-        if nearLaptop then
-            DrawMarker(2,
-                LAPTOP_COORDS.x, LAPTOP_COORDS.y, LAPTOP_COORDS.z,
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                0.35, 0.35, 0.25,
-                255, 140, 0, 180,
+        if nearLaptop and not laptopOpen and truckerInteractionsReady() then
+            -- Draw ground marker under laptop desk
+            DrawMarker(1,
+                LAPTOP_COORDS.x, LAPTOP_COORDS.y, LAPTOP_COORDS.z - 0.95,
+                0, 0, 0,
+                0, 0, 0,
+                0.8, 0.8, 0.35,
+                245, 158, 11, 160,
                 false, false, 2, false, nil, nil, false)
-            if not laptopOpen and not npcMenuOpen then
-                BeginTextCommandDisplayHelp('STRING')
-                AddTextComponentSubstringPlayerName('~INPUT_CONTEXT~ — Route Laptop')
-                EndTextCommandDisplayHelp(0, false, true, 100)
+
+            BeginTextCommandDisplayHelp('STRING')
+            AddTextComponentSubstringPlayerName('~INPUT_CONTEXT~ — Open Route Laptop')
+            EndTextCommandDisplayHelp(0, false, true, 100)
+
+            if IsControlJustPressed(0, INTERACT_KEY) or IsDisabledControlJustPressed(0, INTERACT_KEY) then
+                openLaptopUi()
             end
-        end
-
-        Wait((nearNpc or nearLaptop) and 0 or 350)
-    end
-end)
-
--- ── E key handler ─────────────────────────────────────────────
-
-CreateThread(function()
-    while true do
-        if nearNpc or nearLaptop then
-            DisableControlAction(0, INTERACT_KEY, true)
-            local pos = GetEntityCoords(PlayerPedId())
-
-            -- ── NPC zone ──────────────────────────────────────
-            if nearNpc then
-                if npcMenuOpen then
-                    -- Close on next press after first release (mirrors Billy Ray)
-                    if IsDisabledControlJustPressed(0, INTERACT_KEY) and npcMenuCloseArmed then
-                        closeNpcMenu()
-                    end
-                    if IsDisabledControlJustReleased(0, INTERACT_KEY) then
-                        npcMenuCloseArmed = true
-                    end
-                elseif truckerInteractionsReady() and not inCooldown and not laptopOpen then
-                    -- Simple press anywhere within tooltip range — same as Billy Ray.
-                    -- (NPC_MENU_DIST sub-check removed: players can't physically reach
-                    --  2.15 m due to ped collision, so menu never opened.)
-                    if IsDisabledControlJustReleased(0, INTERACT_KEY) then
-                        openTruckerNpcMenu()
-                    end
-                end
-            end
-
-            -- ── Laptop zone (only when not at NPC and no menu open) ──
-            if nearLaptop and not nearNpc and not laptopOpen and not npcMenuOpen
-               and not inCooldown and truckerInteractionsReady() then
-                if IsDisabledControlJustReleased(0, INTERACT_KEY) then
-                    openLaptopUi()
-                end
-            end
-
             Wait(0)
         else
-            npcMenuCloseArmed = false
-            Wait(200)
+            Wait(250)
         end
     end
 end)
 
 -- ── NUI events ────────────────────────────────────────────────
 
--- playerInteraction menu closed (ESC or backdrop click)
-AddEventHandler('sunset:nui:playerInteractionClose', function()
-    if not npcMenuOpen then return end
-    closeNpcMenu()
-    armGrace(1500)
-end)
-
--- playerInteraction action selected
-AddEventHandler('sunset:nui:playerInteractionAction', function(data)
-    if not data or not data.action then return end
-    if not TRUCKER_ACTIONS[data.action] then return end   -- ignore other resources' menus
-    if not npcMenuOpen then return end
-
-    local action = data.action
-    closeNpcMenu()
-    armGrace(2000)
-
-    if action == 'hire_trucker' then
-        inCooldown = true
-        CreateThread(function()
-            local ok, err = Sunset.AwaitCallback('sunset:hireJob', 'trucker')
-            if ok then
-                SetNewWaypoint(LAPTOP_COORDS.x, LAPTOP_COORDS.y)
-                exports.sunset_ui:Notify('You are now a Trucker! Head to the ~y~Route Laptop~s~ to pick your first delivery.', 'success', 8000)
-            else
-                local msg = err or 'Hiring failed.'
-                if msg:find('already work', 1, true) or msg:find('already', 1, true) then
-                    SetNewWaypoint(LAPTOP_COORDS.x, LAPTOP_COORDS.y)
-                    exports.sunset_ui:Notify('You are already a Trucker! Head to the ~y~Route Laptop~s~ to pick a delivery.', 'info', 6000)
-                else
-                    exports.sunset_ui:Notify(msg, 'error', 6000)
-                end
-            end
-            SetTimeout(2000, function() inCooldown = false end)
-        end)
-
-    elseif action == 'end_trucker_shift' then
-        inCooldown = true
-        CreateThread(function()
-            local ok, err = Sunset.AwaitCallback('sunset:jobs:cancelWork')
-            if ok then
-                if JC then JC.cleanup() ; JC.hideObjective() end
-                -- Clear any active GPS waypoint (e.g. laptop waypoint from hiring)
-                SetWaypointOff()
-                exports.sunset_ui:Notify('Shift cancelled.', 'info', 4000)
-            else
-                exports.sunset_ui:Notify(err or 'Could not cancel shift.', 'error')
-            end
-            SetTimeout(2000, function() inCooldown = false end)
-        end)
-    end
-end)
-
--- Laptop close (ESC or js call)
 AddEventHandler('sunset:nui:truckerLaptopClose', function()
     if not laptopOpen then return end
     laptopOpen = false
@@ -380,7 +102,6 @@ AddEventHandler('sunset:nui:truckerLaptopClose', function()
     armGrace(1500)
 end)
 
--- Another modal superseded the laptop (single-modal rule in app.js)
 AddEventHandler('sunset:nui:modalSuperseded', function(panel)
     if panel ~= 'truckerLaptop' then return end
     if not laptopOpen then return end
@@ -389,9 +110,7 @@ AddEventHandler('sunset:nui:modalSuperseded', function(panel)
     armGrace(1000)
 end)
 
--- Route picked from laptop
 AddEventHandler('sunset:nui:truckerPickRoute', function(data)
-    print('[TRUCKER NUI] truckerPickRoute received: ' .. json.encode(data or {}))
     if not data or not data.routeIndex then return end
     laptopOpen = false
     exports.sunset_ui:SetFocus(false, false)
@@ -401,7 +120,7 @@ AddEventHandler('sunset:nui:truckerPickRoute', function(data)
     armGrace(2000)
     local routeIdx = data.routeIndex
     CreateThread(function()
-        Wait(200)  -- let the browser fully close the overlay before spawning
+        Wait(200)
         if Sunset.Jobs and Sunset.Jobs.StartTrucker then
             Sunset.Jobs.StartTrucker(routeIdx)
         else

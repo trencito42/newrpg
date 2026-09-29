@@ -17,6 +17,7 @@ files {
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
+    '@sunset_core/shared/jobs_workplaces.lua',
     'shared/config.lua',
     'shared/adapters.lua',
 }

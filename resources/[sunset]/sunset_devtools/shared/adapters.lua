@@ -53,6 +53,71 @@ register('missions', {
     end,
 })
 
+-- ── Job Workplaces & Supervisor NPCs ─────────────────────────
+
+register('workplaces', {
+    label = 'Job Workplaces',
+    jobName = nil,
+
+    describe = function()
+        if not Sunset or not Sunset.JobWorkplaces then return {} end
+        local fields = {}
+        for jobId, wp in pairs(Sunset.JobWorkplaces) do
+            local npc = wp.npc or {}
+            fields[#fields + 1] = {
+                key    = jobId .. '_npc',
+                label  = ('[%s] %s (%s)'):format(wp.jobLabel or jobId, npc.name or 'Supervisor', wp.locationLabel or 'Workplace'),
+                type   = 'ped',
+                coords = npc.coords,
+                model  = npc.model,
+            }
+            if wp.secondaryLocation and wp.secondaryLocation.coords then
+                fields[#fields + 1] = {
+                    key    = jobId .. '_secondary',
+                    label  = ('[%s] %s'):format(wp.jobLabel or jobId, wp.secondaryLocation.label or 'Secondary Location'),
+                    type   = 'point',
+                    coords = wp.secondaryLocation.coords,
+                }
+            end
+        end
+        table.sort(fields, function(a, b) return a.label < b.label end)
+        return fields
+    end,
+
+    load = function(key)
+        if not Sunset or not Sunset.JobWorkplaces then return nil, 'Sunset.JobWorkplaces not available' end
+        local jobId, part = key:match('^([^_]+)_(.+)$')
+        local wp = jobId and Sunset.JobWorkplaces[jobId]
+        if not wp then return nil, ('Unknown workplace: %s'):format(key) end
+
+        if part == 'npc' and wp.npc and wp.npc.coords then
+            local c = wp.npc.coords
+            return {
+                label    = ('[%s] %s'):format(wp.jobLabel or jobId, wp.npc.name or 'Supervisor'),
+                subtitle = wp.locationLabel or 'Workplace',
+                model    = wp.npc.model,
+                coords   = vector3(c.x, c.y, c.z),
+                heading  = c.w or c.h or 0.0,
+                scenario = wp.npc.scenario,
+            }
+        elseif part == 'secondary' and wp.secondaryLocation and wp.secondaryLocation.coords then
+            local c = wp.secondaryLocation.coords
+            return {
+                label    = ('[%s] %s'):format(wp.jobLabel or jobId, wp.secondaryLocation.label or 'Secondary Location'),
+                subtitle = wp.locationLabel or 'Workplace',
+                coords   = vector3(c.x, c.y, c.z),
+                heading  = c.w or c.h or 0.0,
+            }
+        end
+        return nil, ('Unknown workplace field: %s'):format(key)
+    end,
+
+    export = function(key, v4, _extra)
+        return ('coords = vector4(%.2f, %.2f, %.2f, %.2f),  -- %s'):format(
+            v4.x, v4.y, v4.z, v4.w, key)
+    end,
+})
+
 -- ── Trucker Route Adapter ────────────────────────────────────
 
 register('trucker', {

@@ -1,0 +1,416 @@
+-- sunset_jobs · client/workplaces.lua
+-- Generic client controller for physical job workplaces, dispatcher NPCs, tooltips, and action menus.
+
+local spawnedNpcs = {}
+local activeWorkplace = nil
+local menuOpen = false
+local currentContext = nil
+local inCooldown = false
+local unlockAt = 0
+
+local function armGrace(ms)
+    unlockAt = GetGameTimer() + (ms or 2000)
+end
+
+local function interactionsReady()
+    if GetGameTimer() < unlockAt then return false end
+    if IsNuiFocused() or IsPauseMenuActive() then return false end
+    return true
+end
+
+-- ── Tooltip Helpers ───────────────────────────────────────────
+
+local function showWorkplaceTooltip(workplace, ped)
+    if not ped or not DoesEntityExist(ped) then return end
+    local npcDef = workplace.npc or {}
+    local shown = false
+    if GetResourceState('sunset_world') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_world:NpcShowTooltip(npcDef.id or ('workplace_' .. workplace.jobId), ped, {
+                badge = npcDef.badge or (workplace.jobLabel:upper() .. ' WORKPLACE'),
+                badgeClass = npcDef.badgeClass or 'npc',
+                icon = npcDef.icon or 'ph-briefcase',
+                title = npcDef.name or workplace.jobLabel,
+                desc = npcDef.title or 'Workplace Supervisor',
+                key = 'E',
+            })
+        end)
+        shown = (ok and res == true)
+    end
+
+    if not shown then
+        BeginTextCommandDisplayHelp('STRING')
+        AddTextComponentSubstringPlayerName(('~INPUT_CONTEXT~ — %s (%s)'):format(npcDef.name or workplace.jobLabel, workplace.jobLabel))
+        EndTextCommandDisplayHelp(0, false, true, 100)
+    end
+end
+
+local function hideWorkplaceTooltip(workplace)
+    if not workplace then return end
+    local npcDef = workplace.npc or {}
+    if GetResourceState('sunset_world') == 'started' then
+        pcall(function()
+            exports.sunset_world:NpcHideTooltip(npcDef.id or ('workplace_' .. workplace.jobId))
+        end)
+    end
+end
+
+-- ── Spawn & Cleanup Workplace NPCs ────────────────────────────
+
+local function spawnWorkplaceNpc(key, workplace)
+    local npcDef = workplace.npc
+    if not npcDef or not npcDef.coords then return end
+
+    local modelHash = joaat(npcDef.model or 'mp_m_shopkeep_01')
+    RequestModel(modelHash)
+    local timeout = GetGameTimer() + 10000
+    while not HasModelLoaded(modelHash) and GetGameTimer() < timeout do Wait(50) end
+    if not HasModelLoaded(modelHash) then
+        print(('[sunset_jobs] ERR: failed to load NPC model %s for %s'):format(npcDef.model, key))
+        return
+    end
+
+    local c = npcDef.coords
+    local ped = CreatePed(4, modelHash, c.x, c.y, c.z - 1.0, c.w or c.h or 0.0, false, true)
+    if not ped or ped == 0 or not DoesEntityExist(ped) then
+        SetModelAsNoLongerNeeded(modelHash)
+        return
+    end
+
+    SetEntityAsMissionEntity(ped, true, true)
+    FreezeEntityPosition(ped, true)
+    SetEntityInvincible(ped, true)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    SetEntityCanBeDamaged(ped, false)
+    SetPedCanRagdoll(ped, false)
+    SetPedFleeAttributes(ped, 0, false)
+    SetPedCombatAttributes(ped, 46, true)
+
+    if npcDef.scenario then
+        TaskStartScenarioInPlace(ped, npcDef.scenario, 0, true)
+    end
+
+    SetModelAsNoLongerNeeded(modelHash)
+
+    -- Add blip
+    local blip = AddBlipForCoord(c.x, c.y, c.z)
+    local sprite = 407
+    if workplace.jobId == 'trucker' then sprite = 477
+    elseif workplace.jobId == 'garbage' then sprite = 318
+    elseif workplace.jobId == 'courier' then sprite = 478
+    elseif workplace.jobId == 'fisherman' then sprite = 68
+    end
+    SetBlipSprite(blip, sprite)
+    SetBlipColour(blip, 5)
+    SetBlipScale(blip, 0.8)
+    SetBlipAsShortRange(blip, true)
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(workplace.jobLabel .. ' Workplace')
+    EndTextCommandSetBlipName(blip)
+
+    spawnedNpcs[key] = {
+        ped = ped,
+        blip = blip,
+        workplace = workplace,
+    }
+end
+
+local function cleanupWorkplaceNpcs()
+    for key, data in pairs(spawnedNpcs) do
+        if data.workplace then hideWorkplaceTooltip(data.workplace) end
+        if data.ped and DoesEntityExist(data.ped) then
+            DeleteEntity(data.ped)
+        end
+        if data.blip and DoesBlipExist(data.blip) then
+            RemoveBlip(data.blip)
+        end
+    end
+    spawnedNpcs = {}
+end
+
+local function initWorkplaces()
+    cleanupWorkplaceNpcs()
+    for key, wp in pairs(Sunset.JobWorkplaces or {}) do
+        -- Skip fisherman if sunset_fishingshop is running and owns Billy Ray directly
+        if key == 'fisherman' and GetResourceState('sunset_fishingshop') == 'started' then
+            -- fishingshop manages Billy Ray ped, but we can hook the interaction
+        else
+            spawnWorkplaceNpc(key, wp)
+        end
+    end
+end
+
+-- ── Menu Interactions ─────────────────────────────────────────
+
+local function closeWorkplaceMenu()
+    if not menuOpen then return end
+    menuOpen = false
+    currentContext = nil
+    exports.sunset_ui:Send('playerInteractionHide', {})
+    exports.sunset_ui:SetFocus(false, false)
+    armGrace(1500)
+end
+
+local function showJobGuide(guide)
+    if not guide or not guide.steps then return end
+    local title = guide.title or 'Job Career Guide'
+    local fullText = table.concat(guide.steps, '\n')
+    exports.sunset_ui:Notify(('=== %s ===\n%s'):format(title, fullText), 'info', 12000)
+end
+
+local function openWorkplaceMenu(workplace)
+    if menuOpen or not interactionsReady() then return end
+    CreateThread(function()
+        local state, err = Sunset.AwaitCallback('sunset:jobs:getWorkplaceState', workplace.jobId)
+        if not state then
+            exports.sunset_ui:Notify(err or 'Could not reach workplace supervisor.', 'error', 5000)
+            return
+        end
+
+        local actions = {}
+        local npcDef = workplace.npc or {}
+
+        -- 1. Apply Action
+        if not state.isEmployed then
+            local applyLabel = ('Apply as %s'):format(workplace.jobLabel)
+            if not state.requirementsMet and state.requirementError then
+                applyLabel = applyLabel .. ' [Missing License]'
+            end
+            actions[#actions + 1] = {
+                id = 'workplace_apply',
+                label = applyLabel,
+                group = 'EMPLOYMENT',
+            }
+        end
+
+        -- 2. Shift Controls
+        if state.isEmployed then
+            if state.onShift then
+                actions[#actions + 1] = {
+                    id = 'workplace_stop_shift',
+                    label = 'End Active Shift',
+                    group = 'SHIFT',
+                }
+            else
+                if workplace.jobId == 'trucker' then
+                    actions[#actions + 1] = {
+                        id = 'workplace_open_laptop',
+                        label = 'Open Route Laptop',
+                        group = 'DISPATCH',
+                    }
+                else
+                    actions[#actions + 1] = {
+                        id = 'workplace_start_shift',
+                        label = ('Start %s Route'):format(workplace.jobLabel),
+                        group = 'SHIFT',
+                    }
+                end
+            end
+        end
+
+        -- 3. Special Actions (Bait Shop, etc.)
+        if workplace.actions and workplace.actions.special then
+            for _, spec in ipairs(workplace.actions.special) do
+                actions[#actions + 1] = {
+                    id = 'workplace_special_' .. spec.id,
+                    label = spec.label,
+                    group = spec.group or 'SPECIAL',
+                }
+            end
+        end
+
+        -- 4. Guide Action
+        if workplace.guide then
+            actions[#actions + 1] = {
+                id = 'workplace_guide',
+                label = ('%s Guide'):format(workplace.jobLabel),
+                group = 'INFO',
+            }
+        end
+
+        -- 5. Resign / Quit Job
+        if state.isEmployed then
+            actions[#actions + 1] = {
+                id = 'workplace_quit',
+                label = ('Resign as %s'):format(workplace.jobLabel),
+                group = 'EMPLOYMENT',
+            }
+        end
+
+        if #actions == 0 then return end
+
+        currentContext = {
+            workplace = workplace,
+            state = state,
+        }
+
+        hideWorkplaceTooltip(workplace)
+        exports.sunset_ui:Send('playerInteractionShow', {
+            menuTitle = ('%s Workplace'):format(workplace.jobLabel),
+            target = { name = npcDef.name or workplace.jobLabel, id = '' },
+            actions = actions,
+        })
+        exports.sunset_ui:SetFocus(true, true)
+        menuOpen = true
+    end)
+end
+
+-- ── Main Proximity Loop ───────────────────────────────────────
+
+CreateThread(function()
+    while true do
+        local playerPed = PlayerPedId()
+        local pos = GetEntityCoords(playerPed)
+        local nearbyWp = nil
+        local nearbyPed = nil
+        local minDistance = 999.0
+
+        for key, data in pairs(spawnedNpcs) do
+            local wp = data.workplace
+            if wp and wp.npc and wp.npc.coords then
+                local npcPos = vector3(wp.npc.coords.x, wp.npc.coords.y, wp.npc.coords.z)
+                local dist = #(pos - npcPos)
+                if dist < minDistance then
+                    minDistance = dist
+                    nearbyWp = wp
+                    nearbyPed = data.ped
+                end
+            end
+        end
+
+        if nearbyWp and minDistance < 4.5 then
+            activeWorkplace = nearbyWp
+            if not menuOpen and interactionsReady() then
+                showWorkplaceTooltip(nearbyWp, nearbyPed)
+                if minDistance < 2.3 and (IsControlJustPressed(0, 38) or IsDisabledControlJustPressed(0, 38)) then
+                    openWorkplaceMenu(nearbyWp)
+                end
+            end
+            Wait(0)
+        else
+            if activeWorkplace then
+                hideWorkplaceTooltip(activeWorkplace)
+                if menuOpen then closeWorkplaceMenu() end
+                activeWorkplace = nil
+            end
+            Wait(300)
+        end
+    end
+end)
+
+-- ── NUI Action Handler ────────────────────────────────────────
+
+AddEventHandler('sunset:nui:playerInteractionClose', function()
+    if not menuOpen then return end
+    closeWorkplaceMenu()
+end)
+
+AddEventHandler('sunset:nui:playerInteractionAction', function(data)
+    if not data or not data.action or not currentContext then return end
+    local action = data.action
+    if not action:find('^workplace_') then return end
+
+    local wp = currentContext.workplace
+    closeWorkplaceMenu()
+    armGrace(2000)
+
+    if action == 'workplace_apply' then
+        inCooldown = true
+        CreateThread(function()
+            local ok, err = Sunset.AwaitCallback('sunset:jobs:workplaceApply', wp.jobId)
+            if ok then
+                exports.sunset_ui:Notify(('You are now employed as %s!'):format(wp.jobLabel), 'success', 6000)
+                if wp.secondaryLocation and wp.secondaryLocation.coords then
+                    local sc = wp.secondaryLocation.coords
+                    SetNewWaypoint(sc.x, sc.y)
+                    exports.sunset_ui:Notify(('GPS waypoint set to %s.'):format(wp.secondaryLocation.label or 'workplace'), 'info', 6000)
+                end
+            else
+                exports.sunset_ui:Notify(err or 'Could not complete application.', 'error', 7000)
+            end
+            inCooldown = false
+        end)
+
+    elseif action == 'workplace_start_shift' then
+        if wp.jobId == 'garbage' and Sunset.Jobs and Sunset.Jobs.StartGarbage then
+            Sunset.Jobs.StartGarbage()
+        elseif wp.jobId == 'courier' and Sunset.Jobs and Sunset.Jobs.StartCourier then
+            Sunset.Jobs.StartCourier()
+        elseif wp.jobId == 'fisherman' and Sunset.Jobs and Sunset.Jobs.StartFisherman then
+            Sunset.Jobs.StartFisherman()
+        end
+
+    elseif action == 'workplace_open_laptop' then
+        TriggerEvent('sunset:jobs:trucker:openLaptop')
+
+    elseif action == 'workplace_stop_shift' then
+        CreateThread(function()
+            local ok, err = Sunset.AwaitCallback('sunset:jobs:cancelWork')
+            if ok then
+                if Sunset.JobClient then
+                    Sunset.JobClient.cleanup()
+                    Sunset.JobClient.hideObjective()
+                end
+                SetWaypointOff()
+                exports.sunset_ui:Notify('Shift cancelled.', 'info', 4000)
+            else
+                exports.sunset_ui:Notify(err or 'Could not cancel shift.', 'error')
+            end
+        end)
+
+    elseif action == 'workplace_guide' then
+        showJobGuide(wp.guide)
+
+    elseif action == 'workplace_quit' then
+        CreateThread(function()
+            local ok, err = Sunset.AwaitCallback('sunset:jobs:workplaceQuit', wp.jobId)
+            if ok then
+                if Sunset.JobClient then
+                    Sunset.JobClient.cleanup()
+                    Sunset.JobClient.hideObjective()
+                end
+                exports.sunset_ui:Notify(('Resigned as %s.'):format(wp.jobLabel), 'info', 5000)
+            else
+                exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
+            end
+        end)
+
+    elseif action:find('^workplace_special_') then
+        local specId = action:gsub('^workplace_special_', '')
+        if specId == 'open_laptop' then
+            TriggerEvent('sunset:jobs:trucker:openLaptop')
+        elseif specId == 'open_bait_shop' then
+            if GetResourceState('sunset_fishingshop') == 'started' then
+                exports.sunset_fishingshop:OpenShop()
+            end
+        elseif specId == 'sell_fish' then
+            if GetResourceState('sunset_fishingshop') == 'started' then
+                exports.sunset_fishingshop:OpenSellMenu()
+            end
+        end
+    end
+end)
+
+-- ── Lifecycle Events ──────────────────────────────────────────
+
+AddEventHandler('onResourceStart', function(res)
+    if res == GetCurrentResourceName() then
+        initWorkplaces()
+    end
+end)
+
+AddEventHandler('onResourceStop', function(res)
+    if res == GetCurrentResourceName() then
+        cleanupWorkplaceNpcs()
+    end
+end)
+
+AddEventHandler('sunset:client:playerSpawned', function()
+    initWorkplaces()
+    armGrace(3000)
+end)
+
+AddEventHandler('sunset:client:characterFlowComplete', function()
+    initWorkplaces()
+    armGrace(3000)
+end)

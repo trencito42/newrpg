@@ -11,6 +11,7 @@ shared_scripts {
     'shared/boot_debug.lua',
     'shared/config.lua',
     'shared/jobs_civilian.lua',
+    'shared/jobs_workplaces.lua',
     'shared/jobs_config.lua',
     'shared/profile.lua',
     'shared/faction_core.lua',
