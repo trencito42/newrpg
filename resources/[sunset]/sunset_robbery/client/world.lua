@@ -14,8 +14,8 @@ local function prepareJewelryInterior()
     RequestIpl('post_hiest_unload')
     local interior = GetInteriorAtCoords(-622.25, -230.93, 38.06)
     if interior and interior ~= 0 then
-        PinInteriorInMemory(interior)
-        RefreshInterior(interior)
+        pcall(PinInteriorInMemory, interior)
+        pcall(RefreshInterior, interior)
     end
 end
 
