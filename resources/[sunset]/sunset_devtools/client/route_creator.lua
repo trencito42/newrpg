@@ -346,8 +346,9 @@ RegisterNUICallback('startGizmoEdit', function(data, cb)
     local v3 = vector3(initialCoords.x or 0, initialCoords.y or 0, initialCoords.z or 0)
     local heading = initialCoords.h or initialCoords.w or initialCoords.heading or 0.0
 
-    -- Temporarily release NUI focus while gizmo is active
+    -- Temporarily release NUI focus and hide window while gizmo is active
     SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'hideForGizmo' })
 
     DevGizmo.start({
         mode = (stageKey == 'parkingBay' or stageKey == 'pickup') and 'vehicle' or 'point',
@@ -372,9 +373,50 @@ RegisterNUICallback('startGizmoEdit', function(data, cb)
             })
             notify(('Updated %s coordinates via Gizmo.'):format(tostring(stageKey)), 'success')
             SetNuiFocus(true, true)
+            SendNUIMessage({ action = 'showAfterGizmo' })
         end,
         onCancel = function()
             SetNuiFocus(true, true)
+            SendNUIMessage({ action = 'showAfterGizmo' })
+        end,
+    })
+
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('startCrosshairAddBin', function(data, cb)
+    local routeId = data.routeId
+    SetNuiFocus(false, false)
+    SendNUIMessage({ action = 'hideForGizmo' })
+
+    local pPos = GetEntityCoords(PlayerPedId())
+    local fwd = GetEntityForwardVector(PlayerPedId())
+    local targetPos = pPos + fwd * 3.0
+
+    DevGizmo.start({
+        mode = 'point',
+        coords = targetPos,
+        heading = 0.0,
+        meta = { label = ('%s [New Bin]'):format(routeId) },
+        onCapture = function(v4, meta, diag)
+            local updated = {
+                x = v4.x,
+                y = v4.y,
+                z = v4.z,
+            }
+            SendNUIMessage({
+                action = 'updateFieldCoords',
+                routeId = routeId,
+                stageKey = 9999, -- append
+                coords = updated,
+            })
+            notify('Added bin via Placement Gizmo.', 'success')
+            SetNuiFocus(true, true)
+            SendNUIMessage({ action = 'showAfterGizmo' })
+        end,
+        onCancel = function()
+            SetNuiFocus(true, true)
+            SendNUIMessage({ action = 'showAfterGizmo' })
         end,
     })
 

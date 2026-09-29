@@ -54,6 +54,14 @@
                 $('#route-creator-app').classList.add('hidden');
                 break;
 
+            case 'hideForGizmo':
+                $('#route-creator-app').classList.add('hidden');
+                break;
+
+            case 'showAfterGizmo':
+                $('#route-creator-app').classList.remove('hidden');
+                break;
+
             case 'updateRoutes':
                 if (msg.adapter && msg.routes) {
                     State.routes[msg.adapter] = msg.routes;
@@ -67,16 +75,26 @@
                 break;
 
             case 'updateFieldCoords':
-                if (msg.routeId && msg.stageKey && msg.coords) {
+                $('#route-creator-app').classList.remove('hidden');
+                if (msg.routeId && msg.stageKey !== undefined && msg.coords) {
                     const r = findRoute(State.activeAdapter, msg.routeId);
                     if (r) {
                         if (State.activeAdapter === 'trucker') {
                             r[msg.stageKey] = msg.coords;
-                        } else if (State.activeAdapter === 'garbage' && typeof msg.stageKey === 'number') {
-                            r.bins[msg.stageKey] = msg.coords;
+                        } else if (State.activeAdapter === 'garbage') {
+                            if (msg.stageKey === 9999 || msg.stageKey === '9999') {
+                                r.bins = r.bins || [];
+                                r.bins.push(msg.coords);
+                            } else {
+                                const idx = Number(msg.stageKey);
+                                if (!isNaN(idx) && r.bins) {
+                                    r.bins[idx] = msg.coords;
+                                }
+                            }
                         }
                         markDirty();
                         renderInspector();
+                        renderRouteList();
                     }
                 }
                 break;
