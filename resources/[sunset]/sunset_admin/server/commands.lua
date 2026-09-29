@@ -1749,12 +1749,48 @@ registerServerCommand('dlp', function(source)
     TriggerClientEvent('sunset:admin:togglePropDebugLabels', source)
 end)
 
--- Client poate apela si prin TriggerServerEvent (RegisterCommand fara restrictie de nivel)
-RegisterNetEvent('sunset:admin:requestTogglePropDebug', function()
+-- /moveveh & /vehfree — 3D interactive vehicle/trailer gizmo positioner
+registerServerCommand('moveveh', function(source)
+    if source == 0 then return print('[SunsetAdmin] /moveveh is in-game only') end
+    if not requirePerm(source, 'moveveh') then return end
+    TriggerClientEvent('sunset:admin:startVehGizmo', source)
+end)
+
+registerServerCommand('vehfree', function(source)
+    if source == 0 then return print('[SunsetAdmin] /vehfree is in-game only') end
+    if not requirePerm(source, 'vehfree') then return end
+    TriggerClientEvent('sunset:admin:startVehGizmo', source)
+end)
+
+-- /spawntrailer [model] — spawn trailer & immediately open 3D Gizmo
+registerServerCommand('spawntrailer', function(source, args)
+    if source == 0 then return print('[SunsetAdmin] /spawntrailer is in-game only') end
+    if not requirePerm(source, 'spawntrailer') then return end
+    local model = (args and args[1] and tostring(args[1])) or 'tanker'
+    TriggerClientEvent('sunset:admin:spawnTrailerGizmo', source, model)
+end)
+
+RegisterNetEvent('sunset:admin:saveGizmoCoords', function(payload)
     local source = source
     if not source or source == 0 then return end
-    if not requirePerm(source, 'dlp') then return end
-    TriggerClientEvent('sunset:admin:togglePropDebugLabels', source)
+    if not requirePerm(source, 'moveveh') then return end
+    if type(payload) ~= 'table' then return end
+
+    local char = exports.sunset_core:GetCharacter(source)
+    local adminName = (char and (char.first_name .. ' ' .. char.last_name)) or ('Admin #' .. source)
+
+    print(('^2[SunsetAdmin VEH GIZMO]^7 %s saved coords: %s | model: %s'):format(
+        adminName, tostring(payload.v4), tostring(payload.model)
+    ))
+
+    TriggerClientEvent('chat:addMessage', source, {
+        color = { 0, 255, 204 },
+        args = { '[VEH GIZMO]', ('Coords saved! ^3%s^7'):format(tostring(payload.v4)) }
+    })
+    TriggerClientEvent('chat:addMessage', source, {
+        color = { 0, 255, 204 },
+        args = { '[VEH GIZMO Table]', ('^2%s^7'):format(tostring(payload.tbl)) }
+    })
 end)
 
 -- ═══ REPORT & HELPME TICKETING SYSTEM ═══

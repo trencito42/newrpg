@@ -123,6 +123,9 @@ SunsetAdmin.Commands = {
     revokelicense = 1,
     giveskin = 3,
     setskin = 1,
+    moveveh = 1,
+    vehfree = 1,
+    spawntrailer = 1,
 }
 
 -- Commands accessible to helpers (level 1-3). Admins automatically pass.

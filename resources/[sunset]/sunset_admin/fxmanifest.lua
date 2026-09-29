@@ -31,6 +31,7 @@ server_scripts {
 client_scripts {
     '@sunset_core/client/callbacks.lua',
     'client/main.lua',
+    'client/veh_gizmo.lua',
     'client/helpdesk.lua',
 }
 

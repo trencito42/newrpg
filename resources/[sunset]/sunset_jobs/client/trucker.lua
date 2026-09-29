@@ -86,6 +86,48 @@ local function drawTruckerMarker(coords, r, g, b)
     -- Floating chevron marker
     DrawMarker(0, pos.x, pos.y, pos.z + 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         2.0, 2.0, 1.5, r, g, b, 200, false, false, 2, false, nil, nil, false)
+local function getAngleDiff(a1, a2)
+    local diff = math.abs((a1 - a2) % 360.0)
+    if diff > 180.0 then diff = 360.0 - diff end
+    return diff
+end
+
+local function drawParkingBay3D(coords, heading, isDocked)
+    local hRad = math.rad(heading or 0.0)
+    local cosH = math.cos(hRad)
+    local sinH = math.sin(hRad)
+    local forward = vector3(-sinH, cosH, 0.0)
+    local right = vector3(cosH, sinH, 0.0)
+
+    local halfW = 1.9 -- width 3.8m
+    local halfL = 6.8 -- length 13.6m
+
+    local ground = getGroundCoords(coords)
+    local center = vector3(ground.x, ground.y, ground.z + 0.12)
+
+    local c1 = center + (forward * halfL) + (right * halfW)
+    local c2 = center + (forward * halfL) - (right * halfW)
+    local c3 = center - (forward * halfL) - (right * halfW)
+    local c4 = center - (forward * halfL) + (right * halfW)
+
+    local r, g, b = 255, 165, 0
+    if isDocked then
+        r, g, b = 46, 204, 113
+    end
+
+    -- Draw perimeter lines
+    DrawLine(c1.x, c1.y, c1.z, c2.x, c2.y, c2.z, r, g, b, 240)
+    DrawLine(c2.x, c2.y, c2.z, c3.x, c3.y, c3.z, r, g, b, 240)
+    DrawLine(c3.x, c3.y, c3.z, c4.x, c4.y, c4.z, r, g, b, 240)
+    DrawLine(c4.x, c4.y, c4.z, c1.x, c1.y, c1.z, r, g, b, 240)
+
+    -- Diagonal markers / arrows
+    DrawLine(c1.x, c1.y, c1.z, center.x, center.y, center.z, r, g, b, 120)
+    DrawLine(c2.x, c2.y, c2.z, center.x, center.y, center.z, r, g, b, 120)
+
+    -- Center chevron
+    DrawMarker(0, center.x, center.y, center.z + 1.2, forward.x, forward.y, 0.0, 0.0, 0.0, 0.0,
+        1.5, 1.5, 1.0, r, g, b, 180, false, false, 2, false, nil, nil, false)
 end
 
 local function inWorkTruck()
@@ -309,17 +351,59 @@ local function startTrucker(selectedRouteIdx)
                 if d then
                     local ppos = GetEntityCoords(PlayerPedId())
                     local distToDeliv = #(ppos - d)
-                    if distToDeliv <= 350.0 then
-                        drawTruckerMarker(d, 46, 204, 113)
-                        if distToDeliv <= 45.0 then
-                            draw3DText(d, '[E] Deliver Cargo')
+                    local truck = JC.vehicles[1]
+                    local trailer = 0
+                    local hasTrailer = false
+                    if truck and DoesEntityExist(truck) then
+                        local hasTr, trEnt = GetVehicleTrailerVehicle(truck)
+                        if hasTr and trEnt ~= 0 and DoesEntityExist(trEnt) then
+                            trailer = trEnt
+                            hasTrailer = true
+                        elseif JC.vehicles[2] and DoesEntityExist(JC.vehicles[2]) then
+                            trailer = JC.vehicles[2]
+                            hasTrailer = true
                         end
                     end
+
+                    local targetH = (session.delivery and (session.delivery.w or session.delivery.heading)) or 0.0
+                    local targetRadius = cfg.manualParkingRadius or 4.5
+                    local angleTolerance = cfg.manualParkingAngleTolerance or 35.0
+
+                    local evalEntity = (hasTrailer and trailer ~= 0 and DoesEntityExist(trailer)) and trailer or truck
+                    local evalPos = (evalEntity and DoesEntityExist(evalEntity)) and GetEntityCoords(evalEntity) or ppos
+                    local evalDist = #(vector3(evalPos.x, evalPos.y, evalPos.z) - d)
+                    local evalHeading = (evalEntity and DoesEntityExist(evalEntity)) and GetEntityHeading(evalEntity) or 0.0
+
+                    local angleDiff = math.min(getAngleDiff(evalHeading, targetH), getAngleDiff((evalHeading + 180.0) % 360.0, targetH))
+                    local isDocked = (evalDist <= targetRadius) and (angleDiff <= angleTolerance)
+
+                    if distToDeliv <= 350.0 then
+                        drawTruckerMarker(d, isDocked and 46 or 255, isDocked and 204 or 165, isDocked and 113 or 0)
+                        drawParkingBay3D(d, targetH, isDocked)
+
+                        if distToDeliv <= 45.0 then
+                            if isDocked then
+                                draw3DText(d, '~g~[G] Confirm Manual Park (2X BONUS)~s~ | [E] Quick Deliver')
+                            else
+                                draw3DText(d, '[E] Quick Deliver | [G] Align in Bay for 2X BONUS')
+                            end
+                        end
+                    end
+
                     if isNearTruckerPoint(d, cfg) and inWorkTruck() and not busy then
-                        JC.showHelp('Press ~INPUT_CONTEXT~ to deliver cargo')
-                        if IsControlJustPressed(0, 38) then
+                        if isDocked then
+                            JC.showHelp('Press ~INPUT_DETONATE~ to confirm ~g~Manual Park (2X BONUS)~s~ or ~INPUT_CONTEXT~ for Quick Unload')
+                        else
+                            JC.showHelp('Press ~INPUT_CONTEXT~ for Quick Unload (or align trailer in box for ~g~2X BONUS~s~)')
+                        end
+
+                        local triggerManual = isDocked and IsControlJustPressed(0, 47) -- G
+                        local triggerAuto   = IsControlJustPressed(0, 38) -- E
+
+                        if triggerManual or triggerAuto then
+                            local doManual = triggerManual
                             busy = true
-                            local result, err2 = Sunset.AwaitCallback('sunset:jobs:trucker:deliver')
+                            local result, err2 = Sunset.AwaitCallback('sunset:jobs:trucker:deliver', doManual)
                             busy = false
                             if result then
                                 JC.sessionData = JC.sessionData or {}
@@ -333,8 +417,14 @@ local function startTrucker(selectedRouteIdx)
                                 JC.setWaypoint(cfg.depot.coords)
                                 setTruckerCheckpoint(cfg.depot.coords, 52, 152, 219)
                                 JC.showObjective('Return the truck', 'Drive back to the depot', 90)
-                                local bonusStr = (result.bonusPct and result.bonusPct > 0)
-                                    and (' (+%d%% rank bonus)'):format(result.bonusPct) or ''
+
+                                local bonusStr = ''
+                                if result.isManual then
+                                    bonusStr = bonusStr .. ' (2X MANUAL DOCK BONUS)'
+                                end
+                                if result.bonusPct and result.bonusPct > 0 then
+                                    bonusStr = bonusStr .. (' (+%d%% rank bonus)'):format(result.bonusPct)
+                                end
                                 JC.notify(('Delivered! +$%d%s — return the truck to the depot'):format(
                                     result.pay or 0, bonusStr), 'success', 8000)
                             else

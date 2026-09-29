@@ -140,7 +140,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:start', function(sourc
     local session, err = SunsetJobs_StartSession(source, 'trucker', {
         routeIndex    = routeIdx,
         pickup        = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = chosenBay.w },
-        delivery      = { x = route.delivery.x, y = route.delivery.y, z = route.delivery.z },
+        delivery      = { x = route.delivery.x, y = route.delivery.y, z = route.delivery.z, w = route.delivery.w or (type(route.delivery) == 'vector4' and route.delivery.w) or 0.0 },
         pay           = route.pay,
         label         = route.label,
         stage         = 'to_pickup',
@@ -181,28 +181,27 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
     return session.data
 end)
 
-exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(source)
+exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(source, isManual)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
     if not session then return nil, err end
     if session.data.stage ~= 'to_delivery' then return nil, 'Cargo not loaded' end
 
     local cfg = Sunset.GetJobConfig('trucker')
-    if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0) then
+    if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 35.0) then
         return nil, 'Use your assigned work truck'
     end
     if session.data.hasTrailer then
-        local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
+        local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 35.0)
         if not trailerOk then return nil, trailerErr end
     end
     local route = cfg.routes[session.data.routeIndex]
     if not route then return nil, 'Route data is missing' end
     if not validateTruckerCoords(source, route.delivery, cfg) then
-        return nil, 'Not at delivery location — drive into the green loading dock marker'
+        return nil, 'Not at delivery location — drive into the loading dock marker'
     end
 
     -- [AUDIT P2-SESSIONS] Scenario 14: flip the stage SYNCHRONOUSLY before any
-    -- yielding payout call. Previously a second `deliver` arriving during the
-    -- AddMoney/DB await still saw stage=='to_delivery' → double pay.
+    -- yielding payout call.
     session.data.stage = 'return_depot'
     local delivered = session.data.deliveredAt
     if delivered then return nil, 'Cargo already delivered on this route.' end
@@ -212,26 +211,43 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     local level = SunsetJobs_GetJobLevel(source, 'trucker')
     local bonus = TRUCKER_RANK_BONUS[level] or 0
     local basePay = route.pay or 500
-    local pay     = math.floor(basePay * (1 + bonus))
+
+    -- Manual Parking 2x Bonus
+    local manualMult = 1.0
+    if isManual == true then
+        manualMult = (cfg and cfg.manualParkingBonusMultiplier) or 2.0
+    end
+
+    local pay = math.floor(basePay * (1 + bonus) * manualMult)
+    local xp  = math.max(10, math.floor((basePay / 10) * manualMult))
 
     -- Use AddMoney directly to avoid double-XP from SunsetJobs_PayReward.
-    -- XP is awarded separately via truckerAddXP (uses trucker-specific thresholds).
-    local paid = exports.sunset_core:AddMoney(source, 'cash', pay, 'trucker_delivery')
+    local paid = exports.sunset_core:AddMoney(source, 'cash', pay, isManual and 'trucker_manual_delivery' or 'trucker_delivery')
     if not paid then
         session.data.stage = 'to_delivery'
         session.data.deliveredAt = nil
         return nil, 'Payment could not be processed. Try delivering once more.'
     end
-    -- XP = base pay / 10 (scales with route value, not fixed)
-    truckerAddXP(source, math.max(5, math.floor(basePay / 10)))
+    truckerAddXP(source, xp)
 
     -- Battlepass mission progress
     if GetResourceState('sunset_pass') == 'started' then
         exports.sunset_pass:AddMissionProgress(source, 'trucker_delivery', 1)
+        if isManual then
+            exports.sunset_pass:AddMissionProgress(source, 'trucker_manual_park', 1)
+        end
     end
 
     SunsetJobs_SetState(source, 'RETURNING')
-    return { pay = pay, basePay = basePay, bonusPct = math.floor(bonus * 100), stage = 'return_depot' }
+    return {
+        pay = pay,
+        basePay = basePay,
+        isManual = isManual == true,
+        manualMultiplier = manualMult,
+        xpAwarded = xp,
+        bonusPct = math.floor(bonus * 100),
+        stage = 'return_depot'
+    }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function(source)
