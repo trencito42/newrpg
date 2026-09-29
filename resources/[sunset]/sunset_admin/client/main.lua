@@ -809,13 +809,14 @@ local function drawPropDebugLabel(obj, distance, isVehicle)
 
     local netId   = NetworkGetEntityIsNetworked(obj) and NetworkGetNetworkIdFromEntity(obj) or 0
     local entType = isVehicle and '~r~VEH~s~' or '~b~OBJ~s~'
+    local heading = GetEntityHeading(obj)
 
     local line1 = ('%s ~y~%s~s~  E:%d N:%s'):format(
         entType, modelName, obj,
         netId > 0 and tostring(netId) or '-'
     )
-    local line2 = ('~o~%.1f, %.1f, %.1f~s~  ~w~%.1fm'):format(
-        objCoords.x, objCoords.y, objCoords.z, distance)
+    local line2 = ('~o~%.1f, %.1f, %.1f~s~  ~g~h=%.1f~s~  ~w~%.1fm'):format(
+        objCoords.x, objCoords.y, objCoords.z, heading, distance)
 
     local scale = math.max(0.22, math.min(0.32, 0.36 - distance * 0.004))
     SetTextFont(0)
