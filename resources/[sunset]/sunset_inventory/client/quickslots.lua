@@ -119,6 +119,15 @@ local function closeEmoteWheel(selection)
     exports.sunset_ui:Send('emoteWheelHide', {})
     if selection and selection ~= '' and GetResourceState('sunset_emotes') == 'started' then
         exports.sunset_emotes:PlayEmote(selection)
+    else
+        -- Holding X and releasing without selecting an emote cancels any current animation
+        if GetResourceState('sunset_emotes') == 'started' then
+            exports.sunset_emotes:StopEmote()
+        end
+        local ped = PlayerPedId()
+        ClearPedTasks(ped)
+        ClearPedSecondaryTask(ped)
+        ClearPedTasksImmediately(ped)
     end
 end
 

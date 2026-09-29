@@ -14,7 +14,10 @@ local Emotes = {
 local playing = false
 
 local function stopEmote()
-    ClearPedTasks(PlayerPedId())
+    local ped = PlayerPedId()
+    ClearPedTasks(ped)
+    ClearPedSecondaryTask(ped)
+    ClearPedTasksImmediately(ped)
     playing = false
 end
 

@@ -405,7 +405,7 @@ AddEventHandler('sunset:nui:truckerPickRoute', function(data)
         if Sunset.Jobs and Sunset.Jobs.StartTrucker then
             Sunset.Jobs.StartTrucker(routeIdx)
         else
-            print('[TRUCKER NUI] ERR: Sunset.Jobs.StartTrucker is nil')
+            TriggerEvent('sunset:jobs:trucker:startShift', routeIdx)
         end
     end)
 end)

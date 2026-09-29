@@ -104,6 +104,8 @@ local function drawTruckerMarker(coords, r, g, b)
     -- Floating chevron marker
     DrawMarker(0, pos.x, pos.y, pos.z + 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         2.0, 2.0, 1.5, r, g, b, 200, false, false, 2, false, nil, nil, false)
+end
+
 local function getAngleDiff(a1, a2)
     local diff = math.abs((a1 - a2) % 360.0)
     if diff > 180.0 then diff = 360.0 - diff end
@@ -486,6 +488,12 @@ end
 
 Sunset.Jobs = Sunset.Jobs or {}
 Sunset.Jobs.StartTrucker = startTrucker   -- called as StartTrucker(routeIndex)
+
+RegisterNetEvent('sunset:jobs:trucker:startShift', function(routeIdx)
+    startTrucker(routeIdx)
+end)
+
+exports('StartTrucker', startTrucker)
 
 RegisterCommand('truckroute', function()
     if JC.jobId ~= 'trucker' or JC.state == 'IDLE' or not JC.sessionData then

@@ -1,3 +1,6 @@
+Sunset = Sunset or {}
+Sunset.Jobs = Sunset.Jobs or {}
+
 local JobClient = {
     state = 'IDLE',
     jobId = nil,
