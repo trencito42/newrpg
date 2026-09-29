@@ -797,14 +797,15 @@ local function drawPropDebugLabel(obj, distance, isVehicle)
     local model = GetEntityModel(obj)
     local modelHex = ('0x%08X'):format(model & 0xFFFFFFFF)
 
-    -- Incearca sa gaseasca un nume mai frumos
     local modelName = modelHex
-    pcall(function()
-        local display = GetDisplayNameFromVehicleModel(model)
-        if display and display ~= '' and display ~= 'NULL' then
-            modelName = display
-        end
-    end)
+    if isVehicle then
+        pcall(function()
+            local display = GetDisplayNameFromVehicleModel(model)
+            if display and display ~= '' and display ~= 'NULL' and display ~= 'CARNOTFOUND' then
+                modelName = display
+            end
+        end)
+    end
 
     local netId   = NetworkGetEntityIsNetworked(obj) and NetworkGetNetworkIdFromEntity(obj) or 0
     local entType = isVehicle and '~r~VEH~s~' or '~b~OBJ~s~'
