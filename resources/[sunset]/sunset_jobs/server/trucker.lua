@@ -242,6 +242,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     -- [AUDIT P2-SESSIONS] Scenario 14: flip the stage SYNCHRONOUSLY before any
     -- yielding payout call.
     session.data.stage = 'return_depot'
+    -- Trailer was unloaded at delivery — clear netId so the server monitor
+    -- doesn't treat the client-side delete as "trailer destroyed" and respawn one.
+    session.trailerNetId = nil
     local delivered = session.data.deliveredAt
     if delivered then return nil, 'Cargo already delivered on this route.' end
     session.data.deliveredAt = os.time()
