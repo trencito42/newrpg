@@ -180,9 +180,35 @@ RegisterCommand('setskin', function(source, args)
     targetChar.metadata = meta
     MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), targetChar.id })
 
+    local targetPlayer = getPlayer(targetSource)
+    if targetPlayer and meta.skin then
+        local already = MySQL.query.await(
+            'SELECT id FROM player_skins WHERE player_id = ? AND model = ?',
+            { targetPlayer.id, meta.skin }
+        )
+        if not already or #already == 0 then
+            MySQL.query.await(
+                'INSERT INTO player_skins (player_id, model, source) VALUES (?, ?, ?)',
+                { targetPlayer.id, meta.skin, 'admin' }
+            )
+        end
+    end
+
     TriggerClientEvent('sunset:skins:applyModel', targetSource, meta.skin or '')
-    exports.sunset_core:CommandReply(source, ('Skin for player %d set and saved to ~b~%s~w~.'):format(targetSource, tostring(meta.skin or 'default')))
+    exports.sunset_core:CommandReply(source, ('Skin for player %d set and saved permanently to ~b~%s~w~.'):format(targetSource, tostring(meta.skin or 'default')))
 end, false)
+
+-- Restore skin on character select / relog
+AddEventHandler('sunset:server:characterSelected', function(source, charId)
+    local char = getCharacter(source)
+    if not char then return end
+    local meta = char.metadata or {}
+    if meta.skin and meta.skin ~= '' and meta.skin ~= 'default' and meta.skin ~= 'reset' then
+        SetTimeout(1200, function()
+            TriggerClientEvent('sunset:skins:applyModel', source, meta.skin)
+        end)
+    end
+end)
 
 -- Battlepass: called from sunset_pass to grant a skin on tier unlock
 RegisterNetEvent('sunset:skins:grantBattlepassSkin')

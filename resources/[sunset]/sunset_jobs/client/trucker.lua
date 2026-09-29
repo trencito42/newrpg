@@ -413,7 +413,7 @@ local function startTrucker(selectedRouteIdx)
                                 if isDocked then
                                     draw3DText(bay, '~g~[G] / [E] Confirm Manual Park (2X BONUS)~s~')
                                 else
-                                    draw3DText(bay, 'Align Trailer in Bay (2X BONUS) | [E] Quick Deliver')
+                                    draw3DText(bay, 'Align Trailer in Bay for ~g~2X BONUS~s~')
                                 end
                             end
                         end
@@ -449,36 +449,8 @@ local function startTrucker(selectedRouteIdx)
                                         JC.notify(err2 or 'Could not deliver cargo', 'error')
                                     end
                                 end
-                            elseif distToEntrance <= (cfg.deliveryRadius or 85.0) or distToBay <= 40.0 then
-                                JC.showHelp('Align trailer in glowing box for ~g~2X BONUS~s~ (or press ~INPUT_CONTEXT~ for Quick Deliver)')
-                                if IsControlJustPressed(0, 38) then -- E -> Quick deliver
-                                    busy = true
-                                    local result, err2 = Sunset.AwaitCallback('sunset:jobs:trucker:deliver', false)
-                                    busy = false
-                                    if result then
-                                        isManualDockingMode = false
-                                        JC.sessionData = JC.sessionData or {}
-                                        JC.sessionData.stage = result.stage or 'return_depot'
-                                        JC.deleteVehicles(true)
-                                        JC.clearBlips()
-                                        local retPoint = (cfg.depot.returnCoords and vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)) or (cfg.depot.spawn and vector3(cfg.depot.spawn.x, cfg.depot.spawn.y, cfg.depot.spawn.z)) or cfg.depot.coords
-                                        local depBlip = JC.addBlip(retPoint, cfg.depot.blip, 'Return Depot')
-                                        SetBlipRoute(depBlip, true)
-                                        SetBlipRouteColour(depBlip, 3)
-                                        JC.setWaypoint(retPoint)
-                                        setTruckerCheckpoint(retPoint, 52, 152, 219)
-                                        JC.showObjective('Return the truck', 'Drive back to the depot', 90)
-
-                                        local bonusStr = ''
-                                        if result.bonusPct and result.bonusPct > 0 then
-                                            bonusStr = bonusStr .. (' (+%d%% rank bonus)'):format(result.bonusPct)
-                                        end
-                                        JC.notify(('Delivered! +$%d%s — return the truck to the depot'):format(
-                                            result.pay or 0, bonusStr), 'success', 8000)
-                                    else
-                                        JC.notify(err2 or 'Could not deliver cargo', 'error')
-                                    end
-                                end
+                            elseif distToBay <= 45.0 then
+                                JC.showHelp('Reverse trailer into the glowing box for ~g~2X BONUS~s~')
                             end
                         end
                     else

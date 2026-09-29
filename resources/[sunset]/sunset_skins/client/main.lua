@@ -4,8 +4,9 @@ local shopNPC  = nil
 -- Apply a GTA ped model to the local player
 local function applyModel(model)
     local hash
-    if not model or model == '' then
-        hash = joaat('a_m_y_business_01')
+    if not model or model == '' or model == 'default' or model == 'reset' then
+        local gender = (Sunset and Sunset.Character and Sunset.Character.gender) or 'male'
+        hash = joaat(gender == 'female' and 'mp_f_freemode_01' or 'mp_m_freemode_01')
     else
         hash = joaat(model)
     end
@@ -100,6 +101,21 @@ end)
 RegisterNetEvent('sunset:skins:notify')
 AddEventHandler('sunset:skins:notify', function(msg)
     exports.sunset_ui:Notify(msg or '', 'success', 5500)
+end)
+
+-- Character loaded / relog: restore active skin from character metadata
+AddEventHandler('sunset:client:onCharacterLoaded', function(charData)
+    local meta = charData and charData.metadata
+    if type(meta) == 'string' then
+        local ok, decoded = pcall(json.decode, meta)
+        meta = ok and decoded or {}
+    end
+    if meta and meta.skin and meta.skin ~= '' and meta.skin ~= 'default' and meta.skin ~= 'reset' then
+        CreateThread(function()
+            Wait(1200)
+            applyModel(meta.skin)
+        end)
+    end
 end)
 
 -- /skins & /myskins — opens wardrobe showing owned skins
