@@ -86,11 +86,11 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     end
 
     local meta = char.metadata or {}
-    meta.skin = (model ~= nil and model ~= '') and model or nil
-    MySQL.query.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), char.id })
-    if char.metadata then char.metadata.skin = meta.skin end
+    meta.skin = (model ~= nil and model ~= '' and model ~= 'default' and model ~= 'reset') and model or nil
+    char.metadata = meta
+    MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), char.id })
 
-    TriggerClientEvent('sunset:skins:applyModel', source, model or '')
+    TriggerClientEvent('sunset:skins:applyModel', source, meta.skin or '')
     return { success = true }
 end)
 
@@ -128,20 +128,41 @@ RegisterCommand('giveskin', function(source, args)
     TriggerClientEvent('sunset:skins:notify', targetId, ('An admin gave you the skin: %s'):format(model))
 end, false)
 
--- /setskin [model]  (admin rank 1+, bypasses ownership — sets model on self)
+-- /setskin [model] or /setskin [id] [model]  (admin rank 1+, bypasses ownership — sets model and saves permanently)
 RegisterCommand('setskin', function(source, args)
     local reqLevel = exports.sunset_admin:GetCommandRequiredLevel('setskin') or 1
     if source ~= 0 and not exports.sunset_admin:IsAdmin(source, reqLevel) then
         exports.sunset_core:CommandDenyAdmin(source)
         return
     end
-    local model = args[1]
-    if not model then
-        exports.sunset_core:CommandUsage(source, '/setskin [model]')
+
+    local targetSource, model
+    if #args >= 2 and tonumber(args[1]) then
+        targetSource = tonumber(args[1])
+        model        = args[2]
+    elseif #args >= 1 then
+        targetSource = (source ~= 0) and source or nil
+        model        = args[1]
+    end
+
+    if not targetSource or not model then
+        exports.sunset_core:CommandUsage(source, '/setskin [model] or /setskin [id] [model]')
         return
     end
-    TriggerClientEvent('sunset:skins:applyModel', source, model)
-    exports.sunset_core:CommandReply(source, ('Skin set to ~b~%s~w~.'):format(model))
+
+    local targetChar = exports.sunset_core:GetCharacter(targetSource)
+    if not targetChar then
+        exports.sunset_core:CommandPlayerNotFound(source, tostring(targetSource))
+        return
+    end
+
+    local meta = targetChar.metadata or {}
+    meta.skin = (model ~= '' and model ~= 'default' and model ~= 'reset') and model or nil
+    targetChar.metadata = meta
+    MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), targetChar.id })
+
+    TriggerClientEvent('sunset:skins:applyModel', targetSource, meta.skin or '')
+    exports.sunset_core:CommandReply(source, ('Skin for player %d set and saved to ~b~%s~w~.'):format(targetSource, tostring(meta.skin or 'default')))
 end, false)
 
 -- Battlepass: called from sunset_pass to grant a skin on tier unlock

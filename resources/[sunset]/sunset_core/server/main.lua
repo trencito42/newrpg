@@ -455,7 +455,7 @@ RegisterCallback('sunset:getCharacters', function(source)
     if not player then return {} end
 
     local chars = MySQL.query.await(
-        'SELECT id, slot, firstname, lastname, dateofbirth, gender, nationality, cash, bank, job, job_grade, position, appearance, last_played, hunger, thirst, stress, level, xp, respect_points, paydays_received, home_property_id FROM characters WHERE player_id = ? ORDER BY slot',
+        'SELECT * FROM characters WHERE player_id = ? ORDER BY slot',
         { player.id }
     )
 

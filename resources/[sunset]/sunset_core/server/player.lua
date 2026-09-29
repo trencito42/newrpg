@@ -61,6 +61,7 @@ function Sunset.SaveCharacter(source)
         if ok and type(dbMeta) == 'table' then
             if dbMeta.rob_points ~= nil then char.metadata.rob_points = dbMeta.rob_points end
             if dbMeta.quickslots ~= nil then char.metadata.quickslots = dbMeta.quickslots end
+            if dbMeta.skin ~= nil and char.metadata.skin == nil then char.metadata.skin = dbMeta.skin end
         end
     end
 
