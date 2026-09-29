@@ -381,7 +381,7 @@
             if (window.MDC && typeof MDC.close === 'function') MDC.close();
             if (window.ClanPanels && typeof ClanPanels.close === 'function') ClanPanels.close();
             if (window.WardrobeShop && typeof WardrobeShop.close === 'function') WardrobeShop.close();
-            if (window.SkinShopUI && !document.getElementById('skinshop')?.classList.contains('hidden')) { post('skinShopClose', {}); }
+            if (window.SkinShopUI && !document.getElementById('skinshop')?.classList.contains('hidden')) { window.SkinShopUI.hide(); post('skinShopClose', {}); }
         },
 
         notify(message, kind = 'info', duration = 4000) {

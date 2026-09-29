@@ -203,7 +203,8 @@ const SkinShopUI = (() => {
             if ($('#skinshop')?.classList.contains('hidden')) return;
             if (e.key === 'Escape') {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation();
+                hide();
                 post('skinShopClose');
             }
         });
