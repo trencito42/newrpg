@@ -351,9 +351,72 @@ AddEventHandler('sunset:nui:playerInteractionClose', function()
 end)
 
 AddEventHandler('sunset:nui:playerInteractionAction', function(data)
-    if not data or not data.action or not currentContext then return end
+    if not data or not data.action then return end
     local action = data.action
     if not action:find('^workplace_') then return end
+
+    -- ── Sub-menu responses (no currentContext needed — it was cleared when sub-menu opened) ──
+    if action == 'workplace_back' then
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        menuOpen = false
+        currentContext = nil
+        return
+
+    elseif action:find('^workplace_take_contract_') then
+        local contractId = action:gsub('^workplace_take_contract_', '')
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        menuOpen = false
+        currentContext = nil
+        CreateThread(function()
+            local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:startContract', contractId)
+            if not result then
+                exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+            else
+                exports.sunset_ui:Notify(('Contract accepted: travel to %s'):format(result.zone and result.zone.label or contractId), 'success', 6000)
+                TriggerEvent('sunset:hunting:contractStarted', result)
+            end
+        end)
+        return
+
+    elseif action:find('^workplace_take_dive_contract_') then
+        local siteId = action:gsub('^workplace_take_dive_contract_', '')
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        menuOpen = false
+        currentContext = nil
+        CreateThread(function()
+            local result, err = Sunset.AwaitCallback('sunset:jobs:diver:startContract', siteId)
+            if not result then
+                exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+            else
+                exports.sunset_ui:Notify(('Dive contract accepted: %s · $%d'):format(siteId, result.pay or 0), 'success', 6000)
+                TriggerEvent('sunset:diving:contractStarted', result)
+            end
+        end)
+        return
+
+    elseif action:find('^workplace_gear_') then
+        local tier = action:gsub('^workplace_gear_', '')
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        menuOpen = false
+        currentContext = nil
+        CreateThread(function()
+            local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentGear', tier)
+            if not result then
+                exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
+            else
+                exports.sunset_ui:Notify(('Gear rented: %s · O2: %ds'):format(tier, result.o2Duration or 120), 'success', 6000)
+                TriggerEvent('sunset:diving:gearRented', result.o2Duration or 120)
+            end
+        end)
+        return
+    end
+
+    -- ── Main menu actions (require currentContext) ─────────────────
+    if not currentContext then return end
 
     local wp = currentContext.workplace
     closeWorkplaceMenu()
@@ -550,51 +613,6 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             end
         end
 
-    -- ── Sub-menu action handlers ─────────────────────────────────
-    elseif action:find('^workplace_take_contract_') then
-        local contractId = action:gsub('^workplace_take_contract_', '')
-        local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:startContract', contractId)
-        if not result then
-            exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
-        else
-            exports.sunset_ui:Notify(('Contract accepted: travel to %s'):format(result.zone and result.zone.label or contractId), 'success', 6000)
-            TriggerEvent('sunset:hunting:contractStarted', result)
-            exports.sunset_ui:Send('playerInteractionHide', {})
-            exports.sunset_ui:SetFocus(false, false)
-            menuOpen = false
-        end
-
-    elseif action:find('^workplace_take_dive_contract_') then
-        local siteId = action:gsub('^workplace_take_dive_contract_', '')
-        local result, err = Sunset.AwaitCallback('sunset:jobs:diver:startContract', siteId)
-        if not result then
-            exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
-        else
-            exports.sunset_ui:Notify(('Dive contract accepted: %s · $%d'):format(siteId, result.pay or 0), 'success', 6000)
-            TriggerEvent('sunset:diving:contractStarted', result)
-            exports.sunset_ui:Send('playerInteractionHide', {})
-            exports.sunset_ui:SetFocus(false, false)
-            menuOpen = false
-        end
-
-    elseif action:find('^workplace_gear_') then
-        local tier = action:gsub('^workplace_gear_', '')
-        local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentGear', tier)
-        if not result then
-            exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
-        else
-            exports.sunset_ui:Notify(('Gear rented: %s · O2: %ds'):format(tier, result.o2Duration or 120), 'success', 6000)
-            -- Notify diver.lua to reset O2 to the new gear's duration
-            TriggerEvent('sunset:diving:gearRented', result.o2Duration or 120)
-            exports.sunset_ui:Send('playerInteractionHide', {})
-            exports.sunset_ui:SetFocus(false, false)
-            menuOpen = false
-        end
-
-    elseif action == 'workplace_back' then
-        exports.sunset_ui:Send('playerInteractionHide', {})
-        exports.sunset_ui:SetFocus(false, false)
-        menuOpen = false
     end
 end)
 

@@ -16,6 +16,21 @@ function CleanupLicenseTestEntities(source)
         local entity = NetworkGetEntityFromNetworkId(tonumber(netId) or 0)
         if entity and entity ~= 0 and DoesEntityExist(entity) then DeleteEntity(entity) end
     end
+    -- [SECTION 9-13] Clean up hunting exam animal peds
+    for _, netId in ipairs(session.huntingLegalNetIds or {}) do
+        local entity = NetworkGetEntityFromNetworkId(tonumber(netId) or 0)
+        if entity and entity ~= 0 and DoesEntityExist(entity) then DeleteEntity(entity) end
+    end
+    for _, netId in ipairs(session.huntingProtectedNetIds or {}) do
+        local entity = NetworkGetEntityFromNetworkId(tonumber(netId) or 0)
+        if entity and entity ~= 0 and DoesEntityExist(entity) then DeleteEntity(entity) end
+    end
+    -- Remove temp hunting weapon from player if still connected
+    if session.huntingExamStarted and GetPlayerName(source) then
+        local practical = SunsetLicenses.Practical.hunting
+        TriggerClientEvent('sunset:licenses:removeHuntingWeapon', source,
+            practical and practical.weapon or 'WEAPON_SNIPERRIFLE')
+    end
 end
 
 local function practicalVehicleModel(licenseType)
@@ -221,7 +236,37 @@ exports.sunset_core:RegisterCallback('sunset:license:validateFinish', function(s
     if ped == 0 then return false, 'Your position could not be verified.' end
     local pos = GetEntityCoords(ped)
 
-    if licenseType == 'weapon' then
+    -- [SECTION 9-13] Hunting practical: server-authoritative target tracking
+    if licenseType == 'hunting' then
+        if not session.huntingExamStarted then
+            return false, 'The hunting exam targets were not set up. Restart the practical test.'
+        end
+        local hits    = tonumber(session.huntingHits)    or 0
+        local mistakes = tonumber(session.huntingMistakes) or 0
+        local need       = practical.targetsRequired or 4
+        local maxMistakes = practical.maxMistakes    or 2
+        if mistakes > maxMistakes then
+            return false, ('Exam failed: you shot %d protected animals (max %d allowed).'):format(mistakes, maxMistakes)
+        end
+        if hits < need then
+            return false, ('Hit %d/%d verified deer targets first.'):format(hits, need)
+        end
+        local facility = SunsetLicenses.Facilities.hunting_range
+        if facility and #(pos - facility.marker) > (facility.markerRadius or 3.0) + 5.0 then
+            return false, 'Return to the hunting range booth to finish the exam.'
+        end
+        local instructorPed = validSupervisor(session) or 0
+        if instructorPed == 0 then
+            return false, 'Your LSSI instructor must remain at the range until the exam is finished.'
+        end
+        session.phase = 'validated'
+        session.practicalValidatedAt = os.time()
+        session.practicalEvidence = session.practicalEvidence or {}
+        session.practicalEvidence[#session.practicalEvidence + 1] = {
+            event = 'finish_validated', at = session.practicalValidatedAt,
+        }
+        return true
+    elseif licenseType == 'weapon' then
         local hits = 0
         for _ in pairs(session.weaponHits or {}) do hits = hits + 1 end
         local need = practical.targetsRequired or 5
@@ -267,4 +312,186 @@ exports.sunset_core:RegisterCallback('sunset:license:validateFinish', function(s
         event = 'finish_validated', at = session.practicalValidatedAt,
     }
     return true
+end)
+
+-- ══════════════════════════════════════════════════════════════════════
+--  SECTIONS 9-13: HUNTING PRACTICAL EXAM (SERVER-AUTHORITATIVE)
+--  Server spawns animal peds, tracks hits via weaponDamageEvent.
+--  STATIC VERIFIED: session guards, weapon hash validation, proximity.
+--  REQUIRES IN-GAME TEST: CreatePed on server, weaponDamageEvent firing
+--  for animal peds, complete flow from theory pass to license grant.
+-- ══════════════════════════════════════════════════════════════════════
+
+local HUNTING_DEER_MODEL_HASH   = GetHashKey('a_c_deer')
+local HUNTING_RABBIT_MODEL_HASH = GetHashKey('a_c_rabbit_01')
+
+-- [SECTION 9] Start the hunting practical: server creates animal peds
+-- at the configured target positions and gives the player a temp weapon.
+exports.sunset_core:RegisterCallback('sunset:license:startHuntingExam', function(source)
+    local session = GetTestSession(source)
+    if not session or session.licenseType ~= 'hunting' or session.phase ~= 'practical'
+        or testExpired(session) then
+        return nil, 'No active hunting practical test.'
+    end
+    -- Idempotent: return existing state if already started
+    if session.huntingExamStarted then
+        return {
+            legalNetIds     = session.huntingLegalNetIds  or {},
+            protectedNetIds = session.huntingProtectedNetIds or {},
+            weapon          = (SunsetLicenses.Practical.hunting or {}).weapon or 'WEAPON_SNIPERRIFLE',
+            ammo            = (SunsetLicenses.Practical.hunting or {}).ammo   or 15,
+            targetsRequired = (SunsetLicenses.Practical.hunting or {}).targetsRequired or 4,
+            maxMistakes     = (SunsetLicenses.Practical.hunting or {}).maxMistakes     or 2,
+        }
+    end
+    -- [SECTION 10] FAIL CLOSED: weapon license is a prerequisite (also enforced at canStartTest)
+    if GetResourceState('sunset_licenses') == 'started' then
+        if exports.sunset_licenses:HasLicense(source, 'weapon') ~= true then
+            return nil, 'You must hold a valid Firearm License to take the Hunting practical.'
+        end
+    end
+    local practical = SunsetLicenses.Practical.hunting
+    if not practical then return nil, 'Hunting practical is not configured.' end
+
+    -- [SECTION 11] Spawn legal targets (deer) at configured target positions
+    local legalNetIds = {}
+    for _, pos in ipairs(practical.targets or {}) do
+        -- PED_TYPE_ANIMAL = 28
+        local ped = CreatePed(28, HUNTING_DEER_MODEL_HASH,
+            pos.x, pos.y, pos.z, pos.w or 0.0, true, true)
+        if ped and ped ~= 0 then
+            FreezeEntityPosition(ped, true)
+            SetEntityInvincible(ped, false)
+            SetBlockingOfNonTemporaryEvents(ped, true)
+            legalNetIds[#legalNetIds + 1] = NetworkGetNetworkIdFromEntity(ped)
+        end
+    end
+
+    -- [SECTION 11] Spawn protected targets (rabbit) at avoid positions
+    local protectedNetIds = {}
+    for _, pos in ipairs(practical.avoidPositions or {}) do
+        local ped = CreatePed(28, HUNTING_RABBIT_MODEL_HASH,
+            pos.x, pos.y, pos.z, pos.w or 0.0, true, true)
+        if ped and ped ~= 0 then
+            FreezeEntityPosition(ped, true)
+            SetEntityInvincible(ped, false)
+            SetBlockingOfNonTemporaryEvents(ped, true)
+            protectedNetIds[#protectedNetIds + 1] = NetworkGetNetworkIdFromEntity(ped)
+        end
+    end
+
+    if #legalNetIds == 0 then
+        -- Cleanup any protected peds spawned before failure
+        for _, netId in ipairs(protectedNetIds) do
+            local e = NetworkGetEntityFromNetworkId(netId)
+            if e and e ~= 0 and DoesEntityExist(e) then DeleteEntity(e) end
+        end
+        return nil, 'Could not spawn exam targets. Retry the practical test.'
+    end
+
+    -- [SECTION 11] Store authoritative exam state in session
+    session.huntingExamStarted    = true
+    session.huntingLegalNetIds    = legalNetIds
+    session.huntingProtectedNetIds = protectedNetIds
+    session.huntingLegalSet       = {}
+    session.huntingProtectedSet   = {}
+    session.huntingHitSet         = {}
+    session.huntingMistakeSet     = {}
+    session.huntingHits           = 0
+    session.huntingMistakes       = 0
+    for _, netId in ipairs(legalNetIds)     do session.huntingLegalSet[netId]     = true end
+    for _, netId in ipairs(protectedNetIds) do session.huntingProtectedSet[netId] = true end
+
+    -- [SECTION 11] Give temp weapon — server authorizes, client executes
+    TriggerClientEvent('sunset:licenses:giveHuntingWeapon', source,
+        practical.weapon or 'WEAPON_SNIPERRIFLE', practical.ammo or 15)
+
+    session.practicalEvidence = session.practicalEvidence or {}
+    session.practicalEvidence[#session.practicalEvidence + 1] = {
+        event = 'hunting_exam_started', at = os.time(),
+        legalSpawned = #legalNetIds, protectedSpawned = #protectedNetIds,
+    }
+
+    return {
+        legalNetIds     = legalNetIds,
+        protectedNetIds = protectedNetIds,
+        weapon          = practical.weapon or 'WEAPON_SNIPERRIFLE',
+        ammo            = practical.ammo   or 15,
+        targetsRequired = practical.targetsRequired or 4,
+        maxMistakes     = practical.maxMistakes     or 2,
+    }
+end)
+
+-- [SECTION 12] weaponDamageEvent — hunting practical hit tracking.
+-- Fires for EVERY weapon damage event; filter early on session check.
+AddEventHandler('weaponDamageEvent', function(sender, data)
+    if type(data) ~= 'table' then return end
+    local session = GetTestSession(sender)
+    if not session or session.licenseType ~= 'hunting' or session.phase ~= 'practical'
+        or not session.huntingExamStarted or testExpired(session) then return end
+
+    local netId = tonumber(data.hitGlobalId)
+    if not netId or netId == 0 then return end
+
+    -- [SECTION 12] Validate weapon: only the exam rifle counts
+    local practical = SunsetLicenses.Practical.hunting
+    local examWeaponHash = GetHashKey(practical.weapon or 'WEAPON_SNIPERRIFLE')
+    local sentHash = tonumber(data.weaponType) or 0
+    -- Normalize to signed 32-bit (weaponDamageEvent may send unsigned)
+    if sentHash > 2147483647 then sentHash = sentHash - 4294967296 end
+    if examWeaponHash > 2147483647 then examWeaponHash = examWeaponHash - 4294967296 end
+    if sentHash ~= examWeaponHash then return end
+
+    -- [SECTION 12] Validate shooter is within the exam zone
+    local ped = GetPlayerPed(sender)
+    if ped == 0 then return end
+    local zoneCenter = practical.zoneCenter
+    if zoneCenter and #(GetEntityCoords(ped) - zoneCenter) > (practical.zoneRadius or 60.0) then return end
+
+    if session.huntingLegalSet and session.huntingLegalSet[netId] then
+        -- Legal target hit (deer)
+        if not session.huntingHitSet then session.huntingHitSet = {} end
+        if not session.huntingHitSet[netId] then
+            session.huntingHitSet[netId]  = true
+            session.huntingHits = (session.huntingHits or 0) + 1
+            session.practicalEvidence = session.practicalEvidence or {}
+            session.practicalEvidence[#session.practicalEvidence + 1] = {
+                event = 'hunting_legal_hit', netId = netId,
+                hits = session.huntingHits, at = os.time(),
+            }
+            TriggerClientEvent('sunset:licenses:huntingProgress', sender,
+                session.huntingHits, practical.targetsRequired or 4)
+            if session.huntingHits >= (practical.targetsRequired or 4) then
+                TriggerClientEvent('sunset:licenses:huntingAllDown', sender)
+            end
+        end
+    elseif session.huntingProtectedSet and session.huntingProtectedSet[netId] then
+        -- Protected target hit (rabbit) — mistake
+        if not session.huntingMistakeSet then session.huntingMistakeSet = {} end
+        if not session.huntingMistakeSet[netId] then
+            session.huntingMistakeSet[netId] = true
+            session.huntingMistakes = (session.huntingMistakes or 0) + 1
+            local maxMistakes = practical.maxMistakes or 2
+            session.practicalEvidence = session.practicalEvidence or {}
+            session.practicalEvidence[#session.practicalEvidence + 1] = {
+                event = 'hunting_protected_hit', netId = netId,
+                mistakes = session.huntingMistakes, at = os.time(),
+            }
+            TriggerClientEvent('sunset:licenses:huntingMistake', sender,
+                session.huntingMistakes, maxMistakes)
+            -- [SECTION 12] Auto-fail on exceeding mistake limit
+            if session.huntingMistakes > maxMistakes then
+                CleanupLicenseTestEntities(sender)
+                if type(FinalizeLicenseExamReport) == 'function' then
+                    FinalizeLicenseExamReport(session, 'failed')
+                end
+                clearTestSession(sender, 'FAILED', 'too many protected animal kills')
+                TriggerClientEvent('sunset:licenses:testAbort', sender)
+                TriggerClientEvent('sunset:client:notify', sender,
+                    ('Exam failed: you shot %d protected animals (limit %d).'):format(
+                        session.huntingMistakes, maxMistakes),
+                    'error', 7000)
+            end
+        end
+    end
 end)

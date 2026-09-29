@@ -156,6 +156,9 @@ Sunset.Shops = {
             { item = 'weapon_pumpshotgun', price = 32000, minLevel = 6, requiredLicense = 'weapon', maxAmount = 1 },
             { item = 'ammo_9mm', price = 180, requiredLicense = 'weapon', maxAmount = 10 },
             { item = 'ammo_shotgun', price = 260, requiredLicense = 'weapon', maxAmount = 10 },
+            { item = 'weapon_sniperrifle', price = 28000, minLevel = 5, requiredLicense = 'weapon', maxAmount = 1 },
+            { item = 'ammo_rifle', price = 320, requiredLicense = 'weapon', maxAmount = 10 },
+            { item = 'hunting_knife', price = 800, maxAmount = 1 },
         },
     },
 }

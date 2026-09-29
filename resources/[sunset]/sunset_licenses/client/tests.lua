@@ -3,6 +3,10 @@ local testVehicle = 0
 local testBlips = {}
 local targetProps = {}
 local weaponServerHits = 0
+-- [SECTION 9-13] Hunting practical client state
+local huntingServerHits    = 0
+local huntingServerMistakes = 0
+local huntingWeaponName     = nil  -- set when weapon is given, cleared on cleanup
 
 local function notify(msg, kind)
     exports.sunset_ui:Notify(msg, kind or 'info', 7000)
