@@ -167,6 +167,9 @@ local function startTrucker(selectedRouteIdx)
     -- Wait a tick for sessionStarted to arrive so JC.jobId / JC.state are set
     Wait(100)
 
+    -- Clean up any leftover work vehicles from previous shifts before spawning
+    JC.deleteVehicles()
+
     JC.sessionData = data
     JC.clearBlips()
     JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')

@@ -571,9 +571,10 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then return nil, 'No ped found' end
     local inDriverSeat = GetPedInVehicleSeat(entity, -1) == ped
-    local nearVehicle = #(GetEntityCoords(ped) - GetEntityCoords(entity)) <= 8.0
-    if not inDriverSeat and not nearVehicle then
-        dlog('player is not in the driver seat of the resolved vehicle')
+    local nearVehicle = #(GetEntityCoords(ped) - GetEntityCoords(entity)) <= 45.0
+    local atDepot = cfg and cfg.depot and cfg.depot.coords and #(GetEntityCoords(ped) - cfg.depot.coords) <= 80.0
+    if not inDriverSeat and not nearVehicle and not atDepot then
+        dlog('player is not in the driver seat or near the vehicle / depot')
         return nil, 'You must drive the work vehicle'
     end
     local cfg = Sunset.GetJobConfig(session.jobId)
@@ -619,7 +620,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
             dlog(('trailer model mismatch: entity=%s expected=%s'):format(GetEntityModel(trailer), tostring(joaat(expectedTrailer))))
             return nil, 'Invalid work trailer'
         end
-        local maxTrailerDist = (session.jobId == 'trucker' and session.data and session.data.stage == 'to_pickup') and 250.0 or 45.0
+        local maxTrailerDist = (session.jobId == 'trucker') and 300.0 or 50.0
         if #(GetEntityCoords(entity) - GetEntityCoords(trailer)) > maxTrailerDist then
             session.trailerNetId = nil
             dlog('trailer too far from truck')

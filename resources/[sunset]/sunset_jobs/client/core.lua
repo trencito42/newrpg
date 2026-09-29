@@ -281,7 +281,9 @@ end
 local RETRYABLE_ERRORS = {
     ['Work vehicle not networked'] = true,
     ['Work trailer is not networked'] = true,
+    ['Work trailer was not registered'] = true,
     ['You must drive the work vehicle'] = true,
+    ['Work trailer is too far from the truck'] = true,
 }
 
 function JobClient.registerVehiclesWithServer()
@@ -302,7 +304,7 @@ function JobClient.registerVehiclesWithServer()
         end
     end
 
-    local totalDeadline = GetGameTimer() + 8000
+    local totalDeadline = GetGameTimer() + 10000
     local attempt, delay = 0, 200
     local lastErr = nil
     while GetGameTimer() < totalDeadline do

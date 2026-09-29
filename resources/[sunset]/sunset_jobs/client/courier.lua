@@ -136,6 +136,7 @@ local function startCourier()
     end
 
     local cfg = Sunset.GetJobConfig('courier')
+    JC.deleteVehicles()
     JC.clearBlips()
     JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, 'Courier Depot')
     JC.sessionData = data

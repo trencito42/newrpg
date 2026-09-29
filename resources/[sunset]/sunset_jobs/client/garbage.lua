@@ -144,6 +144,7 @@ local function startGarbage()
     end
 
     local cfg = Sunset.GetJobConfig('garbage')
+    JC.deleteVehicles()
     JC.clearBlips()
     JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
 
