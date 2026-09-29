@@ -9,6 +9,7 @@ version '1.0.0'
 dependencies { 'sunset_core', 'sunset_ui' }
 
 shared_scripts {
+    '@sunset_core/shared/boot_debug.lua',
     '@sunset_core/shared/config.lua',
     '@sunset_core/shared/password.lua',
 }

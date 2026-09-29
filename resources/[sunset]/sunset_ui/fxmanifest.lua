@@ -52,6 +52,10 @@ files {
     'web/modules/**/*',
 }
 
+shared_scripts {
+    '@sunset_core/shared/boot_debug.lua',
+}
+
 client_scripts {
     'client/main.lua',
     'client/nui_bridge.lua',

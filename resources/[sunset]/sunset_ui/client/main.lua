@@ -56,13 +56,11 @@ function SetFocus(hasFocus, hasCursor, keepInput, owner)
     focusOwner = hasFocus and owner or nil
     SetNuiFocus(hasFocus, hasCursor == true)
     SetNuiFocusKeepInput(keepInput == true)
-    if nuiDebugEnabled() then
-        -- [BOOT TRACE v3] include a short traceback so we can identify WHO steals
-        -- focus (the 13s login-screen release bug).
+    if nuiDebugEnabled() or (SunsetBoot and SunsetBoot.IsVerbose and SunsetBoot.IsVerbose()) then
         local tb = debug.traceback('', 2):gsub('\n', ' | '):sub(1, 220)
-        -- NOTE: `os` is server-only; GetGameTimer() is the client-safe clock.
-        print(('^5[FOCUS %s]^7 ui: SetFocus(has=%s cursor=%s owner=%s) | %s'):format(
-            tostring(GetBootEpoch and GetBootEpoch() or GetGameTimer()), tostring(hasFocus), tostring(hasCursor == true), owner, tb))
+        local bootId = (SunsetBoot and SunsetBoot.GetBootId) and SunsetBoot.GetBootId() or 'boot'
+        print(('^5[BOOTV boot=%s %d] [focus] SetFocus(has=%s cursor=%s keepInput=%s owner=%s screen=%s) | %s^7'):format(
+            bootId, GetGameTimer(), tostring(hasFocus), tostring(hasCursor == true), tostring(keepInput == true), tostring(owner), tostring(currentScreen), tb))
     end
     return true
 end

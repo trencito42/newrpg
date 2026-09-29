@@ -53,19 +53,9 @@ end)
 CreateThread(function()
     while not NetworkIsPlayerActive(PlayerId()) do Wait(100) end
 
-    -- [BOOT TRACE v2] ABSOLUTE epoch-ms timestamps. Lua has no wall clock, so
-    -- we calibrate against the NUI's Date.now() via a one-shot handshake
-    -- (sunset_ui posts nuiEpoch back). Until calibration lands, lines print
-    -- with epoch=0 and a local ms offset — still ORDERED, and the NUI side
-    -- prints true epochs, so the two can be interleaved.
-    local bootLocal = GetGameTimer()
-    local epochOffset = nil -- set from NUI handshake: Date.now() - GetGameTimer()
-    local function btrace(stage)
-        local abs = epochOffset and (GetGameTimer() + epochOffset) or 0
-        print(('^5[BOOT %d (+%dms)]^7 core: %s'):format(abs, GetGameTimer() - bootLocal, stage))
-    end
-    exports('BootTrace', function(stage) btrace(tostring(stage)) end)
-    btrace('network active, waiting for sunset_ui')
+    local tNetActive = GetGameTimer()
+    SunsetBoot.Log('core', 'network:active', 'network active, waiting for sunset_ui & sunset_auth_ui')
+    exports('BootTrace', function(stage) SunsetBoot.Log('core', tostring(stage)) end)
 
     -- [A/B NOFX MODE] convar sv_sunset_nofx=1 disables loadscreen/NUI
     -- animations, filters and big backgrounds for freeze A/B testing.
@@ -77,7 +67,8 @@ CreateThread(function()
     while (GetResourceState('sunset_auth_ui') ~= 'started' and GetResourceState('sunset_ui') ~= 'started') and GetGameTimer() < uiDeadline do
         Wait(50)
     end
-    btrace('auth_ui state=' .. tostring(GetResourceState('sunset_auth_ui')) .. ', sunset_ui state=' .. tostring(GetResourceState('sunset_ui')))
+    SunsetBoot.Log('core', 'ui:state', ('auth_ui=%s sunset_ui=%s'):format(
+        tostring(GetResourceState('sunset_auth_ui')), tostring(GetResourceState('sunset_ui'))))
 
     local domDeadline = GetGameTimer() + 30000
     while GetGameTimer() < domDeadline do
@@ -89,11 +80,12 @@ CreateThread(function()
     end
 
     SetBootState('SESSION_REQUESTED', 'auth DOM ready')
-    btrace('notifying server playerLoaded')
+    SunsetBoot.Log('core', 'session:request', 'notifying server playerLoaded')
     TriggerServerEvent('sunset:server:playerLoaded')
 
     -- Auth decides between quick-login and the form. Keep the FiveM loadscreen
     -- until either presentation has reached its final painted position.
+    local tAuthRendered = nil
     local handoffOk, handoffErr = pcall(function()
         local readyDeadline = GetGameTimer() + 12000
         local nuiReady = false
@@ -101,7 +93,9 @@ CreateThread(function()
             if GetResourceState('sunset_auth_ui') == 'started' then
                 local rendered = exports.sunset_auth_ui:IsVisibleRendered()
                 if rendered then
-                    btrace('sunset_auth_ui visible frame confirmed')
+                    tAuthRendered = GetGameTimer()
+                    SunsetBoot.RecordMilestone('network_to_auth_rendered', tAuthRendered - tNetActive, 'auth DOM painted')
+                    SunsetBoot.Log('core', 'auth_ui:rendered', ('visible frame confirmed (+%dms from net)'):format(tAuthRendered - tNetActive))
                     nuiReady = true
                     break
                 end
@@ -109,10 +103,15 @@ CreateThread(function()
             Wait(25)
         end
         if not nuiReady then
-            btrace('NUI ready timeout (8s) — proceeding with failsafe shutdown')
+            tAuthRendered = GetGameTimer()
+            SunsetBoot.Log('core', 'auth_ui:timeout', 'NUI ready timeout (8s) — proceeding with failsafe shutdown')
         end
 
-        btrace('SEND_LOADING_SCREEN_MESSAGE sunsetHandoff')
+        local tHandoffStart = GetGameTimer()
+        if tAuthRendered then
+            SunsetBoot.RecordMilestone('auth_rendered_to_handoff', tHandoffStart - tAuthRendered)
+        end
+        SunsetBoot.Log('core', 'handoff:send', 'SEND_LOADING_SCREEN_MESSAGE sunsetHandoff')
         SendLoadingScreenMessage(json.encode({ eventName = 'sunsetHandoff' }))
         if nofx then
             SendLoadingScreenMessage(json.encode({ eventName = 'nofx' }))
@@ -134,30 +133,34 @@ CreateThread(function()
     SetEntityVisible(ped, false, false)
     SetFocusPosAndVel(0.0, 0.0, -100.0, 0.0, 0.0, 0.0)
 
-    btrace('ShutdownLoadingScreenNui (calling)')
+    local tShutdownStart = GetGameTimer()
+    SunsetBoot.Log('core', 'loadscreen_shutdown:start', 'calling ShutdownLoadingScreenNui & ShutdownLoadingScreen')
     ShutdownLoadingScreenNui()
-    btrace('ShutdownLoadingScreenNui RETURNED')
+    SunsetBoot.Log('core', 'loadscreen_nui_shutdown:returned')
     ShutdownLoadingScreen()
-    btrace('ShutdownLoadingScreen RETURNED')
-    DoScreenFadeIn(500)
-    btrace('fade-in started; auth owns the visible surface')
+    local tShutdownEnd = GetGameTimer()
+    SunsetBoot.Log('core', 'loadscreen_shutdown:end', ('returned elapsed=%dms'):format(tShutdownEnd - tShutdownStart))
+    SunsetBoot.RecordMilestone('handoff_to_loadscreen_off', tShutdownEnd - (tAuthRendered or tShutdownStart))
 
-    -- [BOOT TRACE v2] 6) first responsive frame after shutdown: measure how
-    -- long the main thread stays blocked between fade-in and the next frames.
+    DoScreenFadeIn(500)
+    SunsetBoot.Log('core', 'screen_fade:in_start', 'fade-in started; auth owns visible surface')
+
+    -- Measure first responsive frames after shutdown
     CreateThread(function()
         local t0 = GetGameTimer()
         local frames = 0
         local lastGapStart = GetGameTimer()
-        while frames < 300 do -- ~5s at 60fps
+        while frames < 300 do
             Wait(0)
             frames = frames + 1
             local now = GetGameTimer()
-            if now - lastGapStart > 300 then
-                btrace(('CLIENT FRAME GAP %dms after %d frames'):format(now - lastGapStart, frames))
-            end
             lastGapStart = now
-            if frames == 1 then btrace(('first frame after shutdown (+%dms)'):format(now - t0)) end
-            if frames == 60 then btrace(('60 frames rendered (+%dms)'):format(now - t0)) end
+            if frames == 1 then
+                SunsetBoot.Log('core', 'renderer:first_frame', ('first frame after shutdown (+%dms)'):format(now - t0))
+            end
+            if frames == 60 then
+                SunsetBoot.Log('core', 'renderer:60_frames', ('60 frames rendered (+%dms)'):format(now - t0))
+            end
         end
     end)
 

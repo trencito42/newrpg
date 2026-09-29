@@ -3,7 +3,11 @@ local pendingSpawnCharacter = nil
 local optionalSpawnMenu = false
 
 local function trace(stage, detail)
-    print(('[SunsetFlow] %s%s'):format(stage, detail and (' | ' .. tostring(detail)) or ''))
+    if SunsetBoot and SunsetBoot.Log then
+        SunsetBoot.Log('characters', stage, detail)
+    else
+        pcall(function() exports.sunset_core:BootLog('characters', stage, detail) end)
+    end
     TriggerServerEvent('sunset:server:flowTrace', stage, detail and tostring(detail) or '')
 end
 
@@ -27,10 +31,17 @@ local function showSpawnSelection(char, optional)
         -- on every login and leaving the loading screen waiting unnecessarily.
         local resolveStarted = GetGameTimer()
         local resolved, err = Sunset.AwaitCallback('sunset:resolveAutoSpawn')
+        local resolveDur = GetGameTimer() - resolveStarted
         if resolved and resolved.x then
             pendingSpawnCharacter = nil
-            trace('spawn_auto_resolved', ('%s | %dms'):format(
-                tostring(resolved.source or 'default'), GetGameTimer() - resolveStarted))
+            local srcName = tostring(resolved.source or 'default')
+            trace('spawn_auto_resolved', ('%s | %dms | coords=%.2f,%.2f,%.2f'):format(
+                srcName, resolveDur, resolved.x, resolved.y, resolved.z))
+            if SunsetBoot and SunsetBoot.RecordMilestone then
+                SunsetBoot.RecordMilestone('resolveAutoSpawn', resolveDur, ('source=%s coords=%.2f,%.2f,%.2f'):format(srcName, resolved.x, resolved.y, resolved.z))
+            else
+                pcall(function() exports.sunset_core:RecordMilestone('resolveAutoSpawn', resolveDur, ('source=%s'):format(srcName)) end)
+            end
             exports.sunset_ui:Show('loading', { holdText = 'Loading character...' })
             TriggerEvent('sunset:client:spawnCharacter', char, resolved)
             return
@@ -173,14 +184,21 @@ local function autoEnterGame()
         Wait(100)
     end
 
+    local tEnterStart = GetGameTimer()
     local result, err = Sunset.AwaitCallback('sunset:enterGame')
+    local enterDur = GetGameTimer() - tEnterStart
     if result and result.character then
-        trace('character_request_complete', result.character.id)
+        if SunsetBoot and SunsetBoot.RecordMilestone then
+            SunsetBoot.RecordMilestone('enterGame_callback', enterDur, ('charId=%s'):format(tostring(result.character.id)))
+        else
+            pcall(function() exports.sunset_core:RecordMilestone('enterGame_callback', enterDur) end)
+        end
+        trace('character_request_complete', ('%s | %dms'):format(tostring(result.character.id), enterDur))
         spawnCharacter(result.character)
         return
     end
 
-    trace('character_request_failed', err or 'empty_response')
+    trace('character_request_failed', ('%s | %dms'):format(tostring(err or 'empty_response'), enterDur))
     inCharacterFlow = false
     if GetResourceState('sunset_auth') == 'started' then
         TriggerEvent('sunset:auth:openLogin')

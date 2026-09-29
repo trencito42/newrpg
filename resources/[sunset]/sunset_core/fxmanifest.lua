@@ -8,6 +8,7 @@ description 'Core framework — player management, database, callbacks'
 version '1.0.0'
 
 shared_scripts {
+    'shared/boot_debug.lua',
     'shared/config.lua',
     'shared/jobs_civilian.lua',
     'shared/jobs_config.lua',
@@ -38,6 +39,7 @@ server_scripts {
 }
 
 client_scripts {
+    'client/boot_debug.lua',
     'client/main.lua',
     'client/callbacks.lua',
 }
@@ -46,6 +48,11 @@ exports {
     'GetPlayer',
     'GetCharacter',
     'TriggerCallback',
+    'BootLog',
+    'BootLogVerbose',
+    'GetBootId',
+    'RecordMilestone',
+    'RecordHitch',
 }
 
 server_exports {

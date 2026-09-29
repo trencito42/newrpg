@@ -5,17 +5,18 @@ const filesEl = document.getElementById('loading-files');
 const tipTextEl = document.getElementById('tip-text');
 const rpmContainer = document.getElementById('rpm-bar');
 
-// [BOOT TRACE v2] ABSOLUTE epoch-ms timestamps (Date.now()) so every context
-// (loadscreen CEF, core Lua, sunset_ui NUI) can be correlated on ONE timeline.
+// [BOOT TRACE v2] ABSOLUTE epoch-ms timestamps (Date.now())
 const BOOT_T0 = Date.now();
+let bootAttemptId = 'BOOT';
 function btrace(stage, extra) {
     try {
-        console.log(`[BOOT ${Date.now()} (+${Date.now() - BOOT_T0}ms)] loadscreen: ${stage}${extra ? ' | ' + extra : ''}`);
+        const now = Date.now();
+        console.log(`[BOOTV boot=${bootAttemptId} ${now} +${now - BOOT_T0}ms] [loadscreen] ${stage}${extra ? ' ' + extra : ''}`);
     } catch (_) { /* console unavailable */ }
 }
-btrace('script start');
+btrace('script:start');
 window.addEventListener('error', (e) => {
-    btrace('JS ERROR', `${e.message} @ ${e.filename}:${e.lineno}`);
+    btrace('js:error', `${e.message} @ ${e.filename}:${e.lineno}`);
 });
 
 // [FREEZE WATCHDOG] rAF frame-gap detector for the loadscreen CEF.
@@ -25,7 +26,9 @@ window.addEventListener('error', (e) => {
         const now = performance.now();
         const gap = now - last;
         last = now;
-        if (gap > 300) btrace('CEF FRAME GAP', `${Math.round(gap)}ms frozen`);
+        if (gap > 200) {
+            console.log(`[HITCH boot=${bootAttemptId}] LOADSCREEN CEF FRAME GAP ${Math.round(gap)}ms visibility=${document.visibilityState} displayedPct=${Math.round(displayedPct)}`);
+        }
         requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

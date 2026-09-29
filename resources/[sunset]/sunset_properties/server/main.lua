@@ -127,6 +127,10 @@ local function resolveSpawnChoiceForChar(source, char, choice, propertyId)
         if not prop or not dbBool(prop.enabled) then return nil, 'That house is no longer available.' end
         if not accessible(char, prop) then return nil, 'You no longer own or rent that house.' end
         pos = decodePos(prop.entry)
+        if SunsetBoot and SunsetBoot.IsDebug() then
+            print(('^5[BOOTV src=%s] properties:resolve_house id=%s entry=%.2f,%.2f,%.2f^7'):format(
+                tostring(source), tostring(propertyId), pos and pos.x or 0, pos and pos.y or 0, pos and pos.z or 0))
+        end
     elseif choice == 'hq' then
         if source and source > 0 then
             local ok, hq = pcall(function()
@@ -196,7 +200,10 @@ exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
     -- 2. home property (owned or rented)
     if char.home_property_id then
         local ok, resolved = pcall(resolveSpawnChoiceForChar, source, char, 'house', char.home_property_id)
-        if ok and resolved and resolved.x then resolved.source = 'house'; return resolved end
+        if ok and resolved and resolved.x then
+            resolved.source = 'house'
+            return resolved
+        end
     end
 
     -- 3. faction HQ

@@ -14,6 +14,22 @@ function post(action, data = {}) {
     } catch (_) { /* noop */ }
 }
 
+// [FREEZE WATCHDOG] rAF frame-gap detector for Auth NUI
+(function authFrameWatchdog() {
+    let last = performance.now();
+    function frame() {
+        const now = performance.now();
+        const gap = now - last;
+        last = now;
+        if (gap > 200) {
+            const screenVis = $('#auth-screen')?.classList.contains('is-visible') ? 'auth' : 'hidden';
+            console.log(`[HITCH] AUTH NUI FRAME GAP ${Math.round(gap)}ms screen=${screenVis} visibility=${document.visibilityState} mode=${AuthUI.mode || 'none'}`);
+        }
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+})();
+
 const AuthUI = {
     mode: 'login', // 'login' | 'register'
     pendingSubmit: false,

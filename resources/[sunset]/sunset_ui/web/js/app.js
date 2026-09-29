@@ -920,6 +920,22 @@
         });
     });
 
+    // [FREEZE WATCHDOG] rAF frame-gap detector for Main sunset_ui NUI
+    (function mainNuiFrameWatchdog() {
+        let last = performance.now();
+        function frame() {
+            const now = performance.now();
+            const gap = now - last;
+            last = now;
+            if (gap > 200) {
+                const currentScreen = window.App?.currentScreen || 'none';
+                console.log(`[HITCH] MAIN NUI FRAME GAP ${Math.round(gap)}ms screen=${currentScreen} visibility=${document.visibilityState}`);
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    })();
+
     document.addEventListener('DOMContentLoaded', () => {
         App.init();
     });

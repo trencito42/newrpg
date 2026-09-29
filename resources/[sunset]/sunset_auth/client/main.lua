@@ -182,7 +182,11 @@ local function performLogin(username, password, rememberQuickLogin)
 end
 
 RegisterNetEvent('sunset:client:sessionReady', function(data)
-    print('^5[BOOT]^7 auth: sessionReady received (license=' .. tostring(data and data.license ~= nil) .. ')')
+    if SunsetBoot and SunsetBoot.Log then
+        SunsetBoot.Log('auth', 'session_ready', ('license_present=%s'):format(tostring(data and data.license ~= nil)))
+    else
+        pcall(function() exports.sunset_core:BootLog('auth', 'session_ready', ('license_present=%s'):format(tostring(data and data.license ~= nil))) end)
+    end
     sessionLicense = data and data.license
     if authenticated then return end
 
@@ -192,17 +196,36 @@ RegisterNetEvent('sunset:client:sessionReady', function(data)
     local store = SunsetAuthAccounts.load(activeLicense())
     local saved = SunsetAuthAccounts.mostRecent(store)
     if saved and type(saved.token) == 'string' and saved.token ~= '' then
-        print('^5[BOOT]^7 auth: saved token found for ' .. tostring(saved.username) .. ', attempting silent quick login')
+        if SunsetBoot and SunsetBoot.Log then
+            SunsetBoot.Log('auth', 'quick_login:start', ('username=%s'):format(tostring(saved.username)))
+        else
+            pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:start', ('username=%s'):format(tostring(saved.username))) end)
+        end
         openQuickAuth(saved.username)
         setBootState('AUTHENTICATING', 'quick login request')
         CreateThread(function()
+            local tQuickStart = GetGameTimer()
             local result, err = Sunset.AwaitCallback('sunset:authQuickLogin', saved.username, saved.token)
+            local quickDur = GetGameTimer() - tQuickStart
+            if SunsetBoot and SunsetBoot.RecordMilestone then
+                SunsetBoot.RecordMilestone('auth_quick_login', quickDur, ('username=%s ok=%s'):format(tostring(saved.username), tostring(result and not result.needsEmail)))
+            else
+                pcall(function() exports.sunset_core:RecordMilestone('auth_quick_login', quickDur) end)
+            end
             if result and not result.needsEmail then
-                print('^5[BOOT]^7 auth: silent quick login succeeded')
+                if SunsetBoot and SunsetBoot.Log then
+                    SunsetBoot.Log('auth', 'quick_login:success', ('elapsed=%dms'):format(quickDur))
+                else
+                    pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:success', ('elapsed=%dms'):format(quickDur)) end)
+                end
                 completeAuthentication(saved.username, result.quickToken, true)
             else
                 -- Token expired or invalid — remove it and fall back to the form.
-                print('^5[BOOT]^7 auth: silent quick login failed (' .. tostring(err) .. '), showing auth screen')
+                if SunsetBoot and SunsetBoot.Log then
+                    SunsetBoot.Log('auth', 'quick_login:failed', ('elapsed=%dms err=%s'):format(quickDur, tostring(err)))
+                else
+                    pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:failed', ('elapsed=%dms err=%s'):format(quickDur, tostring(err))) end)
+                end
                 SunsetAuthAccounts.remove(activeLicense(), saved.username)
                 openAuth()
                 scheduleAuthWatchdog()
@@ -211,7 +234,11 @@ RegisterNetEvent('sunset:client:sessionReady', function(data)
         return
     end
 
-    print('^5[BOOT]^7 auth: no saved token, opening auth screen')
+    if SunsetBoot and SunsetBoot.Log then
+        SunsetBoot.Log('auth', 'form:open', 'no saved token, opening auth form')
+    else
+        pcall(function() exports.sunset_core:BootLog('auth', 'form:open', 'no saved token, opening auth form') end)
+    end
     openAuth()
     scheduleAuthWatchdog()
 end)

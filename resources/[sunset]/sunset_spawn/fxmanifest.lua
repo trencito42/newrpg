@@ -8,6 +8,7 @@ description 'Player spawn and world entry'
 version '1.0.0'
 
 shared_scripts {
+    '@sunset_core/shared/boot_debug.lua',
     '@sunset_core/shared/config.lua',
     '@sunset_core/shared/factions.lua',
     '@sunset_core/shared/utils.lua',

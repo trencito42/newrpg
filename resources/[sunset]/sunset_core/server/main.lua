@@ -75,10 +75,25 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
         return
     end
 
+    local isBootDebug = SunsetBoot.IsDebug()
+    local tStart = isBootDebug and GetGameTimer() or 0
+    if isBootDebug then
+        print(('^5[BOOTV src=%d] callback %s START^7'):format(source, name))
+    end
+
     local ok, packed = pcall(function(...)
         local result, err = Callbacks[name](source, ...)
         return { result = result, err = err }
     end, ...)
+
+    if isBootDebug then
+        local dur = GetGameTimer() - tStart
+        local flag = ''
+        if dur >= 1000 then flag = ' ^1[STALL]^5'
+        elseif dur >= 500 then flag = ' ^1[VERY SLOW]^5'
+        elseif dur >= 100 then flag = ' ^3[SLOW]^5' end
+        print(('^5[BOOTV src=%d] callback %s END %dms%s (ok=%s)^7'):format(source, name, dur, flag, tostring(ok and not packed.err)))
+    end
 
     if not ok then
         print(('^1[blaze.mp]^7 Callback error (%s): %s'):format(name, tostring(packed)))
@@ -127,10 +142,24 @@ end)
 
 -- Moves the player back to the main routing bucket right before spawn
 -- streaming begins (called by sunset_spawn before streamSpawnArea).
-RegisterNetEvent('sunset:server:prepareSpawn', function()
+RegisterNetEvent('sunset:server:prepareSpawn', function(requestId)
     local source = source
-    if not Sessions[source] or not Sessions[source].authenticated then return end
-    SetPlayerRoutingBucket(source, 0)
+    local session = Sessions[source]
+    local oldBucket = GetPlayerRoutingBucket(source)
+    if SunsetBoot.IsDebug() then
+        print(('^5[BOOTV src=%d] prepareSpawn:received oldBucket=%s requestId=%s auth=%s^7'):format(
+            source, tostring(oldBucket), tostring(requestId), tostring(session and session.authenticated)))
+    end
+
+    if session and session.authenticated then
+        SetPlayerRoutingBucket(source, 0)
+    end
+    local newBucket = GetPlayerRoutingBucket(source)
+    if SunsetBoot.IsDebug() then
+        print(('^5[BOOTV src=%d] prepareSpawn:ack oldBucket=%s newBucket=%s^7'):format(
+            source, tostring(oldBucket), tostring(newBucket)))
+    end
+    TriggerClientEvent('sunset:client:prepareSpawnAck', source, requestId, newBucket, oldBucket)
 end)
 
 local function completeAuthentication(source, accountId, username)
@@ -140,10 +169,14 @@ local function completeAuthentication(source, accountId, username)
     accountId = tonumber(accountId)
     if not accountId or type(username) ~= 'string' or username == '' then return false end
 
+    local t0 = SunsetBoot.IsDebug() and GetGameTimer() or 0
     local account = MySQL.single.await(
         'SELECT id, username, premium_points, admin_level, helper_level FROM accounts WHERE id = ?',
         { accountId }
     )
+    if SunsetBoot.IsDebug() then
+        print(('^5[BOOTV src=%d] DB auth.account %dms^7'):format(source, GetGameTimer() - t0))
+    end
     if not account then return false end
     username = account.username
 
@@ -182,6 +215,7 @@ local function completeAuthentication(source, accountId, username)
     end
 
     local license = session.license
+    local t1 = SunsetBoot.IsDebug() and GetGameTimer() or 0
     local player = MySQL.single.await('SELECT * FROM players WHERE account_id = ?', { accountId })
 
     if not player then
@@ -190,6 +224,9 @@ local function completeAuthentication(source, accountId, username)
             MySQL.update.await('UPDATE players SET account_id = ? WHERE id = ?', { accountId, player.id })
             player.account_id = accountId
         end
+    end
+    if SunsetBoot.IsDebug() then
+        print(('^5[BOOTV src=%d] DB auth.player %dms^7'):format(source, GetGameTimer() - t1))
     end
 
     if not player then
@@ -373,7 +410,11 @@ local function loadCharacterForPlayer(source, player, charId)
         end
     end
 
+    local tChar = SunsetBoot.IsDebug() and GetGameTimer() or 0
     local char = MySQL.single.await('SELECT * FROM characters WHERE id = ? AND player_id = ?', { charId, player.id })
+    if SunsetBoot.IsDebug() then
+        print(('^5[BOOTV src=%d] DB enterGame.character %dms charId=%s^7'):format(source, GetGameTimer() - tChar, tostring(charId)))
+    end
     if not char then return nil end
 
     char = Sunset.DecodeCharacter(char)

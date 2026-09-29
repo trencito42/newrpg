@@ -407,21 +407,46 @@ function SunsetAppearance.ApplyClothingSnapshot(ped, snap)
 end
 
 function SunsetAppearance.apply(ped, appearance, gender)
+    local tStart = GetGameTimer()
     local model = GetEntityModel(ped)
     if model ~= `mp_m_freemode_01` and model ~= `mp_f_freemode_01` then
         SetPedDefaultComponentVariation(ped)
         return appearance
     end
     appearance = SunsetAppearance.normalize(appearance, gender)
+
+    local numComponents = appearance.components and (function() local c = 0; for _ in pairs(appearance.components) do c = c + 1 end return c end)() or 0
+    local numProps = appearance.props and (function() local c = 0; for _ in pairs(appearance.props) do c = c + 1 end return c end)() or 0
+    local numOverlays = appearance.overlays and (function() local c = 0; for _ in pairs(appearance.overlays) do c = c + 1 end return c end)() or 0
+
+    if SunsetBoot and SunsetBoot.Log then
+        SunsetBoot.Log('appearance', 'apply:start', ('components=%d props=%d overlays=%d'):format(numComponents, numProps, numOverlays))
+    end
+
+    local isVerbose = SunsetBoot and SunsetBoot.IsVerbose and SunsetBoot.IsVerbose()
     local hb = appearance.headBlend
 
+    local t0 = isVerbose and GetGameTimer() or 0
     appearance = SunsetAppearance.applyClothes(ped, appearance, gender)
-    appearance = SunsetAppearance.applyProps(ped, appearance)
+    if isVerbose then
+        SunsetBoot.LogVerbose('appearance', 'apply_group:clothes', ('elapsed=%dms'):format(GetGameTimer() - t0))
+    end
 
+    local t1 = isVerbose and GetGameTimer() or 0
+    appearance = SunsetAppearance.applyProps(ped, appearance)
+    if isVerbose then
+        SunsetBoot.LogVerbose('appearance', 'apply_group:props', ('elapsed=%dms'):format(GetGameTimer() - t1))
+    end
+
+    local t2 = isVerbose and GetGameTimer() or 0
     local hd, ht = setComponentSafe(ped, 2, appearance.hair.drawable or 0, appearance.hair.texture or 0)
     appearance.hair.drawable, appearance.hair.texture = hd, ht
     applyHair(ped, appearance.hair)
+    if isVerbose then
+        SunsetBoot.LogVerbose('appearance', 'apply_group:hair', ('elapsed=%dms'):format(GetGameTimer() - t2))
+    end
 
+    local t3 = isVerbose and GetGameTimer() or 0
     if gender == 1 then
         applyOverlay(ped, 1, { index = 0 })
         applyOverlay(ped, 2, appearance.overlays['2'])
@@ -429,9 +454,21 @@ function SunsetAppearance.apply(ped, appearance, gender)
         applyOverlay(ped, 1, appearance.overlays['1'])
         applyOverlay(ped, 2, appearance.overlays['2'])
     end
+    if isVerbose then
+        SunsetBoot.LogVerbose('appearance', 'apply_group:overlays', ('elapsed=%dms'):format(GetGameTimer() - t3))
+    end
 
     -- Head blend LAST so skin applies to face + hands after clothing
+    local t4 = isVerbose and GetGameTimer() or 0
     applyHeadBlend(ped, hb)
+    if isVerbose then
+        SunsetBoot.LogVerbose('appearance', 'apply_group:headBlend', ('elapsed=%dms'):format(GetGameTimer() - t4))
+    end
+
+    local totalElapsed = GetGameTimer() - tStart
+    if SunsetBoot and SunsetBoot.Log then
+        SunsetBoot.Log('appearance', 'apply:end', ('elapsed=%dms'):format(totalElapsed))
+    end
 
     return appearance
 end
