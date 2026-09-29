@@ -528,23 +528,27 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(sourc
         return nil, 'Return to Terry at the Vespucci waterfront to hand off the salvage.'
     end
 
-    -- Pay out the contract bonus
+    -- [SECTION 35] Idempotency guard: transition stage to 'idle' BEFORE paying out.
+    -- If the callback fires twice (double-tap, lag) the stage check above exits on
+    -- the second call. Clearing the snapshot first ensures payment cannot happen twice.
     local cfgDiver = Sunset.JobsConfig.diver
     local bonus  = snap.pay or 0
     local xpBonus = (cfgDiver and cfgDiver.xpPerContract) or 80
+    local siteId = snap.siteId
 
+    -- Atomically disarm the handoff BEFORE payment
+    session.data.stage      = 'idle'
+    session.data.contractId = nil
+    session.data.recovered  = 0
+    Snapshots[source]     = nil
+    ClaimedPoints[source] = nil
+
+    -- Pay out the contract bonus
     local paid = exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')
     if paid then
         SunsetJobs_AddJobProgress(source, 'diver', xpBonus, 1, bonus)
         exports.sunset_core:RefreshMoney(source)
     end
-
-    local siteId = snap.siteId
-    Snapshots[source]     = nil
-    ClaimedPoints[source] = nil
-    session.data.contractId = nil
-    session.data.recovered  = 0
-    session.data.stage      = 'idle'
     TriggerClientEvent('sunset:diving:contractComplete', source, {
         siteId = siteId,
         bonus  = bonus,
@@ -593,6 +597,15 @@ AddEventHandler('sunset:jobs:sessionEnded', function(src, jobId)
         local ent = NetworkGetEntityFromNetworkId(boatNetId)
         if ent and ent ~= 0 and DoesEntityExist(ent) then DeleteEntity(ent) end
         RentedBoats[src] = nil
+    end
+    -- [SECTION 29] Recover rented gear on ANY session end path (endShift, cancelWork,
+    -- playerDropped, or resource stop). The endShift callback handles the normal path,
+    -- but cancelWork and crashes go through sessionEnded directly — without this block
+    -- the gear item would persist in the player's inventory without consuming a rental.
+    local sess = SunsetJobs_GetSession(src)
+    if sess and sess.data and sess.data.rentedGearItem then
+        exports.sunset_inventory:RemoveItem(src, sess.data.rentedGearItem, 1)
+        sess.data.rentedGearItem = nil
     end
     Snapshots[src]     = nil
     ClaimedPoints[src] = nil
