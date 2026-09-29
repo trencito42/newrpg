@@ -20,6 +20,8 @@ Sunset.JobSession.Kind = {
     courier = 'courier',
     fisherman = 'fisherman',
     mechanic = 'mechanic',
+    hunter  = 'hunter',
+    diver   = 'diver',
 }
 
 Sunset.JobSession.Config = {
