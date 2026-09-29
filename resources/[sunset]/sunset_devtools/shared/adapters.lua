@@ -301,3 +301,208 @@ register('garbage', {
         end
     end,
 })
+
+-- ── Hunting Zone Adapter ─────────────────────────────────────
+
+register('hunting', {
+    label = 'Hunting Zones',
+    jobName = 'hunting',
+    description = 'Polygon hunting zone with ranked species and animal spawn points.',
+    icon = 'target',
+
+    createDefault = function(id, label)
+        id = id or ('hunting_zone_' .. os.time())
+        return {
+            id = id,
+            label = label or 'New Hunting Zone',
+            minRank = 1,
+            minZ = 0.0,
+            maxZ = 300.0,
+            maxAlive = 5,
+            respawnSec = 180,
+            species = { deer = 2 },
+            polygon = {},
+            spawnPoints = {},
+        }
+    end,
+
+    validate = function(zone)
+        local results = {}
+        if not zone.id or zone.id == '' then
+            table.insert(results, { status = 'FAIL', field = 'id', message = 'Zone ID is required.' })
+        else
+            table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. zone.id })
+        end
+
+        local polyCount = zone.polygon and #zone.polygon or 0
+        if polyCount < 3 then
+            table.insert(results, { status = 'FAIL', field = 'polygon',
+                message = ('Polygon needs at least 3 vertices (has %d).'):format(polyCount) })
+        else
+            table.insert(results, { status = 'PASS', field = 'polygon',
+                message = ('%d-vertex polygon.'):format(polyCount) })
+        end
+
+        local spawnCount = zone.spawnPoints and #zone.spawnPoints or 0
+        if spawnCount == 0 then
+            table.insert(results, { status = 'FAIL', field = 'spawnPoints',
+                message = 'At least 1 spawn point required.' })
+        else
+            table.insert(results, { status = 'PASS', field = 'spawnPoints',
+                message = ('%d spawn points.'):format(spawnCount) })
+        end
+
+        local maxAlive = tonumber(zone.maxAlive) or 0
+        if maxAlive < 1 or maxAlive > 12 then
+            table.insert(results, { status = 'FAIL', field = 'maxAlive',
+                message = 'maxAlive must be 1–12.' })
+        else
+            table.insert(results, { status = 'PASS', field = 'maxAlive',
+                message = ('Max alive: %d.'):format(maxAlive) })
+        end
+
+        return results
+    end,
+
+    visualize = function(zone, isPreview, selIndex)
+        if not zone then return end
+
+        -- Draw polygon outline
+        local poly = zone.polygon or {}
+        local n = #poly
+        for i = 1, n do
+            local a = poly[i]
+            local b = poly[(i % n) + 1]
+            if a and b then
+                DrawLine(a.x, a.y, a.z + 0.5, b.x, b.y, b.z + 0.5, 34, 197, 94, 200)
+                DrawMarker(1, a.x, a.y, a.z, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5,
+                    34, 197, 94, 180, false, true, 2, false, nil, nil, false)
+            end
+        end
+
+        -- Draw spawn points
+        local spawnPts = zone.spawnPoints or {}
+        for i, sp in ipairs(spawnPts) do
+            local isSel = (i == selIndex)
+            local r, g, b_ = isSel and 255 or 180, isSel and 200 or 120, 0
+            DrawMarker(2, sp.x, sp.y, sp.z + 0.5, 0, 0, 0, 0, 0, 0, 0.7, 0.7, 0.7,
+                r, g, b_, 200, false, true, 2, false, nil, nil, false)
+            -- Draw heading arrow using a short line
+            local rad = math.rad(sp.h or 0)
+            local ex  = sp.x + math.cos(rad) * 2.0
+            local ey  = sp.y + math.sin(rad) * 2.0
+            DrawLine(sp.x, sp.y, sp.z + 0.6, ex, ey, sp.z + 0.6, r, g, b_, 180)
+        end
+    end,
+})
+
+-- ── Dive Site Adapter ────────────────────────────────────────
+-- Loot points are underwater — no ground-snap, snapMode = none.
+
+register('diving', {
+    label = 'Dive Sites',
+    jobName = 'diving',
+    description = 'Underwater salvage site: search zone + loot points (no ground-snap).',
+    icon = 'waves',
+    snapMode = 'none',  -- underwater: don't snap to ground
+
+    createDefault = function(id, label)
+        id = id or ('dive_site_' .. os.time())
+        return {
+            id = id,
+            label = label or 'New Dive Site',
+            minRank = 1,
+            requiresBoat = false,
+            difficulty = 'easy',
+            requiredSalvage = 3,
+            pay = 300,
+            searchZone = { x = 0, y = 0, z = -10.0, radius = 60.0 },
+            diveEntry   = { x = 0, y = 0, z = 0.0 },
+            returnPoint = { x = -812.0, y = -1282.0, z = 5.0 },
+            lootPoints  = {},
+        }
+    end,
+
+    validate = function(site)
+        local results = {}
+        if not site.id or site.id == '' then
+            table.insert(results, { status = 'FAIL', field = 'id', message = 'Site ID required.' })
+        else
+            table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. site.id })
+        end
+
+        local sz = site.searchZone
+        if not sz or not sz.radius or sz.radius <= 0 then
+            table.insert(results, { status = 'FAIL', field = 'searchZone',
+                message = 'searchZone radius must be > 0.' })
+        else
+            table.insert(results, { status = 'PASS', field = 'searchZone',
+                message = ('Search zone: radius %.0fm at z=%.1f.'):format(sz.radius, sz.z or 0) })
+        end
+
+        local lpCount = site.lootPoints and #site.lootPoints or 0
+        local required = site.requiredSalvage or 3
+        if lpCount < required then
+            table.insert(results, { status = 'FAIL', field = 'lootPoints',
+                message = ('Need at least %d loot points (required salvage), have %d.'):format(required, lpCount) })
+        elseif lpCount < required + 1 then
+            table.insert(results, { status = 'WARNING', field = 'lootPoints',
+                message = ('Recommend more loot points than requiredSalvage for randomness.') })
+        else
+            table.insert(results, { status = 'PASS', field = 'lootPoints',
+                message = ('%d loot points (%d required).'):format(lpCount, required) })
+        end
+
+        -- Check all loot points have negative Z (underwater)
+        for i, pt in ipairs(site.lootPoints or {}) do
+            if pt.z >= 0 then
+                table.insert(results, { status = 'WARNING', field = 'lootPoints',
+                    message = ('Loot point %d has z=%.1f — should be negative (underwater).'):format(i, pt.z) })
+            end
+        end
+
+        return results
+    end,
+
+    visualize = function(site, isPreview, selIndex)
+        if not site then return end
+
+        -- Draw search zone circle (approximate with 16-segment ring)
+        local sz = site.searchZone
+        if sz then
+            local segments = 16
+            for i = 0, segments - 1 do
+                local a1 = (i / segments) * 2 * math.pi
+                local a2 = ((i + 1) / segments) * 2 * math.pi
+                local x1 = sz.x + math.cos(a1) * sz.radius
+                local y1 = sz.y + math.sin(a1) * sz.radius
+                local x2 = sz.x + math.cos(a2) * sz.radius
+                local y2 = sz.y + math.sin(a2) * sz.radius
+                DrawLine(x1, y1, (sz.z or 0) + 1.0, x2, y2, (sz.z or 0) + 1.0, 30, 144, 255, 180)
+            end
+        end
+
+        -- Draw loot points (no ground-snap)
+        local lpts = site.lootPoints or {}
+        for i, pt in ipairs(lpts) do
+            local isSel = (i == selIndex)
+            local r, g, b_ = isSel and 255 or 30, isSel and 220 or 144, isSel and 50 or 255
+            DrawMarker(1, pt.x, pt.y, pt.z, 0, 0, 0, 0, 0, 0, 0.8, 0.8, 0.8,
+                r, g, b_, 200, false, true, 2, false, nil, nil, false)
+        end
+
+        -- Draw dive entry
+        if site.diveEntry then
+            local de = site.diveEntry
+            DrawMarker(2, de.x, de.y, de.z + 0.5, 0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0,
+                0, 200, 255, 180, false, true, 2, false, nil, nil, false)
+        end
+
+        -- Draw return point
+        if site.returnPoint then
+            local rp = site.returnPoint
+            DrawMarker(2, rp.x, rp.y, rp.z + 0.5, 0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0,
+                255, 165, 0, 180, false, true, 2, false, nil, nil, false)
+        end
+    end,
+})
