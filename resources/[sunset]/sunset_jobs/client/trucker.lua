@@ -274,6 +274,8 @@ local function startTrucker(selectedRouteIdx)
                             if result then
                                 JC.sessionData = JC.sessionData or {}
                                 JC.sessionData.stage = result.stage or 'return_depot'
+                                -- Detach and delete the trailer — cargo unloaded at delivery point
+                                JC.deleteVehicles(true)
                                 JC.clearBlips()
                                 local depBlip = JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Return Depot')
                                 SetBlipRoute(depBlip, true)

@@ -231,10 +231,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function
     if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0) then
         return nil, 'Return your assigned work truck'
     end
-    if session.data.hasTrailer then
-        local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
-        if not trailerOk then return nil, trailerErr end
-    end
+    -- Trailer was already left at the delivery point; no trailer check needed here.
     if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, cfg.returnRadius or 25.0) then
         return nil, 'Return the truck to the depot'
     end

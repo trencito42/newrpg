@@ -711,6 +711,7 @@ local function drawVehicleDebugLabel(veh, distance)
         modelName,
         plate ~= '' and plate or 'NO PLATE'
     )
+    local vpos = GetEntityCoords(veh)
     local line2 = ('%.1fm  |  %.0f km/h  |  ENG %.0f  BODY %.0f  |  NETOWN %s'):format(
         distance,
         speed,
@@ -718,6 +719,7 @@ local function drawVehicleDebugLabel(veh, distance)
         body,
         ownerSid and ('#' .. ownerSid) or '-'
     )
+    local line3 = ('~o~%.1f, %.1f, %.1f'):format(vpos.x, vpos.y, vpos.z)
 
     local scale = math.max(0.24, math.min(0.34, 0.38 - distance * 0.003))
     SetTextFont(0)
@@ -736,6 +738,12 @@ local function drawVehicleDebugLabel(veh, distance)
     BeginTextCommandDisplayText('STRING')
     AddTextComponentSubstringPlayerName(line2)
     EndTextCommandDisplayText(sx, sy + 0.015)
+
+    SetTextScale(math.max(0.20, scale - 0.04), math.max(0.20, scale - 0.04))
+    SetTextColour(200, 200, 200, 200)
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(line3)
+    EndTextCommandDisplayText(sx, sy + 0.029)
 end
 
 local function refreshVehicleDebugCache()
