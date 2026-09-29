@@ -65,6 +65,39 @@ local function updateShiftHud()
     end
 end
 
+-- ── Zone Navigation Blip ─────────────────────────────────────
+-- [SECTION 19] Area blip toward hunting zone — no exact animal GPS.
+local ZoneBlip = nil
+
+local function clearZoneBlip()
+    if ZoneBlip and DoesBlipExist(ZoneBlip) then RemoveBlip(ZoneBlip) end
+    ZoneBlip = nil
+    SetWaypointOff()
+end
+
+local function setZoneBlip(zone)
+    clearZoneBlip()
+    if not zone then return end
+    -- Use centroid of polygon as navigation target (rough, not exact animal positions)
+    local polygon = zone.polygon or {}
+    if #polygon == 0 then return end
+    local cx, cy = 0, 0
+    for _, pt in ipairs(polygon) do cx = cx + pt.x; cy = cy + pt.y end
+    cx = cx / #polygon; cy = cy / #polygon
+    ZoneBlip = AddBlipForCoord(cx, cy, zone.minZ or 0)
+    SetBlipSprite(ZoneBlip, 153)
+    SetBlipColour(ZoneBlip, 2)
+    SetBlipScale(ZoneBlip, 1.1)
+    SetBlipAsShortRange(ZoneBlip, false)
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(('Hunting Zone — %s'):format(zone.label or zone.id or '?'))
+    EndTextCommandSetBlipName(ZoneBlip)
+    -- Also set GPS waypoint so minimap nav activates immediately
+    SetNewWaypoint(cx, cy)
+    exports.sunset_ui:Notify(('~b~GPS set to Hunting Zone: %s. ~y~No animal positions shown — track them.'):format(
+        zone.label or zone.id or '?'), 'info', 7000)
+end
+
 -- ── State Changes ─────────────────────────────────────────────
 AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if not data then return end
@@ -72,9 +105,13 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
         ContractData = data
         -- Zone object is embedded in data by server (startContract response)
         CurrentZone = data.zone or CurrentZone
+        if CurrentZone and not ZoneBlip then
+            setZoneBlip(CurrentZone)
+        end
     elseif data.stage == 'idle' or not data.contractId then
         CurrentZone = nil
         ContractData = nil
+        clearZoneBlip()
     end
     updateShiftHud()
 end)
@@ -171,6 +208,8 @@ RegisterNetEvent('sunset:hunting:contractComplete', function(result)
     AddTextComponentSubstringPlayerName(msg)
     EndTextCommandThisFrame(3, 0, 6000, -1, -1)
     ContractData = nil
+    -- [SECTION 19] Clear zone blip when contract is complete
+    clearZoneBlip()
 end)
 
 -- ── HUD Thread ────────────────────────────────────────────────
@@ -272,7 +311,17 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             if not result then
                 exports.sunset_ui:Notify(('~r~%s'):format(err or 'Harvest failed'), 'error', 5000)
             else
+                -- [SECTION 20] Remove from client registries AFTER successful harvest
                 CarcassMarkers[netId] = nil
+                local animal = ManagedAnimals[netId]
+                if animal then
+                    -- Delete the physical ped; entity is no longer needed
+                    if animal.ped and DoesEntityExist(animal.ped) then
+                        SetEntityAsMissionEntity(animal.ped, false, true)
+                        DeleteEntity(animal.ped)
+                    end
+                    ManagedAnimals[netId] = nil
+                end
                 if ContractData then
                     ContractData.harvested = result.contractProgress or ContractData.harvested
                     updateShiftHud()
@@ -297,6 +346,8 @@ AddEventHandler('sunset:hunting:contractStarted', function(result)
     if not result then return end
     ContractData = result
     CurrentZone  = result.zone
+    -- [SECTION 19] Set zone blip on new contract
+    if CurrentZone then setZoneBlip(CurrentZone) end
     updateShiftHud()
 end)
 
@@ -318,6 +369,8 @@ AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     ShiftActive = false
     ContractData = nil
     CurrentZone  = nil
+    -- [SECTION 19] Clear zone blip on shift end/cancel
+    clearZoneBlip()
     exports.sunset_ui:Send('jobShiftHide', {})
     -- Clean up all spawned animals
     for netId, animal in pairs(ManagedAnimals) do

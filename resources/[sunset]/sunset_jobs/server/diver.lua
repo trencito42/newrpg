@@ -388,30 +388,43 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
     local totalValue = 0
     local sold = {}
 
+    -- [SECTION 24] Atomic sell: snapshot → remove → pay → restore on failure.
+    -- Preserve site/condition/value/rarity/salvageIdx/savedAt metadata for restore.
     local inv = exports.sunset_inventory:GetInventory(source)
     if not inv then return nil, 'Could not load inventory' end
 
+    local salvageSet = {}
+    for _, si in ipairs(salvageItems) do salvageSet[si] = true end
+
+    local snapshots = {}  -- full slot snapshot for restore-on-failure
     for _, slot in ipairs(inv) do
-        local isSalvage = false
-        for _, si in ipairs(salvageItems) do
-            if slot.item == si then isSalvage = true; break end
-        end
-        if isSalvage then
+        if salvageSet[slot.item] then
             local meta = type(slot.metadata) == 'table' and slot.metadata or {}
             local itemVal = tonumber(meta.value) or 30
             totalValue = totalValue + itemVal
             sold[#sold + 1] = { item = slot.item, slot = slot.slot, value = itemVal }
+            snapshots[#snapshots + 1] = {
+                item     = slot.item,
+                count    = slot.count or 1,
+                metadata = meta,
+            }
         end
     end
 
     if #sold == 0 then return nil, 'No salvage items to sell. Go dive first.' end
 
-    -- Pay FIRST: if payment fails, items are never removed (atomicity guard)
-    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
-    if not paid then return nil, 'Payment failed — no items were removed. Try again.' end
-
+    -- Remove items first; restore with full metadata if payment fails.
     for _, s in ipairs(sold) do
         exports.sunset_inventory:RemoveItem(source, s.item, 1)
+    end
+
+    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
+    if not paid then
+        for _, snap in ipairs(snapshots) do
+            exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
+        end
+        exports.sunset_inventory:ReloadInventory(source)
+        return nil, 'Payment failed — your salvage items have been returned. Try again.'
     end
 
     SunsetJobs_AddJobProgress(source, 'diver', math.max(5, math.floor(totalValue / 10)), 0, totalValue)

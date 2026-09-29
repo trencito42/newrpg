@@ -1,6 +1,18 @@
 -- sunset_jobs · server/workplaces.lua
 -- Server-authoritative workplace NPC handler: employment status, applications, licensing, shift state, and resignation.
 
+-- [SECTIONS 2-3] Proper human-readable labels for each license type.
+-- SunsetLicenses is defined in sunset_licenses/shared/config.lua which is not
+-- loaded in this resource's context, so we maintain a local copy here.
+-- Keep in sync with sunset_licenses/shared/config.lua SunsetLicenses.Types.
+local LicenseLabels = {
+    driver  = 'Driving License',
+    pilot   = 'Pilot License',
+    boat    = 'Boat License',
+    weapon  = 'Firearm License',
+    hunting = 'Hunting License',
+}
+
 local function getCharacterData(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, 'Character not loaded' end
@@ -39,13 +51,8 @@ local function checkRequirements(source, char, reqs)
             if not hasLic then
                 -- Use the proper label from SunsetLicenses.Types if available,
                 -- fall back to capitalizing the raw key.
-                local licLabel
-                local licTypes = SunsetLicenses and SunsetLicenses.Types
-                if licTypes and licTypes[lic] and licTypes[lic].label then
-                    licLabel = licTypes[lic].label
-                else
-                    licLabel = lic:sub(1,1):upper() .. lic:sub(2)
-                end
+                -- Prefer the local label table; fall back to capitalizing the raw key.
+                local licLabel = LicenseLabels[lic] or (lic:sub(1,1):upper() .. lic:sub(2))
                 missing[#missing + 1] = licLabel
             end
         end
