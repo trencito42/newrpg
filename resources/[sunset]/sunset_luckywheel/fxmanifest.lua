@@ -39,12 +39,12 @@ files {
     'audio/sfx/dlc_vinewood/*.awc',
 }
 
-data_file 'AUDIO_GAMEDATA' 'audio/dlcvinewood_game.dat'
-data_file 'AUDIO_SOUNDDATA' 'audio/dlcvinewood_sounds.dat'
-data_file 'AUDIO_DYNAMIXDATA' 'audio/dlcvinewood_mix.dat'
-data_file 'AUDIO_SYNTHDATA' 'audio/dlcVinewood_amp.dat'
-data_file 'AUDIO_SPEECHDATA' 'audio/dlcvinewood_speech.dat'
-data_file 'AUDIO_WAVEPACK' 'audio/sfx/dlc_vinewood'
+data_file 'AUDIO_GAMEDATA'    'audio/dlcvinewood_game.dat151'
+data_file 'AUDIO_SOUNDDATA'   'audio/dlcvinewood_sounds.dat54'
+data_file 'AUDIO_DYNAMIXDATA' 'audio/dlcvinewood_mix.dat15'
+data_file 'AUDIO_SYNTHDATA'   'audio/dlcvinewood_amp.dat10'
+data_file 'AUDIO_SPEECHDATA'  'audio/dlcvinewood_speech.dat4'
+data_file 'AUDIO_WAVEPACK'    'audio/sfx/dlc_vinewood'
 
 dependencies {
     'sunset_core',

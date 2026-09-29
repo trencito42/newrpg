@@ -1,12 +1,13 @@
 local shopOpen = false
 local shopNPC  = nil
 
--- Apply a GTA ped model to the local player
+-- Apply a GTA ped model to the local player (RUNTIME changes only — NOT during spawn)
 local function applyModel(model)
     local hash
     if not model or model == '' or model == 'default' or model == 'reset' then
-        local gender = (Sunset and Sunset.Character and Sunset.Character.gender) or 'male'
-        hash = joaat(gender == 'female' and 'mp_f_freemode_01' or 'mp_m_freemode_01')
+        local gender = (Sunset and Sunset.Character and Sunset.Character.gender)
+        local isFemale = gender == 1 or gender == '1' or gender == 'female'
+        hash = joaat(isFemale and 'mp_f_freemode_01' or 'mp_m_freemode_01')
     else
         hash = joaat(model)
     end
@@ -103,18 +104,26 @@ AddEventHandler('sunset:skins:notify', function(msg)
     exports.sunset_ui:Notify(msg or '', 'success', 5500)
 end)
 
--- Character loaded / relog: restore active skin from character metadata
-AddEventHandler('sunset:client:onCharacterLoaded', function(charData)
+-- Post-spawn sanity check: verify the model matches what metadata says.
+-- sunset_spawn is the sole owner of SetPlayerModel during login; it already
+-- reads meta.skin via resolveModel().  We only log a warning here — we never
+-- call SetPlayerModel during spawn flow.
+AddEventHandler('sunset:client:playerSpawned', function(charData)
     local meta = charData and charData.metadata
     if type(meta) == 'string' then
         local ok, decoded = pcall(json.decode, meta)
         meta = ok and decoded or {}
     end
-    if meta and meta.skin and meta.skin ~= '' and meta.skin ~= 'default' and meta.skin ~= 'reset' then
-        CreateThread(function()
-            Wait(1200)
-            applyModel(meta.skin)
-        end)
+    if not meta then return end
+    local skin = meta.skin
+    if not skin or skin == '' or skin == 'default' or skin == 'reset' then return end
+
+    local expectedHash = joaat(skin)
+    local currentPed   = PlayerPedId()
+    local currentModel = GetEntityModel(currentPed)
+    if currentModel ~= expectedHash then
+        print(('^3[sunset_skins] post-spawn sanity mismatch: expected skin=%s hash=%d actual=%d^7'):format(
+            tostring(skin), expectedHash, currentModel))
     end
 end)
 

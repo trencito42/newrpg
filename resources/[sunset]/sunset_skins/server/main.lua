@@ -198,17 +198,13 @@ RegisterCommand('setskin', function(source, args)
     exports.sunset_core:CommandReply(source, ('Skin for player %d set and saved permanently to ~b~%s~w~.'):format(targetSource, tostring(meta.skin or 'default')))
 end, false)
 
--- Restore skin on character select / relog
-AddEventHandler('sunset:server:characterSelected', function(source, charId)
-    local char = getCharacter(source)
-    if not char then return end
-    local meta = char.metadata or {}
-    if meta.skin and meta.skin ~= '' and meta.skin ~= 'default' and meta.skin ~= 'reset' then
-        SetTimeout(1200, function()
-            TriggerClientEvent('sunset:skins:applyModel', source, meta.skin)
-        end)
-    end
-end)
+-- NOTE: the characterSelected delayed applyModel was removed.
+-- sunset_spawn is the sole owner of SetPlayerModel during login; it already
+-- reads char.metadata.skin via resolveModel() and applies the correct model
+-- in one shot before streaming.  A second SetPlayerModel 1.2 s later would
+-- invalidate spawn's cached ped handle, causing 0,0,0 coords and 18 s timeouts.
+-- Runtime skin changes (equip callback, /setskin) still go through TriggerClientEvent
+-- sunset:skins:applyModel directly — that path is unaffected.
 
 -- Battlepass: called from sunset_pass to grant a skin on tier unlock
 RegisterNetEvent('sunset:skins:grantBattlepassSkin')

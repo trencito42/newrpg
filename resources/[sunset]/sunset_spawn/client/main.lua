@@ -28,6 +28,39 @@ local function recordMilestone(phase, durationMs, details)
     end
 end
 
+local function decodeMetadata(raw)
+    if type(raw) == 'table' then return raw end
+    if type(raw) == 'string' then
+        local ok, decoded = pcall(json.decode, raw)
+        return ok and type(decoded) == 'table' and decoded or {}
+    end
+    return {}
+end
+
+-- Resolve the model that should be applied for login.
+-- Priority: meta.skin (skin-shop override) → char.model → meta.model → gender default.
+local function resolveModel(char)
+    local meta    = decodeMetadata(char.metadata)
+    local gender  = tonumber(char.gender) or 0
+    local defModel = (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
+
+    local skin = meta.skin
+    if skin and skin ~= '' and skin ~= 'default' and skin ~= 'reset' then
+        return skin, 'meta.skin'
+    end
+    if char.model then return char.model, 'char.model' end
+    if meta.model then return meta.model, 'meta.model' end
+    return defModel, 'gender_default'
+end
+
+-- Returns true when ped is still the live player ped with a valid model.
+local function isValidPlayerPed(ped)
+    if not DoesEntityExist(ped) then return false end
+    if ped ~= PlayerPedId()    then return false end
+    if GetEntityModel(ped) == 0 then return false end
+    return true
+end
+
 local function validCoordinate(value)
     value = tonumber(value)
     return value and value == value and math.abs(value) < 10000.0
@@ -116,6 +149,16 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
     logBoot(isFallback and 'stream_fallback:start' or 'stream:start',
         ('target=%s x=%.2f y=%.2f z=%.2f'):format(sourceLabel, pos.x, pos.y, pos.z))
 
+    -- Guard: bail immediately if the ped handle is already stale.
+    if not isValidPlayerPed(ped) then
+        local currentPed = PlayerPedId()
+        print(('^1[SPAWN CRITICAL] STALE PLAYER PED HANDLE^7 phase=streamSpawnArea:entry'
+            .. ' cachedPed=%d currentPed=%d cachedModel=%d currentModel=%d'):format(
+            ped, currentPed, GetEntityModel(ped), GetEntityModel(currentPed)))
+        logBoot('stream:stale_ped_entry', ('cachedPed=%d currentPed=%d'):format(ped, currentPed))
+        return false, 'STALE_PED'
+    end
+
     local tFocusStart = GetGameTimer()
     SetFocusPosAndVel(pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
     logBootVerbose('stream:focus_set', ('elapsed=%dms'):format(GetGameTimer() - tFocusStart))
@@ -130,6 +173,19 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
     local loaded = false
 
     while GetGameTimer() < deadline do
+        -- Mid-loop stale ped detection: stop wasting time if ped was replaced.
+        if not isValidPlayerPed(ped) then
+            local currentPed = PlayerPedId()
+            print(('^1[SPAWN CRITICAL] STALE PLAYER PED HANDLE^7 phase=streamSpawnArea:loop'
+                .. ' cachedPed=%d currentPed=%d cachedModel=%d currentModel=%d elapsed=%dms'):format(
+                ped, currentPed, GetEntityModel(ped), GetEntityModel(currentPed), GetGameTimer() - tStart))
+            logBoot('stream:stale_ped_loop', ('cachedPed=%d currentPed=%d elapsed=%dms'):format(
+                ped, currentPed, GetGameTimer() - tStart))
+            NewLoadSceneStop()
+            ClearFocus()
+            return false, 'STALE_PED'
+        end
+
         RequestCollisionAtCoord(pos.x, pos.y, pos.z)
         local hasColl = HasCollisionLoadedAroundEntity(ped)
         local waitColl = IsEntityWaitingForWorldCollision(ped)
@@ -215,15 +271,17 @@ local function spawnPlayer(char, spawnPosition)
     Wait(350)
     logBoot('screen_fade:out_complete', ('elapsed=%dms'):format(GetGameTimer() - tFadeStart))
 
-    local defaultCivModel = (char.gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
-    local rawModel = char.model or (char.metadata and (char.metadata.skin or char.metadata.model)) or defaultCivModel
+    local rawModel, modelSource = resolveModel(char)
     local model = type(rawModel) == 'string' and GetHashKey(rawModel) or rawModel
     if not IsModelInCdimage(model) or not IsModelValid(model) then
-        model = defaultCivModel
+        local gender = tonumber(char.gender) or 0
+        model = (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
+        rawModel = tostring(model)
+        modelSource = 'fallback_invalid'
     end
 
     local tModelStart = GetGameTimer()
-    logBoot('model:request', ('model=%s hash=%s'):format(tostring(rawModel), tostring(model)))
+    logBoot('model:request', ('model=%s hash=%s source=%s'):format(tostring(rawModel), tostring(model), tostring(modelSource)))
     RequestModel(model)
     while not HasModelLoaded(model) do Wait(10) end
     local modelLoadDur = GetGameTimer() - tModelStart
@@ -267,12 +325,18 @@ local function spawnPlayer(char, spawnPosition)
     -- Explicit routing bucket transition handshake before streaming
     prepareSpawnBucket()
 
-    local collisionLoaded = streamSpawnArea(ped, pos, false, pos.source)
+    local collisionLoaded, streamReason = streamSpawnArea(ped, pos, false, pos.source)
     if not collisionLoaded then
-        local fallback = defaultPosition()
-        logBoot('collision:timeout_fallback', ('primary timed out at %.2f %.2f %.2f; using fallback default'):format(pos.x, pos.y, pos.z))
-        pos = fallback
-        collisionLoaded = streamSpawnArea(ped, pos, true, 'default_fallback')
+        if streamReason == 'STALE_PED' then
+            logBoot('collision:stale_ped_abort', 'ped became invalid; skipping fallback stream')
+        else
+            local fallback = defaultPosition()
+            logBoot('collision:timeout_fallback',
+                ('primary timed out at %.2f,%.2f,%.2f reason=%s; using fallback default'):format(
+                    pos.x, pos.y, pos.z, tostring(streamReason or 'TIMEOUT')))
+            pos = fallback
+            collisionLoaded = streamSpawnArea(ped, pos, true, 'default_fallback')
+        end
     end
 
     logBoot('character_spawned:notify_server', ('charId=%s'):format(tostring(char.id)))
@@ -290,27 +354,43 @@ local function spawnPlayer(char, spawnPosition)
     Wait(150)
     recordMilestone('gameplay_reveal', GetGameTimer() - tGameplayStart)
 
-    -- Streaming eviction watchdog for slow clients
+    -- Post-spawn world eviction watchdog.
+    -- Uses PlayerPedId() each tick (not the cached spawn-time ped) so it
+    -- never acts on a stale handle.  Fires at most once.
     local safePos = pos
     CreateThread(function()
         local deadline = GetGameTimer() + 14000
-        while GetGameTimer() < deadline do
+        local fired = false
+        while GetGameTimer() < deadline and not fired do
             Wait(250)
-            local current = GetEntityCoords(ped)
-            if IsEntityWaitingForWorldCollision(ped) or current.z < safePos.z - 8.0 then
-                local fallback = defaultPosition()
-                logBoot('world_eviction:recovered', ('relocating ped to safe default from %.2f,%.2f,%.2f'):format(current.x, current.y, current.z))
-                DoScreenFadeOut(200)
-                Wait(250)
-                FreezeEntityPosition(ped, true)
-                streamSpawnArea(ped, fallback, true, 'eviction_recovery')
-                SetEntityCoordsNoOffset(ped, fallback.x, fallback.y, fallback.z + 0.15, false, false, false)
-                SetEntityHeading(ped, fallback.w)
-                FreezeEntityPosition(ped, false)
-                DoScreenFadeIn(500)
-                exports.sunset_ui:Notify('Your saved location was not safe, so you were moved to the default spawn.', 'warning', 7000)
-                return
+            local livePed = PlayerPedId()
+            -- Only act if the live ped is valid and we are post-spawn.
+            if not DoesEntityExist(livePed) or GetEntityModel(livePed) == 0 then
+                -- Ped is transitioning or invalid; skip this tick.
+                goto continue
             end
+            local current = GetEntityCoords(livePed)
+            -- Ignore 0,0,0 — that is a stale/uninitialized state, not a real unsafe position.
+            local isPosNull = math.abs(current.x) < 0.01 and math.abs(current.y) < 0.01 and math.abs(current.z) < 0.01
+            if not isPosNull then
+                if IsEntityWaitingForWorldCollision(livePed) or current.z < safePos.z - 8.0 then
+                    local reason = IsEntityWaitingForWorldCollision(livePed) and 'WORLD_COLLISION_LOST' or 'Z_DROP'
+                    fired = true
+                    local fallback = defaultPosition()
+                    logBoot('world_eviction:recovered', ('reason=%s relocating from %.2f,%.2f,%.2f'):format(
+                        reason, current.x, current.y, current.z))
+                    DoScreenFadeOut(200)
+                    Wait(250)
+                    FreezeEntityPosition(livePed, true)
+                    streamSpawnArea(livePed, fallback, true, 'eviction_recovery')
+                    SetEntityCoordsNoOffset(livePed, fallback.x, fallback.y, fallback.z + 0.15, false, false, false)
+                    SetEntityHeading(livePed, fallback.w)
+                    FreezeEntityPosition(livePed, false)
+                    DoScreenFadeIn(500)
+                    exports.sunset_ui:Notify('Your saved location was not safe, so you were moved to the default spawn.', 'warning', 7000)
+                end
+            end
+            ::continue::
         end
     end)
 
