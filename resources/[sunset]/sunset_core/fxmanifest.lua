@@ -10,6 +10,9 @@ version '1.0.0'
 shared_scripts {
     'shared/boot_debug.lua',
     'shared/config.lua',
+    'shared/locales/en.lua',
+    'shared/locales/ro.lua',
+    'shared/locale.lua',
     'shared/jobs_civilian.lua',
     'shared/jobs_workplaces.lua',
     'shared/jobs_config.lua',
