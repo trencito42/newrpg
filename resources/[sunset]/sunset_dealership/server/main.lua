@@ -210,11 +210,12 @@ end)
 
 local function auditAdmin(source, action, model, payload)
     local char = exports.sunset_core:GetCharacter(source)
+    local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or ('player_' .. source))
     pcall(function()
         MySQL.insert.await([[
             INSERT INTO dealership_admin_log (admin_name, character_id, action, model, payload)
             VALUES (?, ?, ?, ?, ?)
-        ]], { GetPlayerName(source) or ('player_' .. source), char and char.id or nil,
+        ]], { adminName, char and char.id or nil,
             action, model, payload and json.encode(payload) or nil })
     end)
 end

@@ -62,9 +62,14 @@ local function buildRoster()
             pcall(function() frozen = exports.sunset_admin:IsFrozen(src) == true end)
             local heat = heatInfo(src)
 
+            local pDisplayName = exports.sunset_core:GetPlayerDisplayName(src)
+            if not pDisplayName or pDisplayName == '' then
+                pDisplayName = exports.sunset_core:GetPlayerBaseName(src)
+            end
+
             rows[#rows + 1] = {
                 src = src,
-                name = exports.sunset_core:GetPlayerDisplayName(src) or GetPlayerName(src) or '?',
+                name = pDisplayName or ('Player %d'):format(src),
                 adminLevel = adminLevel(src),
                 ping = GetPlayerPing(src) or 0,
                 health = health,
@@ -101,9 +106,11 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:panel', function(source)
         if ok and type(res) == 'table' then shield = res end
     end
 
+    local myDisplayName = exports.sunset_core:GetPlayerDisplayName(source) or exports.sunset_core:GetPlayerBaseName(source) or ('Player %d'):format(source)
+
     return {
         myLevel = adminLevel(source),
-        myName = GetPlayerName(source),
+        myName = myDisplayName,
         playerCount = #GetPlayers(),
         maxPlayers = GetConvarInt('sv_maxclients', 64),
         roster = buildRoster(),

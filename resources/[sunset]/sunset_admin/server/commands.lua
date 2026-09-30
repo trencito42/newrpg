@@ -26,6 +26,15 @@ local function flushActionLog()
     ActionLogRunning = false
 end
 
+local function getDisplayName(src)
+    if not src or src == 0 then return 'CONSOLE' end
+    local ok, name = pcall(function() return exports.sunset_core:GetPlayerDisplayName(src) end)
+    if ok and type(name) == 'string' and name ~= '' then return name end
+    local okBase, base = pcall(function() return exports.sunset_core:GetPlayerBaseName(src) end)
+    if okBase and type(base) == 'string' and base ~= '' then return base end
+    return ('Player %d'):format(src)
+end
+
 local function recordActionLog(source, cmd, args, allowed)
     if source == 0 then
         -- console: no source row; still logged with name CONSOLE
@@ -40,7 +49,7 @@ local function recordActionLog(source, cmd, args, allowed)
             accountId = player and tonumber(player.account_id) or nil
         end)
         ActionLogQueue[#ActionLogQueue + 1] = {
-            source, GetPlayerName(source) or ('ID %d'):format(source), accountId,
+            source, getDisplayName(source), accountId,
             tostring(cmd), args and tostring(args):sub(1, 255) or '', allowed and 1 or 0,
         }
     end
@@ -81,7 +90,7 @@ local function logAdminAction(source, cmd)
     if source ~= 0 and IsAdmin(source, 2) ~= true and IsAdmin(source, 1) == true then
         return
     end
-    local adminName = source == 0 and 'CONSOLE' or (GetPlayerName(source) or 'Unknown')
+    local adminName = getDisplayName(source)
     pcall(function()
         exports.sunset_core:SendDiscordLog('admin', 'Comanda Admin Executata', ('Adminul **%s** (ID: %s) a apelat `/%s`'):format(adminName, tostring(source), cmd), 'orange', {
             { name = 'Admin', value = adminName, inline = true },
@@ -262,8 +271,8 @@ end
 
 local function auditStatChange(source, targetPlayer, targetChar, stat, oldValue, newValue)
     local admin = source ~= 0 and exports.sunset_core:GetPlayer(source) or nil
-    local adminName = source == 0 and 'console' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source) or ('ID ' .. source))
-    local targetName = exports.sunset_core:GetPlayerDisplayName(targetPlayer.source) or GetPlayerName(targetPlayer.source) or ('ID ' .. targetPlayer.source)
+    local adminName = getDisplayName(source)
+    local targetName = getDisplayName(targetPlayer.source)
     MySQL.insert.await([[
         INSERT INTO admin_stat_audit
             (admin_account_id, admin_name, target_character_id, target_name, stat_name, old_value, new_value)
@@ -519,8 +528,8 @@ registerServerCommand('mute', function(source, args)
     if not license then return notify(source, 'Nu s-a putut rezolva licenta jucatorului.', 'error') end
 
     local now = os.time()
-    local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
+    local adminName = getDisplayName(source)
+    local targetName = getDisplayName(target)
 
     MutedPlayers[license] = {
         expiresAt = now + (duration * 60),
@@ -553,8 +562,8 @@ registerServerCommand('unmute', function(source, args)
     end
 
     MutedPlayers[license] = nil
-    local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
+    local adminName = getDisplayName(source)
+    local targetName = getDisplayName(target)
 
     TriggerClientEvent('sunset:chat:system', target, ('Mute-ul tau a fost scos de catre %s.'):format(adminName), 'success')
     notify(source, ('I-ai scos mute-ul lui %s.'):format(targetName), 'success')
@@ -588,8 +597,8 @@ registerServerCommand('nmute', function(source, args)
     if not license then return notify(source, 'Nu s-a putut rezolva licenta jucatorului.', 'error') end
 
     local now = os.time()
-    local staffName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
+    local staffName = getDisplayName(source)
+    local targetName = getDisplayName(target)
 
     NMutedPlayers[license] = {
         expiresAt = now + (duration * 60),
@@ -614,8 +623,8 @@ registerServerCommand('unnmute', function(source, args)
     end
 
     NMutedPlayers[license] = nil
-    local staffName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
+    local staffName = getDisplayName(source)
+    local targetName = getDisplayName(target)
 
     TriggerClientEvent('sunset:chat:system', target, ('Mute-ul de la /n a fost scos de catre %s.'):format(staffName), 'success')
     notify(source, ('I-ai scos mute-ul de la /n lui %s.'):format(targetName), 'success')
@@ -633,7 +642,7 @@ registerServerCommand('warn', function(source, args)
         return
     end
     if source ~= 0 then
-        notify(source, ('Warning issued to %s (%d warn(s) this week).'):format(GetPlayerName(target) or '?', ok.warns), 'success')
+        notify(source, ('Warning issued to %s (%d warn(s) this week).'):format(getDisplayName(target), ok.warns), 'success')
     end
 end, false)
 
@@ -651,7 +660,7 @@ registerServerCommand('clearwarns', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /clearwarns [player id]')
     if not target then return end
     SunsetAdmin.Sanctions.clearWarns(source, target)
-    notify(source, ('Warn history cleared for %s.'):format(GetPlayerName(target) or '?'), 'success')
+    notify(source, ('Warn history cleared for %s.'):format(getDisplayName(target)), 'success')
 end, false)
 
 local function resolveUnbanLicense(source, arg)
@@ -891,7 +900,7 @@ registerServerCommand('heal', function(source, args)
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkLegit(target, 'health', 10) end)
     end
-    notify(source, 'Healed ' .. (GetPlayerName(target) or '?') .. ' (ID ' .. target .. ')', 'success')
+    notify(source, 'Healed ' .. getDisplayName(target) .. ' (ID ' .. target .. ')', 'success')
     if target ~= source then
         TriggerClientEvent('sunset:client:notify', target, 'You were healed by medical staff.', 'success')
     end
@@ -914,7 +923,7 @@ registerServerCommand('revive', function(source, args)
         notify(source, err or ('Could not revive player #%d — they may not be downed or revive is blocked.'):format(target), 'error')
         return
     end
-    notify(source, 'Revived ' .. (GetPlayerName(target) or '?') .. ' (ID ' .. target .. ')', 'success')
+    notify(source, 'Revived ' .. getDisplayName(target) .. ' (ID ' .. target .. ')', 'success')
 end, false)
 
 -- /arespawn [id] — respawn player at their saved spawn point (home, last location, or default)
@@ -1020,7 +1029,7 @@ registerServerCommand('goto', function(source, args)
     local coords = GetEntityCoords(ped)
     SetPlayerRoutingBucket(source, GetPlayerRoutingBucket(target) or 0)
     TriggerClientEvent('sunset:admin:teleport', source, coords.x, coords.y, coords.z)
-    notify(source, ('Te-ai teleportat la %s (ID %d).'):format(exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target), target), 'success')
+    notify(source, ('Te-ai teleportat la %s (ID %d).'):format(getDisplayName(target), target), 'success')
 end, false)
 
 registerServerCommand('gethere', function(source, args)
@@ -1034,7 +1043,7 @@ registerServerCommand('gethere', function(source, args)
     SetPlayerRoutingBucket(target, GetPlayerRoutingBucket(source) or 0)
     TriggerClientEvent('sunset:admin:teleport', target, coords.x, coords.y, coords.z)
     markAnticheatTarget(target, 'gethere')
-    notify(source, ('L-ai teleportat pe %s la tine.'):format(exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)), 'success')
+    notify(source, ('L-ai teleportat pe %s la tine.'):format(getDisplayName(target)), 'success')
     TriggerClientEvent('sunset:client:notify', target, 'Ai fost teleportat de catre un administrator.', 'info')
 end, false)
 
@@ -1139,7 +1148,7 @@ registerServerCommand('disarm', function(source, args)
     if GetResourceState('sunset_inventory') == 'started' then
         pcall(function() exports.sunset_inventory:ClearWeapons(target) end)
     end
-    notify(source, ('I-ai luat armele lui %s (ID %d).'):format(exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target), target), 'success')
+    notify(source, ('I-ai luat armele lui %s (ID %d).'):format(getDisplayName(target), target), 'success')
     TriggerClientEvent('sunset:client:notify', target, 'Un administrator ti-a confiscat armele.', 'warning')
 end, false)
 
@@ -1179,7 +1188,7 @@ registerServerCommand('setvw', function(source, args)
 
     local vw = tonumber(args[2]) or 0
     SetPlayerRoutingBucket(target, vw)
-    notify(source, ('Ai setat Virtual World-ul lui %s la %d.'):format(exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target), vw), 'success')
+    notify(source, ('Ai setat Virtual World-ul lui %s la %d.'):format(getDisplayName(target), vw), 'success')
     TriggerClientEvent('sunset:client:notify', target, ('Virtual World-ul tau a fost setat la %d de catre un admin.'):format(vw), 'info')
 end, false)
 
@@ -1192,7 +1201,7 @@ registerServerCommand('sethp', function(source, args)
     if hp > 200 then hp = 200 end
     if hp < 0 then hp = 0 end
     TriggerClientEvent('sunset:admin:setHealth', target, hp)
-    notify(source, ('Ai setat HP-ul lui %s la %d.'):format(exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target), hp), 'success')
+    notify(source, ('Ai setat HP-ul lui %s la %d.'):format(getDisplayName(target), hp), 'success')
     TriggerClientEvent('sunset:client:notify', target, ('HP-ul tau a fost setat la %d de catre un administrator.'):format(hp), 'info')
 end, false)
 
@@ -1489,7 +1498,7 @@ end)
 -- [STAFF BROADCAST] Admin promotions/demotions are announced to all online
 -- staff (never to the public chat — doxxing admins invites targeting).
 local function announceStaffChange(bySource, targetName, level)
-    local byName = bySource == 0 and 'CONSOLE' or (GetPlayerName(bySource) or '?')
+    local byName = getDisplayName(bySource)
     local title = (SunsetAdmin.Levels and SunsetAdmin.Levels[tonumber(level) or 0]) or 'Player'
     local verb = (tonumber(level) or 0) > 0 and 'is now' or 'was removed from staff — now'
     local text = ('[STAFF] %s %s %s (level %d).'):format(targetName, verb, title, tonumber(level) or 0)
@@ -1509,15 +1518,15 @@ registerServerCommand('setadmin', function(source, args)
     local target = tonumber(arg1)
     if target and GetPlayerName(target) then
         local license = Sunset.GetIdentifier(target, 'license')
-        SetAdmin(license, level, GetPlayerName(target), source == 0 and 'console' or GetPlayerName(source))
+        SetAdmin(license, level, getDisplayName(target), getDisplayName(source))
         local title = (SunsetAdmin.Levels and SunsetAdmin.Levels[level]) or 'level ' .. level
         if level > 0 then
             notify(target, ('Your staff level is now %d (%s).'):format(level, title), 'success', 10000)
         else
             notify(target, 'Your staff level was removed.', 'warning', 10000)
         end
-        if source ~= 0 then notify(source, ('Admin level for %s set to %d (%s).'):format(GetPlayerName(target), level, title), 'success') end
-        announceStaffChange(source, exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target) or ('#' .. target), level)
+        if source ~= 0 then notify(source, ('Admin level for %s set to %d (%s).'):format(getDisplayName(target), level, title), 'success') end
+        announceStaffChange(source, getDisplayName(target), level)
         return
     end
 
@@ -1562,14 +1571,14 @@ registerServerCommand('sethelper', function(source, args)
     local target = tonumber(arg1)
     if target and GetPlayerName(target) then
         local license = Sunset.GetIdentifier(target, 'license')
-        SetHelper(license, level, GetPlayerName(target), source == 0 and 'console' or GetPlayerName(source))
+        SetHelper(license, level, getDisplayName(target), getDisplayName(source))
         local title = (SunsetAdmin.HelperLevels and SunsetAdmin.HelperLevels[level]) or 'Helper Level ' .. level
         if level > 0 then
             notify(target, ('Nivelul tau de helper este acum %d (%s).'):format(level, title), 'success', 10000)
         else
             notify(target, 'Accesul tau de helper a fost revocat.', 'warning', 10000)
         end
-        if source ~= 0 then notify(source, ('Helper level for %s set to %d (%s).'):format(GetPlayerName(target), level, title), 'success') end
+        if source ~= 0 then notify(source, ('Helper level for %s set to %d (%s).'):format(getDisplayName(target), level, title), 'success') end
         return
     end
 
@@ -1643,7 +1652,7 @@ RegisterNetEvent('sunset:admin:setcp', function(name, x, y, z, heading)
         return notify(source, 'Could not read your position — wait until you have fully spawned in.', 'error')
     end
 
-    local createdBy = GetPlayerName(source) or ('player_' .. source)
+    local createdBy = getDisplayName(source)
     local ok, result = SunsetAdmin.SaveCheckpoint(name, name, x, y, z, heading, createdBy)
     if not ok then
         return notify(source, result, 'error')
@@ -1825,7 +1834,7 @@ exports('GetActiveReports', function()
         rows[#rows + 1] = {
             id = id,
             reporter = src,
-            reporterName = t.name or t.reporterName or (src and GetPlayerName(src)) or ('Player %d'):format(src or 0),
+            reporterName = t.name or t.reporterName or (src and getDisplayName(src)) or ('Player %d'):format(src or 0),
             target = t.target,
             targetName = t.targetName,
             reason = t.text or t.reason or '',
@@ -1843,7 +1852,7 @@ exports('GetActiveReports', function()
         rows[#rows + 1] = {
             id = qId,
             reporter = src,
-            reporterName = q.name or (src and GetPlayerName(src)) or ('Player %d'):format(src),
+            reporterName = q.name or (src and getDisplayName(src)) or ('Player %d'):format(src),
             target = nil,
             targetName = nil,
             reason = q.text or '',
@@ -1883,7 +1892,7 @@ registerServerCommand('report', function(source, args)
 
     ReportSeq = ReportSeq + 1
     local ticketId = ReportSeq
-    local name = exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source) or ('Player %d'):format(source)
+    local name = getDisplayName(source)
 
     local report = {
         id = ticketId,
@@ -1942,7 +1951,7 @@ registerServerCommand('ar', function(source, args)
         return notify(source, 'Usage: /ar [player id sau report id]', 'error')
     end
 
-    local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
+    local adminName = getDisplayName(source)
 
     -- Check newbie questions first
     local foundQuestion = nil
@@ -2012,7 +2021,7 @@ registerServerCommand('cr', function(source, args)
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if reason == '' then reason = 'Rezolvat' end
 
-    local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
+    local adminName = getDisplayName(source)
 
     -- Check if it is a newbie question
     local foundQuestion = nil
@@ -2107,7 +2116,7 @@ local function handleNewbieQuestion(source, args, cmdName)
     end
     LastNewbAsk[source] = now
 
-    local name = exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source) or ('Player %d'):format(source)
+    local name = getDisplayName(source)
     ReportSeq = ReportSeq + 1
     local qId = ReportSeq
     ActiveNewbieQuestions[source] = {
@@ -2209,7 +2218,7 @@ local function handleNewbieAnswer(source, args)
 
     ActiveNewbieQuestions[qSrc] = nil
 
-    local staffName = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
+    local staffName = getDisplayName(source)
     local isAdm = source ~= 0 and IsAdmin(source, 1)
     local staffRole = isAdm and 'Admin' or 'Helper'
 
@@ -2261,7 +2270,7 @@ registerServerCommand('nd', function(source, args)
 
     ActiveNewbieQuestions[qSrc] = nil
 
-    local staffName = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
+    local staffName = getDisplayName(source)
     local staffRole = (source ~= 0 and IsAdmin(source, 1)) and 'Admin' or 'Helper'
 
     if GetPlayerName(q.src) then

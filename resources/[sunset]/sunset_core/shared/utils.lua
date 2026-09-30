@@ -39,6 +39,15 @@ end
 
 if IsDuplicityVersion() then
     function Sunset.GetPlayerName(source)
-        return GetPlayerName(source) or 'Unknown'
+        if not source or source == 0 then return 'Server' end
+        local ok, name = pcall(function()
+            return exports.sunset_core:GetPlayerDisplayName(source)
+        end)
+        if ok and type(name) == 'string' and name ~= '' then return name end
+        local okBase, base = pcall(function()
+            return exports.sunset_core:GetPlayerBaseName(source)
+        end)
+        if okBase and type(base) == 'string' and base ~= '' then return base end
+        return ('Player_%d'):format(source)
     end
 end

@@ -18,6 +18,15 @@ local function adminLevelOf(src)
     return ok and tonumber(lvl) or 0
 end
 
+local function getDisplayName(src)
+    if not src or src == 0 then return 'CONSOLE' end
+    local ok, name = pcall(function() return exports.sunset_core:GetPlayerDisplayName(src) end)
+    if ok and type(name) == 'string' and name ~= '' then return name end
+    local okBase, base = pcall(function() return exports.sunset_core:GetPlayerBaseName(src) end)
+    if okBase and type(base) == 'string' and base ~= '' then return base end
+    return ('Player %d'):format(src)
+end
+
 local function markAnticheat(src, cmd)
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkAdminAction(src, cmd) end)
@@ -46,9 +55,9 @@ function A.freeze(source, args)
     TriggerClientEvent('sunset:admin:freeze', target, true)
     TriggerClientEvent('sunset:client:notify', target, 'You have been frozen by staff. Stay where you are.', 'error', 10000)
     notify(source, ('Froze #%d (%s). /unfreeze %d to release.'):format(
-        target, GetPlayerName(target) or '?', target), 'success')
+        target, getDisplayName(target), target), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s froze #%d (%s)')
-        :format(GetPlayerName(source) or 'console', target, GetPlayerName(target) or '?')) end)
+        :format(getDisplayName(source), target, getDisplayName(target))) end)
     markAnticheat(target, 'freeze')
 end
 
@@ -116,7 +125,7 @@ function A.slap(source, args)
     end
     TriggerClientEvent('sunset:admin:slap', target, source)
     TriggerClientEvent('sunset:client:notify', target,
-        ('You were slapped by %s. Behave.'):format(GetPlayerName(source) or 'staff'), 'warning', 8000)
+        ('You were slapped by %s. Behave.'):format(getDisplayName(source)), 'warning', 8000)
     notify(source, ('Slapped #%d.'):format(target), 'success')
     markAnticheat(target, 'slap')
 end
@@ -177,9 +186,9 @@ function A.spectate(source, args)
     SetPlayerRoutingBucket(source, bucket)
     TriggerClientEvent('sunset:admin:spectateStart', source, target)
     notify(source, ('Now spectating #%d (%s). /spectate off to exit.'):format(
-        target, GetPlayerName(target) or '?'), 'success', 8000)
+        target, getDisplayName(target)), 'success', 8000)
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s started spectating #%d (%s)')
-        :format(GetPlayerName(source) or '?', target, GetPlayerName(target) or '?')) end)
+        :format(getDisplayName(source), target, getDisplayName(target))) end)
     markAnticheat(source, 'spectate')
 end
 
@@ -394,7 +403,7 @@ function A.ahealall(source)
     end
     notify(source, ('Healed %d players.'):format(count), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s healed ALL players')
-        :format(source == 0 and 'console' or (GetPlayerName(source) or '?'))) end)
+        :format(getDisplayName(source))) end)
 end
 
 function A.fixall(source)
@@ -445,7 +454,7 @@ function A.dvall(source, args)
     end
     notify(source, ('Deleted %d unowned vehicle(s) within 60m.'):format(deleted), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s dvall: deleted %d vehicle(s)')
-        :format(GetPlayerName(source) or '?', deleted)) end)
+        :format(getDisplayName(source), deleted)) end)
 end
 
 -- ── /gotoid alias (G15/4.10) ───────────────────────────────────
@@ -526,7 +535,7 @@ function A.aduty(source, args)
     pcall(function()
         Player(source).state:set('adminDuty', on, true)
     end)
-    local name = exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source)
+    local name = getDisplayName(source)
     notify(source, on
         and 'Te-ai pus ON DUTY ca admin. Primesti report-uri si avertizari.'
         or 'Te-ai pus OFF DUTY ca admin.', 'info')
@@ -553,7 +562,7 @@ function A.hduty(source, args)
     pcall(function()
         Player(source).state:set('helperDuty', on, true)
     end)
-    local name = exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source)
+    local name = getDisplayName(source)
     notify(source, on
         and 'Te-ai pus ON DUTY ca helper. Primesti intrebarile jucatorilor.'
         or 'Te-ai pus OFF DUTY ca helper.', 'info')

@@ -8,16 +8,21 @@ local Sanctions = {}
 
 local function adminName(source)
     if source == 0 then return 'CONSOLE' end
-    return GetPlayerName(source) or ('ID %d'):format(source)
+    local ok, name = pcall(function() return exports.sunset_core:GetPlayerDisplayName(source) end)
+    if ok and type(name) == 'string' and name ~= '' then return name end
+    local okBase, base = pcall(function() return exports.sunset_core:GetPlayerBaseName(source) end)
+    if okBase and type(base) == 'string' and base ~= '' then return base end
+    return ('ID %d'):format(source)
 end
 
 local function targetIdentity(target)
     local char = exports.sunset_core:GetCharacter(target)
     local player = exports.sunset_core:GetPlayer(target)
+    local tName = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:GetPlayerBaseName(target) or ('ID %d'):format(target)
     return {
         accountId = player and tonumber(player.account_id) or nil,
         characterId = char and tonumber(char.id) or nil,
-        name = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target) or '?',
+        name = tName,
         license = Sunset.GetIdentifier(target, 'license'),
     }
 end

@@ -24,6 +24,15 @@ end
 local ClanCache = {}
 local CLAN_CACHE_TTL = 30
 
+local function getDisplayName(src)
+    if not src or src == 0 then return '?' end
+    local ok, name = pcall(function() return exports.sunset_core:GetPlayerDisplayName(src) end)
+    if ok and type(name) == 'string' and name ~= '' then return name end
+    local okBase, base = pcall(function() return exports.sunset_core:GetPlayerBaseName(src) end)
+    if okBase and type(base) == 'string' and base ~= '' then return base end
+    return ('Player %d'):format(src)
+end
+
 local function getPlayerClan(src)
     local char = exports.sunset_core:GetCharacter(src)
     if not char then return nil end
@@ -198,19 +207,20 @@ local function endWar(turfId, reason)
     -- [WAR REDESIGN] Build per-player stats + MVP for the end screen.
     local stats, mvp = {}, nil
     for src, p in pairs(war.participants or {}) do
+        local pName = p.name or getDisplayName(src)
         stats[#stats + 1] = {
-            name = GetPlayerName(src) or p.name or '?',
+            name = pName,
             src = src,
             kills = p.kills or 0,
             deaths = p.deaths or 0,
             side = tonumber(p.clanId) == tonumber(war.attackerClanId) and 'attacker' or 'defender',
         }
         if not mvp or (p.kills or 0) > (mvp.kills or 0) then
-            mvp = { name = GetPlayerName(src) or p.name or '?', kills = p.kills or 0, deaths = p.deaths or 0 }
+            mvp = { name = pName, kills = p.kills or 0, deaths = p.deaths or 0 }
         end
         -- [QUESTS 7-9] clan chain: participants who actually fought (any kill or
         -- death) get quest progress; idle zone-sitters do not.
-        if ((p.kills or 0) + (p.deaths or 0)) > 0 and GetPlayerName(src) then
+        if ((p.kills or 0) + (p.deaths or 0)) > 0 and DoesEntityExist(GetPlayerPed(src)) then
             local okC, charC = pcall(function() return exports.sunset_core:GetCharacter(src) end)
             if okC and charC and charC.id then
                 TriggerEvent('sunset:quest:progress', charC.id, 'turf_war_fought', 1,
@@ -296,10 +306,10 @@ local function startWar(turf, attackerClan, defenderClan)
             local pClan = getPlayerClan(src)
             if pClan then
                 if tonumber(pClan.clan_id) == tonumber(warData.attackerClanId) then
-                    warData.participants[src] = { clanId = warData.attackerClanId, kills = 0, deaths = 0, name = GetPlayerName(src) or '?' }
+                    warData.participants[src] = { clanId = warData.attackerClanId, kills = 0, deaths = 0, name = getDisplayName(src) }
                     TriggerClientEvent('sunset:turfs:warJoined', src, { turfId = turfId, role = 'attacker' })
                 elseif warData.defenderClanId and tonumber(pClan.clan_id) == tonumber(warData.defenderClanId) then
-                    warData.participants[src] = { clanId = warData.defenderClanId, kills = 0, deaths = 0, name = GetPlayerName(src) or '?' }
+                    warData.participants[src] = { clanId = warData.defenderClanId, kills = 0, deaths = 0, name = getDisplayName(src) }
                     TriggerClientEvent('sunset:turfs:warJoined', src, { turfId = turfId, role = 'defender' })
                 end
             end
@@ -349,7 +359,7 @@ local function startWar(turf, attackerClan, defenderClan)
             -- [WAR REDESIGN] Auto-register zone participants for stats/respawn/armory.
             for _, src in ipairs(attPeds or {}) do
                 if not current.participants[src] then
-                    current.participants[src] = { clanId = current.attackerClanId, kills = 0, deaths = 0, name = GetPlayerName(src) or '?' }
+                    current.participants[src] = { clanId = current.attackerClanId, kills = 0, deaths = 0, name = getDisplayName(src) }
                     TriggerClientEvent('sunset:turfs:warJoined', src, { turfId = turfId, role = 'attacker' })
                 end
             end
@@ -360,7 +370,7 @@ local function startWar(turf, attackerClan, defenderClan)
                     local srcClan = getPlayerClan(src)
                     current.participants[src] = {
                         clanId = (srcClan and srcClan.clan_id) or current.defenderClanId,
-                        kills = 0, deaths = 0, name = GetPlayerName(src) or '?'
+                        kills = 0, deaths = 0, name = getDisplayName(src)
                     }
                     TriggerClientEvent('sunset:turfs:warJoined', src, { turfId = turfId, role = 'defender' })
                 end
@@ -659,8 +669,8 @@ local function scoreWarKill(victimSrc, turfId)
     bump(attackerSrc, 'kills')
     bump(victimSrc, 'deaths')
     TriggerClientEvent('sunset:turfs:warKill', -1, {
-        killer = GetPlayerName(attackerSrc),
-        victim = GetPlayerName(victimSrc),
+        killer = getDisplayName(attackerSrc),
+        victim = getDisplayName(victimSrc),
         clanTag = aClan.tag,
         turfId = turfId,
     })
@@ -833,7 +843,7 @@ exports.sunset_core:RegisterCallback('sunset:turfs:warScoreboard', function(sour
     local rows = {}
     for src, p in pairs(war.participants) do
         rows[#rows + 1] = {
-            name = GetPlayerName(src) or p.name or '?',
+            name = p.name or getDisplayName(src),
             kills = p.kills or 0,
             deaths = p.deaths or 0,
             side = tonumber(p.clanId) == tonumber(war.attackerClanId) and 'attacker' or 'defender',

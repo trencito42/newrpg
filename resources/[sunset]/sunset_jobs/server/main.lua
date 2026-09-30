@@ -257,7 +257,7 @@ local function runSetJob(source, args)
     reply(target, ('Your civilian job was set to %s.'):format(label), 'success')
     if source ~= 0 then
         reply(source, ('Set %s (#%d) civilian job to %s (grade %d).'):format(
-            GetPlayerName(target) or '?', target, label, grade), 'success')
+            exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, label, grade), 'success')
     end
 end
 
@@ -289,7 +289,7 @@ local function runSetFaction(source, args)
         exports.sunset_core:SetFaction(target, nil, 0)
         reply(target, 'Your faction membership was cleared.', 'success')
         if source ~= 0 then
-            reply(source, ('Cleared faction for %s (#%d).'):format(GetPlayerName(target) or '?', target), 'success')
+            reply(source, ('Cleared faction for %s (#%d).'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target), 'success')
         end
         return
     end
@@ -314,7 +314,7 @@ local function runSetFaction(source, args)
     reply(target, ('Your faction was set to %s.'):format(label), 'success')
     if source ~= 0 then
         reply(source, ('Set %s (#%d) faction to %s (grade %d).'):format(
-            GetPlayerName(target) or '?', target, label, grade), 'success')
+            exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, label, grade), 'success')
     end
 end
 

@@ -604,9 +604,13 @@ exports.sunset_core:RegisterCallback('sunset:getInventory', function(source)
                     if distance <= 3.0 then
                         local targetChar = exports.sunset_core:GetCharacter(target)
                         if targetChar then
+                            local tName = exports.sunset_core:GetPlayerDisplayName(target)
+                            if not tName or tName == '' then
+                                tName = exports.sunset_core:GetPlayerBaseName(target)
+                            end
                             nearbyPlayers[#nearbyPlayers + 1] = {
                                 id = target,
-                                name = targetChar.name or targetChar.firstname or GetPlayerName(target),
+                                name = tName or ('Player %d'):format(target),
                                 distance = math.floor(distance * 10 + 0.5) / 10,
                             }
                         end

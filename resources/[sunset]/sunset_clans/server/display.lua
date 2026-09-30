@@ -33,7 +33,7 @@ function ClanDisplay.baseName(source)
     end
     local player = exports.sunset_core:GetPlayer(source)
     if player and player.name and player.name ~= '' then return player.name end
-    return GetPlayerName(source) or 'Player'
+    return ('Player_%d'):format(source or 0)
 end
 
 function ClanDisplay.sync(source)

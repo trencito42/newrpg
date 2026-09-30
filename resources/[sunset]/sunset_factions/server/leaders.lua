@@ -85,24 +85,24 @@ local function handleSetLeader(source, args)
         if not exports.sunset_core:SetFaction(target, factionId, topGrade) then
             exports.sunset_core:CommandReply(source,
                 ('Could not add %s (#%d) to %s — invalid faction grade in config.'):format(
-                    GetPlayerName(target) or '?', target, factionId), 'error')
+                    exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'error')
             return true
         end
     elseif not exports.sunset_core:SetFaction(target, factionId, topGrade) then
         exports.sunset_core:CommandReply(source,
             ('Could not set %s (#%d) to top rank in %s.'):format(
-                GetPlayerName(target) or '?', target, factionId), 'error')
+                exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'error')
         return true
     end
     MySQL.insert.await(
         'INSERT INTO faction_leaders (character_id, faction_id, assigned_by) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE assigned_by = VALUES(assigned_by)',
-        { char.id, factionId, source == 0 and 'console' or GetPlayerName(source) }
+        { char.id, factionId, source == 0 and 'console' or (exports.sunset_core:GetPlayerDisplayName(source) or ('Player %d'):format(source)) }
     )
     FactionCore.auditLog(factionId, char.id, 'setleader', char.id, { by = source })
     FactionCore.notify(target, 'You are now a faction leader', 'success')
     if source ~= 0 then
         exports.sunset_core:CommandReply(source,
-            ('Made %s (#%d) leader of %s.'):format(GetPlayerName(target) or '?', target, factionId), 'success')
+            ('Made %s (#%d) leader of %s.'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'success')
     end
     return true
 end
@@ -147,7 +147,7 @@ local function handleRemoveLeader(source, args)
         'info', 10000)
     if source ~= 0 then
         exports.sunset_core:CommandReply(source,
-            ('Removed %s (#%d) as leader of %s.'):format(GetPlayerName(target) or '?', target, factionId), 'success')
+            ('Removed %s (#%d) as leader of %s.'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'success')
     end
     return true
 end

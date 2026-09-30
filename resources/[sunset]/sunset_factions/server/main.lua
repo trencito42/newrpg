@@ -597,7 +597,7 @@ exports.sunset_core:RegisterCallback('sunset:taxiFare', function(source, targetI
     end
 
     local driverChar = getChar(source)
-    local driverName = driverChar and (driverChar.firstname .. ' ' .. driverChar.lastname) or GetPlayerName(source)
+    local driverName = driverChar and (driverChar.firstname .. ' ' .. driverChar.lastname) or (exports.sunset_core:GetPlayerDisplayName(source) or ('Player %d'):format(source))
 
     PendingTaxiFares[targetId] = {
         driverSource = source,

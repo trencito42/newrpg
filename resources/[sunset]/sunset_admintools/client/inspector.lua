@@ -62,8 +62,13 @@ local function describeEntity(ent)
             plate, class, GetVehicleFuelLevel(ent), GetVehicleEngineHealth(ent), GetVehicleBodyHealth(ent))
     end
     local ownerSrc = NetworkGetEntityOwner(ent)
+    local ownerName = '?'
+    if ownerSrc > 0 then
+        local st = Player(ownerSrc) and Player(ownerSrc).state
+        ownerName = (st and (st.sunsetDisplayName or st.sunsetName)) or ('Player_%d'):format(ownerSrc)
+    end
     lines[#lines + 1] = ('OWNER: %s | POP: %d | HEALTH: %d | MISSION: %s'):format(
-        ownerSrc > 0 and ('src ' .. ownerSrc .. ' (' .. (GetPlayerName(ownerSrc) or '?') .. ')') or 'SERVER/none',
+        ownerSrc > 0 and ('src ' .. ownerSrc .. ' (' .. ownerName .. ')') or 'SERVER/none',
         GetEntityPopulationType(ent), GetEntityHealth(ent),
         tostring(IsEntityAMissionEntity(ent)))
     lines[#lines + 1] = ('POS: %.2f, %.2f, %.2f | HEADING: %.1f'):format(coords.x, coords.y, coords.z, GetEntityHeading(ent))

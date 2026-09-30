@@ -412,13 +412,18 @@ local function localRpName()
     if type(display) == 'string' and display ~= '' then
         return display:gsub('%s*%(%d+%)%s*$', '')
     end
+    local name = LocalPlayer.state.sunsetName
+    if type(name) == 'string' and name ~= '' then
+        return name:gsub('%s*%(%d+%)%s*$', '')
+    end
+    local char = exports.sunset_core:GetCharacter()
     if char and char.firstname then
         local full = (char.firstname or '') .. ((char.lastname and char.lastname ~= '') and (' ' .. char.lastname) or '')
         if full ~= '' then return full end
     end
     local player = exports.sunset_core:GetPlayer()
     if player and player.name and player.name ~= '' then return player.name end
-    return GetPlayerName(PlayerId()) or 'Player'
+    return ('Player_%d'):format(GetPlayerServerId(PlayerId()))
 end
 
 local function applyPauseHeader()
@@ -471,12 +476,19 @@ local FACTION_COLORS = {
 
 local function formatSampName(serverId, fallbackName)
     local sid = tonumber(serverId) or 0
-    local label = tostring(fallbackName or 'Player')
+    local label = nil
     local st = sid > 0 and Player(sid) and Player(sid).state
     if st and type(st.sunsetDisplayName) == 'string' and st.sunsetDisplayName ~= '' then
         label = st.sunsetDisplayName
     elseif st and type(st.sunsetName) == 'string' and st.sunsetName ~= '' then
         label = st.sunsetName
+    end
+    if not label or label == '' then
+        if fallbackName and fallbackName ~= '' and not fallbackName:find('^Player') then
+            label = fallbackName
+        else
+            label = ('Player_%d'):format(sid)
+        end
     end
     -- Clean up existing (ID) suffixes and trim
     label = label:gsub('%s*%(%d+%)%s*$', ''):gsub('%s+$', '')
@@ -545,7 +557,7 @@ CreateThread(function()
                             player = player,
                             serverId = serverId,
                             ped = ped,
-                            name = formatSampName(serverId, GetPlayerName(player)),
+                            name = formatSampName(serverId),
                             color = getPlayerFactionColor(serverId),
                             wanted = policeView and wantedLevelForPlayer(serverId) or 0,
                         }

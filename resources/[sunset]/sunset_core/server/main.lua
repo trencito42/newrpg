@@ -261,6 +261,9 @@ local function completeAuthentication(source, accountId, username)
         character = nil,
     }
 
+    Player(source).state:set('sunsetName', username, true)
+    Player(source).state:set('sunsetDisplayName', username, true)
+
     session.authenticated = true
     TriggerClientEvent('sunset:client:playerReady', source, {
         id = player.id,
@@ -300,7 +303,7 @@ function GetPlayerBaseName(source)
         if player and player.name and player.name ~= '' then
             base = player.name
         else
-            base = GetPlayerName(source) or 'Player'
+            base = ('Player_%d'):format(source or 0)
         end
     end
     return base

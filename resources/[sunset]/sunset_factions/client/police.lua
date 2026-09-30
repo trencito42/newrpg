@@ -242,7 +242,7 @@ local function radarTargetInfo(veh, speed)
                 name = display
             else
                 local tagged = st and st.sunsetName
-                local base = (tagged and tagged ~= '' and tagged) or GetPlayerName(player) or 'Player'
+                local base = (tagged and tagged ~= '' and tagged) or ('Player %d'):format(sid)
                 name = ('%s (%d)'):format(base, sid)
             end
         end
