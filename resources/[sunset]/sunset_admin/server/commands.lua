@@ -2290,33 +2290,14 @@ end)
 
 local function handleFnc(source, args)
     local targetInput = args[1]
-    local newName = args[2] and table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1') or ''
+    local extraArg = args[2] and table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1') or ''
 
-    -- Player self-invocation (/fnc without arguments)
-    if not targetInput or targetInput == '' then
-        if source == 0 then
-            print('[SunsetAdmin] Usage: /fnc [id/nume]')
-            return
-        end
-
-        local char = exports.sunset_core:GetCharacter(source)
-        if not char or not char.id then
-            return notify(source, 'Nu ai un caracter încărcat.', 'error')
-        end
-
-        local tokens = tonumber(char.fnc_tokens) or 0
-        local isAdmin = IsAdmin and IsAdmin(source, 3)
-
-        if tokens <= 0 and not isAdmin then
-            return notify(source, 'Nu ai niciun FNC (Free Name Change) disponibil! Contactează un admin.', 'error')
-        end
-
-        TriggerClientEvent('sunset:admin:openFncModal', source, { tokens = tokens })
-        return
-    end
-
-    -- Admin granting FNC or renaming target
+    -- Admin requirement
     if not requirePerm(source, 'fnc') then return end
+
+    if not targetInput or targetInput == '' then
+        return notify(source, 'Utilizare: /fnc [id/nume] [motiv/nume_nou]', 'info')
+    end
 
     local target = resolveTarget(source, targetInput)
     if not target then return end
@@ -2329,34 +2310,58 @@ local function handleFnc(source, args)
     local adminName = getDisplayName(source)
     local targetName = getDisplayName(target)
 
-    -- Case A: /fnc [id] -> Give FNC token & open modal for target player to pick their own name
-    if newName == '' then
-        MySQL.update.await('UPDATE characters SET fnc_tokens = fnc_tokens + 1 WHERE id = ?', { targetChar.id })
-        targetChar.fnc_tokens = (tonumber(targetChar.fnc_tokens) or 0) + 1
+    -- Case A: /fnc [id] [optional reason] -> FORCE player to change their name via modal
+    -- If extraArg is empty or looks like a reason (or no specific direct rename)
+    local isDirectRename = false
+    if extraArg ~= '' and #extraArg >= 3 and #extraArg <= 24 and extraArg:match('^[a-zA-Z0-9%._%-]+$') and not extraArg:find(' ') then
+        -- Could be direct rename if admin specifically typed a single valid nickname
+        isDirectRename = true
+    end
 
-        TriggerClientEvent('sunset:admin:openFncModal', target, { tokens = targetChar.fnc_tokens })
-        notify(source, ('I-ai oferit un FNC jucătorului %s (#%d). I s-a deschis meniul pentru a-și alege numele.'):format(targetName, target), 'success')
-        notify(target, ('Adminul %s ți-a oferit un FNC (Free Name Change)! Alege-ți noul nume din fereastra deschisă.'):format(adminName), 'info')
+    if not isDirectRename then
+        local reason = extraArg ~= '' and extraArg or 'Nume neconform regulamentului'
+        
+        TriggerClientEvent('sunset:admin:openFncModal', target, {
+            forced = true,
+            reason = reason,
+            currentName = targetName,
+            tokens = 1
+        })
+
+        notify(source, ('I-ai forțat schimbarea numelui jucătorului %s (#%d). I s-a deschis fereastra de alegere nume.'):format(targetName, target), 'success')
+        notify(target, ('Adminul %s ți-a forțat schimbarea numelui (FNC)! Motiv: %s. Alege-ți un nou nume.'):format(adminName, reason), 'error')
 
         TriggerClientEvent('chat:addMessage', -1, {
-            color = { 0, 255, 180 },
-            args = { 'FNC', ('^3[ADMIN] ^7Adminul ^2%s^7 i-a acordat un FNC (Free Name Change) jucătorului ^3%s (#%d)^7.'):format(adminName, targetName, target) }
+            color = { 255, 100, 100 },
+            args = { 'ADMIN', ('^3[ADMIN] ^7Adminul ^2%s^7 i-a forțat schimbarea numelui jucătorului ^1%s (#%d)^7 (Motiv: ^3%s^7).'):format(adminName, targetName, target, reason) }
         })
         return
     end
 
-    -- Case B: /fnc [id] [New_Name] -> Direct admin rename override
-    local first, last = newName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
-    if not first or not last then
-        first = newName:gsub('[^%a%d]', '')
+    -- Case B: /fnc [id] [NewName] -> Direct admin rename
+    local cleanName = extraArg:gsub('^%s*(.-)%s*$', '%1')
+    if #cleanName < 3 or #cleanName > 24 or not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
+        return notify(source, 'Nume invalid! Numele trebuie să aibă între 3 și 24 caractere (litere, cifre, punct, liniuțe).', 'error')
+    end
+
+    local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
+    if not first then
+        first = cleanName
         last = ''
     end
 
-    if #first < 2 then
-        return notify(source, 'Numele trebuie să aibă minim 2 caractere!', 'error')
-    end
+    -- Check if name is taken
+    local existing = MySQL.single.await([[
+        SELECT id FROM characters
+        WHERE LOWER(firstname) = LOWER(?)
+           OR LOWER(CONCAT(firstname, '_', lastname)) = LOWER(?)
+           OR LOWER(CONCAT(firstname, ' ', lastname)) = LOWER(?)
+        LIMIT 1
+    ]], { cleanName, cleanName, cleanName })
 
-    local formattedFull = last ~= '' and (first .. ' ' .. last) or first
+    if existing and tonumber(existing.id) ~= tonumber(targetChar.id) then
+        return notify(source, 'Acest nume este deja ocupat de alt jucător!', 'error')
+    end
 
     MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
         first, last, targetChar.id
@@ -2364,101 +2369,102 @@ local function handleFnc(source, args)
 
     targetChar.firstname = first
     targetChar.lastname = last
+    targetChar.name = cleanName
 
     local pObj = exports.sunset_core:GetPlayer(target)
-    if pObj then pObj.name = formattedFull end
+    if pObj then pObj.name = cleanName end
 
     local st = Player(target).state
-    st:set('sunsetName', formattedFull, true)
-    st:set('name', formattedFull, true)
+    st:set('sunsetName', cleanName, true)
+    st:set('name', cleanName, true)
+    st:set('sunsetDisplayName', cleanName, true)
+
     if GetResourceState('sunset_clans') == 'started' then
         pcall(function() exports.sunset_clans:SyncPlayerClan(target) end)
-    else
-        st:set('sunsetDisplayName', formattedFull, true)
     end
 
     TriggerClientEvent('sunset:client:updateCharacter', target, targetChar)
     TriggerClientEvent('sunset:client:onCharacterLoaded', target, targetChar)
+    TriggerClientEvent('sunset:client:onCharacterUpdated', target, targetChar)
 
-    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, formattedFull)
+    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
-    notify(source, ('I-ai schimbat numele lui %s în %s.'):format(targetName, formattedFull), 'success')
-    notify(target, ('Numele tău a fost schimbat în %s de adminul %s.'):format(formattedFull, adminName), 'info')
+    notify(source, ('I-ai schimbat numele lui %s în %s.'):format(targetName, cleanName), 'success')
+    notify(target, ('Numele tău a fost schimbat în %s de adminul %s.'):format(cleanName, adminName), 'info')
 end
 
 registerServerCommand('fnc', handleFnc)
 registerServerCommand('givefnc', handleFnc)
 registerServerCommand('changename', handleFnc)
 registerServerCommand('setname', handleFnc)
+registerServerCommand('forcenamechange', handleFnc)
 
 -- Server callback: Player submitting their chosen name from the FNC modal
 exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(source, newName)
     local char = exports.sunset_core:GetCharacter(source)
     if not char or not char.id then return false, 'Caracter invalid' end
 
-    local tokens = tonumber(char.fnc_tokens) or 0
-    local isAdmin = IsAdmin and IsAdmin(source, 3)
-    if tokens <= 0 and not isAdmin then
-        return false, 'Nu ai niciun token FNC disponibil!'
+    local cleanName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
+    if #cleanName < 3 or #cleanName > 24 then
+        return false, 'Numele trebuie să aibă între 3 și 24 caractere!'
     end
 
-    newName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
-    local first, last = newName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
-    if not first or not last or #first < 2 or #last < 2 then
-        return false, 'Format invalid! Numele trebuie să conțină Prenume și Nume (ex: Alexandru_Popa, minim 2 litere fiecare).'
+    if not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
+        return false, 'Numele poate conține doar litere, cifre, puncte și liniuțe (ex: diablo69, alex.ro, Viper_99)!'
     end
 
     -- Check if name already exists in database
     local existing = MySQL.single.await([[
         SELECT id FROM characters
-        WHERE (LOWER(firstname) = LOWER(?) AND LOWER(lastname) = LOWER(?))
+        WHERE (LOWER(firstname) = LOWER(?) AND (lastname IS NULL OR lastname = ''))
            OR LOWER(CONCAT(firstname, '_', lastname)) = LOWER(?)
+           OR LOWER(CONCAT(firstname, ' ', lastname)) = LOWER(?)
+           OR LOWER(firstname) = LOWER(?)
         LIMIT 1
-    ]], { first, last, first .. '_' .. last })
+    ]], { cleanName, cleanName, cleanName, cleanName })
 
     if existing and tonumber(existing.id) ~= tonumber(char.id) then
         return false, 'Acest nume este deja ocupat de alt jucător! Te rugăm să alegi alt nume.'
     end
 
     local oldName = getDisplayName(source)
-    local formattedFull = first .. ' ' .. last
-
-    -- Update database & deduct token
-    if not isAdmin or tokens > 0 then
-        MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ?, fnc_tokens = GREATEST(0, fnc_tokens - 1) WHERE id = ?', {
-            first, last, char.id
-        })
-        char.fnc_tokens = math.max(0, tokens - 1)
-    else
-        MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
-            first, last, char.id
-        })
+    local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
+    if not first then
+        first = cleanName
+        last = ''
     end
+
+    -- Update database
+    MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
+        first, last, char.id
+    })
 
     char.firstname = first
     char.lastname = last
+    char.name = cleanName
 
     local pObj = exports.sunset_core:GetPlayer(source)
-    if pObj then pObj.name = formattedFull end
+    if pObj then pObj.name = cleanName end
 
     -- Sync state bags and clan
     local st = Player(source).state
-    st:set('sunsetName', formattedFull, true)
-    st:set('name', formattedFull, true)
+    st:set('sunsetName', cleanName, true)
+    st:set('name', cleanName, true)
+    st:set('sunsetDisplayName', cleanName, true)
+
     if GetResourceState('sunset_clans') == 'started' then
         pcall(function() exports.sunset_clans:SyncPlayerClan(source) end)
-    else
-        st:set('sunsetDisplayName', formattedFull, true)
     end
 
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
     TriggerClientEvent('sunset:client:onCharacterLoaded', source, char)
+    TriggerClientEvent('sunset:client:onCharacterUpdated', source, char)
 
-    local msg = ('^2[FNC] ^7Jucătorul ^3%s (#%d)^7 și-a ales noul nume ^2%s^7.'):format(oldName, source, formattedFull)
+    local msg = ('^2[FNC] ^7Jucătorul ^3%s (#%d)^7 și-a ales noul nume ^2%s^7.'):format(oldName, source, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })
-    notify(source, ('Numele tău a fost schimbat cu succes în %s!'):format(formattedFull), 'success')
+    notify(source, ('Numele tău a fost schimbat cu succes în %s!'):format(cleanName), 'success')
 
-    return true, formattedFull
+    return true, cleanName
 end)
 
 AddEventHandler('playerDropped', function()

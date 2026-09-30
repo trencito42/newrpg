@@ -185,7 +185,15 @@ RegisterNetEvent('sunset:client:updateCharacter', function(charData)
     else
         Sunset.Character = charData
     end
-    TriggerEvent('sunset:client:onCharacterUpdated', charData)
+    if Sunset.Player then
+        if charData.name then
+            Sunset.Player.name = charData.name
+        elseif charData.firstname then
+            local formatted = charData.firstname .. ((charData.lastname and charData.lastname ~= '') and (' ' .. charData.lastname) or '')
+            Sunset.Player.name = formatted
+        end
+    end
+    TriggerEvent('sunset:client:onCharacterUpdated', Sunset.Character or charData)
 end)
 
 function GetPlayerData()

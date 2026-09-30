@@ -104,9 +104,18 @@ local function buildHudData()
         waypointDist = math.floor(math.sqrt(dx * dx + dy * dy))
     end
 
-    local playerData = exports.sunset_core:GetPlayer()
-    local displayName = playerData and playerData.name
-        or (char.firstname .. (char.lastname ~= '' and (' ' .. char.lastname) or ''))
+    local pState = LocalPlayer.state
+    local displayName = pState.sunsetName or pState.name
+    if not displayName or displayName == '' then
+        if char and char.name and char.name ~= '' then
+            displayName = char.name
+        elseif char and char.firstname and char.firstname ~= '' then
+            displayName = char.firstname .. ((char.lastname and char.lastname ~= '') and (' ' .. char.lastname) or '')
+        else
+            local playerData = exports.sunset_core:GetPlayer()
+            displayName = playerData and playerData.name or '—'
+        end
+    end
 
     local jobId = select(1, Sunset.GetCharacterJob(char))
     local md = char.metadata or {}
@@ -392,8 +401,36 @@ RegisterNetEvent('sunset:client:paydayTimer', function()
 end)
 
 RegisterNetEvent('sunset:client:updateCharacter', function(updated)
-    if char and updated then
+    if not updated then return end
+    if char then
         for k, v in pairs(updated) do char[k] = v end
+    else
+        char = updated
+    end
+    updateHud()
+end)
+
+AddEventHandler('sunset:client:onCharacterUpdated', function(updated)
+    if not updated then return end
+    if char then
+        for k, v in pairs(updated) do char[k] = v end
+    else
+        char = updated
+    end
+    updateHud()
+end)
+
+AddStateBagChangeHandler('sunsetName', nil, function(bagName, key, value)
+    local ply = GetPlayerFromStateBagName(bagName)
+    if ply == PlayerId() then
+        updateHud()
+    end
+end)
+
+AddStateBagChangeHandler('name', nil, function(bagName, key, value)
+    local ply = GetPlayerFromStateBagName(bagName)
+    if ply == PlayerId() then
+        updateHud()
     end
 end)
 

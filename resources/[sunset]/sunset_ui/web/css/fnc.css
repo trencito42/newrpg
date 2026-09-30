@@ -112,6 +112,10 @@
     color: #ffbe00;
 }
 
+.fnc-val--reason {
+    color: #ff5555;
+}
+
 .fnc-field-group {
     display: flex;
     flex-direction: column;
