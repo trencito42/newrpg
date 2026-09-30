@@ -133,8 +133,8 @@ RegisterNetEvent('sunset:inventory:client:usedItem', function(item, category, ex
         elseif item == 'water' then
             propModel = `prop_ld_flow_bottle`
             bone = GetPedBoneIndex(ped, 18905)
-            pos = vector3(0.12, 0.028, 0.001)
-            rot = vector3(10.0, 175.0, 0.0)
+            pos = vector3(0.12, 0.03, 0.05)
+            rot = vector3(-20.0, 170.0, 0.0)
         elseif item == 'coffee' then
             propModel = `prop_fib_coffee`
             animDict = 'amb@world_human_drinking@coffee@male@idle_a'

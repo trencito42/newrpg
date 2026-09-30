@@ -688,6 +688,10 @@
                 document.body.classList.toggle('hud-chrome-hidden', !payload.show);
                 return;
             }
+            if (action === 'pauseState') {
+                document.body.classList.toggle('game-paused', !!payload.paused);
+                return;
+            }
 
             if (action === 'chatToggle') { window.Chat?.toggle?.(payload.open, payload); return; }
             if (action === 'chatMessage') { window.Chat?.add?.(payload); return; }
