@@ -2365,13 +2365,20 @@ local function handleFnc(source, args)
     targetChar.firstname = first
     targetChar.lastname = last
 
+    local pObj = exports.sunset_core:GetPlayer(target)
+    if pObj then pObj.name = formattedFull end
+
     local st = Player(target).state
     st:set('sunsetName', formattedFull, true)
+    st:set('name', formattedFull, true)
     if GetResourceState('sunset_clans') == 'started' then
         pcall(function() exports.sunset_clans:SyncPlayerClan(target) end)
     else
         st:set('sunsetDisplayName', formattedFull, true)
     end
+
+    TriggerClientEvent('sunset:client:updateCharacter', target, targetChar)
+    TriggerClientEvent('sunset:client:onCharacterLoaded', target, targetChar)
 
     local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, formattedFull)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
@@ -2431,14 +2438,21 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
     char.firstname = first
     char.lastname = last
 
+    local pObj = exports.sunset_core:GetPlayer(source)
+    if pObj then pObj.name = formattedFull end
+
     -- Sync state bags and clan
     local st = Player(source).state
     st:set('sunsetName', formattedFull, true)
+    st:set('name', formattedFull, true)
     if GetResourceState('sunset_clans') == 'started' then
         pcall(function() exports.sunset_clans:SyncPlayerClan(source) end)
     else
         st:set('sunsetDisplayName', formattedFull, true)
     end
+
+    TriggerClientEvent('sunset:client:updateCharacter', source, char)
+    TriggerClientEvent('sunset:client:onCharacterLoaded', source, char)
 
     local msg = ('^2[FNC] ^7Jucătorul ^3%s (#%d)^7 și-a ales noul nume ^2%s^7.'):format(oldName, source, formattedFull)
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })

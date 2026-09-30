@@ -49,9 +49,9 @@ const SunsetPlayerIdentity = {
         const name = this.stripServerId(row.name);
         const id = Number(row.id) || 0;
         const showId = options.showId !== false;
-        const idPart = showId && id > 0 ? ` (${id})` : '';
+        const idHtml = showId && id > 0 ? ` (${id})` : '';
         const factionColor = row.factionColor || this.factionColor(row.factionId);
-        const nameHtml = `<span class="player-identity__name" style="color:${esc(factionColor)}">${esc(name)}${esc(idPart)}</span>`;
+        const nameHtml = `<span class="player-identity__name" style="color:${esc(factionColor)}">${esc(name)}</span>`;
 
         // [ADUTY] On-duty staff prefix: [HELPER] for level 1, [STAFF] for 2+
         let dutyPrefix = '';
@@ -63,7 +63,7 @@ const SunsetPlayerIdentity = {
         }
 
         if (!row.clanTag) {
-            return `${dutyPrefix}${nameHtml}`;
+            return `${dutyPrefix}${nameHtml}${idHtml}`;
         }
 
         const parts = this.splitClanParts(row);
@@ -72,6 +72,7 @@ const SunsetPlayerIdentity = {
             parts.prefix ? `<span class="player-identity__clan" style="color:${esc(parts.color)}">${esc(parts.prefix)}</span>` : '',
             nameHtml,
             parts.suffix ? `<span class="player-identity__clan" style="color:${esc(parts.color)}">${esc(parts.suffix)}</span>` : '',
+            idHtml,
         ].join('');
     },
 

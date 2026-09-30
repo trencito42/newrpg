@@ -522,8 +522,9 @@ const Chat = {
         const idPart = options.showId !== false && sid > 0 ? ` (${sid})` : '';
         return [
             parts.prefix ? `<span class="chat-clan-tag" style="color:${esc(parts.color)}">${esc(parts.prefix)}</span>` : '',
-            `<span>${esc(name)}${esc(idPart)}</span>`,
+            `<span>${esc(name)}</span>`,
             parts.suffix ? `<span class="chat-clan-tag" style="color:${esc(parts.color)}">${esc(parts.suffix)}</span>` : '',
+            idPart ? `<span>${esc(idPart)}</span>` : '',
         ].join('');
     },
 
