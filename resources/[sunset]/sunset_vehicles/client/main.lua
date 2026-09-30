@@ -1315,4 +1315,48 @@ function SetVehicleProp(key, value)
     vehicleProps[key] = value
 end
 
+-- ── Vehicle entry info display ────────────────────────────────────────────
+-- Shows a compact chat message once per vehicle enter (not on seat change).
+
+CreateThread(function()
+    local lastVeh = 0
+    while true do
+        local ped = PlayerPedId()
+        local veh = GetVehiclePedIsIn(ped, false)
+
+        if veh ~= lastVeh then
+            if veh ~= 0 and DoesEntityExist(veh) then
+                local netId = VehToNet(veh)
+                if netId ~= 0 then
+                    local info = Sunset.AwaitCallback('sunset:getVehicleEntryInfo', netId)
+                    if info then
+                        local msg
+                        if info.category == 'personal_own' then
+                            local insLine = info.destroyed
+                                and '^1[TOTALED]^7'
+                                or ('^3Lv.%d^7 (%d pts) | Claim: ^3$%d^7'):format(
+                                    info.ins_level, info.ins_points, info.claim_cost)
+                            msg = ('^5[Vehicle]^7 ^2%s^7 ^8(%s)^7 | ^3%.1f km^7 | Ins: %s'):format(
+                                info.model, info.plate, info.odometer, insLine)
+                        elseif info.category == 'personal_other' then
+                            msg = ('^5[Vehicle]^7 ^2%s^7 ^8(%s)^7 | Owner: Private'):format(
+                                info.model, info.plate)
+                        elseif info.category == 'faction' then
+                            msg = ('^5[Vehicle]^7 ^3%s^7 | Faction: ^4%s^7'):format(
+                                info.plate ~= '' and info.plate or 'Fleet', info.faction)
+                        else
+                            local p = info.plate ~= '' and (' ^8(%s)^7'):format(info.plate) or ''
+                            msg = ('^5[Vehicle]^7 NPC vehicle%s'):format(p)
+                        end
+                        TriggerEvent('chat:addMessage', { args = { msg }, color = { 255, 255, 255 } })
+                    end
+                end
+            end
+            lastVeh = veh
+        end
+
+        Wait(500)
+    end
+end)
+
 exports('SetVehicleProp', SetVehicleProp)

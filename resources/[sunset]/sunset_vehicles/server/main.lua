@@ -1145,3 +1145,72 @@ exports('DeleteVehicleRecord', function(vehicleId)
     MySQL.update.await('DELETE FROM vehicles WHERE id = ?', { vehicleId })
     return true
 end)
+
+-- ── Vehicle entry information ─────────────────────────────────────────────
+-- Returns sanitised vehicle info when a player enters a vehicle.
+-- Insurance details are only returned to the registered owner.
+exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(source, vehicleNetId)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return nil end
+
+    local vehicle = NetworkGetEntityFromNetworkId(vehicleNetId)
+    if not vehicle or not DoesEntityExist(vehicle) then return nil end
+
+    local rawPlate = GetVehicleNumberPlateText(vehicle) or ''
+    local plate = normalizePlate(rawPlate)
+    local modelName = GetEntityModel(vehicle)
+
+    -- Faction fleet vehicle?
+    local factionId = Entity(vehicle).state.sunsetFactionVehicle
+    if factionId then
+        local factionLabel = factionId
+        local cfg = Sunset and Sunset.Factions and Sunset.Factions[factionId]
+        if cfg then factionLabel = cfg.label or factionId end
+        return { category = 'faction', plate = rawPlate:match('^%s*(.-)%s*$'), faction = factionLabel }
+    end
+
+    -- Personal owned vehicle?
+    if plate ~= '' then
+        local row = MySQL.single.await([[
+            SELECT v.id, v.model, v.props, v.insurance_points, v.insurance_level,
+                   v.insurance_cost, v.destroyed, c.firstname, c.lastname,
+                   v.character_id
+            FROM vehicles v
+            JOIN characters c ON c.id = v.character_id
+            WHERE REPLACE(UPPER(v.plate),' ','') = ?
+            LIMIT 1
+        ]], { plate })
+
+        if row then
+            local displayModel = (row.model or ''):lower()
+            local cleanPlate   = rawPlate:match('^%s*(.-)%s*$')
+            local isOwner      = row.character_id == char.id
+
+            local props = (type(row.props) == 'string' and json.decode(row.props)) or {}
+            local odometer = props.odometer or 0
+
+            if isOwner then
+                local baseCost = calculateVehicleInsuranceCost(row.model, row.insurance_cost)
+                return {
+                    category      = 'personal_own',
+                    plate         = cleanPlate,
+                    model         = displayModel,
+                    odometer      = math.floor(odometer * 10) / 10,
+                    ins_level     = math.max(1, math.min(11, tonumber(row.insurance_level) or 1)),
+                    ins_points    = math.max(0, tonumber(row.insurance_points) or 5),
+                    claim_cost    = math.floor(baseCost * (tonumber(row.insurance_level) or 1)),
+                    destroyed     = row.destroyed == 1,
+                }
+            else
+                return {
+                    category = 'personal_other',
+                    plate    = cleanPlate,
+                    model    = displayModel,
+                }
+            end
+        end
+    end
+
+    -- Unregistered / NPC vehicle.
+    return { category = 'npc', plate = rawPlate:match('^%s*(.-)%s*$') }
+end)

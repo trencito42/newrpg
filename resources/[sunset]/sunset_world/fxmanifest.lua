@@ -32,6 +32,7 @@ client_scripts {
 
 server_scripts {
     'server/access.lua',
+    'server/glue_server.lua',
 }
 
 -- [CROSS-RESOURCE] NPC world tooltips must be driven through these exports:
