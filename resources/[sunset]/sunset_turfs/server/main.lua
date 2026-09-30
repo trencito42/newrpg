@@ -544,7 +544,7 @@ local function runAttackTurf(source)
     end
 
     if ownedCount > 0 and not hasAdjacency then
-        TriggerClientEvent('sunset:client:notify', source, 'Nu poți ataca acest teritoriu! Trebuie să fie adiacent cu teritoriile deținute deja de clanul tău.', 'error', 6000)
+        TriggerClientEvent('sunset:client:notify', source, 'You cannot attack this territory! It must be adjacent to territories already owned by your gang.', 'error', 6000)
         return
     end
 

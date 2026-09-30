@@ -125,8 +125,8 @@ function Sanctions.warn(source, target, reason)
 
     -- auto-escalation: 3/3 warns -> automatic account ban (7 days)
     if totalWarns >= 3 then
-        local banReason = ('Acumulare 3/3 avertismente (ultimul: %s)'):format(reason)
-        broadcastPublic(('Player %s a primit ban pe cont (7 zile) pentru acumularea a 3/3 warns.'):format(id.name))
+        local banReason = ('3/3 warns accumulated (last: %s)'):format(reason)
+        broadcastPublic(('Player %s has been account banned (7 days) for accumulating 3/3 warns.'):format(id.name))
         Sanctions.ban(source, target, 7 * 1440, banReason)
         return { warns = totalWarns, reason = reason, banned = true }
     end

@@ -1188,7 +1188,7 @@ registerServerCommand('setvw', function(source, args)
 
     local vw = tonumber(args[2]) or 0
     SetPlayerRoutingBucket(target, vw)
-    notify(source, ('You set %s's routing bucket to %d.'):format(getDisplayName(target), vw), 'success')
+    notify(source, ("You set %s's routing bucket to %d."):format(getDisplayName(target), vw), 'success')
     TriggerClientEvent('sunset:client:notify', target, ('Your routing bucket was set to %d by an admin.'):format(vw), 'info')
 end, false)
 
@@ -1201,7 +1201,7 @@ registerServerCommand('sethp', function(source, args)
     if hp > 200 then hp = 200 end
     if hp < 0 then hp = 0 end
     TriggerClientEvent('sunset:admin:setHealth', target, hp)
-    notify(source, ('You set %s's HP to %d.'):format(getDisplayName(target), hp), 'success')
+    notify(source, ("You set %s's HP to %d."):format(getDisplayName(target), hp), 'success')
     TriggerClientEvent('sunset:client:notify', target, ('Your HP was set to %d by an administrator.'):format(hp), 'info')
 end, false)
 
@@ -2304,7 +2304,7 @@ local function handleFnc(source, args)
 
     local targetChar = exports.sunset_core:GetCharacter(target)
     if not targetChar or not targetChar.id then
-        return notify(source, 'Jucătorul țintă nu are un caracter încărcat.', 'error')
+        return notify(source, 'Target player does not have a character loaded.', 'error')
     end
 
     local adminName = getDisplayName(source)
@@ -2319,7 +2319,7 @@ local function handleFnc(source, args)
     end
 
     if not isDirectRename then
-        local reason = extraArg ~= '' and extraArg or 'Nume neconform regulamentului'
+        local reason = extraArg ~= '' and extraArg or 'Name violates server rules'
         
         TriggerClientEvent('sunset:admin:openFncModal', target, {
             forced = true,
@@ -2328,12 +2328,12 @@ local function handleFnc(source, args)
             tokens = 1
         })
 
-        notify(source, ('I-ai forțat schimbarea numelui jucătorului %s (#%d). I s-a deschis fereastra de alegere nume.'):format(targetName, target), 'success')
-        notify(target, ('Adminul %s ți-a forțat schimbarea numelui (FNC)! Motiv: %s. Alege-ți un nou nume.'):format(adminName, reason), 'error')
+        notify(source, ('You forced a name change for %s (#%d). The name selection window has been opened.'):format(targetName, target), 'success')
+        notify(target, ('Admin %s has forced you to change your name (FNC)! Reason: %s. Choose a new name.'):format(adminName, reason), 'error')
 
         TriggerClientEvent('chat:addMessage', -1, {
             color = { 255, 100, 100 },
-            args = { 'ADMIN', ('^3[ADMIN] ^7Adminul ^2%s^7 i-a forțat schimbarea numelui jucătorului ^1%s (#%d)^7 (Motiv: ^3%s^7).'):format(adminName, targetName, target, reason) }
+            args = { 'ADMIN', ('^3[ADMIN] ^7Admin ^2%s^7 forced a name change for ^1%s (#%d)^7 (Reason: ^3%s^7).'):format(adminName, targetName, target, reason) }
         })
         return
     end
@@ -2341,7 +2341,7 @@ local function handleFnc(source, args)
     -- Case B: /fnc [id] [NewName] -> Direct admin rename
     local cleanName = extraArg:gsub('^%s*(.-)%s*$', '%1')
     if #cleanName < 3 or #cleanName > 24 or not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return notify(source, 'Nume invalid! Numele trebuie să aibă între 3 și 24 caractere (litere, cifre, punct, liniuțe).', 'error')
+        return notify(source, 'Invalid name! Name must be between 3 and 24 characters (letters, digits, dots, hyphens).', 'error')
     end
 
     local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
@@ -2360,7 +2360,7 @@ local function handleFnc(source, args)
     ]], { cleanName, cleanName, cleanName })
 
     if existing and tonumber(existing.id) ~= tonumber(targetChar.id) then
-        return notify(source, 'Acest nume este deja ocupat de alt jucător!', 'error')
+        return notify(source, 'This name is already taken by another player!', 'error')
     end
 
     MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
@@ -2389,8 +2389,8 @@ local function handleFnc(source, args)
 
     local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
-    notify(source, ('I-ai schimbat numele lui %s în %s.'):format(targetName, cleanName), 'success')
-    notify(target, ('Numele tău a fost schimbat în %s de adminul %s.'):format(cleanName, adminName), 'info')
+    notify(source, ('You changed the name of %s to %s.'):format(targetName, cleanName), 'success')
+    notify(target, ('Your name was changed to %s by admin %s.'):format(cleanName, adminName), 'info')
 end
 
 registerServerCommand('fnc', handleFnc)
@@ -2402,15 +2402,15 @@ registerServerCommand('forcenamechange', handleFnc)
 -- Server callback: Player submitting their chosen name from the FNC modal
 exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(source, newName)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char or not char.id then return false, 'Caracter invalid' end
+    if not char or not char.id then return false, 'Invalid character' end
 
     local cleanName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
     if #cleanName < 3 or #cleanName > 24 then
-        return false, 'Numele trebuie să aibă între 3 și 24 caractere!'
+        return false, 'Name must be between 3 and 24 characters!'
     end
 
     if not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return false, 'Numele poate conține doar litere, cifre, puncte și liniuțe (ex: diablo69, alex.ro, Viper_99)!'
+        return false, 'Name may only contain letters, digits, dots and hyphens (e.g. diablo69, alex.ro, Viper_99)!'
     end
 
     -- Check if name already exists in database
@@ -2424,7 +2424,7 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
     ]], { cleanName, cleanName, cleanName, cleanName })
 
     if existing and tonumber(existing.id) ~= tonumber(char.id) then
-        return false, 'Acest nume este deja ocupat de alt jucător! Te rugăm să alegi alt nume.'
+        return false, 'This name is already taken by another player! Please choose a different name.'
     end
 
     local oldName = getDisplayName(source)
@@ -2460,9 +2460,9 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
     TriggerClientEvent('sunset:client:onCharacterLoaded', source, char)
     TriggerClientEvent('sunset:client:onCharacterUpdated', source, char)
 
-    local msg = ('^2[FNC] ^7Jucătorul ^3%s (#%d)^7 și-a ales noul nume ^2%s^7.'):format(oldName, source, cleanName)
+    local msg = ('^2[FNC] ^7Player ^3%s (#%d)^7 chose the new name ^2%s^7.'):format(oldName, source, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })
-    notify(source, ('Numele tău a fost schimbat cu succes în %s!'):format(cleanName), 'success')
+    notify(source, ('Your name has been successfully changed to %s!'):format(cleanName), 'success')
 
     return true, cleanName
 end)

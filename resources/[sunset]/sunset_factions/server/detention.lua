@@ -217,6 +217,7 @@ end)
 RegisterNetEvent('sunset:server:handsUp', function(state)
     local src = source
     if Detention.getState(src) == Detention.States.JAILED then return end
+    if not exports.sunset_core:RateLimit(src, 'handsUp', 600) then return end
     HandsUp[src] = state == true
     if HandsUp[src] and not Cuffed[src] then
         Detention.setState(src, Detention.States.COMPLIANT)
