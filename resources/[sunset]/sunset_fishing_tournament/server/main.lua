@@ -176,7 +176,7 @@ local function claimPendingRewards(source, charId)
                 charId, rank, cash, xp, tId)
 
             notify(source, ('🎣 Fishing Tournament Claimed — Rank #%d! Reward: $%s + %d XP.'):format(
-                rank, exports.sunset_core:FormatMoney and exports.sunset_core:FormatMoney(cash) or tostring(cash), xp), 'success', 10000)
+                rank, exports.sunset_core.FormatMoney and exports.sunset_core:FormatMoney(cash) or tostring(cash), xp), 'success', 10000)
         end
     end)
 end
@@ -314,7 +314,7 @@ local function settleTournament()
 
                     notify(activeSource, ('🎣 Fishing Tournament — %s! %d fish (Total: %.1f KG). Reward: $%s + %d XP.'):format(
                         reward.label, entry.fishCount, entry.totalWeight10 / 10,
-                        exports.sunset_core:FormatMoney and exports.sunset_core:FormatMoney(reward.cash) or tostring(reward.cash),
+                        exports.sunset_core.FormatMoney and exports.sunset_core:FormatMoney(reward.cash) or tostring(reward.cash),
                         reward.xp), 'success', 15000)
                 else
                     -- Pending offline reward
@@ -623,7 +623,7 @@ end)
 -- Dev / Admin diagnostic command
 RegisterCommand('fishtournamentdebug', function(source, args, raw)
     local isConsole = (source == 0)
-    local isAdmin = isConsole or (exports.sunset_core:IsPlayerAdmin and exports.sunset_core:IsPlayerAdmin(source))
+    local isAdmin = isConsole or (exports.sunset_core.IsPlayerAdmin and exports.sunset_core:IsPlayerAdmin(source))
     if not isAdmin then
         if source > 0 then notify(source, 'No permission.', 'error') end
         return
