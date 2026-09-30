@@ -470,7 +470,7 @@ const Chat = {
                 : esc(this.nameWithId(name, id));
             return {
                 badge: { label: 'LOCAL', className: 'badge-local' },
-                author: { html: `${who} says:`, className: 'color-accent' },
+                author: { html: `${who} says:`, className: '' },
                 content: { html: esc(msg), className: '' },
             };
         }
