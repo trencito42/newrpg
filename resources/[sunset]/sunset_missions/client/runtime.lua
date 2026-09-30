@@ -409,7 +409,7 @@ local function runContainer47(session)
 end
 
 -- ── Mission complete (from server) ────────────────────────────────────────────
-AddEventHandler('sunset:missions:complete', function(data)
+RegisterNetEvent('sunset:missions:complete', function(data)
     MSN_NUI_ShowComplete(data)
     clearBlips()
     MSN_StopPursuit()
