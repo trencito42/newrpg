@@ -900,9 +900,191 @@ const Chat = {
         return `${prefix}${msg || name}`;
     },
 
+    updateCharCounter() {
+        const input = $('#chat-input');
+        const counter = $('#chat-char-counter');
+        if (counter && input) {
+            counter.textContent = `${input.value.length}/250`;
+        }
+    },
+
+    formatSampLine(m) {
+        const type = String(m.type || 'say').toLowerCase().replace(/[^a-z0-9_]/g, '') || 'say';
+        const rawName = String(m.name || 'Player').trim();
+        const id = Number(m.id) || 0;
+        const msg = this.escapeHtml(String(m.message ?? ''));
+        const time = this.formatTime(m);
+        const timeHtml = time ? `<span class="chat-time">${this.escapeHtml(time)} </span>` : '';
+        const who = (m.clanTag || m.factionId || m.adminDuty)
+            ? this.formatPlayerNameHtml(m)
+            : this.escapeHtml(this.nameWithId(rawName, id));
+
+        // 1. RP Action Commands (/me, /do)
+        if (type === 'me') {
+            return `${timeHtml}<span class="chat-color-rp">* ${who} ${msg}</span>`;
+        }
+        if (type === 'do') {
+            return `${timeHtml}<span class="chat-color-rp">* ${msg} (( ${who} ))</span>`;
+        }
+
+        // 2. Speech variations (/s, /w, /l, local say)
+        if (type === 'shout' || m.subType === 'shout') {
+            return `${timeHtml}<span class="chat-color-say">${who} shouts: ${msg}!</span>`;
+        }
+        if (type === 'whisper' || m.subType === 'whisper') {
+            return `${timeHtml}<span class="chat-color-whisper">${who} whispers: ${msg}</span>`;
+        }
+        if (type === 'low' || m.subType === 'low') {
+            return `${timeHtml}<span class="chat-color-low">${who} says [low]: ${msg}</span>`;
+        }
+        if (type === 'say' || type === '') {
+            return `${timeHtml}<span class="chat-color-say">${who} says: ${msg}</span>`;
+        }
+
+        // 3. OOC (( ... ))
+        if (type === 'ooc' || type === 'b') {
+            return `${timeHtml}<span class="chat-color-ooc">(( ${who}: ${msg} ))</span>`;
+        }
+
+        // 4. Private Messages / Direct Messages
+        if (type === 'pm' || type === 'dm') {
+            return `${timeHtml}<span class="chat-color-pm">DM from ${who}: ${msg}</span>`;
+        }
+        if (type === 'pm_echo' || type === 'dm_echo') {
+            return `${timeHtml}<span class="chat-color-pm">DM sent to ${who}: ${msg}</span>`;
+        }
+
+        // 5. Phone / SMS
+        if (type === 'sms' || m.smsNotify) {
+            return `${timeHtml}<span class="chat-color-sms">SMS from ${who}: ${msg || 'You got a new message.'}</span>`;
+        }
+
+        // 6. Tweet / Social
+        if (type === 'tweet') {
+            return `${timeHtml}<span class="chat-color-tweet">@${who}: ${msg}</span>`;
+        }
+
+        // 7. Staff, Admin & Leader chats
+        if (type === 'staff_chat') {
+            const role = m.staffRole ? `[${this.escapeHtml(m.staffRole)}] ` : '[Staff] ';
+            return `${timeHtml}<span class="chat-color-staff">${role}${who}: ${msg}</span>`;
+        }
+        if (type === 'admin_chat') {
+            const lvl = m.adminLevel ? ` [L${m.adminLevel}]` : '';
+            return `${timeHtml}<span class="chat-color-admin">[Admin${lvl}] ${who}: ${msg}</span>`;
+        }
+        if (type === 'leader_chat') {
+            const title = m.leaderTitle ? `[LEADER: ${this.escapeHtml(m.leaderTitle)}] ` : '[LEADER] ';
+            return `${timeHtml}<span class="chat-color-leader">${title}${who}: ${msg}</span>`;
+        }
+
+        // 8. Reports
+        if (type === 'report') {
+            return `${timeHtml}<span class="chat-color-report">[Report] ${who} reported: ${msg}</span>`;
+        }
+        if (type === 'report_reply') {
+            return `${timeHtml}<span class="chat-color-report">[Report Reply] Replied to ${who}: ${msg}</span>`;
+        }
+        if (type === 'report_admin_reply') {
+            return `${timeHtml}<span class="chat-color-report">[Admin] ${who} replied to your report: ${msg}</span>`;
+        }
+
+        // 9. Announcements, News & Advertisements
+        if (type === 'anno' || type === 'announce' || type === 'announcement') {
+            return `${timeHtml}<span class="chat-color-announcement">[Announcement] ${msg}</span>`;
+        }
+        if (type === 'news' || type === 'breaking_news') {
+            return `${timeHtml}<span class="chat-color-news">[Breaking News] ${msg}</span>`;
+        }
+        if (type === 'ad' || type === 'advertisement') {
+            return `${timeHtml}<span class="chat-color-ad">[Advertisement] ${msg}</span>`;
+        }
+
+        // 10. Emergency / Police / Dispatch / Radio / Department
+        if (type === 'lspd' || type === 'police' || type === 'police_alert') {
+            return `${timeHtml}<span class="chat-color-police">[LSPD] ${msg}</span>`;
+        }
+        if (type === 'dispatch' || type === 'radar') {
+            return `${timeHtml}<span class="chat-color-dispatch">[Dispatch]: ${msg}</span>`;
+        }
+        if (type === 'r' || type === 'radio') {
+            const faction = String(m.factionLabel || '').trim();
+            const rank = String(m.rank || '').trim();
+            const header = [this.escapeHtml(faction), this.escapeHtml(rank), who].filter(Boolean).join(' ');
+            const ch = m.channelName ? `[CH: ${this.escapeHtml(m.channelName)}] ` : '';
+            let text = msg;
+            if (text && !/over\.?$/i.test(text.trim())) {
+                text = `${text.replace(/[.,\s]+$/, '')}, over.`;
+            }
+            return `${timeHtml}<span class="chat-color-radio">^^ ${ch}${header} says: ${text} ^^</span>`;
+        }
+        if (type === 'd' || type === 'dept') {
+            const fromDept = this.escapeHtml(m.fromDept || m.factionLabel || 'LSPD');
+            const toDept = this.escapeHtml(m.toDept || 'EMS');
+            let text = msg;
+            if (text && !/over\.?$/i.test(text.trim())) {
+                text = `${text.replace(/[.,\s]+$/, '')}, over.`;
+            }
+            return `${timeHtml}<span class="chat-color-dept">** [${fromDept} -&gt; ${toDept}] ${who} says: ${text} **</span>`;
+        }
+
+        // 11. Faction & Clan
+        if (type === 'f' || type === 'faction_action') {
+            const faction = String(m.factionLabel || '').trim();
+            const rank = String(m.rank || '').trim();
+            const header = [this.escapeHtml(faction), this.escapeHtml(rank), who].filter(Boolean).join(' ');
+            return `${timeHtml}<span class="chat-color-faction">** [FACTION] ${header}: ${msg} **</span>`;
+        }
+        if (type === 'c' || type === 'clan_action') {
+            const rankNum = m.clanRank ? `R${m.clanRank}` : '';
+            const rankTitle = String(m.clanRankLabel || '').trim();
+            const clanWho = [rankNum, rankTitle, this.formatClanNameHtml(m)].filter(Boolean).join(' ');
+            return `${timeHtml}<span class="chat-color-clan">** [CLAN] ${clanWho}: ${msg} **</span>`;
+        }
+
+        // 12. Government
+        if (type === 'gov') {
+            const dept = String(m.factionLabel || m.name || 'GOVERNMENT').trim();
+            const rankLabel = String(m.issuerRank || m.rank || '').trim();
+            const header = [dept, rankLabel].filter(Boolean).join(' · ');
+            return `${timeHtml}<span class="chat-color-gov">[GOVERNMENT] ${this.escapeHtml(header)}: ${msg}</span>`;
+        }
+
+        // 13. System / Error / Warn / Info / Sanctions
+        if (type === 'command_error' || type === 'error') {
+            const tag = rawName && rawName !== 'SYSTEM' ? `[${this.escapeHtml(rawName)}]: ` : '[Error]: ';
+            return `${timeHtml}<span class="chat-color-error"><strong class="chat-color-error-tag">${tag}</strong>${msg}</span>`;
+        }
+        if (type === 'command_warn' || type === 'warn') {
+            const tag = rawName && rawName !== 'SYSTEM' ? `[${this.escapeHtml(rawName)}]: ` : '[Warning]: ';
+            return `${timeHtml}<span class="chat-color-warn"><strong class="chat-color-warn-tag">${tag}</strong>${msg}</span>`;
+        }
+        if (type === 'command_info' || type === 'info') {
+            const tag = rawName && rawName !== 'SYSTEM' ? `[${this.escapeHtml(rawName)}]: ` : '[Info]: ';
+            return `${timeHtml}<span class="chat-color-info"><strong class="chat-color-info-tag">${tag}</strong><span class="chat-color-info-body">${msg}</span></span>`;
+        }
+        if (type === 'admin_action') {
+            return `${timeHtml}<span class="chat-color-sanction"><strong class="chat-color-sanction-tag">[SANCTION]</strong> ${msg}</span>`;
+        }
+
+        // 14. Newbie Questions
+        if (type === 'newbie_q' || type === 'newb_question') {
+            return `${timeHtml}<span class="chat-color-newbie">[QUESTION] ${who}: ${msg}</span>`;
+        }
+        if (type === 'newbie_qa' || type === 'newb_answer') {
+            return `${timeHtml}<span class="chat-color-newbie">[ANSWER] ${msg}</span>`;
+        }
+
+        // Fallback generic
+        if (rawName && msg && rawName !== 'SYSTEM') {
+            return `${timeHtml}<span class="chat-color-say">${who}: ${msg}</span>`;
+        }
+        return `${timeHtml}<span class="chat-color-say">${msg || who}</span>`;
+    },
+
     buildMessageElement(m, options = {}) {
         const el = document.createElement('div');
-        const type = String(m.type || 'say').toLowerCase().replace(/[^a-z_]/g, '') || 'say';
+        const type = String(m.type || 'say').toLowerCase().replace(/[^a-z0-9_]/g, '') || 'say';
         const factionId = String(m.factionId || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
         const classes = ['chat-msg', `chat-msg--${type}`];
         if (factionId) classes.push(`chat-msg--faction-${factionId}`);
@@ -910,10 +1092,6 @@ const Chat = {
 
         if (type === 'faction_motd' || type === 'clan_motd' || type === 'blaze_pass') {
             el.className = [...classes, 'chat-msg--block'].join(' ');
-            const time = document.createElement('span');
-            time.className = 'msg-time';
-            time.textContent = this.premiumTime(m);
-            el.appendChild(time);
             const block = document.createElement('div');
             block.className = 'msg-content';
             block.innerHTML = type === 'blaze_pass'
@@ -925,15 +1103,7 @@ const Chat = {
         }
 
         el.className = classes.join(' ');
-        const time = document.createElement('span');
-        time.className = 'msg-time';
-        time.textContent = this.premiumTime(m);
-        el.appendChild(time);
-
-        const meta = this.premiumMeta(type, m);
-        if (meta.badge) el.appendChild(this.createBadge(meta.badge.label, meta.badge.className));
-        if (meta.author) el.appendChild(this.createAuthor(meta.author.html, meta.author.className));
-        el.appendChild(this.createContent(meta.content.html, meta.content.className));
+        el.innerHTML = this.formatSampLine(m);
         if (!options.animate) el.style.animation = 'none';
         return el;
     },
@@ -1071,6 +1241,7 @@ const Chat = {
             app?.classList.add('is-active');
             backdrop?.classList.remove('hidden');
             wrap?.classList.remove('hidden');
+            this.updateCharCounter();
             this._pendingRender = false;
             this.render();
             requestAnimationFrame(() => {
@@ -1092,6 +1263,7 @@ const Chat = {
                 input.value = '';
                 input.blur();
             }
+            this.updateCharCounter();
         }
     },
 
@@ -1102,6 +1274,7 @@ const Chat = {
         if (input.value !== next) input.value = next;
         this.suggestionPick = 0;
         this.renderSuggestions();
+        this.updateCharCounter();
         if (options.fromHistory) {
             input.focus({ preventScroll: true });
             const end = input.value.length;
@@ -1120,6 +1293,7 @@ const Chat = {
         }
         post('chatSend', { message: msg, channel: this.channel || 'all' });
         input.value = '';
+        this.updateCharCounter();
         this.hideSuggestions();
     },
 };
@@ -1152,6 +1326,7 @@ $('#chat-settings-close')?.addEventListener('click', (e) => {
 $('#chat-input')?.addEventListener('input', () => {
     Chat.suggestionPick = 0;
     Chat.renderSuggestions();
+    Chat.updateCharCounter();
 });
 
 $('#chat-input')?.addEventListener('keydown', (e) => {

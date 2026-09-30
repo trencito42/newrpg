@@ -347,6 +347,78 @@ local function runDoCommand(source, args)
     })
 end
 
+local function runShoutCommand(source, args)
+    if checkMute(source) then return end
+    local msg = cleanChatText(table.concat(args, ' '), 256)
+    if not msg then return end
+    local identity = chatIdentity(source)
+    sendNearby(source, {
+        id = source,
+        name = identity.name,
+        factionId = identity.factionId,
+        clanTag = identity.clanTag,
+        clanTagColor = identity.clanTagColor,
+        clanTagStyle = identity.clanTagStyle,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = 'shout',
+    }, 45.0)
+end
+
+local function runWhisperCommand(source, args)
+    if checkMute(source) then return end
+    local msg = cleanChatText(table.concat(args, ' '), 256)
+    if not msg then return end
+    local identity = chatIdentity(source)
+    sendNearby(source, {
+        id = source,
+        name = identity.name,
+        factionId = identity.factionId,
+        clanTag = identity.clanTag,
+        clanTagColor = identity.clanTagColor,
+        clanTagStyle = identity.clanTagStyle,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = 'whisper',
+    }, 4.0)
+end
+
+local function runLowCommand(source, args)
+    if checkMute(source) then return end
+    local msg = cleanChatText(table.concat(args, ' '), 256)
+    if not msg then return end
+    local identity = chatIdentity(source)
+    sendNearby(source, {
+        id = source,
+        name = identity.name,
+        factionId = identity.factionId,
+        clanTag = identity.clanTag,
+        clanTagColor = identity.clanTagColor,
+        clanTagStyle = identity.clanTagStyle,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = 'low',
+    }, 6.0)
+end
+
+local function runBCommand(source, args)
+    if checkMute(source) then return end
+    local msg = cleanChatText(table.concat(args, ' '), 256)
+    if not msg then return end
+    local identity = chatIdentity(source)
+    sendNearby(source, {
+        id = source,
+        name = identity.name,
+        factionId = identity.factionId,
+        clanTag = identity.clanTag,
+        clanTagColor = identity.clanTagColor,
+        clanTagStyle = identity.clanTagStyle,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = 'b',
+    }, 22.0)
+end
+
 RegisterCommand('me', function(source, args)
     runMeCommand(source, args)
 end, false)
@@ -355,12 +427,41 @@ RegisterCommand('do', function(source, args)
     runDoCommand(source, args)
 end, false)
 
+RegisterCommand('s', function(source, args)
+    runShoutCommand(source, args)
+end, false)
+RegisterCommand('shout', function(source, args)
+    runShoutCommand(source, args)
+end, false)
+
+RegisterCommand('w', function(source, args)
+    runWhisperCommand(source, args)
+end, false)
+RegisterCommand('whisper', function(source, args)
+    runWhisperCommand(source, args)
+end, false)
+
+RegisterCommand('l', function(source, args)
+    runLowCommand(source, args)
+end, false)
+RegisterCommand('low', function(source, args)
+    runLowCommand(source, args)
+end, false)
+
+RegisterCommand('b', function(source, args)
+    runBCommand(source, args)
+end, false)
+
 function RunServerCommand(source, name, args)
     if source == 0 then return false end
     name = string.lower(tostring(name or ''))
     args = args or {}
     if name == 'me' then runMeCommand(source, args) return true end
     if name == 'do' then runDoCommand(source, args) return true end
+    if name == 's' or name == 'shout' then runShoutCommand(source, args) return true end
+    if name == 'w' or name == 'whisper' then runWhisperCommand(source, args) return true end
+    if name == 'l' or name == 'low' then runLowCommand(source, args) return true end
+    if name == 'b' then runBCommand(source, args) return true end
     return false
 end
 exports('RunServerCommand', RunServerCommand)
