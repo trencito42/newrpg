@@ -3,7 +3,7 @@ game 'gta5'
 
 this_is_a_map 'yes'
 
--- Register the custom archetype type library so the game knows about
--- the 5 custom block models (brick_stone_block, cobblestone_block,
--- dirt_block, grass_block, sand_block) that build the villa island.
+-- YTYP must be registered BEFORE YMAP streams, so entities with custom
+-- archetype hashes (grass_block, sand_block, dirt_block, cobblestone_block,
+-- brick_stone_block) resolve to their YDR/YTD assets.
 data_file 'DLC_ITYP_REQUEST' 'stream/villa_island.ytyp'

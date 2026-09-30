@@ -45,21 +45,23 @@ villa_island/
 
 ## Location
 
-The island is located in the ocean south-east of the main GTA V map.  
-Based on coordinate analysis of the YMAP, approximate centre is around:
+The island is located in the **western ocean**, far west of the main GTA V map.  
+Coordinates verified by direct RSC7/YMAP binary parsing of all entity positions:
 
 ```
-x ≈ 4600,  y ≈ -4800,  z ≈ 5
+x ≈ -5838,  y ≈ 1135,  z ≈ 8
 ```
+
+Full entity bounding box: X (-5938 to -5735), Y (1038 to 1234), Z (-12 to +16)
 
 FiveM teleport command for testing:
 
 ```lua
-SetEntityCoords(PlayerPedId(), 4600.0, -4800.0, 5.0, false, false, false, true)
+SetEntityCoords(PlayerPedId(), -5838.0, 1135.0, 8.0, false, false, false, true)
 ```
 
-> **Note:** Confirm exact coords in-game or with CodeWalker — RSC7 binary
-> parsing gives approximate values. Fine-tune the Z until you land on the island.
+> **Note:** Previous README had wrong coordinates (x≈4600, y≈-4800) — those were
+> incorrect. The island is in the deep western ocean, NOT south-east of the map.
 
 ---
 
@@ -114,9 +116,8 @@ scripts spawn props. Fully safe for OneSync Infinity servers.
 
 ## Known issues
 
-- **Exact coordinates:** The YMAP binary is RSC7 (paged virtual memory) and
-  cannot be read sequentially. The coordinates above are approximate — verify
-  in-game or open the YMAP with CodeWalker for exact values.
+- **Coordinates verified:** x≈-5838, y≈1135, z≈8 — confirmed by full RSC7
+  entity binary scan. Previous README had wrong values (x≈4600, y≈-4800).
 - **LODs:** The block models use `+hidr.ytd` high-detail textures. Low-LOD
   variants are not present, which may cause props to disappear at longer view
   distances. This is a characteristic of the original mod.
