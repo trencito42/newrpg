@@ -218,7 +218,7 @@ local function sendStaffPreview(ad)
     local etaRemSec = etaSec % 60
     local etaStr = ('%02d:%02d'):format(etaMin, etaRemSec)
 
-    local previewMsg = ('[CNN Preview #%d] %s (%s): "%s" | Publicare în: %s'):format(
+    local previewMsg = ('[CNN Preview #%d] %s (%s): "%s" | Publishing in: %s'):format(
         ad.id, ad.playerName, tostring(ad.src or '?'), ad.text, etaStr
     )
 
