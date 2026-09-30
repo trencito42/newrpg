@@ -1,10 +1,10 @@
-/* ═══ CHAT — SA-MP style (top-left) ═══ */
+/* ═══ CHAT — SA RPG style (top-left, 8-11 lines, 12 s fade) ═══ */
 :root {
     --chat-font-size: 13px;
-    --chat-time-size: 13px;
+    --chat-time-size: 11px;
     --chat-input-size: 14px;
-    --chat-page-height: 220px;
-    --chat-line-height: 1.14;
+    --chat-page-height: 175px;
+    --chat-line-height: 1.35;
 }
 
 /* Full-viewport transparent backdrop: guarantees CEF hit-testing and renders system mouse cursor */
@@ -35,7 +35,7 @@ body.chat-ui-open * {
     position: fixed;
     top: 10px;
     left: 10px;
-    width: min(560px, 44vw);
+    width: min(500px, 42vw);
     z-index: 40;
     pointer-events: none;
     font-family: 'Inter', sans-serif;

@@ -672,9 +672,9 @@ registerPropertyCommand('acreatehouse',function(source,args)
         return message(source, ('Usage: /acreatehouse [pret] [interior] [nivel minim] [nume]\nInterioare: %s'):format(table.concat(list, ', ')), 'error')
     end
     local label = table.concat(args, ' ', 4):sub(1, 64)
-    if #label < 3 then return message(source, 'Adauga un nume pentru casa dupa nivelul minim.', 'error') end
+    if #label < 3 then return message(source, 'Add a name for the house after the minimum level.', 'error') end
     local ped = GetPlayerPed(source)
-    if ped == 0 then return message(source, 'Pozitia jucatorului indisponibila. Incearca din nou.', 'error') end
+    if ped == 0 then return message(source, 'Player position unavailable. Try again.', 'error') end
     local pos, heading = GetEntityCoords(ped), GetEntityHeading(ped)
     local id = MySQL.insert.await([[INSERT INTO properties(label,price,interior,entry,interior_pos,exit_pos,minimum_level,for_sale,enabled)
       VALUES(?,?,?,?,?,?,?,1,1)]], {label, math.floor(price), interior, encodePos(pos, heading), encodePos(preset.coords, preset.coords.w), encodePos(pos, heading), math.floor(level)})

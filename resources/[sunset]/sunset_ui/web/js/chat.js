@@ -1,3 +1,5 @@
+const CHAT_FADE_MS = 12000; // messages vanish 12 s after arrival when chat is closed
+
 const Chat = {
     messages: [],
     settingsOpen: false,
@@ -6,6 +8,7 @@ const Chat = {
     channel: 'all',
     suggestions: [],
     suggestionPick: 0,
+    _expiryTimer: null,
     channelPrefixes: {
         me: '/me ',
         do: '/do ',
@@ -174,7 +177,33 @@ const Chat = {
         this.suggestionPick = 0;
     },
 
+    // Returns messages to display — full history when open, last pageSize() within
+    // CHAT_FADE_MS when closed (SA-style: messages vanish after 12 s).
+    visibleMessages(open) {
+        if (open) return this.messages;
+        const cutoff = Date.now() - CHAT_FADE_MS;
+        const recent = this.messages.filter((m) => (m._addedAt || 0) >= cutoff);
+        return recent.slice(-this.pageSize());
+    },
+
+    // Schedule a re-render when the oldest visible message's fade window expires.
+    scheduleExpiry() {
+        if (this._expiryTimer) clearTimeout(this._expiryTimer);
+        this._expiryTimer = null;
+        if (this.isChatOpen()) return;
+        const cutoff = Date.now() - CHAT_FADE_MS;
+        const oldest = this.messages.find((m) => (m._addedAt || 0) >= cutoff);
+        if (!oldest) return;
+        const delay = (oldest._addedAt || 0) + CHAT_FADE_MS - Date.now();
+        if (delay <= 0) return;
+        this._expiryTimer = setTimeout(() => {
+            this._expiryTimer = null;
+            if (!this.isChatOpen()) this.render();
+        }, delay + 50);
+    },
+
     add(msg) {
+        msg._addedAt = Date.now();
         this.messages.push(msg);
         const cap = this.maxMessages();
         let trimmed = false;
@@ -195,6 +224,7 @@ const Chat = {
             return;
         }
         this.render();
+        this.scheduleExpiry();
     },
 
     onSettingsChange() {
@@ -302,7 +332,7 @@ const Chat = {
         if (type === 'pm' || type === 'pm_echo') {
             const role = m.role || 'Admin';
             const text = type === 'pm_echo'
-                ? `** PM trimis catre [${esc(name)}] (${id}): [${esc(msg)}] **`
+                ? `** PM sent to [${esc(name)}] (${id}): [${esc(msg)}] **`
                 : `** ${role} [${esc(name)}] (${id}): [${esc(msg)}] **`;
             return {
                 badge: { label: 'PM', className: 'badge-pm' },
@@ -745,7 +775,7 @@ const Chat = {
 
         if (type === 'pm_echo') {
             const sid = id > 0 ? ` (${id})` : '';
-            return `${prefix}** PM trimis catre [${name}]${sid}: [${msg}] **`;
+            return `${prefix}** PM sent to [${name}]${sid}: [${msg}] **`;
         }
 
         if (type === 'report') {
@@ -1127,9 +1157,10 @@ const Chat = {
         if (!container) return;
         container.innerHTML = '';
         const open = this.isChatOpen();
-        const visible = open ? this.messages : this.messages.slice(-this.pageSize());
+        const visible = this.visibleMessages(open);
         visible.forEach((m) => container.appendChild(this.buildMessageElement(m, { animate: false })));
         container.scrollTop = container.scrollHeight;
+        if (!open) this.scheduleExpiry();
     },
 
     appendMessage(msg) {
@@ -1228,6 +1259,7 @@ const Chat = {
         const input = $('#chat-input');
         const backdrop = $('#chat-backdrop');
         if (open) {
+            if (this._expiryTimer) { clearTimeout(this._expiryTimer); this._expiryTimer = null; }
             this.setContext(data);
             ChatSettings.init();
             this.initChannelSelector();

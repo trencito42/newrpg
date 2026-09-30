@@ -2,8 +2,8 @@ const CHAT_SETTINGS_KEY = 'sunset_chat_settings';
 
 const ChatSettings = {
     defaults: {
-        fontSize: 13.5,
-        maxHeight: 350,
+        fontSize: 13,
+        maxHeight: 175,
     },
     settings: null,
 

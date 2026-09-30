@@ -118,7 +118,7 @@ local function checkMute(source)
             return exports.sunset_admin:IsMuted(source)
         end)
         if ok and isMuted then
-            TriggerClientEvent('sunset:chat:system', source, ('Ai mute pentru inca %d minute. Motiv: %s'):format(remainingMin or 1, reason or 'Sanctiune admin'), 'error')
+            TriggerClientEvent('sunset:chat:system', source, ('You are muted for %d more minute(s). Reason: %s'):format(remainingMin or 1, reason or 'Admin sanction'), 'error')
             return true
         end
     end
@@ -246,7 +246,7 @@ RegisterCommand('e', function(source, args)
     if source == 0 then return end
     local ok, isStaff = pcall(function() return exports.sunset_admin:IsStaff(source) end)
     if not ok or isStaff ~= true then
-        TriggerClientEvent('sunset:chat:system', source, 'Comanda disponibila doar pentru staff (admini si helperi).', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff (admins and helpers).', 'error')
         return
     end
     local msg = cleanChatText(table.concat(args, ' '), 256)
@@ -288,7 +288,7 @@ RegisterCommand('lc', function(source, args)
         end
     end)
     if not isLeader and not isAdmin then
-        TriggerClientEvent('sunset:chat:system', source, 'Nu ai acces la chat-ul liderilor (/lc).', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'You do not have access to the leaders chat (/lc).', 'error')
         return
     end
     local msg = cleanChatText(table.concat(args, ' '), 256)
@@ -551,5 +551,5 @@ RegisterCommand('cc', function(source, args)
     end
     TriggerClientEvent('sunset:chat:clear', -1)
     local name = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    TriggerClientEvent('sunset:chat:system', -1, ('Chat-ul a fost curatat de catre %s.'):format(name), 'info')
+    TriggerClientEvent('sunset:chat:system', -1, ('Chat has been cleared by %s.'):format(name), 'info')
 end, false)
