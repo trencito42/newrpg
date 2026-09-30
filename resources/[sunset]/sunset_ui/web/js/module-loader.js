@@ -26,6 +26,7 @@
             js: ['js/radar.js']
         },
         damage_indicators: {
+            html: 'modules/damage_indicators/index.html',
             css: ['css/damage-indicators.css'],
             js: ['js/damage-indicators.js']
         },

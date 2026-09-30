@@ -1,8 +1,8 @@
 local spawned = false
 local spawning = false
 
-local CIVILIAN_MALE = `a_m_m_bevhills_02`
-local CIVILIAN_FEMALE = `a_f_m_beach_01`
+local CIVILIAN_MALE = `mp_m_freemode_01`
+local CIVILIAN_FEMALE = `mp_f_freemode_01`
 
 local function logBoot(stage, details)
     if SunsetBoot and SunsetBoot.Log then
@@ -38,7 +38,7 @@ local function decodeMetadata(raw)
 end
 
 -- Resolve the model that should be applied for login.
--- Priority: meta.skin (skin-shop override) → char.model → meta.model → gender default.
+-- Priority: meta.skin (skin-shop override) → char.model → meta.model → appearance.model → gender default.
 local function resolveModel(char)
     local meta    = decodeMetadata(char.metadata)
     local gender  = tonumber(char.gender) or 0
@@ -48,8 +48,11 @@ local function resolveModel(char)
     if skin and skin ~= '' and skin ~= 'default' and skin ~= 'reset' then
         return skin, 'meta.skin'
     end
-    if char.model then return char.model, 'char.model' end
-    if meta.model then return meta.model, 'meta.model' end
+    if char.model and char.model ~= '' then return char.model, 'char.model' end
+    if meta.model and meta.model ~= '' then return meta.model, 'meta.model' end
+    if char.appearance and type(char.appearance) == 'table' and char.appearance.model and char.appearance.model ~= '' then
+        return char.appearance.model, 'char.appearance.model'
+    end
     return defModel, 'gender_default'
 end
 

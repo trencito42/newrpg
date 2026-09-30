@@ -20,8 +20,8 @@ local WEAPON_LABELS = {
 
 local FREEMODE_MALE = `mp_m_freemode_01`
 local FREEMODE_FEMALE = `mp_f_freemode_01`
-local CIVILIAN_MALE = `a_m_m_bevhills_02`
-local CIVILIAN_FEMALE = `a_f_m_beach_01`
+local CIVILIAN_MALE = `mp_m_freemode_01`
+local CIVILIAN_FEMALE = `mp_f_freemode_01`
 local preDutyModel = nil
 
 local function getChar()
@@ -209,24 +209,24 @@ function ApplyFactionLoadout(factionId, grade, customSkin)
         switchPedModel(customSkin)
         ped = PlayerPedId()
     else
-        local outfit = Sunset.ResolveFactionOutfit and Sunset.ResolveFactionOutfit(loadout, grade, gender)
-        if outfit then
-            local freemodeModel = freemodeModelFor(gender)
-            if GetEntityModel(ped) ~= freemodeModel then
-                switchPedModel(freemodeModel)
-                ped = PlayerPedId()
-                applySavedAppearance(ped, char, gender)
-            end
-            if exports.sunset_appearance and exports.sunset_appearance.ApplyFactionOutfit then
-                exports.sunset_appearance:ApplyFactionOutfit(ped, outfit, gender, char.appearance)
-            else
-                applyOutfitComponents(ped, outfit)
-            end
-        elseif Sunset.ResolveFactionSkin then
-            local targetSkin = Sunset.ResolveFactionSkin(factionId, grade, gender)
-            if targetSkin then
-                switchPedModel(targetSkin)
-                ped = PlayerPedId()
+        local targetSkin = Sunset.ResolveFactionSkin and Sunset.ResolveFactionSkin(factionId, grade, gender)
+        if targetSkin then
+            switchPedModel(targetSkin)
+            ped = PlayerPedId()
+        else
+            local outfit = Sunset.ResolveFactionOutfit and Sunset.ResolveFactionOutfit(loadout, grade, gender)
+            if outfit then
+                local freemodeModel = freemodeModelFor(gender)
+                if GetEntityModel(ped) ~= freemodeModel then
+                    switchPedModel(freemodeModel)
+                    ped = PlayerPedId()
+                    applySavedAppearance(ped, char, gender)
+                end
+                if exports.sunset_appearance and exports.sunset_appearance.ApplyFactionOutfit then
+                    exports.sunset_appearance:ApplyFactionOutfit(ped, outfit, gender, char.appearance)
+                else
+                    applyOutfitComponents(ped, outfit)
+                end
             end
         end
     end
@@ -277,15 +277,18 @@ function ClearFactionLoadout()
     SetPedArmour(ped, 0)
 
     local gender = (char and char.gender) or 0
-    local targetModel = preDutyModel or civilianModelFor(gender)
+    local meta = (char and char.metadata) or {}
+    local savedSkin = meta.skin
+    local targetModel = preDutyModel or (savedSkin and savedSkin ~= '' and savedSkin ~= 'default' and savedSkin) or freemodeModelFor(gender)
     preDutyModel = nil
 
-    if GetEntityModel(ped) ~= targetModel then
+    if GetEntityModel(ped) ~= (type(targetModel) == 'number' and targetModel or joaat(targetModel)) then
         switchPedModel(targetModel)
         ped = PlayerPedId()
     end
 
-    if targetModel == FREEMODE_MALE or targetModel == FREEMODE_FEMALE then
+    local currentModel = GetEntityModel(ped)
+    if currentModel == FREEMODE_MALE or currentModel == FREEMODE_FEMALE then
         local snap = civilianSnapshot
         civilianSnapshot = nil
         applySavedAppearance(ped, char, gender)

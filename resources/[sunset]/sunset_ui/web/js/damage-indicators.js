@@ -10,7 +10,7 @@ const DamageIndicators = {
     dmgContainer: null,
     markers: {},
     flashTimeout: null,
-    active: false,
+    active: true,
 
     init() {
         this.root = document.getElementById('damage-indicators');
@@ -22,17 +22,21 @@ const DamageIndicators = {
             bottom: document.getElementById('dmg-marker-bottom'),
             left: document.getElementById('dmg-marker-left'),
         };
+        this.active = true;
     },
 
     setActive(active) {
-        this.active = active === true;
+        this.active = active !== false;
         if (!this.root) this.init();
         this.root?.classList.toggle('hidden', !this.active);
     },
 
     takeDamage(amount, type = 'health', direction = null) {
-        if (!this.active || !amount || amount < 1) return;
-        if (!this.root) this.init();
+        if (!amount || amount < 1) return;
+        if (!this.root || !this.dmgContainer) this.init();
+        if (!this.root) return;
+        this.active = true;
+        this.root.classList.remove('hidden');
 
         const dmgEl = document.createElement('div');
         const safeType = ['health', 'armor', 'crit'].includes(type) ? type : 'health';

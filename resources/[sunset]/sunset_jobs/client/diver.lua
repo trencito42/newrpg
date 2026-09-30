@@ -357,7 +357,7 @@ CreateThread(function()
                     local cancelled   = false
                     local startPos    = GetEntityCoords(PlayerPedId())
 
-                    exports.sunset_ui:Send('progressBarShow', {
+                    exports.sunset_ui:Send('progressBar', {
                         label    = 'Recovering salvage...',
                         duration = holdMs,
                     })
@@ -373,7 +373,7 @@ CreateThread(function()
                         end
                     end
 
-                    exports.sunset_ui:Send('progressBarHide', {})
+                    exports.sunset_ui:Send('cancelProgressBar', {})
 
                     if cancelled then
                         exports.sunset_ui:Notify('Salvage cancelled — you moved away.', 'error', 3000)

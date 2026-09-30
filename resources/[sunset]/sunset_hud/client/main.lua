@@ -478,10 +478,12 @@ local function formatSampName(serverId, fallbackName)
     elseif st and type(st.sunsetName) == 'string' and st.sunsetName ~= '' then
         label = st.sunsetName
     end
-    -- Clean up spaces to underscores for authentic SA:MP style (e.g. Andrew_Evans)
+    -- Clean up existing (ID) suffixes and trim
+    label = label:gsub('%s*%(%d+%)%s*$', ''):gsub('%s+$', '')
+    -- Clean up internal spaces to underscores for authentic SA:MP style (e.g. Andrew_Evans)
     label = label:gsub('%s+', '_')
-    if sid > 0 and not label:match('%(%d+%)%s*$') then
-        label = ('%s(%d)'):format(label, sid)
+    if sid > 0 then
+        label = ('%s (%d)'):format(label, sid)
     end
     return label
 end
@@ -512,6 +514,11 @@ local function drawText2D(text, x, y, scale, r, g, b, a, font, center, outline)
     AddTextComponentSubstringPlayerName(text)
     EndTextCommandDisplayText(x, y)
 end
+
+-- Preload star textures dictionary
+CreateThread(function()
+    RequestStreamedTextureDict('mpleaderboard', true)
+end)
 
 -- SA:MP Style 3D Overhead Nametags & Health/Armour Bars
 local NAMETAG_DISTANCE = 24.0
@@ -572,11 +579,12 @@ CreateThread(function()
                         local inVeh = IsPedInAnyVehicle(ped, false)
                         local headBone = GetPedBoneCoords(ped, 31086, 0.0, 0.0, 0.0)
                         local tagZ = (headBone and headBone.z > 0.0) and headBone.z or pedCoords.z
-                        local tagPos = vector3(pedCoords.x, pedCoords.y, tagZ + (inVeh and 0.46 or 0.34))
+                        local tagPos = vector3(pedCoords.x, pedCoords.y, tagZ + (inVeh and 0.52 or 0.38))
 
                         local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(tagPos.x, tagPos.y, tagPos.z)
                         if onScreen then
                             local scale = math.max(0.24, math.min(0.36, 0.33 * (1.0 - (dist / NAMETAG_DISTANCE) * 0.28)))
+                            local scaleFactor = scale / 0.32
                             local fade = math.max(0.0, math.min(1.0, (NAMETAG_DISTANCE - dist) / 4.0))
                             local alpha = math.floor(255 * fade)
 
@@ -590,24 +598,45 @@ CreateThread(function()
                                 local hasArmour = armour > 0
                                 local armourPct = math.max(0.0, math.min(1.0, armour / 100.0))
 
-                                local barWidth = 0.038 * (scale / 0.32)
-                                local barHeight = 0.0048 * (scale / 0.32)
+                                local barWidth = 0.040 * scaleFactor
+                                local barHeight = 0.0050 * scaleFactor
                                 local border = 0.0009
+                                local hasWanted = (info.wanted and info.wanted > 0)
 
-                                -- 1. Wanted indicator (visible to Police / Sheriff / FIB on duty)
-                                if info.wanted and info.wanted > 0 then
-                                    local wantedY = screenY - (hasArmour and 0.046 or 0.034)
-                                    drawText2D(('★ WANTED [★%d]'):format(info.wanted), screenX, wantedY, scale * 0.82, 255, 215, 0, alpha, 0, true, true)
+                                -- 1. Wanted indicator (5 HUD-matching star sprites, visible to Police on duty)
+                                if hasWanted then
+                                    if not HasStreamedTextureDictLoaded('mpleaderboard') then
+                                        RequestStreamedTextureDict('mpleaderboard', true)
+                                    else
+                                        local screenAspect = GetAspectRatio(false)
+                                        local starH = 0.015 * scaleFactor
+                                        local starW = starH / (screenAspect > 0.0 and screenAspect or 1.777)
+                                        local starSpacing = 0.0105 * scaleFactor
+                                        local totalW = 4 * starSpacing
+                                        local startX = screenX - (totalW / 2.0)
+                                        local starsY = screenY - 0.046 * scaleFactor
+
+                                        for i = 1, 5 do
+                                            local sX = startX + (i - 1) * starSpacing
+                                            if i <= info.wanted then
+                                                -- Active wanted star (vibrant crimson #ff3366 like HUD)
+                                                DrawSprite('mpleaderboard', 'leaderboard_star_icon', sX, starsY, starW, starH, 0.0, 255, 51, 102, alpha)
+                                            else
+                                                -- Inactive placeholder star
+                                                DrawSprite('mpleaderboard', 'leaderboard_star_icon', sX, starsY, starW, starH, 0.0, 35, 35, 35, math.floor(alpha * 0.45))
+                                            end
+                                        end
+                                    end
                                 end
 
-                                -- 2. Player Name & Server ID (with faction color)
-                                local nameY = screenY - (hasArmour and 0.024 or 0.016)
+                                -- 2. Player Name & Server ID (with faction color, aerated spacing)
+                                local nameY = screenY - (hasWanted and 0.024 or 0.018) * scaleFactor
                                 local col = info.color or FACTION_COLORS.civilian
                                 drawText2D(info.name, screenX, nameY, scale, col.r, col.g, col.b, alpha, 0, true, true)
 
                                 -- 3. Armour Bar (if player has armour)
                                 if hasArmour then
-                                    local armourY = screenY + 0.002
+                                    local armourY = screenY + 0.004 * scaleFactor
                                     -- Background
                                     DrawRect(screenX, armourY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
                                     -- Fill (Silver/White SA:MP style)
@@ -616,8 +645,8 @@ CreateThread(function()
                                     DrawRect(aFillX, armourY, aFillW, barHeight, 220, 225, 235, alpha)
                                 end
 
-                                -- 4. Health Bar (Red SA:MP style)
-                                local hpY = screenY + (hasArmour and 0.009 or 0.002)
+                                -- 4. Health Bar (Red SA:MP style, aerated whether armour exists or not)
+                                local hpY = screenY + (hasArmour and 0.014 or 0.006) * scaleFactor
                                 -- Background
                                 DrawRect(screenX, hpY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
                                 -- Fill (Classic Red HP)

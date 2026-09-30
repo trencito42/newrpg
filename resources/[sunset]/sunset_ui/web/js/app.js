@@ -133,6 +133,8 @@
         radarAlertShow: 'radar',
         radarAlertHide: 'radar',
         damageTaken: 'damage_indicators',
+        progressBarShow: null,
+        progressBarHide: null,
 
         // Inventory & Hotbar
         inventoryShow: 'inventory',
@@ -572,9 +574,9 @@
             post('gameplayVisible', { now: Date.now() });
             if (window.ModuleLoader) {
                 await this.idle();
-                ModuleLoader.preload('radar');
+                ModuleLoader.ensure('radar');
                 await this.nextFrame();
-                ModuleLoader.preload('damage_indicators');
+                ModuleLoader.ensure('damage_indicators');
             }
         },
 
@@ -711,6 +713,9 @@
             if (action === 'radarAlertShow') { window.RadarAlert?.show?.(payload); return; }
             if (action === 'radarAlertHide') { window.RadarAlert?.hide?.(); return; }
             if (action === 'damageTaken') {
+                if (window.ModuleLoader && !ModuleLoader.isLoaded('damage_indicators')) {
+                    await ModuleLoader.ensure('damage_indicators');
+                }
                 window.DamageIndicators?.setActive?.(true);
                 window.DamageIndicators?.takeDamage?.(payload.amount, payload.type, payload.direction);
                 return;
