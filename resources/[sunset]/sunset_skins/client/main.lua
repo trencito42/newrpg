@@ -4,8 +4,10 @@ local shopNPC  = nil
 -- Apply a GTA ped model to the local player (RUNTIME changes only — NOT during spawn)
 local function applyModel(model)
     local hash
-    if not model or model == '' or model == 'default' or model == 'reset' then
-        local gender = (Sunset and Sunset.Character and Sunset.Character.gender)
+    local isReset = not model or model == '' or model == 'default' or model == 'reset'
+    local char = exports.sunset_core:GetCharacter()
+    local gender = (char and tonumber(char.gender)) or (Sunset and Sunset.Character and tonumber(Sunset.Character.gender)) or 0
+    if isReset then
         local isFemale = gender == 1 or gender == '1' or gender == 'female'
         hash = joaat(isFemale and 'mp_f_freemode_01' or 'mp_m_freemode_01')
     else
@@ -31,6 +33,12 @@ local function applyModel(model)
     SetPlayerModel(PlayerId(), hash)
     SetPedDefaultComponentVariation(PlayerPedId())
     SetModelAsNoLongerNeeded(hash)
+
+    if isReset or hash == `mp_m_freemode_01` or hash == `mp_f_freemode_01` then
+        if char and char.appearance and GetResourceState('sunset_appearance') == 'started' then
+            exports.sunset_appearance:ApplyAppearance(PlayerPedId(), char.appearance, gender)
+        end
+    end
 end
 
 -- Open the skin shop via sunset_ui

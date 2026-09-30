@@ -308,7 +308,11 @@ local function spawnPlayer(char, spawnPosition)
 
     if model == `mp_m_freemode_01` or model == `mp_f_freemode_01` then
         local app = char.appearance
-        if not app or not next(app) then
+        if type(app) == 'string' then
+            local ok, dec = pcall(json.decode, app)
+            app = ok and dec or {}
+        end
+        if not app or type(app) ~= 'table' or not next(app) then
             if GetResourceState('sunset_appearance') == 'started' then
                 app = exports.sunset_appearance:GetDefaultAppearance(char.gender or 0)
             end

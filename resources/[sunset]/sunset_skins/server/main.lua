@@ -96,7 +96,9 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     local char   = getCharacter(source)
     if not player or not char then return nil, 'Not authenticated' end
 
-    if model and model ~= '' then
+    local isReset = not model or model == '' or model == 'default' or model == 'reset'
+
+    if not isReset then
         local existing = MySQL.query.await(
             'SELECT id FROM player_skins WHERE player_id = ? AND model = ?',
             { player.id, model }
@@ -105,11 +107,16 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     end
 
     local meta = char.metadata or {}
-    meta.skin = (model ~= nil and model ~= '' and model ~= 'default' and model ~= 'reset') and model or nil
+    if type(meta) == 'string' then
+        local ok, dec = pcall(json.decode, meta)
+        meta = ok and dec or {}
+    end
+    meta.skin = (not isReset) and model or nil
     char.metadata = meta
     MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), char.id })
 
-    TriggerClientEvent('sunset:skins:applyModel', source, meta.skin or '')
+    TriggerClientEvent('sunset:client:updateCharacter', source, char)
+    TriggerClientEvent('sunset:skins:applyModel', source, meta.skin or 'default')
     return { success = true }
 end)
 
