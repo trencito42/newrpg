@@ -2,6 +2,10 @@ local CHAT_RANGE = 22.0
 local CHAT_COOLDOWN_MS = 350
 local ChatRateLimits = {}
 
+local function t(source, key, params)
+    return exports.sunset_core:TFor(source, key, params)
+end
+
 local function checkChatRateLimit(source, key, cooldownMs)
     local now = GetGameTimer()
     local bucket = ChatRateLimits[source] or {}
@@ -118,7 +122,10 @@ local function checkMute(source)
             return exports.sunset_admin:IsMuted(source)
         end)
         if ok and isMuted then
-            TriggerClientEvent('sunset:chat:system', source, ('You are muted for %d more minute(s). Reason: %s'):format(remainingMin or 1, reason or 'Admin sanction'), 'error')
+            TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.muted_remaining', {
+                minutes = remainingMin or 1,
+                reason = reason or t(source, 'chat.default_mute_reason'),
+            }), 'error')
             return true
         end
     end
@@ -134,11 +141,11 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
     if channel == 'staff' then
         local ok, isStaff = pcall(function() return exports.sunset_admin:IsStaff(src) end)
         if not ok or isStaff ~= true then
-            TriggerClientEvent('sunset:chat:system', src, 'Staff chat is for staff members only.', 'error')
+            TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.staff_only'), 'error')
             return
         end
         if not checkChatRateLimit(src, 'say', CHAT_COOLDOWN_MS) then
-            TriggerClientEvent('sunset:chat:system', src, 'Slow down — message rate limited.', 'warning')
+            TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.rate_limited'), 'warning')
             return
         end
         message = cleanChatText(message, 256)
@@ -146,8 +153,6 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
         local identity = chatIdentity(src)
         local aLvl = exports.sunset_admin:GetAdminLevel(src) or 0
         local hLvl = exports.sunset_admin:GetHelperLevel(src) or 0
-        local roleStr = aLvl > 0 and ('Admin Lvl %d'):format(aLvl) or ('Helper Lvl %d'):format(hLvl)
-
         for _, id in ipairs(GetPlayers()) do
             local pid = tonumber(id)
             if pid and exports.sunset_admin:IsStaff(pid) then
@@ -157,7 +162,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
                     message = message,
                     time = os.date('%H:%M:%S'),
                     type = 'staff_chat',
-                    staffRole = roleStr,
+                    staffRole = aLvl > 0 and t(pid, 'chat.role.admin', { level = aLvl }) or t(pid, 'chat.role.helper', { level = hLvl }),
                 })
             end
         end
@@ -167,7 +172,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
     local isOoc = channel == 'ooc'
     local rateKey = isOoc and 'ooc' or 'say'
     if not checkChatRateLimit(src, rateKey, CHAT_COOLDOWN_MS) then
-        TriggerClientEvent('sunset:chat:system', src, 'Slow down — message rate limited.', 'warning')
+        TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.rate_limited'), 'warning')
         return
     end
     message = cleanChatText(message, 256)
@@ -220,7 +225,7 @@ RegisterCommand('a', function(source, args)
     end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then
-        TriggerClientEvent('sunset:chat:system', source, 'Usage: /a [message]', 'warning')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.usage.admin'), 'warning')
         return
     end
     local identity = chatIdentity(source)
@@ -246,19 +251,17 @@ RegisterCommand('e', function(source, args)
     if source == 0 then return end
     local ok, isStaff = pcall(function() return exports.sunset_admin:IsStaff(source) end)
     if not ok or isStaff ~= true then
-        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff (admins and helpers).', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'staff_only'), 'error')
         return
     end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then
-        TriggerClientEvent('sunset:chat:system', source, 'Usage: /e [message]', 'warning')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.usage.staff'), 'warning')
         return
     end
     local identity = chatIdentity(source)
     local aLvl = exports.sunset_admin:GetAdminLevel(source) or 0
     local hLvl = exports.sunset_admin:GetHelperLevel(source) or 0
-    local roleStr = aLvl > 0 and ('Admin Lvl %d'):format(aLvl) or ('Helper Lvl %d'):format(hLvl)
-
     for _, id in ipairs(GetPlayers()) do
         local pid = tonumber(id)
         if pid and exports.sunset_admin:IsStaff(pid) then
@@ -268,7 +271,7 @@ RegisterCommand('e', function(source, args)
                 message = msg,
                 time = os.date('%H:%M:%S'),
                 type = 'staff_chat',
-                staffRole = roleStr,
+                staffRole = aLvl > 0 and t(pid, 'chat.role.admin', { level = aLvl }) or t(pid, 'chat.role.helper', { level = hLvl }),
             })
         end
     end
@@ -288,19 +291,20 @@ RegisterCommand('lc', function(source, args)
         end
     end)
     if not isLeader and not isAdmin then
-        TriggerClientEvent('sunset:chat:system', source, 'You do not have access to the leaders chat (/lc).', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.leader_denied'), 'error')
         return
     end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then
-        TriggerClientEvent('sunset:chat:system', source, 'Usage: /lc [message]', 'warning')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.usage.leader'), 'warning')
         return
     end
     local identity = chatIdentity(source)
-    local title = 'Leader'
+    local titleLevel = nil
+    local title = nil
     if isAdmin then
         local aLvl = exports.sunset_admin:GetAdminLevel(source) or 0
-        title = ('Admin Lvl %d'):format(aLvl)
+        titleLevel = aLvl
     else
         local char = exports.sunset_core:GetCharacter(source)
         local fId = select(1, Sunset.GetCharacterFaction(char))
@@ -317,13 +321,15 @@ RegisterCommand('lc', function(source, args)
             elseif exports.sunset_factions:IsFactionLeader(pid) then canSee = true end
         end)
         if canSee then
+            local recipientTitle = titleLevel and t(pid, 'chat.role.admin', { level = titleLevel })
+                or title or t(pid, 'chat.role.leader')
             TriggerClientEvent('sunset:chat:message', pid, {
                 id = source,
                 name = identity.name,
                 message = msg,
                 time = os.date('%H:%M:%S'),
                 type = 'leader_chat',
-                leaderTitle = title,
+                leaderTitle = recipientTitle,
             })
         end
     end
@@ -466,18 +472,13 @@ function RunServerCommand(source, name, args)
 end
 exports('RunServerCommand', RunServerCommand)
 
-local BASE_CHAT_CHANNELS = {
-    { id = 'all', label = 'LOCAL', placeholder = 'Local message — nearby players hear you' },
-    { id = 'ooc', label = 'OOC', placeholder = 'Out of Character — global (( message ))' },
-    { id = 'me', label = 'ME', placeholder = 'RP action (/me searches the trunk...)' },
-    { id = 'do', label = 'DO', placeholder = 'RP action (/do the trunk opens)' },
-}
-
 local function buildChatChannels(source)
-    local channels = {}
-    for _, row in ipairs(BASE_CHAT_CHANNELS) do
-        channels[#channels + 1] = row
-    end
+    local channels = {
+        { id = 'all', label = t(source, 'chat.channel.local'), placeholder = t(source, 'chat.channel.local_hint') },
+        { id = 'ooc', label = 'OOC', placeholder = t(source, 'chat.channel.ooc_hint') },
+        { id = 'me', label = 'ME', placeholder = t(source, 'chat.channel.me_hint') },
+        { id = 'do', label = 'DO', placeholder = t(source, 'chat.channel.do_hint') },
+    }
 
     local char = exports.sunset_core:GetCharacter(source)
     local factionId = select(1, Sunset.GetCharacterFaction(char))
@@ -487,19 +488,19 @@ local function buildChatChannels(source)
         if Sunset.IsEmergencyDepartment(factionId) then
             channels[#channels + 1] = {
                 id = 'radio',
-                label = 'RADIO',
-                placeholder = ('%s radio — your department only'):format(label),
+                label = t(source, 'chat.channel.radio'),
+                placeholder = t(source, 'chat.channel.radio_hint', { faction = label }),
             }
             channels[#channels + 1] = {
                 id = 'dept',
-                label = 'DEPT',
-                placeholder = 'Inter-agency radio (LSPD, Sheriff, FIB, EMS, LSFD)',
+                label = t(source, 'chat.channel.department'),
+                placeholder = t(source, 'chat.channel.department_hint'),
             }
         else
             channels[#channels + 1] = {
                 id = 'faction',
                 label = string.upper(label),
-                placeholder = ('%s faction chat'):format(label),
+                placeholder = t(source, 'chat.channel.faction_hint', { faction = label }),
             }
         end
     end
@@ -512,7 +513,7 @@ local function buildChatChannels(source)
             channels[#channels + 1] = {
                 id = 'clan',
                 label = string.upper(meta.clanTag),
-                placeholder = ('%s clan chat'):format(meta.clanTag),
+                placeholder = t(source, 'chat.channel.clan_hint', { clan = meta.clanTag }),
             }
         end
     end
@@ -523,8 +524,8 @@ local function buildChatChannels(source)
         if ok and isAdmin == true then
             channels[#channels + 1] = {
                 id = 'staff',
-                label = 'STAFF',
-                placeholder = 'Staff chat — visible to all online staff only',
+                label = t(source, 'chat.channel.staff'),
+                placeholder = t(source, 'chat.channel.staff_hint'),
             }
         end
     end
@@ -550,6 +551,9 @@ RegisterCommand('cc', function(source, args)
         end
     end
     TriggerClientEvent('sunset:chat:clear', -1)
-    local name = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
-    TriggerClientEvent('sunset:chat:system', -1, ('Chat has been cleared by %s.'):format(name), 'info')
+    for _, id in ipairs(GetPlayers()) do
+        local recipient = tonumber(id)
+        local name = source == 0 and t(recipient, 'chat.server') or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
+        TriggerClientEvent('sunset:chat:system', recipient, t(recipient, 'chat.cleared', { name = name }), 'info')
+    end
 end, false)

@@ -5,7 +5,7 @@
                     <div class="voice-icon" id="hud-voice-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                     </div>
-                    <div class="voice-range" id="hud-voice-range" title="Voice range">Normal · 3.0m</div>
+                    <div class="voice-range" id="hud-voice-range" title="" data-i18n-title="ui.hud.voice_range"><span data-i18n="ui.hud.normal_3_0m"></span></div>
                 </div>
                 <div class="premium-unskew time-date-container">
                     <div class="time-display" id="hud-time">00:00</div>
@@ -28,7 +28,7 @@
                         </div>
                         <div class="vital-bar-bg"><div class="vital-bar-fill fill-health" id="hud-health" style="width: 100%;"></div></div>
                     </div>
-                    <div class="vital-row vital-row--armor" title="Armor">
+                    <div class="vital-row vital-row--armor" title="" data-i18n-title="ui.hud.armor">
                         <div class="vital-icon" style="color: var(--hud-armor);">
                             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                         </div>
@@ -37,9 +37,9 @@
                 </div>
             </div>
             <div class="premium-unskew hud-wanted-premium" id="hud-wanted" aria-live="polite">
-                <div class="wanted-title">WANTED LEVEL</div>
+                <div class="wanted-title"><span data-i18n="ui.hud.wanted_level"></span></div>
                 <div class="wanted-row">
-                    <div class="wanted-stars" id="hud-wanted-stars" aria-label="Wanted level">
+                    <div class="wanted-stars" id="hud-wanted-stars" aria-label="" data-i18n-aria="ui.hud.wanted_level_2dbaa9">
                         <svg class="wanted-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         <svg class="wanted-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         <svg class="wanted-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -65,13 +65,13 @@
             </div>
             <div class="premium-unskew location-panel">
                 <div class="location-line">
-                    <span class="location-compass" id="hud-heading" aria-label="Compass heading">N</span>
+                    <span class="location-compass" id="hud-heading" aria-label="" data-i18n-aria="ui.hud.compass_heading"><span data-i18n="ui.hud.n"></span></span>
                     <span class="location-sep" aria-hidden="true"></span>
                     <span class="loc-street" id="hud-street">—</span>
                 </div>
                 <div class="loc-zone" id="hud-zone">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span id="hud-zone-text">LOS SANTOS</span>
+                    <span id="hud-zone-text"><span data-i18n="ui.hud.los_santos"></span></span>
                 </div>
             </div>
         </div>
@@ -81,7 +81,7 @@
                 <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path></svg>
             </div>
             <div class="hud-waypoint-body">
-                <span class="hud-waypoint-label">WAYPOINT</span>
+                <span class="hud-waypoint-label"><span data-i18n="ui.hud.waypoint"></span></span>
                 <span class="hud-waypoint-distance" id="hud-waypoint-distance">—</span>
             </div>
         </div>
@@ -93,20 +93,20 @@
 
         <div class="hud-bottom-right hud-boot hud-boot--speed hidden" id="hud-speedo" data-hud-panel="speedo">
             <div class="speedo-panel speedo-panel--forza">
-                <canvas id="forza-speedo-canvas" class="forza-speedo-canvas" width="450" height="450" aria-label="Vehicle speedometer"></canvas>
+                <canvas id="forza-speedo-canvas" class="forza-speedo-canvas" width="450" height="450" aria-label="" data-i18n-aria="ui.hud.vehicle_speedometer"></canvas>
             </div>
         </div>
 
         <div id="veh-hints" class="veh-hints" data-hud-panel="veh-hints" aria-hidden="true">
-            <div class="veh-hints__row" data-hint="engine"><span class="veh-hints__label">ENGINE OFF</span><span class="veh-hints__key">2</span></div>
-            <div class="veh-hints__row" data-hint="lock"><span class="veh-hints__label">UNLOCKED</span><span class="veh-hints__key">U</span></div>
-            <div class="veh-hints__row" data-hint="seatbelt"><span class="veh-hints__label">SEATBELT OFF</span><span class="veh-hints__key">K</span></div>
-            <div class="veh-hints__row" data-hint="lights"><span class="veh-hints__label">LIGHTS OFF</span><span class="veh-hints__key">H</span></div>
+            <div class="veh-hints__row" data-hint="engine"><span class="veh-hints__label"><span data-i18n="ui.hud.engine_off"></span></span><span class="veh-hints__key">2</span></div>
+            <div class="veh-hints__row" data-hint="lock"><span class="veh-hints__label"><span data-i18n="ui.hud.unlocked"></span></span><span class="veh-hints__key"><span data-i18n="ui.hud.u"></span></span></div>
+            <div class="veh-hints__row" data-hint="seatbelt"><span class="veh-hints__label"><span data-i18n="ui.hud.seatbelt_off"></span></span><span class="veh-hints__key"><span data-i18n="ui.hud.k"></span></span></div>
+            <div class="veh-hints__row" data-hint="lights"><span class="veh-hints__label"><span data-i18n="ui.hud.lights_off"></span></span><span class="veh-hints__key"><span data-i18n="ui.hud.h"></span></span></div>
         </div>
 
         <div class="hud-editor-bar hidden" id="hud-editor-bar">
-            <span id="hud-editor-label">HUD Editor — click a panel</span>
-            <span class="hud-editor-hint">Arrows = move · Shift = fast · Enter = save · Backspace = reset · Esc = close</span>
+            <span id="hud-editor-label"><span data-i18n="ui.hud.hud_editor_click_a_panel"></span></span>
+            <span class="hud-editor-hint"><span data-i18n="ui.hud.arrows_move_shift_fast_enter_save_backspace_reset_esc"></span></span>
         </div>
     </div>
 
@@ -114,58 +114,58 @@
          cannot arrive before their DOM exists. -->
     <div id="server-announce" class="server-announce hidden" aria-live="assertive">
         <div class="server-announce__inner"><div class="server-announce__stripe"></div><div class="server-announce__content">
-            <span class="server-announce__badge" id="server-announce-badge">ANNOUNCEMENT</span>
+            <span class="server-announce__badge" id="server-announce-badge"><span data-i18n="ui.hud.announcement"></span></span>
             <p class="server-announce__msg" id="server-announce-msg"></p><span class="server-announce__meta" id="server-announce-meta"></span>
         </div></div>
     </div>
     <div id="police-order" class="police-order hidden" aria-live="assertive">
         <div class="police-order__inner"><div class="police-order__stripe"></div><div class="police-order__content">
-            <span class="police-order__badge">POLICE ORDER</span><p class="police-order__msg" id="police-order-msg"></p><span class="police-order__meta" id="police-order-meta"></span>
+            <span class="police-order__badge"><span data-i18n="ui.hud.police_order"></span></span><p class="police-order__msg" id="police-order-msg"></p><span class="police-order__meta" id="police-order-meta"></span>
         </div></div>
     </div>
     <div id="taxi-meter" class="taxi-meter hidden" data-hud-panel="taxi-meter">
-        <div class="taxi-meter__head"><span class="taxi-meter__label">TAXI METER</span><span class="taxi-meter__status" id="taxi-meter-status">IDLE</span></div>
+        <div class="taxi-meter__head"><span class="taxi-meter__label"><span data-i18n="ui.hud.taxi_meter"></span></span><span class="taxi-meter__status" id="taxi-meter-status"><span data-i18n="ui.hud.idle"></span></span></div>
         <div class="taxi-meter__fare" id="taxi-meter-fare">$0</div>
-        <div class="taxi-meter__row"><span>Distance</span><strong id="taxi-meter-dist">0.0 km</strong></div>
-        <div class="taxi-meter__row"><span>Time</span><strong id="taxi-meter-time">00:00</strong></div>
+        <div class="taxi-meter__row"><span><span data-i18n="ui.hud.distance"></span></span><strong id="taxi-meter-dist"><span data-i18n="ui.hud.0_0_km"></span></strong></div>
+        <div class="taxi-meter__row"><span><span data-i18n="ui.hud.time"></span></span><strong id="taxi-meter-time">00:00</strong></div>
     </div>
     <div id="world-tooltip-layer" aria-hidden="true"></div>
 
     <div id="fuel-pump" class="fuel-pump-forza hidden" aria-hidden="true" aria-live="polite">
-        <div class="fp-info-panel"><div><div class="fp-label" id="fp-station-label">Gas Station</div><div class="fp-type" id="fp-pump-label"></div><div class="fp-car" id="fp-vehicle-name">Vehicle</div></div>
-            <div class="fp-type"><i class="ph-fill ph-drop"></i><span id="fp-fuel-type">Premium Gasoline 99</span></div>
-            <div class="fp-type"><i class="ph-fill ph-wallet"></i><span id="fp-price-line">$0 / Liter</span></div>
-            <div class="fp-type fp-owner-line"><i class="ph-fill ph-user-circle"></i><span id="fp-owner-name">Owner: State</span></div>
+        <div class="fp-info-panel"><div><div class="fp-label" id="fp-station-label"><span data-i18n="ui.hud.gas_station"></span></div><div class="fp-type" id="fp-pump-label"></div><div class="fp-car" id="fp-vehicle-name"><span data-i18n="common.vehicle"></span></div></div>
+            <div class="fp-type"><i class="ph-fill ph-drop"></i><span id="fp-fuel-type"><span data-i18n="ui.hud.premium_gasoline_99"></span></span></div>
+            <div class="fp-type"><i class="ph-fill ph-wallet"></i><span id="fp-price-line"><span data-i18n="ui.hud.0_liter"></span></span></div>
+            <div class="fp-type fp-owner-line"><i class="ph-fill ph-user-circle"></i><span id="fp-owner-name"><span data-i18n="ui.hud.owner_state"></span></span></div>
         </div>
-        <div class="fp-counter-panel"><div class="fp-counter-group"><div class="fp-cg-label">Pump Volume</div><div class="fp-cg-value"><span id="fp-val-liters">00.00</span> <span class="fp-cg-unit">L</span></div></div>
-            <div class="fp-counter-group"><div class="fp-cg-label">Total Due</div><div class="fp-cg-value total">$ <span id="fp-val-price">00.00</span></div></div>
+        <div class="fp-counter-panel"><div class="fp-counter-group"><div class="fp-cg-label"><span data-i18n="ui.hud.pump_volume"></span></div><div class="fp-cg-value"><span id="fp-val-liters">00.00</span> <span class="fp-cg-unit"><span data-i18n="ui.hud.l"></span></span></div></div>
+            <div class="fp-counter-group"><div class="fp-cg-label"><span data-i18n="ui.hud.total_due"></span></div><div class="fp-cg-value total">$ <span id="fp-val-price">00.00</span></div></div>
         </div>
         <div class="fp-action-panel"><div class="fp-tank-gauge"><div class="fp-tank-fill" id="fp-tank-fill"></div></div><div class="fp-pump-action">
             <div class="fp-tank-pct"><span id="fp-tank-pct">0%</span><i class="ph-fill ph-gas-pump" id="fp-tank-icon"></i></div>
-            <button type="button" class="fp-btn-pump" id="fp-btn-pump" disabled><span class="fp-key-hint">SPACE</span> Press Pump</button>
-            <button type="button" class="fp-btn-checkout" id="fp-btn-checkout" disabled><span class="fp-key-hint">ENTER</span> Pay &amp; Close</button>
+            <button type="button" class="fp-btn-pump" id="fp-btn-pump" disabled><span class="fp-key-hint"><span data-i18n="ui.hud.space"></span></span> <span data-i18n="ui.hud.press_pump"></span></button>
+            <button type="button" class="fp-btn-checkout" id="fp-btn-checkout" disabled><span class="fp-key-hint"><span data-i18n="ui.hud.enter"></span></span> <span data-i18n="ui.hud.pay_close"></span></button>
         </div></div>
     </div>
 
     <div id="fishing-panel" class="fishing-shell hidden state-idle" aria-live="polite">
         <svg class="fishing-frame" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="fishing-frame__path" vector-effect="non-scaling-stroke" d="M5 .5 L99.5 .5 L99.5 95 L95 99.5 L.5 99.5 L.5 5 Z" /></svg>
         <div class="fishing-panel__body"><div class="fishing__header"><div class="fishing__icon-slot" id="fishing-icon-slot"></div><div class="fishing__title-wrap">
-            <div class="fishing__title" id="fishing-title">Fishing</div><div class="fishing__bag" id="fishing-bag">Bag 0/2</div>
-        </div></div><div class="fishing__message" id="fishing-message">Press <span class="fishing__key">E</span> to cast</div><div class="fishing__progress"><div class="fishing__progress-fill" id="fishing-progress"></div></div></div>
+            <div class="fishing__title" id="fishing-title"><span data-i18n="ui.hud.fishing"></span></div><div class="fishing__bag" id="fishing-bag"><span data-i18n="ui.hud.bag_0_2"></span></div>
+        </div></div><div class="fishing__message" id="fishing-message"><span data-i18n="ui.hud.press"></span> <span class="fishing__key"><span data-i18n="ui.hud.e"></span></span> <span data-i18n="ui.hud.to_cast"></span></div><div class="fishing__progress"><div class="fishing__progress-fill" id="fishing-progress"></div></div></div>
     </div>
 
     <div id="radar-panel" class="radar-shell hidden state-scan" aria-live="polite"><div class="radar-panel__body">
-        <div class="radar__header"><div class="radar__title-wrap"><div class="radar__title" id="radar-title">Mobile Radar</div><div class="radar__meta" id="radar-meta"></div></div></div>
+        <div class="radar__header"><div class="radar__title-wrap"><div class="radar__title" id="radar-title"><span data-i18n="ui.hud.mobile_radar"></span></div><div class="radar__meta" id="radar-meta"></div></div></div>
         <div class="radar__message" id="radar-message"></div><div class="radar__stats">
-            <div class="radar__stat"><span class="radar__stat-label">Speed</span><span class="radar__stat-value" id="radar-speed">000</span></div>
-            <div class="radar__stat"><span class="radar__stat-label">Plate</span><span class="radar__stat-value" id="radar-plate">--------</span></div>
-            <div class="radar__stat"><span class="radar__stat-label">Driver</span><span class="radar__stat-value" id="radar-driver">—</span></div>
+            <div class="radar__stat"><span class="radar__stat-label"><span data-i18n="ui.hud.speed"></span></span><span class="radar__stat-value" id="radar-speed">000</span></div>
+            <div class="radar__stat"><span class="radar__stat-label"><span data-i18n="ui.hud.plate"></span></span><span class="radar__stat-value" id="radar-plate">--------</span></div>
+            <div class="radar__stat"><span class="radar__stat-label"><span data-i18n="ui.hud.driver"></span></span><span class="radar__stat-value" id="radar-driver">—</span></div>
         </div><div class="radar__progress"><div class="radar__progress-fill" id="radar-progress"></div></div><div class="radar__hits hidden" id="radar-hits"></div>
     </div></div>
     <div id="radar-alert-panel" class="radar-alert-shell hidden" aria-live="assertive"><div class="radar-alert__body">
         <div class="radar-alert__header"><div class="radar-alert__title-wrap"><div class="radar-alert__title" id="radar-alert-title"></div><div class="radar-alert__meta" id="radar-alert-meta"></div></div><div class="radar-alert__badge" id="radar-alert-badge"></div></div>
         <div class="radar-alert__message"><span class="radar-alert__speed-hero" id="radar-alert-speed"></span><span class="radar-alert__sub" id="radar-alert-sub"></span></div>
-        <div class="radar-alert__stats"><div class="radar-alert__stat"><span class="radar-alert__stat-label">Speed</span><span class="radar-alert__stat-value" id="radar-alert-stat-speed"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label">Limit</span><span class="radar-alert__stat-value" id="radar-alert-stat-limit"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label">Over</span><span class="radar-alert__stat-value" id="radar-alert-stat-over"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label" id="radar-alert-stat-fine-label">Fine</span><span class="radar-alert__stat-value" id="radar-alert-stat-fine"></span></div></div>
+        <div class="radar-alert__stats"><div class="radar-alert__stat"><span class="radar-alert__stat-label"><span data-i18n="ui.hud.speed"></span></span><span class="radar-alert__stat-value" id="radar-alert-stat-speed"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label"><span data-i18n="ui.hud.limit"></span></span><span class="radar-alert__stat-value" id="radar-alert-stat-limit"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label"><span data-i18n="ui.hud.over"></span></span><span class="radar-alert__stat-value" id="radar-alert-stat-over"></span></div><div class="radar-alert__stat"><span class="radar-alert__stat-label" id="radar-alert-stat-fine-label"><span data-i18n="ui.hud.fine"></span></span><span class="radar-alert__stat-value" id="radar-alert-stat-fine"></span></div></div>
         <div class="radar-alert__progress"><div class="radar-alert__progress-fill" id="radar-alert-progress"></div></div>
     </div></div>
 
@@ -175,35 +175,35 @@
             <div class="ft-hud__top">
                 <div class="ft-hud__brand">
                     <span class="ft-hud__icon">🎣</span>
-                    <span class="ft-hud__title">TOURNAMENT</span>
+                    <span class="ft-hud__title"><span data-i18n="ui.hud.tournament"></span></span>
                 </div>
-                <div class="ft-hud__status-badge" id="ft-hud-status-badge">0/3 QUALIFY</div>
+                <div class="ft-hud__status-badge" id="ft-hud-status-badge"><span data-i18n="ui.hud.0_3_qualify"></span></div>
                 <div class="ft-hud__timer" id="ft-hud-timer">00:00</div>
             </div>
 
             <div class="ft-hud__main">
                 <div class="ft-hud__metric ft-hud__metric--hero">
-                    <div class="ft-hud__rank-tag">RANK</div>
+                    <div class="ft-hud__rank-tag"><span data-i18n="ui.hud.rank"></span></div>
                     <div class="ft-hud__rank-val" id="ft-hud-rank">#--</div>
                 </div>
                 <div class="ft-hud__metric ft-hud__metric--weight">
-                    <div class="ft-hud__metric-lbl">TOTAL CATCH</div>
-                    <div class="ft-hud__metric-val"><span id="ft-hud-weight">0.0</span> <span class="ft-hud__unit">KG</span></div>
+                    <div class="ft-hud__metric-lbl"><span data-i18n="ui.hud.total_catch"></span></div>
+                    <div class="ft-hud__metric-val"><span id="ft-hud-weight">0.0</span> <span class="ft-hud__unit"><span data-i18n="ui.hud.kg"></span></span></div>
                 </div>
             </div>
 
             <div class="ft-hud__stats">
                 <div class="ft-hud__stat">
-                    <span class="ft-hud__stat-lbl">Leader</span>
+                    <span class="ft-hud__stat-lbl"><span data-i18n="ui.hud.leader"></span></span>
                     <span class="ft-hud__stat-val ft-hud__stat-val--leader" id="ft-hud-leader-name">—</span>
-                    <span class="ft-hud__stat-sub" id="ft-hud-leader-weight">0.0 KG</span>
+                    <span class="ft-hud__stat-sub" id="ft-hud-leader-weight"><span data-i18n="ui.hud.0_0_kg"></span></span>
                 </div>
                 <div class="ft-hud__stat">
-                    <span class="ft-hud__stat-lbl">Catches</span>
+                    <span class="ft-hud__stat-lbl"><span data-i18n="ui.hud.catches"></span></span>
                     <span class="ft-hud__stat-val" id="ft-hud-fish-count">0</span>
                 </div>
                 <div class="ft-hud__stat">
-                    <span class="ft-hud__stat-lbl">Biggest</span>
+                    <span class="ft-hud__stat-lbl"><span data-i18n="ui.hud.biggest"></span></span>
                     <span class="ft-hud__stat-val" id="ft-hud-biggest">—</span>
                 </div>
             </div>
@@ -221,9 +221,9 @@
     <div id="fishing-tournament-results" class="ft-results-modal hidden" aria-modal="true" role="dialog">
         <div class="ft-results-card">
             <div class="ft-results-header">
-                <div class="ft-results-badge">OFFICIAL RESULTS</div>
-                <h2 class="ft-results-title" id="ft-results-title">FISHING TOURNAMENT</h2>
-                <p class="ft-results-sub" id="ft-results-subtitle">Event Completed</p>
+                <div class="ft-results-badge"><span data-i18n="ui.hud.official_results"></span></div>
+                <h2 class="ft-results-title" id="ft-results-title"><span data-i18n="ui.hud.fishing_tournament"></span></h2>
+                <p class="ft-results-sub" id="ft-results-subtitle"><span data-i18n="ui.hud.event_completed"></span></p>
             </div>
 
             <div class="ft-podium" id="ft-podium">
@@ -235,7 +235,7 @@
             </div>
 
             <div class="ft-results-footer">
-                <button type="button" class="ft-results-close-btn" id="ft-results-close-btn">CLOSE</button>
+                <button type="button" class="ft-results-close-btn" id="ft-results-close-btn"><span data-i18n="ui.hud.close"></span></button>
             </div>
         </div>
     </div>

@@ -23,6 +23,14 @@ local function uiNotify(msg, kind, dur)
     end
 end
 
+local function tr(key, params)
+    if GetResourceState('sunset_core') == 'started' then
+        local ok, value = pcall(function() return exports.sunset_core:Translate(key, params or {}) end)
+        if ok and type(value) == 'string' then return value end
+    end
+    return ('[?%s]'):format(tostring(key))
+end
+
 local function isEnabled(value)
     if value == true or value == 1 then return true end
     if type(value) == 'string' then
@@ -67,7 +75,7 @@ local function openQuickAuth(username)
     if GetResourceState('sunset_auth_ui') == 'started' then
         local payload = authPayload()
         payload.presentation = 'quick-login'
-        payload.loadingText = 'Signing in...'
+        payload.loadingText = tr('auth.signing_in')
         payload.username = username
         pcall(function() exports.sunset_auth_ui:Show('auth', payload) end)
     end
@@ -119,10 +127,10 @@ local function completeAuthentication(username, quickToken, rememberQuickLogin)
             Wait(0)
         end
     end
-    authUiSend('authSuccess', { text = 'Loading character...' })
+    authUiSend('authSuccess', { text = tr('auth.loading_character') })
     -- Paint the permanent shell transition before the auth surface is removed.
     if GetResourceState('sunset_ui') == 'started' then
-        pcall(function() exports.sunset_ui:ShowTransition('Loading character...') end)
+        pcall(function() exports.sunset_ui:ShowTransition(tr('auth.loading_character')) end)
         local deadline = GetGameTimer() + 2500
         while GetGameTimer() < deadline do
             local ok, visible = pcall(function() return exports.sunset_ui:IsTransitionVisible() end)
@@ -139,7 +147,7 @@ local function completeAuthentication(username, quickToken, rememberQuickLogin)
         pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
     end
     if isEnabled(rememberQuickLogin) and not saved then
-        uiNotify('Login succeeded, but Quick Login could not be saved on this PC.', 'warning', 7000)
+        uiNotify(tr('auth.quick_save_failed'), 'warning', 7000)
     end
     TriggerEvent('sunset:client:authenticationComplete')
 end
@@ -168,7 +176,7 @@ local function performLogin(username, password, rememberQuickLogin)
     if not result then
         setBootState('AUTH_FORM', 'password login failed')
         authUiSend('authError', { message = err })
-        uiNotify(err or 'Login failed', 'error')
+        uiNotify(err or tr('auth.login_failed'), 'error')
         pushAuthAccounts()
         return false
     end
@@ -249,7 +257,13 @@ RegisterNetEvent('sunset:auth:openLogin', openAuth)
 -- (re)push the saved-account list then, because SendNUIMessage issued before
 -- the NUI page is live can be dropped (accounts only appeared after toggling
 -- the quick-login checkbox, which triggered a fresh push).
-AddEventHandler('sunset:nui:authReady', function()
+AddEventHandler('sunset:nui:authReady', function(data)
+    local locale = data and data.locale
+    if locale then
+        CreateThread(function()
+            Sunset.AwaitCallback('sunset:setConnectionLocale', locale)
+        end)
+    end
     if not authenticated then
         pushAuthAccounts()
     end
@@ -257,12 +271,12 @@ end)
 
 RegisterCommand('fixlogin', function()
     if authenticated then
-        uiNotify('You are already logged in.', 'info')
+        uiNotify(tr('auth.already_logged_in'), 'info')
         return
     end
     openAuth()
 end, false)
-TriggerEvent('chat:addSuggestion', '/fixlogin', 'Re-open the login screen if you only see a black screen')
+TriggerEvent('chat:addSuggestion', '/fixlogin', tr('auth.fixlogin_help'))
 
 RegisterNetEvent('sunset:client:playerReady', function()
     authenticated = true
@@ -292,10 +306,10 @@ AddEventHandler('sunset:nui:authRegister', function(data)
     if not result then
         setBootState('AUTH_FORM', 'registration failed')
         authUiSend('authError', { message = err })
-        uiNotify(err or 'Registration failed', 'error')
+        uiNotify(err or tr('auth.registration_failed'), 'error')
         return
     end
-    uiNotify('Account created! Logging in...', 'success')
+    uiNotify(tr('auth.account_created'), 'success')
     handleAuthResult(result, data.username, data.password, remember)
 end)
 
@@ -303,12 +317,12 @@ AddEventHandler('sunset:nui:authSetEmail', function(data)
     local result, err = Sunset.AwaitCallback('sunset:authSetEmail', data and data.email)
     if not result then
         authUiSend('authEmailResult', { ok = false, message = err })
-        uiNotify(err or 'Could not save email', 'error')
+        uiNotify(err or tr('auth.email_save_failed'), 'error')
         return
     end
 
     local pending = pendingAuth or {}
-    uiNotify('Email saved. Welcome back!', 'success')
+    uiNotify(tr('auth.email_saved'), 'success')
     authUiSend('authEmailResult', { ok = true })
     completeAuthentication(
         pending.username or result.username,
@@ -323,7 +337,7 @@ AddEventHandler('sunset:nui:authPickAccount', function(data)
 
     local license = activeLicense()
     if not license then
-        uiNotify('Session not ready — try again in a moment', 'error')
+        uiNotify(tr('auth.session_not_ready'), 'error')
         return
     end
 
@@ -337,7 +351,7 @@ AddEventHandler('sunset:nui:authPickAccount', function(data)
     if type(row.token) == 'string' and row.token ~= '' then
         CreateThread(function()
             setBootState('AUTHENTICATING', 'saved account login request')
-            authUiSend('authLoading', { loading = true, text = 'Signing in...' })
+            authUiSend('authLoading', { loading = true, text = tr('auth.signing_in') })
             local result, err = Sunset.AwaitCallback('sunset:authQuickLogin', row.username, row.token)
             if result and result.needsEmail then
                 promptEmailSync(row.username, nil, true)
@@ -346,7 +360,7 @@ AddEventHandler('sunset:nui:authPickAccount', function(data)
             else
                 SunsetAuthAccounts.remove(license, row.username)
                 setBootState('AUTH_FORM', 'saved token rejected')
-                authUiSend('authError', { message = err or 'Saved login expired. Enter your password again.' })
+                authUiSend('authError', { message = err or tr('auth.saved_expired') })
                 pushAuthAccounts()
             end
         end)

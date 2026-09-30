@@ -63,3 +63,24 @@ AddEventHandler('playerDropped', function()
         broadcastRemove(src)
     end
 end)
+
+-- [AUDIT GLUE-DEATH] Clear glue state on player death so the attachment is not
+-- re-applied on respawn via glueSyncAll.  GTA detaches entities when the ped
+-- enters a ragdoll/wasted state; without this the server still holds a stale
+-- entry and would re-attach the ped after the respawn screen.
+AddEventHandler('sunset:server:playerDied', function()
+    local src = source
+    if glueStates[src] then
+        glueStates[src] = nil
+        broadcastRemove(src)
+    end
+end)
+
+-- Fallback: also clean up when the player respawns (belt-and-suspenders).
+RegisterNetEvent('sunset:server:characterSpawned', function()
+    local src = source
+    if glueStates[src] then
+        glueStates[src] = nil
+        broadcastRemove(src)
+    end
+end)

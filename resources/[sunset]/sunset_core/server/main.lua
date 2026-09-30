@@ -1,4 +1,5 @@
 local Players = {}
+local ConnectionLocales = {}
 local Callbacks = {}
 local Sessions = {}
 local CallbackRate = {}
@@ -33,12 +34,95 @@ Sunset.GetCharacter = function(source)
     return p and p.character or nil
 end
 
+local function normalizeLocale(locale)
+    locale = type(locale) == 'string' and locale:lower() or ''
+    return Sunset.IsValidLocale(locale) and locale or nil
+end
+
+function Sunset.GetPlayerLocale(source)
+    local player = Players[tonumber(source)]
+    return normalizeLocale(player and player.language)
+        or normalizeLocale(ConnectionLocales[tonumber(source)])
+        or (Sunset.Config and Sunset.Config.DefaultLanguage)
+        or 'en'
+end
+
+function Sunset.SetConnectionLocale(source, locale)
+    source = tonumber(source)
+    locale = normalizeLocale(locale)
+    if not source or not locale then return false end
+    ConnectionLocales[source] = locale
+    return true
+end
+
+function Sunset.TFor(source, key, params)
+    return Sunset.Translate(Sunset.GetPlayerLocale(source), key, params)
+end
+
+function Sunset.NotifyFor(source, key, params, notificationType, duration)
+    TriggerClientEvent('sunset:client:notify', source, Sunset.TFor(source, key, params), notificationType or 'info', duration)
+end
+
+function Sunset.BroadcastLocalized(key, params, notificationType, duration)
+    for source in pairs(Players) do
+        Sunset.NotifyFor(source, key, params, notificationType, duration)
+    end
+end
+
+function Sunset.LocalizedError(key, params)
+    return { localeKey = tostring(key), params = type(params) == 'table' and params or {} }
+end
+
+local function resolveLocalizedError(source, err)
+    if type(err) == 'table' and type(err.localeKey) == 'string' then
+        return Sunset.TFor(source, err.localeKey, err.params)
+    end
+    return err
+end
+
+function Sunset.SetPlayerLocale(source, locale)
+    source = tonumber(source)
+    locale = normalizeLocale(locale)
+    local player = source and Players[source]
+    if not source or not player or not locale then return false end
+
+    local changed = MySQL.update.await(
+        'UPDATE accounts SET language = ? WHERE id = ?',
+        { locale, player.account_id }
+    )
+    if changed == nil then return false end
+
+    player.language = locale
+    Player(source).state:set('sunsetLocale', locale, true)
+    TriggerClientEvent('sunset:client:localeChanged', source, locale)
+    TriggerEvent('sunset:server:localeChanged', source, locale)
+    return true
+end
+
 -- ═══ CALLBACKS ═══
 
 function RegisterCallback(name, cb)
     Callbacks[name] = cb
 end
 exports('RegisterCallback', RegisterCallback)
+
+RegisterCallback('sunset:setLocale', function(source, locale)
+    locale = normalizeLocale(locale)
+    if not locale then
+        return nil, Sunset.LocalizedError('locale.invalid')
+    end
+    if not Sunset.SetPlayerLocale(source, locale) then
+        return nil, Sunset.LocalizedError('locale.save_failed')
+    end
+    return { locale = locale }
+end)
+
+RegisterCallback('sunset:setConnectionLocale', function(source, locale)
+    if not Sunset.SetConnectionLocale(source, locale) then
+        return nil, Sunset.LocalizedError('locale.invalid')
+    end
+    return { locale = Sunset.GetPlayerLocale(source) }
+end)
 
 RegisterNetEvent('sunset:server:triggerCallback', function(name, requestId, ...)
     local source = source
@@ -52,7 +136,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     rate.count = rate.count + 1
     if rate.count > 30 then
         print(('^3[blaze.mp]^7 Callback flood blocked from %s'):format(source))
-        TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = 'Too many requests — wait a moment' })
+        TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = Sunset.TFor(source, 'error.too_many_requests') })
         return
     end
     CallbackNameRate[source] = CallbackNameRate[source] or {}
@@ -66,12 +150,12 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     if named.count > namedLimit then
         TriggerClientEvent('sunset:client:callbackResponse', source, requestId, {
             __cb = true, result = nil,
-            err = 'That action is being requested too quickly. Wait a second and try again.'
+            err = Sunset.TFor(source, 'error.action_too_fast')
         })
         return
     end
     if not Callbacks[name] then
-        TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = 'Callback not found: ' .. name })
+        TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = Sunset.TFor(source, 'error.action_unavailable') })
         return
     end
 
@@ -100,7 +184,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
         TriggerClientEvent('sunset:client:callbackResponse', source, requestId, {
             __cb = true,
             result = nil,
-            err = ('Server error while processing %s. Try once more; if it repeats, report this action to staff.'):format(name)
+            err = Sunset.TFor(source, 'error.server_action_failed')
         })
         return
     end
@@ -108,7 +192,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     TriggerClientEvent('sunset:client:callbackResponse', source, requestId, {
         __cb = true,
         result = packed.result,
-        err = packed.err
+        err = resolveLocalizedError(source, packed.err)
     })
 end)
 
@@ -127,7 +211,7 @@ RegisterNetEvent('sunset:server:playerLoaded', function()
 
     local license = getLicense(source)
     if not license then
-        DropPlayer(source, 'Could not verify your game license.')
+        DropPlayer(source, Sunset.TFor(source, 'auth.license_failed'))
         return
     end
 
@@ -171,7 +255,7 @@ local function completeAuthentication(source, accountId, username)
 
     local t0 = SunsetBoot.IsDebug() and GetGameTimer() or 0
     local account = MySQL.single.await(
-        'SELECT id, username, premium_points, admin_level, helper_level FROM accounts WHERE id = ?',
+        'SELECT id, username, premium_points, admin_level, helper_level, language FROM accounts WHERE id = ?',
         { accountId }
     )
     if SunsetBoot.IsDebug() then
@@ -194,7 +278,7 @@ local function completeAuthentication(source, accountId, username)
                 end
                 otherPlayer.sessionStart = nil
             end
-            DropPlayer(otherSrc, 'Your account was logged in from another session.')
+            DropPlayer(otherSrc, Sunset.TFor(otherSrc, 'auth.logged_in_elsewhere'))
             Players[otherSrc] = nil
             Sessions[otherSrc] = nil
         end
@@ -256,6 +340,7 @@ local function completeAuthentication(source, accountId, username)
         premium_points = account and tonumber(account.premium_points) or 0,
         admin_level = account and tonumber(account.admin_level) or 0,
         helper_level = account and tonumber(account.helper_level) or 0,
+        language = normalizeLocale(account and account.language) or 'en',
         playtime = tonumber(player.playtime) or 0,
         sessionStart = os.time(),
         character = nil,
@@ -263,6 +348,7 @@ local function completeAuthentication(source, accountId, username)
 
     Player(source).state:set('sunsetName', username, true)
     Player(source).state:set('sunsetDisplayName', username, true)
+    Player(source).state:set('sunsetLocale', Players[source].language, true)
 
     session.authenticated = true
     TriggerClientEvent('sunset:client:playerReady', source, {
@@ -271,6 +357,7 @@ local function completeAuthentication(source, accountId, username)
         name = username,
         premium = account and tonumber(account.premium_points) or 0,
         playtime = tonumber(player.playtime) or 0,
+        language = Players[source].language,
     })
     TriggerEvent('sunset:server:authenticated', source, accountId)
     TriggerEvent('sunset:server:playerReady', source, Players[source])
@@ -284,6 +371,8 @@ exports('CompleteAuthentication', completeAuthentication)
 
 function GetPlayer(source) return Players[source] end
 exports('GetPlayer', GetPlayer)
+exports('NotifyFor', Sunset.NotifyFor)
+exports('BroadcastLocalized', Sunset.BroadcastLocalized)
 
 function GetCharacter(source)
     return Players[source] and Players[source].character or nil
@@ -370,7 +459,7 @@ end
 local function createDefaultAccountCharacter(player)
     local count = MySQL.scalar.await('SELECT COUNT(*) FROM characters WHERE player_id = ?', { player.id })
     if count >= Sunset.Config.MaxCharacters then
-        return nil, 'Character limit reached'
+        return nil, Sunset.LocalizedError('character.limit', { limit = Sunset.Config.MaxCharacters })
     end
 
     local spawn = Sunset.Config.DefaultSpawn
@@ -486,6 +575,7 @@ AddEventHandler('playerDropped', function()
         Sunset.SaveCharacter(source)
     end
     Players[source] = nil
+    ConnectionLocales[source] = nil
     Sessions[source] = nil
     CallbackRate[source] = nil
     CallbackNameRate[source] = nil
@@ -511,11 +601,11 @@ end)
 
 RegisterCallback('sunset:createCharacter', function(source, data)
     local player = GetPlayer(source)
-    if not player then return nil, 'Not logged in' end
+    if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
 
     local count = MySQL.scalar.await('SELECT COUNT(*) FROM characters WHERE player_id = ?', { player.id })
     if count >= Sunset.Config.MaxCharacters then
-        return nil, 'Character limit reached (' .. Sunset.Config.MaxCharacters .. ')'
+        return nil, Sunset.LocalizedError('character.limit', { limit = Sunset.Config.MaxCharacters })
     end
 
     data = data or {}
@@ -533,12 +623,12 @@ RegisterCallback('sunset:createCharacter', function(source, data)
     if year and (year % 400 == 0 or (year % 4 == 0 and year % 100 ~= 0)) then daysInMonth[2] = 29 end
     if not year or year < 1900 or year > tonumber(os.date('%Y')) - 16
         or month < 1 or month > 12 or day < 1 or day > daysInMonth[month] then
-        return nil, 'Enter a valid date of birth; characters must be at least 16 years old'
+        return nil, Sunset.LocalizedError('character.invalid_birthdate')
     end
     data.gender = math.max(0, math.min(1, tonumber(data.gender) or 0))
     data.nationality = type(data.nationality) == 'string' and data.nationality:sub(1, 32) or 'American'
     if not data.nationality:match("^[%a%s'%-]+$") then
-        return nil, 'Select a valid nationality'
+        return nil, Sunset.LocalizedError('character.invalid_nationality')
     end
 
     local slot = count + 1
@@ -567,13 +657,13 @@ end)
 
 RegisterCallback('sunset:selectCharacter', function(source, charId)
     local player = GetPlayer(source)
-    if not player then return nil, 'Not logged in' end
+    if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
     return loadCharacterForPlayer(source, player, charId)
 end)
 
 RegisterCallback('sunset:enterGame', function(source)
     local player = GetPlayer(source)
-    if not player then return nil, 'Not logged in' end
+    if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
 
     local row = MySQL.single.await(
         'SELECT id FROM characters WHERE player_id = ? ORDER BY slot LIMIT 1',
@@ -586,7 +676,7 @@ RegisterCallback('sunset:enterGame', function(source)
     end
 
     local char, err = createDefaultAccountCharacter(player)
-    if not char then return nil, err or 'Could not create character' end
+    if not char then return nil, err or Sunset.LocalizedError('character.create_failed') end
 
     char = loadCharacterForPlayer(source, player, char.id)
     return { character = char }
@@ -594,14 +684,14 @@ end)
 
 RegisterCallback('sunset:deleteCharacter', function(source, charId)
     local player = GetPlayer(source)
-    if not player then return false, 'Not logged in' end
+    if not player then return false, Sunset.LocalizedError('auth.not_logged_in') end
     charId = tonumber(charId)
-    if not charId then return false, 'Invalid character' end
+    if not charId then return false, Sunset.LocalizedError('character.invalid') end
 
     -- [AUDIT P5-09] Never delete the currently loaded character: the live cache
     -- would point at a dead row and all subsequent writes would silently no-op.
     if player.character and tonumber(player.character.id) == charId then
-        return false, 'You cannot delete the character you are playing. Switch characters first.'
+        return false, Sunset.LocalizedError('character.delete_active')
     end
 
     -- Prove ownership before any related asset is touched, then repeat that
@@ -611,7 +701,7 @@ RegisterCallback('sunset:deleteCharacter', function(source, charId)
         'SELECT 1 FROM characters WHERE id = ? AND player_id = ? LIMIT 1',
         { charId, player.id }
     )
-    if not owned then return false, 'That character does not belong to your account.' end
+    if not owned then return false, Sunset.LocalizedError('character.not_owned') end
 
     local deleted = MySQL.startTransaction(function(query)
         local locked = query.single.await(

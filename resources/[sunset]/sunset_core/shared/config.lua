@@ -10,6 +10,7 @@ Sunset.Brand = {
 
 Sunset.Config = {
     ServerName = Sunset.Brand.ServerName,
+    DefaultLanguage = 'en',
     MaxCharacters = 1,
     DefaultSpawn = vector4(-1037.58, -2737.58, 20.17, 328.0),
     StartingCash = 250,

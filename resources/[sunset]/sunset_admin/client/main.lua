@@ -294,9 +294,15 @@ local specTarget = nil
 local specLastCoords = nil
 local specLastSync = 0
 
-RegisterNetEvent('sunset:admin:spectateStart', function(targetSrc)
+RegisterNetEvent('sunset:admin:spectateStart', function(targetSrc, initCoords)
     specTarget = targetSrc
     local ped = PlayerPedId()
+    -- [AUDIT SPECTATE-DIST] Teleport admin near target before activating spectate
+    -- mode so the target's ped is within streaming range on the first sync tick.
+    if initCoords and type(initCoords) == 'table' and initCoords.x then
+        -- Move admin 2 m beside the target (offset avoids overlap with the target ped)
+        SetEntityCoordsNoOffset(ped, initCoords.x + 2.0, initCoords.y, initCoords.z, false, false, false)
+    end
     -- keep coords, invisible + frozen (per spec §4.1)
     SetEntityVisible(ped, false, false)
     FreezeEntityPosition(ped, true)

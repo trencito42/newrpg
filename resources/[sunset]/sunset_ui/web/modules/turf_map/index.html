@@ -5,26 +5,26 @@
         <!-- Header -->
         <header class="turf-map-header">
             <div class="turf-map-header__title-group">
-                <div class="turf-map-header__badge">TERRITORIES</div>
-                <h1 class="turf-map-header__title">GANG WAR TURF MAP</h1>
-                <span class="turf-map-header__subtitle">Los Santos Gang Territories & Control Zones</span>
+                <div class="turf-map-header__badge"><span data-i18n="ui.turf_map.territories"></span></div>
+                <h1 class="turf-map-header__title"><span data-i18n="ui.turf_map.gang_war_turf_map"></span></h1>
+                <span class="turf-map-header__subtitle"><span data-i18n="ui.turf_map.los_santos_gang_territories_control_zones"></span></span>
             </div>
             <div class="turf-map-header__controls">
                 <div class="turf-map-stats" id="turf-map-stats">
                     <div class="turf-map-stat-item">
-                        <span class="stat-label">TERRITORIES</span>
+                        <span class="stat-label"><span data-i18n="ui.turf_map.territories"></span></span>
                         <span class="stat-val" id="turf-stat-count">0</span>
                     </div>
                     <div class="turf-map-stat-item">
-                        <span class="stat-label">ACTIVE WARS</span>
+                        <span class="stat-label"><span data-i18n="ui.turf_map.active_wars"></span></span>
                         <span class="stat-val stat-val--active" id="turf-stat-wars">0</span>
                     </div>
                 </div>
-                <button class="turf-map-btn turf-map-btn--toggle" id="turf-map-debug-toggle" title="Toggle Calibration & Debug Overlay">
+                <button class="turf-map-btn turf-map-btn--toggle" id="turf-map-debug-toggle" title="" data-i18n-title="ui.turf_map.toggle_calibration_debug_overlay">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
-                    <span>DEBUG</span>
+                    <span><span data-i18n="ui.turf_map.debug"></span></span>
                 </button>
-                <button class="turf-map-btn turf-map-btn--close" id="turf-map-close-btn" title="Close Map (ESC)">
+                <button class="turf-map-btn turf-map-btn--close" id="turf-map-close-btn" title="" data-i18n-title="ui.turf_map.close_map_esc">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -34,7 +34,7 @@
         <div class="turf-map-viewport" id="turf-map-viewport">
             <div class="turf-map-canvas" id="turf-map-canvas">
                 <!-- Base GTA Map Image -->
-                <img src="assets/gta-map.webp" class="turf-map-image" alt="GTA V Map" draggable="false" />
+                <img src="assets/gta-map.webp" class="turf-map-image" alt="" draggable="false" data-i18n-alt="ui.turf_map.gta_v_map"/>
 
                 <!-- SVG Polygons Layer -->
                 <svg id="turf-map-svg" class="turf-map-svg" viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
@@ -62,43 +62,43 @@
 
             <!-- Map Zoom & Center Controls -->
             <div class="turf-map-navigation">
-                <button class="map-nav-btn" id="turf-zoom-in" title="Zoom In">+</button>
-                <button class="map-nav-btn" id="turf-zoom-out" title="Zoom Out">−</button>
-                <button class="map-nav-btn" id="turf-zoom-reset" title="Reset View">⟲</button>
-                <button class="map-nav-btn" id="turf-focus-player" title="Focus My Location">⌖</button>
+                <button class="map-nav-btn" id="turf-zoom-in" title="" data-i18n-title="ui.turf_map.zoom_in">+</button>
+                <button class="map-nav-btn" id="turf-zoom-out" title="" data-i18n-title="ui.turf_map.zoom_out">−</button>
+                <button class="map-nav-btn" id="turf-zoom-reset" title="" data-i18n-title="ui.turf_map.reset_view">⟲</button>
+                <button class="map-nav-btn" id="turf-focus-player" title="" data-i18n-title="ui.turf_map.focus_my_location">⌖</button>
             </div>
 
             <!-- Floating Hover Tooltip -->
             <div id="turf-map-tooltip" class="turf-map-tooltip hidden">
                 <div class="tooltip-header">
                     <span class="tooltip-turf-id" id="tooltip-turf-id">#1</span>
-                    <h3 class="tooltip-turf-name" id="tooltip-turf-name">Davis</h3>
+                    <h3 class="tooltip-turf-name" id="tooltip-turf-name"><span data-i18n="ui.turf_map.davis"></span></h3>
                 </div>
                 <div class="tooltip-body">
                     <div class="tooltip-row">
-                        <span class="tooltip-label">OWNER:</span>
-                        <span class="tooltip-val" id="tooltip-turf-owner">Grove Street Families</span>
+                        <span class="tooltip-label"><span data-i18n="ui.turf_map.owner"></span></span>
+                        <span class="tooltip-val" id="tooltip-turf-owner"><span data-i18n="ui.turf_map.grove_street_families"></span></span>
                     </div>
                     <div class="tooltip-row">
-                        <span class="tooltip-label">STATUS:</span>
-                        <span class="tooltip-val tooltip-status" id="tooltip-turf-status">PEACE</span>
+                        <span class="tooltip-label"><span data-i18n="ui.turf_map.status"></span></span>
+                        <span class="tooltip-val tooltip-status" id="tooltip-turf-status"><span data-i18n="ui.turf_map.peace"></span></span>
                     </div>
                     <div class="tooltip-row" id="tooltip-war-row" style="display:none;">
-                        <span class="tooltip-label">WAR:</span>
-                        <span class="tooltip-val tooltip-war-info" id="tooltip-war-info">Grove vs Ballas (03:41)</span>
+                        <span class="tooltip-label"><span data-i18n="ui.turf_map.war"></span></span>
+                        <span class="tooltip-val tooltip-war-info" id="tooltip-war-info"><span data-i18n="ui.turf_map.grove_vs_ballas_03_41"></span></span>
                     </div>
                     <div class="tooltip-row">
-                        <span class="tooltip-label">INCOME:</span>
-                        <span class="tooltip-val tooltip-income" id="tooltip-turf-income">$1,500 / payout</span>
+                        <span class="tooltip-label"><span data-i18n="ui.turf_map.income"></span></span>
+                        <span class="tooltip-val tooltip-income" id="tooltip-turf-income"><span data-i18n="ui.turf_map.1_500_payout"></span></span>
                     </div>
                 </div>
             </div>
 
             <!-- Debug Info Floating Panel -->
             <div id="turf-debug-panel" class="turf-debug-panel hidden">
-                <div class="debug-panel-title">CALIBRATION & GEOMETRY DEBUG</div>
+                <div class="debug-panel-title"><span data-i18n="ui.turf_map.calibration_geometry_debug"></span></div>
                 <div class="debug-panel-content" id="turf-debug-content">
-                    Hover over a turf or point to inspect coordinates.
+                    <span data-i18n="ui.turf_map.hover_over_a_turf_or_point_to_inspect_coordinates"></span>
                 </div>
             </div>
         </div>
@@ -106,13 +106,13 @@
         <!-- Legend / Footer -->
         <footer class="turf-map-footer">
             <div class="turf-map-legend">
-                <div class="legend-item"><span class="legend-box" style="background: rgba(46, 204, 113, 0.4); border-color: #2ecc71;"></span> Controlled</div>
-                <div class="legend-item"><span class="legend-box" style="background: rgba(142, 68, 173, 0.4); border-color: #9b59b6;"></span> Enemy Gang</div>
-                <div class="legend-item"><span class="legend-box" style="background: rgba(120, 144, 156, 0.25); border-color: #90a4ae;"></span> Unowned / Free</div>
-                <div class="legend-item"><span class="legend-box legend-box--war"></span> Active War / Contested</div>
+                <div class="legend-item"><span class="legend-box" style="background: rgba(46, 204, 113, 0.4); border-color: #2ecc71;"></span> <span data-i18n="ui.turf_map.controlled"></span></div>
+                <div class="legend-item"><span class="legend-box" style="background: rgba(142, 68, 173, 0.4); border-color: #9b59b6;"></span> <span data-i18n="ui.turf_map.enemy_gang"></span></div>
+                <div class="legend-item"><span class="legend-box" style="background: rgba(120, 144, 156, 0.25); border-color: #90a4ae;"></span> <span data-i18n="ui.turf_map.unowned_free"></span></div>
+                <div class="legend-item"><span class="legend-box legend-box--war"></span> <span data-i18n="ui.turf_map.active_war_contested"></span></div>
             </div>
             <div class="turf-map-hint">
-                <span>Drag to pan &bull; Scroll to zoom &bull; Click turf to center</span>
+                <span><span data-i18n="ui.turf_map.drag_to_pan_bull_scroll_to_zoom_bull_click"></span></span>
             </div>
         </footer>
     </div>

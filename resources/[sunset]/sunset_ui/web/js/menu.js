@@ -34,7 +34,34 @@ const Menu = {
             post('menuAction', { action: 'properties' });
         });
 
+        $$('.menu-language-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                if (btn.disabled || btn.dataset.locale === window.I18n?.getLocale?.()) return;
+                $$('.menu-language-btn').forEach((item) => { item.disabled = true; });
+                const response = await post('localeSet', { locale: btn.dataset.locale });
+                if (!response?.ok) {
+                    notify(response?.error || window.I18n?.t('locale.failed'), 'error');
+                }
+                $$('.menu-language-btn').forEach((item) => { item.disabled = false; });
+            });
+        });
+
+        window.addEventListener('sunset:localeChanged', () => {
+            this.syncLanguageButtons();
+            if (this._data && !$('#menu')?.classList.contains('hidden')) this.update(this._data);
+        });
+
         if (window.ChatSettings) ChatSettings.init();
+        this.syncLanguageButtons();
+    },
+
+    syncLanguageButtons() {
+        const locale = window.I18n?.getLocale?.() || 'en';
+        $$('.menu-language-btn').forEach((btn) => {
+            const active = btn.dataset.locale === locale;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
     },
 
     setTab(tab) {
@@ -49,7 +76,7 @@ const Menu = {
     },
 
     formatXp(n) {
-        return (n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return window.I18n?.number(n || 0) || String(n || 0);
     },
 
     buyLevelState(data) {
@@ -62,9 +89,9 @@ const Menu = {
         let reason = '';
         if (!canBuy) {
             if (rp < rpNeed) {
-                reason = `Need ${this.formatXp(rpNeed)} RP — you have ${this.formatXp(rp)}`;
+                reason = window.I18n.t('menu.level.need_rp', { required: this.formatXp(rpNeed), current: this.formatXp(rp) });
             } else {
-                reason = `Need ${formatMoney(price)} in cash or bank`;
+                reason = window.I18n.t('menu.level.need_money', { price: formatMoney(price) });
             }
         }
         return { level, rp, rpNeed, price, canBuy, reason };
@@ -85,15 +112,15 @@ const Menu = {
 
         if (profileBtn) {
             if (state.canBuy) {
-                profileBtn.innerHTML = `BUY LEVEL ${nextLevel}<small>${this.formatXp(state.rpNeed)} RP · ${formatMoney(state.price)}</small>`;
+                profileBtn.innerHTML = `${window.I18n.t('menu.level.buy', { level: nextLevel })}<small>${this.formatXp(state.rpNeed)} RP · ${formatMoney(state.price)}</small>`;
             } else {
-                profileBtn.innerHTML = `LEVEL ${nextLevel} LOCKED<small>${this.escape(state.reason)}</small>`;
+                profileBtn.innerHTML = `${window.I18n.t('menu.level.locked', { level: nextLevel })}<small>${this.escape(state.reason)}</small>`;
             }
         }
 
         if (statsBtn) {
             statsBtn.textContent = state.canBuy
-                ? `BUY LEVEL ${nextLevel} · ${this.formatXp(state.rpNeed)} RP · ${formatMoney(state.price)}`
+                ? `${window.I18n.t('menu.level.buy', { level: nextLevel })} · ${this.formatXp(state.rpNeed)} RP · ${formatMoney(state.price)}`
                 : state.reason;
         }
     },
@@ -124,62 +151,20 @@ const Menu = {
         })[ch]);
     },
 
+    t(key, params) {
+        return window.I18n?.t(key, params) || `[?${key}]`;
+    },
+
     factionTips(jobId) {
-        const common = [
-            '<li>Factions are joined at HQ markers on the map (LSPD, EMS, Taxi…).</li>',
-            '<li>Faction membership requires a leader invitation after an accepted Discord/site application. Members use <strong>[E]</strong> at HQ for duty.</li>',
-        ];
+        const common = ['menu.job.tip.common1', 'menu.job.tip.common2'];
         const perJob = {
-            police: [
-                '<li>Fleet garage at MRPD — spawn patrol car on duty.</li>',
-                '<li><strong>/fine</strong> <strong>/cuff</strong> <strong>/uncuff</strong> — Sergeant+ can uncuff.</li>',
-                '<li>LSPD Armory crafting inside MRPD (rank 1+).</li>',
-            ],
-            medic: [
-                '<li>Ambulance bay at Pillbox — spawn on duty.</li>',
-                '<li><strong>/heal</strong> and <strong>/revive</strong> (Paramedic+).</li>',
-                '<li>EMS Supply Room crafting at hospital.</li>',
-            ],
-            taxi: [
-                '<li>Depot marker spawns your cab when on duty.</li>',
-                '<li>Passengers use Downtown Cab phone app.</li>',
-                '<li><strong>/fare [id] [amount]</strong> for manual street fares.</li>',
-            ],
-            mechanic: [
-                '<li>Drive into HQ in a vehicle for $250 repair.</li>',
-                '<li><strong>/repairveh [id]</strong> on duty for player repairs.</li>',
-                '<li>Parts bench at shop — craft repair kits.</li>',
-            ],
-            lsfd: [
-                '<li>Fire truck garage at the station.</li>',
-                '<li><strong>/heal</strong> all ranks; <strong>/revive</strong> Engineer+.</li>',
-                '<li>Field rescue — stabilize before EMS arrives.</li>',
-            ],
-            sunset_cartel: [
-                '<li>Hidden HQ blip — members only.</li>',
-                '<li>Cartel Lab crafting (Soldier+).</li>',
-                '<li><strong>/sellpouch</strong> at HQ stash marker.</li>',
-            ],
-            night_syndicate: [
-                '<li>Hidden HQ — recruit via <strong>/finvite</strong>.</li>',
-                '<li>Workshop crafting — shiv, ammo (ranked).</li>',
-                '<li><strong>/fence</strong> contraband at HQ stash.</li>',
-            ],
-            trucker: [
-                '<li>Haul cargo routes across San Andreas.</li>',
-                '<li>Keep your civilian job while in a faction.</li>',
-            ],
-            fisherman: [
-                '<li>Catch and sell fish for extra income.</li>',
-                '<li>Works alongside any faction membership.</li>',
-            ],
-            unemployed: [
-                '<li>Visit the Job Center for trucker or fisherman work.</li>',
-                '<li>Or join a faction at HQ markers on the map.</li>',
-            ],
+            police: ['menu.job.tip.police1', 'menu.job.tip.police2', 'menu.job.tip.police3'],
+            medic: ['menu.job.tip.medic1', 'menu.job.tip.medic2', 'menu.job.tip.medic3'],
+            taxi: ['menu.job.tip.taxi1', 'menu.job.tip.taxi2', 'menu.job.tip.taxi3'],
+            mechanic: ['menu.job.tip.mechanic1', 'menu.job.tip.mechanic2', 'menu.job.tip.mechanic3'],
         };
-        const tips = [...common, ...(perJob[jobId] || ['<li>Use <strong>/faction</strong> to see your commands.</li>'])];
-        return tips.join('');
+        const tips = [...common, ...(perJob[jobId] || ['menu.job.tip.generic'])];
+        return tips.map((key) => `<li>${this.escape(this.t(key))}</li>`).join('');
     },
 
     vehicleImage(model) {
@@ -192,7 +177,7 @@ const Menu = {
         const vid = Number(vehicleId) || 0;
         if (ecu.stock) {
             return `<div class="menu-vcard__ecu-strip menu-vcard__ecu-strip--stock">
-                <span class="menu-vcard__ecu-pill">STOCK ECU</span>
+                <span class="menu-vcard__ecu-pill">${this.t('menu.vehicle.stock_ecu')}</span>
             </div>`;
         }
 
@@ -207,10 +192,10 @@ const Menu = {
 
         return `<div class="menu-vcard__ecu-strip" data-ecu-id="${vid}">
             <div class="menu-vcard__ecu-strip-main">
-                <span class="menu-vcard__ecu-pill">TUNED</span>
-                <span class="menu-vcard__ecu-summary">${this.escape(ecu.summary || 'Custom map')}</span>
+                <span class="menu-vcard__ecu-pill">${this.t('menu.vehicle.tuned')}</span>
+                <span class="menu-vcard__ecu-summary">${this.escape(ecu.summary || this.t('menu.vehicle.custom_map'))}</span>
                 ${dyno ? `<span class="menu-vcard__ecu-dyno">${this.escape(dyno.value)}</span>` : ''}
-                <button type="button" class="menu-vcard__ecu-toggle" data-ecu-toggle="${vid}" aria-label="ECU details">⋯</button>
+                <button type="button" class="menu-vcard__ecu-toggle" data-ecu-toggle="${vid}" aria-label="${this.t('menu.vehicle.ecu_details')}">⋯</button>
             </div>
             <div class="menu-vcard__ecu-chips">${chipHtml}</div>
             <div class="menu-vcard__ecu-detail hidden" data-ecu-detail="${vid}">${detailLines}</div>
@@ -259,21 +244,21 @@ const Menu = {
     },
 
     vmenuStatusTag(key) {
-        if (key === 'garage') return { cls: 'garage', label: 'Garage' };
-        if (key === 'out' || key === 'parked') return { cls: 'out', label: key === 'parked' ? 'Parked' : 'Street' };
-        return { cls: 'impound', label: 'Confiscat' };
+        if (key === 'garage') return { cls: 'garage', label: this.t('menu.vehicle.garage') };
+        if (key === 'out' || key === 'parked') return { cls: 'out', label: key === 'parked' ? this.t('menu.vehicle.parked') : this.t('menu.vehicle.street') };
+        return { cls: 'impound', label: this.t('menu.vehicle.impounded') };
     },
 
     vmenuTuningList(ecuInfo) {
         const ecu = ecuInfo || {};
         if (ecu.stock) {
-            return '<div class="tuning-item" style="color:rgba(255,255,255,0.4)">No modifications</div>';
+            return `<div class="tuning-item" style="color:rgba(255,255,255,0.4)">${this.t('menu.vehicle.no_modifications')}</div>`;
         }
         const lines = (ecu.lines || []).slice(0, 6);
         if (!lines.length) {
             const chips = (ecu.chips || []).slice(0, 6);
             if (!chips.length) {
-                return `<div class="tuning-item">ECU: <span>${this.escape(ecu.summary || 'Custom')}</span></div>`;
+                return `<div class="tuning-item">ECU: <span>${this.escape(ecu.summary || this.t('menu.vehicle.custom_map'))}</span></div>`;
             }
             return chips.map((chip) => `<div class="tuning-item">Chip: <span>${this.escape(chip)}</span></div>`).join('');
         }
@@ -296,11 +281,11 @@ const Menu = {
         const stored = !isDestroyed && (v.stored === true || v.stored === 1 || v.stored === '1' || Number(v.stored) === 1);
         const inWorld = !isDestroyed && v.inWorld === true;
         const hasPark = Number.isFinite(Number(v.parked_x)) && Number.isFinite(Number(v.parked_y));
-        if (isDestroyed) return { key: 'impound', label: 'Impounded / Insurance', stored: false, inWorld: false, isDestroyed: true };
-        if (stored) return { key: 'garage', label: `Garage · ${v.garage || 'Central'}`, stored, inWorld };
-        if (inWorld) return { key: 'out', label: v.garage || 'Street', stored, inWorld };
-        if (hasPark) return { key: 'parked', label: 'Parked', stored, inWorld };
-        return { key: 'impound', label: 'Unavailable', stored, inWorld };
+        if (isDestroyed) return { key: 'impound', label: this.t('menu.vehicle.impounded'), stored: false, inWorld: false, isDestroyed: true };
+        if (stored) return { key: 'garage', label: `${this.t('menu.vehicle.garage')} · ${v.garage || 'Central'}`, stored, inWorld };
+        if (inWorld) return { key: 'out', label: v.garage || this.t('menu.vehicle.street'), stored, inWorld };
+        if (hasPark) return { key: 'parked', label: this.t('menu.vehicle.parked'), stored, inWorld };
+        return { key: 'impound', label: this.t('menu.vehicle.unavailable'), stored, inWorld };
     },
 
     _bindVehicleImpoundHold(root, vehicleId, claimCost) {
@@ -330,7 +315,7 @@ const Menu = {
         hold.onpointerup = reset;
         hold.onpointerleave = reset;
         const label = hold.querySelector('.bh-text');
-        if (label) label.innerHTML = `<span class="key">ENTER</span> Pay Impound Fee (${formatMoney(claimCost)})`;
+        if (label) label.innerHTML = `<span class="key">ENTER</span> ${this.t('menu.vehicle.pay_impound', { price: formatMoney(claimCost) })}`;
     },
 
     renderVehicles(data) {
@@ -349,7 +334,7 @@ const Menu = {
 
         if (!vehicles.length) {
             this.selectedVehicleId = null;
-            grid.innerHTML = '<div class="vmenu-empty"><strong>No Vehicles</strong><span>Your cars will appear here.</span></div>';
+            grid.innerHTML = `<div class="vmenu-empty"><strong>${this.t('menu.vehicle.empty')}</strong><span>${this.t('menu.vehicle.empty_hint')}</span></div>`;
             return;
         }
 
@@ -370,7 +355,7 @@ const Menu = {
         const listHtml = (filtered.length ? filtered : vehicles).map((v) => {
             const status = this._vehicleStateOf(v);
             const tag = this.vmenuStatusTag(status.key);
-            const name = this.escape((v.label || v.model || 'Vehicle').toUpperCase());
+            const name = this.escape((v.label || v.model || this.t('common.vehicle')).toUpperCase());
             const plate = this.escape(v.plate || '—');
             const isSelected = String(v.id) === String(this.selectedVehicleId);
             return `<button type="button" class="v-item ${isSelected ? 'active' : ''}" data-v-select="${Number(v.id) || 0}">
@@ -384,7 +369,7 @@ const Menu = {
         }).join('');
 
         const status = this._vehicleStateOf(selected);
-        const displayName = this.escape((selected.label || selected.model || 'Vehicle').toUpperCase());
+        const displayName = this.escape((selected.label || selected.model || this.t('common.vehicle')).toUpperCase());
         const plate = this.escape(selected.plate || '—');
         const fuel = Math.max(0, Math.min(100, Math.round(Number(selected.fuel) || 0)));
         const engine = Math.max(0, Math.min(100, Math.round((Number(selected.engine) || 0) / 10)));
@@ -396,44 +381,44 @@ const Menu = {
 
         let mainAction = '';
         let gpsAction = `<button type="button" class="btn-action secondary" data-v-action="gps" data-v-plate="${plate}" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-crosshair"></i> GPS</button>`;
-        let impoundHold = `<div class="btn-hold hidden" data-v-impound-hold data-v-id="${Number(selected.id) || 0}"><div class="bh-progress"></div><div class="bh-text"><span class="key">ENTER</span> Pay Impound Fee</div></div>`;
+        let impoundHold = `<div class="btn-hold hidden" data-v-impound-hold data-v-id="${Number(selected.id) || 0}"><div class="bh-progress"></div><div class="bh-text"><span class="key">ENTER</span> ${this.t('menu.vehicle.pay_impound', { price: formatMoney(claimCost) })}</div></div>`;
 
         if (status.isDestroyed) {
             mainAction = '';
             gpsAction = '';
             if (insurancePts > 0) {
-                impoundHold = `<div class="btn-hold" data-v-impound-hold data-v-id="${Number(selected.id) || 0}"><div class="bh-progress"></div><div class="bh-text"><span class="key">ENTER</span> Pay Impound Fee (${formatMoney(claimCost)})</div></div>`;
+                impoundHold = `<div class="btn-hold" data-v-impound-hold data-v-id="${Number(selected.id) || 0}"><div class="bh-progress"></div><div class="bh-text"><span class="key">ENTER</span> ${this.t('menu.vehicle.pay_impound', { price: formatMoney(claimCost) })}</div></div>`;
             } else {
-                mainAction = `<button type="button" class="btn-action" data-v-action="renew_insurance" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-shield-check"></i> Renew Insurance (${formatMoney(renewCost)})</button>`;
+                mainAction = `<button type="button" class="btn-action" data-v-action="renew_insurance" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-shield-check"></i> ${this.t('menu.vehicle.renew_insurance', { price: formatMoney(renewCost) })}</button>`;
                 impoundHold = '';
             }
         } else if (status.stored) {
-            mainAction = `<button type="button" class="btn-action" data-v-action="spawn" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-key"></i> Request Valet</button>`;
+            mainAction = `<button type="button" class="btn-action" data-v-action="spawn" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-key"></i> ${this.t('menu.vehicle.valet')}</button>`;
             gpsAction = '';
         } else if (status.inWorld) {
             const parkAction = selected.isCurrentVehicle ? 'park' : 'store';
-            const parkLabel = selected.isCurrentVehicle ? 'Park / Garage' : 'Send to Garage';
+            const parkLabel = selected.isCurrentVehicle ? this.t('menu.vehicle.park') : this.t('menu.vehicle.send_garage');
             mainAction = `<button type="button" class="btn-action" data-v-action="${parkAction}" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-car"></i> ${parkLabel}</button>`;
             gpsAction = `<button type="button" class="btn-action secondary" data-v-action="gps" data-v-plate="${plate}" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-crosshair"></i> GPS (${this.escape(status.label)})</button>`;
         } else {
-            mainAction = `<button type="button" class="btn-action" data-v-action="spawn" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-key"></i> Respawn Aici</button>`;
+            mainAction = `<button type="button" class="btn-action" data-v-action="spawn" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-key"></i> ${this.t('menu.vehicle.respawn_here')}</button>`;
         }
 
         grid.innerHTML = `<div class="v-sidebar">
                 <div class="v-header">
-                    <h2 class="vh-title"><i class="ph-bold ph-steering-wheel"></i> Vehiculele Tale</h2>
+                    <h2 class="vh-title"><i class="ph-bold ph-steering-wheel"></i> ${this.t('menu.vehicle.title')}</h2>
                     <div class="v-search">
                         <i class="ph-bold ph-magnifying-glass"></i>
-                        <input type="text" id="v-menu-search" placeholder="Search model or plate..." value="${this.escape(query)}">
+                        <input type="text" id="v-menu-search" placeholder="${this.t('menu.vehicle.search')}" value="${this.escape(query)}">
                     </div>
                 </div>
-                <div class="v-list">${listHtml || '<div class="vmenu-empty" style="transform:skewX(5deg);border:none;background:transparent"><span>No results</span></div>'}</div>
+                <div class="v-list">${listHtml || `<div class="vmenu-empty" style="transform:skewX(5deg);border:none;background:transparent"><span>${this.t('common.no_results')}</span></div>`}</div>
             </div>
             <div class="v-details">
                 <i class="ph-fill ph-car-profile vd-watermark"></i>
                 <div class="vd-header">
                     <div class="vd-title-box">
-                        <div class="vd-class">${this.escape(selected.vehicleClass || 'Personal Vehicle')}</div>
+                        <div class="vd-class">${this.escape(selected.vehicleClass || this.t('menu.vehicle.personal'))}</div>
                         <h2 class="vd-name">${displayName}</h2>
                     </div>
                     <div class="vd-plate-box">
@@ -444,25 +429,25 @@ const Menu = {
                 <div class="vd-body">
                     <div class="vd-status-grid">
                         <div class="status-box ${this.vmenuStatClass(engine)}">
-                            <div class="sb-label"><i class="ph-fill ph-engine"></i> Engine</div>
+                            <div class="sb-label"><i class="ph-fill ph-engine"></i> ${this.t('menu.vehicle.engine')}</div>
                             <div class="sb-val">${engine}%</div>
                         </div>
                         <div class="status-box ${this.vmenuStatClass(body)}">
-                            <div class="sb-label"><i class="ph-fill ph-car"></i> Caroserie</div>
+                            <div class="sb-label"><i class="ph-fill ph-car"></i> ${this.t('menu.vehicle.body')}</div>
                             <div class="sb-val">${body}%</div>
                         </div>
                         <div class="status-box ${this.vmenuStatClass(fuel)}">
-                            <div class="sb-label"><i class="ph-fill ph-gas-pump"></i> Fuel</div>
+                            <div class="sb-label"><i class="ph-fill ph-gas-pump"></i> ${this.t('menu.vehicle.fuel')}</div>
                             <div class="sb-val">${fuel}%</div>
                         </div>
                     </div>
                     <div class="vd-extra-grid">
                         <div class="vd-card">
-                            <div class="vc-title"><i class="ph-fill ph-gauge"></i> Kilometraj (Odo)</div>
-                            <div class="odometer-val">${odometer.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} KM</div>
+                            <div class="vc-title"><i class="ph-fill ph-gauge"></i> ${this.t('menu.vehicle.odometer')}</div>
+                            <div class="odometer-val">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} KM</div>
                         </div>
                         <div class="vd-card">
-                            <div class="vc-title"><i class="ph-fill ph-cpu"></i> Installed Tuning</div>
+                            <div class="vc-title"><i class="ph-fill ph-cpu"></i> ${this.t('menu.vehicle.tuning')}</div>
                             <div class="tuning-list">${this.vmenuTuningList(selected.ecuInfo)}</div>
                         </div>
                     </div>
@@ -540,12 +525,12 @@ const Menu = {
         const unemployed = !data.jobId || data.jobId === 'unemployed';
         const hasFaction = !!data.factionId;
         const dutyBadge = data.hasDuty
-            ? (data.onDuty ? '<span class="menu-job-badge menu-job-badge--on">ON DUTY</span>' : '<span class="menu-job-badge menu-job-badge--off">OFF DUTY</span>')
+            ? (data.onDuty ? `<span class="menu-job-badge menu-job-badge--on">${this.t('menu.job.on_duty')}</span>` : `<span class="menu-job-badge menu-job-badge--off">${this.t('menu.job.off_duty')}</span>`)
             : '';
 
         const jobLine = this.escape(hasFaction
             ? (data.factionLabel || data.factionId)
-            : (unemployed ? 'Unemployed' : (data.job || 'Unemployed')));
+            : (unemployed ? this.t('menu.profile.unemployed') : (data.job || this.t('menu.profile.unemployed'))));
 
         const rankLine = this.escape(hasFaction
             ? (data.factionGradeLabel || '—')
@@ -554,48 +539,48 @@ const Menu = {
         const salaryLine = hasFaction ? (data.factionSalary || 0) : (data.jobSalary || 0);
 
         const civilianSub = hasFaction
-            ? `<p class="menu-job-sub">Civilian job: ${this.escape(data.job || 'Unemployed')}</p>`
+            ? `<p class="menu-job-sub">${this.t('menu.job.civilian', { job: this.escape(data.job || this.t('menu.profile.unemployed')) })}</p>`
             : '';
 
         card.innerHTML = `
             <div class="menu-job-card__header">
                 <div>
-                    <div class="menu-job-card__label">${hasFaction ? 'FACTION' : 'CIVILIAN JOB'}</div>
+                    <div class="menu-job-card__label">${hasFaction ? this.t('menu.job.faction') : this.t('menu.job.civilian_job')}</div>
                     <h4>${jobLine}</h4>
                     ${civilianSub}
                 </div>
                 ${dutyBadge}
             </div>
             <div class="menu-job-stats">
-                <div><span>Rank</span><strong>${rankLine}</strong></div>
-                <div><span>Salary</span><strong>$${salaryLine}/hr</strong></div>
-                <div><span>Next payday</span><strong>${data.payday || '—'}</strong></div>
-                <div><span>Server time</span><strong>${data.serverTime || '—'}</strong></div>
+                <div><span>${this.t('menu.job.rank')}</span><strong>${rankLine}</strong></div>
+                <div><span>${this.t('menu.job.salary')}</span><strong>${formatMoney(salaryLine)}/hr</strong></div>
+                <div><span>${this.t('menu.job.next_payday')}</span><strong>${data.payday || '—'}</strong></div>
+                <div><span>${this.t('menu.job.server_time')}</span><strong>${data.serverTime || '—'}</strong></div>
             </div>`;
 
         let actions = '';
         if (!unemployed || hasFaction) {
             if (data.hasDuty) {
-                actions += `<button type="button" class="menu-job-btn menu-job-btn--primary" data-j-action="duty">${data.onDuty ? 'Go off duty' : 'Go on duty'}</button>`;
+                actions += `<button type="button" class="menu-job-btn menu-job-btn--primary" data-j-action="duty">${data.onDuty ? this.t('menu.job.go_off_duty') : this.t('menu.job.go_on_duty')}</button>`;
             }
             if (hasFaction) {
-                actions += `<button type="button" class="menu-job-btn" data-j-action="faction">Faction info</button>`;
-                actions += `<button type="button" class="menu-job-btn menu-job-btn--danger" data-j-action="leave">Leave faction</button>`;
+                actions += `<button type="button" class="menu-job-btn" data-j-action="faction">${this.t('menu.job.faction_info')}</button>`;
+                actions += `<button type="button" class="menu-job-btn menu-job-btn--danger" data-j-action="leave">${this.t('menu.job.leave_faction')}</button>`;
             }
             if (!unemployed) {
-                actions += `<button type="button" class="menu-job-btn menu-job-btn--danger" data-j-action="quit_civilian">Quit civilian job</button>`;
+                actions += `<button type="button" class="menu-job-btn menu-job-btn--danger" data-j-action="quit_civilian">${this.t('menu.job.quit_civilian')}</button>`;
             }
         } else {
-            actions = `<p class="menu-mgmt-empty">Join a <strong>faction</strong> at HQ on the map (LSPD, EMS, Taxi…).</p>`;
+            actions = `<p class="menu-mgmt-empty">${this.t('menu.job.join_hint')}</p>`;
         }
 
         if (data.factionId === 'taxi') {
-            actions += `<button type="button" class="menu-job-btn menu-job-btn--cab" data-j-action="phone">Open Downtown Cab app</button>`;
+            actions += `<button type="button" class="menu-job-btn menu-job-btn--cab" data-j-action="phone">${this.t('menu.job.open_taxi')}</button>`;
         }
 
         side.innerHTML = `
             <div class="menu-job-side__box">
-                <h5>Quick tips</h5>
+                <h5>${this.t('menu.job.quick_tips')}</h5>
                 <ul>${this.factionTips(data.factionId || data.jobId)}</ul>
             </div>
             <div class="menu-job-actions">${actions}</div>`;
@@ -613,6 +598,7 @@ const Menu = {
     },
 
     update(data) {
+        this._data = data;
         if (!data) return;
         this.init();
 
@@ -625,7 +611,7 @@ const Menu = {
         $('#menu-id').textContent = String(Number(data.id) || 0);
         const jobLabel = $('#menu-job-label');
         if (jobLabel) {
-            jobLabel.textContent = data.factionLabel || data.job || 'Unemployed';
+            jobLabel.textContent = data.factionLabel || data.job || window.I18n?.t('menu.profile.unemployed') || 'Unemployed';
         }
         const cidEl = $('#menu-cid');
         if (cidEl) cidEl.textContent = data.cid ? ('CID: ' + data.cid) : 'CID: —';
@@ -643,18 +629,18 @@ const Menu = {
         $('#menu-stats-playtime').textContent = data.playtime || '0H 0M';
         $('#menu-stats-session').textContent = data.sessionTime || '0H 0M';
         $('#menu-stats-created').textContent = data.characterCreated || '—';
-        $('#menu-stats-lastlogin').textContent = `Last login ${data.lastLogin || '—'}`;
+        $('#menu-stats-lastlogin').textContent = `${window.I18n?.t('menu.stats.last_login') || 'Last login —'} ${data.lastLogin || '—'}`;
         $('#menu-stats-tasks').textContent = String(data.completedTasks || 0);
         $('#menu-stats-earned').textContent = formatMoney(data.careerEarnings || 0);
         $('#menu-stats-skills').textContent = String(data.combinedSkillLevels || 0);
-        $('#menu-stats-assets').textContent = `${data.vehicleCount || 0} vehicles · ${data.propertyCount || 0} properties`;
-        $('#menu-stats-home').textContent = `Home: ${data.homeLabel || 'None'}`;
+        $('#menu-stats-assets').textContent = window.I18n?.t('menu.stats.asset_count', { vehicles: data.vehicleCount || 0, properties: data.propertyCount || 0 });
+        $('#menu-stats-home').textContent = window.I18n?.t('menu.stats.home', { home: data.homeLabel || window.I18n?.t('common.none') });
 
         const xp = data.respectPoints || 0;
         const xpMax = data.respectRequired || 4;
         const level = data.level || 1;
         $('#menu-xp-text').textContent = `${this.formatXp(xp)} / ${this.formatXp(xpMax)} RP`;
-        $('#menu-level').textContent = `Level ${level}`;
+        $('#menu-level').textContent = window.I18n?.t('menu.profile.level', { level }) || `Level ${level}`;
         const xpBar = $('#menu-xp-bar');
         if (xpBar) xpBar.style.width = `${Math.min(100, (xp / xpMax) * 100)}%`;
 
@@ -684,11 +670,12 @@ const Menu = {
         setBar('menu-stress-bar', stress);
 
         $('#menu-property-count').textContent = String(data.propertyCount ?? 0);
-        $('#menu-home-label').textContent = data.homeLabel || 'None';
+        $('#menu-home-label').textContent = data.homeLabel || window.I18n?.t('common.none') || 'None';
 
         this.renderProperties(data);
         this.renderVehicles(data);
         this.renderJob(data);
+        this.syncLanguageButtons();
 
         const avatar = $('#menu-avatar');
         if (avatar) {
@@ -716,7 +703,7 @@ const Menu = {
         if (brandTitle) {
             if (!this._brandHtml) this._brandHtml = brandTitle.innerHTML;
             if (this.soloMode === 'vehicle') {
-                brandTitle.innerHTML = 'VEHICLES <span>GARAGE</span>';
+                brandTitle.innerHTML = this.t('menu.vehicle.solo_brand');
             } else {
                 brandTitle.innerHTML = this._brandHtml;
             }

@@ -26,6 +26,22 @@ RegisterNUICallback('nuiError', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('localeSet', function(data, cb)
+    local locale = type(data) == 'table' and data.locale or nil
+    if not exports.sunset_core:IsValidLocale(locale) then
+        cb({ ok = false, error = exports.sunset_core:Translate('locale.invalid') })
+        return
+    end
+
+    exports.sunset_core:TriggerCallback('sunset:setLocale', function(result, err)
+        if not result then
+            cb({ ok = false, error = err or exports.sunset_core:Translate('locale.save_failed') })
+            return
+        end
+        cb({ ok = true, locale = result.locale })
+    end, locale)
+end)
+
 -- [AUDIT UI-HANG] Failsafe: when the JS explicitly asks to close the shared
 -- player-interaction menu, guarantee the panel hides and focus is released even
 -- if the owning resource's handler no-ops or errors. Resources that close the

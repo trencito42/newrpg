@@ -29,7 +29,11 @@ const PropertyUI = {
     },
 
     money(value) {
-        return `$${Number(value || 0).toLocaleString()}`;
+        return window.I18n?.money(value) || `$${Number(value || 0).toLocaleString()}`;
+    },
+
+    t(key, params) {
+        return window.I18n?.t(key, params) || `[?${key}]`;
     },
 
     dispatch(propertyId, action, payload) {
@@ -74,7 +78,7 @@ const PropertyUI = {
 
         if (browserView) browserView.classList.add('hidden');
         if (manageView) manageView.classList.remove('hidden');
-        if (titleEl) titleEl.textContent = `Manage #${p.id} ${p.label || 'Residence'}`;
+        if (titleEl) titleEl.textContent = this.t('property.manage_title', { id: p.id, property: p.label || this.t('property.default_name') });
 
         if (!content) return;
         content.replaceChildren();
@@ -90,10 +94,10 @@ const PropertyUI = {
         heroLeft.innerHTML = `
             <div class="house-row__title-wrap">
                 <span class="prop-id-badge">#${p.id}</span>
-                <strong class="prop-address">${this.escape(p.label || 'Residence')}</strong>
+                <strong class="prop-address">${this.escape(p.label || this.t('property.default_name'))}</strong>
                 <div class="prop-status-badge is-owned">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>YOUR PROPERTY</span>
+                    <span>${this.t('property.yours')}</span>
                 </div>
             </div>
         `;
@@ -114,21 +118,21 @@ const PropertyUI = {
         chips.innerHTML = `
             <span class="prop-chip prop-chip--lvl">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>LVL ${p.minimumLevel || 1}</span>
+                <span>${this.t('property.level', { level: p.minimumLevel || 1 })}</span>
             </span>
             <span class="prop-chip prop-chip--interior">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                <span>${this.escape(p.interior || 'Standard')}</span>
+                <span>${this.escape(p.interior || this.t('property.interior.standard'))}</span>
             </span>
             <span class="prop-chip ${p.locked ? 'prop-chip--locked' : 'prop-chip--open'}">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="${p.locked ? 'M7 11V7a5 5 0 0 1 10 0v4' : 'M7 11V7a5 5 0 0 1 9.9-1'}"/></svg>
-                <span>${p.locked ? 'LOCKED' : 'OPEN'}</span>
+                <span>${p.locked ? this.t('property.status.locked') : this.t('property.status.open')}</span>
             </span>
             <span class="prop-chip prop-chip--renters">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span>${p.renterCount || 0}/${p.maxRenters || 1} Tenants</span>
+                <span>${this.t('property.tenant_count.' + (Number(p.renterCount) === 1 ? 'one' : 'other'), { count: p.renterCount || 0 })} / ${p.maxRenters || 1}</span>
             </span>
-            ${p.rentEnabled ? `<span class="prop-chip prop-chip--rent-price"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/></svg><span>${this.money(p.rentPrice)}/payday</span></span>` : ''}
+            ${p.rentEnabled ? `<span class="prop-chip prop-chip--rent-price"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/></svg><span>${this.t('property.rate', { price: this.money(p.rentPrice) })}</span></span>` : ''}
         `;
         heroLeft.appendChild(chips);
 
@@ -136,7 +140,7 @@ const PropertyUI = {
         heroRight.className = 'prop-manage-hero__actions';
         heroRight.append(
             this.createButton(
-                'Enter',
+                this.t('common.enter'),
                 'enter',
                 p.id,
                 {},
@@ -144,7 +148,7 @@ const PropertyUI = {
                 '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>'
             ),
             this.createButton(
-                'Set Home',
+                this.t('property.action.set_home'),
                 'sethome',
                 p.id,
                 {},
@@ -152,7 +156,7 @@ const PropertyUI = {
                 '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
             ),
             this.createButton(
-                p.locked ? 'Unlock' : 'Lock',
+                p.locked ? this.t('common.unlock') : this.t('common.lock'),
                 'lock',
                 p.id,
                 {},
@@ -175,19 +179,19 @@ const PropertyUI = {
         descCard.innerHTML = `
             <div class="owner-panel-card__label">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                <span>VISITOR NOTE / NAME</span>
+                <span>${this.t('property.visitor_note')}</span>
             </div>
         `;
         const descInput = document.createElement('textarea');
         descInput.className = 'owner-field-textarea';
         descInput.maxLength = 160;
-        descInput.placeholder = 'House description shown to visitors (max 160 chars)...';
+        descInput.placeholder = this.t('property.visitor_note_placeholder');
         descInput.value = this.cleanText(p.description || '');
 
         const descActions = document.createElement('div');
         descActions.className = 'owner-actions-row';
         const saveDesc = this.createButton(
-            'Save Note',
+            this.t('property.action.save_note'),
             'description',
             p.id,
             () => ({ text: descInput.value.trim() }),
@@ -195,7 +199,7 @@ const PropertyUI = {
             '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
         );
         const clearDesc = this.createButton(
-            'Clear',
+            this.t('property.action.clear'),
             'description',
             p.id,
             { clear: true },
@@ -212,7 +216,7 @@ const PropertyUI = {
         rentCard.innerHTML = `
             <div class="owner-panel-card__label">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/></svg>
-                <span>RENTAL &amp; CAPACITY</span>
+                <span>${this.t('property.rental_capacity')}</span>
             </div>
         `;
         const rentFieldsRow = document.createElement('div');
@@ -220,7 +224,7 @@ const PropertyUI = {
 
         const rentCol = document.createElement('div');
         rentCol.className = 'owner-subfield';
-        rentCol.innerHTML = '<span class="owner-subfield__title">Rent ($/payday)</span>';
+        rentCol.innerHTML = `<span class="owner-subfield__title">${this.t('property.rent_per_payday')}</span>`;
         const rentInput = document.createElement('input');
         rentInput.type = 'number';
         rentInput.className = 'owner-field-input';
@@ -231,7 +235,7 @@ const PropertyUI = {
 
         const slotsCol = document.createElement('div');
         slotsCol.className = 'owner-subfield';
-        slotsCol.innerHTML = '<span class="owner-subfield__title">Max Tenants</span>';
+        slotsCol.innerHTML = `<span class="owner-subfield__title">${this.t('property.max_tenants')}</span>`;
         const slotsInput = document.createElement('input');
         slotsInput.type = 'number';
         slotsInput.className = 'owner-field-input';
@@ -248,7 +252,7 @@ const PropertyUI = {
             ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
             : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
         const rentOn = this.createButton(
-            p.rentEnabled ? 'Update Rent' : 'Enable Rent',
+            p.rentEnabled ? this.t('property.action.update_rent') : this.t('property.action.enable_rent'),
             'rent_on',
             p.id,
             () => ({ price: Number(rentInput.value) }),
@@ -257,7 +261,7 @@ const PropertyUI = {
         );
 
         const saveSlots = this.createButton(
-            'Save Capacity',
+            this.t('property.action.save_capacity'),
             'max_renters',
             p.id,
             () => ({ count: Number(slotsInput.value) }),
@@ -269,7 +273,7 @@ const PropertyUI = {
 
         if (p.rentEnabled) {
             const rentOff = this.createButton(
-                'Disable Rent',
+                this.t('property.action.disable_rent'),
                 'rent_off',
                 p.id,
                 {},
@@ -282,7 +286,7 @@ const PropertyUI = {
 
         const rentHint = document.createElement('div');
         rentHint.className = 'owner-field-hint';
-        rentHint.textContent = `Rent: $${rentInput.min}–$${rentInput.max}/payday · Slots: ${slotsInput.min}–${slotsInput.max}`;
+        rentHint.textContent = this.t('property.rent_limits', { min: rentInput.min, max: rentInput.max, slotMin: slotsInput.min, slotMax: slotsInput.max });
         rentCard.append(rentFieldsRow, rentActions, rentHint);
         grid.appendChild(rentCard);
 
@@ -292,7 +296,7 @@ const PropertyUI = {
         interiorCard.innerHTML = `
             <div class="owner-panel-card__label">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <span>INTERIOR THEME</span>
+                <span>${this.t('property.interior_theme')}</span>
             </div>
         `;
         const interiorSelect = document.createElement('select');
@@ -305,7 +309,7 @@ const PropertyUI = {
             interiorSelect.appendChild(opt);
         });
         const interiorBtn = this.createButton(
-            'Change Interior',
+            this.t('property.action.change_interior'),
             'interior',
             p.id,
             () => ({ key: interiorSelect.value }),
@@ -314,7 +318,7 @@ const PropertyUI = {
         );
         const interiorHint = document.createElement('div');
         interiorHint.className = 'owner-field-hint';
-        interiorHint.textContent = 'Switch layout and decor styling instantly';
+        interiorHint.textContent = this.t('property.interior_hint');
         interiorCard.append(interiorSelect, interiorBtn, interiorHint);
         grid.appendChild(interiorCard);
 
@@ -327,7 +331,7 @@ const PropertyUI = {
             <div class="renters-section-head">
                 <div class="renters-section-title">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                    <span>ACTIVE TENANTS ROSTER</span>
+                    <span>${this.t('property.tenant_roster')}</span>
                     <span class="renters-count-chip">${p.renterCount || 0} / ${p.maxRenters || 1}</span>
                 </div>
             </div>
@@ -337,9 +341,9 @@ const PropertyUI = {
         const loadRenters = document.createElement('button');
         loadRenters.type = 'button';
         loadRenters.className = 'prop-btn prop-btn--sm';
-        loadRenters.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span>Refresh List</span>';
+        loadRenters.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span>${this.t('property.action.refresh')}</span>`;
         loadRenters.addEventListener('click', () => {
-            rentersList.innerHTML = '<span class="renter-loading"><svg class="spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Fetching tenants...</span>';
+            rentersList.innerHTML = `<span class="renter-loading"><svg class="spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ${this.t('property.fetching_tenants')}</span>`;
             post('propertyRenters', { propertyId: p.id });
         });
         rentersHeadRight.appendChild(loadRenters);
@@ -347,7 +351,7 @@ const PropertyUI = {
 
         const rentersList = document.createElement('div');
         rentersList.className = 'house-owner-tools__renter-list';
-        rentersList.innerHTML = '<span class="renter-loading"><svg class="spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Loading tenants list...</span>';
+        rentersList.innerHTML = `<span class="renter-loading"><svg class="spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ${this.t('property.loading_tenants')}</span>`;
         rentersSection.appendChild(rentersList);
         content.appendChild(rentersSection);
 
@@ -359,9 +363,9 @@ const PropertyUI = {
             <div class="sell-card-info">
                 <div class="sell-card-title">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    <span>LIQUIDATE PROPERTY</span>
+                    <span>${this.t('property.liquidate')}</span>
                 </div>
-                <span class="sell-card-desc">Sell residence back to the state for a 70% refund (${this.money(sellRefund)}). All active tenants will be immediately evicted.</span>
+                <span class="sell-card-desc">${this.t('property.liquidate_desc', { percent: meta.sellRefundPercent || 70, amount: this.money(sellRefund) })}</span>
             </div>
         `;
         const sellBtn = document.createElement('button');
@@ -369,7 +373,7 @@ const PropertyUI = {
         sellBtn.className = 'prop-btn prop-btn--danger-action';
         sellBtn.innerHTML = `
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            <span>Sell House (${this.money(sellRefund)})</span>
+            <span>${this.t('property.action.sell', { amount: this.money(sellRefund) })}</span>
         `;
         sellBtn.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -379,7 +383,7 @@ const PropertyUI = {
                 sellBtn.classList.add('is-confirming');
                 sellBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <span>Confirm Sale (${this.money(sellRefund)})</span>
+                    <span>${this.t('property.action.confirm_sale', { amount: this.money(sellRefund) })}</span>
                 `;
                 return;
             }
@@ -421,7 +425,7 @@ const PropertyUI = {
         titleWrap.className = 'house-row__title-wrap';
         titleWrap.innerHTML = `
             <span class="prop-id-badge">#${p.id}</span>
-            <strong class="prop-address">${this.escape(p.label || 'Residence')}</strong>
+            <strong class="prop-address">${this.escape(p.label || this.t('property.default_name'))}</strong>
         `;
         details.appendChild(titleWrap);
 
@@ -445,25 +449,25 @@ const PropertyUI = {
         const levelChip = `
             <span class="prop-chip prop-chip--lvl">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>LVL ${p.minimumLevel || 1}</span>
+                <span>${this.t('property.level', { level: p.minimumLevel || 1 })}</span>
             </span>
         `;
         // Interior
         const interiorChip = `
             <span class="prop-chip prop-chip--interior">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                <span>${this.escape(p.interior || 'Standard')}</span>
+                <span>${this.escape(p.interior || this.t('property.interior.standard'))}</span>
             </span>
         `;
         // Lock
         const lockChip = p.locked
             ? `<span class="prop-chip prop-chip--locked">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span>LOCKED</span>
+                <span>${this.t('property.status.locked')}</span>
                </span>`
             : `<span class="prop-chip prop-chip--open">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                <span>OPEN</span>
+                <span>${this.t('property.status.open')}</span>
                </span>`;
 
         // Owner
@@ -478,7 +482,7 @@ const PropertyUI = {
         const rentersChip = p.owner_character_id
             ? `<span class="prop-chip prop-chip--renters">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span>${p.renterCount || 0}/${p.maxRenters || 1} Renters</span>
+                <span>${this.t('property.renter_count.' + (Number(p.renterCount) === 1 ? 'one' : 'other'), { count: p.renterCount || 0 })} / ${p.maxRenters || 1}</span>
                </span>`
             : '';
 
@@ -486,7 +490,7 @@ const PropertyUI = {
         const rentRateChip = (p.owner_character_id && p.rentEnabled)
             ? `<span class="prop-chip prop-chip--rent-price">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/></svg>
-                <span>${this.money(p.rentPrice)}/payday</span>
+                <span>${this.t('property.rate', { price: this.money(p.rentPrice) })}</span>
                </span>`
             : '';
 
@@ -502,17 +506,17 @@ const PropertyUI = {
         badge.className = 'prop-status-badge';
         if (p.owned) {
             badge.classList.add('is-owned');
-            badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>YOUR PROPERTY</span>`;
+            badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>${this.t('property.yours')}</span>`;
         } else if (p.rented) {
             badge.classList.add('is-rented');
-            badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>RENTING</span>`;
+            badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>${this.t('property.status.renting')}</span>`;
         } else if (p.owner_character_id) {
             if (p.rentEnabled) {
                 badge.classList.add('is-rentable');
-                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>RENT ${this.money(p.rentPrice)}/PAYDAY</span>`;
+                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>${this.t('property.rate', { price: this.money(p.rentPrice) })}</span>`;
             } else {
                 badge.classList.add('is-occupied');
-                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>OCCUPIED</span>`;
+                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>${this.t('property.status.occupied')}</span>`;
             }
         } else {
             if (p.forSale) {
@@ -520,7 +524,7 @@ const PropertyUI = {
                 badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg><span>${this.money(p.price)}</span>`;
             } else {
                 badge.classList.add('is-unavailable');
-                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>UNAVAILABLE</span>`;
+                badge.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>${this.t('property.status.unavailable')}</span>`;
             }
         }
         side.appendChild(badge);
@@ -532,7 +536,7 @@ const PropertyUI = {
         // Enter
         if (p.access || !p.locked) {
             actions.appendChild(this.createButton(
-                'Enter',
+                this.t('common.enter'),
                 'enter',
                 p.id,
                 {},
@@ -544,7 +548,7 @@ const PropertyUI = {
         // Purchase
         if (!p.owner_character_id && p.forSale) {
             actions.appendChild(this.createButton(
-                'Purchase',
+                this.t('property.action.purchase'),
                 'buy',
                 p.id,
                 {},
@@ -556,7 +560,7 @@ const PropertyUI = {
         // Rent Room
         if (p.owner_character_id && !p.access && p.rentEnabled && Number(p.renterCount) < Number(p.maxRenters)) {
             actions.appendChild(this.createButton(
-                'Rent Room',
+                this.t('property.action.rent_room'),
                 'rent',
                 p.id,
                 {},
@@ -566,19 +570,19 @@ const PropertyUI = {
         } else if (p.owner_character_id && !p.access && !p.rentEnabled) {
             const hint = document.createElement('div');
             hint.className = 'house-row__rent-hint';
-            hint.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Owner not accepting renters</span>';
+            hint.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${this.t('property.owner_no_rent')}</span>`;
             details.appendChild(hint);
         } else if (p.owner_character_id && !p.access && p.rentEnabled && Number(p.renterCount) >= Number(p.maxRenters)) {
             const hint = document.createElement('div');
             hint.className = 'house-row__rent-hint';
-            hint.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Rental slots full</span>';
+            hint.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${this.t('property.rental_full')}</span>`;
             details.appendChild(hint);
         }
 
         // Set Home
         if (p.access) {
             actions.appendChild(this.createButton(
-                'Set Home',
+                this.t('property.action.set_home'),
                 'sethome',
                 p.id,
                 {},
@@ -590,7 +594,7 @@ const PropertyUI = {
         // End lease
         if (p.rented) {
             actions.appendChild(this.createButton(
-                'End Lease',
+                this.t('property.action.end_lease'),
                 'unrent',
                 p.id,
                 {},
@@ -603,7 +607,7 @@ const PropertyUI = {
         // Lock / Unlock
         if (p.owned) {
             actions.appendChild(this.createButton(
-                p.locked ? 'Unlock' : 'Lock',
+                p.locked ? this.t('common.unlock') : this.t('common.lock'),
                 'lock',
                 p.id,
                 {},
@@ -621,7 +625,7 @@ const PropertyUI = {
             toggle.className = 'prop-btn prop-btn--manage';
             toggle.innerHTML = `
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                <span>Manage</span>
+                <span>${this.t('property.action.manage')}</span>
             `;
             toggle.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -676,8 +680,8 @@ const PropertyUI = {
                     <div class="house-empty-icon">
                         <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
-                    <strong>No Matching Residences</strong>
-                    <span>Try changing your search term or select another category filter.</span>
+                    <strong>${this.t('property.no_match.title')}</strong>
+                    <span>${this.t('property.no_match.description')}</span>
                 `;
                 list.appendChild(tempEmpty);
             }
@@ -719,6 +723,8 @@ const PropertyUI = {
 
     renderList(container, data) {
         if (!container) return;
+        this._lastContainer = container;
+        this._lastData = data;
         container.innerHTML = '';
         this.setMeta(data.meta);
         this.setupControls();
@@ -732,8 +738,8 @@ const PropertyUI = {
                     <div class="house-empty-icon">
                         <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
-                    <strong>No Properties Available</strong>
-                    <span>No residences have been created yet. An administrator can create one using /acreatehouse.</span>
+                    <strong>${this.t('property.empty.title')}</strong>
+                    <span>${this.t('property.empty.description')}</span>
                 </li>
             `;
         }
@@ -755,7 +761,7 @@ const PropertyUI = {
                 list.innerHTML = `
                     <div class="renter-empty">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span>No active tenants registered to this residence</span>
+                        <span>${this.t('property.no_tenants')}</span>
                     </div>
                 `;
                 return;
@@ -766,12 +772,12 @@ const PropertyUI = {
                 item.innerHTML = `
                     <div class="renter-info">
                         <span class="renter-id">#${row.character_id}</span>
-                        <strong class="renter-name">${this.escape(row.name || 'Resident')}</strong>
-                        <span class="renter-rate">${this.money(row.rent_price)}/payday</span>
+                        <strong class="renter-name">${this.escape(row.name || this.t('property.resident'))}</strong>
+                        <span class="renter-rate">${this.t('property.rate', { price: this.money(row.rent_price) })}</span>
                     </div>
                 `;
                 const kickBtn = this.createButton(
-                    'Evict',
+                    this.t('property.action.evict'),
                     'kick_renter',
                     propertyId,
                     { characterId: row.character_id },
@@ -787,3 +793,10 @@ const PropertyUI = {
 };
 
 window.PropertyUI = PropertyUI;
+
+window.addEventListener('sunset:localeChanged', () => {
+    if (!PropertyUI._lastContainer || !PropertyUI._lastData) return;
+    const activeId = PropertyUI.activeProperty?.id;
+    PropertyUI.renderList(PropertyUI._lastContainer, PropertyUI._lastData);
+    if (activeId) PropertyUI.refreshManageView(activeId, PropertyUI._lastData.properties);
+});

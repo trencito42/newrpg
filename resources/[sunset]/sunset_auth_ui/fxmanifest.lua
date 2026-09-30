@@ -23,4 +23,4 @@ client_scripts {
 -- mutual dependency would be a hard cycle). Linkage is runtime-only:
 -- sunset_auth pushes state via exports.sunset_auth_ui:Send/Show, and this
 -- resource forwards NUI callbacks as 'sunset:nui:<name>' client events.
-dependencies { 'sunset_core' }
+dependencies { 'sunset_core', 'sunset_ui' }

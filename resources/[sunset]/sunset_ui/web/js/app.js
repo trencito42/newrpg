@@ -18,31 +18,31 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json; charset=UTF-8' },
             body: JSON.stringify(data),
-        }).catch(() => ({}));
+        }).then((response) => response.json().catch(() => ({ ok: response.ok }))).catch(() => ({}));
     }
     window.post = post;
 
     function formatMoney(amount) {
         if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '$0';
-        return '$' + Math.floor(Number(amount) || 0).toLocaleString('en-US');
+        return window.I18n?.money(amount) || ('$' + Math.floor(Number(amount) || 0).toLocaleString('en-US'));
     }
     window.formatMoney = formatMoney;
 
     const NOTIFY_META = {
         info: {
-            label: 'NOTICE',
+            labelKey: 'common.notice',
             icon: '<circle cx="12" cy="12" r="9"/><path d="M12 8v1M12 11v5"/>',
         },
         success: {
-            label: 'CONFIRMED',
+            labelKey: 'common.confirmed',
             icon: '<path d="M5 12l5 5L19 7"/>',
         },
         warning: {
-            label: 'ATTENTION',
+            labelKey: 'common.attention',
             icon: '<path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 17h.01"/>',
         },
         error: {
-            label: 'ALERT',
+            labelKey: 'common.alert',
             icon: '<path d="M6 6l12 12M18 6L6 18"/>',
         },
     };
@@ -484,7 +484,7 @@
 
             const title = document.createElement('div');
             title.className = 'notification__title';
-            title.textContent = meta.label;
+            title.textContent = window.I18n?.t(meta.labelKey) || meta.labelKey;
 
             const copy = document.createElement('div');
             copy.className = 'notification__message';
@@ -600,6 +600,10 @@
             const payload = data.data && typeof data.data === 'object' ? data.data : data;
 
             // Global shell actions
+            if (action === 'localeSet') {
+                window.I18n?.setLocale?.(payload.locale);
+                return;
+            }
             if (action === 'notify' || action === 'notification') {
                 this.notify(payload.message || payload.text, payload.type || payload.kind, payload.duration || payload.dur);
                 return;

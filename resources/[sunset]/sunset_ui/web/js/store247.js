@@ -22,21 +22,16 @@ const StoreUI = {
         misc: 'ph-shopping-bag',
     },
 
-    CAT_LABELS: {
-        all: 'All Items',
-        food: 'Food',
-        drinks: 'Drinks',
-        medical: 'Medical',
-        supplies: 'Supplies',
-        materials: 'Materials',
-        tools: 'Tools',
-        ammo: 'Ammo',
-        electronics: 'Electronics',
-        utility: 'Safety & Utility',
-        melee: 'Melee',
-        handguns: 'Handguns',
-        shotguns: 'Shotguns',
-        misc: 'Misc',
+    titleKey(title, isFishing) {
+        const known = {
+            'SELL FISH': 'store.sell_fish',
+            'FISHING SUPPLY': 'store.fishing_supply',
+            '24/7 — SELL FISH': 'store.supermarket_sell_fish',
+            'Fishing Shop': 'store.fishing_shop',
+            '24/7 Supermarket': 'store.supermarket',
+        };
+        const normalized = String(title || '').trim();
+        return known[normalized] || (!normalized ? (isFishing ? 'store.fishing_shop' : 'store.supermarket') : null);
     },
 
     init() {
@@ -73,6 +68,13 @@ const StoreUI = {
             if (document.getElementById('store-forza')?.classList.contains('hidden')) return;
             if (event.key === 'Enter') this.stopBuy();
         });
+        window.addEventListener('sunset:localeChanged', () => {
+            if (!this.state) return;
+            this.renderTitle();
+            this.renderCategories();
+            this.renderItems();
+            this.renderCheckout();
+        });
     },
 
     post(action, data = {}) {
@@ -103,14 +105,21 @@ const StoreUI = {
     },
 
     formatMoney(amount) {
-        const n = Math.floor(Number(amount) || 0);
-        return `$${n.toLocaleString('en-US')}`;
+        return I18n.money(Math.floor(Number(amount) || 0));
+    },
+
+    renderTitle() {
+        const title = document.getElementById('store-title');
+        if (!title || !this.state) return;
+        title.textContent = this.state.customTitle || I18n.t(this.state.titleKey);
     },
 
     show(data = {}) {
         this.init();
         const isFishing = data.mode === 'buy' || data.mode === 'sell';
         const shop = data.shop || {};
+        const rawTitle = isFishing ? data.title : shop.label;
+        const localizedTitleKey = this.titleKey(rawTitle, isFishing);
         const items = isFishing ? (data.items || []) : (shop.items || []);
         const categories = ['all'];
         const seen = new Set();
@@ -126,7 +135,8 @@ const StoreUI = {
         this.state = {
             shopId: data.shopId,
             businessId: data.businessId,
-            label: isFishing ? (data.title || 'Fishing Shop') : (shop.label || '24/7 Supermarket'),
+            titleKey: localizedTitleKey,
+            customTitle: localizedTitleKey ? null : String(rawTitle || ''),
             items: items.map((row) => ({
                 ...row,
                 price: uiMode === 'fishing-sell' ? (row.unitValue || row.price || 0) : (row.price || 0),
@@ -145,8 +155,7 @@ const StoreUI = {
         panel?.setAttribute('aria-hidden', 'false');
         document.body.classList.add('store-open');
 
-        const title = document.getElementById('store-title');
-        if (title) title.textContent = this.state.label;
+        this.renderTitle();
 
         this.renderCategories();
         this.renderItems();
@@ -179,7 +188,7 @@ const StoreUI = {
             btn.className = 'st-cat-item' + (this.state.activeCategory === cat ? ' is-active' : '');
             btn.dataset.storeCat = cat;
             const icon = this.CAT_ICONS[cat] || 'ph-package';
-            const label = this.CAT_LABELS[cat] || cat;
+            const label = I18n.t(`store.category.${cat}`);
             btn.innerHTML = `<i class="ph-fill ${icon}"></i> <span>${label}</span>`;
             list.appendChild(btn);
         });
@@ -201,7 +210,7 @@ const StoreUI = {
         grid.innerHTML = '';
         const rows = this.filteredItems();
         if (!rows.length) {
-            grid.innerHTML = '<div class="st-empty-state" style="grid-column:1/-1;min-height:200px"><span>No items in this category</span></div>';
+            grid.innerHTML = `<div class="st-empty-state" style="grid-column:1/-1;min-height:200px"><span>${I18n.t('store.empty_category')}</span></div>`;
             return;
         }
         rows.forEach((row) => {
@@ -277,8 +286,8 @@ const StoreUI = {
         const buyText = document.getElementById('store-buy-text');
         if (buyText) {
             buyText.innerHTML = this.state.uiMode === 'fishing-sell'
-                ? '<span class="st-key-hint">ENTER</span> Sell'
-                : '<span class="st-key-hint">ENTER</span> Pay';
+                ? `<span class="st-key-hint">${I18n.t('store.key_enter')}</span> ${I18n.t('store.sell')}`
+                : `<span class="st-key-hint">${I18n.t('store.key_enter')}</span> ${I18n.t('store.pay')}`;
         }
 
         const icon = document.getElementById('store-preview-icon');
@@ -286,7 +295,7 @@ const StoreUI = {
         const name = document.getElementById('store-preview-name');
         if (name) name.textContent = row.label || row.item;
         const price = document.getElementById('store-preview-price');
-        const unitLabel = this.state.uiMode === 'fishing-sell' ? 'each (sell)' : 'each';
+        const unitLabel = I18n.t(this.state.uiMode === 'fishing-sell' ? 'store.each_sell' : 'store.each');
         if (price) {
             price.textContent = `${this.formatMoney(row.price)} / ${unitLabel}`;
             price.style.color = this.state.uiMode === 'fishing-sell' ? 'var(--st-success)' : '';
@@ -294,15 +303,15 @@ const StoreUI = {
         const weight = document.getElementById('store-preview-weight');
         if (weight) {
             const requirements = [];
-            if (row.minLevel) requirements.push(`Level ${row.minLevel}`);
-            if (row.requiredLicense === 'weapon') requirements.push('Firearm License');
-            const weightText = row.weight != null ? `Weight: ${Number(row.weight).toFixed(1)} kg` : '';
+            if (row.minLevel) requirements.push(I18n.t('store.level_requirement', { level: row.minLevel }));
+            if (row.requiredLicense === 'weapon') requirements.push(I18n.t('store.firearm_license'));
+            const weightText = row.weight != null ? I18n.t('store.weight', { weight: I18n.number(Number(row.weight), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) : '';
             weight.textContent = [weightText, requirements.join(' · ')].filter(Boolean).join(' — ');
         }
         const qty = document.getElementById('store-qty-value');
         if (qty) qty.textContent = String(this.state.qty);
         const totalEl = document.getElementById('store-total-value');
-        if (totalEl) totalEl.textContent = total.toLocaleString('en-US');
+        if (totalEl) totalEl.textContent = I18n.number(total, { maximumFractionDigits: 0 });
     },
 
     startBuy() {
@@ -321,7 +330,7 @@ const StoreUI = {
                 this.buyPending = true;
                 const text = document.getElementById('store-buy-text');
                 if (text) {
-                    text.innerHTML = 'Processing...';
+                    text.textContent = I18n.t('store.processing');
                     text.style.color = '#000';
                 }
                 const btn = document.getElementById('store-buy');
@@ -407,8 +416,8 @@ const StoreUI = {
         if (text) {
             const isSell = this.state?.uiMode === 'fishing-sell';
             text.innerHTML = isSell
-                ? '<span class="st-key-hint">ENTER</span> Sell'
-                : '<span class="st-key-hint">ENTER</span> Pay';
+                ? `<span class="st-key-hint">${I18n.t('store.key_enter')}</span> ${I18n.t('store.sell')}`
+                : `<span class="st-key-hint">${I18n.t('store.key_enter')}</span> ${I18n.t('store.pay')}`;
             text.style.color = '';
         }
         const btn = document.getElementById('store-buy');

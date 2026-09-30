@@ -1,29 +1,29 @@
 <div id="ticket" class="overlay-panel hidden">
         <div class="overlay-panel__box">
-            <h2>Issue Citation</h2>
-            <label class="field"><span>Target ID</span><input type="number" id="ticket-target" min="1"></label>
-            <label class="field"><span>Violation</span><select id="ticket-violation"></select></label>
-            <label class="field"><span>Amount ($)</span><input type="number" id="ticket-amount" min="1" value="250" readonly></label>
-            <label class="field"><span>Reason</span><input type="text" id="ticket-reason" maxlength="128" readonly></label>
+            <h2><span data-i18n="ui.panels.issue_citation"></span></h2>
+            <label class="field"><span><span data-i18n="ui.panels.target_id"></span></span><input type="number" id="ticket-target" min="1"></label>
+            <label class="field"><span><span data-i18n="ui.panels.violation"></span></span><select id="ticket-violation"></select></label>
+            <label class="field"><span><span data-i18n="ui.panels.amount"></span></span><input type="number" id="ticket-amount" min="1" value="250" readonly></label>
+            <label class="field"><span><span data-i18n="ui.panels.reason"></span></span><input type="text" id="ticket-reason" maxlength="128" readonly></label>
             <div class="btn-row">
-                <button type="button" class="btn btn--primary" id="ticket-issue">ISSUE CITATION</button>
+                <button type="button" class="btn btn--primary" id="ticket-issue"><span data-i18n="ui.panels.issue_citation_a267fe"></span></button>
             </div>
-            <button type="button" class="panel-close" id="ticket-close">Close</button>
+            <button type="button" class="panel-close" id="ticket-close"><span data-i18n="common.close"></span></button>
         </div>
     </div>
 
     <!-- TICKET RECEIVE (civilian pay/refuse) -->
     <div id="ticket-receive" class="overlay-panel hidden">
         <div class="overlay-panel__box ticket-receive">
-            <div class="ticket-receive__badge">CITATION</div>
-            <h2>Traffic Citation</h2>
-            <p class="ticket-receive__officer" id="ticket-receive-officer">Issued by Officer —</p>
+            <div class="ticket-receive__badge"><span data-i18n="ui.panels.citation"></span></div>
+            <h2><span data-i18n="ui.panels.traffic_citation"></span></h2>
+            <p class="ticket-receive__officer" id="ticket-receive-officer"><span data-i18n="ui.panels.issued_by_officer"></span></p>
             <div class="ticket-receive__amount" id="ticket-receive-amount">$250</div>
             <p class="ticket-receive__reason" id="ticket-receive-reason">—</p>
-            <p class="ticket-receive__hint">Pay now from bank or cash. Refusing may increase wanted level.</p>
+            <p class="ticket-receive__hint"><span data-i18n="ui.panels.pay_now_from_bank_or_cash_refusing_may_increase"></span></p>
             <div class="btn-row">
-                <button type="button" class="btn btn--primary" id="ticket-pay">PAY FINE</button>
-                <button type="button" class="btn btn--ghost" id="ticket-refuse">REFUSE</button>
+                <button type="button" class="btn btn--primary" id="ticket-pay"><span data-i18n="ui.panels.pay_fine"></span></button>
+                <button type="button" class="btn btn--ghost" id="ticket-refuse"><span data-i18n="ui.panels.refuse"></span></button>
             </div>
         </div>
     </div>
@@ -32,11 +32,11 @@
     <div id="servicecalls" class="overlay-panel hidden">
         <div class="overlay-panel__box overlay-panel__box--wide servicecalls-panel">
             <div class="servicecalls-header">
-                <h2>Service Calls</h2>
-                <span class="servicecalls-count" id="servicecalls-count">0 active</span>
+                <h2><span data-i18n="ui.panels.service_calls"></span></h2>
+                <span class="servicecalls-count" id="servicecalls-count"><span data-i18n="ui.panels.0_active"></span></span>
             </div>
             <ul class="servicecalls-list" id="servicecalls-list"></ul>
-            <button type="button" class="panel-close" id="servicecalls-close">Close (ESC)</button>
+            <button type="button" class="panel-close" id="servicecalls-close"><span data-i18n="ui.panels.close_esc"></span></button>
         </div>
     </div>
 
@@ -44,15 +44,15 @@
     <div id="jobs-panel" class="overlay-panel hidden">
         <div class="overlay-panel__box overlay-panel__box--wide jobs-menu__shell">
             <div class="jobs-menu__header">
-                <h2 id="jobs-panel-title">Jobs</h2>
-                <p class="jobs-menu__current">Job curent: <strong id="jobs-panel-current">Neangajat</strong></p>
-                <p class="jobs-menu__session hidden" id="jobs-panel-session">Tura activa: <strong></strong></p>
+                <h2 id="jobs-panel-title"><span data-i18n="ui.panels.jobs"></span></h2>
+                <p class="jobs-menu__current"><span data-i18n="ui.panels.job_curent"></span> <strong id="jobs-panel-current"><span data-i18n="ui.panels.neangajat"></span></strong></p>
+                <p class="jobs-menu__session hidden" id="jobs-panel-session"><span data-i18n="ui.panels.tura_activa"></span> <strong></strong></p>
             </div>
             <div class="jobs-menu__list" id="jobs-panel-list"></div>
             <div class="jobs-menu__actions">
-                <button type="button" class="jobs-menu__button jobs-menu__button--primary" id="jobs-panel-work" disabled>Incepe Tura</button>
-                <button type="button" class="jobs-menu__button jobs-menu__button--danger" id="jobs-panel-cancel" disabled>Anuleaza Tura</button>
-                <button type="button" class="jobs-menu__button" id="jobs-panel-close">Inchide</button>
+                <button type="button" class="jobs-menu__button jobs-menu__button--primary" id="jobs-panel-work" disabled><span data-i18n="ui.panels.incepe_tura"></span></button>
+                <button type="button" class="jobs-menu__button jobs-menu__button--danger" id="jobs-panel-cancel" disabled><span data-i18n="ui.panels.anuleaza_tura"></span></button>
+                <button type="button" class="jobs-menu__button" id="jobs-panel-close"><span data-i18n="ui.panels.inchide"></span></button>
             </div>
         </div>
     </div>
@@ -61,27 +61,27 @@
     <div id="skills" class="overlay-panel hidden">
         <div class="overlay-panel__box overlay-panel__box--wide skills-panel">
             <div class="skills-header">
-                <h2>Skills</h2>
-                <span class="skills-sub">Job experience &amp; progression</span>
+                <h2><span data-i18n="ui.panels.skills"></span></h2>
+                <span class="skills-sub"><span data-i18n="ui.panels.job_experience_progression"></span></span>
             </div>
             <ul class="skills-list" id="skills-list"></ul>
-            <button type="button" class="panel-close" id="skills-close">Close (ESC)</button>
+            <button type="button" class="panel-close" id="skills-close"><span data-i18n="ui.panels.close_esc"></span></button>
         </div>
     </div>
 
     <div id="help" class="overlay-panel overlay-panel--peek hidden">
         <div class="overlay-panel__box overlay-panel__box--wide help-panel">
-            <div class="help-header"><h2>Commands</h2><span class="help-sub" id="help-sub">Available for you right now</span></div>
+            <div class="help-header"><h2><span data-i18n="ui.panels.commands"></span></h2><span class="help-sub" id="help-sub"><span data-i18n="ui.panels.available_for_you_right_now"></span></span></div>
             <div id="help-body" class="help-body"></div>
-            <button type="button" class="panel-close" id="help-close">Close (ESC)</button>
+            <button type="button" class="panel-close" id="help-close"><span data-i18n="ui.panels.close_esc"></span></button>
         </div>
     </div>
     <div id="documents" class="overlay-panel hidden">
-        <div class="overlay-panel__box"><h2 id="documents-title">Documents</h2><div id="documents-body" class="documents-body"></div><button type="button" class="panel-close" id="documents-close">Close</button></div>
+        <div class="overlay-panel__box"><h2 id="documents-title"><span data-i18n="ui.panels.documents"></span></h2><div id="documents-body" class="documents-body"></div><button type="button" class="panel-close" id="documents-close"><span data-i18n="common.close"></span></button></div>
     </div>
     <div id="emotes" class="overlay-panel hidden">
-        <div class="overlay-panel__box"><h2>Emotes</h2><ul class="panel-list" id="emotes-list"></ul><button type="button" class="panel-close" id="emotes-close">Close</button></div>
+        <div class="overlay-panel__box"><h2><span data-i18n="ui.panels.emotes"></span></h2><ul class="panel-list" id="emotes-list"></ul><button type="button" class="panel-close" id="emotes-close"><span data-i18n="common.close"></span></button></div>
     </div>
     <div id="crafting" class="overlay-panel hidden">
-        <div class="overlay-panel__box overlay-panel__box--wide"><h2 id="crafting-title">Crafting</h2><ul class="panel-list" id="crafting-list"></ul><button type="button" class="panel-close" id="crafting-close">Close</button></div>
+        <div class="overlay-panel__box overlay-panel__box--wide"><h2 id="crafting-title"><span data-i18n="ui.panels.crafting"></span></h2><ul class="panel-list" id="crafting-list"></ul><button type="button" class="panel-close" id="crafting-close"><span data-i18n="common.close"></span></button></div>
     </div>

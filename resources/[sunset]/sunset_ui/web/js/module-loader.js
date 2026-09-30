@@ -301,6 +301,7 @@
                     mountedWrapper.className = 'ui-module-container';
                     mountedWrapper.innerHTML = htmlText;
                     root.appendChild(mountedWrapper);
+                    window.I18n?.translateTree?.(mountedWrapper);
                 }
 
                 // 3. Load JS scripts sequentially
@@ -340,7 +341,7 @@
                 document.getElementById(`module-${name}`)?.remove();
                 pendingModuleQueues.delete(name);
                 if (window.App && typeof window.App.notify === 'function') {
-                    window.App.notify('An interface failed to load. Please reopen it or reconnect.', 'error');
+                    window.App.notify(window.I18n?.t('common.interface_failed') || 'Interface unavailable.', 'error');
                 }
                 return false;
             } finally {

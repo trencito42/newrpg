@@ -52,6 +52,10 @@ local function message(source, text, kind)
     end
 end
 
+local function t(source, key, params)
+    return exports.sunset_core:TFor(source, key, params)
+end
+
 local PropertyChatHandlers = {}
 local function registerPropertyCommand(name, handler)
     name = string.lower(name)
@@ -59,9 +63,18 @@ local function registerPropertyCommand(name, handler)
     RegisterCommand(name, handler, false)
 end
 
-local function publicRow(row, char)
+-- [AUDIT SQL-1] publicRow now accepts an optional pre-fetched rentedIds set so
+-- callers that process many rows (getProperties, getPropertiesPage) can batch
+-- the rental lookup in a single query instead of one query per row (N+1).
+local function publicRow(row, char, rentedIds)
     local owned = tonumber(row.owner_character_id) == tonumber(char.id)
-    local rented = activeRental(char.id, row.id) ~= nil
+    local rented
+    if rentedIds then
+        rented = rentedIds[tonumber(row.id)] == true
+    else
+        -- Fallback: single-row context (e.g. inline property() calls) — one query is fine.
+        rented = activeRental(char.id, row.id) ~= nil
+    end
     return {
         id=row.id, label=row.label, description=row.description, price=tonumber(row.price) or 0, entry=decodePos(row.entry),
         owner_character_id=row.owner_character_id,
@@ -75,6 +88,17 @@ local function publicRow(row, char)
     }
 end
 
+-- Fetch this character's active rental property IDs in one query.
+local function fetchRentedIds(charId)
+    local rentalRows = MySQL.query.await(
+        'SELECT property_id FROM property_rentals WHERE character_id=? AND active=1',
+        { charId }
+    ) or {}
+    local set = {}
+    for _, r in ipairs(rentalRows) do set[tonumber(r.property_id)] = true end
+    return set
+end
+
 exports.sunset_core:RegisterCallback('sunset:getProperties', function(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return {} end
@@ -83,8 +107,76 @@ exports.sunset_core:RegisterCallback('sunset:getProperties', function(source)
       (SELECT COUNT(*) FROM property_rentals r WHERE r.property_id=p.id AND r.active=1) renter_count
       FROM properties p LEFT JOIN characters c ON c.id=p.owner_character_id
       WHERE p.enabled=1 ORDER BY p.price,p.id]]) or {}
-    for i,row in ipairs(rows) do rows[i]=publicRow(row,char) end
+    -- [AUDIT SQL-1] Pre-fetch all active rental IDs for this char in one query (was N+1).
+    local rentedIds = fetchRentedIds(char.id)
+    for i,row in ipairs(rows) do rows[i]=publicRow(row,char,rentedIds) end
     return rows
+end)
+
+-- [AUDIT PAGINATION] Server-side filtered/sorted page for the /properties NUI.
+-- Input:  page (1-based), pageSize, search (string), filter ('all'|'owned'|'rented'|'forsale'), sort ('price'|'id'|'name')
+-- Output: { rows, total, page, totalPages }
+exports.sunset_core:RegisterCallback('sunset:getPropertiesPage', function(source, opts)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return { rows={}, total=0, page=1, totalPages=0 } end
+    opts = type(opts) == 'table' and opts or {}
+    local page     = math.max(1, tonumber(opts.page) or 1)
+    local pageSize = math.max(1, math.min(50, tonumber(opts.pageSize) or 20))
+    local search   = type(opts.search) == 'string' and opts.search:match('^%s*(.-)%s*$') or ''
+    local filter   = tostring(opts.filter or 'all')
+    local sort     = tostring(opts.sort or 'price')
+
+    -- Build WHERE clause fragments
+    local conditions = { 'p.enabled=1' }
+    local params = {}
+
+    if search ~= '' then
+        conditions[#conditions+1] = '(p.label LIKE ? OR p.description LIKE ?)'
+        local like = '%' .. search .. '%'
+        params[#params+1] = like
+        params[#params+1] = like
+    end
+
+    if filter == 'owned' then
+        conditions[#conditions+1] = 'p.owner_character_id=?'
+        params[#params+1] = char.id
+    elseif filter == 'rented' then
+        conditions[#conditions+1] = 'EXISTS(SELECT 1 FROM property_rentals r WHERE r.property_id=p.id AND r.character_id=? AND r.active=1)'
+        params[#params+1] = char.id
+    elseif filter == 'forsale' then
+        conditions[#conditions+1] = 'p.for_sale=1 AND p.owner_character_id IS NULL'
+    end
+
+    local whereClause = 'WHERE ' .. table.concat(conditions, ' AND ')
+
+    local orderMap = { price='p.price,p.id', id='p.id', name='p.label' }
+    local orderBy = orderMap[sort] or 'p.price,p.id'
+
+    local countParams = {}; for _, v in ipairs(params) do countParams[#countParams+1] = v end
+    local total = tonumber(MySQL.scalar.await(
+        'SELECT COUNT(*) FROM properties p ' .. whereClause,
+        countParams
+    )) or 0
+
+    local offset = (page - 1) * pageSize
+    local pageParams = {}; for _, v in ipairs(params) do pageParams[#pageParams+1] = v end
+    pageParams[#pageParams+1] = pageSize
+    pageParams[#pageParams+1] = offset
+
+    local rows = MySQL.query.await(([[
+        SELECT p.*,
+          TRIM(CONCAT(COALESCE(c.firstname,''),' ',COALESCE(c.lastname,''))) owner_name,
+          (SELECT COUNT(*) FROM property_rentals r WHERE r.property_id=p.id AND r.active=1) renter_count
+        FROM properties p
+        LEFT JOIN characters c ON c.id=p.owner_character_id
+        %s ORDER BY %s LIMIT ? OFFSET ?
+    ]]):format(whereClause, orderBy), pageParams) or {}
+
+    local rentedIds = fetchRentedIds(char.id)
+    for i, row in ipairs(rows) do rows[i] = publicRow(row, char, rentedIds) end
+
+    local totalPages = math.max(1, math.ceil(total / pageSize))
+    return { rows=rows, total=total, page=page, totalPages=totalPages }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:getSpawnHomes', function(source)
@@ -106,7 +198,7 @@ local function spawnCoords(pos)
 end
 
 local function resolveSpawnChoiceForChar(source, char, choice, propertyId)
-    if not char then return nil, 'Character data is unavailable. Please reconnect.' end
+    if not char then return nil, t(source, 'property.character_unavailable') end
     choice = tostring(choice or '')
     if source and source > 0 then
         local jailed = false
@@ -124,8 +216,8 @@ local function resolveSpawnChoiceForChar(source, char, choice, propertyId)
         pos = decodePos(char.position)
     elseif choice == 'house' then
         local prop = property(propertyId)
-        if not prop or not dbBool(prop.enabled) then return nil, 'That house is no longer available.' end
-        if not accessible(char, prop) then return nil, 'You no longer own or rent that house.' end
+        if not prop or not dbBool(prop.enabled) then return nil, t(source, 'property.unavailable') end
+        if not accessible(char, prop) then return nil, t(source, 'property.access_lost') end
         pos = decodePos(prop.entry)
         if SunsetBoot and SunsetBoot.IsDebug() then
             print(('^5[BOOTV src=%s] properties:resolve_house id=%s entry=%.2f,%.2f,%.2f^7'):format(
@@ -151,13 +243,13 @@ local function resolveSpawnChoiceForChar(source, char, choice, propertyId)
                 pos = { x = hq.x, y = hq.y, z = hq.z, w = heading }
             end
         end
-        if not pos then return nil, 'Faction HQ spawn is only available to faction members.' end
+        if not pos then return nil, t(source, 'property.hq_members_only') end
     else
-        return nil, 'Invalid spawn location.'
+        return nil, t(source, 'property.spawn_invalid')
     end
 
     local resolved = spawnCoords(pos)
-    if not resolved then return nil, 'That spawn location has invalid coordinates.' end
+    if not resolved then return nil, t(source, 'property.spawn_coords_invalid') end
     return resolved
 end
 
@@ -179,7 +271,7 @@ end)
 -- Never resolves to the last position (removed from the game).
 exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, t(source, 'no_character') end
 
     -- jail lock wins over everything (resolveSpawnChoiceForChar handles it too)
     local jailed = false
@@ -252,14 +344,14 @@ end
 exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
     local char=exports.sunset_core:GetCharacter(source)
     local prop=property(id)
-    if not char then return nil,'Character data is unavailable.' end
-    if not prop or not dbBool(prop.enabled) then return nil,'This house does not exist or is disabled.' end
-    if not nearby(source,prop) then return nil,'Stand inside this house entrance marker to buy it.' end
-    if not dbBool(prop.for_sale) then return nil,'This house is not for sale. An admin can enable it with /ahouseedit '..prop.id..' sale 1.' end
-    if prop.owner_character_id then return nil,'This house already has an owner.' end
+    if not char then return nil,t(source, 'property.character_unavailable') end
+    if not prop or not dbBool(prop.enabled) then return nil,t(source, 'property.not_found') end
+    if not nearby(source,prop) then return nil,t(source, 'property.buy.nearby') end
+    if not dbBool(prop.for_sale) then return nil,t(source, 'property.buy.not_for_sale') end
+    if prop.owner_character_id then return nil,t(source, 'property.buy.owned') end
     local currentLevel, requiredLevel = tonumber(char.level) or 1, tonumber(prop.minimum_level) or 1
     if currentLevel < requiredLevel then
-        return nil,('Purchase blocked: this house requires level %d, but you are level %d. No money was charged. Earn RP at payday and use /buylevel.'):format(requiredLevel,currentLevel)
+        return nil,t(source, 'property.buy.level', { required = requiredLevel, current = currentLevel })
     end
     local maxOwned = tonumber(SunsetProperties.MaxOwnedPerCharacter) or 0
     if maxOwned > 0 then
@@ -268,12 +360,12 @@ exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
             { char.id }
         )) or 0
         if ownedCount >= maxOwned then
-            return nil, ('You can own at most %d houses. Sell one before buying another.'):format(maxOwned)
+            return nil, t(source, 'property.buy.limit', { limit = maxOwned })
         end
     end
     local price=tonumber(prop.price) or 0
     local bank, cash = exports.sunset_core:GetMoney(source,'bank'), exports.sunset_core:GetMoney(source,'cash')
-    if bank<price and cash<price then return nil,('Purchase blocked: the house costs $%d. You have $%d in bank and $%d cash; the full price must be in one account. No money was charged.'):format(price,bank,cash) end
+    if bank<price and cash<price then return nil,t(source, 'property.buy.money', { price = price, bank = bank, cash = cash }) end
     local paidFrom = bank >= price and 'bank' or 'cash'
     local defaultRent = math.floor(tonumber(SunsetProperties.DefaultRentPrice) or 500)
     local callOk, committed = pcall(function()
@@ -296,27 +388,27 @@ exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
         end)
     end)
     if not callOk or not committed then
-        return nil,'Purchase was cancelled because the house, ownership limit, or balance changed. No money was charged.'
+        return nil,t(source, 'property.buy.changed')
     end
     exports.sunset_core:RefreshMoney(source)
     exports.sunset_core:SetHomeProperty(source, prop.id)
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('You bought %s for $%d. Rent is open at $%d/payday — change it in Owner settings or /houserent.'):format(prop.label,price,defaultRent)
+    return true,t(source, 'property.buy.success', { property = prop.label, price = price, rent = defaultRent })
 end)
 
 exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
     local char=exports.sunset_core:GetCharacter(source)
     local prop=property(id)
-    if not char then return nil,'Character data is unavailable.' end
-    if not prop or not prop.owner_character_id then return nil,'This house has no owner and cannot be rented.' end
-    if not nearby(source,prop) then return nil,'Stand inside this house entrance marker to rent it.' end
-    if tonumber(prop.owner_character_id)==tonumber(char.id) then return nil,'You own this house already.' end
-    if not dbBool(prop.rent_enabled) then return nil,'The owner is not accepting renters.' end
-    if tonumber(prop.renter_count)>=tonumber(prop.max_renters) then return nil,'This house has no free rental slots.' end
-    if activeRental(char.id,prop.id) then return nil,'You already rent this house.' end
+    if not char then return nil,t(source, 'property.character_unavailable') end
+    if not prop or not prop.owner_character_id then return nil,t(source, 'property.rent.no_owner') end
+    if not nearby(source,prop) then return nil,t(source, 'property.rent.nearby') end
+    if tonumber(prop.owner_character_id)==tonumber(char.id) then return nil,t(source, 'property.rent.own') end
+    if not dbBool(prop.rent_enabled) then return nil,t(source, 'property.rent.disabled') end
+    if tonumber(prop.renter_count)>=tonumber(prop.max_renters) then return nil,t(source, 'property.rent.full') end
+    if activeRental(char.id,prop.id) then return nil,t(source, 'property.rent.already') end
     local price=tonumber(prop.rent_price) or 0
     local bank, cash = exports.sunset_core:GetMoney(source,'bank'), exports.sunset_core:GetMoney(source,'cash')
-    if bank<price and cash<price then return nil,('You need $%d in bank or cash for the first rent payment.'):format(price) end
+    if bank<price and cash<price then return nil,t(source, 'property.rent.money', { price = price }) end
     local paidFrom = bank >= price and 'bank' or 'cash'
     local ownerId = tonumber(prop.owner_character_id)
     local callOk, committed = pcall(function()
@@ -343,7 +435,7 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
         end)
     end)
     if not callOk or not committed then
-        return nil,'Rent could not be completed because availability or a balance changed. No money was charged.'
+        return nil,t(source, 'property.rent.changed')
     end
     exports.sunset_core:RefreshMoney(source)
     exports.sunset_core:SetHomeProperty(source, prop.id)
@@ -355,73 +447,73 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
     -- [QUESTS] housing chain: first rental.
     TriggerEvent('sunset:quest:progress', char.id, 'property_rented', 1, { propertyId = prop.id })
-    return true,('You now rent %s for $%d each payday.'):format(prop.label,price)
+    return true,t(source, 'property.rent.success', { property = prop.label, price = price })
 end)
 
 exports.sunset_core:RegisterCallback('sunset:leaveRental', function(source)
     local char=exports.sunset_core:GetCharacter(source)
-    if not char then return nil,'Character data is unavailable.' end
+    if not char then return nil,t(source, 'property.character_unavailable') end
     local rent=activeRental(char.id)
-    if not rent then return nil,'You do not currently rent a house.' end
+    if not rent then return nil,t(source, 'property.rent.none') end
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id})
     if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,'Rental ended. Your civilian job and faction were not changed.'
+    return true,t(source, 'property.rent.ended')
 end)
 
 exports.sunset_core:RegisterCallback('sunset:setHome', function(source,id)
     local char=exports.sunset_core:GetCharacter(source)
     local prop=property(id)
-    if not char or not prop or not accessible(char,prop) then return nil,'You must own or actively rent that house.' end
-    if not exports.sunset_core:SetHomeProperty(source,prop.id) then return nil,'The home spawn could not be saved. Please try again.' end
-    return true,('Home spawn set to %s.'):format(prop.label)
+    if not char or not prop or not accessible(char,prop) then return nil,t(source, 'property.home.requires_access') end
+    if not exports.sunset_core:SetHomeProperty(source,prop.id) then return nil,t(source, 'property.home.save_failed') end
+    return true,t(source, 'property.home.saved', { property = prop.label })
 end)
 
 local function enter(source,id)
     local char=exports.sunset_core:GetCharacter(source)
     local prop=property(id)
-    if not char then return nil,'Character data is unavailable.' end
-    if not prop or not dbBool(prop.enabled) then return nil,'This house is disabled. Ask an administrator to enable it.' end
-    if not nearby(source,prop) then return nil,'Stand inside the entrance marker to enter.' end
+    if not char then return nil,t(source, 'property.character_unavailable') end
+    if not prop or not dbBool(prop.enabled) then return nil,t(source, 'property.enter.disabled') end
+    if not nearby(source,prop) then return nil,t(source, 'property.enter.nearby') end
     -- [AUDIT P6-10] A cuffed/escorted/downed suspect must not escape into a house
     -- routing bucket; nothing releases the escort attach on property enter.
     if GetResourceState('sunset_factions')=='started' then
         local ok,cuffed=pcall(function() return exports.sunset_factions:IsCuffed(source) end)
-        if ok and cuffed then return nil,'You cannot enter a house while cuffed.' end
+        if ok and cuffed then return nil,t(source, 'property.enter.cuffed') end
         local ok2,det=pcall(function() return exports.sunset_factions:GetDetentionState(source) end)
-        if ok2 and tostring(det or ''):upper()=='ESCORTED' then return nil,'You cannot enter a house while being escorted.' end
+        if ok2 and tostring(det or ''):upper()=='ESCORTED' then return nil,t(source, 'property.enter.escorted') end
     end
     if GetResourceState('sunset_death')=='started' then
         local ok3,downed=pcall(function() return exports.sunset_death:IsPlayerDowned(source) end)
-        if ok3 and downed then return nil,'You cannot enter a house while downed.' end
+        if ok3 and downed then return nil,t(source, 'property.enter.downed') end
     end
-    if dbBool(prop.locked) and not accessible(char,prop) then return nil,'The door is locked. Only the owner and active renters may enter.' end
+    if dbBool(prop.locked) and not accessible(char,prop) then return nil,t(source, 'property.enter.locked') end
     local preset=SunsetProperties.Interiors[prop.interior]
     local interior=preset and preset.coords or decodePos(prop.interior_pos)
-    if not interior then return nil,'No valid interior is configured. Contact an administrator.' end
+    if not interior then return nil,t(source, 'property.enter.no_interior') end
     Inside[source]=prop.id
     SetPlayerRoutingBucket(source,SunsetProperties.BucketBase+prop.id)
     local entry=decodePos(prop.entry)
     Player(source).state:set('sunsetPropertyExit',entry,false)
     TriggerClientEvent('sunset:client:propertyInterior',source,{id=prop.id,label=prop.label,interior=interior,entry=entry,isOwnerOrRenter=accessible(char,prop)})
-    return true,'Entering house...'
+    return true,t(source, 'property.enter.loading')
 end
 exports.sunset_core:RegisterCallback('sunset:enterProperty',enter)
 
 local function ownedProperty(source,id)
     local char=exports.sunset_core:GetCharacter(source)
-    if not char then return nil,nil,'Character data is unavailable.' end
+    if not char then return nil,nil,t(source, 'property.character_unavailable') end
     local prop=id and property(id) or (Inside[source] and property(Inside[source]))
     if not prop then
         local owned = MySQL.query.await('SELECT id FROM properties WHERE owner_character_id=?', { char.id }) or {}
         if #owned == 1 then
             prop = property(owned[1].id)
         elseif #owned > 1 then
-            return char, nil, 'You own multiple houses — specify the house ID in the command or UI.'
+            return char, nil, t(source, 'property.owner.multiple')
         end
     end
-    if not prop then return char, nil, 'Specify a house ID or stand inside your house.' end
-    if tonumber(prop.owner_character_id)~=tonumber(char.id) then return char,nil,'Only the house owner can change this setting.' end
+    if not prop then return char, nil, t(source, 'property.owner.specify') end
+    if tonumber(prop.owner_character_id)~=tonumber(char.id) then return char,nil,t(source, 'property.owner.only') end
     return char,prop
 end
 
@@ -431,7 +523,7 @@ local function toggleLock(source,id)
     local locked=dbBool(prop.locked) and 0 or 1
     MySQL.update.await('UPDATE properties SET locked=? WHERE id=?',{locked,prop.id})
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,locked==1 and 'House door locked.' or 'House door unlocked; guests may enter.'
+    return true,locked==1 and t(source, 'property.locked.success') or t(source, 'property.unlocked.success')
 end
 
 local function setRent(source,id,price)
@@ -440,15 +532,15 @@ local function setRent(source,id,price)
     if price == false or price == nil then
         MySQL.update.await('UPDATE properties SET rent_enabled=0 WHERE id=?',{prop.id})
         TriggerClientEvent('sunset:client:propertiesChanged',-1)
-        return true,'New rentals disabled; existing renters keep access.'
+        return true,t(source, 'property.rent.disabled_success')
     end
     price=tonumber(price)
     if not price or price<SunsetProperties.RentMin or price>SunsetProperties.RentMax then
-        return nil,('Rent must be between $%d and $%d per payday.'):format(SunsetProperties.RentMin,SunsetProperties.RentMax)
+        return nil,t(source, 'property.rent.range', { min = SunsetProperties.RentMin, max = SunsetProperties.RentMax })
     end
     MySQL.update.await('UPDATE properties SET rent_enabled=1,rent_price=? WHERE id=?',{math.floor(price),prop.id})
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('Rent enabled at $%d per payday.'):format(price)
+    return true,t(source, 'property.rent.enabled', { price = price })
 end
 
 local function setMaxRenters(source,id,count)
@@ -456,17 +548,17 @@ local function setMaxRenters(source,id,count)
     if not prop then return nil,err end
     count=tonumber(count)
     if not count or count<SunsetProperties.MaxRentersMin or count>SunsetProperties.MaxRentersMax then
-        return nil,('Maximum renters must be between %d and %d.'):format(SunsetProperties.MaxRentersMin,SunsetProperties.MaxRentersMax)
+        return nil,t(source, 'property.rent.capacity_range', { min = SunsetProperties.MaxRentersMin, max = SunsetProperties.MaxRentersMax })
     end
     local activeRenters = tonumber(prop.renter_count) or tonumber(MySQL.scalar.await(
         'SELECT COUNT(*) FROM property_rentals WHERE property_id = ? AND active = 1', { prop.id }
     )) or 0
     if count < activeRenters then
-        return nil, ('You already have %d active tenants. Evict someone first or choose a higher cap.'):format(activeRenters)
+        return nil, t(source, 'property.rent.capacity_active', { count = activeRenters })
     end
     MySQL.update.await('UPDATE properties SET max_renters=? WHERE id=?',{math.floor(count),prop.id})
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('Maximum renters set to %d.'):format(count)
+    return true,t(source, 'property.rent.capacity_saved', { count = count })
 end
 
 local function setDescription(source,id,text)
@@ -475,41 +567,41 @@ local function setDescription(source,id,text)
     if text == false or text == nil or text == '' then
         MySQL.update.await('UPDATE properties SET description=NULL WHERE id=?',{prop.id})
         TriggerClientEvent('sunset:client:propertiesChanged',-1)
-        return true,'House description removed.'
+        return true,t(source, 'property.description.removed')
     end
     text=tostring(text):match('^%s*(.-)%s*$')
-    if text == '' then return nil,'Description cannot be empty. Use clear to remove it.' end
-    if #text>160 then return nil,'House description is too long. Maximum: 160 characters.' end
+    if text == '' then return nil,t(source, 'property.description.empty') end
+    if #text>160 then return nil,t(source, 'property.description.long') end
     MySQL.update.await('UPDATE properties SET description=? WHERE id=?',{text,prop.id})
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('House description updated: %s'):format(text)
+    return true,t(source, 'property.description.saved', { description = text })
 end
 
 local function changeInterior(source,id,key)
     local preset=SunsetProperties.Interiors[tostring(key or '')]
-    if not preset then return nil,'Unknown interior. Pick a valid option from the list.' end
+    if not preset then return nil,t(source, 'property.interior.invalid') end
     local _,prop,err=ownedProperty(source,id)
     if not prop then return nil,err end
     for player,insideId in pairs(Inside) do
         if insideId==prop.id and tonumber(player)~=source then
-            return nil,'Everyone else must leave before the interior is changed.'
+            return nil,t(source, 'property.interior.occupied')
         end
     end
     MySQL.update.await('UPDATE properties SET interior=?,interior_pos=? WHERE id=?',{key,encodePos(preset.coords,preset.coords.w),prop.id})
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('Interior changed to %s. Re-enter to see it.'):format(preset.label)
+    return true,t(source, 'property.interior.changed', { interior = preset.label })
 end
 
 local function kickRenter(source,id,characterId)
     local _,prop,err=ownedProperty(source,id)
     if not prop then return nil,err end
     characterId=tonumber(characterId)
-    if not characterId then return nil,'Select a renter to remove.' end
+    if not characterId then return nil,t(source, 'property.renter.select') end
     local changed=MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=? AND character_id=? AND active=1',{prop.id,characterId})
-    if changed<1 then return nil,'That character is not an active renter in this house.' end
+    if changed<1 then return nil,t(source, 'property.renter.not_active') end
     clearHome(characterId,prop.id,('The owner removed you from %s. Your job and faction were not changed.'):format(prop.label))
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('Renter #%d was removed.'):format(characterId)
+    return true,t(source, 'property.renter.removed', { id = characterId })
 end
 
 local function evictPropertyRenters(propertyId, label, reasonSuffix)
@@ -525,21 +617,21 @@ local function evictPropertyRenters(propertyId, label, reasonSuffix)
     MySQL.update.await('UPDATE characters SET home_property_id=NULL WHERE home_property_id=?', { propertyId })
 end
 
-local function transferPropertyOwnership(propertyId, fromCharId, toCharId)
+local function transferPropertyOwnership(propertyId, fromCharId, toCharId, recipientSource)
     propertyId = tonumber(propertyId)
     fromCharId = tonumber(fromCharId)
     toCharId = tonumber(toCharId)
-    if not propertyId or not fromCharId or not toCharId then return false, 'Invalid property transfer.' end
+    if not propertyId or not fromCharId or not toCharId then return false, t(recipientSource, 'property.transfer.invalid') end
     local prop = property(propertyId)
     if not prop or tonumber(prop.owner_character_id) ~= fromCharId then
-        return false, 'Seller no longer owns this property.'
+        return false, t(recipientSource, 'property.transfer.not_owned')
     end
     evictPropertyRenters(propertyId, prop.label or 'the house', 'the house was traded')
     local changed = MySQL.update.await(
         'UPDATE properties SET owner_character_id=? WHERE id=? AND owner_character_id=?',
         { toCharId, propertyId, fromCharId }
     )
-    if changed ~= 1 then return false, 'Property transfer failed.' end
+    if changed ~= 1 then return false, t(recipientSource, 'property.transfer.failed') end
     if tonumber(prop.owner_character_id) == fromCharId then
         for _, playerId in ipairs(GetPlayers()) do
             local src = tonumber(playerId)
@@ -562,14 +654,14 @@ local function sellHouse(source,id,confirm)
     if not prop then return nil,err end
     local refund=math.floor((tonumber(prop.price) or 0)*0.7)
     if not confirm then
-        return false,('This permanently sells %s for 70%% ($%d). Confirm to proceed.'):format(prop.label,refund)
+        return false,t(source, 'property.sell.confirm', { property = prop.label, percent = 70, refund = refund })
     end
     evictPropertyRenters(prop.id, prop.label, 'the house was sold')
     MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
     exports.sunset_core:SetHomeProperty(source,nil)
     exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
     TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    return true,('House sold. $%d was deposited in your bank.'):format(refund)
+    return true,t(source, 'property.sell.success', { refund = refund })
 end
 
 exports.sunset_core:RegisterCallback('sunset:getPropertyMeta', function()
@@ -605,9 +697,9 @@ exports.sunset_core:RegisterCallback('sunset:propertyAction', function(source,ac
     elseif action=='lock' then return toggleLock(source,id)
     elseif action=='sethome' then
         local char=exports.sunset_core:GetCharacter(source); local prop=property(id)
-        if not char or not prop or not accessible(char,prop) then return nil,'You do not have access to this house.' end
-        if not exports.sunset_core:SetHomeProperty(source,prop.id) then return nil,'The home spawn could not be saved. Please try again.' end
-        return true,('Home spawn set to %s.'):format(prop.label)
+        if not char or not prop or not accessible(char,prop) then return nil,t(source, 'property.home.requires_access') end
+        if not exports.sunset_core:SetHomeProperty(source,prop.id) then return nil,t(source, 'property.home.save_failed') end
+        return true,t(source, 'property.home.saved', { property = prop.label })
     elseif action=='rent_on' then return setRent(source,id,payload.price)
     elseif action=='rent_off' then return setRent(source,id,false)
     elseif action=='max_renters' then return setMaxRenters(source,id,payload.count)
@@ -619,15 +711,15 @@ exports.sunset_core:RegisterCallback('sunset:propertyAction', function(source,ac
     elseif action=='sell' then return sellHouse(source,id,payload.confirm == true)
     elseif action=='unrent' then
         local char=exports.sunset_core:GetCharacter(source)
-        if not char then return nil,'Character data is unavailable.' end
+        if not char then return nil,t(source, 'property.character_unavailable') end
         local rent=activeRental(char.id)
-        if not rent then return nil,'You do not currently rent a house.' end
+        if not rent then return nil,t(source, 'property.rent.none') end
         MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id})
         if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
         TriggerClientEvent('sunset:client:propertiesChanged',-1)
-        return true,'Rental ended. Your civilian job and faction were not changed.'
+        return true,t(source, 'property.rent.ended')
     end
-    return nil,'Unknown house action.'
+    return nil,t(source, 'property.action.unknown')
 end)
 
 RegisterNetEvent('sunset:server:exitProperty',function()

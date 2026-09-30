@@ -92,7 +92,7 @@ RegisterNetEvent('sunset:chat:system', function(message, kind)
     end
     exports.sunset_ui:Send('chatMessage', {
         id = 0,
-        name = 'SYSTEM',
+        name = exports.sunset_core:Translate('chat.system'),
         message = tostring(message or ''),
         time = chatTimeStamp(),
         type = msgType,
@@ -201,8 +201,8 @@ end)
 AddEventHandler('sunset:client:playerSpawned', function()
     exports.sunset_ui:Send('chatMessage', {
         id = 0,
-        name = 'SERVER',
-        message = 'Welcome to blaze.mp! T = chat, /help for commands.',
+        name = exports.sunset_core:Translate('chat.server'),
+        message = exports.sunset_core:Translate('chat.welcome'),
         time = '',
     })
 end)
@@ -219,12 +219,12 @@ RegisterNetEvent('chat:addMessage')
 AddEventHandler('chat:addMessage', function(msg)
     if type(msg) == 'string' then
         exports.sunset_ui:Send('chatMessage', {
-            id = 0, name = 'SYSTEM', message = msg, time = chatTimeStamp(),
+            id = 0, name = exports.sunset_core:Translate('chat.system'), message = msg, time = chatTimeStamp(),
         })
         return
     end
     if type(msg) ~= 'table' then return end
-    local name = 'SYSTEM'
+    local name = exports.sunset_core:Translate('chat.system')
     local text = msg.message
     if type(msg.args) == 'table' then
         name = tostring(msg.args[1] or name)

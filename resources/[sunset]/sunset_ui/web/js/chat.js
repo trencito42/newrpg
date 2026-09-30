@@ -19,13 +19,30 @@ const Chat = {
     },
 
     defaultChannels: [
-        { id: 'all', label: 'LOCAL', placeholder: 'Local message — nearby players hear you' },
-        { id: 'ooc', label: 'OOC', placeholder: 'Out of Character — global (( message ))' },
-        { id: 'me', label: 'ME', placeholder: 'RP action (/me searches the trunk...)' },
-        { id: 'do', label: 'DO', placeholder: 'RP action (/do the trunk opens)' },
+        { id: 'all', labelKey: 'chat.channel.local', placeholderKey: 'chat.placeholder.local' },
+        { id: 'ooc', labelKey: 'chat.channel.ooc', placeholderKey: 'chat.placeholder.ooc' },
+        { id: 'me', labelKey: 'chat.channel.me', placeholderKey: 'chat.placeholder.me' },
+        { id: 'do', labelKey: 'chat.channel.do', placeholderKey: 'chat.placeholder.do' },
     ],
 
     availableChannels: [],
+
+    channelLabel(channel) {
+        const keys = {
+            all: 'chat.channel.local', ooc: 'chat.channel.ooc', me: 'chat.channel.me', do: 'chat.channel.do',
+            faction: 'chat.channel.faction', clan: 'chat.channel.clan', dept: 'chat.channel.department', radio: 'chat.channel.radio',
+        };
+        return keys[channel?.id] ? I18n.t(keys[channel.id]) : (channel?.label || String(channel?.id || '').toUpperCase());
+    },
+
+    channelPlaceholder(channel) {
+        const keys = {
+            all: 'chat.placeholder.local', ooc: 'chat.placeholder.ooc',
+            me: 'chat.placeholder.me', do: 'chat.placeholder.do',
+        };
+        return keys[channel?.id] ? I18n.t(keys[channel.id])
+            : ((channel?.placeholderKey && I18n.t(channel.placeholderKey)) || channel?.placeholder || I18n.t('chat.input.placeholder'));
+    },
 
     pageSize() {
         const maxH = ChatSettings?.settings?.maxHeight || 350;
@@ -301,7 +318,7 @@ const Chat = {
         // [SANCTIONS] public sanction broadcasts (warn/kick/ban/jail) from sunset_admin.
         if (type === 'admin_action') {
             return {
-                badge: { label: 'SANCTION', className: 'badge-error' },
+                badge: { label: I18n.t('chat.badge.sanction'), className: 'badge-error' },
                 author: null,
                 content: { html: `<span class="color-error">${esc(msg)}</span>`, className: '' },
             };
@@ -323,7 +340,7 @@ const Chat = {
 
         if (type === 'anno') {
             return {
-                badge: { label: 'ANNOUNCEMENT', className: 'badge-error' },
+                badge: { label: I18n.t('chat.badge.announcement'), className: 'badge-error' },
                 author: null,
                 content: { html: `<span class="color-anno">**( ${esc(name)} (${id}): (${esc(msg)}) )**</span>`, className: '' },
             };
@@ -343,7 +360,7 @@ const Chat = {
 
         if (type === 'report') {
             return {
-                badge: { label: 'REPORT', className: 'badge-error' },
+                badge: { label: I18n.t('chat.badge.report'), className: 'badge-error' },
                 author: { html: `[${esc(name)}] (${id}):`, className: 'color-error' },
                 content: { html: `<span class="color-error">${esc(msg)}</span>`, className: '' },
             };
@@ -351,7 +368,7 @@ const Chat = {
 
         if (type === 'newbie_q') {
             return {
-                badge: { label: 'QUESTION', className: 'badge-newbie-q' },
+                badge: { label: I18n.t('chat.badge.question'), className: 'badge-newbie-q' },
                 author: { html: `[${esc(name)}] (${id}):`, className: 'color-newbie-q' },
                 content: { html: `<span class="color-newbie-q">${esc(msg)}</span>`, className: '' },
             };
@@ -359,7 +376,7 @@ const Chat = {
 
         if (type === 'newbie_qa') {
             return {
-                badge: { label: 'HELP', className: 'badge-peace' },
+                badge: { label: I18n.t('chat.badge.help'), className: 'badge-peace' },
                 author: null,
                 content: { html: `<span class="color-newbie-qa" style="white-space: pre-line;">${esc(msg)}</span>`, className: '' },
             };
@@ -368,7 +385,7 @@ const Chat = {
         if (type === 'admin_chat') {
             const lvl = m.adminLevel ? ` [L${m.adminLevel}]` : '';
             return {
-                badge: { label: 'ADMIN', className: 'badge-admin' },
+                badge: { label: I18n.t('chat.badge.admin'), className: 'badge-admin' },
                 author: { html: `(( [ADMIN]${lvl} ${esc(name)} (${id}):`, className: 'color-admin' },
                 content: { html: `${esc(msg)} ))`, className: 'text-admin' },
             };
@@ -377,7 +394,7 @@ const Chat = {
         if (type === 'staff_chat') {
             const role = m.staffRole || 'Staff';
             return {
-                badge: { label: 'STAFF', className: 'badge-staff' },
+                badge: { label: I18n.t('chat.badge.staff'), className: 'badge-staff' },
                 author: { html: `(( [STAFF] ${role} ${esc(name)} (${id}):`, className: 'color-staff' },
                 content: { html: `${esc(msg)} ))`, className: 'text-staff' },
             };
@@ -386,7 +403,7 @@ const Chat = {
         if (type === 'leader_chat') {
             const title = m.leaderTitle || 'Leader';
             return {
-                badge: { label: 'LEADER', className: 'badge-leader' },
+                badge: { label: I18n.t('chat.badge.leader'), className: 'badge-leader' },
                 author: { html: `[LEADER] ${title} ${esc(name)} (${id}):`, className: 'color-leader' },
                 content: { html: esc(msg), className: 'text-leader' },
             };
@@ -396,7 +413,7 @@ const Chat = {
             const from = name || 'SERVER';
             const idPart = id > 0 ? ` (${id})` : '';
             return {
-                badge: { label: 'ADMIN', className: 'badge-admin' },
+                badge: { label: I18n.t('chat.badge.admin'), className: 'badge-admin' },
                 author: { html: `${esc(from)}${esc(idPart)}:`, className: 'color-admin' },
                 content: { html: esc(msg), className: 'text-admin' },
             };
@@ -408,7 +425,7 @@ const Chat = {
             const idPart = id > 0 ? ` (${id})` : '';
             const isAnswer = type === 'newb_answer';
             return {
-                badge: { label: isAnswer ? 'ANSWER' : 'QUESTION', className: isAnswer ? 'badge-peace' : 'badge-warn' },
+                badge: { label: I18n.t(isAnswer ? 'chat.badge.answer' : 'chat.badge.question'), className: isAnswer ? 'badge-peace' : 'badge-warn' },
                 author: { html: `${esc(from)}${esc(idPart)}:`, className: isAnswer ? 'color-peace' : 'color-warn' },
                 content: { html: esc(msg), className: '' },
             };
@@ -419,7 +436,7 @@ const Chat = {
             const rankLabel = String(m.issuerRank || m.rank || '').trim();
             const header = [dept, rankLabel].filter(Boolean).join(' · ');
             return {
-                badge: { label: 'GOV', className: 'badge-gov' },
+                badge: { label: I18n.t('chat.badge.government'), className: 'badge-gov' },
                 author: { html: `${esc(header)}:`, className: 'color-gov' },
                 content: { html: esc(msg), className: 'text-gov' },
             };
@@ -430,7 +447,7 @@ const Chat = {
             const rankTitle = String(m.clanRankLabel || '').trim();
             const who = [rankNum, rankTitle, this.formatClanNameHtml(m)].filter(Boolean).join(' ');
             return {
-                badge: { label: type === 'clan_action' ? 'CLAN' : 'CLAN', className: 'badge-mafia' },
+                badge: { label: I18n.t('chat.badge.clan'), className: 'badge-mafia' },
                 author: { html: `${who}:`, className: 'color-mafia' },
                 content: { html: esc(msg), className: '' },
             };
@@ -439,7 +456,7 @@ const Chat = {
         if (type === 'faction_action' || type === 'faction_info') {
             const header = [esc(faction), esc(rank), this.formatPlayerNameHtml(m)].filter(Boolean).join(' ');
             return {
-                badge: { label: 'FACTION', className: 'badge-peace' },
+                badge: { label: I18n.t('chat.badge.faction'), className: 'badge-peace' },
                 author: { html: `${header}:`, className: 'color-peace' },
                 content: { html: esc(msg), className: '' },
             };
@@ -488,7 +505,7 @@ const Chat = {
             const roleLabel = level >= 3 ? 'ADMIN' : level >= 2 ? 'MOD' : 'HELPER';
             const who = this.formatPlayerNameHtml(m);
             return {
-                badge: { label: 'STAFF', className: 'badge-staff' },
+                badge: { label: I18n.t('chat.badge.staff'), className: 'badge-staff' },
                 author: { html: `[${roleLabel}] ${who}:`, className: 'color-staff' },
                 content: { html: esc(msg), className: 'text-staff' },
             };
@@ -499,7 +516,7 @@ const Chat = {
                 ? this.formatPlayerNameHtml(m)
                 : esc(this.nameWithId(name, id));
             return {
-                badge: { label: 'LOCAL', className: 'badge-local' },
+                badge: { label: I18n.t('chat.badge.local'), className: 'badge-local' },
                 author: { html: `${who} says:`, className: '' },
                 content: { html: esc(msg), className: '' },
             };
@@ -519,7 +536,7 @@ const Chat = {
         }
 
         return {
-            badge: { label: 'SYSTEM', className: 'badge-system' },
+            badge: { label: I18n.t('chat.badge.system'), className: 'badge-system' },
             author: name ? { html: `${esc(name)}:`, className: '' } : null,
             content: { html: esc(msg || name), className: '' },
         };
@@ -1194,8 +1211,8 @@ const Chat = {
         this.channel = channelId || 'all';
         const labelEl = $('#chat-channel-label');
         const input = $('#chat-input');
-        if (labelEl) labelEl.textContent = label || row?.label || 'LOCAL';
-        if (input) input.placeholder = placeholder || row?.placeholder || 'Type a message...';
+        if (labelEl) labelEl.textContent = label || this.channelLabel(row) || I18n.t('chat.channel.local');
+        if (input) input.placeholder = placeholder || this.channelPlaceholder(row);
         document.querySelectorAll('#chat-channel-dropdown .dropdown-item').forEach((item) => {
             item.classList.toggle('active', item.dataset.channel === this.channel);
         });
@@ -1209,15 +1226,15 @@ const Chat = {
 
         dropdown.innerHTML = list.map((ch) => {
             const id = this.escapeHtml(ch.id || 'all');
-            const label = this.escapeHtml(ch.label || id.toUpperCase());
-            const placeholder = this.escapeHtml(ch.placeholder || '');
+            const label = this.escapeHtml(this.channelLabel(ch) || id.toUpperCase());
+            const placeholder = this.escapeHtml(this.channelPlaceholder(ch));
             const optClass = `opt-${id.replace(/[^a-z0-9_-]/gi, '')}`;
             return `<div class="dropdown-item ${optClass}" data-channel="${id}" data-placeholder="${placeholder}">${label}</div>`;
         }).join('');
 
         const active = list.some((ch) => ch.id === this.channel) ? this.channel : 'all';
         const activeRow = list.find((ch) => ch.id === active) || list[0];
-        this.setChannel(activeRow.id, activeRow.label, activeRow.placeholder);
+        this.setChannel(activeRow.id, this.channelLabel(activeRow), this.channelPlaceholder(activeRow));
     },
 
     initChannelSelector() {
@@ -1425,3 +1442,8 @@ window.addEventListener('message', (event) => {
 });
 
 window.Chat = Chat;
+
+window.addEventListener('sunset:localeChanged', () => {
+    if (!Chat.availableChannels.length) return;
+    Chat.applyChannels(Chat.availableChannels);
+});

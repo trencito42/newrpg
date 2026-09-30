@@ -6,52 +6,52 @@
                         <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     </div>
                     <div class="premium-clan__brand-text">
-                        <h1 id="business-panel-title">BUSINESS</h1>
-                        <span id="business-panel-type">Management</span>
+                        <h1 id="business-panel-title"><span data-i18n="ui.businesses.business"></span></h1>
+                        <span id="business-panel-type"><span data-i18n="ui.businesses.management"></span></span>
                     </div>
                 </div>
-                <nav class="premium-clan__nav" aria-label="Business sections">
+                <nav class="premium-clan__nav" aria-label="" data-i18n-aria="ui.businesses.business_sections">
                     <button type="button" class="premium-clan__nav-item is-active" data-business-tab="admin" id="business-tab-admin">
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        Admin
+                        <span data-i18n="ui.businesses.admin"></span>
                     </button>
                     <button type="button" class="premium-clan__nav-item" data-business-tab="owner" id="business-tab-owner">
                         <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        My Businesses
+                        <span data-i18n="ui.businesses.my_businesses"></span>
                     </button>
                 </nav>
-                <button type="button" class="premium-clan__close" id="business-panel-close">CLOSE</button>
+                <button type="button" class="premium-clan__close" id="business-panel-close"><span data-i18n="ui.businesses.close"></span></button>
             </aside>
             <div class="premium-clan__content">
                 <div class="premium-clan__tab is-active" data-business-panel="admin">
                     <div class="premium-clan__header">
-                        <h2>Business Administration</h2>
-                        <p>Set price, owner profit %, availability, and owner for each location.</p>
+                        <h2><span data-i18n="ui.businesses.business_administration"></span></h2>
+                        <p><span data-i18n="ui.businesses.set_price_owner_profit_availability_and_owner_for_each"></span></p>
                     </div>
                     <div class="business-admin-layout">
                         <div class="business-admin-list-wrap">
-                            <h3>Locations</h3>
+                            <h3><span data-i18n="ui.businesses.locations"></span></h3>
                             <div id="business-admin-list" class="premium-clan__roster business-admin-list"></div>
                         </div>
                         <div class="business-admin-detail-wrap">
-                            <p id="business-admin-empty" class="premium-clan__empty">Select a location from the list.</p>
+                            <p id="business-admin-empty" class="premium-clan__empty"><span data-i18n="ui.businesses.select_a_location_from_the_list"></span></p>
                             <div id="business-admin-form" class="premium-clan__form hidden" data-business-id="">
-                                <h3 id="business-admin-selected-label">Business</h3>
+                                <h3 id="business-admin-selected-label"><span data-i18n="ui.businesses.business_d6663d"></span></h3>
                                 <div class="premium-clan__stats business-admin-stats">
-                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label">Type</span><span class="premium-clan__stat-value" id="business-admin-type">—</span></div>
-                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label">Catalog</span><span class="premium-clan__stat-value" id="business-admin-catalog">—</span></div>
-                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label">Owner</span><span class="premium-clan__stat-value" id="business-admin-owner">—</span></div>
-                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label">Accumulated profit</span><span class="premium-clan__stat-value" id="business-admin-balance" style="color:var(--pf-success);">$0</span></div>
+                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label"><span data-i18n="ui.businesses.type"></span></span><span class="premium-clan__stat-value" id="business-admin-type">—</span></div>
+                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label"><span data-i18n="ui.businesses.catalog"></span></span><span class="premium-clan__stat-value" id="business-admin-catalog">—</span></div>
+                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label"><span data-i18n="ui.businesses.owner"></span></span><span class="premium-clan__stat-value" id="business-admin-owner">—</span></div>
+                                    <div class="premium-clan__stat"><span class="premium-clan__stat-label"><span data-i18n="ui.businesses.accumulated_profit"></span></span><span class="premium-clan__stat-value" id="business-admin-balance" style="color:var(--pf-success);">$0</span></div>
                                 </div>
-                                <label>Display name<input type="text" id="business-admin-label" maxlength="128"></label>
-                                <label>Purchase price ($)<input type="number" id="business-admin-price" min="0" step="1000"></label>
-                                <label>Owner profit (%)<input type="number" id="business-admin-profit" min="0" max="100" step="1"></label>
-                                <label class="premium-clan__check"><input type="checkbox" id="business-admin-for-sale"> For sale (no owner)</label>
-                                <label class="premium-clan__check"><input type="checkbox" id="business-admin-enabled" checked> Enabled</label>
+                                <label><span data-i18n="ui.businesses.display_name"></span><input type="text" id="business-admin-label" maxlength="128"></label>
+                                <label><span data-i18n="ui.businesses.purchase_price"></span><input type="number" id="business-admin-price" min="0" step="1000"></label>
+                                <label><span data-i18n="ui.businesses.owner_profit"></span><input type="number" id="business-admin-profit" min="0" max="100" step="1"></label>
+                                <label class="premium-clan__check"><input type="checkbox" id="business-admin-for-sale"> <span data-i18n="ui.businesses.for_sale_no_owner"></span></label>
+                                <label class="premium-clan__check"><input type="checkbox" id="business-admin-enabled" checked> <span data-i18n="ui.businesses.enabled"></span></label>
                                 <div class="business-admin-actions premium-clan__btn-group">
-                                    <button type="button" class="premium-clan__btn premium-clan__btn--primary" id="business-admin-save">SAVE</button>
-                                    <button type="button" class="premium-clan__btn premium-clan__btn--secondary" id="business-admin-teleport">TELEPORT</button>
-                                    <button type="button" class="premium-clan__btn premium-clan__btn--danger" id="business-admin-clear-owner">CLEAR OWNER</button>
+                                    <button type="button" class="premium-clan__btn premium-clan__btn--primary" id="business-admin-save"><span data-i18n="ui.businesses.save"></span></button>
+                                    <button type="button" class="premium-clan__btn premium-clan__btn--secondary" id="business-admin-teleport"><span data-i18n="ui.businesses.teleport"></span></button>
+                                    <button type="button" class="premium-clan__btn premium-clan__btn--danger" id="business-admin-clear-owner"><span data-i18n="ui.businesses.clear_owner"></span></button>
                                 </div>
                             </div>
                         </div>
@@ -59,16 +59,16 @@
                 </div>
                 <div class="premium-clan__tab" data-business-panel="owner">
                     <div class="premium-clan__header">
-                        <h2>Your Businesses</h2>
-                        <p>Earn profit from store and gas station sales. Withdraw to your bank account.</p>
+                        <h2><span data-i18n="ui.businesses.your_businesses"></span></h2>
+                        <p><span data-i18n="ui.businesses.earn_profit_from_store_and_gas_station_sales_withdraw"></span></p>
                     </div>
                     <div class="premium-clan__stat business-owner-total-stat">
-                        <span class="premium-clan__stat-label">Total available</span>
+                        <span class="premium-clan__stat-label"><span data-i18n="ui.businesses.total_available"></span></span>
                         <span class="premium-clan__stat-value" id="business-owner-total" style="color:var(--pf-success);">$0</span>
                     </div>
                     <div id="business-owner-list" class="business-owner-list"></div>
                 </div>
             </div>
-            <div class="premium-clans-dir__close-hint">PRESS ESC TO CLOSE</div>
+            <div class="premium-clans-dir__close-hint"><span data-i18n="ui.businesses.press_esc_to_close"></span></div>
         </div>
     </div>

@@ -61,6 +61,10 @@ client_scripts {
     'client/nui_bridge.lua',
 }
 
+server_scripts {
+    'server/main.lua',
+}
+
 exports {
     'Show',
     'Hide',

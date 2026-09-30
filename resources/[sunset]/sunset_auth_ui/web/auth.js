@@ -3,6 +3,7 @@
    Double rAF ensures zero white/black flash during loadscreen handoff. */
 
 const $ = (sel) => document.querySelector(sel);
+const tr = (key, params) => window.I18n ? window.I18n.t(key, params) : `[?${key}]`;
 
 function post(action, data = {}) {
     try {
@@ -34,6 +35,7 @@ const AuthUI = {
     mode: 'login', // 'login' | 'register'
     pendingSubmit: false,
     visibleGeneration: 0,
+    accounts: [],
 
     init() {
         // Form switches
@@ -83,14 +85,14 @@ const AuthUI = {
             }
 
             if (this.pendingSubmit) return;
-            this.showLoading(true, 'Conectare rapidă...');
+            this.showLoading(true, tr('auth.quick_connecting'));
             this.pendingSubmit = true;
             post('authPickAccount', { username });
         });
 
         // DOM readiness is not visual readiness. Lua may safely send state now,
         // but the loadscreen must remain until show() paints its final frame.
-        post('authReady', {});
+        post('authReady', { locale: window.I18n?.getLocale() || 'en' });
         post('authDomReady', { now: Date.now() });
     },
 
@@ -103,6 +105,7 @@ const AuthUI = {
     },
 
     async show(data = {}) {
+        if (data.locale && window.I18n) window.I18n.setLocale(data.locale);
         const generation = ++this.visibleGeneration;
         await this.waitForBackground();
         if (generation !== this.visibleGeneration) return;
@@ -122,7 +125,7 @@ const AuthUI = {
             if (rem) rem.checked = data.quickLogin !== false;
         }
         if (data.presentation === 'quick-login') {
-            this.showLoading(true, data.loadingText || 'Signing in...');
+            this.showLoading(true, data.loadingText || tr('auth.signing_in'));
         } else {
             this.showLoading(false);
         }
@@ -159,7 +162,7 @@ const AuthUI = {
         const isLogin = mode === 'login';
         $('#auth-form-login')?.classList.toggle('hidden', !isLogin);
         $('#auth-form-register')?.classList.toggle('hidden', isLogin);
-        $('#auth-main-title').textContent = isLogin ? 'Loghează-te' : 'Înregistrare';
+        $('#auth-main-title').textContent = tr(isLogin ? 'auth.login_title' : 'auth.register_title');
         this.hideError();
 
         setTimeout(() => {
@@ -201,11 +204,11 @@ const AuthUI = {
         const user = ($('#auth-user')?.value || '').trim();
         const pass = $('#auth-pass')?.value || '';
         if (!user || !pass) {
-            return this.showError('Completează toate câmpurile obligatorii.');
+            return this.showError(tr('auth.required'));
         }
 
         this.hideError();
-        this.showLoading(true, 'Se verifică datele...');
+        this.showLoading(true, tr('auth.verifying'));
         this.pendingSubmit = true;
 
         post('authLogin', {
@@ -223,20 +226,20 @@ const AuthUI = {
         const pass2 = $('#reg-pass2')?.value || '';
 
         if (!user || !email || !pass || !pass2) {
-            return this.showError('Completează toate câmpurile obligatorii.');
+            return this.showError(tr('auth.required'));
         }
         if (!email.includes('@') || !email.includes('.')) {
-            return this.showError('Adresă de email invalidă.');
+            return this.showError(tr('auth.email_invalid'));
         }
         if (pass !== pass2) {
-            return this.showError('Parolele introduse nu coincid.');
+            return this.showError(tr('auth.passwords_mismatch'));
         }
         if (pass.length < 6) {
-            return this.showError('Parola trebuie să aibă minim 6 caractere.');
+            return this.showError(tr('auth.password_too_short'));
         }
 
         this.hideError();
-        this.showLoading(true, 'Se creează contul...');
+        this.showLoading(true, tr('auth.creating'));
         this.pendingSubmit = true;
 
         post('authRegister', {
@@ -254,6 +257,7 @@ const AuthUI = {
         if (!list || !wrap) return;
 
         const rows = Array.isArray(accounts) ? accounts : [];
+        this.accounts = rows;
         if (!rows.length) {
             wrap.classList.add('hidden');
             return;
@@ -267,9 +271,11 @@ const AuthUI = {
         list.innerHTML = rows.map((a) => {
             const username = String(a.username || '').trim();
             const initial = (username || '?').slice(0, 2).toUpperCase();
-            const level = Number(a.level) >= 1 ? `LVL ${Math.floor(Number(a.level))}` : 'NOU';
+            const level = Number(a.level) >= 1
+                ? tr('auth.level', { level: Math.floor(Number(a.level)) })
+                : tr('auth.new_account');
             const totalMoney = Number(a.cash || 0) + Number(a.bank || 0);
-            const funds = `$${Math.floor(totalMoney).toLocaleString('en-US')}`;
+            const funds = window.I18n ? window.I18n.money(totalMoney) : `$${Math.floor(totalMoney)}`;
 
             return `
             <div class="auth-account-card" data-username="${esc(username)}">
@@ -278,7 +284,7 @@ const AuthUI = {
                     <div class="auth-account-card__name">${esc(username)}</div>
                     <div class="auth-account-card__meta">${esc(level)} · ${esc(funds)}</div>
                 </div>
-                <button type="button" class="auth-account-card__remove" title="Șterge de pe acest PC">
+                <button type="button" class="auth-account-card__remove" title="${esc(tr('auth.remove_saved'))}">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>`;
@@ -288,7 +294,7 @@ const AuthUI = {
     promptEmail(username) {
         this.showLoading(false);
         this.pendingSubmit = false;
-        $('#auth-email-username').textContent = username || 'tău';
+        $('#auth-email-username').textContent = username || tr('auth.your_account');
         $('#auth-email-input').value = '';
         $('#auth-email-error')?.classList.add('hidden');
         $('#auth-email-modal')?.classList.remove('hidden');
@@ -304,14 +310,14 @@ const AuthUI = {
         const errEl = $('#auth-email-error');
         if (!email || !email.includes('@') || !email.includes('.')) {
             if (errEl) {
-                errEl.textContent = 'Introdu o adresă de email validă.';
+                errEl.textContent = tr('auth.email_invalid');
                 errEl.classList.remove('hidden');
             }
             return;
         }
 
         if (errEl) errEl.classList.add('hidden');
-        this.showLoading(true, 'Se asociază emailul...');
+        this.showLoading(true, tr('auth.linking_email'));
         post('authSetEmail', { email });
     },
 };
@@ -333,7 +339,7 @@ window.addEventListener('message', (event) => {
             if (payload.accounts) AuthUI.setAccounts(payload.accounts);
             break;
         case 'authError':
-            AuthUI.showError(payload.message || 'A apărut o eroare la autentificare.');
+            AuthUI.showError(payload.message || tr('auth.generic_error'));
             break;
         case 'authNeedsEmail':
             AuthUI.promptEmail(payload.username);
@@ -360,7 +366,13 @@ window.addEventListener('message', (event) => {
             $('#auth-pass')?.focus({ preventScroll: true });
             break;
         case 'authSuccess':
-            AuthUI.showLoading(true, payload.text || 'Loading character...');
+            AuthUI.showLoading(true, payload.text || tr('auth.loading_character'));
+            break;
+        case 'localeSet':
+            if (window.I18n && window.I18n.setLocale(payload.locale)) {
+                AuthUI.switchMode(AuthUI.mode);
+                AuthUI.setAccounts(AuthUI.accounts || []);
+            }
             break;
         case 'authCapturePortrait':
             if (!payload.source || !payload.username) break;
@@ -382,5 +394,6 @@ window.addEventListener('message', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.I18n) window.I18n.translateTree(document);
     AuthUI.init();
 });

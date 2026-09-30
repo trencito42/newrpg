@@ -1,14 +1,14 @@
 <div id="trade-invite-modal" class="trade-notif-wrapper hidden" aria-hidden="true">
         <div class="trade-notif-box">
-            <div class="tn-desc" id="trade-invite-desc">Jucătorul <span>Player</span> (ID: 0)<br>vrea să inițieze un Trade.</div>
+            <div class="tn-desc" id="trade-invite-desc"><span data-i18n="ui.trade.jucatorul"></span> <span><span data-i18n="common.player"></span></span> <span data-i18n="ui.trade.id_0"></span><br><span data-i18n="ui.trade.vrea_sa_initieze_un_trade"></span></div>
             <div class="tn-actions">
                 <div class="btn-hold accept" id="trade-invite-accept" role="button" tabindex="0">
                     <div class="bh-progress" id="trade-invite-accept-hold"></div>
-                    <div class="bh-text"><span class="key">Y</span> Acceptă</div>
+                    <div class="bh-text"><span class="key"><span data-i18n="ui.trade.y"></span></span> <span data-i18n="ui.trade.accepta"></span></div>
                 </div>
                 <div class="btn-hold decline" id="trade-invite-decline" role="button" tabindex="0">
                     <div class="bh-progress" id="trade-invite-decline-hold"></div>
-                    <div class="bh-text"><span class="key">N</span> Refuză</div>
+                    <div class="bh-text"><span class="key"><span data-i18n="ui.trade.n"></span></span> <span data-i18n="ui.trade.refuza"></span></div>
                 </div>
             </div>
         </div>
@@ -19,64 +19,64 @@
         <div class="trade-container">
             <div class="tp-panel" id="trade-panel-mine">
                 <div class="tp-header">
-                    <div class="tp-title"><i class="ph-bold ph-arrow-circle-up" style="color:#00ffcc;"></i> Your Offer</div>
-                    <div class="tp-status" id="trade-status-mine">Editing...</div>
+                    <div class="tp-title"><i class="ph-bold ph-arrow-circle-up" style="color:#00ffcc;"></i> <span data-i18n="ui.trade.your_offer"></span></div>
+                    <div class="tp-status" id="trade-status-mine"><span data-i18n="ui.trade.editing"></span></div>
                 </div>
                 <div class="tp-content" id="trade-my-offer"></div>
                 <div class="tp-actions">
-                    <button type="button" class="btn-add-trade" id="trade-add-offer"><i class="ph-bold ph-plus"></i> Add from Inventory / Properties</button>
-                    <button type="button" class="btn-lock-trade" id="trade-lock-mine"><i class="ph-bold ph-lock-key"></i> Lock Offer</button>
-                    <button type="button" class="btn-cancel-trade" id="trade-cancel-mine"><i class="ph-bold ph-x"></i> Cancel Trade</button>
+                    <button type="button" class="btn-add-trade" id="trade-add-offer"><i class="ph-bold ph-plus"></i> <span data-i18n="ui.trade.add_from_inventory_properties"></span></button>
+                    <button type="button" class="btn-lock-trade" id="trade-lock-mine"><i class="ph-bold ph-lock-key"></i> <span data-i18n="ui.trade.lock_offer"></span></button>
+                    <button type="button" class="btn-cancel-trade" id="trade-cancel-mine"><i class="ph-bold ph-x"></i> <span data-i18n="ui.trade.cancel_trade"></span></button>
                 </div>
             </div>
             <div class="tp-panel" id="trade-panel-their">
                 <div class="tp-header">
-                    <div class="tp-title"><i class="ph-bold ph-arrow-circle-down" style="color:rgba(255,255,255,0.4);"></i> <span id="trade-their-title">Player</span></div>
-                    <div class="tp-status" id="trade-status-their">Editing</div>
+                    <div class="tp-title"><i class="ph-bold ph-arrow-circle-down" style="color:rgba(255,255,255,0.4);"></i> <span id="trade-their-title"><span data-i18n="common.player"></span></span></div>
+                    <div class="tp-status" id="trade-status-their"><span data-i18n="ui.trade.editing_3b9ba1"></span></div>
                 </div>
                 <div class="tp-content" id="trade-their-offer"></div>
                 <div class="tp-actions">
-                    <div class="tp-waiting">Waiting for the other player<br>to confirm their offer.</div>
+                    <div class="tp-waiting"><span data-i18n="ui.trade.waiting_for_the_other_player"></span><br><span data-i18n="ui.trade.to_confirm_their_offer"></span></div>
                 </div>
             </div>
         </div>
     </div>
     <div id="trade-countdown-screen" class="countdown-overlay hidden" aria-hidden="true">
         <div class="cd-number" id="trade-cd-timer">5</div>
-        <div class="cd-text">Finalizing Trade</div>
-        <div class="cd-hint">Either player can cancel during the countdown.</div>
-        <button type="button" class="btn-cancel-trade cd-cancel" id="trade-cd-cancel"><i class="ph-bold ph-x"></i> Cancel Trade (ESC)</button>
+        <div class="cd-text"><span data-i18n="ui.trade.finalizing_trade"></span></div>
+        <div class="cd-hint"><span data-i18n="ui.trade.either_player_can_cancel_during_the_countdown"></span></div>
+        <button type="button" class="btn-cancel-trade cd-cancel" id="trade-cd-cancel"><i class="ph-bold ph-x"></i> <span data-i18n="ui.trade.cancel_trade_esc"></span></button>
     </div>
 
     <!-- ASSET SELECTOR MODAL -->
     <div id="trade-selector-modal" class="selector-modal hidden" aria-hidden="true">
         <div class="selector-wrapper">
             <div class="sel-sidebar">
-                <div class="sel-header">Choose Source</div>
+                <div class="sel-header"><span data-i18n="ui.trade.choose_source"></span></div>
                 <div class="cat-list">
-                    <button type="button" class="cat-item money active" data-tab="cash"><i class="ph-fill ph-currency-dollar"></i> <span>Cash</span></button>
-                    <button type="button" class="cat-item" data-tab="items"><i class="ph-fill ph-backpack"></i> <span>Inventory</span></button>
-                    <button type="button" class="cat-item" data-tab="vehicles"><i class="ph-fill ph-car-profile"></i> <span>Vehicles</span></button>
-                    <button type="button" class="cat-item" data-tab="properties"><i class="ph-fill ph-house"></i> <span>Properties</span></button>
-                    <button type="button" class="cat-item" data-tab="businesses"><i class="ph-fill ph-storefront"></i> <span>Businesses</span></button>
+                    <button type="button" class="cat-item money active" data-tab="cash"><i class="ph-fill ph-currency-dollar"></i> <span><span data-i18n="ui.trade.cash"></span></span></button>
+                    <button type="button" class="cat-item" data-tab="items"><i class="ph-fill ph-backpack"></i> <span><span data-i18n="ui.trade.inventory"></span></span></button>
+                    <button type="button" class="cat-item" data-tab="vehicles"><i class="ph-fill ph-car-profile"></i> <span><span data-i18n="common.vehicles"></span></span></button>
+                    <button type="button" class="cat-item" data-tab="properties"><i class="ph-fill ph-house"></i> <span><span data-i18n="common.properties"></span></span></button>
+                    <button type="button" class="cat-item" data-tab="businesses"><i class="ph-fill ph-storefront"></i> <span><span data-i18n="ui.trade.businesses"></span></span></button>
                 </div>
             </div>
             <div class="sel-content">
                 <div class="sc-header">
-                    <div class="sc-title" id="trade-sc-title">Add Amount</div>
-                    <div class="sc-balance" id="trade-sc-balance"><span>Available:</span> $0</div>
+                    <div class="sc-title" id="trade-sc-title"><span data-i18n="ui.trade.add_amount"></span></div>
+                    <div class="sc-balance" id="trade-sc-balance"><span><span data-i18n="ui.trade.available"></span></span> $0</div>
                 </div>
                 <div class="sc-body">
                     <div id="trade-tab-cash">
                         <div class="cash-terminal">
                             <div class="ct-amount"><span>$</span><div id="trade-cash-value">0</div></div>
-                            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.4);text-transform:uppercase;">Enter the exact amount</div>
+                            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.4);text-transform:uppercase;"><span data-i18n="ui.trade.enter_the_exact_amount"></span></div>
                             <div class="ct-controls">
                                 <button type="button" class="ct-btn" data-cash-add="100"><span>+100</span></button>
-                                <button type="button" class="ct-btn" data-cash-add="1000"><span>+1k</span></button>
-                                <button type="button" class="ct-btn" data-cash-add="5000"><span>+5k</span></button>
-                                <button type="button" class="ct-btn" data-cash-add="10000"><span>+10k</span></button>
-                                <button type="button" class="ct-btn clear" id="trade-cash-clear"><span>Reset</span></button>
+                                <button type="button" class="ct-btn" data-cash-add="1000"><span><span data-i18n="ui.trade.1k"></span></span></button>
+                                <button type="button" class="ct-btn" data-cash-add="5000"><span><span data-i18n="ui.trade.5k"></span></span></button>
+                                <button type="button" class="ct-btn" data-cash-add="10000"><span><span data-i18n="ui.trade.10k"></span></span></button>
+                                <button type="button" class="ct-btn clear" id="trade-cash-clear"><span><span data-i18n="ui.trade.reset"></span></span></button>
                             </div>
                         </div>
                     </div>
@@ -86,8 +86,8 @@
                     <div id="trade-tab-businesses" style="display:none;"><div class="asset-grid is-list" id="trade-tab-businesses-grid"></div></div>
                 </div>
                 <div class="sc-actions">
-                    <button type="button" class="btn-act cancel" id="trade-selector-close">Cancel</button>
-                    <button type="button" class="btn-act confirm" id="trade-selector-confirm">Add to Offer</button>
+                    <button type="button" class="btn-act cancel" id="trade-selector-close"><span data-i18n="common.cancel"></span></button>
+                    <button type="button" class="btn-act confirm" id="trade-selector-confirm"><span data-i18n="ui.trade.add_to_offer"></span></button>
                 </div>
             </div>
         </div>

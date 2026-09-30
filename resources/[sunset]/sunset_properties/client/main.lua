@@ -52,7 +52,7 @@ RegisterNetEvent('sunset:death:forceHospital', function()
     transState = TRANS_NONE
 end)
 RegisterNetEvent('sunset:client:propertiesChanged', refreshSoon)
-RegisterNetEvent('sunset:client:propertyMessage', function(text, kind) exports.sunset_ui:Notify(text or 'House update', kind or 'info', 6500) end)
+RegisterNetEvent('sunset:client:propertyMessage', function(text, kind) exports.sunset_ui:Notify(text or exports.sunset_core:Translate('property.update'), kind or 'info', 6500) end)
 
 local function openProperties(properties, selectedId, opts)
     opts = opts or {}
@@ -74,6 +74,16 @@ end
 
 exports('IsPanelOpen', function()
     return propertiesPanelOpen
+end)
+
+-- [AUDIT MENU-LAZY] Expose cached data so sunset_menu can read it without a
+-- server round-trip on every M press.  The menu must NOT call sunset:getProperties
+-- directly — it should use these exports instead.
+exports('GetCachedProperties', function()
+    return cachedProperties
+end)
+exports('GetCachedMeta', function()
+    return cachedMeta
 end)
 
 exports('IsInsideProperty', function()
@@ -125,7 +135,7 @@ local function runAction(action, propertyId, payload)
     else
         ok, message = Sunset.AwaitCallback(callback, propertyId)
     end
-    exports.sunset_ui:Notify(message or (ok and 'House updated.' or 'House action failed.'), ok and 'success' or 'error', 6500)
+    exports.sunset_ui:Notify(message or exports.sunset_core:Translate(ok and 'property.update.success' or 'property.update.failed'), ok and 'success' or 'error', 6500)
     if ok then
         if CLOSE_ACTIONS[action] then
             propertiesPanelOpen = false
@@ -174,7 +184,7 @@ AddEventHandler('sunset:nui:propertyRenters', function(data)
         if not propertyId then return end
         local renters, err = Sunset.AwaitCallback('sunset:getPropertyRenters', propertyId)
         if not renters then
-            exports.sunset_ui:Notify(err or 'Could not load renters.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('property.renters.load_failed'), 'error')
             return
         end
         exports.sunset_ui:Send('propertyRenters', { propertyId = propertyId, renters = renters })
@@ -205,7 +215,7 @@ RegisterNetEvent('sunset:client:propertyInterior', function(data)
     exports.sunset_ui:Notify(helpText, 'info', 6500)
 
     if not ok then
-        exports.sunset_ui:Notify('World loading took a moment — if something looks wrong, re-enter.', 'warning', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('property.world_slow'), 'warning', 5000)
     end
 end)
 
@@ -231,7 +241,7 @@ RegisterNetEvent('sunset:client:propertyExited', function(data)
     DisplayRadar(true)
 
     if not ok then
-        exports.sunset_ui:Notify('World loading took a moment — if something looks wrong, rejoin.', 'warning', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('property.world_slow'), 'warning', 5000)
     end
 end)
 
@@ -259,10 +269,10 @@ end)
 
 RegisterCommand('sethome', function(_, args)
     local id = tonumber(args[1])
-    if not id then return exports.sunset_ui:Notify('Usage: /sethome [house id]. You must own or rent it.', 'error') end
+    if not id then return exports.sunset_ui:Notify(exports.sunset_core:Translate('property.sethome.usage'), 'error') end
     CreateThread(function()
         local ok, message = Sunset.AwaitCallback('sunset:setHome', id)
-        exports.sunset_ui:Notify(message or 'Home spawn update failed.', ok and 'success' or 'error')
+        exports.sunset_ui:Notify(message or exports.sunset_core:Translate('property.home.save_failed'), ok and 'success' or 'error')
     end)
 end, false)
 

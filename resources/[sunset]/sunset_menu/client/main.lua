@@ -136,11 +136,17 @@ local function buildMenuData(forceExtras)
     local displayName = playerData and playerData.name
         or (char.firstname .. (char.lastname ~= '' and (' ' .. char.lastname) or ''))
 
+    -- [AUDIT MENU-LAZY] Read from the properties client cache instead of issuing
+    -- a server callback on every M press.  sunset_properties refreshes the cache
+    -- on spawn and whenever propertiesChanged fires, so the data is always warm.
+    -- Fallback to empty tables when the resource is not started.
     local properties = {}
     local propertyMeta = nil
     pcall(function()
-        properties = Sunset.AwaitCallback('sunset:getProperties') or {}
-        propertyMeta = Sunset.AwaitCallback('sunset:getPropertyMeta') or {}
+        if GetResourceState('sunset_properties') == 'started' then
+            properties = exports.sunset_properties:GetCachedProperties() or {}
+            propertyMeta = exports.sunset_properties:GetCachedMeta() or {}
+        end
     end)
 
     return {

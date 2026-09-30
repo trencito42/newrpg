@@ -167,10 +167,66 @@ CreateThread(function()
 end)
 
 RegisterNetEvent('sunset:client:playerReady', function(data)
+    Sunset.SetLocalLocale(data and data.language or nil)
     Sunset.Player = data
     Sunset.Ready = true
     Sunset.Debug('Player ready:', data.name)
     TriggerEvent('sunset:client:onPlayerReady', data)
+end)
+
+local function syncLocaleToNui(locale)
+    if GetResourceState('sunset_ui') == 'started' then
+        pcall(function()
+            exports.sunset_ui:Send('localeSet', { locale = locale })
+        end)
+    end
+    if GetResourceState('sunset_auth_ui') == 'started' then
+        pcall(function()
+            exports.sunset_auth_ui:Send('localeSet', { locale = locale })
+        end)
+    end
+end
+
+RegisterNetEvent('sunset:client:localeChanged', function(locale)
+    if not Sunset.SetLocalLocale(locale) then return end
+    if Sunset.Player then Sunset.Player.language = locale end
+    syncLocaleToNui(locale)
+    TriggerEvent('sunset:client:onLocaleChanged', locale)
+end)
+
+function GetLocale()
+    return Sunset.GetLocale()
+end
+
+function Translate(key, params)
+    return Sunset.T(key, params)
+end
+
+function IsValidLocale(locale)
+    return Sunset.IsValidLocale(locale)
+end
+
+function SetLocale(locale)
+    if not Sunset.IsValidLocale(locale) then
+        return false, Sunset.T('locale.invalid')
+    end
+
+    CreateThread(function()
+        local result, err = Sunset.AwaitCallback('sunset:setLocale', locale)
+        if not result then
+            TriggerEvent('sunset:client:localeChangeFailed', err or Sunset.T('locale.save_failed'))
+        end
+    end)
+    return true
+end
+
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource == 'sunset_ui' or resource == 'sunset_auth_ui' then
+        CreateThread(function()
+            Wait(250)
+            syncLocaleToNui(Sunset.GetLocale())
+        end)
+    end
 end)
 
 RegisterNetEvent('sunset:client:characterLoaded', function(charData)

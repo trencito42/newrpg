@@ -362,6 +362,21 @@ RegisterCommand('cursor', function()
     Notify('Cursorul a fost resetat.', 'info')
 end, false)
 
+-- [AUDIT NUI-ERR] Forward JS errors to server logs so staff can diagnose
+-- NUI crashes without requiring the player to share F8 output.
+RegisterNUICallback('nuiError', function(data, cb)
+    data = type(data) == 'table' and data or {}
+    local msg = tostring(data.message or 'unknown JS error'):sub(1, 300)
+    local src = tostring(data.source or ''):sub(1, 120)
+    local stack = tostring(data.stack or ''):sub(1, 400)
+    local errType = tostring(data.type or 'onerror')
+    NuiDebugRecordError(msg, src, data.lineno)
+    print(('^1[NUI-ERROR type=%s]^7 %s | source=%s:%s | stack: %s'):format(
+        errType, msg, src, tostring(data.lineno or '?'), stack))
+    TriggerServerEvent('sunset:server:nuiError', errType, msg, src, data.lineno)
+    cb('ok')
+end)
+
 CreateThread(function()
     local lastPauseState = nil
     while true do

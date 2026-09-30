@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sunset Route Creator</title>
+    <title data-i18n="ui.devtools.sunset_route_creator"></title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,64 +16,64 @@
                     <div class="rc-brand">
                         <span class="rc-brand__icon">⚡</span>
                         <div>
-                            <h1 class="rc-brand__title">ROUTE CREATOR</h1>
-                            <span class="rc-brand__subtitle">SUNSET DEVTOOLS v2.0</span>
+                            <h1 class="rc-brand__title"><span data-i18n="ui.devtools.route_creator"></span></h1>
+                            <span class="rc-brand__subtitle"><span data-i18n="ui.devtools.sunset_devtools_v2_0"></span></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="rc-section-title">JOB ADAPTERS</div>
+                <div class="rc-section-title"><span data-i18n="ui.devtools.job_adapters"></span></div>
                 <div class="rc-adapter-list" id="rc-adapter-list">
                     <button type="button" class="rc-adapter-item active" data-adapter="trucker">
                         <span class="rc-adapter-icon">🚚</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Trucker</span>
-                            <span class="rc-adapter-sub">Pickup, delivery &amp; parking bay</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.trucker"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.pickup_delivery_parking_bay"></span></span>
                         </div>
                     </button>
                     <button type="button" class="rc-adapter-item" data-adapter="garbage">
                         <span class="rc-adapter-icon">🗑️</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Garbage</span>
-                            <span class="rc-adapter-sub">Ordered bin collection stops</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.garbage"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.ordered_bin_collection_stops"></span></span>
                         </div>
                     </button>
                     <button type="button" class="rc-adapter-item" data-adapter="hunting">
                         <span class="rc-adapter-icon">🦌</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Hunter</span>
-                            <span class="rc-adapter-sub">Polygon zones &amp; spawn points</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.hunter"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.polygon_zones_spawn_points"></span></span>
                         </div>
                     </button>
                     <button type="button" class="rc-adapter-item" data-adapter="diving">
                         <span class="rc-adapter-icon">🤿</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Diver</span>
-                            <span class="rc-adapter-sub">Dive sites &amp; loot points</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.diver"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.dive_sites_loot_points"></span></span>
                         </div>
                     </button>
-                    <div class="rc-adapter-item disabled" title="Architecture ready — not yet active">
+                    <div class="rc-adapter-item disabled" title="" data-i18n-title="ui.devtools.architecture_ready_not_yet_active">
                         <span class="rc-adapter-icon">🚌</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Bus Routes</span>
-                            <span class="rc-adapter-sub">Extensible adapter</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.bus_routes"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.extensible_adapter"></span></span>
                         </div>
                     </div>
-                    <div class="rc-adapter-item disabled" title="Architecture ready — not yet active">
+                    <div class="rc-adapter-item disabled" title="" data-i18n-title="ui.devtools.architecture_ready_not_yet_active">
                         <span class="rc-adapter-icon">📦</span>
                         <div class="rc-adapter-info">
-                            <span class="rc-adapter-name">Courier</span>
-                            <span class="rc-adapter-sub">Extensible adapter</span>
+                            <span class="rc-adapter-name"><span data-i18n="ui.devtools.courier"></span></span>
+                            <span class="rc-adapter-sub"><span data-i18n="ui.devtools.extensible_adapter"></span></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="rc-sidebar-footer">
                     <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-reload">
-                        <span>🔄</span> Reload From Disk
+                        <span>🔄</span> <span data-i18n="ui.devtools.reload_from_disk"></span>
                     </button>
                     <button type="button" class="rc-btn rc-btn--danger" id="rc-btn-close">
-                        <span>✕</span> Close [ESC]
+                        <span>✕</span> <span data-i18n="ui.devtools.close_esc"></span>
                     </button>
                 </div>
             </div>
@@ -82,16 +82,16 @@
             <div class="rc-col rc-col--list">
                 <div class="rc-list-header">
                     <div class="rc-search-wrap">
-                        <input type="text" id="rc-search-input" placeholder="Search routes..." autocomplete="off">
+                        <input type="text" id="rc-search-input" placeholder="" autocomplete="off" data-i18n-placeholder="ui.devtools.search_routes">
                     </div>
                     <button type="button" class="rc-btn rc-btn--primary" id="rc-btn-new-route">
-                        <span>+</span> New Route
+                        <span>+</span> <span data-i18n="ui.devtools.new_route"></span>
                     </button>
                 </div>
 
                 <div class="rc-route-count">
-                    <span id="rc-route-count-text">0 Routes Configured</span>
-                    <span class="rc-save-badge saved" id="rc-global-save-status">SAVED</span>
+                    <span id="rc-route-count-text"><span data-i18n="ui.devtools.0_routes_configured"></span></span>
+                    <span class="rc-save-badge saved" id="rc-global-save-status"><span data-i18n="ui.devtools.saved"></span></span>
                 </div>
 
                 <div class="rc-route-list" id="rc-route-list">
@@ -103,20 +103,20 @@
             <div class="rc-col rc-col--inspector" id="rc-inspector-pane">
                 <div class="rc-empty-state" id="rc-empty-inspector">
                     <div class="rc-empty-icon">📍</div>
-                    <h3>Select or Create a Route</h3>
-                    <p>Select a route from the middle list or create a new route to inspect and visually position gameplay elements.</p>
+                    <h3><span data-i18n="ui.devtools.select_or_create_a_route"></span></h3>
+                    <p><span data-i18n="ui.devtools.select_a_route_from_the_middle_list_or_create"></span></p>
                 </div>
 
                 <div class="rc-inspector-content hidden" id="rc-inspector-content">
                     <!-- Inspector Header -->
                     <div class="rc-insp-header">
                         <div class="rc-insp-title-row">
-                            <input type="text" id="rc-insp-label" class="rc-input-hero" placeholder="Route Name">
-                            <span class="rc-save-badge saved" id="rc-route-dirty-badge">SAVED</span>
+                            <input type="text" id="rc-insp-label" class="rc-input-hero" placeholder="" data-i18n-placeholder="ui.devtools.route_name">
+                            <span class="rc-save-badge saved" id="rc-route-dirty-badge"><span data-i18n="ui.devtools.saved"></span></span>
                         </div>
                         <div class="rc-insp-id-row">
-                            <label>ID:</label>
-                            <input type="text" id="rc-insp-id" class="rc-input-inline" placeholder="unique_route_id">
+                            <label><span data-i18n="ui.devtools.id"></span></label>
+                            <input type="text" id="rc-insp-id" class="rc-input-inline" placeholder="" data-i18n-placeholder="ui.devtools.unique_route_id">
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
 
                     <!-- Live Validation Section -->
                     <div class="rc-validation-section">
-                        <div class="rc-section-title">ROUTE VALIDATION</div>
+                        <div class="rc-section-title"><span data-i18n="ui.devtools.route_validation"></span></div>
                         <div class="rc-validation-list" id="rc-validation-list">
                             <!-- Injected by adapter.validate() -->
                         </div>
@@ -137,20 +137,20 @@
                     <div class="rc-insp-footer">
                         <div class="rc-footer-actions">
                             <button type="button" class="rc-btn rc-btn--accent" id="rc-btn-preview-world">
-                                <span>👁️</span> Preview in World
+                                <span>👁️</span> <span data-i18n="ui.devtools.preview_in_world"></span>
                             </button>
                             <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-test-route">
-                                <span>🎮</span> Test Mode
+                                <span>🎮</span> <span data-i18n="ui.devtools.test_mode"></span>
                             </button>
                             <button type="button" class="rc-btn rc-btn--secondary" id="rc-btn-duplicate-route">
-                                <span>📋</span> Duplicate
+                                <span>📋</span> <span data-i18n="ui.devtools.duplicate"></span>
                             </button>
                             <button type="button" class="rc-btn rc-btn--danger-soft" id="rc-btn-delete-route">
-                                <span>🗑️</span> Delete
+                                <span>🗑️</span> <span data-i18n="ui.devtools.delete"></span>
                             </button>
                         </div>
                         <button type="button" class="rc-btn rc-btn--success rc-btn--save" id="rc-btn-save-routes">
-                            <span>💾</span> Save All Routes to Disk
+                            <span>💾</span> <span data-i18n="ui.devtools.save_all_routes_to_disk"></span>
                         </button>
                     </div>
                 </div>
@@ -160,11 +160,11 @@
         <!-- Confirm Modal -->
         <div class="rc-modal-overlay hidden" id="rc-modal">
             <div class="rc-modal-card">
-                <h3 class="rc-modal-title" id="rc-modal-title">Confirm Action</h3>
-                <p class="rc-modal-msg" id="rc-modal-msg">Are you sure?</p>
+                <h3 class="rc-modal-title" id="rc-modal-title"><span data-i18n="ui.devtools.confirm_action"></span></h3>
+                <p class="rc-modal-msg" id="rc-modal-msg"><span data-i18n="ui.devtools.are_you_sure"></span></p>
                 <div class="rc-modal-actions">
-                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-modal-cancel">Cancel</button>
-                    <button type="button" class="rc-btn rc-btn--danger" id="rc-modal-confirm">Confirm</button>
+                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-modal-cancel"><span data-i18n="common.cancel"></span></button>
+                    <button type="button" class="rc-btn rc-btn--danger" id="rc-modal-confirm"><span data-i18n="common.confirm"></span></button>
                 </div>
             </div>
         </div>
@@ -172,13 +172,13 @@
         <!-- Test Route Modal -->
         <div class="rc-modal-overlay hidden" id="rc-test-modal">
             <div class="rc-modal-card rc-modal-card--test">
-                <h3 class="rc-modal-title">🎮 Route Test Mode (Dev Only)</h3>
-                <p class="rc-modal-msg">Teleport your ped or work vehicle to any route checkpoint for collision &amp; layout validation. No economy rewards.</p>
+                <h3 class="rc-modal-title"><span data-i18n="ui.devtools.route_test_mode_dev_only"></span></h3>
+                <p class="rc-modal-msg"><span data-i18n="ui.devtools.teleport_your_ped_or_work_vehicle_to_any_route"></span></p>
                 <div class="rc-test-actions" id="rc-test-actions-list">
                     <!-- Dynamic per adapter -->
                 </div>
                 <div class="rc-modal-actions">
-                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-test-modal-close">Close</button>
+                    <button type="button" class="rc-btn rc-btn--secondary" id="rc-test-modal-close"><span data-i18n="common.close"></span></button>
                 </div>
             </div>
         </div>
@@ -188,12 +188,12 @@
     <div id="rc-world-hud" class="rc-world-hud hidden">
         <div class="rc-world-hud__glass">
             <div class="rc-world-hud__header">
-                <span class="rc-world-hud__tag" id="rc-wh-tag">WORLD PREVIEW</span>
-                <span class="rc-world-hud__title" id="rc-wh-title">Route Name</span>
+                <span class="rc-world-hud__tag" id="rc-wh-tag"><span data-i18n="ui.devtools.world_preview"></span></span>
+                <span class="rc-world-hud__title" id="rc-wh-title"><span data-i18n="ui.devtools.route_name"></span></span>
             </div>
-            <div class="rc-world-hud__coords" id="rc-wh-coords">X: 0.00 | Y: 0.00 | Z: 0.00</div>
+            <div class="rc-world-hud__coords" id="rc-wh-coords"><span data-i18n="ui.devtools.x_0_00_y_0_00_z_0_00"></span></div>
             <div class="rc-world-hud__controls" id="rc-wh-controls">
-                <span>[ESC / M] Return to Editor Menu</span>
+                <span><span data-i18n="ui.devtools.esc_m_return_to_editor_menu"></span></span>
             </div>
         </div>
     </div>

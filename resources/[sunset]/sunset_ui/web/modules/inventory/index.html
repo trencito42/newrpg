@@ -4,9 +4,9 @@
             <div class="inv-panel">
                 <div class="inv-header">
                     <div class="inv-title">
-                        <div class="inv-name"><i class="ph-bold ph-user"></i> Inventar</div>
-                        <div class="inv-cash-badge" id="inventory-cash-badge" title="Wallet cash — drag into trade offer">$<strong id="inventory-cash">0</strong></div>
-                        <div class="inv-weight-text"><span id="weight-val-player">0.0</span> / <span id="weight-max-player">30.0</span> KG</div>
+                        <div class="inv-name"><i class="ph-bold ph-user"></i> <span data-i18n="ui.inventory.inventar"></span></div>
+                        <div class="inv-cash-badge" id="inventory-cash-badge" title="" data-i18n-title="ui.inventory.wallet_cash_drag_into_trade_offer">$<strong id="inventory-cash">0</strong></div>
+                        <div class="inv-weight-text"><span id="weight-val-player">0.0</span> / <span id="weight-max-player">30.0</span> <span data-i18n="ui.inventory.kg"></span></div>
                     </div>
                     <div class="weight-bar-container" id="weight-bar-player"></div>
                 </div>
@@ -21,51 +21,51 @@
                     <div class="inv-grid" id="grid-player"></div>
                 </div>
                 <div class="inv-actions">
-                    <span id="inventory-selected-label">SELECT AN ITEM</span>
-                    <button type="button" id="inventory-use-selected" disabled>USE</button>
-                    <button type="button" class="is-danger" id="inventory-drop-selected" disabled>DROP</button>
+                    <span id="inventory-selected-label"><span data-i18n="ui.inventory.select_an_item"></span></span>
+                    <button type="button" id="inventory-use-selected" disabled><span data-i18n="ui.inventory.use"></span></button>
+                    <button type="button" class="is-danger" id="inventory-drop-selected" disabled><span data-i18n="ui.inventory.drop"></span></button>
                 </div>
                 <!-- [DROP ZONE] Drag an item here to throw it on the ground -->
-                <div class="inv-trash" id="inventory-trash-zone" title="Drag an item here to drop it">
+                <div class="inv-trash" id="inventory-trash-zone" title="" data-i18n-title="ui.inventory.drag_an_item_here_to_drop_it">
                     <i class="ph-bold ph-trash"></i>
-                    <span>TRASH</span>
+                    <span><span data-i18n="ui.inventory.trash"></span></span>
                 </div>
             </div>
             <div class="proximity-panel" id="inventory-nearby-panel">
                 <div class="prox-header">
-                    <div class="prox-radar-icon"></div> Players nearby
+                    <div class="prox-radar-icon"></div> <span data-i18n="ui.inventory.players_nearby"></span>
                 </div>
                 <div class="prox-list" id="inventory-nearby-list"></div>
             </div>
         </div>
         <div class="premium-trade-panel hidden" id="inventory-trade-panel">
-            <div class="premium-side-heading">TRADE WITH <strong id="inventory-trade-target">PLAYER</strong></div>
-            <span class="premium-trade-label">YOUR OFFER — DRAG ITEMS OR CASH HERE</span>
+            <div class="premium-side-heading"><span data-i18n="ui.inventory.trade_with"></span> <strong id="inventory-trade-target"><span data-i18n="ui.inventory.player"></span></strong></div>
+            <span class="premium-trade-label"><span data-i18n="ui.inventory.your_offer_drag_items_or_cash_here"></span></span>
             <div class="premium-trade-zone" id="inventory-my-offer"></div>
-            <span class="premium-trade-label">YOUR ASSETS</span>
+            <span class="premium-trade-label"><span data-i18n="ui.inventory.your_assets"></span></span>
             <div class="premium-trade-assets" id="inventory-my-assets"></div>
-            <button type="button" class="premium-trade-add-asset" id="inventory-trade-add-asset">+ ADD HOUSE / VEHICLE / BUSINESS</button>
-            <span class="premium-trade-label">THEIR OFFER</span>
+            <button type="button" class="premium-trade-add-asset" id="inventory-trade-add-asset"><span data-i18n="ui.inventory.add_house_vehicle_business"></span></button>
+            <span class="premium-trade-label"><span data-i18n="ui.inventory.their_offer"></span></span>
             <div class="premium-trade-zone is-readonly" id="inventory-their-offer"></div>
-            <span class="premium-trade-label">THEIR ASSETS</span>
+            <span class="premium-trade-label"><span data-i18n="ui.inventory.their_assets"></span></span>
             <div class="premium-trade-assets is-readonly" id="inventory-their-assets"></div>
-            <button type="button" class="premium-trade-confirm" id="inventory-trade-confirm">ACCEPT TRADE</button>
-            <button type="button" class="premium-trade-cancel" id="inventory-trade-cancel">CANCEL</button>
+            <button type="button" class="premium-trade-confirm" id="inventory-trade-confirm"><span data-i18n="ui.inventory.accept_trade"></span></button>
+            <button type="button" class="premium-trade-cancel" id="inventory-trade-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
         </div>
         <div class="premium-trade-asset-modal hidden" id="inventory-trade-asset-modal" aria-hidden="true">
             <div class="premium-qty-box premium-trade-asset-box">
-                <h3>ADD ASSET TO TRADE</h3>
-                <p class="premium-trade-asset-hint">Only garage-stored vehicles and assets you own can be traded.</p>
+                <h3><span data-i18n="ui.inventory.add_asset_to_trade"></span></h3>
+                <p class="premium-trade-asset-hint"><span data-i18n="ui.inventory.only_garage_stored_vehicles_and_assets_you_own_can"></span></p>
                 <div class="premium-trade-asset-list" id="inventory-trade-asset-list"></div>
                 <div class="premium-qty-actions">
-                    <button type="button" class="premium-qty-cancel" id="inventory-trade-asset-close">CLOSE</button>
+                    <button type="button" class="premium-qty-cancel" id="inventory-trade-asset-close"><span data-i18n="ui.inventory.close"></span></button>
                 </div>
             </div>
         </div>
         <div class="premium-qty-modal hidden" id="inventory-qty-modal" aria-hidden="true">
             <div class="premium-qty-box">
-                <h3 id="inventory-qty-title">SELECT AMOUNT</h3>
-                <p class="premium-qty-item" id="inventory-qty-item-name">Item</p>
+                <h3 id="inventory-qty-title"><span data-i18n="ui.inventory.select_amount"></span></h3>
+                <p class="premium-qty-item" id="inventory-qty-item-name"><span data-i18n="ui.inventory.item"></span></p>
                 <div class="premium-qty-controls">
                     <button type="button" class="premium-qty-btn" id="inventory-qty-minus">-</button>
                     <input type="number" id="inventory-qty-input" min="1" max="1" value="1" class="premium-qty-input">
@@ -75,13 +75,13 @@
                 <div class="premium-qty-quick">
                     <button type="button" id="inventory-qty-quick-1">1</button>
                     <button type="button" id="inventory-qty-quick-half">50%</button>
-                    <button type="button" id="inventory-qty-quick-all">ALL</button>
+                    <button type="button" id="inventory-qty-quick-all"><span data-i18n="ui.inventory.all"></span></button>
                 </div>
                 <div class="premium-qty-actions">
-                    <button type="button" class="premium-qty-cancel" id="inventory-qty-cancel">CANCEL</button>
-                    <button type="button" class="premium-qty-confirm" id="inventory-qty-confirm">CONFIRM</button>
+                    <button type="button" class="premium-qty-cancel" id="inventory-qty-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
+                    <button type="button" class="premium-qty-confirm" id="inventory-qty-confirm"><span data-i18n="ui.inventory.confirm"></span></button>
                 </div>
             </div>
         </div>
-        <div class="inv-close-hint">APASĂ ESC SAU I PENTRU A ÎNCHIDE</div>
+        <div class="inv-close-hint"><span data-i18n="ui.inventory.apasa_esc_sau_i_pentru_a_inchide"></span></div>
     </div>

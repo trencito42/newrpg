@@ -184,7 +184,13 @@ function A.spectate(source, args)
     -- [G7 FIX] join the target's routing bucket so properties are visible.
     local bucket = GetPlayerRoutingBucket(target) or 0
     SetPlayerRoutingBucket(source, bucket)
-    TriggerClientEvent('sunset:admin:spectateStart', source, target)
+    -- [AUDIT SPECTATE-DIST] Pass the target's current coords so the admin client
+    -- can teleport near the target before calling NetworkSetInSpectatorMode.
+    -- Without this, if the target is >500 m away their ped is not streamed and
+    -- the spectate cam shows nothing.
+    local targetPed = GetPlayerPed(target)
+    local initCoords = (targetPed and targetPed ~= 0) and GetEntityCoords(targetPed) or nil
+    TriggerClientEvent('sunset:admin:spectateStart', source, target, initCoords and {x=initCoords.x,y=initCoords.y,z=initCoords.z} or nil)
     notify(source, ('Now spectating #%d (%s). /spectate off to exit.'):format(
         target, getDisplayName(target)), 'success', 8000)
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s started spectating #%d (%s)')

@@ -6,20 +6,20 @@
             <div class="nui-load-vignette"></div>
             <div class="hud-wrapper">
                 <div class="brand-container">
-                    <div class="brand-title">SUNSET <span>MP</span></div>
-                    <div class="brand-subtitle">Est. 2026 &middot; Los Santos</div>
+                    <div class="brand-title"><span data-i18n="ui.characters.sunset"></span> <span><span data-i18n="ui.characters.mp"></span></span></div>
+                    <div class="brand-subtitle"><span data-i18n="ui.characters.est_2026_middot_los_santos"></span></div>
                 </div>
                 <div class="bottom-area">
                     <div class="tips-container">
-                        <div class="tips-header">Server Tips</div>
+                        <div class="tips-header"><span data-i18n="ui.characters.server_tips"></span></div>
                         <div class="tips-text forza-load-tip">
-                            Stay in character at all times. Press G to open the quick interaction menu.
+                            <span data-i18n="ui.characters.stay_in_character_at_all_times_press_g_to"></span>
                         </div>
                     </div>
                     <div class="speedometer-loading">
                         <div class="massive-pct forza-load-pct">100<span>%</span></div>
                         <div class="loading-status-text">
-                            <span class="forza-load-status">Entering session...</span>
+                            <span class="forza-load-status"><span data-i18n="ui.characters.entering_session"></span></span>
                             <span class="file-count forza-load-files"></span>
                         </div>
                         <div class="rpm-bar-container forza-load-rpm"></div>
@@ -29,33 +29,33 @@
         </section>
         <section id="screen-characters" class="screen hidden">
             <div class="panel panel--left">
-                <img class="panel-logo" src="assets/logoblaze.svg?v=1" width="120" height="120" alt="blaze.mp">
+                <img class="panel-logo" src="assets/logoblaze.svg?v=1" width="120" height="120" alt="" data-i18n-alt="ui.characters.blaze_mp">
                 <p class="panel-user" id="player-name"></p>
                 <div class="slots" id="characters-list"></div>
-                <button class="btn" id="btn-create-char">+ New Character</button>
+                <button class="btn" id="btn-create-char"><span data-i18n="ui.characters.new_character"></span></button>
             </div>
         </section>
         <section id="screen-create" class="screen hidden">
             <div class="panel panel--center">
-                <button class="link-back" id="btn-back-select">← Back</button>
-                <h2 class="panel-title">New Character</h2>
+                <button class="link-back" id="btn-back-select"><span data-i18n="ui.characters.back"></span></button>
+                <h2 class="panel-title"><span data-i18n="ui.characters.new_character_991697"></span></h2>
                 <form id="create-form" class="form">
                     <div class="row">
-                        <label class="field"><span>First Name</span><input type="text" id="firstname" maxlength="32" required></label>
-                        <label class="field"><span>Last Name</span><input type="text" id="lastname" maxlength="32" required></label>
+                        <label class="field"><span><span data-i18n="ui.characters.first_name"></span></span><input type="text" id="firstname" maxlength="32" required></label>
+                        <label class="field"><span><span data-i18n="ui.characters.last_name"></span></span><input type="text" id="lastname" maxlength="32" required></label>
                     </div>
                     <div class="row">
-                        <label class="field"><span>Date of Birth</span><input type="date" id="dateofbirth" required></label>
-                        <label class="field"><span>Nationality</span><select id="nationality"></select></label>
+                        <label class="field"><span><span data-i18n="ui.characters.date_of_birth"></span></span><input type="date" id="dateofbirth" required></label>
+                        <label class="field"><span><span data-i18n="ui.characters.nationality"></span></span><select id="nationality"></select></label>
                     </div>
                     <div class="field">
-                        <span>Gender</span>
+                        <span><span data-i18n="ui.characters.gender"></span></span>
                         <div class="toggle" id="gender-picker">
-                            <button type="button" class="toggle__btn active" data-gender="0">Male</button>
-                            <button type="button" class="toggle__btn" data-gender="1">Female</button>
+                            <button type="button" class="toggle__btn active" data-gender="0"><span data-i18n="ui.characters.male"></span></button>
+                            <button type="button" class="toggle__btn" data-gender="1"><span data-i18n="ui.characters.female"></span></button>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn--primary">Confirm</button>
+                    <button type="submit" class="btn btn--primary"><span data-i18n="common.confirm"></span></button>
                 </form>
             </div>
         </section>
@@ -63,20 +63,20 @@
             <div class="nui-load-vignette"></div>
             <div class="hud-wrapper">
                 <div class="brand-container">
-                    <div class="brand-title">SUNSET <span>MP</span></div>
-                    <div class="brand-subtitle">Est. 2026 &middot; Los Santos</div>
+                    <div class="brand-title"><span data-i18n="ui.characters.sunset"></span> <span><span data-i18n="ui.characters.mp"></span></span></div>
+                    <div class="brand-subtitle"><span data-i18n="ui.characters.est_2026_middot_los_santos"></span></div>
                 </div>
                 <div class="bottom-area">
                     <div class="tips-container">
-                        <div class="tips-header">Server Tips</div>
+                        <div class="tips-header"><span data-i18n="ui.characters.server_tips"></span></div>
                         <div class="tips-text forza-load-tip">
-                            Stay in character at all times. Press G to open the quick interaction menu.
+                            <span data-i18n="ui.characters.stay_in_character_at_all_times_press_g_to"></span>
                         </div>
                     </div>
                     <div class="speedometer-loading">
                         <div class="massive-pct forza-load-pct">0<span>%</span></div>
                         <div class="loading-status-text">
-                            <span class="forza-load-status">Initializing session...</span>
+                            <span class="forza-load-status"><span data-i18n="ui.characters.initializing_session"></span></span>
                             <span class="file-count forza-load-files"></span>
                         </div>
                         <div class="rpm-bar-container forza-load-rpm"></div>
@@ -91,38 +91,38 @@
             <div class="spawn-cinematic-fade" id="spawn-fade-overlay"></div>
             <div class="spawn-ui" id="spawn-main-ui">
                 <div class="spawn-locations">
-                    <div class="spawn-section-title">Select Spawn Point</div>
+                    <div class="spawn-section-title"><span data-i18n="ui.characters.select_spawn_point"></span></div>
                     <div class="spawn-location-list" id="spawn-location-list">
                         <button type="button" class="spawn-loc-item active" data-spawn="last" data-status="Safe" data-risk="Low" style="--delay:0.1s">
                             <span class="spawn-loc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg></span>
-                            <span class="spawn-loc-label">Last Location</span>
+                            <span class="spawn-loc-label"><span data-i18n="ui.characters.last_location"></span></span>
                         </button>
                         <button type="button" class="spawn-loc-item" data-spawn="default" data-status="Public" data-risk="Medium" style="--delay:0.2s">
                             <span class="spawn-loc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10.5V20h11v-9.5M10 20v-6h4v6"/></svg></span>
-                            <span class="spawn-loc-label">Default Spawn</span>
+                            <span class="spawn-loc-label"><span data-i18n="ui.characters.default_spawn"></span></span>
                         </button>
                         <button type="button" class="spawn-loc-item hidden" data-spawn="house" data-property-id="" data-status="Property" data-risk="None" style="--delay:0.3s">
                             <span class="spawn-loc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V21h13V10.5M9 21v-6h6v6"/></svg></span>
-                            <span class="spawn-loc-label">Property</span>
+                            <span class="spawn-loc-label"><span data-i18n="common.property"></span></span>
                         </button>
                         <button type="button" class="spawn-loc-item hidden" data-spawn="hq" data-status="Faction" data-risk="Low" style="--delay:0.4s">
                             <span class="spawn-loc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/><path d="M4 20h16"/></svg></span>
-                            <span class="spawn-loc-label">Faction HQ</span>
+                            <span class="spawn-loc-label"><span data-i18n="ui.characters.faction_hq"></span></span>
                         </button>
                     </div>
                 </div>
                 <div class="spawn-details">
                     <div class="spawn-detail-row">
-                        <span class="spawn-detail-label">Zone Status</span>
-                        <span class="spawn-detail-value val-safe" id="spawn-info-status">Safe</span>
+                        <span class="spawn-detail-label"><span data-i18n="ui.characters.zone_status"></span></span>
+                        <span class="spawn-detail-value val-safe" id="spawn-info-status"><span data-i18n="ui.characters.safe"></span></span>
                     </div>
                     <div class="spawn-detail-row">
-                        <span class="spawn-detail-label">Risk Level</span>
-                        <span class="spawn-detail-value" id="spawn-info-risk">Low</span>
+                        <span class="spawn-detail-label"><span data-i18n="ui.characters.risk_level"></span></span>
+                        <span class="spawn-detail-value" id="spawn-info-risk"><span data-i18n="ui.characters.low"></span></span>
                     </div>
                     <button type="button" class="spawn-btn-confirm" id="spawn-btn-confirm">
-                        <span class="spawn-key-hint">ENTER</span>
-                        Confirm
+                        <span class="spawn-key-hint"><span data-i18n="ui.characters.enter"></span></span>
+                        <span data-i18n="common.confirm"></span>
                     </button>
                 </div>
             </div>
@@ -132,86 +132,86 @@
             <div class="auth-overlay"></div>
             <div id="auth-panel" class="auth-container active">
                 <header class="auth-header">
-                    <div class="auth-subtitle">Securitate SunsetMP</div>
-                    <div class="auth-title" id="auth-main-title">Loghează-te</div>
+                    <div class="auth-subtitle"><span data-i18n="ui.characters.securitate_sunsetmp"></span></div>
+                    <div class="auth-title" id="auth-main-title"><span data-i18n="ui.characters.logheaza_te"></span></div>
                 </header>
                 <div class="auth-tabs hidden" aria-hidden="true">
-                    <button type="button" class="auth-tab is-active active" id="auth-tab-login" data-tab="login">Login</button>
-                    <button type="button" class="auth-tab" id="auth-tab-register" data-tab="register" hidden>Register</button>
+                    <button type="button" class="auth-tab is-active active" id="auth-tab-login" data-tab="login"><span data-i18n="ui.characters.login"></span></button>
+                    <button type="button" class="auth-tab" id="auth-tab-register" data-tab="register" hidden><span data-i18n="ui.characters.register"></span></button>
                 </div>
                 <div id="form-slider" class="auth-login-stack form-slider">
                     <div id="auth-form-login" class="form-section auth-form is-active active">
                         <div class="input-group field">
-                            <div class="input-label">Nume Jucător</div>
-                            <input type="text" class="input-field form-input" id="auth-login-user" maxlength="20" autocomplete="username" spellcheck="false" placeholder="Ex: Ștefan">
+                            <div class="input-label"><span data-i18n="ui.characters.nume_jucator"></span></div>
+                            <input type="text" class="input-field form-input" id="auth-login-user" maxlength="20" autocomplete="username" spellcheck="false" placeholder="" data-i18n-placeholder="ui.characters.ex_stefan">
                             <i class="ph-bold ph-user input-icon"></i>
                         </div>
                         <div class="input-group field">
-                            <div class="input-label">Parolă Acces</div>
+                            <div class="input-label"><span data-i18n="ui.characters.parola_acces"></span></div>
                             <input type="password" class="input-field form-input" id="auth-login-pass" maxlength="64" autocomplete="current-password" placeholder="••••••••">
                             <i class="ph-bold ph-lock-key input-icon"></i>
                         </div>
                         <label class="auth-remember checkbox-group">
                             <input type="checkbox" id="auth-remember-quick" checked>
                             <span class="checkbox-custom" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-                            <span class="checkbox-label">Salvează contul pentru login rapid</span>
+                            <span class="checkbox-label"><span data-i18n="ui.characters.salveaza_contul_pentru_login_rapid"></span></span>
                         </label>
-                        <button type="button" class="btn-submit btn btn--primary btn-main" id="auth-login-btn"><i class="ph-bold ph-sign-in"></i> Conectare</button>
+                        <button type="button" class="btn-submit btn btn--primary btn-main" id="auth-login-btn"><i class="ph-bold ph-sign-in"></i> <span data-i18n="ui.characters.conectare"></span></button>
                         <div class="auth-links">
-                            <button type="button" class="auth-link" id="auth-forgot-pass">Ai uitat parola?</button>
-                            <button type="button" class="auth-link highlight" id="auth-go-register" hidden>Nu ai cont? Creează unul <i class="ph-bold ph-arrow-right"></i></button>
+                            <button type="button" class="auth-link" id="auth-forgot-pass"><span data-i18n="ui.characters.ai_uitat_parola"></span></button>
+                            <button type="button" class="auth-link highlight" id="auth-go-register" hidden><span data-i18n="ui.characters.nu_ai_cont_creeaza_unul"></span> <i class="ph-bold ph-arrow-right"></i></button>
                         </div>
                     </div>
                     <div id="auth-form-register" class="form-section auth-form hidden">
                         <div class="input-group field">
-                            <div class="input-label">Nume Dorit</div>
-                            <input type="text" class="input-field form-input" id="auth-reg-user" maxlength="20" spellcheck="false" autocomplete="username" placeholder="Alege un username">
+                            <div class="input-label"><span data-i18n="ui.characters.nume_dorit"></span></div>
+                            <input type="text" class="input-field form-input" id="auth-reg-user" maxlength="20" spellcheck="false" autocomplete="username" placeholder="" data-i18n-placeholder="ui.characters.alege_un_username">
                             <i class="ph-bold ph-identification-badge input-icon"></i>
                         </div>
                         <div class="input-group field">
-                            <div class="input-label">Adresa Email</div>
-                            <input type="email" class="input-field form-input" id="auth-reg-email" maxlength="254" spellcheck="false" autocomplete="email" placeholder="adresa@email.com">
+                            <div class="input-label"><span data-i18n="ui.characters.adresa_email"></span></div>
+                            <input type="email" class="input-field form-input" id="auth-reg-email" maxlength="254" spellcheck="false" autocomplete="email" placeholder="" data-i18n-placeholder="ui.characters.adresa_email_com">
                             <i class="ph-bold ph-envelope-simple input-icon"></i>
                         </div>
                         <div class="input-group field">
-                            <div class="input-label">Parolă Secură</div>
+                            <div class="input-label"><span data-i18n="ui.characters.parola_secura"></span></div>
                             <input type="password" class="input-field form-input" id="auth-reg-pass" maxlength="64" autocomplete="new-password" placeholder="••••••••">
                             <i class="ph-bold ph-shield-check input-icon"></i>
                         </div>
                         <div class="input-group field">
-                            <div class="input-label">Confirmă Parola</div>
+                            <div class="input-label"><span data-i18n="ui.characters.confirma_parola"></span></div>
                             <input type="password" class="input-field form-input" id="auth-reg-pass2" maxlength="64" autocomplete="new-password" placeholder="••••••••">
                             <i class="ph-bold ph-shield-check input-icon"></i>
                         </div>
                         <label class="auth-remember checkbox-group">
                             <input type="checkbox" id="auth-reg-remember-quick" checked>
                             <span class="checkbox-custom" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-                            <span class="checkbox-label">Salvează contul pentru login rapid</span>
+                            <span class="checkbox-label"><span data-i18n="ui.characters.salveaza_contul_pentru_login_rapid"></span></span>
                         </label>
-                        <button type="button" class="btn-submit btn btn--primary btn-main" id="auth-register-btn"><i class="ph-bold ph-user-plus"></i> Înregistrare</button>
+                        <button type="button" class="btn-submit btn btn--primary btn-main" id="auth-register-btn"><i class="ph-bold ph-user-plus"></i> <span data-i18n="ui.characters.inregistrare"></span></button>
                         <div class="auth-links">
-                            <button type="button" class="auth-link highlight" id="auth-go-login"><i class="ph-bold ph-arrow-left"></i> Înapoi la Autentificare</button>
+                            <button type="button" class="auth-link highlight" id="auth-go-login"><i class="ph-bold ph-arrow-left"></i> <span data-i18n="ui.characters.inapoi_la_autentificare"></span></button>
                         </div>
                     </div>
                 </div>
-                <div class="auth-divider"><span>Login Rapid — Selectează Cont</span></div>
+                <div class="auth-divider"><span><span data-i18n="ui.characters.login_rapid_selecteaza_cont"></span></span></div>
                 <div id="auth-account-list" class="auth-identities-list auth-account-list"></div>
                 <div class="auth-footer">
-                    <div class="server-status" id="auth-server-status"><i class="ph-fill ph-circle"></i> Server Online</div>
-                    <div class="build-version">blaze.mp — Sunset Core Edition</div>
+                    <div class="server-status" id="auth-server-status"><i class="ph-fill ph-circle"></i> <span data-i18n="ui.characters.server_online"></span></div>
+                    <div class="build-version"><span data-i18n="ui.characters.blaze_mp_sunset_core_edition"></span></div>
                 </div>
             </div>
             <div id="auth-email-modal" class="auth-email-modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-email-title">
                 <div class="auth-email-modal__panel">
-                    <div class="auth-email-modal__eyebrow">Account sync</div>
-                    <h2 id="auth-email-title" class="auth-email-modal__title">Link your email</h2>
-                    <p class="auth-email-modal__desc">We need an email on <strong id="auth-email-username">your account</strong> for recovery and account security.</p>
+                    <div class="auth-email-modal__eyebrow"><span data-i18n="ui.characters.account_sync"></span></div>
+                    <h2 id="auth-email-title" class="auth-email-modal__title"><span data-i18n="ui.characters.link_your_email"></span></h2>
+                    <p class="auth-email-modal__desc"><span data-i18n="ui.characters.we_need_an_email_on"></span> <strong id="auth-email-username"><span data-i18n="ui.characters.your_account"></span></strong> <span data-i18n="ui.characters.for_recovery_and_account_security"></span></p>
                     <label class="field">
-                        <span>Email address</span>
-                        <input type="email" id="auth-email-input" maxlength="254" spellcheck="false" autocomplete="email" placeholder="you@example.com">
+                        <span><span data-i18n="ui.characters.email_address"></span></span>
+                        <input type="email" id="auth-email-input" maxlength="254" spellcheck="false" autocomplete="email" placeholder="" data-i18n-placeholder="ui.characters.you_example_com">
                     </label>
                     <p class="auth-email-modal__error hidden" id="auth-email-error"></p>
-                    <button type="button" class="btn btn--primary" id="auth-email-submit">Save &amp; continue</button>
+                    <button type="button" class="btn btn--primary" id="auth-email-submit"><span data-i18n="ui.characters.save_continue"></span></button>
                 </div>
             </div>
         </section>

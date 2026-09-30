@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sunset Missions</title>
+<title data-i18n="ui.missions.sunset_missions"></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,700;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
 ═══════════════════════════════════════════════════════ -->
 <div id="mission-offer" class="ms-offer-root hidden">
     <div class="ms-offer-panel">
-        <div class="ms-panel-title" id="offer-contact-label">MISSION OFFER</div>
+        <div class="ms-panel-title" id="offer-contact-label"><span data-i18n="ui.missions.mission_offer"></span></div>
 
         <div class="ms-panel-items">
             <!-- Logo -->
@@ -28,26 +28,26 @@
             <!-- Details group -->
             <div class="ms-panel-details" id="offer-details">
                 <div class="ms-panel-detail" id="offer-area-row">
-                    <span class="ms-detail-key">AREA</span>
+                    <span class="ms-detail-key"><span data-i18n="ui.missions.area"></span></span>
                     <span class="ms-detail-val" id="offer-area"></span>
                 </div>
                 <div class="ms-panel-detail">
-                    <span class="ms-detail-key">PAYOUT</span>
+                    <span class="ms-detail-key"><span data-i18n="ui.missions.payout"></span></span>
                     <span class="ms-detail-val ms-detail-money" id="offer-payout"></span>
                 </div>
                 <div class="ms-panel-detail" id="offer-rep-row">
-                    <span class="ms-detail-key">REP</span>
+                    <span class="ms-detail-key"><span data-i18n="ui.missions.rep"></span></span>
                     <span class="ms-detail-val" id="offer-rep"></span>
                 </div>
                 <div class="ms-panel-detail ms-detail-warn hidden" id="offer-cooldown-row">
-                    <span class="ms-detail-key">COOLDOWN</span>
+                    <span class="ms-detail-key"><span data-i18n="ui.missions.cooldown"></span></span>
                     <span class="ms-detail-val" id="offer-cooldown"></span>
                 </div>
             </div>
 
             <!-- Actions -->
-            <button class="ms-panel-item ms-item-accept" id="btn-accept">ACCEPT</button>
-            <button class="ms-panel-item ms-item-danger" id="btn-decline">DECLINE</button>
+            <button class="ms-panel-item ms-item-accept" id="btn-accept"><span data-i18n="ui.missions.accept"></span></button>
+            <button class="ms-panel-item ms-item-danger" id="btn-decline"><span data-i18n="ui.missions.decline"></span></button>
         </div>
     </div>
 </div>
@@ -56,7 +56,7 @@
      OBJECTIVE HUD  — top-right strip
 ═══════════════════════════════════════════════════════ -->
 <div id="mission-hud" class="ms-hud hidden">
-    <div class="ms-hud-label">ACTIVE MISSION</div>
+    <div class="ms-hud-label"><span data-i18n="ui.missions.active_mission"></span></div>
     <div class="ms-hud-objective" id="hud-objective"></div>
     <div class="ms-hud-sub" id="hud-sub"></div>
     <div class="ms-hud-extras" id="hud-extras"></div>
@@ -67,15 +67,15 @@
 ═══════════════════════════════════════════════════════ -->
 <div id="lockpick" class="ms-mg-root hidden">
     <div class="ms-mg-card">
-        <div class="ms-mg-label">PICK THE LOCK</div>
-        <div class="ms-mg-hint">Click when the pick reaches the <em>green zone</em></div>
+        <div class="ms-mg-label"><span data-i18n="ui.missions.pick_the_lock"></span></div>
+        <div class="ms-mg-hint"><span data-i18n="ui.missions.click_when_the_pick_reaches_the"></span> <em><span data-i18n="ui.missions.green_zone"></span></em></div>
         <div class="lp-track">
             <div class="lp-zone" id="lp-zone"></div>
             <div class="lp-pick" id="lp-pick"></div>
         </div>
         <div class="lp-pins" id="lp-pins"></div>
         <div class="lp-attempts" id="lp-attempts"></div>
-        <button class="ms-mg-btn" id="btn-pick">PICK</button>
+        <button class="ms-mg-btn" id="btn-pick"><span data-i18n="ui.missions.pick"></span></button>
         <div class="ms-mg-feedback" id="lp-feedback"></div>
     </div>
 </div>
@@ -85,8 +85,8 @@
 ═══════════════════════════════════════════════════════ -->
 <div id="seal-game" class="ms-mg-root hidden">
     <div class="ms-mg-card">
-        <div class="ms-mg-label">CUT THE SEAL</div>
-        <div class="ms-mg-hint">Hold steady — keep pressure in the <em>green zone</em></div>
+        <div class="ms-mg-label"><span data-i18n="ui.missions.cut_the_seal"></span></div>
+        <div class="ms-mg-hint"><span data-i18n="ui.missions.hold_steady_keep_pressure_in_the"></span> <em><span data-i18n="ui.missions.green_zone"></span></em></div>
         <div class="sl-bar-wrap">
             <div class="sl-bar-track">
                 <div class="sl-zone-good"></div>
@@ -97,7 +97,7 @@
             </div>
         </div>
         <button class="ms-mg-btn" id="btn-seal"
-            onmousedown="SealGame.onPress()" onmouseup="SealGame.onRelease()">HOLD</button>
+            onmousedown="SealGame.onPress()" onmouseup="SealGame.onRelease()"><span data-i18n="ui.missions.hold"></span></button>
         <div class="ms-mg-feedback" id="sl-feedback"></div>
     </div>
 </div>
@@ -107,16 +107,16 @@
 ═══════════════════════════════════════════════════════ -->
 <div id="mission-complete" class="ms-complete-root hidden">
     <div class="ms-complete-panel">
-        <div class="ms-complete-tag">MISSION COMPLETE</div>
+        <div class="ms-complete-tag"><span data-i18n="ui.missions.mission_complete"></span></div>
         <div class="ms-complete-mission" id="complete-mission-name"></div>
         <div class="ms-complete-divider"></div>
         <div class="ms-complete-rows" id="complete-rewards"></div>
         <div class="ms-complete-total-row">
-            <span>TOTAL EARNED</span>
+            <span><span data-i18n="ui.missions.total_earned"></span></span>
             <span class="ms-complete-total" id="complete-total"></span>
         </div>
         <div class="ms-complete-rep" id="complete-rep"></div>
-        <button class="ms-panel-item ms-item-accept ms-complete-close" id="btn-complete">CONTINUE</button>
+        <button class="ms-panel-item ms-item-accept ms-complete-close" id="btn-complete"><span data-i18n="ui.missions.continue"></span></button>
     </div>
 </div>
 

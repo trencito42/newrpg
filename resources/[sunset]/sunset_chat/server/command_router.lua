@@ -47,6 +47,10 @@ local function chatSystem(source, message, kind)
     TriggerClientEvent('sunset:chat:system', source, message, kind or 'info')
 end
 
+local function t(source, key, params)
+    return exports.sunset_core:TFor(source, key, params)
+end
+
 local function getAdminLevel(source)
     local ok, level = pcall(function()
         return exports.sunset_admin:GetAdminLevel(source)
@@ -162,7 +166,7 @@ local function tryRunServerChatCommand(src, cmd, args)
         return exports.sunset_factions:RunChatCommand(src, cmd, args)
     end)
     if not ok then
-        chatSystem(src, ('/%s failed on the server: %s'):format(cmd, tostring(handled)), 'error')
+        chatSystem(src, t(src, 'chat.command.failed', { command = cmd }), 'error')
         return true
     end
     if handled then return true end
@@ -171,7 +175,7 @@ local function tryRunServerChatCommand(src, cmd, args)
         return exports.sunset_clans:RunChatCommand(src, cmd, args)
     end)
     if not ok then
-        chatSystem(src, ('/%s failed on the server: %s'):format(cmd, tostring(handled)), 'error')
+        chatSystem(src, t(src, 'chat.command.failed', { command = cmd }), 'error')
         return true
     end
     if handled then return true end
@@ -180,7 +184,7 @@ local function tryRunServerChatCommand(src, cmd, args)
         return exports.sunset_turfs:RunChatCommand(src, cmd, args)
     end)
     if not ok then
-        chatSystem(src, ('/%s failed on the server: %s'):format(cmd, tostring(handled)), 'error')
+        chatSystem(src, t(src, 'chat.command.failed', { command = cmd }), 'error')
         return true
     end
     if handled then return true end
@@ -189,13 +193,13 @@ local function tryRunServerChatCommand(src, cmd, args)
         return exports.sunset_chat:RunServerCommand(src, cmd, args)
     end)
     if not ok then
-        chatSystem(src, ('/%s failed on the server: %s'):format(cmd, tostring(handled)), 'error')
+        chatSystem(src, t(src, 'chat.command.failed', { command = cmd }), 'error')
         return true
     end
     if handled then return true end
 
     if SERVER_CHAT_COMMANDS[cmd] then
-        chatSystem(src, ('/%s could not be processed. Reconnect or contact staff.'):format(cmd), 'error')
+        chatSystem(src, t(src, 'chat.command.unavailable', { command = cmd }), 'error')
         return true
     end
 
@@ -205,7 +209,7 @@ end
 RegisterNetEvent('sunset:chat:runCommand', function(line)
     local src = source
     if not checkCommandRateLimit(src, 'runCommand') then
-        chatSystem(src, 'Slow down — wait before running another command.', 'warning')
+        chatSystem(src, t(src, 'chat.command_rate_limited'), 'warning')
         return
     end
     if type(line) ~= 'string' then return end
@@ -231,9 +235,9 @@ RegisterNetEvent('sunset:chat:runCommand', function(line)
         local level = getAdminLevel(src)
         if level < need and not hasFactionMedicPerm(src, cmd) then
             local label = (SunsetAdmin.Levels and SunsetAdmin.Levels[need]) or ('Level ' .. need)
-            chatSystem(src, ('No access to /%s. Requires %s (admin level %d). Your level: %d.'):format(
-                cmd, label, need, level
-            ), 'error')
+            chatSystem(src, t(src, 'chat.command.no_access', {
+                command = cmd, role = label, required = need, current = level,
+            }), 'error')
             return
         end
     end
@@ -242,7 +246,9 @@ RegisterNetEvent('sunset:chat:runCommand', function(line)
     if usageDef then
         local minArgs = usageDef.minArgs or 0
         if countArgs(rest) < minArgs then
-            chatSystem(src, usageDef.usage or ('Usage: /' .. cmd), 'error')
+            chatSystem(src, usageDef.usageKey and t(src, usageDef.usageKey)
+                or usageDef.usage
+                or t(src, 'chat.command.usage', { command = cmd }), 'error')
             return
         end
     end

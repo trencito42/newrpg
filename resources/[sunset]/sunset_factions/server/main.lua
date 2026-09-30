@@ -774,7 +774,12 @@ local function factionRoster(factionId)
     end
 
     local roster = {}
-    for _, row in ipairs(MySQL.query.await('SELECT id, firstname, lastname, metadata FROM characters', {}) or {}) do
+    for _, row in ipairs(MySQL.query.await([[
+        SELECT c.id, c.firstname, c.lastname, c.metadata
+        FROM faction_membership fm
+        JOIN characters c ON c.id = fm.character_id
+        WHERE fm.faction_id = ?
+    ]], { factionId }) or {}) do
         local metadata = row.metadata
         if type(metadata) == 'string' then
             local ok, decoded = pcall(json.decode, metadata)
@@ -928,22 +933,18 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
         byId[factionId] = entry
         result[#result + 1] = entry
     end
-    local charactersOk, characters = pcall(function()
-        return MySQL.query.await('SELECT id, metadata FROM characters', {})
-    end)
-    if not charactersOk then return nil, 'Faction directory could not read member data. Please try again.' end
     local memberFactionByCharId = {}
-    for _, row in ipairs(characters or {}) do
-        local metadata = row.metadata
-        if type(metadata) == 'string' then
-            local ok, decoded = pcall(json.decode, metadata)
-            metadata = ok and decoded or {}
-        end
-        if type(metadata) == 'table' and metadata.faction then
-            memberFactionByCharId[row.id] = metadata.faction
-            local entry = byId[metadata.faction]
-            if entry then entry.total = entry.total + 1 end
-        end
+    local memberCountsOk, memberCountRows = pcall(function()
+        return MySQL.query.await([[
+            SELECT fm.faction_id, fm.character_id
+            FROM faction_membership fm
+        ]], {})
+    end)
+    if not memberCountsOk then return nil, 'Faction directory could not read member data. Please try again.' end
+    for _, row in ipairs(memberCountRows or {}) do
+        memberFactionByCharId[row.character_id] = row.faction_id
+        local entry = byId[row.faction_id]
+        if entry then entry.total = entry.total + 1 end
     end
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
