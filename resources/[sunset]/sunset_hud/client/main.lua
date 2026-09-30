@@ -455,7 +455,21 @@ local function wantedLevelForPlayer(serverId)
     return math.max(0, math.min(5, tonumber(bag.level) or 0))
 end
 
-local function playerNametagLabel(serverId, fallbackName)
+local FACTION_COLORS = {
+    police          = { r = 59,  g = 130, b = 246 }, -- #3B82F6 (LSPD Blue)
+    sheriff         = { r = 217, g = 119, b = 6   }, -- #D97706 (Sheriff Amber/Tan)
+    fib             = { r = 96,  g = 165, b = 250 }, -- #60A5FA (FIB Light Blue)
+    medic           = { r = 239, g = 68,  b = 68  }, -- #EF4444 (EMS Crimson Red)
+    taxi            = { r = 234, g = 179, b = 8   }, -- #EAB308 (Taxi Yellow)
+    mechanic        = { r = 249, g = 115, b = 22  }, -- #F97316 (LSC Orange)
+    lsfd            = { r = 244, g = 63,  b = 94  }, -- #F43F5E (LSFD Fire Red)
+    lssi            = { r = 34,  g = 197, b = 94  }, -- #22C55E (LSSI Green)
+    sunset_cartel   = { r = 220, g = 38,  b = 38  }, -- #DC2626 (Cartel Deep Red)
+    night_syndicate = { r = 168, g = 85,  b = 247 }, -- #A855F7 (Syndicate Purple)
+    civilian        = { r = 245, g = 245, b = 245 }, -- #F5F5F5 (Civilian Crisp White)
+}
+
+local function formatSampName(serverId, fallbackName)
     local sid = tonumber(serverId) or 0
     local label = tostring(fallbackName or 'Player')
     local st = sid > 0 and Player(sid) and Player(sid).state
@@ -464,97 +478,158 @@ local function playerNametagLabel(serverId, fallbackName)
     elseif st and type(st.sunsetName) == 'string' and st.sunsetName ~= '' then
         label = st.sunsetName
     end
+    -- Clean up spaces to underscores for authentic SA:MP style (e.g. Andrew_Evans)
+    label = label:gsub('%s+', '_')
     if sid > 0 and not label:match('%(%d+%)%s*$') then
-        label = ('%s (%d)'):format(label, sid)
+        label = ('%s(%d)'):format(label, sid)
     end
     return label
 end
 
--- Native gamer tags are attached to the network ped by the game itself. Unlike
--- manually projected 3D text, they keep up with players in vehicles and in the
--- air, and the engine lays out the name, health, voice and wanted components.
-local NAMETAG_DISTANCE = 22.0
-local NAMETAG_REFRESH_MS = 100
-local gamerTags = {}
-
-local function removeGamerTag(player)
-    local entry = gamerTags[player]
-    if not entry then return end
-    if entry.tag and IsMpGamerTagActive(entry.tag) then
-        RemoveMpGamerTag(entry.tag)
+local function getPlayerFactionColor(serverId)
+    local sid = tonumber(serverId) or 0
+    local st = sid > 0 and Player(sid) and Player(sid).state
+    local factionId = st and st.sunsetFaction
+    if factionId and FACTION_COLORS[factionId] then
+        return FACTION_COLORS[factionId]
     end
-    gamerTags[player] = nil
+    return FACTION_COLORS.civilian
 end
 
-local function ensureGamerTag(player, ped, label)
-    local entry = gamerTags[player]
-    if entry and (entry.ped ~= ped or entry.label ~= label or not IsMpGamerTagActive(entry.tag)) then
-        removeGamerTag(player)
-        entry = nil
+local function drawText2D(text, x, y, scale, r, g, b, a, font, center, outline)
+    SetTextFont(font or 0)
+    SetTextProportional(true)
+    SetTextScale(scale, scale)
+    SetTextColour(r, g, b, a)
+    if outline ~= false then
+        SetTextOutline()
+        SetTextDropShadow()
     end
-    if entry then return entry end
-
-    local tag = CreateMpGamerTagWithCrewColor(ped, label, false, false, '', 0, 0, 0, 0)
-    entry = { tag = tag, ped = ped, label = label }
-    gamerTags[player] = entry
-    SetMpGamerTagHealthBarColour(tag, 18)
-    return entry
+    if center ~= false then
+        SetTextCentre(true)
+    end
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayText(x, y)
 end
 
-local function setGamerTagVisible(entry, visible, wantedLevel, isTalking, alpha)
-    local tag = entry.tag
-    SetMpGamerTagVisibility(tag, 0, visible) -- player name + server ID
-    SetMpGamerTagVisibility(tag, 2, visible) -- native health/armour bar
-    SetMpGamerTagVisibility(tag, 4, visible and isTalking) -- voice icon
-    SetMpGamerTagVisibility(tag, 7, visible and wantedLevel > 0) -- wanted star
-    if visible then
-        SetMpGamerTagWantedLevel(tag, wantedLevel)
-        SetMpGamerTagAlpha(tag, 0, alpha)
-        SetMpGamerTagAlpha(tag, 2, alpha)
-        SetMpGamerTagAlpha(tag, 4, alpha)
-        SetMpGamerTagAlpha(tag, 7, alpha)
-    end
-end
+-- SA:MP Style 3D Overhead Nametags & Health/Armour Bars
+local NAMETAG_DISTANCE = 24.0
+local cachedPlayers = {}
 
+-- Background metadata refresh thread (runs every 200ms for zero hitching)
 CreateThread(function()
     while true do
         local myPlayer = PlayerId()
         local myPed = PlayerPedId()
         local myCoords = GetEntityCoords(myPed)
         local policeView = isLawEnforcementOnDuty()
-        local active = {}
-        local hideAll = IsPauseMenuActive() or IsScreenFadedOut()
+        local activeList = {}
 
         for _, player in ipairs(GetActivePlayers()) do
             if player ~= myPlayer and NetworkIsPlayerActive(player) then
-                active[player] = true
                 local ped = GetPlayerPed(player)
                 if ped ~= 0 and DoesEntityExist(ped) then
                     local serverId = GetPlayerServerId(player)
-                    local label = playerNametagLabel(serverId, GetPlayerName(player))
-                    local entry = ensureGamerTag(player, ped, label)
-                    local distance = #(myCoords - GetEntityCoords(ped))
-                    local visible = not hideAll
-                        and distance <= NAMETAG_DISTANCE
-                        and HasEntityClearLosToEntity(myPed, ped, 17)
-                    local wantedLevel = policeView and wantedLevelForPlayer(serverId) or 0
-                    local fade = math.max(0.0, math.min(1.0, (NAMETAG_DISTANCE - distance) / 7.0))
-                    local alpha = math.floor(145 + (110 * fade))
-                    setGamerTagVisible(entry, visible, wantedLevel, NetworkIsPlayerTalking(player), alpha)
-                else
-                    removeGamerTag(player)
+                    local pedCoords = GetEntityCoords(ped)
+                    local dist = #(myCoords - pedCoords)
+                    if dist <= (NAMETAG_DISTANCE + 5.0) then
+                        activeList[player] = {
+                            player = player,
+                            serverId = serverId,
+                            ped = ped,
+                            name = formatSampName(serverId, GetPlayerName(player)),
+                            color = getPlayerFactionColor(serverId),
+                            wanted = policeView and wantedLevelForPlayer(serverId) or 0,
+                        }
+                    end
                 end
             end
         end
 
-        for player in pairs(gamerTags) do
-            if not active[player] then removeGamerTag(player) end
-        end
-        Wait(NAMETAG_REFRESH_MS)
+        cachedPlayers = activeList
+        Wait(200)
     end
 end)
 
-AddEventHandler('onResourceStop', function(resourceName)
-    if resourceName ~= GetCurrentResourceName() then return end
-    for player in pairs(gamerTags) do removeGamerTag(player) end
+-- Main 3D Render Thread (runs each frame)
+CreateThread(function()
+    while true do
+        local hideAll = IsPauseMenuActive() or IsScreenFadedOut()
+        if hideAll or not next(cachedPlayers) then
+            Wait(150)
+        else
+            local myPed = PlayerPedId()
+            local myCoords = GetEntityCoords(myPed)
+
+            for _, info in pairs(cachedPlayers) do
+                local ped = info.ped
+                if DoesEntityExist(ped) and IsEntityVisible(ped) then
+                    local pedCoords = GetEntityCoords(ped)
+                    local dist = #(myCoords - pedCoords)
+
+                    if dist <= NAMETAG_DISTANCE and HasEntityClearLosToEntity(myPed, ped, 17) then
+                        local inVeh = IsPedInAnyVehicle(ped, false)
+                        local headBone = GetPedBoneCoords(ped, 31086, 0.0, 0.0, 0.0)
+                        local tagZ = (headBone and headBone.z > 0.0) and headBone.z or pedCoords.z
+                        local tagPos = vector3(pedCoords.x, pedCoords.y, tagZ + (inVeh and 0.46 or 0.34))
+
+                        local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(tagPos.x, tagPos.y, tagPos.z)
+                        if onScreen then
+                            local scale = math.max(0.24, math.min(0.36, 0.33 * (1.0 - (dist / NAMETAG_DISTANCE) * 0.28)))
+                            local fade = math.max(0.0, math.min(1.0, (NAMETAG_DISTANCE - dist) / 4.0))
+                            local alpha = math.floor(255 * fade)
+
+                            if alpha > 15 then
+                                local health = GetEntityHealth(ped)
+                                local maxHealth = GetEntityMaxHealth(ped)
+                                if maxHealth <= 100 then maxHealth = 200 end
+                                local healthPct = math.max(0.0, math.min(1.0, (health - 100) / (maxHealth - 100)))
+
+                                local armour = GetPedArmour(ped)
+                                local hasArmour = armour > 0
+                                local armourPct = math.max(0.0, math.min(1.0, armour / 100.0))
+
+                                local barWidth = 0.038 * (scale / 0.32)
+                                local barHeight = 0.0048 * (scale / 0.32)
+                                local border = 0.0009
+
+                                -- 1. Wanted indicator (visible to Police / Sheriff / FIB on duty)
+                                if info.wanted and info.wanted > 0 then
+                                    local wantedY = screenY - (hasArmour and 0.046 or 0.034)
+                                    drawText2D(('★ WANTED [★%d]'):format(info.wanted), screenX, wantedY, scale * 0.82, 255, 215, 0, alpha, 0, true, true)
+                                end
+
+                                -- 2. Player Name & Server ID (with faction color)
+                                local nameY = screenY - (hasArmour and 0.024 or 0.016)
+                                local col = info.color or FACTION_COLORS.civilian
+                                drawText2D(info.name, screenX, nameY, scale, col.r, col.g, col.b, alpha, 0, true, true)
+
+                                -- 3. Armour Bar (if player has armour)
+                                if hasArmour then
+                                    local armourY = screenY + 0.002
+                                    -- Background
+                                    DrawRect(screenX, armourY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
+                                    -- Fill (Silver/White SA:MP style)
+                                    local aFillW = barWidth * armourPct
+                                    local aFillX = screenX - (barWidth / 2) + (aFillW / 2)
+                                    DrawRect(aFillX, armourY, aFillW, barHeight, 220, 225, 235, alpha)
+                                end
+
+                                -- 4. Health Bar (Red SA:MP style)
+                                local hpY = screenY + (hasArmour and 0.009 or 0.002)
+                                -- Background
+                                DrawRect(screenX, hpY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
+                                -- Fill (Classic Red HP)
+                                local hFillW = barWidth * healthPct
+                                local hFillX = screenX - (barWidth / 2) + (hFillW / 2)
+                                DrawRect(hFillX, hpY, hFillW, barHeight, 235, 55, 55, alpha)
+                            end
+                        end
+                    end
+                end
+            end
+            Wait(0)
+        end
+    end
 end)
