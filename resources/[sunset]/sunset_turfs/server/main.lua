@@ -59,6 +59,8 @@ AddEventHandler('playerDropped', function()
     if ok and char and char.id then ClanCache[char.id] = nil end
 end)
 
+local TurfAdjacency = {}
+
 local function loadTurfsFromDb()
     local rows = MySQL.query.await([[
         SELECT t.*, c.name AS clan_name, c.tag AS clan_tag, c.tag_color AS clan_color
@@ -68,11 +70,35 @@ local function loadTurfsFromDb()
 
     Turfs = {}
     for _, r in ipairs(rows) do
+        local polygon = nil
+        if r.polygon and r.polygon ~= '' then
+            local okP, parsed = pcall(function()
+                return type(r.polygon) == 'table' and r.polygon or json.decode(r.polygon)
+            end)
+            if okP and type(parsed) == 'table' and #parsed >= 3 then
+                polygon = parsed
+            end
+        end
+
+        local center = vector3(tonumber(r.x) or 0.0, tonumber(r.y) or 0.0, tonumber(r.z) or 0.0)
+        local radius = tonumber(r.radius) or 110.0
+        if polygon and (#polygon >= 3) then
+            if center.x == 0.0 and center.y == 0.0 then
+                center = SunsetTurfs.ComputePolygonCenter(polygon)
+            end
+            if not r.radius or radius <= 0.0 then
+                radius = SunsetTurfs.ComputePolygonRadius(polygon, center)
+            end
+        end
+
         Turfs[r.id] = {
             id = r.id,
             name = r.name,
-            coords = vector3(r.x, r.y, r.z),
-            radius = tonumber(r.radius) or 110.0,
+            coords = center,
+            radius = radius,
+            polygon = polygon,
+            minZ = tonumber(r.min_z) or -50.0,
+            maxZ = tonumber(r.max_z) or 500.0,
             ownerClanId = r.owner_clan_id and tonumber(r.owner_clan_id) or nil,
             ownerName = r.clan_name or 'Free',
             ownerTag = r.clan_tag or '--',
@@ -81,7 +107,24 @@ local function loadTurfsFromDb()
             respectPayout = tonumber(r.respect_payout) or 2,
         }
     end
-    log(('Loaded %d gang territories from database.'):format(#rows))
+
+    -- Load territory adjacency connections
+    local connRows = MySQL.query.await([[
+        SELECT turf_a, turf_b FROM turf_connections
+    ]]) or {}
+
+    TurfAdjacency = {}
+    for _, c in ipairs(connRows) do
+        local a, b = tonumber(c.turf_a), tonumber(c.turf_b)
+        if a and b then
+            TurfAdjacency[a] = TurfAdjacency[a] or {}
+            TurfAdjacency[a][b] = true
+            TurfAdjacency[b] = TurfAdjacency[b] or {}
+            TurfAdjacency[b][a] = true
+        end
+    end
+
+    log(('Loaded %d hand-crafted polygon gang territories and %d adjacency links.'):format(#rows, #connRows))
 end
 
 CreateThread(function()
@@ -102,12 +145,11 @@ AddEventHandler('onResourceStart', function(resourceName)
 end)
 
 local function syncTurfsToClient(src)
-    TriggerClientEvent('sunset:turfs:syncAll', src or -1, Turfs)
+    TriggerClientEvent('sunset:turfs:syncAll', src or -1, Turfs, TurfAdjacency)
 end
 
 RegisterNetEvent('sunset:turfs:requestSync', function()
     local src = source
-    -- [AUDIT P2-10] Full turf+war state dump per call: throttle to prevent DoS amplification.
     if not exports.sunset_core:RateLimit(src, 'turfsSync', 5000) then return end
     syncTurfsToClient(src)
     for turfId, war in pairs(ActiveWars) do
@@ -116,9 +158,17 @@ RegisterNetEvent('sunset:turfs:requestSync', function()
 end)
 
 local function findTurfAtCoords(coords)
+    if not coords then return nil end
     for _, t in pairs(Turfs) do
-        if #(coords - t.coords) <= t.radius then
-            return t
+        if t.polygon and #t.polygon >= 3 then
+            local zOk = (coords.z >= (t.minZ or -50.0)) and (coords.z <= (t.maxZ or 500.0))
+            if zOk and SunsetTurfs.IsPointInPolygon(coords, t.polygon) then
+                return t
+            end
+        else
+            if #(coords - t.coords) <= t.radius then
+                return t
+            end
         end
     end
     return nil
@@ -131,20 +181,28 @@ local function getClanMembersInTurf(clanId, turf)
         local src = tonumber(pid)
         if src then
             local ped = GetPlayerPed(src)
-            if ped and ped ~= 0 and #(GetEntityCoords(ped) - turf.coords) <= turf.radius then
-                -- [PHANTOM POINTS FIX] Dead/downed players must NOT count for
-                -- zone-presence scoring (their corpse stays in the zone while
-                -- they wait for the war respawn -> team kept scoring).
-                local alive = GetEntityHealth(ped) > 0
-                if alive and GetResourceState('sunset_death') == 'started' then
-                    local okD, downed = pcall(function() return exports.sunset_death:IsPlayerDowned(src) end)
-                    if okD and downed then alive = false end
+            if ped and ped ~= 0 then
+                local pedCoords = GetEntityCoords(ped)
+                local inZone = false
+                if turf.polygon and #turf.polygon >= 3 then
+                    local zOk = (pedCoords.z >= (turf.minZ or -50.0)) and (pedCoords.z <= (turf.maxZ or 500.0))
+                    inZone = zOk and SunsetTurfs.IsPointInPolygon(pedCoords, turf.polygon)
+                else
+                    inZone = #(pedCoords - turf.coords) <= turf.radius
                 end
-                if alive then
-                    local pClan = getPlayerClan(src)
-                    if pClan and tonumber(pClan.clan_id) == tonumber(clanId) then
-                        count = count + 1
-                        table.insert(peds, src)
+
+                if inZone then
+                    local alive = GetEntityHealth(ped) > 0
+                    if alive and GetResourceState('sunset_death') == 'started' then
+                        local okD, downed = pcall(function() return exports.sunset_death:IsPlayerDowned(src) end)
+                        if okD and downed then alive = false end
+                    end
+                    if alive then
+                        local pClan = getPlayerClan(src)
+                        if pClan and tonumber(pClan.clan_id) == tonumber(clanId) then
+                            count = count + 1
+                            table.insert(peds, src)
+                        end
                     end
                 end
             end
@@ -473,6 +531,23 @@ local function runAttackTurf(source)
         end
     end
 
+    -- [ADJACENCY CHECK] If clan owns 1 or more turfs, target MUST be adjacent to at least one owned turf
+    local ownedCount = 0
+    local hasAdjacency = false
+    for tId, t in pairs(Turfs) do
+        if t.ownerClanId and tonumber(t.ownerClanId) == tonumber(pClan.clan_id) then
+            ownedCount = ownedCount + 1
+            if TurfAdjacency[tId] and TurfAdjacency[tId][turf.id] then
+                hasAdjacency = true
+            end
+        end
+    end
+
+    if ownedCount > 0 and not hasAdjacency then
+        TriggerClientEvent('sunset:client:notify', source, 'Nu poți ataca acest teritoriu! Trebuie să fie adiacent cu teritoriile deținute deja de clanul tău.', 'error', 6000)
+        return
+    end
+
     local defenderClan = nil
     if turf.ownerClanId then
         defenderClan = MySQL.single.await('SELECT id, name, tag, tag_color FROM clans WHERE id = ?', { turf.ownerClanId })
@@ -481,6 +556,80 @@ local function runAttackTurf(source)
     startWar(turf, pClan, defenderClan)
     log(('attackturf src=%s clan=%s turf=%s'):format(source, tostring(pClan.clan_id), tostring(turf.id)))
 end
+
+-- Developer & Staff Editor Callbacks for Hand-Crafted Polygons
+exports.sunset_core:RegisterCallback('sunset:turfs:savePolygon', function(source, turfId, points)
+    if not checkAdmin(source, 2) then return false, 'Permisiune insuficienta' end
+    turfId = tonumber(turfId)
+    if not turfId or not Turfs[turfId] then return false, 'Teritoriu invalid' end
+    if type(points) ~= 'table' or #points < 3 then return false, 'Poligonul trebuie sa aiba minim 3 puncte' end
+
+    local cleanPoints = {}
+    for i, pt in ipairs(points) do
+        cleanPoints[#cleanPoints + 1] = {
+            x = math.floor((tonumber(pt.x) or 0.0) * 100 + 0.5) / 100,
+            y = math.floor((tonumber(pt.y) or 0.0) * 100 + 0.5) / 100,
+            z = math.floor((tonumber(pt.z) or 0.0) * 100 + 0.5) / 100,
+        }
+    end
+
+    local center = SunsetTurfs.ComputePolygonCenter(cleanPoints)
+    local radius = SunsetTurfs.ComputePolygonRadius(cleanPoints, center)
+    local jsonStr = json.encode(cleanPoints)
+
+    MySQL.update.await('UPDATE turfs SET polygon = ?, x = ?, y = ?, z = ?, radius = ? WHERE id = ?', {
+        jsonStr, center.x, center.y, center.z, radius, turfId
+    })
+
+    -- Update normalized turf_points
+    MySQL.query.await('DELETE FROM turf_points WHERE turf_id = ?', { turfId })
+    for i, pt in ipairs(cleanPoints) do
+        MySQL.insert.await('INSERT INTO turf_points (turf_id, point_order, x, y, z) VALUES (?, ?, ?, ?, ?)', {
+            turfId, i - 1, pt.x, pt.y, pt.z
+        })
+    end
+
+    Turfs[turfId].polygon = cleanPoints
+    Turfs[turfId].coords = center
+    Turfs[turfId].radius = radius
+
+    syncTurfsToClient(-1)
+    log(('Admin %s updated polygon for Turf #%d (%s) with %d points'):format(getDisplayName(source), turfId, Turfs[turfId].name, #cleanPoints))
+    return true, ('Poligonul pentru teritoriul #%d (%s) a fost salvat cu succes (%d varfuri)!'):format(turfId, Turfs[turfId].name, #cleanPoints)
+end)
+
+exports.sunset_core:RegisterCallback('sunset:turfs:saveConnections', function(source, turfId, targetTurfIds)
+    if not checkAdmin(source, 2) then return false, 'Permisiune insuficienta' end
+    turfId = tonumber(turfId)
+    if not turfId or not Turfs[turfId] then return false, 'Teritoriu invalid' end
+    if type(targetTurfIds) ~= 'table' then return false, 'Lista conexiuni invalida' end
+
+    -- Delete old connections involving this turf
+    MySQL.query.await('DELETE FROM turf_connections WHERE turf_a = ? OR turf_b = ?', { turfId, turfId })
+
+    TurfAdjacency[turfId] = {}
+    for _, otherId in ipairs(targetTurfIds) do
+        local b = tonumber(otherId)
+        if b and b ~= turfId and Turfs[b] then
+            MySQL.insert.await('INSERT IGNORE INTO turf_connections (turf_a, turf_b) VALUES (?, ?)', {
+                math.min(turfId, b), math.max(turfId, b)
+            })
+            TurfAdjacency[turfId][b] = true
+            TurfAdjacency[b] = TurfAdjacency[b] or {}
+            TurfAdjacency[b][turfId] = true
+        end
+    end
+
+    syncTurfsToClient(-1)
+    return true, ('Conexiunile pentru teritoriul #%d au fost actualizate.'):format(turfId)
+end)
+
+exports.sunset_core:RegisterCallback('sunset:turfs:getAllTurfsData', function(source)
+    return {
+        turfs = Turfs,
+        adjacency = TurfAdjacency
+    }
+end)
 
 RegisterCommand('attackturf', function(source)
     runAttackTurf(source)

@@ -136,6 +136,12 @@
             this.ensureDom();
             this.active = true;
             this.data = data;
+            if (data?.attackerColor) {
+                document.documentElement.style.setProperty('--war-accent', data.attackerColor);
+            }
+            if (data?.defenderColor) {
+                document.documentElement.style.setProperty('--war-enemy', data.defenderColor);
+            }
             const hud = document.getElementById('war-hud');
             hud?.classList.remove('hidden');
             this.updateHud(data);
@@ -144,6 +150,12 @@
         updateHud(data) {
             if (!data) return;
             this.data = data;
+            if (data.attackerColor) {
+                document.documentElement.style.setProperty('--war-accent', data.attackerColor);
+            }
+            if (data.defenderColor) {
+                document.documentElement.style.setProperty('--war-enemy', data.defenderColor);
+            }
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
             set('war-att-name', data.attackerName || 'ATTACKERS');
             set('war-def-name', data.defenderName || 'DEFENDERS');

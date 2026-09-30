@@ -492,8 +492,16 @@ local function formatSampName(serverId, fallbackName)
     end
     -- Clean up existing (ID) suffixes and trim
     label = label:gsub('%s*%(%d+%)%s*$', ''):gsub('%s+$', '')
-    -- Clean up internal spaces to underscores for authentic SA:MP style (e.g. Andrew_Evans)
-    label = label:gsub('%s+', '_')
+
+    -- Separate clan tag and player name if present to keep clean spacing
+    local tagPrefix, namePart = label:match('^(%[[^%]]+%])%s*(.+)$')
+    if tagPrefix and namePart then
+        namePart = namePart:gsub('%s+', '_')
+        label = ('%s %s'):format(tagPrefix, namePart)
+    else
+        label = label:gsub('%s+', '_')
+    end
+
     if sid > 0 then
         label = ('%s (%d)'):format(label, sid)
     end
@@ -626,7 +634,7 @@ CreateThread(function()
                                         local starSpacing = 0.0105 * scaleFactor
                                         local totalW = 4 * starSpacing
                                         local startX = screenX - (totalW / 2.0)
-                                        local starsY = screenY - 0.046 * scaleFactor
+                                        local starsY = screenY - 0.048 * scaleFactor
 
                                         for i = 1, 5 do
                                             local sX = startX + (i - 1) * starSpacing
@@ -641,14 +649,14 @@ CreateThread(function()
                                     end
                                 end
 
-                                -- 2. Player Name & Server ID (with faction color, aerated spacing)
-                                local nameY = screenY - (hasWanted and 0.024 or 0.018) * scaleFactor
+                                -- 2. Player Name & Server ID (with faction color, aerated vertical spacing)
+                                local nameY = screenY - (hasWanted and 0.026 or 0.020) * scaleFactor
                                 local col = info.color or FACTION_COLORS.civilian
                                 drawText2D(info.name, screenX, nameY, scale, col.r, col.g, col.b, alpha, 0, true, true)
 
                                 -- 3. Armour Bar (if player has armour)
                                 if hasArmour then
-                                    local armourY = screenY + 0.004 * scaleFactor
+                                    local armourY = screenY + 0.005 * scaleFactor
                                     -- Background
                                     DrawRect(screenX, armourY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
                                     -- Fill (Silver/White SA:MP style)
@@ -658,7 +666,7 @@ CreateThread(function()
                                 end
 
                                 -- 4. Health Bar (Red SA:MP style, aerated whether armour exists or not)
-                                local hpY = screenY + (hasArmour and 0.014 or 0.006) * scaleFactor
+                                local hpY = screenY + (hasArmour and 0.015 or 0.007) * scaleFactor
                                 -- Background
                                 DrawRect(screenX, hpY, barWidth + border * 2, barHeight + border * 2, 0, 0, 0, math.min(210, alpha))
                                 -- Fill (Classic Red HP)

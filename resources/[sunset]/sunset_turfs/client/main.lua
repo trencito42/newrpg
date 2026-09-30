@@ -207,22 +207,28 @@ local function syncWarPlayerBlips()
     end
 end
 
-RegisterNetEvent('sunset:turfs:syncAll', function(turfs)
+local LocalAdjacency = {}
+local turfDebugActive = false
+local turfEditActive = false
+local editTurfId = nil
+local editVertices = {}
+
+RegisterNetEvent('sunset:turfs:syncAll', function(turfs, adjacency)
     LocalTurfs = turfs or {}
+    LocalAdjacency = adjacency or {}
     refreshBlips()
 end)
 
 RegisterNetEvent('sunset:turfs:warStart', function(war)
     ActiveWar = war
     refreshBlips()
-    -- [WAR FIX] Only participants hear the war-start sting and see the HUD;
-    -- the broadcast still updates blips/map for everyone, but the on-screen
-    -- war panels are participant-only (warParticipant set via warJoined).
     if warParticipant then
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
         exports.sunset_ui:Send('warHudShow', {
             attackerName = war.attackerName,
             defenderName = war.defenderName,
+            attackerColor = war.attackerColor or '#00ffcc',
+            defenderColor = war.defenderColor or '#8b5cf6',
             attackerScore = war.attackerScore or 0,
             defenderScore = war.defenderScore or 0,
             scoreTarget = war.scoreTarget,
@@ -255,7 +261,6 @@ RegisterNetEvent('sunset:turfs:warEnd', function(data)
     end
     clearWarPlayerBlips()
     refreshBlips()
-    -- [WAR FIX] Hide participant panels first (harmless for non-participants).
     exports.sunset_ui:Send('warHudHide', {})
     exports.sunset_ui:Send('warRespawnHide', {})
     exports.sunset_ui:Send('warScoreboardHide', {})
@@ -264,7 +269,6 @@ RegisterNetEvent('sunset:turfs:warEnd', function(data)
         warParticipant = false
         local myRole = myWarRole or 'defender'
         PlaySoundFrontend(-1, 'RACE_PLACED', 'HUD_AWARDS', true)
-        -- [WAR FIX] Strip the loadout weapons granted for this war.
         TriggerEvent('sunset:turfs:warEndedLocal')
         exports.sunset_ui:Send('warEndShow', {
             turfId = data.turfId,
@@ -282,13 +286,11 @@ RegisterNetEvent('sunset:turfs:warEnd', function(data)
     myWarRole = nil
 end)
 
+-- Zone presence & detection loop (polygon containment)
 CreateThread(function()
     Wait(2000)
     TriggerServerEvent('sunset:turfs:requestSync')
 
-    -- [RESYNC] Re-request turf data after spawn/character load: the one-shot
-    -- sync at resource start could fire before the server had its DB rows or
-    -- before auth completed, leaving the map without turf blips entirely.
     AddEventHandler('sunset:client:playerSpawned', function()
         SetTimeout(1500, function()
             TriggerServerEvent('sunset:turfs:requestSync')
@@ -296,16 +298,24 @@ CreateThread(function()
     end)
 
     while true do
-        Wait(800)
+        Wait(600)
         local ped = PlayerPedId()
         if ped and ped ~= 0 then
             local pos = GetEntityCoords(ped)
             local insideAny = nil
 
             for _, t in pairs(LocalTurfs) do
-                if #(pos - t.coords) <= (t.radius or 110.0) then
-                    insideAny = t
-                    break
+                if t.polygon and #t.polygon >= 3 then
+                    local zOk = (pos.z >= (t.minZ or -50.0)) and (pos.z <= (t.maxZ or 500.0))
+                    if zOk and SunsetTurfs.IsPointInPolygon(pos, t.polygon) then
+                        insideAny = t
+                        break
+                    end
+                else
+                    if #(pos - t.coords) <= (t.radius or 110.0) then
+                        insideAny = t
+                        break
+                    end
                 end
             end
 
@@ -325,6 +335,138 @@ CreateThread(function()
         end
     end
 end)
+
+-- In-world Developer Polygon Debug Renderer & Interactive Editor
+CreateThread(function()
+    while true do
+        if turfDebugActive or turfEditActive then
+            local pPed = PlayerPedId()
+            local pCoords = GetEntityCoords(pPed)
+
+            -- 1. Render all active polygons if debug is on
+            if turfDebugActive and not turfEditActive then
+                for id, t in pairs(LocalTurfs) do
+                    if t.polygon and #t.polygon >= 3 then
+                        local pts = t.polygon
+                        local n = #pts
+                        for i = 1, n do
+                            local p1 = pts[i]
+                            local p2 = pts[(i % n) + 1]
+                            local z = t.coords.z
+                            DrawLine(p1.x, p1.y, z - 2.0, p2.x, p2.y, z - 2.0, 0, 255, 204, 255)
+                            DrawLine(p1.x, p1.y, z + 8.0, p2.x, p2.y, z + 8.0, 0, 255, 204, 255)
+                            DrawLine(p1.x, p1.y, z - 2.0, p1.x, p1.y, z + 8.0, 0, 200, 255, 200)
+                        end
+                    end
+                end
+            end
+
+            -- 2. Render live editor vertices
+            if turfEditActive then
+                local n = #editVertices
+                for i = 1, n do
+                    local pt = editVertices[i]
+                    DrawMarker(28, pt.x, pt.y, pt.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.2, 1.2, 1.2, 255, 50, 80, 200, false, false, 2, false, nil, nil, false)
+                    DrawLine(pt.x, pt.y, pt.z - 5.0, pt.x, pt.y, pt.z + 15.0, 255, 100, 100, 255)
+                    if i > 1 then
+                        local prev = editVertices[i - 1]
+                        DrawLine(prev.x, prev.y, prev.z, pt.x, pt.y, pt.z, 255, 255, 0, 255)
+                    end
+                end
+                if n >= 3 then
+                    local first = editVertices[1]
+                    local last = editVertices[n]
+                    DrawLine(last.x, last.y, last.z, first.x, first.y, first.z, 0, 255, 150, 255)
+                end
+
+                -- Draw Editor On-Screen Controls Text
+                SetTextFont(0)
+                SetTextScale(0.35, 0.35)
+                SetTextColour(255, 255, 255, 240)
+                SetTextOutline()
+                BeginTextCommandDisplayText('STRING')
+                AddTextComponentSubstringPlayerName(('~y~[TURF EDITOR: #%d]~s~ Vertices: ~g~%d~s~\n~b~[E]~s~ Add Point | ~r~[X]~s~ Remove Last | ~o~[Z]~s~ Clear\n~g~[ENTER]~s~ Save Polygon | ~s~[ESC/BACKSPACE] Cancel'):format(editTurfId or 0, n))
+                EndTextCommandDisplayText(0.02, 0.02)
+
+                -- Key bindings for editor
+                DisableControlAction(0, 38, true) -- E
+                DisableControlAction(0, 73, true) -- X
+                DisableControlAction(0, 20, true) -- Z
+                DisableControlAction(0, 18, true) -- ENTER
+                DisableControlAction(0, 177, true) -- BACKSPACE
+
+                if IsDisabledControlJustPressed(0, 38) then -- E: Add point
+                    local pos = GetEntityCoords(pPed)
+                    table.insert(editVertices, { x = math.floor(pos.x * 10) / 10, y = math.floor(pos.y * 10) / 10, z = math.floor(pos.z * 10) / 10 })
+                    PlaySoundFrontend(-1, 'NAV_UP_DOWN', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+                elseif IsDisabledControlJustPressed(0, 73) then -- X: Remove last
+                    if #editVertices > 0 then
+                        table.remove(editVertices)
+                        PlaySoundFrontend(-1, 'CANCEL', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+                    end
+                elseif IsDisabledControlJustPressed(0, 20) then -- Z: Clear
+                    editVertices = {}
+                    PlaySoundFrontend(-1, 'CANCEL', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+                elseif IsDisabledControlJustPressed(0, 18) then -- ENTER: Save
+                    if #editVertices >= 3 then
+                        CreateThread(function()
+                            local ok, msg = Sunset.AwaitCallback('sunset:turfs:savePolygon', editTurfId, editVertices)
+                            if ok then
+                                exports.sunset_ui:Notify(msg or 'Polygon saved successfully!', 'success', 6000)
+                                turfEditActive = false
+                                editVertices = {}
+                            else
+                                exports.sunset_ui:Notify(msg or 'Failed to save polygon.', 'error', 6000)
+                            end
+                        end)
+                    else
+                        exports.sunset_ui:Notify('Polygon must have at least 3 vertices!', 'error', 4000)
+                    end
+                elseif IsDisabledControlJustPressed(0, 177) then -- BACKSPACE / ESC: Cancel
+                    turfEditActive = false
+                    editVertices = {}
+                    exports.sunset_ui:Notify('Turf editing cancelled.', 'info', 4000)
+                end
+            end
+
+            Wait(0)
+        else
+            Wait(1000)
+        end
+    end
+end)
+
+RegisterCommand('turfdebug', function()
+    turfDebugActive = not turfDebugActive
+    exports.sunset_ui:Notify(('Turf polygon wireframe visualizer: %s'):format(turfDebugActive and 'ACTIVAT' or 'DEZACTIVAT'), turfDebugActive and 'success' or 'info', 4000)
+end, false)
+
+local function startEditingTurf(turfId)
+    turfId = tonumber(turfId)
+    if not turfId or not LocalTurfs[turfId] then
+        exports.sunset_ui:Notify('Usage: /turfedit [1-18]. See /turflist', 'warning', 4000)
+        return
+    end
+
+    editTurfId = turfId
+    local existing = LocalTurfs[turfId].polygon
+    editVertices = {}
+    if existing and #existing >= 3 then
+        for _, pt in ipairs(existing) do
+            table.insert(editVertices, { x = pt.x, y = pt.y, z = pt.z or LocalTurfs[turfId].coords.z })
+        end
+    end
+    turfEditActive = true
+    exports.sunset_ui:Notify(('Editing polygon for Turf #%d (%s). Stand at vertices and press [E] to mark points.'):format(turfId, LocalTurfs[turfId].name), 'info', 8000)
+end
+
+RegisterCommand('turfedit', function(_, args)
+    startEditingTurf(args[1])
+end, false)
+
+RegisterCommand('editturf', function(_, args)
+    startEditingTurf(args[1])
+end, false)
 
 CreateThread(function()
     while true do

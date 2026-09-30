@@ -2288,6 +2288,67 @@ registerServerCommand('nd', function(source, args)
     notify(source, ('Ai sters intrebarea lui %s.'):format(q.name), 'success')
 end)
 
+local function handleFnc(source, args)
+    if not requirePerm(source, 'fnc') then return end
+
+    local targetInput = args[1]
+    local newName = args[2] and table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1') or ''
+
+    if not targetInput or newName == '' then
+        return notify(source, 'Usage: /fnc [id/nume] [Nume_Nou sau Prenume Nume]', 'warning')
+    end
+
+    local target = resolveTarget(source, targetInput)
+    if not target then return end
+
+    -- Parse Firstname and Lastname
+    local first, last = newName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
+    if not first or not last then
+        first = newName:gsub('[^%a%d]', '')
+        last = ''
+    end
+
+    if #first < 2 then
+        return notify(source, 'Numele trebuie sa aiba minim 2 caractere!', 'error')
+    end
+
+    local char = exports.sunset_core:GetCharacter(target)
+    if not char or not char.id then
+        return notify(source, 'Jucatorul tinta nu are un caracter incarcat.', 'error')
+    end
+
+    local oldName = getDisplayName(target)
+    local formattedFull = last ~= '' and (first .. ' ' .. last) or first
+
+    -- Update database
+    MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
+        first, last, char.id
+    })
+
+    -- Update character in memory
+    char.firstname = first
+    char.lastname = last
+
+    -- Sync state bags and clan
+    local st = Player(target).state
+    st:set('sunsetName', formattedFull, true)
+    if GetResourceState('sunset_clans') == 'started' then
+        pcall(function() exports.sunset_clans:SyncPlayerClan(target) end)
+    else
+        st:set('sunsetDisplayName', formattedFull, true)
+    end
+
+    local adminName = getDisplayName(source)
+    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 in ^2%s^7 (/fnc).'):format(adminName, oldName, formattedFull)
+    TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
+    notify(source, ('I-ai schimbat numele lui %s in %s.'):format(oldName, formattedFull), 'success')
+    notify(target, ('Numele tau a fost schimbat in %s de adminul %s.'):format(formattedFull, adminName), 'info')
+end
+
+registerServerCommand('fnc', handleFnc)
+registerServerCommand('changename', handleFnc)
+registerServerCommand('setname', handleFnc)
+
 AddEventHandler('playerDropped', function()
     LastNewbAsk[source] = nil
     ActivePlayerReports[source] = nil
