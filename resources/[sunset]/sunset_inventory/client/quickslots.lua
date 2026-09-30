@@ -120,14 +120,16 @@ local function closeEmoteWheel(selection)
     if selection and selection ~= '' and GetResourceState('sunset_emotes') == 'started' then
         exports.sunset_emotes:PlayEmote(selection)
     else
-        -- Holding X and releasing without selecting an emote cancels any current animation
         if GetResourceState('sunset_emotes') == 'started' then
             exports.sunset_emotes:StopEmote()
         end
+        -- ClearPedTasksImmediately ejects the ped from any vehicle — skip in vehicle.
         local ped = PlayerPedId()
-        ClearPedTasks(ped)
-        ClearPedSecondaryTask(ped)
-        ClearPedTasksImmediately(ped)
+        if not IsPedInAnyVehicle(ped, false) then
+            ClearPedTasks(ped)
+            ClearPedSecondaryTask(ped)
+            ClearPedTasksImmediately(ped)
+        end
     end
 end
 

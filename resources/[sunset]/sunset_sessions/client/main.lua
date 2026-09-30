@@ -59,7 +59,10 @@ function EmergencyCleanup(reason)
     local ped = PlayerPedId()
 
     -- animation / scenario
-    ClearPedTasksImmediately(ped)
+    local inVehicle = IsPedInAnyVehicle(ped, false)
+    if not inVehicle then
+        ClearPedTasksImmediately(ped)
+    end
     ClearPedSecondaryTask(ped)
 
     -- frozen / invincible / collision
@@ -69,7 +72,7 @@ function EmergencyCleanup(reason)
     SetEntityCollision(ped, true, true)
 
     -- attached entities (escort, props)
-    if IsEntityAttachedToAnyPed(ped) or IsEntityAttached(ped) then
+    if not inVehicle and (IsEntityAttachedToAnyPed(ped) or IsEntityAttached(ped)) then
         DetachEntity(ped, true, true)
     end
 
