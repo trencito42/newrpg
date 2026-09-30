@@ -106,6 +106,22 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:panel', function(source)
         if ok and type(res) == 'table' then shield = res end
     end
 
+    local cnnAds = { pending = {}, published = {}, rejected = {} }
+    if GetResourceState('sunset_cnn') == 'started' then
+        pcall(function()
+            local q = exports.sunset_cnn:GetAdQueue() or {}
+            cnnAds.pending = q
+            local recPub = MySQL.query.await([[
+                SELECT id, player_name, text, price_paid, submitted_at, published_at FROM cnn_ads WHERE status = 'published' ORDER BY id DESC LIMIT 20
+            ]]) or {}
+            local recRej = MySQL.query.await([[
+                SELECT id, player_name, text, reject_reason, reviewed_by, reviewed_at FROM cnn_ads WHERE status = 'rejected' ORDER BY id DESC LIMIT 20
+            ]]) or {}
+            cnnAds.published = recPub
+            cnnAds.rejected = recRej
+        end)
+    end
+
     local myDisplayName = exports.sunset_core:GetPlayerDisplayName(source) or exports.sunset_core:GetPlayerBaseName(source) or ('Player %d'):format(source)
 
     return {
@@ -116,6 +132,7 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:panel', function(source)
         roster = buildRoster(),
         reports = reports,
         shield = shield,
+        cnnAds = cnnAds,
         time = os.date('%H:%M:%S'),
     }
 end)
@@ -154,6 +171,28 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, 
     end
     if action == 'kick' then
         return runCmd('kick', { tostring(targetId), tostring(extra and extra.reason or 'Kicked by staff') })
+    end
+    if action == 'mute' then
+        local dur = extra and extra.minutes or 10
+        local rsn = extra and extra.reason or 'Mute de la staff'
+        return runCmd('mute', { tostring(targetId), tostring(dur), tostring(rsn) })
+    end
+    if action == 'approveAd' then
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        local adId = tonumber(extra and extra.adId or targetId)
+        return exports.sunset_cnn:ApproveAd(adId, source)
+    end
+    if action == 'rejectAd' then
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        local adId = tonumber(extra and extra.adId or targetId)
+        local reason = extra and extra.reason or 'Continut neadecvat'
+        return exports.sunset_cnn:RejectAd(adId, source, reason)
+    end
+    if action == 'adMute' then
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        local dur = extra and extra.minutes or 15
+        local rsn = extra and extra.reason or 'Abuz anunturi CNN'
+        return exports.sunset_cnn:AdMutePlayer(targetId, dur, rsn, source)
     end
     if action == 'history' then
         -- panel-shaped history (Sanctions.history prints to chat instead)

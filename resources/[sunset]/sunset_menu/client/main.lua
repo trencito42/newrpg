@@ -382,6 +382,14 @@ AddEventHandler('sunset:nui:menuAction', function(data)
         end)
         return
     end
+    if data.action == 'turfs' then
+        closeMenu()
+        CreateThread(function()
+            Wait(150)
+            ExecuteCommand('turfs')
+        end)
+        return
+    end
     if data.action == 'buy_level' then
         CreateThread(function()
             local ok, message = Sunset.AwaitCallback('sunset:buyLevel')

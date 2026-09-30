@@ -92,6 +92,7 @@ local RESOURCE_COMMAND_EXPORTS = {
     'sunset_businesses',
     'sunset_clans',
     'sunset_turfs',
+    'sunset_cnn',
 }
 
 local function tryRunResourceCommand(src, cmd, args)

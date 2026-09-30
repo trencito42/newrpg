@@ -1,0 +1,473 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SUNSETMP — Turf Map Visualization Styles (turf_map.css)
+   SVG Polygon Gang Territories, Pan/Zoom Canvas, Live War HUD
+   ═══════════════════════════════════════════════════════════════════ */
+
+.turf-map-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    user-select: none;
+    font-family: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e6edf3;
+    opacity: 1;
+    transition: opacity 0.25s ease-out;
+}
+
+.turf-map-screen.hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.turf-map-backdrop {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(10, 14, 23, 0.75) 0%, rgba(5, 7, 12, 0.92) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.turf-map-container {
+    position: relative;
+    width: 92vw;
+    height: 90vh;
+    max-width: 1500px;
+    max-height: 950px;
+    background: linear-gradient(135deg, rgba(18, 24, 38, 0.94) 0%, rgba(13, 17, 26, 0.97) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 10;
+}
+
+/* Header */
+.turf-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(10, 14, 22, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.turf-map-header__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.turf-map-header__badge {
+    align-self: flex-start;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #00ffcc;
+    background: rgba(0, 255, 204, 0.12);
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.turf-map-header__title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin: 4px 0 0 0;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+}
+
+.turf-map-header__subtitle {
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.turf-map-header__controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.turf-map-stats {
+    display: flex;
+    gap: 12px;
+}
+
+.turf-map-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+}
+
+.turf-map-stat-item .stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #8b949e;
+    letter-spacing: 0.06em;
+}
+
+.turf-map-stat-item .stat-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.turf-map-stat-item .stat-val--active {
+    color: #ff4757;
+    animation: warPulseText 1.5s infinite;
+}
+
+.turf-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #c9d1d9;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turf-map-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.turf-map-btn--toggle.active {
+    background: rgba(0, 255, 204, 0.18);
+    border-color: #00ffcc;
+    color: #00ffcc;
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.25);
+}
+
+.turf-map-btn--close {
+    padding: 8px;
+    color: #ff5555;
+    background: rgba(255, 85, 85, 0.1);
+    border-color: rgba(255, 85, 85, 0.25);
+}
+
+.turf-map-btn--close:hover {
+    background: rgba(255, 85, 85, 0.25);
+    border-color: rgba(255, 85, 85, 0.5);
+    color: #ffffff;
+}
+
+/* Viewport & Canvas */
+.turf-map-viewport {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #0d1117;
+    cursor: grab;
+}
+
+.turf-map-viewport.is-dragging {
+    cursor: grabbing;
+}
+
+.turf-map-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2048px;
+    height: 2048px;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.turf-map-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2048px;
+    height: 2048px;
+    pointer-events: none;
+    filter: brightness(0.9) contrast(1.05);
+}
+
+.turf-map-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2048px;
+    height: 2048px;
+    overflow: visible;
+}
+
+/* SVG Polygons */
+.turf-polygon {
+    cursor: pointer;
+    transition: fill-opacity 0.2s ease, stroke-width 0.2s ease, stroke 0.2s ease;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.turf-polygon:hover {
+    fill-opacity: 0.65 !important;
+    stroke-width: 4px !important;
+    stroke: #ffffff !important;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.turf-polygon--war {
+    animation: turfWarPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes turfWarPulse {
+    0% {
+        fill-opacity: 0.3;
+        stroke-width: 3.5px;
+    }
+    50% {
+        fill-opacity: 0.65;
+        stroke-width: 6px;
+        stroke: #ff3838;
+    }
+    100% {
+        fill-opacity: 0.3;
+        stroke-width: 3.5px;
+    }
+}
+
+@keyframes warPulseText {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Turf Center Labels */
+.turf-label-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    fill: #ffffff;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.05em;
+}
+
+.turf-tag-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    fill: #00ffcc;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Navigation controls */
+.turf-map-navigation {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+}
+
+.map-nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(18, 24, 38, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.map-nav-btn:hover {
+    background: rgba(0, 255, 204, 0.25);
+    border-color: #00ffcc;
+    color: #00ffcc;
+    transform: translateY(-2px);
+}
+
+/* Floating Tooltip */
+.turf-map-tooltip {
+    position: absolute;
+    pointer-events: none;
+    z-index: 100;
+    min-width: 220px;
+    background: rgba(13, 17, 26, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    transform: translate(12px, 12px);
+    transition: opacity 0.15s ease;
+}
+
+.turf-map-tooltip.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tooltip-turf-id {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #00ffcc;
+    background: rgba(0, 255, 204, 0.12);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.tooltip-turf-name {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+
+.tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+}
+
+.tooltip-label {
+    color: #8b949e;
+    font-weight: 600;
+}
+
+.tooltip-val {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.tooltip-status {
+    color: #2ecc71;
+    font-weight: 800;
+}
+
+.tooltip-status.war {
+    color: #ff4757;
+    animation: warPulseText 1.5s infinite;
+}
+
+.tooltip-war-info {
+    color: #ff6b81;
+}
+
+.tooltip-income {
+    color: #f1c40f;
+}
+
+/* Debug panel */
+.turf-debug-panel {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(10, 14, 22, 0.95);
+    border: 1px solid #00ffcc;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.72rem;
+    color: #00ffcc;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    backdrop-filter: blur(8px);
+}
+
+.turf-debug-panel.hidden {
+    display: none;
+}
+
+.debug-panel-title {
+    font-weight: 800;
+    border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+}
+
+/* Footer */
+.turf-map-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: rgba(10, 14, 22, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.75rem;
+}
+
+.turf-map-legend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #c9d1d9;
+    font-weight: 600;
+}
+
+.legend-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid;
+}
+
+.legend-box--war {
+    background: rgba(255, 71, 87, 0.4);
+    border-color: #ff4757;
+    animation: warPulseText 1.5s infinite;
+}
+
+.turf-map-hint {
+    color: #8b949e;
+}

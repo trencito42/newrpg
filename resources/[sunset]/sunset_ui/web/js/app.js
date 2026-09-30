@@ -355,6 +355,7 @@
         warHudShow: 'clans', warHudUpdate: 'clans', warHudHide: 'clans', warArmoryShow: 'clans', warArmoryHide: 'clans',
         warScoreboardShow: 'clans', warScoreboardHide: 'clans', warEndShow: 'clans', warEndHide: 'clans', warRespawnShow: 'clans', warRespawnHide: 'clans',
         helpdeskRefresh: 'helpdesk', helpdeskHistory: 'helpdesk', helpdeskTicks: 'helpdesk', shieldHud: 'helpdesk', shieldHudHide: 'helpdesk',
+        turfMapOpen: 'turf_map', turfMapClose: 'turf_map', turfMapSync: 'turf_map', turfMapWarUpdate: 'turf_map', turfMapWarEnd: 'turf_map',
     });
 
     const App = {
@@ -386,6 +387,7 @@
                 'crafting-close': 'craftingClose', 'dealership-close': 'dealershipClose',
                 'dispatch-112-cancel': 'close112Modal',
                 'ft-results-close-btn': 'fishingTournamentCloseResults',
+                'turf-map-close-btn': 'turfMapClose',
             };
             document.addEventListener('click', (event) => {
                 const control = event.target?.closest?.('[id]');
@@ -438,6 +440,19 @@
                     piEl.classList.add('hidden');
                     piEl.setAttribute('aria-hidden', 'true');
                     post('playerInteractionClose', {});
+                }
+                return;
+            }
+
+            // Check if Turf Map is open
+            const turfMapEl = document.getElementById('turf-map-screen');
+            if (turfMapEl && !turfMapEl.classList.contains('hidden')) {
+                if (window.TurfMap && typeof window.TurfMap.close === 'function') {
+                    window.TurfMap.close();
+                } else {
+                    turfMapEl.classList.add('hidden');
+                    turfMapEl.setAttribute('aria-hidden', 'true');
+                    post('turfMapClose', {});
                 }
                 return;
             }
@@ -995,6 +1010,11 @@
                 case 'fncModalShow': window.FncUI?.show?.(payload); return;
                 case 'fncModalHide': window.FncUI?.hide?.(); return;
                 case 'fncModalError': window.FncUI?.showError?.(payload?.error); return;
+                case 'turfMapOpen': window.TurfMap?.open?.(payload); return;
+                case 'turfMapClose': window.TurfMap?.close?.(); return;
+                case 'turfMapSync': window.TurfMap?.sync?.(payload); return;
+                case 'turfMapWarUpdate': window.TurfMap?.updateWar?.(payload); return;
+                case 'turfMapWarEnd': window.TurfMap?.endWar?.(payload); return;
             }
 
             // Legacy window handler routing

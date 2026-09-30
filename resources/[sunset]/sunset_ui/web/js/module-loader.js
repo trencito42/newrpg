@@ -193,6 +193,11 @@
             html: 'modules/panels/index.html',
             css: ['css/panels.css', 'css/org-panels.css', 'css/gameplay_glass.css'],
             js: ['js/panels.js', 'js/overlays.js', 'js/player_identity.js', 'js/world-tooltip.js', 'js/fuel_pump.js']
+        },
+        turf_map: {
+            html: 'modules/turf_map/index.html',
+            css: ['css/turf_map.css'],
+            js: ['js/turf_map.js']
         }
     };
 

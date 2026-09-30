@@ -1,9 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   ADMIN HELPDESK + BLAZE SHIELD WIDGET (staff console)
-   Standalone module: own message listener (no app.js switch edits),
-   same design system (glass/teal/phosphor). Data arrives via
-   sunset_ui:Send('helpdeskShow'|'helpdeskRefresh'|...) payloads.
-   Actions post back to sunset_admin/client/helpdesk.lua.
+   ADMIN HELPDESK + BLAZE SHIELD WIDGET + CNN ADS SYSTEM
+   Same design system: glass surfaces, teal accent, Outfit/Syne typography.
    ═══════════════════════════════════════════════════════════════ */
 
 const $hd = (sel, root) => (root || document).querySelector(sel);
@@ -78,18 +75,33 @@ const ShieldWidget = {
 const Helpdesk = {
     data: null,
     selectedSrc: null,
+    activeTab: 'overview', // 'overview' | 'cnn'
+    cnnSubTab: 'pending',   // 'pending' | 'published' | 'rejected'
     open: false,
+    _ticker: null,
 
     esc(s) { return ShieldWidget.esc(s); },
+
+    formatEta(sec) {
+        sec = Math.max(0, Math.floor(sec));
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    },
 
     render(data) {
         this.data = data || this.data;
         if (!this.data) return;
         this.renderHead();
-        this.renderReports();
-        this.renderRoster();
-        this.renderDetail();
-        this.renderDetStats();
+        this.renderNav();
+        if (this.activeTab === 'overview') {
+            this.renderReports();
+            this.renderRoster();
+            this.renderDetail();
+            this.renderDetStats();
+        } else {
+            this.renderCnnAds();
+        }
     },
 
     renderHead() {
@@ -106,6 +118,21 @@ const Helpdesk = {
         suspChip.classList.toggle('hidden', !shield.suspect);
         $hd('#hd-mode').textContent = String(shield.mode || 'log_only').toUpperCase();
         $hd('#hd-mode').classList.toggle('danger', shield.mode === 'enforce');
+
+        const pendingAds = (d.cnnAds && Array.isArray(d.cnnAds.pending)) ? d.cnnAds.pending.length : 0;
+        const cnnBadge = $hd('#hd-cnn-badge');
+        if (cnnBadge) {
+            cnnBadge.textContent = String(pendingAds);
+            cnnBadge.classList.toggle('has-items', pendingAds > 0);
+        }
+    },
+
+    renderNav() {
+        $hd('#hd-tab-overview')?.classList.toggle('active', this.activeTab === 'overview');
+        $hd('#hd-tab-cnn')?.classList.toggle('active', this.activeTab === 'cnn');
+        $hd('#hd-body-overview')?.classList.toggle('hidden', this.activeTab !== 'overview');
+        $hd('#hd-body-cnn')?.classList.toggle('hidden', this.activeTab !== 'cnn');
+        $hd('#hd-detstats')?.classList.toggle('hidden', this.activeTab !== 'overview');
     },
 
     renderReports() {
@@ -226,6 +253,7 @@ const Helpdesk = {
                 <button class="hd-btn" data-hd-act="spectate" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-eye"></i> Spectate</button>
                 <button class="hd-btn warn" data-hd-act="warn" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-warning"></i> Warn</button>
                 <button class="hd-btn danger" data-hd-act="kick" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-sign-out"></i> Kick</button>
+                <button class="hd-btn danger" data-hd-act="adMute" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-speaker-slash"></i> AD-Mute</button>
                 <button class="hd-btn" data-hd-act="history" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-clock-counter-clockwise"></i> History</button>
                 <button class="hd-btn" data-hd-act="dismissHeat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-shield-slash"></i> Dismiss heat</button>
                 <button class="hd-btn" data-hd-act="acheat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-magnifying-glass"></i> Evidence</button>
@@ -236,13 +264,10 @@ const Helpdesk = {
             <div id="hd-history"><div class="hd-empty"><i class="ph-bold ph-clock-counter-clockwise"></i>Click "History" to load.</div></div>
         `;
         wrap.innerHTML = html;
-
-        // load live ticks for the selected player
         this.loadTicks(p.src);
     },
 
     loadTicks(src) {
-        // evidence arrives async via helpdeskAction→Lua; ask Lua to fetch it
         post('helpdeskAction', { action: 'evidence', targetId: src });
     },
 
@@ -300,17 +325,113 @@ const Helpdesk = {
         });
     },
 
-    prompt(action, targetId, title) {
+    // ═══════════════════════════════════════════════════════════════
+    //  CNN ADVERTISEMENTS TAB RENDERING
+    // ═══════════════════════════════════════════════════════════════
+    renderCnnAds() {
+        const cnn = (this.data && this.data.cnnAds) ? this.data.cnnAds : { pending: [], published: [], rejected: [] };
+        const pending = Array.isArray(cnn.pending) ? cnn.pending : [];
+        const published = Array.isArray(cnn.published) ? cnn.published : [];
+        const rejected = Array.isArray(cnn.rejected) ? cnn.rejected : [];
+
+        $hd('#hd-cnn-sub-pending')?.classList.toggle('active', this.cnnSubTab === 'pending');
+        $hd('#hd-cnn-sub-published')?.classList.toggle('active', this.cnnSubTab === 'published');
+        $hd('#hd-cnn-sub-rejected')?.classList.toggle('active', this.cnnSubTab === 'rejected');
+
+        $hd('#hd-cnn-count-pending').textContent = String(pending.length);
+        $hd('#hd-cnn-count-published').textContent = String(published.length);
+        $hd('#hd-cnn-count-rejected').textContent = String(rejected.length);
+
+        const listContainer = $hd('#hd-cnn-list');
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
+
+        if (this.cnnSubTab === 'pending') {
+            if (!pending.length) {
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>Nu există anunțuri CNN în coada de așteptare.</div>';
+                return;
+            }
+            pending.forEach((ad) => {
+                const card = document.createElement('div');
+                card.className = `hd-cnn-card${ad.status === 'approved' ? ' is-approved' : ''}`;
+                const etaText = this.formatEta(ad.remainingSec || 0);
+                const canApprove = ad.status === 'pending';
+
+                card.innerHTML = `
+                    <div class="hd-cnn-card__head">
+                        <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
+                        <div class="hd-cnn-card__author">${this.esc(ad.playerName)} <span class="dim">(#${Number(ad.src || 0)})</span></div>
+                        <div class="hd-cnn-card__pos">Queue #${Number(ad.queuePosition || 1)}</div>
+                        <div class="hd-cnn-card__eta"><i class="ph-bold ph-clock"></i> <span class="hd-ad-countdown" data-ad-id="${ad.id}">${etaText}</span></div>
+                        <div class="hd-cnn-card__status badge-${ad.status}">${this.esc(String(ad.status || 'pending').toUpperCase())}</div>
+                    </div>
+                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                    <div class="hd-cnn-card__actions">
+                        ${canApprove ? `<button class="hd-btn tiny primary" data-hd-act="approveAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-check"></i> Approve</button>` : '<span class="approved-chip"><i class="ph-bold ph-check"></i> Approved</span>'}
+                        <button class="hd-btn tiny danger" data-hd-act="rejectAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-trash"></i> Reject / Delete</button>
+                        ${ad.src ? `<button class="hd-btn tiny" data-hd-act="selectPlayer" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-user"></i> View Player</button>` : ''}
+                        ${ad.src ? `<button class="hd-btn tiny warn" data-hd-act="warn" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-warning"></i> Warn</button>` : ''}
+                        ${ad.src ? `<button class="hd-btn tiny danger" data-hd-act="adMute" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-speaker-slash"></i> AD-Mute</button>` : ''}
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        } else if (this.cnnSubTab === 'published') {
+            if (!published.length) {
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-broadcast"></i>Nu există anunțuri publicate recent.</div>';
+                return;
+            }
+            published.forEach((ad) => {
+                const card = document.createElement('div');
+                card.className = 'hd-cnn-card is-published';
+                card.innerHTML = `
+                    <div class="hd-cnn-card__head">
+                        <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
+                        <div class="hd-cnn-card__author">${this.esc(ad.player_name || ad.playerName)}</div>
+                        <div class="hd-cnn-card__status badge-published"><i class="ph-bold ph-check-circle"></i> PUBLISHED</div>
+                        <div class="hd-cnn-card__time">${this.esc(String(ad.published_at || '').slice(0, 16))}</div>
+                    </div>
+                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                `;
+                listContainer.appendChild(card);
+            });
+        } else if (this.cnnSubTab === 'rejected') {
+            if (!rejected.length) {
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>Nu există anunțuri respinse recent.</div>';
+                return;
+            }
+            rejected.forEach((ad) => {
+                const card = document.createElement('div');
+                card.className = 'hd-cnn-card is-rejected';
+                card.innerHTML = `
+                    <div class="hd-cnn-card__head">
+                        <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
+                        <div class="hd-cnn-card__author">${this.esc(ad.player_name || ad.playerName)}</div>
+                        <div class="hd-cnn-card__status badge-rejected"><i class="ph-bold ph-x-circle"></i> REJECTED</div>
+                        <div class="hd-cnn-card__reviewer">By: <strong>${this.esc(ad.reviewed_by || 'Staff')}</strong></div>
+                        <div class="hd-cnn-card__time">${this.esc(String(ad.reviewed_at || '').slice(0, 16))}</div>
+                    </div>
+                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                    <div class="hd-cnn-card__reason"><strong>Motiv respingere:</strong> ${this.esc(ad.reject_reason || 'Nerespectare regulament')}</div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+    },
+
+    prompt(action, targetId, title, options = {}) {
         const backdrop = $hd('#hd-prompt-backdrop');
         backdrop.classList.remove('hidden');
         $hd('#hd-prompt-title').textContent = title;
         const input = $hd('#hd-prompt-input');
-        input.value = '';
+        input.value = options.defaultVal || '';
+        input.placeholder = options.placeholder || 'Reason (required, min 3 chars)';
         input.focus();
         $hd('#hd-prompt-ok').onclick = () => {
             const reason = String(input.value || '').trim();
             backdrop.classList.add('hidden');
-            post('helpdeskAction', { action, targetId, reason });
+            const payload = { action, targetId, reason, adId: options.adId, minutes: options.minutes || 15 };
+            post('helpdeskAction', payload);
         };
         $hd('#hd-prompt-cancel').onclick = () => backdrop.classList.add('hidden');
         input.onkeydown = (e) => {
@@ -319,24 +440,44 @@ const Helpdesk = {
         };
     },
 
+    startCountdownTicker() {
+        if (this._ticker) clearInterval(this._ticker);
+        this._ticker = setInterval(() => {
+            if (!this.open || !this.data || !this.data.cnnAds) return;
+            const pending = this.data.cnnAds.pending || [];
+            pending.forEach((ad) => {
+                if (ad.remainingSec > 0) ad.remainingSec--;
+                const span = $hd(`.hd-ad-countdown[data-ad-id="${ad.id}"]`);
+                if (span) span.textContent = this.formatEta(ad.remainingSec);
+            });
+        }, 1000);
+    },
+
+    stopCountdownTicker() {
+        if (this._ticker) {
+            clearInterval(this._ticker);
+            this._ticker = null;
+        }
+    },
+
     show(data) {
         this.open = true;
         this.data = data;
         const el = $hd('#helpdesk');
         el.classList.remove('hidden');
         this.render(data);
+        this.startCountdownTicker();
     },
 
     hide() {
         this.open = false;
         this.selectedSrc = null;
+        this.stopCountdownTicker();
         $hd('#helpdesk')?.classList.add('hidden');
     },
 };
 
 // ── Bootstrap: static shell injected immediately ──
-// [FIX] Was DOMContentLoaded which never fires for lazy-loaded scripts
-// (injected after boot). Now runs immediately — defer guarantees body exists.
 (function buildHelpdeskShell() {
     const shell = document.createElement('div');
     shell.id = 'helpdesk';
@@ -347,6 +488,10 @@ const Helpdesk = {
             <div class="helpdesk-panel__head">
                 <div class="helpdesk-panel__logo"><i class="ph-bold ph-headset"></i></div>
                 <div class="helpdesk-panel__title">Staff <span>Console</span></div>
+                <div class="helpdesk-nav">
+                    <button type="button" class="hd-nav-tab active" id="hd-tab-overview"><i class="ph-bold ph-users-four"></i> Overview</button>
+                    <button type="button" class="hd-nav-tab" id="hd-tab-cnn"><i class="ph-bold ph-megaphone"></i> CNN Ads <span class="count" id="hd-cnn-badge">0</span></button>
+                </div>
                 <div class="helpdesk-panel__meta">
                     <span class="hd-chip"><i class="ph-bold ph-user-circle"></i><span id="hd-level">—</span></span>
                     <span class="hd-chip"><i class="ph-bold ph-users-three"></i><span id="hd-players">—</span></span>
@@ -357,7 +502,7 @@ const Helpdesk = {
                 </div>
                 <button class="helpdesk-panel__close" id="hd-close" title="Close (ESC)"><i class="ph-bold ph-x"></i></button>
             </div>
-            <div class="helpdesk-panel__body">
+            <div class="helpdesk-panel__body" id="hd-body-overview">
                 <div class="hd-col">
                     <div class="hd-col__head"><i class="ph-bold ph-megaphone-simple"></i> Reports & Questions <span class="count" id="hd-reports-count">0</span></div>
                     <div class="hd-col__scroll" id="hd-reports"></div>
@@ -372,6 +517,14 @@ const Helpdesk = {
                         <div class="hd-empty"><i class="ph-bold ph-cursor-click"></i>Select a player from the roster.</div>
                     </div>
                 </div>
+            </div>
+            <div class="helpdesk-panel__cnn hidden" id="hd-body-cnn">
+                <div class="hd-cnn-subnav">
+                    <button type="button" class="hd-cnn-subtab active" id="hd-cnn-sub-pending">Pending Queue (<span id="hd-cnn-count-pending">0</span>)</button>
+                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-published">Published History (<span id="hd-cnn-count-published">0</span>)</button>
+                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-rejected">Rejected (<span id="hd-cnn-count-rejected">0</span>)</button>
+                </div>
+                <div class="hd-cnn-scroll" id="hd-cnn-list"></div>
             </div>
             <div class="hd-detstats" id="hd-detstats" style="padding:8px 16px;border-top:1px solid var(--glass-border);"></div>
             <div class="hd-prompt-backdrop hidden" id="hd-prompt-backdrop">
@@ -388,40 +541,91 @@ const Helpdesk = {
     `;
     document.body.appendChild(shell);
 
-    // event delegation for all action buttons
+    // Tab navigation clicks
+    $hd('#hd-tab-overview')?.addEventListener('click', () => {
+        Helpdesk.activeTab = 'overview';
+        Helpdesk.renderNav();
+        Helpdesk.render();
+    });
+
+    $hd('#hd-tab-cnn')?.addEventListener('click', () => {
+        Helpdesk.activeTab = 'cnn';
+        Helpdesk.renderNav();
+        Helpdesk.render();
+    });
+
+    // CNN Sub-tab clicks
+    $hd('#hd-cnn-sub-pending')?.addEventListener('click', () => {
+        Helpdesk.cnnSubTab = 'pending';
+        Helpdesk.renderCnnAds();
+    });
+    $hd('#hd-cnn-sub-published')?.addEventListener('click', () => {
+        Helpdesk.cnnSubTab = 'published';
+        Helpdesk.renderCnnAds();
+    });
+    $hd('#hd-cnn-sub-rejected')?.addEventListener('click', () => {
+        Helpdesk.cnnSubTab = 'rejected';
+        Helpdesk.renderCnnAds();
+    });
+
+    // Event delegation for action buttons
     shell.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-hd-act]');
         if (!btn || btn.disabled) return;
         const action = btn.dataset.hdAct;
         const targetId = Number(btn.dataset.hdTarget || Helpdesk.selectedSrc || 0);
+        const adId = Number(btn.dataset.hdAdId || 0);
+
+        if (action === 'selectPlayer') {
+            Helpdesk.activeTab = 'overview';
+            Helpdesk.selectedSrc = targetId;
+            Helpdesk.renderNav();
+            Helpdesk.render();
+            return;
+        }
+
+        if (action === 'approveAd') {
+            post('helpdeskAction', { action: 'approveAd', adId });
+            return;
+        }
+
+        if (action === 'rejectAd') {
+            Helpdesk.prompt('rejectAd', 0, `Respinge Anunțul #${adId}`, { adId, placeholder: 'Motiv respingere (ex: Continut neadecvat)' });
+            return;
+        }
+
+        if (action === 'adMute') {
+            Helpdesk.prompt('adMute', targetId, `AD-Mute Player #${targetId}`, { placeholder: 'Motiv AD-Mute (15 minute)', minutes: 15 });
+            return;
+        }
+
         if (action === 'warn' || action === 'kick') {
             Helpdesk.prompt(action, targetId, action === 'warn' ? `Warn #${targetId}` : `Kick #${targetId}`);
             return;
         }
+
         if (action === 'acheat') {
-            // show evidence inline (already loaded) — scroll to ticks
             $hd('#hd-ticks')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             return;
         }
-        if (!targetId && action !== 'spectateOff') return;
-        post('helpdeskAction', { action, targetId });
+
+        if (!targetId && action !== 'spectateOff' && !adId) return;
+        post('helpdeskAction', { action, targetId, adId });
     });
 
     $hd('#hd-close')?.addEventListener('click', () => post('helpdeskClose'));
 })();
 
-// ESC closes the panel (universal handler in app.js also posts helpdeskClose)
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     const panel = $hd('#helpdesk');
     if (!panel || panel.classList.contains('hidden')) return;
     const promptBox = $hd('#hd-prompt-backdrop');
-    if (promptBox && !promptBox.classList.contains('hidden')) return; // prompt owns ESC
+    if (promptBox && !promptBox.classList.contains('hidden')) return;
     e.preventDefault();
     post('helpdeskClose');
 }, true);
 
-// ── NUI messages (standalone listener; app.js untouched) ──
 window.addEventListener('message', (event) => {
     const data = event?.data || {};
     switch (data.action) {

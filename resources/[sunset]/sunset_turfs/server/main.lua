@@ -625,9 +625,40 @@ exports.sunset_core:RegisterCallback('sunset:turfs:saveConnections', function(so
 end)
 
 exports.sunset_core:RegisterCallback('sunset:turfs:getAllTurfsData', function(source)
+    local wars = {}
+    local now = os.time()
+    for id, war in pairs(ActiveWars) do
+        wars[id] = {
+            turfId = war.turfId,
+            turfName = war.turfName,
+            attackerClanId = war.attackerClanId,
+            attackerName = war.attackerName,
+            attackerTag = war.attackerTag,
+            attackerColor = war.attackerColor or '#00ffcc',
+            defenderClanId = war.defenderClanId,
+            defenderName = war.defenderName,
+            defenderTag = war.defenderTag,
+            defenderColor = war.defenderColor or '#8b5cf6',
+            startedAt = war.startedAt,
+            endsAt = war.endsAt,
+            attackerScore = war.attackerScore or 0,
+            defenderScore = war.defenderScore or 0,
+            remainingSec = math.max(0, math.floor((war.endsAt or now) - now))
+        }
+    end
+
+    local cds = {}
+    for id, exp in pairs(TurfCooldowns) do
+        if exp > now then
+            cds[id] = exp - now
+        end
+    end
+
     return {
         turfs = Turfs,
-        adjacency = TurfAdjacency
+        adjacency = TurfAdjacency,
+        activeWars = wars,
+        cooldowns = cds
     }
 end)
 

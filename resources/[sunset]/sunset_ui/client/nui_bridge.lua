@@ -156,6 +156,7 @@ forward('emoteWheelClose')
 forward('warArmoryClose')
 forward('warTakeLoadout')
 forward('warEndClose')
+forward('turfMapClose')
 -- NOTE: hotbarAssign/hotbarUse intentionally NOT forwarded: the numbered
 -- quick bar (1-5) was removed by design; GTA's weapon wheel is the selector.
 -- The JS posts are being deleted in hotbar.js (see below).
@@ -240,6 +241,7 @@ forward('fishingShopBuy')
 forward('fishingShopSell')
 forward('fishingShopClose')
 forward('fishingTournamentCloseResults')
+forward('fishingTournamentDismissResults')
 AddEventHandler('sunset:nui:fishingTournamentCloseResults', function()
     SetFocus(false, false, false, 'fishing_tournament')
 end)

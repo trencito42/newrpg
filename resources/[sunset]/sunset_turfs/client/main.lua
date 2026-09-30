@@ -213,15 +213,26 @@ local turfEditActive = false
 local editTurfId = nil
 local editVertices = {}
 
+local isTurfMapOpen = false
+
 RegisterNetEvent('sunset:turfs:syncAll', function(turfs, adjacency)
     LocalTurfs = turfs or {}
     LocalAdjacency = adjacency or {}
     refreshBlips()
+    if isTurfMapOpen then
+        exports.sunset_ui:Send('turfMapSync', {
+            turfs = LocalTurfs,
+            adjacency = LocalAdjacency
+        })
+    end
 end)
 
 RegisterNetEvent('sunset:turfs:warStart', function(war)
     ActiveWar = war
     refreshBlips()
+    if isTurfMapOpen then
+        exports.sunset_ui:Send('turfMapWarUpdate', war)
+    end
     if warParticipant then
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
         exports.sunset_ui:Send('warHudShow', {
@@ -253,6 +264,9 @@ RegisterNetEvent('sunset:turfs:warTick', function(war)
     if ActiveWar and ActiveWar.turfId == war.turfId then
         ActiveWar = war
     end
+    if isTurfMapOpen then
+        exports.sunset_ui:Send('turfMapWarUpdate', war)
+    end
 end)
 
 RegisterNetEvent('sunset:turfs:warEnd', function(data)
@@ -261,6 +275,9 @@ RegisterNetEvent('sunset:turfs:warEnd', function(data)
     end
     clearWarPlayerBlips()
     refreshBlips()
+    if isTurfMapOpen then
+        exports.sunset_ui:Send('turfMapWarEnd', data)
+    end
     exports.sunset_ui:Send('warHudHide', {})
     exports.sunset_ui:Send('warRespawnHide', {})
     exports.sunset_ui:Send('warScoreboardHide', {})
@@ -832,3 +849,49 @@ RegisterNetEvent('sunset:turfs:warKill', function(data)
                     ('WAR: %s [%s] took down %s'):format(tostring(data.killer), tostring(data.clanTag or ''), tostring(data.victim)),
         'error', 4000)
 end)
+
+local function openTurfMap()
+    if isTurfMapOpen then return end
+    exports.sunset_core:TriggerCallback('sunset:turfs:getAllTurfsData', function(data)
+        if not data then return end
+        isTurfMapOpen = true
+        SetNuiFocus(true, true)
+        local ped = PlayerPedId()
+        local pCoords = GetEntityCoords(ped)
+        exports.sunset_ui:Send('turfMapOpen', {
+            turfs = data.turfs or {},
+            adjacency = data.adjacency or {},
+            activeWars = data.activeWars or {},
+            cooldowns = data.cooldowns or {},
+            playerCoords = { x = pCoords.x, y = pCoords.y, z = pCoords.z }
+        })
+    end)
+end
+
+local function closeTurfMap()
+    if not isTurfMapOpen then return end
+    isTurfMapOpen = false
+    SetNuiFocus(false, false)
+    exports.sunset_ui:Send('turfMapClose', {})
+end
+
+RegisterCommand('turfs', function()
+    openTurfMap()
+end, false)
+
+RegisterNetEvent('sunset:turfs:openMap', function()
+    openTurfMap()
+end)
+
+RegisterNUICallback('turfMapClose', function(data, cb)
+    isTurfMapOpen = false
+    SetNuiFocus(false, false)
+    if cb then cb({ ok = true }) end
+end)
+
+AddEventHandler('sunset:nui:turfMapClose', function()
+    closeTurfMap()
+end)
+
+exports('OpenTurfMap', openTurfMap)
+exports('CloseTurfMap', closeTurfMap)
