@@ -240,7 +240,7 @@
       "minRank": 2,
       "requiresBoat": true,
       "difficulty": "medium",
-      "requiredSalvage": 4,
+      "requiredSalvage": 3,
       "pay": 520,
       "searchZone": { "x": -805.0, "y": 5980.0, "z": -15.0, "radius": 90.0 },
       "boatSpawn": { "x": -798.2, "y": -1502.5, "z": 0.12, "h": 110.0 },
