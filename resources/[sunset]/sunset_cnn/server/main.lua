@@ -266,7 +266,7 @@ local function publishAd(ad)
     -- If author is online, notify them
     if ad.src and GetPlayerPing(ad.src) > 0 then
         TriggerClientEvent('sunset:chat:system', ad.src,
-            ('Anunțul tău (#%d) a fost publicat pe server.'):format(ad.id), 'success')
+            ('Your announcement (#%d) has been published on the server.'):format(ad.id), 'success')
     end
 
     log(('Published CNN ad #%d by %s: "%s"'):format(ad.id, ad.playerName, ad.text))
@@ -293,7 +293,7 @@ function ApproveAd(adId, staffSrc)
 
     if not found then
         AdMutex[adId] = nil
-        return false, 'Anunțul nu se mai află în coada de așteptare.'
+        return false, 'This announcement is no longer in the queue.'
     end
 
     if found.status == 'approved' then
@@ -347,7 +347,7 @@ function RejectAd(adId, staffSrc, reason)
 
     if not found then
         AdMutex[adId] = nil
-        return false, 'Anunțul nu se mai află în coada de așteptare.'
+        return false, 'This announcement is no longer in the queue.'
     end
 
     if found.status == 'rejected' or found.status == 'published' then
@@ -444,12 +444,12 @@ function SubmitAd(source, text)
 
     local isAdMuted, admMin, admReason = IsAdMuted(src)
     if isAdMuted then
-        return false, ('You are currently ad-muted (%d min). Reason: %s'):format(admMin or 1, admReason or 'Sanctiune CNN')
+        return false, ('You are currently ad-muted (%d min). Reason: %s'):format(admMin or 1, admReason or 'CNN Sanction')
     end
 
     -- Queue limit check
     if #AdQueue >= (Config.CNN.maxPendingQueue or 50) then
-        return false, 'Coada de anunțuri CNN este plină momentan. Te rugăm să încerci mai târziu.'
+        return false, 'The CNN announcement queue is currently full. Please try again later.'
     end
 
     -- Cooldown check
@@ -458,13 +458,13 @@ function SubmitAd(source, text)
     local cd = Config.CNN.playerCooldown or 120
     if (now - lastAd) < cd then
         local remCd = cd - (now - lastAd)
-        return false, ('Trebuie să mai aștepți %d secunde înainte de a plasa un nou anunț.'):format(remCd)
+        return false, ('You must wait %d more seconds before placing a new announcement.'):format(remCd)
     end
 
     -- Clean & length check
     local clean = cleanText(text, Config.CNN.maxLength or 140)
     if not clean or #clean < (Config.CNN.minLength or 5) then
-        return false, ('Textul anunțului trebuie să aibă între %d și %d caractere.'):format(
+        return false, ('Ad text must be between %d and %d characters.'):format(
             Config.CNN.minLength or 5, Config.CNN.maxLength or 140
         )
     end
@@ -684,13 +684,13 @@ local function listAdsCommand(source)
             print(('  #%d | ID %d | %s: "%s" | [%s] in %ds'):format(idx, ad.id, ad.playerName, ad.text, ad.status, rem))
         end
     else
-        TriggerClientEvent('sunset:chat:system', source, ('[CNN Queue] %d anunțuri în așteptare:'):format(#AdQueue), 'info')
+        TriggerClientEvent('sunset:chat:system', source, ('[CNN Queue] %d pending announcement(s):'):format(#AdQueue), 'info')
         for idx, ad in ipairs(AdQueue) do
             local rem = math.max(0, ad.scheduledAt - now)
             local min = math.floor(rem / 60)
             local sec = rem % 60
             TriggerClientEvent('sunset:chat:system', source,
-                ('  [#%d] ID: %d | %s (#%s) [%s]: "%s" (Publicare în %02d:%02d)'):format(
+                ('  [#%d] ID: %d | %s (#%s) [%s]: "%s" (Publishing in %02d:%02d)'):format(
                     idx, ad.id, ad.playerName, tostring(ad.src or '?'), string.upper(ad.status), ad.text, min, sec
                 ), 'info')
         end

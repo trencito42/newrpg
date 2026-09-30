@@ -236,8 +236,8 @@ Sunset.CommandUsage = {
     bizadmin = { usage = '/bizadmin — admin business panel (staff level 3+)', minArgs = 0 },
     bizhelp = { usage = '/bizhelp — list business commands', minArgs = 0 },
     ecudebug = { usage = '/ecudebug — ECU diagnostics (in vehicle, admin 2+)', minArgs = 0 },
-    fnc = { usage = '/fnc [id] [motiv/nume_nou] — forțează schimbarea numelui unui jucător (admin)', minArgs = 1 },
-    forcenamechange = { usage = '/forcenamechange [id] [motiv/nume_nou] — forțează schimbarea numelui (admin)', minArgs = 1 },
+    fnc = { usage = '/fnc [id] [reason/new_name] — force a name change for a player (admin)', minArgs = 1 },
+    forcenamechange = { usage = '/forcenamechange [id] [reason/new_name] — force a name change (admin)', minArgs = 1 },
     -- [SUGGESTIONS] player-facing commands that had no usage entry (invisible
     -- in the chat suggestion list until now).
     ['112'] = { usage = '/112 — open the emergency call menu', minArgs = 0 },

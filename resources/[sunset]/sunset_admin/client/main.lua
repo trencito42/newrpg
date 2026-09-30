@@ -950,7 +950,7 @@ RegisterNetEvent('sunset:admin:openFncModal', function(data)
     local pName = LocalPlayer.state.sunsetName or LocalPlayer.state.name or 'Player'
     exports.sunset_ui:Send('fncModalShow', {
         currentName = data.currentName or pName,
-        reason = data.reason or 'Schimbare forțată de nume de către admin',
+        reason = data.reason or 'Forced name change by an admin',
         forced = data.forced == true,
         tokens = data.tokens or 1,
     })
@@ -968,10 +968,10 @@ AddEventHandler('sunset:nui:fncSubmit', function(payload)
         if ok then
             exports.sunset_ui:Send('fncModalHide', {})
             exports.sunset_ui:SetFocus(false, false)
-            exports.sunset_ui:Notify(('Numele tău a fost actualizat: %s'):format(tostring(result)), 'success')
+            exports.sunset_ui:Notify(('Your name has been updated: %s'):format(tostring(result)), 'success')
             TriggerEvent('sunset:client:onCharacterUpdated', { name = result, firstname = result })
         else
-            exports.sunset_ui:Send('fncModalError', { error = result or 'Eroare la schimbarea numelui.' })
+            exports.sunset_ui:Send('fncModalError', { error = result or 'Failed to change name.' })
         end
     end, name)
 end)

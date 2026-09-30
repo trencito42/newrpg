@@ -21,7 +21,7 @@ local function setupBlips()
         SetBlipColour(blip, blipCfg.color or 2)
         SetBlipAsShortRange(blip, true)
         BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(blipCfg.label or 'CNN - Anunțuri')
+        AddTextComponentSubstringPlayerName(blipCfg.label or 'CNN - Announcements')
         EndTextCommandSetBlipName(blip)
         Blips[#Blips + 1] = blip
     end

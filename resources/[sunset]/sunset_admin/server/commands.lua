@@ -2387,7 +2387,7 @@ local function handleFnc(source, args)
     TriggerClientEvent('sunset:client:onCharacterLoaded', target, targetChar)
     TriggerClientEvent('sunset:client:onCharacterUpdated', target, targetChar)
 
-    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
+    local msg = ('^3[ADMIN] ^7Admin ^2%s^7 changed the name of ^1%s^7 to ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
     notify(source, ('You changed the name of %s to %s.'):format(targetName, cleanName), 'success')
     notify(target, ('Your name was changed to %s by admin %s.'):format(cleanName, adminName), 'info')

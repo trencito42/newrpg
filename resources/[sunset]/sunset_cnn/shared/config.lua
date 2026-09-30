@@ -24,6 +24,6 @@ Config.CNN = {
         sprite = 459,          -- News / Microphone icon
         color = 2,             -- Green
         scale = 0.8,
-        label = 'CNN - Anunțuri Publicitare',
+        label = 'CNN - Announcements',
     },
 }
