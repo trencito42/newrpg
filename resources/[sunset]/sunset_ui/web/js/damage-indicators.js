@@ -48,7 +48,7 @@ const DamageIndicators = {
         dmgEl.style.left = `${randomX}px`;
         dmgEl.style.top = `${randomY}px`;
         this.dmgContainer?.appendChild(dmgEl);
-        setTimeout(() => dmgEl.remove(), 800);
+        setTimeout(() => dmgEl.remove(), 1800);
 
         clearTimeout(this.flashTimeout);
         if (this.screenFlash) {
