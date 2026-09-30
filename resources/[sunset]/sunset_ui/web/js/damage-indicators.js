@@ -66,6 +66,9 @@ const DamageIndicators = {
             marker.classList.remove('active');
             void marker.offsetWidth;
             marker.classList.add('active');
+            // Remove .active after animation ends so display:none/block on #ui-root
+            // (pause menu) cannot restart a stale animation and show a ghost arc.
+            marker.addEventListener('animationend', () => marker.classList.remove('active'), { once: true });
         }
     },
 };
