@@ -2289,19 +2289,63 @@ registerServerCommand('nd', function(source, args)
 end)
 
 local function handleFnc(source, args)
-    if not requirePerm(source, 'fnc') then return end
-
     local targetInput = args[1]
     local newName = args[2] and table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1') or ''
 
-    if not targetInput or newName == '' then
-        return notify(source, 'Usage: /fnc [id/nume] [Nume_Nou sau Prenume Nume]', 'warning')
+    -- Player self-invocation (/fnc without arguments)
+    if not targetInput or targetInput == '' then
+        if source == 0 then
+            print('[SunsetAdmin] Usage: /fnc [id/nume]')
+            return
+        end
+
+        local char = exports.sunset_core:GetCharacter(source)
+        if not char or not char.id then
+            return notify(source, 'Nu ai un caracter încărcat.', 'error')
+        end
+
+        local tokens = tonumber(char.fnc_tokens) or 0
+        local isAdmin = IsAdmin and IsAdmin(source, 3)
+
+        if tokens <= 0 and not isAdmin then
+            return notify(source, 'Nu ai niciun FNC (Free Name Change) disponibil! Contactează un admin.', 'error')
+        end
+
+        TriggerClientEvent('sunset:admin:openFncModal', source, { tokens = tokens })
+        return
     end
+
+    -- Admin granting FNC or renaming target
+    if not requirePerm(source, 'fnc') then return end
 
     local target = resolveTarget(source, targetInput)
     if not target then return end
 
-    -- Parse Firstname and Lastname
+    local targetChar = exports.sunset_core:GetCharacter(target)
+    if not targetChar or not targetChar.id then
+        return notify(source, 'Jucătorul țintă nu are un caracter încărcat.', 'error')
+    end
+
+    local adminName = getDisplayName(source)
+    local targetName = getDisplayName(target)
+
+    -- Case A: /fnc [id] -> Give FNC token & open modal for target player to pick their own name
+    if newName == '' then
+        MySQL.update.await('UPDATE characters SET fnc_tokens = fnc_tokens + 1 WHERE id = ?', { targetChar.id })
+        targetChar.fnc_tokens = (tonumber(targetChar.fnc_tokens) or 0) + 1
+
+        TriggerClientEvent('sunset:admin:openFncModal', target, { tokens = targetChar.fnc_tokens })
+        notify(source, ('I-ai oferit un FNC jucătorului %s (#%d). I s-a deschis meniul pentru a-și alege numele.'):format(targetName, target), 'success')
+        notify(target, ('Adminul %s ți-a oferit un FNC (Free Name Change)! Alege-ți noul nume din fereastra deschisă.'):format(adminName), 'info')
+
+        TriggerClientEvent('chat:addMessage', -1, {
+            color = { 0, 255, 180 },
+            args = { 'FNC', ('^3[ADMIN] ^7Adminul ^2%s^7 i-a acordat un FNC (Free Name Change) jucătorului ^3%s (#%d)^7.'):format(adminName, targetName, target) }
+        })
+        return
+    end
+
+    -- Case B: /fnc [id] [New_Name] -> Direct admin rename override
     local first, last = newName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
     if not first or not last then
         first = newName:gsub('[^%a%d]', '')
@@ -2309,27 +2353,18 @@ local function handleFnc(source, args)
     end
 
     if #first < 2 then
-        return notify(source, 'Numele trebuie sa aiba minim 2 caractere!', 'error')
+        return notify(source, 'Numele trebuie să aibă minim 2 caractere!', 'error')
     end
 
-    local char = exports.sunset_core:GetCharacter(target)
-    if not char or not char.id then
-        return notify(source, 'Jucatorul tinta nu are un caracter incarcat.', 'error')
-    end
-
-    local oldName = getDisplayName(target)
     local formattedFull = last ~= '' and (first .. ' ' .. last) or first
 
-    -- Update database
     MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
-        first, last, char.id
+        first, last, targetChar.id
     })
 
-    -- Update character in memory
-    char.firstname = first
-    char.lastname = last
+    targetChar.firstname = first
+    targetChar.lastname = last
 
-    -- Sync state bags and clan
     local st = Player(target).state
     st:set('sunsetName', formattedFull, true)
     if GetResourceState('sunset_clans') == 'started' then
@@ -2338,16 +2373,79 @@ local function handleFnc(source, args)
         st:set('sunsetDisplayName', formattedFull, true)
     end
 
-    local adminName = getDisplayName(source)
-    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 in ^2%s^7 (/fnc).'):format(adminName, oldName, formattedFull)
+    local msg = ('^3[ADMIN] ^7Adminul ^2%s^7 i-a schimbat numele lui ^1%s^7 în ^2%s^7 (/fnc).'):format(adminName, targetName, formattedFull)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
-    notify(source, ('I-ai schimbat numele lui %s in %s.'):format(oldName, formattedFull), 'success')
-    notify(target, ('Numele tau a fost schimbat in %s de adminul %s.'):format(formattedFull, adminName), 'info')
+    notify(source, ('I-ai schimbat numele lui %s în %s.'):format(targetName, formattedFull), 'success')
+    notify(target, ('Numele tău a fost schimbat în %s de adminul %s.'):format(formattedFull, adminName), 'info')
 end
 
 registerServerCommand('fnc', handleFnc)
+registerServerCommand('givefnc', handleFnc)
 registerServerCommand('changename', handleFnc)
 registerServerCommand('setname', handleFnc)
+
+-- Server callback: Player submitting their chosen name from the FNC modal
+exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(source, newName)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char or not char.id then return false, 'Caracter invalid' end
+
+    local tokens = tonumber(char.fnc_tokens) or 0
+    local isAdmin = IsAdmin and IsAdmin(source, 3)
+    if tokens <= 0 and not isAdmin then
+        return false, 'Nu ai niciun token FNC disponibil!'
+    end
+
+    newName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
+    local first, last = newName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
+    if not first or not last or #first < 2 or #last < 2 then
+        return false, 'Format invalid! Numele trebuie să conțină Prenume și Nume (ex: Alexandru_Popa, minim 2 litere fiecare).'
+    end
+
+    -- Check if name already exists in database
+    local existing = MySQL.single.await([[
+        SELECT id FROM characters
+        WHERE (LOWER(firstname) = LOWER(?) AND LOWER(lastname) = LOWER(?))
+           OR LOWER(CONCAT(firstname, '_', lastname)) = LOWER(?)
+        LIMIT 1
+    ]], { first, last, first .. '_' .. last })
+
+    if existing and tonumber(existing.id) ~= tonumber(char.id) then
+        return false, 'Acest nume este deja ocupat de alt jucător! Te rugăm să alegi alt nume.'
+    end
+
+    local oldName = getDisplayName(source)
+    local formattedFull = first .. ' ' .. last
+
+    -- Update database & deduct token
+    if not isAdmin or tokens > 0 then
+        MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ?, fnc_tokens = GREATEST(0, fnc_tokens - 1) WHERE id = ?', {
+            first, last, char.id
+        })
+        char.fnc_tokens = math.max(0, tokens - 1)
+    else
+        MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
+            first, last, char.id
+        })
+    end
+
+    char.firstname = first
+    char.lastname = last
+
+    -- Sync state bags and clan
+    local st = Player(source).state
+    st:set('sunsetName', formattedFull, true)
+    if GetResourceState('sunset_clans') == 'started' then
+        pcall(function() exports.sunset_clans:SyncPlayerClan(source) end)
+    else
+        st:set('sunsetDisplayName', formattedFull, true)
+    end
+
+    local msg = ('^2[FNC] ^7Jucătorul ^3%s (#%d)^7 și-a ales noul nume ^2%s^7.'):format(oldName, source, formattedFull)
+    TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })
+    notify(source, ('Numele tău a fost schimbat cu succes în %s!'):format(formattedFull), 'success')
+
+    return true, formattedFull
+end)
 
 AddEventHandler('playerDropped', function()
     LastNewbAsk[source] = nil

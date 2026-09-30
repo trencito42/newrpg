@@ -972,6 +972,9 @@
                 case 'warEndHide': window.WarUI?.hideEnd?.(); return;
                 case 'warRespawnShow': window.WarUI?.showRespawn?.(payload.seconds || 5); return;
                 case 'warRespawnHide': window.WarUI?.hideRespawn?.(); return;
+                case 'fncModalShow': window.FncUI?.show?.(payload); return;
+                case 'fncModalHide': window.FncUI?.hide?.(); return;
+                case 'fncModalError': window.FncUI?.showError?.(payload?.error); return;
             }
 
             // Legacy window handler routing

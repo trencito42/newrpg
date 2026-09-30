@@ -943,3 +943,29 @@ CreateThread(function()
         end
     end
 end)
+
+-- FNC (Free Name Change) Modal Flow
+RegisterNetEvent('sunset:admin:openFncModal', function(data)
+    exports.sunset_ui:Send('fncModalShow', {
+        currentName = LocalPlayer.state.sunsetName or 'Player',
+        tokens = data and data.tokens or 1,
+    })
+    exports.sunset_ui:SetFocus(true, true)
+end)
+
+AddEventHandler('sunset:nui:fncClose', function()
+    exports.sunset_ui:Send('fncModalHide', {})
+    exports.sunset_ui:SetFocus(false, false)
+end)
+
+AddEventHandler('sunset:nui:fncSubmit', function(payload)
+    local name = payload and payload.name
+    Sunset.Callback('sunset:admin:submitFncName', function(ok, result)
+        if ok then
+            exports.sunset_ui:Send('fncModalHide', {})
+            exports.sunset_ui:SetFocus(false, false)
+        else
+            exports.sunset_ui:Send('fncModalError', { error = result or 'Eroare la schimbarea numelui.' })
+        end
+    end, name)
+end)
