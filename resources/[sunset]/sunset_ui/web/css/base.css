@@ -147,3 +147,25 @@ html, body {
     background: var(--glass-border);
     border-radius: var(--radius-full);
 }
+
+/* ═══ GAME PAUSE & MODAL HUD HIDING ═══ */
+body.game-paused #ui-root,
+body.game-paused #hud,
+body.game-paused .hud,
+body.game-paused .hud-tr,
+body.game-paused .hud-bl,
+body.game-paused .hud-bottom-right,
+body.game-paused .identity-container,
+body.game-paused .hud-player-identity,
+body.game-paused .hud-wanted-premium,
+body.game-paused #notifications,
+body.game-paused #progress-root,
+body.game-paused #hunter-compass,
+body.game-paused #hotbar-hud,
+body.game-paused .weapon-ammo-hud {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+

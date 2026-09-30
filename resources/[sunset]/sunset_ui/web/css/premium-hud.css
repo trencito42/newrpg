@@ -686,3 +686,16 @@
         padding: 5px 12px;
     }
 }
+
+body.game-paused .hud,
+body.game-paused .hud-tr,
+body.game-paused .hud-bl,
+body.game-paused .hud-player-identity,
+body.game-paused #hud-identity,
+body.game-paused .premium-hud-tr,
+body.game-paused .premium-hud-bl {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+

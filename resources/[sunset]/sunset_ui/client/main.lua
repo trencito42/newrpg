@@ -361,3 +361,15 @@ RegisterCommand('cursor', function()
     focusOwner = nil
     Notify('Cursorul a fost resetat.', 'info')
 end, false)
+
+CreateThread(function()
+    local lastPauseState = nil
+    while true do
+        local paused = IsPauseMenuActive() or IsScreenFadedOut()
+        if paused ~= lastPauseState then
+            lastPauseState = paused
+            Send('pauseState', { paused = paused })
+        end
+        Wait(paused and 50 or 150)
+    end
+end)

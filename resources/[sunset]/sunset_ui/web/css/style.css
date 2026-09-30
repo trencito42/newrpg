@@ -42,7 +42,9 @@ html, body {
 }
 
 
+body.game-paused #ui-root,
 body.game-paused #hud,
+body.game-paused .hud,
 body.game-paused #job-objective,
 body.game-paused #courier-panel,
 body.game-paused #fishing-panel,
@@ -62,6 +64,13 @@ body.game-paused #chat,
 body.game-paused #chat-backdrop,
 body.game-paused .hud-tr,
 body.game-paused .hud-bl,
+body.game-paused #hud-identity,
+body.game-paused .hud-player-identity,
+body.game-paused .identity-container,
+body.game-paused #hud-wanted,
+body.game-paused .hud-wanted-premium,
+body.game-paused #hud-speedo,
+body.game-paused #veh-hints,
 body.game-paused .hud-waypoint-widget,
 body.game-paused .player-interaction,
 body.game-paused .hunter-compass,
@@ -102,6 +111,7 @@ body.faction-panels-open #server-announce,
 body.faction-panels-open #police-order,
 body.faction-panels-open #notifications,
 body.faction-panels-open #progress {
+    display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
     filter: blur(3px);

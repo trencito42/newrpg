@@ -543,7 +543,6 @@ CreateThread(function()
         local myPlayer = PlayerId()
         local myPed = PlayerPedId()
         local myCoords = GetEntityCoords(myPed)
-        local policeView = isLawEnforcementOnDuty()
         local activeList = {}
 
         for _, player in ipairs(GetActivePlayers()) do
@@ -560,7 +559,7 @@ CreateThread(function()
                             ped = ped,
                             name = formatSampName(serverId),
                             color = getPlayerFactionColor(serverId),
-                            wanted = policeView and wantedLevelForPlayer(serverId) or 0,
+                            wanted = wantedLevelForPlayer(serverId) or 0,
                         }
                     end
                 end

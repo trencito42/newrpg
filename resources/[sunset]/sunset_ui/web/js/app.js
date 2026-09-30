@@ -694,7 +694,27 @@
                 return;
             }
             if (action === 'pauseState') {
-                document.body.classList.toggle('game-paused', !!payload.paused);
+                const isPaused = !!payload.paused;
+                document.body.classList.toggle('game-paused', isPaused);
+                const hudEl = document.getElementById('hud');
+                if (hudEl) {
+                    hudEl.style.display = isPaused ? 'none' : '';
+                    hudEl.classList.toggle('hidden', isPaused);
+                }
+                const uiRoot = document.getElementById('ui-root');
+                if (uiRoot) {
+                    uiRoot.style.display = isPaused ? 'none' : '';
+                }
+                const notifEl = document.getElementById('notifications');
+                if (notifEl) {
+                    notifEl.style.display = isPaused ? 'none' : '';
+                }
+                const compassEl = document.getElementById('hunter-compass');
+                if (compassEl && isPaused) {
+                    compassEl.style.display = 'none';
+                } else if (compassEl && !compassEl.classList.contains('hidden')) {
+                    compassEl.style.display = '';
+                }
                 return;
             }
 
