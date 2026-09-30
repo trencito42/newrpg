@@ -4,6 +4,8 @@ local packageProp = nil
 local carryAnimActive = false
 local courierUiKey = nil
 local currentCourierCheckpoint = nil
+-- true only after player physically takes the package from the van rear
+local retrievedFromVan = false
 
 local function clearCourierCheckpoint()
     if currentCourierCheckpoint then
@@ -276,69 +278,103 @@ local function startCourier()
                 local target = session.deliveries and session.deliveries[idx]
                 if target then
                     local pos = vector3(target.coords.x, target.coords.y, target.coords.z)
-                    JC.drawMarker(pos, 46, 204, 113)
                     local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
                     local nearDelivery = JC.isNear(pos, cfg.deliveryRadius or 3.0)
                     local total = session.total or 1
                     local pct = math.floor(((session.delivered or 0) / math.max(total, 1)) * 100)
+                    local workVan = getWorkVan()
 
-                    -- Re-attach package prop when player exits vehicle near delivery
-                    if onFoot and session.hasPackage then
-                        attachPackage(cfg)
-                    elseif not onFoot then
-                        detachPackage()
-                    end
+                    if not onFoot then
+                        -- Driving to delivery — prop must never be on the ped while in vehicle
+                        if packageProp then
+                            detachPackage()
+                            retrievedFromVan = false
+                        end
+                        updateObjective(cfg, session)
 
-                    if nearDelivery and onFoot then
-                        draw3DText(pos, '[E] Deliver Package')
-                        if not busy and IsControlJustPressed(0, 38) then
-                            busy = true
+                    elseif not retrievedFromVan then
+                        -- On foot but hasn't taken the parcel from the van yet
+                        if workVan then
+                            local rearPos = getVanRearCoords(workVan, cfg)
+                            local nearRear = JC.isNear(rearPos, cfg.dumpRadius or 3.8)
+                            JC.drawMarker(rearPos, 255, 180, 0)
                             showCourierUi('working', {
                                 counter = ('Package %d/%d'):format(idx, total),
-                                message = 'Handing over package',
-                                detail = target.label or 'Delivery address',
+                                message = 'Get the parcel from your van',
+                                detail = nearRear and 'Press [E] to open the rear doors' or 'Walk to the rear of your van',
                                 progress = pct,
-                            }, true)
-                            JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 2000)
-                            local result, err2 = Sunset.AwaitCallback('sunset:jobs:courier:deliver')
-                            busy = false
-                            if result then
-                                detachPackage()
-                                local newDelivered = (session.delivered or 0) + 1
-                                JC.notify(('Delivered +$%d (%d/%d)'):format(result.pay or 0, newDelivered, total), 'success')
-                                if result.completed then
-                                    clearCourierCheckpoint()
-                                    showCourierUi('complete', {
-                                        counter = ('Package %d/%d'):format(total, total),
-                                        message = 'Route complete!',
-                                        detail = 'All packages delivered successfully',
-                                        progress = 100,
-                                    }, true)
-                                    Wait(2000)
-                                    JC.deleteVehicles()
-                                    JC.clearBlips()
-                                    JC.hideObjective()
-                                    break
-                                else
-                                    JC.sessionData = result.data
-                                    local nextIdx = result.data.deliveryIndex or 1
-                                    local nextTarget = result.data.deliveries and result.data.deliveries[nextIdx]
-                                    if nextTarget then
-                                        pointToDelivery(cfg, nextTarget,
-                                            ('Delivery %d: '):format(nextIdx) .. (nextTarget.label or ''))
-                                    end
-                                    updateObjective(cfg, result.data)
+                            })
+                            if nearRear then
+                                draw3DText(rearPos, '[E] Get Package from Van')
+                                if not busy and IsControlJustPressed(0, 38) then
+                                    busy = true
+                                    JC.playAnim('anim@heists@box_carry@', 'idle', 1200)
+                                    busy = false
+                                    attachPackage(cfg)
+                                    retrievedFromVan = true
                                 end
-                            else
-                                JC.notify(err2 or 'Could not deliver the package', 'error')
-                                courierUiKey = nil
                             end
+                        else
+                            -- Van missing (edge case) — allow direct delivery
+                            retrievedFromVan = true
+                            attachPackage(cfg)
                         end
-                    elseif nearDelivery and not onFoot then
-                        draw3DText(pos, '[E] Deliver Package')
-                        JC.showHelp('Exit the vehicle to deliver the package')
+
                     else
-                        updateObjective(cfg, session)
+                        -- Carrying parcel — walk to delivery door
+                        JC.drawMarker(pos, 46, 204, 113)
+                        if nearDelivery then
+                            draw3DText(pos, '[E] Deliver Package')
+                            if not busy and IsControlJustPressed(0, 38) then
+                                busy = true
+                                showCourierUi('working', {
+                                    counter = ('Package %d/%d'):format(idx, total),
+                                    message = 'Handing over package',
+                                    detail = target.label or 'Delivery address',
+                                    progress = pct,
+                                }, true)
+                                JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 2000)
+                                local result, err2 = Sunset.AwaitCallback('sunset:jobs:courier:deliver')
+                                busy = false
+                                if result then
+                                    detachPackage()
+                                    retrievedFromVan = false
+                                    local newDelivered = (session.delivered or 0) + 1
+                                    JC.notify(('Delivered +$%d (%d/%d)'):format(result.pay or 0, newDelivered, total), 'success')
+                                    if result.completed then
+                                        clearCourierCheckpoint()
+                                        showCourierUi('complete', {
+                                            counter = ('Package %d/%d'):format(total, total),
+                                            message = 'Route complete!',
+                                            detail = 'All packages delivered successfully',
+                                            progress = 100,
+                                        }, true)
+                                        Wait(2000)
+                                        JC.deleteVehicles()
+                                        JC.clearBlips()
+                                        JC.hideObjective()
+                                        break
+                                    else
+                                        JC.sessionData = result.data
+                                        local nextIdx = result.data.deliveryIndex or 1
+                                        local nextTarget = result.data.deliveries and result.data.deliveries[nextIdx]
+                                        if nextTarget then
+                                            pointToDelivery(cfg, nextTarget,
+                                                ('Delivery %d: '):format(nextIdx) .. (nextTarget.label or ''))
+                                        end
+                                        updateObjective(cfg, result.data)
+                                    end
+                                else
+                                    JC.notify(err2 or 'Could not deliver the package', 'error')
+                                    courierUiKey = nil
+                                end
+                            end
+                        elseif nearDelivery and not onFoot then
+                            draw3DText(pos, '[E] Deliver Package')
+                            JC.showHelp('Exit the vehicle to deliver the package')
+                        else
+                            updateObjective(cfg, session)
+                        end
                     end
                 end
             end
@@ -346,6 +382,7 @@ local function startCourier()
         end
         clearCourierCheckpoint()
         detachPackage()
+        retrievedFromVan = false
         hideCourierUi()
         JC.hideObjective()
     end)
@@ -355,6 +392,7 @@ RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     if jobId ~= 'courier' then return end
     clearCourierCheckpoint()
     detachPackage()
+    retrievedFromVan = false
     hideCourierUi()
 end)
 
