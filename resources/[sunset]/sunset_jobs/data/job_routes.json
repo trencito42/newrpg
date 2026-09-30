@@ -149,7 +149,7 @@
       "maxZ": 200.0,
       "maxAlive": 5,
       "respawnSec": 180,
-      "species": { "deer": 3, "boar": 2 },
+      "species": { "deer": 5 },
       "polygon": [
         { "x": -730.0, "y": 5430.0, "z": 30.0 },
         { "x": -530.0, "y": 5430.0, "z": 30.0 },
@@ -173,7 +173,7 @@
       "maxZ": 300.0,
       "maxAlive": 6,
       "respawnSec": 200,
-      "species": { "deer": 2, "boar": 3, "coyote": 1 },
+      "species": { "boar": 6 },
       "polygon": [
         { "x": 1250.0, "y": 3780.0, "z": 45.0 },
         { "x": 1480.0, "y": 3780.0, "z": 48.0 },
@@ -198,7 +198,7 @@
       "maxZ": 200.0,
       "maxAlive": 4,
       "respawnSec": 240,
-      "species": { "coyote": 3, "boar": 1 },
+      "species": { "coyote": 4 },
       "polygon": [
         { "x": 2250.0, "y": 3540.0, "z": 50.0 },
         { "x": 2500.0, "y": 3520.0, "z": 55.0 },

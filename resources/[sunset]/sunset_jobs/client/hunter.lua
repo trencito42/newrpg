@@ -411,7 +411,13 @@ end)
 CreateThread(function()
     while true do
         Wait(500)
-        if not ShiftActive then
+        if not ShiftActive or not ContractData then
+            exports.sunset_ui:Send('hunterCompassHide', {})
+            goto compassContinue
+        end
+
+        -- Only show compass when player is inside the hunting zone
+        if not isInZone(CurrentZone) then
             exports.sunset_ui:Send('hunterCompassHide', {})
             goto compassContinue
         end
@@ -432,18 +438,9 @@ CreateThread(function()
             end
         end
 
-        -- Fall back to zone centroid
-        if not target and CurrentZone and CurrentZone.polygon and #CurrentZone.polygon > 0 then
-            local cx, cy = 0, 0
-            for _, pt in ipairs(CurrentZone.polygon) do cx = cx + pt.x; cy = cy + pt.y end
-            local n = #CurrentZone.polygon
-            target      = vector3(cx / n, cy / n, CurrentZone.minZ or playerPos.z)
-            targetDist  = #(vector3(playerPos.x, playerPos.y, playerPos.z) - target)
-            targetLabel = CurrentZone.label or 'Hunting Zone'
-        end
-
         if not target then
-            exports.sunset_ui:Send('hunterCompassHide', {})
+            -- Inside zone but no animals visible yet — show pulsing indicator
+            exports.sunset_ui:Send('hunterCompassUpdate', { angle = 0, dist = 0, label = 'Press B to track' })
             goto compassContinue
         end
 

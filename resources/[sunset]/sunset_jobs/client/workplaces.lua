@@ -522,7 +522,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         elseif specId == 'contracts' and wp.jobId == 'hunter' then
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:hunter:getContracts')
             if not contracts or #contracts == 0 then
-                exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
+                exports.sunset_ui:Notify(err or 'No contracts available at your rank yet.', 'error', 5000)
             else
                 local items = {}
                 for _, c in ipairs(contracts) do
