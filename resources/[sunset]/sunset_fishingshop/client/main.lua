@@ -108,6 +108,7 @@ local FISHING_ACTIONS = {
     open_shop_247 = true,
     buy_business = true,
     manage_business = true,
+    join_tournament = true,
 }
 
 local function isAllowedMenuAction(action)
@@ -336,7 +337,7 @@ local function isOnFishermanShift()
     return ok and active == true
 end
 
-local function buildBillyRayActions(job)
+local function buildBillyRayActions(job, tournamentActive, tournamentJoined)
     local actions = {}
     job = job or getCharacterJob()
 
@@ -357,6 +358,11 @@ local function buildBillyRayActions(job)
         actions[#actions + 1] = { id = 'fishing_guide', label = 'Fisherman Guide', group = 'INFO' }
     end
 
+    if tournamentActive then
+        local tLabel = tournamentJoined and 'Fishing Tournament (Joined)' or 'Join Fishing Tournament'
+        actions[#actions + 1] = { id = 'join_tournament', label = tLabel, group = 'TOURNAMENT' }
+    end
+
     return actions
 end
 
@@ -370,7 +376,18 @@ local function openBillyRayMenu()
         end
         if menuOpen or not billyInteractionsReady() then return end
         syncLocalJob(data.job, data.job_grade)
-        local actions = buildBillyRayActions(data.job)
+
+        -- Check tournament status (non-blocking — ignore error)
+        local tournamentActive, tournamentJoined = false, false
+        if GetResourceState('sunset_fishing_tournament') == 'started' then
+            local tStatus = Sunset.AwaitCallback('sunset:fishingTournament:status')
+            if tStatus and tStatus.active then
+                tournamentActive = true
+                tournamentJoined = tStatus.joined == true
+            end
+        end
+
+        local actions = buildBillyRayActions(data.job, tournamentActive, tournamentJoined)
         if #actions == 0 then return end
         billyHoldStart = nil
         menuCloseArmed = false
@@ -688,6 +705,27 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
+        end)
+
+    elseif action == 'join_tournament' then
+        inCooldown = true
+        CreateThread(function()
+            if GetResourceState('sunset_fishing_tournament') ~= 'started' then
+                exports.sunset_ui:Notify('Fishing tournament system is not running.', 'error')
+                SetTimeout(2000, function() inCooldown = false end)
+                return
+            end
+            exports.sunset_core:TriggerCallback('sunset:fishingTournament:join', function(res)
+                inCooldown = false
+                if res and res.ok then
+                    if res.status then
+                        exports.sunset_ui:Send('fishingTournamentHudShow', res.status)
+                    end
+                    exports.sunset_ui:Notify('You joined the Fishing Tournament! Fish as much as you can.', 'success', 7000)
+                else
+                    exports.sunset_ui:Notify((res and res.error) or 'Could not join tournament.', 'error', 5000)
+                end
+            end)
         end)
 
     elseif action == 'sell_fish_247' then
