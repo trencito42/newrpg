@@ -221,7 +221,7 @@ RegisterCommand('clothinglab', function()
         if ok then
             TriggerEvent('sunset:clothing:debugToggle', not debugActive)
         else
-            exports.sunset_ui:Notify('clothinglab: admin level 4+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.clothinglab_admin_level_4_required'), 'error')
         end
     end)
 end, false)
@@ -236,7 +236,7 @@ RegisterCommand('validateoutfit', function()
     CreateThread(function()
         local ok = Sunset.AwaitCallback('sunset:clothing:debug')
         if not ok then
-            exports.sunset_ui:Notify('validateoutfit: admin level 4+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.validateoutfit_admin_level_4_required'), 'error')
             return
         end
         validateAndRepair(false)
@@ -247,7 +247,7 @@ RegisterCommand('repairoutfit', function()
     CreateThread(function()
         local ok = Sunset.AwaitCallback('sunset:clothing:debug')
         if not ok then
-            exports.sunset_ui:Notify('repairoutfit: admin level 4+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.repairoutfit_admin_level_4_required'), 'error')
             return
         end
         validateAndRepair(true)
@@ -259,7 +259,7 @@ RegisterCommand('clothingtest', function(source, args)
     CreateThread(function()
         local ok = Sunset.AwaitCallback('sunset:clothing:debug')
         if not ok then
-            exports.sunset_ui:Notify('clothingtest: admin level 4+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.clothingtest_admin_level_4_required'), 'error')
             return
         end
 
@@ -338,7 +338,7 @@ RegisterCommand('clothingtest', function(source, args)
             exports.sunset_ui:Notify(('Clothing test completed: %d failed'):format(failed), 'error')
         else
             print('^2[clothingtest] ALL CLOTHING COMPATIBILITY ACCEPTANCE TESTS PASSED!^7')
-            exports.sunset_ui:Notify('All clothing compatibility checks passed!', 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.all_clothing_compatibility_checks_passed'), 'success')
         end
     end)
 end, false)

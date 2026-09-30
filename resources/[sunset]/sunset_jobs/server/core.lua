@@ -123,18 +123,18 @@ end
 
 function SunsetJobs_RequireSession(source, jobId, allowedStates)
     local session = Sessions[source]
-    if not session then return nil, 'No active work session' end
-    if jobId and session.jobId ~= jobId then return nil, 'Wrong job session' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_work_session' } end
+    if jobId and session.jobId ~= jobId then return nil, { localeKey = 'jobs.message.wrong_job_session' } end
     if allowedStates then
         local ok = false
         for _, st in ipairs(allowedStates) do
             if session.state == st then ok = true break end
         end
-        if not ok then return nil, 'Invalid session state' end
+        if not ok then return nil, { localeKey = 'jobs.message.invalid_session_state' } end
     end
     if session.timeoutAt and os.time() > session.timeoutAt then
         SunsetJobs_ClearSession(source, 'FAILED', 'Session timed out')
-        return nil, 'Session timed out'
+        return nil, { localeKey = 'jobs.message.session_timed_out' }
     end
     return session
 end
@@ -241,11 +241,11 @@ end)
 function SunsetJobs_ValidateTrailer(source, mustBeAttached, maxDistance)
     local state = SunsetJobs_GetTrailerState(source, mustBeAttached, maxDistance)
     if state == 'ok' then return true end
-    if state == 'no_truck' then return false, 'Your assigned truck is missing' end
-    if state == 'destroyed' then return false, 'Your assigned trailer was destroyed' end
-    if state == 'wrong_model' then return false, 'Wrong trailer' end
-    if state == 'too_far' then return false, 'Return to your assigned trailer' end
-    return false, 'Attach your assigned trailer before continuing'
+    if state == 'no_truck' then return false, { localeKey = 'jobs.message.your_assigned_truck_is_missing' } end
+    if state == 'destroyed' then return false, { localeKey = 'jobs.message.your_assigned_trailer_was_destroyed' } end
+    if state == 'wrong_model' then return false, { localeKey = 'jobs.message.wrong_trailer' } end
+    if state == 'too_far' then return false, { localeKey = 'jobs.message.return_to_your_assigned_trailer' } end
+    return false, { localeKey = 'jobs.message.attach_your_assigned_trailer_before_continuing' }
 end
 
 local function trailerRecoveryRemaining(session, cfg)
@@ -256,13 +256,14 @@ end
 
 local function authorizeTrailerRecovery(session, cfg)
     local remaining = trailerRecoveryRemaining(session, cfg)
-    if remaining <= 0 then return nil, 'No trailer recoveries remain for this shift' end
+    if remaining <= 0 then return nil, { localeKey = 'jobs.message.no_trailer_recoveries_remain_for_this_shift' } end
 
     local now = os.time()
     local cooldown = cfg.trailerRecoveryCooldownSec or 180
     if session.lastTrailerRecoveryAt and now - session.lastTrailerRecoveryAt < cooldown then
-        return nil, ('Trailer recovery available in %d seconds'):format(
-            cooldown - (now - session.lastTrailerRecoveryAt))
+        return nil, { localeKey = 'jobs.message.trailer_recovery_available_in_value_seconds', formatArgs = {
+            cooldown - (now - session.lastTrailerRecoveryAt)
+        } }
     end
 
     session.lastTrailerRecoveryAt = now
@@ -322,7 +323,7 @@ function SunsetJobs_AddJobProgress(source, jobId, xpDelta, taskDelta, earnedDelt
         level = level + 1
         needed = xpForLevel(level)
         TriggerClientEvent('sunset:client:notify', source,
-            ('%s skill level %d!'):format(Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId, level),
+            exports.sunset_core:TFor(source, 'jobs.message.value_skill_level_value', Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId, level),
             'success', 5000)
         -- [QUESTS 7-9] advanced chain: skill level-ups drive the quest progress.
         TriggerEvent('sunset:quest:progress', char.id, 'job_level_up', 1, { jobId = jobId, level = level })
@@ -401,18 +402,18 @@ end)
 
 function SunsetJobs_StartSession(source, jobId, data)
     if Sessions[source] then
-        return nil, 'Already on a work shift'
+        return nil, { localeKey = 'jobs.message.already_on_a_work_shift' }
     end
     if GetResourceState('sunset_racing') == 'started' then
         pcall(function() exports.sunset_racing:CancelPlayerRace(source, 'Started civilian job shift') end)
     end
     local currentJob = charJob(source)
     if currentJob ~= jobId then
-        return nil, 'You are not employed as ' .. (Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId)
+        return nil, { localeKey = 'jobs.message.you_are_not_employed_as' } .. (Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId)
     end
 
     local cfg = Sunset.GetJobConfig(jobId)
-    if not cfg then return nil, 'Job not configured' end
+    if not cfg then return nil, { localeKey = 'jobs.message.job_not_configured' } end
 
     sessionSeq = sessionSeq + 1
     local session = {
@@ -468,7 +469,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:jobs:getPanelData', function(source)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'jobs.message.no_character' } end
 
     local jobId, jobGrade = Sunset.GetCharacterJob(char)
     local progress = fetchProgress(char.id)
@@ -523,7 +524,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:getSkills', function(source)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'jobs.message.no_character' } end
     local progress = fetchProgress(char.id)
     local skills = {}
     for jobId, prog in pairs(progress) do
@@ -541,7 +542,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:cancelWork', function(source)
     local session = Sessions[source]
-    if not session then return nil, 'No active shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_shift_190f3a' } end
     SunsetJobs_ClearSession(source, 'CANCELLED', 'Cancelled by player')
     return true
 end)
@@ -558,24 +559,24 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
     local entity = vehicleNetId and NetworkGetEntityFromNetworkId(vehicleNetId) or 0
     if not entity or entity == 0 then
         dlog('netId did not resolve to an entity (not propagated yet / invalid)')
-        return nil, 'Work vehicle not networked'
+        return nil, { localeKey = 'jobs.message.work_vehicle_not_networked' }
     end
     if not DoesEntityExist(entity) then
         dlog('entity resolved but does not exist server-side')
-        return nil, 'Work vehicle not networked'
+        return nil, { localeKey = 'jobs.message.work_vehicle_not_networked' }
     end
     if GetEntityType(entity) ~= 2 then
         dlog(('resolved entity is not a vehicle (type=%d)'):format(GetEntityType(entity)))
-        return nil, 'Invalid work vehicle'
+        return nil, { localeKey = 'jobs.message.invalid_work_vehicle' }
     end
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'No ped found' end
+    if not ped or ped == 0 then return nil, { localeKey = 'jobs.message.no_ped_found' } end
     local inDriverSeat = GetPedInVehicleSeat(entity, -1) == ped
     local nearVehicle = #(GetEntityCoords(ped) - GetEntityCoords(entity)) <= 45.0
     local atDepot = cfg and cfg.depot and cfg.depot.coords and #(GetEntityCoords(ped) - cfg.depot.coords) <= 80.0
     if not inDriverSeat and not nearVehicle and not atDepot then
         dlog('player is not in the driver seat or near the vehicle / depot')
-        return nil, 'You must drive the work vehicle'
+        return nil, { localeKey = 'jobs.message.you_must_drive_the_work_vehicle' }
     end
     local cfg = Sunset.GetJobConfig(session.jobId)
     -- [MODEL FIX] The authoritative expected model is the one stored in the
@@ -587,7 +588,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
         or (cfg and (cfg.truckModel or cfg.vehicleModel))
     if expected and GetEntityModel(entity) ~= joaat(expected) then
         dlog(('model mismatch: entity=%s expected=%s'):format(GetEntityModel(entity), tostring(joaat(expected))))
-        return nil, 'Assigned truck model does not match'
+        return nil, { localeKey = 'jobs.message.assigned_truck_model_does_not_match' }
     end
     Entity(entity).state:set('sunsetProtectedVehicle', true, true)
     session.vehicleNetId = vehicleNetId
@@ -606,25 +607,25 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
     if expectsTrailer then
         if not session.trailerNetId then
             dlog('session expects a trailer but none was submitted')
-            return nil, 'Work trailer was not registered'
+            return nil, { localeKey = 'jobs.message.work_trailer_was_not_registered' }
         end
         local trailer = NetworkGetEntityFromNetworkId(session.trailerNetId)
         if not trailer or trailer == 0 or not DoesEntityExist(trailer) then
             session.trailerNetId = nil
             dlog('trailer netId did not resolve (not propagated yet)')
-            return nil, 'Work trailer is not networked'
+            return nil, { localeKey = 'jobs.message.work_trailer_is_not_networked' }
         end
         local expectedTrailer = (session.data and session.data.trailerModel) or (cfg and cfg.trailerModel)
         if expectedTrailer and GetEntityModel(trailer) ~= joaat(expectedTrailer) then
             session.trailerNetId = nil
             dlog(('trailer model mismatch: entity=%s expected=%s'):format(GetEntityModel(trailer), tostring(joaat(expectedTrailer))))
-            return nil, 'Invalid work trailer'
+            return nil, { localeKey = 'jobs.message.invalid_work_trailer' }
         end
         local maxTrailerDist = (session.jobId == 'trucker') and 300.0 or 50.0
         if #(GetEntityCoords(entity) - GetEntityCoords(trailer)) > maxTrailerDist then
             session.trailerNetId = nil
             dlog('trailer too far from truck')
-            return nil, 'Work trailer is too far from the truck'
+            return nil, { localeKey = 'jobs.message.work_trailer_is_too_far_from_the_truck' }
         end
         Entity(trailer).state:set('sunsetProtectedVehicle', true, true)
         if session.frameworkId then
@@ -640,7 +641,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:vehicleLost', function(source)
     local session = Sessions[source]
-    if not session then return nil, 'No session' end
+    if not session then return nil, { localeKey = 'jobs.message.no_session' } end
     SunsetJobs_ClearSession(source, 'FAILED', 'Work vehicle destroyed')
     return true
 end)
@@ -651,19 +652,19 @@ exports.sunset_core:RegisterCallback('sunset:jobs:recoverTrailer', function(sour
 
     local cfg = Sunset.GetJobConfig('trucker')
     if not cfg or not session.vehicleNetId then
-        return nil, 'Your assigned truck is missing'
+        return nil, { localeKey = 'jobs.message.your_assigned_truck_is_missing' }
     end
 
     local truck = NetworkGetEntityFromNetworkId(session.vehicleNetId)
     local ped = GetPlayerPed(source)
     if not truck or truck == 0 or not DoesEntityExist(truck) then
-        return nil, 'Your assigned truck no longer exists'
+        return nil, { localeKey = 'jobs.message.your_assigned_truck_no_longer_exists' }
     end
     if not ped or ped == 0 or GetPedInVehicleSeat(truck, -1) ~= ped then
-        return nil, 'Sit in the driver seat of your assigned truck'
+        return nil, { localeKey = 'jobs.message.sit_in_the_driver_seat_of_your_assigned_truck' }
     end
     if GetEntitySpeed(truck) > 1.5 then
-        return nil, 'Stop the truck before recovering the trailer'
+        return nil, { localeKey = 'jobs.message.stop_the_truck_before_recovering_the_trailer' }
     end
 
     local trailerState = SunsetJobs_GetTrailerState(source, false, cfg.trailerRecoveryMaxDistance or 30.0)
@@ -679,7 +680,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:recoverTrailer', function(sour
     end
 
     if not session.trailerNetId then
-        return nil, 'Your assigned trailer is missing'
+        return nil, { localeKey = 'jobs.message.your_assigned_trailer_is_missing' }
     end
 
     local trailer = NetworkGetEntityFromNetworkId(session.trailerNetId)
@@ -695,7 +696,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:recoverTrailer', function(sour
     end
 
     if #(GetEntityCoords(truck) - GetEntityCoords(trailer)) > (cfg.trailerRecoveryMaxDistance or 30.0) then
-        return nil, 'The assigned trailer is too far away to recover'
+        return nil, { localeKey = 'jobs.message.the_assigned_trailer_is_too_far_away_to_recover' }
     end
 
     local remaining, err2 = authorizeTrailerRecovery(session, cfg)
@@ -715,22 +716,22 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerTrailer', function(sou
     trailerNetId = tonumber(trailerNetId)
     local trailer = trailerNetId and NetworkGetEntityFromNetworkId(trailerNetId) or 0
     if not trailer or trailer == 0 or not DoesEntityExist(trailer) then
-        return nil, 'Trailer is not networked'
+        return nil, { localeKey = 'jobs.message.trailer_is_not_networked' }
     end
     -- [MODEL FIX] Session data holds the real trailer model ('tanker' for fuel
     -- routes); cfg.trailerModel is only the 'trailers2' fallback. Validating
     -- against the fallback rejected every legitimate replacement trailer.
     local expectedTrailer = (session.data and session.data.trailerModel) or (cfg and cfg.trailerModel)
     if expectedTrailer and GetEntityModel(trailer) ~= joaat(expectedTrailer) then
-        return nil, 'Invalid trailer model'
+        return nil, { localeKey = 'jobs.message.invalid_trailer_model' }
     end
 
     local truck = session.vehicleNetId and NetworkGetEntityFromNetworkId(session.vehicleNetId) or 0
     if not truck or truck == 0 or not DoesEntityExist(truck) then
-        return nil, 'Your assigned truck is missing'
+        return nil, { localeKey = 'jobs.message.your_assigned_truck_is_missing' }
     end
     if #(GetEntityCoords(truck) - GetEntityCoords(trailer)) > 25.0 then
-        return nil, 'Spawn the replacement trailer near your truck'
+        return nil, { localeKey = 'jobs.message.spawn_the_replacement_trailer_near_your_truck' }
     end
 
     session.trailerNetId = trailerNetId
@@ -744,10 +745,10 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:trailerDestroyed', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE', 'RETURNING' })
     if not session then return nil, err end
-    if session.trailerDestroyHandled then return nil, 'Already handling trailer loss' end
+    if session.trailerDestroyHandled then return nil, { localeKey = 'jobs.message.already_handling_trailer_loss' } end
 
     local state = SunsetJobs_GetTrailerState(source, false, 50.0)
-    if state ~= 'destroyed' then return nil, 'Trailer is still present' end
+    if state ~= 'destroyed' then return nil, { localeKey = 'jobs.message.trailer_is_still_present' } end
 
     local cfg = Sunset.GetJobConfig('trucker')
     local usesLeft = trailerRecoveryRemaining(session, cfg)
@@ -854,7 +855,7 @@ CreateThread(function()
                         if session.vehicleExitWarn ~= warnBucket then
                             session.vehicleExitWarn = warnBucket
                             TriggerClientEvent('sunset:client:notify', src,
-                                ('Return to your work vehicle within %d seconds'):format(math.max(0, remaining)), 'warning')
+                                exports.sunset_core:TFor(src, 'jobs.message.return_to_your_work_vehicle_within_value_seconds', math.max(0, remaining)), 'warning')
                         end
                         if elapsed >= grace then
                             SunsetJobs_ClearSession(src, 'FAILED', 'You abandoned your work vehicle')

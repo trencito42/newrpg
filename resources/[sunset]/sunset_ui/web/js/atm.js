@@ -563,7 +563,7 @@
 
             $('#atm-proc-action').textContent = action === 'withdraw' ? 'CASH WITHDRAWAL' : 'CASH DEPOSIT';
             $('#atm-proc-amount').textContent = this.fmt(amount);
-            $('#atm-proc-status').textContent = 'Contacting bank... Counting bills...';
+            $('#atm-proc-status').textContent = I18n.t('dynamic.atm.contacting_bank_counting_bills');
 
             this.sound.playCashCounting(1300);
 

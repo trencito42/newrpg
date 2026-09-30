@@ -109,7 +109,7 @@ end)
 
 RegisterNetEvent('sunset:fire:incidentEnded', function(incidentId)
     cleanupIncident(incidentId)
-    notify('Fire incident cleared', 'success')
+    notify(exports.sunset_core:Translate('fire.message.fire_incident_cleared'), 'success')
 end)
 
 CreateThread(function()
@@ -164,7 +164,7 @@ RegisterCommand('firecalls', function()
     CreateThread(function()
         local list, err = Sunset.AwaitCallback('sunset:fireGetIncidents')
         if not list then return notify(err or 'Could not load fire incidents', 'error') end
-        if #list < 1 then return notify('No active fire incidents — use /firestart', 'info') end
+        if #list < 1 then return notify(exports.sunset_core:Translate('fire.message.no_active_fire_incidents_use_firestart'), 'info') end
         syncIncidents(list, true)
         for _, inc in ipairs(list) do
             notify(('#%s — %s (%s%% remaining)'):format(

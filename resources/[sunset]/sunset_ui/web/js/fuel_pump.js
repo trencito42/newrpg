@@ -112,7 +112,7 @@ const FuelPump = (() => {
             get('fp-price-line').textContent = `$${formatMoney(data.pricePerLiter)} / Liter`;
         }
         if (data.ownerName !== undefined && get('fp-owner-name')) {
-            get('fp-owner-name').textContent = `Proprietar: ${data.ownerName || 'Stat'}`;
+            get('fp-owner-name').textContent = I18n.t('dynamic.fuel_pump.proprietar_value0', { value0: data.ownerName || 'Stat' });
         }
         if (data.sessionLiters !== undefined && get('fp-val-liters')) {
             get('fp-val-liters').textContent = formatLiters(data.sessionLiters);

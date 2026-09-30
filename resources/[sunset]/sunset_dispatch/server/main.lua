@@ -8,7 +8,7 @@ local function wrapCreateCall(a, b, c, d, e)
     if type(a) == 'table' then
         local opts = a
         local source = opts.source or opts.callerSource
-        if not source then return nil, 'source required in opts' end
+        if not source then return nil, { localeKey = 'dispatch.message.source_required_in_opts' } end
         return ServiceCore.createServiceCall(
             source,
             opts.callType or opts.type,
@@ -54,7 +54,7 @@ exports('CompleteCall', function(arg1, arg2, arg3)
     end
     local callId, source = arg1, arg2
     local call = ServiceCore.getCallById(callId)
-    if not call then return nil, 'Call not found' end
+    if not call then return nil, { localeKey = 'dispatch.message.call_not_found' } end
     return ServiceCore.completeCall(source, call.callType, callId)
 end)
 
@@ -90,7 +90,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:dispatchList', function(source, callType)
     if not exports.sunset_factions:IsOnDuty(source) then
-        return nil, 'You must be on duty'
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty' }
     end
     callType = callType and Sunset.Dispatch.NormalizeServiceType(callType) or nil
     return ServiceCore.getActiveCalls(callType)
@@ -98,13 +98,13 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:dispatchGet', function(source, callId)
     local call = ServiceCore.getCallById(callId)
-    if not call then return nil, 'Call not found' end
+    if not call then return nil, { localeKey = 'dispatch.message.call_not_found' } end
     return ServiceCore.serializeCall(call, source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:dispatchAccept', function(source, callType, callId)
     if not exports.sunset_factions:IsOnDuty(source) then
-        return nil, 'You must be on duty'
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty' }
     end
     local call, err = ServiceCore.acceptCall(source, callType, callId)
     if not call then return nil, err end
@@ -113,7 +113,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:dispatchPanelData', function(source)
     if not exports.sunset_factions:IsOnDuty(source) then
-        return nil, 'You must be on duty'
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty' }
     end
 
     local openCalls = ServiceCore.getActiveCalls(nil, { status = Sunset.Dispatch.States.OPEN })
@@ -152,7 +152,7 @@ end)
 
 local function create112Call(source, category, description, street, area)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'dispatch.message.no_character_loaded' } end
 
     category = tostring(category or 'emergency'):lower()
     local allowedCategories = {

@@ -452,7 +452,7 @@
                     const pt = worldToSvg(lm.x, lm.y);
 
                     const markerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    
+
                     // Crosshair
                     const ch1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     ch1.setAttribute('x1', (pt.x - 8).toFixed(1));
@@ -534,7 +534,7 @@
 
             if (war) {
                 if (statusEl) {
-                    statusEl.textContent = 'CONTESTED / AT WAR';
+                    statusEl.textContent = I18n.t('dynamic.turf_map.contested_at_war');
                     statusEl.className = 'tooltip-val tooltip-status war';
                 }
                 if (warRow) warRow.style.display = 'flex';
@@ -547,7 +547,7 @@
                 }
             } else {
                 if (statusEl) {
-                    statusEl.textContent = 'PEACE';
+                    statusEl.textContent = I18n.t('dynamic.turf_map.peace');
                     statusEl.className = 'tooltip-val tooltip-status';
                 }
                 if (warRow) warRow.style.display = 'none';

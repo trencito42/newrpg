@@ -30,7 +30,7 @@ local function applyCuffState(state)
         if loadAnimDict(CUFF_DICT) then
             TaskPlayAnim(ped, CUFF_DICT, CUFF_ANIM, 8.0, -8.0, -1, 49, 0, false, false, false)
         end
-        if changed then exports.sunset_ui:Notify('You have been restrained', 'error') end
+        if changed then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_have_been_restrained'), 'error') end
     else
         SetEnableHandcuffs(ped, false)
         SetPedCanPlayGestureAnims(ped, true)
@@ -39,7 +39,7 @@ local function applyCuffState(state)
         DetachEntity(ped, true, false)
         if changed then
             ClearPedTasks(ped)
-            exports.sunset_ui:Notify('Restraints removed', 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.restraints_removed'), 'success')
         end
     end
 end
@@ -180,7 +180,7 @@ detentionCmd('takeout', 'sunset:detentionTakeOut', 'Usage: /takeout [id]')
 
 RegisterCommand('frisk', function(_, args)
     local target = tonumber(args[1])
-    if not target then return exports.sunset_ui:Notify('Usage: /frisk [id]', 'error') end
+    if not target then return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_frisk_id'), 'error') end
     local items, err = Sunset.AwaitCallback('sunset:detentionFrisk', target)
     if not items then return exports.sunset_ui:Notify(err or 'Frisk failed. Check duty, rank, target ID and 3m distance.', 'error') end
     exports.sunset_ui:Send('chatMessage', { id = 0, name = 'FRI SK', message = ('=== Frisk #%d ==='):format(target), time = '' })

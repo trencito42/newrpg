@@ -336,7 +336,7 @@ RegisterNUICallback('loadingTimeout', function(_, cb)
     if currentScreen == 'loading' then
         Hide()
         DoScreenFadeIn(500)
-        Notify('Character loading took too long. Your controls were restored; reconnect if the character still does not appear.', 'error', 8000)
+        Notify(exports.sunset_core:Translate('ui.message.character_loading_took_too_long_your_controls_were_restored'), 'error', 8000)
         TriggerEvent('sunset:client:loadingTimedOut')
     end
     cb('ok')
@@ -352,14 +352,14 @@ RegisterCommand('fixnui', function()
     if GetResourceState('sunset_auth') == 'started' then
         TriggerEvent('sunset:auth:openLogin')
     end
-    Notify('UI reset. Login reopened if you were still on the entry screen.', 'success')
+    Notify(exports.sunset_core:Translate('ui.message.ui_reset_login_reopened_if_you_were_still_on'), 'success')
 end, false)
 
 RegisterCommand('cursor', function()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     focusOwner = nil
-    Notify('Cursorul a fost resetat.', 'info')
+    Notify(exports.sunset_core:Translate('ui.message.cursorul_a_fost_resetat'), 'info')
 end, false)
 
 -- [AUDIT NUI-ERR] Forward JS errors to server logs so staff can diagnose

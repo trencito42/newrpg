@@ -154,7 +154,7 @@ end
 
 local function buildHelp(source)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'help.message.no_character_loaded' } end
 
     local categories = {
         {

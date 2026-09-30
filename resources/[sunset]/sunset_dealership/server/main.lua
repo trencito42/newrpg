@@ -55,13 +55,13 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:dealership:getCatalog', function(source, adminMode)
     if not adminMode and not nearDealership(source) then
-        return nil, 'Go to Premium Deluxe Motorsport and stand inside the orange marker.'
+        return nil, { localeKey = 'dealership.message.go_to_premium_deluxe_motorsport_and_stand_inside_the' }
     end
     if adminMode and not isAdmin(source) then
-        return nil, 'Dealership administration requires Admin level 3 or higher.'
+        return nil, { localeKey = 'dealership.message.dealership_administration_requires_admin_level_3_or_higher' }
     end
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'dealership.message.your_character_is_not_loaded_reconnect_and_select_it' } end
     return {
         dealership = Sunset.Dealership.label,
         admin = adminMode == true,
@@ -73,19 +73,19 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:dealership:testDrive', function(source, model)
     if not nearDealership(source) then
-        return nil, 'Start test drives from the dealership marker.'
+        return nil, { localeKey = 'dealership.message.start_test_drives_from_the_dealership_marker' }
     end
     model = cleanModel(model)
-    if not model then return nil, 'Invalid vehicle selection. Reopen the dealership.' end
+    if not model then return nil, { localeKey = 'dealership.message.invalid_vehicle_selection_reopen_the_dealership' } end
     local row = MySQL.single.await(
         'SELECT model, label, test_drive_enabled FROM dealership_vehicles WHERE model = ? AND available = 1',
         { model })
-    if not row then return nil, 'That vehicle is no longer available.' end
-    if not booleanValue(row.test_drive_enabled) then return nil, 'Test drives are disabled for this vehicle.' end
+    if not row then return nil, { localeKey = 'dealership.message.that_vehicle_is_no_longer_available' } end
+    if not booleanValue(row.test_drive_enabled) then return nil, { localeKey = 'dealership.message.test_drives_are_disabled_for_this_vehicle' } end
 
     local now = os.time()
     local remaining = 90 - (now - (TestDriveCooldown[source] or 0))
-    if remaining > 0 then return nil, ('Next test drive is available in %d seconds.'):format(remaining) end
+    if remaining > 0 then return nil, { localeKey = 'dealership.message.next_test_drive_is_available_in_value_seconds', formatArgs = { remaining } } end
     TestDriveCooldown[source] = now
     if TestDrives[source] and DoesEntityExist(TestDrives[source]) then DeleteEntity(TestDrives[source]) end
     local s = Sunset.Dealership.testDriveSpawn
@@ -96,7 +96,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:testDrive', function(sou
     local vehicle = CreateVehicle(joaat(row.model), s.x, s.y, s.z, s.w or 0.0, true, true)
     if not vehicle or vehicle == 0 then
         TestDriveCooldown[source] = nil
-        return nil, 'The test-drive vehicle could not be created. Try again in a clear spawn area.'
+        return nil, { localeKey = 'dealership.message.the_test_drive_vehicle_could_not_be_created_try' }
     end
     Entity(vehicle).state:set('sunsetProtectedVehicle', true, true)
     TestDrives[source] = vehicle
@@ -124,10 +124,10 @@ RegisterNetEvent('sunset:dealership:endTestDrive', function(netId)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:dealership:purchase', function(source, model, color)
-    if PurchaseLocks[source] then return nil, 'Your previous purchase is still being processed.' end
-    if not nearDealership(source) then return nil, 'Purchase the vehicle from the dealership marker.' end
+    if PurchaseLocks[source] then return nil, { localeKey = 'dealership.message.your_previous_purchase_is_still_being_processed' } end
+    if not nearDealership(source) then return nil, { localeKey = 'dealership.message.purchase_the_vehicle_from_the_dealership_marker' } end
     model = cleanModel(model)
-    if not model then return nil, 'Invalid vehicle selection. Reopen the dealership.' end
+    if not model then return nil, { localeKey = 'dealership.message.invalid_vehicle_selection_reopen_the_dealership' } end
 
     PurchaseLocks[source] = true
     local function finish(result, err)
@@ -221,18 +221,18 @@ local function auditAdmin(source, action, model, payload)
 end
 
 exports.sunset_core:RegisterCallback('sunset:dealership:adminSave', function(source, data)
-    if not isAdmin(source) then return nil, 'Dealership administration requires Admin level 3 or higher.' end
-    if type(data) ~= 'table' then return nil, 'The vehicle form is invalid.' end
+    if not isAdmin(source) then return nil, { localeKey = 'dealership.message.dealership_administration_requires_admin_level_3_or_higher' } end
+    if type(data) ~= 'table' then return nil, { localeKey = 'dealership.message.the_vehicle_form_is_invalid' } end
     local model = cleanModel(data.model)
-    if not model then return nil, 'Model must contain only letters, numbers, or underscore.' end
+    if not model then return nil, { localeKey = 'dealership.message.model_must_contain_only_letters_numbers_or_underscore' } end
     local label = cleanText(data.label, 80, model)
     local brand = cleanText(data.brand, 48, 'Other')
     local category = cleanText(data.category, 32, 'other'):lower()
     local price = math.floor(tonumber(data.price) or -1)
     local stock = math.floor(tonumber(data.stock) or -1)
     local displayOrder = math.max(0, math.min(9999, math.floor(tonumber(data.displayOrder) or 100)))
-    if price < 1 or price > 2000000000 then return nil, 'Price must be between $1 and $2,000,000,000.' end
-    if stock < 0 or stock > 1000000 then return nil, 'Stock must be between 0 and 1,000,000.' end
+    if price < 1 or price > 2000000000 then return nil, { localeKey = 'dealership.message.price_must_be_between_1_and_2_000_000' } end
+    if stock < 0 or stock > 1000000 then return nil, { localeKey = 'dealership.message.stock_must_be_between_0_and_1_000_000' } end
 
     MySQL.insert.await([[
         INSERT INTO dealership_vehicles
@@ -250,11 +250,11 @@ exports.sunset_core:RegisterCallback('sunset:dealership:adminSave', function(sou
 end)
 
 exports.sunset_core:RegisterCallback('sunset:dealership:adminDelete', function(source, model)
-    if not isAdmin(source) then return nil, 'Dealership administration requires Admin level 3 or higher.' end
+    if not isAdmin(source) then return nil, { localeKey = 'dealership.message.dealership_administration_requires_admin_level_3_or_higher' } end
     model = cleanModel(model)
-    if not model then return nil, 'Invalid vehicle model.' end
+    if not model then return nil, { localeKey = 'dealership.message.invalid_vehicle_model' } end
     local changed = MySQL.update.await('DELETE FROM dealership_vehicles WHERE model = ?', { model })
-    if not changed or changed < 1 then return nil, 'That dealership vehicle no longer exists.' end
+    if not changed or changed < 1 then return nil, { localeKey = 'dealership.message.that_dealership_vehicle_no_longer_exists' } end
     auditAdmin(source, 'delete', model)
     return { vehicles = fetchCatalog(true) }
 end)

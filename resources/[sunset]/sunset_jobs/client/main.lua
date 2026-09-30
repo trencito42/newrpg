@@ -17,9 +17,9 @@ AddEventHandler('sunset:nui:jobCenterHire', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:hireJob', data.jobId)
     if ok then
         if data.jobId ~= 'unemployed' then
-            exports.sunset_ui:Notify('You are now employed as ' .. (data.jobLabel or data.jobId), 'success', 6000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_are_now_employed_as') .. (data.jobLabel or data.jobId), 'success', 6000)
         else
-            exports.sunset_ui:Notify('You have resigned.', 'info', 4000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_have_resigned'), 'info', 4000)
         end
         exports.sunset_ui:SetFocus(false, false)
         exports.sunset_ui:Send('jobCenterHide', {})
@@ -43,7 +43,7 @@ end)
 AddEventHandler('sunset:nui:jobCenterWaypoint', function(data)
     if data and data.x and data.y then
         SetNewWaypoint(data.x, data.y)
-        exports.sunset_ui:Notify('Waypoint setat pe harta!', 'info', 3000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.waypoint_setat_pe_harta'), 'info', 3000)
     end
 end)
 

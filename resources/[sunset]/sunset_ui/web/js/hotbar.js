@@ -70,8 +70,8 @@ const HotbarUI = {
         if (!container.querySelector('.wheel-center')) {
             container.insertAdjacentHTML('afterbegin', `
                 <div class="wheel-center">
-                    <div class="wheel-center-title" id="wheel-title">Emotes</div>
-                    <div class="wheel-center-desc" id="wheel-desc">Select</div>
+                    <div class="wheel-center-title" id="wheel-title">${I18n.t('shell.emotes')}</div>
+                    <div class="wheel-center-desc" id="wheel-desc">${I18n.t('shell.select_one')}</div>
                 </div>
             `);
         }

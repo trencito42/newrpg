@@ -166,7 +166,7 @@ CreateThread(function()
                 CreateThread(function()
                     local ctx = Sunset.AwaitCallback('sunset:getStoreContext')
                     if not ctx then
-                        notify('Store unavailable right now.', 'error')
+                        notify(exports.sunset_core:Translate('world.message.store_unavailable_right_now'), 'error')
                         return
                     end
                     openStoreMenu(ctx)
@@ -209,7 +209,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         local shopId = (ctx and ctx.shopId) or 'twentyfour7'
         local shop = Sunset.Shops and Sunset.Shops[shopId]
         if not shop then
-            notify('Shop unavailable.', 'error')
+            notify(exports.sunset_core:Translate('world.message.shop_unavailable'), 'error')
             return
         end
         TriggerEvent('sunset:world:openShop', shopId, shop)
@@ -219,7 +219,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             local invData, err = Sunset.AwaitCallback('sunset:fishingshop:getFishInventory')
             if invData then
                 if not invData.items or #invData.items == 0 then
-                    notify('You have no fish in your inventory.', 'info')
+                    notify(exports.sunset_core:Translate('world.message.you_have_no_fish_in_your_inventory'), 'info')
                 else
                     exports.sunset_ui:Send('fishingShopShow', {
                         mode = 'sell',
@@ -238,7 +238,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     elseif action == 'buy_business' then
         local biz = ctx and ctx.business
         if not biz or not biz.id then
-            notify('This business is not for sale.', 'error')
+            notify(exports.sunset_core:Translate('world.message.this_business_is_not_for_sale'), 'error')
             return
         end
         CreateThread(function()

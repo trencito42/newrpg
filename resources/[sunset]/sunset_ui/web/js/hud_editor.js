@@ -49,7 +49,7 @@ const HudEditor = {
             el.classList.toggle('hud-panel--selected', el.dataset.hudPanel === id);
         });
         const label = $('#hud-editor-label');
-        if (label) label.textContent = `Selected: ${id} — arrow keys to move`;
+        if (label) label.textContent = I18n.t('dynamic.hud_editor.selected_value0_arrow_keys_to_move', { value0: id });
     },
 
     move(dx, dy) {

@@ -80,7 +80,7 @@ const TruckerLaptop = {
     _renderRank() {
         if (!this._state) return;
         const { rank, xp, xpNext } = this._state;
-        if (this._rankBadge) this._rankBadge.textContent = `Rank ${rank}`;
+        if (this._rankBadge) this._rankBadge.textContent = I18n.t('dynamic.trucker_laptop.rank_value0', { value0: rank });
         const pct = xpNext > 0 ? Math.min(100, Math.round((xp / xpNext) * 100)) : 0;
         if (this._xpFill)  this._xpFill.style.width = pct + '%';
         if (this._xpLabel) this._xpLabel.textContent = `${xp} / ${xpNext} XP`;

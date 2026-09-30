@@ -170,7 +170,7 @@ local function startCourier()
     local van = JC.spawnVehicle(vehicleModel, vehicleSpawn, true)
     if not van then
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify('Could not spawn the delivery van — try again', 'error')
+        JC.notify(exports.sunset_core:Translate('jobs.message.could_not_spawn_the_delivery_van_try_again'), 'error')
         return
     end
     local ok, registerErr = JC.registerVehiclesWithServer()
@@ -216,7 +216,7 @@ local function startCourier()
                                 JC.sessionData = newData
                                 attachPackage(cfg)
                                 updateObjective(cfg, newData)
-                                JC.notify('Take the parcel to the back doors of your van.', 'info')
+                                JC.notify(exports.sunset_core:Translate('jobs.message.take_the_parcel_to_the_back_doors_of_your'), 'info')
                             else
                                 JC.notify(err2 or 'Could not pick up package', 'error')
                             end
@@ -268,7 +268,7 @@ local function startCourier()
                             end
                         end
                     else
-                        JC.notify('Your delivery van is missing', 'error')
+                        JC.notify(exports.sunset_core:Translate('jobs.message.your_delivery_van_is_missing'), 'error')
                     end
                 end
 

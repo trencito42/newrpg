@@ -33,9 +33,9 @@ const Scoreboard = {
         const cops = document.getElementById('sb-stat-cops');
         const ems = document.getElementById('sb-stat-ems');
         const mech = document.getElementById('sb-stat-mech');
-        if (cops) cops.textContent = `LSPD: ${stats.police || 0}`;
-        if (ems) ems.textContent = `EMS: ${stats.ems || 0}`;
-        if (mech) mech.textContent = `Mechanics: ${stats.mechanic || 0}`;
+        if (cops) cops.textContent = I18n.t('dynamic.scoreboard.lspd_value0', { value0: stats.police || 0 });
+        if (ems) ems.textContent = I18n.t('dynamic.scoreboard.ems_value0', { value0: stats.ems || 0 });
+        if (mech) mech.textContent = I18n.t('dynamic.scoreboard.mechanics_value0', { value0: stats.mechanic || 0 });
 
         const list = document.getElementById('sb-player-list');
         if (!list) return;

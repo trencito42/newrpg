@@ -94,7 +94,7 @@ local function runVehicleRecovery(session)
     addBlip(GetEntityCoords(missionVehicle), 225, 1, variant.vehicleLabel, 0.7)
     MSN_NUI_UpdateHUD('Vehicle located — steal it', variant.vehicleLabel,
         { plate = variant.vehiclePlate, color = variant.vehicleColor.name })
-    notify('Vehicle located!', 'success')
+    notify(exports.sunset_core:Translate('missions.message.vehicle_located'), 'success')
 
     -- STEAL_VEHICLE — wait near vehicle, trigger lockpick, then enter
     setStage('STEAL_VEHICLE')
@@ -119,13 +119,13 @@ local function runVehicleRecovery(session)
                         lockpickDone    = true
                         if success then
                             SetVehicleDoorsLocked(missionVehicle, 1)
-                            notify('Lock picked! Get in the vehicle.', 'success')
+                            notify(exports.sunset_core:Translate('missions.message.lock_picked_get_in_the_vehicle'), 'success')
                         else
                             -- Lockpick failed → alarm + vehicle stays enterable
                             SetVehicleAlarm(missionVehicle, true)
                             StartVehicleAlarm(missionVehicle)
                             SetVehicleDoorsLocked(missionVehicle, 1)
-                            notify('Lockpick failed — alarm triggered!', 'error')
+                            notify(exports.sunset_core:Translate('missions.message.lockpick_failed_alarm_triggered'), 'error')
                         end
                     end)
                 end
@@ -150,7 +150,7 @@ local function runVehicleRecovery(session)
     addBlip(def.deliveryCoords, 1, 2, 'Delivery Point', 0.8)
     MSN_NUI_UpdateHUD('Deliver the vehicle — avoid damage', variant.vehicleLabel, { plate = variant.vehiclePlate })
     SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
-    notify('Deliver the vehicle to Rico!', 'info')
+    notify(exports.sunset_core:Translate('missions.message.deliver_the_vehicle_to_rico'), 'info')
 
     -- Server-authoritative PURSUIT stage transition
     Sunset.AwaitCallback('sunset:missions:vr:vehicleEntered')
@@ -303,7 +303,7 @@ local function runContainer47(session)
                         local ok, err = Sunset.AwaitCallback('sunset:missions:c47:identify', { slotIndex = cp.slotIndex })
                         if ok then
                             identified = true
-                            notify('Match found — ' .. revealed, 'success')
+                            notify(exports.sunset_core:Translate('missions.message.match_found') .. revealed, 'success')
                             clearBlips()
                         elseif err == 'wrong_container' then
                             MSN_RaiseAlert(1)
@@ -329,10 +329,10 @@ local function runContainer47(session)
                 waitingSeal = false
                 MSN_NUI_ShowSeal(function(success)
                     if success then
-                        notify('Seal cut — take the cargo!', 'success')
+                        notify(exports.sunset_core:Translate('missions.message.seal_cut_take_the_cargo'), 'success')
                     else
                         MSN_RaiseAlert(2)
-                        notify('Seal broken noisily — guards alerted!', 'error')
+                        notify(exports.sunset_core:Translate('missions.message.seal_broken_noisily_guards_alerted'), 'error')
                     end
                     TriggerEvent('sunset:missions:client:sealBroken')
                 end)
@@ -362,7 +362,7 @@ local function runContainer47(session)
                 MSN_RaiseAlert(2)
                 setStage('ALERT')
                 cargoTaken = true
-                notify('Cargo taken — get out now!', 'warning')
+                notify(exports.sunset_core:Translate('missions.message.cargo_taken_get_out_now'), 'warning')
             end
         end
     end

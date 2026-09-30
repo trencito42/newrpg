@@ -290,7 +290,7 @@ end
 function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
     jobName = tostring(jobName or ''):lower()
     if type(routesList) ~= 'table' then
-        return false, 'Invalid routes payload'
+        return false, { localeKey = 'jobs.message.invalid_routes_payload' }
     end
 
     local normalizedList = {}
@@ -299,37 +299,37 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
     if jobName == 'trucker' then
         for i, r in ipairs(routesList) do
             local norm = normalizeTruckerRoute(r, i)
-            if not norm then return false, ('Malformed trucker route at index %d'):format(i) end
-            if seenIds[norm.id] then return false, ('Duplicate route ID: %s'):format(norm.id) end
+            if not norm then return false, { localeKey = 'jobs.message.malformed_trucker_route_at_index_value', formatArgs = { i } } end
+            if seenIds[norm.id] then return false, { localeKey = 'jobs.message.duplicate_route_id_value', formatArgs = { norm.id } } end
             seenIds[norm.id] = true
             normalizedList[#normalizedList + 1] = norm
         end
     elseif jobName == 'garbage' then
         for i, r in ipairs(routesList) do
             local norm = normalizeGarbageRoute(r, i)
-            if not norm then return false, ('Malformed garbage route at index %d'):format(i) end
-            if seenIds[norm.id] then return false, ('Duplicate route ID: %s'):format(norm.id) end
+            if not norm then return false, { localeKey = 'jobs.message.malformed_garbage_route_at_index_value', formatArgs = { i } } end
+            if seenIds[norm.id] then return false, { localeKey = 'jobs.message.duplicate_route_id_value', formatArgs = { norm.id } } end
             seenIds[norm.id] = true
             normalizedList[#normalizedList + 1] = norm
         end
     elseif jobName == 'hunting' then
         for i, r in ipairs(routesList) do
             local norm = normalizeHuntingZone(r, i)
-            if not norm then return false, ('Malformed hunting zone at index %d'):format(i) end
-            if seenIds[norm.id] then return false, ('Duplicate zone ID: %s'):format(norm.id) end
+            if not norm then return false, { localeKey = 'jobs.message.malformed_hunting_zone_at_index_value', formatArgs = { i } } end
+            if seenIds[norm.id] then return false, { localeKey = 'jobs.message.duplicate_zone_id_value', formatArgs = { norm.id } } end
             seenIds[norm.id] = true
             normalizedList[#normalizedList + 1] = norm
         end
     elseif jobName == 'diving' then
         for i, r in ipairs(routesList) do
             local norm = normalizeDiveSite(r, i)
-            if not norm then return false, ('Malformed dive site at index %d'):format(i) end
-            if seenIds[norm.id] then return false, ('Duplicate site ID: %s'):format(norm.id) end
+            if not norm then return false, { localeKey = 'jobs.message.malformed_dive_site_at_index_value', formatArgs = { i } } end
+            if seenIds[norm.id] then return false, { localeKey = 'jobs.message.duplicate_site_id_value', formatArgs = { norm.id } } end
             seenIds[norm.id] = true
             normalizedList[#normalizedList + 1] = norm
         end
     else
-        return false, 'Unsupported job name: ' .. tostring(jobName)
+        return false, { localeKey = 'jobs.message.unsupported_job_name' } .. tostring(jobName)
     end
 
     -- Update Cache
@@ -357,7 +357,7 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
     local written = SaveResourceFile(resourceName, ROUTE_DATA_PATH, serialized, -1)
     if not written then
         print(('^1[sunset_jobs:route_store] ERROR: SaveResourceFile failed for %s^7'):format(ROUTE_DATA_PATH))
-        return false, 'Failed to write file to disk'
+        return false, { localeKey = 'jobs.message.failed_to_write_file_to_disk' }
     end
 
     print(('^2[sunset_jobs:route_store] Successfully saved %d %s routes to %s.^7'):format(#normalizedList, jobName, ROUTE_DATA_PATH))

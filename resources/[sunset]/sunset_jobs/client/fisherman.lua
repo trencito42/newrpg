@@ -249,12 +249,12 @@ end
 
 local function stopShift()
     if not isFishermanShift() then
-        JC.notify('No active shift.', 'info')
+        JC.notify(exports.sunset_core:Translate('jobs.message.no_active_shift'), 'info')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:jobs:cancelWork')
     if ok then
-        JC.notify('Shift ended.', 'info')
+        JC.notify(exports.sunset_core:Translate('jobs.message.shift_ended'), 'info')
         JC.jobId = nil
         JC.state = 'IDLE'
         fishing = false
@@ -270,7 +270,7 @@ end
 local function startFisherman()
     local jobId = JC.getCharacterJob()
     if jobId ~= 'fisherman' then
-        JC.notify('You must be a Fisherman. Speak with Billy Ray.', 'error', 6000)
+        JC.notify(exports.sunset_core:Translate('jobs.message.you_must_be_a_fisherman_speak_with_billy_ray'), 'error', 6000)
         return
     end
 
@@ -284,11 +284,11 @@ local function startFisherman()
         JC.state = 'STARTING'
     end
     applyShiftBlips()
-    JC.notify('Shift started! GPS set to the Paleto Bay fishing area. Press E once you are at the water to cast.', 'info', 8000)
+    JC.notify(exports.sunset_core:Translate('jobs.message.shift_started_gps_set_to_the_paleto_bay_fishing'), 'info', 8000)
 end
 
 local function attemptFish()
-    if fishing then return JC.notify('Your line is already cast', 'warning') end
+    if fishing then return JC.notify(exports.sunset_core:Translate('jobs.message.your_line_is_already_cast'), 'warning') end
     if not isFishermanShift() then
         local jobId = JC.getCharacterJob()
         if jobId == 'fisherman' then
@@ -301,12 +301,12 @@ local function attemptFish()
                 return JC.notify(err or 'Could not start shift.', 'error')
             end
         else
-            return JC.notify('You must be a Fisherman. Speak with Billy Ray at Paleto Bay.', 'error')
+            return JC.notify(exports.sunset_core:Translate('jobs.message.you_must_be_a_fisherman_speak_with_billy_ray_43c2b4'), 'error')
         end
     end
     local spotIdx = nearestSpotIndex()
     if not atFishingSpot() then
-        return JC.notify('You are not in the Paleto Bay fishing area.', 'error')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.you_are_not_in_the_paleto_bay_fishing_area'), 'error')
     end
 
     fishing = true
@@ -319,7 +319,7 @@ local function attemptFish()
 
     -- Avertizare fara momeala
     if (cast.baitTier or 0) == 0 then
-        JC.notify('No bait! Catch chance is low. Buy bait from Fishing Supply.', 'warning', 5000)
+        JC.notify(exports.sunset_core:Translate('jobs.message.no_bait_catch_chance_is_low_buy_bait_from'), 'warning', 5000)
     end
 
     -- Animatie scurta de aruncare
@@ -396,9 +396,9 @@ local function attemptFish()
     elseif not early and reelErr then
         JC.notify(reelErr, 'warning')
     elseif not early then
-        JC.notify('Too late — the fish escaped', 'warning')
+        JC.notify(exports.sunset_core:Translate('jobs.message.too_late_the_fish_escaped'), 'warning')
     else
-        JC.notify('Too early — the fish escaped', 'warning')
+        JC.notify(exports.sunset_core:Translate('jobs.message.too_early_the_fish_escaped'), 'warning')
     end
 
     hideFishingUi()
@@ -541,11 +541,11 @@ end)
 AddEventHandler('sunset:client:startFishermanShift', function()
     local jobId = JC.getCharacterJob()
     if jobId ~= 'fisherman' then
-        exports.sunset_ui:Notify('You must be a Fisherman. Speak with Billy Ray.', 'error', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_must_be_a_fisherman_speak_with_billy_ray'), 'error', 5000)
         return
     end
     if isFishermanShift() then
-        exports.sunset_ui:Notify('You already have an active shift. Press E at the pontoon or use /fish.', 'info', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_already_have_an_active_shift_press_e_at'), 'info', 5000)
         return
     end
     CreateThread(startFisherman)

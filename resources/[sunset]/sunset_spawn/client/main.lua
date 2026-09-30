@@ -159,7 +159,7 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
             .. ' cachedPed=%d currentPed=%d cachedModel=%d currentModel=%d'):format(
             ped, currentPed, GetEntityModel(ped), GetEntityModel(currentPed)))
         logBoot('stream:stale_ped_entry', ('cachedPed=%d currentPed=%d'):format(ped, currentPed))
-        return false, 'STALE_PED'
+        return false, { localeKey = 'spawn.message.stale_ped' }
     end
 
     local tFocusStart = GetGameTimer()
@@ -186,7 +186,7 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
                 ped, currentPed, GetGameTimer() - tStart))
             NewLoadSceneStop()
             ClearFocus()
-            return false, 'STALE_PED'
+            return false, { localeKey = 'spawn.message.stale_ped' }
         end
 
         RequestCollisionAtCoord(pos.x, pos.y, pos.z)
@@ -394,7 +394,7 @@ local function spawnPlayer(char, spawnPosition)
                     SetEntityHeading(livePed, fallback.w)
                     FreezeEntityPosition(livePed, false)
                     DoScreenFadeIn(500)
-                    exports.sunset_ui:Notify('Your saved location was not safe, so you were moved to the default spawn.', 'warning', 7000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('spawn.message.your_saved_location_was_not_safe_so_you_were'), 'warning', 7000)
                 end
             end
             ::continue::
@@ -402,7 +402,7 @@ local function spawnPlayer(char, spawnPosition)
     end)
 
     if not collisionLoaded then
-        exports.sunset_ui:Notify('The map loaded slowly. If the world is missing, reconnect once.', 'warning', 7000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('spawn.message.the_map_loaded_slowly_if_the_world_is_missing'), 'warning', 7000)
     end
     spawned = true
     spawning = false

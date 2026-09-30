@@ -136,9 +136,9 @@ local function exportAll()
     print('^2═══════════════════════════════════════════════════════════════^7')
 
     if next(pendingDrafts) then
-        notify('Export printed to F8. See console for full snippets.', 'success')
+        notify(exports.sunset_core:Translate('devtools.message.export_printed_to_f8_see_console_for_full_snippets'), 'success')
     else
-        notify('No drafts to export yet. Edit a stage first.', 'warning')
+        notify(exports.sunset_core:Translate('devtools.message.no_drafts_to_export_yet_edit_a_stage_first'), 'warning')
     end
 end
 
@@ -174,25 +174,25 @@ end
 -- Start the route editor
 function DevRoute.open(ak, routeHint)
     if DevGizmo.isActive() then
-        notify('Close the current gizmo before opening route editor.', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.close_the_current_gizmo_before_opening_route_editor'), 'error')
         return
     end
     if isRouteEditorActive then
         isRouteEditorActive = false
-        notify('Route editor closed.', 'info')
+        notify(exports.sunset_core:Translate('devtools.message.route_editor_closed'), 'info')
         return
     end
 
     local adapter = SunsetDevTools.Adapters[ak]
     if not adapter then
-        notify('Unknown adapter: ' .. tostring(ak), 'error')
+        notify(exports.sunset_core:Translate('devtools.message.unknown_adapter') .. tostring(ak), 'error')
         return
     end
 
     adapterKey = ak
     routeFields = adapter.describe and adapter.describe() or {}
     if #routeFields == 0 then
-        notify('No fields for adapter: ' .. ak, 'warning')
+        notify(exports.sunset_core:Translate('devtools.message.no_fields_for_adapter') .. ak, 'warning')
         return
     end
 
@@ -290,7 +290,7 @@ function DevRoute.open(ak, routeHint)
             -- Close (ESC)
             if IsControlJustPressed(0, 200) then
                 isRouteEditorActive = false
-                notify('Route editor closed.', 'info')
+                notify(exports.sunset_core:Translate('devtools.message.route_editor_closed'), 'info')
                 break
             end
 

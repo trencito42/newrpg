@@ -362,7 +362,7 @@ RegisterCommand('fskins', function()
     if not char then return end
     local fid = getFactionId(char)
     if not fid or not exports.sunset_factions:IsOnDuty() then
-        return exports.sunset_ui:Notify('You must be ON DUTY in a faction to change your uniform / skin.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_must_be_on_duty_in_a_faction_to'), 'error')
     end
 
     local grade = (char.metadata and tonumber(char.metadata.faction_grade)) or 0
@@ -370,7 +370,7 @@ RegisterCommand('fskins', function()
     local options = Sunset.GetFactionSkinOptions(fid, grade, gender)
 
     if not options or #options == 0 then
-        return exports.sunset_ui:Notify('There are no alternative skins for your grade.', 'info')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.there_are_no_alternative_skins_for_your_grade'), 'info')
     end
 
     TriggerEvent('chat:addMessage', {
@@ -392,7 +392,7 @@ RegisterCommand('fskin', function(_, args)
     if not char then return end
     local fid = getFactionId(char)
     if not fid or not exports.sunset_factions:IsOnDuty() then
-        return exports.sunset_ui:Notify('You must be ON DUTY in a faction to change your uniform / skin.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_must_be_on_duty_in_a_faction_to'), 'error')
     end
 
     local arg = args[1] and tostring(args[1]):lower()
@@ -419,7 +419,7 @@ RegisterCommand('fskin', function(_, args)
     end
 
     if not chosen then
-        exports.sunset_ui:Notify('Skin not found. Type /fskins for the full list.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.skin_not_found_type_fskins_for_the_full_list'), 'error')
         return
     end
 

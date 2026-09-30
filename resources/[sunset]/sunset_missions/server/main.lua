@@ -5,19 +5,19 @@ end)
 -- ── acceptMission ─────────────────────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:missions:accept', function(source, missionId)
     local def = SunsetMissions.GetMission(missionId)
-    if not def then return nil, 'Mission not found' end
+    if not def then return nil, { localeKey = 'missions.message.mission_not_found' } end
 
     local existing = MSN_GetSession(source)
-    if existing then return nil, 'Already in a mission' end
+    if existing then return nil, { localeKey = 'missions.message.already_in_a_mission' } end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Not logged in' end
+    if not char then return nil, { localeKey = 'missions.message.not_logged_in' } end
 
     local ok, err = MSN_ValidateRequirements(source, def)
     if not ok then return nil, err end
 
     local coolOk = MSN_ValidateCooldown(char.id, missionId, def.cooldown)
-    if not coolOk then return nil, 'On cooldown — come back later' end
+    if not coolOk then return nil, { localeKey = 'missions.message.on_cooldown_come_back_later' } end
 
     -- Build random variant
     local variant = {}
@@ -70,7 +70,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:accept', function(source, 
     end
 
     local session = MSN_CreateSession(source, missionId, variant)
-    if not session then return nil, 'Could not create session' end
+    if not session then return nil, { localeKey = 'missions.message.could_not_create_session' } end
 
     print(('[sunset_missions] src=%d started mission=%s id=%s'):format(source, missionId, session.id))
     return { sessionId = session.id, variant = variant }
@@ -89,7 +89,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source
             break
         end
     end
-    if not allowed then return nil, 'Invalid stage transition: ' .. s.state .. ' -> ' .. tostring(data.stage) end
+    if not allowed then return nil, { localeKey = 'missions.message.invalid_stage_transition' } .. s.state .. ' -> ' .. tostring(data.stage) end
 
     MSN_SetState(source, data.stage)
     return true
@@ -110,7 +110,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(sour
 
     local def  = SunsetMissions.GetMission('vehicle_recovery')
     if not MSN_ValidateCoords(source, def.deliveryCoords, SunsetMissions.Config.deliveryRadius + 10) then
-        return nil, 'Not at delivery location'
+        return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
     local cond = math.max(0, math.min(100, data.condition or 0))
@@ -124,14 +124,14 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:identify', function(so
     local s, err = MSN_RequireSession(source, 'container_47', { 'SEARCH' })
     if not s then return nil, err end
     local slotIndex = tonumber(data and data.slotIndex)
-    if not slotIndex then return nil, 'Invalid slot' end
+    if not slotIndex then return nil, { localeKey = 'missions.message.invalid_slot' } end
     if slotIndex == s.data.targetSlot then
         MSN_SetState(source, 'IDENTIFY')
         return true
     else
         -- wrong container: raise alert on server side
         s.data.alertLevel = math.min(4, (s.data.alertLevel or 0) + 1)
-        return false, 'wrong_container'
+        return false, { localeKey = 'missions.message.wrong_container' }
     end
 end)
 
@@ -149,7 +149,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(sou
 
     local def = SunsetMissions.GetMission('container_47')
     if not MSN_ValidateCoords(source, def.deliveryCoords, SunsetMissions.Config.deliveryRadius + 15) then
-        return nil, 'Not at delivery location'
+        return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
     local cond    = 100

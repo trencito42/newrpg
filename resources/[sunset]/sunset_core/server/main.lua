@@ -75,6 +75,13 @@ end
 
 local function resolveLocalizedError(source, err)
     if type(err) == 'table' and type(err.localeKey) == 'string' then
+        if type(err.formatArgs) == 'table' then
+            return Sunset.Translate(
+                Sunset.GetPlayerLocale(source),
+                err.localeKey,
+                table.unpack(err.formatArgs)
+            )
+        end
         return Sunset.TFor(source, err.localeKey, err.params)
     end
     return err

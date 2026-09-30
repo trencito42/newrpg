@@ -89,7 +89,7 @@ end
 -- ── Get Contracts ─────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:getContracts', function(source)
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     local level = session.data.level or 1
     local sites  = SunsetJobRoutes.GetRoutes('diving') or {}
@@ -113,30 +113,30 @@ end)
 
 -- ── Start Contract ────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function(source, siteId)
-    if not checkRate(source, 'startContract') then return nil, 'Too many requests' end
+    if not checkRate(source, 'startContract') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     if Snapshots[source] then
-        return nil, ('You already have a contract active: %s. Abandon it first.'):format(Snapshots[source].siteId)
+        return nil, { localeKey = 'jobs.message.you_already_have_a_contract_active_value_abandon_it', formatArgs = { Snapshots[source].siteId } }
     end
 
     siteId = tostring(siteId or '')
     local site = getDiveSite(siteId)
-    if not site then return nil, 'Unknown dive site' end
+    if not site then return nil, { localeKey = 'jobs.message.unknown_dive_site' } end
 
     local level = session.data.level or 1
     if site.minRank > level then
-        return nil, ('Requires Diver Rank %d (you are Rank %d)'):format(site.minRank, level)
+        return nil, { localeKey = 'jobs.message.requires_diver_rank_value_you_are_rank_value', formatArgs = { site.minRank, level } }
     end
 
     -- Boat license check for offshore sites (FAIL CLOSED)
     if site.requiresBoat then
         if GetResourceState('sunset_licenses') ~= 'started' then
-            return nil, 'Licensing service unavailable. Try again in a moment.'
+            return nil, { localeKey = 'jobs.message.licensing_service_unavailable_try_again_in_a_moment' }
         end
         if exports.sunset_licenses:HasLicense(source, 'boat') ~= true then
-            return nil, 'Offshore sites require a valid Boat License (BWC). Visit LSSI.'
+            return nil, { localeKey = 'jobs.message.offshore_sites_require_a_valid_boat_license_bwc_visit' }
         end
     end
 
@@ -144,12 +144,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function
     local hasScuba  = exports.sunset_inventory:HasItem(source, 'scuba_gear', 1)
     local hasAdv    = exports.sunset_inventory:HasItem(source, 'advanced_tank', 1)
     if not hasScuba and not hasAdv then
-        return nil, 'You need Diving Gear. Rent from Terry first.'
+        return nil, { localeKey = 'jobs.message.you_need_diving_gear_rent_from_terry_first' }
     end
 
     -- Server randomly selects loot points (immutable snapshot)
     if not site.lootPoints or #site.lootPoints == 0 then
-        return nil, 'Dive site has no loot points configured. Contact an admin.'
+        return nil, { localeKey = 'jobs.message.dive_site_has_no_loot_points_configured_contact_an' }
     end
 
     -- Shuffle and pick required number of active loot points
@@ -214,32 +214,32 @@ end)
 
 -- ── Rent Gear ─────────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentGear', function(source, tierName)
-    if not checkRate(source, 'rentGear') then return nil, 'Too many requests' end
+    if not checkRate(source, 'rentGear') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     tierName = tostring(tierName or 'basic')
     local cfgDiver = Sunset.JobsConfig.diver
-    if not cfgDiver or not cfgDiver.gear then return nil, 'Gear config missing' end
+    if not cfgDiver or not cfgDiver.gear then return nil, { localeKey = 'jobs.message.gear_config_missing' } end
 
     local gearCfg = cfgDiver.gear[tierName]
-    if not gearCfg then return nil, ('Unknown gear tier: %s'):format(tierName) end
+    if not gearCfg then return nil, { localeKey = 'jobs.message.unknown_gear_tier_value', formatArgs = { tierName } } end
 
     local level = session.data.level or 1
     if level < (gearCfg.minRank or 1) then
-        return nil, ('This gear requires Diver Rank %d'):format(gearCfg.minRank)
+        return nil, { localeKey = 'jobs.message.this_gear_requires_diver_rank_value', formatArgs = { gearCfg.minRank } }
     end
 
     local cost = gearCfg.rentCost or 30
     local removed = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'gear_rental')
-    if not removed then return nil, ('Insufficient funds — gear costs $%d'):format(cost) end
+    if not removed then return nil, { localeKey = 'jobs.message.insufficient_funds_gear_costs_value', formatArgs = { cost } } end
 
     -- Grant gear item
     local item = tierName == 'advanced' and 'advanced_tank' or 'scuba_gear'
     local ok = exports.sunset_inventory:AddItem(source, item, 1)
     if not ok then
         exports.sunset_core:AddMoney(source, 'cash', cost, 'gear_rental_refund')
-        return nil, 'Inventory full — could not add gear'
+        return nil, { localeKey = 'jobs.message.inventory_full_could_not_add_gear' }
     end
 
     -- Store gear tier and O2 in session so contract start is server-authoritative.
@@ -260,26 +260,26 @@ end)
 
 -- ── Rent Boat ─────────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentBoat', function(source)
-    if not checkRate(source, 'rentBoat') then return nil, 'Too many requests' end
+    if not checkRate(source, 'rentBoat') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     -- Must hold boat license
     if GetResourceState('sunset_licenses') ~= 'started' then
-        return nil, 'Licensing service unavailable. Try again in a moment.'
+        return nil, { localeKey = 'jobs.message.licensing_service_unavailable_try_again_in_a_moment' }
     end
     if exports.sunset_licenses:HasLicense(source, 'boat') ~= true then
-        return nil, 'Requires a valid Boat License (BWC). Visit LSSI Maritime School.'
+        return nil, { localeKey = 'jobs.message.requires_a_valid_boat_license_bwc_visit_lssi_maritime' }
     end
 
     if RentedBoats[source] then
-        return nil, 'You already have a boat rented. Return it first.'
+        return nil, { localeKey = 'jobs.message.you_already_have_a_boat_rented_return_it_first' }
     end
 
     local cfgDiver = Sunset.JobsConfig.diver
     local cost = cfgDiver and cfgDiver.boatRentCost or 80
     local removed = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'boat_rental')
-    if not removed then return nil, ('Insufficient funds — boat rental costs $%d'):format(cost) end
+    if not removed then return nil, { localeKey = 'jobs.message.insufficient_funds_boat_rental_costs_value', formatArgs = { cost } } end
 
     local model = cfgDiver and cfgDiver.boatModel or 'dinghy'
     -- Boat spawn coords from active contract or default dock
@@ -373,35 +373,35 @@ end)
 -- [SECTION 33] Phase 1: server validates player+point, issues a hold token.
 -- The point is NOT claimed yet — that happens in completeSalvage after minDuration.
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:beginSalvage', function(source, pointIndex)
-    if not checkRate(source, 'beginSalvage') then return nil, 'Too many requests' end
+    if not checkRate(source, 'beginSalvage') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'No active Diver shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
 
     local snap = Snapshots[source]
-    if not snap then return nil, 'No active contract — choose a contract first' end
+    if not snap then return nil, { localeKey = 'jobs.message.no_active_contract_choose_a_contract_first' } end
 
     -- Gear revalidation (player must still have a valid gear tier in session)
-    if not session.data.gearTier then return nil, 'No diving gear — return to Terry first' end
+    if not session.data.gearTier then return nil, { localeKey = 'jobs.message.no_diving_gear_return_to_terry_first' } end
 
     pointIndex = tonumber(pointIndex)
-    if not pointIndex then return nil, 'Invalid loot point index' end
+    if not pointIndex then return nil, { localeKey = 'jobs.message.invalid_loot_point_index' } end
 
     local pt = snap.lootPoints[pointIndex]
-    if not pt then return nil, 'Loot point not found' end
-    if pt.claimed then return nil, 'Already salvaged' end
+    if not pt then return nil, { localeKey = 'jobs.message.loot_point_not_found' } end
+    if pt.claimed then return nil, { localeKey = 'jobs.message.already_salvaged' } end
     if ClaimedPoints[source] and ClaimedPoints[source][pointIndex] then
-        return nil, 'Already salvaged'
+        return nil, { localeKey = 'jobs.message.already_salvaged' }
     end
 
     -- Player must be alive
     local ped = GetPlayerPed(source)
-    if IsEntityDead(ped) then return nil, 'Cannot salvage while dead' end
+    if IsEntityDead(ped) then return nil, { localeKey = 'jobs.message.cannot_salvage_while_dead' } end
 
     -- Proximity check at begin (server-side)
     if not SunsetJobs_ValidateCoords(source,
         vector3(pt.x, pt.y, pt.z),
         Sunset.JobsConfig.diver.salvageRadius or 4.0) then
-        return nil, 'Move closer to the salvage point'
+        return nil, { localeKey = 'jobs.message.move_closer_to_the_salvage_point' }
     end
 
     -- Issue token — one per player at a time
@@ -420,57 +420,57 @@ end)
 -- [SECTION 34] Phase 2: validates token, elapsed time, point still unclaimed,
 -- session active, gear still valid, player alive, proximity. THEN claims.
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:completeSalvage', function(source, pointIndex, clientToken)
-    if not checkRate(source, 'completeSalvage') then return nil, 'Too many requests' end
+    if not checkRate(source, 'completeSalvage') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'No active Diver shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
 
     local snap = Snapshots[source]
-    if not snap then return nil, 'No active contract — choose a contract first' end
+    if not snap then return nil, { localeKey = 'jobs.message.no_active_contract_choose_a_contract_first' } end
 
     pointIndex = tonumber(pointIndex)
-    if not pointIndex then return nil, 'Invalid loot point index' end
+    if not pointIndex then return nil, { localeKey = 'jobs.message.invalid_loot_point_index' } end
 
     -- Token validation
     local hold = SalvageTokens[source]
-    if not hold then return nil, 'No salvage in progress — hold E on a point first' end
+    if not hold then return nil, { localeKey = 'jobs.message.no_salvage_in_progress_hold_e_on_a_point' } end
     if tostring(clientToken) ~= tostring(hold.token) then
         SalvageTokens[source] = nil
-        return nil, 'Salvage token invalid'
+        return nil, { localeKey = 'jobs.message.salvage_token_invalid' }
     end
     if hold.pointIndex ~= pointIndex then
         SalvageTokens[source] = nil
-        return nil, 'Salvage point mismatch'
+        return nil, { localeKey = 'jobs.message.salvage_point_mismatch' }
     end
 
     -- Elapsed time check
     local elapsed = os.time() - hold.issuedAt
     if elapsed < (hold.minDuration or SALVAGE_MIN_HOLD_SEC) then
         SalvageTokens[source] = nil
-        return nil, ('Hold the point for %d seconds'):format(hold.minDuration or SALVAGE_MIN_HOLD_SEC)
+        return nil, { localeKey = 'jobs.message.hold_the_point_for_value_seconds', formatArgs = { hold.minDuration or SALVAGE_MIN_HOLD_SEC } }
     end
 
     -- Consume token (one-shot)
     SalvageTokens[source] = nil
 
     local pt = snap.lootPoints[pointIndex]
-    if not pt then return nil, 'Loot point not found' end
-    if pt.claimed then return nil, 'Already salvaged' end
+    if not pt then return nil, { localeKey = 'jobs.message.loot_point_not_found' } end
+    if pt.claimed then return nil, { localeKey = 'jobs.message.already_salvaged' } end
     if ClaimedPoints[source] and ClaimedPoints[source][pointIndex] then
-        return nil, 'Already salvaged'
+        return nil, { localeKey = 'jobs.message.already_salvaged' }
     end
 
     -- Gear revalidation (must still have a valid gear tier in session)
-    if not session.data.gearTier then return nil, 'Gear missing — return to Terry' end
+    if not session.data.gearTier then return nil, { localeKey = 'jobs.message.gear_missing_return_to_terry' } end
 
     -- Player must be alive
     local ped = GetPlayerPed(source)
-    if IsEntityDead(ped) then return nil, 'Cannot salvage while dead' end
+    if IsEntityDead(ped) then return nil, { localeKey = 'jobs.message.cannot_salvage_while_dead' } end
 
     -- Proximity re-check at completion
     if not SunsetJobs_ValidateCoords(source,
         vector3(pt.x, pt.y, pt.z),
         Sunset.JobsConfig.diver.salvageRadius or 4.0) then
-        return nil, 'Moved too far from the salvage point'
+        return nil, { localeKey = 'jobs.message.moved_too_far_from_the_salvage_point' }
     end
 
     -- Mark claimed BEFORE inventory add (idempotency guard)
@@ -485,7 +485,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:completeSalvage', functi
     if #lootTable == 0 then
         pt.claimed = false
         ClaimedPoints[source][pointIndex] = nil
-        return nil, 'Loot table not configured. Contact an admin.'
+        return nil, { localeKey = 'jobs.message.loot_table_not_configured_contact_an_admin' }
     end
 
     local lootEntry = pickLootItem(lootTable)
@@ -502,7 +502,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:completeSalvage', functi
     if not ok then
         pt.claimed = false
         ClaimedPoints[source][pointIndex] = nil
-        return nil, 'Inventory full — drop something and try again'
+        return nil, { localeKey = 'jobs.message.inventory_full_drop_something_and_try_again' }
     end
     exports.sunset_inventory:ReloadInventory(source)
 
@@ -533,9 +533,9 @@ end)
 
 -- ── Sell Salvage ──────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
-    if not checkRate(source, 'sell') then return nil, 'Too many requests' end
+    if not checkRate(source, 'sell') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'No active Diver shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
 
     local salvageItems = { 'salvage_parts', 'marine_electronics', 'sealed_cargo', 'marine_artifact' }
     local totalValue = 0
@@ -544,7 +544,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
     -- [SECTION 24] Atomic sell: snapshot → remove → pay → restore on failure.
     -- Preserve site/condition/value/rarity/salvageIdx/savedAt metadata for restore.
     local inv = exports.sunset_inventory:GetInventory(source)
-    if not inv then return nil, 'Could not load inventory' end
+    if not inv then return nil, { localeKey = 'jobs.message.could_not_load_inventory' } end
 
     local salvageSet = {}
     for _, si in ipairs(salvageItems) do salvageSet[si] = true end
@@ -564,7 +564,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
         end
     end
 
-    if #sold == 0 then return nil, 'No salvage items to sell. Go dive first.' end
+    if #sold == 0 then return nil, { localeKey = 'jobs.message.no_salvage_items_to_sell_go_dive_first' } end
 
     -- Remove items first; restore with full metadata if payment fails.
     for _, s in ipairs(sold) do
@@ -577,7 +577,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
             exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
         end
         exports.sunset_inventory:ReloadInventory(source)
-        return nil, 'Payment failed — your salvage items have been returned. Try again.'
+        return nil, { localeKey = 'jobs.message.payment_failed_your_salvage_items_have_been_returned_try' }
     end
 
     SunsetJobs_AddJobProgress(source, 'diver', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
@@ -607,7 +607,7 @@ end)
 -- ── Start Shift ───────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:start', function(source)
     local char = getChar(source)
-    if not char then return nil, 'Character not loaded' end
+    if not char then return nil, { localeKey = 'jobs.message.character_not_loaded' } end
 
     local existing = SunsetJobs_GetSession(source)
     if existing and existing.jobId == 'diver' then return existing.data end
@@ -654,27 +654,27 @@ local TERRY_COORDS = { x = -812.0, y = -1282.0, z = 5.0 }
 local TERRY_HANDOFF_RADIUS = 15.0
 
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(source)
-    if not checkRate(source, 'handoff') then return nil, 'Too many requests' end
+    if not checkRate(source, 'handoff') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
 
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
-    if not session then return nil, 'No active Diver shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
 
     local snap = Snapshots[source]
-    if not snap then return nil, 'No active contract — choose a contract first' end
+    if not snap then return nil, { localeKey = 'jobs.message.no_active_contract_choose_a_contract_first' } end
 
     if session.data.stage ~= 'return_to_terry' then
-        return nil, 'Nothing to hand off yet. Recover all salvage first.'
+        return nil, { localeKey = 'jobs.message.nothing_to_hand_off_yet_recover_all_salvage_first' }
     end
 
     if snap.recovered < snap.required then
-        return nil, ('Recover all salvage first (%d/%d).'):format(snap.recovered, snap.required)
+        return nil, { localeKey = 'jobs.message.recover_all_salvage_first_value_value', formatArgs = { snap.recovered, snap.required } }
     end
 
     -- Proximity check to Terry NPC
     if not SunsetJobs_ValidateCoords(source,
         vector3(TERRY_COORDS.x, TERRY_COORDS.y, TERRY_COORDS.z),
         TERRY_HANDOFF_RADIUS) then
-        return nil, 'Return to Terry at the Vespucci waterfront to hand off the salvage.'
+        return nil, { localeKey = 'jobs.message.return_to_terry_at_the_vespucci_waterfront_to_hand' }
     end
 
     -- [SECTION 35] Idempotency guard: transition stage to 'idle' BEFORE paying out.

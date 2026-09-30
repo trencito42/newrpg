@@ -102,7 +102,7 @@ end
 local function cycleVoiceProximity()
     if not isPmaVoiceStarted() then
         pcall(function()
-            exports.sunset_ui:Notify('Voice chat is unavailable.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('hud.message.voice_chat_is_unavailable'), 'error')
         end)
         return
     end
@@ -112,7 +112,7 @@ end
 local function setVoiceModeIndex(targetIndex)
     if not isPmaVoiceStarted() then
         pcall(function()
-            exports.sunset_ui:Notify('Voice chat is unavailable.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('hud.message.voice_chat_is_unavailable'), 'error')
         end)
         return
     end

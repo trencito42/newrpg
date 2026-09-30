@@ -208,7 +208,7 @@ const ClanPanels = {
                     ? `CLAN <span>${clanName} · <span style="color:${color}">[${clanTag}]</span></span>`
                     : `CLAN <span>${clanName}</span>`;
             }
-            if (typeEl) typeEl.textContent = 'Private Organization';
+            if (typeEl) typeEl.textContent = I18n.t('dynamic.clans.private_organization');
 
             // Sidebar Tab Toggles
             document.querySelector('[data-clan-tab="overview"]')?.classList.remove('hidden');
@@ -302,8 +302,8 @@ const ClanPanels = {
         } else {
             $('#clan-overview-membership')?.classList.add('hidden');
             // Guest / Registration Mode
-            if (title) title.innerHTML = 'CLAN <span>REGISTRATION</span>';
-            if (typeEl) typeEl.textContent = 'Register a clan';
+            if (title) title.innerHTML = I18n.t('dynamic.clans.clan_registration');
+            if (typeEl) typeEl.textContent = I18n.t('dynamic.clans.register_a_clan');
 
             document.querySelector('[data-clan-tab="overview"]')?.classList.add('hidden');
             document.querySelector('[data-clan-tab="roster"]')?.classList.add('hidden');
@@ -321,7 +321,7 @@ const ClanPanels = {
                 );
                 const costEl = $('#clan-create-cost');
                 if (costEl) {
-                    costEl.textContent = `Cost: ${Number(payload.creationCost || 500).toLocaleString()} Blaze Points — you have ${Number(payload.accountCoins || 0).toLocaleString()} BP`;
+                    costEl.textContent = I18n.t('dynamic.clans.cost_value0_blaze_points_you_have_value1_bp', { value0: Number(payload.creationCost || 500).toLocaleString(), value1: Number(payload.accountCoins || 0).toLocaleString() });
                 }
             }
             this.updateCreatePreview();

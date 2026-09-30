@@ -25,7 +25,10 @@ const document = {
         return [];
     },
 };
-const window = { dispatchEvent(event) { this.lastEvent = event; } };
+const window = {
+    dispatchEvent(event) { this.lastEvent = event; },
+    addEventListener(name, cb) { listeners.set(`window:${name}`, cb); },
+};
 const context = vm.createContext({ window, document, console, Intl, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail; } } });
 const source = fs.readFileSync(path.resolve(__dirname, '../resources/[sunset]/sunset_ui/web/js/i18n.js'), 'utf8');
 const generatedSource = fs.readFileSync(path.resolve(__dirname, '../resources/[sunset]/sunset_ui/web/js/i18n.generated.js'), 'utf8');
@@ -47,4 +50,6 @@ assert(document.documentElement.lang === 'ro', 'document language did not update
 assert(window.lastEvent?.type === 'sunset:localeChanged', 'locale event not dispatched');
 assert(window.I18n.setLocale('xx') === false && window.I18n.getLocale() === 'ro', 'invalid locale changed state');
 assert(window.I18n.t('does.not.exist') === '[?does.not.exist]', 'missing-key marker failed');
+listeners.get('window:message')?.({ data: { action: 'localeSet', data: { locale: 'en' } } });
+assert(window.I18n.getLocale() === 'en', 'standalone NUI locale message failed');
 console.log('NUI localization tests OK: locale validation, interpolation, live rerender, attributes, event, and fallback marker.');

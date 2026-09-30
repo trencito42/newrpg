@@ -113,36 +113,36 @@ end
 local function validateAssetOwnership(source, asset)
     local char = character(source)
     if not char or not asset or not ASSET_TYPES[asset.assetType] then
-        return nil, 'Invalid trade asset.'
+        return nil, { localeKey = 'inventory.message.invalid_trade_asset' }
     end
     local assetId = tonumber(asset.id)
-    if not assetId then return nil, 'Invalid trade asset.' end
+    if not assetId then return nil, { localeKey = 'inventory.message.invalid_trade_asset' } end
 
     if asset.assetType == 'vehicle' then
         local row = MySQL.single.await(
             'SELECT id, stored, destroyed FROM vehicles WHERE id = ? AND character_id = ?',
             { assetId, char.id }
         )
-        if not row then return nil, ('%s no longer owns that vehicle.'):format(displayName(source)) end
+        if not row then return nil, { localeKey = 'inventory.message.value_no_longer_owns_that_vehicle', formatArgs = { displayName(source) } } end
         if row.destroyed == 1 or row.destroyed == true or row.destroyed == '1' then
-            return nil, 'Destroyed vehicles cannot be traded.'
+            return nil, { localeKey = 'inventory.message.destroyed_vehicles_cannot_be_traded' }
         end
         if tonumber(row.stored) ~= 1 then
-            return nil, 'Only garage-stored vehicles can be traded.'
+            return nil, { localeKey = 'inventory.message.only_garage_stored_vehicles_can_be_traded' }
         end
     elseif asset.assetType == 'property' then
         local row = MySQL.single.await(
             'SELECT id FROM properties WHERE id = ? AND owner_character_id = ? AND enabled = 1',
             { assetId, char.id }
         )
-        if not row then return nil, ('%s no longer owns that house.'):format(displayName(source)) end
+        if not row then return nil, { localeKey = 'inventory.message.value_no_longer_owns_that_house', formatArgs = { displayName(source) } } end
     elseif asset.assetType == 'business' then
         if GetResourceState('sunset_businesses') ~= 'started' then
-            return nil, 'Business trading is unavailable.'
+            return nil, { localeKey = 'inventory.message.business_trading_is_unavailable' }
         end
         local row = exports.sunset_businesses:GetBusinessRow(assetId)
         if not row or tonumber(row.ownerCharacterId) ~= tonumber(char.id) then
-            return nil, ('%s no longer owns that business.'):format(displayName(source))
+            return nil, { localeKey = 'inventory.message.value_no_longer_owns_that_business', formatArgs = { displayName(source) } }
         end
     end
     return true
@@ -150,7 +150,7 @@ end
 
 local function receiverCanTakeAsset(receiverSource, asset)
     local char = character(receiverSource)
-    if not char then return nil, 'Both characters must remain loaded.' end
+    if not char then return nil, { localeKey = 'inventory.message.both_characters_must_remain_loaded' } end
 
     if asset.assetType == 'property' then
         local maxOwned = 0
@@ -163,12 +163,12 @@ local function receiverCanTakeAsset(receiverSource, asset)
                 { char.id }
             )) or 0
             if owned >= maxOwned then
-                return nil, ('%s cannot own more than %d houses.'):format(displayName(receiverSource), maxOwned)
+                return nil, { localeKey = 'inventory.message.value_cannot_own_more_than_value_houses', formatArgs = { displayName(receiverSource), maxOwned } }
             end
         end
     elseif asset.assetType == 'business' then
         if GetResourceState('sunset_businesses') ~= 'started' then
-            return nil, 'Business trading is unavailable.'
+            return nil, { localeKey = 'inventory.message.business_trading_is_unavailable' }
         end
         local maxOwned = 0
         if GetResourceState('sunset_businesses') == 'started' then
@@ -180,7 +180,7 @@ local function receiverCanTakeAsset(receiverSource, asset)
                 { char.id }
             )) or 0
             if owned >= maxOwned then
-                return nil, ('%s cannot own more than %d businesses.'):format(displayName(receiverSource), maxOwned)
+                return nil, { localeKey = 'inventory.message.value_cannot_own_more_than_value_businesses', formatArgs = { displayName(receiverSource), maxOwned } }
             end
         end
     end
@@ -294,22 +294,22 @@ end
 
 local function validateTrade(trade)
     if not trade or TradesByPlayer[trade.a] ~= trade or TradesByPlayer[trade.b] ~= trade then
-        return nil, 'This trade is no longer active.'
+        return nil, { localeKey = 'inventory.message.this_trade_is_no_longer_active' }
     end
     if not closeEnough(trade.a, trade.b) then
-        return nil, 'Trade cancelled because the players moved more than 3.5 metres apart.'
+        return nil, { localeKey = 'inventory.message.trade_cancelled_because_the_players_moved_more_than_3' }
     end
     for _, owner in ipairs({ trade.a, trade.b }) do
         for rowId, offered in pairs(trade.offers[owner]) do
             local row = findRow(owner, rowId)
             if not row or row.item ~= offered.item or (tonumber(row.count) or 0) < offered.count then
-                return nil, ('%s inventory changed. Reopen the trade.'):format(displayName(owner))
+                return nil, { localeKey = 'inventory.message.value_inventory_changed_reopen_the_trade', formatArgs = { displayName(owner) } }
             end
         end
         local char = character(owner)
         local cashOffer = offeredCash(trade, owner)
         if cashOffer > 0 and (not char or cashOffer > (tonumber(char.cash) or 0)) then
-            return nil, ('%s no longer has enough cash for this trade.'):format(displayName(owner))
+            return nil, { localeKey = 'inventory.message.value_no_longer_has_enough_cash_for_this_trade', formatArgs = { displayName(owner) } }
         end
         for _, asset in pairs(assetsMap(trade, owner)) do
             local assetOk, assetErr = validateAssetOwnership(owner, asset)
@@ -340,8 +340,9 @@ local function canReceiveItems(source, rows)
         local weapon = def and def.weapon and string.upper(def.weapon)
         if weapon and not LICENSE_EXEMPT_WEAPONS[weapon]
             and not exports.sunset_licenses:HasLicense(source, 'weapon') then
-            return nil, ('%s cannot receive %s without a valid Firearm License.'):format(
-                displayName(source), def.label or row.item)
+            return nil, { localeKey = 'inventory.message.value_cannot_receive_value_without_a_valid_firearm_license', formatArgs = {
+                displayName(source), def.label or row.item
+            } }
         end
     end
     return true
@@ -371,7 +372,7 @@ local function completeTrade(trade)
     local aCash, bCash = offeredCash(trade, trade.a), offeredCash(trade, trade.b)
     local aAssets, bAssets = assetsArray(trade, trade.a), assetsArray(trade, trade.b)
     if not tradeSideHasOffer(trade, trade.a) and not tradeSideHasOffer(trade, trade.b) then
-        return nil, 'Add at least one item, cash, or asset before accepting the trade.'
+        return nil, { localeKey = 'inventory.message.add_at_least_one_item_cash_or_asset_before' }
     end
 
     for _, asset in ipairs(bAssets) do
@@ -384,19 +385,19 @@ local function completeTrade(trade)
     end
 
     local maxWeight = tonumber(Sunset.Config.MaxWeight) or 30
-    if inventoryWeightAfter(trade.a, aOut, bOut) > maxWeight then return nil, ('%s has insufficient carry capacity.'):format(displayName(trade.a)) end
-    if inventoryWeightAfter(trade.b, bOut, aOut) > maxWeight then return nil, ('%s has insufficient carry capacity.'):format(displayName(trade.b)) end
+    if inventoryWeightAfter(trade.a, aOut, bOut) > maxWeight then return nil, { localeKey = 'inventory.message.value_has_insufficient_carry_capacity', formatArgs = { displayName(trade.a) } } end
+    if inventoryWeightAfter(trade.b, bOut, aOut) > maxWeight then return nil, { localeKey = 'inventory.message.value_has_insufficient_carry_capacity', formatArgs = { displayName(trade.b) } } end
     local receiveOk, receiveErr = canReceiveItems(trade.a, bOut)
     if not receiveOk then return nil, receiveErr end
     receiveOk, receiveErr = canReceiveItems(trade.b, aOut)
     if not receiveOk then return nil, receiveErr end
 
     local aSlots, bSlots = freeSlotsAfter(trade.a, aOut), freeSlotsAfter(trade.b, bOut)
-    if #aSlots < #bOut then return nil, ('%s needs more free inventory slots.'):format(displayName(trade.a)) end
-    if #bSlots < #aOut then return nil, ('%s needs more free inventory slots.'):format(displayName(trade.b)) end
+    if #aSlots < #bOut then return nil, { localeKey = 'inventory.message.value_needs_more_free_inventory_slots', formatArgs = { displayName(trade.a) } } end
+    if #bSlots < #aOut then return nil, { localeKey = 'inventory.message.value_needs_more_free_inventory_slots', formatArgs = { displayName(trade.b) } } end
 
     local aChar, bChar = character(trade.a), character(trade.b)
-    if not aChar or not bChar then return nil, 'Both characters must remain loaded.' end
+    if not aChar or not bChar then return nil, { localeKey = 'inventory.message.both_characters_must_remain_loaded' } end
     -- All offered value is committed on one database connection. Returning false
     -- rolls the complete exchange back; no compensation chain can leave half a
     -- trade behind after a query failure or disconnect.
@@ -502,7 +503,7 @@ local function completeTrade(trade)
         return true
     end)
     if not transactionOk then
-        return nil, 'Trade could not be committed because an offer changed. Nothing was moved; review both offers and retry.'
+        return nil, { localeKey = 'inventory.message.trade_could_not_be_committed_because_an_offer_changed' }
     end
 
     ReloadInventory(trade.a)
@@ -534,17 +535,17 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRequest', function(source, data)
     local target = tonumber(type(data) == 'table' and data.targetId)
-    if not target or target == source then return nil, 'Choose another nearby player.' end
+    if not target or target == source then return nil, { localeKey = 'inventory.message.choose_another_nearby_player' } end
     -- [AUDIT P6-05] Downed/jailed players cannot trade (neither side).
     if exports.sunset_core:IsIncapacitated(source) or exports.sunset_core:IsIncapacitated(target) then
-        return nil, 'One of the players cannot trade right now.'
+        return nil, { localeKey = 'inventory.message.one_of_the_players_cannot_trade_right_now' }
     end
-    if TradesByPlayer[source] or TradesByPlayer[target] then return nil, 'One of the players already has an active trade.' end
-    if not closeEnough(source, target) then return nil, 'Move within 3.5 metres of that player.' end
+    if TradesByPlayer[source] or TradesByPlayer[target] then return nil, { localeKey = 'inventory.message.one_of_the_players_already_has_an_active_trade' } end
+    if not closeEnough(source, target) then return nil, { localeKey = 'inventory.message.move_within_3_5_metres_of_that_player' } end
     -- [ANTI-SPAM] If this target already has a pending invite from this sender, refuse.
     local existing = TradeInvites[target]
     if existing and existing.from == source and existing.expiresAt >= os.time() then
-        return nil, 'You already sent a trade request — wait for them to accept or decline.'
+        return nil, { localeKey = 'inventory.message.you_already_sent_a_trade_request_wait_for_them' }
     end
     TradeInvites[target] = { from = source, expiresAt = os.time() + INVITE_SECONDS }
     TriggerClientEvent('sunset:inventory:tradeInvite', target, source, displayName(source))
@@ -555,9 +556,9 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeAccept', function(so
     local invite = TradeInvites[source]
     TradeInvites[source] = nil
     if not invite or invite.expiresAt < os.time() or not closeEnough(source, invite.from) then
-        return nil, 'No valid nearby trade request is waiting.'
+        return nil, { localeKey = 'inventory.message.no_valid_nearby_trade_request_is_waiting' }
     end
-    if TradesByPlayer[source] or TradesByPlayer[invite.from] then return nil, 'One of the players already has an active trade.' end
+    if TradesByPlayer[source] or TradesByPlayer[invite.from] then return nil, { localeKey = 'inventory.message.one_of_the_players_already_has_an_active_trade' } end
     nextTradeId = nextTradeId + 1
     local trade = { id = nextTradeId, a = invite.from, b = source, offers = {}, cash = {}, assets = {}, accepted = {}, busy = false }
     trade.offers[trade.a], trade.offers[trade.b] = {}, {}
@@ -571,9 +572,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeDecline', function(source)
     local invite = TradeInvites[source]
     TradeInvites[source] = nil
-    if not invite then return nil, 'No trade request is waiting.' end
+    if not invite then return nil, { localeKey = 'inventory.message.no_trade_request_is_waiting' } end
     if GetPlayerName(invite.from) then
-        TriggerClientEvent('sunset:client:notify', invite.from, ('%s declined your trade request.'):format(displayName(source)), 'info')
+        TriggerClientEvent('sunset:client:notify', invite.from, exports.sunset_core:TFor(invite.from, 'inventory.message.value_declined_your_trade_request', displayName(source)), 'info')
     end
     return { message = 'Trade request declined.', kind = 'info' }
 end)
@@ -584,9 +585,9 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOffer', function(sou
     if not valid then if trade then endTrade(trade, err, 'error') end return nil, err end
     local rowId = tonumber(type(data) == 'table' and data.rowId)
     local row = findRow(source, rowId)
-    if not row then return nil, 'That item is no longer in your inventory.' end
+    if not row then return nil, { localeKey = 'inventory.message.that_item_is_no_longer_in_your_inventory' } end
     local count = math.floor(tonumber(data.count) or tonumber(row.count) or 1)
-    if count < 1 or count > (tonumber(row.count) or 0) then return nil, 'Invalid item amount.' end
+    if count < 1 or count > (tonumber(row.count) or 0) then return nil, { localeKey = 'inventory.message.invalid_item_amount' } end
     trade.offers[source][rowId] = itemView(row, count)
     trade.finalizing = false
     trade.countdown = 0
@@ -597,7 +598,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemove', function(source, data)
     local trade = TradesByPlayer[source]
-    if not trade then return nil, 'No active trade.' end
+    if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     trade.offers[source][tonumber(type(data) == 'table' and data.rowId)] = nil
     trade.finalizing = false
     trade.countdown = 0
@@ -611,10 +612,10 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferCash', function
     local valid, err = validateTrade(trade)
     if not valid then if trade then endTrade(trade, err, 'error') end return nil, err end
     local char = character(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'inventory.message.character_not_loaded' } end
     local amount = math.floor(tonumber(type(data) == 'table' and data.amount) or 0)
-    if amount < 0 then return nil, 'Invalid cash amount.' end
-    if amount > (tonumber(char.cash) or 0) then return nil, 'You do not have that much cash.' end
+    if amount < 0 then return nil, { localeKey = 'inventory.message.invalid_cash_amount' } end
+    if amount > (tonumber(char.cash) or 0) then return nil, { localeKey = 'inventory.message.you_do_not_have_that_much_cash' } end
     trade.cash[source] = amount
     trade.finalizing = false
     trade.countdown = 0
@@ -628,7 +629,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeCatalog', function(source)
     local trade = TradesByPlayer[source]
-    if not trade then return nil, 'No active trade.' end
+    if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     return buildTradeCatalog(source)
 end)
 
@@ -644,10 +645,10 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferAsset', functio
     if not ASSET_TYPES[assetType] or not assetId then
         print(('^3[trade]^7 offerAsset rejected src=%s type=%s id=%s'):format(
             tostring(source), tostring(assetType), tostring(assetId)))
-        return nil, 'Invalid trade asset.'
+        return nil, { localeKey = 'inventory.message.invalid_trade_asset' }
     end
     if assetsMap(trade, source)[assetType] then
-        return nil, 'Remove your current asset offer of that type first.'
+        return nil, { localeKey = 'inventory.message.remove_your_current_asset_offer_of_that_type_first' }
     end
 
     local catalog = buildTradeCatalog(source)
@@ -665,7 +666,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferAsset', functio
         print(('^3[trade]^7 offerAsset no catalog match src=%s type=%s id=%s (catalog v=%d p=%d b=%d)'):format(
             tostring(source), tostring(assetType), tostring(assetId),
             #catalog.vehicles, #catalog.properties, #catalog.businesses))
-        return nil, 'That asset is no longer available to trade.'
+        return nil, { localeKey = 'inventory.message.that_asset_is_no_longer_available_to_trade' }
     end
 
     local assetOk, assetErr = validateAssetOwnership(source, match)
@@ -685,9 +686,9 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveAsset', function(source, data)
     local trade = TradesByPlayer[source]
-    if not trade then return nil, 'No active trade.' end
+    if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     local assetType = type(data) == 'table' and data.assetType
-    if not ASSET_TYPES[assetType] then return nil, 'Invalid trade asset.' end
+    if not ASSET_TYPES[assetType] then return nil, { localeKey = 'inventory.message.invalid_trade_asset' } end
     trade.assets[source][assetType] = nil
     trade.finalizing = false
     trade.countdown = 0
@@ -698,7 +699,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveCash', function(source)
     local trade = TradesByPlayer[source]
-    if not trade then return nil, 'No active trade.' end
+    if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     trade.cash[source] = 0
     trade.finalizing = false
     trade.countdown = 0
@@ -711,7 +712,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeConfirm', function(s
     local trade = TradesByPlayer[source]
     local valid, err = validateTrade(trade)
     if not valid then if trade then endTrade(trade, err, 'error') end return nil, err end
-    if trade.busy then return nil, 'Trade is already processing.' end
+    if trade.busy then return nil, { localeKey = 'inventory.message.trade_is_already_processing' } end
     trade.accepted[source] = true
     if not (trade.accepted[trade.a] and trade.accepted[trade.b]) then
         sendTradeState(trade)
@@ -767,7 +768,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeCancel', function(source)
     local trade = TradesByPlayer[source]
-    if not trade then return nil, 'No active trade.' end
+    if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     trade.finalizing = false
     endTrade(trade, ('Trade cancelled by %s.'):format(displayName(source)), 'info')
     return { message = 'Trade cancelled.', kind = 'info' }
@@ -780,13 +781,13 @@ end
 exports.sunset_core:RegisterCallback('sunset:inventory:drop', function(source, data)
     local rowId = tonumber(type(data) == 'table' and data.rowId)
     local row = findRow(source, rowId)
-    if not row then return nil, 'That item is no longer in your inventory.' end
+    if not row then return nil, { localeKey = 'inventory.message.that_item_is_no_longer_in_your_inventory' } end
     local count = math.floor(tonumber(data.count) or tonumber(row.count) or 1)
-    if count < 1 or count > (tonumber(row.count) or 0) then return nil, 'Invalid drop amount.' end
+    if count < 1 or count > (tonumber(row.count) or 0) then return nil, { localeKey = 'inventory.message.invalid_drop_amount' } end
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Your character is not available.' end
+    if not ped or ped == 0 then return nil, { localeKey = 'inventory.message.your_character_is_not_available' } end
     local coords = GetEntityCoords(ped)
-    if not RemoveItemById(source, row.id, row.item, count) then return nil, 'Inventory changed before the item could be dropped.' end
+    if not RemoveItemById(source, row.id, row.item, count) then return nil, { localeKey = 'inventory.message.inventory_changed_before_the_item_could_be_dropped' } end
     nextDropId = nextDropId + 1
     local drop = {
         id = nextDropId,
@@ -813,16 +814,16 @@ end)
 exports.sunset_core:RegisterCallback('sunset:inventory:pickupDrop', function(source, dropId)
     dropId = tonumber(dropId)
     local drop = dropId and Drops[dropId]
-    if not drop or drop.expiresAt <= os.time() then return nil, 'That drop expired or was already collected.' end
-    if DropLocks[dropId] then return nil, 'Another player is collecting this drop.' end
+    if not drop or drop.expiresAt <= os.time() then return nil, { localeKey = 'inventory.message.that_drop_expired_or_was_already_collected' } end
+    if DropLocks[dropId] then return nil, { localeKey = 'inventory.message.another_player_is_collecting_this_drop' } end
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Your character is not available.' end
+    if not ped or ped == 0 then return nil, { localeKey = 'inventory.message.your_character_is_not_available' } end
     local c = drop.coords
-    if #(GetEntityCoords(ped) - vector3(c.x, c.y, c.z)) > 2.5 then return nil, 'Move closer to the dropped bag.' end
+    if #(GetEntityCoords(ped) - vector3(c.x, c.y, c.z)) > 2.5 then return nil, { localeKey = 'inventory.message.move_closer_to_the_dropped_bag' } end
     DropLocks[dropId] = true
     if not TryAddItem(source, drop.item, drop.count, nil, drop.metadata) then
         DropLocks[dropId] = nil
-        return nil, 'Not enough inventory weight or free slots for this drop.'
+        return nil, { localeKey = 'inventory.message.not_enough_inventory_weight_or_free_slots_for_this' }
     end
     Drops[dropId] = nil
     DropLocks[dropId] = nil

@@ -462,7 +462,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 if not data then
                     exports.sunset_ui:Notify(err or 'Could not start Hunter shift.', 'error', 5000)
                 else
-                    exports.sunset_ui:Notify('Hunter shift started. Visit Mason to pick a contract.', 'success', 5000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.hunter_shift_started_visit_mason_to_pick_a_contract'), 'success', 5000)
                 end
             end)
         elseif wp.jobId == 'diver' then
@@ -471,7 +471,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 if not data then
                     exports.sunset_ui:Notify(err or 'Could not start Diver shift.', 'error', 5000)
                 else
-                    exports.sunset_ui:Notify('Diver shift started. Rent gear and pick a contract with Terry.', 'success', 5000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.diver_shift_started_rent_gear_and_pick_a_contract'), 'success', 5000)
                 end
             end)
         end
@@ -488,7 +488,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     Sunset.JobClient.hideObjective()
                 end
                 SetWaypointOff()
-                exports.sunset_ui:Notify('Shift cancelled.', 'info', 4000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.shift_cancelled'), 'info', 4000)
             else
                 exports.sunset_ui:Notify(err or 'Could not cancel shift.', 'error')
             end
@@ -562,7 +562,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             end
 
         elseif specId == 'equipment' and wp.jobId == 'hunter' then
-            exports.sunset_ui:Notify('Required: Bolt-action Rifle + Hunting Knife. Available at Ammu-Nation.', 'info', 7000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.required_bolt_action_rifle_hunting_knife_available_at_ammu'), 'info', 7000)
 
         -- ── Diver special actions ───────────────────────────────
         elseif specId == 'contracts' and wp.jobId == 'diver' then

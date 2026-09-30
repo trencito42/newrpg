@@ -13,9 +13,9 @@ end
 
 local function requireLeaderPerm(source, perm)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded_reconnect_and_select_it' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'No faction' end
+    if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
     if FactionCore.isFactionLeader(char.id, factionId) then return char, factionId end
     if not FactionCore.hasManagePerm(source, perm) then
         return nil, FactionCore.manageAccessError(source, perm, 'manage faction members')
@@ -187,13 +187,13 @@ exports.sunset_core:RegisterCallback('sunset:factionUninvite', function(source, 
 
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     local target = FactionCore.getChar(targetId)
     local targetFaction, targetGrade
     if target then targetFaction, targetGrade = FactionCore.getFactionOf(target) end
     if not target or targetFaction ~= factionId then
-        return nil, 'Target is not in your faction'
+        return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' }
     end
 
     FactionCore.broadcastManagement(factionId, source,
@@ -211,21 +211,21 @@ exports.sunset_core:RegisterCallback('sunset:factionGiveRank', function(source, 
 
     targetId = tonumber(targetId)
     newGrade = tonumber(newGrade)
-    if not targetId or newGrade == nil then return nil, 'Usage: /fgiverank [id] [grade]' end
+    if not targetId or newGrade == nil then return nil, { localeKey = 'factions.message.usage_fgiverank_id_grade' } end
     if not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
 
     local target = FactionCore.getChar(targetId)
     local targetFaction, targetGrade = FactionCore.getFactionOf(target)
     if not target or targetFaction ~= factionId then
-        return nil, 'Target is not in your faction'
+        return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' }
     end
 
     local faction = Sunset.Factions[factionId]
-    if not faction or not faction.grades[newGrade] then return nil, 'Invalid grade' end
+    if not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
     if newGrade >= (myGrade or 0) and source ~= targetId and not FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, 'You cannot set rank to your level or higher'
+        return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
     end
 
     if newGrade > (tonumber(targetGrade) or 0) then
@@ -250,21 +250,21 @@ exports.sunset_core:RegisterCallback('sunset:factionWarn', function(source, targ
     targetId = tonumber(targetId)
     reason = reason or 'No reason given'
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     local target = FactionCore.getChar(targetId)
     if not target or select(1, FactionCore.getFactionOf(target)) ~= factionId then
-        return nil, 'Target is not in your faction'
+        return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' }
     end
     if FactionCore.isFactionLeader(target.id, factionId) then
-        return nil, 'You cannot warn a faction leader'
+        return nil, { localeKey = 'factions.message.you_cannot_warn_a_faction_leader' }
     end
     local _, myGrade = FactionCore.getFactionOf(char)
     local _, targetGrade = FactionCore.getFactionOf(target)
     if (targetGrade or 0) >= (myGrade or 0)
         and tonumber(target.id) ~= tonumber(char.id)
         and not FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, 'You cannot warn members at your rank or higher'
+        return nil, { localeKey = 'factions.message.you_cannot_warn_members_at_your_rank_or_higher' }
     end
 
     local warnCount = tonumber(MySQL.scalar.await(
@@ -272,7 +272,7 @@ exports.sunset_core:RegisterCallback('sunset:factionWarn', function(source, targ
         { factionId, target.id }
     )) or 0
     if warnCount >= 3 then
-        return nil, 'This member already has 3/3 faction warnings'
+        return nil, { localeKey = 'factions.message.this_member_already_has_3_3_faction_warnings' }
     end
 
     pcall(function()
@@ -295,7 +295,7 @@ local function setFactionMotd(source, message)
     local char, factionId = requireLeaderPerm(source, 'fmotd')
     if not char then return nil, factionId end
     message = tostring(message or ''):gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 512)
-    if message == '' then return nil, 'The MOTD cannot be empty. Use /fmotd with no text to read it.' end
+    if message == '' then return nil, { localeKey = 'factions.message.the_motd_cannot_be_empty_use_fmotd_with_no' } end
     local saved, saveError = pcall(function()
         MySQL.insert.await([[
             INSERT INTO faction_motd (faction_id, message, updated_by) VALUES (?, ?, ?)
@@ -304,7 +304,7 @@ local function setFactionMotd(source, message)
     end)
     if not saved then
         print(('[sunset_factions] Failed to save MOTD for %s: %s'):format(factionId, tostring(saveError)))
-        return nil, 'The faction MOTD could not be saved. Please try again or contact staff.'
+        return nil, { localeKey = 'factions.message.the_faction_motd_could_not_be_saved_please_try' }
     end
     FactionCore.auditLog(factionId, char.id, 'fmotd', nil, { message = message })
     local faction = Sunset.Factions[factionId]
@@ -318,9 +318,9 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:factionGetMotd', function(source)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded_reconnect_and_select_it' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'You are not a member of a faction.' end
+    if not factionId then return nil, { localeKey = 'factions.message.you_are_not_a_member_of_a_faction' } end
     local faction = Sunset.Factions[factionId]
     return { factionId = factionId, label = faction and faction.label or factionId, message = getFactionMotd(factionId) }
 end)
@@ -393,7 +393,7 @@ exports.sunset_core:RegisterCallback('sunset:factionMembers', function(source)
     local char = FactionCore.getChar(source)
     if not char then return nil end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'No faction' end
+    if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
 
     local motd = getFactionMotd(factionId)
 

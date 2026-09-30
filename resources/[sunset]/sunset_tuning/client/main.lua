@@ -172,7 +172,7 @@ end
 local function openPanel(shop)
     local veh = getDriverVehicle()
     if veh == 0 then
-        notify('Get in the driver seat of your car for ECU tuning', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.get_in_the_driver_seat_of_your_car_for'), 'error')
         return
     end
 
@@ -181,7 +181,7 @@ local function openPanel(shop)
     currentPlate = STC.plateOf(veh)
     currentShop = shop or nearestShop()
     if not currentShop then
-        notify('You are not at a tuning shop', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.you_are_not_at_a_tuning_shop'), 'error')
         return
     end
 
@@ -193,7 +193,7 @@ local function openPanel(shop)
 
     local caps = SunsetTuning.ProfileResolver.Resolve(modelName, GetVehicleClass(veh))
     if not caps.supported then
-        notify('ECU tuning is not available for this vehicle type.', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.ecu_tuning_is_not_available_for_this_vehicle_type'), 'error')
         return
     end
 
@@ -339,7 +339,7 @@ RegisterNUICallback('tuningSave', function(data, cb)
     if costVal > 0 then
         notify(('ECU & modifications saved — $%d'):format(costVal), 'success')
     else
-        notify('Modifications saved successfully — $0', 'success')
+        notify(exports.sunset_core:Translate('tuning.message.modifications_saved_successfully_0'), 'success')
     end
     sendUi('saved', { saved = true, tune = draftTune, cosmetics = draftCosmetics, plate = currentPlate })
     cb({ ok = true, tune = draftTune })

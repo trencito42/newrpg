@@ -8,11 +8,11 @@ local Cfg = SunsetTestAgent.Config
 
 local function requireAdmin(source)
     if GetConvar(Cfg.enabledConvar, 'false') ~= 'true' then
-        return false, 'The test agent is disabled (kill switch off).'
+        return false, { localeKey = 'test_agent.message.the_test_agent_is_disabled_kill_switch_off' }
     end
     local level = TestAgentAuth.adminLevel(source)
     if level < (Cfg.minAdminLevel or 5) then
-        return false, ('Admin level %d < %d required.'):format(level, Cfg.minAdminLevel or 5)
+        return false, { localeKey = 'test_agent.message.admin_level_value_value_required', formatArgs = { level, Cfg.minAdminLevel or 5 } }
     end
     return true
 end

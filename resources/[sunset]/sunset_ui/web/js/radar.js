@@ -57,7 +57,7 @@ const RadarHud = {
         this._panel.classList.remove('hidden');
 
         if (this._title) this._title.textContent = data.title || 'Mobile Radar';
-        if (this._meta) this._meta.textContent = `Limit ${limit} km/h`;
+        if (this._meta) this._meta.textContent = I18n.t('dynamic.radar.limit_value0_km_h', { value0: limit });
         if (this._message) this._message.textContent = data.message || 'Scanning lane…';
         if (this._speed) this._speed.textContent = String(speed).padStart(3, '0');
         if (this._plate) this._plate.textContent = data.plate || '--------';
@@ -190,10 +190,10 @@ const RadarAlert = {
                     : `AUTOMATIC FINE: $${fine.toLocaleString('en-US')} (UNPAID)`;
                 this._sub.style.display = 'inline-block';
             } else if (data.officer) {
-                this._sub.textContent = `RECORDED BY ${String(data.officer).toUpperCase()}`;
+                this._sub.textContent = I18n.t('dynamic.radar.recorded_by_value0', { value0: String(data.officer).toUpperCase() });
                 this._sub.style.display = 'inline-block';
             } else {
-                this._sub.textContent = 'EXCESSIVE SPEED RECORDED';
+                this._sub.textContent = I18n.t('dynamic.radar.excessive_speed_recorded');
                 this._sub.style.display = 'inline-block';
             }
         }
@@ -207,9 +207,9 @@ const RadarAlert = {
                 this._statFine.className = paid ? 'radar-alert__stat-value is-paid' : 'radar-alert__stat-value is-fine';
                 if (this._statFineLabel) this._statFineLabel.textContent = paid ? 'Charged to Account' : 'Unpaid Fine';
             } else {
-                this._statFine.textContent = 'Warning';
+                this._statFine.textContent = I18n.t('dynamic.radar.warning');
                 this._statFine.className = 'radar-alert__stat-value is-danger';
-                if (this._statFineLabel) this._statFineLabel.textContent = 'Penalty';
+                if (this._statFineLabel) this._statFineLabel.textContent = I18n.t('dynamic.radar.penalty');
             }
         }
 

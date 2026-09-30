@@ -36,22 +36,22 @@ local SeatsTaken = {} -- [slotId] = src
 
 exports.sunset_core:RegisterCallback('sunset:slots:tryPlay', function(source, slotId)
     local src = source
-    if not slotId then return false, 'Invalid slot machine.' end
+    if not slotId then return false, { localeKey = 'slots.message.invalid_slot_machine' } end
     local idStr = tostring(slotId)
     if SeatsTaken[idStr] and SeatsTaken[idStr] ~= src then
-        return false, 'This slot machine is currently in use.'
+        return false, { localeKey = 'slots.message.this_slot_machine_is_currently_in_use' }
     end
 
     local chips = countChips(src)
     local minBet = Config.MinBet or 50
     if chips < minBet then
-        return false, ('You need at least %d Casino Chips to play. Exchange cash for chips at the cashier.'):format(minBet)
+        return false, { localeKey = 'slots.message.you_need_at_least_value_casino_chips_to_play', formatArgs = { minBet } }
     end
 
     -- Take up to 25,000 chips for the slot machine session (or all chips if player has fewer)
     local sessionChips = math.min(chips, 25000)
     if not takeChips(src, sessionChips) then
-        return false, 'Could not deduct chips from inventory.'
+        return false, { localeKey = 'slots.message.could_not_deduct_chips_from_inventory' }
     end
 
     SeatsTaken[idStr] = src
@@ -153,4 +153,4 @@ AddEventHandler('playerDropped', function()
     end
 end)
 
-print('^2[sunset_slots]^7 Sizzling 5-reel slot machines online')
+print('^2[sunset_slots]^7 Sizzling 5-reel slot machines online')

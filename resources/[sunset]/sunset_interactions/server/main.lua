@@ -9,29 +9,29 @@ end
 local function nearbyPlayers(source, targetId, range)
     targetId = tonumber(targetId)
     if not targetId or targetId <= 0 or not GetPlayerName(targetId) then
-        return nil, 'That player is no longer online. Close the menu and select them again.'
+        return nil, { localeKey = 'interactions.message.that_player_is_no_longer_online_close_the_menu' }
     end
-    if targetId == source then return nil, 'You cannot interact with yourself from this menu.' end
+    if targetId == source then return nil, { localeKey = 'interactions.message.you_cannot_interact_with_yourself_from_this_menu' } end
     if GetPlayerRoutingBucket(source) ~= GetPlayerRoutingBucket(targetId) then
-        return nil, 'That player is no longer in your session.'
+        return nil, { localeKey = 'interactions.message.that_player_is_no_longer_in_your_session' }
     end
 
     local sourcePed = GetPlayerPed(source)
     local targetPed = GetPlayerPed(targetId)
     if not sourcePed or sourcePed == 0 or not targetPed or targetPed == 0 then
-        return nil, 'One of the characters is not available yet. Try again in a moment.'
+        return nil, { localeKey = 'interactions.message.one_of_the_characters_is_not_available_yet_try' }
     end
 
     local sourceCoords = GetEntityCoords(sourcePed)
     local targetCoords = GetEntityCoords(targetPed)
     if #(sourceCoords - targetCoords) > (range or INTERACTION_RANGE) then
-        return nil, ('Move closer to player #%d. You must remain within %.1f metres.'):format(targetId, range or INTERACTION_RANGE)
+        return nil, { localeKey = 'interactions.message.move_closer_to_player_value_you_must_remain_within', formatArgs = { targetId, range or INTERACTION_RANGE } }
     end
 
     local sourceChar = exports.sunset_core:GetCharacter(source)
     local targetChar = exports.sunset_core:GetCharacter(targetId)
     if not sourceChar or not targetChar then
-        return nil, 'Both players must have a loaded character.'
+        return nil, { localeKey = 'interactions.message.both_players_must_have_a_loaded_character' }
     end
     return { sourceChar = sourceChar, targetChar = targetChar, targetId = targetId }
 end
@@ -193,24 +193,24 @@ exports.sunset_core:RegisterCallback('sunset:interactionGiveCash', function(sour
     -- [AUDIT P6-05] Downed/jailed players cannot hand over cash (robbery-at-gunpoint
     -- of a bleeding player must go through the robbery system, not free transfer).
     if exports.sunset_core:IsIncapacitated(source) or exports.sunset_core:IsIncapacitated(targetId) then
-        return nil, 'Cash cannot be exchanged right now.'
+        return nil, { localeKey = 'interactions.message.cash_cannot_be_exchanged_right_now' }
     end
 
     local amount = math.floor(tonumber(rawAmount) or 0)
     if amount < 1 or amount > MAX_CASH_TRANSFER then
-        return nil, ('Enter an amount between $1 and $%s.'):format(MAX_CASH_TRANSFER)
+        return nil, { localeKey = 'interactions.message.enter_an_amount_between_1_and_value', formatArgs = { MAX_CASH_TRANSFER } }
     end
 
     local now = GetGameTimer()
-    if now - (RequestRate[source] or 0) < 1500 then return nil, 'Wait a moment before transferring money again.' end
+    if now - (RequestRate[source] or 0) < 1500 then return nil, { localeKey = 'interactions.message.wait_a_moment_before_transferring_money_again' } end
     RequestRate[source] = now
 
     if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'player_transfer') then
-        return nil, ('You need $%s cash in hand for this transfer.'):format(amount)
+        return nil, { localeKey = 'interactions.message.you_need_value_cash_in_hand_for_this_transfer', formatArgs = { amount } }
     end
     if not exports.sunset_core:AddMoney(pair.targetId, 'cash', amount, 'player_transfer') then
         exports.sunset_core:AddMoney(source, 'cash', amount, 'player_transfer_rollback')
-        return nil, 'The recipient could not receive the money. Your cash was returned.'
+        return nil, { localeKey = 'interactions.message.the_recipient_could_not_receive_the_money_your_cash' }
     end
 
     local giverName = exports.sunset_core:GetPlayerDisplayName(source)
@@ -246,7 +246,7 @@ exports.sunset_core:RegisterCallback('sunset:interactionAddFriend', function(sou
 
     if not ok then
         print(('[sunset_interactions] add contact failed: %s'):format(tostring(dbErr)))
-        return nil, 'The contact could not be saved. Try again.'
+        return nil, { localeKey = 'interactions.message.the_contact_could_not_be_saved_try_again' }
     end
 
     notify(pair.targetId, ('%s added you to their contacts.'):format(exports.sunset_core:GetPlayerDisplayName(source)), 'info', 5000)

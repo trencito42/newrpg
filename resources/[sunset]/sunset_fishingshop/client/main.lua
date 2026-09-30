@@ -49,7 +49,7 @@ local function openFishSellMenu()
             return
         end
         if not invData.items or #invData.items == 0 then
-            exports.sunset_ui:Notify('You have no fish to sell. Caught fish appear in your inventory.', 'info', 6500)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_have_no_fish_to_sell_caught_fish_appear'), 'info', 6500)
             return
         end
 
@@ -216,7 +216,7 @@ end
 -- resource (separate environments). Use the exports; keep a same-resource
 -- global fallback for safety.
 local function worldShowTooltip(id, ped, meta)
-    if GetResourceState('sunset_world') ~= 'started' then return false, 'sunset_world not started' end
+    if GetResourceState('sunset_world') ~= 'started' then return false, { localeKey = 'fishingshop.message.sunset_world_not_started' } end
     local ok, shownOrErr, reason = pcall(function()
         return exports.sunset_world:NpcShowTooltip(id, ped, meta)
     end)
@@ -311,7 +311,7 @@ local function notifyHireError(err)
     debugHire(('FAIL: %s'):format(errMsg))
     if errMsg:find('already work', 1, true)
         or errMsg:find('already', 1, true) then
-        exports.sunset_ui:Notify('You are already a Fisherman! Press Start Shift to begin.', 'info', 7000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_are_already_a_fisherman_press_start_shift_to'), 'info', 7000)
         return
     end
     exports.sunset_ui:Notify(errMsg, 'error', 8000)
@@ -617,7 +617,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         local shopId = (ctx and ctx.shopId) or 'twentyfour7'
         local shop = Sunset.Shops and Sunset.Shops[shopId]
         if not shop then
-            exports.sunset_ui:Notify('Shop unavailable.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.shop_unavailable'), 'error')
             return
         end
         TriggerEvent('sunset:world:openShop', shopId, shop)
@@ -625,7 +625,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     elseif action == 'buy_business' then
         local biz = ctx and ctx.business
         if not biz or not biz.id then
-            exports.sunset_ui:Notify('This business is not for sale.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.this_business_is_not_for_sale'), 'error')
             return
         end
         inCooldown = true
@@ -651,9 +651,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             if ok then
                 syncLocalJob('fisherman', 0)
                 if err == 'already' then
-                    exports.sunset_ui:Notify('You are already a Fisherman! Press Start Shift to begin.', 'info', 8000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_are_already_a_fisherman_press_start_shift_to'), 'info', 8000)
                 else
-                    exports.sunset_ui:Notify('You are now a Fisherman! Press Start Shift to begin.', 'success', 8000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_are_now_a_fisherman_press_start_shift_to'), 'success', 8000)
                 end
             else
                 notifyHireError(err)
@@ -671,7 +671,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, err = Sunset.AwaitCallback('sunset:jobs:fisherman:endShift')
             if ok then
-                exports.sunset_ui:Notify('Fishing shift ended.', 'success', 5000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fishing_shift_ended'), 'success', 5000)
             else
                 exports.sunset_ui:Notify(err or 'You have no active shift.', 'error')
             end
@@ -695,7 +695,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         if guide and guide.steps then
             exports.sunset_ui:Notify(('=== %s ===\n%s'):format(guide.title or 'Fisherman Guide', table.concat(guide.steps, '\n')), 'info', 12000)
         else
-            exports.sunset_ui:Notify('Fisherman Guide: Buy bait from Billy Ray, stand at the Paleto pontoon, press [E] to fish, and sell your catch!', 'info', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fisherman_guide_buy_bait_from_billy_ray_stand_at'), 'info', 8000)
         end
 
     elseif action == 'quit_fisherman_job' then
@@ -704,7 +704,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             local ok, err = Sunset.AwaitCallback('sunset:quitCivilianJob')
             if ok then
                 syncLocalJob('unemployed', 0)
-                exports.sunset_ui:Notify('You have resigned as a Fisherman.', 'info', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_have_resigned_as_a_fisherman'), 'info', 6000)
             else
                 exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
             end
@@ -715,7 +715,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         inCooldown = true
         CreateThread(function()
             if GetResourceState('sunset_fishing_tournament') ~= 'started' then
-                exports.sunset_ui:Notify('Fishing tournament system is not running.', 'error')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fishing_tournament_system_is_not_running'), 'error')
                 SetTimeout(2000, function() inCooldown = false end)
                 return
             end
@@ -725,7 +725,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     if res.status then
                         exports.sunset_ui:Send('fishingTournamentHudShow', res.status)
                     end
-                    exports.sunset_ui:Notify('You joined the Fishing Tournament! Fish as much as you can.', 'success', 7000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_joined_the_fishing_tournament_fish_as_much_as'), 'success', 7000)
                 else
                     exports.sunset_ui:Notify((res and res.error) or 'Could not join tournament.', 'error', 5000)
                 end
@@ -736,14 +736,14 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         inCooldown = true
         CreateThread(function()
             if GetResourceState('sunset_fishing_tournament') ~= 'started' then
-                exports.sunset_ui:Notify('Fishing tournament system is not running.', 'error')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fishing_tournament_system_is_not_running'), 'error')
                 SetTimeout(2000, function() inCooldown = false end)
                 return
             end
             local tStatus = Sunset.AwaitCallback('sunset:fishingTournament:status')
             inCooldown = false
             if not tStatus or not tStatus.active then
-                exports.sunset_ui:Notify('No active tournament found.', 'error', 4000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.no_active_tournament_found'), 'error', 4000)
                 return
             end
             -- Refresh the HUD
@@ -777,7 +777,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             local invData, err = Sunset.AwaitCallback('sunset:fishingshop:getFishInventory')
             if invData then
                 if not invData.items or #invData.items == 0 then
-                    exports.sunset_ui:Notify('You have no fish in your inventory.', 'info')
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_have_no_fish_in_your_inventory'), 'info')
                 else
                     exports.sunset_ui:Send('fishingShopShow', {
                         mode  = 'sell',

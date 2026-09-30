@@ -23,7 +23,7 @@ function renderQuestion() {
     const q = state.questions[idx];
     if (!q) return;
 
-    progressEl.textContent = `Question ${idx + 1} / ${total}`;
+    progressEl.textContent = I18n.t('dynamic.quiz.question_value0_value1', { value0: idx + 1, value1: total });
     questionEl.textContent = q.q || '';
     optionsEl.innerHTML = '';
 

@@ -53,7 +53,7 @@ end
 
 function SunsetAdmin.SaveCheckpoint(id, label, x, y, z, heading, createdBy)
     id = normalizeId(id)
-    if not id then return false, 'Invalid checkpoint name (use letters, numbers, _ or -).' end
+    if not id then return false, { localeKey = 'admin.message.invalid_checkpoint_name_use_letters_numbers_or' } end
 
     label = label and tostring(label):gsub('^%s+', ''):gsub('%s+$', '') or id
     if label == '' then label = id end
@@ -77,14 +77,14 @@ end
 
 function SunsetAdmin.DeleteCheckpoint(id)
     id = normalizeId(id)
-    if not id then return false, 'Invalid checkpoint name.' end
+    if not id then return false, { localeKey = 'admin.message.invalid_checkpoint_name' } end
 
     local removed = MySQL.update.await('DELETE FROM admin_checkpoints WHERE id = ?', { id })
     if removed and removed > 0 then
         SunsetAdmin.RefreshCheckpoints()
         return true, id
     end
-    return false, ('No checkpoint named "%s".'):format(id)
+    return false, { localeKey = 'admin.message.no_checkpoint_named_value', formatArgs = { id } }
 end
 
 CreateThread(function()

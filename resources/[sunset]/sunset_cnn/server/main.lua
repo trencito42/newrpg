@@ -137,7 +137,7 @@ function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
     reason = cleanText(reason, 200) or 'Abuz anunturi CNN'
     local adminName = getDisplayName(adminSrc)
     local license = Sunset.GetIdentifier(targetSrc, 'license')
-    if not license then return false, 'Player not found or invalid identifier.' end
+    if not license then return false, { localeKey = 'cnn.message.player_not_found_or_invalid_identifier' } end
 
     local char = exports.sunset_core:GetCharacter(targetSrc)
     local charId = char and char.id or nil
@@ -278,8 +278,8 @@ end
 
 function ApproveAd(adId, staffSrc)
     adId = tonumber(adId)
-    if not adId then return false, 'Invalid Ad ID.' end
-    if AdMutex[adId] then return false, 'Action in progress.' end
+    if not adId then return false, { localeKey = 'cnn.message.invalid_ad_id' } end
+    if AdMutex[adId] then return false, { localeKey = 'cnn.message.action_in_progress' } end
     AdMutex[adId] = true
 
     local staffName = getDisplayName(staffSrc)
@@ -293,17 +293,17 @@ function ApproveAd(adId, staffSrc)
 
     if not found then
         AdMutex[adId] = nil
-        return false, 'This announcement is no longer in the queue.'
+        return false, { localeKey = 'cnn.message.this_announcement_is_no_longer_in_the_queue' }
     end
 
     if found.status == 'approved' then
         AdMutex[adId] = nil
-        return false, 'This advertisement has already been approved.'
+        return false, { localeKey = 'cnn.message.this_advertisement_has_already_been_approved' }
     end
 
     if found.status == 'rejected' or found.status == 'published' then
         AdMutex[adId] = nil
-        return false, 'This advertisement has already been handled.'
+        return false, { localeKey = 'cnn.message.this_advertisement_has_already_been_handled' }
     end
 
     found.status = 'approved'
@@ -328,8 +328,8 @@ exports('ApproveAd', ApproveAd)
 
 function RejectAd(adId, staffSrc, reason)
     adId = tonumber(adId)
-    if not adId then return false, 'Invalid Ad ID.' end
-    if AdMutex[adId] then return false, 'Action in progress.' end
+    if not adId then return false, { localeKey = 'cnn.message.invalid_ad_id' } end
+    if AdMutex[adId] then return false, { localeKey = 'cnn.message.action_in_progress' } end
     AdMutex[adId] = true
 
     local staffName = getDisplayName(staffSrc)
@@ -347,12 +347,12 @@ function RejectAd(adId, staffSrc, reason)
 
     if not found then
         AdMutex[adId] = nil
-        return false, 'This announcement is no longer in the queue.'
+        return false, { localeKey = 'cnn.message.this_announcement_is_no_longer_in_the_queue' }
     end
 
     if found.status == 'rejected' or found.status == 'published' then
         AdMutex[adId] = nil
-        return false, 'This advertisement has already been handled.'
+        return false, { localeKey = 'cnn.message.this_advertisement_has_already_been_handled' }
     end
 
     found.status = 'rejected'
@@ -425,31 +425,31 @@ end
 
 function SubmitAd(source, text)
     local src = source
-    if src == 0 then return false, 'Must be used in-game.' end
+    if src == 0 then return false, { localeKey = 'cnn.message.must_be_used_in_game' } end
 
     local char = exports.sunset_core:GetCharacter(src)
-    if not char then return false, 'Character not loaded.' end
+    if not char then return false, { localeKey = 'cnn.message.character_not_loaded' } end
 
     -- Location check
     local atCnn, locName = isPlayerAtCnn(src)
     if not atCnn then
-        return false, 'You must be at a CNN / Weazel News station to place an announcement.'
+        return false, { localeKey = 'cnn.message.you_must_be_at_a_cnn_weazel_news_station' }
     end
 
     -- Mute checks
     local okAdmin, isMuted, mMin, mReason = pcall(function() return exports.sunset_admin:IsMuted(src) end)
     if okAdmin and isMuted then
-        return false, ('You are currently muted (%d min). Reason: %s'):format(mMin or 1, mReason or 'Sanctiune')
+        return false, { localeKey = 'cnn.message.you_are_currently_muted_value_min_reason_value', formatArgs = { mMin or 1, mReason or 'Sanctiune' } }
     end
 
     local isAdMuted, admMin, admReason = IsAdMuted(src)
     if isAdMuted then
-        return false, ('You are currently ad-muted (%d min). Reason: %s'):format(admMin or 1, admReason or 'CNN Sanction')
+        return false, { localeKey = 'cnn.message.you_are_currently_ad_muted_value_min_reason_value', formatArgs = { admMin or 1, admReason or 'CNN Sanction' } }
     end
 
     -- Queue limit check
     if #AdQueue >= (Config.CNN.maxPendingQueue or 50) then
-        return false, 'The CNN announcement queue is currently full. Please try again later.'
+        return false, { localeKey = 'cnn.message.the_cnn_announcement_queue_is_currently_full_please_try' }
     end
 
     -- Cooldown check
@@ -458,15 +458,15 @@ function SubmitAd(source, text)
     local cd = Config.CNN.playerCooldown or 120
     if (now - lastAd) < cd then
         local remCd = cd - (now - lastAd)
-        return false, ('You must wait %d more seconds before placing a new announcement.'):format(remCd)
+        return false, { localeKey = 'cnn.message.you_must_wait_value_more_seconds_before_placing_a', formatArgs = { remCd } }
     end
 
     -- Clean & length check
     local clean = cleanText(text, Config.CNN.maxLength or 140)
     if not clean or #clean < (Config.CNN.minLength or 5) then
-        return false, ('Ad text must be between %d and %d characters.'):format(
+        return false, { localeKey = 'cnn.message.ad_text_must_be_between_value_and_value_characters', formatArgs = {
             Config.CNN.minLength or 5, Config.CNN.maxLength or 140
-        )
+         } }
     end
 
     -- Price & Money check
@@ -474,7 +474,7 @@ function SubmitAd(source, text)
     local cash = tonumber(char.cash) or 0
     local bank = tonumber(char.bank) or 0
     if cash < price and bank < price then
-        return false, ('You do not have enough money to pay for the announcement ($%d).'):format(price)
+        return false, { localeKey = 'cnn.message.you_do_not_have_enough_money_to_pay_for', formatArgs = { price } }
     end
 
     if cash >= price then
@@ -577,7 +577,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:cnn:getHelpdeskAds', function(source)
     if exports.sunset_admin:GetAdminLevel(source) < 1 and exports.sunset_admin:GetHelperLevel(source) < 1 then
-        return nil, 'Staff only.'
+        return nil, { localeKey = 'cnn.message.staff_only' }
     end
 
     local pending = GetAdQueue()
@@ -597,7 +597,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:cnn:action', function(source, action, adId, extra)
     local isStaff = exports.sunset_admin:IsStaff(source)
-    if not isStaff then return false, 'Staff only.' end
+    if not isStaff then return false, { localeKey = 'cnn.message.staff_only' } end
 
     action = tostring(action or '')
     adId = tonumber(adId)
@@ -614,7 +614,7 @@ exports.sunset_core:RegisterCallback('sunset:cnn:action', function(source, actio
         return AdMutePlayer(targetSrc, minutes, reason, source)
     end
 
-    return false, 'Unknown CNN action.'
+    return false, { localeKey = 'cnn.message.unknown_cnn_action' }
 end)
 
 -- ═══════════════════════════════════════════════════════════════

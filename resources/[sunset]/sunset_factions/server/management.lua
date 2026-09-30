@@ -101,17 +101,17 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:factionResignSubmit', function(source, reason)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'You are not in a faction.' end
+    if not factionId then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_6153f1' } end
     if FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, 'Leaders cannot resign — transfer leadership or ask staff.'
+        return nil, { localeKey = 'factions.message.leaders_cannot_resign_transfer_leadership_or_ask_staff' }
     end
     reason = tostring(reason or ''):gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 255)
 
     local existing = MySQL.single.await(
         "SELECT id FROM faction_resignations WHERE character_id = ? AND status = 'pending' LIMIT 1", { char.id })
-    if existing then return nil, 'You already have a pending resignation. Wait for the leader to handle it.' end
+    if existing then return nil, { localeKey = 'factions.message.you_already_have_a_pending_resignation_wait_for_the' } end
 
     MySQL.insert.await(
         'INSERT INTO faction_resignations (faction_id, character_id, reason) VALUES (?, ?, ?)',
@@ -168,13 +168,13 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     resignationId = tonumber(resignationId)
     action = tostring(action or ''):lower()
     if not resignationId or (action ~= 'accept' and action ~= 'accept_fp' and action ~= 'decline') then
-        return nil, 'Invalid resignation action.'
+        return nil, { localeKey = 'factions.message.invalid_resignation_action' }
     end
 
     local row = MySQL.single.await(
         "SELECT * FROM faction_resignations WHERE id = ? AND faction_id = ? AND status = 'pending' LIMIT 1",
         { resignationId, factionId })
-    if not row then return nil, 'That resignation request no longer exists.' end
+    if not row then return nil, { localeKey = 'factions.message.that_resignation_request_no_longer_exists' } end
     local targetCharId = tonumber(row.character_id)
 
     if action == 'decline' then
@@ -202,7 +202,7 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     else
         removed = exports.sunset_core:SetFactionByCharacterId(targetCharId, nil, 0)
     end
-    if not removed then return nil, 'Could not remove the member. Try again.' end
+    if not removed then return nil, { localeKey = 'factions.message.could_not_remove_the_member_try_again' } end
 
     MySQL.update.await(
         'DELETE FROM faction_leaders WHERE character_id = ?', { targetCharId })
@@ -235,9 +235,9 @@ exports.sunset_core:RegisterCallback('sunset:factionPardonFP', function(source, 
     local char, factionId, err = leaderOnlyForFaction(source)
     if not char then return nil, err end
     targetCharacterId = tonumber(targetCharacterId)
-    if not targetCharacterId then return nil, 'Invalid member.' end
+    if not targetCharacterId then return nil, { localeKey = 'factions.message.invalid_member_16ab17' } end
     local fp = FactionManagement.getFP(targetCharacterId)
-    if fp <= 0 then return nil, 'That character has no FP to pardon.' end
+    if fp <= 0 then return nil, { localeKey = 'factions.message.that_character_has_no_fp_to_pardon' } end
     FactionManagement.setFP(targetCharacterId, 0)
     FactionCore.auditLog(factionId, char.id, 'fp_pardon', targetCharacterId, { previousFp = fp })
     FactionCore.notify(source, ('Pardoned %d FP for %s.'):format(fp, FactionCore.memberDisplayName(targetCharacterId)), 'success')
@@ -246,9 +246,9 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:factionFPStatus', function(source, targetCharacterId)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'You are not in a faction.' end
+    if not factionId then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_6153f1' } end
     targetCharacterId = tonumber(targetCharacterId) or tonumber(char.id)
     local fp, reason = FactionManagement.getFP(targetCharacterId)
     return { fp = fp, reason = reason }

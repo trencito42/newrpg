@@ -68,7 +68,7 @@ RegisterCommand('cmotd', function(_, args)
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:clanManage', { action = 'motd', message = msg })
-    if ok then exports.sunset_ui:Notify('Clan MOTD updated', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_motd_updated'), 'success')
     else exports.sunset_ui:Notify(err or 'MOTD update failed. Officers can set it with /cmotd [message].', 'error') end
 end, false)
 TriggerEvent('chat:addSuggestion', '/cmotd', 'Read clan MOTD, or set it if you are an officer', { { name = 'message', help = 'optional new MOTD' } })
@@ -88,7 +88,7 @@ RegisterCommand('declineclan', function()
     if not ok then
         return exports.sunset_ui:Notify(err or 'Could not decline invite.', 'error', 7000)
     end
-    exports.sunset_ui:Notify('Clan invite declined.', 'info')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_invite_declined'), 'info')
 end, false)
 TriggerEvent('chat:addSuggestion', '/declineclan', 'Decline a pending clan invitation')
 TriggerEvent('chat:addSuggestion', '/c', 'Clan chat — visible to your clan members only')
@@ -97,7 +97,7 @@ local function clanWarnCommand(_, args)
     local targetId = tonumber(args[1])
     local reason = table.concat(args, ' ', 2)
     if not targetId or reason == '' then
-        return exports.sunset_ui:Notify('Usage: /cwarn [id] [reason]', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.usage_cwarn_id_reason'), 'error')
     end
     local ok, err = Sunset.AwaitCallback('sunset:clanManage', {
         action = 'warn',
@@ -105,7 +105,7 @@ local function clanWarnCommand(_, args)
         reason = reason,
     })
     if ok then
-        exports.sunset_ui:Notify('Clan warning issued.', 'warning')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_warning_issued'), 'warning')
         exports.sunset_ui:Send('clanPanelShow', ok)
     else
         exports.sunset_ui:Notify(err or 'Clan warning failed.', 'error', 8000)
@@ -138,23 +138,23 @@ local function handleClanManageUi(data)
         ok, err = Sunset.AwaitCallback('sunset:clanManage', data)
         if ok then
             if action == 'invite' then
-                exports.sunset_ui:Notify('Clan invite sent.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_invite_sent'), 'success')
             elseif action == 'kick' then
-                exports.sunset_ui:Notify('Member removed from clan.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.member_removed_from_clan'), 'success')
             elseif action == 'rankUp' or action == 'rankDown' then
-                exports.sunset_ui:Notify('Member rank updated.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.member_rank_updated'), 'success')
             elseif action == 'warn' then
-                exports.sunset_ui:Notify('Clan warning issued.', 'warning')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_warning_issued'), 'warning')
             elseif action == 'rankLabels' then
-                exports.sunset_ui:Notify('Clan rank names saved.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_rank_names_saved'), 'success')
             elseif action == 'motd' then
-                exports.sunset_ui:Notify('Clan MOTD updated.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_motd_updated_8cc5ba'), 'success')
             elseif action == 'settings' then
-                exports.sunset_ui:Notify('Clan settings saved.', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_settings_saved'), 'success')
             elseif action == 'leave' then
-                exports.sunset_ui:Notify('You left the clan.', 'info')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.you_left_the_clan'), 'info')
             elseif action == 'dissolve' then
-                exports.sunset_ui:Notify('Clan dissolved.', 'warning')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_dissolved'), 'warning')
             end
             exports.sunset_ui:Send('clanPanelShow', ok)
             return

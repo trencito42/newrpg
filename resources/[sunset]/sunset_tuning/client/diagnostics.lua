@@ -12,13 +12,13 @@ end
 
 RegisterCommand('ecudebug', function()
     if not isAdmin() then
-        exports.sunset_ui:Notify('ECU debug requires admin level 2+.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('tuning.message.ecu_debug_requires_admin_level_2'), 'error')
         return
     end
 
     local ped = PlayerPedId()
     if not IsPedInAnyVehicle(ped, false) then
-        exports.sunset_ui:Notify('Sit in a vehicle to run ECU debug.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('tuning.message.sit_in_a_vehicle_to_run_ecu_debug'), 'error')
         return
     end
 

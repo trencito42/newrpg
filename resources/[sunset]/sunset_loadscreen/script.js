@@ -5,6 +5,40 @@ const filesEl = document.getElementById('loading-files');
 const tipTextEl = document.getElementById('tip-text');
 const rpmContainer = document.getElementById('rpm-bar');
 
+// The loadscreen runs before account authentication and before normal resources.
+// Use the browser language here; the account locale takes over as soon as sunset_core starts.
+const LOADSCREEN_LOCALES = {
+    en: {
+        title: 'SunsetMP — Loading', brand_subtitle: 'Est. 2026 · Los Santos', tips_header: 'Server Tips',
+        initializing_session: 'Initializing session...', entering_session: 'Entering session...',
+        loading_assets: 'Loading game assets...', downloading_files: 'Downloading {count} files...',
+        initializing_resources: 'Initializing resources...', preparing_world: 'Preparing world...',
+        connecting_server: 'Connecting to server...',
+        tip_0: 'Stay in character at all times. Press G to open the quick interaction menu.',
+        tip_1: 'Your voice range is shown on the HUD. Adjust voice settings in the pause menu.',
+        tip_2: 'Vehicles left in traffic lanes may be impounded after server restarts.',
+        tip_3: 'Press G near other players to open contextual interaction options.',
+        tip_4: 'Need help? Use /report and describe the issue clearly.',
+    },
+    ro: {
+        title: 'SunsetMP — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server',
+        initializing_session: 'Se inițializează sesiunea...', entering_session: 'Se intră în sesiune...',
+        loading_assets: 'Se încarcă fișierele jocului...', downloading_files: 'Se descarcă {count} fișiere...',
+        initializing_resources: 'Se inițializează resursele...', preparing_world: 'Se pregătește lumea...',
+        connecting_server: 'Se conectează la server...',
+        tip_0: 'Rămâi în caracter în permanență. Apasă G pentru meniul rapid de interacțiune.',
+        tip_1: 'Raza vocii este afișată pe HUD. Poți ajusta vocea din meniul de pauză.',
+        tip_2: 'Vehiculele lăsate pe carosabil pot fi ridicate după restartul serverului.',
+        tip_3: 'Apasă G lângă alți jucători pentru opțiunile de interacțiune.',
+        tip_4: 'Ai nevoie de ajutor? Folosește /report și descrie clar problema.',
+    },
+};
+const loadscreenLocale = String(navigator.language || 'en').toLowerCase().startsWith('ro') ? 'ro' : 'en';
+const lsT = (key, params = {}) => String(LOADSCREEN_LOCALES[loadscreenLocale][key] || LOADSCREEN_LOCALES.en[key] || key)
+    .replace(/\{(\w+)\}/g, (all, name) => Object.prototype.hasOwnProperty.call(params, name) ? params[name] : all);
+document.documentElement.lang = loadscreenLocale;
+document.querySelectorAll('[data-ls-i18n]').forEach((el) => { el.textContent = lsT(el.dataset.lsI18n); });
+
 // [BOOT TRACE v2] ABSOLUTE epoch-ms timestamps (Date.now())
 const BOOT_T0 = Date.now();
 let bootAttemptId = 'BOOT';
@@ -44,13 +78,7 @@ function applyNofx() {
 
 const TOTAL_SEGMENTS = 25;
 
-const TIPS = [
-    'Stay in character at all times. Press G to open the quick interaction menu.',
-    'Your voice range is shown on the HUD. Adjust voice settings in the pause menu.',
-    'Vehicles left in traffic lanes may be impounded after server restarts.',
-    'Press G near other players to open contextual interaction options.',
-    'Need help? Use /report and describe the issue clearly.',
-];
+const TIPS = Array.from({ length: 5 }, (_, index) => lsT(`tip_${index}`));
 
 let displayedPct = 0;   // monotonic: never decreases
 let initTotal = 0;
@@ -218,7 +246,7 @@ function finishHandoff() {
     touchLoadEvent('sunsetHandoff', 'handoff');
 
     loadscreen.classList.add('is-handoff');
-    setProgress(100, 'Entering session...');
+    setProgress(100, lsT('entering_session'));
     segments.forEach((seg) => {
         seg.classList.add('active');
         if (seg.classList.contains('is-redline')) seg.classList.add('redline');
@@ -250,7 +278,7 @@ const handlers = {
         loadMetrics.tLoadProgressEnd = Date.now();
 
         const frac = Number(data.loadFraction) || 0;
-        setProgress(frac * 70, 'Loading game assets...');
+        setProgress(frac * 70, lsT('loading_assets'));
         btrace('load_progress', `fraction=${frac.toFixed(3)} pct=${Math.round(frac * 70)}%`);
     },
     onLogLine(data) {
@@ -268,7 +296,7 @@ const handlers = {
         loadMetrics.currentBatchStart = Date.now();
         btrace('data_batch_start', `count=${loadMetrics.currentBatchCount} batch=${loadMetrics.dataFileBatches}`);
         if (data && data.count) {
-            taskEl.innerText = `Downloading ${data.count} files...`;
+            taskEl.innerText = lsT('downloading_files', { count: data.count });
         }
     },
     onDataFileEntry(data) {
@@ -297,7 +325,7 @@ const handlers = {
         touchLoadEvent('startInitFunctionOrder', 'resource_init');
         initTotal = Number(data && data.count) || 1;
         initDone = 0;
-        setProgress(70, 'Initializing resources...');
+        setProgress(70, lsT('initializing_resources'));
         btrace('init_order_start', `type=${(data && data.type) || 'all'} order=${(data && data.order) || 0} count=${initTotal}`);
     },
     initFunctionInvoking(data) {
@@ -351,7 +379,7 @@ const handlers = {
         const idx = data && data.idx !== undefined ? Number(data.idx) : 0;
         const count = data && data.count ? Number(data.count) : 1;
         const pct = 85 + (idx / count) * 10;
-        setProgress(pct, 'Preparing world...');
+        setProgress(pct, lsT('preparing_world'));
         btrace('map_load_step', `idx=${idx}/${count} pct=${Math.round(pct)}%`);
     },
 };
@@ -378,5 +406,5 @@ document.addEventListener('dragstart', (event) => event.preventDefault(), true);
 document.addEventListener('copy', (event) => event.preventDefault(), true);
 
 // Start at 0% with a real status. No fake simulation.
-setProgress(0, 'Connecting to server...');
+setProgress(0, lsT('connecting_server'));
 btrace('loadscreen ready, waiting for FiveM events');

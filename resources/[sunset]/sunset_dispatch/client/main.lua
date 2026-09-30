@@ -19,7 +19,7 @@ end
 
 RegisterNetEvent('sunset:dispatch:waypoint', function(coords)
     setWaypoint(coords)
-    notify('GPS waypoint set for service call', 'info')
+    notify(exports.sunset_core:Translate('dispatch.message.gps_waypoint_set_for_service_call'), 'info')
 end)
 
 RegisterNetEvent('sunset:dispatch:newCall', function(call)
@@ -62,7 +62,7 @@ end)
 
 RegisterNetEvent('sunset:dispatch:callAccepted', function(call)
     if not call then return end
-    notify('A responder is on the way', 'success')
+    notify(exports.sunset_core:Translate('dispatch.message.a_responder_is_on_the_way'), 'success')
 end)
 
 RegisterNetEvent('sunset:dispatch:callUpdated', function(call)
@@ -123,7 +123,7 @@ AddEventHandler('sunset:ui:serviceCallsAcceptRequest', function(data)
 
     local call = Sunset.AwaitCallback('sunset:dispatchGet', callId)
     if not call or not call.callType then
-        notify('Call not found', 'error')
+        notify(exports.sunset_core:Translate('dispatch.message.call_not_found'), 'error')
         return
     end
 

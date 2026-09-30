@@ -98,7 +98,7 @@ end)
 
 local function completeIncident(incidentId, source)
     local inc = Incidents[incidentId]
-    if not inc or inc.status ~= 'active' then return false, 'Incident not active' end
+    if not inc or inc.status ~= 'active' then return false, { localeKey = 'fire.message.incident_not_active' } end
 
     inc.status = 'completed'
     local payout = Sunset.Fire.payout or 350
@@ -133,7 +133,7 @@ local function completeIncident(incidentId, source)
 end
 
 exports.sunset_core:RegisterCallback('sunset:fireGetIncidents', function(source)
-    if not isFirefighter(source) then return nil, 'Must be on duty as LSFD' end
+    if not isFirefighter(source) then return nil, { localeKey = 'fire.message.must_be_on_duty_as_lsfd' } end
     local list = {}
     for _, inc in pairs(Incidents) do
         if inc.status == 'active' then
@@ -145,7 +145,7 @@ exports.sunset_core:RegisterCallback('sunset:fireGetIncidents', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:fireRequestIncident', function(source)
-    if not isFirefighter(source) then return nil, 'Must be on duty as LSFD' end
+    if not isFirefighter(source) then return nil, { localeKey = 'fire.message.must_be_on_duty_as_lsfd' } end
 
     local list = {}
     for _, inc in pairs(Incidents) do
@@ -155,32 +155,32 @@ exports.sunset_core:RegisterCallback('sunset:fireRequestIncident', function(sour
 
     local now = os.time()
     if now - LastIncidentRequest < 600 then
-        return nil, ('No new incident available for %d seconds'):format(600 - (now - LastIncidentRequest))
+        return nil, { localeKey = 'fire.message.no_new_incident_available_for_value_seconds', formatArgs = { 600 - (now - LastIncidentRequest) } }
     end
     local incident = spawnIncident()
-    if not incident then return nil, 'Could not create a fire incident' end
+    if not incident then return nil, { localeKey = 'fire.message.could_not_create_a_fire_incident' } end
     LastIncidentRequest = now
     return { existing = false, incidents = { incident } }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:fireExtinguish', function(source, incidentId, amount)
-    if not isFirefighter(source) then return nil, 'Must be on duty as LSFD' end
+    if not isFirefighter(source) then return nil, { localeKey = 'fire.message.must_be_on_duty_as_lsfd' } end
 
     incidentId = tonumber(incidentId)
     local inc = Incidents[incidentId]
-    if not inc or inc.status ~= 'active' then return nil, 'Incident not found' end
+    if not inc or inc.status ~= 'active' then return nil, { localeKey = 'fire.message.incident_not_found' } end
 
     local now = GetGameTimer()
-    if now - (LastExtinguish[source] or 0) < 200 then return nil, 'Extinguishing too quickly' end
+    if now - (LastExtinguish[source] or 0) < 200 then return nil, { localeKey = 'fire.message.extinguishing_too_quickly' } end
     LastExtinguish[source] = now
 
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Invalid player' end
+    if not ped or ped == 0 then return nil, { localeKey = 'fire.message.invalid_player' } end
     local pCoords = GetEntityCoords(ped)
     local iCoords = inc.coords
     local dist = #(pCoords - vector3(iCoords.x, iCoords.y, iCoords.z))
     if dist > (Sunset.Fire.extinguishRange or 8.0) + 2.0 then
-        return nil, 'Too far from the fire'
+        return nil, { localeKey = 'fire.message.too_far_from_the_fire' }
     end
 
     local currentWeapon = GetSelectedPedWeapon(ped)
@@ -192,11 +192,11 @@ exports.sunset_core:RegisterCallback('sunset:fireExtinguish', function(source, i
     end
     local hasExtinguisher = (currentWeapon == `WEAPON_FIREEXTINGUISHER`)
     if not hasExtinguisher and not isFireTruck then
-        return nil, 'You need a fire extinguisher or fire truck to put out fires'
+        return nil, { localeKey = 'fire.message.you_need_a_fire_extinguisher_or_fire_truck_to' }
     end
 
     amount = math.min(tonumber(amount) or 0, Sunset.Fire.extinguishRate or 12)
-    if amount < 1 then return nil, 'Invalid extinguish amount' end
+    if amount < 1 then return nil, { localeKey = 'fire.message.invalid_extinguish_amount' } end
 
     inc.fireHealth = math.max(0, (inc.fireHealth or 0) - amount)
     broadcastFirefighters('sunset:fire:incidentUpdate', serializeIncident(inc))
@@ -214,7 +214,7 @@ AddEventHandler('playerDropped', function()
 end)
 
 exports.sunset_core:RegisterCallback('sunset:fireAcceptDispatch', function(source, callId)
-    if not isFirefighter(source) then return nil, 'Not on duty' end
+    if not isFirefighter(source) then return nil, { localeKey = 'fire.message.not_on_duty' } end
     local call, err = exports.sunset_dispatch:AcceptCall(source, 'fire', callId)
     if not call then return nil, err end
     return true

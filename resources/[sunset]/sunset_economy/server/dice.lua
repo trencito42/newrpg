@@ -113,15 +113,15 @@ local function executeDiceMatch(challengerSrc, targetSrc, bet)
     if not cChar or not tChar then return end
 
     if not exports.sunset_core:RemoveMoney(challengerSrc, 'cash', bet, 'dice_wager') then
-        TriggerClientEvent('sunset:client:notify', challengerSrc, 'You no longer have the required money.', 'error')
-        TriggerClientEvent('sunset:client:notify', targetSrc, 'Your opponent no longer has the required money.', 'error')
+        TriggerClientEvent('sunset:client:notify', challengerSrc, exports.sunset_core:TFor(challengerSrc, 'economy.message.you_no_longer_have_the_required_money'), 'error')
+        TriggerClientEvent('sunset:client:notify', targetSrc, exports.sunset_core:TFor(targetSrc, 'economy.message.your_opponent_no_longer_has_the_required_money'), 'error')
         return
     end
 
     if not exports.sunset_core:RemoveMoney(targetSrc, 'cash', bet, 'dice_wager') then
         exports.sunset_core:AddMoney(challengerSrc, 'cash', bet, 'dice_refund')
-        TriggerClientEvent('sunset:client:notify', targetSrc, 'You no longer have the required money.', 'error')
-        TriggerClientEvent('sunset:client:notify', challengerSrc, 'Your opponent no longer has the required money.', 'error')
+        TriggerClientEvent('sunset:client:notify', targetSrc, exports.sunset_core:TFor(targetSrc, 'economy.message.you_no_longer_have_the_required_money'), 'error')
+        TriggerClientEvent('sunset:client:notify', challengerSrc, exports.sunset_core:TFor(challengerSrc, 'economy.message.your_opponent_no_longer_has_the_required_money'), 'error')
         return
     end
 
@@ -213,25 +213,25 @@ RegisterCommand('barbut', function(source, args)
     if sub == 'accept' then
         local challenge = PendingChallenges[source]
         if not challenge then
-            TriggerClientEvent('sunset:client:notify', source, 'You have no active dice challenge.', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_have_no_active_dice_challenge'), 'error')
             return
         end
         -- [AUDIT P6-05] Downed/jailed players cannot gamble.
         if exports.sunset_core:IsIncapacitated(source) or exports.sunset_core:IsIncapacitated(challenge.from) then
             PendingChallenges[source] = nil
-            TriggerClientEvent('sunset:client:notify', source, 'You cannot play dice right now.', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_cannot_play_dice_right_now'), 'error')
             return
         end
         PendingChallenges[source] = nil
 
         local challenger = challenge.from
         if not GetPlayerName(challenger) then
-            TriggerClientEvent('sunset:client:notify', source, 'The player who challenged you has disconnected.', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.the_player_who_challenged_you_has_disconnected'), 'error')
             return
         end
 
         if getDist(source, challenger) > 5.0 then
-            TriggerClientEvent('sunset:client:notify', source, 'You must be next to the player to play.', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_must_be_next_to_the_player_to_play'), 'error')
             return
         end
 
@@ -241,9 +241,9 @@ RegisterCommand('barbut', function(source, args)
         if PendingChallenges[source] then
             local challenger = PendingChallenges[source].from
             PendingChallenges[source] = nil
-            TriggerClientEvent('sunset:client:notify', source, 'You declined the dice game.', 'info')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_declined_the_dice_game'), 'info')
             if GetPlayerName(challenger) then
-                TriggerClientEvent('sunset:client:notify', challenger, 'Your dice challenge was declined.', 'warning')
+                TriggerClientEvent('sunset:client:notify', challenger, exports.sunset_core:TFor(challenger, 'economy.message.your_dice_challenge_was_declined'), 'warning')
             end
         end
         return
@@ -253,53 +253,53 @@ RegisterCommand('barbut', function(source, args)
     local bet = tonumber(args[2])
 
     if not targetId or not bet or bet < MIN_DICE_BET then
-        TriggerClientEvent('sunset:client:notify', source, ('Usage: /barbut [player_id] [min. bet $%d]'):format(MIN_DICE_BET), 'info')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.usage_barbut_player_id_min_bet_value', MIN_DICE_BET), 'info')
         return
     end
 
     if bet > MAX_DICE_BET then
-        TriggerClientEvent('sunset:client:notify', source, ('The maximum bet is $%s.'):format(groupDigits(MAX_DICE_BET)), 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.the_maximum_bet_is_value', groupDigits(MAX_DICE_BET)), 'error')
         return
     end
 
     if targetId == source then
-        TriggerClientEvent('sunset:client:notify', source, 'You cannot play dice with yourself.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_cannot_play_dice_with_yourself'), 'error')
         return
     end
 
     -- [AUDIT P6-05] Downed/jailed players cannot challenge or be challenged.
     if exports.sunset_core:IsIncapacitated(source) or exports.sunset_core:IsIncapacitated(targetId) then
-        TriggerClientEvent('sunset:client:notify', source, 'You cannot play dice right now.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_cannot_play_dice_right_now'), 'error')
         return
     end
 
     if not GetPlayerName(targetId) then
-        TriggerClientEvent('sunset:client:notify', source, 'Player not found.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.player_not_found'), 'error')
         return
     end
 
     if getDist(source, targetId) > 4.0 then
-        TriggerClientEvent('sunset:client:notify', source, 'The player is too far away (you must be close to each other).', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.the_player_is_too_far_away_you_must_be'), 'error')
         return
     end
 
     local cCash = exports.sunset_core:GetCharacter(source)
     local tCash = exports.sunset_core:GetCharacter(targetId)
     if not cCash or (tonumber(cCash.cash) or 0) < bet then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have enough cash on you.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.you_do_not_have_enough_cash_on_you'), 'error')
         return
     end
     if not tCash or (tonumber(tCash.cash) or 0) < bet then
-        TriggerClientEvent('sunset:client:notify', source, 'The challenged player does not have enough cash.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.the_challenged_player_does_not_have_enough_cash'), 'error')
         return
     end
 
     PendingChallenges[targetId] = { from = source, bet = bet, expires = os.time() + 30 }
 
     local cName = (cCash.firstname or '') .. ' ' .. (cCash.lastname or '')
-    TriggerClientEvent('sunset:client:notify', source, ('You sent a dice challenge to %s for $%s.'):format(
-        (tCash.firstname or '') .. ' ' .. (tCash.lastname or ''),
-        groupDigits(bet)
+    TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source,
+        'economy.message.you_sent_a_dice_challenge_to_value_for_value',
+        (tCash.firstname or '') .. ' ' .. (tCash.lastname or ''), groupDigits(bet)
     ), 'info')
 
     TriggerClientEvent('chat:addMessage', targetId, {

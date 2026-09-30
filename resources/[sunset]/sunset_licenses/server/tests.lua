@@ -52,28 +52,28 @@ end
 local function validateTestVehicle(source, session)
     local netId = tonumber(session.testVehicleNet)
     if not netId or netId <= 0 then
-        return nil, 'The training vehicle was not registered. Restart the practical test.'
+        return nil, { localeKey = 'licenses.message.the_training_vehicle_was_not_registered_restart_the_practical' }
     end
     local vehicle = NetworkGetEntityFromNetworkId(netId)
     if not vehicle or vehicle == 0 or not DoesEntityExist(vehicle) or GetEntityType(vehicle) ~= 2 then
-        return nil, 'The training vehicle no longer exists. Restart the practical test.'
+        return nil, { localeKey = 'licenses.message.the_training_vehicle_no_longer_exists_restart_the_practical' }
     end
     local expectedModel = practicalVehicleModel(session.licenseType)
     if expectedModel and GetEntityModel(vehicle) ~= GetHashKey(expectedModel) then
-        return nil, 'You must use the vehicle assigned for this practical test.'
+        return nil, { localeKey = 'licenses.message.you_must_use_the_vehicle_assigned_for_this_practical' }
     end
     if NetworkGetEntityOwner(vehicle) ~= source then
-        return nil, 'The assigned training vehicle is not under your control.'
+        return nil, { localeKey = 'licenses.message.the_assigned_training_vehicle_is_not_under_your_control' }
     end
     local ped = GetPlayerPed(source)
     if ped == 0 or GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return nil, 'You must be in the driver seat of your assigned training vehicle.'
+        return nil, { localeKey = 'licenses.message.you_must_be_in_the_driver_seat_of_your' }
     end
     local def = SunsetLicenses.Types[session.licenseType]
     if def and def.instructorFaction and session.licenseType ~= 'weapon' then
         local instructorPed = validSupervisor(session) or 0
         if instructorPed == 0 or GetVehiclePedIsIn(instructorPed, false) ~= vehicle then
-            return nil, 'Your LSSI instructor must supervise the practical from the assigned vehicle.'
+            return nil, { localeKey = 'licenses.message.your_lssi_instructor_must_supervise_the_practical_from_the' }
         end
     end
     return vehicle
@@ -82,24 +82,24 @@ end
 exports.sunset_core:RegisterCallback('sunset:license:registerTestVehicle', function(source, netId)
     local session = GetTestSession(source)
     if not session or session.phase ~= 'practical' or session.licenseType == 'weapon' or testExpired(session) then
-        return nil, 'No active vehicle practical test.'
+        return nil, { localeKey = 'licenses.message.no_active_vehicle_practical_test' }
     end
     netId = tonumber(netId)
-    if not netId or netId <= 0 then return nil, 'Invalid training vehicle.' end
+    if not netId or netId <= 0 then return nil, { localeKey = 'licenses.message.invalid_training_vehicle' } end
     local vehicle = NetworkGetEntityFromNetworkId(netId)
     if not vehicle or vehicle == 0 or not DoesEntityExist(vehicle) or GetEntityType(vehicle) ~= 2 then
-        return nil, 'Training vehicle is not network-ready yet.'
+        return nil, { localeKey = 'licenses.message.training_vehicle_is_not_network_ready_yet' }
     end
     local expectedModel = practicalVehicleModel(session.licenseType)
     if not expectedModel or GetEntityModel(vehicle) ~= GetHashKey(expectedModel) then
-        return nil, 'Wrong vehicle model for this practical test.'
+        return nil, { localeKey = 'licenses.message.wrong_vehicle_model_for_this_practical_test' }
     end
     if NetworkGetEntityOwner(vehicle) ~= source then
-        return nil, 'Training vehicle ownership could not be verified.'
+        return nil, { localeKey = 'licenses.message.training_vehicle_ownership_could_not_be_verified' }
     end
     local ped = GetPlayerPed(source)
     if ped == 0 or GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return nil, 'Enter the driver seat before the vehicle is registered.'
+        return nil, { localeKey = 'licenses.message.enter_the_driver_seat_before_the_vehicle_is_registered' }
     end
     session.testVehicleNet = netId
     session.vehicleRegisteredAt = os.time()
@@ -109,28 +109,28 @@ end)
 exports.sunset_core:RegisterCallback('sunset:license:validateCheckpoint', function(source, licenseType, index)
     licenseType = tostring(licenseType or '')
     index = tonumber(index)
-    if not index then return false, 'Invalid checkpoint.' end
+    if not index then return false, { localeKey = 'licenses.message.invalid_checkpoint' } end
     local session = GetTestSession(source)
     if not session or session.licenseType ~= licenseType or session.phase ~= 'practical' then
-        return false, 'No active practical test.'
+        return false, { localeKey = 'licenses.message.no_active_practical_test' }
     end
-    if testExpired(session) then return false, 'The practical test time expired.' end
+    if testExpired(session) then return false, { localeKey = 'licenses.message.the_practical_test_time_expired' } end
     local practical = SunsetLicenses.Practical[licenseType]
     if not practical or not practical.checkpoints or not practical.checkpoints[index] then
-        return false, 'Invalid checkpoint index.'
+        return false, { localeKey = 'licenses.message.invalid_checkpoint_index' }
     end
     session.lastCheckpoint = tonumber(session.lastCheckpoint) or 0
     if index ~= session.lastCheckpoint + 1 then
-        return false, ('Wrong checkpoint order — go to checkpoint %d next.'):format(session.lastCheckpoint + 1)
+        return false, { localeKey = 'licenses.message.wrong_checkpoint_order_go_to_checkpoint_value_next', formatArgs = { session.lastCheckpoint + 1 } }
     end
     local vehicle, vehicleError = validateTestVehicle(source, session)
     if not vehicle then return false, vehicleError end
     local pos = GetEntityCoords(vehicle)
     local cp = practical.checkpoints[index]
     local radius = practical.checkpointRadius or 8.0
-    if #(pos - cp) > radius + 2.0 then return false, 'You are too far from the checkpoint.' end
+    if #(pos - cp) > radius + 2.0 then return false, { localeKey = 'licenses.message.you_are_too_far_from_the_checkpoint' } end
     if licenseType == 'pilot' and pos.z < cp.z - math.max(8.0, radius * 0.35) then
-        return false, 'Gain altitude and fly through the checkpoint; it cannot be passed from the ground.'
+        return false, { localeKey = 'licenses.message.gain_altitude_and_fly_through_the_checkpoint_it_cannot' }
     end
     session.lastCheckpoint = index
     session.practicalEvidence = session.practicalEvidence or {}
@@ -145,9 +145,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:license:registerWeaponTargets', function(source, targetNetIds)
     local session = GetTestSession(source)
     if not session or session.licenseType ~= 'weapon' or session.phase ~= 'practical' or testExpired(session) then
-        return nil, 'No active weapon practical test.'
+        return nil, { localeKey = 'licenses.message.no_active_weapon_practical_test' }
     end
-    if type(targetNetIds) ~= 'table' then return nil, 'Invalid range targets.' end
+    if type(targetNetIds) ~= 'table' then return nil, { localeKey = 'licenses.message.invalid_range_targets' } end
     local practical = SunsetLicenses.Practical.weapon
     local registered = {}
     for index, netId in ipairs(targetNetIds) do
@@ -157,15 +157,15 @@ exports.sunset_core:RegisterCallback('sunset:license:registerWeaponTargets', fun
         if not expected or entity == 0 or not DoesEntityExist(entity) or GetEntityType(entity) ~= 3
             or GetEntityModel(entity) ~= GetHashKey('prop_range_target_01')
             or NetworkGetEntityOwner(entity) ~= source then
-            return nil, ('Range target %d could not be verified.'):format(index)
+            return nil, { localeKey = 'licenses.message.range_target_value_could_not_be_verified', formatArgs = { index } }
         end
         local pos = GetEntityCoords(entity)
         if #(pos - vector3(expected.x, expected.y, expected.z - 1.0)) > 3.0 then
-            return nil, ('Range target %d is in the wrong position.'):format(index)
+            return nil, { localeKey = 'licenses.message.range_target_value_is_in_the_wrong_position', formatArgs = { index } }
         end
         registered[netId] = index
     end
-    if #targetNetIds ~= #(practical.targets or {}) then return nil, 'Not all range targets were registered.' end
+    if #targetNetIds ~= #(practical.targets or {}) then return nil, { localeKey = 'licenses.message.not_all_range_targets_were_registered' } end
     session.weaponTargets = registered
     session.weaponHits = {}
     session.weaponTargetsRegisteredAt = GetGameTimer()
@@ -227,37 +227,37 @@ exports.sunset_core:RegisterCallback('sunset:license:validateFinish', function(s
     licenseType = tostring(licenseType or '')
     local session = GetTestSession(source)
     if not session or session.licenseType ~= licenseType or session.phase ~= 'practical' then
-        return false, 'No active practical test.'
+        return false, { localeKey = 'licenses.message.no_active_practical_test' }
     end
-    if testExpired(session) then return false, 'The practical test time expired.' end
+    if testExpired(session) then return false, { localeKey = 'licenses.message.the_practical_test_time_expired' } end
     local practical = SunsetLicenses.Practical[licenseType]
-    if not practical then return false, 'Invalid practical test.' end
+    if not practical then return false, { localeKey = 'licenses.message.invalid_practical_test' } end
     local ped = GetPlayerPed(source)
-    if ped == 0 then return false, 'Your position could not be verified.' end
+    if ped == 0 then return false, { localeKey = 'licenses.message.your_position_could_not_be_verified' } end
     local pos = GetEntityCoords(ped)
 
     -- [SECTION 9-13] Hunting practical: server-authoritative target tracking
     if licenseType == 'hunting' then
         if not session.huntingExamStarted then
-            return false, 'The hunting exam targets were not set up. Restart the practical test.'
+            return false, { localeKey = 'licenses.message.the_hunting_exam_targets_were_not_set_up_restart' }
         end
         local hits    = tonumber(session.huntingHits)    or 0
         local mistakes = tonumber(session.huntingMistakes) or 0
         local need       = practical.targetsRequired or 4
         local maxMistakes = practical.maxMistakes    or 2
         if mistakes > maxMistakes then
-            return false, ('Exam failed: you shot %d protected animals (max %d allowed).'):format(mistakes, maxMistakes)
+            return false, { localeKey = 'licenses.message.exam_failed_you_shot_value_protected_animals_max_value', formatArgs = { mistakes, maxMistakes } }
         end
         if hits < need then
-            return false, ('Hit %d/%d verified deer targets first.'):format(hits, need)
+            return false, { localeKey = 'licenses.message.hit_value_value_verified_deer_targets_first', formatArgs = { hits, need } }
         end
         local facility = SunsetLicenses.Facilities.hunting_range
         if facility and #(pos - facility.marker) > (facility.markerRadius or 3.0) + 5.0 then
-            return false, 'Return to the hunting range booth to finish the exam.'
+            return false, { localeKey = 'licenses.message.return_to_the_hunting_range_booth_to_finish_the' }
         end
         local instructorPed = validSupervisor(session) or 0
         if instructorPed == 0 then
-            return false, 'Your LSSI instructor must remain at the range until the exam is finished.'
+            return false, { localeKey = 'licenses.message.your_lssi_instructor_must_remain_at_the_range_until' }
         end
         session.phase = 'validated'
         session.practicalValidatedAt = os.time()
@@ -270,28 +270,28 @@ exports.sunset_core:RegisterCallback('sunset:license:validateFinish', function(s
         local hits = 0
         for _ in pairs(session.weaponHits or {}) do hits = hits + 1 end
         local need = practical.targetsRequired or 5
-        if hits < need then return false, ('Hit %d/%d verified targets first.'):format(hits, need) end
+        if hits < need then return false, { localeKey = 'licenses.message.hit_value_value_verified_targets_first', formatArgs = { hits, need } } end
         local facility = SunsetLicenses.Facilities.range
         if #(pos - facility.marker) > (facility.markerRadius or 2.5) + 3.0 then
-            return false, 'Return to the range booth to finish the test.'
+            return false, { localeKey = 'licenses.message.return_to_the_range_booth_to_finish_the_test' }
         end
         local instructorPed = validSupervisor(session) or 0
         if instructorPed == 0 or #(GetEntityCoords(instructorPed) - practical.zoneCenter) > (practical.zoneRadius or 22.0) + 5.0 then
-            return false, 'Your LSSI instructor must remain at the range until the exam is finished.'
+            return false, { localeKey = 'licenses.message.your_lssi_instructor_must_remain_at_the_range_until' }
         end
     else
-        if not session.allCheckpoints then return false, 'Complete all checkpoints before finishing.' end
+        if not session.allCheckpoints then return false, { localeKey = 'licenses.message.complete_all_checkpoints_before_finishing' } end
         local vehicle, vehicleError = validateTestVehicle(source, session)
         if not vehicle then return false, vehicleError end
         local finish = practical.finish
         if finish and #(GetEntityCoords(vehicle) - vector3(finish.x, finish.y, finish.z))
             > (practical.finishRadius or 10.0) + 2.0 then
-            return false, 'Return with your assigned vehicle to the finish point.'
+            return false, { localeKey = 'licenses.message.return_with_your_assigned_vehicle_to_the_finish_point' }
         end
         -- Engine-running state is not exposed as a server native. The server still verifies
         -- the exact test vehicle, driver seat and finish position before accepting this flag.
         if practical.requireEngineOff and (type(data) ~= 'table' or data.engineOn ~= false) then
-            return false, 'Shut off the engine before finishing.'
+            return false, { localeKey = 'licenses.message.shut_off_the_engine_before_finishing' }
         end
         local maxPenalties = practical.maxPenalties or practical.maxSpeedStrikes or 4
         local penaltyCount = tonumber(data and data.penalties)
@@ -301,7 +301,7 @@ exports.sunset_core:RegisterCallback('sunset:license:validateFinish', function(s
             penaltyCount = collisions + speedStrikes
         end
         if penaltyCount >= maxPenalties then
-            return false, ('Too many penalties during the test (%d/%d).'):format(penaltyCount, maxPenalties)
+            return false, { localeKey = 'licenses.message.too_many_penalties_during_the_test_value_value', formatArgs = { penaltyCount, maxPenalties } }
         end
     end
 
@@ -331,7 +331,7 @@ exports.sunset_core:RegisterCallback('sunset:license:startHuntingExam', function
     local session = GetTestSession(source)
     if not session or session.licenseType ~= 'hunting' or session.phase ~= 'practical'
         or testExpired(session) then
-        return nil, 'No active hunting practical test.'
+        return nil, { localeKey = 'licenses.message.no_active_hunting_practical_test' }
     end
     -- Idempotent: return existing state if already started
     if session.huntingExamStarted then
@@ -347,11 +347,11 @@ exports.sunset_core:RegisterCallback('sunset:license:startHuntingExam', function
     -- [SECTION 10] FAIL CLOSED: weapon license is a prerequisite (also enforced at canStartTest)
     if GetResourceState('sunset_licenses') == 'started' then
         if exports.sunset_licenses:HasLicense(source, 'weapon') ~= true then
-            return nil, 'You must hold a valid Firearm License to take the Hunting practical.'
+            return nil, { localeKey = 'licenses.message.you_must_hold_a_valid_firearm_license_to_take' }
         end
     end
     local practical = SunsetLicenses.Practical.hunting
-    if not practical then return nil, 'Hunting practical is not configured.' end
+    if not practical then return nil, { localeKey = 'licenses.message.hunting_practical_is_not_configured' } end
 
     -- [SECTION 11] Spawn legal targets (deer) at configured target positions
     local legalNetIds = {}
@@ -386,7 +386,7 @@ exports.sunset_core:RegisterCallback('sunset:license:startHuntingExam', function
             local e = NetworkGetEntityFromNetworkId(netId)
             if e and e ~= 0 and DoesEntityExist(e) then DeleteEntity(e) end
         end
-        return nil, 'Could not spawn exam targets. Retry the practical test.'
+        return nil, { localeKey = 'licenses.message.could_not_spawn_exam_targets_retry_the_practical_test' }
     end
 
     -- [SECTION 11] Store authoritative exam state in session

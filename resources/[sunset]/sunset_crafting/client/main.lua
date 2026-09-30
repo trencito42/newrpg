@@ -41,7 +41,7 @@ AddEventHandler('sunset:nui:craftingCraft', function(data)
     exports.sunset_ui:SetFocus(false, false)
 
     if not runCraftProgress(duration, label) then
-        exports.sunset_ui:Notify('Crafting cancelled', 'warning')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.message.crafting_cancelled'), 'warning')
     else
         local ok, err = Sunset.AwaitCallback('sunset:craftItem', data.stationId, data.recipeId)
         if ok then
@@ -75,7 +75,7 @@ end)
 
 RegisterCommand('crafting', function()
     local char = exports.sunset_core:GetCharacter()
-    if not char then return exports.sunset_ui:Notify('Your character is not loaded yet.', 'error') end
+    if not char then return exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.message.your_character_is_not_loaded_yet'), 'error') end
     local factionId = select(1, Sunset.GetCharacterFaction(char))
     local pos = GetEntityCoords(PlayerPedId())
     local closestId, closest, closestDistance
@@ -88,7 +88,7 @@ RegisterCommand('crafting', function()
         end
     end
     if not closest then
-        return exports.sunset_ui:Notify('No crafting station is available for your current faction.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.message.no_crafting_station_is_available_for_your_current_faction'), 'error')
     end
     if closestDistance <= 4.0 then
         TriggerEvent('sunset:world:openCrafting', closestId, closest)

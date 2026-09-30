@@ -49,7 +49,7 @@ AddEventHandler('sunset:licenses:frameworkSessionEnded', function(fwSession, sta
         -- NOTE: do not use `notify` here — it is a local declared later in this
         -- file (forward ref would resolve to nil global at this scope).
         TriggerClientEvent('sunset:client:notify', src,
-            ('Your license exam ended: %s.'):format(tostring(state or 'session closed')), 'error', 7000)
+            exports.sunset_core:TFor(src, 'licenses.message.your_license_exam_ended_value', tostring(state or 'session closed')), 'error', 7000)
     end
 end)
 
@@ -213,7 +213,7 @@ exports('GetLicenseRows', GetLicenseRows)
 function HasLicense(source, licenseType)
     licenseType = tostring(licenseType or '')
     local def = SunsetLicenses.Types[licenseType]
-    if not def then return false, 'Unknown license type.' end
+    if not def then return false, { localeKey = 'licenses.message.unknown_license_type' } end
     if IsInLicenseTest(source) then
         local session = TestSessions[source]
         if session and session.licenseType == licenseType
@@ -228,7 +228,7 @@ function HasLicense(source, licenseType)
     -- purchases: "action failed" while the DB said licensed). One indexed query
     -- per check is cheap; correctness beats the cache.
     local cid = charId(source)
-    if not cid then return false, 'Character not loaded.' end
+    if not cid then return false, { localeKey = 'licenses.message.character_not_loaded' } end
     local paydays = currentPaydays(source)
     local owned = false
     for _, row in ipairs(loadLicenseRows(cid)) do
@@ -244,7 +244,7 @@ function HasLicense(source, licenseType)
         cache.paydays = paydays
     end
     if not owned then
-        return false, ('You need a valid %s. Visit the %s.'):format(def.label, def.label)
+        return false, { localeKey = 'licenses.message.you_need_a_valid_value_visit_the_value', formatArgs = { def.label, def.label } }
     end
     return true
 end
@@ -362,9 +362,9 @@ end)
 
 function GrantLicense(source, licenseType, issuedByCharacterId)
     licenseType = tostring(licenseType or '')
-    if not SunsetLicenses.Types[licenseType] then return false, 'Invalid license type.' end
+    if not SunsetLicenses.Types[licenseType] then return false, { localeKey = 'licenses.message.invalid_license_type' } end
     local cid = charId(source)
-    if not cid then return false, 'Character not loaded.' end
+    if not cid then return false, { localeKey = 'licenses.message.character_not_loaded' } end
     local paydays = currentPaydays(source)
     local expires = paydays + (SunsetLicenses.PaydayExpiry or 150)
     local saved, result = pcall(MySQL.insert.await, [[
@@ -379,7 +379,7 @@ function GrantLicense(source, licenseType, issuedByCharacterId)
     if not saved or result == nil then
         print(('[sunset_licenses] Failed to persist %s for character %d: %s'):format(
             licenseType, cid, tostring(result)))
-        return false, 'The license could not be saved. No license was issued; contact an administrator.'
+        return false, { localeKey = 'licenses.message.the_license_could_not_be_saved_no_license_was' }
     end
     notify(source, ('%s issued — valid until payday #%d.'):format(
         SunsetLicenses.Types[licenseType].label, expires), 'success')
@@ -400,7 +400,7 @@ function RevokeLicense(source, licenseType)
         if num and num > 0 then
             return RevokeLicenseByCharacterId(num, licenseType)
         end
-        return false, 'Character not loaded.'
+        return false, { localeKey = 'licenses.message.character_not_loaded' }
     end
     MySQL.update.await(
         'DELETE FROM character_licenses WHERE character_id = ? AND license_type = ?',
@@ -414,7 +414,7 @@ exports('RevokeLicense', RevokeLicense)
 
 function RevokeLicenseByCharacterId(cid, licenseType)
     cid = tonumber(cid)
-    if not cid or cid <= 0 then return false, 'Invalid character ID' end
+    if not cid or cid <= 0 then return false, { localeKey = 'licenses.message.invalid_character_id' } end
     licenseType = tostring(licenseType or '')
     MySQL.update.await(
         'DELETE FROM character_licenses WHERE character_id = ? AND license_type = ?',
@@ -492,7 +492,7 @@ local function checkPrerequisites(source, licenseType)
         local ok, _ = HasLicense(source, prereqType)
         if not ok then
             local prereqLabel = prereqDef and prereqDef.label or prereqType
-            return false, ('You must hold a valid %s before taking the %s exam.'):format(prereqLabel, def.label)
+            return false, { localeKey = 'licenses.message.you_must_hold_a_valid_value_before_taking_the', formatArgs = { prereqLabel, def.label } }
         end
     end
     return true
@@ -501,37 +501,37 @@ end
 local function canStartTest(source, licenseType)
     licenseType = tostring(licenseType or '')
     local def = SunsetLicenses.Types[licenseType]
-    if not def then return false, 'Invalid license type.' end
-    if TestSessions[source] then return false, 'You already have a license test in progress.' end
+    if not def then return false, { localeKey = 'licenses.message.invalid_license_type' } end
+    if TestSessions[source] then return false, { localeKey = 'licenses.message.you_already_have_a_license_test_in_progress' } end
     local ok, err = HasLicense(source, licenseType)
     if ok and err ~= 'test' then
-        return false, ('You already hold a valid %s.'):format(def.label)
+        return false, { localeKey = 'licenses.message.you_already_hold_a_valid_value', formatArgs = { def.label } }
     end
     -- Check prerequisites before allowing exam start (e.g. hunting requires weapon license)
     local prereqOk, prereqErr = checkPrerequisites(source, licenseType)
     if not prereqOk then return false, prereqErr end
     local facility = SunsetLicenses.Facilities[def.facility]
     if not facility or not near(source, facility.marker, (facility.markerRadius or 3.0) + 2.0) then
-        return false, ('Stand at the %s marker to start this exam.'):format(
-            facility and facility.label or 'license school')
+        return false, { localeKey = 'licenses.message.stand_at_the_value_marker_to_start_this_exam', formatArgs = {
+            facility and facility.label or 'license school' } }
     end
     if def.instructorFaction then
         local authorization = AuthorizedTests[source]
         if not authorization or authorization.licenseType ~= licenseType
             or authorization.expiresAt < os.time() then
             AuthorizedTests[source] = nil
-            return false, ('An on-duty LSSI instructor must authorize your %s exam first.'):format(def.label)
+            return false, { localeKey = 'licenses.message.an_on_duty_lssi_instructor_must_authorize_your_value', formatArgs = { def.label } }
         end
         local instructor = authorization.instructor
         if not GetPlayerName(instructor) or not isInstructor(instructor) then
             AuthorizedTests[source] = nil
-            return false, 'Your LSSI instructor is no longer available or on duty.'
+            return false, { localeKey = 'licenses.message.your_lssi_instructor_is_no_longer_available_or_on' }
         end
         local sourcePos, instructorPos = playerCoords(source), playerCoords(instructor)
         if not sourcePos or not instructorPos
             or #(sourcePos - instructorPos) > (SunsetLicenses.InstructorMaxDistance or 12.0)
             or not near(instructor, facility.marker, (facility.markerRadius or 3.0) + 8.0) then
-            return false, 'Stay beside your LSSI instructor at the exam facility.'
+            return false, { localeKey = 'licenses.message.stay_beside_your_lssi_instructor_at_the_exam_facility' }
         end
     end
     return true
@@ -544,7 +544,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:license:getStatus', function(source)
     local cid = charId(source)
-    if not cid then return nil, 'Character not loaded.' end
+    if not cid then return nil, { localeKey = 'licenses.message.character_not_loaded' } end
     return {
         licenses = GetLicenses(source),
         playtimeMinutes = playtimeMinutes(source),
@@ -557,7 +557,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:license:getExamOffer', function(source, licenseType)
     licenseType = tostring(licenseType or '')
     local def = SunsetLicenses.Types[licenseType]
-    if not def then return nil, 'Invalid license type.' end
+    if not def then return nil, { localeKey = 'licenses.message.invalid_license_type' } end
     local fee = resolveExamFee(licenseType)
     return {
         licenseType = licenseType,
@@ -573,11 +573,11 @@ exports.sunset_core:RegisterCallback('sunset:license:startTheory', function(sour
     local ok, err = canStartTest(source, licenseType)
     if not ok then return nil, err end
     local theory = SunsetLicenses.Theory[licenseType]
-    if not theory then return nil, 'No theory exam configured for this license.' end
+    if not theory then return nil, { localeKey = 'licenses.message.no_theory_exam_configured_for_this_license' } end
     local fee = resolveExamFee(licenseType)
     local paid, charged, chargedAccount = chargeExamFee(source, licenseType)
     if not paid then
-        return nil, ('Exam fee is $%d. You need enough cash or bank balance.'):format(fee)
+        return nil, { localeKey = 'licenses.message.exam_fee_is_value_you_need_enough_cash_or', formatArgs = { fee } }
     end
     local def = SunsetLicenses.Types[licenseType]
     local authorization = AuthorizedTests[source]
@@ -607,7 +607,7 @@ exports.sunset_core:RegisterCallback('sunset:license:startTheory', function(sour
             if charged > 0 and chargedAccount then
                 exports.sunset_core:AddMoney(source, chargedAccount, charged, 'license_exam_refund')
             end
-            return nil, 'The supervised exam audit record could not be created. No test started; contact staff.'
+            return nil, { localeKey = 'licenses.message.the_supervised_exam_audit_record_could_not_be_created' }
         end
     end
     AuthorizedTests[source] = nil
@@ -624,23 +624,23 @@ exports.sunset_core:RegisterCallback('sunset:license:gradeTheoryAnswer', functio
     answer = tonumber(answer)
     local session = TestSessions[source]
     if not session or session.licenseType ~= licenseType or session.phase ~= 'theory' then
-        return nil, 'No active theory exam.'
+        return nil, { localeKey = 'licenses.message.no_active_theory_exam' }
     end
     if session.theoryDeadline and os.time() > session.theoryDeadline then
-        return nil, 'Theory time expired.'
+        return nil, { localeKey = 'licenses.message.theory_time_expired' }
     end
-    if not questionIndex or answer == nil then return nil, 'Invalid answer.' end
+    if not questionIndex or answer == nil then return nil, { localeKey = 'licenses.message.invalid_answer' } end
     local theory = SunsetLicenses.Theory[licenseType]
-    if not theory or not theory.questions[questionIndex] then return nil, 'Invalid question.' end
+    if not theory or not theory.questions[questionIndex] then return nil, { localeKey = 'licenses.message.invalid_question' } end
     session.theoryAnswers = session.theoryAnswers or {}
     if session.theoryAnswers[questionIndex] ~= nil then
-        return nil, 'You already answered this question.'
+        return nil, { localeKey = 'licenses.message.you_already_answered_this_question' }
     end
     local answerKey = session.theoryAnswerKey
         or (SunsetLicenseTheoryAnswers and SunsetLicenseTheoryAnswers[licenseType])
     local question = theory.questions[questionIndex]
     local expected = tonumber(question and question.serverAnswer) or tonumber(answerKey and answerKey[questionIndex])
-    if expected == nil then return nil, 'The server answer key is not configured for this exam.' end
+    if expected == nil then return nil, { localeKey = 'licenses.message.the_server_answer_key_is_not_configured_for_this' } end
     local correct = tonumber(answer) == expected
     session.theoryAnswers[questionIndex] = answer
     return { correct = correct, questionIndex = questionIndex }
@@ -650,20 +650,20 @@ exports.sunset_core:RegisterCallback('sunset:license:submitTheory', function(sou
     licenseType = tostring(licenseType or '')
     local session = TestSessions[source]
     if not session or session.licenseType ~= licenseType or session.phase ~= 'theory' then
-        return nil, 'No active theory exam. Start again at the school marker.'
+        return nil, { localeKey = 'licenses.message.no_active_theory_exam_start_again_at_the_school' }
     end
     if session.theoryDeadline and os.time() > session.theoryDeadline then
         if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'failed') end
         clearTestSession(source)
-        return nil, 'Theory time expired — exam failed.'
+        return nil, { localeKey = 'licenses.message.theory_time_expired_exam_failed' }
     end
     local theory = SunsetLicenses.Theory[licenseType]
-    if not theory then return nil, 'Invalid exam.' end
+    if not theory then return nil, { localeKey = 'licenses.message.invalid_exam' } end
     answers = type(answers) == 'table' and answers or session.theoryAnswers or {}
     session.theoryAnswers = answers
     local answerKey = session.theoryAnswerKey
         or (SunsetLicenseTheoryAnswers and SunsetLicenseTheoryAnswers[licenseType])
-    if not answerKey then return nil, 'The server answer key is not configured for this exam.' end
+    if not answerKey then return nil, { localeKey = 'licenses.message.the_server_answer_key_is_not_configured_for_this' } end
     local score = 0
     for i, q in ipairs(theory.questions or {}) do
         local expected = tonumber(q.serverAnswer) or tonumber(answerKey[i])
@@ -678,7 +678,7 @@ exports.sunset_core:RegisterCallback('sunset:license:submitTheory', function(sou
     if score < need then
         if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'failed') end
         clearTestSession(source)
-        return nil, ('Theory failed (%d/%d). Study the rules and try again.'):format(score, #(theory.questions or {}))
+        return nil, { localeKey = 'licenses.message.theory_failed_value_value_study_the_rules_and_try', formatArgs = { score, #(theory.questions or {}) } }
     end
     session.phase = 'practical'
     session.theoryPassedAt = os.time()
@@ -742,13 +742,13 @@ exports.sunset_core:RegisterCallback('sunset:license:completePractical', functio
     local session = TestSessions[source]
     if not session or session.licenseType ~= licenseType or session.phase ~= 'validated'
         or not session.practicalValidatedAt then
-        return nil, 'The practical test has not been validated by the server.'
+        return nil, { localeKey = 'licenses.message.the_practical_test_has_not_been_validated_by_the' }
     end
     if sessionTimedOut(session) or os.time() - session.practicalValidatedAt > 20 then
         if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'aborted') end
         if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(source) end
         clearTestSession(source)
-        return nil, 'The practical result expired. Start the exam again.'
+        return nil, { localeKey = 'licenses.message.the_practical_result_expired_start_the_exam_again' }
     end
     local def = SunsetLicenses.Types[licenseType]
     if def and def.instructorFaction then
@@ -756,7 +756,7 @@ exports.sunset_core:RegisterCallback('sunset:license:completePractical', functio
             if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'aborted') end
             if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(source) end
             clearTestSession(source)
-            return nil, 'Your LSSI instructor must remain online and on duty until the exam is completed.'
+            return nil, { localeKey = 'licenses.message.your_lssi_instructor_must_remain_online_and_on_duty' }
         end
     end
     local candidateMistakes = tonumber(session.candidateMistakes) or 0
@@ -767,8 +767,8 @@ exports.sunset_core:RegisterCallback('sunset:license:completePractical', functio
         clearTestSession(source)
         notify(session.instructor, ('Candidate #%d failed the practical with %.1f/%.1f recorded mistakes.'):format(
             source, candidateMistakes, failAt), 'warning')
-        return nil, ('Practical failed: the instructor recorded %.1f/%.1f mistakes. Ask LSSI management to review the report if needed.'):format(
-            candidateMistakes, failAt)
+        return nil, { localeKey = 'licenses.message.practical_failed_the_instructor_recorded_value_value_mistakes_ask', formatArgs = {
+            candidateMistakes, failAt } }
     end
     if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(source) end
     clearTestSession(source)

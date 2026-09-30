@@ -15,7 +15,7 @@ end)
 local function openQuests()
     local list = Sunset.AwaitCallback('sunset:quests:list')
     if type(list) ~= 'table' then
-        return exports.sunset_ui:Notify('Quest log unavailable right now.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('quests.message.quest_log_unavailable_right_now'), 'error')
     end
     panelRendered = false
     panelRenderToken = panelRenderToken + 1
@@ -29,7 +29,7 @@ local function openQuests()
     if not panelRendered then
         exports.sunset_ui:Send('questLogHide', {})
         exports.sunset_ui:SetFocus(false, false, false, 'force')
-        return exports.sunset_ui:Notify('Quest log failed to load. Try again once.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('quests.message.quest_log_failed_to_load_try_again_once'), 'error')
     end
 
     exports.sunset_ui:SetFocus(true, true, false, 'quests')
@@ -58,7 +58,7 @@ AddEventHandler('sunset:nui:questClaim', function(data)
     if not questKey then return end
     local ok, err = Sunset.AwaitCallback('sunset:quests:claim', questKey)
     if ok then
-        exports.sunset_ui:Notify('Reward claimed!', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('quests.message.reward_claimed'), 'success')
         if panelOpen then openQuests() end
     else
         exports.sunset_ui:Notify(err or 'Could not claim reward.', 'error')

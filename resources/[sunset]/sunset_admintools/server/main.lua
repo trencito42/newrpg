@@ -47,7 +47,7 @@ end)
 -- every current and future CFX builtin collision.
 RegisterCommand('blzresmon', function(source, args)
     if not isAdmin(source, 3) then
-        if source ~= 0 then TriggerClientEvent('sunset:client:notify', source, 'Admin level 3+ required.', 'error') end
+        if source ~= 0 then TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'admintools.message.admin_level_3_required'), 'error') end
         return
     end
     Reports = {}
@@ -77,7 +77,7 @@ end, false)
 -- that belong to no player session (see client/inspector.lua for criteria).
 RegisterCommand('sweeporphans', function(source, args)
     if not isAdmin(source, 3) then
-        if source ~= 0 then TriggerClientEvent('sunset:client:notify', source, 'Admin level 3+ required.', 'error') end
+        if source ~= 0 then TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'admintools.message.admin_level_3_required'), 'error') end
         return
     end
     local dryRun = args[1] ~= 'force'

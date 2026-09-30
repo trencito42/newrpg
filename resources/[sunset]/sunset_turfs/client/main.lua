@@ -437,12 +437,12 @@ CreateThread(function()
                             end
                         end)
                     else
-                        exports.sunset_ui:Notify('Polygon must have at least 3 vertices!', 'error', 4000)
+                        exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.polygon_must_have_at_least_3_vertices'), 'error', 4000)
                     end
                 elseif IsDisabledControlJustPressed(0, 177) then -- BACKSPACE / ESC: Cancel
                     turfEditActive = false
                     editVertices = {}
-                    exports.sunset_ui:Notify('Turf editing cancelled.', 'info', 4000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.turf_editing_cancelled'), 'info', 4000)
                 end
             end
 
@@ -461,7 +461,7 @@ end, false)
 local function startEditingTurf(turfId)
     turfId = tonumber(turfId)
     if not turfId or not LocalTurfs[turfId] then
-        exports.sunset_ui:Notify('Usage: /turfedit [1-18]. See /turflist', 'warning', 4000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.usage_turfedit_1_18_see_turflist'), 'warning', 4000)
         return
     end
 
@@ -529,12 +529,12 @@ end
 RegisterNetEvent('sunset:turfs:warJoined', function(data)
     warParticipant = true
     myWarRole = data and data.role or 'defender'
-    exports.sunset_ui:Notify('You joined the war! /armory for loadout. Z = war stats.', 'warning', 9000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.you_joined_the_war_armory_for_loadout_z_war'), 'warning', 9000)
     -- [MOBILIZATION] Loud targeted alert for defenders: your turf is under
     -- attack, get there (rally window before zone scoring).
     if myWarRole == 'defender' then
         PlaySoundFrontend(-1, 'Event_Start_Text', 'HUD_MINI_GAME_SOUNDSET', true)
-        exports.sunset_ui:Notify('YOUR TERRITORY IS UNDER ATTACK! Rally now - scoring starts after the rally window.', 'error', 12000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.your_territory_is_under_attack_rally_now_scoring_starts'), 'error', 12000)
     end
     -- [WAR FIX] warStart (-1 broadcast) arrives BEFORE the ticker registers us
     -- as participant, so the participant-gated warHudShow never fired for the
@@ -565,13 +565,13 @@ end)
 
 RegisterCommand('armory', function()
     if not warParticipant then
-        exports.sunset_ui:Notify('You are not in an active war.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.you_are_not_in_an_active_war'), 'error')
         return
     end
     if armoryOpen then closeArmory() return end
     CreateThread(function()
         local info = Sunset.AwaitCallback('sunset:turfs:armoryData')
-        if not info then exports.sunset_ui:Notify('The armory is not available right now.', 'error') return end
+        if not info then exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.message.the_armory_is_not_available_right_now'), 'error') return end
         armoryOpen = true
         exports.sunset_ui:Send('warArmoryShow', info)
         exports.sunset_ui:SetFocus(true, true)

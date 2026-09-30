@@ -107,13 +107,13 @@ local function startRobbery(locationId)
     pcall(function()
         dead = exports.sunset_death:IsDead() == true
     end)
-    if dead then return notify('You cannot rob right now', 'error') end
+    if dead then return notify(exports.sunset_core:Translate('robbery.message.you_cannot_rob_right_now'), 'error') end
     TriggerServerEvent('sunset:robbery:tryStart', locationId or 'luxury_store')
 end
 
 RegisterNetEvent('sunset:robbery:tryCommand', function()
     local loc = nearestLocation(GetEntityCoords(PlayerPedId()))
-    if not loc then return notify('You are not near a robbery location', 'error') end
+    if not loc then return notify(exports.sunset_core:Translate('robbery.message.you_are_not_near_a_robbery_location'), 'error') end
     startRobbery(loc.id)
 end)
 
@@ -125,7 +125,7 @@ RegisterNetEvent('sunset:robbery:started', function(payload)
         smashed = {},
     }
     RobberyAnims.sound('terminal')
-    notify('Security live — crack the cipher', 'warning', 6000)
+    notify(exports.sunset_core:Translate('robbery.message.security_live_crack_the_cipher'), 'warning', 6000)
 
     local ped = PlayerPedId()
     local pos = GetEntityCoords(ped)
@@ -145,11 +145,11 @@ RegisterNetEvent('sunset:robbery:hackResult', function(payload)
     session = session or {}
     session.stage = 'LOOTING'
     if payload.result == 'perfect' then
-        notify('SECURITY BYPASSED — police delayed', 'success', 6000)
+        notify(exports.sunset_core:Translate('robbery.message.security_bypassed_police_delayed'), 'success', 6000)
     elseif payload.result == 'normal' then
-        notify('Firewall down — short delay only', 'info', 6000)
+        notify(exports.sunset_core:Translate('robbery.message.firewall_down_short_delay_only'), 'info', 6000)
     else
-        notify('TRACE COMPLETE — alarm going out now', 'error', 7000)
+        notify(exports.sunset_core:Translate('robbery.message.trace_complete_alarm_going_out_now'), 'error', 7000)
         RobberyAnims.sound('alarm')
     end
     if payload.result ~= 'failed' and session.location and session.location.vaultOnHackSuccess then
@@ -196,7 +196,7 @@ RegisterNetEvent('sunset:robbery:escaping', function(payload)
     session.escapeOrigin = payload.origin or (session.location and session.location.coords)
     markEscapeGuide(session.escapeOrigin)
     RobberyNui.send('hudShow', payload.hud or { stage = 'ESCAPING' })
-    notify('Get 300m away from the store. GPS set to the fence after you clear.', 'warning', 8000)
+    notify(exports.sunset_core:Translate('robbery.message.get_300m_away_from_the_store_gps_set_to'), 'warning', 8000)
 end)
 
 RegisterNetEvent('sunset:robbery:alarm', function()

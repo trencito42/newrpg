@@ -1,7 +1,7 @@
 local sessions = {}
 
 function MSN_CreateSession(source, missionId, variant)
-    if sessions[source] then return nil, 'already_in_mission' end
+    if sessions[source] then return nil, { localeKey = 'missions.message.already_in_mission' } end
     local id = ('msn_%d_%d'):format(source, math.floor(os.clock() * 1000) % 1000000)
     local char = exports.sunset_core:GetCharacter(source)
     sessions[source] = {
@@ -26,14 +26,14 @@ end
 
 function MSN_RequireSession(source, missionId, allowedStates)
     local s = sessions[source]
-    if not s then return nil, 'no_session' end
-    if missionId and s.mission ~= missionId then return nil, 'wrong_mission' end
+    if not s then return nil, { localeKey = 'missions.message.no_session' } end
+    if missionId and s.mission ~= missionId then return nil, { localeKey = 'missions.message.wrong_mission' } end
     if allowedStates then
         local ok = false
         for _, st in ipairs(allowedStates) do
             if s.state == st then ok = true break end
         end
-        if not ok then return nil, 'wrong_state:' .. s.state end
+        if not ok then return nil, { localeKey = 'missions.message.wrong_state' } .. s.state end
     end
     return s
 end

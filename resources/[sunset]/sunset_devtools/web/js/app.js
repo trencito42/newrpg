@@ -151,17 +151,17 @@
     function markDirty() {
         State.isDirty = true;
         $('#rc-global-save-status').className = 'rc-save-badge dirty';
-        $('#rc-global-save-status').textContent = 'UNSAVED';
+        $('#rc-global-save-status').textContent = I18n.t('dynamic.app.unsaved');
         $('#rc-route-dirty-badge').className = 'rc-save-badge dirty';
-        $('#rc-route-dirty-badge').textContent = 'UNSAVED';
+        $('#rc-route-dirty-badge').textContent = I18n.t('dynamic.app.unsaved');
     }
 
     function markSaved() {
         State.isDirty = false;
         $('#rc-global-save-status').className = 'rc-save-badge saved';
-        $('#rc-global-save-status').textContent = 'SAVED';
+        $('#rc-global-save-status').textContent = I18n.t('dynamic.app.saved');
         $('#rc-route-dirty-badge').className = 'rc-save-badge saved';
-        $('#rc-route-dirty-badge').textContent = 'SAVED';
+        $('#rc-route-dirty-badge').textContent = I18n.t('dynamic.app.saved');
     }
 
     // ── Helper Finders ─────────────────────────────────────────────
@@ -842,7 +842,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'rc-btn rc-btn--secondary';
-                btn.textContent = `Teleport to Bin #${idx + 1}`;
+                btn.textContent = I18n.t('dynamic.app.teleport_to_bin_value0', { value0: idx + 1 });
                 btn.addEventListener('click', () => {
                     post('testTeleport', { type: 'ped_bin', coords: b });
                 });
@@ -853,7 +853,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'rc-btn rc-btn--secondary';
-                btn.textContent = `Teleport to Spawn Point #${idx + 1}`;
+                btn.textContent = I18n.t('dynamic.app.teleport_to_spawn_point_value0', { value0: idx + 1 });
                 btn.addEventListener('click', () => {
                     post('testTeleport', { type: 'ped_spawn', coords: pt });
                 });
@@ -880,7 +880,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'rc-btn rc-btn--accent';
-                btn.textContent = `Teleport to Loot Point #${idx + 1}`;
+                btn.textContent = I18n.t('dynamic.app.teleport_to_loot_point_value0', { value0: idx + 1 });
                 btn.addEventListener('click', () => {
                     post('testTeleport', { type: 'ped_coord', coords: pt });
                 });

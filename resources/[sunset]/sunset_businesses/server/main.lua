@@ -229,12 +229,12 @@ function TransferOwnership(businessId, fromCharId, toCharId)
     businessId = tonumber(businessId)
     fromCharId = tonumber(fromCharId)
     toCharId = tonumber(toCharId)
-    if not businessId or not fromCharId or not toCharId then return false, 'Invalid business transfer.' end
+    if not businessId or not fromCharId or not toCharId then return false, { localeKey = 'businesses.message.invalid_business_transfer' } end
     local changed = MySQL.update.await(
         'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id = ?',
         { toCharId, businessId, fromCharId }
     )
-    if not changed or changed < 1 then return false, 'Business ownership could not be transferred.' end
+    if not changed or changed < 1 then return false, { localeKey = 'businesses.message.business_ownership_could_not_be_transferred' } end
     TriggerClientEvent('sunset:client:businessesChanged', -1)
     return true
 end
@@ -357,13 +357,13 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, businessId)
     local char = character(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'businesses.message.character_not_loaded' } end
     local row = MySQL.single.await('SELECT * FROM player_businesses WHERE id = ? AND enabled = 1', { tonumber(businessId) })
-    if not row then return nil, 'Business not found.' end
-    if row.owner_character_id then return nil, 'This business already has an owner.' end
-    if row.for_sale ~= 1 and row.for_sale ~= true then return nil, 'This business is not for sale.' end
+    if not row then return nil, { localeKey = 'businesses.message.business_not_found' } end
+    if row.owner_character_id then return nil, { localeKey = 'businesses.message.this_business_already_has_an_owner' } end
+    if row.for_sale ~= 1 and row.for_sale ~= true then return nil, { localeKey = 'businesses.message.this_business_is_not_for_sale' } end
     local coords = vector3(tonumber(row.coords_x) or 0, tonumber(row.coords_y) or 0, tonumber(row.coords_z) or 0)
-    if not nearby(source, coords) then return nil, 'Stand at the business entrance to buy it.' end
+    if not nearby(source, coords) then return nil, { localeKey = 'businesses.message.stand_at_the_business_entrance_to_buy_it' } end
 
     local maxOwned = tonumber(SunsetBusinesses.MaxOwnedPerCharacter) or 0
     if maxOwned > 0 then
@@ -372,20 +372,20 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
             { char.id }
         )) or 0
         if count >= maxOwned then
-            return nil, ('You can own at most %d businesses.'):format(maxOwned)
+            return nil, { localeKey = 'businesses.message.you_can_own_at_most_value_businesses', formatArgs = { maxOwned } }
         end
     end
 
     local price = tonumber(row.price) or 0
     if exports.sunset_core:GetMoney(source, 'bank') < price and exports.sunset_core:GetMoney(source, 'cash') < price then
-        return nil, ('You need $%s in bank or cash to buy this business.'):format(price)
+        return nil, { localeKey = 'businesses.message.you_need_value_in_bank_or_cash_to_buy', formatArgs = { price } }
     end
 
     local claimed = MySQL.update.await(
         'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id IS NULL',
         { char.id, row.id }
     )
-    if claimed ~= 1 then return nil, 'Another player bought this business first.' end
+    if claimed ~= 1 then return nil, { localeKey = 'businesses.message.another_player_bought_this_business_first' } end
 
     local paid = exports.sunset_core:RemoveMoney(source, 'bank', price, 'business_purchase')
         or exports.sunset_core:RemoveMoney(source, 'cash', price, 'business_purchase')
@@ -394,7 +394,7 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
             'UPDATE player_businesses SET owner_character_id = NULL, for_sale = 1 WHERE id = ? AND owner_character_id = ?',
             { row.id, char.id }
         )
-        return nil, 'Payment failed; the purchase was rolled back.'
+        return nil, { localeKey = 'businesses.message.payment_failed_the_purchase_was_rolled_back' }
     end
 
     TriggerClientEvent('sunset:client:businessesChanged', -1)
@@ -403,7 +403,7 @@ end)
 
 local function ownerDashboard(source)
     local char = character(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'businesses.message.character_not_loaded' } end
     local owned = GetOwnedBusinesses(source)
     local totalBalance = 0
     for _, row in ipairs(owned) do totalBalance = totalBalance + (row.balance or 0) end
@@ -424,7 +424,7 @@ local function ownedSummary(source)
 end
 
 local function adminDashboard(source, selectedId)
-    if not isAdmin(source) then return nil, 'Admin access required.' end
+    if not isAdmin(source) then return nil, { localeKey = 'businesses.message.admin_access_required' } end
     local businesses = businessListForPlayer(source)
     local owned, ownedTotal = ownedSummary(source)
     local selected = nil
@@ -467,43 +467,43 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
 
     if action == 'withdraw' then
         local char = character(source)
-        if not char then return nil, 'Character not loaded.' end
+        if not char then return nil, { localeKey = 'businesses.message.character_not_loaded' } end
         local row = MySQL.single.await(
             'SELECT id, balance, owner_character_id FROM player_businesses WHERE id = ? AND enabled = 1',
             { businessId }
         )
         if not row or tonumber(row.owner_character_id) ~= tonumber(char.id) then
-            return nil, 'You do not own this business.'
+            return nil, { localeKey = 'businesses.message.you_do_not_own_this_business' }
         end
         local amount = math.floor(tonumber(row.balance) or 0)
-        if amount <= 0 then return nil, 'No profit to withdraw yet.' end
+        if amount <= 0 then return nil, { localeKey = 'businesses.message.no_profit_to_withdraw_yet' } end
         local changed = MySQL.update.await(
             'UPDATE player_businesses SET balance = 0 WHERE id = ? AND owner_character_id = ? AND balance >= ?',
             { businessId, char.id, amount }
         )
-        if changed ~= 1 then return nil, 'Withdraw failed.' end
+        if changed ~= 1 then return nil, { localeKey = 'businesses.message.withdraw_failed' } end
         if not exports.sunset_core:AddMoney(source, 'bank', amount, 'business_withdraw') then
             MySQL.update.await('UPDATE player_businesses SET balance = balance + ? WHERE id = ?', { amount, businessId })
-            return nil, 'Could not deposit to your bank.'
+            return nil, { localeKey = 'businesses.message.could_not_deposit_to_your_bank' }
         end
         TriggerClientEvent('sunset:client:businessesChanged', -1)
         return refreshAfterManage(source, 'owner'), ('Withdrew $%s to your bank.'):format(amount)
     end
 
     if action == 'select' then
-        if not isAdmin(source) then return nil, 'Admin access required.' end
+        if not isAdmin(source) then return nil, { localeKey = 'businesses.message.admin_access_required' } end
         return adminDashboard(source, businessId)
     end
 
     if mode == 'admin' then
-        if not isAdmin(source) then return nil, 'Admin access required.' end
+        if not isAdmin(source) then return nil, { localeKey = 'businesses.message.admin_access_required' } end
         if action == 'update' then
             local label = tostring(payload.label or ''):sub(1, 128)
             local price = math.max(0, math.floor(tonumber(payload.price) or 0))
             local profitPercent = math.max(0, math.min(100, math.floor(tonumber(payload.profitPercent) or 70)))
             local forSale = payload.forSale == true or payload.forSale == 1 or payload.forSale == '1'
             local enabled = payload.enabled ~= false and payload.enabled ~= 0 and payload.enabled ~= '0'
-            if label == '' then return nil, 'Label is required.' end
+            if label == '' then return nil, { localeKey = 'businesses.message.label_is_required' } end
             MySQL.update.await([[
                 UPDATE player_businesses
                 SET label = ?, price = ?, profit_percent = ?, for_sale = ?, enabled = ?
@@ -522,7 +522,7 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
             return refreshAfterManage(source, 'admin', businessId), 'Owner cleared; business is for sale again.'
         elseif action == 'teleport' then
             local row = fetchRow(businessId)
-            if not row then return nil, 'Business not found.' end
+            if not row then return nil, { localeKey = 'businesses.message.business_not_found' } end
             TriggerClientEvent('sunset:client:businessTeleport', source, {
                 x = tonumber(row.coords_x) or 0,
                 y = tonumber(row.coords_y) or 0,
@@ -530,18 +530,18 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
             })
             return refreshAfterManage(source, 'admin', businessId), 'Teleported to business.'
         end
-        return nil, 'Unknown admin action.'
+        return nil, { localeKey = 'businesses.message.unknown_admin_action' }
     end
 
     if action == 'teleport' then
         local char = character(source)
-        if not char then return nil, 'Character not loaded.' end
+        if not char then return nil, { localeKey = 'businesses.message.character_not_loaded' } end
         local row = MySQL.single.await(
             'SELECT id, coords_x, coords_y, coords_z, owner_character_id FROM player_businesses WHERE id = ? AND enabled = 1',
             { businessId }
         )
         if not row or tonumber(row.owner_character_id) ~= tonumber(char.id) then
-            return nil, 'You do not own this business.'
+            return nil, { localeKey = 'businesses.message.you_do_not_own_this_business' }
         end
         TriggerClientEvent('sunset:client:businessTeleport', source, {
             x = tonumber(row.coords_x) or 0,
@@ -551,7 +551,7 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
         return refreshAfterManage(source, 'owner'), 'Teleported to your business.'
     end
 
-    return nil, 'Unknown action.'
+    return nil, { localeKey = 'businesses.message.unknown_action' }
 end)
 
 local BUSINESS_OWNER_COMMANDS = {

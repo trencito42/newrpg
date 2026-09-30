@@ -57,17 +57,17 @@ end
 function SunsetLottery.BuyTicket(source, number)
     number = tonumber(number)
     if not number or number < 1 or number > 100 then
-        return false, 'Pick a number between 1 and 100.'
+        return false, { localeKey = 'economy.message.pick_a_number_between_1_and_100' }
     end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return false, 'Character is not loaded.' end
+    if not char then return false, { localeKey = 'economy.message.character_is_not_loaded' } end
 
     local cost = SunsetLottery.TicketPrice
     local prizeCut = math.floor(cost * (1 - SunsetLottery.TaxBurnRate))
     local account = (tonumber(char.cash) or 0) >= cost and 'cash'
         or ((tonumber(char.bank) or 0) >= cost and 'bank' or nil)
-    if not account then return false, ('You need $%s to buy a ticket.'):format(cost) end
+    if not account then return false, { localeKey = 'economy.message.you_need_value_to_buy_a_ticket', formatArgs = { cost } } end
     local newJackpot
     local callOk, committed = pcall(function()
         return MySQL.startTransaction(function(query)
@@ -90,8 +90,8 @@ function SunsetLottery.BuyTicket(source, number)
         end)
     end)
     if not callOk or not committed then
-        return false, ('Ticket not purchased: you need $%d and can hold a maximum of %d tickets per round. You were not charged.'):format(
-            cost, SunsetLottery.MaxTicketsPerPlayer)
+        return false, { localeKey = 'economy.message.ticket_not_purchased_you_need_value_and_can_hold_a_maximum_of_val', formatArgs = {
+            cost, SunsetLottery.MaxTicketsPerPlayer } }
     end
     CurrentJackpot = newJackpot
     exports.sunset_core:RefreshMoney(source)
@@ -215,7 +215,7 @@ local function runLotteryCommand(source, args)
 
     local num = tonumber(sub)
     if not num then
-        TriggerClientEvent('sunset:client:notify', source, 'Usage: /loto [1-100] or /loto info', 'info')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.usage_loto_1_100_or_loto_info'), 'info')
         return
     end
 

@@ -123,7 +123,7 @@ const InventoryForza = {
         if (!nearby.length) {
             const empty = document.createElement('div');
             empty.className = 'prox-empty';
-            empty.textContent = 'No players nearby (3m).';
+            empty.textContent = I18n.t('dynamic.inventory_forza.no_players_nearby_3m');
             list.appendChild(empty);
             return;
         }

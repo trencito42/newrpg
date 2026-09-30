@@ -87,7 +87,7 @@ openDrugsUI = function(mode, index)
     currentIndex = index
     local status = Sunset.AwaitCallback('sunset:drugs:status')
     if not status then
-        exports.sunset_ui:Notify('Could not load drug status.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('drugs.message.could_not_load_drug_status'), 'error')
         -- [STATE FIX] never leave drugsOpen=true after a failed open
         drugsOpen = false
         currentMode = nil
@@ -170,7 +170,7 @@ AddEventHandler('sunset:nui:drugsHarvest', function(data)
     -- spot existence + proximity anyway.
     local spotIndex = tonumber(data.spotIndex) or currentIndex
     if not spotIndex then
-        exports.sunset_ui:Notify('Reopen the harvest spot and try again.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('drugs.message.reopen_the_harvest_spot_and_try_again'), 'error')
         return
     end
     runTimedAction('sunset:drugs:harvestStart', { spotIndex },

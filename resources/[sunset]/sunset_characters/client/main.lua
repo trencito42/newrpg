@@ -104,16 +104,16 @@ AddEventHandler('sunset:client:spawnSelectionRequired', showSpawnSelection)
 
 local function openSpawnMenuNow(force)
     if inCharacterFlow and not force then
-        exports.sunset_ui:Notify('Finish the current login flow first.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.finish_the_current_login_flow_first'), 'error')
         return false
     end
     local char = exports.sunset_core:GetCharacter()
     if not char or not char.id then
-        exports.sunset_ui:Notify('No character loaded.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.no_character_loaded'), 'error')
         return false
     end
     if GetResourceState('sunset_appearance') == 'started' and exports.sunset_appearance:IsEditing() then
-        exports.sunset_ui:Notify('Finish character appearance first.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.finish_character_appearance_first'), 'error')
         return false
     end
     showSpawnSelection(char, true)
@@ -141,7 +141,7 @@ AddEventHandler('sunset:nui:spawnSelect', function(data)
     if not pendingSpawnCharacter then return end
     local choice = data and data.location
     if choice ~= 'default' and choice ~= 'last' and choice ~= 'house' and choice ~= 'hq' then
-        return exports.sunset_ui:Notify('Choose one of the available spawn locations.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.choose_one_of_the_available_spawn_locations'), 'error')
     end
     local resolved, err = Sunset.AwaitCallback('sunset:resolveSpawnChoice', choice, tonumber(data and data.propertyId))
     if not resolved then
@@ -271,7 +271,7 @@ AddEventHandler('sunset:nui:delete', function(data)
             exports.sunset_ui:Notify(err or 'Could not delete that character', 'error')
             return
         end
-        exports.sunset_ui:Notify('Character deleted', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.character_deleted'), 'success')
         showCharacterList()
     end)
 end)

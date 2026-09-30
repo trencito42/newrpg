@@ -40,7 +40,7 @@ local function showJobHelp()
     local cfg = Sunset.GetJobConfig(jobId)
     local def = Sunset.CivilianJobs[jobId]
     if not cfg or not def or jobId == 'unemployed' then
-        JC.notify('Get a job at the Job Center or use /jobs', 'info')
+        JC.notify(exports.sunset_core:Translate('jobs.message.get_a_job_at_the_job_center_or_use'), 'info')
         return
     end
     JC.notify(def.label .. ': ' .. (cfg.help or def.description or ''), 'info', 8000)
@@ -130,7 +130,7 @@ AddEventHandler('sunset:ui:jobsSelectRequest', function(data)
     exports.sunset_ui:Send('jobsHide', {})
     local ok, err = Sunset.AwaitCallback('sunset:hireJob', data.jobId)
     if ok then
-        JC.notify('You are now employed as ' .. (data.jobLabel or data.jobId), 'success')
+        JC.notify(exports.sunset_core:Translate('jobs.message.you_are_now_employed_as') .. (data.jobLabel or data.jobId), 'success')
     else
         JC.notify(err or 'Could not get job', 'error')
     end
@@ -162,7 +162,7 @@ RegisterCommand('spawntruck', function()
     end
 
     local truckHash = loadModel('phantom')
-    if not truckHash then exports.sunset_ui:Notify('Could not load phantom model', 'error', 3000) return end
+    if not truckHash then exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.could_not_load_phantom_model'), 'error', 3000) return end
     local truck = CreateVehicle(truckHash, pos.x, pos.y, pos.z, h, true, false)
     SetEntityAsMissionEntity(truck, true, true)
     TaskWarpPedIntoVehicle(ped, truck, -1)
@@ -170,7 +170,7 @@ RegisterCommand('spawntruck', function()
 
     Wait(300)
     local trailerHash = loadModel('tanker')
-    if not trailerHash then exports.sunset_ui:Notify('Could not load tanker model', 'error', 3000) return end
+    if not trailerHash then exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.could_not_load_tanker_model'), 'error', 3000) return end
     local rear = GetOffsetFromEntityInWorldCoords(truck, 0.0, -10.5, 0.5)
     local trailer = CreateVehicle(trailerHash, rear.x, rear.y, rear.z, h, true, false)
     SetEntityAsMissionEntity(trailer, true, true)
@@ -179,7 +179,7 @@ RegisterCommand('spawntruck', function()
     Wait(200)
     AttachVehicleToTrailer(truck, trailer, 1.1)
     SetModelAsNoLongerNeeded(trailerHash)
-    exports.sunset_ui:Notify('Spawned phantom+tanker. Use /dl for coords+heading.', 'success', 4000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.spawned_phantom_tanker_use_dl_for_coords_heading'), 'success', 4000)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/spawntruck', '[DEV] Spawn phantom+tanker la tine pentru testare coords')

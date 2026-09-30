@@ -359,7 +359,7 @@ end, false)
 RegisterCommand('hudexport', function(_, args)
     local layout = readSavedHudLayout()
     if not layout then
-        exports.sunset_ui:Notify('Save your HUD first: /hudedit then Enter', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('hud.message.save_your_hud_first_hudedit_then_enter'), 'error')
         return
     end
     local applyAll = args[1] == 'all'
@@ -369,7 +369,7 @@ end, false)
 RegisterCommand('hudreset', function()
     DeleteResourceKvp('sunset_hud_layout')
     refreshHudLayout(getHudLayout())
-    exports.sunset_ui:Notify('HUD reset to server default', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('hud.message.hud_reset_to_server_default'), 'success')
 end, false)
 
 RegisterNetEvent('sunset:client:hudDefaultUpdated', function(layout, applyAll)
@@ -437,7 +437,7 @@ end)
 AddEventHandler('sunset:nui:hudEditSave', function(data)
     if type(data) ~= 'table' then return end
     SetResourceKvp('sunset_hud_layout', json.encode(data))
-    exports.sunset_ui:Notify('HUD layout saved', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('hud.message.hud_layout_saved'), 'success')
 end)
 
 AddEventHandler('sunset:nui:hudEditClose', function()

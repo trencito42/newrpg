@@ -66,11 +66,11 @@
             const doSubmit = () => {
                 const val = inputField?.value?.trim() || '';
                 if (!val || val.length < 3 || val.length > 24) {
-                    this.showError('Name must be between 3 and 24 characters!');
+                    this.showError(I18n.t('dynamic.fnc.name_must_be_between_3_and_24_characters'));
                     return;
                 }
                 if (!/^[a-zA-Z0-9._-]+$/.test(val)) {
-                    this.showError('Name may only contain letters, digits, dots and hyphens (e.g. diablo69, alex.ro, Viper_99)!');
+                    this.showError(I18n.t('dynamic.fnc.name_may_only_contain_letters_digits_dots_and_hyphens_e_g_diablo'));
                     return;
                 }
                 this.clearError();

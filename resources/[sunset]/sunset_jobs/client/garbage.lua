@@ -168,7 +168,7 @@ local function startGarbage()
     else
         JC.setWaypoint(cfg.depot.coords)
     end
-    JC.notify('Collect bins on your route — truck capacity: ' .. (data.capacity or 8), 'info')
+    JC.notify(exports.sunset_core:Translate('jobs.message.collect_bins_on_your_route_truck_capacity') .. (data.capacity or 8), 'info')
 
     CreateThread(function()
         local busy = false
@@ -204,7 +204,7 @@ local function startGarbage()
                                 worldBag = nil
                             end
                             updateObjective(cfg, newData)
-                            JC.notify('Take the bag to the back of your truck', 'info')
+                            JC.notify(exports.sunset_core:Translate('jobs.message.take_the_bag_to_the_back_of_your_truck'), 'info')
                         else
                             JC.notify(err2 or 'Could not pick up trash from the bin', 'error')
                         end
@@ -238,7 +238,7 @@ local function startGarbage()
                                 JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
                                 JC.setWaypoint(unload)
                                 setGarbageCheckpoint(unload, 52, 152, 219)
-                                JC.notify('Truck full — return to depot to unload', 'info')
+                                JC.notify(exports.sunset_core:Translate('jobs.message.truck_full_return_to_depot_to_unload'), 'info')
                             else
                                 local nextBin = newData.bins and newData.bins[newData.binIndex or 1]
                                 pointToBin(cfg, nextBin, 'Trash Bin ' .. tostring(newData.binIndex or 1))
@@ -248,7 +248,7 @@ local function startGarbage()
                         end
                     end
                 else
-                    JC.notify('Your trash truck is missing', 'error')
+                    JC.notify(exports.sunset_core:Translate('jobs.message.your_trash_truck_is_missing'), 'error')
                 end
             elseif stage == 'return_unload' then
                 local unload = cfg.depot.unload or cfg.depot.coords

@@ -201,14 +201,14 @@ local function processPayday(source)
     end)
     PlayedMinutes[source] = 0
     if not callOk or not committed then
-        TriggerClientEvent('sunset:client:notify', source, 'Payday could not be committed safely. Your activity was kept; staff can retry this period.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.payday_could_not_be_committed_safely_your_activity_was'), 'error')
         return
     end
     if outcome.status == 'insufficient_activity' then
-        TriggerClientEvent('sunset:client:notify', source, ('Payday skipped: You played %d/20 min required this hour.'):format(outcome.played), 'info')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.payday_skipped_you_played_value_20_min_required_this_hour', outcome.played), 'info')
         return
     elseif outcome.status == 'detained' then
-        TriggerClientEvent('sunset:client:notify', source, 'Payday suspended while incapacitated or serving a jail sentence.', 'warning')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.payday_suspended_while_incapacitated_or_serving_a_jail_sentence'), 'warning')
         return
     end
 
@@ -230,7 +230,7 @@ local function processPayday(source)
     end
     if rent.evicted then
         TriggerClientEvent('sunset:client:notify', source,
-            ('Rental at %s ended because you could not pay it.'):format(rent.label or 'your house'), 'error')
+            exports.sunset_core:TFor(source, 'economy.message.rental_at_value_ended_because_you_could_not_pay_it', rent.label or 'your house'), 'error')
     end
     TriggerEvent('sunset:payday:processed', source)
     TriggerClientEvent('sunset:client:payday', source, net, totalTax, {
@@ -287,7 +287,7 @@ end)
 
 exports('SetWorldWeather', function(weather)
     weather = string.upper(tostring(weather or ''))
-    if not WEATHER_TYPES[weather] then return false, 'Invalid weather type' end
+    if not WEATHER_TYPES[weather] then return false, { localeKey = 'economy.message.invalid_weather_type' } end
     WorldWeather = weather
     broadcastWeather()
     return true
@@ -374,21 +374,21 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, itemName, amount, businessId)
     amount = math.floor(tonumber(amount) or 1)
-    if amount < 1 then return nil, 'Invalid amount' end
+    if amount < 1 then return nil, { localeKey = 'economy.message.invalid_amount' } end
     -- [AUDIT P6-05] Downed/jailed players cannot shop.
-    if exports.sunset_core:IsIncapacitated(source) then return nil, 'You cannot shop right now.' end
+    if exports.sunset_core:IsIncapacitated(source) then return nil, { localeKey = 'economy.message.you_cannot_shop_right_now' } end
     -- [BUGFIX] Double-fire guard: the hold-to-buy UI could post twice (click +
     -- ENTER), first purchase succeeded while the second failed with "already
     -- own" -> player saw "purchase failed" yet the item was in inventory.
     if not exports.sunset_core:RateLimit(source, 'shopBuy', 800) then
-        return nil, 'Processing your last purchase...'
+        return nil, { localeKey = 'economy.message.processing_your_last_purchase' }
     end
 
     local shop = Sunset.Shops[shopId]
-    if not shop then return nil, 'Shop not found' end
+    if not shop then return nil, { localeKey = 'economy.message.shop_not_found' } end
 
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Invalid player ped' end
+    if not ped or ped == 0 then return nil, { localeKey = 'economy.message.invalid_player_ped' } end
     local playerCoords = GetEntityCoords(ped)
     if shopId == 'twentyfour7' then
         local nearStore = false
@@ -399,40 +399,41 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
             end
         end
         if not nearStore then
-            return nil, 'You must be at a 24/7 store to buy items'
+            return nil, { localeKey = 'economy.message.you_must_be_at_a_24_7_store_to' }
         end
     elseif shop.coords and #(playerCoords - shop.coords) > 15.0 then
-        return nil, 'You must be at the shop location to buy items'
+        return nil, { localeKey = 'economy.message.you_must_be_at_the_shop_location_to_buy' }
     end
 
     local shopItem
     for _, row in ipairs(shop.items) do
         if row.item == itemName then shopItem = row break end
     end
-    if not shopItem then return nil, 'Item not sold here' end
+    if not shopItem then return nil, { localeKey = 'economy.message.item_not_sold_here' } end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not char then return nil, { localeKey = 'economy.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     local maxAmount = math.max(1, math.floor(tonumber(shopItem.maxAmount) or 100))
     if amount > maxAmount then
-        return nil, ('You can buy at most %d of this item at once.'):format(maxAmount)
+        return nil, { localeKey = 'economy.message.you_can_buy_at_most_value_of_this_item', formatArgs = { maxAmount } }
     end
     local itemDef = Sunset.Items[itemName]
-    if not itemDef then return nil, 'This shop item is not configured correctly.' end
+    if not itemDef then return nil, { localeKey = 'economy.message.this_shop_item_is_not_configured_correctly' } end
     if shopItem.minLevel and (tonumber(char.level) or 1) < tonumber(shopItem.minLevel) then
-        return nil, ('Requires level %d. Your current level is %d.'):format(
-            tonumber(shopItem.minLevel), tonumber(char.level) or 1)
+        return nil, { localeKey = 'economy.message.requires_level_value_your_current_level_is_value', formatArgs = {
+            tonumber(shopItem.minLevel), tonumber(char.level) or 1
+        } }
     end
     if shopItem.requiredLicense then
         if GetResourceState('sunset_licenses') ~= 'started' then
-            return nil, 'The license service is unavailable. You were not charged.'
+            return nil, { localeKey = 'economy.message.the_license_service_is_unavailable_you_were_not_charged' }
         end
         if not exports.sunset_licenses:HasLicense(source, shopItem.requiredLicense) then
-            return nil, 'A valid Firearm License is required. Contact an on-duty LSSI instructor.'
+            return nil, { localeKey = 'economy.message.a_valid_firearm_license_is_required_contact_an_on' }
         end
     end
     if itemDef.weapon and exports.sunset_inventory:HasItem(source, itemName, 1) then
-        return nil, ('You already own %s.'):format(itemDef.label or itemName)
+        return nil, { localeKey = 'economy.message.you_already_own_value', formatArgs = { itemDef.label or itemName } }
     end
 
     -- Optional fisherman-skill gate (minFishLevel on shop item)
@@ -445,8 +446,8 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
             )) or 1
         end
         if fishLevel < shopItem.minFishLevel then
-            return nil, ('Requires Fisherman level %d (your level: %d). Fish more to level up!'):format(
-                shopItem.minFishLevel, fishLevel)
+            return nil, { localeKey = 'economy.message.requires_fisherman_level_value_your_level_value_fish_more_to_leve', formatArgs = {
+                shopItem.minFishLevel, fishLevel } }
         end
     end
 
@@ -454,14 +455,14 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
     local chargedAccount = 'cash'
     if not exports.sunset_core:RemoveMoney(source, 'cash', total, 'shop') then
         if not exports.sunset_core:RemoveMoney(source, 'bank', total, 'shop') then
-            return nil, 'Not enough money'
+            return nil, { localeKey = 'economy.message.not_enough_money' }
         end
         chargedAccount = 'bank'
     end
 
     if not exports.sunset_inventory:AddItem(source, itemName, amount) then
         exports.sunset_core:AddMoney(source, chargedAccount, total, 'shop_refund')
-        return nil, 'Inventory full'
+        return nil, { localeKey = 'economy.message.inventory_full' }
     end
 
     -- [GUNSHOP FIX] Firearms are given with 0 ammo by the inventory sync, so a
@@ -501,31 +502,31 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:atmTransfer', function(source, action, amount)
     amount = math.floor(amount or 0)
-    if amount < 1 then return nil, 'Invalid amount' end
+    if amount < 1 then return nil, { localeKey = 'economy.message.invalid_amount' } end
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'economy.message.no_character' } end
 
     -- [AUDIT P2-08] Require physical presence at an ATM. Money math was already
     -- safe, but the callback was callable from anywhere (defeats robbery RP).
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'No character' end
+    if not ped or ped == 0 then return nil, { localeKey = 'economy.message.no_character' } end
     local pos = GetEntityCoords(ped)
     local nearAtm = false
     for _, atm in ipairs(Sunset.ATMs or {}) do
         if #(pos - atm) <= 2.5 then nearAtm = true break end
     end
-    if not nearAtm then return nil, 'You must be at an ATM.' end
+    if not nearAtm then return nil, { localeKey = 'economy.message.you_must_be_at_an_atm' } end
 
     if action == 'deposit' then
         if not exports.sunset_core:MoveMoney(source, 'cash', 'bank', amount, 'atm_deposit') then
-            return nil, 'Not enough cash'
+            return nil, { localeKey = 'economy.message.not_enough_cash' }
         end
     elseif action == 'withdraw' then
         if not exports.sunset_core:MoveMoney(source, 'bank', 'cash', amount, 'atm_withdraw') then
-            return nil, 'Not enough bank balance'
+            return nil, { localeKey = 'economy.message.not_enough_bank_balance' }
         end
     else
-        return nil, 'Invalid action'
+        return nil, { localeKey = 'economy.message.invalid_action' }
     end
     return { cash = char.cash, bank = char.bank }
 end)
@@ -533,21 +534,21 @@ end)
 exports.sunset_core:RegisterCallback('sunset:phoneBankTransfer', function(source, targetId, amount)
     targetId = tonumber(targetId)
     amount = math.floor(tonumber(amount) or 0)
-    if not targetId or targetId < 1 then return nil, 'Invalid player ID' end
-    if amount < 1 then return nil, 'Invalid amount' end
-    if targetId == source then return nil, 'You cannot transfer to yourself' end
+    if not targetId or targetId < 1 then return nil, { localeKey = 'economy.message.invalid_player_id' } end
+    if amount < 1 then return nil, { localeKey = 'economy.message.invalid_amount' } end
+    if targetId == source then return nil, { localeKey = 'economy.message.you_cannot_transfer_to_yourself' } end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'economy.message.no_character_loaded' } end
 
     local targetChar = exports.sunset_core:GetCharacter(targetId)
-    if not targetChar then return nil, 'Player not found or offline' end
+    if not targetChar then return nil, { localeKey = 'economy.message.player_not_found_or_offline' } end
 
     if not exports.sunset_core:TransferMoney(source, targetId, 'bank', amount, 'bank_transfer') then
-        return nil, 'Not enough bank balance'
+        return nil, { localeKey = 'economy.message.not_enough_bank_balance' }
     end
     TriggerClientEvent('sunset:client:notify', targetId,
-        ('Received $%s bank transfer from %s.'):format(amount, exports.sunset_core:GetPlayerDisplayName(source) or 'someone'),
+        exports.sunset_core:TFor(targetId, 'economy.message.received_value_bank_transfer_from_value', amount, exports.sunset_core:GetPlayerDisplayName(source) or 'someone'),
         'success', 6000)
 
     exports.sunset_core:RefreshMoney(source)

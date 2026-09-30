@@ -16,17 +16,17 @@ local function getChar(source)
 end
 
 local function sanitize(appearance, fallback)
-    if GetResourceState('sunset_appearance') ~= 'started' then return nil, 'Appearance system unavailable.' end
+    if GetResourceState('sunset_appearance') ~= 'started' then return nil, { localeKey = 'clothing.message.appearance_system_unavailable' } end
     local ok, result, err = pcall(function()
         return exports.sunset_appearance:ValidateAppearance(appearance, fallback)
     end)
-    if not ok then return nil, 'Validation error.' end
+    if not ok then return nil, { localeKey = 'clothing.message.validation_error' } end
     return result, err
 end
 
 exports.sunset_core:RegisterCallback('sunset:outfits:list', function(source)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'clothing.message.no_character' } end
     local rows = MySQL.query.await(
         'SELECT id, name, appearance, updated_at FROM character_outfits WHERE character_id = ? ORDER BY name ASC',
         { char.id }) or {}
@@ -39,10 +39,10 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:outfits:save', function(source, name, snapshot)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'clothing.message.no_character' } end
     name = tostring(name or ''):gsub('^%s*(.-)%s*$', '%1'):sub(1, 24)
-    if #name < 2 then return nil, 'The name must have at least 2 characters.' end
-    if hasBadChars(name) then return nil, 'Invalid characters in name.' end
+    if #name < 2 then return nil, { localeKey = 'clothing.message.the_name_must_have_at_least_2_characters' } end
+    if hasBadChars(name) then return nil, { localeKey = 'clothing.message.invalid_characters_in_name' } end
 
     local count = tonumber(MySQL.scalar.await(
         'SELECT COUNT(*) FROM character_outfits WHERE character_id = ?', { char.id })) or 0
@@ -50,7 +50,7 @@ exports.sunset_core:RegisterCallback('sunset:outfits:save', function(source, nam
         'SELECT id FROM character_outfits WHERE character_id = ? AND name = ?', { char.id, name })
 
     if not existing and count >= MAX_OUTFITS then
-        return nil, ('Limita de %d outfit-uri atinsa. Sterge unul mai vechi.'):format(MAX_OUTFITS)
+        return nil, { localeKey = 'clothing.message.limita_de_value_outfit_uri_atinsa_sterge_unul_mai', formatArgs = { MAX_OUTFITS } }
     end
 
     -- The client sends a ped clothing snapshot (what the player actually
@@ -85,14 +85,14 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:outfits:equip', function(source, outfitId)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'clothing.message.no_character' } end
     outfitId = tonumber(outfitId)
-    if not outfitId then return nil, 'Invalid outfit.' end
+    if not outfitId then return nil, { localeKey = 'clothing.message.invalid_outfit' } end
 
     local row = MySQL.single.await(
         'SELECT appearance FROM character_outfits WHERE id = ? AND character_id = ?',
         { outfitId, char.id })
-    if not row then return nil, 'Outfit not found.' end
+    if not row then return nil, { localeKey = 'clothing.message.outfit_not_found' } end
 
     local decoded = type(row.appearance) == 'string' and json.decode(row.appearance) or row.appearance
     local sanitized, err = sanitize(decoded, char.appearance)
@@ -101,7 +101,7 @@ exports.sunset_core:RegisterCallback('sunset:outfits:equip', function(source, ou
     -- Equip = write onto the live character appearance (same path as shop
     -- purchase, minus the fee: outfits you already own are free to wear).
     local encoded = json.encode(sanitized)
-    if not encoded then return nil, 'Outfit data error.' end
+    if not encoded then return nil, { localeKey = 'clothing.message.outfit_data_error' } end
     MySQL.update.await('UPDATE characters SET appearance = ? WHERE id = ?', { encoded, char.id })
     char.appearance = sanitized
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
@@ -111,26 +111,26 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:outfits:delete', function(source, outfitId)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'clothing.message.no_character' } end
     outfitId = tonumber(outfitId)
-    if not outfitId then return nil, 'Invalid outfit.' end
+    if not outfitId then return nil, { localeKey = 'clothing.message.invalid_outfit' } end
     local changed = MySQL.update.await(
         'DELETE FROM character_outfits WHERE id = ? AND character_id = ?',
         { outfitId, char.id })
-    if not changed or changed < 1 then return nil, 'Outfit not found.' end
+    if not changed or changed < 1 then return nil, { localeKey = 'clothing.message.outfit_not_found' } end
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:outfits:rename', function(source, outfitId, newName)
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'clothing.message.no_character' } end
     outfitId = tonumber(outfitId)
     newName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1'):sub(1, 24)
-    if not outfitId or #newName < 2 then return nil, 'Invalid name.' end
-    if hasBadChars(newName) then return nil, 'Invalid characters in name.' end
+    if not outfitId or #newName < 2 then return nil, { localeKey = 'clothing.message.invalid_name' } end
+    if hasBadChars(newName) then return nil, { localeKey = 'clothing.message.invalid_characters_in_name' } end
     local changed = MySQL.update.await(
         'UPDATE character_outfits SET name = ? WHERE id = ? AND character_id = ?',
         { newName, outfitId, char.id })
-    if not changed or changed < 1 then return nil, 'Outfit not found or name taken.' end
+    if not changed or changed < 1 then return nil, { localeKey = 'clothing.message.outfit_not_found_or_name_taken' } end
     return true
 end)

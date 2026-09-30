@@ -65,7 +65,7 @@ RegisterNetEvent('sunset:client:glueRemove', function(targetSrc)
 
     local localSrc = GetPlayerServerId(PlayerId())
     if targetSrc == localSrc then
-        notify('Detached.', 'success')
+        notify(exports.sunset_core:Translate('world.message.detached'), 'success')
     end
 end)
 
@@ -83,7 +83,7 @@ RegisterCommand('glue', function()
     local origin = GetEntityCoords(ped)
 
     if IsEntityAttached(ped) then
-        notify('Already glued. Use /unglue to detach.', 'info')
+        notify(exports.sunset_core:Translate('world.message.already_glued_use_unglue_to_detach'), 'info')
         return
     end
 
@@ -99,13 +99,13 @@ RegisterCommand('glue', function()
     end
 
     if not closest then
-        notify('No vehicle nearby (within 10 m).', 'error')
+        notify(exports.sunset_core:Translate('world.message.no_vehicle_nearby_within_10_m'), 'error')
         return
     end
 
     local netId = VehToNet(closest)
     if netId == 0 then
-        notify('Vehicle is not networked — cannot glue.', 'error')
+        notify(exports.sunset_core:Translate('world.message.vehicle_is_not_networked_cannot_glue'), 'error')
         return
     end
 
@@ -118,7 +118,7 @@ end, false)
 RegisterCommand('unglue', function()
     local ped = PlayerPedId()
     if not IsEntityAttached(ped) then
-        notify('You are not glued to anything.', 'info')
+        notify(exports.sunset_core:Translate('world.message.you_are_not_glued_to_anything'), 'info')
         return
     end
     TriggerServerEvent('sunset:server:unglue')

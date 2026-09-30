@@ -97,7 +97,7 @@
         if (buyProgress >= 100) {
             buyComplete = true;
             if (text) {
-                text.textContent = 'Purchased!';
+                text.textContent = I18n.t('dynamic.dealership.purchased');
                 text.style.color = '#000';
             }
             if (btn) btn.style.background = 'var(--dl-accent)';
@@ -153,7 +153,7 @@
         if (!state.vehicles.length) {
             const empty = document.createElement('p');
             empty.className = 'dl-stock-note';
-            empty.textContent = 'No vehicles in catalog.';
+            empty.textContent = I18n.t('dynamic.dealership.no_vehicles_in_catalog');
             list.appendChild(empty);
         }
     };
@@ -179,11 +179,11 @@
         }
         const priceLabel = $('#dl-price-label');
         if (priceLabel) {
-            if (!vehicle) priceLabel.textContent = 'Purchase Price';
+            if (!vehicle) priceLabel.textContent = I18n.t('dynamic.dealership.purchase_price');
             else if (Number(vehicle.stock) > 0) {
-                priceLabel.textContent = `Purchase Price · ${vehicle.stock} in stock`;
+                priceLabel.textContent = I18n.t('dynamic.dealership.purchase_price_value0_in_stock', { value0: vehicle.stock });
             } else {
-                priceLabel.textContent = 'Purchase Price · Sold out';
+                priceLabel.textContent = I18n.t('dynamic.dealership.purchase_price_sold_out');
             }
         }
         const stockEl = $('#dl-stock-note');
@@ -197,7 +197,7 @@
         if (testBtn) {
             const enabled = vehicle && (vehicle.test_drive_enabled === true || Number(vehicle.test_drive_enabled) === 1);
             testBtn.disabled = state.admin || !enabled || !vehicle;
-            testBtn.textContent = `Test Drive — ${state.testDriveSeconds || 60}s`;
+            testBtn.textContent = I18n.t('dynamic.dealership.test_drive_value0_s', { value0: state.testDriveSeconds || 60 });
         }
         buyComplete = false;
         stopBuy(true);
@@ -242,15 +242,15 @@
             const btn = $('#dealership-admin-delete');
             if (!deleteConfirm) {
                 deleteConfirm = true;
-                if (btn) btn.textContent = `Confirm delete ${model}?`;
+                if (btn) btn.textContent = I18n.t('dynamic.dealership.confirm_delete_value0', { value0: model });
                 setTimeout(() => {
                     deleteConfirm = false;
-                    if (btn) btn.textContent = 'DELETE SELECTED';
+                    if (btn) btn.textContent = I18n.t('dynamic.dealership.delete_selected');
                 }, 3500);
                 return;
             }
             deleteConfirm = false;
-            if (btn) btn.textContent = 'DELETE SELECTED';
+            if (btn) btn.textContent = I18n.t('dynamic.dealership.delete_selected');
             post('dealershipAdminDelete', { model });
         });
         $('#dl-admin-toggle')?.addEventListener('click', () => {

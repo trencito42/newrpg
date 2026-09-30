@@ -75,7 +75,7 @@ local B64MAP = {}
 for i = 1, 64 do B64MAP[B64CHARS:sub(i, i)] = i - 1 end
 
 local function base64Decode(data)
-    if type(data) ~= 'string' then return nil, 'not a string' end
+    if type(data) ~= 'string' then return nil, { localeKey = 'test_agent.message.not_a_string' } end
     local out = {}
     local buf, bits = 0, 0
     for i = 1, #data do
@@ -84,7 +84,7 @@ local function base64Decode(data)
             break
         elseif c ~= '\n' and c ~= '\r' and c ~= ' ' then
             local v = B64MAP[c]
-            if not v then return nil, ('invalid character %q at %d'):format(c, i) end
+            if not v then return nil, { localeKey = 'test_agent.message.invalid_character_value_at_value', formatArgs = { c, i } } end
             buf = (buf << 6) | v
             bits = bits + 6
             if bits >= 8 then

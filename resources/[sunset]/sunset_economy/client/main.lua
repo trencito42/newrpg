@@ -118,7 +118,7 @@ end)
 AddEventHandler('sunset:nui:shopBuy', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:buyItem', data.shopId, data.item, data.amount or 1, data.businessId)
     if ok then
-        exports.sunset_ui:Notify('Purchase successful', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('economy.message.purchase_successful'), 'success')
     else
         exports.sunset_ui:Notify(err or 'Purchase failed', 'error')
     end
@@ -136,7 +136,7 @@ end)
 AddEventHandler('sunset:nui:atmAction', function(data)
     local result, err = Sunset.AwaitCallback('sunset:atmTransfer', data.action, tonumber(data.amount))
     if result then
-        exports.sunset_ui:Notify('Transaction complete', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('economy.message.transaction_complete'), 'success')
         result.ok = true
         result.action = data.action
         result.amount = tonumber(data.amount)

@@ -29,11 +29,11 @@ end
 local function validateTruckRear(source, cfg, vehicleNetId)
     local session = SunsetJobs_GetSession(source)
     local entity = resolveWorkTruck(session, cfg, vehicleNetId)
-    if not entity then return false, 'Your assigned trash truck must be nearby' end
+    if not entity then return false, { localeKey = 'jobs.message.your_assigned_trash_truck_must_be_nearby' } end
 
     local rear = getTruckRearCoords(entity, cfg.truckRearOffset or -4.5)
     if not SunsetJobs_ValidateCoords(source, rear, cfg.dumpRadius or 4.5) then
-        return false, 'Go to the back of your trash truck'
+        return false, { localeKey = 'jobs.message.go_to_the_back_of_your_trash_truck' }
     end
     return true
 end
@@ -41,7 +41,7 @@ end
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(source, selectedRouteId)
     local cfg = Sunset.GetJobConfig('garbage')
     if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 20.0) then
-        return nil, 'Go to the garbage depot to start work'
+        return nil, { localeKey = 'jobs.message.go_to_the_garbage_depot_to_start_work' }
     end
 
     local routesList = SunsetJobRoutes.GetRoutes('garbage')
@@ -76,7 +76,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(sourc
     end
 
     if not route.bins or #route.bins == 0 then
-        return nil, 'No bins available on route'
+        return nil, { localeKey = 'jobs.message.no_bins_available_on_route' }
     end
 
     -- Preserve the authored order in the immutable session snapshot
@@ -104,17 +104,17 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:pickupBin', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
     if not session then return nil, err end
-    if session.data.stage ~= 'collecting' then return nil, 'Unload at depot first' end
-    if session.data.carrying then return nil, 'You are already carrying a bag' end
+    if session.data.stage ~= 'collecting' then return nil, { localeKey = 'jobs.message.unload_at_depot_first' } end
+    if session.data.carrying then return nil, { localeKey = 'jobs.message.you_are_already_carrying_a_bag' } end
 
     local cfg = Sunset.GetJobConfig('garbage')
     local idx = session.data.binIndex or 1
     local bin = session.data.bins[idx]
-    if not bin then return nil, 'No more bins on route' end
+    if not bin then return nil, { localeKey = 'jobs.message.no_more_bins_on_route' } end
 
     local binPos = vector3(bin.x, bin.y, bin.z)
     if not SunsetJobs_ValidateCoords(source, binPos, cfg.collectRadius or 3.0) then
-        return nil, 'Not at the bin'
+        return nil, { localeKey = 'jobs.message.not_at_the_bin' }
     end
 
     session.data.carrying = true
@@ -124,11 +124,11 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(source, vehicleNetId)
     local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
     if not session then return nil, err or 'No active garbage shift' end
-    if session.data.stage ~= 'collecting' then return nil, 'Unload at depot first' end
-    if not session.data.carrying then return nil, 'Pick up trash from the bin first' end
+    if session.data.stage ~= 'collecting' then return nil, { localeKey = 'jobs.message.unload_at_depot_first' } end
+    if not session.data.carrying then return nil, { localeKey = 'jobs.message.pick_up_trash_from_the_bin_first' } end
 
     local cfg = Sunset.GetJobConfig('garbage')
-    if not cfg then return nil, 'Garbage job is not configured' end
+    if not cfg then return nil, { localeKey = 'jobs.message.garbage_job_is_not_configured' } end
 
     local ok, truckErr = validateTruckRear(source, cfg, vehicleNetId)
     if not ok then return nil, truckErr or 'Go to the back of your trash truck' end
@@ -150,14 +150,14 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:unload', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'RETURNING', 'ACTIVE' })
     if not session then return nil, err end
-    if session.data.stage ~= 'return_unload' then return nil, 'Truck not full yet' end
-    if session.data.carrying then return nil, 'Dump the bag in your truck first' end
+    if session.data.stage ~= 'return_unload' then return nil, { localeKey = 'jobs.message.truck_not_full_yet' } end
+    if session.data.carrying then return nil, { localeKey = 'jobs.message.dump_the_bag_in_your_truck_first' } end
 
     local cfg = Sunset.GetJobConfig('garbage')
-    if not SunsetJobs_ValidateVehicle(source, cfg.truckModel, true, 20.0) then return nil, 'Use your assigned trash truck' end
+    if not SunsetJobs_ValidateVehicle(source, cfg.truckModel, true, 20.0) then return nil, { localeKey = 'jobs.message.use_your_assigned_trash_truck' } end
     local unload = cfg.depot.unload or cfg.depot.coords
     if not SunsetJobs_ValidateCoords(source, unload, 8.0) then
-        return nil, 'Drive to the depot unload point'
+        return nil, { localeKey = 'jobs.message.drive_to_the_depot_unload_point' }
     end
 
     local bonus = cfg.payPerUnload or 120

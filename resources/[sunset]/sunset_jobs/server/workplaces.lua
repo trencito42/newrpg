@@ -15,7 +15,7 @@ local LicenseLabels = {
 
 local function getCharacterData(source)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Character not loaded' end
+    if not char then return nil, { localeKey = 'jobs.message.character_not_loaded' } end
     return char
 end
 
@@ -26,7 +26,7 @@ local function checkRequirements(source, char, reqs)
     if reqs.minLevel and reqs.minLevel > 1 then
         local playerLevel = tonumber(char.level) or 1
         if playerLevel < reqs.minLevel then
-            return false, ('Requires Character Level %d (You are Level %d)'):format(reqs.minLevel, playerLevel)
+            return false, { localeKey = 'jobs.message.requires_character_level_value_you_are_level_value', formatArgs = { reqs.minLevel, playerLevel } }
         end
     end
 
@@ -40,7 +40,7 @@ local function checkRequirements(source, char, reqs)
     -- instead of the generic "[Missing License]".
     if reqs.licenses and #reqs.licenses > 0 then
         if GetResourceState('sunset_licenses') ~= 'started' then
-            return false, 'Licensing service unavailable. Try again in a moment.'
+            return false, { localeKey = 'jobs.message.licensing_service_unavailable_try_again_in_a_moment' }
         end
         local missing = {}
         for _, lic in ipairs(reqs.licenses) do
@@ -58,10 +58,11 @@ local function checkRequirements(source, char, reqs)
         end
         if #missing > 0 then
             if #missing == 1 then
-                return false, ('Requires a valid %s. Visit the DMV / LSSI Office.'):format(missing[1])
+                return false, { localeKey = 'jobs.message.requires_a_valid_value_visit_the_dmv_lssi_office', formatArgs = { missing[1] } }
             else
-                return false, ('Missing licenses: %s. Visit the DMV / LSSI Office.'):format(
-                    table.concat(missing, ', '))
+                return false, { localeKey = 'jobs.message.missing_licenses_value_visit_the_dmv_lssi_office', formatArgs = {
+                    table.concat(missing, ', ')
+                } }
             end
         end
     end
@@ -86,7 +87,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:getWorkplaceState', function(s
 
     jobId = tostring(jobId or ''):lower()
     local workplace = Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId]
-    if not workplace then return nil, 'Unknown workplace' end
+    if not workplace then return nil, { localeKey = 'jobs.message.unknown_workplace' } end
 
     local currentJob = select(1, Sunset.GetCharacterJob(char))
     local isEmployed = (currentJob == jobId)
@@ -123,12 +124,12 @@ local function applyAtWorkplace(source, jobId)
 
     jobId = tostring(jobId or ''):lower()
     local workplace = Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId]
-    if not workplace then return false, 'Unknown workplace job' end
+    if not workplace then return false, { localeKey = 'jobs.message.unknown_workplace_job' } end
 
     -- Verify proximity to workplace NPC (anti-remote exploit)
     if workplace.npc and workplace.npc.coords then
         if not isPlayerNearCoords(source, workplace.npc.coords, 12.0) then
-            return false, 'You must speak with the workplace supervisor in person.'
+            return false, { localeKey = 'jobs.message.you_must_speak_with_the_workplace_supervisor_in_person' }
         end
     end
 
@@ -140,7 +141,7 @@ local function applyAtWorkplace(source, jobId)
 
     local currentJob = select(1, Sunset.GetCharacterJob(char))
     if currentJob == jobId then
-        return false, ('You are already employed as %s.'):format(workplace.jobLabel or jobId)
+        return false, { localeKey = 'jobs.message.you_are_already_employed_as_value', formatArgs = { workplace.jobLabel or jobId } }
     end
 
     -- If switching from another civilian job, clean active shift
@@ -155,7 +156,7 @@ local function applyAtWorkplace(source, jobId)
 
     local setOk = exports.sunset_core:SetJob(source, jobId, 0)
     if not setOk then
-        return false, 'Could not update your employment record. Please try again.'
+        return false, { localeKey = 'jobs.message.could_not_update_your_employment_record_please_try_again' }
     end
 
     local hiredLabel = workplace.jobLabel or (Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label) or jobId
@@ -180,7 +181,7 @@ local function quitAtWorkplace(source, jobId)
     jobId = tostring(jobId or ''):lower()
     local currentJob = select(1, Sunset.GetCharacterJob(char))
     if currentJob ~= jobId then
-        return false, 'You are not employed at this workplace.'
+        return false, { localeKey = 'jobs.message.you_are_not_employed_at_this_workplace' }
     end
 
     if SunsetJobs_ClearSession then
@@ -190,7 +191,7 @@ local function quitAtWorkplace(source, jobId)
 
     local setOk = exports.sunset_core:SetJob(source, 'unemployed', 0)
     if not setOk then
-        return false, 'Could not resign — please try again.'
+        return false, { localeKey = 'jobs.message.could_not_resign_please_try_again' }
     end
 
     local label = (Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId] and Sunset.JobWorkplaces[jobId].jobLabel) or jobId

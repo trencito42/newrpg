@@ -67,11 +67,11 @@ end
 
 local function quitCivilianJob(source, reason)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'jobs.message.your_character_is_not_loaded_reconnect_and_select_it' } end
 
     local currentJob = select(1, Sunset.GetCharacterJob(char))
     if not currentJob or currentJob == 'unemployed' then
-        return nil, 'You do not have a civilian job to quit.'
+        return nil, { localeKey = 'jobs.message.you_do_not_have_a_civilian_job_to_quit' }
     end
 
     if SunsetJobs_ClearSession then
@@ -79,7 +79,7 @@ local function quitCivilianJob(source, reason)
     end
     TriggerClientEvent('sunset:jobs:forceClearHud', source)
     if not exports.sunset_core:SetJob(source, 'unemployed', 0) then
-        return nil, 'Could not clear your civilian job — try again after ending your current shift.'
+        return nil, { localeKey = 'jobs.message.could_not_clear_your_civilian_job_try_again_after' }
     end
     exports.sunset_core:CommandReply(source,
         'Civilian job resigned. Your faction membership is unchanged.', 'success')
@@ -88,7 +88,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:jobs:getJobCenterJobs', function(source, centerId)
     local center = Sunset.JobCenters and Sunset.JobCenters[centerId]
-    if not center then return nil, 'Unknown employment office.' end
+    if not center then return nil, { localeKey = 'jobs.message.unknown_employment_office' } end
     return buildJobCenterJobs(center, source)
 end)
 
@@ -96,7 +96,7 @@ local function hireCivilianJob(source, jobId)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then
         print(('[sunset:hireJob] FAIL src=%s jobId=%s reason=character_not_loaded'):format(source, tostring(jobId)))
-        return nil, 'Your character is not loaded. Reconnect and select it again.'
+        return nil, { localeKey = 'jobs.message.your_character_is_not_loaded_reconnect_and_select_it' }
     end
 
     jobId = tostring(jobId or ''):lower()
@@ -105,7 +105,7 @@ local function hireCivilianJob(source, jobId)
         source, tostring(jobId), tostring(currentJob), tostring(char.id)))
 
     if not (Sunset.CivilianJobs and Sunset.CivilianJobs[jobId]) then
-        return nil, 'That is not a valid civilian job. Factions require a leader invitation.'
+        return nil, { localeKey = 'jobs.message.that_is_not_a_valid_civilian_job_factions_require' }
     end
 
     if jobId == 'unemployed' then
@@ -128,7 +128,7 @@ local function hireCivilianJob(source, jobId)
 
     if currentJob == jobId then
         local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-        return nil, ('You already work as %s.'):format(label)
+        return nil, { localeKey = 'jobs.message.you_already_work_as_value', formatArgs = { label } }
     end
 
     if currentJob ~= 'unemployed' then
@@ -144,7 +144,7 @@ local function hireCivilianJob(source, jobId)
     local setOk = exports.sunset_core:SetJob(source, jobId, 0)
     if not setOk then
         print(('[sunset:hireJob] FAIL src=%s jobId=%s reason=set_job_failed'):format(source, tostring(jobId)))
-        return nil, 'Could not assign the job — try reconnecting or contact staff.'
+        return nil, { localeKey = 'jobs.message.could_not_assign_the_job_try_reconnecting_or_contact' }
     end
     print(('[sunset:hireJob] OK src=%s jobId=%s'):format(source, tostring(jobId)))
 

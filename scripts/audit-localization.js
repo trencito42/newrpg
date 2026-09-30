@@ -26,15 +26,21 @@ function scan(file) {
     filesScanned++;
     const rel = path.relative(root, file);
     const ext = path.extname(file);
-    const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+    const source = fs.readFileSync(file, 'utf8');
+    if (/i18n-ignore-file/.test(source)) return;
+    const lines = source.split(/\r?\n/);
     lines.forEach((line, index) => {
         if (intentional(line) || /^\s*(?:--|\/\/|\/\*|\*)/.test(line)) return;
         let reason = null;
         if (ext === '.lua' && /(?:Notify|notify|uiNotify|CommandReply|chat:addMessage|AddTextComponent|BeginTextCommand|return\s+(?:nil|false)\s*,)\s*\(?\s*['"][A-Za-z]/.test(line)) reason = 'Lua player-facing literal';
-        if (ext === '.lua' && /TriggerClientEvent\s*\([^\n]*(?:notify|chat:addMessage)[^\n]*['"][A-Za-z]/i.test(line)) reason = 'Lua outbound player-facing literal';
-        if (ext === '.js' && /(?:textContent|innerText|innerHTML|insertAdjacentHTML|showToast|setStatus|showError)\s*(?:=|\()\s*[`'"][A-Za-z]/.test(line)) reason = 'JS visible literal';
-        if (ext === '.html' && /(?:placeholder|title|aria-label)="[A-Za-z]/.test(line) && !/data-i18n-(?:placeholder|title|aria)=/.test(line)) reason = 'HTML attribute literal';
-        if (ext === '.html' && />\s*[A-Za-z][^<{]{2,}\s*</.test(line) && !/data-i18n=/.test(line)) reason = 'HTML text literal';
+        if (ext === '.lua' && !/(?:TFor|NotifyFor)\s*\(/.test(line)
+            && /TriggerClientEvent\s*\(\s*['"][^'"]*(?:notify|chat:addMessage)[^'"]*['"]\s*,\s*[^,]+,\s*(?:\(?\s*['"][A-Za-z]|\(\s*['"][^'"]+['"]\s*\):format)/i.test(line)) {
+            reason = 'Lua outbound player-facing literal';
+        }
+        if (ext === '.js' && /(?:textContent|innerText|innerHTML|showToast|setStatus|showError)\s*(?:=|\()\s*[`'"][A-Za-z]/.test(line)) reason = 'JS visible literal';
+        if (ext === '.js' && /insertAdjacentHTML\s*\(\s*['"][^'"]+['"]\s*,\s*[`'"][A-Za-z]/.test(line)) reason = 'JS visible literal';
+        if (ext === '.html' && /(?:placeholder|title|aria-label)="[A-Za-z]/.test(line) && !/data-(?:ls-)?i18n-(?:placeholder|title|aria)=/.test(line)) reason = 'HTML attribute literal';
+        if (ext === '.html' && />\s*[A-Za-z][^<{]{2,}\s*</.test(line) && !/data-(?:ls-)?i18n=/.test(line)) reason = 'HTML text literal';
         if (ext === '.css' && /content\s*:\s*['"][A-Za-z]/.test(line)) reason = 'CSS generated literal';
         if (reason) findings.push({ rel, line: index + 1, reason, text: line.trim().slice(0, 180) });
     });

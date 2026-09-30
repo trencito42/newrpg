@@ -47,7 +47,7 @@ end
 
 -- Returns a sanitized appearance table, or nil + reason on hostile input.
 local function sanitizeAppearance(raw, fallback)
-    if type(raw) ~= 'table' then return nil, 'appearance must be a table' end
+    if type(raw) ~= 'table' then return nil, { localeKey = 'appearance.message.appearance_must_be_a_table' } end
     fallback = type(fallback) == 'table' and fallback or {}
 
     local out = { version = 2, components = {}, props = {}, overlays = {} }
@@ -58,12 +58,12 @@ local function sanitizeAppearance(raw, fallback)
     out.headBlend = {}
     for _, key in ipairs({ 'shapeFirst', 'shapeSecond', 'shapeThird', 'skinFirst', 'skinSecond', 'skinThird' }) do
         local v = num(hbRaw[key], 0, 45, num(hbFallback[key], 0, 45, 0))
-        if v == nil then return nil, 'headBlend.' .. key .. ' out of range' end
+        if v == nil then return nil, { localeKey = 'appearance.message.headblend' } .. key .. ' out of range' end
         out.headBlend[key] = math.floor(v)
     end
     for _, key in ipairs({ 'shapeMix', 'skinMix', 'thirdMix' }) do
         local v = num(hbRaw[key], 0.0, 1.0, num(hbFallback[key], 0.0, 1.0, 0.0))
-        if v == nil then return nil, 'headBlend.' .. key .. ' out of range' end
+        if v == nil then return nil, { localeKey = 'appearance.message.headblend' } .. key .. ' out of range' end
         out.headBlend[key] = v
     end
 
@@ -72,7 +72,7 @@ local function sanitizeAppearance(raw, fallback)
     local hairFallback = type(fallback.hair) == 'table' and fallback.hair or {}
     out.hair = {}
     local hd = num(hairRaw.drawable, 0, MAX_DRAWABLE, num(hairFallback.drawable, 0, MAX_DRAWABLE, 0))
-    if hd == nil then return nil, 'hair.drawable out of range' end
+    if hd == nil then return nil, { localeKey = 'appearance.message.hair_drawable_out_of_range' } end
     out.hair.drawable = math.floor(hd)
     out.hair.texture = math.floor(num(hairRaw.texture, 0, MAX_TEXTURE, num(hairFallback.texture, 0, MAX_TEXTURE, 0)) or 0)
     out.hair.color = math.floor(num(hairRaw.color, 0, 63, num(hairFallback.color, 0, 63, 0)) or 0)
@@ -82,7 +82,7 @@ local function sanitizeAppearance(raw, fallback)
     for _, key in ipairs({ '1', '2' }) do
         local ovRaw = type(raw.overlays) == 'table' and type(raw.overlays[key]) == 'table' and raw.overlays[key] or {}
         local idx = num(ovRaw.index, 0, 28, 0)
-        if idx == nil then return nil, 'overlay index out of range' end
+        if idx == nil then return nil, { localeKey = 'appearance.message.overlay_index_out_of_range' } end
         out.overlays[key] = {
             index = math.floor(idx),
             opacity = num(ovRaw.opacity, 0.0, 1.0, 0.0) or 0.0,
@@ -92,7 +92,7 @@ local function sanitizeAppearance(raw, fallback)
 
     -- components
     if raw.components ~= nil and type(raw.components) ~= 'table' then
-        return nil, 'components must be a table'
+        return nil, { localeKey = 'appearance.message.components_must_be_a_table' }
     end
     for _, slot in ipairs(COMPONENT_SLOTS) do
         local fb = type(fallback.components) == 'table' and fallback.components[slot] or nil
@@ -103,14 +103,14 @@ local function sanitizeAppearance(raw, fallback)
             fb and tonumber(fb.texture) or 0,
             0) -- components: min drawable 0
         if pair == nil and raw.components and raw.components[slot] ~= nil then
-            return nil, ('component %s invalid'):format(slot)
+            return nil, { localeKey = 'appearance.message.component_value_invalid', formatArgs = { slot } }
         end
         out.components[slot] = pair or { drawable = fb and tonumber(fb.drawable) or 0, texture = fb and tonumber(fb.texture) or 0 }
     end
 
     -- props (-1 = none)
     if raw.props ~= nil and type(raw.props) ~= 'table' then
-        return nil, 'props must be a table'
+        return nil, { localeKey = 'appearance.message.props_must_be_a_table' }
     end
     for _, slot in ipairs(PROP_SLOTS) do
         local fb = type(fallback.props) == 'table' and fallback.props[slot] or nil
@@ -120,7 +120,7 @@ local function sanitizeAppearance(raw, fallback)
             fb and tonumber(fb.drawable) or -1,
             fb and tonumber(fb.texture) or 0)
         if pair == nil and raw.props and raw.props[slot] ~= nil then
-            return nil, ('prop %s invalid'):format(slot)
+            return nil, { localeKey = 'appearance.message.prop_value_invalid', formatArgs = { slot } }
         end
         out.props[slot] = pair or { drawable = fb and tonumber(fb.drawable) or -1, texture = fb and tonumber(fb.texture) or 0 }
     end
@@ -130,19 +130,19 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:saveAppearance', function(source, appearance, gender, charId)
     local player = exports.sunset_core:GetPlayer(source)
-    if not player then return nil, 'Not logged in' end
+    if not player then return nil, { localeKey = 'appearance.message.not_logged_in' } end
 
     local char = exports.sunset_core:GetCharacter(source)
     charId = tonumber(charId) or (char and char.id)
     if not char and charId then
         char = loadCharacterForPlayer(source, player.id, charId)
     end
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'appearance.message.no_character_loaded' } end
 
     -- [CLOTHING FIX B1] Ownership: the callback may only ever write the
     -- character that belongs to THIS player (charId is re-checked in SQL too).
     if charId and char.id ~= charId then
-        return nil, 'Character mismatch.'
+        return nil, { localeKey = 'appearance.message.character_mismatch' }
     end
 
     gender = tonumber(gender)
@@ -153,11 +153,11 @@ exports.sunset_core:RegisterCallback('sunset:saveAppearance', function(source, a
     local sanitized, err = sanitizeAppearance(appearance, char.appearance)
     if not sanitized then
         print(('[sunset_appearance] rejected appearance save from %s: %s'):format(tostring(source), tostring(err)))
-        return nil, 'Invalid appearance data. Nothing was saved.'
+        return nil, { localeKey = 'appearance.message.invalid_appearance_data_nothing_was_saved' }
     end
 
     local encoded = json.encode(sanitized)
-    if not encoded or #encoded > 8192 then return nil, 'Invalid appearance data' end
+    if not encoded or #encoded > 8192 then return nil, { localeKey = 'appearance.message.invalid_appearance_data' } end
 
     MySQL.update.await('UPDATE characters SET appearance = ?, gender = ? WHERE id = ? AND player_id = ?', {
         encoded, char.gender, char.id, player.id

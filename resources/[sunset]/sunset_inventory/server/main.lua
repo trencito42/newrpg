@@ -371,15 +371,15 @@ local ConvertLocks = {} -- [source] = true while a ConvertItems is in flight
 -- A per-source lock rejects overlapping conversions (two quick clicks
 -- would otherwise interleave the awaited SQL and double-remove).
 function ConvertItems(source, removeItem, removeCount, addItem, addCount)
-    if ConvertLocks[source] then return false, 'Another conversion is in progress' end
+    if ConvertLocks[source] then return false, { localeKey = 'inventory.message.another_conversion_is_in_progress' } end
     ConvertLocks[source] = true
     local ok, err = (function()
         removeCount = math.floor(tonumber(removeCount) or 0)
         addCount = math.floor(tonumber(addCount) or 0)
-        if removeCount < 1 or addCount < 1 then return false, 'invalid counts' end
-        if not Sunset.Items[removeItem] or not Sunset.Items[addItem] then return false, 'unknown item' end
-        if not HasItem(source, removeItem, removeCount) then return false, 'not enough source items' end
-        if not RemoveItem(source, removeItem, removeCount) then return false, 'could not remove source items' end
+        if removeCount < 1 or addCount < 1 then return false, { localeKey = 'inventory.message.invalid_counts' } end
+        if not Sunset.Items[removeItem] or not Sunset.Items[addItem] then return false, { localeKey = 'inventory.message.unknown_item' } end
+        if not HasItem(source, removeItem, removeCount) then return false, { localeKey = 'inventory.message.not_enough_source_items' } end
+        if not RemoveItem(source, removeItem, removeCount) then return false, { localeKey = 'inventory.message.could_not_remove_source_items' } end
         if AddItem(source, addItem, addCount) then return true end
         -- Compensation: restore the removed source items (space is guaranteed —
         -- we just freed it). If even this fails, the inventory is in a broken
@@ -388,7 +388,7 @@ function ConvertItems(source, removeItem, removeCount, addItem, addCount)
             print(('^1[sunset_inventory]^7 ConvertItems COMPENSATION FAILED src=%s item=%s x%d — manual intervention needed'):format(
                 tostring(source), tostring(removeItem), removeCount))
         end
-        return false, 'not enough space for the product'
+        return false, { localeKey = 'inventory.message.not_enough_space_for_the_product' }
     end)()
     ConvertLocks[source] = nil
     return ok, err
@@ -421,18 +421,18 @@ end
 
 function UseItem(source, item)
     if type(IsInventoryTradeLocked) == 'function' and IsInventoryTradeLocked(source) then
-        return false, 'Cancel or complete your active trade before using items.'
+        return false, { localeKey = 'inventory.message.cancel_or_complete_your_active_trade_before_using_items' }
     end
     if type(item) ~= 'string' or item == '' then
-        return false, 'The selected inventory item is invalid. Close and reopen the inventory.'
+        return false, { localeKey = 'inventory.message.the_selected_inventory_item_is_invalid_close_and_reopen' }
     end
     local def = Sunset.Items[item]
-    if not def then return false, 'This item is no longer configured. Close and reopen the inventory.' end
+    if not def then return false, { localeKey = 'inventory.message.this_item_is_no_longer_configured_close_and_reopen' } end
     if not HasItem(source, item, 1) then
-        return false, ('You no longer have %s. Close and reopen the inventory.'):format(def.label or item)
+        return false, { localeKey = 'inventory.message.you_no_longer_have_value_close_and_reopen_the', formatArgs = { def.label or item } }
     end
     if not def.usable then
-        return false, ('%s cannot be used directly from the inventory.'):format(def.label or item)
+        return false, { localeKey = 'inventory.message.value_cannot_be_used_directly_from_the_inventory', formatArgs = { def.label or item } }
     end
 
     if item == 'gas_can' then
@@ -443,10 +443,10 @@ function UseItem(source, item)
 
     if def.ammoRounds and type(def.ammoWeapons) == 'table' then
         if GetResourceState('sunset_licenses') ~= 'started' then
-            return false, 'The license service is unavailable. The ammunition was not consumed.'
+            return false, { localeKey = 'inventory.message.the_license_service_is_unavailable_the_ammunition_was_not' }
         end
         if not exports.sunset_licenses:HasLicense(source, 'weapon') then
-            return false, 'Your Firearm License is missing or expired. The ammunition was not consumed.'
+            return false, { localeKey = 'inventory.message.your_firearm_license_is_missing_or_expired_the_ammunition' }
         end
         local compatible = {}
         for _, weaponName in ipairs(def.ammoWeapons) do compatible[string.upper(weaponName)] = true end
@@ -463,12 +463,12 @@ function UseItem(source, item)
             end
         end
         if not targetWeaponItem then
-            return false, ('You do not own a weapon compatible with %s. The box was not consumed.'):format(def.label or item)
+            return false, { localeKey = 'inventory.message.you_do_not_own_a_weapon_compatible_with_value', formatArgs = { def.label or item } }
         end
 
         -- Consume exactly ONE box
         if not RemoveItem(source, item, 1) then
-            return false, 'Your ammunition changed before it could be loaded. Reopen the inventory.'
+            return false, { localeKey = 'inventory.message.your_ammunition_changed_before_it_could_be_loaded_reopen' }
         end
 
         -- [AMMO PERSIST] Immediately increment the weapon's metadata.ammo
@@ -495,14 +495,14 @@ function UseItem(source, item)
     end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return false, 'Your character is not loaded. Reconnect and try again.' end
+    if not char then return false, { localeKey = 'inventory.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if not def.hunger and not def.thirst and not def.stress and not def.heal then
-        return false, ('%s does not have a usable action configured yet. The item was not consumed.'):format(
-            def.label or item)
+        return false, { localeKey = 'inventory.message.value_does_not_have_a_usable_action_configured_yet_the_item_was_n', formatArgs = {
+            def.label or item } }
     end
     if not RemoveItem(source, item, 1) then
-        return false, ('Could not consume %s because your inventory changed. Reopen it and try again.'):format(
-            def.label or item)
+        return false, { localeKey = 'inventory.message.could_not_consume_value_because_your_inventory_changed_reopen_it_', formatArgs = {
+            def.label or item } }
     end
 
     if def.hunger then char.hunger = math.min(100, (char.hunger or 100) + def.hunger) end
@@ -521,14 +521,14 @@ end
 function TryAddItem(source, item, count, slot, metadata)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then
-        return false, 'That player has not loaded a character yet.'
+        return false, { localeKey = 'inventory.message.that_player_has_not_loaded_a_character_yet' }
     end
     if not Sunset.Items[item] then
-        return false, ('"%s" is not a registered item. Check items.lua or /help for valid item ids.'):format(tostring(item or '?'))
+        return false, { localeKey = 'inventory.message.value_is_not_a_registered_item_check_items_lua', formatArgs = { tostring(item or '?') } }
     end
     count = math.floor(count or 1)
     if count < 1 then
-        return false, 'Item count must be at least 1.'
+        return false, { localeKey = 'inventory.message.item_count_must_be_at_least_1' }
     end
 
     local inv = GetInventory(source)
@@ -536,8 +536,8 @@ function TryAddItem(source, item, count, slot, metadata)
     local addedWeight = getItemWeight(item, count)
     local capacity = maxWeightFor(source)
     if currentWeight + addedWeight > capacity then
-        return false, ('Inventory too heavy: %.1f/%.1f kg — cannot add %.1f kg of %s.'):format(
-            currentWeight, capacity, addedWeight, item)
+        return false, { localeKey = 'inventory.message.inventory_too_heavy_value_value_kg_cannot_add_value_kg_of_value', formatArgs = {
+            currentWeight, capacity, addedWeight, item } }
     end
 
     metadata = metadata or (item == 'gas_can' and { liters = 0 } or nil)
@@ -547,7 +547,7 @@ function TryAddItem(source, item, count, slot, metadata)
                 if AddItem(source, item, count, slot, metadata) then
                     return true
                 end
-                return false, 'Could not stack the item — try again.'
+                return false, { localeKey = 'inventory.message.could_not_stack_the_item_try_again' }
             end
         end
     end
@@ -561,13 +561,13 @@ function TryAddItem(source, item, count, slot, metadata)
         end
     end
     if not freeSlot then
-        return false, ('Inventory full: no free slots (%d max).'):format(Sunset.Config.MaxSlots)
+        return false, { localeKey = 'inventory.message.inventory_full_no_free_slots_value_max', formatArgs = { Sunset.Config.MaxSlots } }
     end
 
     if AddItem(source, item, count, slot, metadata) then
         return true
     end
-    return false, 'Could not add the item — database or inventory sync failed.'
+    return false, { localeKey = 'inventory.message.could_not_add_the_item_database_or_inventory_sync' }
 end
 
 exports('GetInventory', GetInventory)
@@ -646,19 +646,19 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:moveSlot', function(source, data)
     if type(IsInventoryTradeLocked) == 'function' and IsInventoryTradeLocked(source) then
-        return nil, 'Cannot rearrange inventory during an active trade.'
+        return nil, { localeKey = 'inventory.message.cannot_rearrange_inventory_during_an_active_trade' }
     end
     local fromSlot = tonumber(type(data) == 'table' and data.fromSlot)
     local toSlot = tonumber(type(data) == 'table' and data.toSlot)
     if not fromSlot or not toSlot or fromSlot < 1 or toSlot < 1 or fromSlot == toSlot then
-        return nil, 'Invalid inventory slot.'
+        return nil, { localeKey = 'inventory.message.invalid_inventory_slot' }
     end
     if fromSlot > Sunset.Config.MaxSlots or toSlot > Sunset.Config.MaxSlots then
-        return nil, 'Invalid inventory slot.'
+        return nil, { localeKey = 'inventory.message.invalid_inventory_slot' }
     end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'inventory.message.your_character_is_not_loaded' } end
     local inv = GetInventory(source)
     local fromRow
     local toRow
@@ -666,7 +666,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:moveSlot', function(sourc
         if tonumber(row.slot) == fromSlot then fromRow = row end
         if tonumber(row.slot) == toSlot then toRow = row end
     end
-    if not fromRow then return nil, 'That inventory slot is empty.' end
+    if not fromRow then return nil, { localeKey = 'inventory.message.that_inventory_slot_is_empty' } end
 
     local transactionOk
     if toRow then
@@ -703,7 +703,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:moveSlot', function(sourc
     end
     if not transactionOk then
         loadInventory(char.id)
-        return nil, 'Your inventory changed while moving that item. It was refreshed; try again.'
+        return nil, { localeKey = 'inventory.message.your_inventory_changed_while_moving_that_item_it_was' }
     end
     inv = loadInventory(char.id)
     sendInventoryUpdate(source, inv)

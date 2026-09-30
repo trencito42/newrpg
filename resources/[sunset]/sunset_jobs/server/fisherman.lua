@@ -193,9 +193,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:catch', function(sou
     if not session then return nil, err end
     local cfg = Sunset.GetJobConfig('fisherman')
     if not inFishZone(source, cfg) then
-        return nil, 'Not at a fishing spot'
+        return nil, { localeKey = 'jobs.message.not_at_a_fishing_spot' }
     end
-    return nil, 'Cast first with /fish'
+    return nil, { localeKey = 'jobs.message.cast_first_with_fish' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(source, spotIndex)
@@ -217,7 +217,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(sour
     local cfg = Sunset.GetJobConfig('fisherman')
     spotIndex = tonumber(spotIndex) or 1
     if not inFishZone(source, cfg) then
-        return nil, 'You are not in the fishing area'
+        return nil, { localeKey = 'jobs.message.you_are_not_in_the_fishing_area' }
     end
 
     session.data.level = fishLevel(source)
@@ -231,13 +231,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(sour
     end
     local minFishWeight = (Sunset.Items['fish_common'] or {}).weight or 0.8
     if currentWeight + minFishWeight > Sunset.Config.MaxWeight then
-        return nil, ('Bag full! Sell your fish first. (%.1f / %.1f kg)'):format(
-            currentWeight, Sunset.Config.MaxWeight)
+        return nil, { localeKey = 'jobs.message.bag_full_sell_your_fish_first_value_value_kg', formatArgs = {
+            currentWeight, Sunset.Config.MaxWeight } }
     end
 
     local now = GetGameTimer()
     local challenge = session.data.fishingChallenge
-    if challenge and now <= challenge.expiresAt then return nil, 'Your line is already cast' end
+    if challenge and now <= challenge.expiresAt then return nil, { localeKey = 'jobs.message.your_line_is_already_cast' } end
 
     local rod = getEquippedRod(source)
     local baitTier, baitItem = consumeBestBait(source)
@@ -278,18 +278,18 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:reel', function(sour
     spotIndex = tonumber(spotIndex) or 1
     if not inFishZone(source, cfg) then
         session.data.fishingChallenge = nil
-        return nil, 'You left the fishing area'
+        return nil, { localeKey = 'jobs.message.you_left_the_fishing_area' }
     end
 
     local challenge = session.data.fishingChallenge
     session.data.fishingChallenge = nil
     if not challenge or challenge.token ~= tostring(token or '') or challenge.spotIndex ~= spotIndex then
-        return nil, 'Invalid cast — use /fish again'
+        return nil, { localeKey = 'jobs.message.invalid_cast_use_fish_again' }
     end
 
     local now = GetGameTimer()
-    if now < challenge.biteAt    then return nil, 'Too early — the fish escaped' end
-    if now > challenge.expiresAt then return nil, 'Too late — the fish escaped' end
+    if now < challenge.biteAt    then return nil, { localeKey = 'jobs.message.too_early_the_fish_escaped' } end
+    if now > challenge.expiresAt then return nil, { localeKey = 'jobs.message.too_late_the_fish_escaped' } end
 
     local rodValueMult   = challenge.rodValueMult   or 1.0
     local rodRarityLevel = challenge.rodRarityLevel or 0
@@ -304,7 +304,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:reel', function(sour
     local catchRoll   = math.random(1, 100)
     if catchRoll > catchChance then
         -- Rata — nimic prins
-        return nil, 'The fish got away... try again!'
+        return nil, { localeKey = 'jobs.message.the_fish_got_away_try_again' }
     end
 
     -- Selectie tip peste: undita creste nivelul efectiv de raritate
@@ -318,7 +318,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:reel', function(sour
         fishKg   = fishKg,
         caughtAt = os.time(),
     }) then
-        return nil, 'Inventory full or no slot. Free space and try again.'
+        return nil, { localeKey = 'jobs.message.inventory_full_or_no_slot_free_space_and_try' }
     end
 
     session.data.catches      = (session.data.catches or 0) + 1
@@ -358,18 +358,18 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:sell', function(source)
     local cfg = Sunset.GetJobConfig('fisherman')
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not char then return nil, { localeKey = 'jobs.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if select(1, Sunset.GetCharacterJob(char)) ~= 'fisherman' then
-        return nil, 'Only employed fishermen can sell fish here.'
+        return nil, { localeKey = 'jobs.message.only_employed_fishermen_can_sell_fish_here' }
     end
     if not SunsetJobs_ValidateCoords(source, cfg.sellPoint.coords, cfg.sellRadius or 5.0) then
-        return nil, 'You are not at Fish Buyer.'
+        return nil, { localeKey = 'jobs.message.you_are_not_at_fish_buyer' }
     end
-    if SellLocks[source] then return nil, 'Sale already being processed.' end
+    if SellLocks[source] then return nil, { localeKey = 'jobs.message.sale_already_being_processed' } end
 
     local count, pending = fishInventorySummary(source, cfg)
     if count <= 0 or pending <= 0 then
-        return nil, 'You have no fish in your inventory. Catch fish with /fish first.'
+        return nil, { localeKey = 'jobs.message.you_have_no_fish_in_your_inventory_catch_fish' }
     end
 
     SellLocks[source] = true
@@ -410,7 +410,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:sell', function(sour
     if not committed then
         SellLocks[source] = nil
         exports.sunset_inventory:ReloadInventory(source)
-        return nil, 'The fish sale was cancelled safely because your inventory changed. No fish or money was lost.'
+        return nil, { localeKey = 'jobs.message.the_fish_sale_was_cancelled_safely_because_your_inventory' }
     end
     exports.sunset_inventory:ReloadInventory(source)
     exports.sunset_core:RefreshMoney(source)
@@ -431,7 +431,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:endShift', function(source)
     local session = SunsetJobs_GetSession(source)
-    if not session or session.jobId ~= 'fisherman' then return nil, 'No fishing shift' end
+    if not session or session.jobId ~= 'fisherman' then return nil, { localeKey = 'jobs.message.no_fishing_shift' } end
     SunsetJobs_ClearSession(source, 'CANCELLED', 'Shift ended')
     return true
 end)

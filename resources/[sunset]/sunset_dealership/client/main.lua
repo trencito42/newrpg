@@ -13,12 +13,12 @@ end
 local function loadVehicleModel(modelName)
     local hash = joaat(modelName)
     if not IsModelInCdimage(hash) or not IsModelAVehicle(hash) then
-        return nil, ('Vehicle model "%s" is not available in this game build.'):format(tostring(modelName))
+        return nil, { localeKey = 'dealership.message.vehicle_model_value_is_not_available_in_this_game', formatArgs = { tostring(modelName) } }
     end
     RequestModel(hash)
     local timeout = GetGameTimer() + 8000
     while not HasModelLoaded(hash) and GetGameTimer() < timeout do Wait(10) end
-    if not HasModelLoaded(hash) then return nil, 'The vehicle model did not finish loading. Try again.' end
+    if not HasModelLoaded(hash) then return nil, { localeKey = 'dealership.message.the_vehicle_model_did_not_finish_loading_try_again' } end
     return hash
 end
 
@@ -106,7 +106,7 @@ local function showPreview(modelName)
     if previewVehicle == 0 then
         SetModelAsNoLongerNeeded(hash)
         previewBusy = false
-        return notify('The preview vehicle could not be created.', 'error')
+        return notify(exports.sunset_core:Translate('dealership.message.the_preview_vehicle_could_not_be_created'), 'error')
     end
     SetEntityAsMissionEntity(previewVehicle, true, true)
     SetEntityInvincible(previewVehicle, true)
@@ -213,7 +213,7 @@ AddEventHandler('sunset:nui:dealershipTestDrive', function(data)
         end
         if testVehicle == 0 or not DoesEntityExist(testVehicle) then
             TriggerServerEvent('sunset:dealership:endTestDrive', drive.netId)
-            return notify('The test-drive vehicle did not stream in. Try again.', 'error')
+            return notify(exports.sunset_core:Translate('dealership.message.the_test_drive_vehicle_did_not_stream_in_try'), 'error')
         end
         SetEntityAsMissionEntity(testVehicle, true, true)
         SetVehicleNumberPlateText(testVehicle, 'TESTDRIV')

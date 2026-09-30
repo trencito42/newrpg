@@ -99,7 +99,7 @@ AddEventHandler('gameEventTriggered', function(name, args)
     local now = GetGameTimer()
     if now - lastFfNotify > 4000 then
         lastFfNotify = now
-        exports.sunset_ui:Notify('Friendly fire blocked — same faction on duty', 'warning', 2500)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.friendly_fire_blocked_same_faction_on_duty'), 'warning', 2500)
     end
 end)
 

@@ -254,12 +254,12 @@ end
 
 -- ── Sell Harvest ──────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(source)
-    if not checkRate(source, 'sell') then return nil, 'Too many requests' end
+    if not checkRate(source, 'sell') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'hunter', nil)
-    if not session then return nil, 'No active Hunter shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_hunter_shift' } end
 
     local char = getChar(source)
-    if not char then return nil, 'Character not loaded' end
+    if not char then return nil, { localeKey = 'jobs.message.character_not_loaded' } end
 
     -- [SECTION 23] Atomic sell: snapshot → validate → remove → verify → pay.
     -- If payment fails, restore the exact item + metadata snapshot so the player
@@ -271,7 +271,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
     local snapshots = {}  -- full slot snapshot for restore-on-failure
 
     local inv = exports.sunset_inventory:GetInventory(source)
-    if not inv then return nil, 'Could not load inventory' end
+    if not inv then return nil, { localeKey = 'jobs.message.could_not_load_inventory' } end
 
     local harvestSet = {}
     for _, hi in ipairs(harvestItems) do harvestSet[hi] = true end
@@ -301,7 +301,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
     end
 
     if #sold == 0 then
-        return nil, 'No harvest items to sell. Go hunt first.'
+        return nil, { localeKey = 'jobs.message.no_harvest_items_to_sell_go_hunt_first' }
     end
 
     -- Remove items FIRST (before payment). Items are locked; payment failure
@@ -318,7 +318,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
             exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
         end
         exports.sunset_inventory:ReloadInventory(source)
-        return nil, 'Payment failed — your items have been returned. Please try again.'
+        return nil, { localeKey = 'jobs.message.payment_failed_your_items_have_been_returned_please_try' }
     end
 
     SunsetJobs_AddJobProgress(source, 'hunter', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
@@ -332,19 +332,19 @@ end)
 -- ── Start Shift ───────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:start', function(source)
     local char = getChar(source)
-    if not char then return nil, 'Character not loaded' end
+    if not char then return nil, { localeKey = 'jobs.message.character_not_loaded' } end
 
     -- Check licenses server-side (fail-closed: if resource down, block)
     if GetResourceState('sunset_licenses') ~= 'started' then
-        return nil, 'Licensing service unavailable. Try again in a moment.'
+        return nil, { localeKey = 'jobs.message.licensing_service_unavailable_try_again_in_a_moment' }
     end
     local hasWeapon = exports.sunset_licenses:HasLicense(source, 'weapon')
     if hasWeapon ~= true then
-        return nil, 'Requires a valid Firearm License. Visit the LSSI Weapon Range.'
+        return nil, { localeKey = 'jobs.message.requires_a_valid_firearm_license_visit_the_lssi_weapon' }
     end
     local hasHunting = exports.sunset_licenses:HasLicense(source, 'hunting')
     if hasHunting ~= true then
-        return nil, 'Requires a valid Hunting License. Visit the LSSI Hunting Range.'
+        return nil, { localeKey = 'jobs.message.requires_a_valid_hunting_license_visit_the_lssi_hunting' }
     end
 
     local existing = SunsetJobs_GetSession(source)
@@ -367,7 +367,7 @@ end)
 -- ── Get Contracts ─────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:getContracts', function(source)
     local session = SunsetJobs_RequireSession(source, 'hunter', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     local level = session.data.level or 1
     local cfg = Sunset.JobsConfig.hunter
@@ -393,12 +393,12 @@ end)
 
 -- ── Start Contract ────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:startContract', function(source, contractId)
-    if not checkRate(source, 'startContract') then return nil, 'Too many requests' end
+    if not checkRate(source, 'startContract') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'hunter', nil)
-    if not session then return nil, 'Start your shift first' end
+    if not session then return nil, { localeKey = 'jobs.message.start_your_shift_first' } end
 
     if session.data.contractId then
-        return nil, ('You already have an active contract: %s'):format(session.data.contractId)
+        return nil, { localeKey = 'jobs.message.you_already_have_an_active_contract_value', formatArgs = { session.data.contractId } }
     end
 
     contractId = tostring(contractId or '')
@@ -407,17 +407,17 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:startContract', functio
     for _, c in ipairs(cfg.contracts or {}) do
         if c.id == contractId then contract = c break end
     end
-    if not contract then return nil, 'Unknown contract' end
+    if not contract then return nil, { localeKey = 'jobs.message.unknown_contract' } end
 
     local level = session.data.level or 1
     if contract.minRank > level then
-        return nil, ('Contract requires Hunter Rank %d (you are Rank %d)'):format(contract.minRank, level)
+        return nil, { localeKey = 'jobs.message.contract_requires_hunter_rank_value_you_are_rank_value', formatArgs = { contract.minRank, level } }
     end
 
     -- Validate zone exists in route store
     local zone = getZone(contract.zoneId)
     if not zone then
-        return nil, 'Hunting zone not configured. Contact an administrator.'
+        return nil, { localeKey = 'jobs.message.hunting_zone_not_configured_contact_an_administrator' }
     end
 
     session.data.contractId   = contractId
@@ -617,17 +617,17 @@ end)
 
 -- ── Inspect Carcass ───────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:inspectCarcass', function(source, netId)
-    if not checkRate(source, 'inspect') then return nil, 'Too many requests' end
+    if not checkRate(source, 'inspect') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     netId = tonumber(netId)
-    if not netId then return nil, 'Invalid animal' end
+    if not netId then return nil, { localeKey = 'jobs.message.invalid_animal' } end
     local animal = Animals[netId]
-    if not animal then return nil, 'No animal found. It may have already been cleaned up.' end
-    if animal.alive then return nil, 'The animal is still alive.' end
-    if animal.harvested then return nil, 'This carcass has already been harvested.' end
+    if not animal then return nil, { localeKey = 'jobs.message.no_animal_found_it_may_have_already_been_cleaned' } end
+    if animal.alive then return nil, { localeKey = 'jobs.message.the_animal_is_still_alive' } end
+    if animal.harvested then return nil, { localeKey = 'jobs.message.this_carcass_has_already_been_harvested' } end
 
     local cfg = Sunset.JobsConfig.hunter
     local speciesCfg = cfg.species[animal.species or '']
-    if not speciesCfg then return nil, 'Unknown species' end
+    if not speciesCfg then return nil, { localeKey = 'jobs.message.unknown_species' } end
 
     local quality = calcKillQuality(animal, animal.killWeapon, animal.killMethod)
     local grade   = qualityToGrade(quality)
@@ -648,45 +648,45 @@ end)
 
 -- ── Harvest Carcass ───────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(source, netId)
-    if not checkRate(source, 'harvest') then return nil, 'Too many requests' end
+    if not checkRate(source, 'harvest') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     netId = tonumber(netId)
-    if not netId then return nil, 'Invalid animal' end
+    if not netId then return nil, { localeKey = 'jobs.message.invalid_animal' } end
 
     local animal = Animals[netId]
-    if not animal then return nil, 'Animal not found or already cleaned up.' end
-    if animal.alive then return nil, 'The animal is still alive.' end
-    if animal.harvested then return nil, 'This carcass has already been harvested.' end
+    if not animal then return nil, { localeKey = 'jobs.message.animal_not_found_or_already_cleaned_up' } end
+    if animal.alive then return nil, { localeKey = 'jobs.message.the_animal_is_still_alive' } end
+    if animal.harvested then return nil, { localeKey = 'jobs.message.this_carcass_has_already_been_harvested' } end
 
     -- Session check
     local session = SunsetJobs_RequireSession(source, 'hunter', nil)
-    if not session then return nil, 'No active Hunter shift' end
+    if not session then return nil, { localeKey = 'jobs.message.no_active_hunter_shift' } end
 
     -- License check (server-side, fail-closed)
     if GetResourceState('sunset_licenses') ~= 'started' then
-        return nil, 'Licensing service unavailable. Try again.'
+        return nil, { localeKey = 'jobs.message.licensing_service_unavailable_try_again' }
     end
     if exports.sunset_licenses:HasLicense(source, 'weapon') ~= true then
-        return nil, 'Requires a valid Firearm License to harvest.'
+        return nil, { localeKey = 'jobs.message.requires_a_valid_firearm_license_to_harvest' }
     end
     if exports.sunset_licenses:HasLicense(source, 'hunting') ~= true then
-        return nil, 'Requires a valid Hunting License to harvest.'
+        return nil, { localeKey = 'jobs.message.requires_a_valid_hunting_license_to_harvest' }
     end
 
     -- Hunting knife check (required to field dress the carcass)
     if not exports.sunset_inventory:HasItem(source, 'hunting_knife', 1) then
-        return nil, 'Requires a Hunting Knife to harvest. Available at Ammu-Nation.'
+        return nil, { localeKey = 'jobs.message.requires_a_hunting_knife_to_harvest_available_at_ammu' }
     end
 
     -- Zone check
     if session.data.zoneId ~= animal.zoneId then
-        return nil, 'This animal is not in your contracted zone.'
+        return nil, { localeKey = 'jobs.message.this_animal_is_not_in_your_contracted_zone' }
     end
 
     -- Proximity check
     if not SunsetJobs_ValidateCoords(source,
         vector3(animal.lastPos.x, animal.lastPos.y, animal.lastPos.z),
         Sunset.JobsConfig.hunter.harvestRadius or 4.0) then
-        return nil, 'Move closer to the carcass to harvest it.'
+        return nil, { localeKey = 'jobs.message.move_closer_to_the_carcass_to_harvest_it' }
     end
 
     -- Harvest ownership check
@@ -696,15 +696,16 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
         local cid = charId(source)
         local windowSec = cfg.harvestOwnerWindowSec or 60
         if owner.charId ~= cid and os.time() - owner.claimedAt < windowSec then
-            return nil, ('This carcass belongs to another hunter for another %d seconds.'):format(
-                windowSec - (os.time() - owner.claimedAt))
+            return nil, { localeKey = 'jobs.message.this_carcass_belongs_to_another_hunter_for_another_value_seconds', formatArgs = {
+                windowSec - (os.time() - owner.claimedAt)
+            } }
         end
     end
 
     -- Species match
     local requiredSpecies = session.data.species
     if requiredSpecies and requiredSpecies ~= '' and animal.species ~= requiredSpecies then
-        return nil, ('Your contract requires %s. This is a %s.'):format(requiredSpecies, animal.species)
+        return nil, { localeKey = 'jobs.message.your_contract_requires_value_this_is_a_value', formatArgs = { requiredSpecies, animal.species } }
     end
 
     -- Mark as harvested BEFORE inventory (idempotency guard)
@@ -717,7 +718,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
 
     if #yields == 0 then
         animal.harvested = false
-        return nil, 'No harvestable yield for this animal.'
+        return nil, { localeKey = 'jobs.message.no_harvestable_yield_for_this_animal' }
     end
 
     -- Add all items; rollback harvested flag if any AddItem fails
@@ -730,7 +731,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
             end
             animal.harvested = false
             HarvestOwner[netId] = { charId = charId(source), claimedAt = os.time() }
-            return nil, 'Failed to add harvest items. Inventory may be full.'
+            return nil, { localeKey = 'jobs.message.failed_to_add_harvest_items_inventory_may_be_full' }
         end
         addedItems[#addedItems + 1] = y
     end
@@ -810,15 +811,15 @@ end)
 -- ── Tracking Clue ─────────────────────────────────────────────
 -- Client polls this when on contract to get a directional tracking clue.
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:track', function(source)
-    if not checkRate(source, 'track') then return nil, 'Too many requests' end
+    if not checkRate(source, 'track') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
     local session = SunsetJobs_RequireSession(source, 'hunter', nil)
-    if not session or session.data.stage ~= 'hunting' then return nil, 'No active hunt' end
+    if not session or session.data.stage ~= 'hunting' then return nil, { localeKey = 'jobs.message.no_active_hunt' } end
 
     local pos = playerPos(source)
-    if not pos then return nil, 'Position unavailable' end
+    if not pos then return nil, { localeKey = 'jobs.message.position_unavailable' } end
 
     local contract = HunterContracts[source]
-    if not contract then return nil, 'No active contract' end
+    if not contract then return nil, { localeKey = 'jobs.message.no_active_contract' } end
 
     -- Find nearest alive unregistered animal in zone
     local nearest, nearestDist = nil, 9999

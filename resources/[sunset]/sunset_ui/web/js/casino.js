@@ -48,11 +48,11 @@ const Casino = {
         title.textContent = names[this.game] || 'Casino';
 
         if (this.game === 'cashier') {
-            sub.textContent = `Cash: $${(this.status.cash || 0).toLocaleString()} · Chips: ${(this.status.chips || 0).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: (this.status.cash || 0).toLocaleString(), value1: (this.status.chips || 0).toLocaleString() });
         } else if (this.game === 'bar') {
-            sub.textContent = `Cash: $${(this.status.cash || 0).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.cash_value', { value0: (this.status.cash || 0).toLocaleString() });
         } else {
-            sub.textContent = `Chips: ${(this.status.chips || 0).toLocaleString()} · Min ${(this.status.minBet || 100).toLocaleString()} · Max ${(this.status.maxBet || 50000).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
         }
 
         if (this.game === 'blackjack') this.renderBlackjack(body);
@@ -196,7 +196,7 @@ const Casino = {
 
         const sub = $('#casino-sub');
         if (sub && this.game === 'blackjack') {
-            sub.textContent = `Chips: ${(this.status.chips || 0).toLocaleString()} · Min ${(this.status.minBet || 100).toLocaleString()} · Max ${(this.status.maxBet || 50000).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
         }
         this.renderStatus();
     },
@@ -237,12 +237,12 @@ const Casino = {
                 resultEl.textContent = `🎉 ${data.matches} match! +${data.payout.toLocaleString()} Chips`;
             } else {
                 resultEl.className = 'slots-result slots-result--lose';
-                resultEl.textContent = 'No match. Try again!';
+                resultEl.textContent = I18n.t('dynamic.casino.no_match_try_again');
             }
         }
         const sub = $('#casino-sub');
         if (sub && this.game === 'slots') {
-            sub.textContent = `Chips: ${(this.status.chips || 0).toLocaleString()} · Min ${(this.status.minBet || 100).toLocaleString()} · Max ${(this.status.maxBet || 50000).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
         }
         this.renderStatus();
     },
@@ -266,7 +266,7 @@ const Casino = {
         `;
         $('#wheel-spin')?.addEventListener('click', () => {
             const btn = $('#wheel-spin');
-            if (btn) { btn.disabled = true; btn.textContent = 'SPINNING...'; }
+            if (btn) { btn.disabled = true; btn.textContent = I18n.t('dynamic.casino.spinning'); }
             post('casinoWheelSpin', {});
         });
     },
@@ -285,7 +285,7 @@ const Casino = {
             resultEl.textContent = `🎉 You won: ${this.esc(data.prize.label)}!`;
         }
         const btn = $('#wheel-spin');
-        if (btn) { btn.disabled = true; btn.textContent = 'SPUN — COME BACK IN 1 HOUR'; }
+        if (btn) { btn.disabled = true; btn.textContent = I18n.t('dynamic.casino.spun_come_back_in_1_hour'); }
     },
 
     // ── CASHIER ──
@@ -331,7 +331,7 @@ const Casino = {
         if (data.cash !== undefined) this.status.cash = data.cash;
         // Re-render to refresh balance cards
         const sub = $('#casino-sub');
-        if (sub) sub.textContent = `Cash: $${(this.status.cash || 0).toLocaleString()} · Chips: ${(this.status.chips || 0).toLocaleString()}`;
+        if (sub) sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: (this.status.cash || 0).toLocaleString(), value1: (this.status.chips || 0).toLocaleString() });
         const body = $('#casino-body');
         if (body) this.renderCashier(body);
         this.renderStatus();
@@ -430,7 +430,7 @@ const Casino = {
         }
         const sub = $('#casino-sub');
         if (sub && this.game === 'roulette') {
-            sub.textContent = `Chips: ${(this.status.chips || 0).toLocaleString()} · Min ${(this.status.minBet || 100).toLocaleString()} · Max ${(this.status.maxBet || 50000).toLocaleString()}`;
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
         }
         this.renderStatus();
     },

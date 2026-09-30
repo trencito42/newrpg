@@ -37,9 +37,9 @@ end
 local function canReview(source)
     local char = character(source)
     local factionId, grade = characterFaction(char)
-    if factionId ~= 'lssi' then return nil, 'Only LSSI management can review instructor exams.' end
-    if grade < REVIEW_MIN_GRADE then return nil, 'LSSI rank 5 or higher is required to review exams.' end
-    if not exports.sunset_factions:IsOnDuty(source) then return nil, 'Go on LSSI duty before reviewing exams.' end
+    if factionId ~= 'lssi' then return nil, { localeKey = 'licenses.message.only_lssi_management_can_review_instructor_exams' } end
+    if grade < REVIEW_MIN_GRADE then return nil, { localeKey = 'licenses.message.lssi_rank_5_or_higher_is_required_to_review' } end
+    if not exports.sunset_factions:IsOnDuty(source) then return nil, { localeKey = 'licenses.message.go_on_lssi_duty_before_reviewing_exams' } end
     return char
 end
 
@@ -137,7 +137,7 @@ local function performance(characterId)
         FROM lssi_exam_reports
         WHERE instructor_character_id = ? AND result <> 'in_progress'
     ]], { characterId })
-    if not ok then return nil, 'LSSI review storage is unavailable. Apply sql/25-lssi-exam-reviews.sql.' end
+    if not ok then return nil, { localeKey = 'licenses.message.lssi_review_storage_is_unavailable_apply_sql_25_lssi' } end
     row = row or {}
     return {
         total = tonumber(row.total) or 0,
@@ -151,18 +151,18 @@ end
 
 function AssessInstructorPromotion(characterId, newGrade)
     characterId, newGrade = tonumber(characterId), tonumber(newGrade)
-    if not characterId or not newGrade then return false, 'Invalid LSSI promotion assessment.' end
+    if not characterId or not newGrade then return false, { localeKey = 'licenses.message.invalid_lssi_promotion_assessment' } end
     local requirement = SunsetLicenses.InstructorPromotionRequirements[newGrade]
     if not requirement then return true end
     local stats, err = performance(characterId)
     if not stats then return false, err end
     if stats.reviewed < requirement.reviewed then
-        return false, ('LSSI rank %d requires %d reviewed exams; this instructor has %d (%d still pending).'):format(
-            newGrade, requirement.reviewed, stats.reviewed, stats.pending)
+        return false, { localeKey = 'licenses.message.lssi_rank_value_requires_value_reviewed_exams_this_instructor_has', formatArgs = {
+            newGrade, requirement.reviewed, stats.reviewed, stats.pending } }
     end
     if stats.averageMistakes > requirement.maxAverageMistakes then
-        return false, ('LSSI rank %d requires at most %.2f average instructor mistakes; current average is %.2f.'):format(
-            newGrade, requirement.maxAverageMistakes, stats.averageMistakes)
+        return false, { localeKey = 'licenses.message.lssi_rank_value_requires_at_most_value_average_instructor_mistake', formatArgs = {
+            newGrade, requirement.maxAverageMistakes, stats.averageMistakes } }
     end
     return true, stats
 end

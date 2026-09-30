@@ -53,7 +53,7 @@ function A.freeze(source, args)
     end
     Frozen[target] = { by = source, at = os.time() }
     TriggerClientEvent('sunset:admin:freeze', target, true)
-    TriggerClientEvent('sunset:client:notify', target, 'You have been frozen by staff. Stay where you are.', 'error', 10000)
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_have_been_frozen_by_staff_stay_where_you'), 'error', 10000)
     notify(source, ('Froze #%d (%s). /unfreeze %d to release.'):format(
         target, getDisplayName(target), target), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] %s froze #%d (%s)')
@@ -71,7 +71,7 @@ function A.unfreeze(source, args)
     end
     Frozen[target] = nil
     TriggerClientEvent('sunset:admin:freeze', target, false)
-    TriggerClientEvent('sunset:client:notify', target, 'You have been unfrozen by staff.', 'success', 6000)
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_have_been_unfrozen_by_staff'), 'success', 6000)
     notify(source, ('Unfroze #%d.'):format(target), 'success')
 end
 
@@ -92,7 +92,7 @@ CreateThread(function()
             elseif now - (row.at or 0) > maxSec then
                 Frozen[target] = nil
                 TriggerClientEvent('sunset:admin:freeze', target, false)
-                TriggerClientEvent('sunset:client:notify', target, 'Auto-unfrozen (staff timeout).', 'info', 6000)
+                TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.auto_unfrozen_staff_timeout'), 'info', 6000)
                 pcall(function() exports.sunset_admin:BroadcastStaff(('[ADMIN] auto-unfroze #%d after %ds')
                     :format(target, maxSec)) end)
             end
@@ -207,7 +207,7 @@ AddEventHandler('playerDropped', function()
             restoreBucket(admin, SavedBucket[admin])
             SavedBucket[admin] = nil
             TriggerClientEvent('sunset:admin:spectateEnd', admin)
-            TriggerClientEvent('sunset:client:notify', admin, 'Spectate ended (target disconnected).', 'info')
+            TriggerClientEvent('sunset:client:notify', admin, exports.sunset_core:TFor(admin, 'admin.message.spectate_ended_target_disconnected'), 'info')
         end
     end
 end)
@@ -292,12 +292,12 @@ function A.bringcar(source, args)
         if GetResourceState('sunset_properties') == 'started' then
             pcall(function() exports.sunset_properties:LeaveProperty(target) end)
         end
-        TriggerClientEvent('sunset:client:notify', target, 'You were pulled out of a property by staff.', 'warning')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_were_pulled_out_of_a_property_by_staff'), 'warning')
     end
     SetPlayerRoutingBucket(target, GetPlayerRoutingBucket(source) or 0)
     TriggerClientEvent('sunset:admin:teleportVehicle', target, coords.x + 2.0, coords.y + 2.0, coords.z)
     notify(source, ('Brought #%d (with their vehicle) to you.'):format(target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'You were brought to an admin.', 'warning')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_were_brought_to_an_admin'), 'warning')
     markAnticheat(target, 'bringcar')
 end
 
@@ -362,7 +362,7 @@ function A.aunjail(source, args)
     end
     SunsetAdmin.Sanctions.unjail(source, target)
     notify(source, ('Released #%d from jail.'):format(target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'You were released from jail by staff.', 'success')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_were_released_from_jail_by_staff'), 'success')
 end
 
 function A.aclear(source, args)
@@ -379,7 +379,7 @@ function A.aclear(source, args)
         return
     end
     notify(source, ('Cleared wanted stars for #%d.'):format(target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'Your wanted stars were cleared by staff.', 'info')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_wanted_stars_were_cleared_by_staff'), 'info')
 end
 
 -- ── mass tools (level 3) ───────────────────────────────────────
@@ -508,7 +508,7 @@ function A.setclan(source, args)
         end
         pcall(function() exports.sunset_clans:SyncPlayerClan(target) end)
         notify(source, ('Removed #%d from their clan (%s row(s)).'):format(target, tostring(removedOrErr)), 'success')
-        TriggerClientEvent('sunset:client:notify', target, 'Staff removed you from your clan.', 'warning')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.staff_removed_you_from_your_clan'), 'warning')
         return
     end
 

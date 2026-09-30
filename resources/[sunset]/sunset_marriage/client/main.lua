@@ -9,7 +9,7 @@ local Cfg = SunsetMarriage.Config
 RegisterCommand('propose', function(source, args)
     local targetId = tonumber(args[1])
     if not targetId then
-        return exports.sunset_ui:Notify('Usage: /propose [player id]', 'warning')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('marriage.message.usage_propose_player_id'), 'warning')
     end
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:marriage:propose', targetId)
@@ -38,7 +38,7 @@ RegisterCommand('marriage', function()
             exports.sunset_ui:Notify(('💍 Married to %s (%s). Married: %s'):format(
                 res.partnerName, res.partnerOnline and 'online' or 'offline', res.marriedAt), 'info', 8000)
         else
-            exports.sunset_ui:Notify('You are not married. Use /propose [id] to propose.', 'info')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('marriage.message.you_are_not_married_use_propose_id_to_propose'), 'info')
         end
     end)
 end, false)

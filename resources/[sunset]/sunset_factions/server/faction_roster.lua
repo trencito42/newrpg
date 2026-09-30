@@ -2,9 +2,9 @@ FactionRoster = FactionRoster or {}
 
 local function rosterLeaderPerm(source, perm)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'No faction' end
+    if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
     if FactionCore.isFactionLeader(char.id, factionId) then return char, factionId end
     if not FactionCore.hasManagePerm(source, perm) then
         return nil, FactionCore.manageAccessError(source, perm, 'manage faction members')
@@ -71,7 +71,7 @@ local function canManageMember(actorSource, actorChar, factionId, targetGrade, t
     end
     local _, myGrade = FactionCore.getFactionOf(actorChar)
     if targetGrade >= (myGrade or 0) and tonumber(targetCharacterId) ~= tonumber(actorChar.id) then
-        return false, 'You cannot manage members at your rank or higher'
+        return false, { localeKey = 'factions.message.you_cannot_manage_members_at_your_rank_or_higher' }
     end
     return true
 end
@@ -82,12 +82,12 @@ function FactionRoster.adjustGrade(source, characterId, delta)
 
     characterId = tonumber(characterId)
     delta = tonumber(delta) or 0
-    if not characterId or delta == 0 then return nil, 'Invalid roster action' end
+    if not characterId or delta == 0 then return nil, { localeKey = 'factions.message.invalid_roster_action' } end
 
     local member = getMemberRow(characterId)
-    if not member or member.factionId ~= factionId then return nil, 'That member is not in your faction' end
+    if not member or member.factionId ~= factionId then return nil, { localeKey = 'factions.message.that_member_is_not_in_your_faction' } end
     if FactionCore.isFactionLeader(characterId, factionId) and delta < 0 then
-        return nil, 'You cannot demote a faction leader'
+        return nil, { localeKey = 'factions.message.you_cannot_demote_a_faction_leader' }
     end
 
     local allowed, err = canManageMember(source, char, factionId, member.grade, characterId)
@@ -97,14 +97,14 @@ function FactionRoster.adjustGrade(source, characterId, delta)
     local newGrade = member.grade + delta
     if not faction or not faction.grades[newGrade] then
         if delta > 0 then
-            return nil, 'Member is already at the highest rank'
+            return nil, { localeKey = 'factions.message.member_is_already_at_the_highest_rank' }
         end
-        return nil, 'Member is already at the lowest rank'
+        return nil, { localeKey = 'factions.message.member_is_already_at_the_lowest_rank' }
     end
     if newGrade >= (select(2, FactionCore.getFactionOf(char)) or 0)
         and tonumber(characterId) ~= tonumber(char.id)
         and not FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, 'You cannot set rank to your level or higher'
+        return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
     end
     if delta > 0 then
         local eligible, eligibilityError = FactionCore.checkPromotionEligibility(factionId, characterId, newGrade)
@@ -119,7 +119,7 @@ function FactionRoster.adjustGrade(source, characterId, delta)
         setOk = exports.sunset_core:SetFactionByCharacterId(characterId, factionId, newGrade)
     end
     if not setOk then
-        return nil, 'Could not save the new rank. Reconnect and try again.'
+        return nil, { localeKey = 'factions.message.could_not_save_the_new_rank_reconnect_and_try' }
     end
 
     local label = FactionLabels.get(factionId, newGrade)
@@ -141,11 +141,11 @@ function FactionRoster.kickMember(source, characterId, options)
     if not char then return nil, factionId end
 
     characterId = tonumber(characterId)
-    if not characterId then return nil, 'Invalid member' end
+    if not characterId then return nil, { localeKey = 'factions.message.invalid_member' } end
 
     local member = getMemberRow(characterId)
-    if not member or member.factionId ~= factionId then return nil, 'That member is not in your faction' end
-    if FactionCore.isFactionLeader(characterId, factionId) then return nil, 'You cannot remove a faction leader' end
+    if not member or member.factionId ~= factionId then return nil, { localeKey = 'factions.message.that_member_is_not_in_your_faction' } end
+    if FactionCore.isFactionLeader(characterId, factionId) then return nil, { localeKey = 'factions.message.you_cannot_remove_a_faction_leader' } end
 
     local allowed, err = canManageMember(source, char, factionId, member.grade, characterId)
     if not allowed then return nil, err end
@@ -203,18 +203,18 @@ function FactionRoster.warnMember(source, characterId, reason)
     reason = tostring(reason or 'No reason given'):gsub('^%s+', ''):gsub('%s+$', '')
     if reason == '' then reason = 'No reason given' end
     reason = reason:sub(1, 256)
-    if not characterId then return nil, 'Invalid member' end
+    if not characterId then return nil, { localeKey = 'factions.message.invalid_member' } end
 
     local member = getMemberRow(characterId)
-    if not member or member.factionId ~= factionId then return nil, 'That member is not in your faction' end
-    if FactionCore.isFactionLeader(characterId, factionId) then return nil, 'You cannot warn a faction leader' end
+    if not member or member.factionId ~= factionId then return nil, { localeKey = 'factions.message.that_member_is_not_in_your_faction' } end
+    if FactionCore.isFactionLeader(characterId, factionId) then return nil, { localeKey = 'factions.message.you_cannot_warn_a_faction_leader' } end
 
     local allowed, err = canManageMember(source, char, factionId, member.grade, characterId)
     if not allowed then return nil, err end
 
     local targetSource = onlineSourceForCharacter(characterId)
     if not targetSource then
-        return nil, 'That player must be online to receive a faction warning'
+        return nil, { localeKey = 'factions.message.that_player_must_be_online_to_receive_a_faction' }
     end
 
     local warnCount = tonumber(MySQL.scalar.await(
@@ -222,7 +222,7 @@ function FactionRoster.warnMember(source, characterId, reason)
         { factionId, characterId }
     )) or 0
     if warnCount >= 3 then
-        return nil, 'This member already has 3/3 faction warnings'
+        return nil, { localeKey = 'factions.message.this_member_already_has_3_3_faction_warnings' }
     end
 
     pcall(function()
@@ -246,7 +246,7 @@ exports.sunset_core:RegisterCallback('sunset:factionMemberRankDelta', function(s
     if not ok then
         print(('[sunset:factionMemberRankDelta] error src=%s charId=%s delta=%s: %s'):format(
             tostring(source), tostring(characterId), tostring(delta), tostring(result)))
-        return nil, 'Could not update rank. Try again or contact staff.'
+        return nil, { localeKey = 'factions.message.could_not_update_rank_try_again_or_contact_staff' }
     end
     return result, err
 end)
@@ -268,11 +268,11 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:factionSetGradeLabels', function(source, labels)
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     local factionId = select(1, FactionCore.getFactionOf(char))
-    if not factionId then return nil, 'No faction' end
+    if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
     if not FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, 'Only the faction leader can rename ranks'
+        return nil, { localeKey = 'factions.message.only_the_faction_leader_can_rename_ranks' }
     end
     local ok, err = FactionLabels.save(factionId, labels, char.id)
     if not ok then return nil, err or 'Could not save rank names' end

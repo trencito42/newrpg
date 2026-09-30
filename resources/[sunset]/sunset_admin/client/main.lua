@@ -92,7 +92,7 @@ RegisterNetEvent('sunset:admin:repairVehicle', function()
     end
 
     if veh == 0 or not DoesEntityExist(veh) then
-        exports.sunset_ui:Notify('No vehicle found nearby', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.no_vehicle_found_nearby'), 'error')
         return
     end
 
@@ -113,7 +113,7 @@ RegisterNetEvent('sunset:admin:repairVehicle', function()
             end
         end)
     end
-    exports.sunset_ui:Notify('Vehicle repaired!', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.vehicle_repaired'), 'success')
 end)
 
 
@@ -166,14 +166,14 @@ RegisterNetEvent('sunset:admin:enterClosestVehicle', function()
         for seat = -1, GetVehicleMaxNumberOfPassengers(veh) - 1 do
             if IsVehicleSeatFree(veh, seat) then
                 TaskWarpPedIntoVehicle(ped, veh, seat)
-                exports.sunset_ui:Notify('Teleportat in vehicul!', 'success')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.teleportat_in_vehicul'), 'success')
                 return
             end
         end
         TaskWarpPedIntoVehicle(ped, veh, -1)
-        exports.sunset_ui:Notify('Teleported into vehicle.', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.teleported_into_vehicle'), 'success')
     else
-        exports.sunset_ui:Notify('No vehicle nearby.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.no_vehicle_nearby'), 'error')
     end
 end)
 
@@ -219,9 +219,9 @@ RegisterNetEvent('sunset:admin:freeze', function(state)
     FreezeEntityPosition(ped, isFrozen)
     if isFrozen then
         ClearPedTasksImmediately(ped)
-        exports.sunset_ui:Notify('You have been FROZEN by staff. Do not disconnect.', 'error', 10000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.you_have_been_frozen_by_staff_do_not_disconnect'), 'error', 10000)
     else
-        exports.sunset_ui:Notify('Unfrozen by staff.', 'success', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.unfrozen_by_staff'), 'success', 5000)
     end
 end)
 
@@ -329,7 +329,7 @@ RegisterNetEvent('sunset:admin:spectateEnd', function()
     SetEntityVisible(ped, true, false)
     FreezeEntityPosition(ped, false)
     SetEntityCollision(ped, true, true)
-    exports.sunset_ui:Notify('Spectate ended.', 'info', 4000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.spectate_ended'), 'info', 4000)
 end)
 
 -- watchdog: no sync for 6s or target gone -> restore (spec failsafe)
@@ -359,7 +359,7 @@ local currentPosition
 
 local function showPosition(args)
     if not hasCoordsPerm() then
-        exports.sunset_ui:Notify('No permission', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.no_permission'), 'error')
         return
     end
 
@@ -379,7 +379,7 @@ local function showPosition(args)
         coordChat(raw)
     end
 
-    exports.sunset_ui:Notify('Position in chat and F8 (use /coords v4 for vector4)', 'info')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.position_in_chat_and_f8_use_coords_v4_for'), 'info')
 end
 
 RegisterNetEvent('sunset:admin:copyCoords', function(args)
@@ -526,7 +526,7 @@ local function setSpeedMultiplier(mult)
     end
 
     if mult <= 1.01 then
-        exports.sunset_ui:Notify('Speed boost disabled', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.speed_boost_disabled'), 'info')
     else
         exports.sunset_ui:Notify(('Speed boost: %.1fx'):format(mult), 'success')
     end
@@ -614,12 +614,12 @@ end, false)
 
 local function tpToWaypoint()
     if adminLevel < 1 then
-        exports.sunset_ui:Notify('No permission', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.no_permission'), 'error')
         return
     end
     local blip = GetFirstBlipInfoId(8) -- 8 = waypoint blip
     if not DoesBlipExist(blip) then
-        exports.sunset_ui:Notify('No waypoint set on map', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.no_waypoint_set_on_map'), 'error')
         return
     end
     local coord = GetBlipInfoIdCoord(blip)
@@ -627,7 +627,7 @@ local function tpToWaypoint()
     -- Pre-loading collision before moving caused up to 10s of apparent freeze
     -- (100 iterations × 100ms Wait) while the game streamed distant terrain.
     SetEntityCoords(PlayerPedId(), coord.x, coord.y, coord.z + 3.0, false, false, false, false)
-    exports.sunset_ui:Notify('Teleported to waypoint', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.teleported_to_waypoint'), 'success')
     -- Silently snap to ground once collision has streamed in at the new location.
     -- The player being on-site forces GTA to load terrain much faster than
     -- requesting it remotely, so this usually resolves in 1-2 iterations.

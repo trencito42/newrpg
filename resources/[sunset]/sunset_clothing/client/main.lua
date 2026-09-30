@@ -58,7 +58,7 @@ end
 local function abortWardrobeOpen(err)
     wardrobePendingFocus = false
     print(('[sunset_clothing] openWardrobe failed: %s'):format(tostring(err or 'unknown')))
-    notify('Could not open clothing store.', 'error')
+    notify(exports.sunset_core:Translate('clothing.message.could_not_open_clothing_store'), 'error')
     inShop = false
     shopType = nil
     savedSnapshot = nil
@@ -131,7 +131,7 @@ local function openWardrobe(fromHouse)
     -- civilian appearance. Refuse to open on duty.
     local okDuty, onDuty = pcall(function() return exports.sunset_factions:IsOnDuty() end)
     if okDuty and onDuty then
-        notify('You cannot buy clothes while in uniform. Get off duty first.', 'error')
+        notify(exports.sunset_core:Translate('clothing.message.you_cannot_buy_clothes_while_in_uniform_get_off'), 'error')
         return
     end
 
@@ -149,7 +149,7 @@ local function openWardrobe(fromHouse)
 
     savedSnapshot = captureSnapshot()
     if not savedSnapshot then
-        notify('Character not loaded.', 'error')
+        notify(exports.sunset_core:Translate('clothing.message.character_not_loaded'), 'error')
         return
     end
 
@@ -195,7 +195,7 @@ local function openBarber()
     if inShop then return end
     savedSnapshot = captureSnapshot()
     if not savedSnapshot then
-        notify('Character not loaded.', 'error')
+        notify(exports.sunset_core:Translate('clothing.message.character_not_loaded'), 'error')
         return
     end
     inShop = true
@@ -219,7 +219,7 @@ end
 
 local function persistWardrobe()
     local char = getCharacter()
-    if not char or not previewAppearance then return false, 'No preview state.' end
+    if not char or not previewAppearance then return false, { localeKey = 'clothing.message.no_preview_state' } end
 
     local saved, err = Sunset.AwaitCallback('sunset:saveAppearance', previewAppearance, char.gender, char.id)
     if not saved then return false, err end
@@ -284,7 +284,7 @@ AddEventHandler('sunset:nui:wardrobePurchase', function()
     if not inShop or shopType ~= 'clothing' then return end
     CreateThread(function()
         if not hasChanges then
-            notify('No changes to purchase.', 'info')
+            notify(exports.sunset_core:Translate('clothing.message.no_changes_to_purchase'), 'info')
             return
         end
         local amount = cartTotal
@@ -339,7 +339,7 @@ AddEventHandler('sunset:nui:clothingApply', function(data)
             return
         end
         SunsetAppearance.apply(PlayerPedId(), appearance, char.gender or 0)
-        notify('Appearance updated ($50)', 'success')
+        notify(exports.sunset_core:Translate('clothing.message.appearance_updated_50'), 'success')
     end)
 end)
 
@@ -450,7 +450,7 @@ RegisterCommand('outfits', function(_, args)
 
     if sub == 'list' or sub == 'lista' then
         local res = Sunset.AwaitCallback('sunset:outfits:list')
-        if not res then notify('Nu s-a putut incarca lista de outfit-uri.', 'error') return end
+        if not res then notify(exports.sunset_core:Translate('clothing.message.nu_s_a_putut_incarca_lista_de_outfit_uri'), 'error') return end
         TriggerEvent('chat:addMessage', { color = { 0, 255, 204 }, args = { 'OUTFITS', ('Saved: %d/%d. Use /outfits save <name>, /outfits wear <number>, /outfits delete <number>.'):format(#res.outfits, res.max) } })
         for i, row in ipairs(res.outfits) do
             TriggerEvent('chat:addMessage', { color = { 220, 220, 220 }, args = { ('%d. %s'):format(i, row.name), '' } })
@@ -463,11 +463,11 @@ RegisterCommand('outfits', function(_, args)
         -- bug as shopping while on duty).
         local okDuty, onDuty = pcall(function() return exports.sunset_factions:IsOnDuty() end)
         if okDuty and onDuty then
-            notify('You cannot save your duty uniform as an outfit. Get off duty.', 'error')
+            notify(exports.sunset_core:Translate('clothing.message.you_cannot_save_your_duty_uniform_as_an_outfit'), 'error')
             return
         end
         local name = table.concat(args, ' ', 2)
-        if name == '' then notify('Usage: /outfits save <name>', 'info') return end
+        if name == '' then notify(exports.sunset_core:Translate('clothing.message.usage_outfits_save_name'), 'info') return end
         local snapshot = SunsetAppearance.GetClothingSnapshot(PlayerPedId())
         local ok, kind = Sunset.AwaitCallback('sunset:outfits:save', name, snapshot)
         if ok then
@@ -481,7 +481,7 @@ RegisterCommand('outfits', function(_, args)
     if sub == 'wear' or sub == 'equip' then
         local res = Sunset.AwaitCallback('sunset:outfits:list')
         local idx = tonumber(args[2])
-        if not res or not idx or not res.outfits[idx] then notify('Invalid number. Use /outfits list.', 'error') return end
+        if not res or not idx or not res.outfits[idx] then notify(exports.sunset_core:Translate('clothing.message.invalid_number_use_outfits_list'), 'error') return end
         local ok, err = Sunset.AwaitCallback('sunset:outfits:equip', res.outfits[idx].id)
         if ok then notify(('Outfit "%s" equipped.'):format(res.outfits[idx].name), 'success')
         else notify(err or 'Failed to equip the outfit.', 'error') end
@@ -491,13 +491,13 @@ RegisterCommand('outfits', function(_, args)
     if sub == 'delete' then
         local res = Sunset.AwaitCallback('sunset:outfits:list')
         local idx = tonumber(args[2])
-        if not res or not idx or not res.outfits[idx] then notify('Invalid number.', 'error') return end
+        if not res or not idx or not res.outfits[idx] then notify(exports.sunset_core:Translate('clothing.message.invalid_number'), 'error') return end
         local ok = Sunset.AwaitCallback('sunset:outfits:delete', res.outfits[idx].id)
         notify(ok and 'Outfit deleted.' or 'Delete failed.', ok and 'success' or 'error')
         return
     end
 
-    notify('Usage: /outfits [list|save <name>|wear <nr>|delete <nr>]', 'info')
+    notify(exports.sunset_core:Translate('clothing.message.usage_outfits_list_save_name_wear_nr_delete_nr'), 'info')
 end, false)
 TriggerEvent('chat:addSuggestion', '/outfits', 'Manage your saved outfits', {
     { name = 'action', help = 'list / save / wear / delete' },

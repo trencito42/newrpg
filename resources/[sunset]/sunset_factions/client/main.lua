@@ -56,18 +56,18 @@ end
 
 local function spawnFleetVehicle(depot, factionId, vehicleModel)
     if not depot or not depot.spawn then
-        exports.sunset_ui:Notify('No fleet garage configured', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.no_fleet_garage_configured'), 'error')
         return
     end
 
     local char = exports.sunset_core:GetCharacter()
     local myFaction = char and Sunset.GetCharacterFaction(char)
     if not myFaction or myFaction ~= factionId then
-        exports.sunset_ui:Notify('You do not work here', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_do_not_work_here'), 'error')
         return
     end
     if not exports.sunset_factions:IsOnDuty() then
-        exports.sunset_ui:Notify('Go on duty at HQ first ([E])', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.go_on_duty_at_hq_first_e'), 'error')
         return
     end
 
@@ -85,7 +85,7 @@ local function spawnFleetVehicle(depot, factionId, vehicleModel)
     local timeout = GetGameTimer() + 8000
     while not HasModelLoaded(model) do
         if GetGameTimer() > timeout then
-            exports.sunset_ui:Notify('Failed to load vehicle model', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.failed_to_load_vehicle_model'), 'error')
             return
         end
         Wait(10)
@@ -98,7 +98,7 @@ local function spawnFleetVehicle(depot, factionId, vehicleModel)
     local veh = CreateVehicle(model, s.x, s.y, spawnZ, s.w, true, false)
     if veh == 0 then
         SetModelAsNoLongerNeeded(model)
-        exports.sunset_ui:Notify('Could not spawn vehicle — clear the area', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.could_not_spawn_vehicle_clear_the_area'), 'error')
         return
     end
 
@@ -133,11 +133,11 @@ local function openFleetGarage(factionId, depot)
     local char = exports.sunset_core:GetCharacter()
     local myFaction = char and Sunset.GetCharacterFaction(char)
     if not myFaction or myFaction ~= factionId then
-        exports.sunset_ui:Notify('You do not work here', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_do_not_work_here'), 'error')
         return
     end
     if not exports.sunset_factions:IsOnDuty() then
-        exports.sunset_ui:Notify('Go on duty at HQ first ([E])', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.go_on_duty_at_hq_first_e'), 'error')
         return
     end
 
@@ -256,21 +256,21 @@ end, false)
 
 RegisterCommand('cuff', function(_, args)
     local target = tonumber(args[1])
-    if not target then return exports.sunset_ui:Notify('Usage: /cuff [id]', 'error') end
+    if not target then return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_cuff_id'), 'error') end
     local ok, err = Sunset.AwaitCallback('sunset:detentionCuff', target)
     if not ok then exports.sunset_ui:Notify(err or 'Could not cuff the suspect. Check duty, rank, ID and distance.', 'error') end
 end, false)
 
 RegisterCommand('uncuff', function(_, args)
     local target = tonumber(args[1])
-    if not target then return exports.sunset_ui:Notify('Usage: /uncuff [id]', 'error') end
+    if not target then return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_uncuff_id'), 'error') end
     local ok, err = Sunset.AwaitCallback('sunset:detentionUncuff', target)
     if not ok then exports.sunset_ui:Notify(err or 'Could not remove the cuffs. Check duty, rank, ID and distance.', 'error') end
 end, false)
 
 RegisterCommand('repairveh', function(_, args)
     local ok, err = Sunset.AwaitCallback('sunset:mechanicRepair', tonumber(args[1]))
-    if ok then exports.sunset_ui:Notify('Vehicle repaired', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.vehicle_repaired'), 'success')
     else exports.sunset_ui:Notify(err or 'Repair could not start. Check duty, rank, distance and that the target is in a vehicle.', 'error') end
 end, false)
 
@@ -318,7 +318,7 @@ RegisterCommand('acceptfare', acceptTaxiFare, false)
 RegisterCommand('declinefare', function()
     local ok, err = Sunset.AwaitCallback('sunset:taxiDeclineFare')
     if ok then
-        exports.sunset_ui:Notify('Taxi fare declined.', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.taxi_fare_declined'), 'info')
     else
         exports.sunset_ui:Notify(err or 'No pending fare to decline.', 'error')
     end
@@ -357,40 +357,40 @@ RegisterCommand('accept', function(_, args)
     elseif sub == 'fare' or sub == 'taxi' then
         acceptTaxiFare()
     else
-        return exports.sunset_ui:Notify('Usage: /accept [faction/fare]', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_accept_faction_fare'), 'error')
     end
 end, false)
 
 RegisterCommand('declinefaction', function()
     local ok, err = Sunset.AwaitCallback('sunset:factionDeclineInvite')
-    if ok then exports.sunset_ui:Notify('Faction invitation declined.', 'info')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.faction_invitation_declined'), 'info')
     else exports.sunset_ui:Notify(err or 'The faction invitation could not be declined.', 'error') end
 end, false)
 
 RegisterCommand('fpromote', function(_, args)
     local ok, err = Sunset.AwaitCallback('sunset:factionPromote', tonumber(args[1]), tonumber(args[2]))
-    if ok then exports.sunset_ui:Notify('Member promoted', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.member_promoted'), 'success')
     else exports.sunset_ui:Notify(err or 'Promotion failed. Check your leader permission, target ID and grade.', 'error') end
 end, false)
 
 RegisterCommand('fgiverank', function(_, args)
     local ok, err = Sunset.AwaitCallback('sunset:factionGiveRank', tonumber(args[1]), tonumber(args[2]))
-    if ok then exports.sunset_ui:Notify('Rank updated', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.rank_updated'), 'success')
     else exports.sunset_ui:Notify(err or 'Rank change failed. Check your leader permission, target ID and grade.', 'error') end
 end, false)
 
 RegisterCommand('funinvite', function(_, args)
     local ok, err = Sunset.AwaitCallback('sunset:factionUninvite', tonumber(args[1]))
-    if ok then exports.sunset_ui:Notify('Member removed', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.member_removed'), 'success')
     else exports.sunset_ui:Notify(err or 'Member removal failed. Check your leader permission and target ID.', 'error') end
 end, false)
 
 RegisterCommand('fwarn', function(_, args)
     local target = tonumber(args[1])
     local reason = table.concat(args, ' ', 2)
-    if not target or reason == '' then return exports.sunset_ui:Notify('Usage: /fwarn [id] [reason]', 'error') end
+    if not target or reason == '' then return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_fwarn_id_reason'), 'error') end
     local ok, err = Sunset.AwaitCallback('sunset:factionWarn', target, reason)
-    if ok then exports.sunset_ui:Notify('Warning issued', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.warning_issued'), 'success')
     else exports.sunset_ui:Notify(err or 'Faction warning failed. Check your leader permission, target ID and reason.', 'error') end
 end, false)
 
@@ -416,7 +416,7 @@ RegisterCommand('fmotd', function(_, args)
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:factionSetMotd', msg)
-    if ok then exports.sunset_ui:Notify('Faction MOTD updated', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.faction_motd_updated'), 'success')
     else exports.sunset_ui:Notify(err or 'MOTD update failed. Check your faction permission and message.', 'error') end
 end, false)
 
@@ -501,7 +501,7 @@ AddEventHandler('sunset:nui:factionManage', function(data)
         end
     elseif action == 'motd' then
         ok, err = Sunset.AwaitCallback('sunset:factionSetMotd', data.message)
-        if ok then exports.sunset_ui:Notify('Faction MOTD updated.', 'success') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.faction_motd_updated_caa52e'), 'success') end
     elseif action == 'rankDelta' then
         ok, err = Sunset.AwaitCallback('sunset:factionMemberRankDelta', tonumber(data.characterId), tonumber(data.delta))
         if ok then exports.sunset_ui:Notify(('Rank updated to %s.'):format(ok.gradeLabel or '?'), 'success') end
@@ -520,7 +520,7 @@ AddEventHandler('sunset:nui:factionManage', function(data)
         elseif targetId then
             ok, err = Sunset.AwaitCallback('sunset:factionWarn', targetId, reason)
         else
-            return exports.sunset_ui:Notify('Invalid member for faction warning.', 'error')
+            return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.invalid_member_for_faction_warning'), 'error')
         end
         if ok then
             local count = type(ok) == 'table' and (ok.warns or ok.count) or nil
@@ -528,25 +528,25 @@ AddEventHandler('sunset:nui:factionManage', function(data)
         end
     elseif action == 'gradeLabels' then
         ok, err = Sunset.AwaitCallback('sunset:factionSetGradeLabels', data.labels or {})
-        if ok then exports.sunset_ui:Notify('Rank names saved.', 'success') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.rank_names_saved'), 'success') end
     elseif action == 'resign' then
         -- [FP SYSTEM] Member submits a resignation request for the leader.
         ok, err = Sunset.AwaitCallback('sunset:factionResignSubmit', data.reason or '')
-        if ok then exports.sunset_ui:Notify('Resignation submitted. The leader can accept it cleanly (no FP) or with FP.', 'success', 12000) end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.resignation_submitted_the_leader_can_accept_it_cleanly_no'), 'success', 12000) end
     elseif action == 'resignAccept' then
         ok, err = Sunset.AwaitCallback('sunset:factionResignHandle', tonumber(data.resignationId), 'accept')
-        if ok then exports.sunset_ui:Notify('Resignation accepted (clean, no FP).', 'success') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.resignation_accepted_clean_no_fp'), 'success') end
     elseif action == 'resignAcceptFp' then
         ok, err = Sunset.AwaitCallback('sunset:factionResignHandle', tonumber(data.resignationId), 'accept_fp')
-        if ok then exports.sunset_ui:Notify('Resignation accepted with FP (60).', 'warning') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.resignation_accepted_with_fp_60'), 'warning') end
     elseif action == 'resignDecline' then
         ok, err = Sunset.AwaitCallback('sunset:factionResignHandle', tonumber(data.resignationId), 'decline')
-        if ok then exports.sunset_ui:Notify('Resignation declined.', 'info') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.resignation_declined'), 'info') end
     elseif action == 'pardonFp' then
         ok, err = Sunset.AwaitCallback('sunset:factionPardonFP', tonumber(data.characterId))
-        if ok then exports.sunset_ui:Notify('FP pardoned.', 'success') end
+        if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.fp_pardoned'), 'success') end
     else
-        return exports.sunset_ui:Notify('Unknown faction action.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.unknown_faction_action'), 'error')
     end
 
     if not ok then
@@ -623,7 +623,7 @@ AddEventHandler('sunset:nui:fleetGarageSpawn', function(data)
         if depot and factionId and data and data.model then
             spawnFleetVehicle(depot, factionId, data.model)
         else
-            exports.sunset_ui:Notify('Could not take out vehicle — try again.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.could_not_take_out_vehicle_try_again'), 'error')
         end
     end)
 end)
@@ -638,7 +638,7 @@ end)
 AddEventHandler('sunset:world:illegalSell', function(factionId)
     local char = exports.sunset_core:GetCharacter()
     if not char or Sunset.GetCharacterFaction(char) ~= factionId then
-        exports.sunset_ui:Notify('Members only', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.members_only'), 'error')
         return
     end
     if factionId == 'sunset_cartel' then
@@ -773,10 +773,10 @@ RegisterCommand('pdgarage', function()
     local char = exports.sunset_core:GetCharacter()
     local factionId = char and Sunset.GetCharacterFaction(char)
     if not factionId or not Sunset.FactionTypeMatches(factionId, 'law_enforcement') then
-        return exports.sunset_ui:Notify('You must be law enforcement', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.you_must_be_law_enforcement'), 'error')
     end
     if not exports.sunset_factions:IsOnDuty() then
-        return exports.sunset_ui:Notify('Go on duty first (/duty at HQ)', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.go_on_duty_first_duty_at_hq'), 'error')
     end
     local faction = Sunset.Factions[factionId]
     if faction and faction.depot then

@@ -155,7 +155,7 @@ local function handleTruckerStart(source, selectedRouteParam)
     end
     if not routesList or #routesList == 0 then
         print('[TRUCKER SERVER] FAIL: no routes')
-        return nil, 'No routes configured'
+        return nil, { localeKey = 'jobs.message.no_routes_configured' }
     end
 
     -- Validate player is in the trucker depot area (120m radius)
@@ -163,7 +163,7 @@ local function handleTruckerStart(source, selectedRouteParam)
         local ped = GetPlayerPed(source)
         local pos = ped and ped ~= 0 and GetEntityCoords(ped) or vector3(0, 0, 0)
         print(('[TRUCKER SERVER] FAIL coords: player=(%.1f,%.1f,%.1f) depot=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, cfg.depot.coords.x, cfg.depot.coords.y, cfg.depot.coords.z))
-        return nil, 'Go to the trucker depot to start work'
+        return nil, { localeKey = 'jobs.message.go_to_the_trucker_depot_to_start_work' }
     end
 
     -- Auto-hire as trucker if not currently employed as trucker
@@ -205,7 +205,7 @@ local function handleTruckerStart(source, selectedRouteParam)
             route = routesList[routeIdx]
         end
     end
-    if not route then return nil, 'Selected route does not exist' end
+    if not route then return nil, { localeKey = 'jobs.message.selected_route_does_not_exist' } end
 
     -- Pick truck model for this route's category
     local catTrucks    = cfg.categoryTrucks or {}
@@ -257,11 +257,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:startShift', handleTru
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
     if not session then print('[TRUCKER] atPickup FAIL session: ' .. tostring(err)) return nil, err end
-    if session.data.stage ~= 'to_pickup' then print('[TRUCKER] atPickup FAIL stage: ' .. tostring(session.data.stage)) return nil, 'Not heading to pickup' end
+    if session.data.stage ~= 'to_pickup' then print('[TRUCKER] atPickup FAIL stage: ' .. tostring(session.data.stage)) return nil, { localeKey = 'jobs.message.not_heading_to_pickup' } end
 
     local cfg = Sunset.GetJobConfig('trucker')
     local vehOk, vehErr = SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0)
-    if not vehOk then print('[TRUCKER] atPickup FAIL vehicle: ' .. tostring(vehErr)) return nil, 'Use your assigned work truck' end
+    if not vehOk then print('[TRUCKER] atPickup FAIL vehicle: ' .. tostring(vehErr)) return nil, { localeKey = 'jobs.message.use_your_assigned_work_truck' } end
     if session.data.hasTrailer then
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
         if not trailerOk then print('[TRUCKER] atPickup FAIL trailer: ' .. tostring(trailerErr)) return nil, trailerErr end
@@ -273,7 +273,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
         local ped = GetPlayerPed(source)
         local pos = GetEntityCoords(ped)
         print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, pickupTarget and pickupTarget.x or 0, pickupTarget and pickupTarget.y or 0, pickupTarget and pickupTarget.z or 0))
-        return nil, 'Not at pickup location — drive into the loading dock marker'
+        return nil, { localeKey = 'jobs.message.not_at_pickup_location_drive_into_the_loading_dock' }
     end
 
     session.data.stage = 'to_delivery'
@@ -285,11 +285,11 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(source, isManual)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
     if not session then return nil, err end
-    if session.data.stage ~= 'to_delivery' then return nil, 'Cargo not loaded' end
+    if session.data.stage ~= 'to_delivery' then return nil, { localeKey = 'jobs.message.cargo_not_loaded' } end
 
     local cfg = Sunset.GetJobConfig('trucker')
     if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 35.0) then
-        return nil, 'Use your assigned work truck'
+        return nil, { localeKey = 'jobs.message.use_your_assigned_work_truck' }
     end
     if session.data.hasTrailer then
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 35.0)
@@ -302,14 +302,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
         parkingBay = session.data.parkingBay and vector3(session.data.parkingBay.x, session.data.parkingBay.y, session.data.parkingBay.z),
     }
     if not validateTruckerCoords(source, delivTarget, cfg) then
-        return nil, 'Not at delivery location — drive into the loading dock marker'
+        return nil, { localeKey = 'jobs.message.not_at_delivery_location_drive_into_the_loading_dock' }
     end
 
     -- Flip stage synchronously before any yielding payout
     session.data.stage = 'return_depot'
     session.trailerNetId = nil
     local delivered = session.data.deliveredAt
-    if delivered then return nil, 'Cargo already delivered on this route.' end
+    if delivered then return nil, { localeKey = 'jobs.message.cargo_already_delivered_on_this_route' } end
     session.data.deliveredAt = os.time()
 
     -- Apply rank bonus to pay (rank 1 = +0%, rank 5 = +5%)
@@ -331,7 +331,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     if not paid then
         session.data.stage = 'to_delivery'
         session.data.deliveredAt = nil
-        return nil, 'Payment could not be processed. Try delivering once more.'
+        return nil, { localeKey = 'jobs.message.payment_could_not_be_processed_try_delivering_once_more' }
     end
     truckerAddXP(source, xp)
 
@@ -361,12 +361,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function
 
     local cfg = Sunset.GetJobConfig('trucker')
     if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0) then
-        return nil, 'Return your assigned work truck'
+        return nil, { localeKey = 'jobs.message.return_your_assigned_work_truck' }
     end
     -- Trailer was already left at the delivery point; no trailer check needed here.
     local retPoint = (cfg.depot.returnCoords and vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)) or (cfg.depot.spawn and vector3(cfg.depot.spawn.x, cfg.depot.spawn.y, cfg.depot.spawn.z)) or cfg.depot.coords
     if not (SunsetJobs_ValidateCoords(source, retPoint, cfg.returnRadius or 30.0) or SunsetJobs_ValidateCoords(source, cfg.depot.coords, cfg.returnRadius or 30.0)) then
-        return nil, 'Return the truck to the depot'
+        return nil, { localeKey = 'jobs.message.return_the_truck_to_the_depot' }
     end
 
     SunsetJobs_ClearSession(source, 'COMPLETED', 'Route complete')
@@ -389,13 +389,13 @@ local AdminRoutePending = {}  -- [source] = { category, pay, label, pickup }
 RegisterCommand('aaddroute', function(source, args)
     if source == 0 then print('[trucker] aaddroute is player-only') return end
     if not exports.sunset_admin:IsAdmin(source, 3) then
-        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 3.', 'error', 4000)
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.necesita_admin_level_3'), 'error', 4000)
         return
     end
 
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then
-        TriggerClientEvent('sunset:client:notify', source, 'Pozitia ta nu a putut fi determinata.', 'error') return
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.pozitia_ta_nu_a_putut_fi_determinata'), 'error') return
     end
     local pos = GetEntityCoords(ped)
 
@@ -403,7 +403,7 @@ RegisterCommand('aaddroute', function(source, args)
     if tostring(args[1] or ''):lower() == 'delivery' then
         local pending = AdminRoutePending[source]
         if not pending then
-            TriggerClientEvent('sunset:client:notify', source, 'You have no pending route. Start with /aaddroute [category] [pay] [label]', 'error', 5000)
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.you_have_no_pending_route_start_with_aaddroute_category'), 'error', 5000)
             return
         end
         local cfg = Sunset.GetJobConfig('trucker')
@@ -439,7 +439,7 @@ RegisterCommand('aaddroute', function(source, args)
         -- Ruta completa: /aaddroute category pay dest_x dest_y dest_z label...
         local label = table.concat(args, ' ', 6)
         if #label < 3 then
-            TriggerClientEvent('sunset:client:notify', source, 'Add a label for the route (minimum 3 characters).', 'error', 4000) return
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.add_a_label_for_the_route_minimum_3_characters'), 'error', 4000) return
         end
         local cfg = Sunset.GetJobConfig('trucker')
         cfg.routes[#cfg.routes + 1] = {
@@ -456,7 +456,7 @@ RegisterCommand('aaddroute', function(source, args)
         -- Doi pasi: salveaza pickup, asteapta /aaddroute delivery
         local label = table.concat(args, ' ', 3)
         if #label < 3 then
-            TriggerClientEvent('sunset:client:notify', source, 'Add a label for the route (minimum 3 characters).', 'error', 4000) return
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.add_a_label_for_the_route_minimum_3_characters'), 'error', 4000) return
         end
         AdminRoutePending[source] = {
             category = category,
@@ -481,11 +481,11 @@ RegisterCommand('alistroutes', function(source)
         return
     end
     if not exports.sunset_admin:IsAdmin(source, 1) then
-        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 1.', 'error', 4000) return
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.necesita_admin_level_1'), 'error', 4000) return
     end
     local cfg = Sunset.GetJobConfig('trucker')
     if not cfg or #cfg.routes == 0 then
-        TriggerClientEvent('sunset:client:notify', source, 'No trucker routes are configured.', 'info', 4000) return
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.no_trucker_routes_are_configured'), 'info', 4000) return
     end
     local lines = {'=== Rute Trucker ==='}
     for i, r in ipairs(cfg.routes) do
@@ -499,7 +499,7 @@ end, false)
 RegisterCommand('adelroute', function(source, args)
     if source == 0 then print('[trucker] adelroute is player-only') return end
     if not exports.sunset_admin:IsAdmin(source, 3) then
-        TriggerClientEvent('sunset:client:notify', source, 'Necesita Admin Level 3.', 'error', 4000) return
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'jobs.message.necesita_admin_level_3'), 'error', 4000) return
     end
     local idx = tonumber(args[1])
     local cfg = Sunset.GetJobConfig('trucker')

@@ -121,7 +121,7 @@ end)
 RegisterCommand('inspect', function()
     isToolAdmin(function(ok)
         if not ok then
-            exports.sunset_ui:Notify('Inspector: admin level 3+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('admintools.message.inspector_admin_level_3_required'), 'error')
             return
         end
         inspectActive = not inspectActive

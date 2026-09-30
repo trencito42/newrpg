@@ -108,19 +108,20 @@ local function validateOfficerTarget(source, targetId, perm, range)
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     if targetId == source then
-        return nil, 'You cannot use a detention action on yourself.'
+        return nil, { localeKey = 'factions.message.you_cannot_use_a_detention_action_on_yourself' }
     end
     if Detention.getState(targetId) == Detention.States.JAILED then
-        return nil, 'Suspect is already in custody'
+        return nil, { localeKey = 'factions.message.suspect_is_already_in_custody' }
     end
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > (range or INTERACT_RANGE) then
-        return nil, ('Move closer to player #%d: you must be within %dm.'):format(
-            targetId, math.floor(range or INTERACT_RANGE))
+        return nil, { localeKey = 'factions.message.move_closer_to_player_value_you_must_be_within_value_m', formatArgs = {
+            targetId, math.floor(range or INTERACT_RANGE)
+        } }
     end
     return targetId
 end
@@ -140,7 +141,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:detentionUncuff', function(source, targetId)
     local target, err = validateOfficerTarget(source, targetId, 'uncuff', INTERACT_RANGE)
     if not target then return nil, err end
-    if not Detention.isCuffed(target) then return nil, 'Suspect is not restrained' end
+    if not Detention.isCuffed(target) then return nil, { localeKey = 'factions.message.suspect_is_not_restrained' } end
 
     Detention.setCuffed(target, false)
     TriggerClientEvent('sunset:faction:uncuff', target)
@@ -152,7 +153,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:detentionEscort', function(source, targetId)
     local target, err = validateOfficerTarget(source, targetId, 'escort', INTERACT_RANGE)
     if not target then return nil, err end
-    if not Detention.isCuffed(target) then return nil, 'Suspect must be restrained first' end
+    if not Detention.isCuffed(target) then return nil, { localeKey = 'factions.message.suspect_must_be_restrained_first' } end
 
     if Escorted[target] == source then
         Detention.setEscort(target, nil)
@@ -172,7 +173,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:detentionPutInVehicle', function(source, targetId)
     local target, err = validateOfficerTarget(source, targetId, 'vehicle_detain', VEHICLE_RANGE)
     if not target then return nil, err end
-    if not Detention.isCuffed(target) then return nil, 'Suspect must be restrained first' end
+    if not Detention.isCuffed(target) then return nil, { localeKey = 'factions.message.suspect_must_be_restrained_first' } end
 
     TriggerClientEvent('sunset:detention:putInVehicle', target, source)
     Detention.setEscort(target, nil)
@@ -185,7 +186,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:detentionTakeOut', function(source, targetId)
     local target, err = validateOfficerTarget(source, targetId, 'vehicle_detain', VEHICLE_RANGE)
     if not target then return nil, err end
-    if not Detention.isCuffed(target) then return nil, 'Suspect must be restrained' end
+    if not Detention.isCuffed(target) then return nil, { localeKey = 'factions.message.suspect_must_be_restrained' } end
 
     TriggerClientEvent('sunset:detention:takeOutVehicle', target)
     if Cuffed[target] then

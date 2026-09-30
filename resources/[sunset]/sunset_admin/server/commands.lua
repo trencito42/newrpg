@@ -540,7 +540,7 @@ registerServerCommand('mute', function(source, args)
     SunsetAdmin.Sanctions.record('mute', target, source, reason, duration)
 
     TriggerClientEvent('sunset:chat:system', target, ('You have been muted for %d minute(s) by %s. Reason: %s'):format(duration, adminName, reason), 'error')
-    TriggerClientEvent('sunset:client:notify', target, ('Muted (%d min): %s'):format(duration, reason), 'error', 10000)
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.muted_value_min_value', duration, reason), 'error', 10000)
 
     local alert = ('[MUTE] %s muted %s (#%d) for %d minute(s). Reason: %s'):format(adminName, targetName, target, duration, reason)
     pcall(function() exports.sunset_admin:BroadcastStaff(alert) end)
@@ -828,7 +828,7 @@ registerServerCommand('giveitem', function(source, args)
     end
     notify(source, ('Gave %dx %s to ID %s'):format(count, item, target), 'success')
     if target ~= source then
-        TriggerClientEvent('sunset:client:notify', target, ('You received %dx %s'):format(count, item), 'success')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value_x_value', count, item), 'success')
     end
 end, false)
 
@@ -857,7 +857,7 @@ registerServerCommand('givegun', function(source, args)
     markAnticheatTarget(target, 'givegun')
     notify(source, ('Gave %s to ID %s'):format(weapon, target), 'success')
     if target ~= source then
-        TriggerClientEvent('sunset:client:notify', target, ('You received %s'):format(weapon), 'success')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value', weapon), 'success')
     end
 end, false)
 
@@ -902,7 +902,7 @@ registerServerCommand('heal', function(source, args)
     end
     notify(source, 'Healed ' .. getDisplayName(target) .. ' (ID ' .. target .. ')', 'success')
     if target ~= source then
-        TriggerClientEvent('sunset:client:notify', target, 'You were healed by medical staff.', 'success')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_were_healed_by_medical_staff'), 'success')
     end
 end, false)
 
@@ -945,7 +945,7 @@ registerServerCommand('arespawn', function(source, args)
         end
         notify(source, ('Hospital respawn sent to #%d.'):format(target), 'success')
         if target ~= source then
-            TriggerClientEvent('sunset:client:notify', target, 'An administrator sent you to the hospital.', 'info')
+            TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_sent_you_to_the_hospital'), 'info')
         end
         return
     end
@@ -954,7 +954,7 @@ registerServerCommand('arespawn', function(source, args)
         TriggerClientEvent('sunset:client:openSpawnMenu', target)
         notify(source, ('Opened spawn menu for #%d.'):format(target), 'success')
         if target ~= source then
-            TriggerClientEvent('sunset:client:notify', target, 'An administrator opened your spawn menu — choose a location.', 'info')
+            TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_opened_your_spawn_menu_choose_a_location'), 'info')
         end
         return
     end
@@ -981,7 +981,7 @@ registerServerCommand('arespawn', function(source, args)
     TriggerClientEvent('sunset:death:forceHospital', target, pos, 0)
     notify(source, ('Respawned #%d at their spawn point.'):format(target), 'success')
     if target ~= source then
-        TriggerClientEvent('sunset:client:notify', target, 'An administrator respawned you at your spawn point.', 'info')
+        TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_respawned_you_at_your_spawn_point'), 'info')
     end
 end, false)
 
@@ -1044,7 +1044,7 @@ registerServerCommand('gethere', function(source, args)
     TriggerClientEvent('sunset:admin:teleport', target, coords.x, coords.y, coords.z)
     markAnticheatTarget(target, 'gethere')
     notify(source, ('L-ai teleportat pe %s la tine.'):format(getDisplayName(target)), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'You have been teleported by an administrator.', 'info')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_have_been_teleported_by_an_administrator'), 'info')
 end, false)
 
 registerServerCommand('spawncar', function(source, args)
@@ -1149,7 +1149,7 @@ registerServerCommand('disarm', function(source, args)
         pcall(function() exports.sunset_inventory:ClearWeapons(target) end)
     end
     notify(source, ('I-ai luat armele lui %s (ID %d).'):format(getDisplayName(target), target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'Un administrator ti-a confiscat armele.', 'warning')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.un_administrator_ti_a_confiscat_armele'), 'warning')
 end, false)
 
 registerServerCommand('disarmarea', function(source, args)
@@ -1173,7 +1173,7 @@ registerServerCommand('disarmarea', function(source, args)
                     if GetResourceState('sunset_inventory') == 'started' then
                         pcall(function() exports.sunset_inventory:ClearWeapons(p) end)
                     end
-                    TriggerClientEvent('sunset:client:notify', p, 'Un administrator a dezarmat zona.', 'warning')
+                    TriggerClientEvent('sunset:client:notify', p, exports.sunset_core:TFor(p, 'admin.message.un_administrator_a_dezarmat_zona'), 'warning')
                 end
             end
         end
@@ -1189,7 +1189,7 @@ registerServerCommand('setvw', function(source, args)
     local vw = tonumber(args[2]) or 0
     SetPlayerRoutingBucket(target, vw)
     notify(source, ("You set %s's routing bucket to %d."):format(getDisplayName(target), vw), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('Your routing bucket was set to %d by an admin.'):format(vw), 'info')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_routing_bucket_was_set_to_value_by_an_admin', vw), 'info')
 end, false)
 
 registerServerCommand('sethp', function(source, args)
@@ -1202,7 +1202,7 @@ registerServerCommand('sethp', function(source, args)
     if hp < 0 then hp = 0 end
     TriggerClientEvent('sunset:admin:setHealth', target, hp)
     notify(source, ("You set %s's HP to %d."):format(getDisplayName(target), hp), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('Your HP was set to %d by an administrator.'):format(hp), 'info')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_hp_was_set_to_value_by_an_administrator', hp), 'info')
 end, false)
 
 registerServerCommand('sethparea', function(source, args)
@@ -1249,7 +1249,7 @@ registerServerCommand('givemoney', function(source, args)
     local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
 
     notify(source, ('You gave $%s to %s (ID %d).'):format(Sunset.FormatNumber(amount), targetName, target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('You received $%s from administrator %s.'):format(Sunset.FormatNumber(amount), adminName), 'success')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value_from_administrator_value', Sunset.FormatNumber(amount), adminName), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ECONOMY] %s i-a dat $%s lui %s (#%d).'):format(adminName, Sunset.FormatNumber(amount), targetName, target)) end)
 end, false)
 
@@ -1270,7 +1270,7 @@ registerServerCommand('giverpall', function(source, args)
                 count = count + 1
                 char.respect_points = (char.respect_points or 0) + amount
                 MySQL.update.await('UPDATE characters SET respect_points = respect_points + ? WHERE id = ?', { amount, char.id })
-                TriggerClientEvent('sunset:client:notify', p, ('You received %d Respect Points (RP) from %s!'):format(amount, adminName), 'success')
+                TriggerClientEvent('sunset:client:notify', p, exports.sunset_core:TFor(p, 'admin.message.you_received_value_respect_points_rp_from_value', amount, adminName), 'success')
             end
         end
     end
@@ -2320,7 +2320,7 @@ local function handleFnc(source, args)
 
     if not isDirectRename then
         local reason = extraArg ~= '' and extraArg or 'Name violates server rules'
-        
+
         TriggerClientEvent('sunset:admin:openFncModal', target, {
             forced = true,
             reason = reason,
@@ -2402,15 +2402,15 @@ registerServerCommand('forcenamechange', handleFnc)
 -- Server callback: Player submitting their chosen name from the FNC modal
 exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(source, newName)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char or not char.id then return false, 'Invalid character' end
+    if not char or not char.id then return false, { localeKey = 'admin.message.invalid_character' } end
 
     local cleanName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
     if #cleanName < 3 or #cleanName > 24 then
-        return false, 'Name must be between 3 and 24 characters!'
+        return false, { localeKey = 'admin.message.name_must_be_between_3_and_24_characters' }
     end
 
     if not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return false, 'Name may only contain letters, digits, dots and hyphens (e.g. diablo69, alex.ro, Viper_99)!'
+        return false, { localeKey = 'admin.message.name_may_only_contain_letters_digits_dots_and_hyphens' }
     end
 
     -- Check if name already exists in database
@@ -2424,7 +2424,7 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
     ]], { cleanName, cleanName, cleanName, cleanName })
 
     if existing and tonumber(existing.id) ~= tonumber(char.id) then
-        return false, 'This name is already taken by another player! Please choose a different name.'
+        return false, { localeKey = 'admin.message.this_name_is_already_taken_by_another_player_please' }
     end
 
     local oldName = getDisplayName(source)

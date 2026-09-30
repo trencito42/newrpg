@@ -96,14 +96,14 @@ end
 -- ── /warn ──────────────────────────────────────────────────────
 function Sanctions.warn(source, target, reason)
     reason = tostring(reason or ''):gsub('^%s+', ''):gsub('%s+$', '')
-    if #reason < 3 then return nil, 'Reason is mandatory (min 3 characters): /warn [id] [reason]' end
+    if #reason < 3 then return nil, { localeKey = 'admin.message.reason_is_mandatory_min_3_characters_warn_id_reason' } end
 
     -- helpers cannot warn staff of equal/higher level
     if source ~= 0 and IsAdmin(target, 1) then
         local myLevel = tonumber(GetAdminLevel(source)) or 0
         local theirLevel = tonumber(GetAdminLevel(target)) or 0
         if theirLevel >= myLevel then
-            return nil, 'You cannot warn a staff member of your level or higher.'
+            return nil, { localeKey = 'admin.message.you_cannot_warn_a_staff_member_of_your_level' }
         end
     end
 
@@ -217,7 +217,7 @@ function Sanctions.ban(source, target, durationMin, reason)
     local id = Sanctions.record(durationMin and 'tempban' or 'ban', target, source, reason, durationMin)
     local aName = adminName(source)
     local license = id.license
-    if not license then return nil, 'Could not resolve the target license.' end
+    if not license then return nil, { localeKey = 'admin.message.could_not_resolve_the_target_license' } end
 
     local ip = exports.sunset_admin:GetPlayerIP(target)
     local expiresAt = durationMin and (os.date('%Y-%m-%d %H:%M:%S', os.time() + durationMin * 60)) or nil

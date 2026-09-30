@@ -2,7 +2,7 @@ local function showDocuments(kind)
     if IsNuiFocused() then return end
     local data = Sunset.AwaitCallback('sunset:getDocuments', kind or 'all')
     if not data then
-        exports.sunset_ui:Notify('Could not load documents', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('documents.message.could_not_load_documents'), 'error')
         return
     end
     exports.sunset_ui:Send('documentsShow', data)

@@ -704,10 +704,10 @@ end)
 
 exports('JoinTournament', function(source)
     source = tonumber(source)
-    if not source or source <= 0 then return nil, 'Invalid player session.' end
-    if TournamentData.state ~= 'ACTIVE' then return nil, 'No fishing tournament is active.' end
+    if not source or source <= 0 then return nil, { localeKey = 'fishing_tournament.message.invalid_player_session' } end
+    if TournamentData.state ~= 'ACTIVE' then return nil, { localeKey = 'fishing_tournament.message.no_fishing_tournament_is_active' } end
     local charId = getCharId(source)
-    if not charId then return nil, 'Character not loaded.' end
+    if not charId then return nil, { localeKey = 'fishing_tournament.message.character_not_loaded' } end
 
     if TournamentData.participants[charId] then
         local p = TournamentData.participants[charId]

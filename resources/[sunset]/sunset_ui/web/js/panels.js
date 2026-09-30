@@ -378,8 +378,8 @@ const Panels = {
         if (!modal || available <= 0) return;
         if (available === 1) return onConfirm(1);
 
-        $('#inventory-qty-title').textContent = 'OFFER CASH';
-        $('#inventory-qty-item-name').textContent = `Wallet cash ($${available.toLocaleString()} available)`;
+        $('#inventory-qty-title').textContent = I18n.t('dynamic.panels.offer_cash');
+        $('#inventory-qty-item-name').textContent = I18n.t('dynamic.panels.wallet_cash_value_available', { value0: available.toLocaleString() });
         const input = $('#inventory-qty-input');
         const slider = $('#inventory-qty-slider');
         input.min = 1; input.max = available; input.value = 1;
@@ -813,7 +813,7 @@ const Panels = {
         if (window.TradeForza) return;
         const dropBtn = $('#inventory-drop-selected');
         if (dropBtn) {
-            dropBtn.textContent = 'OFFER';
+            dropBtn.textContent = I18n.t('dynamic.panels.offer');
             dropBtn.classList.remove('is-danger');
         }
         const target = $('#inventory-trade-target');
@@ -849,7 +849,7 @@ const Panels = {
                     } else {
                         slot.appendChild(createItemArtwork(row, 'premium-trade-slot__icon'));
                         const count = document.createElement('b');
-                        count.textContent = `x${Number(row.count) || 0}`;
+                        count.textContent = I18n.t('dynamic.panels.x_value0', { value0: Number(row.count) || 0 });
                         slot.appendChild(count);
                         slot.title = row.label || row.item;
                         if (removable) {
@@ -879,7 +879,7 @@ const Panels = {
             if (data.finalizing && Number(data.countdown) > 0) {
                 confirm.disabled = true;
                 confirm.classList.add('is-countdown');
-                confirm.textContent = `FINALIZING IN ${data.countdown}S...`;
+                confirm.textContent = I18n.t('dynamic.panels.finalizing_in_value0_s', { value0: data.countdown });
             } else if (data.myAccepted) {
                 confirm.disabled = true;
                 confirm.textContent = data.theirAccepted ? 'PROCESSING...' : 'WAITING FOR PLAYER...';
@@ -900,7 +900,7 @@ const Panels = {
         document.body.classList.remove('trade-forza-active');
         const dropBtn = $('#inventory-drop-selected');
         if (dropBtn) {
-            dropBtn.textContent = 'DROP';
+            dropBtn.textContent = I18n.t('dynamic.panels.drop');
             dropBtn.classList.add('is-danger');
         }
     },
@@ -956,7 +956,7 @@ const Panels = {
         if (rows.length === 0) {
             const li = document.createElement('li');
             li.className = 'mdc-empty';
-            li.textContent = 'No active wanted players online';
+            li.textContent = I18n.t('dynamic.panels.no_active_wanted_players_online');
             list.appendChild(li);
         } else {
             rows.forEach((row) => {
@@ -1008,7 +1008,7 @@ const Panels = {
         const rows = data.charges || [];
         if (!rows.length) {
             const li = document.createElement('li');
-            li.textContent = 'No charges on record';
+            li.textContent = I18n.t('dynamic.panels.no_charges_on_record');
             charges.appendChild(li);
         } else {
             rows.forEach((row) => {
@@ -1200,7 +1200,7 @@ const Panels = {
                 if (!(cat.entries || []).length) {
                     const li = document.createElement('li');
                     li.className = 'help-empty';
-                    li.textContent = 'No commands in this category';
+                    li.textContent = I18n.t('dynamic.panels.no_commands_in_this_category');
                     list.appendChild(li);
                 }
                 section.appendChild(list);
@@ -1344,7 +1344,7 @@ const Panels = {
                 event.stopPropagation();
                 if (btn.disabled) return;
                 btn.disabled = true;
-                btn.textContent = 'Spawning...';
+                btn.textContent = I18n.t('dynamic.panels.spawning');
                 post('fleetGarageSpawn', {
                     factionId: data.factionId,
                     model: v.model,
@@ -1408,7 +1408,7 @@ const Panels = {
         $('#clothing-title').textContent = type === 'barber' ? 'Barber' : 'Clothing';
 
         if (type === 'barber') {
-            if (hint) hint.textContent = 'Choose a hairstyle. $50 per change.';
+            if (hint) hint.textContent = I18n.t('dynamic.panels.choose_a_hairstyle_50_per_change');
             this.barberHair = data.hair ?? this.barberHair ?? 0;
 
             const picker = document.createElement('div');
@@ -1422,12 +1422,12 @@ const Panels = {
             const apply = document.createElement('button');
             apply.type = 'button';
             apply.className = 'btn btn--primary clothing-apply';
-            apply.textContent = 'Apply — $50';
+            apply.textContent = I18n.t('dynamic.panels.apply_50');
             options.appendChild(apply);
 
             const label = () => {
                 const el = $('#barber-label');
-                if (el) el.textContent = `Hair #${this.barberHair}`;
+                if (el) el.textContent = I18n.t('dynamic.panels.hair_value0', { value0: this.barberHair });
             };
             const preview = () => post('clothingPreview', { type: 'barber', hair: this.barberHair });
 
@@ -1446,7 +1446,7 @@ const Panels = {
             });
             label();
         } else {
-            if (hint) hint.textContent = 'Choose a top (torso). $50 per change.';
+            if (hint) hint.textContent = I18n.t('dynamic.panels.choose_a_top_torso_50_per_change');
             this.clothingDrawable = data.drawable ?? this.clothingDrawable ?? 0;
 
             const picker = document.createElement('div');
@@ -1460,12 +1460,12 @@ const Panels = {
             const apply = document.createElement('button');
             apply.type = 'button';
             apply.className = 'btn btn--primary clothing-apply';
-            apply.textContent = 'Apply — $50';
+            apply.textContent = I18n.t('dynamic.panels.apply_50');
             options.appendChild(apply);
 
             const label = () => {
                 const el = $('#cloth-label');
-                if (el) el.textContent = `Outfit #${this.clothingDrawable}`;
+                if (el) el.textContent = I18n.t('dynamic.panels.outfit_value0', { value0: this.clothingDrawable });
             };
             const preview = () => post('clothingPreview', {
                 type: 'clothing',
@@ -1566,7 +1566,7 @@ const Panels = {
 
             if (job.npcCoords) {
                 waypointBtn.classList.remove('hidden');
-                waypointBtn.textContent = 'SET GPS TO WORKPLACE';
+                waypointBtn.textContent = I18n.t('dynamic.panels.set_gps_to_workplace');
             } else {
                 waypointBtn.classList.add('hidden');
             }
@@ -1594,7 +1594,7 @@ const Panels = {
         });
 
         // Reset side panel
-        sideTitle.textContent = 'CAREER OPPORTUNITY';
+        sideTitle.textContent = I18n.t('dynamic.panels.career_opportunity');
         detailEl.innerHTML = '<p class="jobcenter-details__hint">Select a career opportunity to view details and set GPS navigation.</p>';
         hireBtn.classList.add('hidden');
         hireBtn.disabled = true;
@@ -1616,7 +1616,7 @@ const Panels = {
     showJobsPanel(data) {
         this.init();
         const d = data || {};
-        $('#jobs-panel-title').textContent = 'Jobs';
+        $('#jobs-panel-title').textContent = I18n.t('dynamic.panels.jobs');
         const currentId = typeof d.currentJob === 'object' ? d.currentJob?.id : d.currentJob;
         const currentLabel = d.currentJobLabel || d.currentJob?.label || currentId || 'Unemployed';
         $('#jobs-panel-current').textContent = currentLabel;
@@ -1656,7 +1656,7 @@ const Panels = {
             const meta = document.createElement('div');
             meta.className = 'jobs-menu__meta';
             const levelText = document.createElement('span');
-            levelText.textContent = `Skill level ${level}`;
+            levelText.textContent = I18n.t('dynamic.panels.skill_level_value0', { value0: level });
             const taskText = document.createElement('span');
             taskText.textContent = `${Number(prog.completedTasks || 0)} completed tasks`;
             const badge = document.createElement('span');
@@ -1714,7 +1714,7 @@ const Panels = {
             const outCount = recipe.output?.count || 1;
             const output = document.createElement('span');
             output.className = 'craft-meta';
-            output.textContent = `Produces: ${outLabel} x${outCount}`;
+            output.textContent = I18n.t('dynamic.panels.produces_value0_x_value1', { value0: outLabel, value1: outCount });
             row.appendChild(output);
             if (recipe.lockedReason) {
                 const locked = document.createElement('span');

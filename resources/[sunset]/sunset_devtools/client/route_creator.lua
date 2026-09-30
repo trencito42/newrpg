@@ -255,7 +255,7 @@ end)
 RegisterNUICallback('reloadJobRoutes', function(_, cb)
     exports.sunset_core:TriggerCallback('sunset:devtools:reloadJobRoutes', function(ok, err)
         if ok then
-            notify('Routes reloaded from disk.', 'success')
+            notify(exports.sunset_core:Translate('devtools.message.routes_reloaded_from_disk'), 'success')
             exports.sunset_core:TriggerCallback('sunset:devtools:getJobRoutes', function(routes)
                 cb({ ok = true, routes = { [currentAdapter] = routes or {} } })
             end, currentAdapter)
@@ -286,7 +286,7 @@ end)
 RegisterNUICallback('captureFromTrailer', function(data, cb)
     local result = captureTrailerEntity()
     if not result then
-        notify('No trailer detected hitched or nearby. Drive or park a trailer nearby first.', 'warning')
+        notify(exports.sunset_core:Translate('devtools.message.no_trailer_detected_hitched_or_nearby_drive_or_park'), 'warning')
         cb({ ok = false })
         return
     end
@@ -411,7 +411,7 @@ RegisterNUICallback('previewRouteInWorld', function(data, cb)
     isWorldPreviewing = true
     SetNuiFocus(false, false)
     DevRouteCreator.SetRouteBlips(previewRoute, data.adapter)
-    notify('World Preview active. Press [ESC] or [M] to return to Route Creator.', 'info')
+    notify(exports.sunset_core:Translate('devtools.message.world_preview_active_press_esc_or_m_to_return'), 'info')
     cb({ ok = true })
 end)
 
@@ -492,7 +492,7 @@ RegisterNUICallback('startCrosshairAddBin', function(data, cb)
                 stageKey = 9999, -- append
                 coords = updated,
             })
-            notify('Added bin via Placement Gizmo.', 'success')
+            notify(exports.sunset_core:Translate('devtools.message.added_bin_via_placement_gizmo'), 'success')
             SetNuiFocus(true, true)
             SendNUIMessage({ action = 'showAfterGizmo' })
         end,

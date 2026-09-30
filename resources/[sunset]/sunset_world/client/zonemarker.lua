@@ -77,7 +77,7 @@ local function drawLoop()
                     points[#points + 1] = { x = p.x, y = p.y, z = p.z }
                     notify(('Point %d placed: %.2f, %.2f, %.2f'):format(#points, p.x, p.y, p.z), 'info')
                 else
-                    notify('Could not detect ground — aim at a surface', 'error')
+                    notify(exports.sunset_core:Translate('world.message.could_not_detect_ground_aim_at_a_surface'), 'error')
                 end
             end
 
@@ -88,7 +88,7 @@ end
 
 local function finish()
     if #points < 2 then
-        notify('Need at least 2 points to define a zone', 'error')
+        notify(exports.sunset_core:Translate('world.message.need_at_least_2_points_to_define_a_zone'), 'error')
         return
     end
 
@@ -112,7 +112,7 @@ local function finish()
         :format(cx, cy, cz, radius, width, length)
 
     print('[ZONEMARK] ' .. line)
-    notify('Zone saved — check F8 console for config line', 'success')
+    notify(exports.sunset_core:Translate('world.message.zone_saved_check_f8_console_for_config_line'), 'success')
 
     -- Also print all raw points
     print('[ZONEMARK] Raw points:')
@@ -128,34 +128,34 @@ RegisterCommand('zonemark', function(_, args)
     local sub = (args[1] or ''):lower()
 
     if sub == 'done' then
-        if not marking then notify('Not in zone marking mode', 'error') return end
+        if not marking then notify(exports.sunset_core:Translate('world.message.not_in_zone_marking_mode'), 'error') return end
         finish()
         marking = false
-        notify('Zone marking ended', 'info')
+        notify(exports.sunset_core:Translate('world.message.zone_marking_ended'), 'info')
         return
     end
 
     if sub == 'clear' then
         points = {}
-        notify('Points cleared — keep marking', 'info')
+        notify(exports.sunset_core:Translate('world.message.points_cleared_keep_marking'), 'info')
         return
     end
 
     if sub == 'cancel' then
         marking = false
         points  = {}
-        notify('Zone marking cancelled', 'info')
+        notify(exports.sunset_core:Translate('world.message.zone_marking_cancelled'), 'info')
         return
     end
 
     -- Start marking
     if marking then
-        notify('Already marking — use /zonemark done or cancel', 'info')
+        notify(exports.sunset_core:Translate('world.message.already_marking_use_zonemark_done_or_cancel'), 'info')
         return
     end
     marking = true
     points  = {}
-    notify('Zone marking started — aim at ground and press E to place corners. /zonemark done when finished.', 'success')
+    notify(exports.sunset_core:Translate('world.message.zone_marking_started_aim_at_ground_and_press_e'), 'success')
     drawLoop()
 end, false)
 

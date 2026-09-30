@@ -82,7 +82,7 @@ end
 local function openPhone()
     if phoneOpen or phoneOpening then return end
     if IsNuiFocused() or isChatOpen() then
-        return exports.sunset_ui:Notify('Close the current menu or chat before opening the phone.', 'info', 3500)
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.close_the_current_menu_or_chat_before_opening_the'), 'info', 3500)
     end
     phoneOpening = true
 
@@ -234,7 +234,7 @@ AddEventHandler('sunset:nui:phoneDeleteContact', function(data)
         data = data or {}
         local res, err = Sunset.AwaitCallback('sunset:phoneDeleteContact', data.contactId)
         if res and res.ok then
-            exports.sunset_ui:Notify('Contact deleted.', 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.contact_deleted'), 'success')
             local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
             exports.sunset_ui:Send('phoneUpdate', refreshed)
         else

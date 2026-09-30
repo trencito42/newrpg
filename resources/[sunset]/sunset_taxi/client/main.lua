@@ -13,7 +13,7 @@ end
 
 local function requireTaxiVehicle()
     if isInTaxiVehicle() then return true end
-    notify('You must use a company cab, not a personal vehicle', 'error')
+    notify(exports.sunset_core:Translate('taxi.message.you_must_use_a_company_cab_not_a_personal'), 'error')
     return false
 end
 
@@ -148,7 +148,7 @@ RegisterNetEvent('sunset:client:taxiRideAccepted', function(ride)
     if ride then ride.isDriver = true end
     if ride and ride.pickup then
         setWaypoint(ride.pickup)
-        notify('GPS set to passenger pickup', 'success')
+        notify(exports.sunset_core:Translate('taxi.message.gps_set_to_passenger_pickup'), 'success')
     end
     refreshPhoneTaxi()
 end)
@@ -157,7 +157,7 @@ RegisterNetEvent('sunset:client:taxiRideInProgress', function(ride)
     activeRide = ride
     if ride and ride.destination then
         setWaypoint(ride.destination)
-        notify('GPS set to destination', 'success')
+        notify(exports.sunset_core:Translate('taxi.message.gps_set_to_destination'), 'success')
     end
     refreshPhoneTaxi()
 end)
@@ -222,7 +222,7 @@ end)
 AddEventHandler('sunset:nui:taxiPickPlace', function(data)
     local row = Sunset.Taxi.FindDestination(data.destinationId)
     if not row or not row.coords then
-        notify('Unknown place', 'error')
+        notify(exports.sunset_core:Translate('taxi.message.unknown_place'), 'error')
         return
     end
     local c = row.coords
@@ -247,7 +247,7 @@ end)
 AddEventHandler('sunset:nui:taxiCancelRide', function()
     CreateThread(function()
         local ok, err = Sunset.AwaitCallback('sunset:taxiCancelRide')
-        if ok then notify('Ride cancelled', 'warning') else notify(err or 'Failed', 'error') end
+        if ok then notify(exports.sunset_core:Translate('taxi.message.ride_cancelled'), 'warning') else notify(err or 'Failed', 'error') end
         refreshPhoneTaxi()
     end)
 end)
@@ -280,7 +280,7 @@ end)
 AddEventHandler('sunset:nui:taxiTip', function(data)
     CreateThread(function()
         local ok, err = Sunset.AwaitCallback('sunset:taxiTip', tonumber(data.amount))
-        if ok then notify('Tip sent — thank you!', 'success')
+        if ok then notify(exports.sunset_core:Translate('taxi.message.tip_sent_thank_you'), 'success')
         else notify(err or 'Could not send tip', 'error') end
     end)
 end)
@@ -385,14 +385,14 @@ CreateThread(function()
                     local dist = #(coords - vector3(p.x, p.y, p.z))
                     if dist <= pickupR and GetGameTimer() - proximityHintAt > 8000 then
                         proximityHintAt = GetGameTimer()
-                        notify('Near pickup — use the Cab app to confirm passenger picked up', 'info')
+                        notify(exports.sunset_core:Translate('taxi.message.near_pickup_use_the_cab_app_to_confirm_passenger'), 'info')
                     end
                 elseif activeRide.status == 'in_progress' and activeRide.destination then
                     local d = activeRide.destination
                     local dist = #(coords - vector3(d.x, d.y, d.z))
                     if dist <= dropR and GetGameTimer() - proximityHintAt > 8000 then
                         proximityHintAt = GetGameTimer()
-                        notify('Near destination — complete trip in the Cab app', 'info')
+                        notify(exports.sunset_core:Translate('taxi.message.near_destination_complete_trip_in_the_cab_app'), 'info')
                     end
                 end
             end

@@ -51,7 +51,7 @@ exports('IsInLocalTest', IsInLicenseTest)
 
 local function startAtFacility(facility)
     if activeTest then
-        return notify('Finish or cancel your current license test first.', 'error')
+        return notify(exports.sunset_core:Translate('licenses.message.finish_or_cancel_your_current_license_test_first'), 'error')
     end
     local licenseType = facility.license
     local theory, err = Sunset.AwaitCallback('sunset:license:startTheory', licenseType)

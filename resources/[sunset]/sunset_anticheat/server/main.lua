@@ -172,7 +172,7 @@ end)
 
 -- ── Callbacks for the future NUI panel (level 1+) ──
 exports.sunset_core:RegisterCallback('sunset:anticheat:panel', function(source, targetId)
-    if not isStaff(source) then return nil, 'Staff only.' end
+    if not isStaff(source) then return nil, { localeKey = 'anticheat.message.staff_only' } end
     local result = {
         mode = Cfg.Mode,
         players = Strikes.GetAllHeats(),
@@ -195,9 +195,9 @@ exports.sunset_core:RegisterCallback('sunset:anticheat:panel', function(source, 
 end)
 
 exports.sunset_core:RegisterCallback('sunset:anticheat:dismiss', function(source, targetId)
-    if not isStaff(source) then return nil, 'Staff only.' end
+    if not isStaff(source) then return nil, { localeKey = 'anticheat.message.staff_only' } end
     targetId = tonumber(targetId)
-    if not targetId or not GetPlayerName(targetId) then return nil, 'Player not online.' end
+    if not targetId or not GetPlayerName(targetId) then return nil, { localeKey = 'anticheat.message.player_not_online' } end
     local n = Strikes.DismissAll(targetId, source)
     if n > 0 then
         Strikes.BroadcastStaff(('^2[SHIELD]^7 %s dismissed %d tick(s) for %s (#%d) as false positive.'):format(

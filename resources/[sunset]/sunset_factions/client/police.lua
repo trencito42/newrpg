@@ -281,7 +281,7 @@ local function stopRadar(showMessage)
         end)
     end
     if showMessage then
-        exports.sunset_ui:Notify('Speed radar stopped — patrol vehicle unlocked.', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.speed_radar_stopped_patrol_vehicle_unlocked'), 'info')
     end
 end
 
@@ -383,7 +383,7 @@ CreateThread(function()
                 if release then
                     Sunset.World.SafeTeleport(vector4(release.x, release.y, release.z, release.w or 0.0))
                 end
-                exports.sunset_ui:Notify('Your sentence is complete — you are free', 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.your_sentence_is_complete_you_are_free'), 'success', 6000)
             end
             Wait(0)
         else
@@ -407,7 +407,7 @@ CreateThread(function()
                 local now = GetGameTimer()
                 if now - lastDriveWarn > 3500 then
                     lastDriveWarn = now
-                    exports.sunset_ui:Notify('Radar active — stop the radar (/stopradar or STOP from the MDC) to drive.', 'warning', 4000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.radar_active_stop_the_radar_stopradar_or_stop_from'), 'warning', 4000)
                 end
             end
 
@@ -428,7 +428,7 @@ CreateThread(function()
                 or not isAuthorizedRadarVehicle(radarVehicle)
             if invalidRadarVehicle then
                 stopRadar(false)
-                exports.sunset_ui:Notify('Radar stopped because you left the driver seat or patrol vehicle.', 'warning', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.radar_stopped_because_you_left_the_driver_seat_or'), 'warning', 6000)
             else
                 local veh, speed = getVehicleInCameraView()
                 if veh ~= 0 and speed > 0 then
@@ -504,7 +504,7 @@ RegisterCommand('su', function(_, args)
     end
 
     if not reasonCode then
-        exports.sunset_ui:Notify('Usage: /su [id] [reason_code] — type /su for reason list', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_su_id_reason_code_type_su_for_reason'), 'error')
         return
     end
 
@@ -515,7 +515,7 @@ end, false)
 RegisterCommand('so', function(_, args)
     local target = tonumber(args[1])
     if not target then
-        exports.sunset_ui:Notify('Usage: /so [id]', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_so_id'), 'error')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeSummon', target)
@@ -525,7 +525,7 @@ end, false)
 RegisterCommand('clear', function(_, args)
     local target = tonumber(args[1])
     if not target then
-        exports.sunset_ui:Notify('Usage: /clear [id]', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_clear_id'), 'error')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeClearWanted', target)
@@ -536,7 +536,7 @@ end, false)
 RegisterCommand('unjail', function(_, args)
     local target = tonumber(args[1])
     if not target then
-        exports.sunset_ui:Notify('Usage: /unjail [id]', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_unjail_id'), 'error')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeUnjail', target)
@@ -642,7 +642,7 @@ RegisterCommand('find', function(_, args)
             stopTracking(true)
             return
         end
-        exports.sunset_ui:Notify('Usage: /find [id] (or /cfind to stop tracking)', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_find_id_or_cfind_to_stop_tracking'), 'error')
         return
     end
     startTracking(target)
@@ -650,13 +650,13 @@ end, false)
 
 RegisterCommand('cfind', function()
     if not stopTracking(true) then
-        exports.sunset_ui:Notify('No active suspect tracking to cancel.', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.no_active_suspect_tracking_to_cancel'), 'info')
     end
 end, false)
 
 RegisterCommand('cancelfind', function()
     if not stopTracking(true) then
-        exports.sunset_ui:Notify('No active suspect tracking to cancel.', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.no_active_suspect_tracking_to_cancel'), 'info')
     end
 end, false)
 
@@ -685,7 +685,7 @@ end, false)
 RegisterCommand('arrest', function(_, args)
     local target = tonumber(args[1])
     if not target then
-        exports.sunset_ui:Notify('Usage: /arrest [id]', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_arrest_id'), 'error')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeArrest', target)
@@ -712,7 +712,7 @@ end, false)
 
 RegisterCommand('cbackup', function()
     local ok, err = Sunset.AwaitCallback('sunset:policeCancelBackup')
-    if ok then exports.sunset_ui:Notify('Backup request cancelled', 'success')
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.backup_request_cancelled'), 'success')
     else actionError(err, 'Backup could not be cancelled. You may not have an active request.') end
 end, false)
 
@@ -760,7 +760,7 @@ end
 RegisterCommand('mdc', function()
     local ped = PlayerPedId()
     if not canAccessMdt(ped) then
-        exports.sunset_ui:Notify('Access Denied: The MDT Toughbook can only be operated from inside an emergency vehicle or at a station terminal.', 'error', 6000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.access_denied_the_mdt_toughbook_can_only_be_operated'), 'error', 6000)
         return
     end
 
@@ -782,7 +782,7 @@ RegisterCommand('mdc', function()
                 exports.sunset_ui:Send('mdcHide', {})
                 exports.sunset_ui:SetFocus(false, false)
                 isMdtOpen = false
-                exports.sunset_ui:Notify('MDT connection lost (exited vehicle/terminal).', 'warning')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.mdt_connection_lost_exited_vehicle_terminal'), 'warning')
                 break
             end
         end
@@ -799,7 +799,7 @@ end, false)
 RegisterCommand('confiscate', function(_, args)
     local target = tonumber(args[1])
     if not target then
-        exports.sunset_ui:Notify('Usage: /confiscate [id]', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_confiscate_id'), 'error')
         return
     end
     local removed, err = Sunset.AwaitCallback('sunset:policeConfiscate', target)
@@ -808,7 +808,7 @@ RegisterCommand('confiscate', function(_, args)
     for _, row in ipairs(removed) do
         chatLine('LSPD', ('%s x%d'):format(row.label or row.item, row.count))
     end
-    exports.sunset_ui:Notify('Contraband confiscated', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.contraband_confiscated'), 'success')
 end, false)
 
 local function tryStartRadar(requestedLimit)
@@ -890,18 +890,18 @@ AddEventHandler('sunset:nui:ticketIssue', function(data)
     data = data or {}
     local reason = data.reason or ''
     if not data.violationCode or data.violationCode == '' then
-        exports.sunset_ui:Notify('Select a violation from the citation list before pressing ISSUE CITATION.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.select_a_violation_from_the_citation_list_before_pressing'), 'error')
         return
     end
     if not tonumber(data.targetId) or tonumber(data.targetId) < 1 then
-        exports.sunset_ui:Notify('Enter the player server ID shown in F10.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.enter_the_player_server_id_shown_in_f10'), 'error')
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeIssueTicket', tonumber(data.targetId), nil, reason, data.violationCode)
     if ok then
         exports.sunset_ui:SetFocus(false, false)
         exports.sunset_ui:Send('ticketHide', {})
-        exports.sunset_ui:Notify('Citation issued', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.citation_issued'), 'success')
     else actionError(err, 'Citation was not issued. Check the target ID, violation and distance.') end
 end)
 
@@ -984,7 +984,7 @@ AddEventHandler('sunset:ui:mdcSetWaypoint', function(data)
     if data and data.x and data.y then
         SetNewWaypoint(tonumber(data.x) + 0.0, tonumber(data.y) + 0.0)
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
-        exports.sunset_ui:Notify('GPS route set to location.', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.gps_route_set_to_location'), 'success')
     end
 end)
 
@@ -1002,7 +1002,7 @@ AddEventHandler('sunset:ui:mdcBookingGps', function()
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
         exports.sunset_ui:Notify(('GPS set to %s (%.0fm).'):format(point.label, distance or 0.0), 'info', 8000)
     else
-        exports.sunset_ui:Notify('No booking points found.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.no_booking_points_found'), 'error')
     end
 end)
 
@@ -1013,7 +1013,7 @@ AddEventHandler('sunset:ui:mdcRequestBackup', function(data)
     if ok then
         if isPanic then
             PlaySoundFrontend(-1, 'Bed', 'WastedSounds', true)
-            exports.sunset_ui:Notify('🚨 10-99 PANIC ALARM BROADCASTED! Code 3 distress active!', 'error', 10000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.10_99_panic_alarm_broadcasted_code_3_distress_active'), 'error', 10000)
         else
             PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
             exports.sunset_ui:Notify(('Backup request #%d sent (%s)'):format(ok, priority == 'code3' and 'CODE 3' or 'Code 2'), 'success')
@@ -1029,7 +1029,7 @@ AddEventHandler('sunset:ui:mdcCancelBackup', function()
     local ok, err = Sunset.AwaitCallback('sunset:policeCancelBackup')
     if ok then
         PlaySoundFrontend(-1, 'CANCEL', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify('Backup request cancelled', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.backup_request_cancelled'), 'success')
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
@@ -1060,7 +1060,7 @@ AddEventHandler('sunset:ui:mdcClearWanted', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:policeClearWanted', target, charId)
     if ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify('Wanted status cleared successfully.', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.wanted_status_cleared_successfully'), 'success')
         local lookupKey = tostring(charId or target)
         local citizenResult = Sunset.AwaitCallback('sunset:policeMdcLookup', lookupKey)
         if citizenResult then exports.sunset_ui:Send('mdcUpdateCitizen', { citizen = citizenResult }) end
@@ -1165,7 +1165,7 @@ AddEventHandler('sunset:ui:ticketPayRequest', function(data)
     if ok then
         exports.sunset_ui:Send('ticketReceiveHide', {})
         exports.sunset_ui:SetFocus(false, false)
-        exports.sunset_ui:Notify('Citation paid', 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.citation_paid'), 'success')
     else
         -- [AUDIT P8-11] Always close the window and release focus on failure:
         -- leaving it open with no other close path trapped the cursor.

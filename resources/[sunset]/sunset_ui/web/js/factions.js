@@ -282,17 +282,17 @@ const FactionPanels = {
             const ok = document.createElement('button');
             ok.type = 'button';
             ok.className = 'premium-faction__btn premium-faction__btn--primary';
-            ok.textContent = 'Accept (no FP)';
+            ok.textContent = I18n.t('dynamic.factions.accept_no_fp');
             ok.addEventListener('click', () => this.postAction('resignAccept', { resignationId: req.id }));
             const okFp = document.createElement('button');
             okFp.type = 'button';
             okFp.className = 'premium-faction__btn premium-faction__btn--warn';
-            okFp.textContent = 'Accept + FP';
+            okFp.textContent = I18n.t('dynamic.factions.accept_fp');
             okFp.addEventListener('click', () => this.postAction('resignAcceptFp', { resignationId: req.id }));
             const no = document.createElement('button');
             no.type = 'button';
             no.className = 'premium-faction__btn premium-faction__btn--secondary';
-            no.textContent = 'Decline';
+            no.textContent = I18n.t('dynamic.factions.decline');
             no.addEventListener('click', () => this.postAction('resignDecline', { resignationId: req.id }));
             actions.append(ok, okFp, no);
 
@@ -446,7 +446,7 @@ const FactionPanels = {
         $('#faction-salary').textContent = `$${Number(data.salary || 0).toLocaleString()}/HR`;
         $('#faction-motd').textContent = data.motd || 'No MOTD posted. Leaders use /fmotd.';
         $('#faction-description').textContent = data.description || 'No department intel on file.';
-        $('#faction-depot').textContent = `Motor pool: ${data.depot || 'Not configured'}`;
+        $('#faction-depot').textContent = I18n.t('dynamic.factions.motor_pool_value0', { value0: data.depot || 'Not configured' });
         $('#faction-report-value').textContent = target > 0 ? `${current} / ${target} ops` : `${current} ops logged`;
         const reportBar = $('#faction-report-bar');
         if (reportBar) reportBar.style.width = `${percent}%`;
@@ -583,7 +583,7 @@ const FactionPanels = {
         if (icon) icon.innerHTML = FACTION_ICONS[cat] || FACTION_ICONS.service;
         $('#faction-dir-modal-title').textContent = faction.label || faction.id;
         $('#faction-dir-modal-desc').textContent = faction.description || 'No public intel.';
-        $('#faction-dir-modal-motd').textContent = 'Loading...';
+        $('#faction-dir-modal-motd').textContent = I18n.t('dynamic.factions.loading');
         $('#faction-dir-modal-leaders').innerHTML = '<li>Loading...</li>';
         $('#faction-dir-modal-roster').innerHTML = '<p class="premium-factions-dir__empty">Loading...</p>';
         $('#faction-dir-modal-recruit').innerHTML = `<li>${this.escape(faction.applicationLabel || '—')}</li>`;
@@ -593,13 +593,13 @@ const FactionPanels = {
             const isIllegal = faction.type === 'illegal';
             if (isIllegal) {
                 btn.disabled = true;
-                btn.textContent = 'Doar In-Character (IC)';
+                btn.textContent = I18n.t('dynamic.factions.doar_in_character_ic');
             } else if (faction.recruiting) {
                 btn.disabled = false;
-                btn.textContent = 'Send Application';
+                btn.textContent = I18n.t('dynamic.factions.send_application');
             } else {
                 btn.disabled = true;
-                btn.textContent = 'Applications Closed';
+                btn.textContent = I18n.t('dynamic.factions.applications_closed');
             }
         }
 
@@ -657,7 +657,7 @@ const FactionPanels = {
 
     applyFaction() {
         if (!this.selectedFaction) return;
-        this.showToast(`Application sent to ${this.selectedFaction.label || this.selectedFaction.id}!`);
+        this.showToast(I18n.t('dynamic.factions.application_sent_to_value0', { value0: this.selectedFaction.label || this.selectedFaction.id }));
         this.closeDirectoryModal();
     },
 

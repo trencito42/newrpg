@@ -58,7 +58,7 @@ const LockpickGame = (() => {
             p.set = true;
             p.el.classList.add('set');
             const fb = $('#lp-feedback');
-            if (fb) { fb.textContent = 'PIN SET'; fb.style.color = '#00ffcc'; }
+            if (fb) { fb.textContent = I18n.t('dynamic.minigames.pin_set'); fb.style.color = '#00ffcc'; }
             currentPin++;
             pickSpeed += 0.3;
             if (currentPin >= PIN_COUNT) {
@@ -69,7 +69,7 @@ const LockpickGame = (() => {
         } else {
             attempts--;
             const fb = $('#lp-feedback');
-            if (fb) { fb.textContent = 'MISSED'; fb.style.color = '#f87171'; }
+            if (fb) { fb.textContent = I18n.t('dynamic.minigames.missed'); fb.style.color = '#f87171'; }
             const att = $('#lp-attempts');
             if (att) att.textContent = `${attempts} attempt${attempts !== 1 ? 's' : ''} remaining`;
             if (attempts <= 0) {
@@ -149,7 +149,7 @@ const SealGame = (() => {
         } else if (!inZone && pressing) {
             noiseHits++;
             const fb = $('#sl-feedback');
-            if (fb) { fb.textContent = 'TOO MUCH FORCE'; fb.style.color = '#fbbf24'; }
+            if (fb) { fb.textContent = I18n.t('dynamic.minigames.too_much_force'); fb.style.color = '#fbbf24'; }
             if (noiseHits >= NOISE_LIMIT) { finish(false); return; }
         } else {
             progress = Math.max(0, progress - 0.15);

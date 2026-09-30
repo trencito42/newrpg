@@ -73,12 +73,12 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:toggleDuty', function(source)
     local char = getChar(source)
-    if not char then return nil, 'Cannot toggle duty: your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.cannot_toggle_duty_your_character_is_not_loaded_reconnect' } end
     local factionId = getFactionOf(char)
     local faction = factionId and Sunset.Factions[factionId]
-    if not faction or not faction.duty then return nil, 'You are not in a faction with duty shifts' end
+    if not faction or not faction.duty then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_with_duty_shifts' } end
     if not FactionCore.isOnDuty(source) and not nearFactionPoint(source, faction, 'hq', 6.0) then
-        return nil, 'Go to your faction HQ to start duty'
+        return nil, { localeKey = 'factions.message.go_to_your_faction_hq_to_start_duty' }
     end
     setDuty(source, not FactionCore.isOnDuty(source))
     return FactionCore.isOnDuty(source)
@@ -86,7 +86,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:joinFactionHQ', function(source, factionId)
     local faction = Sunset.Factions[factionId]
-    if not faction then return nil, 'Unknown faction' end
+    if not faction then return nil, { localeKey = 'factions.message.unknown_faction' } end
     return nil, faction.applicationsOpen
         and ('You cannot join %s at the HQ. Apply on Discord or the website; if accepted, its leader must invite you with /finvite.'):format(faction.label)
         or ('%s is not recruiting publicly. Membership requires a leader invitation.'):format(faction.label)
@@ -94,9 +94,9 @@ end)
 
 local function leaveFactionForSource(source)
     local char = getChar(source)
-    if not char then return nil, 'Cannot leave the faction: your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.cannot_leave_the_faction_your_character_is_not_loaded' } end
     local oldFaction = getFactionOf(char)
-    if not oldFaction then return nil, 'You are not in a faction' end
+    if not oldFaction then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction' } end
 
     local wasLeader = FactionCore.isFactionLeader(char.id, oldFaction)
     setDuty(source, false)
@@ -106,7 +106,7 @@ local function leaveFactionForSource(source)
     MySQL.update.await('DELETE FROM faction_leaders WHERE character_id = ?', { char.id })
 
     if not exports.sunset_core:SetFaction(source, nil, 0) then
-        return nil, 'Could not leave faction — try again'
+        return nil, { localeKey = 'factions.message.could_not_leave_faction_try_again' }
     end
 
     -- [FP SYSTEM] Instant self-leave without a resignation request = +60 FP
@@ -132,29 +132,29 @@ end)
 
 local function performFactionInvite(source, targetId)
     local char = getChar(source)
-    if not char then return nil, 'Cannot recruit: your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.cannot_recruit_your_character_is_not_loaded_reconnect_and' } end
     FactionCore.ensureFactionMembership(source, char)
     char = getChar(source) or char
     local myFaction = getFactionOf(char)
-    if not myFaction then return nil, 'You are not in a faction.' end
+    if not myFaction then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_6153f1' } end
     if not memberManagePerm(source, 'invite') then
         return nil, FactionCore.manageAccessError(source, 'invite', 'invite players')
     end
 
     targetId = tonumber(targetId)
     if not targetId or targetId < 1 then
-        return nil, 'Enter a valid server ID from F10 (scoreboard).'
+        return nil, { localeKey = 'factions.message.enter_a_valid_server_id_from_f10_scoreboard' }
     end
     if not GetPlayerName(targetId) then
-        return nil, ('Player #%d is not online. Use F10 to check current server IDs.'):format(targetId)
+        return nil, { localeKey = 'factions.message.player_value_is_not_online_use_f10_to_check', formatArgs = { targetId } }
     end
-    if targetId == source then return nil, 'You cannot invite yourself.' end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_invite_yourself' } end
     local target = getChar(targetId)
-    if not target then return nil, 'That player has not loaded a character yet.' end
+    if not target then return nil, { localeKey = 'factions.message.that_player_has_not_loaded_a_character_yet' } end
     local targetFaction = getFactionOf(target)
     if targetFaction then
         local label = Sunset.Factions[targetFaction] and Sunset.Factions[targetFaction].label or targetFaction
-        return nil, ('That player is already a member of %s.'):format(label)
+        return nil, { localeKey = 'factions.message.that_player_is_already_a_member_of_value', formatArgs = { label } }
     end
     -- [FP SYSTEM] Block inviting faction-punished characters early, so the
     -- leader learns why instead of the invite failing silently on accept.
@@ -163,11 +163,11 @@ local function performFactionInvite(source, targetId)
         if not fpOk then return nil, fpErr end
     end
     if FactionCore.distBetween(FactionCore.playerCoords(source), FactionCore.playerCoords(targetId)) > 10.0 then
-        return nil, 'Meet the accepted applicant first; they must be within 10 metres when you invite them.'
+        return nil, { localeKey = 'factions.message.meet_the_accepted_applicant_first_they_must_be_within' }
     end
     local existing = PendingFactionInvites[targetId]
     if existing and existing.expiresAt > os.time() then
-        return nil, 'That player already has a pending faction invitation. They must accept or decline it first.'
+        return nil, { localeKey = 'factions.message.that_player_already_has_a_pending_faction_invitation_they' }
     end
 
     local faction = Sunset.Factions[myFaction]
@@ -200,15 +200,15 @@ end)
 
 local function performFactionAcceptInvite(source)
     local invite = PendingFactionInvites[source]
-    if not invite then return nil, 'You do not have a pending faction invitation.' end
+    if not invite then return nil, { localeKey = 'factions.message.you_do_not_have_a_pending_faction_invitation' } end
     PendingFactionInvites[source] = nil
-    if invite.expiresAt <= os.time() then return nil, 'Your faction invitation expired. Ask them to invite you again.' end
+    if invite.expiresAt <= os.time() then return nil, { localeKey = 'factions.message.your_faction_invitation_expired_ask_them_to_invite_you' } end
 
     local char = getChar(source)
     if not char or tonumber(char.id) ~= tonumber(invite.targetCharacterId) then
-        return nil, 'The invitation belongs to a different or unloaded character.'
+        return nil, { localeKey = 'factions.message.the_invitation_belongs_to_a_different_or_unloaded_character' }
     end
-    if getFactionOf(char) then return nil, 'You are already a member of a faction.' end
+    if getFactionOf(char) then return nil, { localeKey = 'factions.message.you_are_already_a_member_of_a_faction' } end
     -- [FP SYSTEM] Faction-punished characters cannot join any faction.
     if FactionManagement then
         local fpOk, fpErr = FactionManagement.assertCanJoin(char.id)
@@ -216,10 +216,10 @@ local function performFactionAcceptInvite(source)
     end
     local inviter = getChar(invite.inviterSource)
     if not inviter or select(1, getFactionOf(inviter)) ~= invite.factionId then
-        return nil, 'The inviting faction member is no longer available. Ask them to send a new invitation.'
+        return nil, { localeKey = 'factions.message.the_inviting_faction_member_is_no_longer_available_ask' }
     end
     if not exports.sunset_core:SetFaction(source, invite.factionId, 0) then
-        return nil, 'Faction membership could not be saved. Please try again.'
+        return nil, { localeKey = 'factions.message.faction_membership_could_not_be_saved_please_try_again' }
     end
 
     local faction = Sunset.Factions[invite.factionId]
@@ -241,7 +241,7 @@ end)
 
 local function performFactionDeclineInvite(source)
     local invite = PendingFactionInvites[source]
-    if not invite then return nil, 'You do not have a pending faction invitation.' end
+    if not invite then return nil, { localeKey = 'factions.message.you_do_not_have_a_pending_faction_invitation' } end
     PendingFactionInvites[source] = nil
     local char = getChar(source)
     FactionCore.auditLog(invite.factionId, char and char.id or nil, 'invite_declined', invite.targetCharacterId, {})
@@ -250,7 +250,7 @@ local function performFactionDeclineInvite(source)
     end
     if GetPlayerName(invite.inviterSource) then
         TriggerClientEvent('sunset:client:notify', invite.inviterSource,
-            ('%s declined the faction invitation.'):format(exports.sunset_core:GetPlayerDisplayName(source)), 'info', 6000)
+            exports.sunset_core:TFor(invite.inviterSource, 'factions.message.value_declined_the_faction_invitation', exports.sunset_core:GetPlayerDisplayName(source)), 'info', 6000)
     end
     return true
 end
@@ -307,30 +307,30 @@ exports('RunFactionDeclineInviteCommand', RunFactionDeclineInviteCommand)
 
 exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, targetId, newGrade)
     local char = getChar(source)
-    if not char then return nil, 'Cannot change rank: your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.cannot_change_rank_your_character_is_not_loaded_reconnect' } end
     if not hasPerm(source, 'promote') and not FactionCore.isFactionLeader(char.id, select(1, getFactionOf(char))) then
         return nil, FactionCore.accessError(source, 'promote', 'change a faction member rank')
     end
 
     local myFaction, myGrade = getFactionOf(char)
-    if not myFaction then return nil, 'No faction' end
+    if not myFaction then return nil, { localeKey = 'factions.message.no_faction' } end
 
     targetId = tonumber(targetId)
     newGrade = tonumber(newGrade)
-    if not targetId or newGrade == nil then return nil, 'Usage: /fpromote [id] [grade]' end
+    if not targetId or newGrade == nil then return nil, { localeKey = 'factions.message.usage_fpromote_id_grade' } end
     if not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
 
     local target = getChar(targetId)
     local targetFaction, targetGrade
     if target then targetFaction, targetGrade = getFactionOf(target) end
-    if not target or targetFaction ~= myFaction then return nil, 'Target is not in your faction' end
+    if not target or targetFaction ~= myFaction then return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' } end
 
     local faction = Sunset.Factions[myFaction]
-    if not faction or not faction.grades[newGrade] then return nil, 'Invalid grade' end
+    if not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
     if newGrade >= (myGrade or 0) and source ~= targetId then
-        return nil, 'You cannot promote to your rank or higher'
+        return nil, { localeKey = 'factions.message.you_cannot_promote_to_your_rank_or_higher' }
     end
 
     if newGrade > (tonumber(targetGrade) or 0) then
@@ -343,13 +343,13 @@ exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, t
     FactionCore.auditLog(myFaction, char.id, 'promote', target.id, { grade = newGrade })
     FactionCore.broadcastManagement(myFaction, source,
         ('promoted %s to %s.'):format(exports.sunset_core:GetPlayerDisplayName(targetId), gradeLabel))
-    TriggerClientEvent('sunset:client:notify', targetId, ('Promoted to %s'):format(gradeLabel), 'success')
-    TriggerClientEvent('sunset:client:notify', source, ('Promoted player to %s'):format(gradeLabel), 'success')
+    TriggerClientEvent('sunset:client:notify', targetId, exports.sunset_core:TFor(targetId, 'factions.message.promoted_to_value', gradeLabel), 'success')
+    TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'factions.message.promoted_player_to_value', gradeLabel), 'success')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeFine', function(source, targetId, amount, reason)
-    return nil, 'The old instant fine command is disabled. Use /ticket [id], select an official violation, and let the player pay or refuse it.'
+    return nil, { localeKey = 'factions.message.the_old_instant_fine_command_is_disabled_use_ticket' }
 end)
 
 function HasFactionPerm(source, perm)
@@ -361,7 +361,7 @@ exports.sunset_core:RegisterCallback('sunset:factionHeal', function(source, targ
     if not hasPerm(source, 'heal') then return nil, FactionCore.accessError(source, 'heal', 'heal a patient') end
     targetId = tonumber(targetId) or source
     if not FactionCore.isOnline(targetId) then
-        return nil, ('Patient ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.patient_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     TriggerClientEvent('sunset:admin:heal', targetId)
     return true
@@ -370,17 +370,17 @@ end)
 exports.sunset_core:RegisterCallback('sunset:factionRevive', function(source, targetId)
     if not hasPerm(source, 'revive') then return nil, FactionCore.accessError(source, 'revive', 'revive a patient') end
     targetId = tonumber(targetId)
-    if not targetId or not GetPlayerName(targetId) then return nil, 'Usage: /revive [player id]' end
+    if not targetId or not GetPlayerName(targetId) then return nil, { localeKey = 'factions.message.usage_revive_player_id' } end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > 4.0 then
-        return nil, 'You must be near the patient'
+        return nil, { localeKey = 'factions.message.you_must_be_near_the_patient' }
     end
 
     local isDowned = false
     pcall(function() isDowned = exports.sunset_death:IsPlayerDowned(targetId) end)
-    if not isDowned then return nil, 'Target is not downed' end
+    if not isDowned then return nil, { localeKey = 'factions.message.target_is_not_downed' } end
 
     local ok, err = exports.sunset_death:RevivePlayer(targetId)
     if not ok then return nil, err end
@@ -390,9 +390,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:mechanicShopRepair', function(source)
     local price = 250
     local faction = Sunset.Factions.mechanic
-    if not nearFactionPoint(source, faction, 'hq', 8.0) then return nil, 'You must be at LS Customs' end
+    if not nearFactionPoint(source, faction, 'hq', 8.0) then return nil, { localeKey = 'factions.message.you_must_be_at_ls_customs' } end
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 or GetVehiclePedIsIn(ped, false) == 0 then return nil, 'You must be in a vehicle' end
+    if not ped or ped == 0 or GetVehiclePedIsIn(ped, false) == 0 then return nil, { localeKey = 'factions.message.you_must_be_in_a_vehicle' } end
     if exports.sunset_core:RemoveMoney(source, 'cash', price, 'ls_customs_repair') then
         addSociety('mechanic', math.floor(price * 0.5))
         return true
@@ -401,7 +401,7 @@ exports.sunset_core:RegisterCallback('sunset:mechanicShopRepair', function(sourc
         addSociety('mechanic', math.floor(price * 0.5))
         return true
     end
-    return nil, ('Not enough money ($%s)'):format(price)
+    return nil, { localeKey = 'factions.message.not_enough_money_value', formatArgs = { price } }
 end)
 
 local function nearFactionDepot(source, depot)
@@ -492,11 +492,11 @@ exports.sunset_core:RegisterCallback('sunset:factionFleetList', function(source,
     local ownFaction = char and select(1, getFactionOf(char))
     local grade = char and ownFaction and FactionCore.getEffectiveGrade(char, ownFaction) or 0
     local faction = ownFaction and Sunset.Factions[ownFaction]
-    if ownFaction ~= factionId or not faction or not faction.depot then return nil, 'You do not work here' end
-    if not FactionCore.isOnDuty(source) then return nil, 'Go on duty first' end
-    if not nearFactionDepot(source, faction.depot) then return nil, 'You must be at the fleet garage' end
+    if ownFaction ~= factionId or not faction or not faction.depot then return nil, { localeKey = 'factions.message.you_do_not_work_here' } end
+    if not FactionCore.isOnDuty(source) then return nil, { localeKey = 'factions.message.go_on_duty_first' } end
+    if not nearFactionDepot(source, faction.depot) then return nil, { localeKey = 'factions.message.you_must_be_at_the_fleet_garage' } end
     local vehicles = fleetVehiclesForGrade(faction.depot, grade, ownFaction)
-    if #vehicles == 0 then return nil, 'No fleet vehicles available for your rank' end
+    if #vehicles == 0 then return nil, { localeKey = 'factions.message.no_fleet_vehicles_available_for_your_rank' } end
     return vehicles
 end)
 
@@ -505,14 +505,14 @@ exports.sunset_core:RegisterCallback('sunset:factionRequestFleet', function(sour
     local ownFaction = char and select(1, getFactionOf(char))
     local grade = char and ownFaction and FactionCore.getEffectiveGrade(char, ownFaction) or 0
     local faction = ownFaction and Sunset.Factions[ownFaction]
-    if ownFaction ~= factionId or not faction or not faction.depot then return nil, 'You do not work here' end
-    if not FactionCore.isOnDuty(source) then return nil, 'Go on duty first' end
-    if not nearFactionDepot(source, faction.depot) then return nil, 'You must be at the fleet garage' end
+    if ownFaction ~= factionId or not faction or not faction.depot then return nil, { localeKey = 'factions.message.you_do_not_work_here' } end
+    if not FactionCore.isOnDuty(source) then return nil, { localeKey = 'factions.message.go_on_duty_first' } end
+    if not nearFactionDepot(source, faction.depot) then return nil, { localeKey = 'factions.message.you_must_be_at_the_fleet_garage' } end
 
     local depot = faction.depot
     local model = vehicleModel or depot.vehicle
-    if not model then return nil, 'No vehicle selected' end
-    if not isAllowedFleetModel(depot, model, grade, ownFaction) then return nil, 'Vehicle not available for your rank' end
+    if not model then return nil, { localeKey = 'factions.message.no_vehicle_selected' } end
+    if not isAllowedFleetModel(depot, model, grade, ownFaction) then return nil, { localeKey = 'factions.message.vehicle_not_available_for_your_rank' } end
     return { vehicle = model, platePrefix = depot.platePrefix }
 end)
 
@@ -555,17 +555,17 @@ exports.sunset_core:RegisterCallback('sunset:mechanicRepair', function(source, t
     if not hasPerm(source, 'repair') then return nil, FactionCore.accessError(source, 'repair', 'repair a customer vehicle') end
     targetId = tonumber(targetId) or source
     if not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > 6.0 then
-        return nil, 'You must be near the vehicle'
+        return nil, { localeKey = 'factions.message.you_must_be_near_the_vehicle' }
     end
     local targetPed = GetPlayerPed(targetId)
     if not targetPed or targetPed == 0 or GetVehiclePedIsIn(targetPed, false) == 0 then
-        return nil, 'Target must be inside a vehicle'
+        return nil, { localeKey = 'factions.message.target_must_be_inside_a_vehicle' }
     end
 
     TriggerClientEvent('sunset:faction:repairVehicle', targetId)
@@ -579,21 +579,21 @@ exports.sunset_core:RegisterCallback('sunset:taxiFare', function(source, targetI
     targetId = tonumber(targetId)
     amount = math.floor(tonumber(amount) or 0)
     if not targetId or amount < 1 or amount > 1000 then
-        return nil, 'Invalid fare amount ($1 - $1,000)'
+        return nil, { localeKey = 'factions.message.invalid_fare_amount_1_1_000' }
     end
-    if not GetPlayerName(targetId) then return nil, 'Passenger not found' end
-    if targetId == source then return nil, 'You cannot charge yourself a fare' end
+    if not GetPlayerName(targetId) then return nil, { localeKey = 'factions.message.passenger_not_found' } end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_charge_yourself_a_fare' } end
 
     local driverPed = GetPlayerPed(source)
     local passengerPed = GetPlayerPed(targetId)
     if not driverPed or not passengerPed or driverPed == 0 or passengerPed == 0 then
-        return nil, 'Invalid player entity'
+        return nil, { localeKey = 'factions.message.invalid_player_entity' }
     end
 
     local driverVeh = GetVehiclePedIsIn(driverPed, false)
     local passVeh = GetVehiclePedIsIn(passengerPed, false)
     if driverVeh == 0 or driverVeh ~= passVeh then
-        return nil, 'The passenger must be inside your taxi vehicle'
+        return nil, { localeKey = 'factions.message.the_passenger_must_be_inside_your_taxi_vehicle' }
     end
 
     local driverChar = getChar(source)
@@ -619,19 +619,19 @@ exports.sunset_core:RegisterCallback('sunset:taxiAcceptFare', function(source)
     local fare = PendingTaxiFares[source]
     if not fare or fare.expiresAt < os.time() then
         PendingTaxiFares[source] = nil
-        return nil, 'No active taxi fare offer or offer has expired'
+        return nil, { localeKey = 'factions.message.no_active_taxi_fare_offer_or_offer_has_expired' }
     end
 
     local driverSrc = fare.driverSource
     if not GetPlayerName(driverSrc) then
         PendingTaxiFares[source] = nil
-        return nil, 'Taxi driver is no longer online'
+        return nil, { localeKey = 'factions.message.taxi_driver_is_no_longer_online' }
     end
 
     local amount = fare.amount
     if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'taxi') then
         if not exports.sunset_core:RemoveMoney(source, 'bank', amount, 'taxi') then
-            return nil, 'You do not have enough cash or bank balance to pay this fare'
+            return nil, { localeKey = 'factions.message.you_do_not_have_enough_cash_or_bank_balance' }
         end
     end
 
@@ -641,45 +641,45 @@ exports.sunset_core:RegisterCallback('sunset:taxiAcceptFare', function(source)
 
     PendingTaxiFares[source] = nil
 
-    TriggerClientEvent('sunset:client:notify', driverSrc, ('Passenger paid fare: $%s'):format(amount), 'success')
+    TriggerClientEvent('sunset:client:notify', driverSrc, exports.sunset_core:TFor(driverSrc, 'factions.message.passenger_paid_fare_value', amount), 'success')
     return { paid = true, amount = amount, driverName = fare.driverName }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:taxiDeclineFare', function(source)
     local fare = PendingTaxiFares[source]
-    if not fare then return nil, 'No pending fare offer' end
+    if not fare then return nil, { localeKey = 'factions.message.no_pending_fare_offer' } end
 
     local driverSrc = fare.driverSource
     PendingTaxiFares[source] = nil
 
     if GetPlayerName(driverSrc) then
-        TriggerClientEvent('sunset:client:notify', driverSrc, 'Passenger declined the taxi fare offer.', 'error')
+        TriggerClientEvent('sunset:client:notify', driverSrc, exports.sunset_core:TFor(driverSrc, 'factions.message.passenger_declined_the_taxi_fare_offer'), 'error')
     end
     return true
 end)
 
 local function sellIllegalAtHQ(source, factionId)
     local char = getChar(source)
-    if not char or getFactionOf(char) ~= factionId then return nil, 'Wrong faction' end
-    if not FactionCore.isOnDuty(source) then return nil, 'You must be on duty' end
+    if not char or getFactionOf(char) ~= factionId then return nil, { localeKey = 'factions.message.wrong_faction' } end
+    if not FactionCore.isOnDuty(source) then return nil, { localeKey = 'factions.message.you_must_be_on_duty' } end
 
     local prices = Sunset.IllegalSellPrices and Sunset.IllegalSellPrices[factionId]
-    if not prices then return nil, 'Nothing to sell here' end
+    if not prices then return nil, { localeKey = 'factions.message.nothing_to_sell_here' } end
 
     local sold = 0
     local total = 0
 
     if prices.item then
-        if not hasPerm(source, 'sell') then return nil, 'Rank too low' end
+        if not hasPerm(source, 'sell') then return nil, { localeKey = 'factions.message.rank_too_low' } end
         if not exports.sunset_inventory:HasItem(source, prices.item, 1) then
-            return nil, ('You need %s to sell'):format(prices.label or prices.item)
+            return nil, { localeKey = 'factions.message.you_need_value_to_sell', formatArgs = { prices.label or prices.item } }
         end
         exports.sunset_inventory:RemoveItem(source, prices.item, 1)
         exports.sunset_core:AddMoney(source, 'cash', prices.price, 'illegal_sale')
         sold = 1
         total = prices.price
     else
-        if not hasPerm(source, 'fence') then return nil, 'Rank too low' end
+        if not hasPerm(source, 'fence') then return nil, { localeKey = 'factions.message.rank_too_low' } end
         for _, row in ipairs(prices) do
             if exports.sunset_inventory:HasItem(source, row.item, 1) then
                 exports.sunset_inventory:RemoveItem(source, row.item, 1)
@@ -689,7 +689,7 @@ local function sellIllegalAtHQ(source, factionId)
                 break
             end
         end
-        if sold < 1 then return nil, 'No fenceable items in inventory' end
+        if sold < 1 then return nil, { localeKey = 'factions.message.no_fenceable_items_in_inventory' } end
     end
 
     return { sold = sold, total = total }
@@ -697,9 +697,9 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:illegalSell', function(source)
     local char = getChar(source)
-    if not char then return nil, 'Cannot sell faction goods: your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.cannot_sell_faction_goods_your_character_is_not_loaded' } end
     local factionId = getFactionOf(char)
-    if not factionId then return nil, 'Not in a faction' end
+    if not factionId then return nil, { localeKey = 'factions.message.not_in_a_faction' } end
     return sellIllegalAtHQ(source, factionId)
 end)
 
@@ -814,18 +814,18 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:factionDashboard', function(source)
     local char = getChar(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     FactionCore.ensureFactionMembership(source, char)
     char = getChar(source) or char
     local factionId, grade = getFactionOf(char)
     local faction = factionId and Sunset.Factions[factionId]
-    if not faction then return nil, 'You are not a member of a faction. Use /factions to browse them.' end
+    if not faction then return nil, { localeKey = 'factions.message.you_are_not_a_member_of_a_faction_use' } end
     local gradeRow = Sunset.GetFactionGrade(factionId, grade)
     local motd = ''
     local motdOk, motdRow = pcall(function()
         return MySQL.single.await('SELECT message FROM faction_motd WHERE faction_id = ?', { factionId })
     end)
-    if not motdOk then return nil, 'Faction data could not be read from the database. Please try again.' end
+    if not motdOk then return nil, { localeKey = 'factions.message.faction_data_could_not_be_read_from_the_database' } end
     if motdRow then motd = tostring(motdRow.message or '') end
     local activityOk, activity = pcall(function()
         return MySQL.single.await([[
@@ -834,9 +834,9 @@ exports.sunset_core:RegisterCallback('sunset:factionDashboard', function(source)
               AND created_at >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
         ]], { factionId, char.id })
     end)
-    if not activityOk then return nil, 'Weekly faction report could not be read. Please try again.' end
+    if not activityOk then return nil, { localeKey = 'factions.message.weekly_faction_report_could_not_be_read_please_try' } end
     local rosterOk, roster = pcall(factionRoster, factionId)
-    if not rosterOk then return nil, 'Faction roster could not be read. Please try again.' end
+    if not rosterOk then return nil, { localeKey = 'factions.message.faction_roster_could_not_be_read_please_try_again' } end
     -- [FP SYSTEM] batch-attach join days + FP to every roster member.
     pcall(function() roster = FactionManagement.enrichRoster(roster) end)
     local isLeader = FactionCore.isFactionLeader(char.id, factionId)
@@ -918,7 +918,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDashboard', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
-    if not getChar(source) then return nil, 'Your character is not loaded.' end
+    if not getChar(source) then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     local result, byId = {}, {}
     for factionId, faction in pairs(Sunset.Factions or {}) do
         local entry = {
@@ -940,7 +940,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
             FROM faction_membership fm
         ]], {})
     end)
-    if not memberCountsOk then return nil, 'Faction directory could not read member data. Please try again.' end
+    if not memberCountsOk then return nil, { localeKey = 'factions.message.faction_directory_could_not_read_member_data_please_try' } end
     for _, row in ipairs(memberCountRows or {}) do
         memberFactionByCharId[row.character_id] = row.faction_id
         local entry = byId[row.faction_id]
@@ -962,7 +962,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
             LEFT JOIN characters c ON c.id = fl.character_id ORDER BY fl.assigned_at ASC
         ]], {})
     end)
-    if not leadersOk then return nil, 'Faction directory could not read leadership data. Please try again.' end
+    if not leadersOk then return nil, { localeKey = 'factions.message.faction_directory_could_not_read_leadership_data_please_try' } end
     for _, row in ipairs(leaderRows or {}) do
         if memberFactionByCharId[row.character_id] ~= row.faction_id then goto continue_leader end
         local entry = byId[row.faction_id]
@@ -977,10 +977,10 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:factionDirectoryDetail', function(source, factionId)
-    if not getChar(source) then return nil, 'Your character is not loaded.' end
+    if not getChar(source) then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     factionId = tostring(factionId or '')
     local faction = Sunset.Factions[factionId]
-    if not faction then return nil, 'Faction not found' end
+    if not faction then return nil, { localeKey = 'factions.message.faction_not_found' } end
 
     local motd = ''
     pcall(function()

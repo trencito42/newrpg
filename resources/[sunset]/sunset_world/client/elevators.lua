@@ -8,7 +8,7 @@ local function fadeTeleport(coords4, allowVehicle)
     local driving = veh ~= 0 and GetPedInVehicleSeat(veh, -1) == ped
 
     if driving and not allowVehicle then
-        exports.sunset_ui:Notify('Exit the vehicle before using the lift', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('world.message.exit_the_vehicle_before_using_the_lift'), 'error')
         return
     end
 
@@ -75,7 +75,7 @@ AddEventHandler('sunset:world:registerElevator', function(factionId, lift, facti
         factionId = factionId,
         onInteract = function()
             if not canUseFactionElevator(factionId) then
-                exports.sunset_ui:Notify('Members only', 'error')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('world.message.members_only'), 'error')
                 return
             end
             fadeTeleport(lift.garage, false)
@@ -91,7 +91,7 @@ AddEventHandler('sunset:world:registerElevator', function(factionId, lift, facti
         factionId = factionId,
         onInteract = function()
             if not canUseFactionElevator(factionId) then
-                exports.sunset_ui:Notify('Members only', 'error')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('world.message.members_only'), 'error')
                 return
             end
             fadeTeleport(lift.lobby, false)

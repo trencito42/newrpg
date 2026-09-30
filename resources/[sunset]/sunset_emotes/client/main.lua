@@ -26,17 +26,17 @@ end
 
 local function playEmote(name)
     if LocalPlayer.state.isCasinoSitting then
-        return exports.sunset_ui:Notify('You cannot use emotes while seated at a casino game.', 'warning')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.message.you_cannot_use_emotes_while_seated_at_a_casino'), 'warning')
     end
 
     local emote = Emotes[name]
-    if not emote then return exports.sunset_ui:Notify('Unknown emote: ' .. tostring(name), 'error') end
+    if not emote then return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.message.unknown_emote') .. tostring(name), 'error') end
 
     local ped = PlayerPedId()
     -- [FIX] In a vehicle: only upper-body emotes (flag 49) are safe.
     -- Full-body emotes (flag 1) override steering/brake controls.
     if IsPedInAnyVehicle(ped, false) and emote.flag ~= 49 then
-        return exports.sunset_ui:Notify('That emote cannot be used while driving.', 'warning')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.message.that_emote_cannot_be_used_while_driving'), 'warning')
     end
     if playing then ClearPedTasks(ped) playing = false end
 
@@ -64,7 +64,7 @@ RegisterCommand('anim', handleEmoteCmd, false)
 
 RegisterCommand('emotes', function()
     if LocalPlayer.state.isCasinoSitting then
-        return exports.sunset_ui:Notify('You cannot open the emotes menu while seated at a casino game.', 'warning')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.message.you_cannot_open_the_emotes_menu_while_seated_at'), 'warning')
     end
     exports.sunset_ui:Send('emotesShow', { emotes = Emotes })
     exports.sunset_ui:SetFocus(true, true)

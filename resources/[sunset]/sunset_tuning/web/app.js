@@ -677,11 +677,11 @@ function updatePriceLabel() {
     const label = document.getElementById('tune-price-label');
     if (!label) return;
     if (hasTuningChanges()) {
-        label.textContent = 'Install Cost · Pending Changes';
+        label.textContent = I18n.t('dynamic.app.install_cost_pending_changes');
     } else if (hasSavedMap) {
-        label.textContent = 'Current Setup · Saved';
+        label.textContent = I18n.t('dynamic.app.current_setup_saved');
     } else {
-        label.textContent = 'Factory Setup · No Changes';
+        label.textContent = I18n.t('dynamic.app.factory_setup_no_changes');
     }
 }
 
@@ -703,13 +703,13 @@ function updateInstallButton() {
 function updateStatusBanner() {
     if (!ecuStatus) return;
     if (hasTuningChanges()) {
-        ecuStatus.textContent = 'PREVIEW · MODIFIED';
+        ecuStatus.textContent = I18n.t('dynamic.app.preview_modified');
         ecuStatus.className = 'status-preview';
     } else if (hasSavedMap) {
-        ecuStatus.textContent = 'SAVED';
+        ecuStatus.textContent = I18n.t('dynamic.app.saved');
         ecuStatus.className = 'status-saved';
     } else {
-        ecuStatus.textContent = 'FACTORY MAP';
+        ecuStatus.textContent = I18n.t('dynamic.app.factory_map');
         ecuStatus.className = 'status-factory';
     }
 }
@@ -1380,7 +1380,7 @@ function renderDetailPanel() {
     if (activeTab === 'powertrain') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Engine Output & ECU Mapping';
+        title.textContent = I18n.t('dynamic.app.engine_output_ecu_mapping');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(sliderField('Horsepower Calibration', 'power', 0, powerLimit(), ' HP'));
@@ -1391,7 +1391,7 @@ function renderDetailPanel() {
     if (activeTab === 'transmission') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Transmission Gearing & Shift Rates';
+        title.textContent = I18n.t('dynamic.app.transmission_gearing_shift_rates');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(sliderField('Shift Speed Response', 'shiftSpeed', -30, 50, '%'));
@@ -1400,7 +1400,7 @@ function renderDetailPanel() {
     if (activeTab === 'brakes') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Brake Dynamics & Energy Recovery';
+        title.textContent = I18n.t('dynamic.app.brake_dynamics_energy_recovery');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(sliderField('Regen / Engine Braking', 'regenBraking', 0, 100, '%'));
@@ -1409,7 +1409,7 @@ function renderDetailPanel() {
     if (activeTab === 'turbo') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Forced Induction & Nitrous Oxide (NOS)';
+        title.textContent = I18n.t('dynamic.app.forced_induction_nitrous_oxide_nos');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(sliderField('Top Speed Governor', 'topSpeed', -10, 40, ' km/h'));
@@ -1418,7 +1418,7 @@ function renderDetailPanel() {
             const nosTitle = document.createElement('div');
             nosTitle.className = 'section-title section-title--compact';
             nosTitle.style.marginTop = '14px';
-            nosTitle.textContent = 'Nitrous Injection System Configuration';
+            nosTitle.textContent = I18n.t('dynamic.app.nitrous_injection_system_configuration');
             tuneDetail.appendChild(nosTitle);
 
             tuneDetail.appendChild(toggleRow('Nitrous System Installed', 'nitrous.installed'));
@@ -1426,7 +1426,7 @@ function renderDetailPanel() {
             if (tune?.nitrous?.installed) {
                 const tierLabel = document.createElement('label');
                 tierLabel.style.marginTop = '10px';
-                tierLabel.textContent = 'NITROUS BOTTLE & INJECTION TIER';
+                tierLabel.textContent = I18n.t('dynamic.app.nitrous_bottle_injection_tier');
                 tuneDetail.appendChild(tierLabel);
 
                 const tierGrid = document.createElement('div');
@@ -1452,7 +1452,7 @@ function renderDetailPanel() {
 
                 const flameTitle = document.createElement('label');
                 flameTitle.style.marginTop = '12px';
-                flameTitle.textContent = 'NITROUS EXHAUST FLAME COLOR';
+                flameTitle.textContent = I18n.t('dynamic.app.nitrous_exhaust_flame_color');
                 tuneDetail.appendChild(flameTitle);
 
                 const nosPresets = [
@@ -1502,7 +1502,7 @@ function renderDetailPanel() {
     if (activeTab === 'handling') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Chassis & Handling Dynamics';
+        title.textContent = I18n.t('dynamic.app.chassis_handling_dynamics');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(sliderField('Steering Angle', 'handling.steering', 85, 120, '%'));
@@ -1528,7 +1528,7 @@ function renderDetailPanel() {
 
         const stockBtn = document.createElement('button');
         stockBtn.className = `option-btn ${curMod === -1 ? 'active' : ''}`;
-        stockBtn.textContent = 'Stock (OEM)';
+        stockBtn.textContent = I18n.t('dynamic.app.stock_oem');
         stockBtn.addEventListener('click', () => {
             cosmetics = ensureCosmetics(cosmetics);
             cosmetics.mods[slotKey] = -1;
@@ -1541,7 +1541,7 @@ function renderDetailPanel() {
         for (let i = 0; i < count; i++) {
             const btn = document.createElement('button');
             btn.className = `option-btn ${curMod === i ? 'active' : ''}`;
-            btn.textContent = `Option #${i + 1}`;
+            btn.textContent = I18n.t('dynamic.app.option_value0', { value0: i + 1 });
             btn.addEventListener('click', () => {
                 cosmetics = ensureCosmetics(cosmetics);
                 cosmetics.mods[slotKey] = i;
@@ -1558,7 +1558,7 @@ function renderDetailPanel() {
         if (!activePartId || activePartId === 'neon') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Neon Underglow System';
+            title.textContent = I18n.t('dynamic.app.neon_underglow_system');
             tuneDetail.appendChild(title);
 
             tuneDetail.appendChild(cosmeticsToggleRow('Enable Underglow', 'neon.enabled'));
@@ -1569,7 +1569,7 @@ function renderDetailPanel() {
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
-            lbl.textContent = 'NEON COLOR PRESETS';
+            lbl.textContent = I18n.t('dynamic.app.neon_color_presets');
             tuneDetail.appendChild(lbl);
 
             const paletteGrid = document.createElement('div');
@@ -1612,14 +1612,14 @@ function renderDetailPanel() {
         } else if (activePartId === 'xenon') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Xenon Headlight System';
+            title.textContent = I18n.t('dynamic.app.xenon_headlight_system');
             tuneDetail.appendChild(title);
 
             tuneDetail.appendChild(cosmeticsToggleRow('Xenon Headlights', 'xenon'));
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
-            lbl.textContent = 'XENON COLOR TEMPERATURE';
+            lbl.textContent = I18n.t('dynamic.app.xenon_color_temperature');
             tuneDetail.appendChild(lbl);
 
             const grid = document.createElement('div');
@@ -1646,7 +1646,7 @@ function renderDetailPanel() {
         if (!activePartId || activePartId === 'wheel_type') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Select Wheel Category';
+            title.textContent = I18n.t('dynamic.app.select_wheel_category');
             tuneDetail.appendChild(title);
 
             const grid = document.createElement('div');
@@ -1669,7 +1669,7 @@ function renderDetailPanel() {
         } else if (activePartId === 'wheel_rim') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Rim Models (Current Category)';
+            title.textContent = I18n.t('dynamic.app.rim_models_current_category');
             tuneDetail.appendChild(title);
 
             const count = visualAvailability.wheels || 0;
@@ -1679,7 +1679,7 @@ function renderDetailPanel() {
             const curMod = cosmetics?.mods?.wheels ?? -1;
             const stockBtn = document.createElement('button');
             stockBtn.className = `option-btn ${curMod === -1 ? 'active' : ''}`;
-            stockBtn.textContent = 'Stock OEM Rims';
+            stockBtn.textContent = I18n.t('dynamic.app.stock_oem_rims');
             stockBtn.addEventListener('click', () => {
                 cosmetics = ensureCosmetics(cosmetics);
                 cosmetics.mods.wheels = -1;
@@ -1692,7 +1692,7 @@ function renderDetailPanel() {
             for (let i = 0; i < count; i++) {
                 const btn = document.createElement('button');
                 btn.className = `option-btn ${curMod === i ? 'active' : ''}`;
-                btn.textContent = `Rim #${i + 1}`;
+                btn.textContent = I18n.t('dynamic.app.rim_value0', { value0: i + 1 });
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.mods.wheels = i;
@@ -1706,7 +1706,7 @@ function renderDetailPanel() {
         } else if (activePartId === 'wheel_color') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Rim Paint Color Index';
+            title.textContent = I18n.t('dynamic.app.rim_paint_color_index');
             tuneDetail.appendChild(title);
 
             const field = document.createElement('div');
@@ -1731,14 +1731,14 @@ function renderDetailPanel() {
         } else if (activePartId === 'smoke') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Tyre Smoke Burnout Controls';
+            title.textContent = I18n.t('dynamic.app.tyre_smoke_burnout_controls');
             tuneDetail.appendChild(title);
 
             tuneDetail.appendChild(cosmeticsToggleRow('Enable Tyre Smoke', 'tyreSmoke'));
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
-            lbl.textContent = 'SMOKE COLOR PRESETS';
+            lbl.textContent = I18n.t('dynamic.app.smoke_color_presets');
             tuneDetail.appendChild(lbl);
 
             const paletteGrid = document.createElement('div');
@@ -1786,12 +1786,12 @@ function renderDetailPanel() {
         if (!activePartId || activePartId === 'finish') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Paint Finish & Surface Style';
+            title.textContent = I18n.t('dynamic.app.paint_finish_surface_style');
             tuneDetail.appendChild(title);
 
             const note = document.createElement('div');
             note.className = 'tune-card-note';
-            note.textContent = 'Applies surface specular shader: Gloss, Metallic, Matte, Metal, or Chrome.';
+            note.textContent = I18n.t('dynamic.app.applies_surface_specular_shader_gloss_metallic_matte_metal_or_ch');
             tuneDetail.appendChild(note);
 
             const grid = document.createElement('div');
@@ -1817,12 +1817,12 @@ function renderDetailPanel() {
         } else if (activePartId === 'pearl') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Pearlescent Clearcoat & Color Combos';
+            title.textContent = I18n.t('dynamic.app.pearlescent_clearcoat_color_combos');
             tuneDetail.appendChild(title);
 
             const comboTitle = document.createElement('label');
             comboTitle.style.marginTop = '8px';
-            comboTitle.textContent = 'CURATED PEARL COMBINATIONS (PRIMARY + PEARL)';
+            comboTitle.textContent = I18n.t('dynamic.app.curated_pearl_combinations_primary_pearl');
             tuneDetail.appendChild(comboTitle);
 
             const comboGrid = document.createElement('div');
@@ -1851,7 +1851,7 @@ function renderDetailPanel() {
 
             const shadesTitle = document.createElement('label');
             shadesTitle.style.marginTop = '14px';
-            shadesTitle.textContent = 'PEARL COAT SHADE PRESETS';
+            shadesTitle.textContent = I18n.t('dynamic.app.pearl_coat_shade_presets');
             tuneDetail.appendChild(shadesTitle);
 
             const paletteGrid = document.createElement('div');
@@ -1898,7 +1898,7 @@ function renderDetailPanel() {
         } else if (activePartId === 'tint') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
-            title.textContent = 'Window Tint Level';
+            title.textContent = I18n.t('dynamic.app.window_tint_level');
             tuneDetail.appendChild(title);
 
             const grid = document.createElement('div');
@@ -1939,7 +1939,7 @@ function renderDetailPanel() {
     if (activeTab === 'exhaust') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Exhaust Pops, Bangs & Flames Calibration';
+        title.textContent = I18n.t('dynamic.app.exhaust_pops_bangs_flames_calibration');
         tuneDetail.appendChild(title);
 
         tuneDetail.appendChild(toggleRow('Exhaust Pops & Bangs Active', 'pop.enabled'));
@@ -1951,7 +1951,7 @@ function renderDetailPanel() {
     if (activeTab === 'special') {
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = 'Special ECU Subsystems';
+        title.textContent = I18n.t('dynamic.app.special_ecu_subsystems');
         tuneDetail.appendChild(title);
 
         if (cap('drift')) {
@@ -1978,7 +1978,7 @@ function renderCategories() {
     if (!tuneCategories) return;
     const title = document.createElement('div');
     title.className = 'section-title';
-    title.textContent = 'Components';
+    title.textContent = I18n.t('dynamic.app.components');
     tuneCategories.innerHTML = '';
     tuneCategories.appendChild(title);
     categories.forEach((cat) => {

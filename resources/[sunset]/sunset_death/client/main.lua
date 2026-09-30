@@ -129,7 +129,7 @@ end)
 
 RegisterCommand('respawn', function()
     if not dead and not IsEntityDead(getPed()) and GetEntityHealth(getPed()) > 100 then
-        exports.sunset_ui:Notify('You are not dead.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('death.message.you_are_not_dead'), 'error')
         return
     end
     TriggerServerEvent('sunset:server:requestRespawn')

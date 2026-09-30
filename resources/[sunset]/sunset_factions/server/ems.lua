@@ -29,10 +29,10 @@ exports.sunset_core:RegisterCallback('sunset:emsStabilize', function(source, tar
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
-        return nil, ('Patient ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.patient_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     if not isAdmin and targetId ~= source and not distCheck(source, targetId, MEDIC_RANGE) then
-        return nil, 'You must be near the patient'
+        return nil, { localeKey = 'factions.message.you_must_be_near_the_patient' }
     end
 
     local ok, err = exports.sunset_death:StabilizePlayer(targetId)
@@ -52,16 +52,16 @@ exports.sunset_core:RegisterCallback('sunset:emsHeal', function(source, targetId
     end
     targetId = tonumber(targetId) or source
     if not FactionCore.isOnline(targetId) then
-        return nil, ('Patient ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.patient_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     if targetId ~= source and not isAdmin and not distCheck(source, targetId, HEAL_RANGE) then
-        return nil, 'You must be near the patient'
+        return nil, { localeKey = 'factions.message.you_must_be_near_the_patient' }
     end
 
     local isDowned = false
     pcall(function() isDowned = exports.sunset_death:IsPlayerDowned(targetId) end)
     if isDowned then
-        return nil, 'Patient is downed — use /stabilize then /revive'
+        return nil, { localeKey = 'factions.message.patient_is_downed_use_stabilize_then_revive' }
     end
 
     TriggerClientEvent('sunset:admin:heal', targetId)
@@ -81,16 +81,16 @@ exports.sunset_core:RegisterCallback('sunset:emsRevive', function(source, target
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
-        return nil, 'Usage: /revive [player id]'
+        return nil, { localeKey = 'factions.message.usage_revive_player_id' }
     end
     if not isAdmin and not distCheck(source, targetId, REVIVE_RANGE) then
-        return nil, 'You must be near the patient'
+        return nil, { localeKey = 'factions.message.you_must_be_near_the_patient' }
     end
 
     local isDowned = false
     pcall(function() isDowned = exports.sunset_death:IsPlayerDowned(targetId) end)
     if not isDowned then
-        return nil, 'Target is not downed'
+        return nil, { localeKey = 'factions.message.target_is_not_downed' }
     end
 
     local ok, err = exports.sunset_death:RevivePlayer(targetId)

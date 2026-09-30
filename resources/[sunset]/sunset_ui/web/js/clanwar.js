@@ -278,7 +278,7 @@
                 // [WAR FIX] A defender who wins/ties KEPT the turf — show "DEFENDED",
                 // not "CONQUERED" (it was already theirs; tie goes to defender).
                 if (won && data.myRole !== 'attacker') {
-                    title.textContent = 'TURF DEFENDED!';
+                    title.textContent = I18n.t('dynamic.clanwar.turf_defended');
                 } else {
                     title.textContent = won ? 'TURF CAPTURED!' : 'TURF PIERDUT!';
                 }

@@ -35,27 +35,27 @@ end
 exports.sunset_core:RegisterCallback('sunset:marriage:propose', function(source, targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, 'Player not found or offline.'
+        return nil, { localeKey = 'marriage.message.player_not_found_or_offline' }
     end
-    if targetId == source then return nil, 'You cannot marry yourself.' end
+    if targetId == source then return nil, { localeKey = 'marriage.message.you_cannot_marry_yourself' } end
 
     local myCharId = getCharId(source)
     local targetCharId = getCharId(targetId)
     if not myCharId or not targetCharId then
-        return nil, 'Both players must have a loaded character.'
+        return nil, { localeKey = 'marriage.message.both_players_must_have_a_loaded_character' }
     end
 
     -- Check if either is already married
     if getMarriage(myCharId) then
-        return nil, 'You are already married.'
+        return nil, { localeKey = 'marriage.message.you_are_already_married' }
     end
     if getMarriage(targetCharId) then
-        return nil, 'That player is already married.'
+        return nil, { localeKey = 'marriage.message.that_player_is_already_married' }
     end
 
     -- Check pending proposal
     if PendingProposals[targetId] and PendingProposals[targetId].expiresAt > os.time() then
-        return nil, 'That player already has a pending proposal.'
+        return nil, { localeKey = 'marriage.message.that_player_already_has_a_pending_proposal' }
     end
 
     -- Check proximity
@@ -68,12 +68,12 @@ exports.sunset_core:RegisterCallback('sunset:marriage:propose', function(source,
         end
     end)
     if not near then
-        return nil, 'You must be near the player to propose.'
+        return nil, { localeKey = 'marriage.message.you_must_be_near_the_player_to_propose' }
     end
 
     -- Charge proposal fee
     if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.proposalFee or 25000, 'marriage_proposal') then
-        return nil, ('Not enough cash. Proposal fee: $%s.'):format(Cfg.proposalFee or 25000)
+        return nil, { localeKey = 'marriage.message.not_enough_cash_proposal_fee_value', formatArgs = { Cfg.proposalFee or 25000 } }
     end
 
     PendingProposals[targetId] = { from = source, expiresAt = os.time() + 120 }
@@ -95,13 +95,13 @@ end)
 exports.sunset_core:RegisterCallback('sunset:marriage:respond', function(source, accept)
     local proposal = PendingProposals[source]
     if not proposal or proposal.expiresAt < os.time() then
-        return nil, 'No pending proposal.'
+        return nil, { localeKey = 'marriage.message.no_pending_proposal' }
     end
     PendingProposals[source] = nil
 
     local fromSrc = proposal.from
     if not GetPlayerName(fromSrc) then
-        return nil, 'The proposer is no longer online.'
+        return nil, { localeKey = 'marriage.message.the_proposer_is_no_longer_online' }
     end
 
     if not accept then
@@ -116,11 +116,11 @@ exports.sunset_core:RegisterCallback('sunset:marriage:respond', function(source,
     local myCharId = getCharId(source)
     local fromCharId = getCharId(fromSrc)
     if not myCharId or not fromCharId then
-        return nil, 'Character not loaded.'
+        return nil, { localeKey = 'marriage.message.character_not_loaded' }
     end
     if getMarriage(myCharId) or getMarriage(fromCharId) then
         exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')
-        return nil, 'One of you is already married. Fee refunded.'
+        return nil, { localeKey = 'marriage.message.one_of_you_is_already_married_fee_refunded' }
     end
 
     -- Create marriage
@@ -144,14 +144,14 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:marriage:divorce', function(source)
     local myCharId = getCharId(source)
-    if not myCharId then return nil, 'No character loaded.' end
+    if not myCharId then return nil, { localeKey = 'marriage.message.no_character_loaded' } end
 
     local marriage = getMarriage(myCharId)
-    if not marriage then return nil, 'You are not married.' end
+    if not marriage then return nil, { localeKey = 'marriage.message.you_are_not_married' } end
 
     -- Charge divorce fee
     if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.divorceFee or 10000, 'marriage_divorce') then
-        return nil, ('Not enough cash. Divorce fee: $%s.'):format(Cfg.divorceFee or 10000)
+        return nil, { localeKey = 'marriage.message.not_enough_cash_divorce_fee_value', formatArgs = { Cfg.divorceFee or 10000 } }
     end
 
     MySQL.update.await('UPDATE marriages SET status = "divorced" WHERE id = ?', { marriage.id })

@@ -634,7 +634,7 @@
 
             // ID Details
             $('#mdc-cit-name').textContent = citizen.name || 'Unknown';
-            $('#mdc-cit-doc-id').textContent = `DOC ID: SA-${String(citizen.id).padStart(4, '0')}`;
+            $('#mdc-cit-doc-id').textContent = I18n.t('dynamic.mdc_tablet.doc_id_sa_value0', { value0: String(citizen.id).padStart(4, '0') });
             $('#mdc-cit-id').textContent = `#${citizen.id}`;
             $('#mdc-cit-server-id').textContent = citizen.isOnline ? `ONLINE (#${citizen.serverId})` : 'OFFLINE';
             $('#mdc-cit-server-id').style.color = citizen.isOnline ? '#10b981' : '#64748b';
@@ -652,7 +652,7 @@
                     wantedPill.textContent = `★ WANTED LEVEL ${citizen.wantedLevel || 1}`;
                 } else {
                     wantedPill.className = 'mdc-pill mdc-pill--clean';
-                    wantedPill.textContent = 'NO ACTIVE WARRANTS';
+                    wantedPill.textContent = I18n.t('dynamic.mdc_tablet.no_active_warrants');
                 }
             }
 
@@ -661,10 +661,10 @@
             if (jailPill) {
                 if (citizen.jailed) {
                     jailPill.className = 'mdc-pill mdc-pill--jailed';
-                    jailPill.textContent = `SERVING JAIL (${citizen.jailMinutes || 1}m remaining)`;
+                    jailPill.textContent = I18n.t('dynamic.mdc_tablet.serving_jail_value0_m_remaining', { value0: citizen.jailMinutes || 1 });
                 } else {
                     jailPill.className = 'mdc-pill mdc-pill--clean';
-                    jailPill.textContent = 'STATUS: AT LARGE / FREE';
+                    jailPill.textContent = I18n.t('dynamic.mdc_tablet.status_at_large_free');
                 }
             }
 
@@ -673,7 +673,7 @@
             if (boloPill) {
                 if (citizen.bolo) {
                     boloPill.className = 'mdc-pill mdc-pill--wanted';
-                    boloPill.textContent = 'ACTIVE BOLO: SUSPECT';
+                    boloPill.textContent = I18n.t('dynamic.mdc_tablet.active_bolo_suspect');
                     boloPill.style.display = 'inline-block';
                 } else {
                     boloPill.style.display = 'none';
@@ -956,7 +956,7 @@
                                     ${esc(row.name || 'Suspect')} <span style="font-size: 12px; color: #38bdf8;">(#${esc(row.id)})</span>
                                 </div>
                                 <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
-                                    Reason: <strong style="color: #cbd5e1;">${esc(row.reason || 'Unspecified')}</strong> · 
+                                    Reason: <strong style="color: #cbd5e1;">${esc(row.reason || 'Unspecified')}</strong> ·
                                     ${row.surrenderable === false ? '<span style="color: #ef4444; font-weight: 700;">NO SURRENDER</span>' : 'SURRENDER ALLOWED'}
                                 </div>
                             </div>
@@ -1077,7 +1077,7 @@
             const customInput = $('#mdc-bolo-custom-reason');
 
             if (title) title.textContent = type === 'vehicle' ? `Flag Vehicle BOLO: ${key}` : `Flag Citizen BOLO: ${key}`;
-            if (targetLabel) targetLabel.textContent = `Target: ${key} (${type.toUpperCase()})`;
+            if (targetLabel) targetLabel.textContent = I18n.t('dynamic.mdc_tablet.target_value0_value1', { value0: key, value1: type.toUpperCase() });
             if (customInput) customInput.value = defaultReason || '';
 
             $$('#mdc-bolo-chips .mdc-chip').forEach((c) => c.classList.remove('is-active'));
@@ -1096,7 +1096,7 @@
             const confirmBtn = $('#mdc-wanted-confirm');
             const listContainer = $('#mdc-charges-list');
 
-            if (label) label.textContent = `Suspect: ${targetName} (#${targetId})`;
+            if (label) label.textContent = I18n.t('dynamic.mdc_tablet.suspect_value0_value1', { value0: targetName, value1: targetId });
             if (confirmBtn) confirmBtn.disabled = true;
 
             const charges = this.reasons.length > 0 ? this.reasons : [
@@ -1146,7 +1146,7 @@
             const confirmBtn = $('#mdc-ticket-confirm');
             const listContainer = $('#mdc-violations-list');
 
-            if (label) label.textContent = `Citizen: ${targetName} (#${targetId})`;
+            if (label) label.textContent = I18n.t('dynamic.mdc_tablet.citizen_value0_value1', { value0: targetName, value1: targetId });
             if (confirmBtn) confirmBtn.disabled = true;
 
             const violations = this.violations.length > 0 ? this.violations : [
@@ -1194,7 +1194,7 @@
             const label = $('#mdc-license-target-label');
             const customInput = $('#mdc-license-custom-reason');
 
-            if (label) label.textContent = `Citizen: ${targetName} (#${targetId})`;
+            if (label) label.textContent = I18n.t('dynamic.mdc_tablet.citizen_value0_value1', { value0: targetName, value1: targetId });
             if (customInput) customInput.value = '';
 
             // Reset chips

@@ -192,7 +192,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         inCooldown = true
         local ok, err = Sunset.AwaitCallback('sunset:carjack:tryLockpick')
         if ok then
-            notify('Usa fortata! Urca repede.', 'success')
+            notify(exports.sunset_core:Translate('carjack.message.usa_fortata_urca_repede'), 'success')
             SetPedIntoVehicle(PlayerPedId(), nearVehicle, -1)
             hasStolenCar = true
             showNpcBlips()
@@ -204,7 +204,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     elseif data.action == 'sell_stolen_car' then
         closeMenu()
         local veh = GetVehiclePedIsIn(PlayerPedId(), false)
-        if veh == 0 then notify('You need to be in the car to sell it.', 'error') return end
+        if veh == 0 then notify(exports.sunset_core:Translate('carjack.message.you_need_to_be_in_the_car_to_sell'), 'error') return end
         inCooldown = true
         local modelHash = GetEntityModel(veh)
         local modelName = tostring(modelHash)

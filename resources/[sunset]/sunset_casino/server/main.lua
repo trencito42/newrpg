@@ -183,24 +183,24 @@ end
 exports.sunset_core:RegisterCallback('sunset:casino:blackjackStart', function(source, bet)
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
-        return nil, ('Bet must be between %d and %d chips.'):format(Cfg.minBet or 100, Cfg.maxBet or 50000)
+        return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
     if not checkCooldown(source) then
-        return nil, 'Wait a moment between games.'
+        return nil, { localeKey = 'casino.message.wait_a_moment_between_games' }
     end
     local charId = getCharId(source)
-    if not charId then return nil, 'No character loaded.' end
+    if not charId then return nil, { localeKey = 'casino.message.no_character_loaded' } end
     if not checkDailyLoss(charId, bet) then
-        return nil, ('Daily loss limit reached ($%s). Come back tomorrow.'):format(Cfg.dailyLossLimit or 500000)
+        return nil, { localeKey = 'casino.message.daily_loss_limit_reached_value_come_back_tomorrow', formatArgs = { Cfg.dailyLossLimit or 500000 } }
     end
     if ActiveBlackjack[source] then
-        return nil, 'You already have an active blackjack hand.'
+        return nil, { localeKey = 'casino.message.you_already_have_an_active_blackjack_hand' }
     end
     if countChips(source) < bet then
-        return nil, 'You do not have enough chips. Buy chips at the Cashier.'
+        return nil, { localeKey = 'casino.message.you_do_not_have_enough_chips_buy_chips_at' }
     end
     if not takeChips(source, bet) then
-        return nil, 'Could not take chips from your inventory.'
+        return nil, { localeKey = 'casino.message.could_not_take_chips_from_your_inventory' }
     end
 
     local deck = buildDeck()
@@ -232,7 +232,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:casino:blackjackHit', function(source)
     local game = ActiveBlackjack[source]
-    if not game or game.done then return nil, 'No active hand.' end
+    if not game or game.done then return nil, { localeKey = 'casino.message.no_active_hand' } end
 
     table.insert(game.playerHand, table.remove(game.deck, 1))
     local val = handValue(game.playerHand)
@@ -254,7 +254,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:casino:blackjackStand', function(source)
     local game = ActiveBlackjack[source]
-    if not game or game.done then return nil, 'No active hand.' end
+    if not game or game.done then return nil, { localeKey = 'casino.message.no_active_hand' } end
 
     dealerPlay(game)
     local settled = settleBlackjack(source, game)
@@ -270,21 +270,21 @@ local SLOT_SYMBOLS = { '🍒', '🍋', '🍊', '🍇', '💎', '7️⃣', '🔔'
 exports.sunset_core:RegisterCallback('sunset:casino:slotsSpin', function(source, bet)
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
-        return nil, ('Bet must be between %d and %d chips.'):format(Cfg.minBet or 100, Cfg.maxBet or 50000)
+        return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
     if not checkCooldown(source) then
-        return nil, 'Wait a moment between games.'
+        return nil, { localeKey = 'casino.message.wait_a_moment_between_games' }
     end
     local charId = getCharId(source)
-    if not charId then return nil, 'No character loaded.' end
+    if not charId then return nil, { localeKey = 'casino.message.no_character_loaded' } end
     if not checkDailyLoss(charId, bet) then
-        return nil, ('Daily loss limit reached ($%s). Come back tomorrow.'):format(Cfg.dailyLossLimit or 500000)
+        return nil, { localeKey = 'casino.message.daily_loss_limit_reached_value_come_back_tomorrow', formatArgs = { Cfg.dailyLossLimit or 500000 } }
     end
     if countChips(source) < bet then
-        return nil, 'You do not have enough chips. Buy chips at the Cashier.'
+        return nil, { localeKey = 'casino.message.you_do_not_have_enough_chips_buy_chips_at' }
     end
     if not takeChips(source, bet) then
-        return nil, 'Could not take chips from your inventory.'
+        return nil, { localeKey = 'casino.message.could_not_take_chips_from_your_inventory' }
     end
 
     -- Spin 3 reels
@@ -338,21 +338,21 @@ end
 exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(source, bet, betType, betValue)
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
-        return nil, ('Bet must be between %d and %d chips.'):format(Cfg.minBet or 100, Cfg.maxBet or 50000)
+        return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
     if not checkCooldown(source) then
-        return nil, 'Wait a moment between games.'
+        return nil, { localeKey = 'casino.message.wait_a_moment_between_games' }
     end
     local charId = getCharId(source)
-    if not charId then return nil, 'No character loaded.' end
+    if not charId then return nil, { localeKey = 'casino.message.no_character_loaded' } end
     if not checkDailyLoss(charId, bet) then
-        return nil, ('Daily loss limit reached ($%s). Come back tomorrow.'):format(Cfg.dailyLossLimit or 500000)
+        return nil, { localeKey = 'casino.message.daily_loss_limit_reached_value_come_back_tomorrow', formatArgs = { Cfg.dailyLossLimit or 500000 } }
     end
     if countChips(source) < bet then
-        return nil, 'You do not have enough chips. Buy chips at the Cashier.'
+        return nil, { localeKey = 'casino.message.you_do_not_have_enough_chips_buy_chips_at' }
     end
     if not takeChips(source, bet) then
-        return nil, 'Could not take chips from your inventory.'
+        return nil, { localeKey = 'casino.message.could_not_take_chips_from_your_inventory' }
     end
 
     -- Spin: 0-36
@@ -433,16 +433,16 @@ exports.sunset_core:RegisterCallback('sunset:casino:wheelSpin', function(source)
     local now = GetGameTimer()
     if WheelCooldowns[charId] and now - WheelCooldowns[charId] < (Cfg.luckyWheelCooldownMs or 3600000) then
         local remaining = math.ceil(((Cfg.luckyWheelCooldownMs or 3600000) - (now - WheelCooldowns[charId])) / 60000)
-        return nil, ('Wheel on cooldown. Try again in %d minutes.'):format(remaining)
+        return nil, { localeKey = 'casino.message.wheel_on_cooldown_try_again_in_value_minutes', formatArgs = { remaining } }
     end
 
     if not checkCooldown(source) then
-        return nil, 'Wait a moment before spinning again.'
+        return nil, { localeKey = 'casino.message.wait_a_moment_before_spinning_again' }
     end
 
     -- Pick random prize
     local prizes = Cfg.luckyWheelPrizes or {}
-    if #prizes == 0 then return nil, 'No prizes configured.' end
+    if #prizes == 0 then return nil, { localeKey = 'casino.message.no_prizes_configured' } end
     local prizeIdx = math.random(#prizes)
     local prize = prizes[prizeIdx]
 
@@ -477,23 +477,23 @@ end)
 exports.sunset_core:RegisterCallback('sunset:casino:buyChips', function(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount < (Cfg.minChipExchange or 100) then
-        return nil, ('Minimum chip exchange is $%s.'):format(Cfg.minChipExchange or 100)
+        return nil, { localeKey = 'casino.message.minimum_chip_exchange_is_value', formatArgs = { Cfg.minChipExchange or 100 } }
     end
     if amount > (Cfg.maxChipExchange or 100000) then
-        return nil, ('Maximum chip exchange is $%s.'):format(Cfg.maxChipExchange or 100000)
+        return nil, { localeKey = 'casino.message.maximum_chip_exchange_is_value', formatArgs = { Cfg.maxChipExchange or 100000 } }
     end
 
     local rate = Cfg.chipExchangeRate or 1
     local cost = math.floor(amount * rate)
 
     if not exports.sunset_core:RemoveMoney(source, 'cash', cost, 'casino_buy_chips') then
-        return nil, ('Not enough cash. You need $%s.'):format(cost)
+        return nil, { localeKey = 'casino.message.not_enough_cash_you_need_value', formatArgs = { cost } }
     end
 
     if not giveChips(source, amount) then
         -- Inventory full/failed — refund
         exports.sunset_core:AddMoney(source, 'cash', cost, 'casino_buy_chips_refund')
-        return nil, 'Inventory full. Make room for your chips.'
+        return nil, { localeKey = 'casino.message.inventory_full_make_room_for_your_chips' }
     end
 
     return { chips = amount, cost = cost, totalChips = countChips(source), cash = exports.sunset_core:GetMoney(source, 'cash') }
@@ -501,15 +501,15 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:casino:sellChips', function(source, amount)
     amount = math.floor(tonumber(amount) or 0)
-    if amount < 1 then return nil, 'Enter an amount to sell.' end
+    if amount < 1 then return nil, { localeKey = 'casino.message.enter_an_amount_to_sell' } end
 
     local current = countChips(source)
     if current < amount then
-        return nil, ('You only have %s chips.'):format(current)
+        return nil, { localeKey = 'casino.message.you_only_have_value_chips', formatArgs = { current } }
     end
 
     if not takeChips(source, amount) then
-        return nil, 'Could not take chips from your inventory.'
+        return nil, { localeKey = 'casino.message.could_not_take_chips_from_your_inventory' }
     end
 
     local rate = Cfg.chipExchangeRate or 1
@@ -517,7 +517,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:sellChips', function(source,
     if not exports.sunset_core:AddMoney(source, 'cash', cash, 'casino_sell_chips') then
         -- Money add failed — return the chips
         giveChips(source, amount)
-        return nil, 'Could not pay you. Try again.'
+        return nil, { localeKey = 'casino.message.could_not_pay_you_try_again' }
     end
 
     return { chips = amount, earned = cash, cash = exports.sunset_core:GetMoney(source, 'cash'), remainingChips = countChips(source) }
@@ -537,10 +537,10 @@ exports.sunset_core:RegisterCallback('sunset:casino:buyDrink', function(source, 
     for _, d in ipairs(Cfg.barDrinks or {}) do
         if d.id == drinkId then drink = d break end
     end
-    if not drink then return nil, 'Unknown drink.' end
+    if not drink then return nil, { localeKey = 'casino.message.unknown_drink' } end
 
     if not exports.sunset_core:RemoveMoney(source, 'cash', drink.price, 'casino_bar') then
-        return nil, ('Not enough cash. %s costs $%s.'):format(drink.label, drink.price)
+        return nil, { localeKey = 'casino.message.not_enough_cash_value_costs_value', formatArgs = { drink.label, drink.price } }
     end
 
     local added = false
@@ -552,7 +552,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:buyDrink', function(source, 
     end
     if not added then
         exports.sunset_core:AddMoney(source, 'cash', drink.price, 'casino_bar_refund')
-        return nil, 'Inventory full. Could not hold the drink.'
+        return nil, { localeKey = 'casino.message.inventory_full_could_not_hold_the_drink' }
     end
 
     return { label = drink.label, price = drink.price, cash = exports.sunset_core:GetMoney(source, 'cash') }

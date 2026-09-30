@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SunsetMP — Loading</title>
+    <title data-ls-i18n="title">SunsetMP — Loading</title>
     <!-- [AUDIT P7-05] Self-hosted fonts (was remote Google Fonts, blocking first paint) -->
     <link rel="stylesheet" href="assets/fonts/gfonts.css">
     <link rel="stylesheet" href="style.css?v=15">
@@ -15,14 +15,14 @@
 
         <div class="hud-wrapper">
             <div class="brand-container">
-                <div class="brand-title">SUNSET <span>MP</span></div>
-                <div class="brand-subtitle">Est. 2026 &middot; Los Santos</div>
+                <div class="brand-title" aria-label="Sunset MP">SUNSET <span>MP</span></div><!-- i18n-ignore: product name -->
+                <div class="brand-subtitle" data-ls-i18n="brand_subtitle">Est. 2026 &middot; Los Santos</div>
             </div>
 
             <div class="bottom-area">
                 <div class="tips-container">
-                    <div class="tips-header">Server Tips</div>
-                    <div class="tips-text" id="tip-text">
+                    <div class="tips-header" data-ls-i18n="tips_header">Server Tips</div>
+                    <div class="tips-text" id="tip-text" data-ls-i18n="tip_0">
                         Stay in character at all times. Press G to open the quick interaction menu.
                     </div>
                 </div>
@@ -30,7 +30,7 @@
                 <div class="speedometer-loading">
                     <div class="massive-pct" id="loading-pct">0<span>%</span></div>
                     <div class="loading-status-text">
-                        <span id="loading-task">Initializing session...</span>
+                        <span id="loading-task" data-ls-i18n="initializing_session">Initializing session...</span>
                         <span class="file-count" id="loading-files"></span>
                     </div>
                     <div class="rpm-bar-container" id="rpm-bar"></div>

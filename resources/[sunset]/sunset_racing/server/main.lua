@@ -88,14 +88,14 @@ exports.sunset_core:RegisterCallback('sunset:racing:startSolo', function(source,
     local route = getRoute(routeId)
     if not route then
         dlog(('solo rejected src=%d reason=unknown_route'):format(source))
-        return nil, 'Unknown race route.'
+        return nil, { localeKey = 'racing.message.unknown_race_route' }
     end
     if ActiveRace then
         dlog(('solo rejected src=%d reason=active_race'):format(source))
-        return nil, 'A race is already in progress. Wait for it to finish.'
+        return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' }
     end
     if PlayerLobby[source] then
-        return nil, 'You are already in a lobby. Leave first.'
+        return nil, { localeKey = 'racing.message.you_are_already_in_a_lobby_leave_first' }
     end
 
     -- Solo cooldown (per character)
@@ -104,23 +104,23 @@ exports.sunset_core:RegisterCallback('sunset:racing:startSolo', function(source,
         local elapsed = nowMs() - SoloCooldowns[charId]
         if elapsed < (Cfg.soloCooldownMs or 300000) then
             local remaining = math.ceil(((Cfg.soloCooldownMs or 300000) - elapsed) / 1000)
-            return nil, ('Solo time trial on cooldown. Try again in %ds.'):format(remaining)
+            return nil, { localeKey = 'racing.message.solo_time_trial_on_cooldown_try_again_in_value', formatArgs = { remaining } }
         end
     end
 
     -- Ped validation
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'No ped found.' end
+    if not ped or ped == 0 then return nil, { localeKey = 'racing.message.no_ped_found' } end
     local pos = GetEntityCoords(ped)
     if #(pos - Cfg.raceHub) > 100.0 then
-        return nil, 'You must be near the Race Hub at LS Customs.'
+        return nil, { localeKey = 'racing.message.you_must_be_near_the_race_hub_at_ls' }
     end
 
     -- Solo entry fee (default 0 = free)
     local soloFee = Cfg.soloEntryFee or 0
     if soloFee > 0 then
         if not exports.sunset_core:RemoveMoney(source, 'cash', soloFee, 'race_solo_entry') then
-            return nil, ('Not enough cash. Solo entry fee: $%s.'):format(soloFee)
+            return nil, { localeKey = 'racing.message.not_enough_cash_solo_entry_fee_value', formatArgs = { soloFee } }
         end
     end
 
@@ -136,27 +136,27 @@ exports.sunset_core:RegisterCallback('sunset:racing:join', function(source, rout
     local route = getRoute(routeId)
     if not route then
         dlog(('join rejected src=%d reason=unknown_route'):format(source))
-        return nil, 'Unknown race route.'
+        return nil, { localeKey = 'racing.message.unknown_race_route' }
     end
     if ActiveRace then
         dlog(('join rejected src=%d reason=active_race'):format(source))
-        return nil, 'A race is already in progress. Wait for it to finish.'
+        return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' }
     end
     if PlayerLobby[source] then
-        return nil, 'You are already in a lobby. Leave first.'
+        return nil, { localeKey = 'racing.message.you_are_already_in_a_lobby_leave_first' }
     end
 
     -- Ped validation
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'No ped found.' end
+    if not ped or ped == 0 then return nil, { localeKey = 'racing.message.no_ped_found' } end
     local pos = GetEntityCoords(ped)
     if #(pos - Cfg.raceHub) > 100.0 then
-        return nil, 'You must be near the Race Hub at LS Customs.'
+        return nil, { localeKey = 'racing.message.you_must_be_near_the_race_hub_at_ls' }
     end
 
     -- Charge entry fee (once — guarded by PlayerLobby check)
     if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.entryFee or 1000, 'race_entry') then
-        return nil, ('Not enough cash. Entry fee: $%s.'):format(Cfg.entryFee or 1000)
+        return nil, { localeKey = 'racing.message.not_enough_cash_entry_fee_value', formatArgs = { Cfg.entryFee or 1000 } }
     end
 
     -- Add to route-specific lobby
@@ -190,7 +190,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:racing:leave', function(source)
     local routeId = PlayerLobby[source]
-    if not routeId then return nil, 'You are not in a lobby.' end
+    if not routeId then return nil, { localeKey = 'racing.message.you_are_not_in_a_lobby' } end
 
     local lobby = Lobbies[routeId]
     if lobby then
@@ -212,12 +212,12 @@ end)
 exports.sunset_core:RegisterCallback('sunset:racing:startMulti', function(source, routeId)
     routeId = tostring(routeId or '')
     local lobby = Lobbies[routeId]
-    if not lobby then return nil, 'No lobby for that route.' end
-    if not lobby.players[source] then return nil, 'You are not in that lobby.' end
+    if not lobby then return nil, { localeKey = 'racing.message.no_lobby_for_that_route' } end
+    if not lobby.players[source] then return nil, { localeKey = 'racing.message.you_are_not_in_that_lobby' } end
     if countLobby(routeId) < (Cfg.minMultiPlayers or 2) then
-        return nil, ('Need at least %d players to start.'):format(Cfg.minMultiPlayers or 2)
+        return nil, { localeKey = 'racing.message.need_at_least_value_players_to_start', formatArgs = { Cfg.minMultiPlayers or 2 } }
     end
-    if ActiveRace then return nil, 'A race is already in progress.' end
+    if ActiveRace then return nil, { localeKey = 'racing.message.a_race_is_already_in_progress' } end
 
     local players = {}
     for src in pairs(lobby.players) do players[#players + 1] = src end
@@ -551,11 +551,11 @@ end
 exports('CancelPlayerRace', cancelPlayerRace)
 
 exports.sunset_core:RegisterCallback('sunset:racing:quit', function(source)
-    if not ActiveRace then return false, 'No race in progress' end
+    if not ActiveRace then return false, { localeKey = 'racing.message.no_race_in_progress' } end
     if cancelPlayerRace(source, 'You abandoned the race.') then
         return true
     end
-    return false, 'You are not actively racing'
+    return false, { localeKey = 'racing.message.you_are_not_actively_racing' }
 end)
 
 -- ═══ DISCONNECT ═══

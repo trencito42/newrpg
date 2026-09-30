@@ -103,10 +103,10 @@ function Sunset.SetPersistentStat(source, scope, field, value)
     local player = Sunset.GetPlayer(source)
     local char = player and player.character
     local allowed = PersistentStatFields[scope]
-    if not player or not char then return false, 'Character data is unavailable.' end
-    if not allowed or not allowed[field] then return false, 'That persistent field is not allowed.' end
+    if not player or not char then return false, { localeKey = 'core.message.character_data_is_unavailable' } end
+    if not allowed or not allowed[field] then return false, { localeKey = 'core.message.that_persistent_field_is_not_allowed' } end
     value = math.floor(tonumber(value) or -1)
-    if value < 0 then return false, 'The value must be zero or greater.' end
+    if value < 0 then return false, { localeKey = 'core.message.the_value_must_be_zero_or_greater' } end
 
     local tableName, rowId, cache
     if scope == 'character' then
@@ -118,7 +118,7 @@ function Sunset.SetPersistentStat(source, scope, field, value)
     end
 
     local changed = MySQL.update.await(('UPDATE %s SET %s = ? WHERE id = ?'):format(tableName, field), { value, rowId })
-    if changed == nil then return false, 'The database rejected the update.' end
+    if changed == nil then return false, { localeKey = 'core.message.the_database_rejected_the_update' } end
     cache[field] = value
     if scope == 'player' and field == 'playtime' then player.sessionStart = os.time() end
 
@@ -148,8 +148,8 @@ function Sunset.SpendBlazePoints(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 then return true end
     local player = Sunset.GetPlayer(source)
-    if not player or not player.account_id then return false, 'Account data is unavailable.' end
-    if not player.character then return false, 'Character data is unavailable.' end
+    if not player or not player.account_id then return false, { localeKey = 'core.message.account_data_is_unavailable' } end
+    if not player.character then return false, { localeKey = 'core.message.character_data_is_unavailable' } end
 
     local changed = MySQL.update.await(
         'UPDATE accounts SET premium_points = premium_points - ? WHERE id = ? AND premium_points >= ?',
@@ -157,7 +157,7 @@ function Sunset.SpendBlazePoints(source, amount)
     )
     if not changed or changed < 1 then
         local balance = Sunset.RefreshBlazePoints(source)
-        return false, ('You need %d Blaze Points (you have %d).'):format(amount, balance)
+        return false, { localeKey = 'core.message.you_need_value_blaze_points_you_have_value', formatArgs = { amount, balance } }
     end
     player.premium_points = math.max(0, (tonumber(player.premium_points) or 0) - amount)
     return true
@@ -167,14 +167,14 @@ function Sunset.AddBlazePoints(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 then return true end
     local player = Sunset.GetPlayer(source)
-    if not player or not player.account_id then return false, 'Account data is unavailable.' end
-    if not player.character then return false, 'Character data is unavailable.' end
+    if not player or not player.account_id then return false, { localeKey = 'core.message.account_data_is_unavailable' } end
+    if not player.character then return false, { localeKey = 'core.message.character_data_is_unavailable' } end
 
     local changed = MySQL.update.await(
         'UPDATE accounts SET premium_points = premium_points + ? WHERE id = ?',
         { amount, player.account_id }
     )
-    if not changed or changed < 1 then return false, 'Could not add Blaze Points.' end
+    if not changed or changed < 1 then return false, { localeKey = 'core.message.could_not_add_blaze_points' } end
     player.premium_points = (tonumber(player.premium_points) or 0) + amount
     return true
 end
@@ -469,9 +469,9 @@ local BuyLevelLocks = {}
 
 local function buyLevel(source)
     local char = Sunset.GetCharacter(source)
-    if not char then return false, 'Character not loaded.' end
+    if not char then return false, { localeKey = 'core.message.character_not_loaded' } end
     if BuyLevelLocks[source] then
-        return false, 'Your level purchase is already being processed.'
+        return false, { localeKey = 'core.message.your_level_purchase_is_already_being_processed' }
     end
 
     BuyLevelLocks[source] = true
@@ -479,14 +479,14 @@ local function buyLevel(source)
     local moneyCost = Sunset.GetLevelMoneyCost(char.level)
     if (char.respect_points or 0) < rpCost then
         BuyLevelLocks[source] = nil
-        return false, ('Level %d requires %d RP; you have %d. You earn 1 RP at every payday.'):format((char.level or 1) + 1, rpCost, char.respect_points or 0)
+        return false, { localeKey = 'core.message.level_value_requires_value_rp_you_have_value_you', formatArgs = { (char.level or 1) + 1, rpCost, char.respect_points or 0 } }
     end
     local account
     if Sunset.GetMoney(source, 'bank') >= moneyCost then account = 'bank'
     elseif Sunset.GetMoney(source, 'cash') >= moneyCost then account = 'cash' end
     if not account then
         BuyLevelLocks[source] = nil
-        return false, ('Level %d costs $%d. Keep the full amount in bank or cash.'):format((char.level or 1) + 1, moneyCost)
+        return false, { localeKey = 'core.message.level_value_costs_value_keep_the_full_amount_in', formatArgs = { (char.level or 1) + 1, moneyCost } }
     end
     local changed = MySQL.update.await(([[
         UPDATE characters
@@ -498,12 +498,12 @@ local function buyLevel(source)
     if not changed or changed < 1 then
         Sunset.RefreshMoney(source)
         BuyLevelLocks[source] = nil
-        return false, 'Your money or RP changed while processing. Nothing was charged; try once more.'
+        return false, { localeKey = 'core.message.your_money_or_rp_changed_while_processing_nothing_was' }
     end
     local row = MySQL.single.await('SELECT cash, bank, level, respect_points FROM characters WHERE id = ?', { char.id })
     if not row then
         BuyLevelLocks[source] = nil
-        return false, 'Level was saved, but the updated profile could not be reloaded. Reopen the menu.'
+        return false, { localeKey = 'core.message.level_was_saved_but_the_updated_profile_could_not' }
     end
     char.cash, char.bank = tonumber(row.cash) or 0, tonumber(row.bank) or 0
     char.level, char.respect_points = tonumber(row.level) or char.level, tonumber(row.respect_points) or 0

@@ -53,7 +53,7 @@ local function guardPerm()
     end
     if not isPermitted then
         TriggerServerEvent('sunset:devtools:checkPerm')
-        notify('DevTools requires admin level ' .. Cfg.minAdminLevel .. '. Checking permission...', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.devtools_requires_admin_level') .. Cfg.minAdminLevel .. '. Checking permission...', 'error')
         return false
     end
     return true
@@ -64,7 +64,7 @@ end
 RegisterCommand('devplace', function(src, args)
     if not guardPerm() then return end
     if DevRoute.isActive() then
-        notify('Close the route editor first (/devroute to toggle).', 'warning')
+        notify(exports.sunset_core:Translate('devtools.message.close_the_route_editor_first_devroute_to_toggle'), 'warning')
         return
     end
     local adapterKey = args[1]
@@ -93,7 +93,7 @@ TriggerEvent('chat:addSuggestion', '/devpos', 'Capture player position as dev co
 RegisterCommand('devroute', function(src, args)
     if not guardPerm() then return end
     if DevGizmo.isActive() then
-        notify('Close the gizmo first (BACKSPACE).', 'warning')
+        notify(exports.sunset_core:Translate('devtools.message.close_the_gizmo_first_backspace'), 'warning')
         return
     end
     local adapterKey = args[1] or 'trucker'
@@ -114,7 +114,7 @@ RegisterCommand('worldprobe', function()
         DevProbe.stop()
     else
         if DevGizmo.isActive() then
-            notify('Close the gizmo first (BACKSPACE).', 'warning')
+            notify(exports.sunset_core:Translate('devtools.message.close_the_gizmo_first_backspace'), 'warning')
             return
         end
         DevProbe.start()
@@ -130,11 +130,11 @@ RegisterCommand('devvalidate', function(src, args)
     local ak = args[1] or 'trucker'
     local adapter = SunsetDevTools.Adapters[ak]
     if not adapter then
-        notify('Unknown adapter: ' .. ak, 'error')
+        notify(exports.sunset_core:Translate('devtools.message.unknown_adapter') .. ak, 'error')
         return
     end
 
-    notify('Running validation — see F8 for results.', 'info')
+    notify(exports.sunset_core:Translate('devtools.message.running_validation_see_f8_for_results'), 'info')
 
     CreateThread(function()
         local fields = adapter.describe and adapter.describe() or {}

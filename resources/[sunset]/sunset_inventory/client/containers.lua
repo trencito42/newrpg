@@ -46,12 +46,12 @@ RegisterCommand('trunk', function(source, args)
 
     local veh = getClosestVehicle(4.5)
     if not veh then
-        return exports.sunset_ui:Notify('No vehicle nearby.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.no_vehicle_nearby'), 'error')
     end
 
     local lock = GetVehicleDoorLockStatus(veh)
     if lock > 1 then
-        return exports.sunset_ui:Notify('The vehicle is locked.', 'warning')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.the_vehicle_is_locked'), 'warning')
     end
 
     local plate = string.upper(GetVehicleNumberPlateText(veh)):gsub('%s+', '')
@@ -60,7 +60,7 @@ RegisterCommand('trunk', function(source, args)
         local item = args[2] and string.lower(args[2])
         local count = tonumber(args[3]) or 1
         if not item then
-            return exports.sunset_ui:Notify('Usage: /trunk put [item] [count]', 'info')
+            return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.usage_trunk_put_item_count'), 'info')
         end
         local res, err = Sunset.AwaitCallback('sunset:container:deposit', 'trunk', plate, item, count)
         if res and res.ok then
@@ -74,7 +74,7 @@ RegisterCommand('trunk', function(source, args)
         local item = args[2] and string.lower(args[2])
         local count = tonumber(args[3]) or 1
         if not item then
-            return exports.sunset_ui:Notify('Usage: /trunk take [item] [count]', 'info')
+            return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.usage_trunk_take_item_count'), 'info')
         end
         local res, err = Sunset.AwaitCallback('sunset:container:withdraw', 'trunk', plate, item, count)
         if res and res.ok then
@@ -119,7 +119,7 @@ RegisterCommand('glovebox', function(source, args)
     if veh == 0 then veh = getClosestVehicle(2.5) end
 
     if not veh or veh == 0 then
-        return exports.sunset_ui:Notify('You must be inside or next to a vehicle.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.you_must_be_inside_or_next_to_a_vehicle'), 'error')
     end
 
     local plate = string.upper(GetVehicleNumberPlateText(veh)):gsub('%s+', '')
@@ -128,7 +128,7 @@ RegisterCommand('glovebox', function(source, args)
         local item = args[2] and string.lower(args[2])
         local count = tonumber(args[3]) or 1
         if not item then
-            return exports.sunset_ui:Notify('Usage: /glovebox put [item] [count]', 'info')
+            return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.usage_glovebox_put_item_count'), 'info')
         end
         local res, err = Sunset.AwaitCallback('sunset:container:deposit', 'glovebox', plate, item, count)
         if res and res.ok then
@@ -142,7 +142,7 @@ RegisterCommand('glovebox', function(source, args)
         local item = args[2] and string.lower(args[2])
         local count = tonumber(args[3]) or 1
         if not item then
-            return exports.sunset_ui:Notify('Usage: /glovebox take [item] [count]', 'info')
+            return exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.message.usage_glovebox_take_item_count'), 'info')
         end
         local res, err = Sunset.AwaitCallback('sunset:container:withdraw', 'glovebox', plate, item, count)
         if res and res.ok then

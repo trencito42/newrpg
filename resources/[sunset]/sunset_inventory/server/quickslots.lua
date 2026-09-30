@@ -119,10 +119,10 @@ end
 
 local function assignQuickslot(source, slot, binding)
     local char, meta = getCharMeta(source)
-    if not char then return nil, 'Your character is not loaded.' end
+    if not char then return nil, { localeKey = 'inventory.message.your_character_is_not_loaded' } end
     slot = tonumber(slot)
     if not slot or slot < 1 or slot > HOTBAR_SLOTS then
-        return nil, 'Invalid quick slot.'
+        return nil, { localeKey = 'inventory.message.invalid_quick_slot' }
     end
 
     meta.quickslots = type(meta.quickslots) == 'table' and meta.quickslots or {}
@@ -137,12 +137,12 @@ local function assignQuickslot(source, slot, binding)
     if binding.kind == 'item' then
         local inv = GetInventory(source)
         local row = findInventoryRow(inv, binding.rowId)
-        if not row then return nil, 'That inventory item is no longer available.' end
+        if not row then return nil, { localeKey = 'inventory.message.that_inventory_item_is_no_longer_available' } end
         meta.quickslots[key] = { kind = 'item', rowId = row.id }
     elseif binding.kind == 'duty_weapon' then
         local weapon = binding.weapon
         if type(weapon) ~= 'string' or weapon == '' then
-            return nil, 'Invalid duty weapon.'
+            return nil, { localeKey = 'inventory.message.invalid_duty_weapon' }
         end
         meta.quickslots[key] = {
             kind = 'duty_weapon',
@@ -152,7 +152,7 @@ local function assignQuickslot(source, slot, binding)
     elseif binding.kind == 'emote' then
         local name = binding.name
         if type(name) ~= 'string' or name == '' then
-            return nil, 'Invalid emote.'
+            return nil, { localeKey = 'inventory.message.invalid_emote' }
         end
         meta.quickslots[key] = {
             kind = 'emote',
@@ -160,7 +160,7 @@ local function assignQuickslot(source, slot, binding)
             label = binding.label or name,
         }
     else
-        return nil, 'Unsupported quick slot type.'
+        return nil, { localeKey = 'inventory.message.unsupported_quick_slot_type' }
     end
 
     saveMeta(char.id, meta)
@@ -191,7 +191,7 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
     local slot = tonumber(data.slot)
     local consume = data.consume == true
     if not slot or slot < 1 or slot > HOTBAR_SLOTS then
-        return nil, 'Invalid quick slot.'
+        return nil, { localeKey = 'inventory.message.invalid_quick_slot' }
     end
 
     local raw = getRawQuickslots(source)
@@ -201,7 +201,7 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
     local inv = GetInventory(source)
     local resolved = resolveBinding(binding, inv)
     if not resolved then
-        return nil, 'That quick slot item is no longer available.'
+        return nil, { localeKey = 'inventory.message.that_quick_slot_item_is_no_longer_available' }
     end
 
     if resolved.kind == 'item' then
@@ -225,7 +225,7 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
         if def.equipProp then
             return { action = 'equip_prop', slot = slot, item = resolved.item }
         end
-        return nil, ('%s cannot be used from a quick slot.'):format(def.label or resolved.item)
+        return nil, { localeKey = 'inventory.message.value_cannot_be_used_from_a_quick_slot', formatArgs = { def.label or resolved.item } }
     end
 
     if resolved.kind == 'duty_weapon' then
@@ -236,5 +236,5 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
         return { action = 'play_emote', slot = slot, name = resolved.name }
     end
 
-    return nil, 'Unsupported quick slot.'
+    return nil, { localeKey = 'inventory.message.unsupported_quick_slot' }
 end)

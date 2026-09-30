@@ -51,7 +51,7 @@ local function openAdminPanel()
 end
 
 local function showBizHelp()
-    notify('Owner: /biz, /mybiz, /mybusiness | Admin: /biz admin, /abiz, /bizadmin', 'info', 10000)
+    notify(exports.sunset_core:Translate('businesses.message.owner_biz_mybiz_mybusiness_admin_biz_admin_abiz_bizadmin'), 'info', 10000)
 end
 
 local function runBizCommand(args)
@@ -169,7 +169,7 @@ local function openGasBusinessMenu()
     CreateThread(function()
         local ctx = Sunset.AwaitCallback('sunset:getGasBusinessContext')
         if not ctx then
-            notify('No gas station business here.', 'error')
+            notify(exports.sunset_core:Translate('businesses.message.no_gas_station_business_here'), 'error')
             return
         end
         gasContext = ctx
@@ -189,7 +189,7 @@ local function openGasBusinessMenu()
             }
         end
         if #actions == 0 then
-            notify('This gas station is not available for purchase.', 'info')
+            notify(exports.sunset_core:Translate('businesses.message.this_gas_station_is_not_available_for_purchase'), 'info')
             return
         end
         exports.sunset_ui:Send('playerInteractionShow', {
@@ -220,7 +220,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     if action == 'buy_gas_business' then
         local biz = ctx and ctx.business
         if not biz or not biz.id then
-            notify('This business is not for sale.', 'error')
+            notify(exports.sunset_core:Translate('businesses.message.this_business_is_not_for_sale'), 'error')
             return
         end
         gasCooldown = true

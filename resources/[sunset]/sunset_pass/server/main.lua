@@ -20,7 +20,7 @@ local CharacterLocks = {}
 local function withCharacterLock(characterId, operation)
     local key = tostring(characterId)
     if CharacterLocks[key] then
-        return nil, 'Your Blaze Pass is already processing another action. Try again in a moment.'
+        return nil, { localeKey = 'pass.message.your_blaze_pass_is_already_processing_another_action_try' }
     end
 
     CharacterLocks[key] = true
@@ -29,7 +29,7 @@ local function withCharacterLock(characterId, operation)
 
     if not result[1] then
         print(('[sunset_pass] operation failed for character %s: %s'):format(key, tostring(result[2])))
-        return nil, 'Blaze Pass could not process the action. No second request was accepted.'
+        return nil, { localeKey = 'pass.message.blaze_pass_could_not_process_the_action_no_second' }
     end
     return table.unpack(result, 2, result.n)
 end
@@ -161,19 +161,19 @@ local function tierReward(level, track)
 end
 
 local function grantReward(source, reward)
-    if not reward or not reward.type then return false, 'Invalid reward.' end
+    if not reward or not reward.type then return false, { localeKey = 'pass.message.invalid_reward' } end
 
     if reward.type == 'cash' or reward.type == 'bank' then
         local ok = exports.sunset_core:AddMoney(source, reward.type, reward.amount or 0, 'sunset_pass')
-        if not ok then return false, 'Could not add money.' end
+        if not ok then return false, { localeKey = 'pass.message.could_not_add_money' } end
         return true
     end
 
     if reward.type == 'premium_points' then
         local player = getPlayer(source)
-        if not player then return false, 'Account data unavailable.' end
+        if not player then return false, { localeKey = 'pass.message.account_data_unavailable' } end
         local amount = math.floor(tonumber(reward.amount) or 0)
-        if amount <= 0 then return false, 'Invalid coin amount.' end
+        if amount <= 0 then return false, { localeKey = 'pass.message.invalid_coin_amount' } end
         local nextValue = (tonumber(player.premium_points) or 0) + amount
         local ok, err = setPremiumPoints(source, nextValue)
         if not ok then return false, err or 'Could not add Blaze Points.' end
@@ -182,14 +182,14 @@ local function grantReward(source, reward)
 
     if reward.type == 'item' then
         if GetResourceState('sunset_inventory') ~= 'started' then
-            return false, 'Inventory is unavailable.'
+            return false, { localeKey = 'pass.message.inventory_is_unavailable' }
         end
         local added = exports.sunset_inventory:AddItem(source, reward.item, reward.count or 1)
-        if not added then return false, 'Inventory full or item invalid.' end
+        if not added then return false, { localeKey = 'pass.message.inventory_full_or_item_invalid' } end
         return true
     end
 
-    return false, 'Unsupported reward type.'
+    return false, { localeKey = 'pass.message.unsupported_reward_type' }
 end
 
 function AddMissionProgress(source, missionId, amount)
@@ -325,20 +325,20 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:pass:getData', function(source)
     local char = getCharacter(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'pass.message.character_not_loaded' } end
     local row = loadRow(char.id)
     return buildPayload(source, row)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:pass:claim', function(source, data)
     local char = getCharacter(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'pass.message.character_not_loaded' } end
 
     local level = tonumber(data and data.level)
     local track = data and data.track
     if not level or level ~= math.floor(level) or level < 1 or level > maxTier()
         or (track ~= 'free' and track ~= 'premium') then
-        return nil, 'Invalid claim request.'
+        return nil, { localeKey = 'pass.message.invalid_claim_request' }
     end
 
     return withCharacterLock(char.id, function()
@@ -348,19 +348,19 @@ exports.sunset_core:RegisterCallback('sunset:pass:claim', function(source, data)
         local claimed = decodeJson(row.claimed)
         local key = claimKey(level, track)
 
-        if claimed[key] then return nil, 'Reward already claimed.' end
-        if level > tierFromXp(xp) then return nil, 'Tier not unlocked yet.' end
-        if track == 'premium' and not premium then return nil, 'Premium pass required.' end
+        if claimed[key] then return nil, { localeKey = 'pass.message.reward_already_claimed' } end
+        if level > tierFromXp(xp) then return nil, { localeKey = 'pass.message.tier_not_unlocked_yet' } end
+        if track == 'premium' and not premium then return nil, { localeKey = 'pass.message.premium_pass_required' } end
 
         local reward = tierReward(level, track)
-        if not reward then return nil, 'No reward on this tier.' end
+        if not reward then return nil, { localeKey = 'pass.message.no_reward_on_this_tier' } end
 
         claimed[key] = true
         saveRow(char.id, xp, premium, claimed, decodeJson(row.mission_progress))
         local saved = loadRow(char.id)
         if not decodeJson(saved.claimed)[key] then
             claimed[key] = false
-            return nil, 'Could not save your claim. Please try again.'
+            return nil, { localeKey = 'pass.message.could_not_save_your_claim_please_try_again' }
         end
 
         local ok, err = grantReward(source, reward)
@@ -377,11 +377,11 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:pass:buyPremium', function(source)
     local char = getCharacter(source)
-    if not char then return nil, 'Character not loaded.' end
+    if not char then return nil, { localeKey = 'pass.message.character_not_loaded' } end
 
     return withCharacterLock(char.id, function()
         local row = loadRow(char.id)
-        if isPremiumRow(row) then return nil, 'Premium pass already unlocked.' end
+        if isPremiumRow(row) then return nil, { localeKey = 'pass.message.premium_pass_already_unlocked' } end
 
         local paid, payment, payErr = chargePremiumPayment(source)
         if not paid then return nil, payErr or 'Premium pass payment failed.' end
@@ -390,12 +390,12 @@ exports.sunset_core:RegisterCallback('sunset:pass:buyPremium', function(source)
         local saved = loadRow(char.id)
         if not isPremiumRow(saved) then
             refundPremiumPayment(source, payment)
-            return nil, 'Premium pass payment succeeded but progress could not be saved. You were refunded.'
+            return nil, { localeKey = 'pass.message.premium_pass_payment_succeeded_but_progress_could_not_be' }
         end
 
         local payload = buildPayload(source, saved)
         if not payload then
-            return nil, 'Premium pass unlocked, but the menu could not refresh. Reopen /pass.'
+            return nil, { localeKey = 'pass.message.premium_pass_unlocked_but_the_menu_could_not_refresh' }
         end
 
         passAnnounce(source, 'PREMIUM UNLOCKED', 'Blaze Pass premium track is now active for this season.', 'success')

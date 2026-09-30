@@ -4,7 +4,7 @@ end
 
 RegisterCommand('stabilize', function(_, args)
     local target = tonumber(args[1])
-    if not target then return notify('Usage: /stabilize [id]', 'error') end
+    if not target then return notify(exports.sunset_core:Translate('factions.message.usage_stabilize_id'), 'error') end
     local ok, err = Sunset.AwaitCallback('sunset:emsStabilize', target)
     if not ok then notify(err or 'Stabilization failed. Check duty, rank, patient ID, distance and downed state.', 'error') end
 end, false)

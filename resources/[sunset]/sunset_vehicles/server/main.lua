@@ -204,24 +204,24 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:spawnVehicle', function(source, vehicleId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
     -- [AUDIT P6-10] Jailed/downed players must not pull cars from the garage.
     if exports.sunset_core:IsIncapacitated(source) then
-        return nil, 'You cannot access your vehicles right now.'
+        return nil, { localeKey = 'vehicles.message.you_cannot_access_your_vehicles_right_now' }
     end
 
     vehicleId = tonumber(vehicleId)
-    if not vehicleId then return nil, 'Invalid vehicle' end
+    if not vehicleId then return nil, { localeKey = 'vehicles.message.invalid_vehicle' } end
 
     local veh = MySQL.single.await(
         'SELECT * FROM vehicles WHERE id = ? AND character_id = ?',
         { vehicleId, char.id }
     )
-    if not veh then return nil, 'Vehicle not found' end
+    if not veh then return nil, { localeKey = 'vehicles.message.vehicle_not_found' } end
 
     if veh.destroyed == 1 or veh.destroyed == true or veh.destroyed == '1' then
-        return nil, 'This vehicle is totaled. File an insurance claim from the garage menu (/v).'
+        return nil, { localeKey = 'vehicles.message.this_vehicle_is_totaled_file_an_insurance_claim_from' }
     end
 
     local stored = normalizeStored(veh.stored)
@@ -233,12 +233,12 @@ exports.sunset_core:RegisterCallback('sunset:spawnVehicle', function(source, veh
     elseif stored == 0 then
         outPlates = { { plate = veh.plate } }
     else
-        return nil, 'Vehicle not available'
+        return nil, { localeKey = 'vehicles.message.vehicle_not_available' }
     end
 
     local spawnOpts = buildSpawnOpts(veh)
     if not spawnOpts then
-        return nil, 'Garage spawn not configured'
+        return nil, { localeKey = 'vehicles.message.garage_spawn_not_configured' }
     end
 
     -- [AUDIT F7.1] Broadcast cleanup to ALL clients: a key-holder may be driving the
@@ -261,7 +261,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:storeVehicle', function(source, garageId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
     TriggerClientEvent('sunset:client:storeVehicleRequest', source, garageId or 'legion')
     return true
@@ -269,20 +269,20 @@ end)
 
 local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageId, parked)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
     local now = GetGameTimer()
-    if now - (StoreRate[source] or 0) < 1500 then return nil, 'Please wait before storing again' end
+    if now - (StoreRate[source] or 0) < 1500 then return nil, { localeKey = 'vehicles.message.please_wait_before_storing_again' } end
     StoreRate[source] = now
 
     plate = normalizePlate(plate)
-    if plate == '' or #plate > 8 or type(props) ~= 'table' then return nil, 'Invalid vehicle data' end
+    if plate == '' or #plate > 8 or type(props) ~= 'table' then return nil, { localeKey = 'vehicles.message.invalid_vehicle_data' } end
 
     local owned = MySQL.single.await(
         'SELECT id, props, fuel, engine, body FROM vehicles WHERE REPLACE(UPPER(plate), " ", "") = ? AND character_id = ?',
         { plate, char.id }
     )
-    if not owned then return nil, 'This vehicle is not owned by your character' end
+    if not owned then return nil, { localeKey = 'vehicles.message.this_vehicle_is_not_owned_by_your_character' } end
 
     -- [AUDIT F1.1] Whitelist client-reported props keys. Performance data (ecu) can
     -- ONLY come from the DB (paid tuning flow); cosmetics/colors/odometer from client.
@@ -305,7 +305,7 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
         math.max(previousOdometer, tonumber(props.odometer) or previousOdometer),
         previousOdometer + 8.0)
     local encodedProps = json.encode(props)
-    if #encodedProps > 32768 then return nil, 'Vehicle data is too large' end
+    if #encodedProps > 32768 then return nil, { localeKey = 'vehicles.message.vehicle_data_is_too_large' } end
 
     local vehicle = tonumber(netId) and NetworkGetEntityFromNetworkId(tonumber(netId)) or 0
     if vehicle == 0 or not DoesEntityExist(vehicle)
@@ -317,7 +317,7 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
     if vehicle and vehicle ~= 0 and DoesEntityExist(vehicle) then
         local driver = GetPedInVehicleSeat(vehicle, -1)
         if driver ~= 0 and driver ~= playerPed then
-            return nil, 'Someone else is currently driving this vehicle.'
+            return nil, { localeKey = 'vehicles.message.someone_else_is_currently_driving_this_vehicle' }
         end
     end
 
@@ -374,7 +374,7 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
         owned.id,
         char.id,
     })
-    if not changed or changed < 1 then return nil, 'Vehicle could not be stored' end
+    if not changed or changed < 1 then return nil, { localeKey = 'vehicles.message.vehicle_could_not_be_stored' } end
     if vehicle and vehicle ~= 0 and DoesEntityExist(vehicle) then
         DeleteEntity(vehicle)
     end
@@ -460,25 +460,25 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:claimVehicleInsurance', function(source, vehicleId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No active character loaded.' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_active_character_loaded' } end
 
     vehicleId = tonumber(vehicleId)
-    if not vehicleId then return nil, 'Invalid vehicle.' end
+    if not vehicleId then return nil, { localeKey = 'vehicles.message.invalid_vehicle_fc2a3f' } end
 
     local veh = MySQL.single.await(
         'SELECT id, model, plate, destroyed, insurance_points, insurance_level, insurance_cost, garage FROM vehicles WHERE id = ? AND character_id = ?',
         { vehicleId, char.id }
     )
-    if not veh then return nil, 'Vehicle not found.' end
+    if not veh then return nil, { localeKey = 'vehicles.message.vehicle_not_found_871b72' } end
 
     local isDestroyed = (veh.destroyed == 1 or veh.destroyed == true or veh.destroyed == '1')
     if not isDestroyed then
-        return nil, 'This vehicle is not totaled. Retrieve it from the garage as usual.'
+        return nil, { localeKey = 'vehicles.message.this_vehicle_is_not_totaled_retrieve_it_from_the' }
     end
 
     local points = math.max(0, tonumber(veh.insurance_points) or 0)
     if points <= 0 then
-        return nil, 'You have no insurance points left. Renew your coverage first.'
+        return nil, { localeKey = 'vehicles.message.you_have_no_insurance_points_left_renew_your_coverage' }
     end
 
     local baseCost = calculateVehicleInsuranceCost(veh.model, veh.insurance_cost)
@@ -491,7 +491,7 @@ exports.sunset_core:RegisterCallback('sunset:claimVehicleInsurance', function(so
     elseif exports.sunset_core:RemoveMoney(source, 'cash', claimCost, 'vehicle_insurance_claim') then
         paidAccount = 'cash'
     else
-        return nil, ('Insufficient funds. You need $%s in bank or cash.'):format(claimCost)
+        return nil, { localeKey = 'vehicles.message.insufficient_funds_you_need_value_in_bank_or_cash', formatArgs = { claimCost } }
     end
 
     local plate = normalizePlate(veh.plate)
@@ -509,7 +509,7 @@ exports.sunset_core:RegisterCallback('sunset:claimVehicleInsurance', function(so
     ]], { veh.id, char.id })
 
     TriggerClientEvent('sunset:client:notify', source,
-        ('Insurance claim approved for $%s (%s). Your vehicle has been repaired and returned to the garage.'):format(claimCost, paidAccount),
+        exports.sunset_core:TFor(source, 'vehicles.message.insurance_claim_approved_for_value_value_your_vehicle_has_been_re', claimCost, paidAccount),
         'success'
     )
 
@@ -536,16 +536,16 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:renewVehicleInsurance', function(source, vehicleId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No active character loaded.' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_active_character_loaded' } end
 
     vehicleId = tonumber(vehicleId)
-    if not vehicleId then return nil, 'Invalid vehicle.' end
+    if not vehicleId then return nil, { localeKey = 'vehicles.message.invalid_vehicle_fc2a3f' } end
 
     local veh = MySQL.single.await(
         'SELECT id, model, plate, insurance_points, insurance_level, insurance_cost FROM vehicles WHERE id = ? AND character_id = ?',
         { vehicleId, char.id }
     )
-    if not veh then return nil, 'Vehicle not found.' end
+    if not veh then return nil, { localeKey = 'vehicles.message.vehicle_not_found_871b72' } end
 
     local baseCost = calculateVehicleInsuranceCost(veh.model, veh.insurance_cost)
     local renewCost = math.floor(baseCost * 3)
@@ -556,7 +556,7 @@ exports.sunset_core:RegisterCallback('sunset:renewVehicleInsurance', function(so
     elseif exports.sunset_core:RemoveMoney(source, 'cash', renewCost, 'vehicle_insurance_renew') then
         paidAccount = 'cash'
     else
-        return nil, ('Insufficient funds. You need $%s to renew 5 insurance points.'):format(renewCost)
+        return nil, { localeKey = 'vehicles.message.insufficient_funds_you_need_value_to_renew_5_insurance', formatArgs = { renewCost } }
     end
 
     MySQL.update.await([[
@@ -566,7 +566,7 @@ exports.sunset_core:RegisterCallback('sunset:renewVehicleInsurance', function(so
     ]], { veh.id, char.id })
 
     TriggerClientEvent('sunset:client:notify', source,
-        ('Purchased +5 insurance points for $%s (%s).'):format(renewCost, paidAccount),
+        exports.sunset_core:TFor(source, 'vehicles.message.purchased_5_insurance_points_for_value_value', renewCost, paidAccount),
         'success'
     )
 
@@ -575,16 +575,16 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:getDrivenOwnedVehicleState', function(source, netId, plate)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid vehicle plate' end
+    if plate == '' then return nil, { localeKey = 'vehicles.message.invalid_vehicle_plate' } end
 
     local vehicle = tonumber(netId) and NetworkGetEntityFromNetworkId(tonumber(netId)) or 0
     local ped = GetPlayerPed(source)
     if vehicle == 0 or not DoesEntityExist(vehicle) or ped == 0
         or GetPedInVehicleSeat(vehicle, -1) ~= ped
         or normalizePlate(GetVehicleNumberPlateText(vehicle)) ~= plate then
-        return nil, 'You must be driving the vehicle'
+        return nil, { localeKey = 'vehicles.message.you_must_be_driving_the_vehicle' }
     end
 
     return MySQL.single.await(
@@ -595,7 +595,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:syncOwnedVehicleState', function(source, netId, plate, reportedFuel, reportedOdometer)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
     local now = GetGameTimer()
     if now - (StateSyncRate[source] or 0) < 10000 then return true end
     StateSyncRate[source] = now
@@ -605,12 +605,12 @@ exports.sunset_core:RegisterCallback('sunset:syncOwnedVehicleState', function(so
         'SELECT id, fuel, props FROM vehicles WHERE REPLACE(UPPER(plate), " ", "") = ? AND character_id = ? AND stored = 0',
         { plate, char.id }
     )
-    if not row then return nil, 'Owned vehicle not active' end
+    if not row then return nil, { localeKey = 'vehicles.message.owned_vehicle_not_active' } end
     local vehicle = tonumber(netId) and NetworkGetEntityFromNetworkId(tonumber(netId)) or 0
     local ped = GetPlayerPed(source)
     if not vehicle or vehicle == 0 or not DoesEntityExist(vehicle) or not ped or ped == 0
         or GetPedInVehicleSeat(vehicle, -1) ~= ped or normalizePlate(GetVehicleNumberPlateText(vehicle)) ~= plate then
-        return nil, 'Vehicle state rejected'
+        return nil, { localeKey = 'vehicles.message.vehicle_state_rejected' }
     end
 
     -- Driving may only consume fuel here. Refuelling has separate paid callbacks.
@@ -705,34 +705,34 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:refuelVehiclePartial', function(source, fromFuel, toFuel, plate)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Invalid player ped' end
+    if not ped or ped == 0 then return nil, { localeKey = 'vehicles.message.invalid_player_ped' } end
     if not isNearGasStation(GetEntityCoords(ped)) then
-        return nil, 'You must be at a gas station pump to refuel'
+        return nil, { localeKey = 'vehicles.message.you_must_be_at_a_gas_station_pump_to' }
     end
 
     local vehicle = GetVehiclePedIsIn(ped, false)
     if not vehicle or vehicle == 0 or GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return nil, 'Sit in the driver seat beside the pump while paying for fuel.'
+        return nil, { localeKey = 'vehicles.message.sit_in_the_driver_seat_beside_the_pump_while' }
     end
     local actualPlate = normalizePlate(GetVehicleNumberPlateText(vehicle))
     if actualPlate == '' or actualPlate ~= normalizePlate(plate) then
-        return nil, 'The active vehicle does not match this refuel session. Reopen the pump.'
+        return nil, { localeKey = 'vehicles.message.the_active_vehicle_does_not_match_this_refuel_session' }
     end
     local owned = findOwnedVehicle(char.id, actualPlate)
-    if not owned then return nil, 'Only your personal vehicle can be refuelled from this menu.' end
+    if not owned then return nil, { localeKey = 'vehicles.message.only_your_personal_vehicle_can_be_refuelled_from_this' } end
     local currentFuel = math.max(0, math.min(100, tonumber(owned.fuel) or 0))
     local requestedFuel = math.max(0, math.min(100, tonumber(toFuel) or currentFuel))
-    if requestedFuel <= currentFuel + 0.05 then return nil, 'The tank did not receive fuel; no payment was taken.' end
+    if requestedFuel <= currentFuel + 0.05 then return nil, { localeKey = 'vehicles.message.the_tank_did_not_receive_fuel_no_payment_was' } end
     local added = requestedFuel - currentFuel
     local pricePer = Sunset.Config.FuelPricePerPercent or 1.75
     local cost = math.ceil(added * pricePer)
-    if cost < 1 then return nil, 'The fuel amount is too small to bill.' end
+    if cost < 1 then return nil, { localeKey = 'vehicles.message.the_fuel_amount_is_too_small_to_bill' } end
     local account = (tonumber(char.cash) or 0) >= cost and 'cash'
         or ((tonumber(char.bank) or 0) >= cost and 'bank' or nil)
-    if not account then return nil, ('You need $%s in cash or bank for this fuel.'):format(cost) end
+    if not account then return nil, { localeKey = 'vehicles.message.you_need_value_in_cash_or_bank_for_this', formatArgs = { cost } } end
     local committed = MySQL.startTransaction(function(query)
         local lockedFuel = query.single.await('SELECT id, fuel FROM vehicles WHERE id=? FOR UPDATE', { owned.id })
         if not lockedFuel then return false end
@@ -748,7 +748,7 @@ exports.sunset_core:RegisterCallback('sunset:refuelVehiclePartial', function(sou
             AND fuel <= ?]], { requestedFuel, owned.id, char.id, lockedCurrent + 0.01 })
         return tonumber(saved) == 1
     end)
-    if not committed then return nil, 'Fuel checkout was cancelled because the balance or tank changed. No payment was taken.' end
+    if not committed then return nil, { localeKey = 'vehicles.message.fuel_checkout_was_cancelled_because_the_balance_or_tank' } end
     exports.sunset_core:RefreshMoney(source)
 
     if GetResourceState('sunset_businesses') == 'started' then
@@ -760,32 +760,32 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:fillGasCan', function(source, targetLiters)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Invalid player ped' end
+    if not ped or ped == 0 then return nil, { localeKey = 'vehicles.message.invalid_player_ped' } end
     if not isNearGasStation(GetEntityCoords(ped)) then
-        return nil, 'You must be at a gas station pump to fill a gas can'
+        return nil, { localeKey = 'vehicles.message.you_must_be_at_a_gas_station_pump_to_2d5458' }
     end
 
     if not exports.sunset_inventory:HasItem(source, 'gas_can', 1) then
-        return nil, 'You need a gas can'
+        return nil, { localeKey = 'vehicles.message.you_need_a_gas_can' }
     end
 
     local maxLiters = Sunset.GetGasCanMaxLiters()
     local current = exports.sunset_inventory:GetGasCanLiters(source) or 0
     targetLiters = math.max(current, math.min(maxLiters, tonumber(targetLiters) or maxLiters))
     local added = targetLiters - current
-    if added <= 0.05 then return nil, 'Gas can is already full' end
+    if added <= 0.05 then return nil, { localeKey = 'vehicles.message.gas_can_is_already_full' } end
 
     local pricePer = Sunset.Config.FuelPricePerLiter or 2.92
     local cost = math.ceil(added * pricePer)
     local account = (tonumber(char.cash) or 0) >= cost and 'cash'
         or ((tonumber(char.bank) or 0) >= cost and 'bank' or nil)
-    if not account then return nil, ('You need $%s in cash or bank to fill the gas can.'):format(cost) end
+    if not account then return nil, { localeKey = 'vehicles.message.you_need_value_in_cash_or_bank_to_fill', formatArgs = { cost } } end
     local gasRow = MySQL.single.await([[SELECT id,metadata FROM character_inventory
         WHERE character_id=? AND item='gas_can' AND count>0 ORDER BY id LIMIT 1]], { char.id })
-    if not gasRow then return nil, 'The gas can is no longer in your inventory.' end
+    if not gasRow then return nil, { localeKey = 'vehicles.message.the_gas_can_is_no_longer_in_your_inventory' } end
     local committed = MySQL.startTransaction(function(query)
         local charged = query.await(
             ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(account, account, account),
@@ -796,7 +796,7 @@ exports.sunset_core:RegisterCallback('sunset:fillGasCan', function(source, targe
             { json.encode({ liters = targetLiters }), gasRow.id, char.id })
         return tonumber(saved) == 1
     end)
-    if not committed then return nil, 'Gas-can checkout was cancelled because the item or balance changed. No payment was taken.' end
+    if not committed then return nil, { localeKey = 'vehicles.message.gas_can_checkout_was_cancelled_because_the_item_or' } end
     exports.sunset_core:RefreshMoney(source)
     exports.sunset_inventory:ReloadInventory(source)
 
@@ -809,42 +809,42 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:useGasCanOnVehicle', function(source, plate)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
     if not exports.sunset_inventory:HasItem(source, 'gas_can', 1) then
-        return nil, 'You need a gas can'
+        return nil, { localeKey = 'vehicles.message.you_need_a_gas_can' }
     end
 
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid vehicle' end
+    if plate == '' then return nil, { localeKey = 'vehicles.message.invalid_vehicle' } end
 
     local owned = findOwnedVehicle(char.id, plate)
-    if not owned then return nil, 'This is not your vehicle' end
+    if not owned then return nil, { localeKey = 'vehicles.message.this_is_not_your_vehicle' } end
 
     local vehicle = findVehicleEntityByPlate(plate)
     local ped = GetPlayerPed(source)
     if not vehicle or not DoesEntityExist(vehicle) or not ped or ped == 0
         or #(GetEntityCoords(ped) - GetEntityCoords(vehicle)) > 4.5 then
-        return nil, 'Stand beside your vehicle before using the gas can.'
+        return nil, { localeKey = 'vehicles.message.stand_beside_your_vehicle_before_using_the_gas_can' }
     end
 
     local canLiters = exports.sunset_inventory:GetGasCanLiters(source) or 0
     local maxCanLiters = Sunset.GetGasCanMaxLiters()
-    if canLiters <= 0.05 then return nil, 'Gas can is empty — fill it at a pump' end
+    if canLiters <= 0.05 then return nil, { localeKey = 'vehicles.message.gas_can_is_empty_fill_it_at_a_pump' } end
 
     local vehicleClass = GetVehicleClass(vehicle)
     local tankCapacity = Sunset.GetVehicleTankCapacityLiters(vehicleClass)
-    if tankCapacity <= 0 then return nil, 'This vehicle has no fuel tank' end
+    if tankCapacity <= 0 then return nil, { localeKey = 'vehicles.message.this_vehicle_has_no_fuel_tank' } end
 
     local currentFuelPercent = math.max(0, math.min(100, tonumber(owned.fuel) or 0))
     local currentTankLiters = Sunset.PercentToTankLiters and Sunset.PercentToTankLiters(currentFuelPercent, vehicleClass)
         or (currentFuelPercent / 100.0) * tankCapacity
     if currentTankLiters >= tankCapacity - 0.05 then
-        return nil, 'Vehicle tank is already full'
+        return nil, { localeKey = 'vehicles.message.vehicle_tank_is_already_full' }
     end
 
     local roomLiters = tankCapacity - currentTankLiters
     local transferLiters = math.min(canLiters, roomLiters)
-    if transferLiters <= 0.05 then return nil, 'Vehicle tank is already full' end
+    if transferLiters <= 0.05 then return nil, { localeKey = 'vehicles.message.vehicle_tank_is_already_full' } end
 
     local fromTankLiters = currentTankLiters
     local newTankLiters = currentTankLiters + transferLiters
@@ -853,7 +853,7 @@ exports.sunset_core:RegisterCallback('sunset:useGasCanOnVehicle', function(sourc
 
     local gasRow = MySQL.single.await([[SELECT id,count FROM character_inventory
         WHERE character_id=? AND item='gas_can' AND count>0 ORDER BY id LIMIT 1]], { char.id })
-    if not gasRow then return nil, 'The gas can is no longer in your inventory.' end
+    if not gasRow then return nil, { localeKey = 'vehicles.message.the_gas_can_is_no_longer_in_your_inventory' } end
     local committed = MySQL.startTransaction(function(query)
         local saved = query.await([[UPDATE vehicles SET fuel=? WHERE id=? AND character_id=? AND fuel=?]],
             { vehicleFuelPercent, owned.id, char.id, owned.fuel })
@@ -869,7 +869,7 @@ exports.sunset_core:RegisterCallback('sunset:useGasCanOnVehicle', function(sourc
         end
         return tonumber(changed) == 1
     end)
-    if not committed then return nil, 'Fuel transfer was cancelled because the vehicle or gas can changed. Nothing was consumed.' end
+    if not committed then return nil, { localeKey = 'vehicles.message.fuel_transfer_was_cancelled_because_the_vehicle_or_gas' } end
     exports.sunset_inventory:ReloadInventory(source)
 
     return {
@@ -919,46 +919,46 @@ end)
 exports.sunset_core:RegisterCallback('sunset:giveVehicleKeys', function(source, targetId, plate)
     local char = exports.sunset_core:GetCharacter(source)
     local target = exports.sunset_core:GetCharacter(tonumber(targetId))
-    if not char or not target then return nil, 'Player not found' end
+    if not char or not target then return nil, { localeKey = 'vehicles.message.player_not_found' } end
     plate = plateKey(plate)
     local row = MySQL.single.await('SELECT character_id FROM vehicles WHERE REPLACE(plate, " ", "") = ?', { plate })
     if not row or tonumber(row.character_id) ~= tonumber(char.id) then
-        return nil, 'You do not own this vehicle'
+        return nil, { localeKey = 'vehicles.message.you_do_not_own_this_vehicle' }
     end
     VehicleKeys[plate] = VehicleKeys[plate] or {}
     VehicleKeys[plate][target.id] = true
-    TriggerClientEvent('sunset:client:notify', tonumber(targetId), 'You received vehicle keys', 'success')
+    TriggerClientEvent('sunset:client:notify', tonumber(targetId), exports.sunset_core:TFor(tonumber(targetId), 'vehicles.message.you_received_vehicle_keys'), 'success')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:takeVehicleKeys', function(source, targetId, plate)
     local char = exports.sunset_core:GetCharacter(source)
     local target = exports.sunset_core:GetCharacter(tonumber(targetId))
-    if not char or not target then return nil, 'Player not found' end
+    if not char or not target then return nil, { localeKey = 'vehicles.message.player_not_found' } end
     plate = plateKey(plate)
     local row = MySQL.single.await('SELECT character_id FROM vehicles WHERE REPLACE(plate, " ", "") = ?', { plate })
     if not row or tonumber(row.character_id) ~= tonumber(char.id) then
-        return nil, 'You do not own this vehicle'
+        return nil, { localeKey = 'vehicles.message.you_do_not_own_this_vehicle' }
     end
     if VehicleKeys[plate] then VehicleKeys[plate][target.id] = nil end
-    TriggerClientEvent('sunset:client:notify', tonumber(targetId), 'Your vehicle keys were taken', 'warning')
+    TriggerClientEvent('sunset:client:notify', tonumber(targetId), exports.sunset_core:TFor(tonumber(targetId), 'vehicles.message.your_vehicle_keys_were_taken'), 'warning')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:parkOwnedVehicle', function(source, netId, plate, reportedProps, reportedFuel)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
     local now = GetGameTimer()
-    if now - (ParkRate[source] or 0) < 1500 then return nil, 'Please wait before parking again' end
+    if now - (ParkRate[source] or 0) < 1500 then return nil, { localeKey = 'vehicles.message.please_wait_before_parking_again' } end
     ParkRate[source] = now
 
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid vehicle plate' end
+    if plate == '' then return nil, { localeKey = 'vehicles.message.invalid_vehicle_plate' } end
     local row = MySQL.single.await(
         'SELECT id, props, fuel FROM vehicles WHERE character_id = ? AND REPLACE(UPPER(plate), " ", "") = ?',
         { char.id, plate }
     )
-    if not row then return nil, 'This is not your vehicle' end
+    if not row then return nil, { localeKey = 'vehicles.message.this_is_not_your_vehicle' } end
 
     local ped = GetPlayerPed(source)
     local vehicle = tonumber(netId) and NetworkGetEntityFromNetworkId(tonumber(netId)) or 0
@@ -966,10 +966,10 @@ exports.sunset_core:RegisterCallback('sunset:parkOwnedVehicle', function(source,
         vehicle = ped ~= 0 and GetVehiclePedIsIn(ped, false) or 0
     end
     if vehicle == 0 or GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return nil, 'Sit in the driver seat of your vehicle to park it.'
+        return nil, { localeKey = 'vehicles.message.sit_in_the_driver_seat_of_your_vehicle_to_f63be1' }
     end
     if normalizePlate(GetVehicleNumberPlateText(vehicle)) ~= plate then
-        return nil, 'The vehicle you are driving does not match this ownership record.'
+        return nil, { localeKey = 'vehicles.message.the_vehicle_you_are_driving_does_not_match_this' }
     end
 
     local pos = GetEntityCoords(vehicle)
@@ -981,7 +981,7 @@ exports.sunset_core:RegisterCallback('sunset:parkOwnedVehicle', function(source,
         props.odometer = math.min(requestedOdometer, previousOdometer + 8.0)
     end
     local encodedProps = json.encode(props)
-    if #encodedProps > 32768 then return nil, 'Vehicle data is too large' end
+    if #encodedProps > 32768 then return nil, { localeKey = 'vehicles.message.vehicle_data_is_too_large' } end
 
     -- Parking cannot repair or refuel a vehicle; those have separate paid,
     -- server-authoritative paths.
@@ -994,7 +994,7 @@ exports.sunset_core:RegisterCallback('sunset:parkOwnedVehicle', function(source,
             parked_x = ?, parked_y = ?, parked_z = ?, parked_h = ?
         WHERE id = ? AND character_id = ?
     ]], { encodedProps, fuelValue, engine, body, pos.x, pos.y, pos.z, heading, row.id, char.id })
-    if not changed or changed < 1 then return nil, 'The parking position could not be saved' end
+    if not changed or changed < 1 then return nil, { localeKey = 'vehicles.message.the_parking_position_could_not_be_saved' } end
     return { ok = true, x = pos.x, y = pos.y, z = pos.z, heading = heading }
 end)
 
@@ -1054,7 +1054,7 @@ local function runGiveCar(source, args)
     end
 
     local targetName = exports.sunset_core:GetPlayerDisplayName(target)
-    TriggerClientEvent('sunset:client:notify', target, ('You received a vehicle: %s'):format(model), 'success')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'vehicles.message.you_received_a_vehicle_value', model), 'success')
     notifyPlayer(
         source,
         ('Gave %s to %s (#%d) — stored in Legion garage'):format(model, targetName, target),
@@ -1079,19 +1079,19 @@ function TransferVehicleOwnership(vehicleId, fromCharId, toCharId)
     fromCharId = tonumber(fromCharId)
     toCharId = tonumber(toCharId)
     if not vehicleId or not fromCharId or not toCharId then
-        return false, 'Invalid vehicle transfer.'
+        return false, { localeKey = 'vehicles.message.invalid_vehicle_transfer' }
     end
 
     local row = MySQL.single.await(
         'SELECT id, plate, stored, destroyed FROM vehicles WHERE id = ? AND character_id = ?',
         { vehicleId, fromCharId }
     )
-    if not row then return false, 'Seller no longer owns this vehicle.' end
+    if not row then return false, { localeKey = 'vehicles.message.seller_no_longer_owns_this_vehicle' } end
     if row.destroyed == 1 or row.destroyed == true or row.destroyed == '1' then
-        return false, 'Destroyed vehicles cannot be traded.'
+        return false, { localeKey = 'vehicles.message.destroyed_vehicles_cannot_be_traded' }
     end
     if normalizeStored(row.stored) ~= 1 then
-        return false, 'Only garage-stored vehicles can be traded.'
+        return false, { localeKey = 'vehicles.message.only_garage_stored_vehicles_can_be_traded' }
     end
 
     local entity = findVehicleEntityByPlate(row.plate)
@@ -1103,7 +1103,7 @@ function TransferVehicleOwnership(vehicleId, fromCharId, toCharId)
         'UPDATE vehicles SET character_id = ?, stored = 1 WHERE id = ? AND character_id = ?',
         { toCharId, vehicleId, fromCharId }
     )
-    if changed ~= 1 then return false, 'Vehicle transfer failed.' end
+    if changed ~= 1 then return false, { localeKey = 'vehicles.message.vehicle_transfer_failed' } end
     -- [AUDIT P6-07] Revoke all in-memory key grants on ownership change.
     clearKeysForPlate(row.plate)
     return true

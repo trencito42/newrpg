@@ -213,7 +213,7 @@ const WardrobeUI = {
                 this.buyComplete = true;
                 const text = this._$('#wardrobe-buy-text');
                 if (text) {
-                    text.innerHTML = 'Payment Confirmed!';
+                    text.innerHTML = I18n.t('dynamic.wardrobe.payment_confirmed');
                     text.style.color = '#000';
                 }
                 const btn = this._$('#wardrobe-buy');

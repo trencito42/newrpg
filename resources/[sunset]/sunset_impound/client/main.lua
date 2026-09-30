@@ -61,7 +61,7 @@ RegisterCommand('impound', function(source, args)
         veh = GetClosestVehicle(coords.x, coords.y, coords.z, 10.0, 0, 70)
     end
     if veh == 0 or not DoesEntityExist(veh) then
-        return exports.sunset_ui:Notify('No vehicle nearby to impound.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('impound.message.no_vehicle_nearby_to_impound'), 'error')
     end
 
     local plate = GetVehicleNumberPlateText(veh)
@@ -70,7 +70,7 @@ RegisterCommand('impound', function(source, args)
         vehicleId = Sunset.AwaitCallback('sunset:vehicles:getVehicleIdByPlate', plate)
     end)
     if not vehicleId then
-        return exports.sunset_ui:Notify('Could not identify this vehicle.', 'error')
+        return exports.sunset_ui:Notify(exports.sunset_core:Translate('impound.message.could_not_identify_this_vehicle'), 'error')
     end
 
     local ok, err = Sunset.AwaitCallback('sunset:impound:confiscate', vehicleId, reasonId)

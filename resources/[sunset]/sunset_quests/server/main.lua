@@ -77,9 +77,9 @@ end
 
 function StartQuest(source, questKey)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return false, 'No character' end
+    if not char then return false, { localeKey = 'quests.message.no_character' } end
     local def = Sunset.QuestIndex[questKey]
-    if not def or not def.chain.enabled then return false, 'Unknown quest' end
+    if not def or not def.chain.enabled then return false, { localeKey = 'quests.message.unknown_quest' } end
     local existing = getQuestState(char.id, questKey)
     if existing then return true end -- idempotent
     ensureActiveQuest(char.id)
@@ -185,11 +185,11 @@ exports('GetProgress', GetProgress)
 -- Claim reward atomically through core (INVARIANT M2: money via API + ledger).
 function ClaimReward(source, questKey)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return false, 'No character' end
+    if not char then return false, { localeKey = 'quests.message.no_character' } end
     local st = getQuestState(char.id, questKey)
-    if not st then return false, 'Quest not started.' end
-    if st.status == 'claimed' then return false, 'Reward already claimed.' end
-    if st.status ~= 'complete' then return false, 'Quest not complete yet.' end
+    if not st then return false, { localeKey = 'quests.message.quest_not_started' } end
+    if st.status == 'claimed' then return false, { localeKey = 'quests.message.reward_already_claimed' } end
+    if st.status ~= 'complete' then return false, { localeKey = 'quests.message.quest_not_complete_yet' } end
 
     local def = Sunset.QuestIndex[questKey]
     local reward = def and def.quest.reward or {}
@@ -199,7 +199,7 @@ function ClaimReward(source, questKey)
         "UPDATE character_quests SET status = 'claimed', claimed_at = NOW() WHERE character_id = ? AND quest_key = ? AND status = 'complete'",
         { char.id, questKey })
     if not changed or changed < 1 then
-        return false, 'Reward already claimed.'
+        return false, { localeKey = 'quests.message.reward_already_claimed' }
     end
     st.status = 'claimed'
 

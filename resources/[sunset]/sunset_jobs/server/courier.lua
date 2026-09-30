@@ -64,11 +64,11 @@ end
 local function validateVanRear(source, cfg, vehicleNetId)
     local session = SunsetJobs_GetSession(source)
     local entity = resolveWorkVan(session, cfg, vehicleNetId)
-    if not entity then return false, 'Your assigned delivery van must be nearby' end
+    if not entity then return false, { localeKey = 'jobs.message.your_assigned_delivery_van_must_be_nearby' } end
 
     local rear = getVanRearCoords(entity, cfg.vanRearOffset or -3.2)
     if not SunsetJobs_ValidateCoords(source, rear, cfg.dumpRadius or 3.8) then
-        return false, 'Go to the back of your delivery van'
+        return false, { localeKey = 'jobs.message.go_to_the_back_of_your_delivery_van' }
     end
     return true
 end
@@ -96,19 +96,19 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:pickupWarehousePackage', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE', 'STARTING' })
     if not session then return nil, err end
-    if session.data.stage ~= 'loading' then return nil, 'All packages already loaded' end
-    if session.data.carryingPackage then return nil, 'You are already carrying a package' end
-    if (session.data.loaded or 0) >= (session.data.total or 6) then return nil, 'Van is fully loaded' end
+    if session.data.stage ~= 'loading' then return nil, { localeKey = 'jobs.message.all_packages_already_loaded' } end
+    if session.data.carryingPackage then return nil, { localeKey = 'jobs.message.you_are_already_carrying_a_package' } end
+    if (session.data.loaded or 0) >= (session.data.total or 6) then return nil, { localeKey = 'jobs.message.van_is_fully_loaded' } end
 
     if not playerOnFoot(source) then
-        return nil, 'Pick up packages on foot'
+        return nil, { localeKey = 'jobs.message.pick_up_packages_on_foot' }
     end
 
     local cfg = Sunset.GetJobConfig('courier')
     local pickupPos = cfg.packagePickup or vector3(112.48, 103.98, 81.15)
     local pPos = type(pickupPos) == 'vector4' and vector3(pickupPos.x, pickupPos.y, pickupPos.z) or pickupPos
     if not SunsetJobs_ValidateCoords(source, pPos, cfg.loadingRadius or 3.5) then
-        return nil, 'Go to the package stack at the loading dock'
+        return nil, { localeKey = 'jobs.message.go_to_the_package_stack_at_the_loading_dock' }
     end
 
     if session.state == 'STARTING' then
@@ -123,11 +123,11 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:loadPackageIntoVan', function(source, vehicleNetId)
     local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
     if not session then return nil, err end
-    if session.data.stage ~= 'loading' then return nil, 'All packages already loaded' end
-    if not session.data.carryingPackage then return nil, 'Pick up a package from the dock first' end
+    if session.data.stage ~= 'loading' then return nil, { localeKey = 'jobs.message.all_packages_already_loaded' } end
+    if not session.data.carryingPackage then return nil, { localeKey = 'jobs.message.pick_up_a_package_from_the_dock_first' } end
 
     if not playerOnFoot(source) then
-        return nil, 'Load packages on foot'
+        return nil, { localeKey = 'jobs.message.load_packages_on_foot' }
     end
 
     local cfg = Sunset.GetJobConfig('courier')
@@ -149,16 +149,16 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:deliver', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
     if not session then return nil, err end
-    if not session.data.hasPackage then return nil, 'No package loaded' end
-    if not playerOnFoot(source) then return nil, 'Deliver the package on foot' end
+    if not session.data.hasPackage then return nil, { localeKey = 'jobs.message.no_package_loaded' } end
+    if not playerOnFoot(source) then return nil, { localeKey = 'jobs.message.deliver_the_package_on_foot' } end
 
     local cfg = Sunset.GetJobConfig('courier')
     local idx = session.data.deliveryIndex or 1
     local target = session.data.deliveries[idx]
-    if not target then return nil, 'No delivery assigned' end
+    if not target then return nil, { localeKey = 'jobs.message.no_delivery_assigned' } end
 
     if not SunsetJobs_ValidateCoords(source, target.coords, cfg.deliveryRadius or 3.0) then
-        return nil, 'Not at delivery address'
+        return nil, { localeKey = 'jobs.message.not_at_delivery_address' }
     end
 
     local pay = cfg.payPerPackage or 90

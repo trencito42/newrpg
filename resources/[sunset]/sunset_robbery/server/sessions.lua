@@ -127,42 +127,43 @@ end
 
 function RobberySessions.canStart(source, locationId, skipGates)
     local loc = SunsetRobbery.Locations[locationId]
-    if not loc then return nil, 'Unknown location' end
-    if RobberySessions.bySource[source] then return nil, 'You are already in a robbery' end
+    if not loc then return nil, { localeKey = 'robbery.message.unknown_location' } end
+    if RobberySessions.bySource[source] then return nil, { localeKey = 'robbery.message.you_are_already_in_a_robbery' } end
     if RobberySessions.locationBusy[locationId] and RobberySessions.locationBusy[locationId] ~= source then
-        return nil, 'This store is already being hit'
+        return nil, { localeKey = 'robbery.message.this_store_is_already_being_hit' }
     end
     local char = RobberyAdapter.getCharacter(source)
-    if not char or not tonumber(char.id) then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not char or not tonumber(char.id) then return nil, { localeKey = 'robbery.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if skipGates or RobberyAdapter.isAdmin(source) then return loc, nil, char end
-    if RobberyAdapter.isDead(source) then return nil, 'You cannot start a robbery right now' end
-    if RobberyAdapter.isPoliceRestricted(source) then return nil, 'Law enforcement cannot commit robberies' end
-    if RobberyAdapter.isJailed(source) then return nil, 'You cannot start a robbery while in custody' end
-    if RobberyAdapter.isWanted(source) then return nil, 'You cannot start a robbery while wanted' end
+    if RobberyAdapter.isDead(source) then return nil, { localeKey = 'robbery.message.you_cannot_start_a_robbery_right_now' } end
+    if RobberyAdapter.isPoliceRestricted(source) then return nil, { localeKey = 'robbery.message.law_enforcement_cannot_commit_robberies' } end
+    if RobberyAdapter.isJailed(source) then return nil, { localeKey = 'robbery.message.you_cannot_start_a_robbery_while_in_custody' } end
+    if RobberyAdapter.isWanted(source) then return nil, { localeKey = 'robbery.message.you_cannot_start_a_robbery_while_wanted' } end
     local now = os.time()
     local characterId = tonumber(char.id)
     local storedPlayerCd = RobberyAdapter.getCooldown('character', characterId)
-    if storedPlayerCd == nil then return nil, 'The robbery ledger is unavailable. Try again shortly.' end
+    if storedPlayerCd == nil then return nil, { localeKey = 'robbery.message.the_robbery_ledger_is_unavailable_try_again_shortly' } end
     local pcd = math.max(RobberySessions.playerCd[characterId] or 0, storedPlayerCd)
     RobberySessions.playerCd[characterId] = pcd
-    if now < pcd then return nil, ('You must wait %d min before another robbery'):format(math.ceil((pcd - now) / 60)) end
+    if now < pcd then return nil, { localeKey = 'robbery.message.you_must_wait_value_min_before_another_robbery', formatArgs = { math.ceil((pcd - now) / 60) } } end
     local storedLocationCd = RobberyAdapter.getCooldown('location', locationId)
-    if storedLocationCd == nil then return nil, 'The robbery ledger is unavailable. Try again shortly.' end
+    if storedLocationCd == nil then return nil, { localeKey = 'robbery.message.the_robbery_ledger_is_unavailable_try_again_shortly' } end
     local lcd = math.max(RobberySessions.locationCd[locationId] or 0, storedLocationCd)
     RobberySessions.locationCd[locationId] = lcd
-    if now < lcd then return nil, ('This store is on lockdown for %d min'):format(math.ceil((lcd - now) / 60)) end
+    if now < lcd then return nil, { localeKey = 'robbery.message.this_store_is_on_lockdown_for_value_min', formatArgs = { math.ceil((lcd - now) / 60) } } end
     local needPolice = loc.minPolice or SunsetRobbery.MinPolice or 1
     if RobberyAdapter.policeCount() < needPolice and SunsetRobbery.RequireRealPolice == true then
-        return nil, ('Need at least %d police on duty'):format(needPolice)
+        return nil, { localeKey = 'robbery.message.need_at_least_value_police_on_duty', formatArgs = { needPolice } }
     end
     if not RobberyAdapter.hasItem(source, SunsetRobbery.RequiredItem, 1) then
         local def = Sunset.Items and Sunset.Items[SunsetRobbery.RequiredItem]
-        return nil, ('You need a %s in your inventory to bypass the store security.'):format(
-            (def and def.label) or SunsetRobbery.RequiredItem or 'required tool')
+        return nil, { localeKey = 'robbery.message.you_need_a_value_in_your_inventory_to_bypass_the_store_security', formatArgs = {
+            (def and def.label) or SunsetRobbery.RequiredItem or 'required tool'
+        } }
     end
     local cost = SunsetRobbery.RobPointsToStart or 1
     if RobberyAdapter.getRobPoints(source) < cost then
-        return nil, ('You need %d rob point(s). Earn them at payday.'):format(cost)
+        return nil, { localeKey = 'robbery.message.you_need_value_rob_point_s_earn_them_at', formatArgs = { cost } }
     end
     return loc, nil, char
 end
@@ -278,9 +279,9 @@ end
 
 function RobberySessions.begin(source, locationId, skipGates)
     if RobberySessions.starting[source] or RobberySessions.bySource[source] then
-        return nil, 'You are already starting a robbery'
+        return nil, { localeKey = 'robbery.message.you_are_already_starting_a_robbery' }
     end
-    if RobberySessions.locationBusy[locationId] then return nil, 'This store is already being hit' end
+    if RobberySessions.locationBusy[locationId] then return nil, { localeKey = 'robbery.message.this_store_is_already_being_hit' } end
     RobberySessions.starting[source] = true
     RobberySessions.locationBusy[locationId] = source
 
@@ -294,20 +295,20 @@ function RobberySessions.begin(source, locationId, skipGates)
     if not GetPlayerName(source) or not liveCharacter or tonumber(liveCharacter.id) ~= tonumber(char.id) then
         RobberySessions.starting[source] = nil
         if RobberySessions.locationBusy[locationId] == source then RobberySessions.locationBusy[locationId] = nil end
-        return nil, 'Your connection changed while the robbery was starting. Try again.'
+        return nil, { localeKey = 'robbery.message.your_connection_changed_while_the_robbery_was_starting_try' }
     end
     if not skipGates and not RobberyAdapter.isAdmin(source) then
         if not RobberyAdapter.takeRobPoints(source, SunsetRobbery.RobPointsToStart or 1) then
             RobberySessions.starting[source] = nil
             if RobberySessions.locationBusy[locationId] == source then RobberySessions.locationBusy[locationId] = nil end
-            return nil, 'Not enough rob points'
+            return nil, { localeKey = 'robbery.message.not_enough_rob_points' }
         end
         if SunsetRobbery.ConsumeRequiredItemOnStart then
             if not RobberyAdapter.removeItem(source, SunsetRobbery.RequiredItem, 1) then
                 RobberyAdapter.refundRobPoints(source, SunsetRobbery.RobPointsToStart or 1)
                 RobberySessions.starting[source] = nil
                 if RobberySessions.locationBusy[locationId] == source then RobberySessions.locationBusy[locationId] = nil end
-                return nil, 'You need a lockpick to bypass the store security.'
+                return nil, { localeKey = 'robbery.message.you_need_a_lockpick_to_bypass_the_store_security' }
             end
         end
     end
@@ -341,14 +342,14 @@ function RobberySessions.begin(source, locationId, skipGates)
         end
         RobberySessions.starting[source] = nil
         if RobberySessions.locationBusy[locationId] == source then RobberySessions.locationBusy[locationId] = nil end
-        return nil, 'The robbery ledger is unavailable. Your rob point was returned; try again.'
+        return nil, { localeKey = 'robbery.message.the_robbery_ledger_is_unavailable_your_rob_point_was' }
     end
     liveCharacter = RobberyAdapter.getCharacter(source)
     if not GetPlayerName(source) or not liveCharacter or tonumber(liveCharacter.id) ~= session.characterId then
         RobberyAdapter.finishRun(session, 'cancelled')
         RobberySessions.starting[source] = nil
         if RobberySessions.locationBusy[locationId] == source then RobberySessions.locationBusy[locationId] = nil end
-        return nil, 'Your connection changed while the robbery was starting. Reconnect and try again.'
+        return nil, { localeKey = 'robbery.message.your_connection_changed_while_the_robbery_was_starting_reconnect' }
     end
     RobberySessions.bySource[source] = session
     RobberySessions.locationBusy[locationId] = source

@@ -19,6 +19,7 @@ shared_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/nui_locale.lua',
     'client/baseline.lua',
     'client/apply.lua',
     'client/exhaust_ptfx.lua',
@@ -49,6 +50,7 @@ dependencies {
     'sunset_vehicles',
     'sunset_factions',
     'sunset_admin',
+    'sunset_ui',
 }
 
 exports {

@@ -180,7 +180,7 @@ local function completeTest(licenseType, extra)
     if not granted then
         return failTest(gErr)
     end
-    notify('License issued — check /licenses.', 'success')
+    notify(exports.sunset_core:Translate('licenses.message.license_issued_check_licenses'), 'success')
     CreateThread(function()
         ShowLicenseTestHud({
             licenseType = licenseType,
@@ -856,7 +856,7 @@ end)
 local function runCheckpointTest(licenseType, cfg, facility)
     local cpIndex = 1
     refreshCheckpointNavigation(cfg, 1, 2)
-    notify('Complete all checkpoints, then return to the finish marker.', 'info')
+    notify(exports.sunset_core:Translate('licenses.message.complete_all_checkpoints_then_return_to_the_finish_marker'), 'info')
 
     if licenseType ~= 'driver' then
         local model = (facility and facility.testVehicle) or cfg.vehicle or 'blista'

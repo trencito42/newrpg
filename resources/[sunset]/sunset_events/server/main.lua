@@ -174,25 +174,25 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:events:join', function(source)
     if not ActiveEvent then
-        return nil, 'No event is currently active.'
+        return nil, { localeKey = 'events.message.no_event_is_currently_active' }
     end
 
     if ActiveEvent.type == 'race_night' then
-        return nil, 'Race Night participation is through racing. Press E at the race hub to join a race.'
+        return nil, { localeKey = 'events.message.race_night_participation_is_through_racing_press_e_at' }
     end
 
     if ActiveEvent.type == 'fishing_tournament' then
         if GetResourceState('sunset_fishing_tournament') == 'started' then
             return exports.sunset_fishing_tournament:JoinTournament(source)
         end
-        return nil, 'Fishing Tournament system is currently unavailable.'
+        return nil, { localeKey = 'events.message.fishing_tournament_system_is_currently_unavailable' }
     end
 
     local location = ActiveEvent.location
     if location then
         local ped = GetPlayerPed(source)
         if not ped or ped == 0 or #(GetEntityCoords(ped) - location) > 50.0 then
-            return nil, 'You must be at the event location to participate.'
+            return nil, { localeKey = 'events.message.you_must_be_at_the_event_location_to_participate' }
         end
     end
 
@@ -223,7 +223,7 @@ end)
 
 RegisterCommand('eventstart', function(source, args)
     if source ~= 0 and not exports.sunset_admin:IsAdmin(source, 3) then
-        TriggerClientEvent('sunset:client:notify', source, 'Requires Admin Level 3.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'events.message.requires_admin_level_3'), 'error')
         return
     end
 
@@ -262,7 +262,7 @@ end, false)
 
 RegisterCommand('eventend', function(source)
     if source ~= 0 and not exports.sunset_admin:IsAdmin(source, 3) then
-        TriggerClientEvent('sunset:client:notify', source, 'Requires Admin Level 3.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'events.message.requires_admin_level_3'), 'error')
         return
     end
 

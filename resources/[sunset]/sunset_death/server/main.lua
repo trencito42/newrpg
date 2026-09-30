@@ -32,7 +32,7 @@ end
 
 local function respawnPlayer(source, bill)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return false, 'No character' end
+    if not char then return false, { localeKey = 'death.message.no_character' } end
 
     bill = bill or 0
     if bill > 0 then
@@ -58,10 +58,10 @@ end
 function RevivePlayer(targetId)
     targetId = tonumber(targetId)
     if not targetId then
-        return false, 'Usage: /revive [player id]'
+        return false, { localeKey = 'death.message.usage_revive_player_id' }
     end
     if not GetPlayerName(targetId) then
-        return false, 'Player not found — check TAB for server ID'
+        return false, { localeKey = 'death.message.player_not_found_check_tab_for_server_id' }
     end
 
     local char = exports.sunset_core:GetCharacter(targetId)
@@ -81,7 +81,7 @@ end
 function ClearDownedForCustody(targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return false, 'Player not found'
+        return false, { localeKey = 'death.message.player_not_found' }
     end
 
     local char = exports.sunset_core:GetCharacter(targetId)
@@ -97,10 +97,10 @@ end
 function StabilizePlayer(targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return false, 'Player not found'
+        return false, { localeKey = 'death.message.player_not_found' }
     end
     if not Downed[targetId] then
-        return false, 'Target is not dead'
+        return false, { localeKey = 'death.message.target_is_not_dead' }
     end
     return true
 end
@@ -202,7 +202,7 @@ RegisterNetEvent('sunset:death:playerKilled', function(victimId)
     if not recorded or recorded.attacker ~= killer then return end
 
     MurderWindow[victimId] = { killerId = killer, expires = os.time() + 60 }
-    TriggerClientEvent('sunset:client:notify', victimId, 'You were attacked! You have 60 seconds to use /112 to call emergency services and report your attacker.', 'error', 10000)
+    TriggerClientEvent('sunset:client:notify', victimId, exports.sunset_core:TFor(victimId, 'death.message.you_were_attacked_you_have_60_seconds_to_use'), 'error', 10000)
     SetTimeout(61000, function()
         local pending = MurderWindow[victimId]
         if pending and pending.killerId == killer then
@@ -215,7 +215,7 @@ RegisterNetEvent('sunset:death:call112', function()
     local src = source
     local pending = MurderWindow[src]
     if not pending or os.time() > pending.expires then
-        TriggerClientEvent('sunset:client:notify', src, 'No emergency report window is open.', 'error')
+        TriggerClientEvent('sunset:client:notify', src, exports.sunset_core:TFor(src, 'death.message.no_emergency_report_window_is_open'), 'error')
         return
     end
 
@@ -242,7 +242,7 @@ RegisterNetEvent('sunset:death:call112', function()
     -- 2. Report attacker for first-degree murder & alert police
     if killer and GetPlayerName(killer) then
         TriggerEvent('sunset:police:autoWanted', killer, 'murder', 'First-degree murder (Reported via 112)')
-        TriggerClientEvent('sunset:client:notify', killer, 'A 112 emergency call reported your crime! You are now WANTED ★5 for murder.', 'error', 12000)
+        TriggerClientEvent('sunset:client:notify', killer, exports.sunset_core:TFor(killer, 'death.message.a_112_emergency_call_reported_your_crime_you_are'), 'error', 12000)
 
         if GetResourceState('sunset_dispatch') == 'started' then
             pcall(function()
@@ -284,7 +284,7 @@ RegisterNetEvent('sunset:death:call112', function()
         end
     end
 
-    TriggerClientEvent('sunset:client:notify', src, '112 received — Medic & Police dispatched! Attacker reported for murder.', 'success', 8000)
+    TriggerClientEvent('sunset:client:notify', src, exports.sunset_core:TFor(src, 'death.message.112_received_medic_police_dispatched_attacker_reported_for_murder'), 'success', 8000)
 end)
 
 AddEventHandler('playerDropped', function()
@@ -295,13 +295,13 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:revivePlayer', function(source, targetId)
     targetId = tonumber(targetId)
-    if not targetId then return nil, 'Usage: /revive [player id]' end
+    if not targetId then return nil, { localeKey = 'death.message.usage_revive_player_id' } end
 
     local isAdmin = false
     pcall(function() isAdmin = exports.sunset_admin:IsAdmin(source, 2) end)
     local isEms = false
     pcall(function() isEms = exports.sunset_factions:HasFactionPerm(source, 'revive') end)
-    if not isAdmin and not isEms then return nil, 'Not on duty or no permission' end
+    if not isAdmin and not isEms then return nil, { localeKey = 'death.message.not_on_duty_or_no_permission' } end
 
     local ok, err = RevivePlayer(targetId)
     if not ok then return nil, err end

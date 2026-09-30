@@ -27,25 +27,25 @@ local DynoSessions = {}
 
 local function activeVehicle(source, plate, requireShop)
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return nil, 'Player entity is unavailable' end
+    if not ped or ped == 0 then return nil, { localeKey = 'tuning.message.player_entity_is_unavailable' } end
     local veh = GetVehiclePedIsIn(ped, false)
-    if not veh or veh == 0 or GetEntityType(veh) ~= 2 then return nil, 'Sit in the driver seat of the vehicle' end
-    if GetPedInVehicleSeat(veh, -1) ~= ped then return nil, 'Only the driver can tune this vehicle' end
-    if normalizePlate(GetVehicleNumberPlateText(veh)) ~= plate then return nil, 'Vehicle plate changed; reopen the tuning menu' end
+    if not veh or veh == 0 or GetEntityType(veh) ~= 2 then return nil, { localeKey = 'tuning.message.sit_in_the_driver_seat_of_the_vehicle' } end
+    if GetPedInVehicleSeat(veh, -1) ~= ped then return nil, { localeKey = 'tuning.message.only_the_driver_can_tune_this_vehicle' } end
+    if normalizePlate(GetVehicleNumberPlateText(veh)) ~= plate then return nil, { localeKey = 'tuning.message.vehicle_plate_changed_reopen_the_tuning_menu' } end
     if requireShop then
         local pos = GetEntityCoords(veh)
         local close = false
         for _, shop in ipairs(SunsetTuning.Shops or {}) do
             if #(pos - shop.coords) <= (SunsetTuning.InteractRadius or 6.0) + 4.0 then close = true break end
         end
-        if not close then return nil, 'Bring the vehicle inside a tuning shop' end
+        if not close then return nil, { localeKey = 'tuning.message.bring_the_vehicle_inside_a_tuning_shop' } end
     end
     return veh
 end
 
 local function saveTuneToVehicle(charId, plate, tune, cosmetics)
     local row = getOwnedVehicleRow(charId, plate)
-    if not row then return false, 'Vehicle not found in your garage', plate end
+    if not row then return false, { localeKey = 'tuning.message.vehicle_not_found_in_your_garage' }, plate end
 
     local props = decodeProps(row.props)
     if SunsetTuning.IsStockTune(tune) then
@@ -74,25 +74,25 @@ local function saveTuneToVehicle(charId, plate, tune, cosmetics)
         'UPDATE vehicles SET props = ?, plate = ? WHERE id = ? AND character_id = ?',
         { json.encode(props), newPlate, row.id, charId }
     )
-    if not changed or changed < 1 then return false, 'Vehicle changed while the tune was being saved', plate end
+    if not changed or changed < 1 then return false, { localeKey = 'tuning.message.vehicle_changed_while_the_tune_was_being_saved' }, plate end
     return true, nil, newPlate
 end
 
 exports.sunset_core:RegisterCallback('sunset:tuning:getTune', function(source, plate, modelName)
     local char = getCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'tuning.message.no_character' } end
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid plate' end
+    if plate == '' then return nil, { localeKey = 'tuning.message.invalid_plate' } end
     local veh, vehicleError = activeVehicle(source, plate, false)
     if not veh then return nil, vehicleError end
 
     local row = getOwnedVehicleRow(char.id, plate)
-    if not row then return nil, 'Not your vehicle' end
+    if not row then return nil, { localeKey = 'tuning.message.not_your_vehicle' } end
 
     modelName = tostring(modelName or row.model or ''):lower()
     local caps = SunsetTuning.ProfileResolver.Resolve(modelName, nil)
     if not caps.supported then
-        return nil, 'ECU tuning is not supported for this vehicle.'
+        return nil, { localeKey = 'tuning.message.ecu_tuning_is_not_supported_for_this_vehicle' }
     end
 
     local props = decodeProps(row.props)
@@ -118,14 +118,14 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, plate, tune, flash, cosmetics)
     local char = getCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'tuning.message.no_character' } end
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid plate' end
+    if plate == '' then return nil, { localeKey = 'tuning.message.invalid_plate' } end
     local veh, vehicleError = activeVehicle(source, plate, true)
     if not veh then return nil, vehicleError end
 
     local row = getOwnedVehicleRow(char.id, plate)
-    if not row then return nil, 'Not your vehicle' end
+    if not row then return nil, { localeKey = 'tuning.message.not_your_vehicle' } end
 
     local modelName = tostring(row.model or ''):lower()
     local caps = SunsetTuning.ProfileResolver.Resolve(modelName, nil)
@@ -136,7 +136,7 @@ exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, 
         local valid, err = SunsetTuning.TuneValidator.Validate(sanitized, caps)
         if not valid then return nil, err end
     else
-        return nil, 'Invalid tune data'
+        return nil, { localeKey = 'tuning.message.invalid_tune_data' }
     end
     local props = decodeProps(row.props)
     local oldTune = props.ecu or SunsetTuning.StockTune()
@@ -154,7 +154,7 @@ exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, 
         elseif exports.sunset_core:RemoveMoney(source, 'cash', cost, 'ecu_tune_save') then
             paidAccount = 'cash'
         else
-            return nil, ('You need $%d in bank or cash to install these modifications.'):format(cost)
+            return nil, { localeKey = 'tuning.message.you_need_value_in_bank_or_cash_to_install', formatArgs = { cost } }
         end
     end
 
@@ -210,18 +210,18 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:tuning:beginDyno', function(source, plate)
     local char = getCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'tuning.message.no_character' } end
     plate = normalizePlate(plate)
-    if plate == '' then return nil, 'Invalid plate' end
+    if plate == '' then return nil, { localeKey = 'tuning.message.invalid_plate' } end
     local veh, vehicleError = activeVehicle(source, plate, true)
     if not veh then return nil, vehicleError end
 
     local row = getOwnedVehicleRow(char.id, plate)
-    if not row then return nil, 'Not your vehicle' end
-    if DynoSessions[source] then return nil, 'A dyno run is already active' end
+    if not row then return nil, { localeKey = 'tuning.message.not_your_vehicle' } end
+    if DynoSessions[source] then return nil, { localeKey = 'tuning.message.a_dyno_run_is_already_active' } end
 
     if not exports.sunset_core:RemoveMoney(source, 'bank', SunsetTuning.DynoCost, 'Dyno run') then
-        return nil, ('Need $%d in bank for dyno'):format(SunsetTuning.DynoCost)
+        return nil, { localeKey = 'tuning.message.need_value_in_bank_for_dyno', formatArgs = { SunsetTuning.DynoCost } }
     end
 
     local token = ('%d:%d:%d'):format(source, os.time(), math.random(100000, 999999))
@@ -240,16 +240,16 @@ end)
 exports.sunset_core:RegisterCallback('sunset:tuning:finishDyno', function(source, token, hp, torque)
     local session = DynoSessions[source]
     DynoSessions[source] = nil
-    if not session or session.token ~= tostring(token or '') then return nil, 'Dyno session is not valid' end
+    if not session or session.token ~= tostring(token or '') then return nil, { localeKey = 'tuning.message.dyno_session_is_not_valid' } end
     local elapsed = os.time() - session.startedAt
-    if elapsed < 8 or elapsed > 45 then return nil, 'Dyno run timing is invalid' end
+    if elapsed < 8 or elapsed > 45 then return nil, { localeKey = 'tuning.message.dyno_run_timing_is_invalid' } end
     local plate = session.plate
     local veh, vehicleError = activeVehicle(source, plate, true)
     if not veh then return nil, vehicleError end
     local char = getCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'tuning.message.no_character' } end
     local row = getOwnedVehicleRow(char.id, plate)
-    if not row then return nil, 'Not your vehicle' end
+    if not row then return nil, { localeKey = 'tuning.message.not_your_vehicle' } end
 
     local props = decodeProps(row.props)
     local tune = SunsetTuning.SanitizeTune(props.ecu)

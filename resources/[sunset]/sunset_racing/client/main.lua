@@ -61,7 +61,7 @@ local isRacingUiOpen = false
 openRaceUI = function()
     local status = Sunset.AwaitCallback('sunset:racing:status')
     if not status then
-        exports.sunset_ui:Notify('Could not load race status.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.could_not_load_race_status'), 'error')
         return
     end
     isRacingUiOpen = true
@@ -267,11 +267,11 @@ local function validateVehicleForRace()
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     if veh == 0 then
-        exports.sunset_ui:Notify('You must be inside a vehicle at the Race Hub.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.you_must_be_inside_a_vehicle_at_the_race'), 'error')
         return false
     end
     if GetPedInVehicleSeat(veh, -1) ~= ped then
-        exports.sunset_ui:Notify('You must be the driver of the vehicle.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.you_must_be_the_driver_of_the_vehicle'), 'error')
         return false
     end
     return true
@@ -286,7 +286,7 @@ AddEventHandler('sunset:nui:racingJoin', function(data)
     data = type(data) == 'table' and data or {}
     local routeId = tostring(data.routeId or '')
     if routeId == '' then
-        exports.sunset_ui:Notify('No route selected.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.no_route_selected'), 'error')
         return
     end
     if not validateVehicleForRace() then return end
@@ -307,7 +307,7 @@ AddEventHandler('sunset:nui:racingStartSolo', function(data)
     data = type(data) == 'table' and data or {}
     local routeId = tostring(data.routeId or '')
     if routeId == '' then
-        exports.sunset_ui:Notify('No route selected.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.no_route_selected'), 'error')
         return
     end
     if not validateVehicleForRace() then return end
@@ -326,7 +326,7 @@ AddEventHandler('sunset:nui:racingStartMulti', function(data)
     data = type(data) == 'table' and data or {}
     local routeId = tostring(data.routeId or '')
     if routeId == '' then
-        exports.sunset_ui:Notify('No route selected.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.no_route_selected'), 'error')
         return
     end
     if not validateVehicleForRace() then return end
@@ -363,7 +363,7 @@ end)
 
 RegisterCommand('quitrace', function()
     if not raceActive then
-        exports.sunset_ui:Notify('You are not currently in an active race.', 'info')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.you_are_not_currently_in_an_active_race'), 'info')
         return
     end
     CreateThread(function()
@@ -375,7 +375,7 @@ RegisterCommand('quitrace', function()
         clearRaceBlips()
         exports.sunset_ui:Send('racingHudHide', {})
         if ok then
-            exports.sunset_ui:Notify('Race abandoned.', 'info')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.race_abandoned'), 'info')
         else
             exports.sunset_ui:Notify(err or 'Race cleared.', 'info')
         end

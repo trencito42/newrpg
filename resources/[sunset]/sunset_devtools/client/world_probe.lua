@@ -78,7 +78,7 @@ end
 function DevProbe.start()
     if isProbeActive then return end
     isProbeActive = true
-    exports.sunset_ui:Notify('World Probe active — aim and look. /worldprobe to exit.', 'info', 5000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('devtools.message.world_probe_active_aim_and_look_worldprobe_to_exit'), 'info', 5000)
 
     CreateThread(function()
         local lastHitCoords = nil
@@ -125,7 +125,7 @@ function DevProbe.start()
                     lastHitCoords.x, lastHitCoords.y, lastHitCoords.z, devH)
                 SetClipboardText(v4)
                 print(('^2[devtools] Copied: %s^7'):format(v4))
-                exports.sunset_ui:Notify('Copied: ' .. v4, 'success', 4000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('devtools.message.copied') .. v4, 'success', 4000)
             end
 
             -- Toggle off with /worldprobe again (handled via command) or ESC
@@ -134,7 +134,7 @@ function DevProbe.start()
             end
         end
 
-        exports.sunset_ui:Notify('World Probe closed.', 'info', 2000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('devtools.message.world_probe_closed'), 'info', 2000)
     end)
 end
 

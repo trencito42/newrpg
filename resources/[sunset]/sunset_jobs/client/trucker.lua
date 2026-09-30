@@ -153,7 +153,7 @@ end
 local function recoverTrailer()
     -- Only valid on trailer routes (e.g. phantom/fuel routes)
     if JC.sessionData and JC.sessionData.hasTrailer == false then
-        return JC.notify('This truck does not use a trailer.', 'info')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.this_truck_does_not_use_a_trailer'), 'info')
     end
     local recovery, err = Sunset.AwaitCallback('sunset:jobs:recoverTrailer')
     if not recovery then
@@ -176,10 +176,10 @@ local function recoverTrailer()
     local truck = NetworkGetEntityFromNetworkId(recovery.truckNetId or 0)
     local trailer = NetworkGetEntityFromNetworkId(recovery.trailerNetId or 0)
     if truck == 0 or trailer == 0 or not DoesEntityExist(truck) or not DoesEntityExist(trailer) then
-        return JC.notify('Could not find your assigned truck or trailer', 'error')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.could_not_find_your_assigned_truck_or_trailer'), 'error')
     end
     if not requestControl(trailer) then
-        return JC.notify('Could not take control of the trailer — try again', 'error')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.could_not_take_control_of_the_trailer_try_again'), 'error')
     end
 
     SetVehicleHandbrake(truck, true)
@@ -203,7 +203,7 @@ local function recoverTrailer()
     local dist = #(GetEntityCoords(truck) - GetEntityCoords(trailer))
     local recovered = isAttached or (attached and (attachedEntity == trailer or dist <= 20.0)) or dist <= 16.0
     if not recovered then
-        return JC.notify('Trailer is upright but could not attach automatically — reverse into it', 'warning')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.trailer_is_upright_but_could_not_attach_automatically_reverse'), 'warning')
     end
     TriggerServerEvent('sunset:jobs:syncTrailerStatus', true)
     JC.notify(('Trailer recovered and attached. %d recoveries remain this shift.'):format(
@@ -237,7 +237,7 @@ local function startTrucker(selectedRouteIdx)
     local truckModel = data.truckModel or cfg.truckModel
     local truck = JC.spawnVehicle(truckModel, cfg.depot.spawn, true)
     if not truck then
-        JC.notify('Could not spawn the truck — try again', 'error')
+        JC.notify(exports.sunset_core:Translate('jobs.message.could_not_spawn_the_truck_try_again'), 'error')
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
         return
     end
@@ -251,7 +251,7 @@ local function startTrucker(selectedRouteIdx)
         if not trailer then
             JC.deleteVehicles()
             Sunset.AwaitCallback('sunset:jobs:cancelWork')
-            JC.notify('Could not create the assigned trailer — try again', 'error')
+            JC.notify(exports.sunset_core:Translate('jobs.message.could_not_create_the_assigned_trailer_try_again'), 'error')
             return
         end
     end
@@ -309,7 +309,7 @@ local function startTrucker(selectedRouteIdx)
     JC.setWaypoint(pickup)
     setTruckerCheckpoint(pickup, 255, 165, 0)
     JC.showObjective('Pick up your trailer', 'Drive to the trailer yard and back up to attach the tanker', 30)
-    JC.notify('Drive to the trailer yard and hook up your tanker trailer.', 'info', 8000)
+    JC.notify(exports.sunset_core:Translate('jobs.message.drive_to_the_trailer_yard_and_hook_up_your'), 'info', 8000)
 
     -- Job loop: pickup → delivery → return depot
     CreateThread(function()
@@ -353,7 +353,7 @@ local function startTrucker(selectedRouteIdx)
                                 JC.setWaypoint(result.delivery)
                                 setTruckerCheckpoint(delivery, 46, 204, 113)
                                 JC.showObjective('Deliver cargo', 'Follow the GPS to: ' .. (result.label or 'destination'), 30)
-                                JC.notify('Trailer attached! Deliver to: ' .. (result.label or 'destination') .. '. Follow the map.', 'success', 8000)
+                                JC.notify(exports.sunset_core:Translate('jobs.message.trailer_attached_deliver_to') .. (result.label or 'destination') .. '. Follow the map.', 'success', 8000)
                             else
                                 JC.notify(pickErr or 'Could not confirm pickup', 'error')
                             end
@@ -493,7 +493,7 @@ local function startTrucker(selectedRouteIdx)
                                 JC.setWaypoint(bay)
                                 setTruckerCheckpoint(bay, 255, 165, 0)
                                 JC.showObjective('Park in Bay', 'Reverse trailer into the glowing box behind the station for 2X BONUS', 75)
-                                JC.notify('Manual parking mode activated! Reverse and align your trailer within the lit zone for a 2X BONUS.', 'info', 7000)
+                                JC.notify(exports.sunset_core:Translate('jobs.message.manual_parking_mode_activated_reverse_and_align_your_trailer'), 'info', 7000)
                             end
                         end
                     end
@@ -541,7 +541,7 @@ exports('StartTrucker', startTrucker)
 
 RegisterCommand('truckroute', function()
     if JC.jobId ~= 'trucker' or JC.state == 'IDLE' or not JC.sessionData then
-        return JC.notify('You are not currently on a trucker shift.', 'info')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.you_are_not_currently_on_a_trucker_shift'), 'info')
     end
     local cfg = Sunset.GetJobConfig('trucker')
     local session = JC.sessionData
@@ -554,7 +554,7 @@ RegisterCommand('truckroute', function()
         SetBlipRoute(JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard'), true)
         JC.setWaypoint(p)
         setTruckerCheckpoint(p, 255, 165, 0)
-        JC.notify('GPS refreshed to trailer yard.', 'success')
+        JC.notify(exports.sunset_core:Translate('jobs.message.gps_refreshed_to_trailer_yard'), 'success')
     elseif stage == 'to_delivery' then
         local d = routePoint(session, 'delivery')
         if d then
@@ -564,7 +564,7 @@ RegisterCommand('truckroute', function()
             SetBlipRouteColour(delivBlip, 2)
             JC.setWaypoint(d)
             setTruckerCheckpoint(d, 46, 204, 113)
-            JC.notify('GPS route refreshed to: ' .. (session.label or 'Destination'), 'success')
+            JC.notify(exports.sunset_core:Translate('jobs.message.gps_route_refreshed_to') .. (session.label or 'Destination'), 'success')
         end
     elseif stage == 'return_depot' and cfg and cfg.depot then
         JC.clearBlips()
@@ -573,7 +573,7 @@ RegisterCommand('truckroute', function()
         SetBlipRouteColour(depBlip, 3)
         JC.setWaypoint(cfg.depot.coords)
         setTruckerCheckpoint(cfg.depot.coords, 52, 152, 219)
-        JC.notify('GPS route refreshed to Trucker Depot.', 'success')
+        JC.notify(exports.sunset_core:Translate('jobs.message.gps_route_refreshed_to_trucker_depot'), 'success')
     end
 end, false)
 TriggerEvent('chat:addSuggestion', '/truckroute', 'Refresh GPS route to current delivery destination or depot')
@@ -595,7 +595,7 @@ local function teleportRig(targetArg)
     end
 
     if not truck or truck == 0 or not DoesEntityExist(truck) then
-        return JC.notify('You must be inside a truck or have an active work truck', 'error')
+        return JC.notify(exports.sunset_core:Translate('jobs.message.you_must_be_inside_a_truck_or_have_an'), 'error')
     end
 
     local destCoords = nil
@@ -615,7 +615,7 @@ local function teleportRig(targetArg)
     elseif lowerArg == 'wp' or lowerArg == 'waypoint' then
         local blip = GetFirstBlipInfoId(8)
         if not DoesBlipExist(blip) then
-            return JC.notify('No GPS waypoint set on map. Place a waypoint first.', 'error')
+            return JC.notify(exports.sunset_core:Translate('jobs.message.no_gps_waypoint_set_on_map_place_a_waypoint'), 'error')
         end
         local wp = GetBlipInfoIdCoord(blip)
         destCoords = vector3(wp.x, wp.y, wp.z)
@@ -660,7 +660,7 @@ local function teleportRig(targetArg)
             destCoords = vector3(wp.x, wp.y, wp.z)
             label = 'Map Waypoint'
         else
-            return JC.notify('No active trucker objective or waypoint found. Usage: /tptruck [wp|1-5|pickup|delivery|depot]', 'error')
+            return JC.notify(exports.sunset_core:Translate('jobs.message.no_active_trucker_objective_or_waypoint_found_usage_tptruck'), 'error')
         end
     end
 

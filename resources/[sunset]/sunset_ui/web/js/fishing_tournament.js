@@ -65,7 +65,7 @@
             }
             if (qualEl) {
                 if (data.qualified) {
-                    qualEl.textContent = 'QUALIFIED';
+                    qualEl.textContent = I18n.t('dynamic.fishing_tournament.qualified');
                     qualEl.className = 'ft-hud__qual-badge qualified';
                 } else {
                     const count = data.fishCount || 0;
@@ -77,16 +77,16 @@
             if (leaderEl) {
                 if (data.leaderName) {
                     const lkg = typeof data.leaderWeight === 'number' ? data.leaderWeight.toFixed(1) : '0.0';
-                    leaderEl.textContent = `Leader: ${data.leaderName} (${lkg} kg)`;
+                    leaderEl.textContent = I18n.t('dynamic.fishing_tournament.leader_value0_value1_kg', { value0: data.leaderName, value1: lkg });
                 } else {
-                    leaderEl.textContent = 'Leader: --';
+                    leaderEl.textContent = I18n.t('dynamic.fishing_tournament.leader');
                 }
             }
             if (biggestEl) {
                 if (data.biggestFish && data.biggestFish.weight > 0) {
-                    biggestEl.textContent = `Biggest: ${data.biggestFish.weight.toFixed(1)} kg`;
+                    biggestEl.textContent = I18n.t('dynamic.fishing_tournament.biggest_value0_kg', { value0: data.biggestFish.weight.toFixed(1) });
                 } else {
-                    biggestEl.textContent = 'Biggest: --';
+                    biggestEl.textContent = I18n.t('dynamic.fishing_tournament.biggest');
                 }
             }
             if (catchesEl) {

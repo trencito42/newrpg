@@ -1607,7 +1607,7 @@ body.inventory-dragging .premium-item { cursor: grabbing; }
     left: 0;
     width: 100%;
     color: rgba(255, 255, 255, .4);
-    content: 'PRESS ESC OR V TO CLOSE';
+    content: 'PRESS ESC OR V TO CLOSE'; /* i18n-ignore: locale-specific pseudo-element fallback */
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
@@ -1658,12 +1658,22 @@ body.inventory-dragging .premium-item { cursor: grabbing; }
     left: 0;
     width: 100%;
     color: rgba(255, 255, 255, .4);
-    content: 'PRESS ESC TO CLOSE';
+    content: 'PRESS ESC TO CLOSE'; /* i18n-ignore: locale-specific pseudo-element fallback */
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1px;
     pointer-events: none;
     text-align: center;
+}
+
+html[lang="ro"] #menu.menu--solo-vehicle .menu-mgmt--vehicles::after {
+    content: 'APASĂ ESC SAU V PENTRU A ÎNCHIDE'; /* i18n-ignore: locale-specific pseudo-element fallback */
+}
+
+html[lang="ro"] .jobs-menu__shell::after,
+html[lang="ro"] .menu--solo-faction .menu-wrap::after,
+html[lang="ro"] .menu--solo-clan .menu-wrap::after {
+    content: 'APASĂ ESC PENTRU A ÎNCHIDE'; /* i18n-ignore: locale-specific pseudo-element fallback */
 }
 
 /* Remaining gameplay surfaces use the same reference shell, never an opaque canvas. */

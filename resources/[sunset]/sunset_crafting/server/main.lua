@@ -1,32 +1,32 @@
 exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, stationId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it' } end
 
     local station = Sunset.CraftingStations[stationId]
-    if not station then return nil, 'This crafting station is not configured.' end
+    if not station then return nil, { localeKey = 'crafting.message.this_crafting_station_is_not_configured' } end
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - station.coords) > 4.0 then
-        return nil, ('Stand inside the marker at %s to craft.'):format(station.label or 'the crafting station')
+        return nil, { localeKey = 'crafting.message.stand_inside_the_marker_at_value_to_craft', formatArgs = { station.label or 'the crafting station' } }
     end
 
     local factionId, grade = Sunset.GetCharacterFaction(char)
 
     if station.access == 'faction' then
         if factionId ~= station.faction then
-            return nil, ('%s is available only to %s members.'):format(
+            return nil, { localeKey = 'crafting.message.value_is_available_only_to_value_members', formatArgs = {
                 station.label or 'This station',
-                Sunset.Factions[station.faction] and Sunset.Factions[station.faction].label or station.faction)
+                Sunset.Factions[station.faction] and Sunset.Factions[station.faction].label or station.faction } }
         end
         if (grade or 0) < (station.minGrade or 0) then
-            return nil, ('Faction rank %d is required at this station; your rank is %d.'):format(
-                station.minGrade or 0, grade or 0)
+            return nil, { localeKey = 'crafting.message.faction_rank_value_is_required_at_this_station_your_rank_is_value', formatArgs = {
+                station.minGrade or 0, grade or 0 } }
         end
         if not exports.sunset_factions:IsOnDuty(source) then
-            return nil, 'You must be ON DUTY to use this station'
+            return nil, { localeKey = 'crafting.message.you_must_be_on_duty_to_use_this_station' }
         end
         if station.illegal then
             if not Sunset.HasFactionPerm(factionId, grade, 'craft_illegal') then
-                return nil, 'Rank too low for this station'
+                return nil, { localeKey = 'crafting.message.rank_too_low_for_this_station' }
             end
         end
     end
@@ -76,7 +76,7 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
     end
 
     if #recipes == 0 then
-        return nil, 'No recipes available here (check rank / duty)'
+        return nil, { localeKey = 'crafting.message.no_recipes_available_here_check_rank_duty' }
     end
 
     return {
@@ -94,7 +94,7 @@ AddEventHandler('playerDropped', function()
 end)
 
 exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, stationId, recipeId)
-    if CraftLocks[source] then return nil, 'Your previous craft is still being processed. Wait a moment.' end
+    if CraftLocks[source] then return nil, { localeKey = 'crafting.message.your_previous_craft_is_still_being_processed_wait_a' } end
     CraftLocks[source] = true
     local function done(result, err)
         CraftLocks[source] = nil

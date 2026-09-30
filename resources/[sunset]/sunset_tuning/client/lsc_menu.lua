@@ -63,7 +63,7 @@ function OpenLsCustomsMenu(opts)
     if menuOpen then return end
     local veh = getDriverVehicle()
     if veh == 0 then
-        notify('Get in the driver seat to use this shop.', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.get_in_the_driver_seat_to_use_this_shop'), 'error')
         return
     end
 
@@ -95,7 +95,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     if action == 'lsc_repair' then
         local veh = getDriverVehicle()
         if veh == 0 then
-            notify('Not in a vehicle.', 'error')
+            notify(exports.sunset_core:Translate('tuning.message.not_in_a_vehicle'), 'error')
             return
         end
 
@@ -105,7 +105,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             SetVehicleEngineHealth(veh, 1000.0)
             SetVehicleBodyHealth(veh, 1000.0)
             SetVehicleDirtLevel(veh, 0.0)
-            notify('Vehicle repaired ($250).', 'success')
+            notify(exports.sunset_core:Translate('tuning.message.vehicle_repaired_250'), 'success')
         else
             notify(err or 'Repair failed.', 'error')
         end

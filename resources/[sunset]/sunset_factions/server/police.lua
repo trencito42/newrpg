@@ -87,7 +87,7 @@ local function notifyRadarCaught(driverSource, officer, speed, limit, over)
         limit = limit,
         over = over,
     })
-    TriggerClientEvent('sunset:client:notify', driverSource, ('%s %s'):format(header, detail), 'error', 10000)
+    TriggerClientEvent('sunset:client:notify', driverSource, exports.sunset_core:TFor(driverSource, 'factions.message.value_value', header, detail), 'error', 10000)
 
     TriggerClientEvent('sunset:ui:radarAlert', driverSource, {
         type = 'mobile',
@@ -288,10 +288,10 @@ end
 
 function AddWantedCharge(targetId, reasonCode, issuedBy, options)
     targetId = tonumber(targetId)
-    if not targetId or not GetPlayerName(targetId) then return nil, 'Player is not online' end
+    if not targetId or not GetPlayerName(targetId) then return nil, { localeKey = 'factions.message.player_is_not_online' } end
     reasonCode = string.lower(tostring(reasonCode or 'robbery'))
     local reasonRow = Sunset.GetPoliceReason(reasonCode)
-    if not reasonRow then return nil, 'Unknown wanted reason' end
+    if not reasonRow then return nil, { localeKey = 'factions.message.unknown_wanted_reason' } end
     local silent = type(options) == 'table' and options.silent == true
     local surrenderable = reasonRow.surrenderable ~= false
     if type(options) == 'table' and options.surrenderable ~= nil then
@@ -554,10 +554,10 @@ exports.sunset_core:RegisterCallback('sunset:policeSetWanted', function(source, 
 
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
-    if targetId == source then return nil, 'You cannot add a wanted charge to yourself.' end
-    if Police.isJailed(targetId) then return nil, 'Suspect is already in custody' end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_add_a_wanted_charge_to_yourself' } end
+    if Police.isJailed(targetId) then return nil, { localeKey = 'factions.message.suspect_is_already_in_custody' } end
 
     reasonCode = string.lower(reasonCode or '')
     local reasonRow = Sunset.GetPoliceReason(reasonCode)
@@ -565,7 +565,7 @@ exports.sunset_core:RegisterCallback('sunset:policeSetWanted', function(source, 
         local codes = {}
         for code in pairs(Sunset.Police.reasons or {}) do codes[#codes + 1] = code end
         table.sort(codes)
-        return nil, ('Invalid reason. Use: %s'):format(table.concat(codes, ', '))
+        return nil, { localeKey = 'factions.message.invalid_reason_use_value', formatArgs = { table.concat(codes, ', ') } }
     end
 
     local maxLevel = wantedCapFor(source)
@@ -573,7 +573,7 @@ exports.sunset_core:RegisterCallback('sunset:policeSetWanted', function(source, 
     local currentLevel = previous and previous.level or 0
     local projected = math.min(maxLevel, currentLevel + reasonRow.stars)
     if projected <= currentLevel and not hasFullWantedPerm(source) then
-        return nil, ('Your rank can only raise suspects up to ★%d wanted. Request supervisory backup for higher charges.'):format(LIMITED_WANTED_MAX)
+        return nil, { localeKey = 'factions.message.your_rank_can_only_raise_suspects_up_to_value', formatArgs = { LIMITED_WANTED_MAX } }
     end
 
     local wanted = setWanted(targetId, reasonRow.stars, reasonRow.label, reasonCode, reasonRow.jailMinutes,
@@ -613,7 +613,7 @@ exports.sunset_core:RegisterCallback('sunset:policeClearWanted', function(source
     end
 
     if not targetCharId then
-        return nil, 'Invalid suspect identifier specified.'
+        return nil, { localeKey = 'factions.message.invalid_suspect_identifier_specified' }
     end
 
     local officerCharId = charId(source)
@@ -643,15 +643,15 @@ exports.sunset_core:RegisterCallback('sunset:policeSummon', function(source, tar
 
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
-    if targetId == source then return nil, 'You cannot issue a police stop order to yourself.' end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_issue_a_police_stop_order_to_yourself' } end
 
     local range = Sunset.Police and Sunset.Police.summonRange or 125.0
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > range then
-        return nil, ('You must be within %dm of the suspect'):format(math.floor(range))
+        return nil, { localeKey = 'factions.message.you_must_be_within_value_m_of_the_suspect', formatArgs = { math.floor(range) } }
     end
 
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
@@ -694,15 +694,15 @@ exports.sunset_core:RegisterCallback('sunset:policeFindWanted', function(source,
     end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
     local wanted = WantedOnline[targetId]
     if not wanted then
-        return nil, ('Player (%d) has no active wanted status.'):format(targetId)
+        return nil, { localeKey = 'factions.message.player_value_has_no_active_wanted_status', formatArgs = { targetId } }
     end
     local coords = FactionCore.playerCoords(targetId)
     if not coords then
-        return nil, 'Could not locate that player.'
+        return nil, { localeKey = 'factions.message.could_not_locate_that_player' }
     end
     return {
         id = targetId,
@@ -722,27 +722,27 @@ exports.sunset_core:RegisterCallback('sunset:policeArrest', function(source, tar
 
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
-    if targetId == source then return nil, 'You cannot arrest yourself.' end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_arrest_yourself' } end
     if not Detention.isCuffed(targetId) then
-        return nil, ('Player #%d is not cuffed. Stand within 3m and use /cuff %d first.'):format(targetId, targetId)
+        return nil, { localeKey = 'factions.message.player_value_is_not_cuffed_stand_within_3m_and', formatArgs = { targetId, targetId } }
     end
     if not WantedOnline[targetId] then
-        return nil, ('Player #%d has no active wanted charges. Add a valid charge with /su %d [reason].'):format(
-            targetId, targetId)
+        return nil, { localeKey = 'factions.message.player_value_has_no_active_wanted_charges_add_a_valid_charge_with', formatArgs = {
+            targetId, targetId } }
     end
     local atBooking, nearest, bookingDistance = bookingStatus(targetId)
     if not atBooking then
-        return nil, ('Take player #%d to %s (%.0fm away). Use /booking for GPS, escort them into the marker, then /arrest %d.'):format(
-            targetId, nearest and nearest.label or 'MRPD Booking', bookingDistance, targetId)
+        return nil, { localeKey = 'factions.message.take_player_value_to_value_value_m_away_use_booking_for_gps_escor', formatArgs = {
+            targetId, nearest and nearest.label or 'MRPD Booking', bookingDistance, targetId } }
     end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     local arrestRange = Sunset.Police and Sunset.Police.arrestRange or 5.0
     if FactionCore.distBetween(officerPos, targetPos) > arrestRange then
-        return nil, ('You must be within %dm of the suspect'):format(math.floor(arrestRange))
+        return nil, { localeKey = 'factions.message.you_must_be_within_value_m_of_the_suspect', formatArgs = { math.floor(arrestRange) } }
     end
 
     local w = WantedOnline[targetId]
@@ -801,13 +801,13 @@ exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source,
 
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Use F10 to check current IDs.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > 3.5 then
-        return nil, 'You must be within 3m of the suspect'
+        return nil, { localeKey = 'factions.message.you_must_be_within_3m_of_the_suspect' }
     end
 
     local inv = exports.sunset_inventory:GetInventory(targetId) or {}
@@ -821,7 +821,7 @@ exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source,
         end
     end
 
-    if #removed < 1 then return nil, 'No confiscatable items found' end
+    if #removed < 1 then return nil, { localeKey = 'factions.message.no_confiscatable_items_found' } end
 
     local officerChar = charId(source)
     local targetChar = charId(targetId)
@@ -884,10 +884,10 @@ local function validateRadarVehicle(source, networkId)
     local vehicle = NetworkGetEntityFromNetworkId(tonumber(networkId) or 0)
     local ped = GetPlayerPed(source)
     if vehicle == 0 or not DoesEntityExist(vehicle) or ped == 0 then
-        return nil, 'You must be driving a valid patrol vehicle.'
+        return nil, { localeKey = 'factions.message.you_must_be_driving_a_valid_patrol_vehicle' }
     end
     if GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return nil, 'You must be in the driver seat of the patrol vehicle.'
+        return nil, { localeKey = 'factions.message.you_must_be_in_the_driver_seat_of_the' }
     end
     local char = FactionCore.getChar(source)
     local factionId = char and select(1, FactionCore.getFactionOf(char))
@@ -904,7 +904,7 @@ local function validateRadarVehicle(source, networkId)
         end
     end
     if not isFleet and not isDepotModel and not allowed then
-        return nil, 'Get in a patrol car from your faction garage or a marked cruiser, then try again.'
+        return nil, { localeKey = 'factions.message.get_in_a_patrol_car_from_your_faction_garage' }
     end
     return vehicle
 end
@@ -915,8 +915,8 @@ exports.sunset_core:RegisterCallback('sunset:policeRadarStart', function(source,
     local cfg = Sunset.Police.radar or {}
     local limit = math.floor(tonumber(requestedLimit) or 0)
     if limit < (cfg.minLimitKmh or 20) or limit > (cfg.maxLimitKmh or 250) then
-        return nil, ('Choose a speed limit between %d and %d km/h. Example: /startradar 90'):format(
-            cfg.minLimitKmh or 20, cfg.maxLimitKmh or 250)
+        return nil, { localeKey = 'factions.message.choose_a_speed_limit_between_value_and_value_km_h_example_startra', formatArgs = {
+            cfg.minLimitKmh or 20, cfg.maxLimitKmh or 250 } }
     end
     RadarSessions[source] = { networkId = NetworkGetNetworkIdFromEntity(vehicle), limitKmh = limit, lastPlate = '', lastAt = 0 }
     broadcastFactionAction(source, ('placed a speed radar with a %d km/h limit.'):format(limit), 'police')
@@ -931,7 +931,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeRadarLock', function(source, targetNetworkId)
     local session = RadarSessions[source]
-    if not session then return nil, 'Radar is not active. Use /startradar [limit_kmh] first.' end
+    if not session then return nil, { localeKey = 'factions.message.radar_is_not_active_use_startradar_limit_kmh_first' } end
     local radarVehicle, err = validateRadarVehicle(source, session.networkId)
     if not radarVehicle then
         RadarSessions[source] = nil
@@ -940,11 +940,11 @@ exports.sunset_core:RegisterCallback('sunset:policeRadarLock', function(source, 
 
     local targetVehicle = NetworkGetEntityFromNetworkId(tonumber(targetNetworkId) or 0)
     if targetVehicle == 0 or targetVehicle == radarVehicle or not DoesEntityExist(targetVehicle) then
-        return nil, 'Radar target is no longer available.'
+        return nil, { localeKey = 'factions.message.radar_target_is_no_longer_available' }
     end
     local cfg = Sunset.Police.radar or {}
     if #(GetEntityCoords(targetVehicle) - GetEntityCoords(radarVehicle)) > (cfg.mobileRange or 45.0) + 10.0 then
-        return nil, 'Radar target is out of range.'
+        return nil, { localeKey = 'factions.message.radar_target_is_out_of_range' }
     end
 
     local speed = math.floor(GetEntitySpeed(targetVehicle) * 3.6 + 0.5)
@@ -1062,7 +1062,7 @@ exports.sunset_core:RegisterCallback('sunset:policeBackup', function(source, pri
         return nil, FactionCore.accessError(source, 'backup', 'request police backup', 'law_enforcement')
     end
     if GetResourceState('sunset_dispatch') ~= 'started' then
-        return nil, 'Cannot request backup: Dispatch is offline. Contact staff; no alert was created.'
+        return nil, { localeKey = 'factions.message.cannot_request_backup_dispatch_is_offline_contact_staff_no' }
     end
 
     local char = FactionCore.getChar(source)
@@ -1100,11 +1100,11 @@ exports.sunset_core:RegisterCallback('sunset:policeCancelBackup', function(sourc
         return nil, FactionCore.accessError(source, 'backup', 'cancel police backup', 'law_enforcement')
     end
     if GetResourceState('sunset_dispatch') ~= 'started' then
-        return nil, 'Cannot cancel backup: Dispatch is offline. Contact staff.'
+        return nil, { localeKey = 'factions.message.cannot_cancel_backup_dispatch_is_offline_contact_staff' }
     end
 
     local call = exports.sunset_dispatch:GetPlayerActiveCall(source, 'police_backup')
-    if not call then return nil, 'No active backup request' end
+    if not call then return nil, { localeKey = 'factions.message.no_active_backup_request' } end
 
     local ok, err = exports.sunset_dispatch:CancelCall(source, 'police_backup', call.id, 'Backup cancelled by officer')
     if not ok then return nil, err end
@@ -1234,7 +1234,7 @@ exports('AdminJail', function(targetId, minutes, reason, adminSource)
     targetId = tonumber(targetId)
     minutes = math.max(1, math.min(1440, math.floor(tonumber(minutes) or 5)))
     if not targetId or not GetPlayerName(targetId) then
-        return false, 'That player is not online.'
+        return false, { localeKey = 'factions.message.that_player_is_not_online' }
     end
     beginJail(targetId, minutes * 60, tostring(reason or 'Admin jail'), adminSource)
     return true
@@ -1243,10 +1243,10 @@ end)
 exports('AdminUnjail', function(targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return false, 'That player is not online.'
+        return false, { localeKey = 'factions.message.that_player_is_not_online' }
     end
     if not JailedOnline[targetId] then
-        return false, 'That player is not in jail.'
+        return false, { localeKey = 'factions.message.that_player_is_not_in_jail' }
     end
     endJail(targetId)
     return true
@@ -1255,7 +1255,7 @@ end)
 exports('AdminClearWanted', function(targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return false, 'That player is not online.'
+        return false, { localeKey = 'factions.message.that_player_is_not_online' }
     end
     clearWanted(targetId, nil)
     return true
@@ -1279,14 +1279,14 @@ exports.sunset_core:RegisterCallback('sunset:policeUnjail', function(source, tar
     local isAdmin = false
     pcall(function() isAdmin = exports.sunset_admin:IsAdmin(source, 2) == true end)
     if not isAdmin and not FactionCore.hasPerm(source, 'arrest') then
-        return nil, 'You cannot release prisoners.'
+        return nil, { localeKey = 'factions.message.you_cannot_release_prisoners' }
     end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, 'That player is not online.'
+        return nil, { localeKey = 'factions.message.that_player_is_not_online' }
     end
     if not JailedOnline[targetId] then
-        return nil, 'That player is not in jail.'
+        return nil, { localeKey = 'factions.message.that_player_is_not_in_jail' }
     end
     endJail(targetId)
     notify(targetId, 'You have been released from jail', 'success')
@@ -1737,7 +1737,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
 
     local targetNum = tonumber(targetId)
     if not targetNum or targetNum <= 0 then
-        return nil, 'The citizen ID is invalid.'
+        return nil, { localeKey = 'factions.message.the_citizen_id_is_invalid' }
     end
 
     local targetChar = nil
@@ -1762,7 +1762,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
     end
 
     if not targetChar then
-        return nil, ('No citizen found with ID %s.'):format(tostring(targetId))
+        return nil, { localeKey = 'factions.message.no_citizen_found_with_id_value', formatArgs = { tostring(targetId) } }
     end
 
     local cid = targetChar.id
@@ -1773,7 +1773,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
     local existing = MySQL.single.await('SELECT id FROM character_licenses WHERE character_id = ? AND license_type = ?', { cid, licenseType })
     if not existing then
         local licLabel = licenseType == 'driver' and 'driver' or 'weapon'
-        return nil, ('%s does not hold an active %s license.'):format(targetName, licLabel)
+        return nil, { localeKey = 'factions.message.value_does_not_hold_an_active_value_license', formatArgs = { targetName, licLabel } }
     end
 
     -- Revoke license
@@ -1792,7 +1792,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
     if onlineSrc then
         TriggerClientEvent('sunset:licenses:refresh', onlineSrc)
         TriggerClientEvent('sunset:client:notify', onlineSrc,
-            ('🚨 LICENSE SUSPENDED: Your %s license has been confiscated by the Police!\nReason: %s\nOfficer: %s'):format(licLabelRo, reason, officerName),
+            exports.sunset_core:TFor(onlineSrc, 'factions.message.license_suspended_your_value_license_has_been_confiscated_by_the_', licLabelRo, reason, officerName),
             'error', 12000)
     end
 
@@ -1918,33 +1918,33 @@ exports.sunset_core:RegisterCallback('sunset:policeIssueTicket', function(source
     end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
-        return nil, ('Player ID %s is not online. Enter the server ID shown in F10.'):format(tostring(targetId or '?'))
+        return nil, { localeKey = 'factions.message.player_id_value_is_not_online_enter_the_server', formatArgs = { tostring(targetId or '?') } }
     end
-    if targetId == source then return nil, 'You cannot issue a citation to yourself.' end
+    if targetId == source then return nil, { localeKey = 'factions.message.you_cannot_issue_a_citation_to_yourself' } end
 
     reasonCode = reasonCode and string.lower(reasonCode) or nil
     if reasonCode then
         local violation = Sunset.GetPoliceViolation(reasonCode)
-        if not violation then return nil, 'That citation violation is invalid. Close and reopen /ticket to refresh the list.' end
+        if not violation then return nil, { localeKey = 'factions.message.that_citation_violation_is_invalid_close_and_reopen_ticket' } end
         amount = violation.amount
         reason = violation.label
     else
-        return nil, 'Select a violation in the citation window before pressing ISSUE CITATION.'
+        return nil, { localeKey = 'factions.message.select_a_violation_in_the_citation_window_before_pressing' }
     end
 
     amount = math.floor(tonumber(amount) or 0)
-    if amount < 1 or amount > 50000 then return nil, 'Invalid citation amount' end
+    if amount < 1 or amount > 50000 then return nil, { localeKey = 'factions.message.invalid_citation_amount' } end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > 30.0 then
-        return nil, ('Move closer to player #%d: citations require you to be within 30m.'):format(targetId)
+        return nil, { localeKey = 'factions.message.move_closer_to_player_value_citations_require_you_to', formatArgs = { targetId } }
     end
 
     local officer = FactionCore.getChar(source)
     local target = FactionCore.getChar(targetId)
-    if not officer then return nil, 'Your character is no longer loaded. Reconnect and select it again.' end
-    if not target then return nil, ('Player #%d has not loaded a character yet; wait for them to finish login.'):format(targetId) end
+    if not officer then return nil, { localeKey = 'factions.message.your_character_is_no_longer_loaded_reconnect_and_select' } end
+    if not target then return nil, { localeKey = 'factions.message.player_value_has_not_loaded_a_character_yet_wait', formatArgs = { targetId } } end
 
     local ticketId = MySQL.insert.await([[
         INSERT INTO tickets (officer_character_id, target_character_id, amount, reason, reason_code, paid)
@@ -1965,26 +1965,26 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policePayTicket', function(source, ticketId)
     ticketId = tonumber(ticketId)
-    if not ticketId then return nil, 'This citation has no valid ID. Close the window and ask the officer to issue it again.' end
+    if not ticketId then return nil, { localeKey = 'factions.message.this_citation_has_no_valid_id_close_the_window' } end
 
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded_reconnect_and_select_it' } end
 
     local row = MySQL.single.await(
         'SELECT id, target_character_id, amount, reason, paid FROM tickets WHERE id = ?',
         { ticketId }
     )
-    if not row or row.target_character_id ~= char.id then return nil, 'This citation does not exist or does not belong to your character.' end
-    if row.paid == 1 then return nil, 'This citation has already been paid; no money was taken.' end
-    if row.paid ~= 0 then return nil, 'This citation was already refused or is currently being processed; no money was taken.' end
+    if not row or row.target_character_id ~= char.id then return nil, { localeKey = 'factions.message.this_citation_does_not_exist_or_does_not_belong' } end
+    if row.paid == 1 then return nil, { localeKey = 'factions.message.this_citation_has_already_been_paid_no_money_was' } end
+    if row.paid ~= 0 then return nil, { localeKey = 'factions.message.this_citation_was_already_refused_or_is_currently_being' } end
 
     local claimed = MySQL.update.await('UPDATE tickets SET paid = 3 WHERE id = ? AND paid = 0', { ticketId })
-    if not claimed or claimed < 1 then return nil, 'This citation was already handled; no money was taken.' end
+    if not claimed or claimed < 1 then return nil, { localeKey = 'factions.message.this_citation_was_already_handled_no_money_was_taken' } end
 
     if not exports.sunset_core:RemoveMoney(source, 'bank', row.amount, 'ticket')
         and not exports.sunset_core:RemoveMoney(source, 'cash', row.amount, 'ticket') then
         MySQL.update.await('UPDATE tickets SET paid = 0 WHERE id = ? AND paid = 3', { ticketId })
-        return nil, ('You need $%s in bank or cash to pay this citation.'):format(row.amount)
+        return nil, { localeKey = 'factions.message.you_need_value_in_bank_or_cash_to_pay', formatArgs = { row.amount } }
     end
 
     MySQL.update.await('UPDATE tickets SET paid = 1, paid_at = NOW() WHERE id = ? AND paid = 3', { ticketId })
@@ -1994,21 +1994,21 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeRefuseTicket', function(source, ticketId)
     ticketId = tonumber(ticketId)
-    if not ticketId then return nil, 'This citation has no valid ID. Close the window and ask the officer to issue it again.' end
+    if not ticketId then return nil, { localeKey = 'factions.message.this_citation_has_no_valid_id_close_the_window' } end
 
     local char = FactionCore.getChar(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and select it again.' end
+    if not char then return nil, { localeKey = 'factions.message.your_character_is_not_loaded_reconnect_and_select_it' } end
 
     local row = MySQL.single.await(
         'SELECT id, target_character_id, amount, reason, paid FROM tickets WHERE id = ?',
         { ticketId }
     )
-    if not row or row.target_character_id ~= char.id then return nil, 'This citation does not exist or does not belong to your character.' end
-    if row.paid == 1 then return nil, 'This citation was already paid and cannot be refused.' end
-    if row.paid ~= 0 then return nil, 'This citation was already refused or is currently being processed.' end
+    if not row or row.target_character_id ~= char.id then return nil, { localeKey = 'factions.message.this_citation_does_not_exist_or_does_not_belong' } end
+    if row.paid == 1 then return nil, { localeKey = 'factions.message.this_citation_was_already_paid_and_cannot_be_refused' } end
+    if row.paid ~= 0 then return nil, { localeKey = 'factions.message.this_citation_was_already_refused_or_is_currently_being_796a1b' } end
 
     local refused = MySQL.update.await('UPDATE tickets SET paid = 2, paid_at = NOW() WHERE id = ? AND paid = 0', { ticketId })
-    if not refused or refused < 1 then return nil, 'This citation was already handled; no new wanted charge was added.' end
+    if not refused or refused < 1 then return nil, { localeKey = 'factions.message.this_citation_was_already_handled_no_new_wanted_charge' } end
 
     local wanted = setWanted(source, 1, 'Refused citation: ' .. (row.reason or ''), 'evading', 4, nil, false, false)
     notify(source, ('You refused citation #%d — wanted increased to ★%d.'):format(ticketId, wanted.level), 'error')

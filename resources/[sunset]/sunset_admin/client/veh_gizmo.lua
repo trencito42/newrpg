@@ -104,12 +104,12 @@ end
 
 function StartVehGizmo(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then
-        notify('No vehicle selected to position', 'error')
+        notify(exports.sunset_core:Translate('admin.message.no_vehicle_selected_to_position'), 'error')
         return
     end
 
     if isGizmoActive then
-        notify('Gizmo positioner is already active', 'error')
+        notify(exports.sunset_core:Translate('admin.message.gizmo_positioner_is_already_active'), 'error')
         return
     end
 
@@ -239,14 +239,14 @@ function StartVehGizmo(veh)
                 vehRot = GetEntityRotation(currentVeh, 2)
                 vehHeading = GetEntityHeading(currentVeh)
                 PlaySoundFrontend(-1, 'NAV_UP_DOWN', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
-                notify('Snapped vehicle to ground level.', 'info')
+                notify(exports.sunset_core:Translate('admin.message.snapped_vehicle_to_ground_level'), 'info')
             end
 
             -- Reset Level (R)
             if IsControlJustPressed(0, 45) then
                 vehRot = vector3(0.0, 0.0, vehRot.z)
                 SetEntityRotation(currentVeh, 0.0, 0.0, vehHeading, 2, true)
-                notify('Reset pitch and roll to 0.0°', 'info')
+                notify(exports.sunset_core:Translate('admin.message.reset_pitch_and_roll_to_0_0'), 'info')
             end
 
             -- Apply translation / rotation updates
@@ -305,7 +305,7 @@ function StartVehGizmo(veh)
                 isGizmoActive = false
                 SetEntityCollision(currentVeh, true, true)
                 FreezeEntityPosition(currentVeh, false)
-                notify('Exited vehicle gizmo mode.', 'info')
+                notify(exports.sunset_core:Translate('admin.message.exited_vehicle_gizmo_mode'), 'info')
                 break
             end
         end
@@ -320,7 +320,7 @@ RegisterNetEvent('sunset:admin:startVehGizmo', function()
         veh = GetClosestVehicle(ppos.x, ppos.y, ppos.z, 20.0, 0, 71)
     end
     if not veh or veh == 0 or not DoesEntityExist(veh) then
-        notify('No vehicle/trailer found nearby. Use /spawntrailer to spawn one.', 'error')
+        notify(exports.sunset_core:Translate('admin.message.no_vehicle_trailer_found_nearby_use_spawntrailer_to_spawn'), 'error')
         return
     end
     StartVehGizmo(veh)
@@ -338,7 +338,7 @@ RegisterNetEvent('sunset:admin:spawnTrailerGizmo', function(model)
     local deadline = GetGameTimer() + 5000
     while not HasModelLoaded(hash) do
         if GetGameTimer() > deadline then
-            notify('Failed to load model in time', 'error')
+            notify(exports.sunset_core:Translate('admin.message.failed_to_load_model_in_time'), 'error')
             return
         end
         Wait(10)
@@ -355,7 +355,7 @@ RegisterNetEvent('sunset:admin:spawnTrailerGizmo', function(model)
     SetModelAsNoLongerNeeded(hash)
 
     if veh == 0 or not DoesEntityExist(veh) then
-        notify('Could not create trailer entity', 'error')
+        notify(exports.sunset_core:Translate('admin.message.could_not_create_trailer_entity'), 'error')
         return
     end
 

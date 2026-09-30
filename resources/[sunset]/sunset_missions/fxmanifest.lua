@@ -28,6 +28,7 @@ shared_scripts {
 }
 
 client_scripts {
+    '@sunset_core/client/nui_locale.lua',
     '@sunset_core/client/callbacks.lua',
     'client/nui.lua',
     'client/entities.lua',

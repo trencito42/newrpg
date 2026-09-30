@@ -94,7 +94,7 @@ local function buildRoster()
 end
 
 exports.sunset_core:RegisterCallback('sunset:helpdesk:panel', function(source)
-    if adminLevel(source) < 1 then return nil, 'Staff only.' end
+    if adminLevel(source) < 1 then return nil, { localeKey = 'admin.message.staff_only' } end
     OpenPanels[source] = true
 
     local reports = {}
@@ -141,7 +141,7 @@ end)
 -- NEVER bypasses requirePerm: every action re-checks the level via the same
 -- config table, so a helper cannot escalate through the panel.
 exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, action, targetId, extra)
-    if adminLevel(source) < 1 then return nil, 'Staff only.' end
+    if adminLevel(source) < 1 then return nil, { localeKey = 'admin.message.staff_only' } end
     targetId = tonumber(targetId)
     action = tostring(action or '')
 
@@ -149,7 +149,7 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, 
     local Handlers = SunsetAdmin and SunsetAdmin.ServerHandlers
     local function runCmd(name, args)
         local h = Handlers and Handlers[name]
-        if not h then return nil, ('Command %s unavailable.'):format(name) end
+        if not h then return nil, { localeKey = 'admin.message.command_value_unavailable', formatArgs = { name } } end
         h(source, args or {})
         return true
     end
@@ -178,25 +178,25 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, 
         return runCmd('mute', { tostring(targetId), tostring(dur), tostring(rsn) })
     end
     if action == 'approveAd' then
-        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, { localeKey = 'admin.message.cnn_resource_offline' } end
         local adId = tonumber(extra and extra.adId or targetId)
         return exports.sunset_cnn:ApproveAd(adId, source)
     end
     if action == 'rejectAd' then
-        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, { localeKey = 'admin.message.cnn_resource_offline' } end
         local adId = tonumber(extra and extra.adId or targetId)
         local reason = extra and extra.reason or 'Continut neadecvat'
         return exports.sunset_cnn:RejectAd(adId, source, reason)
     end
     if action == 'adMute' then
-        if GetResourceState('sunset_cnn') ~= 'started' then return nil, 'CNN resource offline.' end
+        if GetResourceState('sunset_cnn') ~= 'started' then return nil, { localeKey = 'admin.message.cnn_resource_offline' } end
         local dur = extra and extra.minutes or 15
         local rsn = extra and extra.reason or 'Abuz anunturi CNN'
         return exports.sunset_cnn:AdMutePlayer(targetId, dur, rsn, source)
     end
     if action == 'history' then
         -- panel-shaped history (Sanctions.history prints to chat instead)
-        if not targetId or not GetPlayerName(targetId) then return nil, 'Player not online.' end
+        if not targetId or not GetPlayerName(targetId) then return nil, { localeKey = 'admin.message.player_not_online' } end
         local ident = GetPlayerIdentifierByType(targetId, 'license')
         local rows = {}
         if ident then
@@ -210,11 +210,11 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, 
         return rows
     end
     if action == 'dismissHeat' then
-        if GetResourceState('sunset_anticheat') ~= 'started' then return nil, 'Anticheat offline.' end
+        if GetResourceState('sunset_anticheat') ~= 'started' then return nil, { localeKey = 'admin.message.anticheat_offline' } end
         local ok, res = pcall(function()
             return exports.sunset_anticheat:DismissStrikes(targetId, source)
         end)
-        if not ok then return nil, 'Could not dismiss.' end
+        if not ok then return nil, { localeKey = 'admin.message.could_not_dismiss' } end
         return { dismissed = res }
     end
     if action == 'evidence' then
@@ -229,7 +229,7 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:action', function(source, 
         return runCmd(action == 'claimReport' and 'ar' or 'cr', { tostring(targetId) })
     end
 
-    return nil, ('Unknown helpdesk action "%s".'):format(action)
+    return nil, { localeKey = 'admin.message.unknown_helpdesk_action_value', formatArgs = { action } }
 end)
 
 AddEventHandler('playerDropped', function()

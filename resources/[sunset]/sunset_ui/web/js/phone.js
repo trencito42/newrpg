@@ -261,7 +261,7 @@ const Phone = {
             const phone = this.chatTarget.phone;
             if (sub) {
                 if (this.chatTarget.isEmergency) {
-                    sub.textContent = 'iMessage · Dispatch 112';
+                    sub.textContent = I18n.t('dynamic.phone.imessage_dispatch_112');
                 } else if (phone) {
                     sub.textContent = `${phone} · ${this.chatTarget.online ? 'iMessage' : 'Offline'}`;
                 } else {
@@ -709,7 +709,7 @@ const Phone = {
         const sub = $('#phone-chat-subtitle');
         if (sub) {
             if (is112) {
-                sub.textContent = 'iMessage · 112 Dispatch';
+                sub.textContent = I18n.t('dynamic.phone.imessage_112_dispatch');
             } else if (target.phone) {
                 sub.textContent = `${target.phone} · ${online ? 'iMessage' : 'Offline'}`;
             } else {
@@ -934,7 +934,7 @@ const Phone = {
         const d = this.data || {};
         const name = d.myName || 'Player';
         $('#phone-settings-name').textContent = name;
-        $('#phone-settings-id').textContent = `Player ID ${d.myId || '—'}`;
+        $('#phone-settings-id').textContent = I18n.t('dynamic.phone.player_id_value0', { value0: d.myId || '—' });
         const avatar = $('#phone-settings-avatar');
         if (avatar) {
             const myAvatar = d.myAvatar || null;
@@ -1132,7 +1132,7 @@ const Phone = {
             if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
             body.dataset.taxiView = 'empty';
             body.innerHTML = `<p class="phone-empty">${this.escapeHtml(d?.error || 'Loading cab app...')}</p>`;
-            if (title) title.textContent = 'Downtown Cab';
+            if (title) title.textContent = I18n.t('dynamic.phone.downtown_cab');
             return;
         }
 

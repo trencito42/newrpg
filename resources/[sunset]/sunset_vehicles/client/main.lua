@@ -238,7 +238,7 @@ end
 
 local function driverOnly()
     if isPassenger() then
-        notify('Only the driver can do that', 'error')
+        notify(exports.sunset_core:Translate('vehicles.message.only_the_driver_can_do_that'), 'error')
         return false
     end
     return true
@@ -270,13 +270,13 @@ local function toggleVehicleLock()
         local coords = GetEntityCoords(ped)
         veh = GetClosestVehicle(coords.x, coords.y, coords.z, 5.0, 0, 0)
     end
-    if veh == 0 then return notify('No vehicle nearby', 'error') end
+    if veh == 0 then return notify(exports.sunset_core:Translate('vehicles.message.no_vehicle_nearby'), 'error') end
     if not supportsDoorLock(veh) then
-        return notify('This vehicle cannot be locked', 'error')
+        return notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_cannot_be_locked'), 'error')
     end
     CreateThread(function()
         if not hasKeysFor(veh) then
-            return notify('You do not have keys for this vehicle', 'error')
+            return notify(exports.sunset_core:Translate('vehicles.message.you_do_not_have_keys_for_this_vehicle'), 'error')
         end
         syncLockState(veh)
         locked = not locked
@@ -301,7 +301,7 @@ RegisterCommand('sunset_seatbelt', function()
     if not IsPedInAnyVehicle(ped, false) then return end
     local veh = GetVehiclePedIsIn(ped, false)
     if not supportsSeatbelt(veh) then
-        return notify('This vehicle has no seatbelt', 'error')
+        return notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_has_no_seatbelt'), 'error')
     end
     seatbelt = not seatbelt
     showVehicleHint('seatbelt')
@@ -315,7 +315,7 @@ RegisterCommand('sunset_engine', function()
     local veh = getVeh()
     if veh == 0 then return end
     if not supportsEngineControl(veh) then
-        return notify('This vehicle has no engine to toggle', 'error')
+        return notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_has_no_engine_to_toggle'), 'error')
     end
     local on = engineEnabled[veh] ~= true
     engineEnabled[veh] = on
@@ -339,7 +339,7 @@ RegisterCommand('sunset_lights', function()
     local veh = getVeh()
     if veh == 0 then return end
     if vehicleClassOf(veh) == 13 then
-        return notify('This vehicle has no headlights', 'error')
+        return notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_has_no_headlights'), 'error')
     end
 
     lightMode = (lightMode + 1) % 3
@@ -407,7 +407,7 @@ CreateThread(function()
                     SetEntityVelocity(ped, forward.x * previousSpeed * 0.75,
                         forward.y * previousSpeed * 0.75, 2.5)
                     SetPedToRagdoll(ped, 1500, 3500, 0, true, true, false)
-                    notify('You were thrown from the vehicle because you were not wearing a seatbelt', 'error')
+                    notify(exports.sunset_core:Translate('vehicles.message.you_were_thrown_from_the_vehicle_because_you_were'), 'error')
                 end
             end
             previousVehicle = veh
@@ -779,7 +779,7 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
 
     local model = joaat(vehData.model)
     if not IsModelInCdimage(model) or not IsModelAVehicle(model) then
-        notify('Invalid vehicle model: ' .. tostring(vehData.model), 'error')
+        notify(exports.sunset_core:Translate('vehicles.message.invalid_vehicle_model') .. tostring(vehData.model), 'error')
         return nil
     end
 
@@ -787,7 +787,7 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     local timeout = GetGameTimer() + 8000
     while not HasModelLoaded(model) do
         if GetGameTimer() > timeout then
-            notify('Failed to load vehicle model', 'error')
+            notify(exports.sunset_core:Translate('vehicles.message.failed_to_load_vehicle_model'), 'error')
             return nil
         end
         Wait(10)
@@ -813,7 +813,7 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
 
     if vehicle == 0 then
         SetModelAsNoLongerNeeded(model)
-        notify('Could not spawn vehicle — move to open space', 'error')
+        notify(exports.sunset_core:Translate('vehicles.message.could_not_spawn_vehicle_move_to_open_space'), 'error')
         return nil
     end
 
@@ -938,9 +938,9 @@ RegisterCommand('givekeys', function(_, args)
             local coords = GetEntityCoords(PlayerPedId())
             veh = GetClosestVehicle(coords.x, coords.y, coords.z, 5.0, 0, 0)
         end
-        if not target or veh == 0 then return notify('Usage: /givekeys [id] near your vehicle', 'error') end
+        if not target or veh == 0 then return notify(exports.sunset_core:Translate('vehicles.message.usage_givekeys_id_near_your_vehicle'), 'error') end
         local ok, err = Sunset.AwaitCallback('sunset:giveVehicleKeys', target, plateOf(veh))
-        if ok then notify('Keys given', 'success') else notify(err or 'Could not give keys', 'error') end
+        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_given'), 'success') else notify(err or 'Could not give keys', 'error') end
     end)
 end, false)
 
@@ -952,20 +952,20 @@ RegisterCommand('takekeys', function(_, args)
             local coords = GetEntityCoords(PlayerPedId())
             veh = GetClosestVehicle(coords.x, coords.y, coords.z, 5.0, 0, 0)
         end
-        if not target or veh == 0 then return notify('Usage: /takekeys [id] near your vehicle', 'error') end
+        if not target or veh == 0 then return notify(exports.sunset_core:Translate('vehicles.message.usage_takekeys_id_near_your_vehicle'), 'error') end
         local ok, err = Sunset.AwaitCallback('sunset:takeVehicleKeys', target, plateOf(veh))
-        if ok then notify('Keys taken', 'success') else notify(err or 'Could not take keys', 'error') end
+        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_taken'), 'success') else notify(err or 'Could not take keys', 'error') end
     end)
 end, false)
 
 local function parkCurrentVehicle(closeMenuAfter)
     CreateThread(function()
         local veh = getVeh()
-        if veh == 0 or not isDriver() then return notify('Sit in the driver seat of your vehicle to park it', 'error') end
+        if veh == 0 or not isDriver() then return notify(exports.sunset_core:Translate('vehicles.message.sit_in_the_driver_seat_of_your_vehicle_to'), 'error') end
         local result, err = Sunset.AwaitCallback('sunset:parkOwnedVehicle', VehToNet(veh), plateOf(veh),
             buildStoreProps(veh), readFuelPercent(veh))
         if result then
-            notify('Vehicle parked here — GPS and future spawns will use this position', 'success')
+            notify(exports.sunset_core:Translate('vehicles.message.vehicle_parked_here_gps_and_future_spawns_will_use'), 'success')
             if closeMenuAfter then TriggerEvent('sunset:nui:menuClose') end
         else notify(err or 'Could not park', 'error') end
     end)
@@ -995,7 +995,7 @@ CreateThread(function()
                     SetVehicleDoorsLockedForPlayer(trying, PlayerId(), false)
                 else
                     ClearPedTasks(ped)
-                    notify('This is not your vehicle', 'error')
+                    notify(exports.sunset_core:Translate('vehicles.message.this_is_not_your_vehicle'), 'error')
                 end
             elseif not isTrackedOwnedVehicle(trying) then
                 -- unlocked but not yours: allow enter, just inform once
@@ -1009,11 +1009,11 @@ AddEventHandler('sunset:nui:garageStore', function(data)
     CreateThread(function()
         local vehData = Sunset.AwaitCallback('sunset:getVehicleById', data.vehicleId)
         if not vehData then
-            notify('Vehicle not found', 'error')
+            notify(exports.sunset_core:Translate('vehicles.message.vehicle_not_found'), 'error')
             return
         end
         if vehData.stored == 1 then
-            notify('Already in garage', 'info')
+            notify(exports.sunset_core:Translate('vehicles.message.already_in_garage'), 'info')
             return
         end
 
@@ -1027,7 +1027,7 @@ AddEventHandler('sunset:nui:garageStore', function(data)
             local ped = PlayerPedId()
             local driver = GetPedInVehicleSeat(entity, -1)
             if driver ~= 0 and driver ~= ped then
-                notify('The vehicle is currently being driven by someone else', 'error')
+                notify(exports.sunset_core:Translate('vehicles.message.the_vehicle_is_currently_being_driven_by_someone_else'), 'error')
                 return
             end
 
@@ -1050,7 +1050,7 @@ AddEventHandler('sunset:nui:garageStore', function(data)
             deleteVehicleEntity(entity)
         end
         if entity then untrackSpawnedOwned(entity) end
-        notify('Vehicle successfully stored', 'success')
+        notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
         closeGarageUiUnlessMenu()
     end)
 end)
@@ -1060,7 +1060,7 @@ AddEventHandler('sunset:nui:garageLocate', function(data)
     if entity then
         local coords = GetEntityCoords(entity)
         SetNewWaypoint(coords.x, coords.y)
-        notify('GPS set to ' .. normalizePlate(data.plate), 'success')
+        notify(exports.sunset_core:Translate('vehicles.message.gps_set_to') .. normalizePlate(data.plate), 'success')
         closeGarageUiUnlessMenu()
         return
     end
@@ -1073,9 +1073,9 @@ AddEventHandler('sunset:nui:garageLocate', function(data)
     local parked = vehData and getParkedCoords(vehData) or nil
     if parked then
         SetNewWaypoint(parked.x, parked.y)
-        notify('GPS set to parked location: ' .. normalizePlate(data.plate or vehData.plate), 'success')
+        notify(exports.sunset_core:Translate('vehicles.message.gps_set_to_parked_location') .. normalizePlate(data.plate or vehData.plate), 'success')
     else
-        notify('Vehicle not found — no parked location saved', 'error')
+        notify(exports.sunset_core:Translate('vehicles.message.vehicle_not_found_no_parked_location_saved'), 'error')
     end
     closeGarageUiUnlessMenu()
 end)
@@ -1178,12 +1178,12 @@ RegisterNetEvent('sunset:client:storeVehicleRequest', function(garageId)
     CreateThread(function()
         local veh = resolveVehicleToStore()
         if veh == 0 or not DoesEntityExist(veh) then
-            return notify('No vehicle nearby to store', 'error')
+            return notify(exports.sunset_core:Translate('vehicles.message.no_vehicle_nearby_to_store'), 'error')
         end
         local ped = PlayerPedId()
         local driver = GetPedInVehicleSeat(veh, -1)
         if driver ~= 0 and driver ~= ped then
-            return notify('The vehicle is currently being driven by someone else', 'error')
+            return notify(exports.sunset_core:Translate('vehicles.message.the_vehicle_is_currently_being_driven_by_someone_else'), 'error')
         end
         local plate = normalizePlate(GetVehicleNumberPlateText(veh))
         local parked = captureParkedPosition(veh)
@@ -1194,7 +1194,7 @@ RegisterNetEvent('sunset:client:storeVehicleRequest', function(garageId)
         if not ok then return notify(err or 'Vehicle could not be stored', 'error') end
         deleteVehicleEntity(veh)
         untrackSpawnedOwned(veh)
-        notify('Vehicle successfully stored', 'success')
+        notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
     end)
 end)
 
@@ -1202,13 +1202,13 @@ AddEventHandler('sunset:world:garageStore', function(garageId)
     CreateThread(function()
         local veh = resolveVehicleToStore()
         if veh == 0 or not DoesEntityExist(veh) then
-            notify('No vehicle nearby to store. Use /v for the garage menu.', 'info')
+            notify(exports.sunset_core:Translate('vehicles.message.no_vehicle_nearby_to_store_use_v_for_the'), 'info')
             return
         end
         local ped = PlayerPedId()
         local driver = GetPedInVehicleSeat(veh, -1)
         if driver ~= 0 and driver ~= ped then
-            notify('The vehicle is currently being driven by someone else', 'error')
+            notify(exports.sunset_core:Translate('vehicles.message.the_vehicle_is_currently_being_driven_by_someone_else'), 'error')
             return
         end
         local plate = normalizePlate(GetVehicleNumberPlateText(veh))
@@ -1220,7 +1220,7 @@ AddEventHandler('sunset:world:garageStore', function(garageId)
         if not ok then return notify(err or 'Vehicle could not be stored', 'error') end
         deleteVehicleEntity(veh)
         untrackSpawnedOwned(veh)
-        notify('Vehicle successfully stored', 'success')
+        notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
     end)
 end)
 
@@ -1239,13 +1239,13 @@ end)
 local function getGasCanTargetVehicle()
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
-        return nil, 'Exit the vehicle and stand beside it before using the gas can'
+        return nil, { localeKey = 'vehicles.message.exit_the_vehicle_and_stand_beside_it_before_using' }
     end
 
     local coords = GetEntityCoords(ped)
     local veh = GetClosestVehicle(coords.x, coords.y, coords.z, 4.5, 0, 71)
     if veh ~= 0 and DoesEntityExist(veh) then return veh end
-    return nil, 'Stand next to your vehicle to use the gas can'
+    return nil, { localeKey = 'vehicles.message.stand_next_to_your_vehicle_to_use_the_gas' }
 end
 
 RegisterNetEvent('sunset:client:useGasCan', function()
@@ -1258,7 +1258,7 @@ RegisterNetEvent('sunset:client:useGasCan', function()
             local insideVehicle = GetVehiclePedIsIn(ped, false)
             local insideFuel = readFuelPercent(insideVehicle)
             if insideFuel >= 99.5 then
-                notify('This vehicle already has a full tank (100%). The gas can was not used.', 'info')
+                notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_already_has_a_full_tank_100_the'), 'info')
             else
                 notify(('Exit the vehicle and stand beside it to refuel. Current tank: %d%%.'):format(
                     math.floor(insideFuel + 0.5)), 'warning')
@@ -1279,7 +1279,7 @@ RegisterNetEvent('sunset:client:useGasCan', function()
         local fuelPct
         fuelPct = readFuelPercent(veh)
         if fuelPct >= 99.5 then
-            notify('This vehicle already has a full tank (100%). The gas can was not used.', 'info')
+            notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_already_has_a_full_tank_100_the'), 'info')
             return
         end
         local tankLiters = Sunset.PercentToTankLiters(fuelPct, vehicleClass)

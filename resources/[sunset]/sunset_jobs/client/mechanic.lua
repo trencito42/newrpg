@@ -40,7 +40,7 @@ RegisterNetEvent('sunset:jobs:mechanic:applyRepair', function(restoreAmount)
         SetVehicleFixed(veh)
         SetVehicleDeformationFixed(veh)
     end
-    JC.notify('Your vehicle was repaired', 'success')
+    JC.notify(exports.sunset_core:Translate('jobs.message.your_vehicle_was_repaired'), 'success')
 end)
 
 local function getNearbyPlayerInVehicle()
@@ -75,7 +75,7 @@ local function startMechanic()
     JC.sessionData = data
     JC.setWaypoint(cfg.depot.coords)
     JC.showObjective('Roadside Mechanic', 'Wait for a service call, then press E to accept it', 0)
-    JC.notify('On duty — accept /service mechanic calls. Stand near a vehicle and press E to repair.', 'success')
+    JC.notify(exports.sunset_core:Translate('jobs.message.on_duty_accept_service_mechanic_calls_stand_near_a'), 'success')
 
     CreateThread(function()
         while JC.jobId == 'mechanic' and JC.state ~= 'IDLE' do
@@ -84,7 +84,7 @@ local function startMechanic()
                     Sunset.AwaitCallback('sunset:jobs:mechanic:acceptCall', activeCall.id)
                     JC.sessionData.stage = 'en_route'
                     JC.showObjective('Roadside Mechanic', 'Drive to the customer shown on GPS', 40)
-                    JC.notify('Call accepted — go to customer', 'success')
+                    JC.notify(exports.sunset_core:Translate('jobs.message.call_accepted_go_to_customer'), 'success')
                 end
             end
 

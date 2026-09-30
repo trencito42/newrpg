@@ -34,9 +34,9 @@ register('missions', {
     end,
 
     load = function(key)
-        if not SunsetMissions or not SunsetMissions.Contacts then return nil, 'SunsetMissions.Contacts not available' end
+        if not SunsetMissions or not SunsetMissions.Contacts then return nil, { localeKey = 'devtools.message.sunsetmissions_contacts_not_available' } end
         local c = SunsetMissions.Contacts[string.lower(key)]
-        if not c then return nil, ('Unknown contact: %s'):format(key) end
+        if not c then return nil, { localeKey = 'devtools.message.unknown_contact_value', formatArgs = { key } } end
         return {
             label    = c.name or key,
             subtitle = c.subtitle,
@@ -85,10 +85,10 @@ register('workplaces', {
     end,
 
     load = function(key)
-        if not Sunset or not Sunset.JobWorkplaces then return nil, 'Sunset.JobWorkplaces not available' end
+        if not Sunset or not Sunset.JobWorkplaces then return nil, { localeKey = 'devtools.message.sunset_jobworkplaces_not_available' } end
         local jobId, part = key:match('^([^_]+)_(.+)$')
         local wp = jobId and Sunset.JobWorkplaces[jobId]
-        if not wp then return nil, ('Unknown workplace: %s'):format(key) end
+        if not wp then return nil, { localeKey = 'devtools.message.unknown_workplace_value', formatArgs = { key } } end
 
         if part == 'npc' and wp.npc and wp.npc.coords then
             local c = wp.npc.coords
@@ -109,7 +109,7 @@ register('workplaces', {
                 heading  = c.w or c.h or 0.0,
             }
         end
-        return nil, ('Unknown workplace field: %s'):format(key)
+        return nil, { localeKey = 'devtools.message.unknown_workplace_field_value', formatArgs = { key } }
     end,
 
     export = function(key, v4, _extra)

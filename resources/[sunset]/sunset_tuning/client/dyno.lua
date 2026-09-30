@@ -148,7 +148,7 @@ function RunDynoTest(shop, onComplete)
     if dynoActive then return end
     local veh = getDriverVehicle()
     if veh == 0 then
-        notify('You must be in the driver seat for the dyno', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.you_must_be_in_the_driver_seat_for_the'), 'error')
         return
     end
 
@@ -197,7 +197,7 @@ function RunDynoTest(shop, onComplete)
     STC.dynoActive = false
 
     if peakRpm < 0.35 then
-        notify('RPM too low — hold W on the stand until the test finishes', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.rpm_too_low_hold_w_on_the_stand_until'), 'error')
         if onComplete then onComplete(nil) end
         return
     end

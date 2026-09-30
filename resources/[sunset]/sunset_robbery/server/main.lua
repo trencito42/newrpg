@@ -111,9 +111,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:robbery:start', function(source, locationId)
     locationId = type(locationId) == 'string' and locationId or 'luxury_store'
     local loc = SunsetRobbery.Locations[locationId]
-    if not loc then return nil, 'Unknown location' end
+    if not loc then return nil, { localeKey = 'robbery.message.unknown_location' } end
     if not nearPoint(source, loc.coords, loc.radius or SunsetRobbery.StartRadius) then
-        return nil, 'You are not at a robbery location'
+        return nil, { localeKey = 'robbery.message.you_are_not_at_a_robbery_location' }
     end
     local session, err = RobberySessions.begin(source, locationId, false)
     if not session then return nil, err end
@@ -366,17 +366,17 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:robbery:fencePreview', function(source)
     if not nearPoint(source, SunsetRobbery.Fence.coords, SunsetRobbery.Fence.interact + 0.6) then
-        return nil, 'Talk to the fence at the docks warehouse'
+        return nil, { localeKey = 'robbery.message.talk_to_the_fence_at_the_docks_warehouse' }
     end
     local offers = {}
     local issued = {}
     local char = RobberyAdapter.getCharacter(source)
-    if not char then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not char then return nil, { localeKey = 'robbery.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     local okInv, inv = pcall(function()
         return exports.sunset_inventory:GetInventory(source)
     end)
     if not okInv then
-        return nil, 'The fence cannot read your pockets right now. Try again.'
+        return nil, { localeKey = 'robbery.message.the_fence_cannot_read_your_pockets_right_now_try' }
     end
     for _, row in ipairs(inv or {}) do
         local itemName = tostring(row.item or '')
@@ -427,24 +427,24 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:robbery:fenceSell', function(source, offerId)
     if not nearPoint(source, SunsetRobbery.Fence.coords, SunsetRobbery.Fence.interact + 0.6) then
-        return nil, 'Stay with the fence'
+        return nil, { localeKey = 'robbery.message.stay_with_the_fence' }
     end
-    if FenceBusy[source] then return nil, 'The fence is already processing your previous item' end
+    if FenceBusy[source] then return nil, { localeKey = 'robbery.message.the_fence_is_already_processing_your_previous_item' } end
     offerId = tostring(offerId or ''):sub(1, 64)
     local offer = FenceOffers[source] and FenceOffers[source][offerId]
     local char = RobberyAdapter.getCharacter(source)
-    if not offer or offer.expiresAt < os.time() then return nil, 'That offer expired. Reopen the fence list.' end
-    if not char or tonumber(char.id) ~= offer.characterId then return nil, 'That offer does not belong to this character' end
-    if offer.item:sub(1, 7) ~= 'stolen_' then return nil, 'The fence only buys stolen goods' end
+    if not offer or offer.expiresAt < os.time() then return nil, { localeKey = 'robbery.message.that_offer_expired_reopen_the_fence_list' } end
+    if not char or tonumber(char.id) ~= offer.characterId then return nil, { localeKey = 'robbery.message.that_offer_does_not_belong_to_this_character' } end
+    if offer.item:sub(1, 7) ~= 'stolen_' then return nil, { localeKey = 'robbery.message.the_fence_only_buys_stolen_goods' } end
     if not RobberyAdapter.isCompletedLoot(offer.robberyId, offer.characterId) then
-        return nil, 'This loot is tied to an unfinished or invalid robbery and cannot be sold.'
+        return nil, { localeKey = 'robbery.message.this_loot_is_tied_to_an_unfinished_or_invalid' }
     end
 
     FenceBusy[source] = true
     FenceOffers[source][offerId] = nil
     if not RobberyAdapter.settleFenceSale(source, offer.rowId, offer.item, offer.offer) then
         FenceBusy[source] = nil
-        return nil, 'That exact item changed or the payment could not be completed. Reopen the fence list.'
+        return nil, { localeKey = 'robbery.message.that_exact_item_changed_or_the_payment_could_not' }
     end
     FenceBusy[source] = nil
     RobberyAdapter.audit({

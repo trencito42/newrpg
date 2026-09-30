@@ -112,7 +112,7 @@ const Drugs = {
                     </div>
                 </div>`;
         } else if (this.mode === 'process') {
-            if (sub) sub.textContent = 'Convert raw materials into product';
+            if (sub) sub.textContent = I18n.t('dynamic.drugs.convert_raw_materials_into_product');
             body.innerHTML = entries.map(([type, d]) => {
                 const ratio = this.status.ratio || 2;
                 const canProcess = d.rawCount >= ratio;
@@ -132,7 +132,7 @@ const Drugs = {
             // SELL — show price RANGE (server randomizes 0.8–1.3x base).
             const variance = this.status.priceVariance || { min: 0.8, max: 1.3 };
             const maxAmount = this.status.maxSellAmount || 10;
-            if (sub) sub.textContent = 'Sell your product — market price varies';
+            if (sub) sub.textContent = I18n.t('dynamic.drugs.sell_your_product_market_price_varies');
             body.innerHTML = entries.map(([type, d]) => {
                 const lo = Math.floor(d.basePrice * variance.min);
                 const hi = Math.floor(d.basePrice * variance.max);

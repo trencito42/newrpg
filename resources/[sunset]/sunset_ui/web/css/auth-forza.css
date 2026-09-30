@@ -526,7 +526,7 @@
 }
 
 #screen-auth.auth-forza .auth-account-card__pick::after {
-    content: 'INTRĂ';
+    content: 'ENTER'; /* i18n-ignore: locale-specific pseudo-element fallback */
     margin-left: auto;
     font-size: 9px;
     font-weight: 900;
@@ -534,6 +534,10 @@
     color: rgba(0, 255, 204, 0.55);
     transform: none;
     flex-shrink: 0;
+}
+
+html[lang="ro"] #screen-auth.auth-forza .auth-account-card__pick::after {
+    content: 'INTRĂ'; /* i18n-ignore: locale-specific pseudo-element fallback */
 }
 
 #screen-auth.auth-forza .auth-account-card:hover .auth-account-card__pick::after {

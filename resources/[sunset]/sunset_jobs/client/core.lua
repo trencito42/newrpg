@@ -186,7 +186,7 @@ end
 function JobClient.spawnVehicle(model, spawn, warp)
     local hash = JobClient.loadModel(model)
     if not hash then
-        JobClient.notify('Failed to load vehicle model', 'error')
+        JobClient.notify(exports.sunset_core:Translate('jobs.message.failed_to_load_vehicle_model'), 'error')
         return nil
     end
 
@@ -300,19 +300,19 @@ local RETRYABLE_ERRORS = {
 
 function JobClient.registerVehiclesWithServer()
     local truck = JobClient.vehicles[1]
-    if not truck or not DoesEntityExist(truck) then return false, 'Work vehicle is missing' end
+    if not truck or not DoesEntityExist(truck) then return false, { localeKey = 'jobs.message.work_vehicle_is_missing' } end
 
     -- Client-side readiness: both entities networked with stable IDs before
     -- the first server round-trip.
     if not ensureNetworked(truck) then
         dlog('registration aborted: truck never networked client-side')
-        return false, 'Work vehicle did not become server-visible. Check OneSync/entity networking.'
+        return false, { localeKey = 'jobs.message.work_vehicle_did_not_become_server_visible_check_onesync' }
     end
     local trailer = JobClient.vehicles[2]
     if trailer and DoesEntityExist(trailer) then
         if not ensureNetworked(trailer) then
             dlog('registration aborted: trailer never networked client-side')
-            return false, 'Work trailer did not become server-visible. Check OneSync/entity networking.'
+            return false, { localeKey = 'jobs.message.work_trailer_did_not_become_server_visible_check_onesync' }
         end
     end
 
@@ -322,7 +322,7 @@ function JobClient.registerVehiclesWithServer()
     while GetGameTimer() < totalDeadline do
         attempt = attempt + 1
         if not DoesEntityExist(truck) then
-            return false, 'Work vehicle was destroyed'
+            return false, { localeKey = 'jobs.message.work_vehicle_was_destroyed' }
         end
         local truckNet = NetworkGetNetworkIdFromEntity(truck)
         local tNet = nil
@@ -372,7 +372,7 @@ function JobClient.progress(label, duration)
 end
 
 function JobClient.respawnTrailer(truck, trailerModel)
-    if not truck or not DoesEntityExist(truck) then return nil, 'Truck is missing' end
+    if not truck or not DoesEntityExist(truck) then return nil, { localeKey = 'jobs.message.truck_is_missing' } end
 
     local oldTrailer = JobClient.vehicles[2]
     if oldTrailer and DoesEntityExist(oldTrailer) then
@@ -388,13 +388,13 @@ function JobClient.respawnTrailer(truck, trailerModel)
     local heading = GetEntityHeading(truck)
     local spawn = vector4(offset.x, offset.y, offset.z, heading)
     local trailer = JobClient.attachTrailer(truck, trailerModel, spawn)
-    if not trailer then return nil, 'Could not spawn replacement trailer' end
+    if not trailer then return nil, { localeKey = 'jobs.message.could_not_spawn_replacement_trailer' } end
 
     -- [NETWORK FIX] attachTrailer already ensures the entity is networked;
     -- retry loop only covers server-side propagation delay, with taxonomy:
     -- retryable = not propagated yet, fatal = anything else.
     if not ensureNetworked(trailer) then
-        return nil, 'Replacement trailer did not become server-visible. Check OneSync/entity networking.'
+        return nil, { localeKey = 'jobs.message.replacement_trailer_did_not_become_server_visible_check_onesync' }
     end
     local totalDeadline = GetGameTimer() + 8000
     local delay = 200
@@ -413,7 +413,7 @@ function JobClient.respawnTrailer(truck, trailerModel)
         Wait(delay)
         delay = 500
     end
-    return nil, 'Work trailer has not propagated to the server yet. Check OneSync/entity networking.'
+    return nil, { localeKey = 'jobs.message.work_trailer_has_not_propagated_to_the_server_yet' }
 end
 
 function JobClient.monitorVehicles()
@@ -462,7 +462,7 @@ function JobClient.monitorVehicles()
             if not truckAlive and JobClient.state ~= 'IDLE' then
                 Sunset.AwaitCallback('sunset:jobs:vehicleLost')
                 JobClient.cleanup()
-                JobClient.notify('Work vehicle destroyed — shift failed', 'error')
+                JobClient.notify(exports.sunset_core:Translate('jobs.message.work_vehicle_destroyed_shift_failed'), 'error')
                 break
             end
             Wait(2000)
@@ -568,7 +568,7 @@ RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId, state, reason, opti
     JobClient.hideObjective()
     JobClient.cleanup(options or {})
     if state == 'COMPLETED' then
-        JobClient.notify('Shift complete!', 'success')
+        JobClient.notify(exports.sunset_core:Translate('jobs.message.shift_complete'), 'success')
     elseif state == 'FAILED' then
         JobClient.notify(reason or 'Shift failed', 'error')
     elseif state == 'CANCELLED' then
@@ -596,10 +596,10 @@ RegisterNetEvent('sunset:jobs:waypointToWork', function(jobId, coords)
     if coords and coords.x then
         JobClient.setWaypoint(coords)
         local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-        JobClient.notify('GPS set to ' .. label .. ' work location', 'info')
+        JobClient.notify(exports.sunset_core:Translate('jobs.message.gps_set_to') .. label .. ' work location', 'info')
     elseif JobClient.waypointToJob(jobId) then
         local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-        JobClient.notify('GPS set to ' .. label .. ' work location', 'info')
+        JobClient.notify(exports.sunset_core:Translate('jobs.message.gps_set_to') .. label .. ' work location', 'info')
     end
 end)
 

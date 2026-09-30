@@ -49,11 +49,11 @@ end
 -- ── Lockpick attempt ────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(source)
     local char = getChar(source)
-    if not char then return false, 'Character not loaded.' end
+    if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
 
     -- Need lockpick in inventory
     local hasItem = exports.sunset_inventory:HasItem(source, 'lockpick', 1)
-    if not hasItem then return false, 'You need a lockpick.' end
+    if not hasItem then return false, { localeKey = 'carjack.message.you_need_a_lockpick' } end
 
     -- Consume lockpick regardless of outcome (single use)
     exports.sunset_inventory:RemoveItem(source, 'lockpick', 1)
@@ -69,7 +69,7 @@ exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(sour
     else
         -- Small XP on fail so players still progress
         addLockpickXP(source, 8)
-        return false, ('Lockpick broke! (%.0f%% chance — level up Lockpicking to improve)'):format(chance)
+        return false, { localeKey = 'carjack.message.lockpick_broke_value_chance_level_up_lockpicking_to_improve', formatArgs = { chance } }
     end
 end)
 
@@ -118,29 +118,29 @@ end
 -- cooldown, vehicle is not player-owned, not a protected/faction vehicle, then deletes it.
 exports.sunset_core:RegisterCallback('sunset:carjack:sell', function(source, data)
     local char = getChar(source)
-    if not char then return false, 'Character not loaded.' end
+    if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
 
     local netId = tonumber(type(data) == 'table' and data.netId)
-    if not netId then return false, 'Invalid vehicle data.' end
+    if not netId then return false, { localeKey = 'carjack.message.invalid_vehicle_data' } end
 
     local now = os.time()
     if SellCooldown[source] and (now - SellCooldown[source]) < 60 then
-        return false, 'The buyer is still counting the last cash. Come back in a minute.'
+        return false, { localeKey = 'carjack.message.the_buyer_is_still_counting_the_last_cash_come' }
     end
 
-    if not nearChopShop(source) then return false, 'You need to be at a chop shop.' end
+    if not nearChopShop(source) then return false, { localeKey = 'carjack.message.you_need_to_be_at_a_chop_shop' } end
 
     local ped = GetPlayerPed(source)
-    if not ped or ped == 0 then return false, 'Character not loaded.' end
+    if not ped or ped == 0 then return false, { localeKey = 'carjack.message.character_not_loaded' } end
 
     local veh = NetworkGetEntityFromNetworkId(netId)
-    if not veh or veh == 0 or not DoesEntityExist(veh) then return false, 'That vehicle is gone.' end
-    if GetVehicleClass(veh) == -1 then return false, 'Invalid vehicle data.' end
-    if GetPedInVehicleSeat(veh, -1) ~= ped then return false, 'You must be driving the vehicle.' end
+    if not veh or veh == 0 or not DoesEntityExist(veh) then return false, { localeKey = 'carjack.message.that_vehicle_is_gone' } end
+    if GetVehicleClass(veh) == -1 then return false, { localeKey = 'carjack.message.invalid_vehicle_data' } end
+    if GetPedInVehicleSeat(veh, -1) ~= ped then return false, { localeKey = 'carjack.message.you_must_be_driving_the_vehicle' } end
 
     local entityState = Entity(veh).state
     if entityState:get('sunsetProtectedVehicle') or entityState:get('sunsetFactionVehicle') then
-        return false, 'Nobody will touch that vehicle.'
+        return false, { localeKey = 'carjack.message.nobody_will_touch_that_vehicle' }
     end
 
     local plate = (GetVehicleNumberPlateText(veh) or ''):gsub('%s+', ''):upper()
@@ -151,7 +151,7 @@ exports.sunset_core:RegisterCallback('sunset:carjack:sell', function(source, dat
             'SELECT id FROM vehicles WHERE REPLACE(UPPER(plate), " ", "") = ? LIMIT 1',
             { plate }
         )
-        if owned then return false, 'The buyer does not want a registered car.' end
+        if owned then return false, { localeKey = 'carjack.message.the_buyer_does_not_want_a_registered_car' } end
     end
 
     -- The client may send a model name, but it is only trusted if its hash matches the

@@ -77,7 +77,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
 
     local myCharId = tonumber(char.id)
     local myPhone = getCharacterPhoneNumber(char)
@@ -171,20 +171,20 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneAddContact', function(source, name, rawPhone)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
 
     rawPhone = tostring(rawPhone or ''):gsub('^%s*(.-)%s*$', '%1')
     name = tostring(name or ''):gsub('^%s*(.-)%s*$', '%1')
 
     if rawPhone == '' then
-        return nil, 'Please enter a valid phone number.'
+        return nil, { localeKey = 'phone.message.please_enter_a_valid_phone_number' }
     end
 
     local myPhone = getCharacterPhoneNumber(char)
     local formatted = formatPhone(rawPhone)
 
     if formatted == myPhone or formatted == tostring(char.id) then
-        return nil, 'You cannot add your own phone number.'
+        return nil, { localeKey = 'phone.message.you_cannot_add_your_own_phone_number' }
     end
 
     -- Resolve character if exists
@@ -221,7 +221,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneAddContact', function(source, 
     end)
 
     if not ok then
-        return nil, 'Database error while saving contact.'
+        return nil, { localeKey = 'phone.message.database_error_while_saving_contact' }
     end
 
     local isOnline = (contactCharId and findSourceByCharacterId(contactCharId) ~= nil) or false
@@ -245,10 +245,10 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneDeleteContact', function(source, contactId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character loaded' end
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
 
     contactId = tonumber(contactId)
-    if not contactId then return nil, 'Invalid contact ID' end
+    if not contactId then return nil, { localeKey = 'phone.message.invalid_contact_id' } end
 
     local affected = MySQL.update.await([[
         DELETE FROM phone_contacts
@@ -256,7 +256,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneDeleteContact', function(sourc
     ]], { contactId, tonumber(char.id) })
 
     if not affected or affected < 1 then
-        return nil, 'Contact not found or already deleted.'
+        return nil, { localeKey = 'phone.message.contact_not_found_or_already_deleted' }
     end
 
     return { ok = true }
@@ -264,7 +264,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, targetCharacterId, message, targetPhoneNumber, location)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'phone.message.no_character' } end
 
     targetCharacterId = tonumber(targetCharacterId)
     if (not targetCharacterId or targetCharacterId == 0) and targetPhoneNumber then
@@ -275,7 +275,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     end
 
     message = tostring(message or ''):sub(1, 256)
-    if not targetCharacterId or message == '' then return nil, 'Invalid recipient or message' end
+    if not targetCharacterId or message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
 
     -- Handle 112 Emergency dispatch messaging
     if targetCharacterId == -112 or tostring(targetPhoneNumber) == '112' then
@@ -288,7 +288,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         end)
         if not dispatchOk then
             print(('[sunset_phone] 112 SMS dispatch error for character %s: %s'):format(char.id, tostring(dispatchResult)))
-            return nil, 'The 112 dispatch is currently unavailable. The message was not sent; try again.'
+            return nil, { localeKey = 'phone.message.the_112_dispatch_is_currently_unavailable_the_message_was' }
         end
         if not dispatchResult or not dispatchResult.ok then
             return nil, dispatchErr or 'The 112 call could not be registered. Try again.'
@@ -315,10 +315,10 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         return { ok = true, emergency = true, callId = dispatchResult.callId }
     end
 
-    if targetCharacterId == tonumber(char.id) then return nil, 'Cannot message yourself' end
+    if targetCharacterId == tonumber(char.id) then return nil, { localeKey = 'phone.message.cannot_message_yourself' } end
 
     local exists = MySQL.scalar.await('SELECT id FROM characters WHERE id = ?', { targetCharacterId })
-    if not exists then return nil, 'Player / character not found' end
+    if not exists then return nil, { localeKey = 'phone.message.player_character_not_found' } end
 
     MySQL.insert.await(
         'INSERT INTO phone_messages (sender_character_id, receiver_character_id, message) VALUES (?, ?, ?)',
@@ -352,14 +352,14 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneSaveAvatar', function(source, characterId, base64)
     characterId = tonumber(characterId)
-    if not characterId then return nil, 'Invalid character' end
+    if not characterId then return nil, { localeKey = 'phone.message.invalid_character' } end
     base64 = tostring(base64 or '')
-    if #base64 < 100 or #base64 > 500000 then return nil, 'Invalid avatar data' end
+    if #base64 < 100 or #base64 > 500000 then return nil, { localeKey = 'phone.message.invalid_avatar_data' } end
 
     -- Only allow saving your own avatar
     local char = exports.sunset_core:GetCharacter(source)
     if not char or tonumber(char.id) ~= characterId then
-        return nil, 'You can only save your own avatar'
+        return nil, { localeKey = 'phone.message.you_can_only_save_your_own_avatar' }
     end
 
     MySQL.update.await('UPDATE characters SET avatar = ? WHERE id = ?', { base64, characterId })

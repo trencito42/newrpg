@@ -254,7 +254,7 @@ end
 
 function ServiceCore.createServiceCall(source, callType, coords, metadata, description)
     callType = Sunset.Dispatch.NormalizeServiceType(callType)
-    if not callType then return nil, 'Invalid service type' end
+    if not callType then return nil, { localeKey = 'dispatch.message.invalid_service_type' } end
 
     metadata = metadata or {}
     description = description or ''
@@ -264,7 +264,7 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
     local isSystem = not source or source == 0 or metadata.system == true
 
     local char = not isSystem and getChar(source) or nil
-    if not isSystem and not char then return nil, 'No character' end
+    if not isSystem and not char then return nil, { localeKey = 'dispatch.message.no_character' } end
     if not isSystem then
         local providers = 0
         for _, id in ipairs(GetPlayers()) do
@@ -273,7 +273,7 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
             end
         end
         if providers < 1 and not (metadata and metadata.emergency) and callType ~= 'police' then
-            return nil, ('No one is on duty for %s right now.'):format(callType)
+            return nil, { localeKey = 'dispatch.message.no_one_is_on_duty_for_value_right_now', formatArgs = { callType } }
         end
         local rateKey = callType == 'police_backup' and 'backupMs' or 'createMs'
         if not checkRateLimit(source, rateKey) then
@@ -296,7 +296,7 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
         INSERT INTO service_calls (call_type, status, caller_character_id, coords, description, metadata)
         VALUES (?, 'OPEN', ?, ?, ?, ?)
     ]], { callType, callerCharId, json.encode(coords), description, json.encode(metadata) })
-    if not insertId then return nil, 'Could not create service call' end
+    if not insertId then return nil, { localeKey = 'dispatch.message.could_not_create_service_call' } end
 
     local call = {
         id = insertId,
@@ -351,33 +351,33 @@ function ServiceCore.acceptCall(source, callType, callId)
     else
         callType = Sunset.Dispatch.NormalizeServiceType(callType)
     end
-    if not callType or not callId then return nil, 'Usage: /accept [type] [id]' end
+    if not callType or not callId then return nil, { localeKey = 'dispatch.message.usage_accept_type_id' } end
     local cfg = Sunset.Dispatch.ServiceTypes[callType]
     if cfg and cfg.broadcastOnly and callType ~= 'police_backup' then
-        return nil, 'This call type cannot be accepted'
+        return nil, { localeKey = 'dispatch.message.this_call_type_cannot_be_accepted' }
     end
     if not ServiceCore.isProviderForType(source, callType) then
-        return nil, 'You must be on duty as a ' .. ((cfg and cfg.label) or callType) .. ' provider'
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_a' } .. ((cfg and cfg.label) or callType) .. ' provider'
     end
-    if not checkRateLimit(source, 'acceptMs') then return nil, 'Please wait before accepting another call' end
+    if not checkRateLimit(source, 'acceptMs') then return nil, { localeKey = 'dispatch.message.please_wait_before_accepting_another_call' } end
 
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'dispatch.message.no_character' } end
 
     if ProviderActive[source] and ProviderActive[source] ~= callId then
         if callType == 'police_backup' or (existingCall and existingCall.metadata and existingCall.metadata.isPanic) then
             ProviderActive[source] = nil
         else
-            return nil, 'Finish your current call first'
+            return nil, { localeKey = 'dispatch.message.finish_your_current_call_first' }
         end
     end
 
-    if AcceptLocks[callId] then return nil, 'Call is being assigned' end
+    if AcceptLocks[callId] then return nil, { localeKey = 'dispatch.message.call_is_being_assigned' } end
     AcceptLocks[callId] = true
 
     local ok, result, err = pcall(function()
         local call = Calls[callId]
-        if not call then return nil, 'Call not found' end
+        if not call then return nil, { localeKey = 'dispatch.message.call_not_found' } end
 
         if call.status == Sunset.Dispatch.States.ASSIGNED and call.responderCharacterId == char.id then
             emitClient('sunset:dispatch:waypoint', source, call.coords)
@@ -387,7 +387,7 @@ function ServiceCore.acceptCall(source, callType, callId)
 
         local isBackup = call.callType == 'police_backup'
         if not isBackup and call.status ~= Sunset.Dispatch.States.OPEN then
-            return nil, 'Call no longer available'
+            return nil, { localeKey = 'dispatch.message.call_no_longer_available' }
         end
 
         if call.status == Sunset.Dispatch.States.OPEN then
@@ -397,7 +397,7 @@ function ServiceCore.acceptCall(source, callType, callId)
                 WHERE id = ? AND status = 'OPEN'
             ]], { char.id, callId })
             if affected < 1 and not isBackup then
-                return nil, 'Call no longer available'
+                return nil, { localeKey = 'dispatch.message.call_no_longer_available' }
             end
         end
 
@@ -424,7 +424,7 @@ function ServiceCore.acceptCall(source, callType, callId)
     AcceptLocks[callId] = nil
     if not ok then
         print(('[sunset_dispatch] acceptCall error: %s'):format(tostring(result)))
-        return nil, 'Could not accept call'
+        return nil, { localeKey = 'dispatch.message.could_not_accept_call' }
     end
     return result, err
 end
@@ -432,22 +432,22 @@ end
 function ServiceCore.cancelCall(source, callType, callId, reason)
     callType = Sunset.Dispatch.NormalizeServiceType(callType)
     callId = tonumber(callId)
-    if not callType or not callId then return nil, 'Usage: /cancel [type] [id]' end
-    if not checkRateLimit(source, 'cancelMs') then return nil, 'Please wait before cancelling again' end
+    if not callType or not callId then return nil, { localeKey = 'dispatch.message.usage_cancel_type_id' } end
+    if not checkRateLimit(source, 'cancelMs') then return nil, { localeKey = 'dispatch.message.please_wait_before_cancelling_again' } end
 
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'dispatch.message.no_character' } end
     local call = Calls[callId]
-    if not call or call.callType ~= callType then return nil, 'Call not found' end
-    if Sunset.Dispatch.IsTerminalState(call.status) then return nil, 'Call already closed' end
+    if not call or call.callType ~= callType then return nil, { localeKey = 'dispatch.message.call_not_found' } end
+    if Sunset.Dispatch.IsTerminalState(call.status) then return nil, { localeKey = 'dispatch.message.call_already_closed' } end
 
     local isCaller = call.callerCharacterId == char.id
     local isResponder = call.responderCharacterId == char.id
     if not isCaller and not isResponder and not ServiceCore.isProviderForType(source, callType) then
-        return nil, 'You cannot cancel this call'
+        return nil, { localeKey = 'dispatch.message.you_cannot_cancel_this_call' }
     end
     if isResponder and not isCaller and call.status == Sunset.Dispatch.States.IN_PROGRESS then
-        return nil, 'Cannot cancel while service is in progress'
+        return nil, { localeKey = 'dispatch.message.cannot_cancel_while_service_is_in_progress' }
     end
 
     call.status = Sunset.Dispatch.States.CANCELLED
@@ -478,20 +478,20 @@ function ServiceCore.updateCallState(source, callType, callId, newState)
     callType = Sunset.Dispatch.NormalizeServiceType(callType)
     callId = tonumber(callId)
     newState = newState and string.upper(newState) or nil
-    if not callType or not callId or not newState then return nil, 'Invalid arguments' end
-    if not Sunset.Dispatch.States[newState] then return nil, 'Invalid state' end
+    if not callType or not callId or not newState then return nil, { localeKey = 'dispatch.message.invalid_arguments' } end
+    if not Sunset.Dispatch.States[newState] then return nil, { localeKey = 'dispatch.message.invalid_state' } end
 
     local call = Calls[callId]
-    if not call or call.callType ~= callType then return nil, 'Call not found' end
+    if not call or call.callType ~= callType then return nil, { localeKey = 'dispatch.message.call_not_found' } end
     if not Sunset.Dispatch.AllowedStateTransition(call.status, newState) then
-        return nil, ('Cannot transition from %s to %s'):format(call.status, newState)
+        return nil, { localeKey = 'dispatch.message.cannot_transition_from_value_to_value', formatArgs = { call.status, newState } }
     end
 
     local char = getChar(source)
-    if not char then return nil, 'No character' end
+    if not char then return nil, { localeKey = 'dispatch.message.no_character' } end
     local isCaller = call.callerCharacterId == char.id
     local isResponder = call.responderCharacterId == char.id
-    if not isCaller and not isResponder then return nil, 'Not part of this call' end
+    if not isCaller and not isResponder then return nil, { localeKey = 'dispatch.message.not_part_of_this_call' } end
 
     call.status = newState
     pcall(function() persistStatus(callId, newState, call.responderCharacterId) end)
@@ -515,7 +515,7 @@ end
 
 function ServiceCore.completeCall(source, callType, callId)
     local call = ServiceCore.getCall(callType, callId)
-    if not call then return nil, 'Call not found' end
+    if not call then return nil, { localeKey = 'dispatch.message.call_not_found' } end
 
     -- A successful gameplay action (revive/extinguish/repair) is authoritative
     -- proof of service. Advance any skipped UI states so the persisted dispatch

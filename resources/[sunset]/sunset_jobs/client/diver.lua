@@ -81,7 +81,7 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
         if data.stage == 'return_to_terry' then
             TerryHandoffReady = true
             SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
-            exports.sunset_ui:Notify('All salvage recovered! Return to Terry at the waterfront.', 'info', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.all_salvage_recovered_return_to_terry_at_the_waterfront'), 'info', 8000)
         else
             TerryHandoffReady = false
         end
@@ -300,7 +300,7 @@ local function setSiteBlip(result)
 
     -- Set GPS waypoint to dive entry (not exact salvage — sonar handles that)
     SetNewWaypoint(bx, by)
-    exports.sunset_ui:Notify('Dive site marked on map. Use sonar to locate salvage underwater.', 'info', 6000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.dive_site_marked_on_map_use_sonar_to_locate'), 'info', 6000)
 end
 
 -- ── Salvage Marker Management ─────────────────────────────────
@@ -376,7 +376,7 @@ CreateThread(function()
                     exports.sunset_ui:Send('cancelProgressBar', {})
 
                     if cancelled then
-                        exports.sunset_ui:Notify('Salvage cancelled — you moved away.', 'error', 3000)
+                        exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.salvage_cancelled_you_moved_away'), 'error', 3000)
                     else
                         -- Phase 2: complete salvage
                         local result, err = Sunset.AwaitCallback(
@@ -479,7 +479,7 @@ end)
 RegisterNetEvent('sunset:diving:returnToTerry', function()
     TerryHandoffReady = true
     SetNewWaypoint(TERRY_COORDS.x, TERRY_COORDS.y)
-    exports.sunset_ui:Notify('All salvage recovered! Return to Terry at the Vespucci waterfront.', 'info', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.all_salvage_recovered_return_to_terry_at_the_vespucci'), 'info', 8000)
 end)
 
 -- Terry handoff proximity thread

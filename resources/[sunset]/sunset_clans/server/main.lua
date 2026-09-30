@@ -238,7 +238,7 @@ end
 
 local function clanProfilePayload(clanId)
     clanId = tonumber(clanId)
-    if not clanId then return nil, 'Invalid clan.' end
+    if not clanId then return nil, { localeKey = 'clans.message.invalid_clan' } end
     local row = MySQL.single.await([[
         SELECT c.id, c.name, c.tag, c.tag_color, c.tag_style, c.description, c.motd,
                c.owner_character_id, c.max_members,
@@ -247,7 +247,7 @@ local function clanProfilePayload(clanId)
         WHERE c.id = ?
         LIMIT 1
     ]], { clanId })
-    if not row then return nil, 'Clan not found.' end
+    if not row then return nil, { localeKey = 'clans.message.clan_not_found' } end
 
     local profile = clanDirectoryRow(row)
     profile.members = buildRoster(clanId)
@@ -310,10 +310,10 @@ local function spendCoins(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 then return true end
     local player = exports.sunset_core:GetPlayer(source)
-    if not player then return false, 'Account not loaded.' end
+    if not player then return false, { localeKey = 'clans.message.account_not_loaded' } end
     local balance = tonumber(player.premium_points) or 0
     if balance < amount then
-        return false, ('You need %d Blaze Points (you have %d).'):format(amount, balance)
+        return false, { localeKey = 'clans.message.you_need_value_blaze_points_you_have_value', formatArgs = { amount, balance } }
     end
     local ok, err = setPremiumPoints(source, balance - amount)
     if not ok then return false, err or 'Could not spend Blaze Points.' end
@@ -408,20 +408,20 @@ end
 local function clanManageDashboard(source, cid)
     local fresh = ClanDisplay.getMembership(cid)
     if not fresh then
-        return nil, 'Your clan membership could not be reloaded. Reopen /clan.'
+        return nil, { localeKey = 'clans.message.your_clan_membership_could_not_be_reloaded_reopen_clan' }
     end
     local ok, dashboard = pcall(dashboardPayload, source, fresh, cid)
     if not ok then
         print(('^1[sunset_clans]^7 dashboard failed: %s'):format(tostring(dashboard)))
-        return nil, 'Changes saved. Reopen /clan to see the update.'
+        return nil, { localeKey = 'clans.message.changes_saved_reopen_clan_to_see_the_update' }
     end
     return dashboard
 end
 
 local function showClanMotd(source)
     local row, cid = membershipFor(source)
-    if not cid then return false, 'Your character is not loaded. Reconnect and try again.' end
-    if not row then return false, 'You are not in a clan.' end
+    if not cid then return false, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
+    if not row then return false, { localeKey = 'clans.message.you_are_not_in_a_clan' } end
     local message = tostring(row.motd or '')
     TriggerClientEvent('sunset:chat:message', source, {
         type = 'clan_motd',
@@ -438,8 +438,8 @@ end
 
 local function applyClanMotd(source, message)
     local row, cid = membershipFor(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
-    if not row or not isOfficer(row, cid) then return nil, 'Only clan leaders and officers can set the MOTD.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
+    if not row or not isOfficer(row, cid) then return nil, { localeKey = 'clans.message.only_clan_leaders_and_officers_can_set_the_motd' } end
     local motd = cleanText(message, SunsetClans.MaxMotdLength)
     MySQL.update.await('UPDATE clans SET motd = ? WHERE id = ?', { motd, row.clan_id })
     safeAudit(row.clan_id, cid, 'motd', { motd = motd })
@@ -451,12 +451,12 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:clanDashboard', function(source)
     local row, cid = membershipFor(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     return dashboardPayload(source, row, cid)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:clanDirectory', function(source)
-    if not charId(source) then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not charId(source) then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     local rows = MySQL.query.await([[
         SELECT c.id, c.name, c.tag, c.tag_color, c.tag_style, c.description, c.motd,
                c.owner_character_id, c.max_members,
@@ -481,15 +481,15 @@ exports.sunset_core:RegisterCallback('sunset:clanDirectory', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:clanProfile', function(source, clanId)
-    if not charId(source) then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not charId(source) then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     return clanProfilePayload(clanId)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, payload)
-    if type(payload) ~= 'table' then return nil, 'Invalid create request.' end
+    if type(payload) ~= 'table' then return nil, { localeKey = 'clans.message.invalid_create_request' } end
     local cid = charId(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
-    if ClanDisplay.getMembership(cid) then return nil, 'You are already in a clan.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
+    if ClanDisplay.getMembership(cid) then return nil, { localeKey = 'clans.message.you_are_already_in_a_clan' } end
 
     local name = cleanName(payload.name)
     local tag = cleanTag(payload.tag)
@@ -498,13 +498,13 @@ exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, paylo
     local tagStyle = tostring(payload.tagStyle or 'brackets')
     if not SunsetClans.isValidTagStyle(tagStyle) then tagStyle = 'brackets' end
 
-    if not name then return nil, ('Clan name must be %d-%d letters, numbers, spaces, dots or dashes.'):format(
-        SunsetClans.MinNameLength, SunsetClans.MaxNameLength) end
-    if not tag then return nil, ('Clan tag must be %d-%d letters or numbers.'):format(
-        SunsetClans.MinTagLength, SunsetClans.MaxTagLength) end
+    if not name then return nil, { localeKey = 'clans.message.clan_name_must_be_value_value_letters_numbers_spaces_dots_or_dash', formatArgs = {
+        SunsetClans.MinNameLength, SunsetClans.MaxNameLength } } end
+    if not tag then return nil, { localeKey = 'clans.message.clan_tag_must_be_value_value_letters_or_numbers', formatArgs = {
+        SunsetClans.MinTagLength, SunsetClans.MaxTagLength } } end
 
     local existing = MySQL.scalar.await('SELECT id FROM clans WHERE LOWER(name) = LOWER(?) OR LOWER(tag) = LOWER(?) LIMIT 1', { name, tag })
-    if existing then return nil, 'That clan name or tag is already taken.' end
+    if existing then return nil, { localeKey = 'clans.message.that_clan_name_or_tag_is_already_taken' } end
 
     local player = exports.sunset_core:GetPlayer(source)
     local balanceBefore = player and tonumber(player.premium_points) or 0
@@ -528,7 +528,7 @@ exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, paylo
     if not insertOk or not clanId then
         refundCoins()
         print(('[sunset_clans] clanCreate insert failed for %s: %s'):format(source, tostring(insertErr or clanId)))
-        return nil, 'Could not create clan in the database. Your Blaze Points were refunded.'
+        return nil, { localeKey = 'clans.message.could_not_create_clan_in_the_database_your_blaze' }
     end
 
     local memberOk, memberErr = pcall(function()
@@ -540,7 +540,7 @@ exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, paylo
         pcall(function() MySQL.update.await('DELETE FROM clans WHERE id = ?', { clanId }) end)
         refundCoins()
         print(('[sunset_clans] clanCreate member insert failed for %s: %s'):format(source, tostring(memberErr)))
-        return nil, 'Could not add you as clan leader. Your Blaze Points were refunded.'
+        return nil, { localeKey = 'clans.message.could_not_add_you_as_clan_leader_your_blaze' }
     end
 
     pcall(function()
@@ -558,13 +558,13 @@ exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, paylo
 
     local row = ClanDisplay.getMembership(cid)
     if not row then
-        return nil, 'Clan was created but could not be loaded. Reopen /clan.'
+        return nil, { localeKey = 'clans.message.clan_was_created_but_could_not_be_loaded_reopen' }
     end
 
     local payloadOk, payload = pcall(dashboardPayload, source, row, cid)
     if not payloadOk then
         print(('[sunset_clans] clanCreate dashboard failed for %s: %s'):format(source, tostring(payload)))
-        return nil, 'Clan created. Reopen /clan to view your clan page.'
+        return nil, { localeKey = 'clans.message.clan_created_reopen_clan_to_view_your_clan_page' }
     end
     safeBroadcast(clanId, source, ('founded the clan %s [%s].'):format(name, tag))
     return payload
@@ -572,8 +572,8 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:clanGetMotd', function(source)
     local row, cid = membershipFor(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
-    if not row then return nil, 'You are not in a clan.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
+    if not row then return nil, { localeKey = 'clans.message.you_are_not_in_a_clan' } end
     return {
         tag = row.tag,
         name = row.name,
@@ -582,33 +582,33 @@ exports.sunset_core:RegisterCallback('sunset:clanGetMotd', function(source)
 end)
 
 local function handleClanManage(source, payload)
-    if type(payload) ~= 'table' then return nil, 'Invalid clan action.' end
+    if type(payload) ~= 'table' then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
     local action = tostring(payload.action or '')
     local row, cid = membershipFor(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
 
     if action == 'motd' then
         return applyClanMotd(source, payload.message)
     end
 
     if action == 'settings' then
-        if not row or not isLeader(row, cid) then return nil, 'Only the clan leader can change clan settings.' end
+        if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
         local description = cleanText(payload.description, SunsetClans.MaxDescriptionLength)
         local tag = cleanTag(payload.tag)
         if not tag then
-            return nil, ('Clan tag must be %d-%d letters or numbers.'):format(
-                SunsetClans.MinTagLength, SunsetClans.MaxTagLength)
+            return nil, { localeKey = 'clans.message.clan_tag_must_be_value_value_letters_or_numbers_537a07', formatArgs = {
+                SunsetClans.MinTagLength, SunsetClans.MaxTagLength } }
         end
         if tag:lower() ~= tostring(row.tag or ''):lower() then
             local taken = MySQL.scalar.await(
                 'SELECT id FROM clans WHERE LOWER(tag) = LOWER(?) AND id <> ? LIMIT 1',
                 { tag, row.clan_id }
             )
-            if taken then return nil, 'That clan tag is already taken.' end
+            if taken then return nil, { localeKey = 'clans.message.that_clan_tag_is_already_taken' } end
         end
         local tagColor = cleanColor(payload.tagColor)
         local tagStyle = tostring(payload.tagStyle or row.tag_style or 'brackets')
-        if not SunsetClans.isValidTagStyle(tagStyle) then return nil, 'Invalid tag style.' end
+        if not SunsetClans.isValidTagStyle(tagStyle) then return nil, { localeKey = 'clans.message.invalid_tag_style' } end
         MySQL.update.await(
             'UPDATE clans SET description = ?, tag = ?, tag_color = ?, tag_style = ? WHERE id = ?',
             { description, tag, tagColor, tagStyle, row.clan_id }
@@ -620,22 +620,22 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'invite' then
-        if not row or not isOfficer(row, cid) then return nil, 'Only clan leaders and officers can invite members.' end
+        if not row or not isOfficer(row, cid) then return nil, { localeKey = 'clans.message.only_clan_leaders_and_officers_can_invite_members' } end
         if clanMemberCount(row.clan_id) >= (row.max_members or SunsetClans.MaxMembers) then
-            return nil, 'Your clan is full.'
+            return nil, { localeKey = 'clans.message.your_clan_is_full' }
         end
         local targetId = tonumber(payload.targetId)
         if not targetId or not GetPlayerName(targetId) then
-            return nil, ('Player ID %s is not online.'):format(tostring(payload.targetId or '?'))
+            return nil, { localeKey = 'clans.message.player_id_value_is_not_online', formatArgs = { tostring(payload.targetId or '?') } }
         end
-        if targetId == source then return nil, 'You cannot invite yourself.' end
+        if targetId == source then return nil, { localeKey = 'clans.message.you_cannot_invite_yourself' } end
         local targetCid = charId(targetId)
-        if not targetCid then return nil, 'That player has not loaded a character yet.' end
-        if ClanDisplay.getMembership(targetCid) then return nil, 'That player is already in a clan.' end
+        if not targetCid then return nil, { localeKey = 'clans.message.that_player_has_not_loaded_a_character_yet' } end
+        if ClanDisplay.getMembership(targetCid) then return nil, { localeKey = 'clans.message.that_player_is_already_in_a_clan' } end
         -- [ANTI-SPAM] If this target already has a pending invite from this clan, refuse.
         local existing = PendingInvites[targetId]
         if existing and existing.clanId == row.clan_id and existing.expiresAt >= os.time() then
-            return nil, 'You already sent a clan invite — wait for them to accept or decline.'
+            return nil, { localeKey = 'clans.message.you_already_sent_a_clan_invite_wait_for_them' }
         end
 
         local expiresAt = os.time() + SunsetClans.InviteExpirySec
@@ -692,14 +692,14 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'kick' then
-        if not row or not isOfficer(row, cid) then return nil, 'Only clan leaders and officers can remove members.' end
+        if not row or not isOfficer(row, cid) then return nil, { localeKey = 'clans.message.only_clan_leaders_and_officers_can_remove_members' } end
         local targetId, targetCid, targetRow, err = resolveClanMember(payload, false)
         if not targetCid then return nil, err end
         if not canManageMember(row, targetRow, cid) then
-            return nil, 'You cannot remove that member.'
+            return nil, { localeKey = 'clans.message.you_cannot_remove_that_member' }
         end
         if memberRank(targetRow) >= SunsetClans.MaxRank then
-            return nil, 'You cannot remove the clan leader.'
+            return nil, { localeKey = 'clans.message.you_cannot_remove_the_clan_leader' }
         end
         safeBroadcast(row.clan_id, source,
             ('removed %s from the clan.'):format(playerName(targetCid)))
@@ -713,11 +713,11 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'rankUp' or action == 'rankDown' then
-        if not row or not isOfficer(row, cid) then return nil, 'Only clan officers and leaders can change ranks.' end
+        if not row or not isOfficer(row, cid) then return nil, { localeKey = 'clans.message.only_clan_officers_and_leaders_can_change_ranks' } end
         local targetId, targetCid, targetRow, err = resolveClanMember(payload, true)
         if not targetCid then return nil, err end
         if not canManageMember(row, targetRow, cid) then
-            return nil, 'You cannot change that member\'s rank.'
+            return nil, { localeKey = 'clans.message.you_cannot_change_that_member_s_rank' }
         end
         local current = memberRank(targetRow)
         local nextRank
@@ -727,13 +727,13 @@ local function handleClanManage(source, payload)
             nextRank = current - 1
         end
         if not isLeader(row, cid) and nextRank >= memberRank(row) then
-            return nil, 'You can only promote members below your own rank.'
+            return nil, { localeKey = 'clans.message.you_can_only_promote_members_below_your_own_rank' }
         end
         if nextRank < 1 or nextRank > SunsetClans.MaxRank then
-            return nil, 'That rank change is not allowed.'
+            return nil, { localeKey = 'clans.message.that_rank_change_is_not_allowed' }
         end
         if nextRank >= SunsetClans.MaxRank and tonumber(targetCid) ~= tonumber(row.owner_character_id) then
-            return nil, 'Only the clan owner can hold the top rank.'
+            return nil, { localeKey = 'clans.message.only_the_clan_owner_can_hold_the_top_rank' }
         end
         MySQL.update.await('UPDATE clan_members SET rank = ? WHERE clan_id = ? AND character_id = ?', {
             nextRank, row.clan_id, targetCid,
@@ -753,15 +753,15 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'warn' then
-        if not row or not isOfficer(row, cid) then return nil, 'Only clan officers and leaders can issue warnings.' end
+        if not row or not isOfficer(row, cid) then return nil, { localeKey = 'clans.message.only_clan_officers_and_leaders_can_issue_warnings' } end
         local targetId, targetCid, targetRow, err = resolveClanMember(payload, false)
         if not targetCid then return nil, err end
         if not canManageMember(row, targetRow, cid) then
-            return nil, 'You cannot warn that member.'
+            return nil, { localeKey = 'clans.message.you_cannot_warn_that_member' }
         end
         local warns = tonumber(targetRow.warns) or 0
         if warns >= SunsetClans.MaxWarns then
-            return nil, 'This member already has 3/3 clan warnings.'
+            return nil, { localeKey = 'clans.message.this_member_already_has_3_3_clan_warnings' }
         end
         local reason = cleanText(payload.reason, 128)
         if reason == '' then reason = 'No reason given' end
@@ -794,7 +794,7 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'rankLabels' then
-        if not row or not isLeader(row, cid) then return nil, 'Only the clan leader can rename ranks.' end
+        if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_rename_ranks' } end
         local labels = SunsetClans.defaultRankLabels()
         if type(payload.labels) == 'table' then
             for i = 1, SunsetClans.MaxRank do
@@ -814,9 +814,9 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'leave' then
-        if not row then return nil, 'You are not in a clan.' end
+        if not row then return nil, { localeKey = 'clans.message.you_are_not_in_a_clan' } end
         if isLeader(row, cid) then
-            return nil, 'Leaders must dissolve the clan or transfer leadership before leaving.'
+            return nil, { localeKey = 'clans.message.leaders_must_dissolve_the_clan_or_transfer_leadership_before' }
         end
         local clanId = row.clan_id
         safeAudit(clanId, cid, 'leave', {})
@@ -828,7 +828,7 @@ local function handleClanManage(source, payload)
     end
 
     if action == 'dissolve' then
-        if not row or not isLeader(row, cid) then return nil, 'Only the clan leader can dissolve the clan.' end
+        if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_dissolve_the_clan' } end
         local clanId = row.clan_id
         local members = MySQL.query.await('SELECT character_id FROM clan_members WHERE clan_id = ?', { clanId }) or {}
         safeAudit(clanId, cid, 'dissolve', {})
@@ -848,7 +848,7 @@ local function handleClanManage(source, payload)
         return dashboardPayload(source, nil, cid)
     end
 
-    return nil, 'Unknown clan action.'
+    return nil, { localeKey = 'clans.message.unknown_clan_action' }
 end
 
 exports.sunset_core:RegisterCallback('sunset:clanManage', function(source, payload)
@@ -862,8 +862,8 @@ end)
 
 local function acceptInvite(source)
     local cid = charId(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
-    if ClanDisplay.getMembership(cid) then return nil, 'You are already in a clan.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
+    if ClanDisplay.getMembership(cid) then return nil, { localeKey = 'clans.message.you_are_already_in_a_clan' } end
 
     local invite = normalizeInvite(PendingInvites[source])
     if not invite then
@@ -876,17 +876,17 @@ local function acceptInvite(source)
             LIMIT 1
         ]], { cid }))
     end
-    if not invite then return nil, 'You have no pending clan invites.' end
+    if not invite then return nil, { localeKey = 'clans.message.you_have_no_pending_clan_invites' } end
     if invite.expires_at and invite.expires_at < os.time() then
         MySQL.update.await('DELETE FROM clan_invites WHERE clan_id = ? AND character_id = ?', { invite.clan_id, cid })
         PendingInvites[source] = nil
-        return nil, 'That clan invite expired.'
+        return nil, { localeKey = 'clans.message.that_clan_invite_expired' }
     end
 
     local count = clanMemberCount(invite.clan_id)
     local maxMembers = tonumber(MySQL.scalar.await('SELECT max_members FROM clans WHERE id = ?', { invite.clan_id })) or SunsetClans.MaxMembers
     if count >= maxMembers then
-        return nil, 'That clan is full.'
+        return nil, { localeKey = 'clans.message.that_clan_is_full' }
     end
 
     local insertOk, insertErr = pcall(function()
@@ -896,7 +896,7 @@ local function acceptInvite(source)
     end)
     if not insertOk then
         print(('[sunset_clans] acceptInvite insert failed for %s: %s'):format(source, tostring(insertErr)))
-        return nil, 'Could not join the clan. Ask the leader to invite you again.'
+        return nil, { localeKey = 'clans.message.could_not_join_the_clan_ask_the_leader_to' }
     end
     MySQL.update.await('DELETE FROM clan_invites WHERE clan_id = ? AND character_id = ?', { invite.clan_id, cid })
     PendingInvites[source] = nil
@@ -914,7 +914,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:clanDeclineInvite', function(source)
     local cid = charId(source)
-    if not cid then return nil, 'Your character is not loaded. Reconnect and try again.' end
+    if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     local pending = PendingInvites[source]
     local clanId = pending and pending.clanId
     if pending then
@@ -947,7 +947,7 @@ function RunMotdCommand(source, args)
     end
     local dashboard, err = applyClanMotd(source, msg)
     if dashboard then
-        TriggerClientEvent('sunset:client:notify', source, 'Clan MOTD updated.', 'success', 6000)
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'clans.message.clan_motd_updated_8cc5ba'), 'success', 6000)
     else
         TriggerClientEvent('sunset:client:notify', source, err or 'MOTD update failed. Officers can set it with /cmotd [message].', 'error', 7000)
     end

@@ -123,31 +123,31 @@ const Missions = (() => {
                     row.className = 'ms-hud-extra';
                     const pct = data.extra.condition;
                     const col = pct > 60 ? '#00ffcc' : pct > 30 ? '#fbbf24' : '#f87171';
-                    row.innerHTML = `CONDITION <span style="color:${col}">${pct}%</span>`;
+                    row.innerHTML = I18n.t('dynamic.missions.condition_value1', { value0: col, value1: pct });
                     ext.appendChild(row);
                 }
                 if (data.extra.plate) {
                     const row = document.createElement('div');
                     row.className = 'ms-hud-extra';
-                    row.innerHTML = `PLATE <span>${data.extra.plate}</span>`;
+                    row.innerHTML = I18n.t('dynamic.missions.plate_value0', { value0: data.extra.plate });
                     ext.appendChild(row);
                 }
                 if (data.extra.color) {
                     const row = document.createElement('div');
                     row.className = 'ms-hud-extra';
-                    row.innerHTML = `COLOR <span>${data.extra.color}</span>`;
+                    row.innerHTML = I18n.t('dynamic.missions.color_value0', { value0: data.extra.color });
                     ext.appendChild(row);
                 }
                 if (data.extra.row) {
                     const row = document.createElement('div');
                     row.className = 'ms-hud-extra';
-                    row.innerHTML = `ROW <span>${data.extra.row}</span>`;
+                    row.innerHTML = I18n.t('dynamic.missions.row_value0', { value0: data.extra.row });
                     ext.appendChild(row);
                 }
                 if (data.extra.id) {
                     const row = document.createElement('div');
                     row.className = 'ms-hud-extra';
-                    row.innerHTML = `CONTAINER <span>${data.extra.id}</span>`;
+                    row.innerHTML = I18n.t('dynamic.missions.container_value0', { value0: data.extra.id });
                     ext.appendChild(row);
                 }
             }

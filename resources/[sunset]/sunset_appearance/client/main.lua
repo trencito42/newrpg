@@ -121,7 +121,7 @@ local function enterStudio(char, skipFade)
     if not loadFreemodePed(char) then
         if not skipFade then DoScreenFadeIn(500) end
         TriggerEvent('sunset:auth:openLogin')
-        exports.sunset_ui:Notify('Failed to load character model', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('appearance.message.failed_to_load_character_model'), 'error')
         return false
     end
 
@@ -340,7 +340,7 @@ RegisterCommand('relook', function()
     if editing then return end
     local char = exports.sunset_core:GetCharacter()
     if not char then
-        exports.sunset_ui:Notify('No character loaded', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('appearance.message.no_character_loaded'), 'error')
         return
     end
     openEditor(char)

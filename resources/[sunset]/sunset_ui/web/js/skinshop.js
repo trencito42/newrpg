@@ -155,7 +155,7 @@ const SkinShopUI = (() => {
             if (btnEquip) {
                 btnEquip.classList.remove('hidden');
                 btnEquip.disabled = false;
-                btnEquip.textContent = 'Reset to Original Outfit';
+                btnEquip.textContent = I18n.t('dynamic.skinshop.reset_to_original_outfit');
             }
         } else if (skin.owned) {
             btnCash?.classList.add('hidden');
@@ -164,7 +164,7 @@ const SkinShopUI = (() => {
             if (btnEquip) {
                 btnEquip.classList.remove('hidden');
                 btnEquip.disabled = false;
-                btnEquip.textContent = 'Equip Skin';
+                btnEquip.textContent = I18n.t('dynamic.skinshop.equip_skin');
             }
         } else if (skin.battlepass) {
             btnCash?.classList.add('hidden');

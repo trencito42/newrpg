@@ -332,7 +332,7 @@ CreateThread(function()
                     if clue and clue.type ~= 'no_tracks' then
                         exports.sunset_ui:Notify(clue.message or 'Tracks spotted nearby.', 'info', 5000)
                     elseif clue then
-                        exports.sunset_ui:Notify('No fresh tracks in range. Move deeper.', 'info', 4000)
+                        exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.no_fresh_tracks_in_range_move_deeper'), 'info', 4000)
                     end
                 end)
             else

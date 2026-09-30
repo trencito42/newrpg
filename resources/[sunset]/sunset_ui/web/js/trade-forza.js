@@ -96,7 +96,7 @@
         if (!items.length) {
             const empty = document.createElement('div');
             empty.className = 'offer-empty';
-            empty.textContent = 'No offers added';
+            empty.textContent = I18n.t('dynamic.trade_forza.no_offers_added');
             container.appendChild(empty);
             return;
         }
@@ -113,7 +113,7 @@
             const sub = document.createElement('div');
             sub.className = 'oi-sub';
             if (row.cash) {
-                name.textContent = 'Cash';
+                name.textContent = I18n.t('dynamic.trade_forza.cash');
                 sub.textContent = `${this.formatMoney(row.amount)} USD`;
                 if (removable) {
                     el.classList.add('is-removable');
@@ -128,7 +128,7 @@
                 }
             } else {
                 name.textContent = row.label || row.item || 'Item';
-                sub.textContent = `Qty: x${Number(row.count) || 0}`;
+                sub.textContent = I18n.t('dynamic.trade_forza.qty_x_value0', { value0: Number(row.count) || 0 });
                 if (removable) {
                     el.classList.add('is-removable');
                     el.addEventListener('click', () => post('inventoryTradeRemove', { rowId: row.id }));

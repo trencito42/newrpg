@@ -23,11 +23,11 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
         isLE = exports.sunset_factions:HasFactionPerm(source, 'impound') == true
     end)
     if not isLE then
-        return nil, 'Only law enforcement on duty can impound vehicles.'
+        return nil, { localeKey = 'impound.message.only_law_enforcement_on_duty_can_impound_vehicles' }
     end
 
     vehicleId = tonumber(vehicleId)
-    if not vehicleId then return nil, 'Invalid vehicle.' end
+    if not vehicleId then return nil, { localeKey = 'impound.message.invalid_vehicle' } end
 
     reasonId = tostring(reasonId or 'other')
     local reasonRow = nil
@@ -41,15 +41,15 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
     pcall(function()
         veh = exports.sunset_vehicles:GetVehicleById(vehicleId)
     end)
-    if not veh then return nil, 'Vehicle not found.' end
+    if not veh then return nil, { localeKey = 'impound.message.vehicle_not_found' } end
 
     local ownerCharId = tonumber(veh.character_id)
-    if not ownerCharId then return nil, 'This vehicle has no registered owner.' end
+    if not ownerCharId then return nil, { localeKey = 'impound.message.this_vehicle_has_no_registered_owner' } end
 
     -- Check if already impounded
     local existing = MySQL.scalar.await(
         'SELECT id FROM impounded_vehicles WHERE vehicle_id = ? AND status = "impounded" LIMIT 1', { vehicleId })
-    if existing then return nil, 'This vehicle is already impounded.' end
+    if existing then return nil, { localeKey = 'impound.message.this_vehicle_is_already_impounded' } end
 
     local impoundedByName = exports.sunset_core:GetPlayerDisplayName(source) or 'Officer'
     local impoundedBy = getCharId(source)
@@ -83,7 +83,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:impound:list', function(source)
     local charId = getCharId(source)
-    if not charId then return nil, 'No character loaded.' end
+    if not charId then return nil, { localeKey = 'impound.message.no_character_loaded' } end
 
     local rows = MySQL.query.await([[
         SELECT iv.id, iv.vehicle_id, iv.reason, iv.fee, iv.daily_fee, iv.impounded_at, iv.impounded_by_name,
@@ -127,17 +127,17 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:impound:recover', function(source, impoundId)
     local charId = getCharId(source)
-    if not charId then return nil, 'No character loaded.' end
+    if not charId then return nil, { localeKey = 'impound.message.no_character_loaded' } end
 
     impoundId = tonumber(impoundId)
-    if not impoundId then return nil, 'Invalid impound record.' end
+    if not impoundId then return nil, { localeKey = 'impound.message.invalid_impound_record' } end
 
     local row = MySQL.single.await([[
         SELECT iv.*, v.plate, v.model FROM impounded_vehicles iv
         LEFT JOIN vehicles v ON v.id = iv.vehicle_id
         WHERE iv.id = ? AND iv.character_id = ? AND iv.status = 'impounded'
     ]], { impoundId, charId })
-    if not row then return nil, 'Impound record not found.' end
+    if not row then return nil, { localeKey = 'impound.message.impound_record_not_found' } end
 
     -- Calculate total fee
     local now = os.time()
@@ -162,12 +162,12 @@ exports.sunset_core:RegisterCallback('sunset:impound:recover', function(source, 
         end
     end)
     if not nearLot then
-        return nil, 'You must be at the impound lot to recover your vehicle.'
+        return nil, { localeKey = 'impound.message.you_must_be_at_the_impound_lot_to_recover' }
     end
 
     -- Charge the fee
     if not exports.sunset_core:RemoveMoney(source, 'cash', totalFee, 'impound_fee') then
-        return nil, ('Not enough cash. Recovery fee: $%s.'):format(totalFee)
+        return nil, { localeKey = 'impound.message.not_enough_cash_recovery_fee_value', formatArgs = { totalFee } }
     end
 
     -- Mark as released

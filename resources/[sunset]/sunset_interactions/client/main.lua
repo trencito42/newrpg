@@ -152,7 +152,7 @@ local function debugTargetSelection(reason, selected, candidates)
 end
 
 local function selectBestInteractionTarget(candidates, currentServerId)
-    if #candidates == 0 then return nil, 'no_candidates' end
+    if #candidates == 0 then return nil, { localeKey = 'interactions.message.no_candidates' } end
 
     local sameVehicle = {}
     local current = nil
@@ -194,7 +194,7 @@ local function selectBestInteractionTarget(candidates, currentServerId)
         best = sameVehicle[1]
         return best, 'vehicle_seat_fallback'
     end
-    if not best then return nil, 'outside_selection_cone' end
+    if not best then return nil, { localeKey = 'interactions.message.outside_selection_cone' } end
 
     if current and current.serverId ~= best.serverId and current.projected
         and current.screenDistance <= CURRENT_TARGET_RELEASE_RADIUS then
@@ -317,13 +317,13 @@ local function openMenu(requestedTarget)
     if menuOpen then return end
     if contextRequestActive or inputIsBusy() then return end
     local ped = PlayerPedId()
-    if IsPedDeadOrDying(ped, true) then return notify('You cannot interact while downed.', 'error') end
+    if IsPedDeadOrDying(ped, true) then return notify(exports.sunset_core:Translate('interactions.message.you_cannot_interact_while_downed'), 'error') end
 
     local targetId = tonumber(requestedTarget or lockedTarget or promptTarget)
-    if not targetId then return notify('No player is close enough. Move within 3 metres and try again.', 'info') end
+    if not targetId then return notify(exports.sunset_core:Translate('interactions.message.no_player_is_close_enough_move_within_3_metres'), 'info') end
     if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
         cancelTargetLock(false)
-        return notify('That player is no longer available or close enough.', 'info')
+        return notify(exports.sunset_core:Translate('interactions.message.that_player_is_no_longer_available_or_close_enough'), 'info')
     end
 
     lockedTarget = targetId
@@ -348,7 +348,7 @@ local function openMenu(requestedTarget)
 
     if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
         cancelTargetLock(false)
-        return notify('That player moved away before the interaction menu opened.', 'info')
+        return notify(exports.sunset_core:Translate('interactions.message.that_player_moved_away_before_the_interaction_menu_opened'), 'info')
     end
     activeTarget = targetId
     lockedTarget = nil
@@ -373,7 +373,7 @@ RegisterCommand('interact', function()
     end
     local candidates = getInteractionCandidates(TARGET_SCAN_DISTANCE)
     local selected = selectBestInteractionTarget(candidates, promptTarget)
-    if not selected then return notify('Look toward a nearby player and try again.', 'info') end
+    if not selected then return notify(exports.sunset_core:Translate('interactions.message.look_toward_a_nearby_player_and_try_again'), 'info') end
     promptTarget = selected.serverId
     lockedTarget = selected.serverId
     local targetId = lockedTarget
@@ -503,7 +503,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     elseif action == 'add_friend' or action == 'add_contact' then
         -- Guard: one add-contact at a time, with a 4-second cooldown after completion.
         if contactBusy or GetGameTimer() < contactCooldownUntil then
-            notify('Please wait before adding another contact.', 'warning', 3000)
+            notify(exports.sunset_core:Translate('interactions.message.please_wait_before_adding_another_contact'), 'warning', 3000)
             return
         end
         contactBusy = true

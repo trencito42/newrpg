@@ -15,7 +15,7 @@ end
 -- Returns all skins with owned flag for this player
 exports.sunset_core:RegisterCallback('skins:getAll', function(source)
     local player = getPlayer(source)
-    if not player then return nil, 'Not authenticated' end
+    if not player then return nil, { localeKey = 'skins.message.not_authenticated' } end
 
     local rows = MySQL.query.await('SELECT model FROM player_skins WHERE player_id = ?', { player.id })
     local owned = {}
@@ -59,27 +59,27 @@ end)
 exports.sunset_core:RegisterCallback('skins:buy', function(source, model, currency)
     local player = getPlayer(source)
     local char   = getCharacter(source)
-    if not player or not char then return nil, 'Not authenticated' end
+    if not player or not char then return nil, { localeKey = 'skins.message.not_authenticated' } end
 
     local cfg = skinByModel(model)
-    if not cfg then return nil, 'Unknown skin' end
-    if cfg.battlepass then return nil, 'This skin is a Battlepass exclusive' end
+    if not cfg then return nil, { localeKey = 'skins.message.unknown_skin' } end
+    if cfg.battlepass then return nil, { localeKey = 'skins.message.this_skin_is_a_battlepass_exclusive' } end
 
     local existing = MySQL.query.await(
         'SELECT id FROM player_skins WHERE player_id = ? AND model = ?',
         { player.id, model }
     )
-    if existing and #existing > 0 then return nil, 'Skin already owned' end
+    if existing and #existing > 0 then return nil, { localeKey = 'skins.message.skin_already_owned' } end
 
     if currency == 'pp' then
         local ok = exports.sunset_core:SpendBlazePoints(source, cfg.pricePP)
         if not ok then
-            return nil, ('Not enough Premium Points — need %d PP'):format(cfg.pricePP)
+            return nil, { localeKey = 'skins.message.not_enough_premium_points_need_value_pp', formatArgs = { cfg.pricePP } }
         end
     else
         local ok = exports.sunset_core:RemoveMoney(source, 'cash', cfg.priceCash, 'skin_shop')
         if not ok then
-            return nil, ('Not enough cash — need $%s'):format(cfg.priceCash)
+            return nil, { localeKey = 'skins.message.not_enough_cash_need_value', formatArgs = { cfg.priceCash } }
         end
     end
 
@@ -94,7 +94,7 @@ end)
 exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     local player = getPlayer(source)
     local char   = getCharacter(source)
-    if not player or not char then return nil, 'Not authenticated' end
+    if not player or not char then return nil, { localeKey = 'skins.message.not_authenticated' } end
 
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
 
@@ -103,7 +103,7 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
             'SELECT id FROM player_skins WHERE player_id = ? AND model = ?',
             { player.id, model }
         )
-        if not existing or #existing == 0 then return nil, 'Skin not owned' end
+        if not existing or #existing == 0 then return nil, { localeKey = 'skins.message.skin_not_owned' } end
     end
 
     local meta = char.metadata or {}
@@ -151,7 +151,7 @@ RegisterCommand('giveskin', function(source, args)
         { target.id, model, 'admin' }
     )
     exports.sunset_core:CommandReply(source, ('Skin ~b~%s~w~ given to player %d.'):format(model, targetId))
-    TriggerClientEvent('sunset:skins:notify', targetId, ('An admin gave you the skin: %s'):format(model))
+    TriggerClientEvent('sunset:skins:notify', targetId, exports.sunset_core:TFor(targetId, 'skins.message.an_admin_gave_you_the_skin_value', model))
 end, false)
 
 -- /setskin [model] or /setskin [id] [model]  (admin rank 1+, bypasses ownership — sets model and saves permanently)
@@ -228,5 +228,5 @@ AddEventHandler('sunset:skins:grantBattlepassSkin', function(model)
         'INSERT INTO player_skins (player_id, model, source) VALUES (?, ?, ?)',
         { player.id, model, 'battlepass' }
     )
-    TriggerClientEvent('sunset:skins:notify', src, ('Battlepass reward unlocked: skin %s'):format(model))
+    TriggerClientEvent('sunset:skins:notify', src, exports.sunset_core:TFor(src, 'skins.message.battlepass_reward_unlocked_skin_value', model))
 end)

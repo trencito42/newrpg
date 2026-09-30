@@ -63,7 +63,7 @@ RegisterCommand('leavecasino', function()
     if insideCasino or isInCasinoInterior(coords) then
         CreateThread(function() leaveCasino() end)
     else
-        exports.sunset_ui:Notify('You are not inside the casino.', 'error')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('casino.message.you_are_not_inside_the_casino'), 'error')
     end
 end, false)
 

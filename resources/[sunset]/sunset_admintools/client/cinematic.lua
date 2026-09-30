@@ -44,7 +44,7 @@ local function startCinematic()
     RenderScriptCams(true, true, 800, true, false)
     SetPlayerControl(PlayerId(), false, 0)
     cineActive = true
-    exports.sunset_ui:Notify('Cinematic ON: WASD+QE move, mouse look, 1-4 presets, F5 snapshot, ESC exit.', 'info', 9000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admintools.message.cinematic_on_wasd_qe_move_mouse_look_1_4'), 'info', 9000)
 end
 
 local function applyPreset(n)
@@ -139,7 +139,7 @@ RegisterCommand('cinematic', function()
     CreateThread(function()
         local ok = Sunset.AwaitCallback('sunset:admintools:check')
         if ok ~= true then
-            exports.sunset_ui:Notify('Cinematic: admin level 3+ required.', 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('admintools.message.cinematic_admin_level_3_required'), 'error')
             return
         end
         if cineActive then stopCinematic() else startCinematic() end

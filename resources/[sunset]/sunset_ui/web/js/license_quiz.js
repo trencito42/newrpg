@@ -173,7 +173,7 @@ const LicenseQuiz = {
         const q = this._state.questions[idx];
         if (!q || !this._options) return;
 
-        if (this._progress) this._progress.textContent = `Question ${idx + 1} / ${total}`;
+        if (this._progress) this._progress.textContent = I18n.t('dynamic.license_quiz.question_value0_value1', { value0: idx + 1, value1: total });
         if (this._question) this._question.textContent = q.q || '';
         this._options.innerHTML = '';
 

@@ -19,6 +19,7 @@
             'common.attention': 'Attention', 'common.alert': 'Alert',
             'common.interface_failed': 'An interface failed to load. Please reopen it or reconnect.',
             'shell.loading_character': 'Loading character…',
+            'shell.page_title': 'blaze.mp — Interface',
             'shell.action_progress': 'Action in progress…',
             'shell.hunting_zone': 'Hunting Zone', 'shell.weapon_ammo': 'Weapon ammo',
             'shell.emotes': 'Emotes', 'shell.select_one': 'Select one',
@@ -232,6 +233,7 @@
             'common.attention': 'Atenție', 'common.alert': 'Alertă',
             'common.interface_failed': 'Interfața nu s-a încărcat. Redeschide-o sau reconectează-te.',
             'shell.loading_character': 'Se încarcă personajul…',
+            'shell.page_title': 'blaze.mp — Interfață',
             'shell.action_progress': 'Acțiune în desfășurare…',
             'shell.hunting_zone': 'Zonă de vânătoare', 'shell.weapon_ammo': 'Muniție armă',
             'shell.emotes': 'Animații', 'shell.select_one': 'Alege una',
@@ -481,6 +483,13 @@
             : `${new Intl.NumberFormat(numberLocale(), { maximumFractionDigits: 0 }).format(Number(metres) || 0)} m`,
         plural: (baseKey, count, params) => t(`${baseKey}.${Number(count) === 1 ? 'one' : 'other'}`, { ...(params || {}), count }),
         dictionaries,
+    });
+
+    window.addEventListener('message', (event) => {
+        const message = event.data || {};
+        if (message.action !== 'localeSet') return;
+        const payload = message.data || message.payload || {};
+        setLocale(payload.locale || message.locale);
     });
 
     try {

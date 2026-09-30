@@ -24,6 +24,7 @@ shared_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/nui_locale.lua',
     '@sunset_jobs/client/visual_shared.lua',
     'client/visualizers.lua',
     'client/validators.lua',
@@ -42,4 +43,4 @@ server_scripts {
     'server/main.lua',
 }
 
-dependencies { 'sunset_core', 'sunset_admin', 'sunset_jobs' }
+dependencies { 'sunset_core', 'sunset_admin', 'sunset_jobs', 'sunset_ui' }

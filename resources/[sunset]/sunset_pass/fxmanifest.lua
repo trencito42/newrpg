@@ -17,6 +17,7 @@ shared_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/nui_locale.lua',
     'client/main.lua',
 }
 
@@ -34,4 +35,5 @@ files {
 dependencies {
     'sunset_core',
     'sunset_inventory',
+    'sunset_ui',
 }

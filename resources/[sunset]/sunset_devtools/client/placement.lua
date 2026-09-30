@@ -95,12 +95,12 @@ end
 local function openPedPlacement(adapterKey, fieldKey, data)
     local hash = joaat(data.model)
     if not IsModelInCdimage(hash) then
-        notify('Model not found in cdimage: ' .. data.model, 'error')
+        notify(exports.sunset_core:Translate('devtools.message.model_not_found_in_cdimage') .. data.model, 'error')
         return
     end
 
     if not requestAndLoadModel(hash) then
-        notify('Failed to load model: ' .. data.model, 'error')
+        notify(exports.sunset_core:Translate('devtools.message.failed_to_load_model') .. data.model, 'error')
         return
     end
 
@@ -115,7 +115,7 @@ local function openPedPlacement(adapterKey, fieldKey, data)
     -- Spawn preview ped at configured coords
     local ped = CreatePed(4, hash, data.coords.x, data.coords.y, data.coords.z, data.heading or 0.0, false, false)
     if ped == 0 or not DoesEntityExist(ped) then
-        notify('Failed to spawn preview ped', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.failed_to_spawn_preview_ped'), 'error')
         SetModelAsNoLongerNeeded(hash)
         return
     end
@@ -147,7 +147,7 @@ local function openPedPlacement(adapterKey, fieldKey, data)
         end,
         onCancel = function()
             deletePreview(ped)
-            notify('Placement cancelled — ped removed.', 'info')
+            notify(exports.sunset_core:Translate('devtools.message.placement_cancelled_ped_removed'), 'info')
         end,
     })
 end
@@ -167,7 +167,7 @@ local function openVehiclePlacement(adapterKey, fieldKey, data, vehMode)
     end
 
     if not requestAndLoadModel(hash) then
-        notify('Failed to load vehicle model: ' .. model, 'error')
+        notify(exports.sunset_core:Translate('devtools.message.failed_to_load_vehicle_model') .. model, 'error')
         return
     end
 
@@ -180,7 +180,7 @@ local function openVehiclePlacement(adapterKey, fieldKey, data, vehMode)
 
     local veh = CreateVehicle(hash, data.coords.x, data.coords.y, data.coords.z, data.heading or 0.0, false, false)
     if veh == 0 or not DoesEntityExist(veh) then
-        notify('Failed to spawn preview vehicle', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.failed_to_spawn_preview_vehicle'), 'error')
         SetModelAsNoLongerNeeded(hash)
         return
     end
@@ -202,7 +202,7 @@ local function openVehiclePlacement(adapterKey, fieldKey, data, vehMode)
         end,
         onCancel = function()
             deletePreview(veh)
-            notify('Placement cancelled — vehicle removed.', 'info')
+            notify(exports.sunset_core:Translate('devtools.message.placement_cancelled_vehicle_removed'), 'info')
         end,
     })
 end
@@ -228,7 +228,7 @@ local function openPointPlacement(adapterKey, fieldKey, data)
             exportAndPrint(adapterKey, fieldKey, v4, meta, diag)
         end,
         onCancel = function()
-            notify('Placement cancelled.', 'info')
+            notify(exports.sunset_core:Translate('devtools.message.placement_cancelled'), 'info')
         end,
     })
 end
@@ -236,7 +236,7 @@ end
 -- Entry point: /devplace [adapterKey] [fieldKey]
 function DevPlace.open(adapterKey, fieldKey)
     if DevGizmo.isActive() or DevProbe.isActive() then
-        notify('Another devtools mode is already active. Close it first.', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.another_devtools_mode_is_already_active_close_it_first'), 'error')
         return
     end
 
@@ -252,7 +252,7 @@ function DevPlace.open(adapterKey, fieldKey)
 
     local adapter = SunsetDevTools.Adapters[adapterKey]
     if not adapter then
-        notify('Unknown adapter: ' .. adapterKey .. '. Use /devplace with no args to list.', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.unknown_adapter') .. adapterKey .. '. Use /devplace with no args to list.', 'error')
         return
     end
 
@@ -260,7 +260,7 @@ function DevPlace.open(adapterKey, fieldKey)
         -- List fields for this adapter
         local fields = adapter.describe and adapter.describe() or {}
         if #fields == 0 then
-            notify('Adapter "' .. adapterKey .. '" has no configurable fields.', 'info')
+            notify(exports.sunset_core:Translate('devtools.message.adapter') .. adapterKey .. '" has no configurable fields.', 'info')
             return
         end
         local lines = { ('Adapter "%s" fields:'):format(adapterKey) }
@@ -279,7 +279,7 @@ function DevPlace.open(adapterKey, fieldKey)
 
     local data, err = adapter.load(fieldKey)
     if not data then
-        notify('Could not load "' .. fieldKey .. '": ' .. (err or 'unknown error'), 'error')
+        notify(exports.sunset_core:Translate('devtools.message.could_not_load') .. fieldKey .. '": ' .. (err or 'unknown error'), 'error')
         return
     end
 
@@ -319,7 +319,7 @@ function DevPlace.capturePlayerPos(adapterKey, fieldKey)
     print(('vector3: %s'):format(v3str))
 
     SetClipboardText(v4str)
-    notify('Player position captured: ' .. v4str, 'success')
+    notify(exports.sunset_core:Translate('devtools.message.player_position_captured') .. v4str, 'success')
 
     if adapterKey and fieldKey then
         local adapter = SunsetDevTools.Adapters[adapterKey]

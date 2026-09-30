@@ -220,7 +220,7 @@ body.inventory-dragging #inventory-hotbar .hotbar-slot {
 }
 
 .hotbar-slot.is-usable.is-ready::after {
-    content: 'USE';
+    content: 'USE'; /* i18n-ignore: locale-specific pseudo-element fallback */
     position: absolute;
     right: 4px;
     bottom: 3px;
@@ -234,6 +234,10 @@ body.inventory-dragging #inventory-hotbar .hotbar-slot {
     color: var(--hotbar-accent);
     opacity: 0.95;
     pointer-events: none;
+}
+
+html[lang="ro"] .hotbar-slot.is-usable.is-ready::after {
+    content: 'FOLOSEȘTE'; /* i18n-ignore: locale-specific pseudo-element fallback */
 }
 
 .hotbar-slot.is-usable.is-ready .hotbar-slot-qty {

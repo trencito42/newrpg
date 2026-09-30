@@ -21,7 +21,7 @@ end
 -- Get all routes for a job
 exports.sunset_core:RegisterCallback('sunset:devtools:getJobRoutes', function(source, jobName)
     if not hasPermission(source) then
-        return nil, 'Permission denied'
+        return nil, { localeKey = 'devtools.message.permission_denied' }
     end
     jobName = tostring(jobName or ''):lower()
     local routes = exports.sunset_jobs:GetRoutes(jobName)
@@ -31,11 +31,11 @@ end)
 -- Save routes list for a job
 exports.sunset_core:RegisterCallback('sunset:devtools:saveJobRoutes', function(source, jobName, routesList)
     if not hasPermission(source) then
-        return false, 'Permission denied'
+        return false, { localeKey = 'devtools.message.permission_denied' }
     end
     jobName = tostring(jobName or ''):lower()
     if type(routesList) ~= 'table' then
-        return false, 'Invalid routes payload'
+        return false, { localeKey = 'devtools.message.invalid_routes_payload' }
     end
 
     local ok, err = exports.sunset_jobs:SaveRoutes(jobName, routesList)
@@ -52,7 +52,7 @@ end)
 -- Reload routes from disk
 exports.sunset_core:RegisterCallback('sunset:devtools:reloadJobRoutes', function(source)
     if not hasPermission(source) then
-        return false, 'Permission denied'
+        return false, { localeKey = 'devtools.message.permission_denied' }
     end
     local ok = exports.sunset_jobs:ReloadRoutes()
     if ok then

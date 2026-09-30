@@ -8,10 +8,10 @@ local function charJob(source)
 end
 
 exports.sunset_core:RegisterCallback('sunset:jobs:mechanic:start', function(source)
-    if charJob(source) ~= 'mechanic' then return nil, 'Not employed as mechanic' end
+    if charJob(source) ~= 'mechanic' then return nil, { localeKey = 'jobs.message.not_employed_as_mechanic' } end
 
     local cfg = Sunset.GetJobConfig('mechanic')
-    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 12.0) then return nil, 'Go to the mechanic depot to start work' end
+    if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 12.0) then return nil, { localeKey = 'jobs.message.go_to_the_mechanic_depot_to_start_work' } end
     local session, err = SunsetJobs_StartSession(source, 'mechanic', {
         repairs = 0,
         activeCallId = nil,
@@ -28,7 +28,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:mechanic:acceptCall', function(source, callId)
     local session, err = SunsetJobs_RequireSession(source, 'mechanic', { 'ACTIVE' })
     if not session then return nil, err end
-    if session.data.activeCallId then return nil, 'Already on a call' end
+    if session.data.activeCallId then return nil, { localeKey = 'jobs.message.already_on_a_call' } end
 
     callId = tonumber(callId)
     if GetResourceState('sunset_dispatch') == 'started' then
@@ -42,31 +42,31 @@ exports.sunset_core:RegisterCallback('sunset:jobs:mechanic:acceptCall', function
         end
     end
 
-    return nil, 'Could not accept call'
+    return nil, { localeKey = 'jobs.message.could_not_accept_call' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:mechanic:repair', function(source, targetSource)
     local session, err = SunsetJobs_RequireSession(source, 'mechanic', { 'ACTIVE' })
     if not session then return nil, err end
 
-    if not session.data.activeCallId then return nil, 'Accept a mechanic service call first' end
+    if not session.data.activeCallId then return nil, { localeKey = 'jobs.message.accept_a_mechanic_service_call_first' } end
     local now = GetGameTimer()
-    if now - (LastRepair[source] or 0) < 10000 then return nil, 'Wait before repairing again' end
+    if now - (LastRepair[source] or 0) < 10000 then return nil, { localeKey = 'jobs.message.wait_before_repairing_again' } end
     targetSource = tonumber(targetSource)
     if not targetSource or not GetPlayerName(targetSource) then
-        return nil, 'Customer not found'
+        return nil, { localeKey = 'jobs.message.customer_not_found' }
     end
 
     local cfg = Sunset.GetJobConfig('mechanic')
     local mePos = GetEntityCoords(GetPlayerPed(source))
     local themPos = GetEntityCoords(GetPlayerPed(targetSource))
     if #(mePos - themPos) > (cfg.repairRadius or 6.0) then
-        return nil, 'Too far from the vehicle'
+        return nil, { localeKey = 'jobs.message.too_far_from_the_vehicle' }
     end
     local targetPed = GetPlayerPed(targetSource)
-    if not targetPed or targetPed == 0 or GetVehiclePedIsIn(targetPed, false) == 0 then return nil, 'Customer must be in a vehicle' end
+    if not targetPed or targetPed == 0 or GetVehiclePedIsIn(targetPed, false) == 0 then return nil, { localeKey = 'jobs.message.customer_must_be_in_a_vehicle' } end
     local call = exports.sunset_dispatch:GetCall(session.data.activeCallId)
-    if not call or tonumber(call.callerSource) ~= targetSource then return nil, 'Repair the customer assigned to this call' end
+    if not call or tonumber(call.callerSource) ~= targetSource then return nil, { localeKey = 'jobs.message.repair_the_customer_assigned_to_this_call' } end
     LastRepair[source] = now
 
     local level = 1
@@ -106,7 +106,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:mechanic:endShift', function(source)
     local session = SunsetJobs_GetSession(source)
-    if not session or session.jobId ~= 'mechanic' then return nil, 'Not on duty' end
+    if not session or session.jobId ~= 'mechanic' then return nil, { localeKey = 'jobs.message.not_on_duty' } end
 
     MechanicProviders[source] = nil
     SunsetJobs_ClearSession(source, 'COMPLETED', 'Off duty')

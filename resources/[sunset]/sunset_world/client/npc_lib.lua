@@ -59,10 +59,10 @@ end
 -- Callers must not mark their prompt "visible" on a silent early-return.
 function SunsetWorld.Npc.showTooltip(id, ped, meta)
     if GetResourceState('sunset_world') ~= 'started' or not SunsetWorld.Tooltips then
-        return false, 'sunset_world or Tooltips unavailable'
+        return false, { localeKey = 'world.message.sunset_world_or_tooltips_unavailable' }
     end
     if not ped or ped == 0 or not DoesEntityExist(ped) then
-        return false, 'ped missing or invalid'
+        return false, { localeKey = 'world.message.ped_missing_or_invalid' }
     end
     -- Keep the entity handle in the shared tooltip layer. The layer resolves the
     -- head position on the render tick, so slow/irregular callers can never leave

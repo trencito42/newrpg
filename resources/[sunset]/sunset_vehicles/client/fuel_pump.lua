@@ -300,7 +300,7 @@ local function finishRefuel(veh)
 
     if endFuel <= sessionStartFuel + 0.05 or sessionAddedLiters <= 0.05 then
         hidePumpUi()
-        notify('Refueling cancelled', 'warning')
+        notify(exports.sunset_core:Translate('vehicles.message.refueling_cancelled'), 'warning')
         setFuelLevel(veh, sessionStartFuel)
         return
     end
@@ -334,7 +334,7 @@ local function finishCanFill()
 
     if endLiters <= canSessionStartLiters + 0.05 or sessionAddedLiters <= 0.05 then
         hidePumpUi()
-        notify('Gas can fill cancelled', 'warning')
+        notify(exports.sunset_core:Translate('vehicles.message.gas_can_fill_cancelled'), 'warning')
         return
     end
 
@@ -379,13 +379,13 @@ local function startRefuel(station, pumpIndex, stationIndex)
 
     local class = GetVehicleClass(veh)
     if class == 13 or (Sunset.GetVehicleTankCapacityLiters(class) or 0) <= 0 then
-        notify('This vehicle does not use fuel', 'info')
+        notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_does_not_use_fuel'), 'info')
         return
     end
 
     local current = getFuelLevel()
     if current >= 99.9 then
-        notify('Tank is already full', 'info')
+        notify(exports.sunset_core:Translate('vehicles.message.tank_is_already_full'), 'info')
         return
     end
 
@@ -413,7 +413,7 @@ local function startCanFill(station, pumpIndex, stationIndex)
     local currentLiters = Sunset.AwaitCallback('sunset:getGasCanLiters') or 0
     local maxLiters = maxCanLiters()
     if currentLiters >= maxLiters - 0.05 then
-        notify('Gas can is already full', 'info')
+        notify(exports.sunset_core:Translate('vehicles.message.gas_can_is_already_full'), 'info')
         return
     end
 
@@ -582,7 +582,7 @@ CreateThread(function()
                             if hasCan then
                                 startCanFill(station, pumpIndex, stationIndex)
                             else
-                                notify('Buy a gas can at a 24/7 store first', 'error')
+                                notify(exports.sunset_core:Translate('vehicles.message.buy_a_gas_can_at_a_24_7_store'), 'error')
                                 waitForStartRelease = true
                             end
                         end

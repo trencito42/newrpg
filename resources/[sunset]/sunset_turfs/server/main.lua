@@ -490,43 +490,43 @@ local function runAttackTurf(source)
 
     local pClan = getPlayerClan(source)
     if not pClan then
-        TriggerClientEvent('sunset:client:notify', source, 'You are not in a clan.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
         return
     end
 
     if not canDeclareTurfAttack(pClan.rank) then
-        TriggerClientEvent('sunset:client:notify', source, 'Only clan officers and leaders (rank 5+) can declare an attack.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.only_clan_officers_and_leaders_rank_5_can_declare'), 'error')
         return
     end
 
     local pCoords = GetEntityCoords(ped)
     local turf = findTurfAtCoords(pCoords)
     if not turf then
-        TriggerClientEvent('sunset:client:notify', source, 'You are not inside any territory. Check the blips on the map.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_are_not_inside_any_territory_check_the_blips'), 'error')
         return
     end
 
     if turf.ownerClanId and tonumber(turf.ownerClanId) == tonumber(pClan.clan_id) then
-        TriggerClientEvent('sunset:client:notify', source, 'This territory is already controlled by your clan!', 'info')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.this_territory_is_already_controlled_by_your_clan'), 'info')
         return
     end
 
     if ActiveWars[turf.id] then
-        TriggerClientEvent('sunset:client:notify', source, 'This territory is already in an active war.', 'warning')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.this_territory_is_already_in_an_active_war'), 'warning')
         return
     end
 
     local cd = TurfCooldowns[turf.id] or 0
     if os.time() < cd then
         local remMin = math.ceil((cd - os.time()) / 60)
-        TriggerClientEvent('sunset:client:notify', source, ('This territory is under post-war protection for %d more minutes.'):format(remMin), 'warning')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.this_territory_is_under_post_war_protection_for_value_more_minute', remMin), 'warning')
         return
     end
 
     for _, activeWar in pairs(ActiveWars) do
         if tonumber(activeWar.attackerClanId) == tonumber(pClan.clan_id)
             or tonumber(activeWar.defenderClanId) == tonumber(pClan.clan_id) then
-            TriggerClientEvent('sunset:client:notify', source, 'Your clan is already engaged in a war on another territory!', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.your_clan_is_already_engaged_in_a_war_on'), 'error')
             return
         end
     end
@@ -544,7 +544,7 @@ local function runAttackTurf(source)
     end
 
     if ownedCount > 0 and not hasAdjacency then
-        TriggerClientEvent('sunset:client:notify', source, 'You cannot attack this territory! It must be adjacent to territories already owned by your gang.', 'error', 6000)
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_cannot_attack_this_territory_it_must_be_adjacent'), 'error', 6000)
         return
     end
 
@@ -559,10 +559,10 @@ end
 
 -- Developer & Staff Editor Callbacks for Hand-Crafted Polygons
 exports.sunset_core:RegisterCallback('sunset:turfs:savePolygon', function(source, turfId, points)
-    if not checkAdmin(source, 2) then return false, 'Permisiune insuficienta' end
+    if not checkAdmin(source, 2) then return false, { localeKey = 'turfs.message.permisiune_insuficienta' } end
     turfId = tonumber(turfId)
-    if not turfId or not Turfs[turfId] then return false, 'Teritoriu invalid' end
-    if type(points) ~= 'table' or #points < 3 then return false, 'Poligonul trebuie sa aiba minim 3 puncte' end
+    if not turfId or not Turfs[turfId] then return false, { localeKey = 'turfs.message.teritoriu_invalid' } end
+    if type(points) ~= 'table' or #points < 3 then return false, { localeKey = 'turfs.message.poligonul_trebuie_sa_aiba_minim_3_puncte' } end
 
     local cleanPoints = {}
     for i, pt in ipairs(points) do
@@ -599,10 +599,10 @@ exports.sunset_core:RegisterCallback('sunset:turfs:savePolygon', function(source
 end)
 
 exports.sunset_core:RegisterCallback('sunset:turfs:saveConnections', function(source, turfId, targetTurfIds)
-    if not checkAdmin(source, 2) then return false, 'Permisiune insuficienta' end
+    if not checkAdmin(source, 2) then return false, { localeKey = 'turfs.message.permisiune_insuficienta' } end
     turfId = tonumber(turfId)
-    if not turfId or not Turfs[turfId] then return false, 'Teritoriu invalid' end
-    if type(targetTurfIds) ~= 'table' then return false, 'Lista conexiuni invalida' end
+    if not turfId or not Turfs[turfId] then return false, { localeKey = 'turfs.message.teritoriu_invalid' } end
+    if type(targetTurfIds) ~= 'table' then return false, { localeKey = 'turfs.message.lista_conexiuni_invalida' } end
 
     -- Delete old connections involving this turf
     MySQL.query.await('DELETE FROM turf_connections WHERE turf_a = ? OR turf_b = ?', { turfId, turfId })
@@ -686,11 +686,11 @@ local function runIntervene(source)
 
     local pClan = getPlayerClan(source)
     if not pClan then
-        TriggerClientEvent('sunset:client:notify', source, 'You are not in a clan.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
         return
     end
     if not canDeclareTurfAttack(pClan.rank) then
-        TriggerClientEvent('sunset:client:notify', source, 'Only clan officers and leaders (rank 5+) can declare an intervention.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.only_clan_officers_and_leaders_rank_5_can_declare_7bce50'), 'error')
         return
     end
 
@@ -700,7 +700,7 @@ local function runIntervene(source)
     for _, war in pairs(ActiveWars) do
         if tonumber(war.attackerClanId) == clanId
             or tonumber(war.defenderClanId or 0) == clanId then
-            TriggerClientEvent('sunset:client:notify', source, 'Your clan is already engaged in a war!', 'error')
+            TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.your_clan_is_already_engaged_in_a_war'), 'error')
             return
         end
     end
@@ -715,7 +715,7 @@ local function runIntervene(source)
         end
     end
     if not targetWar then
-        TriggerClientEvent('sunset:client:notify', source, 'There is no unowned territory being captured right now. /intervene only works on an empty turf.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.there_is_no_unowned_territory_being_captured_right_now'), 'error')
         return
     end
 
@@ -724,7 +724,7 @@ local function runIntervene(source)
     local elapsed = os.time() - (targetWar.startedAt or os.time())
     local window = SunsetTurfs.InterventionWindowSec or 240
     if elapsed > window then
-        TriggerClientEvent('sunset:client:notify', source, 'The intervention window has closed — the capture is too far along.', 'warning')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.the_intervention_window_has_closed_the_capture_is_too'), 'warning')
         return
     end
 
@@ -888,9 +888,9 @@ end
 -- Armory data for the UI: packages + which the player can afford/rank.
 exports.sunset_core:RegisterCallback('sunset:turfs:armoryData', function(source)
     local war = findActiveWarForSource(source)
-    if not war then return nil, 'You are not in an active war.' end
+    if not war then return nil, { localeKey = 'turfs.message.you_are_not_in_an_active_war' } end
     local pClan = getPlayerClan(source)
-    if not pClan then return nil, 'You are not in a clan.' end
+    if not pClan then return nil, { localeKey = 'turfs.message.you_are_not_in_a_clan' } end
 
     local packages = {}
     for _, pkg in ipairs(SunsetTurfs.Loadouts or {}) do
@@ -925,14 +925,14 @@ end)
 -- so respawn re-grants the same kit).
 exports.sunset_core:RegisterCallback('sunset:turfs:takeLoadout', function(source, loadoutId)
     local war = findActiveWarForSource(source)
-    if not war then return nil, 'You are not in an active war.' end
+    if not war then return nil, { localeKey = 'turfs.message.you_are_not_in_an_active_war' } end
     local pClan = getPlayerClan(source)
-    if not pClan then return nil, 'You are not in a clan.' end
+    if not pClan then return nil, { localeKey = 'turfs.message.you_are_not_in_a_clan' } end
 
     local pkg = getLoadoutById(tostring(loadoutId or ''))
-    if not pkg then return nil, 'Invalid package.' end
+    if not pkg then return nil, { localeKey = 'turfs.message.invalid_package' } end
     if (tonumber(pClan.rank) or 0) < (pkg.rank or 1) then
-        return nil, ('You need rank %d for this package.'):format(pkg.rank or 1)
+        return nil, { localeKey = 'turfs.message.you_need_rank_value_for_this_package', formatArgs = { pkg.rank or 1 } }
     end
 
     -- One free loadout per war participant; paid packages can be re-bought.
@@ -940,11 +940,11 @@ exports.sunset_core:RegisterCallback('sunset:turfs:takeLoadout', function(source
     if (pkg.cost or 0) > 0 then
         if not exports.sunset_core:RemoveMoney(source, 'cash', pkg.cost, 'turf_loadout') then
             if not exports.sunset_core:RemoveMoney(source, 'bank', pkg.cost, 'turf_loadout') then
-                return nil, ('You do not have $%s for this package.'):format(pkg.cost)
+                return nil, { localeKey = 'turfs.message.you_do_not_have_value_for_this_package', formatArgs = { pkg.cost } }
             end
         end
     elseif participant.loadoutTaken then
-        return nil, 'You already took the free package for this war.'
+        return nil, { localeKey = 'turfs.message.you_already_took_the_free_package_for_this_war' }
     end
     participant.loadoutTaken = true
     participant.loadout = pkg.id
@@ -961,12 +961,12 @@ end)
 -- the player is a participant, dead/downed, and the war is still active.
 exports.sunset_core:RegisterCallback('sunset:turfs:warRespawn', function(source)
     local war = findActiveWarForSource(source)
-    if not war then return nil, 'You are not in an active war.' end
+    if not war then return nil, { localeKey = 'turfs.message.you_are_not_in_an_active_war' } end
     local turf = Turfs[war.turfId]
-    if not turf then return nil, 'Invalid territory.' end
+    if not turf then return nil, { localeKey = 'turfs.message.invalid_territory' } end
 
     local participant = war.participants[source]
-    if not participant then return nil, 'You are no longer part of this war.' end
+    if not participant then return nil, { localeKey = 'turfs.message.you_are_no_longer_part_of_this_war' } end
 
     -- [WAR KILL FIX] The victim actually died and used the war respawn: this is
     -- the authoritative kill moment. Score it now (not on every hit).
@@ -1101,7 +1101,7 @@ end
 
 local function runTurflist(source)
     if not checkAdmin(source, 1) then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have the required permission.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_do_not_have_the_required_permission'), 'error')
         return
     end
 
@@ -1142,7 +1142,7 @@ local function runTurflist(source)
 
     if source ~= 0 then
         TriggerClientEvent('sunset:client:notify', source,
-            ('%d territories listed in chat.'):format(#rows), 'success', 5000)
+            exports.sunset_core:TFor(source, 'turfs.message.value_territories_listed_in_chat', #rows), 'success', 5000)
     end
 end
 
@@ -1153,19 +1153,19 @@ end, false)
 local function runGototurf(source, args)
     if source == 0 then print('Comanda doar in joc.'); return end
     if not checkAdmin(source, 2) then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have the required permission.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_do_not_have_the_required_permission'), 'error')
         return
     end
 
     local turfId = tonumber(args[1])
     local turf = turfId and Turfs[turfId]
     if not turf then
-        TriggerClientEvent('sunset:client:notify', source, 'Usage: /gototurf [1-16]. See /turflist', 'warning')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.usage_gototurf_1_16_see_turflist'), 'warning')
         return
     end
 
     TriggerClientEvent('sunset:turfs:teleport', source, turf.coords)
-    TriggerClientEvent('sunset:client:notify', source, ('Teleported to territory #%d (%s)'):format(turf.id, turf.name), 'success')
+    TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.teleported_to_territory_value_value', turf.id, turf.name), 'success')
 end
 
 RegisterCommand('gototurf', function(source, args)
@@ -1174,7 +1174,7 @@ end, false)
 
 local function runForceturf(source, args)
     if not checkAdmin(source, 2) then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have the required permission.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_do_not_have_the_required_permission'), 'error')
         return
     end
 
@@ -1234,7 +1234,7 @@ end, false)
 
 local function runStopwar(source, args)
     if not checkAdmin(source, 2) then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have the required permission.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_do_not_have_the_required_permission'), 'error')
         return
     end
 
@@ -1256,7 +1256,7 @@ end, false)
 
 local function runResetturfcd(source, args)
     if not checkAdmin(source, 2) then
-        TriggerClientEvent('sunset:client:notify', source, 'You do not have the required permission.', 'error')
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_do_not_have_the_required_permission'), 'error')
         return
     end
 

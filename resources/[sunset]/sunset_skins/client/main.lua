@@ -15,7 +15,7 @@ local function applyModel(model)
     end
 
     if not IsModelValid(hash) then
-        exports.sunset_ui:Notify('Invalid skin model: ' .. tostring(model), 'error', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.invalid_skin_model') .. tostring(model), 'error', 5000)
         return
     end
 
@@ -26,7 +26,7 @@ local function applyModel(model)
         t = t + 1
     end
     if not HasModelLoaded(hash) then
-        exports.sunset_ui:Notify('Could not load skin model', 'error', 4000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.could_not_load_skin_model'), 'error', 4000)
         return
     end
 
@@ -66,7 +66,7 @@ AddEventHandler('sunset:nui:skinShopBuy', function(data)
     data = type(data) == 'table' and data or {}
     local result, err = Sunset.AwaitCallback('skins:buy', data.model, data.currency)
     if result then
-        exports.sunset_ui:Notify('Skin purchased!', 'success', 4000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.skin_purchased'), 'success', 4000)
         local skins = Sunset.AwaitCallback('skins:getAll')
         exports.sunset_ui:Send('skinShopUpdate', { skins = skins or {} })
     else
@@ -80,9 +80,9 @@ AddEventHandler('sunset:nui:skinShopEquip', function(data)
     local result, err = Sunset.AwaitCallback('skins:equip', data.model)
     if result then
         if data.model == 'default' or data.model == '' then
-            exports.sunset_ui:Notify('Restored original character appearance!', 'success', 3000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.restored_original_character_appearance'), 'success', 3000)
         else
-            exports.sunset_ui:Notify('Skin equipped!', 'success', 3000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.skin_equipped'), 'success', 3000)
         end
     else
         exports.sunset_ui:Notify(err or 'Equip failed', 'error', 5000)

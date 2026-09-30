@@ -82,12 +82,12 @@ function CreateSession(opts)
     local charId = tonumber(opts.charId)
     local activity = tostring(opts.activity or '')
     if not source or not charId or not Activities[activity] then
-        return nil, 'Invalid session parameters.'
+        return nil, { localeKey = 'sessions.message.invalid_session_parameters' }
     end
     if ByChar[charId] then
         local existing = Sessions[ByChar[charId]]
         if existing and not TERMINAL[existing.state] then
-            return nil, 'You already have an active session.'
+            return nil, { localeKey = 'sessions.message.you_already_have_an_active_session' }
         end
     end
     -- [MULTI-PARTY] Optional extra participants (e.g. taxi passenger). Every
@@ -100,7 +100,7 @@ function CreateSession(opts)
             if cid and cid ~= charId then
                 local existing = ByChar[cid] and Sessions[ByChar[cid]]
                 if existing and not TERMINAL[existing.state] then
-                    return nil, 'Another participant already has an active session.'
+                    return nil, { localeKey = 'sessions.message.another_participant_already_has_an_active_session' }
                 end
                 participants[#participants + 1] = cid
             end
@@ -196,9 +196,9 @@ end
 
 function Transition(sessionId, newState, reason)
     local session = GetSession(sessionId)
-    if not session then return false, 'Session not found' end
-    if session.ended or TERMINAL[session.state] then return false, 'Session already ended' end
-    if not STATES[newState] then return false, 'Invalid state' end
+    if not session then return false, { localeKey = 'sessions.message.session_not_found' } end
+    if session.ended or TERMINAL[session.state] then return false, { localeKey = 'sessions.message.session_already_ended' } end
+    if not STATES[newState] then return false, { localeKey = 'sessions.message.invalid_state' } end
 
     if TERMINAL[newState] then
         finish(session, newState, reason)

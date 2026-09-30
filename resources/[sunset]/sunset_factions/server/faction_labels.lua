@@ -49,8 +49,8 @@ end
 
 function FactionLabels.save(factionId, labels, updatedBy)
     factionId = tostring(factionId or '')
-    if not Sunset.Factions[factionId] then return false, 'Unknown faction' end
-    if type(labels) ~= 'table' then return false, 'Invalid rank labels' end
+    if not Sunset.Factions[factionId] then return false, { localeKey = 'factions.message.unknown_faction' } end
+    if type(labels) ~= 'table' then return false, { localeKey = 'factions.message.invalid_rank_labels' } end
 
     for grade, label in pairs(labels) do
         grade = tonumber(grade)

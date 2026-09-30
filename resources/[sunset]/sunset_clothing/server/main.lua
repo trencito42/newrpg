@@ -29,12 +29,12 @@ end
 exports.sunset_core:RegisterCallback('sunset:payAppearance', function(source, amount)
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then
-        return false, 'Invalid player entity'
+        return false, { localeKey = 'clothing.message.invalid_player_entity' }
     end
 
     local coords = GetEntityCoords(ped)
     if not isNearAnyShop(coords) then
-        return false, 'You are not near any clothing or barber shop'
+        return false, { localeKey = 'clothing.message.you_are_not_near_any_clothing_or_barber_shop' }
     end
 
     local price = APPEARANCE_PRICE
@@ -47,13 +47,13 @@ exports.sunset_core:RegisterCallback('sunset:payAppearance', function(source, am
         return true
     end
 
-    return false, ('Not enough money ($%s)'):format(price)
+    return false, { localeKey = 'clothing.message.not_enough_money_value', formatArgs = { price } }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:refundAppearance', function(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 or amount > APPEARANCE_PRICE then return false end
-    if not PendingRefunds[source] then return false, 'Nothing to refund.' end
+    if not PendingRefunds[source] then return false, { localeKey = 'clothing.message.nothing_to_refund' } end
     PendingRefunds[source] = nil
     return exports.sunset_core:AddMoney(source, 'cash', amount, 'appearance_refund')
 end)

@@ -338,25 +338,25 @@ RegisterCommand('refillnos', function()
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     if not veh or veh == 0 or GetPedInVehicleSeat(veh, -1) ~= ped then
-        notify('Sit in the driver seat to refill nitrous oxide.', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.sit_in_the_driver_seat_to_refill_nitrous_oxide'), 'error')
         return
     end
 
     local state = STC.appliedVehicles[veh]
     local tune = state and state.tune
     if not tune or not tune.nitrous or not tune.nitrous.installed then
-        notify('This vehicle does not have a nitrous oxide system installed.', 'error')
+        notify(exports.sunset_core:Translate('tuning.message.this_vehicle_does_not_have_a_nitrous_oxide_system'), 'error')
         return
     end
 
     local current = bottles[veh] or 100.0
     if current >= 99.5 then
-        notify('Nitrous bottle is already full (100%).', 'info')
+        notify(exports.sunset_core:Translate('tuning.message.nitrous_bottle_is_already_full_100'), 'info')
         return
     end
 
     bottles[veh] = 100.0
-    notify('Nitrous bottle refilled to 100%.', 'success')
+    notify(exports.sunset_core:Translate('tuning.message.nitrous_bottle_refilled_to_100'), 'success')
 end, false)
 
 -- Cleanup on resource stop

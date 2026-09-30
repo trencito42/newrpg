@@ -155,7 +155,7 @@ CreateThread(function()
         Wait(0)
         if nearContact and IsControlJustReleased(0, 38) then
             if MSN_ActiveSession() then
-                exports.sunset_ui:Notify('You are already on a mission', 'warning')
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.you_are_already_on_a_mission'), 'warning')
             else
                 local contactId = nearContact
                 local contact   = SunsetMissions.Contacts[contactId]
@@ -180,7 +180,7 @@ AddEventHandler('sunset:missions:client:accept', function(missionId)
         exports.sunset_ui:Notify(err or 'Could not start mission', 'error')
         return
     end
-    exports.sunset_ui:Notify('Mission accepted', 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.mission_accepted'), 'success')
     MSN_NUI_HideOffer()
     MSN_StartMissionRuntime(missionId, data)
 end)
@@ -189,7 +189,7 @@ RegisterCommand('abandonmission', function()
     if MSN_ActiveSession() then
         MSN_AbortMission('Mission abandoned')
     else
-        exports.sunset_ui:Notify('No active mission', 'warning')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.no_active_mission'), 'warning')
     end
 end, false)
 
@@ -197,6 +197,6 @@ RegisterCommand('cancelmission', function()
     if MSN_ActiveSession() then
         MSN_AbortMission('Mission cancelled')
     else
-        exports.sunset_ui:Notify('No active mission', 'warning')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.no_active_mission'), 'warning')
     end
 end, false)
