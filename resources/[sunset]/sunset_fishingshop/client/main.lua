@@ -109,6 +109,7 @@ local FISHING_ACTIONS = {
     buy_business = true,
     manage_business = true,
     join_tournament = true,
+    view_tournament_standings = true,
 }
 
 local function isAllowedMenuAction(action)
@@ -361,6 +362,9 @@ local function buildBillyRayActions(job, tournamentActive, tournamentJoined)
     if tournamentActive then
         local tLabel = tournamentJoined and 'Fishing Tournament (Joined)' or 'Join Fishing Tournament'
         actions[#actions + 1] = { id = 'join_tournament', label = tLabel, group = 'TOURNAMENT' }
+        if tournamentJoined then
+            actions[#actions + 1] = { id = 'view_tournament_standings', label = 'View Standings', group = 'TOURNAMENT' }
+        end
     end
 
     return actions
@@ -726,6 +730,45 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     exports.sunset_ui:Notify((res and res.error) or 'Could not join tournament.', 'error', 5000)
                 end
             end)
+        end)
+
+    elseif action == 'view_tournament_standings' then
+        inCooldown = true
+        CreateThread(function()
+            if GetResourceState('sunset_fishing_tournament') ~= 'started' then
+                exports.sunset_ui:Notify('Fishing tournament system is not running.', 'error')
+                SetTimeout(2000, function() inCooldown = false end)
+                return
+            end
+            local tStatus = Sunset.AwaitCallback('sunset:fishingTournament:status')
+            inCooldown = false
+            if not tStatus or not tStatus.active then
+                exports.sunset_ui:Notify('No active tournament found.', 'error', 4000)
+                return
+            end
+            -- Refresh the HUD
+            exports.sunset_ui:Send('fishingTournamentHudShow', tStatus)
+            -- Build leaderboard text
+            local lines = {}
+            local lb = tStatus.leaderboard or {}
+            for _, entry in ipairs(lb) do
+                local marker = entry.isSelf and ' <<' or ''
+                local qualMark = entry.qualified and '' or ' (unqualified)'
+                lines[#lines + 1] = ('#%d %s — %.1f kg%s%s'):format(
+                    entry.rank,
+                    entry.name,
+                    tonumber(entry.weight) or 0,
+                    qualMark,
+                    marker
+                )
+            end
+            local myLine = ('Your rank: #%d | %s kg | %d fish'):format(
+                tStatus.rank or 0,
+                tStatus.totalWeight or '0.0',
+                tStatus.fishCount or 0
+            )
+            local msg = '~y~=== Tournament Standings ===~w~\n' .. table.concat(lines, '\n') .. '\n~g~' .. myLine
+            exports.sunset_ui:Notify(msg, 'info', 12000)
         end)
 
     elseif action == 'sell_fish_247' then
