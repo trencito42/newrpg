@@ -4,4 +4,4 @@
 -- ═══════════════════════════════════════════════════════════════
 
 ALTER TABLE `characters`
-    ADD COLUMN IF NOT EXISTS `fnc_tokens` INT NOT NULL DEFAULT 0 AFTER `respect`;
+    ADD COLUMN IF NOT EXISTS `fnc_tokens` INT NOT NULL DEFAULT 0;
