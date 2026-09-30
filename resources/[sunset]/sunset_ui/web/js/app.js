@@ -550,6 +550,7 @@
             // Cleanly hide any remaining entry/loading/character screens
             const appEl = document.getElementById('app');
             if (appEl) {
+                appEl.classList.remove('visible');
                 appEl.classList.add('hidden');
                 appEl.style.display = 'none';
             }
@@ -610,6 +611,7 @@
                 this.currentScreen = 'gameplay';
                 const appEl = document.getElementById('app');
                 if (appEl) {
+                    appEl.classList.remove('visible');
                     appEl.classList.add('hidden');
                     appEl.style.display = 'none';
                 }
@@ -641,6 +643,7 @@
                         const appEl = document.getElementById('app');
                         if (appEl) {
                             appEl.classList.remove('hidden');
+                            appEl.classList.add('visible');
                             appEl.style.display = '';
                         }
                         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
