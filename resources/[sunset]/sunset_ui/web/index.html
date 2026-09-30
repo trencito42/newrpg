@@ -38,6 +38,25 @@
         </div>
     </div>
 
+    <!-- Hunter Job Compass -->
+    <div id="hunter-compass" class="hunter-compass hidden" aria-hidden="true">
+        <svg class="hc-ring" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="36" cy="36" r="34" fill="rgba(0,0,0,0.62)" stroke="rgba(255,190,0,0.75)" stroke-width="1.5"/>
+            <text x="36" y="12" text-anchor="middle" fill="rgba(255,190,0,0.9)" font-size="9" font-weight="900" font-family="sans-serif">N</text>
+            <text x="36" y="67" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="sans-serif">S</text>
+            <text x="8"  y="39" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="sans-serif">W</text>
+            <text x="64" y="39" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="sans-serif">E</text>
+            <g id="hunter-compass-needle" transform-origin="36 36">
+                <polygon points="36,14 39,36 36,42 33,36" fill="#ffbe00"/>
+                <polygon points="36,42 39,36 36,58 33,36" fill="rgba(255,190,0,0.35)"/>
+            </g>
+        </svg>
+        <div class="hc-info">
+            <span class="hc-dist" id="hunter-compass-dist">--</span>
+            <span class="hc-label" id="hunter-compass-label">Hunting Zone</span>
+        </div>
+    </div>
+
     <!-- Persistent Gameplay Overlays (Emote Wheel, Weapon Ammo, Player Interaction) -->
     <div id="weapon-ammo-hud" class="weapon-ammo-hud hidden" aria-hidden="true" aria-label="Weapon ammo">
         <span class="wah-clip" id="wah-clip">0</span>

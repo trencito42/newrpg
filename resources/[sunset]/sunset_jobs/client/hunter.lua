@@ -369,6 +369,7 @@ AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     -- [SECTION 19] Clear zone blip on shift end/cancel
     clearZoneBlip()
     exports.sunset_ui:Send('jobShiftHide', {})
+    exports.sunset_ui:Send('hunterCompassHide', {})
     -- Clean up all spawned animals
     for netId, animal in pairs(ManagedAnimals) do
         if animal.ped and DoesEntityExist(animal.ped) then
@@ -402,6 +403,63 @@ CreateThread(function()
             end
         end
         ::continue::
+    end
+end)
+
+-- ── Hunter Compass HUD ───────────────────────────────────────
+-- Points toward nearest alive contract animal, or zone centroid if none yet visible.
+CreateThread(function()
+    while true do
+        Wait(500)
+        if not ShiftActive then
+            exports.sunset_ui:Send('hunterCompassHide', {})
+            goto compassContinue
+        end
+
+        local playerPos = GetEntityCoords(PlayerPedId())
+        local target, targetLabel, targetDist = nil, nil, math.huge
+
+        -- Prefer nearest alive managed animal
+        for _, animal in pairs(ManagedAnimals) do
+            if animal.ped and DoesEntityExist(animal.ped) and animal.alive then
+                local pos = GetEntityCoords(animal.ped)
+                local d = #(vector3(playerPos.x, playerPos.y, playerPos.z) - vector3(pos.x, pos.y, pos.z))
+                if d < targetDist then
+                    targetDist  = d
+                    target      = pos
+                    targetLabel = animal.species or 'Animal'
+                end
+            end
+        end
+
+        -- Fall back to zone centroid
+        if not target and CurrentZone and CurrentZone.polygon and #CurrentZone.polygon > 0 then
+            local cx, cy = 0, 0
+            for _, pt in ipairs(CurrentZone.polygon) do cx = cx + pt.x; cy = cy + pt.y end
+            local n = #CurrentZone.polygon
+            target      = vector3(cx / n, cy / n, CurrentZone.minZ or playerPos.z)
+            targetDist  = #(vector3(playerPos.x, playerPos.y, playerPos.z) - target)
+            targetLabel = CurrentZone.label or 'Hunting Zone'
+        end
+
+        if not target then
+            exports.sunset_ui:Send('hunterCompassHide', {})
+            goto compassContinue
+        end
+
+        -- Angle from North, clockwise (0=N, 90=E, 180=S, 270=W)
+        local dx = target.x - playerPos.x
+        local dy = target.y - playerPos.y
+        local angle = math.deg(math.atan(dx, dy))
+        if angle < 0 then angle = angle + 360 end
+
+        exports.sunset_ui:Send('hunterCompassUpdate', {
+            angle = angle,
+            dist  = targetDist,
+            label = targetLabel,
+        })
+
+        ::compassContinue::
     end
 end)
 

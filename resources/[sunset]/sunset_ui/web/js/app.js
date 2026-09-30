@@ -837,6 +837,24 @@
                 case 'jobShiftHide': window.JobShift?.hide?.(); return;
                 case 'jobSkillShow': window.JobShift?.showSkill?.(payload); return;
                 case 'jobSkillHide': window.JobShift?.hideSkill?.(); return;
+                case 'hunterCompassUpdate': {
+                    const compass = document.getElementById('hunter-compass');
+                    const needle  = document.getElementById('hunter-compass-needle');
+                    const distEl  = document.getElementById('hunter-compass-dist');
+                    const labelEl = document.getElementById('hunter-compass-label');
+                    if (!compass) return;
+                    compass.classList.remove('hidden');
+                    compass.setAttribute('aria-hidden', 'false');
+                    if (needle) needle.setAttribute('transform', `rotate(${payload.angle || 0}, 36, 36)`);
+                    if (distEl)  distEl.textContent  = payload.dist < 1000 ? `${Math.round(payload.dist)}m` : `${(payload.dist / 1000).toFixed(1)}km`;
+                    if (labelEl) labelEl.textContent = payload.label || 'Hunting Zone';
+                    return;
+                }
+                case 'hunterCompassHide': {
+                    const compass = document.getElementById('hunter-compass');
+                    if (compass) { compass.classList.add('hidden'); compass.setAttribute('aria-hidden', 'true'); }
+                    return;
+                }
                 case 'courierShow': window.Courier?.show?.(payload); return;
                 case 'courierUpdate': window.Courier?.update?.(payload); return;
                 case 'courierHide': window.Courier?.hide?.(); return;
