@@ -348,7 +348,7 @@ const Helpdesk = {
 
         if (this.cnnSubTab === 'pending') {
             if (!pending.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>Nu există anunțuri CNN în coada de așteptare.</div>';
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>No CNN announcements in the queue.</div>';
                 return;
             }
             pending.forEach((ad) => {
@@ -378,7 +378,7 @@ const Helpdesk = {
             });
         } else if (this.cnnSubTab === 'published') {
             if (!published.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-broadcast"></i>Nu există anunțuri publicate recent.</div>';
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-broadcast"></i>No announcements published recently.</div>';
                 return;
             }
             published.forEach((ad) => {
@@ -397,7 +397,7 @@ const Helpdesk = {
             });
         } else if (this.cnnSubTab === 'rejected') {
             if (!rejected.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>Nu există anunțuri respinse recent.</div>';
+                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>No announcements rejected recently.</div>';
                 return;
             }
             rejected.forEach((ad) => {
@@ -590,7 +590,7 @@ const Helpdesk = {
         }
 
         if (action === 'rejectAd') {
-            Helpdesk.prompt('rejectAd', 0, `Respinge Anunțul #${adId}`, { adId, placeholder: 'Motiv respingere (ex: Continut neadecvat)' });
+            Helpdesk.prompt('rejectAd', 0, `Reject Ad #${adId}`, { adId, placeholder: 'Rejection reason (e.g. Inappropriate content)' });
             return;
         }
 

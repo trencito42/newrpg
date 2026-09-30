@@ -211,11 +211,11 @@
         btnEl?.classList.add('active');
 
         const titles = {
-            cash: 'Adaugă Sumă',
-            items: 'Selectează Obiecte',
-            vehicles: 'Selectează Vehicul',
-            properties: 'Selectează Proprietate',
-            businesses: 'Selectează Afacere',
+            cash: 'Add Amount',
+            items: 'Select Items',
+            vehicles: 'Select Vehicle',
+            properties: 'Select Property',
+            businesses: 'Select Business',
         };
         const titleEl = document.getElementById('trade-sc-title');
         if (titleEl) titleEl.textContent = titles[tabId] || 'Choose Source';
