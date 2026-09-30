@@ -12,44 +12,42 @@ local function fadeTeleport(coords4, allowVehicle)
         return
     end
 
-    DoScreenFadeOut(400)
-    while not IsScreenFadedOut() do Wait(0) end
-
     local x, y, z = coords4.x, coords4.y, coords4.z
     local heading = coords4.w or 0.0
-    FreezeEntityPosition(ped, true)
-    if driving then FreezeEntityPosition(veh, true) end
-
-    RequestCollisionAtCoord(x, y, z)
-    for _ = 1, 20 do
-        RequestCollisionAtCoord(x, y, z)
-        Wait(50)
-    end
 
     if driving and allowVehicle then
+        -- Vehicle path: fade, pre-stream, move vehicle + re-seat ped
+        DoScreenFadeOut(400)
+        while not IsScreenFadedOut() do Wait(0) end
+
+        FreezeEntityPosition(ped, true)
+        FreezeEntityPosition(veh, true)
+
+        SetFocusPosAndVel(x, y, z, 0.0, 0.0, 0.0)
+        NewLoadSceneStartSphere(x, y, z, 80.0, 0)
+        RequestCollisionAtCoord(x, y, z)
+        Wait(300)
+
         SetEntityCoords(veh, x, y, z, false, false, false, false)
         SetEntityHeading(veh, heading)
         SetPedIntoVehicle(ped, veh, -1)
         SetVehicleOnGroundProperly(veh)
-    else
-        SetEntityCoordsNoOffset(ped, x, y, z, false, false, false)
-        SetEntityHeading(ped, heading)
-    end
 
-    local timeout = GetGameTimer() + 5000
-    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
-        RequestCollisionAtCoord(x, y, z)
-        Wait(50)
-    end
-    Wait(250)
-
-    if driving then
+        local deadline = GetGameTimer() + 5000
+        while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < deadline do
+            RequestCollisionAtCoord(x, y, z)
+            Wait(50)
+        end
+        NewLoadSceneStop()
+        ClearFocus()
+        Wait(200)
         FreezeEntityPosition(veh, false)
-    else
         FreezeEntityPosition(ped, false)
+        DoScreenFadeIn(500)
+    else
+        -- On-foot path: delegate to centralized safe teleport
+        Sunset.World.SafeTeleport(coords4)
     end
-
-    DoScreenFadeIn(500)
 end
 
 local function canUseFactionElevator(factionId)

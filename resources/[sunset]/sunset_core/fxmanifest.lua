@@ -43,6 +43,7 @@ client_scripts {
     'client/boot_debug.lua',
     'client/main.lua',
     'client/callbacks.lua',
+    'client/world_stream.lua',
 }
 
 exports {

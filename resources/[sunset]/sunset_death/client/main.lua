@@ -48,6 +48,12 @@ local function doRespawn(coords, bill)
         Wait(300)
     end
 
+    -- Pre-stream destination before resurrection so collision is ready
+    SetFocusPosAndVel(x, y, z, 0.0, 0.0, 0.0)
+    NewLoadSceneStartSphere(x, y, z, 80.0, 0)
+    RequestCollisionAtCoord(x, y, z)
+    Wait(300)
+
     NetworkResurrectLocalPlayer(x, y, z, heading, true, false)
     local ped = getPed()
     ClearPedTasksImmediately(ped)
@@ -59,7 +65,16 @@ local function doRespawn(coords, bill)
     SetPedArmour(ped, 0)
     SetPlayerControl(PlayerId(), true, 0)
 
-    Wait(400)
+    -- Wait for collision to confirm before unfreezing
+    local deadline = GetGameTimer() + 6000
+    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < deadline do
+        RequestCollisionAtCoord(x, y, z)
+        Wait(50)
+    end
+    NewLoadSceneStop()
+    ClearFocus()
+
+    Wait(200)
     DoScreenFadeIn(800)
     respawning = false
 

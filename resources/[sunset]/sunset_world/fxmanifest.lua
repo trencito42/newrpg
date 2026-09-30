@@ -17,6 +17,7 @@ shared_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/world_stream.lua',
     'client/interaction.lua',
     'client/world_tooltips.lua',
     'client/npc_lib.lua',

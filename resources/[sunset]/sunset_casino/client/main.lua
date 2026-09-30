@@ -48,15 +48,12 @@ local function closeCasinoUI()
 end
 
 local function leaveCasino()
-    local ped = PlayerPedId()
     closeCasinoUI()
-    DoScreenFadeOut(400)
-    Wait(500)
     insideCasino = false
-    SetEntityCoords(ped, Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z, false, false, false, false)
-    SetEntityHeading(ped, 270.0)
-    Wait(300)
-    DoScreenFadeIn(400)
+    Sunset.World.SafeTeleport(
+        vector4(Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z, 270.0),
+        { fadeOutMs = 400, fadeInMs = 400 }
+    )
 end
 
 -- Escape hatch: /leavecasino ALWAYS works while inside the interior, even if

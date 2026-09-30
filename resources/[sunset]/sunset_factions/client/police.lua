@@ -343,8 +343,7 @@ RegisterNetEvent('sunset:police:jail', function(payload)
     SetEnableHandcuffs(ped, false)
     TriggerEvent('sunset:faction:uncuff')
     if coords and coords.x then
-        SetEntityCoords(ped, coords.x, coords.y, coords.z, false, false, false, false)
-        if coords.w then SetEntityHeading(ped, coords.w) end
+        Sunset.World.SafeTeleport(vector4(coords.x, coords.y, coords.z, coords.w or 0.0))
     end
 
     exports.sunset_ui:Notify(('Sentenced — %d minutes remaining'):format(minutes), 'error', 8000)
@@ -357,10 +356,8 @@ RegisterNetEvent('sunset:police:release', function()
     jailSentenceTotal = 0
     hideJailHud()
     local release = Sunset.Police and Sunset.Police.releaseCoords
-    local ped = PlayerPedId()
     if release then
-        SetEntityCoords(ped, release.x, release.y, release.z, false, false, false, false)
-        SetEntityHeading(ped, release.w or 0.0)
+        Sunset.World.SafeTeleport(vector4(release.x, release.y, release.z, release.w or 0.0))
     end
 end)
 
@@ -383,10 +380,8 @@ CreateThread(function()
                 hideJailHud()
                 TriggerServerEvent('sunset:server:jailComplete')
                 local release = Sunset.Police and Sunset.Police.releaseCoords
-                local ped = PlayerPedId()
                 if release then
-                    SetEntityCoords(ped, release.x, release.y, release.z, false, false, false, false)
-                    SetEntityHeading(ped, release.w or 0.0)
+                    Sunset.World.SafeTeleport(vector4(release.x, release.y, release.z, release.w or 0.0))
                 end
                 exports.sunset_ui:Notify('Your sentence is complete — you are free', 'success', 6000)
             end

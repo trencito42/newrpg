@@ -6,6 +6,14 @@ local panelSelectedId = nil
 local propertiesPanelOpen = false
 local managePropertyId = nil
 
+-- Transition state machine — prevents concurrent enter/exit calls from
+-- E-spam or rapid server events causing double-teleports or mutex races.
+local TRANS_NONE     = 'NONE'
+local TRANS_ENTERING = 'ENTERING'
+local TRANS_INSIDE   = 'INSIDE'
+local TRANS_EXITING  = 'EXITING'
+local transState = TRANS_NONE
+
 local function loadMeta()
     if cachedMeta then return cachedMeta end
     cachedMeta = Sunset.AwaitCallback('sunset:getPropertyMeta') or {}
@@ -31,11 +39,18 @@ end
 
 AddEventHandler('sunset:client:playerSpawned', function()
     insideProperty = nil
+    transState = TRANS_NONE
     Wait(1500)
     refreshProperties()
 end)
-RegisterNetEvent('sunset:client:respawn', function() insideProperty = nil end)
-RegisterNetEvent('sunset:death:forceHospital', function() insideProperty = nil end)
+RegisterNetEvent('sunset:client:respawn', function()
+    insideProperty = nil
+    transState = TRANS_NONE
+end)
+RegisterNetEvent('sunset:death:forceHospital', function()
+    insideProperty = nil
+    transState = TRANS_NONE
+end)
 RegisterNetEvent('sunset:client:propertiesChanged', refreshSoon)
 RegisterNetEvent('sunset:client:propertyMessage', function(text, kind) exports.sunset_ui:Notify(text or 'House update', kind or 'info', 6500) end)
 
@@ -168,66 +183,56 @@ end)
 
 RegisterNetEvent('sunset:client:propertyInterior', function(data)
     if not data or not data.interior then return end
+    -- Mutex: block duplicate transitions (E-spam / double server event)
+    if transState ~= TRANS_NONE then return end
+    transState = TRANS_ENTERING
     insideProperty = data
-    local ped = PlayerPedId()
-    DoScreenFadeOut(400)
-    Wait(500)
 
-    local targetX = data.interior.x
-    local targetY = data.interior.y
-    local targetZ = data.interior.z
-    local heading = data.interior.w or 0.0
+    -- Server already set routing bucket; restoreOnFail=false — can't safely
+    -- undo the bucket change from the client side.
+    local ok = Sunset.World.SafeTeleport(data.interior, {
+        timeout       = 8000,
+        restoreOnFail = false,
+    })
 
-    SetEntityCoordsNoOffset(ped, targetX, targetY, targetZ, false, false, false)
-    SetEntityHeading(ped, heading)
-    FreezeEntityPosition(ped, true)
-    RequestCollisionAtCoord(targetX, targetY, targetZ)
-
-    local timeout = GetGameTimer() + 3000
-    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
-        RequestCollisionAtCoord(targetX, targetY, targetZ)
-        Wait(50)
-    end
-
-    Wait(250)
-    FreezeEntityPosition(ped, false)
+    transState = TRANS_INSIDE
     DisplayRadar(false)
-    DoScreenFadeIn(500)
 
     local helpText = ('Inside %s — press E near the door to exit.'):format(data.label or 'house')
     if data.isOwnerOrRenter then
         helpText = helpText .. ' Use /wardrobe to change clothes.'
     end
     exports.sunset_ui:Notify(helpText, 'info', 6500)
+
+    if not ok then
+        exports.sunset_ui:Notify('World loading took a moment — if something looks wrong, re-enter.', 'warning', 5000)
+    end
 end)
 
 RegisterNetEvent('sunset:client:propertyExited', function(data)
+    -- Only allow exit from INSIDE; also allow NONE so a reconnect/respawn can clear state
+    if transState ~= TRANS_INSIDE and transState ~= TRANS_NONE then return end
+    transState = TRANS_EXITING
     insideProperty = nil
-    if not data or not data.entry then return end
-    local ped = PlayerPedId()
-    DoScreenFadeOut(400)
-    Wait(500)
 
-    local targetX = data.entry.x
-    local targetY = data.entry.y
-    local targetZ = data.entry.z
-    local heading = data.entry.w or 0.0
-
-    RequestCollisionAtCoord(targetX, targetY, targetZ)
-    SetEntityCoordsNoOffset(ped, targetX, targetY, targetZ, false, false, false)
-    SetEntityHeading(ped, heading)
-    FreezeEntityPosition(ped, true)
-
-    local timeout = GetGameTimer() + 2500
-    while not HasCollisionLoadedAroundEntity(ped) and GetGameTimer() < timeout do
-        RequestCollisionAtCoord(targetX, targetY, targetZ)
-        Wait(50)
+    if not data or not data.entry then
+        transState = TRANS_NONE
+        DisplayRadar(true)
+        return
     end
 
-    Wait(200)
-    FreezeEntityPosition(ped, false)
+    -- Restore is safe here — server has already moved routing bucket back to 0
+    local ok = Sunset.World.SafeTeleport(data.entry, {
+        timeout       = 8000,
+        restoreOnFail = false,
+    })
+
+    transState = TRANS_NONE
     DisplayRadar(true)
-    DoScreenFadeIn(500)
+
+    if not ok then
+        exports.sunset_ui:Notify('World loading took a moment — if something looks wrong, rejoin.', 'warning', 5000)
+    end
 end)
 
 CreateThread(function()
@@ -290,6 +295,10 @@ AddEventHandler('sunset:ui:forceCloseAll', function()
     propertiesPanelOpen = false
     panelSelectedId = nil
     managePropertyId = nil
+    -- If caught mid-transition, clear so future enter/exit events are accepted
+    if transState == TRANS_ENTERING or transState == TRANS_EXITING then
+        transState = TRANS_NONE
+    end
 end)
 
 AddEventHandler('sunset:nui:propertyOpenManage', function(data)

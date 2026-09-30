@@ -19,8 +19,12 @@ end)
 
 RegisterNetEvent('sunset:client:businessTeleport', function(coords)
     if type(coords) ~= 'table' then return end
-    local ped = PlayerPedId()
-    SetEntityCoords(ped, coords.x or 0.0, coords.y or 0.0, (coords.z or 0.0) + 0.35, false, false, false, false)
+    Sunset.World.SafeTeleport(vector4(
+        coords.x or 0.0,
+        coords.y or 0.0,
+        (coords.z or 0.0) + 0.35,
+        coords.w or 0.0
+    ))
 end)
 
 local function openPanel(mode)

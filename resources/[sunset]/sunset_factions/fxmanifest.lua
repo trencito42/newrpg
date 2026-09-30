@@ -19,6 +19,7 @@ dependencies { 'sunset_core', 'sunset_world', 'sunset_inventory', 'sunset_death'
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/world_stream.lua',
     'client/loadout.lua',
     'client/friendlyfire.lua',
     'client/detention.lua',

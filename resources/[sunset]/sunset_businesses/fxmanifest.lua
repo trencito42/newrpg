@@ -21,6 +21,7 @@ server_scripts {
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    '@sunset_core/client/world_stream.lua',
     'client/main.lua',
 }
 
