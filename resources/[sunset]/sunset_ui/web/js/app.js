@@ -47,6 +47,33 @@
         },
     };
 
+    function parseGtaColors(str) {
+        const map = {
+            '~y~': '<span style="color:#FFD700">',
+            '~o~': '<span style="color:#FF8C00">',
+            '~r~': '<span style="color:#FF5555">',
+            '~g~': '<span style="color:#4ADE80">',
+            '~b~': '<span style="color:#60A5FA">',
+            '~p~': '<span style="color:#C084FC">',
+            '~w~': '<span style="color:#FFFFFF">',
+            '~s~': '<span style="color:#FFFFFF">',
+            '~n~': '<br>',
+        };
+        let out = String(str ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        let openSpans = 0;
+        out = out.replace(/~([a-zA-Z0-9_]+)~/g, (match) => {
+            const lower = match.toLowerCase();
+            if (lower === '~n~') return '<br>';
+            if (map[lower]) {
+                openSpans++;
+                return map[lower];
+            }
+            return '';
+        });
+        for (let i = 0; i < openSpans; i++) out += '</span>';
+        return out;
+    }
+
     function normalizeNotifyType(type) {
         const t = String(type || 'info').toLowerCase();
         if (t === 'success' || t === 'ok') return 'success';
@@ -444,7 +471,7 @@
 
             const copy = document.createElement('div');
             copy.className = 'notification__message';
-            copy.textContent = String(message ?? '');
+            copy.innerHTML = parseGtaColors(message);
 
             wrap.append(title, copy);
             el.append(notifyIconSvg(safeType), wrap);

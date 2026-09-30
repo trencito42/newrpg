@@ -387,6 +387,11 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         menuOpen = false
         currentContext = nil
         CreateThread(function()
+            -- auto-start shift if needed
+            local _, startErr = Sunset.AwaitCallback('sunset:jobs:diver:start')
+            if startErr and startErr ~= 'Character not loaded' then
+                exports.sunset_ui:Notify(startErr, 'error', 5000) return
+            end
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:startContract', siteId)
             if not result then
                 exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
@@ -404,6 +409,11 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         menuOpen = false
         currentContext = nil
         CreateThread(function()
+            -- auto-start shift if needed
+            local _, startErr = Sunset.AwaitCallback('sunset:jobs:diver:start')
+            if startErr and startErr ~= 'Character not loaded' then
+                exports.sunset_ui:Notify(startErr, 'error', 5000) return
+            end
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentGear', tier)
             if not result then
                 exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
@@ -556,6 +566,8 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
 
         -- ── Diver special actions ───────────────────────────────
         elseif specId == 'contracts' and wp.jobId == 'diver' then
+            -- auto-start shift so contracts are accessible immediately
+            Sunset.AwaitCallback('sunset:jobs:diver:start')
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:diver:getContracts')
             if not contracts or #contracts == 0 then
                 exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
@@ -599,6 +611,8 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             menuOpen = true
 
         elseif specId == 'rent_boat' and wp.jobId == 'diver' then
+            -- auto-start shift if needed
+            Sunset.AwaitCallback('sunset:jobs:diver:start')
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentBoat')
             if not result then
                 exports.sunset_ui:Notify(err or 'Cannot rent boat.', 'error', 5000)
