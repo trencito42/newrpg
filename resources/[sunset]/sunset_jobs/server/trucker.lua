@@ -403,7 +403,7 @@ RegisterCommand('aaddroute', function(source, args)
     if tostring(args[1] or ''):lower() == 'delivery' then
         local pending = AdminRoutePending[source]
         if not pending then
-            TriggerClientEvent('sunset:client:notify', source, 'Nu ai nicio ruta in asteptare. Incepe cu /aaddroute [categorie] [plata] [label]', 'error', 5000)
+            TriggerClientEvent('sunset:client:notify', source, 'You have no pending route. Start with /aaddroute [category] [pay] [label]', 'error', 5000)
             return
         end
         local cfg = Sunset.GetJobConfig('trucker')
@@ -439,7 +439,7 @@ RegisterCommand('aaddroute', function(source, args)
         -- Ruta completa: /aaddroute category pay dest_x dest_y dest_z label...
         local label = table.concat(args, ' ', 6)
         if #label < 3 then
-            TriggerClientEvent('sunset:client:notify', source, 'Adauga un label pentru ruta (minim 3 caractere).', 'error', 4000) return
+            TriggerClientEvent('sunset:client:notify', source, 'Add a label for the route (minimum 3 characters).', 'error', 4000) return
         end
         local cfg = Sunset.GetJobConfig('trucker')
         cfg.routes[#cfg.routes + 1] = {
@@ -456,7 +456,7 @@ RegisterCommand('aaddroute', function(source, args)
         -- Doi pasi: salveaza pickup, asteapta /aaddroute delivery
         local label = table.concat(args, ' ', 3)
         if #label < 3 then
-            TriggerClientEvent('sunset:client:notify', source, 'Adauga un label pentru ruta (minim 3 caractere).', 'error', 4000) return
+            TriggerClientEvent('sunset:client:notify', source, 'Add a label for the route (minimum 3 characters).', 'error', 4000) return
         end
         AdminRoutePending[source] = {
             category = category,
@@ -485,7 +485,7 @@ RegisterCommand('alistroutes', function(source)
     end
     local cfg = Sunset.GetJobConfig('trucker')
     if not cfg or #cfg.routes == 0 then
-        TriggerClientEvent('sunset:client:notify', source, 'Nu exista nicio ruta de trucker configurata.', 'info', 4000) return
+        TriggerClientEvent('sunset:client:notify', source, 'No trucker routes are configured.', 'info', 4000) return
     end
     local lines = {'=== Rute Trucker ==='}
     for i, r in ipairs(cfg.routes) do

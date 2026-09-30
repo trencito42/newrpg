@@ -525,7 +525,7 @@ registerServerCommand('mute', function(source, args)
     end
 
     local license = Sunset.GetIdentifier(target, 'license')
-    if not license then return notify(source, 'Nu s-a putut rezolva licenta jucatorului.', 'error') end
+    if not license then return notify(source, 'Could not resolve player license.', 'error') end
 
     local now = os.time()
     local adminName = getDisplayName(source)
@@ -539,15 +539,15 @@ registerServerCommand('mute', function(source, args)
 
     SunsetAdmin.Sanctions.record('mute', target, source, reason, duration)
 
-    TriggerClientEvent('sunset:chat:system', target, ('Ai primit mute pentru %d minute de la %s. Motiv: %s'):format(duration, adminName, reason), 'error')
-    TriggerClientEvent('sunset:client:notify', target, ('Ai primit mute (%d min): %s'):format(duration, reason), 'error', 10000)
+    TriggerClientEvent('sunset:chat:system', target, ('You have been muted for %d minute(s) by %s. Reason: %s'):format(duration, adminName, reason), 'error')
+    TriggerClientEvent('sunset:client:notify', target, ('Muted (%d min): %s'):format(duration, reason), 'error', 10000)
 
-    local alert = ('[MUTE] %s i-a dat mute lui %s (#%d) pentru %d minute. Motiv: %s'):format(adminName, targetName, target, duration, reason)
+    local alert = ('[MUTE] %s muted %s (#%d) for %d minute(s). Reason: %s'):format(adminName, targetName, target, duration, reason)
     pcall(function() exports.sunset_admin:BroadcastStaff(alert) end)
     TriggerClientEvent('sunset:chat:message', -1, {
-        id = 0, name = 'SANCTION', message = ('%s a primit mute pentru %d minute de la %s. Motiv: %s'):format(targetName, duration, adminName, reason), type = 'admin_action'
+        id = 0, name = 'SANCTION', message = ('%s has been muted for %d minute(s) by %s. Reason: %s'):format(targetName, duration, adminName, reason), type = 'admin_action'
     })
-    notify(source, ('I-ai dat mute lui %s pentru %d minute.'):format(targetName, duration), 'success')
+    notify(source, ('You muted %s for %d minute(s).'):format(targetName, duration), 'success')
 end, false)
 
 -- /unmute [id]
@@ -558,24 +558,24 @@ registerServerCommand('unmute', function(source, args)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license or not MutedPlayers[license] then
-        return notify(source, 'Acest jucator nu are mute.', 'error')
+        return notify(source, 'This player is not muted.', 'error')
     end
 
     MutedPlayers[license] = nil
     local adminName = getDisplayName(source)
     local targetName = getDisplayName(target)
 
-    TriggerClientEvent('sunset:chat:system', target, ('Mute-ul tau a fost scos de catre %s.'):format(adminName), 'success')
-    notify(source, ('I-ai scos mute-ul lui %s.'):format(targetName), 'success')
-    pcall(function() exports.sunset_admin:BroadcastStaff(('[MUTE] %s i-a scos mute-ul lui %s.'):format(adminName, targetName)) end)
+    TriggerClientEvent('sunset:chat:system', target, ('Your mute has been removed by %s.'):format(adminName), 'success')
+    notify(source, ('You removed the mute from %s.'):format(targetName), 'success')
+    pcall(function() exports.sunset_admin:BroadcastStaff(('[MUTE] %s removed mute from %s.'):format(adminName, targetName)) end)
 end, false)
 
 -- /nmute [id] [motiv] [durata in minute] — da mute unui player de la chat-ul de incepatori (/n /helpme)
 registerServerCommand('nmute', function(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'Comanda disponibila doar pentru staff (admini si helperi).', 'error')
+        return notify(source, 'This command is available only for staff (admins and helpers).', 'error')
     end
-    local target = getTarget(source, args[1], 'Usage: /nmute [player id] [motiv] [durata in minute]')
+    local target = getTarget(source, args[1], 'Usage: /nmute [player id] [reason] [duration in minutes]')
     if not target or not guardSelfTarget(source, target, args[1], 'nmute') then return end
 
     local duration, reason
@@ -594,7 +594,7 @@ registerServerCommand('nmute', function(source, args)
     end
 
     local license = Sunset.GetIdentifier(target, 'license')
-    if not license then return notify(source, 'Nu s-a putut rezolva licenta jucatorului.', 'error') end
+    if not license then return notify(source, 'Could not resolve player license.', 'error') end
 
     local now = os.time()
     local staffName = getDisplayName(source)
@@ -606,9 +606,9 @@ registerServerCommand('nmute', function(source, args)
         by = staffName,
     }
 
-    TriggerClientEvent('sunset:chat:system', target, ('You are muted for asking questions for %d minutes. (Motiv: %s)'):format(duration, reason), 'error')
-    notify(source, ('I-ai dat mute de la /n lui %s pentru %d minute.'):format(targetName, duration), 'success')
-    pcall(function() exports.sunset_admin:BroadcastStaff(('[NMUTE] %s i-a dat mute de la /n lui %s (#%d) pentru %d min: "%s"'):format(staffName, targetName, target, duration, reason)) end)
+    TriggerClientEvent('sunset:chat:system', target, ('You are muted from the newbie channel for %d minute(s). Reason: %s'):format(duration, reason), 'error')
+    notify(source, ('You muted %s from /n for %d minute(s).'):format(targetName, duration), 'success')
+    pcall(function() exports.sunset_admin:BroadcastStaff(('[NMUTE] %s muted %s (#%d) from /n for %d min: "%s"'):format(staffName, targetName, target, duration, reason)) end)
 end, false)
 
 -- /unnmute [id]
@@ -619,15 +619,15 @@ registerServerCommand('unnmute', function(source, args)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license or not NMutedPlayers[license] then
-        return notify(source, 'Acest jucator nu are mute la chat-ul de incepatori.', 'error')
+        return notify(source, 'This player does not have a newbie channel mute.', 'error')
     end
 
     NMutedPlayers[license] = nil
     local staffName = getDisplayName(source)
     local targetName = getDisplayName(target)
 
-    TriggerClientEvent('sunset:chat:system', target, ('Mute-ul de la /n a fost scos de catre %s.'):format(staffName), 'success')
-    notify(source, ('I-ai scos mute-ul de la /n lui %s.'):format(targetName), 'success')
+    TriggerClientEvent('sunset:chat:system', target, ('Your newbie channel mute has been removed by %s.'):format(staffName), 'success')
+    notify(source, ('You removed the /n mute from %s.'):format(targetName), 'success')
 end, false)
 
 -- /warn [id] [reason] — level 1+, sanction row + broadcast + auto-escalation.
@@ -1044,7 +1044,7 @@ registerServerCommand('gethere', function(source, args)
     TriggerClientEvent('sunset:admin:teleport', target, coords.x, coords.y, coords.z)
     markAnticheatTarget(target, 'gethere')
     notify(source, ('L-ai teleportat pe %s la tine.'):format(getDisplayName(target)), 'success')
-    TriggerClientEvent('sunset:client:notify', target, 'Ai fost teleportat de catre un administrator.', 'info')
+    TriggerClientEvent('sunset:client:notify', target, 'You have been teleported by an administrator.', 'info')
 end, false)
 
 registerServerCommand('spawncar', function(source, args)
@@ -1108,7 +1108,7 @@ registerServerCommand('getcar', function(source, args)
     local bucket = GetPlayerRoutingBucket(source)
     SetEntityRoutingBucket(veh, bucket)
     SetEntityCoords(veh, coords.x + 2.0, coords.y + 2.0, coords.z, false, false, false, true)
-    notify(source, ('Ai adus vehiculul [%s] la tine.'):format(arg), 'success')
+    notify(source, ('You brought vehicle [%s] to you.'):format(arg), 'success')
 end, false)
 
 registerServerCommand('fixveh', function(source, args)
@@ -1124,7 +1124,7 @@ registerServerCommand('mark', function(source, args)
     local coords = GetEntityCoords(ped)
     local bucket = GetPlayerRoutingBucket(source) or 0
     AdminMarks[source] = { coords = coords, bucket = bucket }
-    notify(source, ('Mark setat la pozitia curenta (VW: %d). Foloseste /gotomark pentru a reveni.'):format(bucket), 'success')
+    notify(source, ('Mark set at current position (VW: %d). Use /gotomark to return.'):format(bucket), 'success')
 end, false)
 
 registerServerCommand('gotomark', function(source, args)
@@ -1132,7 +1132,7 @@ registerServerCommand('gotomark', function(source, args)
     if not requirePerm(source, 'gotomark') then return end
     local mark = AdminMarks[source]
     if not mark then
-        return notify(source, 'Nu ai setat niciun mark. Foloseste /mark intai.', 'error')
+        return notify(source, 'You have not set a mark yet. Use /mark first.', 'error')
     end
     SetPlayerRoutingBucket(source, mark.bucket)
     TriggerClientEvent('sunset:admin:teleport', source, mark.coords.x, mark.coords.y, mark.coords.z)
@@ -1178,7 +1178,7 @@ registerServerCommand('disarmarea', function(source, args)
             end
         end
     end
-    notify(source, ('Ai dezarmat %d jucatori pe o raza de %.1f metri.'):format(count, radius), 'success')
+    notify(source, ('You disarmed %d player(s) within %.1f metres.'):format(count, radius), 'success')
 end, false)
 
 registerServerCommand('setvw', function(source, args)
@@ -1188,8 +1188,8 @@ registerServerCommand('setvw', function(source, args)
 
     local vw = tonumber(args[2]) or 0
     SetPlayerRoutingBucket(target, vw)
-    notify(source, ('Ai setat Virtual World-ul lui %s la %d.'):format(getDisplayName(target), vw), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('Virtual World-ul tau a fost setat la %d de catre un admin.'):format(vw), 'info')
+    notify(source, ('You set %s's routing bucket to %d.'):format(getDisplayName(target), vw), 'success')
+    TriggerClientEvent('sunset:client:notify', target, ('Your routing bucket was set to %d by an admin.'):format(vw), 'info')
 end, false)
 
 registerServerCommand('sethp', function(source, args)
@@ -1201,8 +1201,8 @@ registerServerCommand('sethp', function(source, args)
     if hp > 200 then hp = 200 end
     if hp < 0 then hp = 0 end
     TriggerClientEvent('sunset:admin:setHealth', target, hp)
-    notify(source, ('Ai setat HP-ul lui %s la %d.'):format(getDisplayName(target), hp), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('HP-ul tau a fost setat la %d de catre un administrator.'):format(hp), 'info')
+    notify(source, ('You set %s's HP to %d.'):format(getDisplayName(target), hp), 'success')
+    TriggerClientEvent('sunset:client:notify', target, ('Your HP was set to %d by an administrator.'):format(hp), 'info')
 end, false)
 
 registerServerCommand('sethparea', function(source, args)
@@ -1228,7 +1228,7 @@ registerServerCommand('sethparea', function(source, args)
             end
         end
     end
-    notify(source, ('Ai setat HP-ul la %d pentru %d jucatori pe o raza de %.1f metri.'):format(hp, count, radius), 'success')
+    notify(source, ('You set HP to %d for %d player(s) within %.1f metres.'):format(hp, count, radius), 'success')
 end, false)
 
 registerServerCommand('givemoney', function(source, args)
@@ -1248,8 +1248,8 @@ registerServerCommand('givemoney', function(source, args)
     local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
     local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
 
-    notify(source, ('I-ai dat $%s lui %s (ID %d).'):format(Sunset.FormatNumber(amount), targetName, target), 'success')
-    TriggerClientEvent('sunset:client:notify', target, ('Ai primit $%s de la administratorul %s.'):format(Sunset.FormatNumber(amount), adminName), 'success')
+    notify(source, ('You gave $%s to %s (ID %d).'):format(Sunset.FormatNumber(amount), targetName, target), 'success')
+    TriggerClientEvent('sunset:client:notify', target, ('You received $%s from administrator %s.'):format(Sunset.FormatNumber(amount), adminName), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ECONOMY] %s i-a dat $%s lui %s (#%d).'):format(adminName, Sunset.FormatNumber(amount), targetName, target)) end)
 end, false)
 
@@ -1270,7 +1270,7 @@ registerServerCommand('giverpall', function(source, args)
                 count = count + 1
                 char.respect_points = (char.respect_points or 0) + amount
                 MySQL.update.await('UPDATE characters SET respect_points = respect_points + ? WHERE id = ?', { amount, char.id })
-                TriggerClientEvent('sunset:client:notify', p, ('Ai primit %d Respect Points (RP) de la %s!'):format(amount, adminName), 'success')
+                TriggerClientEvent('sunset:client:notify', p, ('You received %d Respect Points (RP) from %s!'):format(amount, adminName), 'success')
             end
         end
     end
@@ -1278,11 +1278,11 @@ registerServerCommand('giverpall', function(source, args)
     TriggerClientEvent('sunset:chat:message', -1, {
         id = 0,
         name = 'SERVER',
-        message = ('Admin %s a acordat %d Respect Points tuturor jucatorilor online!'):format(adminName, amount),
+        message = ('Admin %s granted %d Respect Points to all online players!'):format(adminName, amount),
         time = os.date('%H:%M:%S'),
         type = 'announce',
     })
-    notify(source, ('Ai acordat %d RP catre %d jucatori online.'):format(amount, count), 'success')
+    notify(source, ('You granted %d RP to %d online player(s).'):format(amount, count), 'success')
 end, false)
 
 local RespawnCarsRunning = false
@@ -1340,7 +1340,7 @@ registerServerCommand('afklist', function(source, args)
         end
     end
     if #list == 0 then
-        notify(source, 'Nu exista niciun jucator pe /sleep sau AFK.', 'info')
+        notify(source, 'No players are currently on /sleep or AFK.', 'info')
     else
         notify(source, ('─── Jucatori pe /sleep sau AFK (%d) ───'):format(#list), 'info')
         for _, line in ipairs(list) do
@@ -1356,8 +1356,8 @@ registerServerCommand('togfind', function(source, args)
     local nextState = not current
     Player(source).state:set('untraceable', nextState, true)
     notify(source, nextState
-        and 'Modul untraceable a fost ACTIVAT. Nu mai poti fi urmarit de politisti, detectivi sau Hitmen.'
-        or 'Modul untraceable a fost DEZACTIVAT.', 'info')
+        and 'Untraceable mode is now ENABLED. You can no longer be tracked by police, detectives or hitmen.'
+        or 'Untraceable mode is now DISABLED.', 'info')
 end, false)
 
 registerServerCommand('check', function(source, args)
@@ -1407,7 +1407,7 @@ end, false)
 -- /pm [id] [text] — PM pentru toti adminii si helperii (culoare galbena spre portocaliu)
 registerServerCommand('pm', function(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'Comanda /pm este disponibila doar pentru staff (admini si helperi).', 'error')
+        return notify(source, 'The /pm command is available only for staff (admins and helpers).', 'error')
     end
 
     local target = getTarget(source, args[1], 'Usage: /pm [player id] [mesaj]')
@@ -1910,7 +1910,7 @@ registerServerCommand('report', function(source, args)
     ActivePlayerReports[source] = report
     ActiveReports[ticketId] = report
 
-    notify(source, 'Report-ul tau a fost trimis catre administratorii online.', 'success')
+    notify(source, 'Your report has been sent to online administrators.', 'success')
 
     -- Sent in RED to all on-duty admins (or all admins if none on duty)
     local sentCount = 0
@@ -1973,7 +1973,7 @@ registerServerCommand('ar', function(source, args)
             TriggerClientEvent('sunset:chat:system', foundQuestion.src,
                 ('%s (ID: %d) a preluat intrebarea ta. Poti primi raspunsul prin /an.'):format(adminName, source), 'info')
         end
-        return notify(source, ('Ai preluat intrebarea lui %s (#%d).'):format(foundQuestion.name, foundQuestion.src), 'success')
+        return notify(source, ('You picked up the question from %s (#%d).'):format(foundQuestion.name, foundQuestion.src), 'success')
     end
 
     -- Check reports
@@ -1988,7 +1988,7 @@ registerServerCommand('ar', function(source, args)
     end
 
     if not report then
-        return notify(source, ('Nu a fost gasit niciun report/intrebare activa pentru ID %d.'):format(targetArg), 'error')
+        return notify(source, ('No active report/question found for ID %d.'):format(targetArg), 'error')
     end
 
     report.status = 'claimed'
@@ -2007,7 +2007,7 @@ registerServerCommand('ar', function(source, args)
                 ('Adminul %s a preluat report-ul lui %s (ID: %d).'):format(adminName, report.name, targetSrc), 'info')
         end
     end
-    notify(source, ('Ai preluat report-ul lui %s (#%d).'):format(report.name, targetSrc), 'success')
+    notify(source, ('You picked up the report from %s (#%d).'):format(report.name, targetSrc), 'success')
 end)
 
 registerServerCommand('cr', function(source, args)
@@ -2041,7 +2041,7 @@ registerServerCommand('cr', function(source, args)
         ActiveNewbieQuestions[qSrc] = nil
         if GetPlayerName(qSrc) then
             TriggerClientEvent('sunset:chat:system', qSrc,
-                ('Intrebarea ta a fost inchisa de %s (ID: %d). Motiv: %s'):format(adminName, source, reason), 'info')
+                ('Your question was closed by %s (ID: %d). Reason: %s'):format(adminName, source, reason), 'info')
         end
         notify(source, ('Ai inchis intrebarea lui %s (#%d).'):format(foundQuestion.name, qSrc), 'success')
         return
@@ -2059,7 +2059,7 @@ registerServerCommand('cr', function(source, args)
     end
 
     if not report then
-        return notify(source, ('Nu a fost gasit niciun report/intrebare activa pentru ID %d.'):format(targetArg), 'error')
+        return notify(source, ('No active report/question found for ID %d.'):format(targetArg), 'error')
     end
 
     local targetSrc = report.src
@@ -2068,7 +2068,7 @@ registerServerCommand('cr', function(source, args)
 
     if GetPlayerName(targetSrc) then
         TriggerClientEvent('sunset:chat:system', targetSrc,
-            ('Report-ul tau a fost inchis de Admin %s (ID: %d). Motiv: %s'):format(adminName, source, reason), 'info')
+            ('Your report was closed by Admin %s (ID: %d). Reason: %s'):format(adminName, source, reason), 'info')
     end
 
     local staffAlert = ('Admin %s (ID: %d) a inchis report-ul lui %s (ID: %d). Motiv: %s'):format(
@@ -2133,7 +2133,7 @@ local function handleNewbieQuestion(source, args, cmdName)
         isHelpme = true,
     }
 
-    notify(source, 'Intrebarea ta a fost trimisa catre echipa de helperi.', 'success')
+    notify(source, 'Your question has been sent to the helper team.', 'success')
 
     -- Sent in DARK GREEN to asking player so they see their question confirmed in chat
     TriggerClientEvent('sunset:chat:message', source, {
@@ -2180,18 +2180,18 @@ registerServerCommand('helpme', function(source, args) handleNewbieQuestion(sour
 
 local function handleNewbieAnswer(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'Comanda disponibila doar pentru helperi si admini.', 'error')
+        return notify(source, 'This command is available only for helpers and admins.', 'error')
     end
 
     local targetId = tonumber(args[1])
     if not targetId then
         local count = 0
-        notify(source, '─── Intrebari active de la jucatori ───', 'info')
+        notify(source, '─── Active questions from players ───', 'info')
         for qSrc, q in pairs(ActiveNewbieQuestions) do
             count = count + 1
             notify(source, ('[%d] %s: "%s" (Raspunde cu /an %d [raspuns])'):format(qSrc, q.name, q.text, qSrc), 'info')
         end
-        if count == 0 then notify(source, 'Nu exista nicio intrebare activa de la jucatori.', 'success') end
+        if count == 0 then notify(source, 'No active questions from players.', 'success') end
         return
     end
 
@@ -2208,7 +2208,7 @@ local function handleNewbieAnswer(source, args)
     end
 
     if not q then
-        return notify(source, ('Nu exista nicio intrebare activa pentru ID %d.'):format(targetId), 'error')
+        return notify(source, ('No active question found for ID %d.'):format(targetId), 'error')
     end
 
     local answer = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
@@ -2249,7 +2249,7 @@ registerServerCommand('nd', function(source, args)
     local targetId = tonumber(args[1])
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if not targetId or reason == '' then
-        return notify(source, 'Usage: /nd [id jucator] [motiv]', 'error')
+        return notify(source, 'Usage: /nd [player id] [reason]', 'error')
     end
 
     local q = ActiveNewbieQuestions[targetId]
@@ -2265,7 +2265,7 @@ registerServerCommand('nd', function(source, args)
     end
 
     if not q then
-        return notify(source, ('Nu exista nicio intrebare activa pentru ID %d.'):format(targetId), 'error')
+        return notify(source, ('No active question found for ID %d.'):format(targetId), 'error')
     end
 
     ActiveNewbieQuestions[qSrc] = nil
@@ -2275,7 +2275,7 @@ registerServerCommand('nd', function(source, args)
 
     if GetPlayerName(q.src) then
         TriggerClientEvent('sunset:chat:system', q.src,
-            ('Intrebarea ta a fost stearsa de %s %s (ID: %d). Motiv: %s'):format(staffRole, staffName, source, reason), 'warning')
+            ('Your question was deleted by %s %s (ID: %d). Reason: %s'):format(staffRole, staffName, source, reason), 'warning')
     end
 
     for _, pid in ipairs(GetPlayers()) do

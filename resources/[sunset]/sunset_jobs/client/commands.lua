@@ -179,7 +179,7 @@ RegisterCommand('spawntruck', function()
     Wait(200)
     AttachVehicleToTrailer(truck, trailer, 1.1)
     SetModelAsNoLongerNeeded(trailerHash)
-    exports.sunset_ui:Notify('Spawned phantom+tanker. /dl pentru coords+heading.', 'success', 4000)
+    exports.sunset_ui:Notify('Spawned phantom+tanker. Use /dl for coords+heading.', 'success', 4000)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/spawntruck', '[DEV] Spawn phantom+tanker la tine pentru testare coords')

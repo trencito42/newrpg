@@ -47,7 +47,7 @@ CreateThread(function()
                     )
                     if dist <= (loc.radius or 6.0) then
                         BeginTextCommandDisplayHelp('STRING')
-                        AddTextComponentSubstringPlayerName('Scrie ~g~/ad [text]~s~ pentru a publica un anunț CNN ($' .. (Config.CNN.price or 500) .. ').')
+                        AddTextComponentSubstringPlayerName('Type ~g~/ad [text]~s~ to publish a CNN announcement ($' .. (Config.CNN.price or 500) .. ').')
                         EndTextCommandDisplayHelp(0, false, true, -1)
                     end
                 end

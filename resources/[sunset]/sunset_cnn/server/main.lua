@@ -156,7 +156,7 @@ function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
 
     local targetName = getDisplayName(targetSrc)
     TriggerClientEvent('sunset:chat:system', targetSrc,
-        ('Ai primit AD-MUTE pentru %d minute de la %s. Motiv: %s'):format(minutes, adminName, reason), 'error')
+        ('You have been ad-muted for %d minute(s) by %s. Reason: %s'):format(minutes, adminName, reason), 'error')
 
     -- Staff broadcast
     local staffMsg = ('[CNN MUTE] %s l-a sanctionat pe %s cu AD-MUTE (%d min). Motiv: %s'):format(
@@ -318,7 +318,7 @@ function ApproveAd(adId, staffSrc)
 
     if staffSrc and staffSrc ~= 0 then
         TriggerClientEvent('sunset:chat:system', staffSrc,
-            ('Ai aprobat anunțul CNN #%d (%s).'):format(adId, found.playerName), 'success')
+            ('You approved CNN announcement #%d (%s).'):format(adId, found.playerName), 'success')
     end
 
     log(('Staff %s approved CNN ad #%d'):format(staffName, adId))
@@ -376,7 +376,7 @@ function RejectAd(adId, staffSrc, reason)
 
     if staffSrc and staffSrc ~= 0 then
         TriggerClientEvent('sunset:chat:system', staffSrc,
-            ('Ai respins anunțul CNN #%d (%s). Motiv: %s'):format(adId, found.playerName, reason), 'success')
+            ('You rejected CNN announcement #%d (%s). Reason: %s'):format(adId, found.playerName, reason), 'success')
     end
 
     recalculateQueue()
@@ -433,18 +433,18 @@ function SubmitAd(source, text)
     -- Location check
     local atCnn, locName = isPlayerAtCnn(src)
     if not atCnn then
-        return false, 'Trebuie să te afli la o stație CNN / Weazel News pentru a plasa un anunț.'
+        return false, 'You must be at a CNN / Weazel News station to place an announcement.'
     end
 
     -- Mute checks
     local okAdmin, isMuted, mMin, mReason = pcall(function() return exports.sunset_admin:IsMuted(src) end)
     if okAdmin and isMuted then
-        return false, ('Ai mute activ (%d min). Motiv: %s'):format(mMin or 1, mReason or 'Sanctiune')
+        return false, ('You are currently muted (%d min). Reason: %s'):format(mMin or 1, mReason or 'Sanctiune')
     end
 
     local isAdMuted, admMin, admReason = IsAdMuted(src)
     if isAdMuted then
-        return false, ('Ai AD-MUTE activ (%d min). Motiv: %s'):format(admMin or 1, admReason or 'Sanctiune CNN')
+        return false, ('You are currently ad-muted (%d min). Reason: %s'):format(admMin or 1, admReason or 'Sanctiune CNN')
     end
 
     -- Queue limit check
@@ -474,7 +474,7 @@ function SubmitAd(source, text)
     local cash = tonumber(char.cash) or 0
     local bank = tonumber(char.bank) or 0
     if cash < price and bank < price then
-        return false, ('Nu ai suficienți bani pentru a plăti anunțul ($%d).'):format(price)
+        return false, ('You do not have enough money to pay for the announcement ($%d).'):format(price)
     end
 
     if cash >= price then
@@ -525,7 +525,7 @@ function SubmitAd(source, text)
 
     local waitSec = math.max(1, adObj.scheduledAt - now)
     TriggerClientEvent('sunset:chat:system', src,
-        ('[Info]: Ai plătit $%d. Anunțul tău (#%d) a fost trimis și va fi publicat în aproximativ %d secunde.'):format(
+        ('[Info]: You paid $%d. Your announcement (#%d) has been submitted and will be published in approximately %d seconds.'):format(
             price, adObj.id, waitSec
         ), 'info')
 
@@ -651,7 +651,7 @@ RegisterCommand('myad', function(source, args)
     end
 
     if not found then
-        TriggerClientEvent('sunset:chat:system', source, 'Nu ai niciun anunț activ în coada de așteptare CNN.', 'info')
+        TriggerClientEvent('sunset:chat:system', source, 'You have no active announcement in the CNN queue.', 'info')
         return
     end
 
@@ -667,12 +667,12 @@ end, false)
 -- /ads /adlist — Staff view pending ads
 local function listAdsCommand(source)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'Comanda disponibila doar pentru staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
         return
     end
 
     if #AdQueue == 0 then
-        if source == 0 then print('[CNN] No pending ads.') else TriggerClientEvent('sunset:chat:system', source, '[CNN] Nu există anunțuri în așteptare.', 'info') end
+        if source == 0 then print('[CNN] No pending ads.') else TriggerClientEvent('sunset:chat:system', source, '[CNN] No announcements waiting.', 'info') end
         return
     end
 
@@ -703,7 +703,7 @@ RegisterCommand('adlist', function(source, args) listAdsCommand(source) end, fal
 -- /acceptad [id] / /aad [id]
 local function acceptAdCommand(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'Comanda disponibila doar pentru staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
         return
     end
     local adId = tonumber(args[1])
@@ -723,7 +723,7 @@ RegisterCommand('aad', function(source, args) acceptAdCommand(source, args) end,
 -- /deletead [id] / /dad [id] / /rejectad [id] [reason]
 local function deleteAdCommand(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'Comanda disponibila doar pentru staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
         return
     end
     local adId = tonumber(args[1])
@@ -746,7 +746,7 @@ RegisterCommand('rejectad', function(source, args) deleteAdCommand(source, args)
 -- /admute [id] [minutes] [reason]
 RegisterCommand('admute', function(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'Comanda disponibila doar pentru staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
         return
     end
     local targetId = tonumber(args[1])

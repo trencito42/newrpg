@@ -171,9 +171,9 @@ RegisterNetEvent('sunset:admin:enterClosestVehicle', function()
             end
         end
         TaskWarpPedIntoVehicle(ped, veh, -1)
-        exports.sunset_ui:Notify('Teleportat in vehicul!', 'success')
+        exports.sunset_ui:Notify('Teleported into vehicle.', 'success')
     else
-        exports.sunset_ui:Notify('Nu exista niciun vehicul in apropiere.', 'error')
+        exports.sunset_ui:Notify('No vehicle nearby.', 'error')
     end
 end)
 

@@ -493,7 +493,7 @@ local function startTrucker(selectedRouteIdx)
                                 JC.setWaypoint(bay)
                                 setTruckerCheckpoint(bay, 255, 165, 0)
                                 JC.showObjective('Park in Bay', 'Reverse trailer into the glowing box behind the station for 2X BONUS', 75)
-                                JC.notify('Mod parcare manuala activat! Da cu spatele si baga remorca in chenarul luminos pentru BONUS 2X.', 'info', 7000)
+                                JC.notify('Manual parking mode activated! Reverse and align your trailer within the lit zone for a 2X BONUS.', 'info', 7000)
                             end
                         end
                     end

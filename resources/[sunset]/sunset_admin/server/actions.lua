@@ -564,8 +564,8 @@ function A.hduty(source, args)
     end)
     local name = getDisplayName(source)
     notify(source, on
-        and 'Te-ai pus ON DUTY ca helper. Primesti intrebarile jucatorilor.'
-        or 'Te-ai pus OFF DUTY ca helper.', 'info')
+        and 'You are now ON DUTY as a helper. You will receive player questions.'
+        or 'You are now OFF DUTY as a helper.', 'info')
     local dutyMsg = ('Helper %s este acum %s.'):format(name, on and 'ON DUTY' or 'OFF DUTY')
     for _, pid in ipairs(GetPlayers()) do
         local p = tonumber(pid)
