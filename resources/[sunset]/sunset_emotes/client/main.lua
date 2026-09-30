@@ -14,10 +14,13 @@ local Emotes = {
 local playing = false
 
 local function stopEmote()
+    if not playing then return end
     local ped = PlayerPedId()
     ClearPedTasks(ped)
     ClearPedSecondaryTask(ped)
-    ClearPedTasksImmediately(ped)
+    if not IsPedInAnyVehicle(ped, false) then
+        ClearPedTasksImmediately(ped)
+    end
     playing = false
 end
 
