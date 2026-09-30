@@ -715,18 +715,35 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     local quality = calcKillQuality(animal, animal.killWeapon, animal.killMethod)
     local yields  = calcHarvestYield(animal, quality)
 
-    -- Try to add all items; rollback harvested flag if inventory is full
+    -- Pre-check: calculate total weight of yield items to give a clear error before touching inventory
+    if #yields == 0 then
+        animal.harvested = false
+        return nil, 'No harvestable yield for this animal.'
+    end
+    local totalYieldWeight = 0
+    for _, y in ipairs(yields) do
+        local itemDef = Sunset.Items and Sunset.Items[y.item]
+        totalYieldWeight = totalYieldWeight + ((itemDef and itemDef.weight or 0) * (y.count or 1))
+    end
+    local currentWeight = exports.sunset_inventory:GetWeight(source) or 0
+    local maxWeight     = exports.sunset_inventory:GetMaxWeight(source) or 30
+    if currentWeight + totalYieldWeight > maxWeight then
+        animal.harvested = false
+        return nil, ('Inventory too full. Need %.1f kg free (have %.1f kg).'):format(
+            totalYieldWeight, math.max(0, maxWeight - currentWeight))
+    end
+
+    -- Add all items; rollback harvested flag if any AddItem fails
     local addedItems = {}
     for _, y in ipairs(yields) do
         local ok = exports.sunset_inventory:AddItem(source, y.item, y.count, nil, y.metadata)
         if not ok then
-            -- Rollback items already added and release harvest
             for _, added in ipairs(addedItems) do
                 exports.sunset_inventory:RemoveItem(source, added.item, added.count)
             end
             animal.harvested = false
             HarvestOwner[netId] = { charId = charId(source), claimedAt = os.time() }
-            return nil, 'Your inventory is full. Make room and try again.'
+            return nil, 'Failed to add harvest items. Inventory may be full.'
         end
         addedItems[#addedItems + 1] = y
     end
