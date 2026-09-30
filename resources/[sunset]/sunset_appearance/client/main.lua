@@ -329,8 +329,10 @@ exports('RegisterTopCompatibility', function(gender, topDrawable, rule)
 end)
 
 AddEventHandler('sunset:client:playerSpawned', function(char)
-    if char and char.appearance then
-        SunsetAppearance.apply(PlayerPedId(), char.appearance, char.gender or 0)
+    local ped = PlayerPedId()
+    local model = GetEntityModel(ped)
+    if (model == `mp_m_freemode_01` or model == `mp_f_freemode_01`) and char and char.appearance then
+        SunsetAppearance.apply(ped, char.appearance, char.gender or 0)
     end
 end)
 

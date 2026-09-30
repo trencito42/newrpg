@@ -1,7 +1,5 @@
 local Downed = {}
 local LastPvPAttacker = {}
--- [BUGFIX] Was declared at line ~225 but used by the playerDied handler above;
--- Lua compiled it as a nil GLOBAL there -> handler crashed on every death.
 local MurderWindow = {}
 
 AddEventHandler('sunset:death:recordAttacker', function(victimSrc, attackerSrc)
@@ -11,15 +9,23 @@ AddEventHandler('sunset:death:recordAttacker', function(victimSrc, attackerSrc)
     LastPvPAttacker[victimSrc] = { attacker = attackerSrc, at = os.time() }
 end)
 
-local function bleedoutDuration()
-    return math.max(30, tonumber(Sunset.Death and Sunset.Death.bleedoutSeconds) or 300)
-end
-
-local function hospitalSpawn(char)
-    -- [FIX] Death respawn must ALWAYS be the hospital. It used to call
-    -- GetSpawnPosition (which returns the saved/last location), so players
-    -- respawned exactly where they died despite the "you wake up at the
-    -- hospital" message. Saved spawn preference is for LOGIN only.
+local function getDeathSpawnPosition(char, source)
+    if not char then
+        local h = Sunset.Config.HospitalSpawn or Sunset.Config.DefaultSpawn
+        return { x = h.x, y = h.y, z = h.z, w = h.w or 0.0 }
+    end
+    local md = type(char.metadata) == 'table' and char.metadata or {}
+    if type(char.metadata) == 'string' then
+        local ok, dec = pcall(json.decode, char.metadata)
+        md = ok and dec or {}
+    end
+    local choice = md.spawn_choice
+    -- If player chose house or hq, resolve that spawn
+    if (choice == 'house' or choice == 'hq') and Sunset.GetSpawnPosition then
+        local pos = Sunset.GetSpawnPosition(char, source)
+        if pos and pos.x then return pos end
+    end
+    -- Default / Hospital spawn
     local h = Sunset.Config.HospitalSpawn or Sunset.Config.DefaultSpawn
     return { x = h.x, y = h.y, z = h.z, w = h.w or 0.0 }
 end
@@ -37,13 +43,12 @@ local function respawnPlayer(source, bill)
 
     char.is_dead = false
     Downed[source] = nil
-    -- [AUDIT 3-5.1] Release any property routing bucket before hospital respawn;
-    -- otherwise the player spawns at the hospital invisible to everyone.
+
     if GetResourceState('sunset_properties') == 'started' then
         pcall(function() exports.sunset_properties:LeaveProperty(source) end)
     end
     SetPlayerRoutingBucket(source, 0)
-    local pos = hospitalSpawn(char)
+    local pos = getDeathSpawnPosition(char, source)
     pcall(function() exports.sunset_core:SaveCharacter(source) end)
     TriggerClientEvent('sunset:death:forceHospital', source, pos, bill)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
@@ -66,8 +71,6 @@ function RevivePlayer(targetId)
     end
 
     Downed[targetId] = nil
-    -- [ANTICHEAT] legit heal source: the revive restores full HP; suppress the
-    -- health-injection detector for this window.
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkLegit(targetId, 'health', 10) end)
     end
@@ -75,8 +78,6 @@ function RevivePlayer(targetId)
     return true
 end
 
--- Used by server-owned custody flows. The receiving resource is responsible for
--- resurrecting/positioning the player so the normal revive event cannot race it.
 function ClearDownedForCustody(targetId)
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
@@ -99,12 +100,8 @@ function StabilizePlayer(targetId)
         return false, 'Player not found'
     end
     if not Downed[targetId] then
-        return false, 'Target is not downed'
+        return false, 'Target is not dead'
     end
-    Downed[targetId].stabilized = true
-    Downed[targetId].releaseAt = os.time()
-        + math.max(30, tonumber(Sunset.Death and Sunset.Death.stabilizeBonusSeconds) or 120)
-    TriggerClientEvent('sunset:death:stabilized', targetId)
     return true
 end
 
@@ -114,67 +111,36 @@ exports('StabilizePlayer', StabilizePlayer)
 exports('ClearDownedForCustody', ClearDownedForCustody)
 exports('IsPlayerDowned', function(source) return Downed[source] ~= nil end)
 
-local function getOnDutyEmsCount()
-    local count = 0
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        if src then
-            local onDuty = false
-            pcall(function()
-                if exports.sunset_factions:IsOnDuty(src) then
-                    local char = exports.sunset_core:GetCharacter(src)
-                    if char then
-                        local factionId = Sunset.GetCharacterFaction and select(1, Sunset.GetCharacterFaction(char))
-                        if not factionId and type(char.metadata) == 'table' then
-                            factionId = char.metadata.faction
-                        end
-                        if factionId == 'ems' or factionId == 'medic' or (Sunset.FactionTypeMatches and Sunset.FactionTypeMatches(factionId, 'medical')) then
-                            count = count + 1
-                        end
-                    end
-                end
-            end)
-            if onDuty then count = count + 1 end
-        end
+local function isOnDutyPolice(src)
+    local onDuty = false
+    pcall(function()
+        onDuty = exports.sunset_factions:IsOnDuty(src) == true
+    end)
+    if not onDuty then return false end
+    local char = exports.sunset_core:GetCharacter(src)
+    if not char then return false end
+    local md = type(char.metadata) == 'table' and char.metadata or {}
+    local factionId = md.faction or char.job
+    if factionId == 'police' then return true end
+    if Sunset.GetCharacterFaction then
+        factionId = select(1, Sunset.GetCharacterFaction(char)) or factionId
     end
-    return count
-end
-
-local function bleedoutDurationFor(source)
-    local ems = getOnDutyEmsCount()
-    if ems == 0 then
-        return math.max(15, tonumber(Sunset.Death and Sunset.Death.soloBleedoutSeconds) or 15)
-    end
-    return math.max(30, tonumber(Sunset.Death and Sunset.Death.bleedoutSeconds) or 180)
+    return Sunset.FactionTypeMatches
+        and Sunset.FactionTypeMatches(factionId, 'law_enforcement') == true
 end
 
 RegisterNetEvent('sunset:server:playerDied', function()
     local source = source
-    -- [AUDIT P2-07] Verify the ped is actually downed server-side; a live player
-    -- must not be able to fake death to spam EMS dispatch or dodge activity.
-    -- [SERVER NATIVE FIX] IsPedDeadOrDying is CLIENT-ONLY (nil on server):
-    -- the old check crashed this handler mid-death, so downed players were
-    -- never registered server-side. Server-side death check: health <= 100
-    -- (fatal) or <= 160 (downed state sets the ped to exactly 150 client-side).
-    local ped = GetPlayerPed(source)
-    if ped and ped ~= 0 then
-        local hp = GetEntityHealth(ped)
-        if hp > 160 then return end
-    end
-    -- [WAR REDESIGN] Turf-war deaths use the war respawn loop (kill-feed style);
-    -- skip the downed/EMS flow entirely for active war participants.
     if GetResourceState('sunset_turfs') == 'started' then
         local ok, inWar = pcall(function() return exports.sunset_turfs:IsInWar(source) end)
         if ok and inWar then return end
     end
-    if Downed[source] then return end
+
     local char = exports.sunset_core:GetCharacter(source)
     if char then char.is_dead = true end
     local now = os.time()
-    local dur = bleedoutDurationFor(source)
-    Downed[source] = { startedAt = now, releaseAt = now + dur, stabilized = false }
+    Downed[source] = { startedAt = now, releaseAt = now + 2, stabilized = false }
     TriggerEvent('sunset:death:playerDowned', source)
-    TriggerClientEvent('sunset:death:syncTimer', source, dur)
 
     local pending = LastPvPAttacker[source]
     LastPvPAttacker[source] = nil
@@ -195,74 +161,29 @@ RegisterNetEvent('sunset:server:playerDied', function()
             end
         end
     end
+
+    -- SA:MP RPG Instant Respawn after 1.5s fade out
+    SetTimeout(1500, function()
+        if GetPlayerName(source) then
+            respawnPlayer(source, Sunset.Config.HospitalBill or 250)
+        end
+    end)
 end)
 
 RegisterNetEvent('sunset:death:enteredDowned', function()
     local source = source
-    -- [AUDIT P2-07] Same server-side verification as playerDied.
-    -- [SERVER NATIVE FIX] Client-only IsPedDeadOrDying replaced with the
-    -- health window check (downed = 150, fatal <= 100, healthy = 200).
-    local ped = GetPlayerPed(source)
-    if ped and ped ~= 0 then
-        local hp = GetEntityHealth(ped)
-        if hp > 160 then return end
-    end
-    if not Downed[source] then
-        local now = os.time()
-        local dur = bleedoutDurationFor(source)
-        Downed[source] = { startedAt = now, releaseAt = now + dur, stabilized = false }
-        TriggerClientEvent('sunset:death:syncTimer', source, dur)
-    end
+    respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
 
 RegisterNetEvent('sunset:server:bleedoutExpired', function()
     local source = source
-    local state = Downed[source]
-    if not state or os.time() < (state.releaseAt or math.huge) then return end
     respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
 
 RegisterNetEvent('sunset:server:requestRespawn', function()
     local source = source
-    local state = Downed[source]
-    if not state then
-        TriggerClientEvent('sunset:client:notify', source, 'You are not downed.', 'info', 4000)
-        return
-    end
-    local now = os.time()
-    local ems = getOnDutyEmsCount()
-    if ems == 0 and (now - (state.startedAt or 0)) >= 10 then
-        respawnPlayer(source, Sunset.Config.HospitalBill or 250)
-        return
-    end
-
-    if now < (state.releaseAt or math.huge) then
-        local remaining = math.max(1, (state.releaseAt or now) - now)
-        TriggerClientEvent('sunset:client:notify', source,
-            ('You must wait %d more seconds before respawning at the hospital, or call /112.'):format(remaining),
-            'warning', 5000)
-        return
-    end
     respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
-
-local function isOnDutyPolice(src)
-    local onDuty = false
-    pcall(function()
-        onDuty = exports.sunset_factions:IsOnDuty(src) == true
-    end)
-    if not onDuty then return false end
-    local char = exports.sunset_core:GetCharacter(src)
-    if not char then return false end
-    local md = type(char.metadata) == 'table' and char.metadata or {}
-    local factionId = md.faction or char.job
-    if factionId == 'police' then return true end
-    if Sunset.GetCharacterFaction then
-        factionId = select(1, Sunset.GetCharacterFaction(char)) or factionId
-    end
-    return Sunset.FactionTypeMatches
-        and Sunset.FactionTypeMatches(factionId, 'law_enforcement') == true
-end
 
 RegisterNetEvent('sunset:death:playerKilled', function(victimId)
     local killer = source
@@ -272,15 +193,11 @@ RegisterNetEvent('sunset:death:playerKilled', function(victimId)
     local killerPed = GetPlayerPed(killer)
     local victimPed = GetPlayerPed(victimId)
     if not killerPed or killerPed == 0 or not victimPed or victimPed == 0 then return end
-    if GetEntityHealth(victimPed) > 0 then return end
     if #(GetEntityCoords(killerPed) - GetEntityCoords(victimPed)) > 500.0 then return end
 
     if isOnDutyPolice(killer) then return end
     if MurderWindow[victimId] then return end
 
-    -- [AUDIT P2-07] Only accept the client claim when it matches server-recorded
-    -- damage attribution (weaponDamageEvent -> recordAttacker). Without this any
-    -- client within 500m could frame an innocent player for murder.
     local recorded = LastPvPAttacker[victimId]
     if not recorded or recorded.attacker ~= killer then return end
 
@@ -310,7 +227,7 @@ RegisterNetEvent('sunset:death:call112', function()
     local victimName = exports.sunset_core:GetPlayerDisplayName(src) or ('Player #' .. tostring(src))
     local killerName = (killer and GetPlayerName(killer)) and exports.sunset_core:GetPlayerDisplayName(killer) or 'Unknown Attacker'
 
-    -- 1. Medic dispatch for downed victim
+    -- 1. Medic dispatch
     if GetResourceState('sunset_dispatch') == 'started' then
         pcall(function()
             exports.sunset_dispatch:CreateServiceCall(src, 'medic', coords, {
@@ -327,7 +244,6 @@ RegisterNetEvent('sunset:death:call112', function()
         TriggerEvent('sunset:police:autoWanted', killer, 'murder', 'First-degree murder (Reported via 112)')
         TriggerClientEvent('sunset:client:notify', killer, 'A 112 emergency call reported your crime! You are now WANTED ★5 for murder.', 'error', 12000)
 
-        -- Create police service call so it populates the Toughbook MDT 112 feed and blip on GPS
         if GetResourceState('sunset_dispatch') == 'started' then
             pcall(function()
                 local dispatchDesc = ('10-99 EMERGENCY — Homicide victim %s reported attacker %s!'):format(victimName, killerName)
@@ -342,7 +258,6 @@ RegisterNetEvent('sunset:death:call112', function()
                     suspectId = killer,
                 }, dispatchDesc)
 
-                -- Broadcast audio chime, priority UI alert, and Toughbook MDT notification to all law enforcement
                 local payload = {
                     callId = (type(call) == 'table' and call.id) or 0,
                     callType = 'police',

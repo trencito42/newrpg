@@ -493,14 +493,7 @@ local function formatSampName(serverId, fallbackName)
     -- Clean up existing (ID) suffixes and trim
     label = label:gsub('%s*%(%d+%)%s*$', ''):gsub('%s+$', '')
 
-    -- Separate clan tag and player name if present to keep clean spacing
-    local tagPrefix, namePart = label:match('^(%[[^%]]+%])%s*(.+)$')
-    if tagPrefix and namePart then
-        namePart = namePart:gsub('%s+', '_')
-        label = ('%s %s'):format(tagPrefix, namePart)
-    else
-        label = label:gsub('%s+', '_')
-    end
+    label = label:gsub('%s+', '_')
 
     if sid > 0 then
         label = ('%s (%d)'):format(label, sid)
@@ -629,12 +622,12 @@ CreateThread(function()
                                         RequestStreamedTextureDict('mpleaderboard', true)
                                     else
                                         local screenAspect = GetAspectRatio(false)
-                                        local starH = 0.015 * scaleFactor
+                                        local starH = 0.024 * scaleFactor
                                         local starW = starH / (screenAspect > 0.0 and screenAspect or 1.777)
-                                        local starSpacing = 0.0105 * scaleFactor
+                                        local starSpacing = 0.0135 * scaleFactor
                                         local totalW = 4 * starSpacing
                                         local startX = screenX - (totalW / 2.0)
-                                        local starsY = screenY - 0.048 * scaleFactor
+                                        local starsY = screenY - 0.033 * scaleFactor
 
                                         for i = 1, 5 do
                                             local sX = startX + (i - 1) * starSpacing
@@ -649,8 +642,8 @@ CreateThread(function()
                                     end
                                 end
 
-                                -- 2. Player Name & Server ID (with faction color, aerated vertical spacing)
-                                local nameY = screenY - (hasWanted and 0.026 or 0.020) * scaleFactor
+                                -- 2. Player Name & Server ID (with faction color, clean vertical spacing)
+                                local nameY = screenY - (hasWanted and 0.016 or 0.018) * scaleFactor
                                 local col = info.color or FACTION_COLORS.civilian
                                 drawText2D(info.name, screenX, nameY, scale, col.r, col.g, col.b, alpha, 0, true, true)
 
