@@ -552,6 +552,8 @@ RegisterNetEvent('sunset:jobs:sessionStarted', function(jobId, session)
         if Sunset.Jobs and Sunset.Jobs.EnsureFishermanShift then
             Sunset.Jobs.EnsureFishermanShift()
         end
+    elseif jobId == 'hunter' then
+        JobClient.hideObjective()
     else
         JobClient.showObjective(label, 'Shift started — follow GPS markers')
     end

@@ -13,6 +13,7 @@ local CarcassMarkers = {}        -- [netId] = { coords, label }
 local HarvestPromptNetId = nil   -- carcass near player
 local TrackingCooldownMs = 0
 local TRACK_INTERVAL_MS  = 8000
+local HudStage = 'idle'          -- idle | go_to_zone | hunting | animal_near | animal_down | harvesting
 
 -- ── Helpers ──────────────────────────────────────────────────
 local function refreshCfg()
@@ -46,12 +47,27 @@ local function updateShiftHud()
     if ContractData and ContractData.contractId then
         local harvested = ContractData.harvested or 0
         local required  = ContractData.requiredHarvests or 1
+        local progress  = math.floor((harvested / required) * 100)
+        local msg, counter
+        if HudStage == 'animal_down' then
+            counter = ('Harvest %d / %d'):format(harvested, required)
+            msg = 'Animal down! Press ~INPUT_CONTEXT~ to harvest the carcass.'
+        elseif HudStage == 'animal_near' then
+            counter = ('Harvest %d / %d'):format(harvested, required)
+            msg = 'Animal spotted! Take the shot.'
+        elseif HudStage == 'go_to_zone' then
+            counter = ('Harvest %d / %d'):format(harvested, required)
+            msg = 'Follow GPS to the hunting zone.'
+        else
+            counter = ('Harvest %d / %d'):format(harvested, required)
+            msg = 'Track animals in the zone. Press B for a clue.'
+        end
         exports.sunset_ui:Send('jobShiftShow', {
             title    = 'Hunter',
-            counter  = ('Harvest %d / %d'):format(harvested, required),
-            message  = 'Shoot {key} and harvest carcasses in the zone.',
+            counter  = counter,
+            message  = msg,
             key      = 'E',
-            progress = math.floor((harvested / required) * 100),
+            progress = progress,
             detail   = ContractData.contractId or '',
         })
     else
@@ -211,24 +227,60 @@ end)
 
 -- ── HUD Thread ────────────────────────────────────────────────
 CreateThread(function()
+    local lastStage = ''
     while true do
         if not ShiftActive then Wait(1000) goto continue end
         Wait(0)
 
-        -- Harvest prompts for nearby carcasses
-        HarvestPromptNetId = nil
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
-        for netId, marker in pairs(CarcassMarkers) do
-            local d = #(vector3(pos.x, pos.y, pos.z) - vector3(marker.coords.x, marker.coords.y, marker.coords.z))
-            if d < (cfg and cfg.harvestRadius or 4.0) then
-                HarvestPromptNetId = netId
-                -- Draw prompt
-                DrawMarker(2, marker.coords.x, marker.coords.y, marker.coords.z + 0.5,
-                    0, 0, 0, 0, 0, 0, 0.4, 0.4, 0.4,
-                    255, 180, 0, 180, false, true, 2, false, nil, nil, false)
-                DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to inspect carcass')
+        local harvestRadius = cfg and cfg.harvestRadius or 4.0
+
+        -- Determine current stage
+        local newStage
+        if not ContractData or not ContractData.contractId then
+            newStage = 'idle'
+        elseif not isInZone(CurrentZone) then
+            newStage = 'go_to_zone'
+        else
+            -- Check for nearby carcass first
+            local hasCarcass = false
+            HarvestPromptNetId = nil
+            for netId, marker in pairs(CarcassMarkers) do
+                local d = #(vector3(pos.x, pos.y, pos.z) - vector3(marker.coords.x, marker.coords.y, marker.coords.z))
+                if d < harvestRadius then
+                    HarvestPromptNetId = netId
+                    hasCarcass = true
+                    DrawMarker(2, marker.coords.x, marker.coords.y, marker.coords.z + 0.5,
+                        0, 0, 0, 0, 0, 0, 0.4, 0.4, 0.4,
+                        255, 180, 0, 180, false, true, 2, false, nil, nil, false)
+                    DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to inspect carcass')
+                    break
+                end
             end
+            if hasCarcass then
+                newStage = 'animal_down'
+            else
+                HarvestPromptNetId = nil
+                -- Check if alive animal is very close (within 20m)
+                local animalNear = false
+                for _, animal in pairs(ManagedAnimals) do
+                    if animal.alive and animal.ped and DoesEntityExist(animal.ped) then
+                        local ap = GetEntityCoords(animal.ped)
+                        if #(vector3(pos.x, pos.y, pos.z) - ap) < 20.0 then
+                            animalNear = true
+                            break
+                        end
+                    end
+                end
+                newStage = animalNear and 'animal_near' or 'hunting'
+            end
+        end
+
+        if newStage ~= lastStage then
+            lastStage = newStage
+            HudStage = newStage
+            updateShiftHud()
         end
 
         ::continue::

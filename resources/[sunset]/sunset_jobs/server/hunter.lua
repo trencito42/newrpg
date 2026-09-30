@@ -715,22 +715,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     local quality = calcKillQuality(animal, animal.killWeapon, animal.killMethod)
     local yields  = calcHarvestYield(animal, quality)
 
-    -- Pre-check: calculate total weight of yield items to give a clear error before touching inventory
     if #yields == 0 then
         animal.harvested = false
         return nil, 'No harvestable yield for this animal.'
-    end
-    local totalYieldWeight = 0
-    for _, y in ipairs(yields) do
-        local itemDef = Sunset.Items and Sunset.Items[y.item]
-        totalYieldWeight = totalYieldWeight + ((itemDef and itemDef.weight or 0) * (y.count or 1))
-    end
-    local currentWeight = exports.sunset_inventory:GetWeight(source) or 0
-    local maxWeight     = exports.sunset_inventory:GetMaxWeight(source) or 30
-    if currentWeight + totalYieldWeight > maxWeight then
-        animal.harvested = false
-        return nil, ('Inventory too full. Need %.1f kg free (have %.1f kg).'):format(
-            totalYieldWeight, math.max(0, maxWeight - currentWeight))
     end
 
     -- Add all items; rollback harvested flag if any AddItem fails
