@@ -46,6 +46,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
       cl.id as clan_id,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style,
       cm.rank as clan_rank,
       (SELECT COUNT(*) FROM admin_sanctions s WHERE s.target_account_id = a.id AND s.action = 'warn' AND s.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as active_warns,
       (SELECT COUNT(*) FROM bans b JOIN players pl ON pl.license = b.license WHERE pl.account_id = a.id AND (b.expires_at IS NULL OR b.expires_at > NOW())) as is_banned
@@ -130,6 +131,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
                         factionId={p.faction_id}
                         clanTag={p.clan_tag}
                         clanColor={p.clan_tag_color}
+                        clanTagStyle={p.clan_tag_style}
                         size="sm"
                       />
                     </td>

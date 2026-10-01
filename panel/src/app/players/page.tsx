@@ -17,6 +17,7 @@ interface PlayerListRow extends RowDataPacket {
   last_played: string | null;
   clan_tag: string | null;
   clan_tag_color: string | null;
+  clan_tag_style: string | null;
 }
 
 interface CountRow extends RowDataPacket {
@@ -61,7 +62,7 @@ export default async function PlayersDirectoryPage({
   const players = await dbQuery<PlayerListRow>(
     `SELECT 
        a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job, c.last_played,
-       cl.tag as clan_tag, cl.tag_color as clan_tag_color
+       cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
@@ -134,6 +135,7 @@ export default async function PlayersDirectoryPage({
                           factionId={hasFaction ? p.job : null}
                           clanTag={p.clan_tag}
                           clanColor={p.clan_tag_color}
+                          clanTagStyle={p.clan_tag_style}
                         />
                       </td>
                       <td className="py-2.5 px-3 font-mono font-medium text-[#f1f1f1]">

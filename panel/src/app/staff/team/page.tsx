@@ -23,7 +23,8 @@ export default async function StaffTeamPage() {
       c.last_played,
       c.job as faction_id,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
      FROM accounts a
      LEFT JOIN players p ON p.account_id = a.id
      LEFT JOIN characters c ON c.player_id = p.id

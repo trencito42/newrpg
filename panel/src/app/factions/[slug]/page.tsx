@@ -47,7 +47,8 @@ export default async function FactionDetailPage({
       `SELECT c.id, a.username, c.job_grade, c.level, c.last_played,
               fm.joined_at,
               cl.tag as clan_tag,
-              cl.tag_color as clan_tag_color
+              cl.tag_color as clan_tag_color,
+              cl.tag_style as clan_tag_style
        FROM accounts a
        JOIN players p ON p.account_id = a.id
        JOIN characters c ON c.player_id = p.id
@@ -61,7 +62,8 @@ export default async function FactionDetailPage({
     dbQuerySingle<LeaderRow>(
       `SELECT fl.character_id, fl.assigned_at, a.username AS leader_name,
               cl.tag as clan_tag,
-              cl.tag_color as clan_tag_color
+              cl.tag_color as clan_tag_color,
+              cl.tag_style as clan_tag_style
        FROM faction_leaders fl
        JOIN characters c ON c.id = fl.character_id
        JOIN players p ON p.id = c.player_id
@@ -160,6 +162,7 @@ export default async function FactionDetailPage({
                 factionId={slug}
                 clanTag={leader.clan_tag}
                 clanColor={leader.clan_tag_color}
+                clanTagStyle={leader.clan_tag_style}
                 size="sm"
               />
             ) : (
@@ -234,6 +237,7 @@ export default async function FactionDetailPage({
                         factionId={slug}
                         clanTag={m.clan_tag}
                         clanColor={m.clan_tag_color}
+                        clanTagStyle={m.clan_tag_style}
                         size="sm"
                       />
                     </td>

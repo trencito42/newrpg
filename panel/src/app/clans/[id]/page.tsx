@@ -78,7 +78,7 @@ export default async function ClanDetailPage({ params }: Context) {
 
   // Controlled turfs
   const turfs = await dbQuery<RowDataPacket>(
-    `SELECT id, name, zone, war_state FROM turfs WHERE owner_clan_id = ?`,
+    `SELECT id, name, radius, payout, respect_payout FROM turfs WHERE owner_clan_id = ?`,
     [clanId]
   );
 
@@ -228,6 +228,7 @@ export default async function ClanDetailPage({ params }: Context) {
                         factionId={m.faction_id}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
+                        clanTagStyle={clan.tag_style}
                         size="sm"
                       />
                     </td>

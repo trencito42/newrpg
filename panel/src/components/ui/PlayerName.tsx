@@ -5,6 +5,7 @@ interface PlayerNameProps {
   factionId?: string | null;
   clanTag?: string | null;
   clanColor?: string | null;
+  clanTagStyle?: string | null;
   href?: string;
   className?: string;
   clickable?: boolean;
@@ -15,6 +16,7 @@ export function PlayerName({
   factionId,
   clanTag,
   clanColor,
+  clanTagStyle,
   href,
   className,
   clickable = true,
@@ -25,6 +27,7 @@ export function PlayerName({
       factionId={factionId}
       clanTag={clanTag}
       clanColor={clanColor}
+      clanTagStyle={clanTagStyle}
       href={href}
       className={className}
       clickable={clickable}

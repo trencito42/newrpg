@@ -38,14 +38,23 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
     `SELECT 
       s.id, s.action, s.target_account_id, s.target_character_id, s.target_name, s.target_license,
       s.admin_account_id, s.admin_name, s.reason, s.duration_min, s.created_at,
-      cl.tag as clan_tag, cl.tag_color as clan_tag_color,
-      c.job as faction_id
+      COALESCE(a.username, s.target_name) as clean_target_username,
+      COALESCE(adm_acc.username, s.admin_name) as clean_admin_username,
+      cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style,
+      adm_cl.tag as admin_clan_tag, adm_cl.tag_color as admin_clan_tag_color, adm_cl.tag_style as admin_clan_tag_style,
+      c.job as faction_id,
+      adm_c.job as admin_faction_id
      FROM admin_sanctions s
      LEFT JOIN accounts a ON a.id = s.target_account_id
      LEFT JOIN players p ON p.account_id = a.id
      LEFT JOIN characters c ON c.player_id = p.id
      LEFT JOIN clan_members cm ON cm.character_id = c.id
      LEFT JOIN clans cl ON cl.id = cm.clan_id
+     LEFT JOIN accounts adm_acc ON adm_acc.id = s.admin_account_id
+     LEFT JOIN players adm_p ON adm_p.account_id = adm_acc.id
+     LEFT JOIN characters adm_c ON adm_c.player_id = adm_p.id
+     LEFT JOIN clan_members adm_cm ON adm_cm.character_id = adm_c.id
+     LEFT JOIN clans adm_cl ON adm_cl.id = adm_cm.clan_id
      ${whereSql}
      ORDER BY s.id DESC LIMIT 50`,
     params
@@ -133,16 +142,24 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
 
                     <td className="px-3 py-2.5">
                       <PlayerIdentity
-                        username={s.target_name}
+                        username={s.clean_target_username || s.target_name}
                         factionId={s.faction_id}
                         clanTag={s.clan_tag}
                         clanColor={s.clan_tag_color}
+                        clanTagStyle={s.clan_tag_style}
                         size="sm"
                       />
                     </td>
 
-                    <td className="px-3 py-2.5 font-medium text-[#f1f1f1]">
-                      {s.admin_name}
+                    <td className="px-3 py-2.5">
+                      <PlayerIdentity
+                        username={s.clean_admin_username || s.admin_name}
+                        factionId={s.admin_faction_id}
+                        clanTag={s.admin_clan_tag}
+                        clanColor={s.admin_clan_tag_color}
+                        clanTagStyle={s.admin_clan_tag_style}
+                        size="sm"
+                      />
                     </td>
 
                     <td className="px-3 py-2.5">

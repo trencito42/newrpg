@@ -130,6 +130,7 @@ export function StaffClansClient({
                         username={clan.owner_username}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
+                        clanTagStyle={clan.tag_style}
                         size="sm"
                       />
                     </td>

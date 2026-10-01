@@ -19,7 +19,7 @@ export default async function StaffFactionsPage() {
     const config = CANONICAL_FACTIONS[fId];
     const leader = await dbQuery<RowDataPacket>(
       `SELECT c.id as character_id, a.id as account_id, a.username, c.job_grade, fl.assigned_at,
-              cl.tag as clan_tag, cl.tag_color as clan_tag_color
+              cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
        FROM characters c
        JOIN players p ON p.id = c.player_id
        JOIN accounts a ON a.id = p.account_id

@@ -28,7 +28,7 @@ export default async function ClansPage({
 
   let sql = `
     SELECT 
-      c.id, c.name, c.tag, c.description, c.tag_color,
+      c.id, c.name, c.tag, c.description, c.tag_color, c.tag_style,
       acc.username as owner_username,
       (SELECT COUNT(*) FROM clan_members cm WHERE cm.clan_id = c.id) as member_count,
       c.max_members,
@@ -135,6 +135,7 @@ export default async function ClansPage({
                         username={clan.owner_username}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
+                        clanTagStyle={clan.tag_style}
                         size="sm"
                       />
                     </td>

@@ -47,6 +47,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
       cl.id as clan_id,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style,
       cm.rank as clan_rank,
       cm.warns as clan_warns,
       p.license
@@ -81,7 +82,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
   // Fetch vehicles
   const vehicles = await dbQuery<RowDataPacket>(
-    `SELECT id, model, plate, stored, insurance_points FROM vehicles WHERE character_id = ? LIMIT 20`,
+    `SELECT id, model, plate, stored, insurance_level FROM vehicles WHERE character_id = ? LIMIT 20`,
     [player.character_id || 0]
   );
 
@@ -121,6 +122,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                 factionId={player.faction_id}
                 clanTag={player.clan_tag}
                 clanColor={player.clan_tag_color}
+                clanTagStyle={player.clan_tag_style}
                 size="lg"
               />
               <span className="text-xs font-mono text-[#6f6f74]">

@@ -8,11 +8,24 @@ export interface PlayerIdentityProps {
   factionColor?: string | null;
   clanTag?: string | null;
   clanColor?: string | null;
+  clanTagStyle?: string | null;
   href?: string;
   size?: "sm" | "md" | "lg";
   showClanTag?: boolean;
   clickable?: boolean;
   className?: string;
+}
+
+export function formatClanTag(tag: string, style?: string | null): { prefix: string; suffix: string } {
+  const cleanTag = tag.trim();
+  if (!cleanTag) return { prefix: "", suffix: "" };
+  const s = (style || "brackets").toLowerCase();
+  if (s === "prefix_dot") return { prefix: `${cleanTag}.`, suffix: "" };
+  if (s === "suffix_dot") return { prefix: "", suffix: `.${cleanTag}` };
+  if (s === "suffix_brackets") return { prefix: "", suffix: `[${cleanTag}]` };
+  if (s === "glued_prefix") return { prefix: cleanTag, suffix: "" };
+  if (s === "glued_suffix") return { prefix: "", suffix: cleanTag };
+  return { prefix: `[${cleanTag}]`, suffix: "" };
 }
 
 export function PlayerIdentity({
@@ -21,6 +34,7 @@ export function PlayerIdentity({
   factionColor: customFactionColor,
   clanTag,
   clanColor,
+  clanTagStyle,
   href,
   size = "md",
   showClanTag = true,
@@ -38,15 +52,16 @@ export function PlayerIdentity({
   };
 
   const hasTag = Boolean(clanTag && showClanTag && clanTag.trim() !== "");
+  const { prefix, suffix } = hasTag ? formatClanTag(clanTag!, clanTagStyle) : { prefix: "", suffix: "" };
 
   const content = (
-    <span className={cn("inline-flex items-center gap-1.5 font-medium leading-none", sizeClasses[size], className)}>
-      {hasTag && (
+    <span className={cn("inline-flex items-center gap-1 font-medium leading-none", sizeClasses[size], className)}>
+      {prefix && (
         <span
           style={{ color: resolvedClanColor }}
-          className="font-mono font-bold tracking-tight select-none"
+          className="font-mono font-bold tracking-tight select-none mr-0.5"
         >
-          [{clanTag}]
+          {prefix}
         </span>
       )}
       <span
@@ -58,6 +73,14 @@ export function PlayerIdentity({
       >
         {username}
       </span>
+      {suffix && (
+        <span
+          style={{ color: resolvedClanColor }}
+          className="font-mono font-bold tracking-tight select-none ml-0.5"
+        >
+          {suffix}
+        </span>
+      )}
     </span>
   );
 

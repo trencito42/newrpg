@@ -70,7 +70,7 @@ export default async function PlayerProfilePage({
     getViewerLocale(),
   ]);
 
-  const char = await dbQuerySingle<CharacterProfileRow & { clan_tag: string | null; clan_tag_color: string | null }>(
+   const char = await dbQuerySingle<CharacterProfileRow & { clan_tag: string | null; clan_tag_color: string | null; clan_tag_style: string | null }>(
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
@@ -79,7 +79,8 @@ export default async function PlayerProfilePage({
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username,
        cl.tag AS clan_tag,
-       cl.tag_color AS clan_tag_color
+       cl.tag_color AS clan_tag_color,
+       cl.tag_style AS clan_tag_style
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
@@ -179,6 +180,7 @@ export default async function PlayerProfilePage({
                 factionId={char.job}
                 clanTag={char.clan_tag}
                 clanColor={char.clan_tag_color}
+                clanTagStyle={char.clan_tag_style}
                 clickable={false}
                 size="lg"
               />

@@ -9,6 +9,7 @@ export interface ResolvedPlayerIdentity {
   clanId: number | null;
   clanTag: string | null;
   clanColor: string | null;
+  clanTagStyle?: string | null;
 }
 
 interface IdentityDbRow extends RowDataPacket {
@@ -17,6 +18,7 @@ interface IdentityDbRow extends RowDataPacket {
   clan_id: number | null;
   clan_tag: string | null;
   clan_tag_color: string | null;
+  clan_tag_style: string | null;
 }
 
 /**
@@ -37,7 +39,8 @@ export async function resolvePlayerIdentities(
       c.job,
       cl.id as clan_id,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
     FROM accounts a
     LEFT JOIN players p ON p.account_id = a.id
     LEFT JOIN characters c ON c.player_id = p.id
@@ -58,6 +61,7 @@ export async function resolvePlayerIdentities(
         clanId: row.clan_id ? Number(row.clan_id) : null,
         clanTag: row.clan_tag || null,
         clanColor: row.clan_tag_color || "#f59e0b",
+        clanTagStyle: row.clan_tag_style || "brackets",
       });
     }
   } catch (err) {

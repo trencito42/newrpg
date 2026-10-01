@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, { params }: Context) {
 
   // Fetch controlled turfs
   const turfs = await dbQuery<RowDataPacket>(
-    `SELECT id, name, zone, owner_clan_id, attack_clan_id, war_state, war_ends_at
+    `SELECT id, name, radius, payout, respect_payout
      FROM turfs
      WHERE owner_clan_id = ?`,
     [clanId]

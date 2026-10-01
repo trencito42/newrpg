@@ -136,6 +136,7 @@ export function StaffFactionsClient({
                         factionId={f.id}
                         clanTag={f.leader.clan_tag}
                         clanColor={f.leader.clan_tag_color}
+                        clanTagStyle={f.leader.clan_tag_style}
                         size="sm"
                       />
                     ) : (

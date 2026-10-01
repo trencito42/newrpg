@@ -134,6 +134,7 @@ export function StaffTeamClient({
                       factionId={adm.faction_id}
                       clanTag={adm.clan_tag}
                       clanColor={adm.clan_tag_color}
+                      clanTagStyle={adm.clan_tag_style}
                       size="sm"
                     />
                   </td>
@@ -196,6 +197,7 @@ export function StaffTeamClient({
                       factionId={hlp.faction_id}
                       clanTag={hlp.clan_tag}
                       clanColor={hlp.clan_tag_color}
+                      clanTagStyle={hlp.clan_tag_style}
                       size="sm"
                     />
                   </td>
