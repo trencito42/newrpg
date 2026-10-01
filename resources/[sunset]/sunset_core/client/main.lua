@@ -86,6 +86,7 @@ CreateThread(function()
     -- Auth decides between quick-login and the form. Keep the FiveM loadscreen
     -- until either presentation has reached its final painted position.
     local tAuthRendered = nil
+    local tHandoffStart = nil
     local handoffOk, handoffErr = pcall(function()
         local readyDeadline = GetGameTimer() + 12000
         local nuiReady = false
@@ -104,10 +105,10 @@ CreateThread(function()
         end
         if not nuiReady then
             tAuthRendered = GetGameTimer()
-            SunsetBoot.Log('core', 'auth_ui:timeout', 'NUI ready timeout (8s) — proceeding with failsafe shutdown')
+            SunsetBoot.Log('core', 'auth_ui:timeout', 'NUI ready timeout (12s) — proceeding with failsafe shutdown')
         end
 
-        local tHandoffStart = GetGameTimer()
+        tHandoffStart = GetGameTimer()
         if tAuthRendered then
             SunsetBoot.RecordMilestone('auth_rendered_to_handoff', tHandoffStart - tAuthRendered)
         end
@@ -116,7 +117,8 @@ CreateThread(function()
         if nofx then
             SendLoadingScreenMessage(json.encode({ eventName = 'nofx' }))
         end
-        Wait(120)
+        -- Do not hold the loadscreen on a terminal percentage. The auth UI
+        -- has already reported its visible frame; shutdown follows immediately.
     end)
     if not handoffOk then
         print('^1[sunset_core]^7 loadscreen handoff failed: ' .. tostring(handoffErr))
@@ -140,7 +142,7 @@ CreateThread(function()
     ShutdownLoadingScreen()
     local tShutdownEnd = GetGameTimer()
     SunsetBoot.Log('core', 'loadscreen_shutdown:end', ('returned elapsed=%dms'):format(tShutdownEnd - tShutdownStart))
-    SunsetBoot.RecordMilestone('handoff_to_loadscreen_off', tShutdownEnd - (tAuthRendered or tShutdownStart))
+    SunsetBoot.RecordMilestone('handoff_to_loadscreen_off', tShutdownEnd - (tHandoffStart or tShutdownStart))
 
     DoScreenFadeIn(500)
     SunsetBoot.Log('core', 'screen_fade:in_start', 'fade-in started; auth owns visible surface')

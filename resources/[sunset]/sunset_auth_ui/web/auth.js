@@ -138,7 +138,7 @@ const AuthUI = {
         }
         requestAnimationFrame(() => requestAnimationFrame(() => {
             if (generation !== this.visibleGeneration || !screen?.classList.contains('is-visible')) return;
-            post('authVisibleRendered', { now: Date.now(), presentation: data.presentation || 'form' });
+            post('authVisibleRendered', { now: Date.now(), presentation: data.presentation || 'form', presentationId: data.presentationId });
         }));
         setTimeout(() => {
             if (data.presentation === 'quick-login') return;

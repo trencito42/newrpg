@@ -120,6 +120,10 @@ pull_repo() {
 
 pull_repo
 
+# The URL version follows asset bytes, not a manually maintained release tag.
+# Run after pull (which may replace index.html) and before Docker copies resources.
+sh scripts/stamp-loadscreen.sh
+
 # Docker Compose reads .env for interpolation, but those values are not exported
 # to this shell. The migration commands below also need the same credentials;
 # without this, `mariadb-admin -p"${MARIADB_PASSWORD}"` becomes bare `-p` and
@@ -161,5 +165,6 @@ sh scripts/apply-migrations.sh "$DIR"
 
 docker compose up -d --remove-orphans
 docker compose up -d --force-recreate fivem
+sh scripts/check-loadscreen-copy.sh
 
 echo "Done. Connect: F8 -> connect $(curl -s ifconfig.me 2>/dev/null || echo YOUR_IP):30120"

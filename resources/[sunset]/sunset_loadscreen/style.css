@@ -49,7 +49,7 @@ html, body {
     position: absolute;
     inset: 0;
     z-index: 0;
-    background: #050508 url('assets/sunset.webp?v=2') no-repeat center center;
+    background: #050508 url('assets/sunset.webp?v=20da2c41e7f86ca3') no-repeat center center;
     background-size: cover;
 }
 

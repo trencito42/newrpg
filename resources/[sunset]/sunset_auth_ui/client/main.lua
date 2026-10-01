@@ -10,6 +10,7 @@ local authOpen = false
 local authDomReady = false
 local authVisibleRendered = false
 local authBootEpoch = 0
+local authPresentationId = 0
 
 -- [NUI FOCUS] Register the auth screen as focus owner 'auth' in the central
 -- manager so no other resource can silently steal/release the login cursor,
@@ -40,19 +41,26 @@ exports('Send', send)
 exports('Show', function(screen, data)
     authOpen = true
     authVisibleRendered = false
+    authPresentationId = authPresentationId + 1
     authFocus(true, true)
-    send('authShow', data)
+    local payload = type(data) == 'table' and data or {}
+    payload.presentationId = authPresentationId
+    send('authShow', payload)
 end)
 
 exports('Hide', function()
     authOpen = false
+    authVisibleRendered = false
     authFocus(false, false)
     send('authHide', {})
 end)
 
 exports('SetFocus', function(hasFocus, hasCursor)
     authFocus(hasFocus == true, hasCursor == true)
-    if not hasFocus then authOpen = false end
+    if not hasFocus then
+        authOpen = false
+        authVisibleRendered = false
+    end
 end)
 
 exports('IsAuthOpen', function() return authOpen and authVisibleRendered end)
@@ -89,8 +97,10 @@ RegisterNUICallback('authDomReady', function(data, cb)
 end)
 
 RegisterNUICallback('authVisibleRendered', function(data, cb)
-    authVisibleRendered = authOpen
-    TriggerEvent('sunset:auth:visibleRendered', data)
+    if authOpen and type(data) == 'table' and tonumber(data.presentationId) == authPresentationId then
+        authVisibleRendered = true
+        TriggerEvent('sunset:auth:visibleRendered', data)
+    end
     cb('ok')
 end)
 
@@ -100,5 +110,6 @@ AddEventHandler('onResourceStop', function(res)
     if authOpen then
         authFocus(false, false)
         authOpen = false
+        authVisibleRendered = false
     end
 end)

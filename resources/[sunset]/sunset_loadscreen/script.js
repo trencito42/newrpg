@@ -53,6 +53,48 @@ try { BOOT_VERBOSE = window.localStorage.getItem('sunset_boot_verbose') === '1';
 // One client-side switch for boot diagnostics. Keep expensive watchdogs and
 // per-event console IPC completely out of the normal loading path.
 const BOOT_DEBUG = BOOT_VERBOSE;
+const LOADSCREEN_BUILD = document.querySelector('meta[name="loadscreen-build"]')?.content || 'unstamped';
+const LOADSCREEN_COMMIT = document.querySelector('meta[name="loadscreen-commit"]')?.content || 'unknown';
+const scriptUrl = document.currentScript?.src || 'unknown';
+const paintTimeOrigin = performance.timeOrigin || (Date.now() - performance.now());
+const paintStamp = () => Math.round(performance.now());
+let firstPaintOccurred = false;
+let firstPaintSource = 'none';
+let firstRafSeen = false;
+let receivedProgress = 0;
+let displayedPct = 0;
+let pendingTask = '';
+let lifecyclePhase = 'connecting';
+const firstEvents = BOOT_DEBUG ? new Set() : null;
+
+function paintTrace(stage, extra = '') {
+    if (BOOT_DEBUG) console.log(`[LS-PAINT] ${stage} t=${paintStamp()}ms visibility=${document.visibilityState} received=${Math.floor(receivedProgress)} displayed=${Math.floor(displayedPct)} source=${firstPaintSource}${extra ? ' ' + extra : ''}`);
+}
+
+function eventTrace(stage, extra = '') {
+    if (!BOOT_DEBUG || firstEvents.has(stage)) return;
+    firstEvents.add(stage);
+    console.log(`[LS-EVENT] ${stage} t=${paintStamp()}ms received=${Math.floor(receivedProgress)} displayed=${Math.floor(displayedPct)}${extra ? ' ' + extra : ''}`);
+}
+
+if (BOOT_DEBUG) {
+    console.log(`[LOADSCREEN BUILD] commit=${LOADSCREEN_COMMIT} asset=${LOADSCREEN_BUILD} script=${scriptUrl} css=${document.querySelector('link[href*="style.css"]')?.href || 'unknown'}`);
+    paintTrace('script_start', `epoch=${Date.now()} timeOrigin=${Math.round(paintTimeOrigin)}`);
+    document.addEventListener('DOMContentLoaded', () => paintTrace('dom_ready'));
+    if (typeof PerformanceObserver === 'function') {
+        try {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    if (entry.name === 'first-paint') {
+                        console.log(`[LS-PAINT] browser_first_paint t=${Math.round(entry.startTime)}ms displayedAtCallback=${Math.floor(displayedPct)} (PaintTiming may be delivered after paint)`);
+                        markFirstPaint('PaintTiming');
+                    }
+                }
+            });
+            observer.observe({ type: 'paint', buffered: true });
+        } catch (_) { paintTrace('paint_timing_unavailable'); }
+    }
+}
 
 function btrace(stage, extra) {
     if (!BOOT_DEBUG) return;
@@ -93,7 +135,6 @@ const TOTAL_SEGMENTS = 25;
 
 const TIPS = Array.from({ length: 5 }, (_, index) => lsT(`tip_${index}`));
 
-let displayedPct = 0;   // monotonic: never decreases
 let initTotal = 0;
 let initDone = 0;
 let handoffReceived = false;
@@ -120,11 +161,12 @@ function updateRpmBar(pct) {
 }
 
 // Monotonic: only move forward, never backwards.
-function setProgress(pct, task) {
-    const clamped = Math.min(100, Math.max(0, pct));
-    if (clamped < displayedPct) return; // monotonic guard
+function renderProgress(pct, task) {
+    if (BOOT_DEBUG && pct >= 100 && lifecyclePhase !== 'terminal_shutdown') {
+        console.error(`[LOADSCREEN INVARIANT] 100% displayed during phase=${lifecyclePhase}`);
+    }
     const oldWholePct = Math.floor(displayedPct);
-    displayedPct = clamped;
+    displayedPct = pct;
     if (Math.floor(displayedPct) !== oldWholePct) {
         pctEl.innerHTML = `${Math.floor(displayedPct)}<span>%</span>`;
         updateRpmBar(displayedPct);
@@ -133,11 +175,50 @@ function setProgress(pct, task) {
     if (filesEl.textContent) filesEl.textContent = '';
 }
 
+function markFirstPaint(source) {
+    if (firstPaintOccurred || document.visibilityState === 'hidden') return;
+    firstPaintOccurred = true;
+    firstPaintSource = source;
+    paintTrace('first_paint_opportunity', 'initialHtmlPct=0 (rAF is not compositor proof)');
+    if (!handoffReceived) renderProgress(receivedProgress, pendingTask);
+}
+
+// The first rAF is before the first potential paint. Let the initial HTML 0%
+// reach that paint; only flush real received progress on the next frame.
+function queuePaintOpportunity() {
+    requestAnimationFrame(() => {
+        firstRafSeen = true;
+        paintTrace('first_raf');
+        requestAnimationFrame(() => {
+            paintTrace('second_raf');
+            markFirstPaint('second_rAF');
+        });
+    });
+}
+queuePaintOpportunity();
+document.addEventListener('visibilitychange', () => {
+    paintTrace('visibility_change');
+    if (document.visibilityState === 'visible' && !firstPaintOccurred && !handoffReceived) queuePaintOpportunity();
+});
+
+function setProgress(pct, task) {
+    const clamped = Math.min(100, Math.max(0, Number(pct) || 0));
+    if (clamped < receivedProgress) return;
+    receivedProgress = clamped;
+    if (BOOT_DEBUG) {
+        if (clamped >= 70) eventTrace('timeTo70');
+        if (clamped >= 85) eventTrace('timeTo85');
+        if (clamped >= 95) eventTrace('timeTo95');
+    }
+    if (task) pendingTask = task;
+    if (firstPaintOccurred && !handoffReceived) renderProgress(receivedProgress, pendingTask);
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  DIAGNOSTICS & STALL TRACKER FOR FIVEM LOAD LIFECYCLE
 // ═══════════════════════════════════════════════════════════════
 
-const loadMetrics = {
+const loadMetrics = BOOT_DEBUG ? {
     currentPhase: 'connecting', // asset_load | data_files | resource_init | map_load | waiting_handoff | handoff
     lastEventName: 'script:start',
     lastEventTime: Date.now(),
@@ -159,12 +240,13 @@ const loadMetrics = {
     tMapLoadStart: 0,
     tMapLoadEnd: 0,
     handoffTimestamp: 0,
-};
+} : null;
 
 const stallAlertThresholds = [1000, 3000, 5000];
 let lastStallAlertLevel = 0;
 
 function touchLoadEvent(eventName, phase) {
+    if (!BOOT_DEBUG) return;
     const now = Date.now();
     const gap = now - loadMetrics.lastEventTime;
 
@@ -258,20 +340,22 @@ function printLoadSummary() {
 
 function finishHandoff() {
     if (handoffReceived) return;
+    if (BOOT_DEBUG) eventTrace('handoff', `firstPaint=${firstPaintOccurred}`);
     btrace('handoff received -> animations off');
     handoffReceived = true;
-    loadMetrics.handoffTimestamp = Date.now() - BOOT_T0;
+    lifecyclePhase = 'terminal_shutdown';
+    if (BOOT_DEBUG) loadMetrics.handoffTimestamp = Date.now() - BOOT_T0;
     touchLoadEvent('sunsetHandoff', 'handoff');
 
     loadscreen.classList.add('is-handoff');
-    setProgress(100, lsT('entering_session'));
+    receivedProgress = 100;
+    eventTrace('timeTo100');
+    if (firstPaintOccurred) renderProgress(100, lsT('entering_session'));
     printLoadSummary();
-
-    setTimeout(() => {
-        btrace('fade-out started');
-        loadscreen.classList.add('fade-out');
-        setTimeout(() => btrace('fade-out complete (still alive)'), 600);
-    }, 90);
+    // Never expose 100 as the first frame. If CEF has not painted yet, the
+    // core will shut this page down immediately instead of fabricating progress.
+    loadscreen.classList.add('fade-out');
+    if (BOOT_DEBUG) paintTrace('handoff_fade_started', `firstRaf=${firstRafSeen}`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -287,14 +371,23 @@ const handlers = {
     },
     loadProgress(data) {
         touchLoadEvent('loadProgress', 'asset_load');
-        if (!loadMetrics.tLoadProgressStart) loadMetrics.tLoadProgressStart = Date.now();
-        loadMetrics.tLoadProgressEnd = Date.now();
+        lifecyclePhase = 'asset_load';
+        if (BOOT_DEBUG) {
+            if (!loadMetrics.tLoadProgressStart) loadMetrics.tLoadProgressStart = Date.now();
+            loadMetrics.tLoadProgressEnd = Date.now();
+        }
 
         const frac = Number(data.loadFraction) || 0;
         setProgress(frac * 70, lsT('loading_assets'));
-        btrace('load_progress', `fraction=${frac.toFixed(3)} pct=${Math.round(frac * 70)}%`);
+        if (BOOT_DEBUG) {
+            eventTrace('first_loadProgress', `fraction=${frac.toFixed(3)} target=${Math.floor(frac * 70)}`);
+            if (frac >= 0.25) eventTrace('loadProgress_25');
+            if (frac >= 0.5) eventTrace('loadProgress_50');
+            btrace('load_progress', `fraction=${frac.toFixed(3)} pct=${Math.round(frac * 70)}%`);
+        }
     },
     onLogLine(data) {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('onLogLine');
         const msg = (data && data.message) ? String(data.message).trim() : '';
         if (msg) {
@@ -304,16 +397,24 @@ const handlers = {
     },
     startDataFileEntries(data) {
         touchLoadEvent('startDataFileEntries', 'data_files');
-        loadMetrics.dataFileBatches += 1;
-        loadMetrics.currentBatchCount = Number(data && data.count) || 0;
-        loadMetrics.currentBatchStart = Date.now();
-        btrace('data_batch_start', `count=${loadMetrics.currentBatchCount} batch=${loadMetrics.dataFileBatches}`);
+        lifecyclePhase = 'data_files';
+        eventTrace('first_data_file_batch');
+        if (BOOT_DEBUG) {
+            loadMetrics.dataFileBatches += 1;
+            loadMetrics.currentBatchCount = Number(data && data.count) || 0;
+            loadMetrics.currentBatchStart = Date.now();
+            btrace('data_batch_start', `count=${loadMetrics.currentBatchCount} batch=${loadMetrics.dataFileBatches}`);
+        }
         if (data && data.count) {
-            taskEl.innerText = lsT('downloading_files', { count: data.count });
+            const task = lsT('downloading_files', { count: data.count });
+            pendingTask = task;
+            if (firstPaintOccurred && taskEl.textContent !== task) taskEl.textContent = task;
         }
     },
     onDataFileEntry(data) {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('onDataFileEntry', 'data_files');
+        eventTrace('first_data_file');
         loadMetrics.totalDataFiles += 1;
         const name = (data && data.name) || 'unknown';
         loadMetrics.lastDataFile = name;
@@ -327,23 +428,30 @@ const handlers = {
         // progress steps. Repainting the name for every entry stalls CEF.
     },
     endDataFileEntries() {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('endDataFileEntries', 'data_files');
         const elapsed = loadMetrics.currentBatchStart ? (Date.now() - loadMetrics.currentBatchStart) : 0;
         btrace('data_batch_end', `count=${loadMetrics.currentBatchCount} elapsed=${elapsed}ms`);
     },
     startInitFunction(data) {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('startInitFunction', 'resource_init');
+        eventTrace('first_init');
         btrace('init_group_start', `type=${(data && data.type) || 'all'}`);
     },
     startInitFunctionOrder(data) {
         touchLoadEvent('startInitFunctionOrder', 'resource_init');
+        lifecyclePhase = 'resource_init';
+        eventTrace('first_init');
         initTotal = Number(data && data.count) || 1;
         initDone = 0;
         setProgress(70, lsT('initializing_resources'));
-        btrace('init_order_start', `type=${(data && data.type) || 'all'} order=${(data && data.order) || 0} count=${initTotal}`);
+        if (BOOT_DEBUG) btrace('init_order_start', `type=${(data && data.type) || 'all'} order=${(data && data.order) || 0} count=${initTotal}`);
     },
     initFunctionInvoking(data) {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('initFunctionInvoking', 'resource_init');
+        eventTrace('first_init');
         const name = (data && data.name) || 'anonymous';
         const type = (data && data.type) || '';
         const idx = (data && data.idx) !== undefined ? data.idx : '';
@@ -355,51 +463,55 @@ const handlers = {
     },
     initFunctionInvoked(data) {
         touchLoadEvent('initFunctionInvoked', 'resource_init');
+        lifecyclePhase = 'resource_init';
         initDone += 1;
-        const name = (data && data.name) || loadMetrics.lastInitFunction;
-        const type = (data && data.type) || '';
-        const tStart = loadMetrics.activeInitFunctions[name];
-        const elapsed = tStart ? (Date.now() - tStart) : 0;
-        delete loadMetrics.activeInitFunctions[name];
-
-        loadMetrics.initFunctionCount += 1;
-        loadMetrics.initTimings.push({
-            name: name,
-            type: type,
-            duration: elapsed,
-            idx: initDone,
-        });
-
-        let speedFlag = '';
-        if (elapsed >= 1000) speedFlag = ' [STALL]';
-        else if (elapsed >= 500) speedFlag = ' [VERY_SLOW]';
-        else if (elapsed >= 100) speedFlag = ' [SLOW]';
-
-        btrace('init_end', `name=${name} elapsed=${elapsed}ms${speedFlag}`);
+        if (BOOT_DEBUG) {
+            const name = (data && data.name) || loadMetrics.lastInitFunction;
+            const type = (data && data.type) || '';
+            const tStart = loadMetrics.activeInitFunctions[name];
+            const elapsed = tStart ? (Date.now() - tStart) : 0;
+            delete loadMetrics.activeInitFunctions[name];
+            loadMetrics.initFunctionCount += 1;
+            loadMetrics.initTimings.push({ name, type, duration: elapsed, idx: initDone });
+            let speedFlag = '';
+            if (elapsed >= 1000) speedFlag = ' [STALL]';
+            else if (elapsed >= 500) speedFlag = ' [VERY_SLOW]';
+            else if (elapsed >= 100) speedFlag = ' [SLOW]';
+            btrace('init_end', `name=${name} elapsed=${elapsed}ms${speedFlag}`);
+        }
 
         if (initTotal > 0) {
             setProgress(70 + (initDone / initTotal) * 15);
         }
     },
     endInitFunction(data) {
+        if (!BOOT_DEBUG) return;
         touchLoadEvent('endInitFunction', 'resource_init');
         btrace('init_group_end', `type=${(data && data.type) || 'all'}`);
     },
     performMapLoadFunction(data) {
         touchLoadEvent('performMapLoadFunction', 'map_load');
-        if (!loadMetrics.tMapLoadStart) loadMetrics.tMapLoadStart = Date.now();
-        loadMetrics.tMapLoadEnd = Date.now();
+        lifecyclePhase = 'map_load';
+        eventTrace('first_map');
+        if (BOOT_DEBUG) {
+            if (!loadMetrics.tMapLoadStart) loadMetrics.tMapLoadStart = Date.now();
+            loadMetrics.tMapLoadEnd = Date.now();
+        }
 
         const idx = data && data.idx !== undefined ? Number(data.idx) : 0;
         const count = data && data.count ? Number(data.count) : 1;
         const pct = 85 + (idx / count) * 10;
         setProgress(pct, lsT('preparing_world'));
-        btrace('map_load_step', `idx=${idx}/${count} pct=${Math.round(pct)}%`);
+        if (BOOT_DEBUG) btrace('map_load_step', `idx=${idx}/${count} pct=${Math.round(pct)}%`);
     },
 };
 
 window.addEventListener('message', (event) => {
     const data = event.data || {};
+    if (handoffReceived && data.eventName !== 'nofx' && data.eventName !== 'sunsetHandoff') {
+        if (BOOT_DEBUG) console.error(`[LOADSCREEN INVARIANT] event=${data.eventName} after terminal handoff; phase=${lifecyclePhase}`);
+        return;
+    }
     const handler = handlers[data.eventName];
     if (handler) handler(data);
 });
