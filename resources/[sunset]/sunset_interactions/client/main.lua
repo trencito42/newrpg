@@ -81,7 +81,7 @@ local function validateInteractionTarget(serverId, maxDistance, requireLos)
     if distance > (maxDistance or TARGET_SCAN_DISTANCE) then return false end
 
     local sharedSeat = getSharedVehicleSeat(me, ped)
-    if requireLos and sharedSeat == nil and not HasEntityClearLosToEntity(me, ped, 17) then return false end
+    if requireLos and sharedSeat == nil and distance >= 2.5 and not HasEntityClearLosToEntity(me, ped, 17) then return false end
     return true, player, ped, distance, sharedSeat
 end
 
@@ -97,7 +97,7 @@ local function getInteractionCandidates(maxDistance)
             if ped ~= 0 and DoesEntityExist(ped) then
                 local distance = #(myCoords - GetEntityCoords(ped))
                 local seat = getSharedVehicleSeat(me, ped)
-                local hasLos = seat ~= nil or HasEntityClearLosToEntity(me, ped, 17)
+                local hasLos = seat ~= nil or distance < 2.5 or HasEntityClearLosToEntity(me, ped, 17)
                 if distance <= limit and hasLos then
                     local head = GetPedBoneCoords(ped, 31086, 0.0, 0.0, 0.08)
                     local projected, screenX, screenY = World3dToScreen2d(head.x, head.y, head.z)
@@ -319,14 +319,13 @@ local function openMenu(requestedTarget)
     local ped = PlayerPedId()
     if IsPedDeadOrDying(ped, true) then return notify(exports.sunset_core:Translate('interactions.message.you_cannot_interact_while_downed'), 'error') end
 
-    local targetId = tonumber(requestedTarget or lockedTarget or promptTarget)
+    local targetId = tonumber(requestedTarget or promptTarget or lockedTarget)
     if not targetId then return notify(exports.sunset_core:Translate('interactions.message.no_player_is_close_enough_move_within_3_metres'), 'info') end
     if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
         cancelTargetLock(false)
         return notify(exports.sunset_core:Translate('interactions.message.that_player_is_no_longer_available_or_close_enough'), 'info')
     end
 
-    lockedTarget = targetId
     hidePlayerPrompt()
     holdActive = false
     menuCloseArmed = false
@@ -337,7 +336,7 @@ local function openMenu(requestedTarget)
     local context, err = Sunset.AwaitCallback('sunset:interactionContext', targetId)
     if requestNonce ~= contextRequestNonce then return end
     contextRequestActive = false
-    if lockedTarget ~= targetId or inputIsBusy() then
+    if inputIsBusy() then
         cancelTargetLock(false)
         return
     end
@@ -346,7 +345,7 @@ local function openMenu(requestedTarget)
         return notify(err or exports.sunset_core:Translate('interactions.msg.the_interaction_menu_could_not_be'), 'error', 6000)
     end
 
-    if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
+    if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, false) then
         cancelTargetLock(false)
         return notify(exports.sunset_core:Translate('interactions.message.that_player_moved_away_before_the_interaction_menu_opened'), 'info')
     end
@@ -382,40 +381,31 @@ end, false)
 
 RegisterCommand('+interactplayer', function()
     if menuOpen then
-        if menuCloseArmed then
-            closeMenu()
-            menuCloseArmed = false
-        end
+        closeMenu()
         return
     end
     if contextRequestActive or inputIsBusy() then return end
-    if not promptTarget then
-        local selected = selectBestInteractionTarget(getInteractionCandidates(TARGET_SCAN_DISTANCE), nil)
-        promptTarget = selected and selected.serverId or nil
-    end
-    if not promptTarget or not validateInteractionTarget(promptTarget, HOLD_VALIDATE_DISTANCE, true) then return end
-    lockedTarget = promptTarget
-    if sharingVehicle() then
-        local targetId = lockedTarget
-        CreateThread(function() openMenu(targetId) end)
+
+    local candidates = getInteractionCandidates(TARGET_SCAN_DISTANCE)
+    local selected = selectBestInteractionTarget(candidates, promptTarget)
+    local targetId = selected and selected.serverId or promptTarget
+
+    if not targetId or not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
+        notify(exports.sunset_core:Translate('interactions.message.no_player_is_close_enough_move_within_3_metres'), 'info')
         return
     end
-    setHoldState(true)
+
+    promptTarget = targetId
+    lockedTarget = targetId
+    CreateThread(function() openMenu(targetId) end)
 end, false)
 
 RegisterCommand('-interactplayer', function()
-    if menuOpen then
-        menuCloseArmed = true
-        return
-    end
-    cancelTargetLock(true)
-    -- [UX] Releasing G inside a shared vehicle hides the prompt again
-    -- (ambient prompts are suppressed there; only hold shows it).
-    if sharingVehicle() then hidePlayerPrompt() end
+    -- Key release handling
 end, false)
 
 AddEventHandler('sunset:nui:playerInteractionHoldComplete', function()
-    local targetId = lockedTarget
+    local targetId = lockedTarget or promptTarget
     if menuOpen or contextRequestActive or inputIsBusy() or not targetId then return end
     if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
         cancelTargetLock(false)
@@ -426,7 +416,7 @@ AddEventHandler('sunset:nui:playerInteractionHoldComplete', function()
     CreateThread(function() openMenu(targetId) end)
 end)
 
-RegisterKeyMapping('+interactplayer', 'Interact with nearby player (hold)', 'keyboard', 'G')
+RegisterKeyMapping('+interactplayer', 'Interact with nearby player', 'keyboard', 'G')
 
 local CallbackActions = {
     cuff = 'sunset:detentionCuff',
@@ -610,6 +600,22 @@ CreateThread(function()
         end
 
         Wait(sleep)
+    end
+end)
+
+-- Physical G key fallback thread (matching scoreboard Z fallback architecture)
+CreateThread(function()
+    while true do
+        if not menuOpen and not inputIsBusy() and not IsPauseMenuActive() then
+            if IsControlJustReleased(0, 47) or IsDisabledControlJustReleased(0, 47) then
+                if not isChatOpen() and not IsNuiFocused() then
+                    ExecuteCommand('+interactplayer')
+                end
+            end
+            Wait(0)
+        else
+            Wait(150)
+        end
     end
 end)
 
