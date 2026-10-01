@@ -209,6 +209,7 @@ local function buildMenuData(forceExtras)
         propertyMeta = propertyMeta,
         avatar = captureMugshot(),
         cid = char.id,
+        soloMode = menuSoloMode,
     }
 end
 

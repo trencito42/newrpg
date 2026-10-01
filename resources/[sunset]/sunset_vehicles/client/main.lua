@@ -885,6 +885,8 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     fuel = vehFuel
     currentVeh = 0
     notify(exports.sunset_core:Translate('vehicles.msg.vehicle_spawned_fuel', { plate = tostring(vehData.plate), veh_fuel = math.floor(tonumber(math.floor(vehFuel)) or 0) }), 'success')
+    TriggerEvent('sunset:client:vehicleUpdated', { id = tonumber(vehData.id), plate = vehData.plate, stored = 0, inWorld = true })
+    TriggerEvent('sunset:menu:refreshIfOpen')
     return vehicle
 end
 

@@ -279,13 +279,13 @@ const Menu = {
     _vehicleStateOf(v) {
         const isDestroyed = v.destroyed === true || v.destroyed === 1 || v.destroyed === '1';
         const stored = !isDestroyed && (v.stored === true || v.stored === 1 || v.stored === '1' || Number(v.stored) === 1);
-        const inWorld = !isDestroyed && v.inWorld === true;
+        const inWorld = !isDestroyed && !stored;
         const hasPark = Number.isFinite(Number(v.parked_x)) && Number.isFinite(Number(v.parked_y));
         if (isDestroyed) return { key: 'impound', label: this.t('menu.vehicle.impounded'), stored: false, inWorld: false, isDestroyed: true };
-        if (stored) return { key: 'garage', label: `${this.t('menu.vehicle.garage')} · ${v.garage || 'Central'}`, stored, inWorld };
-        if (inWorld) return { key: 'out', label: v.garage || this.t('menu.vehicle.street'), stored, inWorld };
-        if (hasPark) return { key: 'parked', label: this.t('menu.vehicle.parked'), stored, inWorld };
-        return { key: 'impound', label: this.t('menu.vehicle.unavailable'), stored, inWorld };
+        if (stored) return { key: 'garage', label: `${this.t('menu.vehicle.garage')} · ${v.garage || 'Central'}`, stored: true, inWorld: false };
+        if (inWorld) return { key: 'out', label: v.garage || this.t('menu.vehicle.street'), stored: false, inWorld: true };
+        if (hasPark) return { key: 'parked', label: this.t('menu.vehicle.parked'), stored: false, inWorld: true };
+        return { key: 'garage', label: this.t('menu.vehicle.garage'), stored: true, inWorld: false };
     },
 
     _bindVehicleImpoundHold(root, vehicleId, claimCost) {
@@ -607,6 +607,10 @@ const Menu = {
         this._data = data;
         if (!data) return;
         this.init();
+
+        if (data.soloMode !== undefined) {
+            this.soloMode = data.soloMode;
+        }
 
         if (this.soloMode === 'vehicle') {
             this.renderVehicles(data);
