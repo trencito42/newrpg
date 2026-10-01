@@ -10,8 +10,10 @@ end
 -- [BOOT TRACE] NUI-side boot/error telemetry -> client console (F8) AND the
 -- game log, so the error forwarder (docker logs) sees loadscreen/login crashes.
 RegisterNUICallback('nuiTrace', function(data, cb)
-    local line = type(data) == 'table' and data.line or tostring(data)
-    print(('^5[NUI TRACE]^7 %s'):format(tostring(line)))
+    if SunsetBoot and SunsetBoot.IsVerbose and SunsetBoot.IsVerbose() then
+        local line = type(data) == 'table' and data.line or tostring(data)
+        print(('^5[NUI TRACE]^7 %s'):format(tostring(line)))
+    end
     cb('ok')
 end)
 
