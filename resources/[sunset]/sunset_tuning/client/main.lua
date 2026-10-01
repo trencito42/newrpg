@@ -1,15 +1,10 @@
 -- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
--- Falls back to the raw natives only if sunset_ui is not running.
 function TUNING_SetNuiFocus(hasFocus, hasCursor, keepInput)
-    if GetResourceState('sunset_ui') == 'started' then
-        local ok, res = pcall(function()
-            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'tuning')
-        end)
-        if ok then return res end
-    end
-    SetNuiFocus(hasFocus, hasCursor)
-    SetNuiFocusKeepInput(keepInput == true)
-    return true
+    if GetResourceState('sunset_ui') ~= 'started' then return false end
+    local ok, res = pcall(function()
+        return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'tuning')
+    end)
+    return ok and res ~= false
 end
 
 local STC = SunsetTuningClient

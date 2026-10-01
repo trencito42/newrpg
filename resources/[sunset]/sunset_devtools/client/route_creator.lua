@@ -122,7 +122,7 @@ function DevRouteCreator.Open(adapterName, selectedRouteId)
         end
 
         isOpen = true
-        SetNuiFocus(true, true)
+        exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
         SendNUIMessage({
             action = 'open',
             adapter = adapterName,
@@ -137,7 +137,7 @@ function DevRouteCreator.Close()
     isOpen = false
     isWorldPreviewing = false
     previewRoute = nil
-    SetNuiFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'dev_route_creator')
     SendNUIMessage({ action = 'close' })
     DevRouteCreator.ClearBlips()
 end
@@ -410,7 +410,7 @@ end)
 RegisterNUICallback('previewRouteInWorld', function(data, cb)
     previewRoute = data.route
     isWorldPreviewing = true
-    SetNuiFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'dev_route_creator')
     DevRouteCreator.SetRouteBlips(previewRoute, data.adapter)
     notify(exports.sunset_core:Translate('devtools.message.world_preview_active_press_esc_or_m_to_return'), 'info')
     cb({ ok = true })
@@ -430,7 +430,7 @@ RegisterNUICallback('startGizmoEdit', function(data, cb)
     local heading = initialCoords.h or initialCoords.w or initialCoords.heading or 0.0
 
     -- Temporarily release NUI focus and hide window while gizmo is active
-    SetNuiFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'dev_route_creator')
     SendNUIMessage({ action = 'hideForGizmo' })
 
     DevGizmo.start({
@@ -455,11 +455,11 @@ RegisterNUICallback('startGizmoEdit', function(data, cb)
                 coords = updated,
             })
             notify(('Updated %s coordinates via Gizmo.'):format(tostring(stageKey)), 'success')
-            SetNuiFocus(true, true)
+            exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
             SendNUIMessage({ action = 'showAfterGizmo' })
         end,
         onCancel = function()
-            SetNuiFocus(true, true)
+            exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
             SendNUIMessage({ action = 'showAfterGizmo' })
         end,
     })
@@ -469,7 +469,7 @@ end)
 
 RegisterNUICallback('startCrosshairAddBin', function(data, cb)
     local routeId = data.routeId
-    SetNuiFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'dev_route_creator')
     SendNUIMessage({ action = 'hideForGizmo' })
 
     local pPos = GetEntityCoords(PlayerPedId())
@@ -494,11 +494,11 @@ RegisterNUICallback('startCrosshairAddBin', function(data, cb)
                 coords = updated,
             })
             notify(exports.sunset_core:Translate('devtools.message.added_bin_via_placement_gizmo'), 'success')
-            SetNuiFocus(true, true)
+            exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
             SendNUIMessage({ action = 'showAfterGizmo' })
         end,
         onCancel = function()
-            SetNuiFocus(true, true)
+            exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
             SendNUIMessage({ action = 'showAfterGizmo' })
         end,
     })
@@ -528,7 +528,7 @@ CreateThread(function()
             if isWorldPreviewing then
                 if IsControlJustPressed(0, 200) or IsControlJustPressed(0, 244) or IsControlJustPressed(0, 288) then -- ESC or M or F1
                     isWorldPreviewing = false
-                    SetNuiFocus(true, true)
+                    exports.sunset_ui:SetFocus(true, true, false, 'dev_route_creator')
                 end
             end
         end
