@@ -1044,7 +1044,7 @@ const Chat = {
             return `${timeHtml}<span class="chat-color-news">[Breaking News] ${msg}</span>`;
         }
         if (type === 'ad' || type === 'advertisement') {
-            return `${timeHtml}<span class="chat-color-ad">[Advertisement] ${msg}</span>`;
+            return `${timeHtml}<span class="chat-color-ad">[Advertisement] ${who}: ${msg}</span>`;
         }
 
         // 10. Emergency / Police / Dispatch / Radio / Department
@@ -1206,6 +1206,19 @@ const Chat = {
         $('#chat-channel-toggle')?.classList.remove('open');
     },
 
+    positionChannelDropdown() {
+        const toggle = $('#chat-channel-toggle');
+        const dropdown = $('#chat-channel-dropdown');
+        if (!toggle || !dropdown) return;
+        dropdown.style.maxHeight = '';
+        const anchor = toggle.getBoundingClientRect();
+        const above = Math.max(0, anchor.top - 12);
+        const below = Math.max(0, window.innerHeight - anchor.bottom - 12);
+        const openBelow = dropdown.scrollHeight > above && below > above;
+        dropdown.classList.toggle('open-below', openBelow);
+        dropdown.style.maxHeight = `${Math.floor(openBelow ? below : above)}px`;
+    },
+
     setChannel(channelId, label, placeholder) {
         const row = this.availableChannels.find((ch) => ch.id === channelId);
         this.channel = channelId || 'all';
@@ -1244,6 +1257,7 @@ const Chat = {
         const dropdown = $('#chat-channel-dropdown');
         toggle?.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!dropdown?.classList.contains('show')) this.positionChannelDropdown();
             dropdown?.classList.toggle('show');
             toggle.classList.toggle('open');
         });

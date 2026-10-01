@@ -12,7 +12,7 @@ let failures = 0;
 
 function placeholders(value) {
     const named = [...value.matchAll(/\{([A-Za-z0-9_]+)\}/g)].map((m) => `named:${m[1]}`);
-    const positional = [...value.matchAll(/%(?:\d+\$)?[-+0 #]*(?:\d+|\*)?(?:\.\d+)?[cdeEfgGiouxXqs]/g)]
+    const positional = [...value.matchAll(/%(?:\d+\$)?[-+0 #]*(?:\d+|\*)?(?:\.\d+)?[cdeEfgGiouxXqs](?![A-Za-z])/g)]
         .map((m) => `printf:${m[0].slice(-1)}`);
     return [...named, ...positional].sort();
 }

@@ -248,28 +248,11 @@ function recalculateQueue()
     end
 end
 
-local function sendStaffPreview(ad)
-    local etaSec = math.max(0, ad.scheduledAt - os.time())
-    local etaMin = math.floor(etaSec / 60)
-    local etaRemSec = etaSec % 60
-    local etaStr = ('%02d:%02d'):format(etaMin, etaRemSec)
-
-    for _, id in ipairs(GetPlayers()) do
-        local pid = tonumber(id)
-        if pid and exports.sunset_admin:IsStaff(pid) then
-            TriggerClientEvent('sunset:chat:message', pid, {
-                id = 0,
-                name = 'CNN',
-                message = t(pid, 'cnn.message.staff_preview', {
-                    id = ad.id, player = ad.playerName, serverId = tostring(ad.src or '?'),
-                    text = ad.text, eta = etaStr,
-                }),
-                time = os.date('%H:%M:%S'),
-                type = 'staff_chat',
-                staffRole = 'CNN PREVIEW',
-            })
-        end
-    end
+local function getAuthorSource(ad)
+    if not ad.src or GetPlayerPing(ad.src) <= 0 then return nil end
+    local current = exports.sunset_core:GetCharacter(ad.src)
+    if current and tonumber(current.id) == tonumber(ad.characterId) then return ad.src end
+    return nil
 end
 
 local function publishAd(ad)
@@ -283,13 +266,16 @@ local function publishAd(ad)
     -- Format broadcast message
     local phoneSuffix = ad.phoneNumber and (' (Tel: %s)'):format(ad.phoneNumber) or ''
     local broadcastText = ('%s%s'):format(ad.text, phoneSuffix)
+    -- A server ID can be reused while an ad waits in the queue. Never display
+    -- or notify that ID unless the same character still owns the session.
+    local authorSrc = getAuthorSource(ad)
 
     -- Global Chat Advertisement Broadcast (rendered in green by our chat system)
     for _, id in ipairs(GetPlayers()) do
         local pid = tonumber(id)
         if pid then
             TriggerClientEvent('sunset:chat:message', pid, {
-                id = ad.src or 0,
+                id = authorSrc or 0,
                 name = ad.playerName,
                 message = broadcastText,
                 time = os.date('%H:%M:%S'),
@@ -299,9 +285,9 @@ local function publishAd(ad)
     end
 
     -- If author is online, notify them
-    if ad.src and GetPlayerPing(ad.src) > 0 then
-        TriggerClientEvent('sunset:chat:system', ad.src,
-            t(ad.src, 'cnn.message.published', { id = ad.id }), 'success')
+    if authorSrc then
+        TriggerClientEvent('sunset:chat:system', authorSrc,
+            t(authorSrc, 'cnn.message.published', { id = ad.id }), 'success')
     end
 
     log(('Published CNN ad #%d by %s: "%s"'):format(ad.id, ad.playerName, ad.text))
@@ -617,9 +603,6 @@ local function submitAdLocked(source, text)
         t(src, 'cnn.message.submitted', { price = price, id = adObj.id, seconds = waitSec }), 'info')
     print(('[CNN AD TRACE] 13 acknowledgement sent: adId=%s player=%s waitSec=%s'):format(adObj.id, src, waitSec))
 
-    -- Send private staff preview
-    sendStaffPreview(adObj)
-
     log(('Player %s (#%d) submitted CNN ad #%d: "%s" (scheduled in %ds)'):format(
         pName, src, adObj.id, clean, waitSec
     ))
@@ -659,7 +642,7 @@ function GetAdQueue()
             remainingSec = math.max(0, ad.scheduledAt - now),
             reviewedBy = ad.reviewedBy,
             rejectReason = ad.rejectReason,
-            src = ad.src,
+            src = getAuthorSource(ad),
         }
     end
     return list
@@ -801,7 +784,7 @@ local function listAdsCommand(source)
             TriggerClientEvent('sunset:chat:system', source,
                 t(source, 'cnn.message.queue_item', {
                     position = idx, id = ad.id, player = ad.playerName,
-                    serverId = tostring(ad.src or '?'), status = t(source, 'cnn.status.' .. ad.status),
+                    serverId = tostring(getAuthorSource(ad) or '?'), status = t(source, 'cnn.status.' .. ad.status),
                     text = ad.text, eta = ('%02d:%02d'):format(min, sec),
                 }), 'info')
         end
