@@ -129,8 +129,9 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
     local tStart = GetGameTimer()
     local sourceLabel = targetSource or (pos and pos.source) or (isFallback and 'fallback' or 'primary')
 
-    if not isValidPlayerPed(ped) then
-        return false, 'STALE_PED'
+    ped = PlayerPedId()
+    if not DoesEntityExist(ped) or GetEntityModel(ped) == 0 then
+        return false, 'INVALID_PED'
     end
 
     SetFocusPosAndVel(pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
@@ -144,10 +145,16 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
     local loaded = false
 
     while GetGameTimer() < deadline do
-        if not isValidPlayerPed(ped) then
+        local currentPed = PlayerPedId()
+        if not DoesEntityExist(currentPed) or GetEntityModel(currentPed) == 0 then
             NewLoadSceneStop()
             ClearFocus()
-            return false, 'STALE_PED'
+            return false, 'INVALID_PED'
+        end
+        if currentPed ~= ped then
+            ped = currentPed
+            SetEntityCoordsNoOffset(ped, pos.x, pos.y, pos.z + 0.15, false, false, false)
+            SetEntityHeading(ped, pos.w or 0.0)
         end
 
         RequestCollisionAtCoord(pos.x, pos.y, pos.z)
@@ -176,6 +183,8 @@ local function spawnPlayer(char, spawnPosition)
     local tSpawnStart = GetGameTimer()
     spawning = true
     lastSpawningCharId = char and char.id or 'unknown'
+    LocalPlayer.state:set('isSpawning', true, false)
+    LocalPlayer.state:set('spawnPhase', 'SPAWNING_MODEL', false)
     pcall(function() exports.sunset_core:SetBootState('SPAWNING', 'spawn started') end)
 
     local pos = resolvePosition(char, spawnPosition)
@@ -208,9 +217,13 @@ local function spawnPlayer(char, spawnPosition)
     print(('^2[LOGIN-PERF] MODEL_READY +%dms (dur=%dms) | model=%s source=%s^7'):format(
         elapsedModel, modelLoadDur, tostring(rawModel), tostring(modelSource)))
 
-    local pedBefore = PlayerPedId()
     SetPlayerModel(PlayerId(), model)
     SetModelAsNoLongerNeeded(model)
+
+    local pedDeadline = GetGameTimer() + 1000
+    while (GetEntityModel(PlayerPedId()) ~= model or not DoesEntityExist(PlayerPedId())) and GetGameTimer() < pedDeadline do
+        Wait(0)
+    end
     local ped = PlayerPedId()
 
     SetPedDefaultComponentVariation(ped)
@@ -238,7 +251,9 @@ local function spawnPlayer(char, spawnPosition)
     -- Routing bucket transition
     prepareSpawnBucket()
 
-    -- Collision streaming (max 1500ms)
+    LocalPlayer.state:set('spawnPhase', 'SPAWNING_WORLD', false)
+
+    -- Collision streaming (max 1500ms) with live ped reacquisition
     streamSpawnArea(ped, pos, false, pos.source)
 
     TriggerServerEvent('sunset:server:characterSpawned', char.id)
@@ -259,6 +274,8 @@ local function spawnPlayer(char, spawnPosition)
 
     spawned = true
     spawning = false
+    LocalPlayer.state:set('spawnPhase', 'GAMEPLAY', false)
+    LocalPlayer.state:set('isSpawning', false, false)
 
     TriggerEvent('sunset:client:characterFlowComplete')
     TriggerEvent('sunset:client:playerSpawned', char)

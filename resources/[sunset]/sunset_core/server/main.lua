@@ -302,8 +302,12 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     end
 
     local isBootDebug = SunsetBoot.IsDebug()
-    local tStart = isBootDebug and GetGameTimer() or 0
-    if isBootDebug then
+    local isSpecialTrace = (name == 'sunset:enterGame')
+    local tStart = (isBootDebug or isSpecialTrace) and GetGameTimer() or 0
+    if isSpecialTrace then
+        print(('^3[CB-PERF] enterGame SERVER_EVENT_RECEIVED id=%s src=%s^7'):format(tostring(requestId), tostring(source)))
+        print(('^3[CB-PERF] enterGame HANDLER_BEGIN^7'))
+    elseif isBootDebug then
         print(('^5[BOOTV src=%d] callback %s START^7'):format(source, name))
     end
 
@@ -312,8 +316,10 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
         return { result = result, err = err }
     end, ...)
 
-    if isBootDebug then
-        local dur = GetGameTimer() - tStart
+    local dur = ((isBootDebug or isSpecialTrace) and (GetGameTimer() - tStart)) or 0
+    if isSpecialTrace then
+        print(('^3[CB-PERF] enterGame HANDLER_END dur=%d^7'):format(dur))
+    elseif isBootDebug then
         local flag = ''
         if dur >= 1000 then flag = ' ^1[STALL]^5'
         elseif dur >= 500 then flag = ' ^1[VERY SLOW]^5'
@@ -323,6 +329,9 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
 
     if not ok then
         print(('^1[blaze.mp]^7 Callback error (%s): %s'):format(name, tostring(packed)))
+        if isSpecialTrace then
+            print(('^1[CB-PERF] enterGame RESPONSE_SENT id=%s (error)^7'):format(tostring(requestId)))
+        end
         TriggerClientEvent('sunset:client:callbackResponse', source, requestId, {
             __cb = true,
             result = nil,
@@ -331,6 +340,9 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
         return
     end
 
+    if isSpecialTrace then
+        print(('^2[CB-PERF] enterGame RESPONSE_SENT id=%s^7'):format(tostring(requestId)))
+    end
     TriggerClientEvent('sunset:client:callbackResponse', source, requestId, {
         __cb = true,
         result = packed.result,
@@ -892,63 +904,64 @@ end)
 
 RegisterCallback('sunset:enterGame', function(source)
     local tEnterGame = GetGameTimer()
+    local tSub = tEnterGame
     local player = GetPlayer(source)
     local accId = player and player.account_id or 'none'
     local pId = player and player.id or 'none'
-    print(('^2[LOGIN-FLOW] 06-SRV ENTERGAME: callback received | src=%s accId=%s pId=%s hasChar=%s^7'):format(
-        tostring(source), tostring(accId), tostring(pId), tostring(player and player.character ~= nil)))
+    local durPlayer = GetGameTimer() - tSub
+    print(('^2[LOGIN-FLOW] ENTERGAME_PLAYER dur=%dms | src=%s accId=%s pId=%s hasChar=%s^7'):format(
+        durPlayer, tostring(source), tostring(accId), tostring(pId), tostring(player and player.character ~= nil)))
 
     if not player then
         return nil, Sunset.LocalizedError('auth.not_logged_in')
     end
 
-    local function getResolvedSpawn()
-        local spawn = nil
-        if GetResourceState('sunset_properties') == 'started' then
-            local okS, resS = pcall(function() return exports.sunset_properties:ResolveAutoSpawn(source) end)
-            if okS and resS and resS.x then spawn = resS end
-        end
-        if not spawn then
-            local def = Sunset.Config.DefaultSpawn or { x = -1037.6, y = -2737.8, z = 13.8, w = 330.0 }
-            spawn = { x = def.x, y = def.y, z = def.z, w = def.w or 0.0, source = 'default' }
-        end
-        return spawn
-    end
-
-    -- [LOGIN PIPELINE] Idempotent: a retried enterGame (lost response / duplicate
-    -- trigger) must hand back the already-loaded character instead of failing.
+    -- [LOGIN PIPELINE] Idempotent: return already-loaded character immediately.
     if player.character and player.character.id then
-        local spawn = getResolvedSpawn()
-        print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: returning already loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
-            tostring(player.character.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
-        return { character = player.character, spawn = spawn }
+        local totalDur = GetGameTimer() - tEnterGame
+        print(('^2[LOGIN-FLOW] ENTERGAME_RETURN (cached) dur=%dms | charId=%s src=%s^7'):format(
+            totalDur, tostring(player.character.id), tostring(source)))
+        return { character = player.character }
     end
 
+    tSub = GetGameTimer()
     local row = MySQL.single.await(
         'SELECT id FROM characters WHERE player_id = ? ORDER BY slot LIMIT 1',
         { player.id }
     )
+    local durQuery = GetGameTimer() - tSub
+    print(('^2[LOGIN-FLOW] ENTERGAME_CHARACTER_QUERY dur=%dms | found=%s^7'):format(
+        durQuery, tostring(row and row.id or 'none')))
 
     if row then
+        tSub = GetGameTimer()
         local char = loadCharacterForPlayer(source, player, row.id)
+        local durLoad = GetGameTimer() - tSub
+        print(('^2[LOGIN-FLOW] ENTERGAME_LOAD_CHARACTER dur=%dms | charId=%s^7'):format(
+            durLoad, tostring(char and char.id or 'nil')))
         if char then
-            local spawn = getResolvedSpawn()
-            print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: successfully loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
-                tostring(char.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
-            return { character = char, spawn = spawn }
+            local totalDur = GetGameTimer() - tEnterGame
+            print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s^7'):format(
+                totalDur, tostring(char.id), tostring(source)))
+            return { character = char }
         end
         Sunset.Warn(('enterGame: character %s could not be loaded for src %s (already loaded / duplicate / missing)'):format(tostring(row.id), tostring(source)))
         return nil, Sunset.LocalizedError('auth.session_not_ready')
     end
 
+    tSub = GetGameTimer()
     local char, err = createDefaultAccountCharacter(player)
     if not char then return nil, err or Sunset.LocalizedError('character.create_failed') end
 
     char = loadCharacterForPlayer(source, player, char.id)
-    local spawn = getResolvedSpawn()
-    print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: created & loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
-        tostring(char and char.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
-    return { character = char, spawn = spawn }
+    local durCreateLoad = GetGameTimer() - tSub
+    print(('^2[LOGIN-FLOW] ENTERGAME_LOAD_CHARACTER (created) dur=%dms | charId=%s^7'):format(
+        durCreateLoad, tostring(char and char.id or 'nil')))
+
+    local totalDur = GetGameTimer() - tEnterGame
+    print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s^7'):format(
+        totalDur, tostring(char and char.id), tostring(source)))
+    return { character = char }
 end)
 
 RegisterCallback('sunset:deleteCharacter', function(source, charId)
@@ -1023,5 +1036,13 @@ end)
 CreateThread(function()
     MySQL.ready(function()
         print('^2[blaze.mp]^7 Core framework loaded — database connected.')
+        local critical = { 'sunset_core', 'sunset_characters', 'sunset_properties', 'sunset_spawn', 'sunset_auth', 'sunset_ui' }
+        local fingerprints = {}
+        for _, resName in ipairs(critical) do
+            local state = GetResourceState(resName)
+            local ver = GetResourceMetadata(resName, 'version', 0) or '1.0.0'
+            fingerprints[#fingerprints + 1] = ('%s=%s(%s)'):format(resName, ver, state)
+        end
+        print(('^2[RESOURCE-VERSIONS]^7 %s'):format(table.concat(fingerprints, ', ')))
     end)
 end)

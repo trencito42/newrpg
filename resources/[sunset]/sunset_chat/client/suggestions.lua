@@ -74,10 +74,17 @@ local function sortedList()
     return list
 end
 
+local pushTimer = nil
 local function pushToUi()
-    exports.sunset_ui:Send('chatSuggestions', {
-        suggestions = sortedList(),
-    })
+    if pushTimer then return end
+    pushTimer = true
+    SetTimeout(350, function()
+        pushTimer = nil
+        if GetResourceState('sunset_ui') ~= 'started' then return end
+        exports.sunset_ui:Send('chatSuggestions', {
+            suggestions = sortedList(),
+        })
+    end)
 end
 
 local function addSuggestion(name, help, params)

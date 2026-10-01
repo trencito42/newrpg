@@ -217,15 +217,10 @@ local function autoEnterGame()
     exports.sunset_ui:Notify(err or 'Could not load your character', 'error')
 end
 
-AddEventHandler('sunset:client:onPlayerReady', function()
-    Wait(100)
-    autoEnterGame()
-end)
-
 AddEventHandler('sunset:client:authenticationComplete', function()
     flowStartTimer = GetGameTimer()
     print('^2[LOGIN-PERF] AUTH_EVENT_RECEIVED +0ms^7')
-    autoEnterGame()
+    CreateThread(autoEnterGame)
 end)
 
 AddEventHandler('sunset:client:characterFlowComplete', function()
@@ -283,13 +278,14 @@ AddEventHandler('sunset:nui:delete', function(data)
     end)
 end)
 
--- Startup recovery: if resource is restarted / client joins while authenticated
+-- Startup recovery: ONLY for an actual resource reload while already authenticated
 CreateThread(function()
-    Wait(300)
-    local isAuth = LocalPlayer.state.sunsetAuthenticated or (GetResourceState('sunset_auth') == 'started' and exports.sunset_auth:IsAuthenticated())
+    Wait(1500)
+    local isAuth = LocalPlayer.state.sunsetAuthenticated == true
+    local isAuthFlow = LocalPlayer.state.sunsetAuthFlowActive == true
     local char = exports.sunset_core:GetCharacter()
-    if isAuth and not inCharacterFlow and not char then
-        print('^2[LOGIN-PERF] CHARACTERS: Resuming character flow on resource start / reload^7')
-        autoEnterGame()
+    if isAuth and not isAuthFlow and not inCharacterFlow and not char and NetworkIsSessionStarted() then
+        print('^2[LOGIN-PERF] CHARACTERS: Resuming character flow on resource reload^7')
+        CreateThread(autoEnterGame)
     end
 end)

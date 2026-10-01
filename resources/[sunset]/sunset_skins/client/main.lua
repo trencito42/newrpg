@@ -13,15 +13,16 @@ AddEventHandler('sunset:client:onLocaleChanged', updateShopBlipName)
 
 -- Apply a GTA ped model to the local player (RUNTIME changes only — NOT during spawn)
 local function applyModel(model)
+    if LocalPlayer.state.isSpawning then return end
     local hash
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
     local char = exports.sunset_core:GetCharacter()
     local gender = (char and tonumber(char.gender)) or (Sunset and Sunset.Character and tonumber(Sunset.Character.gender)) or 0
     if isReset then
         local isFemale = gender == 1 or gender == '1' or gender == 'female'
-        hash = joaat(isFemale and 'mp_f_freemode_01' or 'mp_m_freemode_01')
+        hash = (isFemale and `mp_f_freemode_01` or `mp_m_freemode_01`)
     else
-        hash = joaat(model)
+        hash = GetHashKey(model)
     end
 
     if not IsModelValid(hash) then
@@ -137,7 +138,7 @@ AddEventHandler('sunset:client:playerSpawned', function(charData)
     local skin = meta.skin
     if not skin or skin == '' or skin == 'default' or skin == 'reset' then return end
 
-    local expectedHash = joaat(skin)
+    local expectedHash = GetHashKey(skin)
     local currentPed   = PlayerPedId()
     local currentModel = GetEntityModel(currentPed)
     if currentModel ~= expectedHash then
