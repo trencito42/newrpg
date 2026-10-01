@@ -34,15 +34,38 @@ export default async function TurfsPage() {
      ORDER BY t.id ASC`
   );
 
+  const controlledCount = turfs.filter((t) => t.owner_clan_id !== null).length;
+  const totalHourlyPayout = turfs.reduce((sum, t) => sum + (Number(t.payout) || 0), 0);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
-          {t(locale, "turfs.title")}
-        </h1>
-        <p className="text-xs text-gray-400 mt-1">
-          {t(locale, "turfs.subtitle")}
-        </p>
+      {/* Header Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-surface-200 to-surface-200 border border-amber-500/30 p-6 sm:p-8 shadow-xl">
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-amber-500/5 blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-brand text-xs font-bold uppercase tracking-widest mb-1.5">
+              <Map className="w-4 h-4 text-brand" />
+              <span>{locale === "ro" ? "Războaie de Teritorii" : "Territory Conquest"}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {t(locale, "turfs.title")}
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
+              {t(locale, "turfs.subtitle")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="px-3.5 py-2 rounded-xl bg-surface-100 border border-surface-border text-center shadow-md">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                {locale === "ro" ? "Teritorii Ocupate" : "Controlled Zones"}
+              </span>
+              <span className="text-base font-black font-mono text-brand">
+                {controlledCount} / {turfs.length}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Grid of Turf Territories */}

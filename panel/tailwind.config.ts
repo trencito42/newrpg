@@ -12,6 +12,23 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        border: {
+          DEFAULT: "#1e283d",
+          light: "#2c3b59",
+        },
+        muted: {
+          DEFAULT: "#141a26",
+          foreground: "#94a3b8",
+        },
+        accent: {
+          DEFAULT: "#f59e0b",
+          foreground: "#080b11",
+        },
+        card: {
+          DEFAULT: "#0f141f",
+          foreground: "#f1f5f9",
+          border: "#1e283d",
+        },
         surface: {
           50: "#1a2130",
           100: "#141a26",
