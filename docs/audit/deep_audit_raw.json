@@ -1,0 +1,2532 @@
+{
+  "moneySourcesCount": 101,
+  "moneySinksCount": 60,
+  "moneySources": [
+    {
+      "file": "[sunset]/sunset_admin/server/commands.lua",
+      "line": 1301,
+      "code": "-- [SEC3] AddCash is not a sunset_core export (every /givemoney threw); validate and use AddMoney."
+    },
+    {
+      "file": "[sunset]/sunset_admin/server/commands.lua",
+      "line": 1306,
+      "code": "if not exports.sunset_core:AddMoney(target, 'cash', amount, 'admin_givemoney') then"
+    },
+    {
+      "file": "[sunset]/sunset_anticheat/server/ledger.lua",
+      "line": 55,
+      "code": "-- Every balance change on the server flows through sunset_core AddMoney /"
+    },
+    {
+      "file": "[sunset]/sunset_anticheat/server/ledger.lua",
+      "line": 59,
+      "code": "-- Whitelist enumerated from the whole codebase 2025 (grep AddMoney/"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 103,
+      "code": "--[[ money = money + amount? ]]"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 174,
+      "code": "function GiveMoney(player, money, reason)"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 245,
+      "code": "GiveMoney(entry.player, amt, reason)"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 279,
+      "code": "GiveMoney(src, bet, 'bet_abort')"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 908,
+      "code": "if payout > 0 then GiveMoney(v.player, payout, 'settle') end"
+    },
+    {
+      "file": "[sunset]/sunset_businesses/server/main.lua",
+      "line": 487,
+      "code": "if not exports.sunset_core:AddMoney(source, 'bank', amount, 'business_withdraw') then"
+    },
+    {
+      "file": "[sunset]/sunset_carjack/server/main.lua",
+      "line": 183,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', payout, 'carjack_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 515,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', prize.value, 'casino_wheel')"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 522,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', mysteryCash, 'casino_wheel_mystery')"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 560,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', cost, 'casino_buy_chips_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 583,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', cash, 'casino_sell_chips') then"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 621,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', drink.price, 'casino_bar_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_clothing/server/main.lua",
+      "line": 61,
+      "code": "return exports.sunset_core:AddMoney(source, 'cash', amount, 'appearance_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_core/fxmanifest.lua",
+      "line": 88,
+      "code": "'AddMoney',"
+    },
+    {
+      "file": "[sunset]/sunset_core/fxmanifest.lua",
+      "line": 92,
+      "code": "'AddMoneyToCharacter',"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 216,
+      "code": "function Sunset.AddMoney(source, account, amount, reason)"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 330,
+      "code": "-- characters go through AddMoney (cache + client refresh); offline ones get the"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 332,
+      "code": "function Sunset.AddMoneyToCharacter(characterId, account, amount, reason)"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 337,
+      "code": "if src and Sunset.GetCharacter(src) then return Sunset.AddMoney(src, account, amount, reason) end"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 345,
+      "code": "exports('AddMoneyToCharacter', Sunset.AddMoneyToCharacter)"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 716,
+      "code": "exports('AddMoney', Sunset.AddMoney)"
+    },
+    {
+      "file": "[sunset]/sunset_drugs/server/main.lua",
+      "line": 288,
+      "code": "-- Payout AFTER confirmed removal. If AddMoney somehow fails, COMPENSATE"
+    },
+    {
+      "file": "[sunset]/sunset_drugs/server/main.lua",
+      "line": 291,
+      "code": "return exports.sunset_core:AddMoney(source, 'cash', price, 'drug_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_drugs/server/main.lua",
+      "line": 294,
+      "code": "print(('^1[sunset_drugs]^7 AddMoney failed after removal src=%s price=%d — restoring product'):format("
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "line": 122,
+      "code": "exports.sunset_core:AddMoney(challengerSrc, 'cash', bet, 'dice_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "line": 190,
+      "code": "-- [AUDIT P5-07] Payout is terminal for this escrow. If AddMoney fails"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "line": 192,
+      "code": "local paid = exports.sunset_core:AddMoney(winnerSrc, 'cash', prize, 'dice_win')"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/main.lua",
+      "line": 469,
+      "code": "exports.sunset_core:AddMoney(source, chargedAccount, total, 'shop_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_events/server/main.lua",
+      "line": 149,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', reward.cash, 'event_reward')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 656,
+      "code": "exports.sunset_core:AddMoney(driverSrc, 'cash', amount - cut, 'taxi_fare')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 707,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', prices.price, 'illegal_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 715,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', row.price, 'fence_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "line": 781,
+      "code": "if bounty > 0 then exports.sunset_core:AddMoney(source, 'bank', bounty, 'arrest_bounty') end"
+    },
+    {
+      "file": "[sunset]/sunset_fire/server/main.lua",
+      "line": 112,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', playerPay, 'fire_incident') then"
+    },
+    {
+      "file": "[sunset]/sunset_fishing_tournament/server/main.lua",
+      "line": 184,
+      "code": "-- AddMoney failed. Release the claim again if the payout fails."
+    },
+    {
+      "file": "[sunset]/sunset_fishing_tournament/server/main.lua",
+      "line": 189,
+      "code": "local paid = cash <= 0 or exports.sunset_core:AddMoney(source, 'cash', cash, 'fishing_tournament_reward')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 230,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', refund, 'bait_shop_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 288,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_247')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 289,
+      "code": "and not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_247_retry') then"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 334,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_legacy')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 335,
+      "code": "and not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_legacy_retry') then"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 398,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', upgrade.cost, 'rod_upgrade_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 403,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', upgrade.cost, 'rod_upgrade_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_interactions/server/main.lua",
+      "line": 215,
+      "code": "if not exports.sunset_core:AddMoney(pair.targetId, 'cash', amount, 'player_transfer') then"
+    },
+    {
+      "file": "[sunset]/sunset_interactions/server/main.lua",
+      "line": 216,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', amount, 'player_transfer_rollback')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/core.lua",
+      "line": 437,
+      "code": "-- [AUDIT P2-SESSIONS] Scenario 16: check the money write. If AddMoney"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/core.lua",
+      "line": 441,
+      "code": "local paid = exports.sunset_core:AddMoney(source, 'cash', amount, reason or ('job_' .. jobId))"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 246,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', cost, 'gear_rental_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 325,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', pendingRef.cost, 'boat_rental_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 354,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', pending.cost, 'boat_rental_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 620,
+      "code": "local paid = totalValue <= 0 or exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 743,
+      "code": "local paid = bonus <= 0 or exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 824,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', pendingRental.cost, 'boat_rental_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/hunter.lua",
+      "line": 335,
+      "code": "local paid = totalValue <= 0 or exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/hunter.lua",
+      "line": 813,
+      "code": "local paid = bonus <= 0 or exports.sunset_core:AddMoney(source, 'cash', bonus, 'hunter_contract_complete')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/trucker.lua",
+      "line": 381,
+      "code": "-- Use AddMoney directly to avoid double-XP from SunsetJobs_PayReward."
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/trucker.lua",
+      "line": 382,
+      "code": "local paid = exports.sunset_core:AddMoney(source, 'cash', pay, isManual and 'trucker_manual_delivery' or 'trucker_delivery')"
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/main.lua",
+      "line": 614,
+      "code": "exports.sunset_core:AddMoney(source, chargedAccount, charged, 'license_exam_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_luckywheel/server.lua",
+      "line": 61,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', prize.amount, 'Lucky Wheel Prize')"
+    },
+    {
+      "file": "[sunset]/sunset_marriage/server/main.lua",
+      "line": 111,
+      "code": "exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_marriage/server/main.lua",
+      "line": 130,
+      "code": "exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_marriage/server/main.lua",
+      "line": 142,
+      "code": "exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_missions/server/rewards.lua",
+      "line": 49,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', total, 'mission_' .. session.mission) then"
+    },
+    {
+      "file": "[sunset]/sunset_pass/server/main.lua",
+      "line": 167,
+      "code": "local ok = exports.sunset_core:AddMoney(source, reward.type, reward.amount or 0, 'sunset_pass')"
+    },
+    {
+      "file": "[sunset]/sunset_properties/server/main.lua",
+      "line": 367,
+      "code": "return exports.sunset_core:AddMoneyToCharacter(characterId, 'bank', amount, 'house_rent_income')"
+    },
+    {
+      "file": "[sunset]/sunset_properties/server/main.lua",
+      "line": 700,
+      "code": "exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_properties/server/main.lua",
+      "line": 894,
+      "code": "exports.sunset_core:SetHomeProperty(source,nil); exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')"
+    },
+    {
+      "file": "[sunset]/sunset_quests/server/main.lua",
+      "line": 209,
+      "code": "if not exports.sunset_core:AddMoney(source, 'bank', reward.money, reward.reason or ('quest_' .. questKey)) then"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 138,
+      "code": "if soloFee > 0 then exports.sunset_core:AddMoney(source, 'cash', soloFee, 'race_refund') end"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 183,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', Cfg.entryFee or 1000, 'race_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 228,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', Cfg.entryFee or 1000, 'race_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 543,
+      "code": "if not exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward') then"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 544,
+      "code": "exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward_retry')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 555,
+      "code": "if not exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 556,
+      "code": "and not exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize_retry') then"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 585,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_dnf')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 644,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_disconnect')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 672,
+      "code": "if GetPlayerName(src) then exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_restart') end"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 676,
+      "code": "if GetPlayerName(src) then exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_restart') end"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 714,
+      "code": "exports.sunset_core:AddMoney(src, 'cash', reward.cash, 'race_night_reward')"
+    },
+    {
+      "file": "[sunset]/sunset_robbery/server/adapter.lua",
+      "line": 116,
+      "code": "return exports.sunset_core:AddMoney(source, 'cash', amount, 'fence') == true"
+    },
+    {
+      "file": "[sunset]/sunset_robbery/server/adapter.lua",
+      "line": 129,
+      "code": "--   2) credit cash through core AddMoney (ledger + cache);"
+    },
+    {
+      "file": "[sunset]/sunset_robbery/server/adapter.lua",
+      "line": 139,
+      "code": "pcall(function() paid = exports.sunset_core:AddMoney(source, 'cash', amount, 'fence') == true end)"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 719,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', driverPay, 'taxi_ride') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 720,
+      "code": "if not exports.sunset_core:AddMoney(source, 'cash', driverPay, 'taxi_ride_retry') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 723,
+      "code": "exports.sunset_core:AddMoney(passengerSrc, chargedFrom, amount, 'taxi_ride_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 802,
+      "code": "if not driverSrc or not exports.sunset_core:AddMoney(driverSrc, 'cash', amount, 'taxi_tip') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 804,
+      "code": "exports.sunset_core:AddMoney(source, 'cash', amount, 'taxi_tip_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 226,
+      "code": "local coreExports = { 'GetCharacter', 'AddMoney', 'RemoveMoney', 'GetMoney',"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 244,
+      "code": "local bad = exports.sunset_core.AddMoney(999991, 'cash', 100, 'td_should_fail')"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 245,
+      "code": "record('AddMoney offline source rejected', bad == false or bad == nil, tostring(bad))"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 183,
+      "code": "exports.sunset_core:AddMoney(source, paidAccount, cost, 'ecu_tune_refund')"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 254,
+      "code": "exports.sunset_core:AddMoney(source, 'bank', SunsetTuning.DynoCost, 'Dyno cancelled refund')"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 280,
+      "code": "exports.sunset_core:AddMoney(source, 'bank', SunsetTuning.DynoCost, 'Dyno error refund')"
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "line": 1117,
+      "code": "if not exports.sunset_core:AddMoney(source, 'bank', totalPayout, 'turf_payout') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 514,
+      "code": "if not exports.sunset_core:AddMoney(source, paidAccount, claimCost, 'refund:vehicle_insurance_claim') then"
+    }
+  ],
+  "moneySinks": [
+    {
+      "file": "[sunset]/sunset_anticheat/server/ledger.lua",
+      "line": 56,
+      "code": "-- RemoveMoney / MoveMoney / TransferMoney → money_transactions with a reason"
+    },
+    {
+      "file": "[sunset]/sunset_anticheat/server/ledger.lua",
+      "line": 60,
+      "code": "-- RemoveMoney/LogMoneyTransaction/TransferMoney/MoveMoney). Direct-DB writes"
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/server.lua",
+      "line": 99,
+      "code": "--[[ money = money - amount? ]]"
+    },
+    {
+      "file": "[sunset]/sunset_businesses/server/main.lua",
+      "line": 393,
+      "code": "local paid = exports.sunset_core:RemoveMoney(source, 'bank', price, 'business_purchase')"
+    },
+    {
+      "file": "[sunset]/sunset_businesses/server/main.lua",
+      "line": 394,
+      "code": "or exports.sunset_core:RemoveMoney(source, 'cash', price, 'business_purchase')"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 554,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', cost, 'casino_buy_chips') then"
+    },
+    {
+      "file": "[sunset]/sunset_casino/server/main.lua",
+      "line": 609,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', drink.price, 'casino_bar') then"
+    },
+    {
+      "file": "[sunset]/sunset_clothing/server/main.lua",
+      "line": 44,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'cash', price, 'appearance') then"
+    },
+    {
+      "file": "[sunset]/sunset_clothing/server/main.lua",
+      "line": 48,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', price, 'appearance') then"
+    },
+    {
+      "file": "[sunset]/sunset_core/fxmanifest.lua",
+      "line": 93,
+      "code": "'RemoveMoney',"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 255,
+      "code": "function Sunset.RemoveMoney(source, account, amount, reason)"
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "line": 717,
+      "code": "exports('RemoveMoney', Sunset.RemoveMoney)"
+    },
+    {
+      "file": "[sunset]/sunset_death/server/main.lua",
+      "line": 39,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', bill, 'hospital') then"
+    },
+    {
+      "file": "[sunset]/sunset_death/server/main.lua",
+      "line": 40,
+      "code": "exports.sunset_core:RemoveMoney(source, 'cash', bill, 'hospital')"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "line": 115,
+      "code": "if not exports.sunset_core:RemoveMoney(challengerSrc, 'cash', bet, 'dice_wager') then"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "line": 121,
+      "code": "if not exports.sunset_core:RemoveMoney(targetSrc, 'cash', bet, 'dice_wager') then"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/main.lua",
+      "line": 461,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', total, 'shop') then"
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/main.lua",
+      "line": 462,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', total, 'shop') then"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 410,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'cash', price, 'ls_customs_repair') then"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 414,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', price, 'ls_customs_repair') then"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 649,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'taxi') then"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/main.lua",
+      "line": 650,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', amount, 'taxi') then"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "line": 1065,
+      "code": "local paid = exports.sunset_core:RemoveMoney(source, 'bank', fine, 'radar_fine')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "line": 1067,
+      "code": "paid = exports.sunset_core:RemoveMoney(source, 'cash', fine, 'radar_fine')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "line": 2037,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', row.amount, 'ticket')"
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "line": 2038,
+      "code": "and not exports.sunset_core:RemoveMoney(source, 'cash', row.amount, 'ticket') then"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 214,
+      "code": "local ok = exports.sunset_core:RemoveMoney(source, 'cash', total, 'bait_shop')"
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/server/main.lua",
+      "line": 390,
+      "code": "local ok = exports.sunset_core:RemoveMoney(source, 'cash', upgrade.cost, 'rod_upgrade')"
+    },
+    {
+      "file": "[sunset]/sunset_impound/server/main.lua",
+      "line": 207,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', totalFee, 'impound_fee') then"
+    },
+    {
+      "file": "[sunset]/sunset_interactions/server/main.lua",
+      "line": 212,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'player_transfer') then"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 239,
+      "code": "local removed = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'gear_rental')"
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/diver.lua",
+      "line": 295,
+      "code": "local removed = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'boat_rental')"
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/main.lua",
+      "line": 470,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'cash', fee, 'license_exam') then"
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/main.lua",
+      "line": 473,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', fee, 'license_exam') then"
+    },
+    {
+      "file": "[sunset]/sunset_marriage/server/main.lua",
+      "line": 76,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.proposalFee or 25000, 'marriage_proposal') then"
+    },
+    {
+      "file": "[sunset]/sunset_marriage/server/main.lua",
+      "line": 170,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.divorceFee or 10000, 'marriage_divorce') then"
+    },
+    {
+      "file": "[sunset]/sunset_properties/server/main.lua",
+      "line": 361,
+      "code": "if not exports.sunset_core:RemoveMoney(source,account,amount,reason) then return nil end"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 130,
+      "code": "local paidFee = exports.sunset_core:RemoveMoney(source, 'cash', soloFee, 'race_solo_entry')"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 173,
+      "code": "-- Charge entry fee (once). [JOBS AUDIT] RemoveMoney yields: two concurrent joins both passed the"
+    },
+    {
+      "file": "[sunset]/sunset_racing/server/main.lua",
+      "line": 177,
+      "code": "local paidEntry = exports.sunset_core:RemoveMoney(source, 'cash', Cfg.entryFee or 1000, 'race_entry')"
+    },
+    {
+      "file": "[sunset]/sunset_skins/server/main.lua",
+      "line": 83,
+      "code": "local ok = exports.sunset_core:RemoveMoney(source, 'cash', cfg.priceCash, 'skin_shop')"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 689,
+      "code": "-- first RemoveMoney was still awaiting, double-charging the passenger and"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 703,
+      "code": "if exports.sunset_core:RemoveMoney(passengerSrc, 'cash', amount, 'taxi_ride') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 705,
+      "code": "elseif exports.sunset_core:RemoveMoney(passengerSrc, 'bank', amount, 'taxi_ride') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 794,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'taxi_tip') then"
+    },
+    {
+      "file": "[sunset]/sunset_taxi/server/main.lua",
+      "line": 795,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', amount, 'taxi_tip') then"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 226,
+      "code": "local coreExports = { 'GetCharacter', 'AddMoney', 'RemoveMoney', 'GetMoney',"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 246,
+      "code": "local neg = exports.sunset_core.RemoveMoney(999991, 'cash', -500, 'td_neg')"
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "line": 247,
+      "code": "record('RemoveMoney negative rejected', neg == false or neg == nil, tostring(neg))"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 155,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', cost, 'ecu_tune_save') then"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 157,
+      "code": "elseif exports.sunset_core:RemoveMoney(source, 'cash', cost, 'ecu_tune_save') then"
+    },
+    {
+      "file": "[sunset]/sunset_tuning/server/main.lua",
+      "line": 241,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', SunsetTuning.DynoCost, 'Dyno run') then"
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "line": 933,
+      "code": "-- Buy/equip a loadout. Validates rank, cost (RemoveMoney), war participation,"
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "line": 951,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'cash', pkg.cost, 'turf_loadout') then"
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "line": 952,
+      "code": "if not exports.sunset_core:RemoveMoney(source, 'bank', pkg.cost, 'turf_loadout') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 496,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', claimCost, 'vehicle_insurance_claim') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 498,
+      "code": "elseif exports.sunset_core:RemoveMoney(source, 'cash', claimCost, 'vehicle_insurance_claim') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 570,
+      "code": "if exports.sunset_core:RemoveMoney(source, 'bank', renewCost, 'vehicle_insurance_renew') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 572,
+      "code": "elseif exports.sunset_core:RemoveMoney(source, 'cash', renewCost, 'vehicle_insurance_renew') then"
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "line": 757,
+      "code": "if exports.sunset_core:RemoveMoney(source, account, cost, reason) then return account end"
+    }
+  ],
+  "commands": [
+    {
+      "file": "[sunset]/sunset_admin/client/helpdesk.lua",
+      "command": "helpdesk",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "setcp",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "delcp",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "gotocp",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "gotoloc",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "speed",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "tpwp",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/client/main.lua",
+      "command": "dlp",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admin/server/main.lua",
+      "command": "sunset_setowner",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admintools/client/cinematic.lua",
+      "command": "cinematic",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admintools/client/inspector.lua",
+      "command": "inspect",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admintools/server/main.lua",
+      "command": "blzresmon",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_admintools/server/main.lua",
+      "command": "sweeporphans",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_anticheat/server/main.lua",
+      "command": "acheat",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_anticheat/server/main.lua",
+      "command": "achud",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_appearance/client/main.lua",
+      "command": "relook",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_auth/client/main.lua",
+      "command": "fixlogin",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_blackjack/client.lua",
+      "command": "bet",
+      "params": "source, args, rawCommand",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_businesses/client/main.lua",
+      "command": "biz",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_casino/client/discovery.lua",
+      "command": "casinoprobe",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_casino/client/discovery.lua",
+      "command": "casinoscan",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_casino/client/discovery.lua",
+      "command": "casinoanim",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_casino/client/discovery.lua",
+      "command": "casinoprops",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_casino/client/main.lua",
+      "command": "leavecasino",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_characters/client/main.lua",
+      "command": "spawnmenu",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/client/main.lua",
+      "command": "sunset_chat",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/client/main.lua",
+      "command": "sunset_chat_close",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "a",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "e",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "lc",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "me",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "do",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "s",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "shout",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "w",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "whisper",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "cw",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "carwhisper",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "l",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "low",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "b",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_chat/server/main.lua",
+      "command": "cc",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/client/main.lua",
+      "command": "cmotd",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/client/main.lua",
+      "command": "acceptclan",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/client/main.lua",
+      "command": "declineclan",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/client/main.lua",
+      "command": "leaveclan",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/client/main.lua",
+      "command": "dissolveclan",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clans/server/chat.lua",
+      "command": "c",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/debug.lua",
+      "command": "clothinglab",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/debug.lua",
+      "command": "clothingdebug",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/debug.lua",
+      "command": "validateoutfit",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/debug.lua",
+      "command": "repairoutfit",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/debug.lua",
+      "command": "clothingtest",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/main.lua",
+      "command": "wardrobe",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/main.lua",
+      "command": "clothes",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/main.lua",
+      "command": "skin",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/main.lua",
+      "command": "closewardrobe",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_clothing/client/main.lua",
+      "command": "outfits",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "ad",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "myad",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "ads",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "adlist",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "acceptad",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "aad",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "deletead",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "dad",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "rejectad",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_cnn/server/main.lua",
+      "command": "admute",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_core/client/boot_debug.lua",
+      "command": "bootdiag",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_core/client/callbacks.lua",
+      "command": "testcbtimeout",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_core/server/player.lua",
+      "command": "buylevel",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_crafting/client/main.lua",
+      "command": "crafting",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_dealership/client/main.lua",
+      "command": "dealership",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_dealership/client/main.lua",
+      "command": "dealershipadmin",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_death/client/main.lua",
+      "command": "respawn",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_death/client/main.lua",
+      "command": "112",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/main.lua",
+      "command": "devplace",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/main.lua",
+      "command": "devpos",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/main.lua",
+      "command": "devroute",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/main.lua",
+      "command": "worldprobe",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/main.lua",
+      "command": "devvalidate",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/route_creator.lua",
+      "command": "devroutes",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/client/route_creator.lua",
+      "command": "devroute",
+      "params": "src, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_devtools/server/main.lua",
+      "command": "devdrafts",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_dispatch/client/main.lua",
+      "command": "calls",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_documents/client/main.lua",
+      "command": "documents",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_documents/client/main.lua",
+      "command": "id",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_documents/client/main.lua",
+      "command": "licenses",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "command": "barbut",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/dice.lua",
+      "command": "dice",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_economy/server/lottery.lua",
+      "command": "lottery",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_emotes/client/main.lua",
+      "command": "emotes",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_emotes/client/main.lua",
+      "command": "stopemote",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_events/server/main.lua",
+      "command": "eventstart",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_events/server/main.lua",
+      "command": "eventend",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/detention.lua",
+      "command": "handsup",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/detention.lua",
+      "command": "frisk",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/ems.lua",
+      "command": "stabilize",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/loadout.lua",
+      "command": "fskins",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/loadout.lua",
+      "command": "fskin",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "quitgroup",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "duty",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fine",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "cuff",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "uncuff",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "repairveh",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fare",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "declinefare",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "finvite",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "accept",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "declinefaction",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fpromote",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fgiverank",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "funinvite",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fwarn",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fw",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fmotd",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fmembers",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "sellpouch",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fence",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "faction",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "factions",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "pd",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "fd",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/main.lua",
+      "command": "pdgarage",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "su",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "so",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "clear",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "unjail",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "find",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "cfind",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "cancelfind",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "wanted",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "arrest",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "booking",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "backup",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "cbackup",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "mdc",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "ticket",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "confiscate",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "startradar",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "setradar",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "radar",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "stopradar",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "radars",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/client/police.lua",
+      "command": "testradaralert",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/leaders.lua",
+      "command": "setleader",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/leaders.lua",
+      "command": "removeleader",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "command": "suspendlicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_factions/server/police.lua",
+      "command": "confiscatelicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_fire/client/main.lua",
+      "command": "firecalls",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_fire/client/main.lua",
+      "command": "firestart",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_fishing_tournament/server/main.lua",
+      "command": "fishtournamentdebug",
+      "params": "source, args, raw",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_fishingshop/client/main.lua",
+      "command": "sellfish",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_help/client/main.lua",
+      "command": "help",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_hud/client/main.lua",
+      "command": "hudedit",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_hud/client/main.lua",
+      "command": "hudexport",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_hud/client/main.lua",
+      "command": "hudreset",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_hud/client/voice.lua",
+      "command": "proximity",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_impound/client/main.lua",
+      "command": "impound",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_interactions/client/main.lua",
+      "command": "interact",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_interactions/client/main.lua",
+      "command": "+interactplayer",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_interactions/client/main.lua",
+      "command": "-interactplayer",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/containers.lua",
+      "command": "trunk",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/containers.lua",
+      "command": "portbagaj",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/containers.lua",
+      "command": "glovebox",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/containers.lua",
+      "command": "torpedou",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "accepttrade",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "declinetrade",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "+sunset_trade_accept",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "-sunset_trade_accept",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "+sunset_trade_decline",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "-sunset_trade_decline",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/main.lua",
+      "command": "inventory",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/quickslots.lua",
+      "command": "+sunset_emote_wheel",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_inventory/client/quickslots.lua",
+      "command": "-sunset_emote_wheel",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/commands.lua",
+      "command": "jobs",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/commands.lua",
+      "command": "work",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/commands.lua",
+      "command": "jobhelp",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/commands.lua",
+      "command": "skills",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/fisherman.lua",
+      "command": "fish",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/fisherman.lua",
+      "command": "fishdebug",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/fisherman.lua",
+      "command": "sw",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/fisherman.lua",
+      "command": "stopwork",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/main.lua",
+      "command": "quitjob",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/trucker.lua",
+      "command": "truckroute",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/client/trucker.lua",
+      "command": "recovertrailer",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/main.lua",
+      "command": "setjob",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/main.lua",
+      "command": "setfaction",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/trucker.lua",
+      "command": "aaddroute",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/trucker.lua",
+      "command": "alistroutes",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_jobs/server/trucker.lua",
+      "command": "adelroute",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/admin.lua",
+      "command": "givelicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/admin.lua",
+      "command": "agivelicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/admin.lua",
+      "command": "revokelicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/admin.lua",
+      "command": "achecklicenses",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/main.lua",
+      "command": "issuelicense",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssimark",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssiunmark",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssireviews",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssireport",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssireview",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_licenses/server/reviews.lua",
+      "command": "lssiperformance",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_marriage/client/main.lua",
+      "command": "propose",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_marriage/client/main.lua",
+      "command": "divorce",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_marriage/client/main.lua",
+      "command": "marriage",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_menu/client/main.lua",
+      "command": "sunset_menu",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_menu/client/main.lua",
+      "command": "chatsettings",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_menu/client/main.lua",
+      "command": "stats",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_menu/client/main.lua",
+      "command": "sunset_menu_close",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_missions/client/main.lua",
+      "command": "abandonmission",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_missions/client/main.lua",
+      "command": "cancelmission",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_pass/client/main.lua",
+      "command": "pass",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_pass/client/main.lua",
+      "command": "battlepass",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_pass/client/main.lua",
+      "command": "missions",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_profile_media/server/main.lua",
+      "command": "refreshavatar",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_properties/client/main.lua",
+      "command": "sethome",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_properties/client/main.lua",
+      "command": "properties",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_properties/client/main.lua",
+      "command": "house",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_properties/client/main.lua",
+      "command": "houses",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_properties/client/main.lua",
+      "command": "myhouse",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_quests/client/main.lua",
+      "command": "quests",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_racing/client/main.lua",
+      "command": "quitrace",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_racing/client/main.lua",
+      "command": "cancelrace",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_robbery/client/world.lua",
+      "command": "robdoor",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_robbery/client/world.lua",
+      "command": "testvault",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_robbery/server/main.lua",
+      "command": "rob",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_robbery/server/main.lua",
+      "command": "robdebug",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_scoreboard/client/main.lua",
+      "command": "+sunset_playerlist",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_scoreboard/client/main.lua",
+      "command": "-sunset_playerlist",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_skins/client/main.lua",
+      "command": "skins",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_skins/client/main.lua",
+      "command": "myskins",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_skins/server/main.lua",
+      "command": "giveskin",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_skins/server/main.lua",
+      "command": "setskin",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_test_agent/server/auth.lua",
+      "command": "testagent_selftest",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_test_agent/server/commands.lua",
+      "command": "testagent",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_test_agent/server/commands.lua",
+      "command": "testshot",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "command": "integrity",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "command": "sessiontest",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "command": "smoketest",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_testdriver/server/main.lua",
+      "command": "testall",
+      "params": "source",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_tuning/client/diagnostics.lua",
+      "command": "ecudebug",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_tuning/client/effects.lua",
+      "command": "exhaustdebug",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_tuning/client/nitrous.lua",
+      "command": "+nitrous",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_tuning/client/nitrous.lua",
+      "command": "-nitrous",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_tuning/client/nitrous.lua",
+      "command": "refillnos",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "turfdebug",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "turfedit",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "editturf",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "armory",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "armurie",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/client/main.lua",
+      "command": "turfs",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "attackturf",
+      "params": "source",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "atac",
+      "params": "source",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "intervene",
+      "params": "source",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "turflist",
+      "params": "source",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "gototurf",
+      "params": "source, args",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "forceturf",
+      "params": "source, args",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "stopwar",
+      "params": "source, args",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_turfs/server/main.lua",
+      "command": "resetturfcd",
+      "params": "source, args",
+      "hasAdminCheckInFile": true
+    },
+    {
+      "file": "[sunset]/sunset_ui/client/main.lua",
+      "command": "fixnui",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_ui/client/main.lua",
+      "command": "cursor",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_ui/server/main.lua",
+      "command": "nuistats",
+      "params": "src",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "sunset_lock",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "lock",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "sunset_seatbelt",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "sunset_engine",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "sunset_lights",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "givekeys",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "takekeys",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/client/main.lua",
+      "command": "park",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_vehicles/server/main.lua",
+      "command": "givecar",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_world/client/glue.lua",
+      "command": "glue",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_world/client/glue.lua",
+      "command": "unglue",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "[sunset]/sunset_world/client/zonemarker.lua",
+      "command": "zonemark",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "ox_inventory/modules/inventory/server.lua",
+      "command": "clearActiveIdentifier",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "ox_inventory/server.lua",
+      "command": "convertinventory",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "ox_lib/resource/interface/client/progress.lua",
+      "command": "cancelprogress",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "ox_lib/resource/settings.lua",
+      "command": "ox_lib",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "ox_lib/resource/zoneCreator/client.lua",
+      "command": "zone",
+      "params": "source, args, rawCommand",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/commands.lua",
+      "command": "setvoiceintent",
+      "params": "source, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/commands.lua",
+      "command": "vol",
+      "params": "_, args",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/commands.lua",
+      "command": "cycleproximity",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/commands.lua",
+      "command": "+secondary_ptt",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/commands.lua",
+      "command": "-secondary_ptt",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/module/radio.lua",
+      "command": "+radiotalk",
+      "params": "",
+      "hasAdminCheckInFile": false
+    },
+    {
+      "file": "pma-voice/client/module/radio.lua",
+      "command": "-radiotalk",
+      "params": "",
+      "hasAdminCheckInFile": false
+    }
+  ]
+}

@@ -1,0 +1,5241 @@
+[
+  {
+    "name": "bob74_ipl",
+    "isSunset": false,
+    "fileCount": 172,
+    "totalSizeKb": 5297,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [
+      "GetAfterHoursNightclubsObject",
+      "GetAgentsAirstrip",
+      "GetAgentsFactory",
+      "GetAgentsHangarDoor",
+      "GetAgentsOffice",
+      "GetBikerClubhouse1Object",
+      "GetBikerClubhouse2Object",
+      "GetBikerCocaineObject",
+      "GetBikerCounterfeitObject",
+      "GetBikerDocumentForgeryObject",
+      "GetBikerGangObject",
+      "GetBikerMethLabObject",
+      "GetBikerWeedFarmObject",
+      "GetSummerCarrierObject",
+      "GetSummerOfficeObject",
+      "GetDiamondArcadeObject",
+      "GetDiamondArcadeBasementObject",
+      "GetDiamondCasinoObject",
+      "GetDiamondPenthouseObject",
+      "GetCayoPericoNightclub",
+      "GetCayoPericoSubmarine",
+      "GetChopShopCargoShipObject",
+      "GetChopShopCartelGarageObject",
+      "GetChopShopLifeguardObject",
+      "GetChopShopSalvageObject",
+      "GetDoomsdayFacilityObject",
+      "GetDrugWarsFreakshopObject",
+      "GetDrugWarsGarageObject",
+      "GetDrugWarsLabObject",
+      "GetDrugWarsTrainCrashObject",
+      "GetExecApartment1Object",
+      "GetExecApartment2Object",
+      "GetExecApartment3Object",
+      "GetFinanceOffice1Object",
+      "GetFinanceOffice2Object",
+      "GetFinanceOffice3Object",
+      "GetFinanceOffice4Object",
+      "GetFinanceOrganizationObject",
+      "GetGunrunningBunkerObject",
+      "GetGunrunningYachtObject",
+      "GetHeistCarrierObject",
+      "GetHeistYachtObject",
+      "GetHLApartment1Object",
+      "GetHLApartment2Object",
+      "GetHLApartment3Object",
+      "GetHLApartment4Object",
+      "GetHLApartment5Object",
+      "GetHLApartment6Object",
+      "GetImportCEOGarage1Object",
+      "GetImportCEOGarage2Object",
+      "GetImportCEOGarage3Object",
+      "GetImportCEOGarage4Object",
+      "GetImportVehicleWarehouseObject",
+      "GetKortzBasement",
+      "GetKortzExhibition",
+      "GetKortzLoadingBay",
+      "GetKortzWorkshop",
+      "GetKortzMuseum",
+      "GetKortzSewers",
+      "GetMansion1",
+      "GetMansion2",
+      "GetMansion3",
+      "GetMansionBasement1",
+      "GetMansionBasement2",
+      "GetMansionBasement3",
+      "GetMercenariesClubObject",
+      "GetMercenariesFixesObject",
+      "GetMercenariesLabObject",
+      "GetMoneyCarwash",
+      "GetMoneyConstruction",
+      "GetMoneyOffice",
+      "GetMpSecurityBillboardsObject",
+      "GetMpSecurityGarageObject",
+      "GetMpSecurityMusicRoofTopObject",
+      "GetMpSecurityOffice1Object",
+      "GetMpSecurityOffice2Object",
+      "GetMpSecurityOffice3Object",
+      "GetMpSecurityOffice4Object",
+      "GetMpSecurityStudioObject",
+      "GetSmugglerHangarObject",
+      "GetTunerGarageObject",
+      "GetTunerMeetupObject",
+      "GetTunerMethLabObject",
+      "GetCriminalEnterpriseSmeonFixObject",
+      "GetCriminalEnterpriseVehicleWarehouseObject",
+      "GetCriminalEnterpriseWarehouseObject",
+      "GetGTAOApartmentHi1Object",
+      "GetGTAOApartmentHi2Object",
+      "GetGTAOHouseHi1Object",
+      "GetGTAOHouseHi2Object",
+      "GetGTAOHouseHi3Object",
+      "GetGTAOHouseHi4Object",
+      "GetGTAOHouseHi5Object",
+      "GetGTAOHouseHi6Object",
+      "GetGTAOHouseHi7Object",
+      "GetGTAOHouseHi8Object",
+      "GetGTAOHouseLow1Object",
+      "GetGTAOHouseMid1Object",
+      "GetAmmunationsObject",
+      "GetBahamaMamasObject",
+      "GetCargoShipObject",
+      "GetFloydObject",
+      "GetFranklinObject",
+      "GetFranklinAuntObject",
+      "GetGraffitisObject",
+      "GetLesterFactoryObject",
+      "GetMichaelObject",
+      "GetNorthYanktonObject",
+      "GetPillboxHospitalObject",
+      "GetRedCarpetObject",
+      "GetSimeonObject",
+      "GetStripClubObject",
+      "GetTrevorsTrailerObject",
+      "GetUFOObject",
+      "GetZancudoGatesObject",
+      "GVariables",
+      "EnableIpl",
+      "GetPedheadshotTexture"
+    ],
+    "dbTables": [],
+    "loops": {
+      "wait0": 10,
+      "waitShort": 4,
+      "waitMedium": 0,
+      "waitLong": 5
+    }
+  },
+  {
+    "name": "ox_inventory",
+    "isSunset": false,
+    "fileCount": 352,
+    "totalSizeKb": 3509,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [
+      "server.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 269,
+    "clientEvents": [
+      "ox_inventory:disarm",
+      "ox_inventory:clearWeapons",
+      "ox_inventory:openInventory",
+      "ox_inventory:forceOpenInventory",
+      "ox_inventory:closeInventory",
+      "ox_inventory:updateSlots",
+      "ox_inventory:inventoryReturned",
+      "ox_inventory:inventoryConfiscated",
+      "ox_inventory:createDrop",
+      "ox_inventory:removeDrop",
+      "txcl:heal",
+      "ox_inventory:setPlayerInventory",
+      "ox_inventory:viewInventory",
+      "esx:onPlayerLogout",
+      "esx_policejob:handcuff",
+      "esx_policejob:unrestrain",
+      "ND:characterUnloaded",
+      "ND:characterLoaded",
+      "ND:updateCharacter",
+      "ox:playerLogout",
+      "ox:setGroup",
+      "qbx_core:client:onGroupUpdate",
+      "qbx_core:client:setGroups",
+      "ox_inventory:refreshMaxWeight",
+      "ox_inventory:refreshSlotCount",
+      "ox_inventory:updateWeapon",
+      "ox_inventory:notify",
+      "ox_inventory:suppressItemNotifications",
+      "ox_inventory:itemNotify"
+    ],
+    "serverEvents": [
+      "ox_inventory:usedItemInternal"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "steal",
+      "clearActiveIdentifier",
+      "convertinventory"
+    ],
+    "stateBags": [
+      "canSteal",
+      "vehicleid",
+      "isDumpster",
+      "instance"
+    ],
+    "exports": [
+      "getCurrentWeapon",
+      "setStashTarget",
+      "openInventory",
+      "useItem",
+      "useSlot",
+      "openNearbyInventory",
+      "closeInventory",
+      "giveItemToTarget",
+      "ConvertItems",
+      "registerHook",
+      "removeHooks",
+      "Keyboard",
+      "Progress",
+      "CancelProgress",
+      "ProgressActive",
+      "Search",
+      "GetPlayerItems",
+      "GetPlayerWeight",
+      "GetPlayerMaxWeight",
+      "GetSlotWithItem",
+      "GetSlotIdWithItem",
+      "GetSlotsWithItem",
+      "GetItemCount",
+      "Inventory",
+      "GetInventory",
+      "GetInventories",
+      "GetInventoryItems",
+      "GetContainerFromSlot",
+      "RemoveInventory",
+      "UpdateVehicle",
+      "GetItem",
+      "SwapSlots",
+      "SetItem",
+      "GetCurrentWeapon",
+      "GetSlot",
+      "SetDurability",
+      "SetMetadata",
+      "SetSlotCount",
+      "SetMaxWeight",
+      "AddItem",
+      "GetItemSlots",
+      "RemoveItem",
+      "CanCarryItem",
+      "CanCarryAmount",
+      "CanCarryWeight",
+      "CanSwapItem",
+      "CustomDrop",
+      "CreateDropFromPlayer",
+      "ConfiscateInventory",
+      "ReturnInventory",
+      "ClearInventory",
+      "GetEmptySlot",
+      "GetSlotForItem",
+      "GetSlotIdsWithItem",
+      "RegisterStash",
+      "CreateTemporaryStash",
+      "InspectInventory",
+      "displayMetadata",
+      "Items",
+      "ItemList",
+      "setContainerProperties",
+      "addCash",
+      "removeCash",
+      "getCash",
+      "getCards",
+      "giveCard",
+      "getBank",
+      "RegisterShop",
+      "notify",
+      "suppressItemNotifications",
+      "weaponWheel",
+      "setGetPlayerNameMethod",
+      "setPlayerInventory",
+      "forceOpenInventory"
+    ],
+    "dbTables": [
+      "another",
+      "resource",
+      "the",
+      "user_licenses",
+      "licenses",
+      "smaller",
+      "inventory",
+      "ox_inventory",
+      "memory",
+      "items",
+      "functions",
+      "initialisation",
+      "item",
+      "decay",
+      "slot",
+      "data",
+      "current_timestamp",
+      "player",
+      "owned_vehicles",
+      "users",
+      "addon_inventory_items",
+      "datastore_data",
+      "addon_account_data"
+    ],
+    "loops": {
+      "wait0": 10,
+      "waitShort": 1,
+      "waitMedium": 9,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "ox_lib",
+    "isSunset": false,
+    "fileCount": 174,
+    "totalSizeKb": 6709,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 35,
+    "clientEvents": [
+      "ox_lib:validateCallback",
+      "ox_lib:setStateBagValue",
+      "ox_lib:alertDialog",
+      "ox_lib:notify",
+      "ox_lib:defaultNotify",
+      "onPlayerDropped",
+      "ox_lib:progressProps",
+      "ox_lib:setVehicleProperties",
+      "ox_lib:saveZone"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "+",
+      "-",
+      "cancelprogress",
+      "ox_lib",
+      "zone"
+    ],
+    "stateBags": [
+      "action",
+      "next",
+      "subscribe",
+      "mount",
+      "watch",
+      "hasError"
+    ],
+    "exports": [
+      "getLocale"
+    ],
+    "dbTables": [
+      "the",
+      "argument",
+      "calling",
+      "index",
+      "right",
+      "being",
+      "sunday",
+      "another",
+      "grouped",
+      "dynamically",
+      "both",
+      "data",
+      "triangles",
+      "statebag",
+      "resource",
+      "opening",
+      "clients",
+      "ox_lib",
+      "stroke",
+      "touchcancel",
+      "focusout",
+      "volumechange"
+    ],
+    "loops": {
+      "wait0": 17,
+      "waitShort": 0,
+      "waitMedium": 7,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "ox_target",
+    "isSunset": false,
+    "fileCount": 45,
+    "totalSizeKb": 75,
+    "clientScripts": [
+      "client/api.lua",
+      "client/compat/qtarget.lua",
+      "client/debug.lua",
+      "client/defaults.lua",
+      "client/framework/esx.lua",
+      "client/framework/nd.lua",
+      "client/framework/ox.lua",
+      "client/framework/qbx.lua",
+      "client/main.lua",
+      "client/state.lua",
+      "client/utils.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 5,
+    "clientEvents": [
+      "ox_target:removeEntity",
+      "ox_target:toggleEntityDoor",
+      "esx:playerLoaded",
+      "esx:setJob",
+      "esx:setJob2",
+      "esx:addInventoryItem",
+      "esx:removeInventoryItem",
+      "ND:characterLoaded",
+      "ND:updateCharacter"
+    ],
+    "serverEvents": [
+      "ox_target:setEntityHasOptions",
+      "ox_target:toggleEntityDoor"
+    ],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [
+      "hasTargetOptions",
+      "setActive",
+      "setDisabled",
+      "isActive",
+      "isDisabled",
+      "isNuiFocused",
+      "setNuiFocus",
+      "lua"
+    ],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "oxmysql",
+    "isSunset": false,
+    "fileCount": 11,
+    "totalSizeKb": 1956,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 5,
+    "clientEvents": [
+      "oxmysql:openUi",
+      "oxmysql:loadResource"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "oxmysql_debug",
+      "mysql"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "most",
+      "the",
+      "pua",
+      "big5",
+      "what",
+      "number",
+      "https",
+      "current_timestamp",
+      "now",
+      "non",
+      "previous",
+      "writing",
+      "one",
+      "acquiring",
+      "response",
+      "node",
+      "mysql_debug",
+      "information_schema",
+      "users"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "pma-voice",
+    "isSunset": false,
+    "fileCount": 59,
+    "totalSizeKb": 1079,
+    "clientScripts": [
+      "client/commands.lua",
+      "client/events.lua",
+      "client/init/init.lua",
+      "client/init/main.lua",
+      "client/init/proximity.lua",
+      "client/init/submix.lua",
+      "client/module/phone.lua",
+      "client/module/radio.lua",
+      "client/utils/Nui.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua",
+      "server/module/phone.lua",
+      "server/module/radio.lua",
+      "server/mute.js"
+    ],
+    "sharedScripts": [
+      "shared.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 9,
+    "clientEvents": [
+      "onPlayerJoining",
+      "onPlayerDropped",
+      "pma-voice:syncCallData",
+      "pma-voice:addPlayerToCall",
+      "pma-voice:removePlayerFromCall",
+      "pma-voice:clSetPlayerCall",
+      "pma-voice:syncRadioData",
+      "pma-voice:setTalkingOnRadio",
+      "pma-voice:addPlayerToRadio",
+      "pma-voice:removePlayerFromRadio",
+      "pma-voice:radioChangeRejected",
+      "pma-voice:clSetPlayerRadio"
+    ],
+    "serverEvents": [
+      "pma-voice:setPlayerCall",
+      "pma-voice:setPlayerRadio",
+      "pma-voice:setTalkingOnRadio"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "setvoiceintent",
+      "vol",
+      "cycleproximity",
+      "+secondary_ptt",
+      "-secondary_ptt",
+      "+radiotalk",
+      "-radiotalk",
+      "muteply"
+    ],
+    "stateBags": [
+      "assignedChannel",
+      "radioChannel",
+      "callChannel",
+      "disableRadio",
+      "submix",
+      "disableProximity",
+      "isDead",
+      "muted"
+    ],
+    "exports": [
+      "setAllowProximityCycleState",
+      "overrideProximityRange",
+      "clearProximityOverride",
+      "setRadioVolume",
+      "getRadioVolume",
+      "setCallVolume",
+      "getCallVolume",
+      "setMicClickOnVolume",
+      "getMicClickOnVolume",
+      "setMicClickOffVolume",
+      "getMicClickOffVolume",
+      "registerCustomSubmix",
+      "setEffectSubmix",
+      "isPlayerMuted",
+      "getMutedPlayers",
+      "toggleMutePlayer",
+      "setVoiceProperty",
+      "SetMumbleProperty",
+      "SetTokoProperty",
+      "overrideProximityCheck",
+      "resetProximityCheck",
+      "setListenerOverride",
+      "setVoiceState",
+      "addVoiceMode",
+      "removeVoiceMode",
+      "setCallChannel",
+      "SetCallChannel",
+      "addPlayerToCall",
+      "removePlayerFromCall",
+      "setRadioChannel",
+      "SetRadioChannel",
+      "removePlayerFromRadio",
+      "addPlayerToRadio",
+      "toggleRadioAnim",
+      "setDisableRadioAnim",
+      "getRadioAnimState",
+      "setRadioTalkAnim",
+      "addRadioDisableBit",
+      "removeRadioDisableBit",
+      "isValidPlayer",
+      "getPlayersInRadioChannel",
+      "GetPlayersInRadioChannel",
+      "setPlayerCall",
+      "addChannelCheck",
+      "removeChannelCheck",
+      "overrideRadioNameGetter",
+      "setPlayerRadio"
+    ],
+    "dbTables": [
+      "mumble",
+      "create_audio_submix",
+      "here",
+      "every",
+      "listen",
+      "the",
+      "targets",
+      "disableradio",
+      "your",
+      "channel",
+      "function",
+      "call",
+      "any",
+      "another",
+      "radio",
+      "radios"
+    ],
+    "loops": {
+      "wait0": 3,
+      "waitShort": 0,
+      "waitMedium": 4,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "villa_island",
+    "isSunset": false,
+    "fileCount": 15,
+    "totalSizeKb": 4032,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_addon_vehicles",
+    "isSunset": true,
+    "fileCount": 182,
+    "totalSizeKb": 75879,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_admin",
+    "isSunset": true,
+    "fileCount": 13,
+    "totalSizeKb": 261,
+    "clientScripts": [
+      "client/helpdesk.lua",
+      "client/main.lua",
+      "client/veh_gizmo.lua"
+    ],
+    "serverScripts": [
+      "server/actions.lua",
+      "server/checkpoints.lua",
+      "server/commands.lua",
+      "server/helpdesk.lua",
+      "server/main.lua",
+      "server/panel.lua",
+      "server/sanctions.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/locations.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:anticheat:shieldHud",
+      "sunset:anticheat:shieldHudHide",
+      "sunset:anticheat:shieldHudToggle",
+      "sunset:client:setAdmin",
+      "sunset:admin:teleport",
+      "sunset:admin:giveWeapon",
+      "sunset:admin:spawnVehicle",
+      "sunset:admin:deleteVehicle",
+      "sunset:admin:repairVehicle",
+      "sunset:admin:heal",
+      "sunset:admin:revive",
+      "sunset:admin:setHealth",
+      "sunset:admin:disarm",
+      "sunset:admin:enterClosestVehicle",
+      "sunset:admin:toggleNoclip",
+      "sunset:admin:toggleGod",
+      "sunset:admin:freeze",
+      "sunset:admin:slap",
+      "sunset:admin:pullout",
+      "sunset:admin:teleportVehicle",
+      "sunset:admin:spectateStart",
+      "sunset:admin:spectateSync",
+      "sunset:admin:spectateEnd",
+      "sunset:admin:copyCoords",
+      "sunset:admin:setSpeed",
+      "sunset:admin:toggleVehicleDebugLabels",
+      "sunset:admin:togglePropDebugLabels",
+      "sunset:admin:openFncModal",
+      "sunset:admin:startVehGizmo",
+      "sunset:admin:spawnTrailerGizmo"
+    ],
+    "serverEvents": [
+      "sunset:admin:setcp",
+      "sunset:admin:delcp",
+      "sunset:admin:gotocp",
+      "sunset:admin:gotoloc",
+      "sunset:admin:requestSpeed",
+      "sunset:admin:saveGizmoCoords",
+      "sunset:admin:weaponGiveFailed",
+      "sunset:server:playerLoaded",
+      "sunset:server:characterSpawned"
+    ],
+    "serverCallbacks": [
+      "sunset:admin:submitFncName",
+      "sunset:helpdesk:panel",
+      "sunset:helpdesk:action"
+    ],
+    "commands": [
+      "helpdesk",
+      "setcp",
+      "delcp",
+      "gotocp",
+      "gotoloc",
+      "speed",
+      "tpwp",
+      "dlp",
+      "sunset_setowner"
+    ],
+    "stateBags": [
+      "sunsetName",
+      "name",
+      "sleeping",
+      "isSleeping",
+      "sleep",
+      "afk",
+      "isAfk",
+      "untraceable",
+      "adminDuty",
+      "helperDuty",
+      "adminLevel",
+      "helperLevel"
+    ],
+    "exports": [
+      "IsHelpdeskOpen",
+      "GetAdminLevel",
+      "IsFrozen",
+      "IsSpectating",
+      "IsOnAdminDuty",
+      "IsOnHelperDuty",
+      "IsMuted",
+      "IsNMuted",
+      "GetActiveReports",
+      "ExecutePlayerCommand",
+      "IsAdmin",
+      "IsHelper",
+      "GetHelperLevel",
+      "IsStaff",
+      "RefreshAdmin",
+      "RefreshStaff",
+      "GetPlayerIP",
+      "SetAdmin",
+      "SetHelper",
+      "GetCommandRequiredLevel",
+      "ExecutePanelModeration",
+      "RecordSanction",
+      "BroadcastStaff",
+      "BanIP",
+      "BanPlayer"
+    ],
+    "dbTables": [
+      "server",
+      "the",
+      "accidentally",
+      "vehicles",
+      "other",
+      "commands",
+      "admin_checkpoints",
+      "label",
+      "admin_action_log",
+      "accounts",
+      "admin_stat_audit",
+      "job_progress",
+      "bans",
+      "characters",
+      "admin_sanctions",
+      "staff",
+      "players",
+      "cnn_ads",
+      "admins",
+      "helpers",
+      "query",
+      "ban_tokens",
+      "level",
+      "jail"
+    ],
+    "loops": {
+      "wait0": 8,
+      "waitShort": 3,
+      "waitMedium": 14,
+      "waitLong": 8
+    }
+  },
+  {
+    "name": "sunset_admintools",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 22,
+    "clientScripts": [
+      "client/cinematic.lua",
+      "client/inspector.lua",
+      "client/profiler.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:admintools:sweep",
+      "sunset:admintools:sampler"
+    ],
+    "serverEvents": [
+      "sunset:admintools:report"
+    ],
+    "serverCallbacks": [
+      "sunset:admintools:check"
+    ],
+    "commands": [
+      "cinematic",
+      "inspect",
+      "blzresmon",
+      "sweeporphans"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsAdminAllowed"
+    ],
+    "dbTables": [
+      "plain",
+      "rot",
+      "every"
+    ],
+    "loops": {
+      "wait0": 5,
+      "waitShort": 0,
+      "waitMedium": 2,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_anticheat",
+    "isSunset": true,
+    "fileCount": 9,
+    "totalSizeKb": 82,
+    "clientScripts": [
+      "client/sampler.lua"
+    ],
+    "serverScripts": [
+      "server/context.lua",
+      "server/detectors.lua",
+      "server/discord.lua",
+      "server/ledger.lua",
+      "server/main.lua",
+      "server/strikes.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:anticheat:tickAck"
+    ],
+    "serverEvents": [
+      "sunset:anticheat:clientTick",
+      "sunset:anticheat:markLegitLocal"
+    ],
+    "serverCallbacks": [
+      "sunset:anticheat:panel",
+      "sunset:anticheat:dismiss"
+    ],
+    "commands": [
+      "acheat",
+      "achud"
+    ],
+    "stateBags": [],
+    "exports": [
+      "MarkLegit",
+      "MarkAdminAction",
+      "IsWhitelisted",
+      "GetContextSnapshot",
+      "GetPanelSummary",
+      "GetTicksForPanel",
+      "AddStrike",
+      "GetHeat",
+      "GetAllHeats",
+      "DismissStrikes"
+    ],
+    "dbTables": [
+      "checktype",
+      "clienttick",
+      "server",
+      "never",
+      "strikes",
+      "the",
+      "anticheat_flags",
+      "money_transactions",
+      "any",
+      "every",
+      "anticheat_strikes",
+      "speed"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 10
+    }
+  },
+  {
+    "name": "sunset_appearance",
+    "isSunset": true,
+    "fileCount": 9,
+    "totalSizeKb": 1096,
+    "clientScripts": [
+      "client/appearance_lib.lua",
+      "client/clothing_compat.lua",
+      "client/clothing_rules.lua",
+      "client/main.lua",
+      "client/torso_data.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:saveAppearance"
+    ],
+    "commands": [
+      "relook"
+    ],
+    "stateBags": [],
+    "exports": [
+      "ApplyFactionOutfit",
+      "ApplyAllClothing",
+      "ApplyAppearance",
+      "GetDefaultAppearance",
+      "ResolveTorso",
+      "IsEditing",
+      "GetClothingSnapshot",
+      "ApplyClothingSnapshot",
+      "RegisterClothingCollection",
+      "ApplyComponent",
+      "RegisterTopCompatibility",
+      "ValidateAppearance"
+    ],
+    "dbTables": [
+      "sunset_clothing",
+      "characters"
+    ],
+    "loops": {
+      "wait0": 4,
+      "waitShort": 1,
+      "waitMedium": 2,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_auth",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 39,
+    "clientScripts": [
+      "client/accounts.lua",
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua",
+      "server/password.js"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:sessionReady",
+      "sunset:auth:openLogin",
+      "sunset:client:playerReady"
+    ],
+    "serverEvents": [
+      "sunset:auth:requestUiStart"
+    ],
+    "serverCallbacks": [
+      "sunset:authRegister",
+      "sunset:authLogin",
+      "sunset:authQuickLogin",
+      "sunset:authSetEmail"
+    ],
+    "commands": [
+      "fixlogin"
+    ],
+    "stateBags": [],
+    "exports": [
+      "OpenLogin",
+      "IsAuthenticated",
+      "IsPlayerAuthenticated",
+      "HashPassword",
+      "VerifyPassword",
+      "GenerateQuickToken",
+      "HashToken"
+    ],
+    "dbTables": [
+      "this",
+      "forcing",
+      "auth_quick_tokens",
+      "accounts"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 0,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "sunset_auth_ui",
+    "isSunset": true,
+    "fileCount": 6,
+    "totalSizeKb": 244,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 4,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [
+      "Send",
+      "Show",
+      "Hide",
+      "SetFocus",
+      "IsAuthOpen",
+      "IsDomReady",
+      "IsVisibleRendered",
+      "IsRendered",
+      "GetBootEpoch"
+    ],
+    "dbTables": [
+      "sunset_auth"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_blackjack",
+    "isSunset": true,
+    "fileCount": 6,
+    "totalSizeKb": 119,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [
+      "server.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "BLACKJACK:SyncTimer",
+      "BLACKJACK:PlayDealerAnim",
+      "BLACKJACK:PlayDealerSpeech",
+      "BLACKJACK:DealerTurnOverCard",
+      "BLACKJACK:SplitHand",
+      "BLACKJACK:PlaceBetChip",
+      "BLACKJACK:BetReceived",
+      "BLACKJACK:RequestBets",
+      "BLACKJACK:RequestMove",
+      "BLACKJACK:GameEndReaction",
+      "BLACKJACK:RetrieveCards",
+      "BLACKJACK:UpdateDealerHand",
+      "BLACKJACK:GiveCard"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "bet"
+    ],
+    "stateBags": [],
+    "exports": [
+      "SetSatDownCallback",
+      "SetStandUpCallback",
+      "SetLeaveCheckCallback",
+      "SetCanSitDownCallback",
+      "SetGetChipsCallback",
+      "SetTakeChipsCallback",
+      "SetGiveChipsCallback"
+    ],
+    "dbTables": [
+      "deal",
+      "round",
+      "players"
+    ],
+    "loops": {
+      "wait0": 26,
+      "waitShort": 1,
+      "waitMedium": 9,
+      "waitLong": 58
+    }
+  },
+  {
+    "name": "sunset_businesses",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 33,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:businessesChanged",
+      "sunset:client:businessTeleport",
+      "sunset:businesses:openPanel",
+      "sunset:businesses:openOwner",
+      "sunset:businesses:openGasMenu"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getBusinesses",
+      "sunset:getStoreContext",
+      "sunset:getGasBusinessByStation",
+      "sunset:getGasBusinessContext",
+      "sunset:getBusinessForShop",
+      "sunset:buyBusiness",
+      "sunset:businessOwnerDashboard",
+      "sunset:businessAdminDashboard",
+      "sunset:businessManage"
+    ],
+    "commands": [
+      "abusiness",
+      "abiz",
+      "bizadmin",
+      "mybusiness",
+      "mybiz",
+      "businesses",
+      "biz",
+      "bizhelp"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsNearTwentyFourSeven",
+      "RecordSale",
+      "RecordSaleAtCoords",
+      "GetBusinessRow",
+      "GetOwnedBusinesses",
+      "TransferOwnership",
+      "GetMaxOwnedPerCharacter",
+      "ExecutePlayerCommand"
+    ],
+    "dbTables": [
+      "player_businesses",
+      "characters",
+      "business_type"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_carjack",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 19,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:carjack:tryLockpick",
+      "sunset:carjack:sell"
+    ],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "job_progress",
+      "dealership_vehicles",
+      "client",
+      "vehicles"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_casino",
+    "isSunset": true,
+    "fileCount": 6,
+    "totalSizeKb": 72,
+    "clientScripts": [
+      "client/discovery.lua",
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/rng.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:languageChanged"
+    ],
+    "serverEvents": [
+      "sunset:casino:probeLog",
+      "sunset:casino:probeLogBatch"
+    ],
+    "serverCallbacks": [
+      "sunset:casino:blackjackStart",
+      "sunset:casino:blackjackHit",
+      "sunset:casino:blackjackStand",
+      "sunset:casino:slotsSpin",
+      "sunset:casino:rouletteSpin",
+      "sunset:casino:wheelSpin",
+      "sunset:casino:buyChips",
+      "sunset:casino:sellChips",
+      "sunset:casino:buyDrink",
+      "sunset:casino:status"
+    ],
+    "commands": [
+      "casinoprobe",
+      "casinoscan",
+      "casinoanim",
+      "casinoprops",
+      "leavecasino"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsCasinoOpen"
+    ],
+    "dbTables": [
+      "entities",
+      "the",
+      "coordinates",
+      "actual",
+      "casino_wheel_cooldown",
+      "next_at",
+      "inventory",
+      "casino_log",
+      "casino_pending_chips"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 3,
+      "waitMedium": 1,
+      "waitLong": 3
+    }
+  },
+  {
+    "name": "sunset_characters",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 12,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:openSpawnMenu"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "spawnmenu"
+    ],
+    "stateBags": [
+      "sunsetAuthenticated",
+      "sunsetAuthFlowActive"
+    ],
+    "exports": [
+      "OpenSpawnMenu"
+    ],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_chat",
+    "isSunset": true,
+    "fileCount": 6,
+    "totalSizeKb": 52,
+    "clientScripts": [
+      "client/main.lua",
+      "client/suggestions.lua"
+    ],
+    "serverScripts": [
+      "server/command_router.lua",
+      "server/connect_motd.lua",
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:chat:executeCommand",
+      "sunset:chat:system",
+      "sunset:chat:clear",
+      "sunset:chat:message",
+      "chat:addMessage",
+      "sunset:client:setAdmin",
+      "chat:addSuggestion",
+      "chat:removeSuggestion"
+    ],
+    "serverEvents": [
+      "sunset:chat:runCommand",
+      "sunset:server:characterSpawned",
+      "sunset:chat:send"
+    ],
+    "serverCallbacks": [
+      "sunset:getChatChannels"
+    ],
+    "commands": [
+      "sunset_chat",
+      "sunset_chat_close",
+      "a",
+      "e",
+      "lc",
+      "me",
+      "do",
+      "s",
+      "shout",
+      "w",
+      "whisper",
+      "cw",
+      "carwhisper",
+      "l",
+      "low",
+      "b",
+      "cc"
+    ],
+    "stateBags": [
+      "sunsetName",
+      "adminDuty"
+    ],
+    "exports": [
+      "IsChatOpen",
+      "GetChatSuggestions",
+      "SyncChatSuggestions",
+      "RefreshCommandList",
+      "RunServerCommand"
+    ],
+    "dbTables": [
+      "the",
+      "sunsetadmin",
+      "players"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 3,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_clans",
+    "isSunset": true,
+    "fileCount": 9,
+    "totalSizeKb": 70,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/admin_ops.lua",
+      "server/chat.lua",
+      "server/display.lua",
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/ranks.lua",
+      "shared/tag.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:clans:openDashboard",
+      "sunset:clans:openDirectory"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:clanDashboard",
+      "sunset:clanDirectory",
+      "sunset:clanProfile",
+      "sunset:clanCreate",
+      "sunset:clanGetMotd",
+      "sunset:clanManage",
+      "sunset:clanAcceptInvite",
+      "sunset:clanDeclineInvite"
+    ],
+    "commands": [
+      "clan",
+      "group",
+      "clans",
+      "cmotd",
+      "acceptclan",
+      "declineclan",
+      "cwarn",
+      "cw",
+      "leaveclan",
+      "dissolveclan",
+      "c"
+    ],
+    "stateBags": [],
+    "exports": [
+      "AdminRemoveFromClan",
+      "AdminSetClan",
+      "RunChatCommand",
+      "FormatDisplayName",
+      "GetClanChatMeta",
+      "SyncPlayerClan",
+      "GetPlayerBaseName",
+      "GetConnectMotd",
+      "RunMotdCommand"
+    ],
+    "dbTables": [
+      "rare",
+      "the",
+      "another",
+      "clans",
+      "clan_members",
+      "characters",
+      "turfs",
+      "clan_audit_log",
+      "this",
+      "clan_invites",
+      "invited_by",
+      "failed"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_clothing",
+    "isSunset": true,
+    "fileCount": 6,
+    "totalSizeKb": 49,
+    "clientScripts": [
+      "client/debug.lua",
+      "client/main.lua",
+      "client/wardrobe.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua",
+      "server/outfits.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:clothing:debugToggle",
+      "sunset:clothing:applyAppearance"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:payAppearance",
+      "sunset:refundAppearance",
+      "sunset:clothing:debug",
+      "sunset:outfits:list",
+      "sunset:outfits:save",
+      "sunset:outfits:equip",
+      "sunset:outfits:delete",
+      "sunset:outfits:rename"
+    ],
+    "commands": [
+      "clothinglab",
+      "clothingdebug",
+      "validateoutfit",
+      "repairoutfit",
+      "clothingtest",
+      "wardrobe",
+      "clothes",
+      "skin",
+      "closewardrobe",
+      "outfits"
+    ],
+    "stateBags": [],
+    "exports": [
+      "OpenWardrobe",
+      "CanOpenWardrobe",
+      "HasAppearancePayment",
+      "ConsumeAppearancePayment"
+    ],
+    "dbTables": [
+      "any",
+      "character_outfits",
+      "the",
+      "characters"
+    ],
+    "loops": {
+      "wait0": 3,
+      "waitShort": 1,
+      "waitMedium": 3,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_cnn",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 43,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:languageChanged"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:cnn:getQueue",
+      "sunset:cnn:getHelpdeskAds",
+      "sunset:cnn:action"
+    ],
+    "commands": [
+      "ad",
+      "myad",
+      "ads",
+      "adlist",
+      "acceptad",
+      "aad",
+      "deletead",
+      "dad",
+      "rejectad",
+      "admute"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsAdMuted",
+      "AdMutePlayer",
+      "ApproveAd",
+      "RejectAd",
+      "GetAdQueue",
+      "GetPendingAds",
+      "RunChatCommand",
+      "ExecutePlayerCommand"
+    ],
+    "dbTables": [
+      "queue",
+      "cnn_ad_mutes",
+      "cnn_ads",
+      "this"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_core",
+    "isSunset": true,
+    "fileCount": 36,
+    "totalSizeKb": 1010,
+    "clientScripts": [
+      "client/boot_debug.lua",
+      "client/callbacks.lua",
+      "client/main.lua",
+      "client/nui_locale.lua",
+      "client/world_stream.lua"
+    ],
+    "serverScripts": [
+      "server/callbacks.lua",
+      "server/command_feedback.lua",
+      "server/discord_logs.lua",
+      "server/locale_commands.lua",
+      "server/main.lua",
+      "server/money_log.lua",
+      "server/player.lua",
+      "server/security.lua"
+    ],
+    "sharedScripts": [
+      "shared/boot_debug.lua",
+      "shared/config.lua",
+      "shared/crafting.lua",
+      "shared/dispatch.lua",
+      "shared/faction_core.lua",
+      "shared/faction_grades.lua",
+      "shared/faction_outfits.lua",
+      "shared/factions.lua",
+      "shared/fish_prices.lua",
+      "shared/help_registry.lua",
+      "shared/items.lua",
+      "shared/job_session.lua",
+      "shared/jobs_civilian.lua",
+      "shared/jobs_config.lua",
+      "shared/jobs_workplaces.lua",
+      "shared/locale.lua",
+      "shared/locales/en.lua",
+      "shared/locales/ro.lua",
+      "shared/password.lua",
+      "shared/police.lua",
+      "shared/profile.lua",
+      "shared/utils.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:printBootSummary",
+      "sunset:client:callbackResponse",
+      "sunset:client:playerReady",
+      "sunset:client:localeChanged",
+      "sunset:client:characterLoaded",
+      "sunset:client:updateCharacter"
+    ],
+    "serverEvents": [
+      "sunset:server:updatePlayerPed",
+      "sunset:server:flowTrace",
+      "sunset:server:triggerCallback",
+      "sunset:server:playerLoaded",
+      "sunset:server:prepareSpawn",
+      "sunset:server:characterSpawned"
+    ],
+    "serverCallbacks": [
+      "sunset:setLocale",
+      "sunset:setConnectionLocale",
+      "sunset:getCharacters",
+      "sunset:createCharacter",
+      "sunset:selectCharacter",
+      "sunset:enterGame",
+      "sunset:deleteCharacter",
+      "sunset:buyLevel"
+    ],
+    "commands": [
+      "bootdiag",
+      "testcbtimeout",
+      "language",
+      "lang",
+      "buylevel"
+    ],
+    "stateBags": [
+      "sunsetPropertyExit",
+      "sunsetAuthFlowActive",
+      "isSpawning"
+    ],
+    "exports": [
+      "GetBootId",
+      "SetEpochOffset",
+      "BootLog",
+      "BootLogVerbose",
+      "RecordMilestone",
+      "RecordHitch",
+      "TriggerCallbackTimeout",
+      "TriggerCallback",
+      "SetBootState",
+      "GetBootState",
+      "BootTrace",
+      "GetPlayer",
+      "GetCharacter",
+      "IsPlayerReady",
+      "AwaitGameReady",
+      "RequestModelSafe",
+      "CreateSafeBlip",
+      "CommandReply",
+      "CommandDenyAdmin",
+      "CommandDenyHeal",
+      "CommandDenyRevive",
+      "CommandPlayerNotFound",
+      "CommandNoCharacter",
+      "CommandUsage",
+      "OnlinePlayerIds",
+      "CommandListKeys",
+      "SendDiscordLog",
+      "UpdatePlayerPed",
+      "GetSourceByPed",
+      "GetSourceByCharacterId",
+      "GetSourceByPlayerId",
+      "GetSourceByAccountId",
+      "GetOnlineCharacters",
+      "RegisterCallback",
+      "CompleteAuthentication",
+      "NotifyFor",
+      "BroadcastLocalized",
+      "TFor",
+      "Translate",
+      "GetPlayerLocale",
+      "SetPlayerLocale",
+      "SetConnectionLocale",
+      "GetPlayerBaseName",
+      "GetPlayerDisplayName",
+      "LogMoneyTransaction",
+      "GetMoneyHistory",
+      "DebitMoneyInTransaction",
+      "CreditMoneyInTransaction",
+      "AddMoneyToCharacter",
+      "ExecutePlayerCommand",
+      "SaveCharacter",
+      "AddMoney",
+      "RemoveMoney",
+      "GetMoney",
+      "MoveMoney",
+      "TransferMoney",
+      "SetPersistentStat",
+      "SetCharacterSkin",
+      "RefreshBlazePoints",
+      "SpendBlazePoints",
+      "AddBlazePoints",
+      "SetHomeProperty",
+      "RefreshMoney",
+      "SetJob",
+      "SetFaction",
+      "SetFactionByCharacterId",
+      "AddXP",
+      "AddRespectPoints",
+      "GetRobPoints",
+      "IsIncapacitated",
+      "SetRobPoints",
+      "AddRobPoints",
+      "SetSpawnPreference",
+      "GetSpawnPosition",
+      "RateLimit"
+    ],
+    "dbTables": [
+      "net",
+      "resources",
+      "accounts",
+      "the",
+      "players",
+      "character_inventory",
+      "characters",
+      "properties",
+      "player_businesses",
+      "turfs",
+      "clans",
+      "lottery_tickets",
+      "money_transactions",
+      "below",
+      "plus",
+      "property_rentals",
+      "nearby",
+      "faction",
+      "posting",
+      "their",
+      "jail",
+      "sunset_ui",
+      "factions",
+      "wrecks",
+      "vehicles",
+      "items",
+      "site",
+      "billy",
+      "lssi",
+      "coastal",
+      "another",
+      "handcuffs",
+      "audited",
+      "your",
+      "vehicle",
+      "clan",
+      "disk",
+      "inside",
+      "rank",
+      "f10",
+      "this",
+      "fishing",
+      "terry",
+      "inventory",
+      "administrator",
+      "advertisements",
+      "van",
+      "tournament",
+      "staff",
+      "failed",
+      "player",
+      "candidate",
+      "previous",
+      "custody",
+      "bolo",
+      "unit",
+      "call",
+      "sale"
+    ],
+    "loops": {
+      "wait0": 4,
+      "waitShort": 7,
+      "waitMedium": 10,
+      "waitLong": 3
+    }
+  },
+  {
+    "name": "sunset_crafting",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 16,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getCraftingMenu",
+      "sunset:craftItem"
+    ],
+    "commands": [
+      "crafting"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "your",
+      "character_inventory"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_dealership",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 29,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [
+      "sunset:dealership:endTestDrive"
+    ],
+    "serverCallbacks": [
+      "sunset:dealership:getCatalog",
+      "sunset:dealership:testDrive",
+      "sunset:dealership:purchase",
+      "sunset:dealership:adminSave",
+      "sunset:dealership:adminDelete"
+    ],
+    "commands": [
+      "dealership",
+      "dealershipadmin"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "vehicles",
+      "dealership_vehicles",
+      "characters",
+      "dealership_sales",
+      "the",
+      "money_transactions",
+      "dealership_admin_log",
+      "label"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 3,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "sunset_death",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 25,
+    "clientScripts": [
+      "client/damage_indicators.lua",
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:respawn",
+      "sunset:death:forceHospital",
+      "sunset:death:reviveInPlace",
+      "sunset:admin:revive"
+    ],
+    "serverEvents": [
+      "sunset:server:playerDied",
+      "sunset:death:enteredDowned",
+      "sunset:server:bleedoutExpired",
+      "sunset:server:requestRespawn",
+      "sunset:death:playerKilled",
+      "sunset:death:call112"
+    ],
+    "serverCallbacks": [
+      "sunset:revivePlayer"
+    ],
+    "commands": [
+      "respawn",
+      "112"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsDead",
+      "IsDowned",
+      "IsStabilized",
+      "ClearDead",
+      "RevivePlayer",
+      "RespawnPlayer",
+      "StabilizePlayer",
+      "ClearDownedForCustody",
+      "IsPlayerDowned"
+    ],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 7,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_devtools",
+    "isSunset": true,
+    "fileCount": 17,
+    "totalSizeKb": 196,
+    "clientScripts": [
+      "client/gizmo.lua",
+      "client/main.lua",
+      "client/placement.lua",
+      "client/route_creator.lua",
+      "client/route_editor.lua",
+      "client/validators.lua",
+      "client/visualizers.lua",
+      "client/world_probe.lua"
+    ],
+    "serverScripts": [
+      "server/drafts.lua",
+      "server/main.lua",
+      "server/routes.lua"
+    ],
+    "sharedScripts": [
+      "shared/adapters.lua",
+      "shared/config.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 3,
+    "clientEvents": [
+      "sunset:devtools:permResult"
+    ],
+    "serverEvents": [
+      "sunset:devtools:checkPerm",
+      "sunset:devtools:saveDraft"
+    ],
+    "serverCallbacks": [
+      "sunset:devtools:getJobRoutes",
+      "sunset:devtools:saveJobRoutes",
+      "sunset:devtools:reloadJobRoutes"
+    ],
+    "commands": [
+      "devplace",
+      "devpos",
+      "devroute",
+      "worldprobe",
+      "devvalidate",
+      "devroutes",
+      "devdrafts"
+    ],
+    "stateBags": [],
+    "exports": [
+      "GetDrafts",
+      "ClearDrafts"
+    ],
+    "dbTables": [
+      "entity",
+      "server",
+      "placed",
+      "adapter",
+      "disk",
+      "camera",
+      "trailer"
+    ],
+    "loops": {
+      "wait0": 6,
+      "waitShort": 2,
+      "waitMedium": 12,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_dispatch",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 47,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/commands.lua",
+      "server/main.lua",
+      "server/service_core.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:dispatch:waypoint",
+      "sunset:dispatch:newCall",
+      "sunset:dispatch:backupAlert",
+      "sunset:dispatch:backupEnded",
+      "sunset:dispatch:callAccepted",
+      "sunset:dispatch:callUpdated",
+      "sunset:dispatch:callEnded",
+      "sunset:dispatch:callTaken"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:dispatchList",
+      "sunset:dispatchGet",
+      "sunset:dispatchAccept",
+      "sunset:dispatchPanelData",
+      "sunset:dispatch:call112"
+    ],
+    "commands": [
+      "calls"
+    ],
+    "stateBags": [],
+    "exports": [
+      "ExecutePlayerCommand",
+      "CreateCall",
+      "CreateServiceCall",
+      "AcceptCall",
+      "CancelCall",
+      "CompleteCall",
+      "GetCall",
+      "GetActiveCalls",
+      "IsProviderForType",
+      "GetCallForResponder",
+      "GetPlayerActiveCall",
+      "UpdateCallState",
+      "Create112Call"
+    ],
+    "dbTables": [
+      "service_calls",
+      "characters",
+      "caller"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 3
+    }
+  },
+  {
+    "name": "sunset_documents",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 3,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getDocuments"
+    ],
+    "commands": [
+      "documents",
+      "id",
+      "licenses"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "character_licenses"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_drugs",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 29,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:drugs:harvestStart",
+      "sunset:drugs:harvestComplete",
+      "sunset:drugs:processStart",
+      "sunset:drugs:processComplete",
+      "sunset:drugs:sell",
+      "sunset:drugs:cancelAction",
+      "sunset:drugs:status"
+    ],
+    "commands": [],
+    "stateBags": [],
+    "exports": [
+      "IsDrugsOpen"
+    ],
+    "dbTables": [
+      "the"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_economy",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 60,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/dice.lua",
+      "server/lottery.lua",
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:serverTime",
+      "sunset:client:serverWeather",
+      "sunset:client:payday",
+      "sunset:economy:playDiceAnim"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:buyItem",
+      "sunset:atmTransfer",
+      "sunset:phoneBankTransfer"
+    ],
+    "commands": [
+      "barbut",
+      "dice",
+      "loto",
+      "lottery"
+    ],
+    "stateBags": [
+      "jackpot",
+      "last_winner_name",
+      "last_winner_prize",
+      "last_winning_number"
+    ],
+    "exports": [
+      "GetNextPayday",
+      "SetWorldTime",
+      "ClearWorldTime",
+      "SetWorldWeather",
+      "ClearWorldWeather"
+    ],
+    "dbTables": [
+      "characters",
+      "money_transactions",
+      "pendingchallenges",
+      "lottery_state",
+      "jackpot",
+      "lottery_tickets",
+      "lottery_draws",
+      "per",
+      "payday_runs",
+      "vehicles",
+      "property_rentals",
+      "properties",
+      "job_progress",
+      "inventory",
+      "the",
+      "anywhere"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 1,
+      "waitLong": 6
+    }
+  },
+  {
+    "name": "sunset_emotes",
+    "isSunset": true,
+    "fileCount": 2,
+    "totalSizeKb": 5,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "emote",
+      "anim",
+      "emotes",
+      "stopemote"
+    ],
+    "stateBags": [
+      "isCasinoSitting"
+    ],
+    "exports": [
+      "PlayEmote",
+      "StopEmote",
+      "IsPlaying",
+      "GetEmoteWheelList"
+    ],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_events",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 18,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:events:start",
+      "sunset:events:end"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:events:join",
+      "sunset:events:status"
+    ],
+    "commands": [
+      "eventstart",
+      "eventend"
+    ],
+    "stateBags": [],
+    "exports": [
+      "GetEventData",
+      "GetActiveEvent"
+    ],
+    "dbTables": [],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 3
+    }
+  },
+  {
+    "name": "sunset_factions",
+    "isSunset": true,
+    "fileCount": 19,
+    "totalSizeKb": 390,
+    "clientScripts": [
+      "client/detention.lua",
+      "client/ems.lua",
+      "client/friendlyfire.lua",
+      "client/loadout.lua",
+      "client/main.lua",
+      "client/police.lua"
+    ],
+    "serverScripts": [
+      "server/chat.lua",
+      "server/core.lua",
+      "server/detention.lua",
+      "server/ems.lua",
+      "server/faction_labels.lua",
+      "server/faction_roster.lua",
+      "server/friendlyfire.lua",
+      "server/leaders.lua",
+      "server/main.lua",
+      "server/management.lua",
+      "server/panel.lua",
+      "server/police.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:faction:cuff",
+      "sunset:faction:uncuff",
+      "sunset:detention:sync",
+      "sunset:detention:escort",
+      "sunset:detention:escortOfficer",
+      "sunset:detention:putInVehicle",
+      "sunset:detention:takeOutVehicle",
+      "sunset:detention:handsUp",
+      "sunset:client:dutyState",
+      "sunset:client:characterLoaded",
+      "sunset:client:updateCharacter",
+      "sunset:faction:repairVehicle",
+      "sunset:faction:taxiFareOffered",
+      "sunset:faction:inviteReceived",
+      "sunset:police:chatAlert",
+      "sunset:police:summonAlert",
+      "sunset:police:jail",
+      "sunset:police:release",
+      "sunset:police:tryStartRadar",
+      "sunset:police:tryStopRadar",
+      "sunset:dispatch:112CallAlert",
+      "sunset:police:radarAlert"
+    ],
+    "serverEvents": [
+      "sunset:server:handsUp",
+      "sunset:server:detentionVehicleState",
+      "sunset:server:detentionEscortDesync",
+      "sunset:factionRegisterFleetVehicle",
+      "sunset:police:fixedRadarTrigger",
+      "sunset:server:jailComplete"
+    ],
+    "serverCallbacks": [
+      "sunset:detentionCuff",
+      "sunset:detentionUncuff",
+      "sunset:detentionEscort",
+      "sunset:detentionPutInVehicle",
+      "sunset:detentionTakeOut",
+      "sunset:detentionFrisk",
+      "sunset:emsStabilize",
+      "sunset:emsHeal",
+      "sunset:emsRevive",
+      "sunset:factionMemberRankDelta",
+      "sunset:factionMemberKick",
+      "sunset:factionMemberWarn",
+      "sunset:factionSetGradeLabels",
+      "sunset:factionUninvite",
+      "sunset:factionGiveRank",
+      "sunset:factionWarn",
+      "sunset:factionSetMotd",
+      "sunset:factionGetMotd",
+      "sunset:factionMembers",
+      "sunset:toggleDuty",
+      "sunset:joinFactionHQ",
+      "sunset:leaveFaction",
+      "sunset:factionInvite",
+      "sunset:factionAcceptInvite",
+      "sunset:factionDeclineInvite",
+      "sunset:factionPromote",
+      "sunset:policeFine",
+      "sunset:factionHeal",
+      "sunset:factionRevive",
+      "sunset:mechanicShopRepair",
+      "sunset:factionFleetList",
+      "sunset:factionRequestFleet",
+      "sunset:mechanicRepair",
+      "sunset:taxiFare",
+      "sunset:taxiAcceptFare",
+      "sunset:taxiDeclineFare",
+      "sunset:illegalSell",
+      "sunset:getFactionPanel",
+      "sunset:factionDashboard",
+      "sunset:factionDirectory",
+      "sunset:factionDirectoryDetail",
+      "sunset:getLeaderSpawnHq",
+      "sunset:factionResignSubmit",
+      "sunset:factionResignationsList",
+      "sunset:factionResignHandle",
+      "sunset:factionPardonFP",
+      "sunset:factionFPStatus",
+      "sunset:policeSetWanted",
+      "sunset:policeClearWanted",
+      "sunset:policeSummon",
+      "sunset:policeWantedList",
+      "sunset:policeFindWanted",
+      "sunset:policeArrest",
+      "sunset:policeReasons",
+      "sunset:policeViolations",
+      "sunset:policeConfiscate",
+      "sunset:policeRadarStart",
+      "sunset:policeRadarStop",
+      "sunset:policeRadarLock",
+      "sunset:policeFixedRadars",
+      "sunset:policeBackup",
+      "sunset:policeCancelBackup",
+      "sunset:getJailSpawnLock",
+      "sunset:policeUnjail",
+      "sunset:policeMdcData",
+      "sunset:policeMdcLookup",
+      "sunset:policeMdcVehicleLookup",
+      "sunset:policeMdcSuspendLicense",
+      "sunset:policeMdcToggleBolo",
+      "sunset:policeMdcSetUnitStatus",
+      "sunset:policeMdcSetCallStatus",
+      "sunset:policeIssueTicket",
+      "sunset:policePayTicket",
+      "sunset:policeRefuseTicket"
+    ],
+    "commands": [
+      "handsup",
+      "frisk",
+      "stabilize",
+      "fskins",
+      "fskin",
+      "leavefaction",
+      "quitfaction",
+      "factionquit",
+      "quitgroup",
+      "duty",
+      "fine",
+      "cuff",
+      "uncuff",
+      "repairveh",
+      "fare",
+      "acceptfare",
+      "declinefare",
+      "finvite",
+      "acceptfaction",
+      "accept",
+      "declinefaction",
+      "fpromote",
+      "fgiverank",
+      "funinvite",
+      "fwarn",
+      "fw",
+      "fmotd",
+      "fmembers",
+      "sellpouch",
+      "fence",
+      "faction",
+      "factions",
+      "pd",
+      "fd",
+      "pdgarage",
+      "su",
+      "so",
+      "clear",
+      "unjail",
+      "find",
+      "cfind",
+      "cancelfind",
+      "wanted",
+      "arrest",
+      "booking",
+      "backup",
+      "cbackup",
+      "mdc",
+      "ticket",
+      "confiscate",
+      "startradar",
+      "setradar",
+      "radar",
+      "stopradar",
+      "radars",
+      "testradaralert",
+      "f",
+      "r",
+      "d",
+      "spy",
+      "gov",
+      "m",
+      "setleader",
+      "removeleader",
+      "suspendlicense",
+      "confiscatelicense"
+    ],
+    "stateBags": [
+      "sunsetCuffed",
+      "cuffed",
+      "sunsetFactionVehicle"
+    ],
+    "exports": [
+      "IsCuffedLocal",
+      "IsHandsUp",
+      "ApplyFactionLoadout",
+      "ClearFactionLoadout",
+      "GetDutyWeaponsForUi",
+      "GetFactionSkinOptions",
+      "IsOnDuty",
+      "IsFactionPanelOpen",
+      "IsJailed",
+      "RunChatCommand",
+      "IsCuffed",
+      "GetDetentionState",
+      "ExecutePlayerCommand",
+      "RunFactionMotdCommand",
+      "GetConnectMotd",
+      "RunFactionInviteCommand",
+      "RunFactionAcceptInviteCommand",
+      "RunFactionDeclineInviteCommand",
+      "HasFactionPerm",
+      "GetDutyState",
+      "IsFactionLeader",
+      "GetLeaderHqSpawn",
+      "GetFactionHqSpawn",
+      "AddSocietyMoney",
+      "ExecutePanelFactionSet",
+      "AddWantedCharge",
+      "GetWantedState",
+      "AdminJail",
+      "AdminUnjail",
+      "AdminClearWanted"
+    ],
+    "dbTables": [
+      "the",
+      "server",
+      "faction",
+      "faction_leaders",
+      "characters",
+      "faction_audit_log",
+      "faction_grade_labels",
+      "label",
+      "faction_warnings",
+      "accounts",
+      "faction_motd",
+      "assigned_by",
+      "message",
+      "societies",
+      "any",
+      "anywhere",
+      "faction_membership",
+      "days",
+      "faction_resignations",
+      "tracking",
+      "faction_punish",
+      "time",
+      "faction_id",
+      "gate",
+      "wanted_records",
+      "jail_sentences",
+      "police_confiscations",
+      "fixed",
+      "mysql",
+      "tickets",
+      "vehicles",
+      "character_licenses"
+    ],
+    "loops": {
+      "wait0": 7,
+      "waitShort": 3,
+      "waitMedium": 12,
+      "waitLong": 19
+    }
+  },
+  {
+    "name": "sunset_fire",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 17,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:fire:newIncident",
+      "sunset:fire:incidentUpdate",
+      "sunset:fire:incidentEnded"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:fireGetIncidents",
+      "sunset:fireRequestIncident",
+      "sunset:fireExtinguish",
+      "sunset:fireAcceptDispatch"
+    ],
+    "commands": [
+      "firecalls",
+      "firestart"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "the",
+      "faction"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 0,
+      "waitLong": 3
+    }
+  },
+  {
+    "name": "sunset_fishing_tournament",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 48,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:fishingTournament:eventStarted",
+      "sunset:fishingTournament:syncHud",
+      "sunset:fishingTournament:catchFeedback",
+      "sunset:fishingTournament:showResults",
+      "sunset:events:clientEnd",
+      "sunset:core:characterSelected"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:fishingTournament:join",
+      "sunset:fishingTournament:status"
+    ],
+    "commands": [
+      "fishtournamentdebug"
+    ],
+    "stateBags": [],
+    "exports": [
+      "StartFishingTournament",
+      "EndFishingTournament",
+      "JoinTournament",
+      "GetTournamentData"
+    ],
+    "dbTables": [
+      "server",
+      "fishing_tournament_rewards",
+      "sunset_core",
+      "the",
+      "fishing_tournament_participants",
+      "fishing_tournament_catches",
+      "fishing_tournaments",
+      "fishing_tournament_history",
+      "rank",
+      "sunset_events",
+      "callback",
+      "sunset_jobs",
+      "location"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_fishingshop",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 54,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:fishingshop:getBillyRayMenu",
+      "sunset:fishingshop:hireFisherman",
+      "sunset:fishingshop:getBaitShop",
+      "sunset:fishingshop:getFishInventory",
+      "sunset:fishingshop:buyCart",
+      "sunset:fishingshop:sellCart",
+      "sunset:fishingshop:sellFish247",
+      "sunset:fishingshop:upgradeRod"
+    ],
+    "commands": [
+      "sellfish"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsNearBillyRay",
+      "IsMenuOpen",
+      "IsNearStore"
+    ],
+    "dbTables": [
+      "this",
+      "here",
+      "server",
+      "anywhere",
+      "job_progress"
+    ],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 0,
+      "waitMedium": 2,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_help",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 8,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getHelp"
+    ],
+    "commands": [
+      "help"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_hud",
+    "isSunset": true,
+    "fileCount": 7,
+    "totalSizeKb": 47,
+    "clientScripts": [
+      "client/main.lua",
+      "client/minimap.lua",
+      "client/voice.lua",
+      "client/world.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:updateMoney",
+      "sunset:client:hudDefaultUpdated",
+      "sunset:client:serverTime",
+      "sunset:client:paydayTimer",
+      "sunset:client:updateCharacter",
+      "sunset:client:wantedUpdate"
+    ],
+    "serverEvents": [
+      "sunset:server:hudExport"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "hudedit",
+      "hudexport",
+      "hudreset",
+      "proximity"
+    ],
+    "stateBags": [
+      "sunsetDisplayName",
+      "sunsetName",
+      "sunsetOnDuty",
+      "sunsetFaction",
+      "sunsetWanted",
+      "proximity",
+      "sunsetProtectedVehicle"
+    ],
+    "exports": [
+      "GetPaydaySeconds",
+      "CycleVoiceProximity",
+      "SetVoiceProximity",
+      "GetVoiceProximity",
+      "GetVoiceHudData",
+      "GetWantedLevel",
+      "GetWantedDecayAt",
+      "GetWantedRemainingSec",
+      "SetWantedLevel"
+    ],
+    "dbTables": [
+      "nui"
+    ],
+    "loops": {
+      "wait0": 6,
+      "waitShort": 1,
+      "waitMedium": 11,
+      "waitLong": 8
+    }
+  },
+  {
+    "name": "sunset_impound",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 18,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:impound:confiscate",
+      "sunset:impound:list",
+      "sunset:impound:recover"
+    ],
+    "commands": [
+      "impound"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsNearLot",
+      "IsImpoundOpen"
+    ],
+    "dbTables": [
+      "the",
+      "vehicles",
+      "impounded_vehicles",
+      "these"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_interactions",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 38,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:interactionContext",
+      "sunset:interactionGiveCash",
+      "sunset:interactionAddFriend"
+    ],
+    "commands": [
+      "interact",
+      "+interactplayer",
+      "-interactplayer"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "phone_contacts",
+      "restraints",
+      "vehicle",
+      "jail",
+      "deteriorating",
+      "characters",
+      "contact_name"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 2,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_inventory",
+    "isSunset": true,
+    "fileCount": 11,
+    "totalSizeKb": 172,
+    "clientScripts": [
+      "client/containers.lua",
+      "client/main.lua",
+      "client/props.lua",
+      "client/quickslots.lua",
+      "client/weapons.lua"
+    ],
+    "serverScripts": [
+      "server/api.lua",
+      "server/containers.lua",
+      "server/main.lua",
+      "server/quickslots.lua",
+      "server/trade.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:inventoryUpdate",
+      "sunset:client:inventoryForceClose",
+      "sunset:inventory:client:usedItem",
+      "sunset:inventory:tradeState",
+      "sunset:inventory:tradeEnded",
+      "sunset:inventory:tradeInvite",
+      "sunset:inventory:dropSync",
+      "sunset:client:addWeaponAmmo",
+      "sunset:client:setWeaponAmmo",
+      "sunset:client:dutyState",
+      "sunset:licenses:refresh"
+    ],
+    "serverEvents": [
+      "sunset:server:inventoryLoaded",
+      "sunset:server:saveWeaponAmmo",
+      "sunset:server:inventoryRequestDrops"
+    ],
+    "serverCallbacks": [
+      "sunset:container:open",
+      "sunset:container:deposit",
+      "sunset:container:withdraw",
+      "sunset:getInventory",
+      "sunset:useItem",
+      "sunset:getGasCanLiters",
+      "sunset:inventoryHasItem",
+      "sunset:inventory:moveSlot",
+      "sunset:hotbar:get",
+      "sunset:hotbar:assign",
+      "sunset:hotbar:use",
+      "sunset:inventory:tradeRequest",
+      "sunset:inventory:tradeAccept",
+      "sunset:inventory:tradeDecline",
+      "sunset:inventory:tradeOffer",
+      "sunset:inventory:tradeRemove",
+      "sunset:inventory:tradeOfferCash",
+      "sunset:inventory:tradeCatalog",
+      "sunset:inventory:tradeOfferAsset",
+      "sunset:inventory:tradeRemoveAsset",
+      "sunset:inventory:tradeRemoveCash",
+      "sunset:inventory:tradeConfirm",
+      "sunset:inventory:tradeCancel",
+      "sunset:inventory:drop",
+      "sunset:inventory:pickupDrop"
+    ],
+    "commands": [
+      "trunk",
+      "portbagaj",
+      "glovebox",
+      "torpedou",
+      "accepttrade",
+      "declinetrade",
+      "+sunset_trade_accept",
+      "-sunset_trade_accept",
+      "+sunset_trade_decline",
+      "-sunset_trade_decline",
+      "inventory",
+      "+sunset_emote_wheel",
+      "-sunset_emote_wheel"
+    ],
+    "stateBags": [
+      "isCasinoSitting"
+    ],
+    "exports": [
+      "Open",
+      "Close",
+      "EquipHotbarProp",
+      "HolsterHotbarProp",
+      "GetHotbarEquippedPropItem",
+      "GetHotbarPropEntity",
+      "IsHotbarPropEntity",
+      "AddCarryException",
+      "ClearCarryExceptions",
+      "EquipHotbarWeapon",
+      "HolsterHotbarWeapon",
+      "GetHotbarEquippedHash",
+      "ApplyOperation",
+      "RemoveStolenByRobbery",
+      "PurgeStolenLoot",
+      "SetCapacityBonus",
+      "GetInventory",
+      "AddItem",
+      "TryAddItem",
+      "RemoveItem",
+      "RemoveItemById",
+      "RemoveRobberyItems",
+      "ReloadInventory",
+      "HasItem",
+      "UseItem",
+      "SetItemMetadata",
+      "SetWeaponAmmo",
+      "CountItem",
+      "ConvertItems",
+      "TakeAllItems",
+      "GetGasCanLiters"
+    ],
+    "dbTables": [
+      "the",
+      "any",
+      "while",
+      "weapons",
+      "shooting",
+      "character_inventory",
+      "container_inventory",
+      "properties",
+      "property_rentals",
+      "characters",
+      "server",
+      "vehicles",
+      "player_businesses",
+      "truly",
+      "per",
+      "now",
+      "this",
+      "range"
+    ],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 11,
+      "waitMedium": 8,
+      "waitLong": 14
+    }
+  },
+  {
+    "name": "sunset_jobs",
+    "isSunset": true,
+    "fileCount": 27,
+    "totalSizeKb": 489,
+    "clientScripts": [
+      "client/commands.lua",
+      "client/core.lua",
+      "client/courier.lua",
+      "client/diver.lua",
+      "client/fisherman.lua",
+      "client/garbage.lua",
+      "client/hunter.lua",
+      "client/main.lua",
+      "client/mechanic.lua",
+      "client/trucker.lua",
+      "client/trucker_npc.lua",
+      "client/visual_shared.lua",
+      "client/workplaces.lua"
+    ],
+    "serverScripts": [
+      "server/core.lua",
+      "server/courier.lua",
+      "server/diver.lua",
+      "server/fisherman.lua",
+      "server/garbage.lua",
+      "server/hunter.lua",
+      "server/main.lua",
+      "server/mechanic.lua",
+      "server/route_store.lua",
+      "server/trucker.lua",
+      "server/workplaces.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:jobs:sessionStarted",
+      "sunset:jobs:stateChanged",
+      "sunset:jobs:sessionEnded",
+      "sunset:jobs:trailerRespawn",
+      "sunset:jobs:waypointToWork",
+      "sunset:client:updateCharacter",
+      "sunset:jobs:forceClearHud",
+      "sunset:diving:spawnBoat",
+      "sunset:diving:boatReturned",
+      "sunset:diving:contractComplete",
+      "sunset:diving:returnToTerry",
+      "sunset:hunting:spawnAnimals",
+      "sunset:hunting:animalHit",
+      "sunset:hunting:animalDown",
+      "sunset:hunting:contractComplete",
+      "sunset:jobs:mechanic:newCall",
+      "sunset:jobs:mechanic:applyRepair",
+      "sunset:jobs:trucker:startShift",
+      "sunset:jobs:trucker:teleportRig",
+      "sunset:jobs:trucker:openLaptop",
+      "sunset:client:languageChanged"
+    ],
+    "serverEvents": [
+      "sunset:jobs:syncTrailerStatus",
+      "sunset:diving:boatSpawned",
+      "sunset:diving:reportO2",
+      "sunset:diving:returnBoat",
+      "sunset:diving:abandonContract",
+      "sunset:hunting:reportAnimalDead",
+      "sunset:hunting:registerAnimal",
+      "sunset:hunting:updateAnimalPos"
+    ],
+    "serverCallbacks": [
+      "sunset:jobs:getPanelData",
+      "sunset:jobs:getSkills",
+      "sunset:jobs:cancelWork",
+      "sunset:jobs:registerVehicle",
+      "sunset:jobs:vehicleLost",
+      "sunset:jobs:recoverTrailer",
+      "sunset:jobs:registerTrailer",
+      "sunset:jobs:trailerDestroyed",
+      "sunset:jobs:courier:start",
+      "sunset:jobs:courier:pickupWarehousePackage",
+      "sunset:jobs:courier:loadPackageIntoVan",
+      "sunset:jobs:courier:deliver",
+      "sunset:jobs:diver:getContracts",
+      "sunset:jobs:diver:startContract",
+      "sunset:jobs:diver:rentGear",
+      "sunset:jobs:diver:rentBoat",
+      "sunset:jobs:diver:beginSalvage",
+      "sunset:jobs:diver:completeSalvage",
+      "sunset:jobs:diver:sell",
+      "sunset:jobs:diver:start",
+      "sunset:jobs:diver:endShift",
+      "sunset:jobs:diver:handoff",
+      "sunset:jobs:fisherman:bagStatus",
+      "sunset:jobs:fisherman:start",
+      "sunset:jobs:fisherman:catch",
+      "sunset:jobs:fisherman:cast",
+      "sunset:jobs:fisherman:reel",
+      "sunset:jobs:fisherman:miss",
+      "sunset:jobs:fisherman:sell",
+      "sunset:jobs:fisherman:endShift",
+      "sunset:jobs:garbage:start",
+      "sunset:jobs:garbage:pickupBin",
+      "sunset:jobs:garbage:dumpBin",
+      "sunset:jobs:garbage:unload",
+      "sunset:jobs:hunter:sellHarvest",
+      "sunset:jobs:hunter:start",
+      "sunset:jobs:hunter:getContracts",
+      "sunset:jobs:hunter:startContract",
+      "sunset:jobs:hunter:inspectCarcass",
+      "sunset:jobs:hunter:harvest",
+      "sunset:jobs:hunter:endShift",
+      "sunset:jobs:hunter:track",
+      "sunset:jobs:getJobCenterJobs",
+      "sunset:hireJob",
+      "sunset:quitCivilianJob",
+      "sunset:jobs:mechanic:start",
+      "sunset:jobs:mechanic:acceptCall",
+      "sunset:jobs:mechanic:repair",
+      "sunset:jobs:mechanic:endShift",
+      "sunset:jobs:trucker:getNpcMenu",
+      "sunset:jobs:trucker:getRank",
+      "sunset:jobs:trucker:getRoutes",
+      "sunset:jobs:trucker:start",
+      "sunset:jobs:trucker:startShift",
+      "sunset:jobs:trucker:atPickup",
+      "sunset:jobs:trucker:deliver",
+      "sunset:jobs:trucker:returnDepot",
+      "sunset:jobs:getWorkplaceState",
+      "sunset:jobs:workplaceApply",
+      "sunset:jobs:workplaceQuit",
+      "sunset:jobs:workplaceStopShift"
+    ],
+    "commands": [
+      "jobs",
+      "work",
+      "jobhelp",
+      "skills",
+      "fish",
+      "fishdebug",
+      "sw",
+      "stopwork",
+      "quitjob",
+      "truckroute",
+      "recovertrailer",
+      "setjob",
+      "setfaction",
+      "aaddroute",
+      "alistroutes",
+      "adelroute",
+      "tptruck",
+      "trucktp"
+    ],
+    "stateBags": [
+      "isEmployed",
+      "requirementsMet",
+      "requirementError",
+      "onShift",
+      "sunsetProtectedVehicle"
+    ],
+    "exports": [
+      "IsFishermanShiftActive",
+      "StartTrucker",
+      "DrawTruckerDeliveryPreview",
+      "DrawTruckerParkingBayPreview",
+      "DrawTruckerPickupPreview",
+      "DrawGarbageBinPreview",
+      "GetGroundCoords",
+      "CancelSession",
+      "PayReward",
+      "AddJobXP",
+      "GetJobLevel",
+      "GetSessionSnapshot",
+      "HireCivilianJob",
+      "ExecutePlayerCommand",
+      "GetMechanicProviders",
+      "GetRoutes",
+      "GetRouteById",
+      "SaveRoutes",
+      "ReloadRoutes"
+    ],
+    "dbTables": [
+      "being",
+      "one",
+      "the",
+      "pallet",
+      "rear",
+      "current",
+      "terry",
+      "server",
+      "contract",
+      "workplaces",
+      "session",
+      "route",
+      "zone",
+      "client",
+      "north",
+      "previous",
+      "each",
+      "far",
+      "active",
+      "job_progress",
+      "truck",
+      "anywhere",
+      "clearsession",
+      "starting",
+      "character_inventory",
+      "characters",
+      "money_transactions",
+      "joaat",
+      "config",
+      "metadata",
+      "animal",
+      "player",
+      "rate",
+      "last",
+      "owning",
+      "teleporting",
+      "for",
+      "src",
+      "per",
+      "accounts",
+      "jobs_config",
+      "canonical",
+      "cache",
+      "level",
+      "laptop",
+      "sunsetjobs_payreward",
+      "sunsetlicenses",
+      "another"
+    ],
+    "loops": {
+      "wait0": 17,
+      "waitShort": 7,
+      "waitMedium": 23,
+      "waitLong": 19
+    }
+  },
+  {
+    "name": "sunset_licenses",
+    "isSunset": true,
+    "fileCount": 12,
+    "totalSizeKb": 169,
+    "clientScripts": [
+      "client/enforcement.lua",
+      "client/main.lua",
+      "client/quiz.lua",
+      "client/test_hud.lua",
+      "client/tests.lua"
+    ],
+    "serverScripts": [
+      "server/admin.lua",
+      "server/main.lua",
+      "server/reviews.lua",
+      "server/tests.lua",
+      "server/theory_answers.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:combat:resyncPed",
+      "sunset:client:languageChanged",
+      "sunset:licenses:beginPractical",
+      "sunset:licenses:testAbort",
+      "sunset:licenses:testComplete",
+      "sunset:licenses:refresh",
+      "sunset:licenses:weaponProgress",
+      "sunset:licenses:giveHuntingWeapon",
+      "sunset:licenses:removeHuntingWeapon",
+      "sunset:licenses:huntingProgress",
+      "sunset:licenses:huntingMistake",
+      "sunset:licenses:huntingAllDown"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:license:has",
+      "sunset:license:getStatus",
+      "sunset:license:getExamOffer",
+      "sunset:license:startTheory",
+      "sunset:license:gradeTheoryAnswer",
+      "sunset:license:submitTheory",
+      "sunset:license:abortTest",
+      "sunset:license:completePractical",
+      "sunset:license:registerTestVehicle",
+      "sunset:license:validateCheckpoint",
+      "sunset:license:registerWeaponTargets",
+      "sunset:license:claimWeaponTargetHit",
+      "sunset:license:validateFinish",
+      "sunset:license:startHuntingExam"
+    ],
+    "commands": [
+      "givelicense",
+      "agivelicense",
+      "revokelicense",
+      "achecklicenses",
+      "issuelicense",
+      "lssimark",
+      "lssiunmark",
+      "lssireviews",
+      "lssireport",
+      "lssireview",
+      "lssiperformance"
+    ],
+    "stateBags": [
+      "msg",
+      "at",
+      "engineOn",
+      "seatbelt",
+      "lightMode"
+    ],
+    "exports": [
+      "HasLicense",
+      "IsInLicenseTest",
+      "IsInLocalTest",
+      "OpenTheoryQuiz",
+      "CloseTheoryQuiz",
+      "StartPracticalTest",
+      "CleanupPracticalTest",
+      "ExecutePlayerCommand",
+      "GetLicenseRows",
+      "GrantLicense",
+      "RevokeLicense",
+      "RevokeLicenseByCharacterId",
+      "GetLicenses",
+      "AssessInstructorPromotion"
+    ],
+    "dbTables": [
+      "sunset_sessions",
+      "character_licenses",
+      "the",
+      "getentityhealth",
+      "issued_at",
+      "lssi_exam_reports",
+      "faction_audit_log",
+      "characters",
+      "player",
+      "theory",
+      "sunset"
+    ],
+    "loops": {
+      "wait0": 3,
+      "waitShort": 2,
+      "waitMedium": 6,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_loadscreen",
+    "isSunset": true,
+    "fileCount": 22,
+    "totalSizeKb": 663,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 1,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_luckywheel",
+    "isSunset": true,
+    "fileCount": 26,
+    "totalSizeKb": 20866,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [
+      "server.lua"
+    ],
+    "sharedScripts": [
+      "config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:luckywheel:doRoll"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "casino_wheel_cooldown",
+      "next_at",
+      "the"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 3,
+      "waitMedium": 1,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "sunset_marriage",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 14,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:marriage:proposalReceived"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:marriage:propose",
+      "sunset:marriage:respond",
+      "sunset:marriage:divorce",
+      "sunset:marriage:status"
+    ],
+    "commands": [
+      "propose",
+      "divorce",
+      "marriage"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "marriages"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_menu",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 26,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getMenuData"
+    ],
+    "commands": [
+      "sunset_menu",
+      "chatsettings",
+      "stats",
+      "sunset_menu_close"
+    ],
+    "stateBags": [],
+    "exports": [
+      "OpenVehicle",
+      "IsMenuOpen",
+      "CloseMenu"
+    ],
+    "dbTables": [
+      "the",
+      "properties",
+      "vehicles",
+      "job_progress"
+    ],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 2,
+      "waitMedium": 11,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_missions",
+    "isSunset": true,
+    "fileCount": 22,
+    "totalSizeKb": 726,
+    "clientScripts": [
+      "client/ai.lua",
+      "client/entities.lua",
+      "client/main.lua",
+      "client/nui.lua",
+      "client/runtime.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua",
+      "server/reputation.lua",
+      "server/rewards.lua",
+      "server/sessions.lua",
+      "server/stages.lua",
+      "server/validator.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/contacts.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 6,
+    "clientEvents": [
+      "sunset:missions:complete"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:missions:accept",
+      "sunset:missions:setStage",
+      "sunset:missions:vr:vehicleEntered",
+      "sunset:missions:vr:deliver",
+      "sunset:missions:c47:identify",
+      "sunset:missions:c47:updateAlert",
+      "sunset:missions:c47:deliver",
+      "sunset:missions:abandon",
+      "sunset:missions:getStats",
+      "sunset:missions:getCooldowns"
+    ],
+    "commands": [
+      "abandonmission",
+      "cancelmission"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "slot",
+      "server",
+      "the",
+      "sunset_mission_reputation",
+      "reputation",
+      "last_mission",
+      "sunset_mission_history",
+      "sunset_mission_cooldowns"
+    ],
+    "loops": {
+      "wait0": 8,
+      "waitShort": 4,
+      "waitMedium": 8,
+      "waitLong": 8
+    }
+  },
+  {
+    "name": "sunset_needs",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 3,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [
+      "sunset:server:needsTick"
+    ],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "sunset_panel_bridge",
+    "isSunset": true,
+    "fileCount": 2,
+    "totalSizeKb": 31,
+    "clientScripts": [],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [
+      "IsAccountOnline",
+      "GetLiveServerStats"
+    ],
+    "dbTables": [
+      "mariadb",
+      "players",
+      "characters",
+      "faction_leaders",
+      "clan_members",
+      "clans",
+      "accounts",
+      "bans",
+      "admin_sanctions",
+      "faction_audit_log",
+      "faction_warnings",
+      "faction_punish",
+      "clan_audit_log",
+      "panel_action_queue",
+      "panel_audit_log",
+      "panel_runtime_snapshot",
+      "player_count"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_pass",
+    "isSunset": true,
+    "fileCount": 7,
+    "totalSizeKb": 57,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 3,
+    "clientEvents": [
+      "sunset:pass:refresh"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:pass:getData",
+      "sunset:pass:claim",
+      "sunset:pass:buyPremium"
+    ],
+    "commands": [
+      "pass",
+      "battlepass",
+      "missions"
+    ],
+    "stateBags": [
+      "tab",
+      "data"
+    ],
+    "exports": [
+      "OpenPass",
+      "ClosePass",
+      "AddMissionProgress"
+    ],
+    "dbTables": [
+      "character_pass_progress",
+      "information_schema",
+      "robbery",
+      "sunset_economy"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_phone",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 33,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:phoneNewMessage",
+      "sunset:client:phoneMessage"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getPhoneData",
+      "sunset:phoneAddContact",
+      "sunset:phoneDeleteContact",
+      "sunset:phoneSend",
+      "sunset:phoneHasAvatar",
+      "sunset:phoneSaveAvatar"
+    ],
+    "commands": [
+      "phone"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsPhoneOpen",
+      "Open",
+      "Close",
+      "IsOpen"
+    ],
+    "dbTables": [
+      "another",
+      "nui",
+      "characters",
+      "phone_messages",
+      "phone_contacts",
+      "contact_name",
+      "other"
+    ],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 3,
+      "waitMedium": 6,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_player",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 2,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:updateCharacter",
+      "sunset:client:heal"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_police_handling",
+    "isSunset": true,
+    "fileCount": 2,
+    "totalSizeKb": 21,
+    "clientScripts": [],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_profile_media",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 6,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset_profile_media:client:captureAvatar",
+      "sunset_profile_media:client:captureVehicle"
+    ],
+    "serverEvents": [
+      "sunset_core:server:characterLoaded"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "refreshavatar"
+    ],
+    "stateBags": [],
+    "exports": [
+      "RequestAvatarCapture",
+      "RequestVehicleCapture"
+    ],
+    "dbTables": [
+      "characters",
+      "panel_player_media",
+      "panel_vehicle_media"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_properties",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 70,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:respawn",
+      "sunset:death:forceHospital",
+      "sunset:client:propertyDelta",
+      "sunset:client:propertiesVersion",
+      "sunset:client:propertiesChanged",
+      "sunset:client:propertyMessage",
+      "sunset:client:propertyInterior",
+      "sunset:client:propertyExited"
+    ],
+    "serverEvents": [
+      "sunset:server:exitProperty"
+    ],
+    "serverCallbacks": [
+      "sunset:getProperties",
+      "sunset:getPropertiesPage",
+      "sunset:getSpawnHomes",
+      "sunset:resolveSpawnChoice",
+      "sunset:resolveAutoSpawn",
+      "sunset:buyProperty",
+      "sunset:rentProperty",
+      "sunset:leaveRental",
+      "sunset:setHome",
+      "sunset:enterProperty",
+      "sunset:getPropertyMeta",
+      "sunset:getPropertyRenters",
+      "sunset:propertyAction"
+    ],
+    "commands": [
+      "sethome",
+      "properties",
+      "house",
+      "houses",
+      "myhouse"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsPanelOpen",
+      "GetCachedProperties",
+      "GetCachedMeta",
+      "IsInsideProperty",
+      "GetInsideProperty",
+      "CanAccessWardrobe",
+      "ResolveSpawnChoice",
+      "ResolveAutoSpawn",
+      "TransferPropertyOwnership",
+      "GetMaxOwnedPerCharacter",
+      "LeaveProperty",
+      "ProcessRentPayday",
+      "ExecutePlayerCommand"
+    ],
+    "dbTables": [
+      "the",
+      "inside",
+      "property_rentals",
+      "properties",
+      "characters",
+      "property_id"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 4,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_quests",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 26,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/chains.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:quests:objectiveComplete"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:quests:list",
+      "sunset:quests:claim"
+    ],
+    "commands": [
+      "quests"
+    ],
+    "stateBags": [],
+    "exports": [
+      "StartQuest",
+      "AddProgress",
+      "CompleteObjective",
+      "IsQuestComplete",
+      "GetProgress",
+      "ClaimReward"
+    ],
+    "dbTables": [
+      "character_quests",
+      "quest",
+      "the"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 0,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_racing",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 50,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:languageChanged",
+      "sunset:racing:start",
+      "sunset:racing:countdown",
+      "sunset:racing:go",
+      "sunset:racing:checkpointReached",
+      "sunset:racing:finished",
+      "sunset:racing:dnf",
+      "sunset:racing:end",
+      "sunset:racing:freeze"
+    ],
+    "serverEvents": [
+      "sunset:racing:checkpoint"
+    ],
+    "serverCallbacks": [
+      "sunset:racing:startSolo",
+      "sunset:racing:join",
+      "sunset:racing:leave",
+      "sunset:racing:startMulti",
+      "sunset:racing:status",
+      "sunset:racing:quit"
+    ],
+    "commands": [
+      "quitrace",
+      "cancelrace"
+    ],
+    "stateBags": [],
+    "exports": [
+      "IsRaceActive",
+      "CancelRace",
+      "CancelPlayerRace",
+      "StartRaceNight",
+      "EndRaceNight",
+      "IsRaceNightActive",
+      "GetRaceNightPoints",
+      "GetTestSnapshot"
+    ],
+    "dbTables": [
+      "blips",
+      "rejected",
+      "lobby",
+      "race",
+      "hub",
+      "docks"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 4
+    }
+  },
+  {
+    "name": "sunset_robbery",
+    "isSunset": true,
+    "fileCount": 14,
+    "totalSizeKb": 137,
+    "clientScripts": [
+      "client/animations.lua",
+      "client/main.lua",
+      "client/nui.lua",
+      "client/world.lua"
+    ],
+    "serverScripts": [
+      "server/adapter.lua",
+      "server/loot.lua",
+      "server/main.lua",
+      "server/police.lua",
+      "server/sessions.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 3,
+    "clientEvents": [
+      "sunset:robbery:tryCommand",
+      "sunset:robbery:started",
+      "sunset:robbery:hackResult",
+      "sunset:robbery:hackOpenUi",
+      "sunset:robbery:hackProgress",
+      "sunset:robbery:displayLoot",
+      "sunset:robbery:itemTaken",
+      "sunset:robbery:hud",
+      "sunset:robbery:escaping",
+      "sunset:robbery:alarm",
+      "sunset:robbery:ended",
+      "sunset:robbery:policePing",
+      "sunset:robbery:doorState",
+      "sunset:client:playerSpawned"
+    ],
+    "serverEvents": [
+      "sunset:robbery:tryStart",
+      "sunset:robbery:hackOpen",
+      "sunset:robbery:hackClick",
+      "sunset:robbery:smash",
+      "sunset:robbery:takeItem",
+      "sunset:robbery:leaveStore",
+      "sunset:robbery:escaped"
+    ],
+    "serverCallbacks": [
+      "sunset:robbery:doorSync",
+      "sunset:robbery:start",
+      "sunset:robbery:fencePreview",
+      "sunset:robbery:fenceSell"
+    ],
+    "commands": [
+      "robdoor",
+      "testvault",
+      "rob",
+      "robdebug"
+    ],
+    "stateBags": [],
+    "exports": [
+      "ExecutePlayerCommand",
+      "GetTestSnapshot",
+      "GetDoorSnapshot"
+    ],
+    "dbTables": [
+      "the",
+      "place",
+      "config",
+      "robbery_cooldowns",
+      "expires_at",
+      "robbery_audit",
+      "robbery_runs",
+      "looting",
+      "sunset_sessions",
+      "robberysessions",
+      "sync"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 2,
+      "waitMedium": 1,
+      "waitLong": 5
+    }
+  },
+  {
+    "name": "sunset_roulette",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 71,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [
+      "server.lua"
+    ],
+    "sharedScripts": [
+      "config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "dc-casino:roulette:client:syncChairs",
+      "dc-casino:roulette:client:startBetting",
+      "dc-casino:roulette:client:startRoulette",
+      "sunset:roulette:cb:resp",
+      "sunset:roulette:cb:req"
+    ],
+    "serverEvents": [
+      "dc-casino:roulette:server:syncChairs",
+      "dc-casino:roulette:server:enterTable"
+    ],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 7,
+      "waitShort": 2,
+      "waitMedium": 1,
+      "waitLong": 7
+    }
+  },
+  {
+    "name": "sunset_scoreboard",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 7,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getScoreboard"
+    ],
+    "commands": [
+      "+sunset_playerlist",
+      "-sunset_playerlist"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_sessions",
+    "isSunset": true,
+    "fileCount": 3,
+    "totalSizeKb": 22,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:sessions:started",
+      "sunset:sessions:stateChanged",
+      "sunset:sessions:ended"
+    ],
+    "serverEvents": [
+      "sunset:sessions:resetRoutingBucket"
+    ],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [
+      "TrackEntity",
+      "TrackBlip",
+      "TrackCheckpoint",
+      "SetActiveSession",
+      "EmergencyCleanup",
+      "RegisterActivity",
+      "CreateSession",
+      "GetSession",
+      "GetSessionBySource",
+      "Transition",
+      "CancelSession",
+      "EndSession",
+      "MarkRewardPending",
+      "CommitReward",
+      "FailReward",
+      "SetEntity",
+      "ResolveEntity",
+      "ListSessions"
+    ],
+    "dbTables": [
+      "the",
+      "another"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 2
+    }
+  },
+  {
+    "name": "sunset_skins",
+    "isSunset": true,
+    "fileCount": 7,
+    "totalSizeKb": 36,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 3,
+    "clientEvents": [
+      "sunset:skins:applyModel",
+      "sunset:skins:notify"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "skins:getAll",
+      "skins:buy",
+      "skins:equip"
+    ],
+    "commands": [
+      "skins",
+      "myskins",
+      "giveskin",
+      "setskin"
+    ],
+    "stateBags": [
+      "isSpawning"
+    ],
+    "exports": [],
+    "dbTables": [
+      "home",
+      "player_skins",
+      "sql",
+      "sunset_pass"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 1,
+      "waitMedium": 1,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_slots",
+    "isSunset": true,
+    "fileCount": 29,
+    "totalSizeKb": 458,
+    "clientScripts": [
+      "client.lua"
+    ],
+    "serverScripts": [
+      "server.lua",
+      "server_config.lua"
+    ],
+    "sharedScripts": [
+      "config.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 21,
+    "clientEvents": [
+      "sunset_slots:unsit"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:slots:tryPlay",
+      "sunset:slots:spin",
+      "sunset:slots:collect",
+      "sunset:slots:gamble",
+      "sunset:slots:exit",
+      "sunset:slots:getPlace"
+    ],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "the",
+      "inside",
+      "then",
+      "slotsserver",
+      "inventory",
+      "one"
+    ],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 2,
+      "waitMedium": 3,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_spawn",
+    "isSunset": true,
+    "fileCount": 2,
+    "totalSizeKb": 14,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:prepareSpawnAck"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [],
+    "loops": {
+      "wait0": 1,
+      "waitShort": 3,
+      "waitMedium": 2,
+      "waitLong": 0
+    }
+  },
+  {
+    "name": "sunset_taxi",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 59,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/locations.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:taxiMeterUpdate",
+      "sunset:client:taxiRefresh",
+      "sunset:client:taxiNewOffer",
+      "sunset:client:taxiRideTaken",
+      "sunset:client:taxiRideAccepted",
+      "sunset:client:taxiRideInProgress",
+      "sunset:client:taxiRideEnded"
+    ],
+    "serverEvents": [],
+    "serverCallbacks": [
+      "sunset:getTaxiAppData",
+      "sunset:taxiEstimate",
+      "sunset:taxiEstimateCoords",
+      "sunset:taxiRequestRide",
+      "sunset:taxiRequestRideCoords",
+      "sunset:taxiAcceptRide",
+      "sunset:taxiCancelRide",
+      "sunset:taxiPickupPassenger",
+      "sunset:taxiCompleteRide",
+      "sunset:taxiSetAvailable",
+      "sunset:taxiTip"
+    ],
+    "commands": [],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "sunset_sessions",
+      "fare",
+      "societies",
+      "taxi_rides",
+      "the",
+      "local",
+      "then"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_test_agent",
+    "isSunset": true,
+    "fileCount": 16,
+    "totalSizeKb": 122,
+    "clientScripts": [
+      "client/log.lua",
+      "client/main.lua",
+      "client/nui_debug.lua",
+      "client/rpc.lua",
+      "client/tools.lua"
+    ],
+    "serverScripts": [
+      "server/auth.lua",
+      "server/commands.lua",
+      "server/domains.lua",
+      "server/http.lua",
+      "server/log.lua",
+      "server/main.lua",
+      "server/rpc.lua",
+      "server/tools.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:testagent:rpc"
+    ],
+    "serverEvents": [
+      "sunset:testagent:rpcResult"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "testagent_selftest",
+      "testagent",
+      "testshot"
+    ],
+    "stateBags": [
+      "instrumented",
+      "focus",
+      "currentScreen",
+      "openPanels",
+      "lastMessage"
+    ],
+    "exports": [
+      "IsTestAgentClient",
+      "IsEnabled",
+      "GetTestPlayer"
+    ],
+    "dbTables": [
+      "the",
+      "convar",
+      "chat",
+      "vehicles",
+      "clan_members",
+      "properties",
+      "there",
+      "resources",
+      "wrong",
+      "characters",
+      "robbery_runs",
+      "robbery_cooldowns"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 2,
+      "waitMedium": 2,
+      "waitLong": 6
+    }
+  },
+  {
+    "name": "sunset_testdriver",
+    "isSunset": true,
+    "fileCount": 2,
+    "totalSizeKb": 13,
+    "clientScripts": [],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [],
+    "serverEvents": [],
+    "serverCallbacks": [],
+    "commands": [
+      "integrity",
+      "sessiontest",
+      "smoketest",
+      "testall"
+    ],
+    "stateBags": [],
+    "exports": [],
+    "dbTables": [
+      "characters",
+      "vehicles",
+      "character_inventory",
+      "container_inventory",
+      "properties",
+      "player_businesses",
+      "turfs",
+      "clans",
+      "payday_runs",
+      "money_transactions"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 0,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_tuning",
+    "isSunset": true,
+    "fileCount": 28,
+    "totalSizeKb": 338,
+    "clientScripts": [
+      "client/apply.lua",
+      "client/baseline.lua",
+      "client/bootstrap.lua",
+      "client/cosmetics.lua",
+      "client/diagnostics.lua",
+      "client/dyno.lua",
+      "client/effects.lua",
+      "client/exhaust_ptfx.lua",
+      "client/lsc_menu.lua",
+      "client/main.lua",
+      "client/nitrous.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua",
+      "shared/profile_resolver.lua",
+      "shared/tune_calculator.lua",
+      "shared/tune_validator.lua",
+      "shared/vehicle_profiles.lua"
+    ],
+    "hasNui": true,
+    "nuiFileCount": 9,
+    "clientEvents": [
+      "sunset:tuning:client:applyByPlate",
+      "sunset:tuning:client:loadPlateTune",
+      "sunset:tuning:client:exhaustFx",
+      "sunset:client:languageChanged",
+      "sunset:client:spawnOwnedVehicle",
+      "sunset:tuning:client:nosState"
+    ],
+    "serverEvents": [
+      "sunset:tuning:flashApplied",
+      "sunset:tuning:syncExhaustFx",
+      "sunset:tuning:syncNosState"
+    ],
+    "serverCallbacks": [
+      "sunset:tuning:getTune",
+      "sunset:tuning:saveTune",
+      "sunset:tuning:getInstallQuote",
+      "sunset:tuning:beginDyno",
+      "sunset:tuning:cancelDyno",
+      "sunset:tuning:finishDyno",
+      "sunset:tuning:getLeaderboard"
+    ],
+    "commands": [
+      "ecudebug",
+      "exhaustdebug",
+      "+nitrous",
+      "-nitrous",
+      "refillnos"
+    ],
+    "stateBags": [
+      "tune",
+      "calculated",
+      "mult",
+      "caps"
+    ],
+    "exports": [
+      "ApplyTune",
+      "GetTuneForPlate",
+      "ExportTuneForStore",
+      "FormatVehicleInfo",
+      "GetVehicleCapabilities",
+      "CaptureModelBaseline",
+      "ReadCosmeticsFromVehicle",
+      "ApplyCosmetics",
+      "OpenLsCustomsMenu",
+      "OpenTuningPanel",
+      "RefillNitrous",
+      "GetNitrousHudState",
+      "GetVehicleTuningInfo"
+    ],
+    "dbTables": [
+      "entity",
+      "vehicles",
+      "baseline",
+      "factory"
+    ],
+    "loops": {
+      "wait0": 6,
+      "waitShort": 2,
+      "waitMedium": 9,
+      "waitLong": 5
+    }
+  },
+  {
+    "name": "sunset_turfs",
+    "isSunset": true,
+    "fileCount": 4,
+    "totalSizeKb": 97,
+    "clientScripts": [
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:turfs:syncAll",
+      "sunset:turfs:warStart",
+      "sunset:turfs:warTick",
+      "sunset:turfs:warEnd",
+      "sunset:turfs:warJoined",
+      "sunset:turfs:grantLoadout",
+      "sunset:turfs:doWarRespawn",
+      "sunset:turfs:teleport",
+      "sunset:turfs:warKill",
+      "sunset:turfs:openMap"
+    ],
+    "serverEvents": [
+      "sunset:turfs:requestSync"
+    ],
+    "serverCallbacks": [
+      "sunset:turfs:savePolygon",
+      "sunset:turfs:saveConnections",
+      "sunset:turfs:getAllTurfsData",
+      "sunset:turfs:armoryData",
+      "sunset:turfs:takeLoadout",
+      "sunset:turfs:warRespawn",
+      "sunset:turfs:warState",
+      "sunset:turfs:warScoreboard"
+    ],
+    "commands": [
+      "turfdebug",
+      "turfedit",
+      "editturf",
+      "armory",
+      "armurie",
+      "turfs",
+      "attackturf",
+      "atac",
+      "intervene",
+      "turflist",
+      "gototurf",
+      "forceturf",
+      "stopwar",
+      "resetturfcd"
+    ],
+    "stateBags": [
+      "sunsetClanId",
+      "clanTag",
+      "turfId",
+      "turfName",
+      "attackerName",
+      "defenderName",
+      "attackerScore",
+      "defenderScore",
+      "scoreTarget",
+      "remainingSec"
+    ],
+    "exports": [
+      "IsInWar",
+      "OpenTurfMap",
+      "CloseTurfMap",
+      "RunChatCommand",
+      "ExecutePlayerCommand"
+    ],
+    "dbTables": [
+      "the",
+      "clan_members",
+      "clans",
+      "turfs",
+      "turf_connections",
+      "sunset_death",
+      "normalized",
+      "turf_points",
+      "centroid"
+    ],
+    "loops": {
+      "wait0": 2,
+      "waitShort": 0,
+      "waitMedium": 6,
+      "waitLong": 13
+    }
+  },
+  {
+    "name": "sunset_ui",
+    "isSunset": true,
+    "fileCount": 281,
+    "totalSizeKb": 4919,
+    "clientScripts": [
+      "client/main.lua",
+      "client/nui_bridge.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [],
+    "hasNui": true,
+    "nuiFileCount": 277,
+    "clientEvents": [
+      "sunset_ui:client:nuiStats",
+      "sunset:client:notify",
+      "sunset:ui:policeOrder",
+      "sunset:ui:announcement",
+      "sunset:ui:ticketReceive",
+      "sunset:ui:serviceCalls",
+      "sunset:ui:jobs",
+      "sunset:ui:skills",
+      "sunset:ui:help",
+      "sunset:ui:jobObjective",
+      "sunset:ui:taxiMeter",
+      "sunset:ui:radarAlert"
+    ],
+    "serverEvents": [
+      "sunset:server:nuiError"
+    ],
+    "serverCallbacks": [],
+    "commands": [
+      "fixnui",
+      "cursor",
+      "nuistats"
+    ],
+    "stateBags": [
+      "vehicles",
+      "selected",
+      "admin",
+      "testDriveSeconds",
+      "money",
+      "dealership",
+      "currentSpeed",
+      "targetSpeed",
+      "targetRpm",
+      "currentRpm",
+      "currentFuel",
+      "targetFuel",
+      "currentHealth",
+      "targetHealth",
+      "currentNos",
+      "targetNos",
+      "engineOn",
+      "locked",
+      "seatbelt",
+      "odo",
+      "hasNos",
+      "nosActive",
+      "gear",
+      "patch",
+      "index",
+      "deadlineAt",
+      "answers",
+      "questions",
+      "licenseType",
+      "results",
+      "examFee",
+      "level",
+      "canBuy",
+      "rpNeed",
+      "price",
+      "reason",
+      "ghost",
+      "itemEl",
+      "badgeEl",
+      "pointerId",
+      "cash",
+      "moved",
+      "row",
+      "cell",
+      "startX",
+      "startY",
+      "dutyWeapon",
+      "actions",
+      "target",
+      "customTitle",
+      "titleKey",
+      "categories",
+      "activeCategory",
+      "items",
+      "qty",
+      "uiMode",
+      "maxQty",
+      "shopId",
+      "businessId",
+      "selectedRoute",
+      "activeDisplay",
+      "drawable",
+      "texture",
+      "maxDrawable",
+      "maxTexture",
+      "cartTotal",
+      "camera",
+      "itemName",
+      "hasChanges",
+      "isProp"
+    ],
+    "exports": [
+      "Show",
+      "Hide",
+      "SetFocus",
+      "GetFocusOwner",
+      "ReleaseFocusUnlessModal",
+      "GetNuiDebugState",
+      "GetNuiDebugHistory",
+      "GetNuiDebugErrors",
+      "Send",
+      "JobHud",
+      "JobHudResult",
+      "JobHudClear",
+      "ShowTransition",
+      "HideTransition",
+      "IsTransitionVisible",
+      "GetBootEpoch",
+      "HideHudChrome",
+      "ShowHudChrome",
+      "IsOpen",
+      "MarkGameplayEntered",
+      "Notify",
+      "ProgressBar"
+    ],
+    "dbTables": [
+      "the",
+      "being",
+      "hanging",
+      "sunset_admin",
+      "server",
+      "product",
+      "store",
+      "list",
+      "motd",
+      "disk",
+      "here",
+      "trade",
+      "bank",
+      "multiplayer",
+      "inventory",
+      "your",
+      "all",
+      "rent",
+      "factions",
+      "rank",
+      "paramedic",
+      "this",
+      "json",
+      "exports",
+      "department",
+      "officer",
+      "backup",
+      "radar",
+      "action",
+      "other",
+      "lua",
+      "svg",
+      "stats",
+      "debug"
+    ],
+    "loops": {
+      "wait0": 0,
+      "waitShort": 0,
+      "waitMedium": 1,
+      "waitLong": 1
+    }
+  },
+  {
+    "name": "sunset_vehicles",
+    "isSunset": true,
+    "fileCount": 5,
+    "totalSizeKb": 142,
+    "clientScripts": [
+      "client/fuel_pump.lua",
+      "client/main.lua"
+    ],
+    "serverScripts": [
+      "server/main.lua"
+    ],
+    "sharedScripts": [
+      "shared/vehicle_config.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:cleanupOwnedVehicles",
+      "sunset:client:spawnOwnedVehicle",
+      "sunset:client:garageMenu",
+      "sunset:client:storeVehicleRequest",
+      "sunset:client:useGasCan"
+    ],
+    "serverEvents": [
+      "sunset:server:vehicleDestroyed",
+      "sunset:vehicles:adminRepairDatabase"
+    ],
+    "serverCallbacks": [
+      "sunset:getVehicles",
+      "sunset:spawnVehicle",
+      "sunset:getVehicleById",
+      "sunset:storeVehicle",
+      "sunset:storeOwnedVehicle",
+      "sunset:claimVehicleInsurance",
+      "sunset:renewVehicleInsurance",
+      "sunset:getDrivenOwnedVehicleState",
+      "sunset:syncOwnedVehicleState",
+      "sunset:hasVehicleKeys",
+      "sunset:giveVehicleKeys",
+      "sunset:takeVehicleKeys",
+      "sunset:parkOwnedVehicle",
+      "sunset:getVehicleEntryInfo"
+    ],
+    "commands": [
+      "sunset_lock",
+      "lock",
+      "sunset_seatbelt",
+      "sunset_engine",
+      "sunset_lights",
+      "v",
+      "garage",
+      "givekeys",
+      "takekeys",
+      "park",
+      "givecar"
+    ],
+    "stateBags": [
+      "sunsetFactionVehicle"
+    ],
+    "exports": [
+      "GetVehicleTelemetry",
+      "GetVehicleState",
+      "IsPlateInWorld",
+      "IsProtectedVehicle",
+      "SetFuelLevel",
+      "GetFuelLevel",
+      "SetVehicleProp",
+      "EnrichVehicleRow",
+      "EnrichVehicleList",
+      "BuildVehicleEcuInfo",
+      "ClearKeysForPlate",
+      "ClearKeysForCharacter",
+      "ExecutePlayerCommand",
+      "TransferVehicleOwnership",
+      "GetVehicleById",
+      "DeleteVehicleEntity",
+      "SpawnVehicleAt",
+      "DeleteVehicleRecord"
+    ],
+    "dbTables": [
+      "this",
+      "any",
+      "dealership_vehicles",
+      "vehicles",
+      "the",
+      "client",
+      "below",
+      "matches",
+      "characters"
+    ],
+    "loops": {
+      "wait0": 4,
+      "waitShort": 4,
+      "waitMedium": 13,
+      "waitLong": 6
+    }
+  },
+  {
+    "name": "sunset_world",
+    "isSunset": true,
+    "fileCount": 14,
+    "totalSizeKb": 61,
+    "clientScripts": [
+      "client/business_npcs.lua",
+      "client/elevators.lua",
+      "client/fib_interior.lua",
+      "client/glue.lua",
+      "client/interaction.lua",
+      "client/main.lua",
+      "client/npc_lib.lua",
+      "client/stores_247.lua",
+      "client/world_tooltips.lua",
+      "client/zonemarker.lua"
+    ],
+    "serverScripts": [
+      "server/access.lua",
+      "server/glue_server.lua"
+    ],
+    "sharedScripts": [
+      "shared/faction.lua"
+    ],
+    "hasNui": false,
+    "nuiFileCount": 0,
+    "clientEvents": [
+      "sunset:client:glueApply",
+      "sunset:client:glueRemove",
+      "sunset:client:glueSyncAll",
+      "sunset:client:registerPropertyZones"
+    ],
+    "serverEvents": [
+      "sunset:server:glue",
+      "sunset:server:unglue",
+      "sunset:server:characterSpawned"
+    ],
+    "serverCallbacks": [
+      "sunset:world:canUseFactionLift"
+    ],
+    "commands": [
+      "glue",
+      "unglue",
+      "zonemark"
+    ],
+    "stateBags": [
+      "sunsetFaction"
+    ],
+    "exports": [
+      "NpcShowTooltip",
+      "NpcHideTooltip",
+      "TooltipCoordsFromEntity",
+      "TooltipSet",
+      "TooltipClear"
+    ],
+    "dbTables": [
+      "the",
+      "previous",
+      "point",
+      "sunset_fishingshop"
+    ],
+    "loops": {
+      "wait0": 9,
+      "waitShort": 1,
+      "waitMedium": 10,
+      "waitLong": 4
+    }
+  }
+]
