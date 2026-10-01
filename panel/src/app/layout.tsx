@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
+import { toViewerSessionDTO } from "@/lib/session-dto";
 import { getServerStatus } from "@/lib/bridge";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Header } from "@/components/navigation/Header";
@@ -28,6 +29,7 @@ export default async function RootLayout({
     getCurrentSession(),
     getServerStatus(),
   ]);
+  const viewerSession = toViewerSessionDTO(session);
 
   return (
     <html lang={locale} className="dark">
@@ -35,7 +37,7 @@ export default async function RootLayout({
         {/* Mobile Navigation */}
         <MobileNav
           locale={locale}
-          session={session}
+          session={viewerSession}
           serverOnline={serverStatus.online}
           playerCount={serverStatus.playerCount}
         />
@@ -44,7 +46,7 @@ export default async function RootLayout({
         <div className="hidden lg:flex flex-shrink-0">
           <Sidebar
             locale={locale}
-            session={session}
+            session={viewerSession}
             serverOnline={serverStatus.online}
             playerCount={serverStatus.playerCount}
           />
@@ -52,7 +54,7 @@ export default async function RootLayout({
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <Header locale={locale} session={session} />
+          <Header locale={locale} session={viewerSession} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             {children}
           </main>

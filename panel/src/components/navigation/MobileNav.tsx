@@ -29,12 +29,12 @@ import {
   FileText,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
-import { UserSession } from "@/lib/types";
+import { ViewerSessionDTO } from "@/lib/types";
 import { LanguageToggle } from "./LanguageToggle";
 
 interface MobileNavProps {
   locale: Locale;
-  session: UserSession | null;
+  session: ViewerSessionDTO | null;
   serverOnline: boolean;
   playerCount: number;
 }

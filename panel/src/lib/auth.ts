@@ -27,11 +27,8 @@ interface SessionDbRow extends RowDataPacket {
  * Validates against panel_web_sessions and joins accounts + active character.
  */
 export async function getCurrentSession(): Promise<UserSession | null> {
-  const cookieStore = await cookies();
-  const rawToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  if (!rawToken || rawToken.length < 32) return null;
-
-  const tokenHash = hashTokenSha256(rawToken);
+  const tokenHash = await getCurrentSessionTokenHash();
+  if (!tokenHash) return null;
 
   const row = await dbQuerySingle<SessionDbRow>(
     `SELECT 
@@ -110,14 +107,19 @@ export async function getCurrentSession(): Promise<UserSession | null> {
     helperLevel: Number(row.helper_level) || 0,
     selectedCharacterId: selectedCharId ? Number(selectedCharId) : null,
     selectedCharacterName: selectedCharName,
-    sessionToken: rawToken,
   };
+}
+
+/** Hashes the HttpOnly cookie server-side; never return its raw value in a session DTO. */
+export async function getCurrentSessionTokenHash(): Promise<string | null> {
+  const rawToken = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  return rawToken && rawToken.length >= 32 ? hashTokenSha256(rawToken) : null;
 }
 
 /**
  * Creates a new authenticated web session for the account.
  */
-export async function createSession(accountId: number): Promise<string> {
+export async function createSession(accountId: number): Promise<void> {
   const rawToken = generateRandomToken(32);
   const tokenHash = hashTokenSha256(rawToken);
 
@@ -160,7 +162,6 @@ export async function createSession(accountId: number): Promise<string> {
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
   });
 
-  return rawToken;
 }
 
 /**
@@ -207,7 +208,8 @@ export async function switchSelectedCharacter(
     return { success: false, error: "Character does not belong to this account" };
   }
 
-  const tokenHash = hashTokenSha256(session.sessionToken);
+  const tokenHash = await getCurrentSessionTokenHash();
+  if (!tokenHash) return { success: false, error: "Not logged in" };
   await dbExecute(
     "UPDATE panel_web_sessions SET selected_character_id = ? WHERE token_hash = ?",
     [characterId, tokenHash]

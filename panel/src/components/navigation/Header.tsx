@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { User, LogIn, ShieldAlert } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
-import { UserSession } from "@/lib/types";
+import { ViewerSessionDTO } from "@/lib/types";
 import { GlobalSearch } from "./GlobalSearch";
 import { LanguageToggle } from "./LanguageToggle";
 import { CharacterSwitcher } from "./CharacterSwitcher";
@@ -10,7 +10,7 @@ import { RowDataPacket } from "mysql2";
 
 interface HeaderProps {
   locale: Locale;
-  session: UserSession | null;
+  session: ViewerSessionDTO | null;
 }
 
 interface CharRow extends RowDataPacket {

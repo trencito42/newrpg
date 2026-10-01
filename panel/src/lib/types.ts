@@ -251,5 +251,15 @@ export interface UserSession {
   helperLevel: number;
   selectedCharacterId: number | null;
   selectedCharacterName: string | null;
-  sessionToken: string;
 }
+
+/** Only these fields may cross a Server Component → Client Component boundary. */
+export type ViewerSessionDTO = Pick<UserSession,
+  | "accountId"
+  | "username"
+  | "language"
+  | "adminLevel"
+  | "helperLevel"
+  | "selectedCharacterId"
+  | "selectedCharacterName"
+>;

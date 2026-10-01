@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentSession, getViewerLocale } from "@/lib/auth";
+import { getCurrentSession, getCurrentSessionTokenHash, getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
 import { t, formatDate, formatNumber } from "@/lib/i18n";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
@@ -34,6 +34,8 @@ export default async function AccountPage() {
   if (!session) {
     redirect("/login");
   }
+  const currentTokenHash = await getCurrentSessionTokenHash();
+  if (!currentTokenHash) redirect("/login");
 
   const locale = await getViewerLocale();
 
@@ -50,12 +52,12 @@ export default async function AccountPage() {
   // Load active sessions
   const sessions = await dbQuery<SessionRow>(
     `SELECT id, ip_address, user_agent, created_at, last_active_at,
-            (token_hash = SHA2(?, 256)) AS is_current
+            (token_hash = ?) AS is_current
      FROM panel_web_sessions
      WHERE account_id = ? AND revoked_at IS NULL AND expires_at > NOW()
      ORDER BY last_active_at DESC
      LIMIT 10`,
-    [session.sessionToken, session.accountId]
+    [currentTokenHash, session.accountId]
   );
 
   // Server Action to update language
@@ -80,12 +82,14 @@ export default async function AccountPage() {
     "use server";
     const curSession = await getCurrentSession();
     if (!curSession) return;
+    const curTokenHash = await getCurrentSessionTokenHash();
+    if (!curTokenHash) return;
 
     await dbExecute(
       `UPDATE panel_web_sessions 
        SET revoked_at = NOW() 
-       WHERE account_id = ? AND token_hash != SHA2(?, 256) AND revoked_at IS NULL`,
-      [curSession.accountId, curSession.sessionToken]
+       WHERE account_id = ? AND token_hash != ? AND revoked_at IS NULL`,
+      [curSession.accountId, curTokenHash]
     );
 
     revalidatePath("/account");

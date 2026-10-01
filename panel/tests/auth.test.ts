@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { UserSession } from "../src/lib/types";
+import { toViewerSessionDTO } from "../src/lib/session-dto";
 
 describe("Role-Based Access Control & Identity Checks", () => {
   const regularCitizen: UserSession = {
-    sessionToken: "sess_1",
     accountId: 10,
     username: "Dan_Popa",
     email: null,
@@ -16,7 +16,6 @@ describe("Role-Based Access Control & Identity Checks", () => {
 
   const helperUser: UserSession = {
     ...regularCitizen,
-    sessionToken: "sess_2",
     accountId: 11,
     username: "Helper_Alex",
     helperLevel: 2,
@@ -25,7 +24,6 @@ describe("Role-Based Access Control & Identity Checks", () => {
 
   const adminUser: UserSession = {
     ...regularCitizen,
-    sessionToken: "sess_3",
     accountId: 12,
     username: "Admin_Mihai",
     adminLevel: 4,
@@ -73,5 +71,21 @@ describe("Role-Based Access Control & Identity Checks", () => {
 
     // Senior admin viewing target account for support/investigation
     expect(canViewPrivateAccount(adminUser, 999)).toBe(true);
+  });
+
+  it("never serializes session credentials or private email into client props", () => {
+    const internal = {
+      ...regularCitizen,
+      sessionToken: "secret-session-sentinel",
+      tokenHash: "secret-hash-sentinel",
+      ipAddress: "private-ip-sentinel",
+      email: "private-email-sentinel@example.invalid",
+    } as UserSession;
+    const serialized = JSON.stringify(toViewerSessionDTO(internal));
+    expect(serialized).not.toContain("secret-session-sentinel");
+    expect(serialized).not.toContain("secret-hash-sentinel");
+    expect(serialized).not.toContain("private-ip-sentinel");
+    expect(serialized).not.toContain("private-email-sentinel");
+    expect(JSON.parse(serialized).username).toBe(regularCitizen.username);
   });
 });

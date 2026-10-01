@@ -1,15 +1,25 @@
-import mysql, { Pool, RowDataPacket, ResultSetHeader } from "mysql2/promise";
+import mysql, { Pool, ResultSetHeader } from "mysql2/promise";
 
 let pool: Pool | null = null;
 
+function requiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required database configuration: ${name}`);
+  return value;
+}
+
 export function getDbPool(): Pool {
   if (!pool) {
+    const port = Number(requiredEnv("DB_PORT"));
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new Error("Invalid database configuration: DB_PORT");
+    }
     pool = mysql.createPool({
-      host: process.env.DB_HOST || "127.0.0.1",
-      port: Number(process.env.DB_PORT || 3306),
-      user: process.env.DB_USER || "rpgblipmade",
-      password: process.env.DB_PASSWORD || "EEpGpEeWQ5ml5pNb9gZ2",
-      database: process.env.DB_NAME || "rpgblipmade",
+      host: requiredEnv("DB_HOST"),
+      port,
+      user: requiredEnv("DB_USER"),
+      password: requiredEnv("DB_PASSWORD"),
+      database: requiredEnv("DB_NAME"),
       waitForConnections: true,
       connectionLimit: 20,
       maxIdle: 10,
@@ -24,47 +34,28 @@ export function getDbPool(): Pool {
   return pool;
 }
 
-/**
- * Execute a parameterized SELECT query returning an array of typed rows.
- */
-export async function dbQuery<T = any>(
-  sql: string,
-  params: any[] = []
-): Promise<T[]> {
+/** Execute a parameterized SELECT query returning an array of typed rows. */
+export async function dbQuery<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   const p = getDbPool();
   const [rows] = await p.query<any[]>(sql, params);
   return rows as T[];
 }
 
-/**
- * Execute a parameterized SELECT query returning a single row or null.
- */
-export async function dbQuerySingle<T = any>(
-  sql: string,
-  params: any[] = []
-): Promise<T | null> {
+/** Execute a parameterized SELECT query returning a single row or null. */
+export async function dbQuerySingle<T = any>(sql: string, params: any[] = []): Promise<T | null> {
   const rows = await dbQuery<T>(sql, params);
   return rows.length > 0 ? rows[0] : null;
 }
 
-/**
- * Execute a parameterized INSERT/UPDATE/DELETE query.
- */
-export async function dbExecute(
-  sql: string,
-  params: any[] = []
-): Promise<ResultSetHeader> {
+/** Execute a parameterized INSERT/UPDATE/DELETE query. */
+export async function dbExecute(sql: string, params: any[] = []): Promise<ResultSetHeader> {
   const p = getDbPool();
   const [result] = await p.execute<ResultSetHeader>(sql, params);
   return result;
 }
 
-/**
- * Run a block of queries inside an atomic transaction.
- */
-export async function dbTransaction<T>(
-  callback: (connection: mysql.PoolConnection) => Promise<T>
-): Promise<T> {
+/** Run a block of queries inside an atomic transaction. */
+export async function dbTransaction<T>(callback: (connection: mysql.PoolConnection) => Promise<T>): Promise<T> {
   const p = getDbPool();
   const connection = await p.getConnection();
   try {
@@ -80,7 +71,6 @@ export async function dbTransaction<T>(
   }
 }
 
-// Aliases for unified query interface
 export const query = dbQuery;
 export const queryOne = dbQuerySingle;
 export const execute = dbExecute;
