@@ -5,6 +5,14 @@ local function notify(message, kind)
     TriggerEvent('sunset:client:notify', message, kind or 'info', 5000)
 end
 
+local function errorText(err, fallbackKey)
+    if type(err) == 'table' and type(err.localeKey) == 'string' then
+        return exports.sunset_core:Translate(err.localeKey, err.params or err.formatArgs)
+    end
+    if type(err) == 'string' and err ~= '' then return err end
+    return exports.sunset_core:Translate(fallbackKey)
+end
+
 local function send(action, data)
     SendNUIMessage({ action = action, data = data or {} })
 end
@@ -31,7 +39,7 @@ local function openPass(tab)
 
     local data, err = Sunset.AwaitCallback('sunset:pass:getData')
     if not data then
-        notify(err or 'Could not load Blaze Pass.', 'error')
+        notify(errorText(err, 'pass.message.load_failed'), 'error')
         return
     end
 
@@ -67,7 +75,7 @@ end)
 RegisterNUICallback('passClaim', function(data, cb)
     local result, err = Sunset.AwaitCallback('sunset:pass:claim', data)
     if not result then
-        notify(err or 'Could not claim reward.', 'error')
+        notify(errorText(err, 'pass.message.claim_failed'), 'error')
         cb({ ok = false })
         return
     end
@@ -78,7 +86,7 @@ end)
 RegisterNUICallback('passBuyPremium', function(_, cb)
     local result, err = Sunset.AwaitCallback('sunset:pass:buyPremium')
     if not result then
-        local message = (type(err) == 'string' and err ~= '') and err or 'Could not unlock premium pass.'
+        local message = errorText(err, 'pass.message.unlock_failed')
         notify(message, 'error')
         cb({ ok = false, error = message })
         return

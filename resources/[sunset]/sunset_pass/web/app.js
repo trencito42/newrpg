@@ -92,14 +92,14 @@ function updatePlayerStats(data) {
         if (data.premium) {
             premiumBox.innerHTML = `
                 <div style="text-align:center; color:var(--premium); font-weight:800; font-size:12px; letter-spacing:1px; padding:15px; background:rgba(184, 41, 255, 0.1); border:1px solid rgba(184, 41, 255, 0.3); border-radius:var(--radius-md);">
-                    ✔️ PREMIUM ACTIVAT
+                    ✔️ ${I18n.t('pass.premium_active')}
                 </div>`;
         } else {
             const costLabel = data.premiumCostLabel || `${data.premiumCost || 250} BP`;
             premiumBox.innerHTML = `
                 <button class="btn-upgrade" id="btn-upgrade" onclick="buyPremium()">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>
-                    <span>Cumpără Premium (${costLabel})</span>
+                    <span>${I18n.t('pass.buy_premium', { cost: costLabel })}</span>
                 </button>`;
         }
     }
@@ -108,7 +108,7 @@ function updatePlayerStats(data) {
 async function buyPremium() {
     const res = await post('passBuyPremium');
     if (res?.state) {
-        showNotify('Premium Activat!');
+        showNotify(I18n.t('pass.premium_activated'));
         renderAll(res.state);
         return;
     }
@@ -120,7 +120,7 @@ async function buyPremium() {
 async function claimBP(level, track) {
     const res = await post('passClaim', { level: Number(level), track });
     if (res?.state) {
-        showNotify(`Recompensă Nivel ${level} Colectată!`);
+        showNotify(I18n.t('pass.reward_claimed', { level }));
         renderAll(res.state);
     }
 }
@@ -157,9 +157,9 @@ function renderBattlepass(data) {
         let freeBtnHtml = '';
         if (tier.free) {
             if (tier.free.claimed) {
-                freeBtnHtml = `<button class="btn-claim claimed">Luat</button>`;
+                freeBtnHtml = `<button class="btn-claim claimed">${I18n.t('pass.claimed')}</button>`;
             } else if (currentTier >= tier.level) {
-                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">Revendică</button>`;
+                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">${I18n.t('pass.claim')}</button>`;
             }
         }
 
@@ -172,13 +172,13 @@ function renderBattlepass(data) {
                 premLockHtml = `
                     <div class="reward-locked-overlay">
                         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <span class="lock-text">LOCKED</span>
+                        <span class="lock-text">${I18n.t('pass.locked')}</span>
                     </div>`;
             } else {
                 if (tier.premium.claimed) {
-                    premBtnHtml = `<button class="btn-claim claimed">Luat</button>`;
+                    premBtnHtml = `<button class="btn-claim claimed">${I18n.t('pass.claimed')}</button>`;
                 } else if (currentTier >= tier.level) {
-                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">Revendică</button>`;
+                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">${I18n.t('pass.claim')}</button>`;
                 }
             }
         }
@@ -189,7 +189,7 @@ function renderBattlepass(data) {
         tierEl.innerHTML = `
             <!-- FREE REWARD (TOP) -->
             <div class="reward-card">
-                <span class="reward-type-label">FREE</span>
+                <span class="reward-type-label">${I18n.t('pass.free')}</span>
                 <div class="reward-icon">${rewardArt(tier.free)}</div>
                 <div class="reward-name">${tier.free ? tier.free.label : '—'}</div>
                 ${freeBtnHtml}
@@ -200,7 +200,7 @@ function renderBattlepass(data) {
 
             <!-- PREMIUM REWARD (BOTTOM) -->
             <div class="reward-card reward-premium">
-                <span class="reward-type-label label-premium">PREMIUM</span>
+                <span class="reward-type-label label-premium">${I18n.t('pass.premium')}</span>
                 ${premLockHtml}
                 <div class="reward-icon">${rewardArt(tier.premium)}</div>
                 <div class="reward-name">${tier.premium ? tier.premium.label : '—'}</div>
@@ -258,7 +258,7 @@ function renderMissions(data) {
                     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                     +${m.xp} XP
                 </span>
-                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${isDone ? 'COLECTAT' : 'ÎN CURS'}</button>
+                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${I18n.t(isDone ? 'pass.claimed' : 'pass.in_progress')}</button>
             </div>
         `;
 
@@ -274,11 +274,11 @@ function renderMissions(data) {
     });
 
     if (!dailyList.hasChildNodes()) {
-        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">Nu există misiuni zilnice active.</div>`;
+        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${I18n.t('pass.no_daily_missions')}</div>`;
     }
 
     if (!weeklyList.hasChildNodes()) {
-        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">Nu există misiuni săptămânale active.</div>`;
+        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${I18n.t('pass.no_weekly_missions')}</div>`;
     }
 }
 
@@ -288,6 +288,10 @@ function renderAll(data) {
     renderBattlepass(data);
     renderMissions(data);
 }
+
+window.addEventListener('sunset:localeChanged', () => {
+    if (state.data) renderAll(state.data);
+});
 
 function show(payload) {
     const wrapper = document.getElementById('bp-wrapper');
