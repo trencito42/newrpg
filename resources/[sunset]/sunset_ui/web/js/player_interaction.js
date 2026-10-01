@@ -92,16 +92,16 @@
     };
 
     const GROUP_CONFIG = {
-        CIVILIAN: { title: 'Player Actions' },
-        FACTION: { title: 'Faction Actions' },
-        POLICE: { title: 'Police Department' },
-        MEDICAL: { title: 'Medical Service' },
-        SERVICE: { title: 'Services' },
-        ADMIN: { title: 'Admin Panel' },
-        FISHING: { title: 'Fishing Actions' },
-        STORE: { title: 'Store' },
-        BUSINESS: { title: 'Business' },
-        CUSTOMS: { title: 'Vehicle Services' },
+        CIVILIAN: { titleKey: 'interaction.group_civilian' },
+        FACTION: { titleKey: 'interaction.group_faction' },
+        POLICE: { titleKey: 'interaction.group_police' },
+        MEDICAL: { titleKey: 'interaction.group_medical' },
+        SERVICE: { titleKey: 'interaction.group_service' },
+        ADMIN: { titleKey: 'interaction.group_admin' },
+        FISHING: { titleKey: 'interaction.group_fishing' },
+        STORE: { titleKey: 'interaction.group_store' },
+        BUSINESS: { titleKey: 'interaction.group_business' },
+        CUSTOMS: { titleKey: 'interaction.group_customs' },
     };
 
     function setProgress(progress) {
@@ -152,10 +152,10 @@
         const groups = [...new Set((actions || []).map((a) => a.group).filter(Boolean))];
         if (groups.length === 1) {
             const conf = GROUP_CONFIG[groups[0]];
-            if (conf) return conf.title;
+            if (conf) return I18n.t(conf.titleKey);
         }
-        if (target?.name) return `Actions - ${String(target.name).toUpperCase()}`;
-        return 'Player Actions';
+        if (target?.name) return I18n.t('interaction.actions_for', { name: String(target.name).toUpperCase() });
+        return I18n.t('interaction.group_civilian');
     }
 
     function hideInputPanel() {
@@ -258,7 +258,7 @@
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'pi-menu-item pi-menu-item--close';
-        closeBtn.innerHTML = `<span>Close</span>${ACTION_ICONS.close}`;
+        closeBtn.innerHTML = `<span>${I18n.t('interaction.close')}</span>${ACTION_ICONS.close}`;
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             postNui('playerInteractionClose');
@@ -380,6 +380,12 @@
         showPrompt,
         setProgress,
     };
+    window.addEventListener('sunset:localeChanged', () => {
+        if (!state || !screenMenuOpen) return;
+        if (menuTitleEl) menuTitleEl.textContent = deriveMenuTitle(state.target || {}, state.actions || [], state);
+        const closeLabel = menuItemsEl?.querySelector('.pi-menu-item--close span');
+        if (closeLabel) closeLabel.textContent = I18n.t('interaction.close');
+    });
     try {
         fetch(`https://${GetParentResourceName()}/nuiTrace`, {
             method: 'POST',
