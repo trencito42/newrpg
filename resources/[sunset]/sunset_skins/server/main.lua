@@ -93,17 +93,19 @@ exports.sunset_core:RegisterCallback('skins:buy', function(source, model, curren
     return { success = true }
 end)
 
--- Equip (switch active skin); saves to character metadata + triggers client model change
+-- Equip (switch active skin); saves to character metadata + updates player cache
 exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     local player = getPlayer(source)
     local char   = getCharacter(source)
     if not player or not char then return nil, { localeKey = 'skins.message.not_authenticated' } end
 
-    -- [SEC3] type/length validation + throttle (model was fed straight into SQL params / client SetPlayerModel)
+    -- [SEC3] type/length validation + throttle (model is sanitized for SQL/state)
     if model ~= nil and (type(model) ~= 'string' or #model > 64 or not model:match('^[%w_]*$')) then
-        return nil, { localeKey = 'skins.message.unknown_skin' }
+        return nil, { localeKey = 'skins.msg.invalid_skin_model', formatArgs = { model = tostring(model) } }
     end
-    if not exports.sunset_core:RateLimit(source, 'skinEquip', 1000) then return nil, { localeKey = 'skins.message.unknown_skin' } end
+    if not exports.sunset_core:RateLimit(source, 'skinEquip', 300) then
+        return nil, { localeKey = 'error.action_too_fast' }
+    end
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
 
     if not isReset then
@@ -111,7 +113,9 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
             'SELECT id FROM player_skins WHERE player_id = ? AND model = ?',
             { player.id, model }
         )
-        if not existing or #existing == 0 then return nil, { localeKey = 'skins.message.skin_not_owned' } end
+        if not existing or #existing == 0 then
+            return nil, { localeKey = 'skins.message.skin_not_owned' }
+        end
     end
 
     local meta = char.metadata or {}
@@ -121,11 +125,14 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     end
     meta.skin = (not isReset) and model or nil
     char.metadata = meta
-    exports.sunset_core:SetCharacterSkin(char.id, meta.skin)
+
+    local okSave = exports.sunset_core:SetCharacterSkin(char.id, meta.skin)
+    if not okSave then
+        return nil, { localeKey = 'skins.message.save_failed' }
+    end
 
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
-    TriggerClientEvent('sunset:skins:applyModel', source, meta.skin or 'default')
-    return { success = true }
+    return { success = true, model = meta.skin or 'default' }
 end)
 
 -- /giveskin [id] [model]  (admin rank 3+)

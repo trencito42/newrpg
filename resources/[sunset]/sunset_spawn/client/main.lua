@@ -304,6 +304,8 @@ AddEventHandler('sunset:client:spawnCharacter', function(char, spawnPosition)
             DoScreenFadeIn(300)
             spawning = false
             spawned = true
+            LocalPlayer.state:set('spawnPhase', 'GAMEPLAY', false)
+            LocalPlayer.state:set('isSpawning', false, false)
             pcall(function() exports.sunset_ui:Send('enterGameplay', { duration = 200 }) end)
             pcall(function() exports.sunset_ui:MarkGameplayEntered() end)
             pcall(function() exports.sunset_ui:HideTransition() end)
@@ -317,6 +319,9 @@ local function resumeIfAlreadySpawned()
     local char = exports.sunset_core:GetCharacter()
     if char and char.id then
         spawned = true
+        spawning = false
+        LocalPlayer.state:set('spawnPhase', 'GAMEPLAY', false)
+        LocalPlayer.state:set('isSpawning', false, false)
         local ped = PlayerPedId()
         SetEntityVisible(ped, true, false)
         FreezeEntityPosition(ped, false)

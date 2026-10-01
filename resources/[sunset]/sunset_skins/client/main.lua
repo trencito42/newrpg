@@ -13,44 +13,69 @@ AddEventHandler('sunset:client:onLocaleChanged', updateShopBlipName)
 
 -- Apply a GTA ped model to the local player (RUNTIME changes only — NOT during spawn)
 local function applyModel(model)
-    if LocalPlayer.state.isSpawning then return end
+    if LocalPlayer.state.isSpawning then
+        print('^3[sunset_skins] applyModel skipped: LocalPlayer.state.isSpawning is true^7')
+        return false, 'spawn_blocked'
+    end
+
     local hash
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
     local char = exports.sunset_core:GetCharacter()
     local gender = (char and tonumber(char.gender)) or (Sunset and Sunset.Character and tonumber(Sunset.Character.gender)) or 0
     if isReset then
-        local isFemale = gender == 1 or gender == '1' or gender == 'female'
+        local isFemale = (gender == 1 or gender == '1' or gender == 'female')
         hash = (isFemale and `mp_f_freemode_01` or `mp_m_freemode_01`)
     else
-        hash = GetHashKey(model)
+        hash = type(model) == 'number' and model or GetHashKey(model)
     end
 
-    if not IsModelValid(hash) then
-        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.msg.invalid_skin_model', { model = tostring(model) }), 'error', 5000)
-        return
+    if not IsModelInCdimage(hash) or not IsModelValid(hash) then
+        print(('^1[sunset_skins] applyModel invalid model: %s (hash: %s)^7'):format(tostring(model), tostring(hash)))
+        return false, 'invalid_model'
     end
 
     RequestModel(hash)
-    local t = 0
-    while not HasModelLoaded(hash) and t < 100 do
-        Wait(50)
-        t = t + 1
+    local deadline = GetGameTimer() + 5000
+    while not HasModelLoaded(hash) and GetGameTimer() < deadline do
+        Wait(25)
     end
     if not HasModelLoaded(hash) then
-        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.could_not_load_skin_model'), 'error', 4000)
-        return
+        print(('^1[sunset_skins] applyModel model load timeout (5000ms): %s (hash: %s)^7'):format(tostring(model), tostring(hash)))
+        return false, 'load_timeout'
     end
 
     SetPlayerModel(PlayerId(), hash)
-    SetPedDefaultComponentVariation(PlayerPedId())
+
+    local pedDeadline = GetGameTimer() + 1000
+    while (GetEntityModel(PlayerPedId()) ~= hash or not DoesEntityExist(PlayerPedId())) and GetGameTimer() < pedDeadline do
+        Wait(10)
+    end
+
+    local newPed = PlayerPedId()
+    if GetEntityModel(newPed) ~= hash then
+        print(('^1[sunset_skins] applyModel SetPlayerModel verification failed: current=%s expected=%s^7'):format(
+            tostring(GetEntityModel(newPed)), tostring(hash)))
+        SetModelAsNoLongerNeeded(hash)
+        return false, 'apply_failed'
+    end
+
+    SetPedDefaultComponentVariation(newPed)
     SetModelAsNoLongerNeeded(hash)
     TriggerServerEvent('sunset:server:updatePlayerPed')
 
     if isReset or hash == `mp_m_freemode_01` or hash == `mp_f_freemode_01` then
         if char and char.appearance and GetResourceState('sunset_appearance') == 'started' then
-            exports.sunset_appearance:ApplyAppearance(PlayerPedId(), char.appearance, gender)
+            exports.sunset_appearance:ApplyAppearance(newPed, char.appearance, gender)
         end
     end
+
+    -- SetPlayerModel resets NUI focus; re-apply it if the shop is currently open
+    if shopOpen then
+        Wait(50)
+        exports.sunset_ui:SetFocus(true, true, false, 'skinshop')
+    end
+
+    return true
 end
 
 -- Open the skin shop via sunset_ui
@@ -89,12 +114,35 @@ end)
 -- sunset_ui NUI bridge: equip
 AddEventHandler('sunset:nui:skinShopEquip', function(data)
     data = type(data) == 'table' and data or {}
-    local result, err = Sunset.AwaitCallback('skins:equip', data.model)
-    if result then
-        if data.model == 'default' or data.model == '' then
-            exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.restored_original_character_appearance'), 'success', 3000)
+    local reqModel = data.model
+
+    if LocalPlayer.state.isSpawning then
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.spawn_blocked'), 'error', 4000)
+        return
+    end
+
+    local result, err = Sunset.AwaitCallback('skins:equip', reqModel)
+    if result and result.success then
+        local isReset = not reqModel or reqModel == '' or reqModel == 'default' or reqModel == 'reset'
+        local ok, reason = applyModel(reqModel)
+        if ok then
+            if isReset then
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.restored_original_character_appearance'), 'success', 3000)
+            else
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.skin_equipped'), 'success', 3000)
+            end
         else
-            exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.skin_equipped'), 'success', 3000)
+            if reason == 'spawn_blocked' then
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.spawn_blocked'), 'error', 5000)
+            elseif reason == 'invalid_model' then
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.msg.invalid_skin_model', { model = tostring(reqModel) }), 'error', 5000)
+            elseif reason == 'load_timeout' then
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.could_not_load_skin_model'), 'error', 5000)
+            elseif reason == 'apply_failed' then
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.saved_but_apply_failed'), 'error', 5000)
+            else
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.equip_failed'), 'error', 5000)
+            end
         end
     else
         exports.sunset_ui:Notify(err or exports.sunset_core:Translate('skins.message.equip_failed'), 'error', 5000)
@@ -110,11 +158,9 @@ end)
 -- Server → client: apply model (used by /setskin and battlepass unlock)
 RegisterNetEvent('sunset:skins:applyModel')
 AddEventHandler('sunset:skins:applyModel', function(model)
-    applyModel(model)
-    -- SetPlayerModel resets NUI focus; re-apply it if the shop is still open
-    if shopOpen then
-        Wait(100)
-        exports.sunset_ui:SetFocus(true, true, false, 'skinshop')
+    local ok, reason = applyModel(model)
+    if not ok then
+        print(('^1[sunset_skins] applyModel failed via event for model=%s reason=%s^7'):format(tostring(model), tostring(reason)))
     end
 end)
 

@@ -367,18 +367,6 @@ CreateThread(function()
 end)
 
 CreateThread(function()
-    local minimap = RequestScaleformMovie('minimap')
-    local minimapDeadline = GetGameTimer() + 10000
-    while not HasScaleformMovieLoaded(minimap) and GetGameTimer() < minimapDeadline do
-        Wait(0)
-    end
-    -- On timeout skip the cosmetic setup but keep the HUD-hide loop below alive.
-    if HasScaleformMovieLoaded(minimap) then
-        BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
-        ScaleformMovieMethodAddParamInt(2) -- 0=hidden, 1=health only, 2=health+armour bars
-        EndScaleformMovieMethod()
-    end
-
     while true do
         if hudActive then
             HideHudComponentThisFrame(1)

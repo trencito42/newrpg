@@ -1,34 +1,57 @@
--- Native GTA minimap health/armour strip ownership.
---
--- The minimap scaleform is reset by several game/UI transitions. A one-shot
--- SETUP_HEALTH_ARMOUR call can therefore be lost after the scaleform restarts,
--- leaving the lower strip missing or partially initialised. Keep this logic in
--- one small place and re-apply it at a low frequency instead of every frame.
+local isDebug = (SunsetBoot and SunsetBoot.IsDebug and SunsetBoot.IsDebug()) or false
+
+local function logMinimap(tag, msg)
+    if isDebug then
+        print(('^2[MINIMAP] %s%s^7'):format(tag, msg and (' ' .. tostring(msg)) or ''))
+    end
+end
 
 local function showNativeVitals(minimap)
+    if not HasScaleformMovieLoaded(minimap) then return false end
     BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
     ScaleformMovieMethodAddParamInt(2)
     EndScaleformMovieMethod()
 
     BeginScaleformMovieMethod(minimap, 'SHOW_HEALTH_ARMOUR')
     EndScaleformMovieMethod()
+    return true
 end
 
 CreateThread(function()
-    local minimap = RequestScaleformMovie('minimap')
-    while not HasScaleformMovieLoaded(minimap) do
-        Wait(0)
+    logMinimap('init')
+
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
     end
 
-    -- Rebuild the minimap scaleform once. This clears stale lower-strip/blur
-    -- state that can otherwise survive a HUD/resource restart.
-    SetRadarBigmapEnabled(true, false)
-    Wait(0)
+    -- Explicitly enforce normal compact GTA radar size at all times.
+    -- Never toggle or enable bigmap during initialization or gameplay.
     SetRadarBigmapEnabled(false, false)
-    Wait(100)
+    logMinimap('radar_normal')
+
+    local minimap = RequestScaleformMovie('minimap')
+    local deadline = GetGameTimer() + 10000
+    while not HasScaleformMovieLoaded(minimap) and GetGameTimer() < deadline do
+        Wait(50)
+    end
+
+    if HasScaleformMovieLoaded(minimap) then
+        logMinimap('scaleform_ready')
+        if showNativeVitals(minimap) then
+            logMinimap('native_vitals_applied')
+        end
+    end
 
     while true do
-        showNativeVitals(minimap)
+        -- Maintain compact radar size and refresh scaleform health/armour strip periodically
+        SetRadarBigmapEnabled(false, false)
+        if HasScaleformMovieLoaded(minimap) then
+            showNativeVitals(minimap)
+        else
+            minimap = RequestScaleformMovie('minimap')
+        end
         Wait(500)
     end
 end)
