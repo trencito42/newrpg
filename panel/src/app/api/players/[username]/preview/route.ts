@@ -36,6 +36,7 @@ export async function GET(
         c.level,
         c.gender,
         c.avatar,
+        c.metadata,
         c.paydays_received as hours,
         c.job as faction_id,
         c.job_grade as faction_rank,
@@ -135,9 +136,17 @@ export async function GET(
         }
       : null;
 
+    let characterSkin: string | null = null;
+    if (player.metadata) {
+      try {
+        const parsed = typeof player.metadata === "string" ? JSON.parse(player.metadata) : player.metadata;
+        if (parsed && parsed.skin) characterSkin = String(parsed.skin);
+      } catch {}
+    }
+
     const preview = {
       username: player.username,
-      avatarUrl: getPedAvatarUrl(player.gender, player.avatar_url || player.avatar),
+      avatarUrl: getPedAvatarUrl(player.gender, player.avatar_url || player.avatar, characterSkin),
       online: Boolean(player.is_online),
       lastSeen: player.last_played,
       level: player.level || 1,

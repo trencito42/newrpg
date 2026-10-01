@@ -66,16 +66,18 @@ function Sunset.SaveCharacter(source)
         -- [AUDIT P5-05] cash/bank/level/xp/respect_points/paydays_received are NO
         -- LONGER written here. They are owned by atomic server operations (guarded
         -- UPDATEs, payday/buyLevel transactions).
-        -- [AUDIT P5-10 / SCAL-FIX] metadata: merge DB-authoritative keys (rob_points, quickslots, spawn_choice)
+        -- [AUDIT P5-10 / SCAL-FIX] metadata: merge all DB-authoritative keys (skin, rob_points, quickslots, spawn_choice, etc.)
         -- so autosave never overwrites or erases keys written separately by JSON_SET.
         local dbRow = MySQL.single.await('SELECT metadata FROM characters WHERE id = ?', { char.id })
         char.metadata = type(char.metadata) == 'table' and char.metadata or {}
         if dbRow and type(dbRow.metadata) == 'string' and dbRow.metadata ~= '' then
             local ok, dbMeta = pcall(json.decode, dbRow.metadata)
             if ok and type(dbMeta) == 'table' then
-                if dbMeta.rob_points ~= nil then char.metadata.rob_points = dbMeta.rob_points end
-                if dbMeta.quickslots ~= nil then char.metadata.quickslots = dbMeta.quickslots end
-                if dbMeta.spawn_choice ~= nil then char.metadata.spawn_choice = dbMeta.spawn_choice end
+                for k, v in pairs(dbMeta) do
+                    if char.metadata[k] == nil then
+                        char.metadata[k] = v
+                    end
+                end
             end
         end
 
@@ -727,12 +729,23 @@ exports('SetPersistentStat', Sunset.SetPersistentStat)
 exports('SetCharacterSkin', function(characterId, skin)
     characterId = tonumber(characterId)
     if not characterId then return false end
+    local cleanSkin = (type(skin) == 'string' and skin ~= '' and #skin <= 64 and skin ~= 'default' and skin ~= 'reset') and skin or nil
     local changed
-    if type(skin) == 'string' and skin ~= '' and #skin <= 64 then
-        changed = MySQL.update.await("UPDATE characters SET metadata = JSON_SET(COALESCE(metadata, JSON_OBJECT()), '$.skin', ?) WHERE id = ?", { skin, characterId })
+    if cleanSkin then
+        changed = MySQL.update.await("UPDATE characters SET metadata = JSON_SET(COALESCE(metadata, JSON_OBJECT()), '$.skin', ?) WHERE id = ?", { cleanSkin, characterId })
     else
         changed = MySQL.update.await("UPDATE characters SET metadata = JSON_REMOVE(COALESCE(metadata, JSON_OBJECT()), '$.skin') WHERE id = ?", { characterId })
     end
+
+    -- Update in-memory player character cache
+    for src, p in pairs(Players) do
+        if p and p.character and tonumber(p.character.id) == characterId then
+            p.character.metadata = type(p.character.metadata) == 'table' and p.character.metadata or {}
+            p.character.metadata.skin = cleanSkin
+            TriggerClientEvent('sunset:client:updateCharacter', src, p.character)
+        end
+    end
+
     return changed ~= nil
 end)
 exports('RefreshBlazePoints', Sunset.RefreshBlazePoints)

@@ -31,12 +31,26 @@ export function getVehiclePreviewUrl(model?: string | null, customUrl?: string |
  * Helper to get GTA V / FiveM ped skin CDN preview image
  * Source: https://docs-backend.fivem.net/peds/${pedModel}.webp
  */
-export function getPedAvatarUrl(gender: number = 0, customUrl?: string | null, pedModel?: string | null): string {
+export function getPedAvatarUrl(
+  gender: number = 0,
+  customUrl?: string | null,
+  pedModel?: string | null
+): string {
   if (customUrl && customUrl.trim().length > 0) {
     return customUrl;
   }
-  if (pedModel && pedModel.trim().length > 0) {
-    return `https://docs-backend.fivem.net/peds/${pedModel.toLowerCase().trim()}.webp`;
+  if (
+    pedModel &&
+    pedModel.trim().length > 0 &&
+    pedModel !== "default" &&
+    pedModel !== "reset"
+  ) {
+    const raw = pedModel.toLowerCase().trim();
+    const aliases: Record<string, string> = {
+      s_m_y_cop_02: "s_m_y_cop_01",
+    };
+    const clean = aliases[raw] || raw;
+    return `https://docs-backend.fivem.net/peds/${clean}.webp`;
   }
   return Number(gender) === 1
     ? "https://docs-backend.fivem.net/peds/mp_f_freemode_01.webp"

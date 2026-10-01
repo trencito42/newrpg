@@ -28,6 +28,7 @@ interface CharacterProfileRow extends RowDataPacket {
   avatar: string | null;
   gender: number;
   nationality: string;
+  metadata: string | Record<string, any> | null;
   registered_at: string;
   last_played: string | null;
   account_username: string;
@@ -101,7 +102,7 @@ export default async function PlayerProfilePage({
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
        c.job, c.job_grade, c.phone_number,
-       c.home_property_id, c.avatar, c.gender, c.nationality,
+       c.home_property_id, c.avatar, c.gender, c.nationality, c.metadata,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username,
        a.admin_level,
@@ -254,6 +255,16 @@ export default async function PlayerProfilePage({
     });
   }
 
+  let characterSkin: string | null = null;
+  if (char.metadata) {
+    try {
+      const parsedMeta = typeof char.metadata === "string" ? JSON.parse(char.metadata) : char.metadata;
+      if (parsedMeta && parsedMeta.skin) {
+        characterSkin = String(parsedMeta.skin);
+      }
+    } catch {}
+  }
+
   return (
     <div className="space-y-5">
       {/* Staff Actions if Admin */}
@@ -268,7 +279,7 @@ export default async function PlayerProfilePage({
           <div className="flex items-start gap-4">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
               <GTAImage
-                src={getPedAvatarUrl(char.gender, char.avatar_url || char.avatar)}
+                src={getPedAvatarUrl(char.gender, char.avatar_url || char.avatar, characterSkin)}
                 alt={char.account_username}
                 fallbackText="GTA Skin"
                 className="w-full h-full object-cover"
