@@ -20,23 +20,23 @@
             wrap.setAttribute('aria-hidden', 'true');
             wrap.innerHTML = `
                 <div class="quest-shell__header">
-                    <div class="quest-shell__title"><i class="ph-fill ph-scroll"></i> Quest Log</div>
+                    <div class="quest-shell__title"><i class="ph-fill ph-scroll"></i> ${I18n.t('quest.log_title')}</div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <span class="quest-shell__count" id="quest-count">0 ACTIVE</span>
+                        <span class="quest-shell__count" id="quest-count"></span>
                         <button type="button" class="quest-shell__close" id="quest-shell-close">ESC</button>
                     </div>
                 </div>
                 <div class="quest-shell__body" id="quest-body"></div>
-                <div class="quest-shell__hint">Progresul tau · apasa ESC sa inchizi</div>
+                <div class="quest-shell__hint">${I18n.t('quest.close_hint')}</div>
             `;
             document.body.appendChild(wrap);
             document.getElementById('quest-shell-close')?.addEventListener('click', () => post('questLogClose'));
         },
 
         statusMeta(q) {
-            if (q.status === 'claimed') return { cls: 'is-claimed', label: 'Revendicat', icon: 'ph-check-circle' };
-            if (q.status === 'complete') return { cls: 'is-complete', label: 'Gata de revendicat', icon: 'ph-gift' };
-            return { cls: '', label: 'In desfasurare', icon: 'ph-hourglass-medium' };
+            if (q.status === 'claimed') return { cls: 'is-claimed', label: I18n.t('quest.claimed'), icon: 'ph-check-circle' };
+            if (q.status === 'complete') return { cls: 'is-complete', label: I18n.t('quest.ready_to_claim'), icon: 'ph-gift' };
+            return { cls: '', label: I18n.t('quest.in_progress'), icon: 'ph-hourglass-medium' };
         },
 
         render() {
@@ -45,10 +45,10 @@
             const list = this.quests || [];
             const countEl = document.getElementById('quest-count');
             const active = list.filter((q) => q.status !== 'claimed').length;
-            if (countEl) countEl.textContent = `${active} ACTIV${active === 1 ? '' : 'E'}`;
+            if (countEl) countEl.textContent = I18n.t(active === 1 ? 'quest.active_one' : 'quest.active_many', { count: active });
 
             if (!list.length) {
-                body.innerHTML = '<div class="quest-shell__empty">Nicio misiune activa.<br>Viziteaza Job Center ca sa incepi.</div>';
+                body.innerHTML = `<div class="quest-shell__empty">${I18n.t('quest.empty')}</div>`;
                 return;
             }
 
@@ -64,7 +64,7 @@
                     ? `<div class="quest-card__reward">${rewardBits.join('')}</div>`
                     : '<div class="quest-card__reward"></div>';
                 const claimBtn = q.status === 'complete'
-                    ? `<button type="button" class="quest-card__claim" data-key="${esc(q.questKey)}"><i class="ph-bold ph-gift"></i> Revendica</button>`
+                    ? `<button type="button" class="quest-card__claim" data-key="${esc(q.questKey)}"><i class="ph-bold ph-gift"></i> ${I18n.t('quest.claim')}</button>`
                     : '';
                 return `
                     <div class="quest-card ${meta.cls}">
@@ -92,6 +92,7 @@
 
         show(data) {
             this.ensureDom();
+            this.updateChrome();
             this.quests = (data && data.quests) || [];
             this.render();
             const shell = document.getElementById('quest-shell');
@@ -102,6 +103,13 @@
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 post('questLogRendered', { renderToken });
             }));
+        },
+
+        updateChrome() {
+            const title = document.querySelector('.quest-shell__title');
+            const hint = document.querySelector('.quest-shell__hint');
+            if (title) title.innerHTML = `<i class="ph-fill ph-scroll"></i> ${I18n.t('quest.log_title')}`;
+            if (hint) hint.textContent = I18n.t('quest.close_hint');
         },
 
         hide() {
@@ -126,4 +134,9 @@
     });
 
     window.QuestLog = QuestLog;
+    window.addEventListener('sunset:localeChanged', () => {
+        if (!QuestLog.open) return;
+        QuestLog.updateChrome();
+        QuestLog.render();
+    });
 })();

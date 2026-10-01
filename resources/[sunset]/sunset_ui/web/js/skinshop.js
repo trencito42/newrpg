@@ -5,12 +5,12 @@ const SkinShopUI = (() => {
     const PED_BASE = 'https://docs-backend.fivem.net/peds/';
 
     const CATEGORIES = [
-        { id: 'owned',     label: 'My Skins'   },
-        { id: 'all',       label: 'All Skins'  },
-        { id: 'civilian',  label: 'Civilian'   },
-        { id: 'special',   label: 'Special'    },
-        { id: 'premium',   label: 'Premium'    },
-        { id: 'exclusive', label: 'Exclusive'  },
+        { id: 'owned', labelKey: 'skinshop.category_owned' },
+        { id: 'all', labelKey: 'skinshop.category_all' },
+        { id: 'civilian', labelKey: 'skinshop.category_civilian' },
+        { id: 'special', labelKey: 'skinshop.category_special' },
+        { id: 'premium', labelKey: 'skinshop.category_premium' },
+        { id: 'exclusive', labelKey: 'skinshop.category_exclusive' },
     ];
 
     let allSkins      = [];
@@ -54,7 +54,7 @@ const SkinShopUI = (() => {
             b.classList.toggle('is-active', b.dataset.cat === catId);
         });
         const title = $('#sk-list-title');
-        if (title) title.textContent = CATEGORIES.find(c => c.id === catId)?.label || 'Skins';
+        if (title) title.textContent = I18n.t(CATEGORIES.find(c => c.id === catId)?.labelKey || 'skinshop.category_all');
         renderSkinList();
     }
 
@@ -68,7 +68,7 @@ const SkinShopUI = (() => {
             filtered = allSkins.filter(s => s.owned);
             // Include default character reset option
             filtered = [
-                { model: 'default', label: 'Default Character (Reset)', category: 'owned', owned: true, isDefault: true },
+                { model: 'default', label: I18n.t('skinshop.default_character'), category: 'owned', owned: true, isDefault: true },
                 ...filtered
             ];
         } else if (activeCat === 'all') {
@@ -80,7 +80,7 @@ const SkinShopUI = (() => {
         if (!filtered.length) {
             const empty = document.createElement('div');
             empty.className = 'sk-empty';
-            empty.textContent = activeCat === 'owned' ? 'You do not own any skins yet' : 'No skins in this category';
+            empty.textContent = I18n.t(activeCat === 'owned' ? 'skinshop.no_owned' : 'skinshop.no_category');
             list.appendChild(empty);
             return;
         }
@@ -90,7 +90,7 @@ const SkinShopUI = (() => {
             row.className = 'sk-skin-row' + (selectedSkin?.model === skin.model ? ' is-active' : '');
             row.dataset.model = skin.model;
 
-            const priceText = skin.isDefault ? 'Original Outfit' : (skin.battlepass ? 'Battlepass' : (skin.owned ? 'Owned' : `$${(skin.priceCash || 0).toLocaleString()}`));
+            const priceText = skin.isDefault ? I18n.t('skinshop.original_outfit') : (skin.battlepass ? I18n.t('skinshop.battlepass') : (skin.owned ? I18n.t('skinshop.owned') : `$${(skin.priceCash || 0).toLocaleString()}`));
             let badge = '';
             if (skin.isDefault)       badge = '<span class="sk-skin-row-badge badge-owned">★</span>';
             else if (skin.owned)      badge = '<span class="sk-skin-row-badge badge-owned">✓</span>';
@@ -205,7 +205,7 @@ const SkinShopUI = (() => {
                 btn.type = 'button';
                 btn.className = 'sk-cat-item' + (cat.id === 'all' ? ' is-active' : '');
                 btn.dataset.cat = cat.id;
-                btn.textContent = cat.label;
+                btn.textContent = I18n.t(cat.labelKey);
                 catList.appendChild(btn);
             });
             catList.addEventListener('click', e => {
@@ -238,7 +238,20 @@ const SkinShopUI = (() => {
         });
     }
 
-    return { show, hide, refresh };
+    function refreshLocale() {
+        if (!ready) return;
+        document.querySelectorAll('#sk-cat-list .sk-cat-item').forEach(btn => {
+            const category = CATEGORIES.find(cat => cat.id === btn.dataset.cat);
+            if (category) btn.textContent = I18n.t(category.labelKey);
+        });
+        selectCategory(activeCat);
+        if (selectedSkin) selectSkin(selectedSkin.isDefault
+            ? { ...selectedSkin, label: I18n.t('skinshop.default_character') }
+            : selectedSkin);
+    }
+
+    return { show, hide, refresh, refreshLocale };
 })();
 
 window.SkinShopUI = SkinShopUI;
+window.addEventListener('sunset:localeChanged', () => SkinShopUI.refreshLocale());
