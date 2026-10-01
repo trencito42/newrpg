@@ -42,15 +42,14 @@ setr sv_stateBagStrictMode false
 # NOTE: setr (replicated) — the CLIENT reads it via GetConvar.
 setr sv_sunset_nofx 0
 
-# [JOBS DEBUG] 1 = enable verbose logging for job vehicle registration
-# (registerVehicle rejections, model mismatches, session state).
-set sv_sunset_jobs_debug 1
+# [JOBS DEBUG] 0 = normal production mode (1 = verbose logging for job vehicle registration).
+set sv_sunset_jobs_debug 0
 
 # ═══ DEV-ONLY TEST AGENT (MCP runtime bridge) ═══
 # Injected from .env at deploy time (TEST_AGENT_ENABLED / TEST_AGENT_TOKEN).
 # Defaults: disabled + empty token = bridge fully locked (fail-safe).
 # Do NOT enable on production without understanding docs/testing/FIVEM_MCP.md.
-ensure sunset_test_agent
+# ensure sunset_test_agent
 setr sunset_test_agent_enabled "__TEST_AGENT_ENABLED__"
 set sunset_test_agent_token "__TEST_AGENT_TOKEN__"
 # Full NUI instrumentation (message/callback/error ring buffers for inspection)
@@ -109,10 +108,10 @@ ensure sunset_scoreboard
 ensure sunset_menu
 ensure sunset_help
 ensure sunset_quests
-ensure sunset_testdriver
-ensure sunset_admintools
+# ensure sunset_testdriver
+# ensure sunset_admintools
 ensure sunset_anticheat
-setr testdriver_autorun 1
+setr testdriver_autorun 0
 ensure sunset_jobs
 ensure sunset_carjack
 ensure sunset_fishingshop
@@ -128,8 +127,8 @@ ensure sunset_events
 ensure sunset_marriage
 ensure sunset_fishing_tournament
 ensure sunset_missions
-ensure sunset_devtools
-setr sunset_devtools_enabled true
+# ensure sunset_devtools
+setr sunset_devtools_enabled false
 
 ensure villa_island
 
