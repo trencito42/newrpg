@@ -14,7 +14,7 @@ interface Context {
 const statusActionSchema = z.object({
   action: z.enum(["take", "under_review", "request_info", "accept", "dismiss", "close"]),
   reason: z.string().trim().max(500).optional(),
-  sanctionType: z.enum(["none", "jail", "warn", "mute", "ban"]).optional(),
+  sanctionType: z.enum(["none", "warn", "mute", "ban"]).optional(),
   sanctionDuration: z.number().int().min(1).max(43200).optional(),
   internalNote: z.string().trim().max(500).optional(),
 });
@@ -71,6 +71,9 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   if (!complaint) {
     return NextResponse.json({ error: "complaint_not_found" }, { status: 404 });
+  }
+  if ((complaint.status === "action_taken" || complaint.status === "dismissed") && action !== "close") {
+    return NextResponse.json({ error: "complaint_already_finalized" }, { status: 409 });
   }
 
   const staffBadge = session.adminLevel >= 1 ? `Admin ${session.adminLevel}` : `Helper ${session.helperLevel}`;
@@ -166,20 +169,36 @@ export async function POST(req: NextRequest, { params }: Context) {
       return NextResponse.json({ error: "reason_required", message: "A clear reason/verdict is required to accept a complaint." }, { status: 400 });
     }
 
+    const queueSanction = sanctionType && sanctionType !== "none";
+    if (queueSanction) {
+      const minimumLevel = sanctionType === "ban" ? 2 : 1;
+      if (session.adminLevel < minimumLevel) {
+        return NextResponse.json({ error: "forbidden_sanction" }, { status: 403 });
+      }
+      if (!complaint.accused_account_id || !complaint.accused_character_id || !session.selectedCharacterId
+        || complaint.accused_account_id === session.accountId) {
+        return NextResponse.json({ error: "invalid_sanction_target" }, { status: 400 });
+      }
+      if (sanctionType === "mute" && !sanctionDuration) {
+        return NextResponse.json({ error: "duration_required" }, { status: 400 });
+      }
+    }
+
     let sanctionSummary = "";
-    if (sanctionType && sanctionType !== "none") {
-      sanctionSummary = `Sanction: ${sanctionType.toUpperCase()}${sanctionDuration ? ` (${sanctionDuration} minutes)` : ""}`;
+    if (queueSanction) {
+      sanctionSummary = `Staff action requested: ${sanctionType.toUpperCase()}${sanctionDuration ? ` (${sanctionDuration} minutes)` : ""}; awaiting FiveM result`;
     }
 
     const finalVerdictText = sanctionSummary ? `${reason} | ${sanctionSummary}` : reason;
 
-    await dbTransaction(async (conn) => {
-      await conn.execute(
+    const accepted = await dbTransaction(async (conn) => {
+      const [updated] = await conn.execute<import("mysql2").ResultSetHeader>(
         `UPDATE panel_complaints 
          SET status = 'action_taken', verdict = ?, handled_by_account_id = ?, updated_at = NOW() 
-         WHERE id = ?`,
+         WHERE id = ? AND status IN ('pending', 'under_review')`,
         [finalVerdictText, session.accountId, complaintId]
       );
+      if (updated.affectedRows !== 1) return false;
 
       const decisionMsg = `[COMPLAINT ACCEPTED]\nHandled by: ${session.username} [${staffBadge}]\nReason: ${reason}${sanctionSummary ? `\n${sanctionSummary}` : ""}`;
       await conn.execute(
@@ -189,11 +208,11 @@ export async function POST(req: NextRequest, { params }: Context) {
         [complaintId, session.accountId, session.selectedCharacterId || null, decisionMsg]
       );
 
-      // If sanction selected and target account/character exists, queue authoritative staff action!
-      if (sanctionType && sanctionType !== "none" && (complaint.accused_account_id || complaint.accused_character_id)) {
+      // Request execution in FiveM; the complaint verdict does not imply success.
+      if (queueSanction) {
         const requestId = crypto.randomUUID();
         const payloadJson = JSON.stringify({
-          durationMin: sanctionDuration || 30,
+          durationMin: sanctionDuration || null,
           reason: `Complaint #${complaintId}: ${reason}`.slice(0, 255),
         });
 
@@ -204,16 +223,18 @@ export async function POST(req: NextRequest, { params }: Context) {
           [
             requestId,
             session.accountId,
-            session.selectedCharacterId || null,
+            session.selectedCharacterId,
             sanctionType,
-            complaint.accused_account_id || null,
-            complaint.accused_character_id || null,
+            complaint.accused_account_id,
+            complaint.accused_character_id,
             payloadJson,
             `Complaint #${complaintId} accepted: ${reason}`.slice(0, 255),
           ]
         );
       }
+      return true;
     });
+    if (!accepted) return NextResponse.json({ error: "complaint_already_finalized" }, { status: 409 });
 
     // Send notifications to reporter and reported player
     if (complaint.accuser_account_id) {
@@ -231,11 +252,11 @@ export async function POST(req: NextRequest, { params }: Context) {
     if (complaint.accused_account_id) {
       await createNotification({
         accountId: complaint.accused_account_id,
-        type: "complaint_action_taken",
-        titleEn: `Complaint #${complaintId} Action Taken`,
-        titleRo: `Sancțiune acordată pe Reclamația #${complaintId}`,
-        messageEn: `A complaint against you was accepted by ${session.username}. Verdict: ${finalVerdictText}`,
-        messageRo: `O reclamație împotriva ta a fost acceptată de ${session.username}. Verdict: ${finalVerdictText}`,
+        type: "complaint_accepted",
+        titleEn: `Complaint #${complaintId} Accepted`,
+        titleRo: `Reclamația #${complaintId} a fost acceptată`,
+        messageEn: `A complaint against you was accepted by ${session.username}. ${queueSanction ? "A staff action is awaiting server confirmation." : ""}`,
+        messageRo: `Reclamația împotriva ta a fost acceptată de ${session.username}. ${queueSanction ? "O acțiune administrativă așteaptă confirmarea serverului." : ""}`,
         linkUrl: `/support/complaints/${complaintId}`,
       });
     }

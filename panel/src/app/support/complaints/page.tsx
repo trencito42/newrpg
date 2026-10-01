@@ -1,4 +1,5 @@
 import { getCurrentSession, getRequestLanguage } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { dbQuery } from "@/lib/db";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
 import Link from "next/link";
@@ -36,17 +37,24 @@ export default async function ComplaintsPage({
   searchParams: Promise<{ filter?: string; new?: string }>;
 }) {
   const session = await getCurrentSession();
+  if (!session) redirect("/login");
   const lang = await getRequestLanguage();
   const { filter = "all", new: showNew } = await searchParams;
 
-  let statusFilterSql = "";
-  if (filter === "pending") {
-    statusFilterSql = "WHERE c.status = 'pending'";
-  } else if (filter === "under_review") {
-    statusFilterSql = "WHERE c.status = 'under_review'";
-  } else if (filter === "resolved") {
-    statusFilterSql = "WHERE c.status IN ('action_taken', 'dismissed')";
+  const conditions: string[] = [];
+  const queryParams: number[] = [];
+  if (session.adminLevel < 1 && session.helperLevel < 1) {
+    conditions.push("(c.accuser_account_id = ? OR p_accused.account_id = ?)");
+    queryParams.push(session.accountId, session.accountId);
   }
+  if (filter === "pending") {
+    conditions.push("c.status = 'pending'");
+  } else if (filter === "under_review") {
+    conditions.push("c.status = 'under_review'");
+  } else if (filter === "resolved") {
+    conditions.push("c.status IN ('action_taken', 'dismissed')");
+  }
+  const whereSql = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const complaints = await dbQuery<ComplaintRow>(
     `SELECT 
@@ -57,9 +65,12 @@ export default async function ComplaintsPage({
        (SELECT MAX(created_at) FROM panel_complaint_messages m WHERE m.complaint_id = c.id) AS last_reply_at
      FROM panel_complaints c
      LEFT JOIN accounts acc_user ON acc_user.id = c.accuser_account_id
-     ${statusFilterSql}
+     LEFT JOIN characters accused_char ON accused_char.id = c.accused_character_id
+     LEFT JOIN players p_accused ON p_accused.id = accused_char.player_id
+     ${whereSql}
      ORDER BY c.id DESC
-     LIMIT 100`
+     LIMIT 100`,
+    queryParams
   );
 
   // Batch resolve identities

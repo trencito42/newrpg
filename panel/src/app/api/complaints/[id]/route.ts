@@ -16,6 +16,7 @@ export async function GET(req: NextRequest, { params }: Context) {
   }
 
   const session = await getCurrentSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   // Fetch complaint details
   const complaint = await dbQuerySingle<RowDataPacket>(
@@ -40,6 +41,11 @@ export async function GET(req: NextRequest, { params }: Context) {
   );
 
   if (!complaint) {
+    return NextResponse.json({ error: "complaint_not_found" }, { status: 404 });
+  }
+  const accusedAccountId = Number(complaint.accused_account_id);
+  if (session.accountId !== complaint.accuser_account_id && session.accountId !== accusedAccountId
+    && session.adminLevel < 1 && session.helperLevel < 1) {
     return NextResponse.json({ error: "complaint_not_found" }, { status: 404 });
   }
 

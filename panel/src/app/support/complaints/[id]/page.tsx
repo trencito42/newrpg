@@ -19,6 +19,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
   }
 
   const session = await getCurrentSession();
+  if (!session) notFound();
   const locale = await getRequestLanguage();
 
   // Fetch complaint
@@ -46,6 +47,9 @@ export default async function ComplaintDetailPage({ params }: Props) {
   if (!complaint) {
     notFound();
   }
+  const accusedAccountId = Number(complaint.accused_account_id);
+  if (session.accountId !== complaint.accuser_account_id && session.accountId !== accusedAccountId
+    && session.adminLevel < 1 && session.helperLevel < 1) notFound();
 
   // Fetch messages thread
   const messages = await dbQuery<RowDataPacket>(
@@ -88,6 +92,7 @@ export default async function ComplaintDetailPage({ params }: Props) {
         isReporter,
         isAccused,
         isStaff,
+        adminLevel: session.adminLevel,
         isLocked,
         canReply,
         canManage: isStaff,

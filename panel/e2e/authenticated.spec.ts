@@ -134,6 +134,48 @@ test("support ticket is created atomically", async ({ page }) => {
   await expect(page.getByText(subject)).toBeVisible();
 });
 
+test("complaint evidence and thread are visible only to involved accounts or staff", async ({ page, browser }) => {
+  const db = await fixtureDb();
+  let complaintId = 0;
+  try {
+    const [admin] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT a.id account_id, c.id character_id FROM accounts a JOIN players p ON p.account_id=a.id JOIN characters c ON c.player_id=p.id WHERE a.username='e2e_admin' LIMIT 1"
+    );
+    const [insert] = await db.execute<mysql.ResultSetHeader>(
+      "INSERT INTO panel_complaints (accuser_account_id,accuser_character_id,accused_character_id,accused_name,category,title,evidence_text) VALUES (?,?,?,?,'other',?,?)",
+      [admin[0].account_id, admin[0].character_id, admin[0].character_id, "E2E Admin", "E2E private complaint", "PRIVATE_COMPLAINT_EVIDENCE_SENTINEL"]
+    );
+    complaintId = insert.insertId;
+    await page.goto("/support/complaints");
+    await expect(page).toHaveURL(/\/login$/);
+    await page.goto(`/support/complaints/${complaintId}`);
+    await expect(page.getByText("PRIVATE_COMPLAINT_EVIDENCE_SENTINEL")).toHaveCount(0);
+    const anonymousApi = await page.evaluate(async (id) => (await fetch(`/api/complaints/${id}`)).status, complaintId);
+    expect(anonymousApi).toBe(401);
+
+    await login(page);
+    await page.goto("/support/complaints");
+    await expect(page.getByText("E2E private complaint")).toHaveCount(0);
+    await page.goto(`/support/complaints/${complaintId}`);
+    await expect(page.getByText("PRIVATE_COMPLAINT_EVIDENCE_SENTINEL")).toHaveCount(0);
+    const outsiderApi = await page.evaluate(async (id) => (await fetch(`/api/complaints/${id}`)).status, complaintId);
+    expect(outsiderApi).toBe(404);
+
+    const staffContext = await browser.newContext();
+    try {
+      const staffPage = await staffContext.newPage();
+      await login(staffPage, "e2e_admin");
+      await staffPage.goto("/support/complaints");
+      await expect(staffPage.getByText("E2E private complaint")).toBeVisible();
+      await staffPage.goto(`/support/complaints/${complaintId}`);
+      await expect(staffPage.getByText("PRIVATE_COMPLAINT_EVIDENCE_SENTINEL")).toBeVisible();
+    } finally { await staffContext.close(); }
+  } finally {
+    if (complaintId) await db.execute("DELETE FROM panel_complaints WHERE id=?", [complaintId]);
+    await db.end();
+  }
+});
+
 test("staff can queue actions, citizen cannot spoof actor or inspect another queue", async ({ page, browser }) => {
   const db = await fixtureDb();
   let targetAccountId = 0;

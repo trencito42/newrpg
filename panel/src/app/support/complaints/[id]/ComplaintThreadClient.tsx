@@ -66,6 +66,7 @@ interface ViewerData {
   isReporter: boolean;
   isAccused: boolean;
   isStaff: boolean;
+  adminLevel: number;
   isLocked: boolean;
   canReply: boolean;
   canManage: boolean;
@@ -99,7 +100,7 @@ export function ComplaintThreadClient({
   // Staff action modal state
   const [staffAction, setStaffAction] = useState<"take" | "under_review" | "request_info" | "accept" | "dismiss" | null>(null);
   const [staffReason, setStaffReason] = useState("");
-  const [sanctionType, setSanctionType] = useState<"none" | "jail" | "warn" | "mute" | "ban">("none");
+  const [sanctionType, setSanctionType] = useState<"none" | "warn" | "mute" | "ban">("none");
   const [sanctionDuration, setSanctionDuration] = useState<number>(30);
   const [submittingAction, setSubmittingAction] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -235,7 +236,7 @@ export function ComplaintThreadClient({
           action: staffAction,
           reason: staffReason,
           sanctionType: sanctionType !== "none" ? sanctionType : undefined,
-          sanctionDuration: sanctionType !== "none" ? Number(sanctionDuration) : undefined,
+          sanctionDuration: sanctionType === "mute" || sanctionType === "ban" ? Number(sanctionDuration) : undefined,
         }),
       });
 
@@ -396,21 +397,20 @@ export function ComplaintThreadClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-[#a5a5a8] block mb-1">Authoritative Sanction:</label>
+                  <label className="text-xs font-semibold text-[#a5a5a8] block mb-1">FiveM action (queued):</label>
                   <select
                     value={sanctionType}
                     onChange={(e: any) => setSanctionType(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#0b0b0c] border border-surface-border rounded text-xs text-[#f1f1f1]"
                   >
-                    <option value="none">None (Verbal Warning / Log only)</option>
-                    <option value="jail">Admin Jail</option>
-                    <option value="warn">Official Warn</option>
-                    <option value="mute">Mute</option>
-                    <option value="ban">Account Ban</option>
+                    <option value="none">No action</option>
+                    {viewer.adminLevel >= 1 && <option value="warn">Warn</option>}
+                    {viewer.adminLevel >= 1 && <option value="mute">Mute</option>}
+                    {viewer.adminLevel >= 2 && <option value="ban">Ban</option>}
                   </select>
                 </div>
 
-                {(sanctionType === "jail" || sanctionType === "mute" || sanctionType === "ban") && (
+                {(sanctionType === "mute" || sanctionType === "ban") && (
                   <div>
                     <label className="text-xs font-semibold text-[#a5a5a8] block mb-1">Duration (Minutes):</label>
                     <input
