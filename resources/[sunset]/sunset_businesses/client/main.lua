@@ -23,9 +23,9 @@ local function openPanel(mode)
     local data, err = Sunset.AwaitCallback(callbackName, {})
     if not data then
         if mode == 'admin' then
-            notify(err or 'Admin business panel requires staff level 3+. Try /biz for your owned businesses.', 'error')
+            notify(err or exports.sunset_core:Translate('businesses.msg.admin_business_panel_requires_staff_level'), 'error')
         else
-            notify(err or 'Could not open business panel.', 'error')
+            notify(err or exports.sunset_core:Translate('businesses.msg.could_not_open_business_panel'), 'error')
         end
         return
     end
@@ -90,7 +90,7 @@ AddEventHandler('sunset:nui:businessManage', function(data)
         if type(message) == 'string' and message ~= '' then
             notify(message, result and 'success' or 'error')
         elseif not result then
-            notify(message or 'Action failed.', 'error')
+            notify(message or exports.sunset_core:Translate('businesses.msg.action_failed'), 'error')
         end
     end)
 end)
@@ -123,7 +123,7 @@ AddEventHandler('sunset:nui:businessSelect', function(data)
         if dashboard then
             exports.sunset_ui:Send('businessPanelShow', dashboard)
         else
-            notify(err or 'Could not load business.', 'error')
+            notify(err or exports.sunset_core:Translate('businesses.msg.could_not_load_business'), 'error')
         end
     end)
 end)
@@ -169,13 +169,13 @@ local function openGasBusinessMenu()
         if biz and not biz.owned and biz.forSale then
             actions[#actions + 1] = {
                 id = 'buy_gas_business',
-                label = ('Buy Gas Station (%s)'):format(formatMoney(biz.price)),
+                label = exports.sunset_core:Translate('businesses.ui.buy_gas_station', { format_money = tostring(formatMoney(biz.price)) }),
                 group = 'BUSINESS',
             }
         elseif biz and biz.mine then
             actions[#actions + 1] = {
                 id = 'manage_gas_business',
-                label = 'Manage Business',
+                label = exports.sunset_core:Translate('fishingshop.menu.manage_business'),
                 group = 'BUSINESS',
             }
         end
@@ -218,9 +218,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, err = Sunset.AwaitCallback('sunset:buyBusiness', biz.id)
             if ok then
-                notify(err or 'Business purchased.', 'success')
+                notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchased'), 'success')
             else
-                notify(err or 'Could not buy business.', 'error')
+                notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchase_failed'), 'error')
             end
             SetTimeout(2000, function() gasCooldown = false end)
         end)

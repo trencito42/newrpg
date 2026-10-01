@@ -43,6 +43,31 @@ local function closeChat()
     exports.sunset_ui:Send('chatToggle', { open = false })
 end
 
+-- [RESTART SAFETY] sunset_ui restarted: page lost chat state -> close our focus
+-- bookkeeping and re-push suggestions. sunset_chat stopped: release focus.
+AddEventHandler('sunset:ui:ready', function()
+    if chatOpen then
+        chatOpen = false
+        TriggerEvent('sunset:client:chatFocusChanged', false)
+    end
+    CreateThread(function()
+        Wait(500)
+        pcall(function() exports.sunset_chat:SyncChatSuggestions() end)
+    end)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    if chatOpen then
+        chatOpen = false
+        TriggerEvent('sunset:client:chatFocusChanged', false)
+        pcall(function()
+            exports.sunset_ui:SetFocus(false, false, false, 'chat')
+            exports.sunset_ui:Send('chatToggle', { open = false })
+        end)
+    end
+end)
+
 RegisterCommand('sunset_chat', function()
     if exports.sunset_ui and exports.sunset_ui:IsOpen() then return end
     openChat()
@@ -126,6 +151,11 @@ local OVERHEAD_MS = 5000
 local OVERHEAD_Z = 1.56
 
 RegisterNetEvent('sunset:chat:message', function(payload)
+    -- Server-side system messages may carry a locale key so each client renders
+    -- them in its own language (messageKey/messageParams).
+    if type(payload) == 'table' and type(payload.messageKey) == 'string' then
+        payload.message = exports.sunset_core:Translate(payload.messageKey, payload.messageParams)
+    end
     exports.sunset_ui:Send('chatMessage', payload)
     local msgType = payload and payload.type or 'say'
     local id = tonumber(payload and payload.id)

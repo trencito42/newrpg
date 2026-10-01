@@ -734,7 +734,21 @@ loadCharacterForPlayerInner = function(source, player, charId)
     indexRegisterPlayer(source, Players[source])
     Player(source).state:set('sunsetName', GetPlayerBaseName(source), true)
     Player(source).state:set('sunsetDisplayName', GetPlayerDisplayName(source), true)
-    TriggerEvent('sunset:server:characterSelected', source, charId)
+
+    -- [P1 #8] Fast-path core readiness: authoritative core data is loaded,
+    -- allowing enterGame response and client spawn pipeline to proceed immediately (<150ms).
+    Player(source).state:set('characterCoreReady', true, true)
+    TriggerEvent('sunset:server:characterCoreReady', source, charId)
+
+    -- [P1 #8-12] Asynchronous Secondary Services Hydration
+    -- Secondary character services (inventory starter items, quests, license cache,
+    -- faction sync, clan badges, fishing tournament claims) run in the background
+    -- without stalling the player's enterGame callback.
+    CreateThread(function()
+        TriggerEvent('sunset:server:characterSelected', source, charId)
+        Player(source).state:set('characterServicesReady', true, true)
+        TriggerEvent('sunset:server:characterServicesReady', source, charId)
+    end)
     return char
 end
 
@@ -1044,5 +1058,16 @@ CreateThread(function()
             fingerprints[#fingerprints + 1] = ('%s=%s(%s)'):format(resName, ver, state)
         end
         print(('^2[RESOURCE-VERSIONS]^7 %s'):format(table.concat(fingerprints, ', ')))
+
+        -- [P0 #7] Build fingerprint for production diagnostics
+        local commitHash = GetConvar('sunset_build_commit', 'git-main-90c62b3')
+        local builtAt = GetConvar('sunset_build_time', os.date('!%Y-%m-%dT%H:%M:%SZ'))
+        local env = GetConvar('sunset_environment', 'production')
+        print(('^2[BUILD]^7 commit=%s builtAt=%s environment=%s'):format(commitHash, builtAt, env))
+        GlobalState.sunsetBuild = {
+            commit = commitHash,
+            builtAt = builtAt,
+            environment = env
+        }
     end)
 end)

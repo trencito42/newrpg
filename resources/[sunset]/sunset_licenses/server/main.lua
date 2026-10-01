@@ -376,8 +376,7 @@ function GrantLicense(source, licenseType, issuedByCharacterId)
             licenseType, cid, tostring(result)))
         return false, { localeKey = 'licenses.message.the_license_could_not_be_saved_no_license_was' }
     end
-    notify(source, ('%s issued — valid until payday #%d.'):format(
-        SunsetLicenses.Types[licenseType].label, expires), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'licenses.msg.issued_valid_until_payday', { label = tostring(SunsetLicenses.Types[licenseType].label), expires = math.floor(tonumber(expires) or 0) }), 'success')
     TriggerClientEvent('sunset:licenses:refresh', source)
     loadLicenseCache(source)
     -- [QUESTS] driving chain: license acquisition progress.
@@ -563,8 +562,20 @@ exports.sunset_core:RegisterCallback('sunset:license:getExamOffer', function(sou
     }
 end)
 
+local StartTheoryBusy, StartTheoryImpl = {}, nil
 exports.sunset_core:RegisterCallback('sunset:license:startTheory', function(source, licenseType)
     licenseType = tostring(licenseType or '')
+    -- [SEC3] serialise per source: canStartTest -> chargeExamFee yields before TestSessions is set,
+    -- so parallel calls double-charged / overwrote the session.
+    if StartTheoryBusy[source] then return nil, { localeKey = 'licenses.message.you_already_have_a_license_test_in_progress' } end
+    StartTheoryBusy[source] = true
+    local okS, r1, r2 = pcall(function() return StartTheoryImpl(source, licenseType) end)
+    StartTheoryBusy[source] = nil
+    if not okS then error(r1) end
+    return r1, r2
+end)
+
+StartTheoryImpl = function(source, licenseType)
     local ok, err = canStartTest(source, licenseType)
     if not ok then return nil, err end
     local theory = SunsetLicenses.Theory[licenseType]
@@ -611,7 +622,7 @@ exports.sunset_core:RegisterCallback('sunset:license:startTheory', function(sour
     payload.theoryTimeSec = theoryTimeSec
     payload.deadlineAt = TestSessions[source].theoryDeadline
     return payload
-end)
+end
 
 exports.sunset_core:RegisterCallback('sunset:license:gradeTheoryAnswer', function(source, licenseType, questionIndex, answer)
     licenseType = tostring(licenseType or '')
@@ -654,8 +665,10 @@ exports.sunset_core:RegisterCallback('sunset:license:submitTheory', function(sou
     end
     local theory = SunsetLicenses.Theory[licenseType]
     if not theory then return nil, { localeKey = 'licenses.message.invalid_exam' } end
-    answers = type(answers) == 'table' and answers or session.theoryAnswers or {}
-    session.theoryAnswers = answers
+    -- [SEC3] score ONLY the answers recorded server-side by gradeTheoryAnswer. The client-supplied
+    -- table used to replace them, so the per-question correct/incorrect feedback could be used
+    -- as an oracle and the final submit re-answered with the right options.
+    answers = session.theoryAnswers or {}
     local answerKey = session.theoryAnswerKey
         or (SunsetLicenseTheoryAnswers and SunsetLicenseTheoryAnswers[licenseType])
     if not answerKey then return nil, { localeKey = 'licenses.message.the_server_answer_key_is_not_configured_for_this' } end
@@ -686,8 +699,7 @@ exports.sunset_core:RegisterCallback('sunset:license:submitTheory', function(sou
     local facility = facilityKey and SunsetLicenses.Facilities[facilityKey]
     local practicalTimeSec = practical and tonumber(practical.maxTimeSec) or 1200
     if session.instructor then
-        notify(session.instructor, ('Candidate #%d passed the %s theory test. Supervise the practical until completion.'):format(
-            source, SunsetLicenses.Types[licenseType].label), 'success')
+        notify(session.instructor, exports.sunset_core:TFor(session.instructor, 'licenses.msg.candidate_passed_the_theory_test_supervise', { source = math.floor(tonumber(source) or 0), label = tostring(SunsetLicenses.Types[licenseType].label) }), 'success')
     end
     return {
         practical = practical,
@@ -721,7 +733,7 @@ local function abortIfInTest(src, reason)
     if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(src) end
     clearTestSession(src, 'FAILED', reason or 'aborted')
     TriggerClientEvent('sunset:licenses:testAbort', src)
-    notify(src, ('Your license exam was cancelled: %s.'):format(reason), 'error')
+    notify(src, exports.sunset_core:TFor(src, 'licenses.msg.your_license_exam_was_cancelled', { reason = tostring(reason) }), 'error')
 end
 
 AddEventHandler('sunset:death:playerDowned', function(src)
@@ -760,8 +772,7 @@ exports.sunset_core:RegisterCallback('sunset:license:completePractical', functio
         if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(source) end
         if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'failed') end
         clearTestSession(source)
-        notify(session.instructor, ('Candidate #%d failed the practical with %.1f/%.1f recorded mistakes.'):format(
-            source, candidateMistakes, failAt), 'warning')
+        notify(session.instructor, exports.sunset_core:TFor(session.instructor, 'licenses.msg.candidate_failed_the_practical_with_recorded', { source = math.floor(tonumber(source) or 0), candidate_mistakes = string.format('%.1f', candidateMistakes), fail_at = string.format('%.1f', failAt) }), 'warning')
         return nil, { localeKey = 'licenses.message.practical_failed_the_instructor_recorded_value_value_mistakes_ask', formatArgs = {
             candidateMistakes, failAt } }
     end
@@ -791,8 +802,7 @@ AddEventHandler('sunset:payday:processed', function(source)
                 { cid, row.license_type }
             )
             local def = SunsetLicenses.Types[row.license_type]
-            notify(source, ('Your %s expired after %d paydays.'):format(
-                def and def.label or row.license_type, SunsetLicenses.PaydayExpiry or 150), 'warning')
+            notify(source, exports.sunset_core:TFor(source, 'licenses.msg.your_expired_after_paydays', { def = tostring(def and def.label or row.license_type), payday_expiry = math.floor(tonumber(SunsetLicenses.PaydayExpiry or 150) or 0) }), 'warning')
             TriggerClientEvent('sunset:licenses:refresh', source)
             loadLicenseCache(source)
         end
@@ -817,7 +827,7 @@ AddEventHandler('playerDropped', function()
             if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(activeSession, 'aborted') end
             if type(CleanupLicenseTestEntities) == 'function' then CleanupLicenseTestEntities(target) end
             clearTestSession(target, 'FAILED', 'instructor disconnected')
-            notify(target, 'Your LSSI exam ended because the supervising instructor disconnected.', 'error')
+            notify(target, exports.sunset_core:TFor(target, 'licenses.msg.your_lssi_exam_ended_because_the'), 'error')
             TriggerClientEvent('sunset:licenses:testAbort', target)
         end
     end
@@ -829,40 +839,39 @@ function RunInstructorLicenseCommand(source, args)
         return true
     end
     if not isInstructor(source) then
-        notify(source, 'LSSI instructors on duty only.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.lssi_instructors_on_duty_only'), 'error')
         return true
     end
     local target = tonumber(args[1])
     local licenseType = string.lower(tostring(args[2] or ''))
     if not target or not GetPlayerName(target) then
-        notify(source, 'Usage: /issuelicense [player id] [pilot|boat|weapon|hunting]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.usage_issuelicense_player_id_pilot_boat'), 'error')
         return true
     end
     local def = SunsetLicenses.Types[licenseType]
     if not def or not def.instructorFaction then
-        notify(source, 'LSSI may conduct tests for: pilot, boat, weapon, hunting. Driving tests are self-service.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.lssi_may_conduct_tests_for_pilot'), 'error')
         return true
     end
     if target == source then
-        notify(source, 'You cannot conduct your own license test.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.you_cannot_conduct_your_own_license'), 'error')
         return true
     end
     local facility = SunsetLicenses.Facilities[def.facility]
     local instructorPos, targetPos = playerCoords(source), playerCoords(target)
     if not instructorPos or not targetPos
         or #(instructorPos - targetPos) > (SunsetLicenses.InstructorMaxDistance or 12.0) then
-        notify(source, 'The candidate must be beside you.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.the_candidate_must_be_beside_you'), 'error')
         return true
     end
     if not facility or not near(source, facility.marker, (facility.markerRadius or 3.0) + 8.0)
         or not near(target, facility.marker, (facility.markerRadius or 3.0) + 8.0) then
-        notify(source, ('You and the candidate must be at %s.'):format(
-            facility and facility.label or 'the exam facility'), 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.you_and_the_candidate_must_be', { facility = facility and facility.label or exports.sunset_core:TFor(source, 'licenses.word.the_exam_facility') }), 'error')
         return true
     end
     local has, hasErr = HasLicense(target, licenseType)
     if has and hasErr ~= 'test' then
-        notify(source, ('Player #%d already has a valid %s.'):format(target, def.label), 'error')
+        notify(source, exports.sunset_core:TFor(source, 'licenses.msg.player_already_has_a_valid', { target = math.floor(tonumber(target) or 0), label = tostring(def.label) }), 'error')
         return true
     end
     AuthorizedTests[target] = {
@@ -871,16 +880,18 @@ function RunInstructorLicenseCommand(source, args)
         issuerCharacterId = charId(source),
         expiresAt = os.time() + (SunsetLicenses.InstructorAuthorizationSeconds or 300),
     }
-    notify(source, ('Authorized %s exam for player #%d. They must press E at the marker within 5 minutes.'):format(
-        def.label, target), 'success')
-    notify(target, ('LSSI instructor #%d authorized your %s exam. Press E at this marker to begin.'):format(
-        source, def.label), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'licenses.msg.authorized_exam_for_player_they_must', { label = tostring(def.label), target = math.floor(tonumber(target) or 0) }), 'success')
+    notify(target, exports.sunset_core:TFor(target, 'licenses.msg.lssi_instructor_authorized_your_exam_press', { source = math.floor(tonumber(source) or 0), label = tostring(def.label) }), 'success')
     return true
 end
 
 RegisterCommand('issuelicense', function(source, args)
     RunInstructorLicenseCommand(source, args or {})
 end, false)
+
+-- [SEC3] tests.lua called clearTestSession (a main.lua local => nil global => error on hunting auto-fail,
+-- leaving the exam session alive). Expose it as a global used by the sibling file.
+function ClearLicenseTestSession(source, fwState, fwReason) clearTestSession(source, fwState, fwReason) end
 
 -- Used by tests.lua server validation
 function GetTestSession(source)

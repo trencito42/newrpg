@@ -103,15 +103,31 @@ end
 
 local staticBlips = {}
 local function addBlip(coords, preset, label, shortRange)
-    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
-    staticBlips[#staticBlips + 1] = blip
-    SetBlipSprite(blip, preset.sprite or 1)
-    SetBlipColour(blip, preset.color or 0)
-    SetBlipScale(blip, preset.scale or 0.7)
-    SetBlipAsShortRange(blip, shortRange ~= false)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(label)
-    EndTextCommandSetBlipName(blip)
+    if not coords then return nil end
+    preset = preset or {}
+    local blip = nil
+    if Sunset and Sunset.CreateSafeBlip then
+        blip = Sunset.CreateSafeBlip(coords, {
+            sprite = preset.sprite or 1,
+            color = preset.color or 0,
+            scale = preset.scale or 0.7,
+            shortRange = shortRange ~= false,
+            label = label,
+        })
+    else
+        pcall(function()
+            blip = exports.sunset_core:CreateSafeBlip(coords, {
+                sprite = preset.sprite or 1,
+                color = preset.color or 0,
+                scale = preset.scale or 0.7,
+                shortRange = shortRange ~= false,
+                label = label,
+            })
+        end)
+    end
+    if blip then
+        staticBlips[#staticBlips + 1] = blip
+    end
     return blip
 end
 
@@ -130,6 +146,12 @@ end
 local zones = {}
 
 CreateThread(function()
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
+    end
+
     local presets = Sunset.WorldBlips or {}
 
     for id, shop in pairs(Sunset.Shops or {}) do
@@ -229,7 +251,7 @@ end)
 AddEventHandler('sunset:world:registerTaxiDepot', function(depot)
     if not depot or not depot.coords then return end
     local color = { 255, 200, 0 }
-    addBlip(depot.coords, { sprite = 198, color = 5, scale = 0.75 }, depot.label or 'Cab Depot', true)
+    addBlip(depot.coords, { sprite = 198, color = 5, scale = 0.75 }, depot.label or exports.sunset_core:Translate('world.msg.cab_depot'), true)
     zones[#zones + 1] = registerZone('taxi:depot', depot.coords, 3.0,
         '[E] Spawn cab', color, function()
             TriggerEvent('sunset:world:taxiDepot')
@@ -379,6 +401,18 @@ AddEventHandler('onResourceStop', function(res)
         if DoesBlipExist(b) then RemoveBlip(b) end
         staticBlips[i] = nil
     end
+end)
+
+-- [RESTART SAFETY] After `restart sunset_world` the zone/blip tables are empty and the
+-- properties resource will not re-broadcast on its own: ask it to.
+AddEventHandler('onClientResourceStart', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    CreateThread(function()
+        Wait(1500)
+        if GetResourceState('sunset_properties') == 'started' then
+            TriggerEvent('sunset:properties:requestRefresh')
+        end
+    end)
 end)
 
 AddEventHandler('sunset:world:uiModalOpen', function()

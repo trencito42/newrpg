@@ -2,9 +2,9 @@ exports.sunset_core:RegisterCallback('sunset:world:canUseFactionLift', function(
     factionId = tostring(factionId or '')
     if factionId == '' then return false end
 
-    if Player(source).state.sunsetFaction == factionId then
-        return true
-    end
+    -- [SEC3] removed Player(source).state.sunsetFaction trust: state bags are client-writable
+    -- (sv_stateBagStrictMode=false), so any player could unlock faction lifts. Server character data only.
+    if #factionId > 64 then return false end
 
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return false end

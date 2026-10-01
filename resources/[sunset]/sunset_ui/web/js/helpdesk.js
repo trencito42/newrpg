@@ -18,7 +18,7 @@ const ShieldWidget = {
         el.innerHTML = `
             <div class="shield-widget__head">
                 <i class="ph-bold ph-shield-check"></i>
-                <span class="shield-widget__title">Blaze Shield</span>
+                <span class="shield-widget__title">${I18n.t('ui.helpdesk.blaze_shield')}</span>
                 <span class="shield-widget__mode" id="shield-mode">log_only</span>
             </div>
             <div class="shield-widget__body" id="shield-body"></div>
@@ -49,7 +49,7 @@ const ShieldWidget = {
             const div = document.createElement('div');
             div.className = `shield-widget__row ${row.band}`;
             div.innerHTML = `
-                <span class="shield-widget__band ${row.band}">${row.band === 'critical' ? 'CRIT' : 'SUSP'}</span>
+                <span class="shield-widget__band ${row.band}">${row.band === 'critical' ? I18n.t('ui.helpdesk.band_crit') : I18n.t('ui.helpdesk.band_susp')}</span>
                 <span class="shield-widget__name">#${Number(row.src)} ${this.esc(row.name)}</span>
                 <span class="shield-widget__heat">${Number(row.heat).toFixed(1)}</span>
             `;
@@ -111,10 +111,10 @@ const Helpdesk = {
         $hd('#hd-level').textContent = I18n.t('dynamic.helpdesk.lvl_value0_value1', { value0: Number(d.myLevel || 1), value1: this.esc(d.myName || '') });
         $hd('#hd-players').textContent = `${Number(d.playerCount || 0)}/${Number(d.maxPlayers || 64)}`;
         const critChip = $hd('#hd-critical');
-        critChip.textContent = `${Number(shield.critical || 0)} critical`;
+        critChip.textContent = I18n.t('ui.helpdesk.n_critical', { n: Number(shield.critical || 0) });
         critChip.classList.toggle('hidden', !shield.critical);
         const suspChip = $hd('#hd-suspect');
-        suspChip.textContent = `${Number(shield.suspect || 0)} suspect`;
+        suspChip.textContent = I18n.t('ui.helpdesk.n_suspect', { n: Number(shield.suspect || 0) });
         suspChip.classList.toggle('hidden', !shield.suspect);
         $hd('#hd-mode').textContent = String(shield.mode || 'log_only').toUpperCase();
         $hd('#hd-mode').classList.toggle('danger', shield.mode === 'enforce');
@@ -141,7 +141,7 @@ const Helpdesk = {
         const rows = Array.isArray(this.data.reports) ? this.data.reports : [];
         badge.textContent = String(rows.length);
         if (!rows.length) {
-            wrap.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>No open reports or questions.</div>';
+            wrap.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>${I18n.t('ui.helpdesk.no_reports')}</div>`;
             return;
         }
         wrap.innerHTML = '';
@@ -152,14 +152,14 @@ const Helpdesk = {
             el.innerHTML = `
                 <div class="hd-report__top">
                     <span class="hd-report__id">#${Number(r.id)}</span>
-                    <span class="hd-report__kind">${r.isHelpme ? 'QUESTION' : 'REPORT'}</span>
-                    <span class="hd-report__by">${this.esc(r.reporterName || '?')} (#${Number(r.reporter || 0)})${r.reporterOnline === false ? ' · offline' : ''} · ${age}m</span>
+                    <span class="hd-report__kind">${r.isHelpme ? I18n.t('ui.helpdesk.kind_question') : I18n.t('ui.helpdesk.kind_report')}</span>
+                    <span class="hd-report__by">${this.esc(r.reporterName || '?')} (#${Number(r.reporter || 0)})${r.reporterOnline === false ? ' · ' + I18n.t('ui.helpdesk.offline') : ''} · ${age}m</span>
                 </div>
-                <div class="hd-report__reason">${r.targetName ? `vs ${this.esc(r.targetName)} (#${Number(r.target)}) — ` : ''}${this.esc(r.reason || '')}</div>
+                <div class="hd-report__reason">${r.targetName ? `${I18n.t('ui.helpdesk.versus')} ${this.esc(r.targetName)} (#${Number(r.target)}) — ` : ''}${this.esc(r.reason || '')}</div>
                 <div class="hd-report__actions">
-                    <button class="hd-btn tiny primary" data-hd-act="claimReport" data-hd-target="${Number(r.id)}" ${r.status === 'claimed' ? 'disabled' : ''}><i class="ph-bold ph-hand-pointing"></i> Claim</button>
-                    <button class="hd-btn tiny" data-hd-act="closeReport" data-hd-target="${Number(r.id)}"><i class="ph-bold ph-x"></i> Close</button>
-                    ${r.reporterOnline !== false ? `<button class="hd-btn tiny" data-hd-act="tp" data-hd-target="${Number(r.reporter)}"><i class="ph-bold ph-map-pin"></i> TP</button>` : ''}
+                    <button class="hd-btn tiny primary" data-hd-act="claimReport" data-hd-target="${Number(r.id)}" ${r.status === 'claimed' ? 'disabled' : ''}><i class="ph-bold ph-hand-pointing"></i> ${I18n.t('ui.helpdesk.claim')}</button>
+                    <button class="hd-btn tiny" data-hd-act="closeReport" data-hd-target="${Number(r.id)}"><i class="ph-bold ph-x"></i> ${I18n.t('common.close')}</button>
+                    ${r.reporterOnline !== false ? `<button class="hd-btn tiny" data-hd-act="tp" data-hd-target="${Number(r.reporter)}"><i class="ph-bold ph-map-pin"></i> ${I18n.t('ui.helpdesk.tp')}</button>` : ''}
                 </div>
             `;
             wrap.appendChild(el);
@@ -180,9 +180,9 @@ const Helpdesk = {
 
             const flags = [];
             if (Number(p.adminLevel) > 0) flags.push(`<span class="hd-staff-badge">L${Number(p.adminLevel)}</span>`);
-            if (p.downed) flags.push('<span class="flag red">DOWNED</span>');
-            if (p.jailed) flags.push('<span class="flag">JAILED</span>');
-            if (p.frozen) flags.push('<span class="flag teal">FROZEN</span>');
+            if (p.downed) flags.push(`<span class="flag red">${I18n.t('ui.helpdesk.flag_downed')}</span>`);
+            if (p.jailed) flags.push(`<span class="flag">${I18n.t('ui.helpdesk.flag_jailed')}</span>`);
+            if (p.frozen) flags.push(`<span class="flag teal">${I18n.t('ui.helpdesk.flag_frozen')}</span>`);
             if (p.inVehicle) flags.push('<span class="flag teal">🚗</span>');
 
             el.innerHTML = `
@@ -192,7 +192,7 @@ const Helpdesk = {
                     <div class="hd-roster__sub">
                         <span>${Number(p.ping)}ms</span>
                         <span>HP ${Number(p.health)}</span>
-                        ${p.money ? `<span>$${Number(p.money.cash).toLocaleString('en-US')} · $${Number(p.money.bank).toLocaleString('en-US')}</span>` : ''}
+                        ${p.money ? `<span>$${I18n.number(Number(p.money.cash))} · $${I18n.number(Number(p.money.bank))}</span>` : ''}
                     </div>
                 </div>
                 <div class="hd-roster__heat">
@@ -208,7 +208,7 @@ const Helpdesk = {
             wrap.appendChild(el);
         });
         if (!rows.length) {
-            wrap.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-users"></i>No players online.</div>';
+            wrap.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-users"></i>${I18n.t('ui.helpdesk.no_players')}</div>`;
         }
     },
 
@@ -221,7 +221,7 @@ const Helpdesk = {
         const wrap = $hd('#hd-detail');
         const p = this.findSelected();
         if (!p) {
-            wrap.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-cursor-click"></i>Select a player from the roster to see details, heat evidence and quick actions.</div>';
+            wrap.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-cursor-click"></i>${I18n.t('ui.helpdesk.select_player_long')}</div>`;
             return;
         }
         const myLevel = Number(this.data.myLevel || 1);
@@ -232,36 +232,36 @@ const Helpdesk = {
             <div class="hd-detail__hero">
                 <div class="hd-detail__name">#${Number(p.src)} ${this.esc(p.name)}</div>
                 <div class="hd-detail__stats">
-                    <span class="k">Heat</span><span class="v" style="color:${heat.band === 'critical' ? '#ff6b6b' : heat.band === 'suspect' ? '#ffb74d' : heat.band === 'watch' ? '#ffd54f' : 'inherit'}">${Number(heat.heat).toFixed(1)} (${heat.band.toUpperCase()})</span>
-                    <span class="k">Active ticks</span><span class="v">${Number(heat.ticks || 0)}</span>
-                    <span class="k">Ping</span><span class="v">${Number(p.ping)} ms</span>
-                    <span class="k">Health</span><span class="v">${Number(p.health)}${p.downed ? ' · DOWNED' : ''}</span>
-                    <span class="k">Cash / Bank</span><span class="v">${p.money ? `$${Number(p.money.cash).toLocaleString('en-US')} / $${Number(p.money.bank).toLocaleString('en-US')}` : '—'}</span>
-                    <span class="k">Char ID</span><span class="v">${p.charId ? Number(p.charId) : '—'}</span>
-                    ${p.coords ? `<span class="k">Position</span><span class="v">${p.coords.x.toFixed(0)}, ${p.coords.y.toFixed(0)}, ${p.coords.z.toFixed(0)}</span>` : ''}
+                    <span class="k">${I18n.t('ui.helpdesk.heat')}</span><span class="v" style="color:${heat.band === 'critical' ? '#ff6b6b' : heat.band === 'suspect' ? '#ffb74d' : heat.band === 'watch' ? '#ffd54f' : 'inherit'}">${Number(heat.heat).toFixed(1)} (${heat.band.toUpperCase()})</span>
+                    <span class="k">${I18n.t('ui.helpdesk.active_ticks')}</span><span class="v">${Number(heat.ticks || 0)}</span>
+                    <span class="k">${I18n.t('ui.helpdesk.ping')}</span><span class="v">${Number(p.ping)} ms</span>
+                    <span class="k">${I18n.t('ui.helpdesk.health')}</span><span class="v">${Number(p.health)}${p.downed ? ' · ' + I18n.t('ui.helpdesk.flag_downed') : ''}</span>
+                    <span class="k">${I18n.t('ui.helpdesk.cash_bank')}</span><span class="v">${p.money ? `$${I18n.number(Number(p.money.cash))} / $${I18n.number(Number(p.money.bank))}` : '—'}</span>
+                    <span class="k">${I18n.t('ui.helpdesk.char_id')}</span><span class="v">${p.charId ? Number(p.charId) : '—'}</span>
+                    ${p.coords ? `<span class="k">${I18n.t('ui.helpdesk.position')}</span><span class="v">${p.coords.x.toFixed(0)}, ${p.coords.y.toFixed(0)}, ${p.coords.z.toFixed(0)}</span>` : ''}
                 </div>
             </div>
             <div class="hd-actions">
-                <button class="hd-btn" data-hd-act="tp" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-map-pin"></i> Teleport</button>
-                <button class="hd-btn" data-hd-act="bring" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-arrows-in-line-vertical"></i> Bring</button>
-                <button class="hd-btn" data-hd-act="heal" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-heartbeat"></i> Heal</button>
-                <button class="hd-btn" data-hd-act="revive" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-first-aid-kit"></i> Revive</button>
-                <button class="hd-btn" data-hd-act="arespawn" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-arrows-clockwise"></i> Respawn</button>
-                <button class="hd-btn ${p.frozen ? 'warn' : ''}" data-hd-act="${p.frozen ? 'unfreeze' : 'freeze'}" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-snowflake"></i> ${p.frozen ? 'Unfreeze' : 'Freeze'}</button>
-                <button class="hd-btn" data-hd-act="pullout" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-car-profile"></i> Pull out</button>
-                <button class="hd-btn" data-hd-act="slap" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-hand"></i> Slap</button>
-                <button class="hd-btn" data-hd-act="spectate" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-eye"></i> Spectate</button>
-                <button class="hd-btn warn" data-hd-act="warn" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-warning"></i> Warn</button>
-                <button class="hd-btn danger" data-hd-act="kick" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-sign-out"></i> Kick</button>
-                <button class="hd-btn danger" data-hd-act="adMute" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-speaker-slash"></i> AD-Mute</button>
-                <button class="hd-btn" data-hd-act="history" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-clock-counter-clockwise"></i> History</button>
-                <button class="hd-btn" data-hd-act="dismissHeat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-shield-slash"></i> Dismiss heat</button>
-                <button class="hd-btn" data-hd-act="acheat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-magnifying-glass"></i> Evidence</button>
+                <button class="hd-btn" data-hd-act="tp" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-map-pin"></i> ${I18n.t('ui.helpdesk.teleport')}</button>
+                <button class="hd-btn" data-hd-act="bring" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-arrows-in-line-vertical"></i> ${I18n.t('ui.helpdesk.bring')}</button>
+                <button class="hd-btn" data-hd-act="heal" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-heartbeat"></i> ${I18n.t('ui.helpdesk.heal')}</button>
+                <button class="hd-btn" data-hd-act="revive" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-first-aid-kit"></i> ${I18n.t('ui.helpdesk.revive')}</button>
+                <button class="hd-btn" data-hd-act="arespawn" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-arrows-clockwise"></i> ${I18n.t('ui.helpdesk.respawn')}</button>
+                <button class="hd-btn ${p.frozen ? 'warn' : ''}" data-hd-act="${p.frozen ? 'unfreeze' : 'freeze'}" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-snowflake"></i> ${p.frozen ? I18n.t('ui.helpdesk.unfreeze') : I18n.t('ui.helpdesk.freeze')}</button>
+                <button class="hd-btn" data-hd-act="pullout" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-car-profile"></i> ${I18n.t('ui.helpdesk.pull_out')}</button>
+                <button class="hd-btn" data-hd-act="slap" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-hand"></i> ${I18n.t('ui.helpdesk.slap')}</button>
+                <button class="hd-btn" data-hd-act="spectate" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-eye"></i> ${I18n.t('ui.helpdesk.spectate')}</button>
+                <button class="hd-btn warn" data-hd-act="warn" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-warning"></i> ${I18n.t('ui.helpdesk.warn')}</button>
+                <button class="hd-btn danger" data-hd-act="kick" ${can(2) ? '' : 'disabled'}><i class="ph-bold ph-sign-out"></i> ${I18n.t('ui.clans.kick')}</button>
+                <button class="hd-btn danger" data-hd-act="adMute" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-speaker-slash"></i> ${I18n.t('ui.helpdesk.ad_mute')}</button>
+                <button class="hd-btn" data-hd-act="history" ${can(1) ? '' : 'disabled'}><i class="ph-bold ph-clock-counter-clockwise"></i> ${I18n.t('ui.helpdesk.history')}</button>
+                <button class="hd-btn" data-hd-act="dismissHeat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-shield-slash"></i> ${I18n.t('ui.helpdesk.dismiss_heat')}</button>
+                <button class="hd-btn" data-hd-act="acheat" ${can(1) ? '' : 'disabled'} ${heat.ticks ? '' : 'disabled'}><i class="ph-bold ph-magnifying-glass"></i> ${I18n.t('ui.helpdesk.evidence')}</button>
             </div>
-            <div class="hd-section-title">Heat evidence (live ticks)</div>
-            <div id="hd-ticks"><div class="hd-empty"><i class="ph-bold ph-shield-check"></i>No active ticks for this player.</div></div>
-            <div class="hd-section-title">Sanction history</div>
-            <div id="hd-history"><div class="hd-empty"><i class="ph-bold ph-clock-counter-clockwise"></i>Click "History" to load.</div></div>
+            <div class="hd-section-title">${I18n.t('ui.helpdesk.heat_evidence')}</div>
+            <div id="hd-ticks"><div class="hd-empty"><i class="ph-bold ph-shield-check"></i>${I18n.t('ui.helpdesk.no_ticks')}</div></div>
+            <div class="hd-section-title">${I18n.t('ui.helpdesk.sanction_history')}</div>
+            <div id="hd-history"><div class="hd-empty"><i class="ph-bold ph-clock-counter-clockwise"></i>${I18n.t('ui.helpdesk.click_history')}</div></div>
         `;
         wrap.innerHTML = html;
         this.loadTicks(p.src);
@@ -275,7 +275,7 @@ const Helpdesk = {
         const wrap = $hd('#hd-ticks');
         if (!wrap) return;
         if (!Array.isArray(ticks) || !ticks.length) {
-            wrap.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>No active ticks for this player.</div>';
+            wrap.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>${I18n.t('ui.helpdesk.no_ticks')}</div>`;
             return;
         }
         wrap.innerHTML = '';
@@ -297,11 +297,11 @@ const Helpdesk = {
         if (!wrap) return;
         const shield = this.data.shield || {};
         wrap.innerHTML = `
-            <span class="hd-detstat">mode: ${this.esc(shield.mode || 'log_only')}</span>
-            <span class="hd-detstat">watching: ${Number(shield.watching || 0)}</span>
-            <span class="hd-detstat${shield.suspect ? ' hot' : ''}">suspect: ${Number(shield.suspect || 0)}</span>
-            <span class="hd-detstat${shield.critical ? ' hot' : ''}">critical: ${Number(shield.critical || 0)}</span>
-            <span class="hd-detstat">auto-ban: ${shield.autoBan ? 'ON (!)' : 'off'}</span>
+            <span class="hd-detstat">${I18n.t('ui.helpdesk.mode')}: ${this.esc(shield.mode || 'log_only')}</span>
+            <span class="hd-detstat">${I18n.t('ui.helpdesk.watching')}: ${Number(shield.watching || 0)}</span>
+            <span class="hd-detstat${shield.suspect ? ' hot' : ''}">${I18n.t('ui.helpdesk.suspect_word')}: ${Number(shield.suspect || 0)}</span>
+            <span class="hd-detstat${shield.critical ? ' hot' : ''}">${I18n.t('ui.helpdesk.critical_word')}: ${Number(shield.critical || 0)}</span>
+            <span class="hd-detstat">${I18n.t('ui.helpdesk.auto_ban')}: ${shield.autoBan ? 'ON (!)' : I18n.t('ui.helpdesk.off')}</span>
         `;
     },
 
@@ -309,7 +309,7 @@ const Helpdesk = {
         const wrap = $hd('#hd-history');
         if (!wrap) return;
         if (!Array.isArray(rows) || !rows.length) {
-            wrap.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>Clean record — no sanctions.</div>';
+            wrap.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>${I18n.t('ui.helpdesk.clean_record')}</div>`;
             return;
         }
         wrap.innerHTML = '';
@@ -348,7 +348,7 @@ const Helpdesk = {
 
         if (this.cnnSubTab === 'pending') {
             if (!pending.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>No CNN announcements in the queue.</div>';
+                listContainer.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-check-circle"></i>${I18n.t('ui.helpdesk.no_cnn_queue')}</div>`;
                 return;
             }
             pending.forEach((ad) => {
@@ -361,24 +361,24 @@ const Helpdesk = {
                     <div class="hd-cnn-card__head">
                         <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
                         <div class="hd-cnn-card__author">${this.esc(ad.playerName)} <span class="dim">(#${Number(ad.src || 0)})</span></div>
-                        <div class="hd-cnn-card__pos">Queue #${Number(ad.queuePosition || 1)}</div>
+                        <div class="hd-cnn-card__pos">${I18n.t('ui.helpdesk.queue')} #${Number(ad.queuePosition || 1)}</div>
                         <div class="hd-cnn-card__eta"><i class="ph-bold ph-clock"></i> <span class="hd-ad-countdown" data-ad-id="${ad.id}">${etaText}</span></div>
                         <div class="hd-cnn-card__status badge-${ad.status}">${this.esc(String(ad.status || 'pending').toUpperCase())}</div>
                     </div>
                     <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
                     <div class="hd-cnn-card__actions">
-                        ${canApprove ? `<button class="hd-btn tiny primary" data-hd-act="approveAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-check"></i> Approve</button>` : '<span class="approved-chip"><i class="ph-bold ph-check"></i> Approved</span>'}
-                        <button class="hd-btn tiny danger" data-hd-act="rejectAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-trash"></i> Reject / Delete</button>
-                        ${ad.src ? `<button class="hd-btn tiny" data-hd-act="selectPlayer" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-user"></i> View Player</button>` : ''}
-                        ${ad.src ? `<button class="hd-btn tiny warn" data-hd-act="warn" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-warning"></i> Warn</button>` : ''}
-                        ${ad.src ? `<button class="hd-btn tiny danger" data-hd-act="adMute" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-speaker-slash"></i> AD-Mute</button>` : ''}
+                        ${canApprove ? `<button class="hd-btn tiny primary" data-hd-act="approveAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-check"></i> ${I18n.t('ui.helpdesk.approve')}</button>` : '<span class="approved-chip"><i class="ph-bold ph-check"></i> ' + I18n.t('ui.helpdesk.approved') + '</span>'}
+                        <button class="hd-btn tiny danger" data-hd-act="rejectAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-trash"></i> ${I18n.t('ui.helpdesk.reject_delete')}</button>
+                        ${ad.src ? `<button class="hd-btn tiny" data-hd-act="selectPlayer" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-user"></i> ${I18n.t('ui.helpdesk.view_player')}</button>` : ''}
+                        ${ad.src ? `<button class="hd-btn tiny warn" data-hd-act="warn" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-warning"></i> ${I18n.t('ui.helpdesk.warn')}</button>` : ''}
+                        ${ad.src ? `<button class="hd-btn tiny danger" data-hd-act="adMute" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-speaker-slash"></i> ${I18n.t('ui.helpdesk.ad_mute')}</button>` : ''}
                     </div>
                 `;
                 listContainer.appendChild(card);
             });
         } else if (this.cnnSubTab === 'published') {
             if (!published.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-broadcast"></i>No announcements published recently.</div>';
+                listContainer.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-broadcast"></i>${I18n.t('ui.helpdesk.no_published')}</div>`;
                 return;
             }
             published.forEach((ad) => {
@@ -388,7 +388,7 @@ const Helpdesk = {
                     <div class="hd-cnn-card__head">
                         <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
                         <div class="hd-cnn-card__author">${this.esc(ad.player_name || ad.playerName)}</div>
-                        <div class="hd-cnn-card__status badge-published"><i class="ph-bold ph-check-circle"></i> PUBLISHED</div>
+                        <div class="hd-cnn-card__status badge-published"><i class="ph-bold ph-check-circle"></i> ${I18n.t('ui.helpdesk.published_caps')}</div>
                         <div class="hd-cnn-card__time">${this.esc(String(ad.published_at || '').slice(0, 16))}</div>
                     </div>
                     <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
@@ -397,7 +397,7 @@ const Helpdesk = {
             });
         } else if (this.cnnSubTab === 'rejected') {
             if (!rejected.length) {
-                listContainer.innerHTML = '<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>No announcements rejected recently.</div>';
+                listContainer.innerHTML = `<div class="hd-empty"><i class="ph-bold ph-shield-check"></i>${I18n.t('ui.helpdesk.no_rejected')}</div>`;
                 return;
             }
             rejected.forEach((ad) => {
@@ -407,12 +407,12 @@ const Helpdesk = {
                     <div class="hd-cnn-card__head">
                         <div class="hd-cnn-card__id">#${Number(ad.id)}</div>
                         <div class="hd-cnn-card__author">${this.esc(ad.player_name || ad.playerName)}</div>
-                        <div class="hd-cnn-card__status badge-rejected"><i class="ph-bold ph-x-circle"></i> REJECTED</div>
-                        <div class="hd-cnn-card__reviewer">By: <strong>${this.esc(ad.reviewed_by || 'Staff')}</strong></div>
+                        <div class="hd-cnn-card__status badge-rejected"><i class="ph-bold ph-x-circle"></i> ${I18n.t('ui.helpdesk.rejected_caps')}</div>
+                        <div class="hd-cnn-card__reviewer">${I18n.t('ui.helpdesk.by')}: <strong>${this.esc(ad.reviewed_by || I18n.t('chat.badge.staff'))}</strong></div>
                         <div class="hd-cnn-card__time">${this.esc(String(ad.reviewed_at || '').slice(0, 16))}</div>
                     </div>
                     <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
-                    <div class="hd-cnn-card__reason"><strong>Motiv respingere:</strong> ${this.esc(ad.reject_reason || 'Nerespectare regulament')}</div>
+                    <div class="hd-cnn-card__reason"><strong>${I18n.t('ui.helpdesk.reject_reason')}:</strong> ${this.esc(ad.reject_reason || I18n.t('ui.helpdesk.default_reject_reason'))}</div>
                 `;
                 listContainer.appendChild(card);
             });
@@ -425,7 +425,7 @@ const Helpdesk = {
         $hd('#hd-prompt-title').textContent = title;
         const input = $hd('#hd-prompt-input');
         input.value = options.defaultVal || '';
-        input.placeholder = options.placeholder || 'Reason (required, min 3 chars)';
+        input.placeholder = options.placeholder || I18n.t('ui.helpdesk.reason_placeholder');
         input.focus();
         $hd('#hd-prompt-ok').onclick = () => {
             const reason = String(input.value || '').trim();
@@ -487,53 +487,53 @@ const Helpdesk = {
         <div class="helpdesk-panel__shell">
             <div class="helpdesk-panel__head">
                 <div class="helpdesk-panel__logo"><i class="ph-bold ph-headset"></i></div>
-                <div class="helpdesk-panel__title">Staff <span>Console</span></div>
+                <div class="helpdesk-panel__title">${I18n.t('ui.helpdesk.staff')} <span>${I18n.t('ui.helpdesk.console')}</span></div>
                 <div class="helpdesk-nav">
-                    <button type="button" class="hd-nav-tab active" id="hd-tab-overview"><i class="ph-bold ph-users-four"></i> Overview</button>
-                    <button type="button" class="hd-nav-tab" id="hd-tab-cnn"><i class="ph-bold ph-megaphone"></i> CNN Ads <span class="count" id="hd-cnn-badge">0</span></button>
+                    <button type="button" class="hd-nav-tab active" id="hd-tab-overview"><i class="ph-bold ph-users-four"></i> ${I18n.t('ui.helpdesk.overview')}</button>
+                    <button type="button" class="hd-nav-tab" id="hd-tab-cnn"><i class="ph-bold ph-megaphone"></i> ${I18n.t('ui.helpdesk.cnn_ads')} <span class="count" id="hd-cnn-badge">0</span></button>
                 </div>
                 <div class="helpdesk-panel__meta">
                     <span class="hd-chip"><i class="ph-bold ph-user-circle"></i><span id="hd-level">—</span></span>
                     <span class="hd-chip"><i class="ph-bold ph-users-three"></i><span id="hd-players">—</span></span>
-                    <span class="hd-chip danger hidden" id="hd-critical">0 critical</span>
-                    <span class="hd-chip warn hidden" id="hd-suspect">0 suspect</span>
+                    <span class="hd-chip danger hidden" id="hd-critical">0 ${I18n.t('ui.helpdesk.critical')}</span>
+                    <span class="hd-chip warn hidden" id="hd-suspect">0 ${I18n.t('ui.helpdesk.suspect')}</span>
                     <span class="hd-chip" id="hd-mode">LOG_ONLY</span>
                     <span class="hd-chip"><i class="ph-bold ph-clock"></i><span id="hd-time">—</span></span>
                 </div>
-                <button class="helpdesk-panel__close" id="hd-close" title="Close (ESC)"><i class="ph-bold ph-x"></i></button>
+                <button class="helpdesk-panel__close" id="hd-close" title="${I18n.t('ui.casino.close_esc')}"><i class="ph-bold ph-x"></i></button>
             </div>
             <div class="helpdesk-panel__body" id="hd-body-overview">
                 <div class="hd-col">
-                    <div class="hd-col__head"><i class="ph-bold ph-megaphone-simple"></i> Reports & Questions <span class="count" id="hd-reports-count">0</span></div>
+                    <div class="hd-col__head"><i class="ph-bold ph-megaphone-simple"></i> ${I18n.t('ui.helpdesk.reports_questions')} <span class="count" id="hd-reports-count">0</span></div>
                     <div class="hd-col__scroll" id="hd-reports"></div>
                 </div>
                 <div class="hd-col">
-                    <div class="hd-col__head"><i class="ph-bold ph-users-four"></i> Players <span class="count" id="hd-roster-count">0</span></div>
+                    <div class="hd-col__head"><i class="ph-bold ph-users-four"></i> ${I18n.t('common.players')} <span class="count" id="hd-roster-count">0</span></div>
                     <div class="hd-col__scroll" id="hd-roster"></div>
                 </div>
                 <div class="hd-col">
-                    <div class="hd-col__head"><i class="ph-bold ph-user-focus"></i> Detail & Actions</div>
+                    <div class="hd-col__head"><i class="ph-bold ph-user-focus"></i> ${I18n.t('ui.helpdesk.detail_actions')}</div>
                     <div class="hd-col__scroll" id="hd-detail">
-                        <div class="hd-empty"><i class="ph-bold ph-cursor-click"></i>Select a player from the roster.</div>
+                        <div class="hd-empty"><i class="ph-bold ph-cursor-click"></i>${I18n.t('ui.helpdesk.select_player')}</div>
                     </div>
                 </div>
             </div>
             <div class="helpdesk-panel__cnn hidden" id="hd-body-cnn">
                 <div class="hd-cnn-subnav">
-                    <button type="button" class="hd-cnn-subtab active" id="hd-cnn-sub-pending">Pending Queue (<span id="hd-cnn-count-pending">0</span>)</button>
-                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-published">Published History (<span id="hd-cnn-count-published">0</span>)</button>
-                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-rejected">Rejected (<span id="hd-cnn-count-rejected">0</span>)</button>
+                    <button type="button" class="hd-cnn-subtab active" id="hd-cnn-sub-pending">${I18n.t('ui.helpdesk.pending_queue')} (<span id="hd-cnn-count-pending">0</span>)</button>
+                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-published">${I18n.t('ui.helpdesk.published_history')} (<span id="hd-cnn-count-published">0</span>)</button>
+                    <button type="button" class="hd-cnn-subtab" id="hd-cnn-sub-rejected">${I18n.t('ui.helpdesk.rejected')} (<span id="hd-cnn-count-rejected">0</span>)</button>
                 </div>
                 <div class="hd-cnn-scroll" id="hd-cnn-list"></div>
             </div>
             <div class="hd-detstats" id="hd-detstats" style="padding:8px 16px;border-top:1px solid var(--glass-border);"></div>
             <div class="hd-prompt-backdrop hidden" id="hd-prompt-backdrop">
                 <div class="hd-prompt">
-                    <div class="hd-prompt__title" id="hd-prompt-title">Reason</div>
-                    <input id="hd-prompt-input" type="text" maxlength="200" placeholder="Reason (required, min 3 chars)">
+                    <div class="hd-prompt__title" id="hd-prompt-title">${I18n.t('ui.helpdesk.reason')}</div>
+                    <input id="hd-prompt-input" type="text" maxlength="200" placeholder="${I18n.t('ui.helpdesk.reason_placeholder')}">
                     <div class="hd-prompt__actions">
-                        <button class="hd-btn" id="hd-prompt-cancel">Cancel</button>
-                        <button class="hd-btn primary" id="hd-prompt-ok">Confirm</button>
+                        <button class="hd-btn" id="hd-prompt-cancel">${I18n.t('common.cancel')}</button>
+                        <button class="hd-btn primary" id="hd-prompt-ok">${I18n.t('common.confirm')}</button>
                     </div>
                 </div>
             </div>
@@ -600,7 +600,7 @@ const Helpdesk = {
         }
 
         if (action === 'warn' || action === 'kick') {
-            Helpdesk.prompt(action, targetId, action === 'warn' ? `Warn #${targetId}` : `Kick #${targetId}`);
+            Helpdesk.prompt(action, targetId, action === 'warn' ? I18n.t('ui.helpdesk.warn_title', { id: targetId }) : I18n.t('ui.helpdesk.kick_title', { id: targetId }));
             return;
         }
 

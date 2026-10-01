@@ -31,7 +31,7 @@ local function openVehicleMenu(veh)
     exports.sunset_ui:Send('playerInteractionShow', {
         target  = { name = modelName, id = '' },
         actions = {
-            { id = 'lockpick_vehicle', label = 'Force the door (Lockpick)', group = 'CIVILIAN' },
+            { id = 'lockpick_vehicle', label = exports.sunset_core:Translate('carjack.ui.force_the_door_lockpick'), group = 'CIVILIAN' },
         },
     })
     exports.sunset_ui:SetFocus(true, true)
@@ -42,7 +42,7 @@ local function openNpcMenu(idx)
     exports.sunset_ui:Send('playerInteractionShow', {
         target  = { name = CHOP_NPCS[idx].label, id = '' },
         actions = {
-            { id = 'sell_stolen_car', label = 'Sell car', group = 'CIVILIAN' },
+            { id = 'sell_stolen_car', label = exports.sunset_core:Translate('carjack.ui.sell_car'), group = 'CIVILIAN' },
         },
     })
     exports.sunset_ui:SetFocus(true, true)
@@ -59,15 +59,16 @@ end
 local function showNpcBlips()
     for i, npc in ipairs(CHOP_NPCS) do
         if not npcBlips[i] then
-            local b = AddBlipForCoord(npc.coords.x, npc.coords.y, npc.coords.z)
-            SetBlipSprite(b, 120)
-            SetBlipColour(b, 2)
-            SetBlipScale(b, 0.85)
-            SetBlipAsShortRange(b, false)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentString(npc.label)
-            EndTextCommandSetBlipName(b)
-            npcBlips[i] = b
+            local b = Sunset.CreateSafeBlip(npc.coords, {
+                sprite = 120,
+                color = 2,
+                scale = 0.85,
+                name = npc.label,
+                shortRange = false
+            })
+            if b then
+                npcBlips[i] = b
+            end
         end
     end
 end
@@ -81,26 +82,25 @@ end
 
 -- ── Spawn NPC-uri ────────────────────────────────────────────
 CreateThread(function()
-    local model = GetHashKey('g_m_y_famca_01')
-    RequestModel(model)
-    local mDeadline = GetGameTimer() + 8000
-    while not HasModelLoaded(model) do
-        if GetGameTimer() > mDeadline then
-            print('[sunset_carjack] chop NPC model load timed out')
-            return
-        end
-        Wait(100)
+    Sunset.AwaitGameReady()
+    local ok, model = Sunset.RequestModelSafe('g_m_y_famca_01', 5000)
+    if not ok then
+        print('[sunset_carjack] chop NPC model load failed — skipping static NPC spawn')
+        return
     end
+
     for i, npc in ipairs(CHOP_NPCS) do
         local ped = CreatePed(4, model,
             npc.coords.x, npc.coords.y, npc.coords.z - 1.0, npc.coords.w,
             false, true)
-        SetEntityAsMissionEntity(ped, true, true)
-        FreezeEntityPosition(ped, true)
-        SetEntityInvincible(ped, true)
-        SetBlockingOfNonTemporaryEvents(ped, true)
-        TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_SMOKING', 0, true)
-        spawnedNpcs[i] = ped
+        if ped and ped ~= 0 and DoesEntityExist(ped) then
+            SetEntityAsMissionEntity(ped, true, true)
+            FreezeEntityPosition(ped, true)
+            SetEntityInvincible(ped, true)
+            SetBlockingOfNonTemporaryEvents(ped, true)
+            TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_SMOKING', 0, true)
+            spawnedNpcs[i] = ped
+        end
     end
     SetModelAsNoLongerNeeded(model)
 end)
@@ -206,7 +206,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             hasStolenCar = true
             showNpcBlips()
         else
-            notify(err or 'The lockpick broke.', 'error')
+            notify(err or exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
         end
         SetTimeout(2000, function() inCooldown = false end)
 
@@ -223,13 +223,13 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         local netId = NetworkGetNetworkIdFromEntity(veh)
         local ok, result = Sunset.AwaitCallback('sunset:carjack:sell', { model = modelName, netId = netId })
         if ok then
-            notify(('Sold! You received $%d cash.'):format(result), 'success')
+            notify(exports.sunset_core:Translate('carjack.msg.sold_you_received_cash', { result = math.floor(tonumber(result) or 0) }), 'success')
             SetEntityAsMissionEntity(veh, false, true)
             DeleteVehicle(veh)
             hasStolenCar = false
             hideNpcBlips()
         else
-            notify(result or 'Could not sell the vehicle.', 'error')
+            notify(result or exports.sunset_core:Translate('carjack.msg.could_not_sell_the_vehicle'), 'error')
         end
         SetTimeout(1500, function() inCooldown = false end)
     end

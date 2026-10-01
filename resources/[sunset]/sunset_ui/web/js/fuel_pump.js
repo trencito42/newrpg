@@ -95,7 +95,7 @@ const FuelPump = (() => {
         if (!panel) return;
 
         if (data.station !== undefined && get('fp-station-label')) {
-            get('fp-station-label').textContent = data.station || 'Gas Station';
+            get('fp-station-label').textContent = data.station || I18n.t('ui.businesses.type_gas');
         }
         const pumpLabel = get('fp-pump-label');
         if (pumpLabel) {
@@ -103,16 +103,16 @@ const FuelPump = (() => {
             pumpLabel.style.display = data.pumpLabel ? 'flex' : 'none';
         }
         if (data.vehicleName !== undefined && get('fp-vehicle-name')) {
-            get('fp-vehicle-name').textContent = data.vehicleName || 'Vehicle';
+            get('fp-vehicle-name').textContent = data.vehicleName || I18n.t('common.vehicle');
         }
         if (data.fuelType !== undefined && get('fp-fuel-type')) {
-            get('fp-fuel-type').textContent = data.fuelType || 'Premium Gasoline';
+            get('fp-fuel-type').textContent = data.fuelType || I18n.t('ui.fuelpump.premium_gasoline');
         }
         if (data.pricePerLiter !== undefined && get('fp-price-line')) {
-            get('fp-price-line').textContent = `$${formatMoney(data.pricePerLiter)} / Liter`;
+            get('fp-price-line').textContent = I18n.t('ui.fuelpump.price_per_liter', { price: formatMoney(data.pricePerLiter) });
         }
         if (data.ownerName !== undefined && get('fp-owner-name')) {
-            get('fp-owner-name').textContent = I18n.t('dynamic.fuel_pump.proprietar_value0', { value0: data.ownerName || 'Stat' });
+            get('fp-owner-name').textContent = I18n.t('dynamic.fuel_pump.proprietar_value0', { value0: data.ownerName || I18n.t('ui.fuelpump.state_owner') });
         }
         if (data.sessionLiters !== undefined && get('fp-val-liters')) {
             get('fp-val-liters').textContent = formatLiters(data.sessionLiters);
@@ -133,15 +133,15 @@ const FuelPump = (() => {
             if (pumpText) {
                 const isCan = (data.vehicleName || state?.vehicleName) === 'Gas Can';
                 pumpText.innerHTML = isCan
-                    ? '<span class="fp-key-hint">E</span> Start Fill'
-                    : '<span class="fp-key-hint">G</span> Start Pump';
+                    ? '<span class="fp-key-hint">E</span> ' + I18n.t('ui.fuelpump.start_fill')
+                    : '<span class="fp-key-hint">G</span> ' + I18n.t('ui.fuelpump.start_pump');
             }
         } else if (mode === 'pumping') {
             panel.classList.add('is-interactive');
             if (pumpBtn) pumpBtn.disabled = data.canPump === false;
             if (checkout) checkout.disabled = (Number(data.sessionLiters) || 0) <= 0;
             const pumpText = get('fp-btn-pump')?.querySelector('.fp-pump-text');
-            if (pumpText) pumpText.innerHTML = '<span class="fp-key-hint">SPACE</span> Press Pump';
+            if (pumpText) pumpText.innerHTML = '<span class="fp-key-hint">SPACE</span> ' + I18n.t('ui.fuelpump.press_pump');
         } else if (mode === 'full' || mode === 'complete') {
             panel.classList.add('is-interactive');
             if (pumpBtn) pumpBtn.disabled = true;

@@ -96,13 +96,13 @@ const BusinessPanels = {
     },
 
     formatMoney(amount) {
-        return `$${Number(amount || 0).toLocaleString('en-US')}`;
+        return `$${I18n.number(Number(amount || 0))}`;
     },
 
     typeLabel(type) {
-        if (type === 'gas') return 'Gas Station';
-        if (type === 'shop') return 'Store';
-        return 'Business';
+        if (type === 'gas') return I18n.t('ui.businesses.type_gas');
+        if (type === 'shop') return I18n.t('ui.businesses.type_store');
+        return I18n.t('ui.businesses.type_business');
     },
 
     escape(text) {
@@ -122,8 +122,8 @@ const BusinessPanels = {
 
         const canAdmin = data.permissions?.admin === true;
         const isAdminView = data.mode === 'admin';
-        $('#business-panel-title').textContent = isAdminView ? 'BUSINESS ADMIN' : 'MY BUSINESSES';
-        $('#business-panel-type').textContent = isAdminView ? 'Location Management' : 'Profits & Withdrawals';
+        $('#business-panel-title').textContent = isAdminView ? I18n.t('ui.businesses.admin_title') : I18n.t('ui.businesses.my_title');
+        $('#business-panel-type').textContent = isAdminView ? I18n.t('ui.businesses.admin_subtitle') : I18n.t('ui.businesses.my_subtitle');
 
         $('#business-tab-admin')?.classList.toggle('hidden', !canAdmin);
         $('#business-tab-owner')?.classList.remove('hidden');
@@ -166,7 +166,7 @@ const BusinessPanels = {
         if (!list) return;
         list.innerHTML = '';
         if (!rows.length) {
-            list.innerHTML = '<p class="premium-clan__empty">No business locations registered yet. Restart sunset_businesses to bootstrap locations.</p>';
+            list.innerHTML = `<p class="premium-clan__empty">${I18n.t('ui.businesses.no_locations')}</p>`;
             return;
         }
         rows.forEach((row) => {
@@ -175,7 +175,7 @@ const BusinessPanels = {
             item.className = 'premium-clan__roster-item business-admin-row';
             item.dataset.businessId = String(row.id);
             if (this.dashboard?.selected?.id === row.id) item.classList.add('is-selected');
-            const owner = row.ownerName || (row.ownerCharacterId ? `CID #${row.ownerCharacterId}` : 'For sale');
+            const owner = row.ownerName || (row.ownerCharacterId ? `CID #${row.ownerCharacterId}` : I18n.t('ui.businesses.for_sale'));
             item.innerHTML = `
                 <div>
                     <strong>${this.escape(row.label)}</strong>
@@ -222,9 +222,9 @@ const BusinessPanels = {
         if (!rows.length) {
             list.innerHTML = `
                 <div class="business-owner-empty">
-                    <strong>You do not own any businesses yet.</strong>
-                    <p>Go to a <b>24/7</b>, <b>Ammunation</b>, or <b>gas station</b>, open the interaction menu, and choose <b>Buy Business</b>.</p>
-                    <p>After purchase, your stores appear here with profit balance, teleport, and withdraw.</p>
+                    <strong>${I18n.t('ui.businesses.none_owned_title')}</strong>
+                    <p>${I18n.t('ui.businesses.none_owned_hint1')}</p>
+                    <p>${I18n.t('ui.businesses.none_owned_hint2')}</p>
                 </div>
             `;
             return;
@@ -239,8 +239,8 @@ const BusinessPanels = {
                     <strong>${this.escape(row.label)}</strong>
                     <span>${this.escape(this.typeLabel(row.businessType))}${catalog}</span>
                 </div>
-                <p>Accumulated profit: <b>${this.formatMoney(balance)}</b></p>
-                <p>Your share: <b>${Number(row.profitPercent || 0)}%</b> of customer sales</p>
+                <p>${I18n.t('ui.businesses.accumulated_profit')}: <b>${this.formatMoney(balance)}</b></p>
+                <p>${I18n.t('ui.businesses.your_share', { percent: Number(row.profitPercent || 0) })}</p>
                 <div class="business-owner-card__actions">
                     <button type="button" class="premium-clan__btn premium-clan__btn--secondary" data-business-teleport="${row.id}">
                         GO TO LOCATION
@@ -273,7 +273,7 @@ const BusinessPanels = {
     clearOwner() {
         const form = $('#business-admin-form');
         const businessId = Number(form?.dataset.businessId || 0);
-        if (!businessId || !confirm('Remove the owner and list this business for sale again?')) return;
+        if (!businessId || !confirm(I18n.t('ui.businesses.confirm_remove_owner'))) return;
         post('businessManage', { mode: 'admin', action: 'clearOwner', businessId });
     },
 

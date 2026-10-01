@@ -11,8 +11,12 @@ client_scripts {
     'timerbars.lua',
     'client.lua',
 }
-server_script 'server.lua'
+server_scripts {
+	'@oxmysql/lib/MySQL.lua',
+	'@sunset_casino/shared/rng.lua',
+	'server.lua',
+}
 
 
 -- [STARTUP] declared so the exports used at runtime are guaranteed started first
-dependencies { 'sunset_inventory' }
+dependencies { 'sunset_inventory', 'oxmysql' }

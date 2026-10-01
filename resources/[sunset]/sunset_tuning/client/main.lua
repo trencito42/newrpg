@@ -210,7 +210,7 @@ local function openPanel(shop)
 
     local payload, err = Sunset.AwaitCallback('sunset:tuning:getTune', currentPlate, modelName)
     if not payload then
-        notify(err or 'Could not load the ECU for this car', 'error')
+        notify(err or exports.sunset_core:Translate('tuning.msg.could_not_load_the_ecu_for'), 'error')
         return
     end
 
@@ -321,7 +321,7 @@ RegisterNUICallback('tuningSave', function(data, cb)
     draftCosmetics = SunsetTuning.SanitizeCosmetics(data.cosmetics or draftCosmetics)
     local saved, err = Sunset.AwaitCallback('sunset:tuning:saveTune', currentPlate, data.tune or draftTune, flash, data.cosmetics or draftCosmetics)
     if not saved then
-        notify(err or 'Salvare esuata', 'error')
+        notify(err or exports.sunset_core:Translate('tuning.msg.salvare_esuata'), 'error')
         cb({ ok = false, error = err })
         return
     end
@@ -346,7 +346,7 @@ RegisterNUICallback('tuningSave', function(data, cb)
     if data and data.testBurst == true and STC.BurstExhaust then STC.BurstExhaust(currentVeh, 'flash', 3) end
     local costVal = saved.cost or 0
     if costVal > 0 then
-        notify(('ECU & modifications saved — $%d'):format(costVal), 'success')
+        notify(exports.sunset_core:Translate('tuning.msg.ecu_modifications_saved', { cost_val = math.floor(tonumber(costVal) or 0) }), 'success')
     else
         notify(exports.sunset_core:Translate('tuning.message.modifications_saved_successfully_0'), 'success')
     end
@@ -360,7 +360,7 @@ RegisterNUICallback('tuningDyno', function(_, cb)
 
     local dynoSession, beginError = Sunset.AwaitCallback('sunset:tuning:beginDyno', currentPlate)
     if not dynoSession or not dynoSession.token then
-        notify(beginError or ('Dyno unavailable — you need $%d in the bank'):format(SunsetTuning.DynoCost), 'error')
+        notify(beginError or exports.sunset_core:Translate('tuning.msg.dyno_unavailable_you_need_in_the', { dyno_cost = math.floor(tonumber(SunsetTuning.DynoCost) or 0) }), 'error')
         cb({ ok = false, error = beginError })
         return
     end
@@ -387,7 +387,7 @@ RegisterNUICallback('tuningDyno', function(_, cb)
             end
             sendUi('dynoResult', { dyno = dynoSaved, result = result })
         else
-            notify(err or 'Dyno failed — check your bank money ($' .. SunsetTuning.DynoCost .. ')', 'error')
+            notify(err or exports.sunset_core:Translate('tuning.msg.dyno_failed_check_your_bank_money', { dyno_cost = tostring(SunsetTuning.DynoCost) }), 'error')
             sendUi('dynoDone', { ok = false })
         end
         cb({ ok = true })
@@ -401,20 +401,35 @@ end)
 
 -- Harmony: secondary tuning shop (LS Customs uses faction HQ menu)
 local tuningShopBlips = {}
-CreateThread(function()
+local function setupTuningBlips()
+    for _, b in ipairs(tuningShopBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+    end
+    tuningShopBlips = {}
+
     for _, shop in ipairs(SunsetTuning.Shops or {}) do
-        if shop.id ~= 'lsc_main' and shop.blip then
-            local blip = AddBlipForCoord(shop.coords.x, shop.coords.y, shop.coords.z)
-            tuningShopBlips[#tuningShopBlips + 1] = blip
-            SetBlipSprite(blip, shop.blip.sprite or 72)
-            SetBlipColour(blip, shop.blip.color or 47)
-            SetBlipScale(blip, shop.blip.scale or 0.8)
-            SetBlipAsShortRange(blip, true)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentSubstringPlayerName(shop.label or exports.sunset_core:Translate('tuning.menu.ecu_tuning'))
-            EndTextCommandSetBlipName(blip)
+        if shop.id ~= 'lsc_main' and shop.blip and shop.coords then
+            local blip = Sunset.CreateSafeBlip(shop.coords, {
+                sprite = shop.blip.sprite or 72,
+                color = shop.blip.color or 47,
+                scale = shop.blip.scale or 0.8,
+                name = shop.label or exports.sunset_core:Translate('tuning.menu.ecu_tuning'),
+                shortRange = true
+            })
+            if blip then
+                tuningShopBlips[#tuningShopBlips + 1] = blip
+            end
         end
     end
+end
+
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupTuningBlips()
+end)
+
+CreateThread(function()
+    Sunset.AwaitGameReady()
+    setupTuningBlips()
 end)
 
 CreateThread(function()

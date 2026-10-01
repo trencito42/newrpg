@@ -133,7 +133,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:loadPackageIntoVan', f
 
     local cfg = Sunset.GetJobConfig('courier')
     local ok, rearErr = validateVanRear(source, cfg, vehicleNetId)
-    if not ok then return nil, rearErr or 'Go to the back doors of your delivery van' end
+    if not ok then return nil, rearErr or exports.sunset_core:TFor(source, 'jobs.err.go_to_the_back_doors_of') end
 
     session.data.carryingPackage = false
     session.data.loaded = (session.data.loaded or 0) + 1

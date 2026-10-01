@@ -25,7 +25,7 @@ RegisterNetEvent('sunset:events:start', function(data)
         SetBlipScale(eventBlip, 1.2)
         SetBlipRoute(eventBlip, true)
         BeginTextCommandSetBlipName('STRING')
-        AddTextComponentString(data.label or 'Event')
+        AddTextComponentString(data.label or exports.sunset_core:Translate('events.msg.event'))
         EndTextCommandSetBlipName(eventBlip)
     end
 end)
@@ -59,7 +59,7 @@ CreateThread(function()
                 if IsControlJustReleased(0, 38) then
                     local res, err = Sunset.AwaitCallback('sunset:events:join')
                     if not res then
-                        exports.sunset_ui:Notify(err or 'Could not join the event.', 'error')
+                        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('events.msg.could_not_join_the_event'), 'error')
                     end
                 end
             end

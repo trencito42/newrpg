@@ -100,12 +100,11 @@ local function setZoneBlip(zone)
     SetBlipScale(ZoneBlip, 1.1)
     SetBlipAsShortRange(ZoneBlip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(('Hunting Zone — %s'):format(zone.label or zone.id or '?'))
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.msg.hunting_zone', { label = tostring(zone.label or zone.id or '?') }))
     EndTextCommandSetBlipName(ZoneBlip)
     -- Also set GPS waypoint so minimap nav activates immediately
     SetNewWaypoint(cx, cy)
-    exports.sunset_ui:Notify(('GPS set to Hunting Zone: %s. No animal positions shown — track them.'):format(
-        zone.label or zone.id or '?'), 'info', 7000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.gps_set_to_hunting_zone_no', { label = tostring(zone.label or zone.id or '?') }), 'info', 7000)
 end
 
 -- ── State Changes ─────────────────────────────────────────────
@@ -147,13 +146,8 @@ RegisterNetEvent('sunset:hunting:spawnAnimals', function(zoneId, zone, needed, s
         local species = spawnList[math.random(#spawnList)]
         local spCfg = speciesCfg[species]
         if spCfg then
-            local model = GetHashKey(spCfg.model)
-            RequestModel(model)
-            local t = 0
-            while not HasModelLoaded(model) and t < 3000 do
-                Wait(100); t = t + 100
-            end
-            if HasModelLoaded(model) then
+            local okModel, model = Sunset.RequestModelSafe(spCfg.model, 4000)
+            if okModel and model then
                 -- Adjust Z to ground
                 local groundZ = pt.z
                 local ok, gz = GetGroundZFor_3dCoord(pt.x, pt.y, pt.z + 2.0, false)
@@ -294,7 +288,7 @@ CreateThread(function()
             CreateThread(function()
                 local info, err = Sunset.AwaitCallback('sunset:jobs:hunter:inspectCarcass', netId)
                 if not info then
-                    exports.sunset_ui:Notify(err or 'Cannot inspect', 'error', 4000)
+                    exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.cannot_inspect'), 'error', 4000)
                 else
                     -- Show carcass info via playerInteraction (no NUI panel needed)
                     exports.sunset_ui:Send('playerInteractionShow', {
@@ -303,12 +297,11 @@ CreateThread(function()
                         actions = {
                             {
                                 id     = 'hunter_harvest_' .. tostring(netId),
-                                label  = ('Harvest — %s  (%.1f kg)'):format(info.grade or '?', info.weight or 0),
-                                detail = ('Quality: %d%%  ·  Shots: %d  ·  Method: %s'):format(
-                                    info.quality or 0, info.shots or 1, info.method or '?'),
+                                label  = exports.sunset_core:Translate('jobs.ui.harvest_kg', { grade = tostring(info.grade or '?'), weight = string.format('%.1f', info.weight or 0) }),
+                                detail = exports.sunset_core:Translate('jobs.ui.quality_shots_method', { quality = math.floor(tonumber(info.quality or 0) or 0), shots = math.floor(tonumber(info.shots or 1) or 0), method = tostring(info.method or '?') }),
                                 group  = 'HARVEST',
                             },
-                            { id = 'hunter_cancel_inspect', label = '← Close', group = 'NAV' },
+                            { id = 'hunter_cancel_inspect', label = exports.sunset_core:Translate('jobs.ui.close'), group = 'NAV' },
                         },
                     })
                     exports.sunset_ui:SetFocus(true, true)
@@ -325,14 +318,14 @@ CreateThread(function()
                 CreateThread(function()
                     local clue, clueErr = Sunset.AwaitCallback('sunset:jobs:hunter:track')
                     if clue and clue.type ~= 'no_tracks' then
-                        exports.sunset_ui:Notify(clue.message or 'Tracks spotted nearby.', 'info', 5000)
+                        exports.sunset_ui:Notify(clue.message or exports.sunset_core:Translate('jobs.msg.tracks_spotted_nearby'), 'info', 5000)
                     elseif clue then
                         exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.no_fresh_tracks_in_range_move_deeper'), 'info', 4000)
                     end
                 end)
             else
                 local remaining = math.ceil((TrackingCooldownMs - GetGameTimer()) / 1000)
-                exports.sunset_ui:Notify(('Tracking cooldown: %ds'):format(remaining), 'info', 2000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.tracking_cooldown_s', { remaining = math.floor(tonumber(remaining) or 0) }), 'info', 2000)
             end
         end
 
@@ -354,7 +347,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:harvest', netId)
             if not result then
-                exports.sunset_ui:Notify(err or 'Harvest failed', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.harvest_failed'), 'error', 5000)
             else
                 -- [SECTION 20] Remove from client registries AFTER successful harvest
                 CarcassMarkers[netId] = nil
@@ -372,8 +365,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     updateShiftHud()
                 end
                 exports.sunset_ui:Notify(
-                    ('Harvested! Grade: %s · Quality: %d%%'):format(
-                        result.grade or '?', result.quality or 0),
+                    exports.sunset_core:Translate('jobs.msg.harvested_grade_quality', { grade = tostring(result.grade or '?'), quality = math.floor(tonumber(result.quality or 0) or 0) }),
                     'success', 5000)
             end
         end)
@@ -506,7 +498,7 @@ CreateThread(function()
 
         if not target then
             -- Inside zone but no animals visible yet — show pulsing indicator
-            exports.sunset_ui:Send('hunterCompassUpdate', { angle = 0, dist = 0, label = 'Press B to track' })
+            exports.sunset_ui:Send('hunterCompassUpdate', { angle = 0, dist = 0, label = exports.sunset_core:Translate('jobs.ui.press_b_to_track') })
             goto compassContinue
         end
 

@@ -131,7 +131,7 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
 
     ped = PlayerPedId()
     if not DoesEntityExist(ped) or GetEntityModel(ped) == 0 then
-        return false, 'INVALID_PED'
+        return false, 'INVALID_PED' -- i18n-ignore: protocol code
     end
 
     SetFocusPosAndVel(pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
@@ -149,7 +149,7 @@ local function streamSpawnArea(ped, pos, isFallback, targetSource)
         if not DoesEntityExist(currentPed) or GetEntityModel(currentPed) == 0 then
             NewLoadSceneStop()
             ClearFocus()
-            return false, 'INVALID_PED'
+            return false, 'INVALID_PED' -- i18n-ignore: protocol code
         end
         if currentPed ~= ped then
             ped = currentPed
@@ -334,6 +334,22 @@ AddEventHandler('onResourceStart', function(resource)
     local ped = PlayerPedId()
     SetEntityVisible(ped, false, false)
     FreezeEntityPosition(ped, true)
+end)
+
+-- [RESTART SAFETY] Stopping mid-spawn must not leave a frozen/invisible ped, a
+-- black screen, or an orphan load-scene/focus. (A restart re-freezes via onResourceStart
+-- if the player has no character yet, or resumes if they already spawned.)
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    pcall(NewLoadSceneStop)
+    pcall(ClearFocus)
+    if spawning or spawned then
+        local ped = PlayerPedId()
+        SetEntityVisible(ped, true, false)
+        FreezeEntityPosition(ped, false)
+        SetEntityInvincible(ped, false)
+        if IsScreenFadedOut() and not IsScreenFadingIn() then DoScreenFadeIn(300) end
+    end
 end)
 
 CreateThread(function()

@@ -210,6 +210,10 @@ function Translate(key, params, ...)
     return Sunset.T(key, params, ...)
 end
 
+function HasTranslation(key)
+    return Sunset.HasTranslation(key)
+end
+
 function IsValidLocale(locale)
     return Sunset.IsValidLocale(locale)
 end
@@ -269,3 +273,26 @@ function GetCharacterData()
     return Sunset.Character
 end
 exports('GetCharacter', GetCharacterData)
+
+-- [RESTART SAFETY] `restart sunset_core` while connected: the server drops every
+-- session (Players/Sessions are in-memory) and this client re-runs the boot
+-- pipeline above (session -> auth -> character -> spawn), i.e. a clean re-login.
+-- On stop make sure no modal UI keeps the cursor and the screen is not left black.
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    Sunset.Ready = false
+    pcall(function() TriggerEvent('sunset:ui:forceCloseAll') end)
+    if IsScreenFadedOut() and not IsScreenFadingIn() then DoScreenFadeIn(300) end
+end)
+
+-- [STARTUP GATE] Single readiness flag for UI openers (M menu, phone, jobs, inventory):
+-- true only after the account is ready, a character is loaded AND the spawn flow
+-- finished. Replaces ad-hoc Wait(N) / "GetCharacter() ~= nil" guesses.
+local playerSpawnedFlag = false
+AddEventHandler('sunset:client:playerSpawned', function() playerSpawnedFlag = true end)
+exports('IsPlayerReady', function()
+    return Sunset.Ready == true and Sunset.Character ~= nil and Sunset.Character.id ~= nil and playerSpawnedFlag
+end)
+exports('AwaitGameReady', Sunset.AwaitGameReady)
+exports('RequestModelSafe', Sunset.RequestModelSafe)
+exports('CreateSafeBlip', Sunset.CreateSafeBlip)

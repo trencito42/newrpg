@@ -177,7 +177,7 @@ end)
 AddEventHandler('sunset:missions:client:accept', function(missionId)
     local data, err = Sunset.AwaitCallback('sunset:missions:accept', missionId)
     if not data then
-        exports.sunset_ui:Notify(err or 'Could not start mission', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('missions.msg.could_not_start_mission'), 'error')
         return
     end
     exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.mission_accepted'), 'success')
@@ -187,7 +187,7 @@ end)
 
 RegisterCommand('abandonmission', function()
     if MSN_ActiveSession() then
-        MSN_AbortMission('Mission abandoned')
+        MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_abandoned'))
     else
         exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.no_active_mission'), 'warning')
     end
@@ -195,7 +195,7 @@ end, false)
 
 RegisterCommand('cancelmission', function()
     if MSN_ActiveSession() then
-        MSN_AbortMission('Mission cancelled')
+        MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_cancelled'))
     else
         exports.sunset_ui:Notify(exports.sunset_core:Translate('missions.message.no_active_mission'), 'warning')
     end

@@ -20,7 +20,7 @@ local function validateLayout(layout)
             if type(pos) ~= 'table' then return false, nil end
             local x = tonumber(pos.x)
             local y = tonumber(pos.y)
-            if x == nil or y == nil then return false, nil end
+            if x == nil or y == nil or x ~= x or y ~= y or math.abs(x) > 10000 or math.abs(y) > 10000 then return false, nil end -- [SEC3] finite + bounded
             sanitized[id] = { x = x, y = y }
             count = count + 1
         end
@@ -37,12 +37,12 @@ end
 RegisterNetEvent('sunset:server:hudExport', function(layout, applyAll)
     local src = source
     if not exports.sunset_admin:IsAdmin(src, 3) then
-        notify(src, 'No permission to export HUD layout', 'error')
+        notify(src, exports.sunset_core:TFor(src, 'hud.msg.no_permission_to_export_hud_layout'), 'error')
         return
     end
     local ok, sanitized = validateLayout(layout)
     if not ok then
-        notify(src, 'Invalid HUD layout data', 'error')
+        notify(src, exports.sunset_core:TFor(src, 'hud.msg.invalid_hud_layout_data'), 'error')
         return
     end
 
@@ -51,9 +51,9 @@ RegisterNetEvent('sunset:server:hudExport', function(layout, applyAll)
 
     if applyAll then
         TriggerClientEvent('sunset:client:hudDefaultUpdated', -1, sanitized, true)
-        notify(src, 'HUD layout exported and applied to all players', 'success')
+        notify(src, exports.sunset_core:TFor(src, 'hud.msg.hud_layout_exported_and_applied_to'), 'success')
     else
         TriggerClientEvent('sunset:client:hudDefaultUpdated', -1, sanitized, false)
-        notify(src, 'HUD layout exported as server default (new players + /hudreset)', 'success')
+        notify(src, exports.sunset_core:TFor(src, 'hud.msg.hud_layout_exported_as_server_default'), 'success')
     end
 end)

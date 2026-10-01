@@ -42,17 +42,17 @@ const Casino = {
         if (!title || !body) return;
 
         const names = {
-            blackjack: 'Blackjack', slots: 'Slot Machines', roulette: 'Roulette',
-            luckywheel: 'Lucky Wheel', cashier: 'Cashier', bar: 'Bar',
+            blackjack: I18n.t('ui.casino.game_blackjack'), slots: I18n.t('ui.casino.game_slots'), roulette: I18n.t('ui.casino.game_roulette'),
+            luckywheel: I18n.t('ui.casino.game_luckywheel'), cashier: I18n.t('ui.casino.game_cashier'), bar: I18n.t('ui.casino.game_bar'),
         };
-        title.textContent = names[this.game] || 'Casino';
+        title.textContent = names[this.game] || I18n.t('ui.casino.casino');
 
         if (this.game === 'cashier') {
-            sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: (this.status.cash || 0).toLocaleString(), value1: (this.status.chips || 0).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: I18n.number((this.status.cash || 0)), value1: I18n.number((this.status.chips || 0)) });
         } else if (this.game === 'bar') {
-            sub.textContent = I18n.t('dynamic.casino.cash_value', { value0: (this.status.cash || 0).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.cash_value', { value0: I18n.number((this.status.cash || 0)) });
         } else {
-            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: I18n.number((this.status.chips || 0)), value1: I18n.number((this.status.minBet || 100)), value2: I18n.number((this.status.maxBet || 50000)) });
         }
 
         if (this.game === 'blackjack') this.renderBlackjack(body);
@@ -72,11 +72,11 @@ const Casino = {
         const loss = this.status.dailyLoss || 0;
         const limit = this.status.dailyLimit || 500000;
         if (this.game === 'cashier' || this.game === 'bar' || this.game === 'luckywheel') {
-            el.innerHTML = `<span>Chips: <strong>${chips.toLocaleString()}</strong></span>`;
+            el.innerHTML = `<span>${I18n.t('ui.casino.chips_label')}: <strong>${I18n.number(chips)}</strong></span>`;
         } else {
             el.innerHTML = `
-                <span>Chips: <strong>${chips.toLocaleString()}</strong></span>
-                <span>Bet: <strong>${this.bet.toLocaleString()} Chips</strong></span>
+                <span>${I18n.t('ui.casino.chips_label')}: <strong>${I18n.number(chips)}</strong></span>
+                <span>${I18n.t('ui.casino.bet_label')}: <strong>${I18n.number(this.bet)} ${I18n.t('ui.casino.chips_unit')}</strong></span>
             `;
         }
     },
@@ -85,7 +85,7 @@ const Casino = {
         const chips = [100, 500, 1000, 5000, 10000, 25000];
         return `
             <div class="casino-bet-row">
-                <span class="casino-bet-label">Bet Chips</span>
+                <span class="casino-bet-label">${I18n.t('ui.casino.bet_chips')}</span>
                 <input type="number" class="casino-bet-input" id="casino-bet" value="${this.bet}" min="${this.status.minBet || 100}" max="${this.status.maxBet || 50000}">
                 ${chips.map((c) => `<button type="button" class="casino-bet-chip" data-casino-chip="${c}">${(c / 1000).toFixed(c < 1000 ? 0 : 0)}${c >= 1000 ? 'K' : ''}</button>`).join('')}
             </div>
@@ -113,19 +113,19 @@ const Casino = {
         body.innerHTML = `
             <div class="bj-table" id="bj-table">
                 <div class="bj-hand">
-                    <div class="bj-hand__label">Dealer</div>
+                    <div class="bj-hand__label">${I18n.t('ui.casino.dealer')}</div>
                     <div class="bj-hand__cards" id="bj-dealer-cards"></div>
                     <div class="bj-hand__value" id="bj-dealer-value"></div>
                 </div>
                 <div class="bj-hand">
-                    <div class="bj-hand__label">You</div>
+                    <div class="bj-hand__label">${I18n.t('ui.casino.you')}</div>
                     <div class="bj-hand__cards" id="bj-player-cards"></div>
                     <div class="bj-hand__value" id="bj-player-value"></div>
                 </div>
                 <div id="bj-result"></div>
                 ${this.betControls()}
                 <div class="bj-actions" id="bj-actions">
-                    <button type="button" class="casino-btn" id="bj-deal">Deal</button>
+                    <button type="button" class="casino-btn" id="bj-deal">${I18n.t('ui.casino.deal')}</button>
                 </div>
             </div>
         `;
@@ -159,19 +159,19 @@ const Casino = {
             if (s.chips !== undefined) this.status.chips = s.chips;
             const resultEl = $('#bj-result');
             const labels = {
-                blackjack: `🃏 BLACKJACK! +${s.payout.toLocaleString()} Chips`,
-                win: `✅ You win! +${s.payout.toLocaleString()} Chips`,
-                dealer_bust: `💥 Dealer busts! +${s.payout.toLocaleString()} Chips`,
-                push: '🤝 Push — bet returned',
-                lose: `❌ Dealer wins. -${this.bet.toLocaleString()} Chips`,
-                bust: `💀 Bust! -${this.bet.toLocaleString()} Chips`,
+                blackjack: `🃏 ${I18n.t('ui.casino.bj_blackjack', { amount: I18n.number(s.payout) })}`,
+                win: `✅ ${I18n.t('ui.casino.bj_win', { amount: I18n.number(s.payout) })}`,
+                dealer_bust: `💥 ${I18n.t('ui.casino.bj_dealer_bust', { amount: I18n.number(s.payout) })}`,
+                push: `🤝 ${I18n.t('ui.casino.bj_push')}`,
+                lose: `❌ ${I18n.t('ui.casino.bj_lose', { amount: I18n.number(this.bet) })}`,
+                bust: `💀 ${I18n.t('ui.casino.bj_bust', { amount: I18n.number(this.bet) })}`,
             };
             const cls = (s.result === 'blackjack' || s.result === 'win' || s.result === 'dealer_bust') ? 'win'
                 : s.result === 'push' ? 'push' : 'lose';
             if (resultEl) resultEl.innerHTML = `<div class="bj-result bj-result--${cls}">${labels[s.result] || s.result}</div>`;
 
             const actions = $('#bj-actions');
-            if (actions) actions.innerHTML = '<button type="button" class="casino-btn" id="bj-deal">New Hand</button>';
+            if (actions) actions.innerHTML = '<button type="button" class="casino-btn" id="bj-deal">'+I18n.t('ui.casino.new_hand')+'</button>';
             $('#bj-deal')?.addEventListener('click', () => {
                 this.bet = Number($('#casino-bet')?.value) || this.bet;
                 $('#bj-result').innerHTML = '';
@@ -187,8 +187,8 @@ const Casino = {
 
             const actions = $('#bj-actions');
             if (actions) actions.innerHTML = `
-                <button type="button" class="casino-btn" id="bj-hit">Hit</button>
-                <button type="button" class="casino-btn casino-btn--secondary" id="bj-stand">Stand</button>
+                <button type="button" class="casino-btn" id="bj-hit">${I18n.t('ui.casino.hit')}</button>
+                <button type="button" class="casino-btn casino-btn--secondary" id="bj-stand">${I18n.t('ui.casino.stand')}</button>
             `;
             $('#bj-hit')?.addEventListener('click', () => post('casinoBlackjackHit', {}));
             $('#bj-stand')?.addEventListener('click', () => post('casinoBlackjackStand', {}));
@@ -196,7 +196,7 @@ const Casino = {
 
         const sub = $('#casino-sub');
         if (sub && this.game === 'blackjack') {
-            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: I18n.number((this.status.chips || 0)), value1: I18n.number((this.status.minBet || 100)), value2: I18n.number((this.status.maxBet || 50000)) });
         }
         this.renderStatus();
     },
@@ -212,7 +212,7 @@ const Casino = {
                 </div>
                 <div class="slots-result" id="slots-result"></div>
                 ${this.betControls()}
-                <button type="button" class="casino-btn" id="slots-spin">Spin</button>
+                <button type="button" class="casino-btn" id="slots-spin">${I18n.t('ui.casino.spin')}</button>
             </div>
         `;
         this.bindBetChips();
@@ -234,7 +234,7 @@ const Casino = {
         if (resultEl) {
             if (data.payout > 0) {
                 resultEl.className = 'slots-result slots-result--win';
-                resultEl.textContent = `🎉 ${data.matches} match! +${data.payout.toLocaleString()} Chips`;
+                resultEl.textContent = `🎉 ${I18n.t('ui.casino.slots_win', { matches: data.matches, amount: I18n.number(data.payout) })}`;
             } else {
                 resultEl.className = 'slots-result slots-result--lose';
                 resultEl.textContent = I18n.t('dynamic.casino.no_match_try_again');
@@ -242,7 +242,7 @@ const Casino = {
         }
         const sub = $('#casino-sub');
         if (sub && this.game === 'slots') {
-            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: I18n.number((this.status.chips || 0)), value1: I18n.number((this.status.minBet || 100)), value2: I18n.number((this.status.maxBet || 50000)) });
         }
         this.renderStatus();
     },
@@ -261,8 +261,8 @@ const Casino = {
                 <div class="wheel-pointer">▼</div>
             </div>
             <div class="wheel-result" id="wheel-result"></div>
-            <button type="button" class="casino-btn casino-btn--primary" id="wheel-spin">SPIN THE WHEEL</button>
-            <p class="casino-hint">1 spin per hour · Free to spin</p>
+            <button type="button" class="casino-btn casino-btn--primary" id="wheel-spin">${I18n.t('ui.casino.spin_wheel')}</button>
+            <p class="casino-hint">${I18n.t('ui.casino.wheel_hint')}</p>
         `;
         $('#wheel-spin')?.addEventListener('click', () => {
             const btn = $('#wheel-spin');
@@ -282,7 +282,7 @@ const Casino = {
         }
         if (resultEl && data.prize) {
             resultEl.className = 'slots-result slots-result--win';
-            resultEl.textContent = `🎉 You won: ${this.esc(data.prize.label)}!`;
+            resultEl.textContent = `🎉 ${I18n.t('ui.casino.you_won_prize', { prize: data.prize.label })}`;
         }
         const btn = $('#wheel-spin');
         if (btn) { btn.disabled = true; btn.textContent = I18n.t('dynamic.casino.spun_come_back_in_1_hour'); }
@@ -295,24 +295,24 @@ const Casino = {
         body.innerHTML = `
             <div class="cashier-panel">
                 <div class="cashier-balance">
-                    <div class="cashier-balance__item"><span>Cash</span><strong>$${cash.toLocaleString()}</strong></div>
-                    <div class="cashier-balance__item"><span>Chips</span><strong>${chips.toLocaleString()}</strong></div>
+                    <div class="cashier-balance__item"><span>${I18n.t('ui.casino.cash_label')}</span><strong>$${I18n.number(cash)}</strong></div>
+                    <div class="cashier-balance__item"><span>${I18n.t('ui.casino.chips_label')}</span><strong>${I18n.number(chips)}</strong></div>
                 </div>
                 <div class="cashier-section">
-                    <h3>Buy Chips</h3>
+                    <h3>${I18n.t('ui.casino.buy_chips')}</h3>
                     <div class="cashier-row">
                         <input type="number" class="casino-bet-input" id="chips-buy-amount" value="1000" min="100" max="100000">
-                        <button type="button" class="casino-btn casino-btn--primary" id="chips-buy">BUY</button>
+                        <button type="button" class="casino-btn casino-btn--primary" id="chips-buy">${I18n.t('ui.casino.buy')}</button>
                     </div>
                 </div>
                 <div class="cashier-section">
-                    <h3>Sell Chips</h3>
+                    <h3>${I18n.t('ui.casino.sell_chips')}</h3>
                     <div class="cashier-row">
                         <input type="number" class="casino-bet-input" id="chips-sell-amount" value="1000" min="100">
-                        <button type="button" class="casino-btn casino-btn--sell" id="chips-sell">SELL</button>
+                        <button type="button" class="casino-btn casino-btn--sell" id="chips-sell">${I18n.t('ui.casino.sell')}</button>
                     </div>
                 </div>
-                <p class="casino-hint">Exchange rate: $1 = 1 chip</p>
+                <p class="casino-hint">${I18n.t('ui.casino.exchange_rate')}</p>
             </div>
         `;
         $('#chips-buy')?.addEventListener('click', () => {
@@ -331,7 +331,7 @@ const Casino = {
         if (data.cash !== undefined) this.status.cash = data.cash;
         // Re-render to refresh balance cards
         const sub = $('#casino-sub');
-        if (sub) sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: (this.status.cash || 0).toLocaleString(), value1: (this.status.chips || 0).toLocaleString() });
+        if (sub) sub.textContent = I18n.t('dynamic.casino.cash_value_chips_value1', { value0: I18n.number((this.status.cash || 0)), value1: I18n.number((this.status.chips || 0)) });
         const body = $('#casino-body');
         if (body) this.renderCashier(body);
         this.renderStatus();
@@ -346,11 +346,11 @@ const Casino = {
                     <div class="bar-item">
                         <div class="bar-item__info">
                             <span class="bar-item__name">${this.esc(d.label)}</span>
-                            <span class="bar-item__effect">+${d.value} thirst</span>
+                            <span class="bar-item__effect">${I18n.t('ui.casino.thirst_effect', { value: d.value })}</span>
                         </div>
                         <div class="bar-item__action">
                             <span class="bar-item__price">$${d.price}</span>
-                            <button type="button" class="casino-btn casino-btn--primary" data-bar-drink="${this.esc(d.id)}">BUY</button>
+                            <button type="button" class="casino-btn casino-btn--primary" data-bar-drink="${this.esc(d.id)}">${I18n.t('ui.casino.buy')}</button>
                         </div>
                     </div>
                 `).join('')}
@@ -422,15 +422,15 @@ const Casino = {
         if (resultEl) {
             if (data.won) {
                 resultEl.className = 'slots-result slots-result--win';
-                resultEl.textContent = `🎉 ${data.result} ${data.color}! +${data.payout.toLocaleString()} Chips`;
+                resultEl.textContent = `🎉 ${I18n.t('ui.casino.roulette_win', { result: data.result, color: I18n.t('ui.casino.color.' + data.color), amount: I18n.number(data.payout) })}`;
             } else {
                 resultEl.className = 'slots-result slots-result--lose';
-                resultEl.textContent = `${data.result} ${data.color}. Better luck next time.`;
+                resultEl.textContent = I18n.t('ui.casino.roulette_lose', { result: data.result, color: I18n.t('ui.casino.color.' + data.color) });
             }
         }
         const sub = $('#casino-sub');
         if (sub && this.game === 'roulette') {
-            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: (this.status.chips || 0).toLocaleString(), value1: (this.status.minBet || 100).toLocaleString(), value2: (this.status.maxBet || 50000).toLocaleString() });
+            sub.textContent = I18n.t('dynamic.casino.chips_value0_min_value1_max_value2', { value0: I18n.number((this.status.chips || 0)), value1: I18n.number((this.status.minBet || 100)), value2: I18n.number((this.status.maxBet || 50000)) });
         }
         this.renderStatus();
     },

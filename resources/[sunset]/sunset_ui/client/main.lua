@@ -329,7 +329,7 @@ exports('JobHudClear', JobHudClear)
 
 function ShowTransition(text)
     transitionVisible = false
-    Send('transitionShow', { text = text or 'Loading character...' })
+    Send('transitionShow', { text = text or exports.sunset_core:Translate('ui.ui.loading_character') })
 end
 exports('ShowTransition', ShowTransition)
 
@@ -383,6 +383,11 @@ RegisterNUICallback('bootEpoch', function(data, cb)
         nuiEpochOffset = dateNow - GetGameTimer()
         print(('^5[BOOT %d]^7 nui: bootEpoch calibrated (offset=%d)'):format(dateNow, nuiEpochOffset))
     end
+    -- [RESTART SAFETY] The NUI page just (re)loaded (first boot, `restart sunset_ui`,
+    -- /fixnui reload). Tell dependents to re-send their page state (HUD, chat
+    -- suggestions, ...). Local client event; listeners must be idempotent.
+    dedupeLast = {}
+    TriggerEvent('sunset:ui:ready')
     cb('ok')
 end)
 
@@ -415,35 +420,43 @@ end
 exports('MarkGameplayEntered', MarkGameplayEntered)
 
 local FRIENDLY_ERRORS = {
-    ['nil'] = 'That action could not be completed. Please try again; if it repeats, report what you clicked.',
-    ['error'] = 'That action stopped unexpectedly. Try again once; if it repeats, report the command or button you used.',
-    ['failed'] = 'That action did not complete. Check the requirement shown in /help, your target ID and your distance, then try again.',
-    ['cannot use item'] = 'This item cannot be used in your current situation. Check the requirement shown in your inventory.',
-    ['no permission'] = 'Your current job, faction rank, duty state, or admin level does not unlock this action. Open /help to see commands available to you.',
-    ['not on duty or no permission'] = 'This action requires the correct faction, rank, and an active duty shift. Go to your faction HQ, start duty, then check /help.',
-    ['player not found'] = 'That server ID is not online. Hold Z and use the ID currently shown there.',
-    ['no character'] = 'Your character is not loaded. Reconnect and select your character again.',
-    ['no character loaded'] = 'Your character is not loaded. Reconnect and select your character again.',
-    ['character error'] = 'A required character is no longer available. Refresh and try again.',
-    ['not found'] = 'That entry no longer exists. Refresh the menu and try again.',
-    ['unavailable'] = 'That system is currently unavailable. Try once more; if it repeats, report the command or button to staff.',
-    ['invalid action'] = 'That button/action is no longer valid for the current screen. Close the menu, reopen it, and try again.',
-    ['invalid amount'] = 'Enter a positive numeric amount within the limit shown by this system.',
-    ['invalid target'] = 'Choose another online player and use the current server ID shown when holding Z.',
-    ['invalid player'] = 'That server ID is not online. Hold Z and use the ID currently shown there.',
-    ['call not found'] = 'That service call was closed, cancelled, or taken already. Refresh the call list.',
-    ['could not accept call'] = 'That service call could not be assigned, usually because another responder took it. Refresh the call list.',
-    ['rank too low'] = 'Your current faction rank does not unlock this action. Open /help to see commands available to your rank.',
-    ['not on duty'] = 'This action requires an active duty shift. Go to your faction HQ and press E or use /duty.',
-    ['must be on duty'] = 'This action requires an active duty shift. Go to your faction HQ and press E or use /duty.',
-    ['wrong faction'] = 'This action belongs to a different faction. Open /faction to check your membership.',
+    ['nil'] = 'ui.friendly.nil',
+    ['error'] = 'ui.friendly.error',
+    ['failed'] = 'ui.friendly.failed',
+    ['cannot use item'] = 'ui.friendly.cannot_use_item',
+    ['no permission'] = 'ui.friendly.no_permission',
+    ['not on duty or no permission'] = 'ui.friendly.not_on_duty_or_no_permission',
+    ['player not found'] = 'ui.friendly.player_not_found',
+    ['no character'] = 'ui.friendly.no_character',
+    ['no character loaded'] = 'ui.friendly.no_character_loaded',
+    ['character error'] = 'ui.friendly.character_error',
+    ['not found'] = 'ui.friendly.not_found',
+    ['unavailable'] = 'ui.friendly.unavailable',
+    ['invalid action'] = 'ui.friendly.invalid_action',
+    ['invalid amount'] = 'ui.friendly.invalid_amount',
+    ['invalid target'] = 'ui.friendly.invalid_target',
+    ['invalid player'] = 'ui.friendly.invalid_player',
+    ['call not found'] = 'ui.friendly.call_not_found',
+    ['could not accept call'] = 'ui.friendly.could_not_accept_call',
+    ['rank too low'] = 'ui.friendly.rank_too_low',
+    ['not on duty'] = 'ui.friendly.not_on_duty',
+    ['must be on duty'] = 'ui.friendly.must_be_on_duty',
+    ['wrong faction'] = 'ui.friendly.wrong_faction',
 }
 
+local function tr(key, params)
+    return exports.sunset_core:Translate(key, params)
+end
+
 local function friendlyMessage(message)
-    if message == nil or message == false then return FRIENDLY_ERRORS['nil'] end
+    if type(message) == 'table' and type(message.localeKey) == 'string' then
+        return tr(message.localeKey, message.params)
+    end
+    if message == nil or message == false then return tr(FRIENDLY_ERRORS['nil']) end
     local text = tostring(message)
-    if text == '' then return FRIENDLY_ERRORS['nil'] end
-    return FRIENDLY_ERRORS[string.lower(text)] or text
+    if text == '' then return tr(FRIENDLY_ERRORS['nil']) end
+    local friendlyKey = FRIENDLY_ERRORS[string.lower(text)]
+    return friendlyKey and tr(friendlyKey) or text
 end
 
 function Notify(message, type, duration)
@@ -555,4 +568,21 @@ AddEventHandler('onResourceStop', function(res)
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     focusOwner = nil
+end)
+
+-- [RESTART SAFETY] Central focus janitor. Most panels take focus with the default
+-- 'legacy' owner (or an owner named after their resource) and have no stop handler of
+-- their own: when that resource stops/restarts mid-panel the cursor would stay locked
+-- forever. Release it here unless the login screen legitimately owns focus.
+AddEventHandler('onClientResourceStop', function(res)
+    if res == GetCurrentResourceName() or type(res) ~= 'string' or not res:match('^sunset_') then return end
+    if not focusOwner then return end
+    if isOpen and currentScreen == 'auth' then return end
+    local short = res:gsub('^sunset_', '')
+    if focusOwner == 'legacy' or focusOwner == short or focusOwner == res then
+        print(('^3[FOCUS]^7 %s stopped while owning NUI focus (%s): released'):format(res, tostring(focusOwner)))
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        focusOwner = nil
+    end
 end)

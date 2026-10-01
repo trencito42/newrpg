@@ -44,25 +44,25 @@ function post(name, data = {}) {
 }
 
 function money(n) {
-    return '$' + Math.max(0, Math.floor(Number(n) || 0)).toLocaleString('en-US');
+    return '$' + I18n.number(Math.max(0, Math.floor(Number(n) || 0)));
 }
 
 const Hud = {
     show(data = {}) {
         $('rob-hud').classList.remove('hidden');
         const escaping = data.stage === 'ESCAPING';
-        $('rob-hud-stage').textContent = escaping ? 'ESCAPE' : 'DUFFEL';
+        $('rob-hud-stage').textContent = escaping ? tr('ui.robbery.escape', null) : tr('ui.robbery.duffel', null);
         const used = data.bagUsed ?? 0;
         const cap = data.bagCap ?? 12;
         $('rob-hud-bag').textContent = `${used} / ${cap}`;
         $('rob-hud-value').textContent = money(data.estimated);
         if (escaping) {
             const left = Math.max(0, Math.floor(Number(data.escapeLeft) || 0));
-            $('rob-hud-response').textContent = left > 0 ? `${left}m OUT` : 'CLEAR';
+            $('rob-hud-response').textContent = left > 0 ? tr('ui.robbery.minutes_out', { minutes: left }) : tr('ui.robbery.clear', null);
         } else {
             const sec = Math.max(0, Number(data.response) || 0);
             $('rob-hud-response').textContent = data.policeAlerted
-                ? 'LIVE'
+                ? tr('ui.robbery.live', null)
                 : `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
         }
         $('rob-hud-fill').style.width = `${Math.min(100, (used / Math.max(1, cap)) * 100)}%`;
@@ -109,8 +109,8 @@ const Hack = {
         if (this.burstDeadline > 0) {
             const burst = Math.max(0, (this.burstDeadline - performance.now()) / 1000);
             $('hack-status').textContent = burst > 0
-                ? `BURST RELAY ACTIVE — ${burst.toFixed(1)}s TO ROUTE NEXT NODE`
-                : 'BURST WINDOW EXPIRED — SELECT TO RESYNC';
+                ? tr('ui.robbery.burst_active', { seconds: burst.toFixed(1) })
+                : tr('ui.robbery.burst_expired', null);
         }
     },
     draw(nodes) {
@@ -142,10 +142,10 @@ const Hack = {
             btn.dataset.id = node.id;
             btn.dataset.kind = node.kind || 'normal';
             btn.dataset.frequency = String(node.frequency || 1);
-            const channel = `CH ${String(node.frequency || 1).padStart(2, '0')}`;
-            const type = node.kind === 'locked' ? `${channel} · LOCK`
-                : (node.kind === 'timed' ? `${channel} · BURST`
-                    : (node.kind === 'corrupted' ? 'CORRUPT' : `CH ${String(node.frequency || 1).padStart(2, '0')}`));
+            const channel = `${tr('ui.robbery.ch_short', null)} ${String(node.frequency || 1).padStart(2, '0')}`;
+            const type = node.kind === 'locked' ? `${channel} · ${tr('ui.robbery.lock', null)}`
+                : (node.kind === 'timed' ? `${channel} · ${tr('ui.robbery.burst', null)}`
+                    : (node.kind === 'corrupted' ? tr('ui.robbery.corrupt', null) : `${tr('ui.robbery.ch_short', null)} ${String(node.frequency || 1).padStart(2, '0')}`));
             btn.innerHTML = `${node.label || node.id}<small>${type}</small>`;
             if (node.kind === 'source') btn.classList.add('is-on');
             btn.addEventListener('click', () => {
@@ -159,7 +159,7 @@ const Hack = {
         });
     },
     setSignal(signal) {
-        $('hack-signal').textContent = signal ? `CH ${String(signal).padStart(2, '0')}` : 'CORE OPEN';
+        $('hack-signal').textContent = signal ? `${tr('ui.robbery.ch_short', null)} ${String(signal).padStart(2, '0')}` : tr('ui.robbery.core_open', null);
     },
     refreshRoute() {
         const available = new Set(this.edges.filter((edge) => edge.from === this.currentNode).map((edge) => edge.to));
@@ -182,7 +182,7 @@ const Hack = {
         $('hack-trace').textContent = `${trace}%`;
         $('hack-trace-fill').style.width = `${trace}%`;
         const status = $('hack-status');
-        status.textContent = data.status || 'SIGNAL ACCEPTED';
+        status.textContent = data.status || tr('ui.robbery.signal_accepted', null);
         status.classList.toggle('is-alert', Boolean(data.errorNode));
         status.classList.toggle('is-burst', Boolean(data.burstMs) && !data.lockArmed);
         this.setSignal(data.signal);
@@ -219,7 +219,7 @@ const Loot = {
     show(data = {}) {
         this.displayId = data.displayId;
         $('loot').classList.remove('hidden');
-        $('loot-title').textContent = (data.label || 'DISPLAY').toUpperCase();
+        $('loot-title').textContent = (data.label || tr('ui.robbery.display', null)).toUpperCase();
         $('loot-bag').textContent = `${data.bagUsed || 0} / ${data.bagCap || 12}`;
         const grid = $('loot-grid');
         grid.innerHTML = '';
@@ -254,14 +254,14 @@ const Fence = {
         list.innerHTML = '';
         const offers = data.offers || [];
         if (!offers.length) {
-            list.innerHTML = '<div class="fence-row">Nothing stolen on you.</div>';
+            list.innerHTML = `<div class="fence-row">${tr('ui.robbery.nothing_stolen', null)}</div>`;
             return;
         }
         offers.forEach((row) => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'fence-row';
-            btn.innerHTML = `${row.label} ×${row.count}<small>Street ${money(row.street)} · Offer ${money(row.offer)}</small>`;
+            btn.innerHTML = `${row.label} ×${row.count}<small>${tr('ui.robbery.street_offer', { street: money(row.street), offer: money(row.offer) })}</small>`;
             btn.addEventListener('click', () => post('fenceSell', { offerId: row.offerId }));
             list.appendChild(btn);
         });

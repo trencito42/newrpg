@@ -52,7 +52,7 @@ local function addMapBlip(coords, preset, fallbackLabel)
     SetBlipScale(blip, preset.scale or 0.85)
     SetBlipAsShortRange(blip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(preset.label or fallbackLabel or 'Robbery')
+    AddTextComponentSubstringPlayerName(preset.label or fallbackLabel or exports.sunset_core:Translate('robbery.msg.robbery'))
     EndTextCommandSetBlipName(blip)
     mapBlips[#mapBlips + 1] = blip
 end
@@ -64,7 +64,7 @@ local function createMapBlips()
     mapBlips = {}
     for _, loc in pairs(SunsetRobbery.Locations or {}) do
         local point = (loc.entrance and loc.entrance.coords) or loc.coords
-        addMapBlip(point, loc.blip, loc.label or 'Robbery')
+        addMapBlip(point, loc.blip, loc.label or exports.sunset_core:Translate('robbery.msg.robbery'))
     end
 end
 
@@ -89,16 +89,15 @@ end
 
 local function spawnFence()
     if fencePed and DoesEntityExist(fencePed) then return end
-    local model = `g_m_m_armgoon_01`
-    RequestModel(model)
-    local deadline = GetGameTimer() + 4000
-    while not HasModelLoaded(model) and GetGameTimer() < deadline do Wait(10) end
-    if not HasModelLoaded(model) then return end
+    local ok, model = Sunset.RequestModelSafe('g_m_m_armgoon_01', 4000)
+    if not ok or not model then return end
     local f = SunsetRobbery.Fence
     fencePed = CreatePed(4, model, f.coords.x, f.coords.y, f.coords.z - 1.0, f.heading or 0.0, false, true)
-    SetEntityInvincible(fencePed, true)
-    SetBlockingOfNonTemporaryEvents(fencePed, true)
-    FreezeEntityPosition(fencePed, true)
+    if fencePed and fencePed ~= 0 and DoesEntityExist(fencePed) then
+        SetEntityInvincible(fencePed, true)
+        SetBlockingOfNonTemporaryEvents(fencePed, true)
+        FreezeEntityPosition(fencePed, true)
+    end
     SetModelAsNoLongerNeeded(model)
 end
 
@@ -214,10 +213,10 @@ RegisterNetEvent('sunset:robbery:ended', function(payload)
     if payload and payload.ok then
         RobberyAnims.sound('complete')
         markFenceGps()
-        notify(('ROBBERY COMPLETE — $%s est. GPS set to the dock fence. Sell there.'):format(payload.estimated or 0), 'success', 9000)
+        notify(exports.sunset_core:Translate('robbery.msg.robbery_complete_est_gps_set_to', { estimated = tostring(payload.estimated or 0) }), 'success', 9000)
     else
         RobberyAnims.detachBag()
-        notify((payload and payload.reason) or 'Robbery ended', 'error', 6000)
+        notify((payload and payload.reason) or exports.sunset_core:Translate('robbery.msg.robbery_ended'), 'error', 6000)
     end
 end)
 
@@ -230,7 +229,7 @@ RegisterNetEvent('sunset:robbery:policePing', function(data)
     SetBlipColour(point, 1)
     SetBlipScale(point, 0.9)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(data.label or 'Robbery')
+    AddTextComponentSubstringPlayerName(data.label or exports.sunset_core:Translate('robbery.msg.robbery'))
     EndTextCommandSetBlipName(point)
     blips[#blips + 1] = blip
     blips[#blips + 1] = point
@@ -244,7 +243,7 @@ AddEventHandler('sunset:robbery:nuiFenceSell', function(data)
     CreateThread(function()
         local result, err = Sunset.AwaitCallback('sunset:robbery:fenceSell', data and data.offerId)
         if result then
-            notify(('Fence paid $%s'):format(result.paid), 'success')
+            notify(exports.sunset_core:Translate('robbery.msg.fence_paid', { paid = tostring(result.paid) }), 'success')
             local preview = Sunset.AwaitCallback('sunset:robbery:fencePreview')
             if preview then
                 RobberyNui.send('fenceShow', preview)
@@ -255,7 +254,7 @@ AddEventHandler('sunset:robbery:nuiFenceSell', function(data)
                 RobberyAnims.detachBag()
             end
         else
-            notify(err or 'Deal fell through', 'error')
+            notify(err or exports.sunset_core:Translate('robbery.msg.deal_fell_through'), 'error')
         end
     end)
 end)
@@ -297,12 +296,12 @@ CreateThread(function()
             if dist(pos, startAt) <= startRange then
                 sleep = 0
                 DrawMarker(1, startAt.x, startAt.y, startAt.z - 1.05, 0, 0, 0, 0, 0, 0, 1.4, 1.4, 0.35, 255, 120, 40, 90, false, false, 2, false, nil, nil, false)
-                drawPrompt(startAt, loc.startHint or '[E] Start robbery')
+                drawPrompt(startAt, loc.startHint or exports.sunset_core:Translate('robbery.msg.e_start_robbery'))
                 if IsControlJustPressed(0, 38) then startRobbery(loc.id) end
             elseif loc.hackTerminal and dist(pos, loc.hackTerminal.coords) <= 3.5 then
                 sleep = 0
                 DrawMarker(2, loc.hackTerminal.coords.x, loc.hackTerminal.coords.y, loc.hackTerminal.coords.z + 0.35, 0, 0, 0, 0, 0, 0, 0.28, 0.28, 0.28, 255, 140, 40, 180, false, false, 2, false, nil, nil, false)
-                drawPrompt(loc.hackTerminal.coords, loc.hackTerminal.label or '[E] Hack vault keypad')
+                drawPrompt(loc.hackTerminal.coords, loc.hackTerminal.label or exports.sunset_core:Translate('robbery.msg.e_hack_vault_keypad'))
                 if IsControlJustPressed(0, 38) then startRobbery(loc.id) end
             end
         end
@@ -311,7 +310,7 @@ CreateThread(function()
             local term = session.location.hackTerminal
             if dist(pos, term.coords) <= 3.5 then
                 sleep = 0
-                drawPrompt(term.coords, term.label or '[E] Hack vault keypad')
+                drawPrompt(term.coords, term.label or exports.sunset_core:Translate('robbery.msg.e_hack_vault_keypad'))
                 DrawMarker(2, term.coords.x, term.coords.y, term.coords.z + 0.35, 0, 0, 0, 0, 0, 0, 0.28, 0.28, 0.28, 255, 140, 40, 180, false, false, 2, false, nil, nil, false)
                 if IsControlJustPressed(0, 38) then
                     TriggerServerEvent('sunset:robbery:hackOpen')
@@ -328,7 +327,7 @@ CreateThread(function()
                 for _, display in ipairs(session.location.displays) do
                     if dist(pos, display.coords) <= SunsetRobbery.StoreInteractRadius then
                         sleep = 0
-                        drawPrompt(display.coords, '[E] Break display — ' .. display.label)
+                        drawPrompt(display.coords, exports.sunset_core:Translate('robbery.msg.e_break_display', { label = tostring(display.label) }))
                         if IsControlJustPressed(0, 38) then
                             RobberyAnims.play('smash', 1600)
                             RobberyAnims.shake(0.07)
@@ -362,13 +361,13 @@ CreateThread(function()
 
         if dist(pos, SunsetRobbery.Fence.coords) <= SunsetRobbery.Fence.interact then
             sleep = 0
-            drawPrompt(SunsetRobbery.Fence.coords, '[E] Fence — "Got anything worth my time?"')
+            drawPrompt(SunsetRobbery.Fence.coords, exports.sunset_core:Translate('robbery.msg.e_fence_got_anything_worth_my'))
             if IsControlJustPressed(0, 38) then
                 RobberyAnims.play('fence', 1400)
                 CreateThread(function()
                     local data, err = Sunset.AwaitCallback('sunset:robbery:fencePreview')
                     if not data then
-                        notify(err or 'The fence is not talking', 'error')
+                        notify(err or exports.sunset_core:Translate('robbery.msg.the_fence_is_not_talking'), 'error')
                         return
                     end
                     RobberyNui.focus(true, true)

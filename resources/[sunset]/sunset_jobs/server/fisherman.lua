@@ -208,7 +208,7 @@ local function fishermanCast(source, spotIndex)
             })
         end
     end
-    if not session then return nil, err or 'No active fisherman shift' end
+    if not session then return nil, err or exports.sunset_core:TFor(source, 'jobs.err.no_active_fisherman_shift') end
 
     local cfg = Sunset.GetJobConfig('fisherman')
     spotIndex = tonumber(spotIndex) or 1

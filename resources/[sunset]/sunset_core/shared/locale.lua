@@ -12,11 +12,16 @@ local function validLocale(locale)
     return Sunset.ValidLocales[locale] and locale or nil
 end
 
-local function interpolate(template, params)
+local function interpolate(template, params, locale)
     if type(params) ~= 'table' then return template end
     return (template:gsub('{([%w_]+)}', function(name)
         local value = params[name]
         if value == nil then return '{' .. name .. '}' end
+        -- A parameter may itself be a locale descriptor ({ localeKey, params }) so
+        -- word-like pieces ("online", "no surrender") follow the viewer's language.
+        if type(value) == 'table' and type(value.localeKey) == 'string' then
+            return Sunset.Translate(locale, value.localeKey, value.params)
+        end
         return tostring(value)
     end))
 end
@@ -45,6 +50,15 @@ function Sunset.IsValidLocale(locale)
     return validLocale(locale) ~= nil
 end
 
+-- True when the active locale (or the English fallback) defines the key.
+function Sunset.HasTranslation(key, locale)
+    locale = validLocale(locale) or validLocale(Sunset.CurrentLocale) or 'en'
+    local primary = Sunset.Locales[locale] or {}
+    local fallback = Sunset.Locales.en or {}
+    local value = rawget(primary, tostring(key or '')) or rawget(fallback, tostring(key or ''))
+    return type(value) == 'string' and value ~= ''
+end
+
 function Sunset.Translate(locale, key, params, ...)
     locale = validLocale(locale) or 'en'
     key = tostring(key or '')
@@ -56,7 +70,7 @@ function Sunset.Translate(locale, key, params, ...)
     end
 
     if type(params) == 'table' then
-        return interpolate(value, params)
+        return interpolate(value, params, locale)
     end
 
     -- Backwards compatibility for the old positional string.format API.

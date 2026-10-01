@@ -13,20 +13,30 @@ local function drawMarker(pos, r, g, b)
 end
 
 local function setupBlips()
+    for _, b in ipairs(blips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+    end
+    blips = {}
+
     for key, facility in pairs(SunsetLicenses.Facilities or {}) do
         if facility.blip and facility.marker then
-            local blip = AddBlipForCoord(facility.marker.x, facility.marker.y, facility.marker.z)
-            SetBlipSprite(blip, facility.blip.sprite or 1)
-            SetBlipColour(blip, facility.blip.color or 2)
-            SetBlipScale(blip, facility.blip.scale or 0.85)
-            SetBlipAsShortRange(blip, true)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentString(facility.label or key)
-            EndTextCommandSetBlipName(blip)
-            blips[#blips + 1] = blip
+            local blip = Sunset.CreateSafeBlip(facility.marker, {
+                sprite = facility.blip.sprite or 1,
+                color = facility.blip.color or 2,
+                scale = facility.blip.scale or 0.85,
+                name = facility.label or key,
+                shortRange = true
+            })
+            if blip then
+                blips[#blips + 1] = blip
+            end
         end
     end
 end
+
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupBlips()
+end)
 
 function HasLicense(licenseType)
     local now = GetGameTimer()
@@ -64,7 +74,7 @@ local function startAtFacility(facility)
     end
     activeTest = { licenseType = licenseType, phase = 'theory' }
     if theory.examFee and theory.examFee > 0 then
-        notify(('Exam fee paid: $%d'):format(theory.examFee), 'info', 5000)
+        notify(exports.sunset_core:Translate('licenses.msg.exam_fee_paid', { exam_fee = math.floor(tonumber(theory.examFee) or 0) }), 'info', 5000)
     end
     OpenTheoryQuiz(licenseType, theory)
 end
@@ -72,7 +82,7 @@ end
 local examOfferCache = {}
 
 CreateThread(function()
-    Wait(2000)
+    Sunset.AwaitGameReady()
     setupBlips()
     while true do
         local sleep = 1000

@@ -26,7 +26,7 @@ local function applyModel(model)
     end
 
     if not IsModelValid(hash) then
-        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.invalid_skin_model') .. tostring(model), 'error', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.msg.invalid_skin_model', { model = tostring(model) }), 'error', 5000)
         return
     end
 
@@ -161,31 +161,69 @@ TriggerEvent('chat:addSuggestion', '/myskins', 'Open wardrobe to view and equip 
 
 -- Spawn NPC at the configured location
 CreateThread(function()
-    local cfg    = SunsetSkins.ShopNPC
-    local model  = joaat(cfg.model)
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
+    end
 
-    RequestModel(model)
-    local modelDeadline = GetGameTimer() + 10000
-    while not HasModelLoaded(model) do
-        if GetGameTimer() > modelDeadline then
-            print('[sunset_skins] shop NPC model load timed out')
-            return
-        end
-        Wait(200)
+    local cfg = SunsetSkins.ShopNPC
+    local isDebug = SunsetBoot and SunsetBoot.IsDebug and SunsetBoot.IsDebug()
+    if isDebug then
+        print(('^5[WORLD-INIT] sunset_skins NPC model request START model=%s^7'):format(tostring(cfg.model)))
+    end
+
+    local tModel = GetGameTimer()
+    local okModel, hash = false, nil
+    if Sunset and Sunset.RequestModelSafe then
+        okModel, hash = Sunset.RequestModelSafe(cfg.model, 5000)
+    else
+        local okR, rHash = pcall(function() return exports.sunset_core:RequestModelSafe(cfg.model, 5000) end)
+        okModel, hash = (okR and rHash ~= false), rHash
     end
 
     local cx, cy, cz, cw = cfg.coords.x, cfg.coords.y, cfg.coords.z, cfg.coords.w
-    shopNPC = CreatePed(4, model, cx, cy, cz - 1.0, cw, false, true)
-    SetEntityInvincible(shopNPC, true)
-    SetBlockingOfNonTemporaryEvents(shopNPC, true)
-    FreezeEntityPosition(shopNPC, true)
-    SetModelAsNoLongerNeeded(model)
+    if okModel and hash then
+        if isDebug then
+            print(('^5[WORLD-INIT] sunset_skins NPC model READY dur=%dms^7'):format(GetGameTimer() - tModel))
+        end
+        shopNPC = CreatePed(4, hash, cx, cy, cz - 1.0, cw, false, true)
+        if shopNPC and shopNPC ~= 0 and DoesEntityExist(shopNPC) then
+            SetEntityInvincible(shopNPC, true)
+            SetBlockingOfNonTemporaryEvents(shopNPC, true)
+            FreezeEntityPosition(shopNPC, true)
+            if isDebug then
+                print(('^5[WORLD-INIT] sunset_skins NPC created entity=%s^7'):format(tostring(shopNPC)))
+            end
+        end
+        SetModelAsNoLongerNeeded(hash)
+    else
+        print(('^3[sunset_skins] Optional shop NPC model %s failed to load; skipping NPC^7'):format(tostring(cfg.model)))
+    end
 
-    shopBlip = AddBlipForCoord(cx, cy, cz)
-    SetBlipSprite(shopBlip, cfg.blip.sprite)
-    SetBlipColour(shopBlip, cfg.blip.color)
-    SetBlipScale(shopBlip, cfg.blip.scale)
-    SetBlipAsShortRange(shopBlip, true)
+    if isDebug then
+        print(('^5[WORLD-INIT] sunset_skins blip START coords=(%.2f,%.2f,%.2f)^7'):format(cx, cy, cz))
+    end
+    if Sunset and Sunset.CreateSafeBlip then
+        shopBlip = Sunset.CreateSafeBlip(cfg.coords, {
+            sprite = cfg.blip.sprite,
+            color = cfg.blip.color,
+            scale = cfg.blip.scale,
+            shortRange = true,
+        })
+    else
+        pcall(function()
+            shopBlip = exports.sunset_core:CreateSafeBlip(cfg.coords, {
+                sprite = cfg.blip.sprite,
+                color = cfg.blip.color,
+                scale = cfg.blip.scale,
+                shortRange = true,
+            })
+        end)
+    end
+    if isDebug and shopBlip then
+        print(('^5[WORLD-INIT] sunset_skins blip DONE handle=%s^7'):format(tostring(shopBlip)))
+    end
     updateShopBlipName()
 
     -- Proximity loop: show [E] prompt and handle interaction

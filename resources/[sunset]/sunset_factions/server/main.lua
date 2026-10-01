@@ -88,8 +88,8 @@ exports.sunset_core:RegisterCallback('sunset:joinFactionHQ', function(source, fa
     local faction = Sunset.Factions[factionId]
     if not faction then return nil, { localeKey = 'factions.message.unknown_faction' } end
     return nil, faction.applicationsOpen
-        and ('You cannot join %s at the HQ. Apply on Discord or the website; if accepted, its leader must invite you with /finvite.'):format(faction.label)
-        or ('%s is not recruiting publicly. Membership requires a leader invitation.'):format(faction.label)
+        and exports.sunset_core:TFor(source, 'factions.err.you_cannot_join_at_the_hq', { label = tostring(faction.label) })
+        or exports.sunset_core:TFor(source, 'factions.err.is_not_recruiting_publicly_membership_requir', { label = tostring(faction.label) })
 end)
 
 local function leaveFactionForSource(source)
@@ -115,7 +115,7 @@ local function leaveFactionForSource(source)
         pcall(function() FactionManagement.applySelfLeaveFP(source, char, oldFaction) end)
     end
 
-    FactionCore.broadcastManagement(oldFaction, source, 'left the faction.', {
+    FactionCore.broadcastManagement(oldFaction, source, { localeKey = 'factions.msg.left_the_faction' }, {
         omitRank = true,
     })
 
@@ -138,7 +138,7 @@ local function performFactionInvite(source, targetId)
     local myFaction = getFactionOf(char)
     if not myFaction then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_6153f1' } end
     if not memberManagePerm(source, 'invite') then
-        return nil, FactionCore.manageAccessError(source, 'invite', 'invite players')
+        return nil, FactionCore.manageAccessError(source, 'invite', { localeKey = 'factions.action.invite_players' })
     end
 
     targetId = tonumber(targetId)
@@ -180,7 +180,7 @@ local function performFactionInvite(source, targetId)
     }
     FactionCore.auditLog(myFaction, char.id, 'invite_sent', target.id, { expiresIn = FACTION_INVITE_SECONDS })
     FactionCore.broadcastManagement(myFaction, source,
-        ('invited %s to join the faction.'):format(exports.sunset_core:GetPlayerDisplayName(targetId)))
+        { localeKey = 'factions.msg.invited_to_join_the_faction', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)) } })
     TriggerClientEvent('sunset:faction:inviteReceived', targetId, {
         factionId = myFaction,
         label = faction and faction.label or myFaction,
@@ -224,7 +224,7 @@ local function performFactionAcceptInvite(source)
 
     local faction = Sunset.Factions[invite.factionId]
     FactionCore.auditLog(invite.factionId, invite.inviterCharacterId, 'invite_accepted', char.id, {})
-    FactionCore.broadcastManagement(invite.factionId, source, ('joined the faction.'))
+    FactionCore.broadcastManagement(invite.factionId, source, ({ localeKey = 'factions.msg.joined_the_faction' }))
     if GetPlayerName(invite.inviterSource) then
         TriggerClientEvent('sunset:client:notify', invite.inviterSource,
             ('%s accepted the invitation to %s.'):format(
@@ -246,7 +246,7 @@ local function performFactionDeclineInvite(source)
     local char = getChar(source)
     FactionCore.auditLog(invite.factionId, char and char.id or nil, 'invite_declined', invite.targetCharacterId, {})
     if char then
-        FactionCore.broadcastManagement(invite.factionId, source, ('declined the faction invitation.'))
+        FactionCore.broadcastManagement(invite.factionId, source, ({ localeKey = 'factions.msg.declined_the_faction_invitation' }))
     end
     if GetPlayerName(invite.inviterSource) then
         TriggerClientEvent('sunset:client:notify', invite.inviterSource,
@@ -264,16 +264,16 @@ function RunFactionInviteCommand(source, args)
     args = args or {}
     local targetId = tonumber(args[1])
     if not targetId then
-        FactionCore.notify(source, 'Usage: /finvite [server id] — use F10 for current IDs.', 'error')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.usage_finvite_server_id_use_f10'), 'error')
         return true
     end
     local ok, err = performFactionInvite(source, targetId)
     if ok then
         FactionCore.notify(source,
-            ('%s was invited to %s and has %d seconds to accept.'):format(ok.target, ok.label, ok.expiresIn),
+            exports.sunset_core:TFor(source, 'factions.msg.was_invited_to_and_has_seconds', { target = tostring(ok.target), label = tostring(ok.label), expires_in = math.floor(tonumber(ok.expiresIn) or 0) }),
             'success', 8000)
     else
-        FactionCore.notify(source, err or 'Recruitment failed. Check your permission and the target ID.', 'error', 8000)
+        FactionCore.notify(source, err or exports.sunset_core:TFor(source, 'factions.msg.recruitment_failed_check_your_permission_and'), 'error', 8000)
     end
     return true
 end
@@ -284,10 +284,10 @@ function RunFactionAcceptInviteCommand(source)
     local ok, err = performFactionAcceptInvite(source)
     if ok then
         FactionCore.notify(source,
-            ('You joined %s. Your civilian job is unchanged. Go to HQ and press E to start duty.'):format(ok.label),
+            exports.sunset_core:TFor(source, 'factions.msg.you_joined_your_civilian_job_is', { label = tostring(ok.label) }),
             'success', 10000)
     else
-        FactionCore.notify(source, err or 'The faction invitation could not be accepted.', 'error', 8000)
+        FactionCore.notify(source, err or exports.sunset_core:TFor(source, 'factions.msg.the_faction_invitation_could_not_be'), 'error', 8000)
     end
     return true
 end
@@ -297,9 +297,9 @@ function RunFactionDeclineInviteCommand(source)
     if source == 0 then return true end
     local ok, err = performFactionDeclineInvite(source)
     if ok then
-        FactionCore.notify(source, 'Faction invitation declined.', 'info')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.message.faction_invitation_declined'), 'info')
     else
-        FactionCore.notify(source, err or 'The faction invitation could not be declined.', 'error')
+        FactionCore.notify(source, err or exports.sunset_core:TFor(source, 'factions.msg.the_faction_invitation_could_not_be_2'), 'error')
     end
     return true
 end
@@ -309,7 +309,7 @@ exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, t
     local char = getChar(source)
     if not char then return nil, { localeKey = 'factions.message.cannot_change_rank_your_character_is_not_loaded_reconnect' } end
     if not hasPerm(source, 'promote') and not FactionCore.isFactionLeader(char.id, select(1, getFactionOf(char))) then
-        return nil, FactionCore.accessError(source, 'promote', 'change a faction member rank')
+        return nil, FactionCore.accessError(source, 'promote', { localeKey = 'factions.action.change_a_faction_member_rank' })
     end
 
     local myFaction, myGrade = getFactionOf(char)
@@ -349,7 +349,7 @@ exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, t
     local gradeLabel = FactionLabels.get(myFaction, newGrade)
     FactionCore.auditLog(myFaction, char.id, 'promote', target.id, { grade = newGrade })
     FactionCore.broadcastManagement(myFaction, source,
-        ('promoted %s to %s.'):format(exports.sunset_core:GetPlayerDisplayName(targetId), gradeLabel))
+        { localeKey = 'factions.msg.promoted_to', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), grade_label = tostring(gradeLabel) } })
     TriggerClientEvent('sunset:client:notify', targetId, exports.sunset_core:TFor(targetId, 'factions.message.promoted_to_value', gradeLabel), 'success')
     TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'factions.message.promoted_player_to_value', gradeLabel), 'success')
     return true
@@ -365,7 +365,7 @@ end
 exports('HasFactionPerm', HasFactionPerm)
 
 exports.sunset_core:RegisterCallback('sunset:factionHeal', function(source, targetId)
-    if not hasPerm(source, 'heal') then return nil, FactionCore.accessError(source, 'heal', 'heal a patient') end
+    if not hasPerm(source, 'heal') then return nil, FactionCore.accessError(source, 'heal', { localeKey = 'factions.action.heal_a_patient' }) end
     targetId = tonumber(targetId) or source
     if not FactionCore.isOnline(targetId) then
         return nil, { localeKey = 'factions.message.patient_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
@@ -382,7 +382,7 @@ exports.sunset_core:RegisterCallback('sunset:factionHeal', function(source, targ
 end)
 
 exports.sunset_core:RegisterCallback('sunset:factionRevive', function(source, targetId)
-    if not hasPerm(source, 'revive') then return nil, FactionCore.accessError(source, 'revive', 'revive a patient') end
+    if not hasPerm(source, 'revive') then return nil, FactionCore.accessError(source, 'revive', { localeKey = 'factions.action.revive_a_patient' }) end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then return nil, { localeKey = 'factions.message.usage_revive_player_id' } end
 
@@ -430,7 +430,7 @@ local function nearFactionDepot(source, depot)
     return false
 end
 
-local fleetVehicleLabel -- [SEC3] forward declaration (was resolved as a nil global inside fleetEntryLabel)
+local fleetVehicleLabel -- [SEC3] forward declaration (used below before its definition)
 local function fleetEntryLabel(depot, vehicleModel)
     vehicleModel = string.lower(tostring(vehicleModel or ''))
     if depot and depot.vehicles then
@@ -452,7 +452,7 @@ local function broadcastFleetTake(source, factionId, faction, vehicleModel)
     local rank = FactionLabels.get(factionId, grade)
     local depotLabel = depot.label or 'fleet garage'
     FactionCore.broadcastManagement(factionId, source,
-        ('took out %s from %s.'):format(vehicleLabel, depotLabel),
+        { localeKey = 'factions.msg.took_out_from', params = { vehicle_label = tostring(vehicleLabel), depot_label = tostring(depotLabel) } },
         { actorId = source, rank = rank })
     FactionCore.auditLog(factionId, char.id, 'fleet_take', char.id, {
         vehicle = vehicleModel,
@@ -568,7 +568,7 @@ RegisterNetEvent('sunset:factionRegisterFleetVehicle', function(networkId, facti
 end)
 
 exports.sunset_core:RegisterCallback('sunset:mechanicRepair', function(source, targetId)
-    if not hasPerm(source, 'repair') then return nil, FactionCore.accessError(source, 'repair', 'repair a customer vehicle') end
+    if not hasPerm(source, 'repair') then return nil, FactionCore.accessError(source, 'repair', { localeKey = 'factions.action.repair_a_customer_vehicle' }) end
     targetId = tonumber(targetId) or source
     if not GetPlayerName(targetId) then
         return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
@@ -591,7 +591,7 @@ end)
 local PendingTaxiFares = {}
 
 exports.sunset_core:RegisterCallback('sunset:taxiFare', function(source, targetId, amount)
-    if not hasPerm(source, 'fare') then return nil, FactionCore.accessError(source, 'fare', 'charge a taxi fare') end
+    if not hasPerm(source, 'fare') then return nil, FactionCore.accessError(source, 'fare', { localeKey = 'factions.action.charge_a_taxi_fare' }) end
     targetId = tonumber(targetId)
     amount = math.floor(tonumber(amount) or 0)
     if not targetId or amount < 1 or amount > 1000 then
@@ -743,7 +743,7 @@ exports.sunset_core:RegisterCallback('sunset:getFactionPanel', function(source)
         local job = Sunset.CivilianJobs[jobId]
         return {
             job = jobId,
-            label = job and job.label or 'Unemployed',
+            label = job and job.label or exports.sunset_core:TFor(source, 'admin.word.unemployed'),
             onDuty = false,
             isFaction = false,
         }

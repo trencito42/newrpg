@@ -267,7 +267,7 @@ local function syncPumpTooltips(playerPos, nearestStation, nearestPump, nearestS
                     badgeClass = 'gas',
                     bodyClass = 'gas',
                     icon = 'ph-gas-pump',
-                    title = ('Gas Pump #%02d'):format(globalId),
+                    title = exports.sunset_core:Translate('vehicles.ui.gas_pump', { global_id = string.format('%02d', globalId) }),
                     desc = desc,
                     meta = ('Owner: %s'):format(ownerLabel),
                     key = isActive and key or '',
@@ -310,7 +310,7 @@ local function finishRefuel(veh)
     if not result then
         hidePumpUi()
         setFuelLevel(veh, sessionStartFuel)
-        notify(err or 'Payment failed', 'error')
+        notify(err or exports.sunset_core:Translate('vehicles.msg.payment_failed'), 'error')
         return
     end
 
@@ -321,7 +321,7 @@ local function finishRefuel(veh)
         cost = result.cost or math.floor(sessionAddedLiters * pricePerLiter() * 100) / 100,
         tankPct = finalFuel,
     })
-    notify(('Refueled %.1f L — paid $%s'):format(sessionAddedLiters, result.cost or 0), 'success')
+    notify(exports.sunset_core:Translate('vehicles.msg.refueled_l_paid', { session_added_liters = string.format('%.1f', sessionAddedLiters), cost = tostring(result.cost or 0) }), 'success')
     sessionAddedLiters = 0
     Wait(900)
     hidePumpUi()
@@ -341,7 +341,7 @@ local function finishCanFill()
     local result, err = Sunset.AwaitCallback('sunset:fillGasCan', endLiters)
     if not result then
         hidePumpUi()
-        notify(err or 'Payment failed', 'error')
+        notify(err or exports.sunset_core:Translate('vehicles.msg.payment_failed'), 'error')
         return
     end
 
@@ -351,7 +351,7 @@ local function finishCanFill()
         cost = result.cost or math.floor(sessionAddedLiters * pricePerLiter() * 100) / 100,
         tankPct = maxLiters > 0 and ((result.liters or endLiters) / maxLiters) * 100.0 or 0,
     })
-    notify(('Gas can: %.0f/%.0f L — paid $%s'):format(result.liters or endLiters, maxLiters, result.cost or 0), 'success')
+    notify(exports.sunset_core:Translate('vehicles.msg.gas_can_l_paid', { liters = string.format('%.0f', result.liters or endLiters), max_liters = string.format('%.0f', maxLiters), cost = tostring(result.cost or 0) }), 'success')
     sessionAddedLiters = 0
     Wait(900)
     hidePumpUi()

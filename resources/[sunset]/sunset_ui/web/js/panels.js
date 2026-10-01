@@ -274,7 +274,7 @@ const Panels = {
             regForm.classList.toggle('hidden', tab !== 'register');
         }
         if (slider) slider.classList.toggle('show-register', tab === 'register');
-        if (title) title.textContent = tab === 'register' ? 'Create Account' : 'Log In';
+        if (title) title.textContent = tab === 'register' ? I18n.t('ui.panels.create_account') : I18n.t('ui.panels.log_in');
     },
 
     showAuth(data = {}) {
@@ -295,7 +295,7 @@ const Panels = {
         const status = $('#auth-server-status');
         if (status && data.playersOnline != null) {
             const max = data.playersMax || 256;
-            status.innerHTML = `<i class="ph-fill ph-circle"></i> Server Online (${data.playersOnline}/${max})`;
+            status.innerHTML = `<i class="ph-fill ph-circle"></i> ${I18n.t('ui.panels.server_online_count', { online: data.playersOnline, max })}`;
         }
         if (window.LoadingScreen) LoadingScreen.reset();
     },
@@ -343,7 +343,7 @@ const Panels = {
         const cash = Number(data.cash) || 0;
         this._inventoryCash = cash;
         const cashEl = $('#inventory-cash');
-        if (cashEl) cashEl.textContent = cash.toLocaleString();
+        if (cashEl) cashEl.textContent = I18n.number(cash);
 
         document.body.classList.add('inventory-open');
         document.body.classList.add('hud-chrome-hidden');
@@ -379,7 +379,7 @@ const Panels = {
         if (available === 1) return onConfirm(1);
 
         $('#inventory-qty-title').textContent = I18n.t('dynamic.panels.offer_cash');
-        $('#inventory-qty-item-name').textContent = I18n.t('dynamic.panels.wallet_cash_value_available', { value0: available.toLocaleString() });
+        $('#inventory-qty-item-name').textContent = I18n.t('dynamic.panels.wallet_cash_value_available', { value0: I18n.number(available) });
         const input = $('#inventory-qty-input');
         const slider = $('#inventory-qty-slider');
         input.min = 1; input.max = available; input.value = 1;
@@ -614,8 +614,8 @@ const Panels = {
         const max = Math.max(1, Number(row.count) || 1);
         if (max === 1) return onConfirm(1);
 
-        $('#inventory-qty-title').textContent = actionType === 'drop' ? 'DROP AMOUNT' : 'OFFER AMOUNT';
-        $('#inventory-qty-item-name').textContent = `${row.label || row.item} (${max} Available)`;
+        $('#inventory-qty-title').textContent = actionType === 'drop' ? I18n.t('ui.panels.drop_amount') : I18n.t('ui.panels.offer_amount');
+        $('#inventory-qty-item-name').textContent = I18n.t('ui.panels.item_available', { label: row.label || row.item, max });
         const input = $('#inventory-qty-input');
         const slider = $('#inventory-qty-slider');
         input.min = 1; input.max = max; input.value = 1;
@@ -715,7 +715,7 @@ const Panels = {
                 }
                 label.textContent = selectedText;
             } else {
-                label.textContent = 'SELECT AN ITEM';
+                label.textContent = I18n.t('ui.inventory.select_an_item');
             }
         }
         const use = $('#inventory-use-selected');
@@ -725,10 +725,10 @@ const Panels = {
     },
 
     _tradeAssetTypeLabel(assetType) {
-        if (assetType === 'vehicle') return 'VEHICLE';
-        if (assetType === 'property') return 'HOUSE';
-        if (assetType === 'business') return 'BUSINESS';
-        return 'ASSET';
+        if (assetType === 'vehicle') return I18n.t('ui.panels.asset_vehicle');
+        if (assetType === 'property') return I18n.t('ui.panels.asset_house');
+        if (assetType === 'business') return I18n.t('ui.panels.asset_business');
+        return I18n.t('ui.panels.asset_generic');
     },
 
     openTradeAssetCatalog() {
@@ -769,7 +769,7 @@ const Panels = {
                 type.className = 'premium-trade-asset-slot__type';
                 type.textContent = this._tradeAssetTypeLabel(assetType);
                 const label = document.createElement('strong');
-                label.textContent = asset.label || 'Asset';
+                label.textContent = asset.label || I18n.t('ui.trade.asset_fallback');
                 const detail = document.createElement('small');
                 detail.textContent = asset.detail || '';
                 slot.appendChild(type);
@@ -839,9 +839,9 @@ const Panels = {
                         icon.textContent = '$';
                         slot.appendChild(icon);
                         const count = document.createElement('b');
-                        count.textContent = `$${cash.toLocaleString()}`;
+                        count.textContent = `$${I18n.number(cash)}`;
                         slot.appendChild(count);
-                        slot.title = 'Cash offer';
+                        slot.title = I18n.t('ui.panels.cash_offer');
                         if (removable) {
                             slot.classList.add('is-removable');
                             slot.addEventListener('click', () => post('inventoryTradeRemoveCash', {}));
@@ -870,8 +870,8 @@ const Panels = {
         if (cashBadge) {
             cashBadge.classList.toggle('is-trade-draggable', (Number(this._inventoryCash) || 0) > 0);
             cashBadge.title = data.active
-                ? 'Drag cash into your trade offer (or double-click)'
-                : 'Wallet cash';
+                ? I18n.t('ui.panels.cash_drag_hint')
+                : I18n.t('ui.panels.wallet_cash');
         }
         const confirm = $('#inventory-trade-confirm');
         if (confirm) {
@@ -882,10 +882,10 @@ const Panels = {
                 confirm.textContent = I18n.t('dynamic.panels.finalizing_in_value0_s', { value0: data.countdown });
             } else if (data.myAccepted) {
                 confirm.disabled = true;
-                confirm.textContent = data.theirAccepted ? 'PROCESSING...' : 'WAITING FOR PLAYER...';
+                confirm.textContent = data.theirAccepted ? I18n.t('ui.panels.processing') : I18n.t('ui.panels.waiting_player');
             } else {
                 confirm.disabled = false;
-                confirm.textContent = data.theirAccepted ? 'ACCEPT THEIR OFFER' : 'ACCEPT TRADE';
+                confirm.textContent = data.theirAccepted ? I18n.t('ui.panels.accept_their_offer') : I18n.t('ui.panels.accept_trade');
             }
         }
     },
@@ -918,15 +918,15 @@ const Panels = {
     },
 
     _shopCategoryLabels: {
-        all: 'All',
-        food: 'Food',
-        drinks: 'Drinks',
-        medical: 'Medical',
-        supplies: 'Supplies',
-        materials: 'Materials',
-        tools: 'Tools',
-        ammo: 'Ammo',
-        misc: 'Misc',
+        get all() { return I18n.t('ui.panels.cat_all'); },
+        get food() { return I18n.t('ui.panels.cat_food'); },
+        get drinks() { return I18n.t('ui.panels.cat_drinks'); },
+        get medical() { return I18n.t('ui.panels.cat_medical'); },
+        get supplies() { return I18n.t('ui.panels.cat_supplies'); },
+        get materials() { return I18n.t('ui.panels.cat_materials'); },
+        get tools() { return I18n.t('ui.panels.cat_tools'); },
+        get ammo() { return I18n.t('ui.panels.cat_ammo'); },
+        get misc() { return I18n.t('ui.panels.cat_misc'); },
     },
 
     showShop(data) {
@@ -964,8 +964,8 @@ const Panels = {
                 const mins = Math.ceil((row.remainingSec || 0) / 60);
                 li.innerHTML = `
                     <div>
-                        <strong>#${escHtml(row.id)} ${escHtml(row.name || 'Unknown')}</strong>
-                        <div class="mdc-time">${escHtml(row.reason || '—')} · ${row.surrenderable === false ? 'NO SURRENDER' : 'SURRENDER ALLOWED'} · ${mins}m to next star</div>
+                        <strong>#${escHtml(row.id)} ${escHtml(row.name || I18n.t('ui.mdc.unknown'))}</strong>
+                        <div class="mdc-time">${escHtml(row.reason || '—')} · ${row.surrenderable === false ? I18n.t('ui.mdc.no_surrender') : I18n.t('ui.mdc.surrender_allowed_caps')} · ${I18n.t('ui.panels.mins_to_next_star', { minutes: mins })}</div>
                     </div>
                     <span class="mdc-stars">★${row.level || 1}</span>`;
                 list.appendChild(li);
@@ -982,7 +982,7 @@ const Panels = {
         if (!data || data.error) {
             result?.classList.add('hidden');
             if (empty) {
-                empty.textContent = data?.error || 'No record found.';
+                empty.textContent = data?.error || I18n.t('ui.panels.no_record');
                 empty.classList.remove('hidden');
             }
             return;
@@ -990,14 +990,14 @@ const Panels = {
 
         empty?.classList.add('hidden');
         result?.classList.remove('hidden');
-        $('#mdc-result-name').textContent = data.name || 'Unknown';
+        $('#mdc-result-name').textContent = data.name || I18n.t('ui.mdc.unknown');
         $('#mdc-result-id').textContent = `#${data.id || 0}`;
         $('#mdc-result-wanted').textContent = data.wanted
-            ? `★${data.wantedLevel || 1} — ${data.wantedReason || 'Active'}`
-            : 'Clear';
+            ? `★${data.wantedLevel || 1} — ${data.wantedReason || I18n.t('ui.panels.wanted_active')}`
+            : I18n.t('ui.panels.clear');
         $('#mdc-result-jail').textContent = data.jailed
-            ? `${data.jailMinutes || 0} min remaining`
-            : 'Not jailed';
+            ? I18n.t('ui.panels.jail_remaining', { minutes: data.jailMinutes || 0 })
+            : I18n.t('ui.panels.not_jailed');
         $('#mdc-result-fines').textContent = data.finesOwed
             ? formatMoney(data.finesOwed)
             : '$0';
@@ -1028,11 +1028,11 @@ const Panels = {
         const amount = $('#ticket-amount');
         const reason = $('#ticket-reason');
         target.value = data.targetId || '';
-        violation.innerHTML = '<option value="">Select a violation...</option>';
+        violation.innerHTML = `<option value="">${I18n.t('ui.panels.select_violation')}</option>`;
         (data.violations || []).forEach((row) => {
             const option = document.createElement('option');
             option.value = row.code;
-            option.textContent = `${row.label} — $${Number(row.amount || 0).toLocaleString()} (${row.code})`;
+            option.textContent = `${row.label} — $${I18n.number(Number(row.amount || 0))} (${row.code})`;
             option.dataset.amount = row.amount || 0;
             option.dataset.label = row.label || row.code;
             violation.appendChild(option);
@@ -1052,10 +1052,10 @@ const Panels = {
         this.init();
         this._ticketId = data?.ticketId || data?.id;
         $('#ticket-receive-officer').textContent = data?.officer
-            ? `Issued by ${data.officer}${data.officerId ? ` #${data.officerId}` : ''}`
-            : 'Issued by Law Enforcement';
+            ? I18n.t('ui.panels.issued_by', { officer: data.officer + (data.officerId ? ` #${data.officerId}` : '') })
+            : I18n.t('ui.panels.issued_by_police');
         $('#ticket-receive-amount').textContent = formatMoney(data?.amount || 0);
-        $('#ticket-receive-reason').textContent = data?.reason || 'Traffic violation';
+        $('#ticket-receive-reason').textContent = data?.reason || I18n.t('ui.panels.traffic_violation');
         $('#ticket-receive')?.classList.remove('hidden');
     },
 
@@ -1065,11 +1065,11 @@ const Panels = {
         this.init();
         const list = $('#servicecalls-list');
         const calls = data?.calls || [];
-        $('#servicecalls-count').textContent = `${calls.length} active`;
+        $('#servicecalls-count').textContent = I18n.t('ui.panels.calls_active', { count: calls.length });
         list.innerHTML = '';
 
         if (!calls.length) {
-            list.innerHTML = '<li class="servicecalls-empty">No active service calls</li>';
+            list.innerHTML = `<li class="servicecalls-empty">${I18n.t('ui.panels.no_service_calls')}</li>`;
         } else {
             calls.forEach((call) => {
                 const li = document.createElement('li');
@@ -1077,12 +1077,12 @@ const Panels = {
                 const canAccept = call.canAccept === true && call.status === 'open';
                 li.innerHTML = `
                     <div>
-                        <div class="sc-type">${escHtml(call.typeLabel || call.type || 'CALL')}</div>
-                        <div class="sc-title">${escHtml(call.title || call.message || 'Service request')}</div>
+                        <div class="sc-type">${escHtml(call.typeLabel || call.type || I18n.t('ui.panels.call_caps'))}</div>
+                        <div class="sc-title">${escHtml(call.title || call.message || I18n.t('ui.panels.service_request'))}</div>
                         <div class="sc-meta">${escHtml(call.location || call.zone || '')}${call.caller ? ` · ${escHtml(call.caller)}` : ''}</div>
                     </div>
                     <span class="sc-status ${escHtml(statusClass)}">${escHtml(call.status || 'open')}</span>
-                    ${canAccept ? `<button type="button" data-call-id="${call.id}">ACCEPT</button>` : ''}`;
+                    ${canAccept ? `<button type="button" data-call-id="${call.id}">${I18n.t('ui.panels.accept_caps')}</button>` : ''}`;
                 li.querySelector('button')?.addEventListener('click', () => {
                     post('serviceCallsAccept', { callId: call.id });
                 });
@@ -1112,16 +1112,16 @@ const Panels = {
             const isCurrent = currentJob && (currentJob.id === job.id);
             const card = document.createElement('div');
             card.className = `job-card${isCurrent ? ' is-current' : ''}`;
-            const xpText = job.xp !== undefined ? `Lv ${job.level || 1} · ${job.xp || 0} XP` : '';
+            const xpText = job.xp !== undefined ? I18n.t('ui.panels.level_xp', { level: job.level || 1, xp: job.xp || 0 }) : '';
             card.innerHTML = `
                 <div class="job-card__top">
                     <span class="job-card__name">${escHtml(job.label || job.id)}</span>
                     <span class="job-card__pay">$${job.salary || 0}/hr</span>
                 </div>
-                <p class="job-card__desc">${job.description || 'No description'}</p>
+                <p class="job-card__desc">${job.description || I18n.t('ui.panels.no_description')}</p>
                 ${xpText ? `<span class="job-card__xp">${xpText}</span>` : ''}
                 <button type="button" class="job-card__btn${isCurrent ? ' job-card__btn--active' : ''}" ${isCurrent ? 'disabled' : ''}>
-                    ${isCurrent ? 'CURRENT JOB' : (job.canSelect === false ? 'LOCKED' : 'SELECT')}
+                    ${isCurrent ? I18n.t('ui.panels.current_job_caps') : (job.canSelect === false ? I18n.t('ui.battlepass.locked') : I18n.t('ui.panels.select_caps'))}
                 </button>`;
             const btn = card.querySelector('button');
             if (!isCurrent && job.canSelect !== false) {
@@ -1131,7 +1131,7 @@ const Panels = {
         });
 
         if (!(data?.jobs || []).length) {
-            grid.innerHTML = '<p class="mdc-empty">No jobs available</p>';
+            grid.innerHTML = `<p class="mdc-empty">${I18n.t('ui.panels.no_jobs')}</p>`;
         }
         $('#jobs-browser')?.classList.remove('hidden');
     },
@@ -1145,7 +1145,7 @@ const Panels = {
         const skills = data?.skills || [];
 
         if (!skills.length) {
-            list.innerHTML = '<li class="skills-empty">No skills tracked yet. Start a job to earn XP.</li>';
+            list.innerHTML = `<li class="skills-empty">${I18n.t('ui.panels.no_skills')}</li>`;
         } else {
             skills.forEach((skill) => {
                 const li = document.createElement('li');
@@ -1159,7 +1159,7 @@ const Panels = {
                         <span class="skill-row__level">LEVEL ${skill.level || 1}</span>
                     </div>
                     <div class="skill-row__bar"><div class="skill-row__fill" style="width:${pct}%"></div></div>
-                    <div class="skill-row__xp">${xp.toLocaleString()} / ${xpTotal.toLocaleString()} XP</div>`;
+                    <div class="skill-row__xp">${I18n.number(xp)} / ${I18n.number(xpTotal)} XP</div>`;
                 list.appendChild(li);
             });
         }
@@ -1177,14 +1177,14 @@ const Panels = {
         const categories = data?.categories || [];
         if (sub) {
             const bits = [];
-            if (data?.onDuty) bits.push('On duty');
-            if (data?.adminLevel && data.adminLevel > 0) bits.push('Admin L' + data.adminLevel);
-            sub.textContent = bits.length ? bits.join(' · ') : 'Available for you right now';
+            if (data?.onDuty) bits.push(I18n.t('ui.panels.on_duty'));
+            if (data?.adminLevel && data.adminLevel > 0) bits.push(I18n.t('ui.panels.admin_level', { level: data.adminLevel }));
+            sub.textContent = bits.length ? bits.join(' · ') : I18n.t('ui.panels.available_now');
         }
 
         body.innerHTML = '';
         if (!categories.length) {
-            body.innerHTML = '<p class="help-empty">No commands available.</p>';
+            body.innerHTML = `<p class="help-empty">${I18n.t('ui.panels.no_commands')}</p>`;
         } else {
             categories.forEach((cat) => {
                 const section = document.createElement('section');
@@ -1236,10 +1236,10 @@ const Panels = {
             const stored = v.stored === true || v.stored === 1 || v.stored === '1' || Number(v.stored) === 1;
             const isDestroyed = v.destroyed === true || v.destroyed === 1 || v.destroyed === '1';
             const inWorld = v.inWorld === true && !isDestroyed;
-            let status = stored ? 'In garage' : (inWorld ? 'Out' : 'Missing');
+            let status = stored ? I18n.t('ui.panels.veh_in_garage') : (inWorld ? I18n.t('ui.panels.veh_out') : I18n.t('ui.panels.veh_missing'));
             let statusClass = stored ? 'stored' : (inWorld ? 'out' : 'missing');
             if (isDestroyed) {
-                status = 'Totaled (Insurance)';
+                status = I18n.t('ui.panels.veh_totaled');
                 statusClass = 'destroyed';
             }
             const model = (v.model || 'vehicle').toUpperCase();
@@ -1264,9 +1264,9 @@ const Panels = {
                     <div class="menu-vcard__plate">${escHtml(v.plate)}</div>
                     <div class="menu-vcard__meta">${escHtml(v.garage || 'legion')}</div>
                     <div class="menu-vcard__insurance">
-                        <span class="insurance-badge">🛡️ Insurance: <strong>${points} pts</strong></span>
-                        <span class="insurance-level ${level > 1 ? 'is-elevated' : ''}">Level ${level}/11</span>
-                        <span class="insurance-cost">Claim fee: ${formatMoney(claimCost)}</span>
+                        <span class="insurance-badge">🛡️ ${I18n.t('ui.panels.insurance')}: <strong>${I18n.t('ui.panels.points_short', { points })}</strong></span>
+                        <span class="insurance-level ${level > 1 ? 'is-elevated' : ''}">${I18n.t('ui.panels.level_of', { level, max: 11 })}</span>
+                        <span class="insurance-cost">${I18n.t('ui.panels.claim_fee', { fee: formatMoney(claimCost) })}</span>
                     </div>
                     ${window.Menu ? window.Menu.formatEcuBlock(v.ecuInfo, v.id) : ''}
                     <div class="menu-vcard__actions"></div>
@@ -1275,23 +1275,23 @@ const Panels = {
             const actions = li.querySelector('.menu-vcard__actions');
             if (isDestroyed) {
                 if (points > 0) {
-                    addBtn(actions, `File Insurance Claim (${formatMoney(claimCost)})`, 'menu-vcard__btn--danger', () => post('garageClaimInsurance', { vehicleId: v.id }));
+                    addBtn(actions, I18n.t('ui.panels.file_claim', { fee: formatMoney(claimCost) }), 'menu-vcard__btn--danger', () => post('garageClaimInsurance', { vehicleId: v.id }));
                 } else {
-                    addBtn(actions, `No Points — Renew Coverage (${formatMoney(renewCost)})`, 'menu-vcard__btn--warning', () => post('garageRenewInsurance', { vehicleId: v.id }));
+                    addBtn(actions, I18n.t('ui.panels.renew_no_points', { fee: formatMoney(renewCost) }), 'menu-vcard__btn--warning', () => post('garageRenewInsurance', { vehicleId: v.id }));
                 }
             } else if (stored) {
-                addBtn(actions, 'Spawn', 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
+                addBtn(actions, I18n.t('ui.panels.spawn'), 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
                 if (points < 5) {
-                    addBtn(actions, `+5 Pct (${formatMoney(renewCost)})`, '', () => post('garageRenewInsurance', { vehicleId: v.id }));
+                    addBtn(actions, I18n.t('ui.panels.plus5_points', { fee: formatMoney(renewCost) }), '', () => post('garageRenewInsurance', { vehicleId: v.id }));
                 }
             }
  else if (inWorld) {
                 addBtn(actions, 'GPS', '', () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
-                addBtn(actions, 'Store', 'menu-vcard__btn--primary', () => post('garageStore', { vehicleId: v.id }));
+                addBtn(actions, I18n.t('ui.panels.store'), 'menu-vcard__btn--primary', () => post('garageStore', { vehicleId: v.id }));
             } else {
                 addBtn(actions, 'GPS', '', () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
-                addBtn(actions, 'Respawn', 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
-                addBtn(actions, 'Store', '', () => post('garageStore', { vehicleId: v.id }));
+                addBtn(actions, I18n.t('ui.panels.respawn'), 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
+                addBtn(actions, I18n.t('ui.panels.store'), '', () => post('garageStore', { vehicleId: v.id }));
             }
 
             list.appendChild(li);
@@ -1299,7 +1299,7 @@ const Panels = {
 
         if (!(data.vehicles || []).length) {
             list.className = 'panel-list';
-            list.innerHTML = '<li class="garage-empty">You have no vehicles. Plates are assigned when you receive a car.</li>';
+            list.innerHTML = `<li class="garage-empty">${I18n.t('ui.panels.no_vehicles')}</li>`;
         }
 
         $('#garage')?.classList.remove('hidden');
@@ -1311,7 +1311,7 @@ const Panels = {
         this.init();
         const list = $('#fleet-garage-list');
         const title = $('#fleet-garage-title');
-        if (title) title.textContent = data.label || 'Fleet Garage';
+        if (title) title.textContent = data.label || I18n.t('ui.panels.fleet_garage');
         list.innerHTML = '';
         list.className = 'fleet-garage__list';
 
@@ -1323,7 +1323,7 @@ const Panels = {
         (data.vehicles || []).forEach((v) => {
             const model = String(v.model || 'vehicle');
             const modelCode = model.toUpperCase();
-            const rankLabel = v.minGradeLabel || `Rank ${Number.isFinite(v.minGrade) ? v.minGrade : 0}+`;
+            const rankLabel = v.minGradeLabel || I18n.t('ui.panels.rank_plus', { rank: Number.isFinite(v.minGrade) ? v.minGrade : 0 });
             const li = document.createElement('li');
             li.className = 'fleet-unit-row';
             li.innerHTML = `
@@ -1336,7 +1336,7 @@ const Panels = {
                     <strong>${escHtml(v.label || modelCode)}</strong>
                     <span>${escHtml(modelCode)} · ${escHtml(rankLabel)}+</span>
                 </div>
-                <button type="button" class="fleet-unit-row__btn">Take out</button>`;
+                <button type="button" class="fleet-unit-row__btn">${I18n.t('ui.panels.take_out')}</button>`;
 
             const btn = li.querySelector('.fleet-unit-row__btn');
             btn.addEventListener('click', (event) => {
@@ -1354,7 +1354,7 @@ const Panels = {
         });
 
         if (!(data.vehicles || []).length) {
-            list.innerHTML = '<li class="garage-empty">No fleet vehicles available for your rank.</li>';
+            list.innerHTML = `<li class="garage-empty">${I18n.t('ui.panels.no_fleet')}</li>`;
         }
 
         $('#fleet-garage')?.classList.remove('hidden');
@@ -1387,7 +1387,7 @@ const Panels = {
         list.innerHTML = '';
         ['wave', 'sit', 'dance', 'smoke', 'drink', 'phone', 'lean', 'pushup', 'wank', 'surrender'].forEach((name) => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${escHtml(name)}</span><button>PLAY</button>`;
+            li.innerHTML = `<span>${escHtml(name)}</span><button>${I18n.t('ui.panels.play_caps')}</button>`;
             li.querySelector('button')?.addEventListener('click', () => post('emotePlay', { emote: name }));
             list.appendChild(li);
         });
@@ -1405,7 +1405,7 @@ const Panels = {
         if (!options) return;
         options.innerHTML = '';
 
-        $('#clothing-title').textContent = type === 'barber' ? 'Barber' : 'Clothing';
+        $('#clothing-title').textContent = type === 'barber' ? I18n.t('ui.panels.barber') : I18n.t('ui.panels.clothing');
 
         if (type === 'barber') {
             if (hint) hint.textContent = I18n.t('dynamic.panels.choose_a_hairstyle_50_per_change');
@@ -1415,7 +1415,7 @@ const Panels = {
             picker.className = 'clothing-picker';
             picker.innerHTML = `
                 <button type="button" class="btn" id="barber-prev">◀</button>
-                <span id="barber-label">Hair #0</span>
+                <span id="barber-label">${I18n.t('dynamic.panels.hair_value0', { value0: 0 })}</span>
                 <button type="button" class="btn" id="barber-next">▶</button>`;
             options.appendChild(picker);
 
@@ -1453,7 +1453,7 @@ const Panels = {
             picker.className = 'clothing-picker';
             picker.innerHTML = `
                 <button type="button" class="btn" id="cloth-prev">◀</button>
-                <span id="cloth-label">Outfit #0</span>
+                <span id="cloth-label">${I18n.t('dynamic.panels.outfit_value0', { value0: 0 })}</span>
                 <button type="button" class="btn" id="cloth-next">▶</button>`;
             options.appendChild(picker);
 
@@ -1503,26 +1503,26 @@ const Panels = {
         this.init();
         const body = $('#documents-body');
         const title = $('#documents-title');
-        title.textContent = data.kind === 'licenses' ? 'Licenses' : 'ID Card';
+        title.textContent = data.kind === 'licenses' ? I18n.t('ui.panels.licenses') : I18n.t('ui.panels.id_card');
         let html = '';
         if (data.id && data.kind !== 'licenses') {
-            html += `<p><strong>Name:</strong> ${escHtml(data.id.name)}</p>`;
-            html += `<p><strong>DOB:</strong> ${escHtml(data.id.dob)}</p>`;
-            html += `<p><strong>Nationality:</strong> ${escHtml(data.id.nationality)}</p>`;
-            html += `<p><strong>Account:</strong> ${escHtml(data.id.account)}</p>`;
+            html += `<p><strong>${I18n.t('common.name')}:</strong> ${escHtml(data.id.name)}</p>`;
+            html += `<p><strong>${I18n.t('ui.panels.dob')}:</strong> ${escHtml(data.id.dob)}</p>`;
+            html += `<p><strong>${I18n.t('ui.characters.nationality')}:</strong> ${escHtml(data.id.nationality)}</p>`;
+            html += `<p><strong>${I18n.t('ui.panels.account')}:</strong> ${escHtml(data.id.account)}</p>`;
             html += `<p><strong>CID:</strong> ${escHtml(data.id.cid)}</p>`;
         }
         if (data.licenses && data.licenses.length) {
-            html += '<h3 style="margin-top:12px">Licenses</h3><ul>';
+            html += `<h3 style="margin-top:12px">${I18n.t('ui.panels.licenses')}</h3><ul>`;
             data.licenses.forEach((l) => {
                 const label = l.label || l.license_type;
-                const status = l.valid === false ? 'Expired' : 'Valid';
-                const expiry = l.expires_at_payday ? ` — expires payday #${l.expires_at_payday}` : '';
+                const status = l.valid === false ? I18n.t('ui.panels.expired') : I18n.t('ui.panels.valid');
+                const expiry = l.expires_at_payday ?  ` — ${I18n.t('ui.panels.expires_payday', { n: l.expires_at_payday })}` : '';
                 html += `<li>${escHtml(label)} — ${escHtml(status)}${escHtml(expiry)}</li>`;
             });
             html += '</ul>';
         } else if (data.kind === 'licenses') {
-            html += '<p>No licenses on record.</p>';
+            html += `<p>${I18n.t('ui.panels.no_licenses')}</p>`;
         }
         body.innerHTML = html;
         $('#documents-close').onclick = () => post('documentsClose');
@@ -1533,7 +1533,7 @@ const Panels = {
     showJobCenter(data) {
         this.init();
         const jobs = data.jobs || [];
-        $('#jobcenter-title').textContent = (data.label || 'EMPLOYMENT OFFICE').toUpperCase();
+        $('#jobcenter-title').textContent = (data.label || I18n.t('ui.panels.employment_office')).toUpperCase();
 
         const list = $('#jobcenter-list');
         const detailEl = $('#jobcenter-details');
@@ -1549,9 +1549,9 @@ const Panels = {
             list.querySelectorAll('.jobcenter-job-item').forEach(li => li.classList.remove('is-selected'));
             el.classList.add('is-selected');
             sideTitle.textContent = job.label;
-            const salaryText = job.salary ? `$${job.salary} / week` : 'Standard Pay';
-            const locationText = job.locationLabel ? `📍 ${job.locationLabel}` : '📍 San Andreas';
-            const supervisorText = job.supervisorName ? `👤 Supervisor: ${job.supervisorName}` : '';
+            const salaryText = job.salary ? I18n.t('ui.panels.salary_week', { amount: job.salary }) : I18n.t('ui.panels.standard_pay');
+            const locationText = job.locationLabel ? `📍 ${job.locationLabel}` : `📍 ${I18n.t('ui.mdc.san_andreas')}`;
+            const supervisorText = job.supervisorName ? `👤 ${I18n.t('ui.panels.supervisor', { name: job.supervisorName })}` : '';
             const addressText = job.address ? `<p class="jobcenter-details__address">${escHtml(job.address)}</p>` : '';
 
             detailEl.innerHTML = `
@@ -1559,9 +1559,9 @@ const Panels = {
                 <p class="jobcenter-details__salary">${escHtml(salaryText)}</p>
                 ${supervisorText ? `<p class="jobcenter-details__supervisor">${escHtml(supervisorText)}</p>` : ''}
                 ${addressText}
-                ${job.isCurrent ? '<p class="jobcenter-details__current">✓ You are currently employed in this career.</p>' : ''}
+                ${job.isCurrent ? `<p class="jobcenter-details__current">✓ ${I18n.t('ui.panels.currently_employed')}</p>` : ''}
                 ${job.description ? `<p class="jobcenter-details__desc">${job.description}</p>` : ''}
-                ${job.hasPhysicalWorkplace && !job.isCurrent ? '<p class="jobcenter-details__apply-hint">💡 Visit the workplace supervisor in person to apply for this job.</p>' : ''}
+                ${job.hasPhysicalWorkplace && !job.isCurrent ? `<p class="jobcenter-details__apply-hint">💡 ${I18n.t('ui.panels.apply_in_person')}</p>` : ''}
             `;
 
             if (job.npcCoords) {
@@ -1574,28 +1574,28 @@ const Panels = {
             if (job.id === 'unemployed') {
                 hireBtn.classList.remove('hidden');
                 hireBtn.disabled = !!job.isCurrent;
-                hireBtn.textContent = job.isCurrent ? 'UNEMPLOYED' : 'RESIGN ALL JOBS';
+                hireBtn.textContent = job.isCurrent ? I18n.t('ui.panels.unemployed_caps') : I18n.t('ui.panels.resign_all');
             } else if (job.hasPhysicalWorkplace) {
                 hireBtn.classList.add('hidden');
             } else {
                 hireBtn.classList.remove('hidden');
                 hireBtn.disabled = !!job.isCurrent;
-                hireBtn.textContent = job.isCurrent ? 'CURRENT JOB' : 'HIRE';
+                hireBtn.textContent = job.isCurrent ? I18n.t('ui.panels.current_job_caps') : I18n.t('ui.panels.hire_caps');
             }
         };
 
         jobs.forEach(job => {
             const el = document.createElement('div');
             el.className = `jobcenter-job-item${job.isCurrent ? ' is-current' : ''}`;
-            el.innerHTML = `<span class="jobcenter-job-item__label">${escHtml(job.label)}${job.isCurrent ? ' <span class="jobcenter-current-badge">CURRENT</span>' : ''}</span>` +
-                (job.salary ? `<span class="jobcenter-job-item__salary">$${job.salary}/wk</span>` : '');
+            el.innerHTML = `<span class="jobcenter-job-item__label">${escHtml(job.label)}${job.isCurrent ? ` <span class="jobcenter-current-badge">${I18n.t('ui.panels.current_caps')}</span>` : ''}</span>` +
+                (job.salary ? `<span class="jobcenter-job-item__salary">${I18n.t('ui.panels.salary_wk', { amount: job.salary })}</span>` : '');
             el.addEventListener('click', () => selectJob(job, el));
             list.appendChild(el);
         });
 
         // Reset side panel
         sideTitle.textContent = I18n.t('dynamic.panels.career_opportunity');
-        detailEl.innerHTML = '<p class="jobcenter-details__hint">Select a career opportunity to view details and set GPS navigation.</p>';
+        detailEl.innerHTML = `<p class="jobcenter-details__hint">${I18n.t('ui.panels.career_hint')}</p>`;
         hireBtn.classList.add('hidden');
         hireBtn.disabled = true;
         waypointBtn.classList.add('hidden');
@@ -1618,7 +1618,7 @@ const Panels = {
         const d = data || {};
         $('#jobs-panel-title').textContent = I18n.t('dynamic.panels.jobs');
         const currentId = typeof d.currentJob === 'object' ? d.currentJob?.id : d.currentJob;
-        const currentLabel = d.currentJobLabel || d.currentJob?.label || currentId || 'Unemployed';
+        const currentLabel = d.currentJobLabel || d.currentJob?.label || currentId || I18n.t('menu.profile.unemployed');
         $('#jobs-panel-current').textContent = currentLabel;
 
         const sessionEl = $('#jobs-panel-session');
@@ -1644,13 +1644,13 @@ const Panels = {
             top.className = 'jobs-menu__card-top';
             const identity = document.createElement('div');
             const title = document.createElement('h3');
-            title.textContent = job.label || job.id || 'Job';
+            title.textContent = job.label || job.id || I18n.t('ui.panels.job');
             const description = document.createElement('p');
-            description.textContent = job.description || job.help || 'Civilian career';
+            description.textContent = job.description || job.help || I18n.t('ui.panels.civilian_career');
             identity.append(title, description);
             const pay = document.createElement('strong');
             pay.className = 'jobs-menu__pay';
-            pay.textContent = `$${Number(job.salary || 0).toLocaleString()}/hr`;
+            pay.textContent = `$${I18n.number(Number(job.salary || 0))}/hr`;
             top.append(identity, pay);
 
             const meta = document.createElement('div');
@@ -1658,10 +1658,10 @@ const Panels = {
             const levelText = document.createElement('span');
             levelText.textContent = I18n.t('dynamic.panels.skill_level_value0', { value0: level });
             const taskText = document.createElement('span');
-            taskText.textContent = `${Number(prog.completedTasks || 0)} completed tasks`;
+            taskText.textContent = I18n.t('ui.panels.completed_tasks', { count: Number(prog.completedTasks || 0) });
             const badge = document.createElement('span');
             badge.className = 'jobs-menu__badge';
-            badge.textContent = job.id === currentId ? 'Employed' : 'Job Center';
+            badge.textContent = job.id === currentId ? I18n.t('ui.panels.employed') : I18n.t('ui.panels.job_center');
             meta.append(levelText, taskText, badge);
 
             const progress = document.createElement('div');
@@ -1675,7 +1675,7 @@ const Panels = {
 
         const work = $('#jobs-panel-work');
         work.disabled = !currentId || currentId === 'unemployed' || Boolean(d.session);
-        work.textContent = d.session ? 'Shift already active' : (work.disabled ? 'Choose a job at Job Center' : `Start ${currentLabel}`);
+        work.textContent = d.session ? I18n.t('ui.panels.shift_active') : (work.disabled ? I18n.t('ui.panels.choose_job') : I18n.t('ui.panels.start_job', { job: currentLabel }));
         work.onclick = () => { if (!work.disabled) post('jobsStartWork'); };
         const cancel = $('#jobs-panel-cancel');
         cancel.disabled = !d.session;
@@ -1688,7 +1688,7 @@ const Panels = {
     showCrafting(data) {
         this.init();
         this._craftStation = data.stationId;
-        $('#crafting-title').textContent = data.stationLabel || 'Crafting';
+        $('#crafting-title').textContent = data.stationLabel || I18n.t('ui.panels.crafting');
         const list = $('#crafting-list');
         list.innerHTML = '';
         if (data.stationHint) {
@@ -1723,7 +1723,7 @@ const Panels = {
                 row.appendChild(locked);
             }
             const button = document.createElement('button');
-            button.textContent = recipe.canCraft ? 'CRAFT' : 'REQUIREMENTS NOT MET';
+            button.textContent = recipe.canCraft ? I18n.t('ui.panels.craft_caps') : I18n.t('ui.panels.requirements_not_met');
             button.disabled = !recipe.canCraft;
             button.addEventListener('click', () => post('craftingCraft', {
                 stationId: this._craftStation,
@@ -1734,7 +1734,7 @@ const Panels = {
             list.appendChild(li);
         });
         if (!(data.recipes || []).length) {
-            list.innerHTML = '<li><span>No recipes available here.</span></li>';
+            list.innerHTML = `<li><span>${I18n.t('ui.panels.no_recipes')}</span></li>`;
         }
         $('#crafting-close').onclick = () => post('craftingClose');
         $('#crafting')?.classList.remove('hidden');
@@ -1841,7 +1841,7 @@ const Panels = {
         const btn = $('#appearance-save');
         if (!btn) return;
         btn.disabled = isSaving;
-        btn.textContent = isSaving ? 'SAVING...' : 'CONFIRM & PLAY';
+        btn.textContent = isSaving ? I18n.t('ui.panels.saving') : I18n.t('ui.panels.confirm_play');
     },
 
     // ── Fishing Shop (buy bait / sell fish) ─────────────────────
@@ -1911,11 +1911,11 @@ const Panels = {
         const isSell = this._fishingShopMode === 'sell';
 
         const title = $('#fishing-shop-qty-title');
-        if (title) title.textContent = isSell ? 'SELECT AMOUNT TO SELL' : 'SELECT AMOUNT';
+        if (title) title.textContent = isSell ? I18n.t('ui.panels.select_amount_sell') : I18n.t('ui.inventory.select_amount');
         const itemName = $('#fishing-shop-qty-item-name');
         if (itemName) itemName.textContent = row.label || row.item;
         const confirmBtn = $('#fishing-shop-qty-confirm');
-        if (confirmBtn) confirmBtn.textContent = isSell ? 'ADD TO SELL LIST' : 'ADD TO CART';
+        if (confirmBtn) confirmBtn.textContent = isSell ? I18n.t('ui.panels.add_to_sell_list') : I18n.t('ui.panels.add_to_cart');
 
         const max = Math.max(1, maxQty);
         if (input) { input.max = max; input.value = 1; }
@@ -1975,13 +1975,13 @@ const Panels = {
             if (isSell) {
                 priceDiv.style.color = '#4ade80';
             }
-            priceDiv.textContent = `$${(entry.price * entry.amount).toLocaleString()}`;
+            priceDiv.textContent = `$${I18n.number((entry.price * entry.amount))}`;
             item.appendChild(priceDiv);
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'fishing-shop-cart-item__remove';
-            removeBtn.setAttribute('aria-label', `Remove ${entry.label}`);
+            removeBtn.setAttribute('aria-label', I18n.t('ui.panels.remove_item', { label: entry.label }));
             removeBtn.textContent = '×';
             removeBtn.addEventListener('click', () => {
                 this._fishingShopCart.splice(idx, 1);
@@ -1991,13 +1991,13 @@ const Panels = {
             list.appendChild(item);
         });
 
-        if (subtotalEl) subtotalEl.textContent = `$${total.toLocaleString()}`;
+        if (subtotalEl) subtotalEl.textContent = `$${I18n.number(total)}`;
         if (confirmBtn) confirmBtn.disabled = this._fishingShopCart.length === 0;
 
         if (this._fishingShopCart.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'fishing-shop-cart-empty';
-            empty.textContent = isSell ? 'Select fish to sell' : 'Click an item to add it to your cart';
+            empty.textContent = isSell ? I18n.t('ui.panels.select_fish') : I18n.t('ui.panels.click_to_add');
             list.appendChild(empty);
         }
     },

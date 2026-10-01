@@ -14,7 +14,7 @@ RegisterCommand('propose', function(source, args)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:marriage:propose', targetId)
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not propose.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('marriage.msg.could_not_propose'), 'error')
         end
     end)
 end, false)
@@ -24,7 +24,7 @@ RegisterCommand('divorce', function()
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:marriage:divorce')
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not divorce.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('marriage.msg.could_not_divorce'), 'error')
         end
     end)
 end, false)
@@ -35,8 +35,7 @@ RegisterCommand('marriage', function()
         local res = Sunset.AwaitCallback('sunset:marriage:status')
         if not res then return end
         if res.married then
-            exports.sunset_ui:Notify(('💍 Married to %s (%s). Married: %s'):format(
-                res.partnerName, res.partnerOnline and 'online' or 'offline', res.marriedAt), 'info', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('marriage.msg.married_to_married', { partner_name = tostring(res.partnerName), partner_online = res.partnerOnline and exports.sunset_core:Translate('marriage.word.online') or exports.sunset_core:Translate('marriage.word.offline'), married_at = tostring(res.marriedAt) }), 'info', 8000)
         else
             exports.sunset_ui:Notify(exports.sunset_core:Translate('marriage.message.you_are_not_married_use_propose_id_to_propose'), 'info')
         end
@@ -54,7 +53,7 @@ AddEventHandler('sunset:nui:marriageRespond', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:marriage:respond', data.accept == true)
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not respond.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('marriage.msg.could_not_respond'), 'error')
         end
         exports.sunset_ui:Send('marriageHide', {})
         exports.sunset_ui:SetFocus(false, false, false, 'marriage')

@@ -80,7 +80,7 @@ local function doRespawn(coords, bill)
     respawning = false
 
     if bill and bill > 0 then
-        exports.sunset_ui:Notify(('Hospital bill: $%s'):format(bill), 'warning')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('death.msg.hospital_bill', { bill = tostring(bill) }), 'warning')
     end
 end
 
@@ -160,6 +160,32 @@ CreateThread(function()
             Wait(1000)
         end
     end
+end)
+
+-- [RESTART SAFETY] After `restart sunset_death` nobody re-fires playerSpawned, so
+-- `active` stayed false and the death loop never ran for connected players.
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    CreateThread(function()
+        Wait(1000)
+        local ok, char = pcall(function() return exports.sunset_core:GetCharacter() end)
+        if ok and char and char.id then active = true end
+    end)
+end)
+
+-- Stopping mid-death/respawn must not leave a black screen, orphan scene/focus or
+-- a dispatch panel owning the cursor.
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    pcall(NewLoadSceneStop)
+    pcall(ClearFocus)
+    pcall(function()
+        TriggerEvent('sunset:ui:forceCloseAll')
+        exports.sunset_ui:Send('dispatch112Hide', {})
+        exports.sunset_ui:SetFocus(false, false, false, 'dispatch112')
+    end)
+    SetPlayerControl(PlayerId(), true, 0)
+    if IsScreenFadedOut() and not IsScreenFadingIn() then DoScreenFadeIn(300) end
 end)
 
 exports('IsDead', function() return dead or downed end)

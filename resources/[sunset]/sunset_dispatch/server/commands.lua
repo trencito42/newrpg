@@ -8,12 +8,12 @@ local function runService(source, args)
     if source == 0 then return end
     local callType = args[1]
     if not callType then
-        notify(source, 'Usage: /service [taxi|medic|fire|mechanic] [message]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.usage_service_taxi_medic_fire_mechanic'), 'error')
         return
     end
     local description = table.concat(args, ' ', 2)
     local call, err = ServiceCore.createServiceCall(source, callType, nil, nil, description)
-    if not call then notify(source, err or 'Could not create service call', 'error'); return end
+    if not call then notify(source, err or exports.sunset_core:TFor(source, 'dispatch.message.could_not_create_service_call'), 'error'); return end
     TriggerEvent('sunset:dispatch:serviceCommand', source, call.callType, call.id, description)
 end
 
@@ -36,33 +36,33 @@ local function runServiceCalls(source)
         end
     end
     if shown == 0 then
-        notify(source, 'No open service calls for your duty role', 'info')
+        notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.no_open_service_calls_for_your'), 'info')
         return
     end
-    notify(source, ('Open calls (%d): %s'):format(shown, table.concat(lines, ' | ')), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.open_calls', { shown = math.floor(tonumber(shown) or 0), concat = table.concat(lines, ' | ') }), 'info')
 end
 
 local function runAccept(source, args)
     if source == 0 then return end
     local callType, callId = args[1], args[2]
     if not callType or not callId then
-        notify(source, 'Usage: /accept [type] [id]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'dispatch.message.usage_accept_type_id'), 'error')
         return
     end
     local call, err = ServiceCore.acceptCall(source, callType, callId)
-    if not call then notify(source, err or 'Could not accept call', 'error') end
+    if not call then notify(source, err or exports.sunset_core:TFor(source, 'dispatch.message.could_not_accept_call'), 'error') end
 end
 
 local function runCancel(source, args)
     if source == 0 then return end
     local callType, callId = args[1], args[2]
     if not callType or not callId then
-        notify(source, 'Usage: /cancel [type] [id]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'dispatch.message.usage_cancel_type_id'), 'error')
         return
     end
     local ok, err = ServiceCore.cancelCall(source, callType, callId)
-    if not ok then notify(source, err or 'Could not cancel call', 'error')
-    else notify(source, 'Service call cancelled', 'success') end
+    if not ok then notify(source, err or exports.sunset_core:TFor(source, 'dispatch.msg.could_not_cancel_call'), 'error')
+    else notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.service_call_cancelled'), 'success') end
 end
 
 local function registerDispatchCommand(name, handler)

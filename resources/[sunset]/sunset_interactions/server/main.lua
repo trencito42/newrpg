@@ -67,7 +67,7 @@ exports.sunset_core:RegisterCallback('sunset:interactionContext', function(sourc
     local actions = {}
     local state = getDetentionState(pair.targetId)
     addAction(actions, 'give_cash', 'CIVILIAN', 'Give cash', 'Hand money directly to this player.', {
-        input = { type = 'number', label = 'Amount', min = 1, max = MAX_CASH_TRANSFER, placeholder = '$ amount' },
+        input = { type = 'number', label = exports.sunset_core:TFor(source, 'interactions.ui.amount'), min = 1, max = MAX_CASH_TRANSFER, placeholder = exports.sunset_core:TFor(source, 'interactions.ui.amount_2') },
     })
     addAction(actions, 'trade', 'CIVILIAN', 'Trade items', 'Propose a secure item trade with this player.')
     -- [FIX] Show "Already in Contacts" if the contact exists, otherwise "Add to Contacts"
@@ -121,13 +121,13 @@ exports.sunset_core:RegisterCallback('sunset:interactionContext', function(sourc
         for code, reason in pairs((Sunset.Police and Sunset.Police.reasons) or {}) do
             reasons[#reasons + 1] = {
                 value = code,
-                label = ('%s — %d star%s%s'):format(reason.label, reason.stars, reason.stars == 1 and '' or 's', reason.surrenderable == false and ' / no surrender' or ''),
+                label = exports.sunset_core:TFor(source, 'interactions.ui.star', { label = tostring(reason.label), stars = math.floor(tonumber(reason.stars) or 0), value = tostring(reason.stars == 1 and '' or 's'), value_2 = reason.surrenderable == false and exports.sunset_core:TFor(source, 'interactions.ui.no_surrender') or '' }),
             }
         end
         table.sort(reasons, function(a, b) return a.label < b.label end)
         addAction(actions, 'set_wanted', 'POLICE', 'Add wanted charge', 'Select the offence committed by this player.', {
             danger = true,
-            input = { type = 'select', label = 'Offence', options = reasons },
+            input = { type = 'select', label = exports.sunset_core:TFor(source, 'interactions.ui.offence'), options = reasons },
         })
     end
     if permitted(source, 'megaphone') then
@@ -151,15 +151,15 @@ exports.sunset_core:RegisterCallback('sunset:interactionContext', function(sourc
     end
     if permitted(source, 'fare') then
         addAction(actions, 'taxi_fare', 'SERVICE', 'Offer taxi fare', 'Send a fare that the passenger must accept.', {
-            input = { type = 'number', label = 'Fare', min = 1, max = 1000, placeholder = '$ fare' },
+            input = { type = 'number', label = exports.sunset_core:TFor(source, 'interactions.ui.fare'), min = 1, max = 1000, placeholder = exports.sunset_core:TFor(source, 'interactions.ui.fare_2') },
         })
     end
     if permitted(source, 'issue_license') then
         addAction(actions, 'license_exam', 'INSTRUCTOR', 'Authorize license exam', 'Start a supervised LSSI exam for this candidate.', {
-            input = { type = 'select', label = 'License', options = {
-                { value = 'pilot', label = 'Flying license' },
-                { value = 'boat', label = 'Boat license' },
-                { value = 'weapon', label = 'Gun license' },
+            input = { type = 'select', label = exports.sunset_core:TFor(source, 'licenses.hint.default_facility'), options = {
+                { value = 'pilot', label = exports.sunset_core:TFor(source, 'interactions.ui.flying_license') },
+                { value = 'boat', label = exports.sunset_core:TFor(source, 'interactions.ui.boat_license') },
+                { value = 'weapon', label = exports.sunset_core:TFor(source, 'interactions.ui.gun_license') },
             } },
         })
     end
@@ -219,7 +219,7 @@ exports.sunset_core:RegisterCallback('sunset:interactionGiveCash', function(sour
 
     local giverName = exports.sunset_core:GetPlayerDisplayName(source)
     local targetName = exports.sunset_core:GetPlayerDisplayName(pair.targetId)
-    notify(pair.targetId, ('%s gave you $%s cash.'):format(giverName, amount), 'success', 6000)
+    notify(pair.targetId, exports.sunset_core:TFor(pair.targetId, 'interactions.msg.gave_you_cash', { giver_name = tostring(giverName), amount = tostring(amount) }), 'success', 6000)
     return { amount = amount, target = targetName }
 end)
 
@@ -253,7 +253,7 @@ exports.sunset_core:RegisterCallback('sunset:interactionAddFriend', function(sou
         return nil, { localeKey = 'interactions.message.the_contact_could_not_be_saved_try_again' }
     end
 
-    notify(pair.targetId, ('%s added you to their contacts.'):format(exports.sunset_core:GetPlayerDisplayName(source)), 'info', 5000)
+    notify(pair.targetId, exports.sunset_core:TFor(pair.targetId, 'interactions.msg.added_you_to_their_contacts', { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(source)) }), 'info', 5000)
     return { name = name, phone = phone }
 end)
 

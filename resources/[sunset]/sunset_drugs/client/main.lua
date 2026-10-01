@@ -131,7 +131,7 @@ runTimedAction = function(startCb, startArgs, completeCb, progressLabel)
         if not info then
             actionBusy = false
             exports.sunset_ui:Send('drugsBusy', { busy = false })
-            exports.sunset_ui:Notify(err or 'Action failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('drugs.msg.action_failed'), 'error')
             return
         end
         local durationMs = tonumber(info.durationMs) or 5000
@@ -150,7 +150,7 @@ runTimedAction = function(startCb, startArgs, completeCb, progressLabel)
         if not res then
             -- Server rejected (moved away / cooldown / inventory). Error is
             -- server-owned and meaningful; show it verbatim.
-            exports.sunset_ui:Notify(err2 or 'Action failed.', 'error')
+            exports.sunset_ui:Notify(err2 or exports.sunset_core:Translate('drugs.msg.action_failed'), 'error')
             refreshStatus()
             return
         end
@@ -174,7 +174,7 @@ AddEventHandler('sunset:nui:drugsHarvest', function(data)
         return
     end
     runTimedAction('sunset:drugs:harvestStart', { spotIndex },
-        'sunset:drugs:harvestComplete', 'Harvesting...')
+        'sunset:drugs:harvestComplete', exports.sunset_core:Translate('drugs.msg.harvesting'))
 end)
 
 AddEventHandler('sunset:nui:drugsProcess', function(data)
@@ -182,7 +182,7 @@ AddEventHandler('sunset:nui:drugsProcess', function(data)
     local drugType = tostring(data.drugType or '')
     if drugType == '' then return end
     runTimedAction('sunset:drugs:processStart', { drugType },
-        'sunset:drugs:processComplete', 'Processing...')
+        'sunset:drugs:processComplete', exports.sunset_core:Translate('drugs.msg.processing'))
 end)
 
 AddEventHandler('sunset:nui:drugsSell', function(data)
@@ -196,7 +196,7 @@ AddEventHandler('sunset:nui:drugsSell', function(data)
         actionBusy = false
         exports.sunset_ui:Send('drugsBusy', { busy = false })
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not sell.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('drugs.msg.could_not_sell'), 'error')
         end
         -- Success notification is server-owned; only refresh UI here.
         refreshStatus()

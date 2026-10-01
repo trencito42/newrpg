@@ -634,7 +634,7 @@
                 return;
             }
             if (action === 'transitionShow') {
-                this.setTransition(true, payload.text || payload.status || 'Loading character...');
+                this.setTransition(true, payload.text || payload.status || I18n.t('shell.loading_character'));
                 return;
             }
             if (action === 'transitionHide') {
@@ -698,7 +698,7 @@
                         }
                     }
                 } else if (screen === 'loading' || screen === 'handoff') {
-                    this.setTransition(true, payload.holdText || payload.text || 'Loading character...');
+                    this.setTransition(true, payload.holdText || payload.text || I18n.t('shell.loading_character'));
                 }
                 return;
             }
@@ -946,7 +946,7 @@
                     compass.setAttribute('aria-hidden', 'false');
                     if (needle) needle.setAttribute('transform', `rotate(${payload.angle || 0}, 36, 36)`);
                     if (distEl)  distEl.textContent  = payload.dist < 1000 ? `${Math.round(payload.dist)}m` : `${(payload.dist / 1000).toFixed(1)}km`;
-                    if (labelEl) labelEl.textContent = payload.label || 'Hunting Zone';
+                    if (labelEl) labelEl.textContent = payload.label || I18n.t('shell.hunting_zone');
                     return;
                 }
                 case 'hunterCompassHide': {

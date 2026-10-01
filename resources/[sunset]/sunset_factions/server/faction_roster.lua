@@ -7,7 +7,7 @@ local function rosterLeaderPerm(source, perm)
     if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
     if FactionCore.isFactionLeader(char.id, factionId) then return char, factionId end
     if not FactionCore.hasManagePerm(source, perm) then
-        return nil, FactionCore.manageAccessError(source, perm, 'manage faction members')
+        return nil, FactionCore.manageAccessError(source, perm, { localeKey = 'factions.action.manage_faction_members' })
     end
     return char, factionId
 end
@@ -51,7 +51,7 @@ local function rosterRankPerm(source)
     if FactionCore.hasManagePerm(source, 'giverank') or FactionCore.hasManagePerm(source, 'promote') then
         return char, factionId, nil
     end
-    return nil, nil, FactionCore.manageAccessError(source, 'giverank', 'manage faction ranks')
+    return nil, nil, FactionCore.manageAccessError(source, 'giverank', { localeKey = 'factions.action.manage_faction_ranks' })
 end
 
 local function onlineSourceForCharacter(characterId)
@@ -67,7 +67,7 @@ local function canManageMember(actorSource, actorChar, factionId, targetGrade, t
     local isLeader = FactionCore.isFactionLeader(actorChar.id, factionId)
     if isLeader then return true end
     if not FactionCore.hasManagePerm(actorSource, 'giverank') and not FactionCore.hasManagePerm(actorSource, 'promote') then
-        return false, FactionCore.manageAccessError(actorSource, 'giverank', 'manage faction ranks')
+        return false, FactionCore.manageAccessError(actorSource, 'giverank', { localeKey = 'factions.action.manage_faction_ranks' })
     end
     local _, myGrade = FactionCore.getFactionOf(actorChar)
     if targetGrade >= (myGrade or 0) and tonumber(targetCharacterId) ~= tonumber(actorChar.id) then
@@ -78,7 +78,7 @@ end
 
 function FactionRoster.adjustGrade(source, characterId, delta)
     local char, factionId, permErr = rosterRankPerm(source)
-    if not char or not factionId then return nil, permErr or 'No faction' end
+    if not char or not factionId then return nil, permErr or exports.sunset_core:TFor(source, 'factions.message.no_faction') end
 
     characterId = tonumber(characterId)
     delta = tonumber(delta) or 0
@@ -126,11 +126,10 @@ function FactionRoster.adjustGrade(source, characterId, delta)
     local auditAction = delta > 0 and 'rank_up' or 'rank_down'
     FactionCore.auditLog(factionId, char.id, auditAction, characterId, { grade = newGrade })
     local targetName = FactionCore.memberDisplayName(characterId)
-    local verb = delta > 0 and 'promoted' or 'demoted'
     FactionCore.broadcastManagement(factionId, source,
-        ('%s %s to %s.'):format(verb, targetName, label))
+        { localeKey = delta > 0 and 'factions.msg.promoted_target_to' or 'factions.msg.demoted_target_to', params = { target_name = tostring(targetName), label = tostring(label) } })
     if targetSource then
-        FactionCore.notify(targetSource, ('Your rank is now %s'):format(label), 'info')
+        FactionCore.notify(targetSource, exports.sunset_core:TFor(targetSource, 'factions.msg.your_rank_is_now', { label = tostring(label) }), 'info')
     end
     return { grade = newGrade, gradeLabel = label }
 end
@@ -172,9 +171,7 @@ function FactionRoster.kickMember(source, characterId, options)
     local targetSource = onlineSourceForCharacter(characterId)
     if not targetSource then
         FactionCore.broadcastManagement(factionId, source,
-            ('removed %s from the faction%s.'):format(
-                FactionCore.memberDisplayName(characterId),
-                options.withFp == true and ' (offline, with FP)' or ' (offline)'))
+            { localeKey = options.withFp == true and 'factions.msg.removed_from_the_faction_offline_fp' or 'factions.msg.removed_from_the_faction_offline', params = { member_display_name = tostring(FactionCore.memberDisplayName(characterId)) } })
         exports.sunset_core:SetFactionByCharacterId(characterId, nil, 0)
         FactionCore.auditLog(factionId, char.id, options.withFp == true and 'uninvite_fp_offline' or 'uninvite_offline', characterId, {})
         return { offline = true }
@@ -183,15 +180,15 @@ function FactionRoster.kickMember(source, characterId, options)
     local targetName = FactionCore.memberDisplayName(characterId)
     if options.withFp then
         FactionCore.broadcastManagement(factionId, source,
-            ('removed %s from the faction (with FP).'):format(targetName))
+            { localeKey = 'factions.msg.removed_from_the_faction_with_fp', params = { target_name = tostring(targetName) } })
     else
         FactionCore.broadcastManagement(factionId, source,
-            ('removed %s from the faction.'):format(targetName))
+            { localeKey = 'factions.msg.removed_from_the_faction_2', params = { target_name = tostring(targetName) } })
     end
     exports.sunset_core:SetFaction(targetSource, nil, 0)
     local auditAction = options.withFp and 'uninvite_fp' or 'uninvite'
     FactionCore.auditLog(factionId, char.id, auditAction, characterId, {})
-    FactionCore.notify(targetSource, 'You were removed from the faction', 'warning')
+    FactionCore.notify(targetSource, exports.sunset_core:TFor(targetSource, 'factions.msg.you_were_removed_from_the_faction'), 'warning')
     return { offline = false, serverId = targetSource }
 end
 
@@ -234,10 +231,9 @@ function FactionRoster.warnMember(source, characterId, reason)
     local nextCount = warnCount + 1
     FactionCore.auditLog(factionId, char.id, 'fwarn', characterId, { reason = reason, count = nextCount })
     FactionCore.broadcastManagement(factionId, source,
-        ('issued a faction warning (%d/3) to %s: %s'):format(
-            nextCount, FactionCore.memberDisplayName(characterId), reason))
-    FactionCore.notify(targetSource, ('Faction warning %d/3: %s'):format(nextCount, reason), 'warning', 8000)
-    FactionCore.notify(source, ('Warning issued (%d/3): %s'):format(nextCount, reason), 'success')
+        { localeKey = 'factions.msg.issued_a_faction_warning_3_to', params = { next_count = math.floor(tonumber(nextCount) or 0), member_display_name = tostring(FactionCore.memberDisplayName(characterId)), reason = tostring(reason) } })
+    FactionCore.notify(targetSource, exports.sunset_core:TFor(targetSource, 'factions.msg.faction_warning_3', { next_count = math.floor(tonumber(nextCount) or 0), reason = tostring(reason) }), 'warning', 8000)
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.warning_issued_3', { next_count = math.floor(tonumber(nextCount) or 0), reason = tostring(reason) }), 'success')
     return { warns = nextCount, reason = reason }
 end
 
@@ -275,8 +271,8 @@ exports.sunset_core:RegisterCallback('sunset:factionSetGradeLabels', function(so
         return nil, { localeKey = 'factions.message.only_the_faction_leader_can_rename_ranks' }
     end
     local ok, err = FactionLabels.save(factionId, labels, char.id)
-    if not ok then return nil, err or 'Could not save rank names' end
+    if not ok then return nil, err or exports.sunset_core:TFor(source, 'factions.err.could_not_save_rank_names') end
     FactionCore.auditLog(factionId, char.id, 'grade_labels', nil, {})
-    FactionCore.broadcastManagement(factionId, source, 'updated faction rank names.')
+    FactionCore.broadcastManagement(factionId, source, { localeKey = 'factions.msg.updated_faction_rank_names' })
     return { grades = FactionLabels.listForFaction(factionId) }
 end)

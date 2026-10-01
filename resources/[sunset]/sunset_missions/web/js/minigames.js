@@ -71,7 +71,7 @@ const LockpickGame = (() => {
             const fb = $('#lp-feedback');
             if (fb) { fb.textContent = I18n.t('dynamic.minigames.missed'); fb.style.color = '#f87171'; }
             const att = $('#lp-attempts');
-            if (att) att.textContent = `${attempts} attempt${attempts !== 1 ? 's' : ''} remaining`;
+            if (att) att.textContent = I18n.t('ui.missions.attempts_remaining', { count: attempts });
             if (attempts <= 0) {
                 setTimeout(() => finish(false), 600);
             }
@@ -94,7 +94,7 @@ const LockpickGame = (() => {
         buildPins();
         updateZone();
         const att = $('#lp-attempts');
-        if (att) att.textContent = `${attempts} attempts remaining`;
+        if (att) att.textContent = I18n.t('ui.missions.attempts_remaining', { count: attempts });
         const fb = $('#lp-feedback');
         if (fb) fb.textContent = '';
 

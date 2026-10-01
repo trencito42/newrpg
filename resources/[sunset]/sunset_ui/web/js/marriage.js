@@ -13,7 +13,7 @@ const Marriage = {
         el.classList.remove('hidden');
         const text = $('#marriage-text');
         if (text) {
-            text.innerHTML = `<strong>${this.esc(data?.fromName || 'Someone')}</strong> wants to marry you!<br>Do you accept?`;
+            text.innerHTML = `<strong>${this.esc(data?.fromName || I18n.t('ui.marriage.someone'))}</strong> ${I18n.t('ui.marriage.wants_to_marry')}<br>${I18n.t('ui.marriage.do_you_accept')}`;
         }
     },
 

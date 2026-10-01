@@ -500,7 +500,7 @@ function SunsetJobs_StartSession(source, jobId, data)
     local currentJob = charJob(source)
     if currentJob ~= jobId then
         -- [JOBS AUDIT] was `{ localeKey = ... } .. label` (table concat -> runtime error).
-        return nil, 'You are not employed as ' .. tostring(Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId)
+        return nil, exports.sunset_core:TFor(source, 'jobs.err.you_are_not_employed_as', { civilian_jobs = tostring(Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId) })
     end
 
     local cfg = Sunset.GetJobConfig(jobId)
@@ -856,7 +856,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trailerDestroyed', function(so
     local usesLeft = trailerRecoveryRemaining(session, cfg)
     if usesLeft <= 0 then
         session.trailerDestroyHandled = true
-        failTruckerTrailerLoss(source, session, 'Trailer destroyed — no recoveries left')
+        failTruckerTrailerLoss(source, session, exports.sunset_core:TFor(source, 'jobs.msg.trailer_destroyed_no_recoveries_left'))
         return { failed = true }
     end
 
@@ -1003,7 +1003,7 @@ CreateThread(function()
                             local usesLeft = trailerRecoveryRemaining(session, cfg)
                             if usesLeft <= 0 then
                                 session.trailerDestroyHandled = true
-                                failTruckerTrailerLoss(src, session, 'Trailer destroyed — no recoveries left')
+                                failTruckerTrailerLoss(src, session, exports.sunset_core:TFor(src, 'jobs.msg.trailer_destroyed_no_recoveries_left'))
                             else
                                 local remaining, err2 = authorizeTrailerRecovery(session, cfg)
                                 if remaining then

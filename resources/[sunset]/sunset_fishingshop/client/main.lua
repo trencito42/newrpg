@@ -32,7 +32,7 @@ local function nearestFishBuyer()
         if coords then
             local distance = #(pos - coords)
             if distance < bestDistance then
-                best = { label = store.label or '24/7 Store', coords = coords }
+                best = { label = store.label or exports.sunset_core:Translate('fishingshop.menu.default_shop'), coords = coords }
                 bestDistance = distance
             end
         end
@@ -223,7 +223,7 @@ local function worldShowTooltip(id, ped, meta)
     end)
     if not ok then return false, tostring(shownOrErr) end
     if shownOrErr == true then return true end
-    return false, reason or 'showTooltip returned false'
+    return false, reason or exports.sunset_core:Translate('fishingshop.err.showtooltip_returned_false')
 end
 
 local function worldHideTooltip(id)
@@ -433,52 +433,83 @@ end)
 
 -- ── Spawn NPC ────────────────────────────────────────────────
 CreateThread(function()
-    local hash = GetHashKey('a_m_m_hillbilly_01')
-    RequestModel(hash)
-    local t = GetGameTimer() + 20000
-    while not HasModelLoaded(hash) and GetGameTimer() < t do Wait(200) end
-    if not HasModelLoaded(hash) then
-        print('[sunset_fishingshop] ERR: model nu s-a incarcat')
-        return
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
     end
-    Wait(500)
-    hillbillyPed = CreatePed(4, hash,
-        NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z, NPC_COORDS.w,
-        false, true)
-    if not hillbillyPed or hillbillyPed == 0 or not DoesEntityExist(hillbillyPed) then
-        print('[sunset_fishingshop] ERR: CreatePed invalid')
+
+    local modelName = 'a_m_m_hillbilly_01'
+    local okModel, hash = false, nil
+    if Sunset and Sunset.RequestModelSafe then
+        okModel, hash = Sunset.RequestModelSafe(modelName, 5000)
+    else
+        local okR, rHash = pcall(function() return exports.sunset_core:RequestModelSafe(modelName, 5000) end)
+        okModel, hash = (okR and rHash ~= false), rHash
+    end
+
+    if okModel and hash then
+        hillbillyPed = CreatePed(4, hash,
+            NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z, NPC_COORDS.w,
+            false, true)
+        if hillbillyPed and hillbillyPed ~= 0 and DoesEntityExist(hillbillyPed) then
+            SetEntityAsMissionEntity(hillbillyPed, true, true)
+            FreezeEntityPosition(hillbillyPed, true)
+            SetEntityInvincible(hillbillyPed, true)
+            SetBlockingOfNonTemporaryEvents(hillbillyPed, true)
+            SetEntityCanBeDamaged(hillbillyPed, false)
+            TaskStartScenarioInPlace(hillbillyPed, 'WORLD_HUMAN_SMOKING', 0, true)
+        end
         SetModelAsNoLongerNeeded(hash)
-        return
+    else
+        print('[sunset_fishingshop] Optional Billy Ray NPC model failed to load; skipping NPC')
     end
-    SetEntityAsMissionEntity(hillbillyPed, true, true)
-    FreezeEntityPosition(hillbillyPed, true)
-    SetEntityInvincible(hillbillyPed, true)
-    SetBlockingOfNonTemporaryEvents(hillbillyPed, true)
-    SetEntityCanBeDamaged(hillbillyPed, false)
-    TaskStartScenarioInPlace(hillbillyPed, 'WORLD_HUMAN_SMOKING', 0, true)
-    SetModelAsNoLongerNeeded(hash)
 
     -- Blip Billy Ray
-    local blip = AddBlipForCoord(NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z)
-    SetBlipSprite(blip, 68)
-    SetBlipColour(blip, 3)
-    SetBlipScale(blip, 0.85)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString(exports.sunset_core:Translate('fishingshop.blip.billy_ray'))
-    EndTextCommandSetBlipName(blip)
-    fishShopBlips[#fishShopBlips + 1] = blip
+    local blip = nil
+    if Sunset and Sunset.CreateSafeBlip then
+        blip = Sunset.CreateSafeBlip(NPC_COORDS, {
+            sprite = 68,
+            color = 3,
+            scale = 0.85,
+            shortRange = true,
+            label = exports.sunset_core:Translate('fishingshop.blip.billy_ray'),
+        })
+    else
+        pcall(function()
+            blip = exports.sunset_core:CreateSafeBlip(NPC_COORDS, {
+                sprite = 68,
+                color = 3,
+                scale = 0.85,
+                shortRange = true,
+                label = exports.sunset_core:Translate('fishingshop.blip.billy_ray'),
+            })
+        end)
+    end
+    if blip then fishShopBlips[#fishShopBlips + 1] = blip end
 
     -- Blip Fishing Supply shop
-    local shopBlip = AddBlipForCoord(BAIT_SHOP_COORDS.x, BAIT_SHOP_COORDS.y, BAIT_SHOP_COORDS.z)
-    SetBlipSprite(shopBlip, 52)   -- store / shop icon
-    SetBlipColour(shopBlip, 3)
-    SetBlipScale(shopBlip, 0.75)
-    SetBlipAsShortRange(shopBlip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString(exports.sunset_core:Translate('fishingshop.blip.supply'))
-    EndTextCommandSetBlipName(shopBlip)
-    fishShopBlips[#fishShopBlips + 1] = shopBlip
+    local shopBlip = nil
+    if Sunset and Sunset.CreateSafeBlip then
+        shopBlip = Sunset.CreateSafeBlip(BAIT_SHOP_COORDS, {
+            sprite = 52,
+            color = 3,
+            scale = 0.75,
+            shortRange = true,
+            label = exports.sunset_core:Translate('fishingshop.blip.supply'),
+        })
+    else
+        pcall(function()
+            shopBlip = exports.sunset_core:CreateSafeBlip(BAIT_SHOP_COORDS, {
+                sprite = 52,
+                color = 3,
+                scale = 0.75,
+                shortRange = true,
+                label = exports.sunset_core:Translate('fishingshop.blip.supply'),
+            })
+        end)
+    end
+    if shopBlip then fishShopBlips[#fishShopBlips + 1] = shopBlip end
 end)
 
 -- [JOBS AUDIT] NPC ped, blips and shop focus survived a resource restart (duplicate Billy Ray / blips).

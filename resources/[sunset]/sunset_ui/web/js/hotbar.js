@@ -100,9 +100,9 @@ const HotbarUI = {
         overlay.classList.add('active');
 
         const hint = count
-            ? 'Move view / 1-9 and release [X]'
-            : 'No emotes loaded';
-        this._setWheelCenter('Emotes', hint);
+            ? I18n.t('ui.hotbar.wheel_hint')
+            : I18n.t('ui.hotbar.no_emotes');
+        this._setWheelCenter(I18n.t('shell.emotes'), hint);
     },
 
     selectWheelFromGame(index) {
@@ -148,7 +148,7 @@ const HotbarUI = {
             }
         });
         const emote = this.emotes[index];
-        if (emote) this._setWheelCenter(emote.label || emote.name, 'Selected');
+        if (emote) this._setWheelCenter(emote.label || emote.name, I18n.t('ui.hotbar.selected'));
     },
 
     _clearWheelSelection() {
@@ -158,7 +158,7 @@ const HotbarUI = {
             el.classList.remove('hovered');
             el.style.transform = el.getAttribute('data-transform') || '';
         });
-        this._setWheelCenter('Emotes', 'Select');
+        this._setWheelCenter(I18n.t('shell.emotes'), I18n.t('ui.hotbar.select'));
     },
 
     _releaseWheel() {

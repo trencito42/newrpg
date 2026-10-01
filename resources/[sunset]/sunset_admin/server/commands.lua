@@ -191,7 +191,7 @@ end
 local function getTarget(source, id, usage)
     if not id or id == '' then
         if source ~= 0 then
-            notify(source, usage or 'You must specify a player ID.', 'error')
+            notify(source, usage or exports.sunset_core:TFor(source, 'admin.msg.you_must_specify_a_player_id'), 'error')
         else
             print('[Sunset] You must specify a player ID')
         end
@@ -202,8 +202,8 @@ local function getTarget(source, id, usage)
     if not target then
         if source ~= 0 then
             local ids = onlineIds()
-            local hint = #ids > 0 and (' Online: ' .. table.concat(ids, ', ')) or ' No one online.'
-            notify(source, 'Invalid player (ID: ' .. tostring(id) .. ').' .. hint, 'error')
+            local hint = #ids > 0 and exports.sunset_core:TFor(source, 'admin.msg.online_ids', { ids = table.concat(ids, ', ') }) or exports.sunset_core:TFor(source, 'admin.msg.no_one_online')
+            notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_player_id', { id = tostring(id), hint = tostring(hint) }), 'error')
         end
         return nil
     end
@@ -213,7 +213,7 @@ end
 local function guardSelfTarget(source, target, idArg, action)
     if source == 0 or not target or target ~= source then return true end
     if idArg == '--self' or string.lower(tostring(idArg)) == 'self' then return true end
-    notify(source, ('Cannot %s yourself. Specify another player ID.'):format(action), 'error')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.cannot_yourself_specify_another_player_id', { action = tostring(action) }), 'error')
     return false
 end
 
@@ -307,24 +307,22 @@ local function setPlayerStat(source, args, forcedStat)
     end
     if not definition then
         return commandOutput(source,
-            'Unknown stat. Available: cash, bank, level, rp, rob, paydays, playtime, premium, hunger, thirst, stress.', 'error')
+            exports.sunset_core:TFor(source, 'admin.msg.unknown_stat_available_cash_bank_level'), 'error')
     end
 
     local rawValue = tonumber(args[valueArgIndex])
     if not rawValue or rawValue ~= math.floor(rawValue) then
-        return commandOutput(source, ('%s must be a whole number between %d and %d.'):format(
-            definition.label, definition.min, definition.max), 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.must_be_a_whole_number_between', { label = tostring(definition.label), min = math.floor(tonumber(definition.min) or 0), max = math.floor(tonumber(definition.max) or 0) }), 'error')
     end
     local value = math.floor(rawValue)
     if value < definition.min or value > definition.max then
-        return commandOutput(source, ('%s must be between %d and %d.'):format(
-            definition.label, definition.min, definition.max), 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.must_be_between_and', { label = tostring(definition.label), min = math.floor(tonumber(definition.min) or 0), max = math.floor(tonumber(definition.max) or 0) }), 'error')
     end
 
     local player = exports.sunset_core:GetPlayer(target)
     local char = exports.sunset_core:GetCharacter(target)
     if not player or not char then
-        return commandOutput(source, 'That player is online but has not selected a character yet.', 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.that_player_is_online_but_has'), 'error')
     end
 
     local oldValue
@@ -344,15 +342,14 @@ local function setPlayerStat(source, args, forcedStat)
         saved, saveError = exports.sunset_core:SetPersistentStat(target, definition.scope, definition.field, value)
     end
     if not saved then
-        return commandOutput(source, saveError or 'The statistic could not be saved. No value was changed.', 'error')
+        return commandOutput(source, saveError or exports.sunset_core:TFor(source, 'admin.msg.the_statistic_could_not_be_saved'), 'error')
     end
 
     auditStatChange(source, player, char, stat, oldValue, value)
     local targetName = exports.sunset_core:GetPlayerDisplayName(target)
-    commandOutput(source, ('Set %s for %s (ID %d): %d -> %d. Saved immediately.'):format(
-        definition.label, targetName, target, oldValue, value), 'success')
+    commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.set_for_id_saved_immediately', { label = tostring(definition.label), target_name = tostring(targetName), target = math.floor(tonumber(target) or 0), old_value = math.floor(tonumber(oldValue) or 0), value = math.floor(tonumber(value) or 0) }), 'success')
     if source ~= target then
-        notify(target, ('An administrator changed your %s from %d to %d.'):format(definition.label, oldValue, value), 'info')
+        notify(target, exports.sunset_core:TFor(target, 'admin.msg.an_administrator_changed_your_from_to', { label = tostring(definition.label), old_value = math.floor(tonumber(oldValue) or 0), value = math.floor(tonumber(value) or 0) }), 'info')
     end
 end
 
@@ -375,7 +372,7 @@ registerServerCommand('astats', function(source, args)
     local player = exports.sunset_core:GetPlayer(target)
     local char = exports.sunset_core:GetCharacter(target)
     if not player or not char then
-        return commandOutput(source, 'That player has not selected a character yet.', 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.that_player_has_not_selected_a'), 'error')
     end
     local name = exports.sunset_core:GetPlayerDisplayName(target)
     local line = ('%s [ID %d/CID %d] | Level %d | RP %d | Rob %d | Paydays %d | Cash $%d | Bank $%d | BP %d | Playtime %dh %dm'):format(
@@ -400,19 +397,19 @@ registerServerCommand('setjobstat', function(source, args)
     local stat = string.lower(tostring(args[3] or ''))
     local definition = JobStatFields[stat]
     if not Sunset.CivilianJobs or not Sunset.CivilianJobs[jobId] then
-        return commandOutput(source, 'Unknown civilian job. Use: trucker, garbage, courier, fisherman or mechanic.', 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.unknown_civilian_job_use_trucker_garbage'), 'error')
     end
     if not definition then
-        return commandOutput(source, 'Unknown job stat. Use: xp, level, tasks or earned.', 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.unknown_job_stat_use_xp_level'), 'error')
     end
     local rawValue = tonumber(args[4])
     if not rawValue or rawValue ~= math.floor(rawValue) or rawValue < definition.min or rawValue > definition.max then
-        return commandOutput(source, ('Value must be a whole number between %d and %d.'):format(definition.min, definition.max), 'error')
+        return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.value_must_be_a_whole_number', { min = math.floor(tonumber(definition.min) or 0), max = math.floor(tonumber(definition.max) or 0) }), 'error')
     end
     local value = math.floor(rawValue)
     local player = exports.sunset_core:GetPlayer(target)
     local char = exports.sunset_core:GetCharacter(target)
-    if not player or not char then return commandOutput(source, 'That player has not selected a character yet.', 'error') end
+    if not player or not char then return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.that_player_has_not_selected_a'), 'error') end
 
     local row = MySQL.single.await('SELECT xp, level, completed_tasks, total_earned FROM job_progress WHERE character_id = ? AND job_id = ?', { char.id, jobId })
     local oldValue = row and math.floor(tonumber(row[definition.field]) or 0) or (stat == 'level' and 1 or 0)
@@ -430,9 +427,8 @@ registerServerCommand('setjobstat', function(source, args)
             completed_tasks = VALUES(completed_tasks), total_earned = VALUES(total_earned)
     ]], { char.id, jobId, values.xp, values.level, values.completed_tasks, values.total_earned })
     auditStatChange(source, player, char, ('job:%s:%s'):format(jobId, stat), oldValue, value)
-    commandOutput(source, ('Set %s %s for %s (ID %d): %d -> %d.'):format(
-        Sunset.CivilianJobs[jobId].label, stat, exports.sunset_core:GetPlayerDisplayName(target), target, oldValue, value), 'success')
-    if source ~= target then notify(target, ('An administrator changed your %s %s to %d.'):format(Sunset.CivilianJobs[jobId].label, stat, value), 'info') end
+    commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.set_for_id', { label = tostring(Sunset.CivilianJobs[jobId].label), stat = tostring(stat), player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(target)), target = math.floor(tonumber(target) or 0), old_value = math.floor(tonumber(oldValue) or 0), value = math.floor(tonumber(value) or 0) }), 'success')
+    if source ~= target then notify(target, exports.sunset_core:TFor(target, 'admin.msg.an_administrator_changed_your_to', { label = tostring(Sunset.CivilianJobs[jobId].label), stat = tostring(stat), value = math.floor(tonumber(value) or 0) }), 'info') end
 end, false)
 
 -- ── [SANCTIONS & MUTES] ─────────────────────────────────────────
@@ -473,13 +469,13 @@ registerServerCommand('kick', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /kick [player id] [reason]')
     if not target or not guardSelfTarget(source, target, args[1], 'kick') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
     local reason = table.concat(args, ' ', 2)
     if reason == '' then reason = 'No reason given' end
     -- [SANCTIONS] kick now records a sanction row + public/staff broadcast.
     SunsetAdmin.Sanctions.kick(source, target, reason)
-    if source ~= 0 then notify(source, 'Player kicked', 'success') end
+    if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_kicked'), 'success') end
 end, false)
 
 -- /ban [id] [durata] [motiv]
@@ -489,15 +485,15 @@ registerServerCommand('ban', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /ban [player id] [durata (ex: 30m, 1d, 7d, perm)] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'ban') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
     local durationMin, reason = SunsetAdmin.Sanctions.parseBanArgs(args)
     local ok, err = SunsetAdmin.Sanctions.ban(source, target, durationMin, reason)
     if not ok then
-        notify(source, err or 'Ban failed', 'error')
+        notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.ban_failed'), 'error')
         return
     end
-    if source ~= 0 then notify(source, durationMin and ('Player banned for %d min'):format(durationMin) or 'Player permanently banned', 'success') end
+    if source ~= 0 then notify(source, durationMin and exports.sunset_core:TFor(source, 'admin.msg.player_banned_for_min', { duration_min = math.floor(tonumber(durationMin) or 0) }) or exports.sunset_core:TFor(source, 'admin.msg.player_permanently_banned'), 'success') end
 end, false)
 
 -- /banip [id] [motiv] — admin da ban permanent playerilor pe IP
@@ -506,16 +502,16 @@ registerServerCommand('banip', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /banip [player id] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'banip') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if reason == '' then reason = 'Permanent IP Ban' end
     local ok, err = SunsetAdmin.Sanctions.banIP(source, target, reason)
     if not ok then
-        notify(source, err or 'IP Ban failed', 'error')
+        notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.ip_ban_failed'), 'error')
         return
     end
-    if source ~= 0 then notify(source, 'Player permanently IP-banned', 'success') end
+    if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_permanently_ip_banned'), 'success') end
 end, false)
 
 registerServerCommand('tempban', function(source, args)
@@ -523,15 +519,15 @@ registerServerCommand('tempban', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /tempban [player id] [30m|1h|6h|12h|1d|3d|7d|14d|30d] [reason]')
     if not target or not guardSelfTarget(source, target, args[1], 'tempban') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
     local durationMin, reason = SunsetAdmin.Sanctions.parseBanArgs(args)
     if not durationMin then
-        notify(source, 'Duration required: /tempban [id] [30m|1h|6h|12h|1d|3d|7d|14d|30d] [reason]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.duration_required_tempban_id_30m_1h'), 'error')
         return
     end
     SunsetAdmin.Sanctions.ban(source, target, durationMin, reason)
-    if source ~= 0 then notify(source, ('Player banned for %d min'):format(durationMin), 'success') end
+    if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_banned_for_min', { duration_min = math.floor(tonumber(durationMin) or 0) }), 'success') end
 end, false)
 
 -- /mute [id] [durata] [motiv] — admin ul da mute unui player
@@ -540,13 +536,13 @@ registerServerCommand('mute', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /mute [player id] [durata in minute] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'mute') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
 
     local duration = tonumber(args[2])
     local reason = table.concat(args, ' ', 3):gsub('^%s*(.-)%s*$', '%1')
     if not duration or duration <= 0 or reason == '' then
-        return notify(source, 'Usage: /mute [player id] [durata in minute] [motiv]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_mute_player_id_durata_in'), 'error')
     end
     -- [SEC3] finite whole-minute duration, max 30 days (inf/NaN/huge broke the %d format after the mute was already stored)
     if duration ~= duration or duration > 43200 then duration = 43200 end
@@ -554,7 +550,7 @@ registerServerCommand('mute', function(source, args)
     reason = reason:sub(1, 200)
 
     local license = Sunset.GetIdentifier(target, 'license')
-    if not license then return notify(source, 'Could not resolve player license.', 'error') end
+    if not license then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_resolve_player_license'), 'error') end
 
     local now = os.time()
     local adminName = getDisplayName(source)
@@ -574,9 +570,9 @@ registerServerCommand('mute', function(source, args)
     local alert = ('[MUTE] %s muted %s (#%d) for %d minute(s). Reason: %s'):format(adminName, targetName, target, duration, reason)
     pcall(function() exports.sunset_admin:BroadcastStaff(alert) end)
     TriggerClientEvent('sunset:chat:message', -1, {
-        id = 0, name = 'SANCTION', message = ('%s has been muted for %d minute(s) by %s. Reason: %s'):format(targetName, duration, adminName, reason), type = 'admin_action'
+        id = 0, name = 'SANCTION', message = exports.sunset_core:TFor(source, 'admin.ui.has_been_muted_for_minute_s', { target_name = tostring(targetName), duration = math.floor(tonumber(duration) or 0), admin_name = tostring(adminName), reason = tostring(reason) }), type = 'admin_action'
     })
-    notify(source, ('You muted %s for %d minute(s).'):format(targetName, duration), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_muted_for_minute_s', { target_name = tostring(targetName), duration = math.floor(tonumber(duration) or 0) }), 'success')
 end, false)
 
 -- /unmute [id]
@@ -587,7 +583,7 @@ registerServerCommand('unmute', function(source, args)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license or not MutedPlayers[license] then
-        return notify(source, 'This player is not muted.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.this_player_is_not_muted'), 'error')
     end
 
     MutedPlayers[license] = nil
@@ -595,19 +591,19 @@ registerServerCommand('unmute', function(source, args)
     local targetName = getDisplayName(target)
 
     TriggerClientEvent('sunset:chat:system', target, ('Your mute has been removed by %s.'):format(adminName), 'success')
-    notify(source, ('You removed the mute from %s.'):format(targetName), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_removed_the_mute_from', { target_name = tostring(targetName) }), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[MUTE] %s removed mute from %s.'):format(adminName, targetName)) end)
 end, false)
 
 -- /nmute [id] [motiv] [durata in minute] — da mute unui player de la chat-ul de incepatori (/n /helpme)
 registerServerCommand('nmute', function(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'This command is available only for staff (admins and helpers).', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'staff_only'), 'error')
     end
     local target = getTarget(source, args[1], 'Usage: /nmute [player id] [reason] [duration in minutes]')
     if not target or not guardSelfTarget(source, target, args[1], 'nmute') then return end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_sanction_a_staff_member'), 'error') -- [SEC3]
     end
 
     local duration, reason
@@ -622,14 +618,14 @@ registerServerCommand('nmute', function(source, args)
     end
 
     if not duration or duration <= 0 or not reason or reason == '' then
-        return notify(source, 'Usage: /nmute [player id] [motiv] [durata in minute]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_nmute_player_id_motiv_durata'), 'error')
     end
     if duration ~= duration or duration > 43200 then duration = 43200 end -- [SEC3]
     duration = math.max(1, math.floor(duration))
     reason = reason:sub(1, 200)
 
     local license = Sunset.GetIdentifier(target, 'license')
-    if not license then return notify(source, 'Could not resolve player license.', 'error') end
+    if not license then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_resolve_player_license'), 'error') end
 
     local now = os.time()
     local staffName = getDisplayName(source)
@@ -642,7 +638,7 @@ registerServerCommand('nmute', function(source, args)
     }
 
     TriggerClientEvent('sunset:chat:system', target, ('You are muted from the newbie channel for %d minute(s). Reason: %s'):format(duration, reason), 'error')
-    notify(source, ('You muted %s from /n for %d minute(s).'):format(targetName, duration), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_muted_from_n_for_minute', { target_name = tostring(targetName), duration = math.floor(tonumber(duration) or 0) }), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[NMUTE] %s muted %s (#%d) from /n for %d min: "%s"'):format(staffName, targetName, target, duration, reason)) end)
 end, false)
 
@@ -654,7 +650,7 @@ registerServerCommand('unnmute', function(source, args)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license or not NMutedPlayers[license] then
-        return notify(source, 'This player does not have a newbie channel mute.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.this_player_does_not_have_a'), 'error')
     end
 
     NMutedPlayers[license] = nil
@@ -662,7 +658,7 @@ registerServerCommand('unnmute', function(source, args)
     local targetName = getDisplayName(target)
 
     TriggerClientEvent('sunset:chat:system', target, ('Your newbie channel mute has been removed by %s.'):format(staffName), 'success')
-    notify(source, ('You removed the /n mute from %s.'):format(targetName), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_removed_the_n_mute_from', { target_name = tostring(targetName) }), 'success')
 end, false)
 
 -- /warn [id] [reason] — level 1+, sanction row + broadcast + auto-escalation.
@@ -673,11 +669,11 @@ registerServerCommand('warn', function(source, args)
     local reason = table.concat(args, ' ', 2)
     local ok, err = SunsetAdmin.Sanctions.warn(source, target, reason)
     if not ok then
-        notify(source, err or 'Warning failed', 'error')
+        notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.warning_failed'), 'error')
         return
     end
     if source ~= 0 then
-        notify(source, ('Warning issued to %s (%d warn(s) this week).'):format(getDisplayName(target), ok.warns), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.warning_issued_to_warn_s_this', { display_name = tostring(getDisplayName(target)), warns = math.floor(tonumber(ok.warns) or 0) }), 'success')
     end
 end, false)
 
@@ -695,13 +691,13 @@ registerServerCommand('clearwarns', function(source, args)
     local target = getTarget(source, args[1], 'Usage: /clearwarns [player id]')
     if not target then return end
     SunsetAdmin.Sanctions.clearWarns(source, target)
-    notify(source, ('Warn history cleared for %s.'):format(getDisplayName(target)), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.warn_history_cleared_for', { display_name = tostring(getDisplayName(target)) }), 'success')
 end, false)
 
 local function resolveUnbanLicense(source, arg)
     if not arg or arg == '' then
         if source ~= 0 then
-            notify(source, 'Usage: /unban [player id or license:xxx]', 'error')
+            notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_unban_player_id_or_license'), 'error')
         else
             print('[Sunset] Usage: /unban [player id or license:xxx]')
         end
@@ -719,8 +715,8 @@ local function resolveUnbanLicense(source, arg)
 
     if source ~= 0 then
         local ids = onlineIds()
-        local hint = #ids > 0 and (' Online: ' .. table.concat(ids, ', ')) or ' No one online. Use license:xxx for offline players.'
-        notify(source, 'Invalid player (ID: ' .. tostring(arg) .. ').' .. hint, 'error')
+        local hint = #ids > 0 and exports.sunset_core:TFor(source, 'admin.msg.online_ids', { ids = table.concat(ids, ', ') }) or exports.sunset_core:TFor(source, 'admin.msg.no_one_online_use_license')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_player_id_2', { arg = tostring(arg), hint = tostring(hint) }), 'error')
     else
         print('[Sunset] Invalid player or use license:xxx')
     end
@@ -740,10 +736,10 @@ registerServerCommand('unban', function(source, args)
         -- [SANCTIONS] record + optionally broadcast the unban.
         SunsetAdmin.Sanctions.unbanRecord(source, license)
         print(('^2[SunsetAdmin]^7 %s unbanned %s (%d row(s))'):format(adminName, license, removed))
-        if source ~= 0 then notify(source, 'Player unbanned', 'success') end
+        if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_unbanned'), 'success') end
     else
         if source ~= 0 then
-            notify(source, 'No ban found for that license', 'error')
+            notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_ban_found_for_that_license'), 'error')
         else
             print('[Sunset] No ban found for ' .. license)
         end
@@ -810,7 +806,7 @@ registerServerCommand('tp', function(source, args)
         return
     end
 
-    notify(source, 'Usage: /tp [player id] or /tp [x] [y] [z] — paste from /coords works too', 'error')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_tp_player_id_or_tp'), 'error')
 end, false)
 
 -- /bring [id]
@@ -825,7 +821,7 @@ registerServerCommand('bring', function(source, args)
     SetPlayerRoutingBucket(target, GetPlayerRoutingBucket(source) or 0)
     TriggerClientEvent('sunset:admin:teleport', target, coords.x, coords.y, coords.z)
     markAnticheatTarget(target, 'bring')
-    notify(source, 'Player brought to you', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_brought_to_you'), 'success')
 end, false)
 
 -- /car [model]
@@ -851,7 +847,7 @@ registerServerCommand('giveitem', function(source, args)
     if count ~= count or count < 1 or count > 100000 then count = 1 end -- [SEC3]
     count = math.floor(count)
     if not item then
-        notify(source, 'Usage: /giveitem [server id] [item] [count]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_giveitem_server_id_item_count'), 'error')
         return
     end
     if not exports.sunset_core:GetCharacter(target) then
@@ -860,10 +856,10 @@ registerServerCommand('giveitem', function(source, args)
     end
     local ok, err = exports.sunset_inventory:TryAddItem(target, item, count)
     if not ok then
-        notify(source, err or ('Could not add %dx %s to player #%d.'):format(count, item, target), 'error')
+        notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.could_not_add_x_to_player', { count = math.floor(tonumber(count) or 0), item = tostring(item), target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
-    notify(source, ('Gave %dx %s to ID %s'):format(count, item, target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.gave_x_to_id', { count = math.floor(tonumber(count) or 0), item = tostring(item), target = tostring(target) }), 'success')
     if target ~= source then
         TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value_x_value', count, item), 'success')
     end
@@ -880,7 +876,7 @@ registerServerCommand('givegun', function(source, args)
     if not target then return end
     local weapon = args[2]
     if not weapon then
-        notify(source, 'Usage: /givegun [server id] [weapon] [ammo]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_givegun_server_id_weapon_ammo'), 'error')
         return
     end
     if not exports.sunset_core:GetCharacter(target) then
@@ -894,7 +890,7 @@ registerServerCommand('givegun', function(source, args)
     ammo = math.floor(ammo)
     TriggerClientEvent('sunset:admin:giveWeapon', target, weapon, ammo, source)
     markAnticheatTarget(target, 'givegun')
-    notify(source, ('Gave %s to ID %s'):format(weapon, target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.gave_to_id', { weapon = tostring(weapon), target = tostring(target) }), 'success')
     if target ~= source then
         TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value', weapon), 'success')
     end
@@ -916,7 +912,7 @@ local function handleRepairCar(source, args, cmdName)
         target = resolveTarget(source, args[1]) or source
     end
     TriggerClientEvent('sunset:admin:repairVehicle', target)
-    notify(source, 'Sent vehicle repair to ID ' .. target, 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.sent_vehicle_repair_to_id', { target = tostring(target) }), 'success')
 end
 
 registerServerCommand('arepaircar', function(source, args) handleRepairCar(source, args, 'arepaircar') end, false)
@@ -935,7 +931,7 @@ registerServerCommand('heal', function(source, args)
     local target = resolveTarget(source, args[1])
     if not target then return end
     if not medicInRange(source, target) then
-        notify(source, 'You must be next to the patient.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_must_be_next_to_the'), 'error')
         return
     end
     TriggerClientEvent('sunset:admin:heal', target)
@@ -943,7 +939,7 @@ registerServerCommand('heal', function(source, args)
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkLegit(target, 'health', 10) end)
     end
-    notify(source, 'Healed ' .. getDisplayName(target) .. ' (ID ' .. target .. ')', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.healed_id', { display_name = tostring(getDisplayName(target)), target = tostring(target) }), 'success')
     if target ~= source then
         TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_were_healed_by_medical_staff'), 'success')
     end
@@ -958,19 +954,19 @@ registerServerCommand('revive', function(source, args)
     end
     local target = resolveTarget(source, args[1])
     if not target then
-        notify(source, 'Usage: /revive [player id]', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'death.message.usage_revive_player_id'), 'error')
         return
     end
     if not medicInRange(source, target) then
-        notify(source, 'You must be next to the patient.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_must_be_next_to_the'), 'error')
         return
     end
     local ok, err = exports.sunset_death:RevivePlayer(target)
     if not ok then
-        notify(source, err or ('Could not revive player #%d — they may not be downed or revive is blocked.'):format(target), 'error')
+        notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.could_not_revive_player_they_may', { target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
-    notify(source, 'Revived ' .. getDisplayName(target) .. ' (ID ' .. target .. ')', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.revived_id', { display_name = tostring(getDisplayName(target)), target = tostring(target) }), 'success')
 end, false)
 
 -- /arespawn [id] — respawn player at their saved spawn point (home, last location, or default)
@@ -980,17 +976,17 @@ registerServerCommand('arespawn', function(source, args)
     if source ~= 0 and not requirePerm(source, 'arespawn') then return end
     local target = resolveTarget(source, args[1])
     if not target then
-        notify(source, 'Usage: /arespawn [server id] | hospital | menu', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_arespawn_server_id_hospital_menu'), 'error')
         return
     end
     local mode = string.lower(tostring(args[2] or ''))
     if mode == 'hospital' then
         local ok, err = exports.sunset_death:RespawnPlayer(target, 0)
         if not ok then
-            notify(source, err or ('Could not hospital-respawn player #%d.'):format(target), 'error')
+            notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.could_not_hospital_respawn_player', { target = math.floor(tonumber(target) or 0) }), 'error')
             return
         end
-        notify(source, ('Hospital respawn sent to #%d.'):format(target), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.hospital_respawn_sent_to', { target = math.floor(tonumber(target) or 0) }), 'success')
         if target ~= source then
             TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_sent_you_to_the_hospital'), 'info')
         end
@@ -999,7 +995,7 @@ registerServerCommand('arespawn', function(source, args)
     if mode == 'menu' then
         pcall(function() exports.sunset_death:RevivePlayer(target) end)
         TriggerClientEvent('sunset:client:openSpawnMenu', target)
-        notify(source, ('Opened spawn menu for #%d.'):format(target), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.opened_spawn_menu_for', { target = math.floor(tonumber(target) or 0) }), 'success')
         if target ~= source then
             TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_opened_your_spawn_menu_choose_a_location'), 'info')
         end
@@ -1008,14 +1004,14 @@ registerServerCommand('arespawn', function(source, args)
 
     local char = exports.sunset_core:GetCharacter(target)
     if not char then
-        notify(source, ('Player #%d has no character loaded.'):format(target), 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.player_has_no_character_loaded', { target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
 
     pcall(function() exports.sunset_death:RevivePlayer(target) end)
     local pos = exports.sunset_core:GetSpawnPosition(char, target)
     if not pos or not pos.x then
-        notify(source, ('Could not resolve a spawn point for #%d.'):format(target), 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_resolve_a_spawn_point', { target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
 
@@ -1026,7 +1022,7 @@ registerServerCommand('arespawn', function(source, args)
     end
     SetPlayerRoutingBucket(target, 0)
     TriggerClientEvent('sunset:death:forceHospital', target, pos, 0)
-    notify(source, ('Respawned #%d at their spawn point.'):format(target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.respawned_at_their_spawn_point', { target = math.floor(tonumber(target) or 0) }), 'success')
     if target ~= source then
         TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.an_administrator_respawned_you_at_your_spawn_point'), 'info')
     end
@@ -1062,7 +1058,7 @@ registerServerCommand('goto', function(source, args)
         local last = HelperGotoCooldown[source] or 0
         if (now - last) < 180 then
             local rem = 180 - (now - last)
-            return notify(source, ('Comanda /goto are un delay de 3 minute! Mai ai de asteptat %d secunde.'):format(rem), 'error')
+            return notify(source, exports.sunset_core:TFor(source, 'admin.msg.comanda_goto_are_un_delay_de', { rem = math.floor(tonumber(rem) or 0) }), 'error')
         end
         HelperGotoCooldown[source] = now
     end
@@ -1071,12 +1067,12 @@ registerServerCommand('goto', function(source, args)
     if not target or target == source then return end
 
     local ped = GetPlayerPed(target)
-    if not ped or ped == 0 then return notify(source, 'Jucatorul tinta nu a fost gasit.', 'error') end
+    if not ped or ped == 0 then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.jucatorul_tinta_nu_a_fost_gasit'), 'error') end
 
     local coords = GetEntityCoords(ped)
     SetPlayerRoutingBucket(source, GetPlayerRoutingBucket(target) or 0)
     TriggerClientEvent('sunset:admin:teleport', source, coords.x, coords.y, coords.z)
-    notify(source, ('Te-ai teleportat la %s (ID %d).'):format(getDisplayName(target), target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.te_ai_teleportat_la_id', { display_name = tostring(getDisplayName(target)), target = math.floor(tonumber(target) or 0) }), 'success')
 end, false)
 
 registerServerCommand('gethere', function(source, args)
@@ -1090,7 +1086,7 @@ registerServerCommand('gethere', function(source, args)
     SetPlayerRoutingBucket(target, GetPlayerRoutingBucket(source) or 0)
     TriggerClientEvent('sunset:admin:teleport', target, coords.x, coords.y, coords.z)
     markAnticheatTarget(target, 'gethere')
-    notify(source, ('L-ai teleportat pe %s la tine.'):format(getDisplayName(target)), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.l_ai_teleportat_pe_la_tine', { display_name = tostring(getDisplayName(target)) }), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_have_been_teleported_by_an_administrator'), 'info')
 end, false)
 
@@ -1125,29 +1121,29 @@ registerServerCommand('gotocar', function(source, args)
     if source == 0 then return end
     if not requirePerm(source, 'gotocar') then return end
     local arg = args[1]
-    if not arg then return notify(source, 'Usage: /gotocar [id vehicul / numar inmatriculare]', 'error') end
+    if not arg then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_gotocar_id_vehicul_numar_inmatriculare'), 'error') end
 
     local veh = findVehicleByArg(arg)
     if not veh then
-        return notify(source, ('Vehiculul cu ID/numar "%s" nu a fost gasit in lumea activa.'):format(arg), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.vehiculul_cu_id_numar_nu_a', { arg = tostring(arg) }), 'error')
     end
 
     local coords = GetEntityCoords(veh)
     local bucket = GetEntityRoutingBucket(veh)
     SetPlayerRoutingBucket(source, bucket)
     TriggerClientEvent('sunset:admin:teleport', source, coords.x, coords.y, coords.z + 1.0)
-    notify(source, ('Te-ai teleportat la vehiculul [%s] (VW: %d).'):format(arg, bucket), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.te_ai_teleportat_la_vehiculul_vw', { arg = tostring(arg), bucket = math.floor(tonumber(bucket) or 0) }), 'success')
 end, false)
 
 registerServerCommand('getcar', function(source, args)
     if source == 0 then return end
     if not requirePerm(source, 'getcar') then return end
     local arg = args[1]
-    if not arg then return notify(source, 'Usage: /getcar [id vehicul / numar inmatriculare]', 'error') end
+    if not arg then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_getcar_id_vehicul_numar_inmatriculare'), 'error') end
 
     local veh = findVehicleByArg(arg)
     if not veh then
-        return notify(source, ('Vehiculul cu ID/numar "%s" nu a fost gasit in lumea activa.'):format(arg), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.vehiculul_cu_id_numar_nu_a', { arg = tostring(arg) }), 'error')
     end
 
     local ped = GetPlayerPed(source)
@@ -1155,7 +1151,7 @@ registerServerCommand('getcar', function(source, args)
     local bucket = GetPlayerRoutingBucket(source)
     SetEntityRoutingBucket(veh, bucket)
     SetEntityCoords(veh, coords.x + 2.0, coords.y + 2.0, coords.z, false, false, false, true)
-    notify(source, ('You brought vehicle [%s] to you.'):format(arg), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_brought_vehicle_to_you', { arg = tostring(arg) }), 'success')
 end, false)
 
 registerServerCommand('fixveh', function(source, args)
@@ -1171,7 +1167,7 @@ registerServerCommand('mark', function(source, args)
     local coords = GetEntityCoords(ped)
     local bucket = GetPlayerRoutingBucket(source) or 0
     AdminMarks[source] = { coords = coords, bucket = bucket }
-    notify(source, ('Mark set at current position (VW: %d). Use /gotomark to return.'):format(bucket), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.mark_set_at_current_position_vw', { bucket = math.floor(tonumber(bucket) or 0) }), 'success')
 end, false)
 
 registerServerCommand('gotomark', function(source, args)
@@ -1179,11 +1175,11 @@ registerServerCommand('gotomark', function(source, args)
     if not requirePerm(source, 'gotomark') then return end
     local mark = AdminMarks[source]
     if not mark then
-        return notify(source, 'You have not set a mark yet. Use /mark first.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_have_not_set_a_mark'), 'error')
     end
     SetPlayerRoutingBucket(source, mark.bucket)
     TriggerClientEvent('sunset:admin:teleport', source, mark.coords.x, mark.coords.y, mark.coords.z)
-    notify(source, 'Te-ai teleportat la mark-ul setat.', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.te_ai_teleportat_la_mark_ul'), 'success')
 end, false)
 
 registerServerCommand('disarm', function(source, args)
@@ -1195,7 +1191,7 @@ registerServerCommand('disarm', function(source, args)
     if GetResourceState('sunset_inventory') == 'started' then
         pcall(function() exports.sunset_inventory:ClearWeapons(target) end)
     end
-    notify(source, ('I-ai luat armele lui %s (ID %d).'):format(getDisplayName(target), target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.i_ai_luat_armele_lui_id', { display_name = tostring(getDisplayName(target)), target = math.floor(tonumber(target) or 0) }), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.un_administrator_ti_a_confiscat_armele'), 'warning')
 end, false)
 
@@ -1225,7 +1221,7 @@ registerServerCommand('disarmarea', function(source, args)
             end
         end
     end
-    notify(source, ('You disarmed %d player(s) within %.1f metres.'):format(count, radius), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_disarmed_player_s_within_metres', { count = math.floor(tonumber(count) or 0), radius = string.format('%.1f', radius) }), 'success')
 end, false)
 
 registerServerCommand('setvw', function(source, args)
@@ -1236,13 +1232,13 @@ registerServerCommand('setvw', function(source, args)
     local vw = tonumber(args[2]) or 0
     -- [SEC3] integer bucket, never the pre-auth isolation bucket (9999); staff cannot move higher staff
     if vw ~= vw or vw < 0 or vw > 65535 or vw ~= math.floor(vw) or vw == 9999 then
-        return notify(source, 'Routing bucket must be a whole number 0-65535 (not 9999).', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.routing_bucket_must_be_a_whole'), 'error')
     end
     if not SunsetAdmin.Sanctions.canActOn(source, target) then
-        return notify(source, 'You cannot move a staff member of your level or higher.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_cannot_move_a_staff_member'), 'error')
     end
     SetPlayerRoutingBucket(target, vw)
-    notify(source, ("You set %s's routing bucket to %d."):format(getDisplayName(target), vw), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_set_s_routing_bucket_to', { display_name = tostring(getDisplayName(target)), vw = math.floor(tonumber(vw) or 0) }), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_routing_bucket_was_set_to_value_by_an_admin', vw), 'info')
 end, false)
 
@@ -1255,7 +1251,7 @@ registerServerCommand('sethp', function(source, args)
     if hp > 200 then hp = 200 end
     if hp < 0 then hp = 0 end
     TriggerClientEvent('sunset:admin:setHealth', target, hp)
-    notify(source, ("You set %s's HP to %d."):format(getDisplayName(target), hp), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_set_s_hp_to', { display_name = tostring(getDisplayName(target)), hp = math.floor(tonumber(hp) or 0) }), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_hp_was_set_to_value_by_an_administrator', hp), 'info')
 end, false)
 
@@ -1286,7 +1282,7 @@ registerServerCommand('sethparea', function(source, args)
             end
         end
     end
-    notify(source, ('You set HP to %d for %d player(s) within %.1f metres.'):format(hp, count, radius), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_set_hp_to_for_player', { hp = math.floor(tonumber(hp) or 0), count = math.floor(tonumber(count) or 0), radius = string.format('%.1f', radius) }), 'success')
 end, false)
 
 registerServerCommand('givemoney', function(source, args)
@@ -1296,7 +1292,7 @@ registerServerCommand('givemoney', function(source, args)
 
     local amount = tonumber(args[2])
     if not amount or amount <= 0 then
-        return notify(source, 'Usage: /givemoney [player id] [suma de bani]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_givemoney_player_id_suma_de'), 'error')
     end
 
     local char = exports.sunset_core:GetCharacter(target)
@@ -1305,15 +1301,15 @@ registerServerCommand('givemoney', function(source, args)
     -- [SEC3] AddCash is not a sunset_core export (every /givemoney threw); validate and use AddMoney.
     amount = math.floor(amount)
     if amount ~= amount or amount < 1 or amount > 2000000000 then
-        return notify(source, 'Amount must be a whole number between 1 and 2,000,000,000.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.amount_must_be_a_whole_number'), 'error')
     end
     if not exports.sunset_core:AddMoney(target, 'cash', amount, 'admin_givemoney') then
-        return notify(source, 'Could not add the money.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_add_the_money'), 'error')
     end
     local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
     local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
 
-    notify(source, ('You gave $%s to %s (ID %d).'):format(Sunset.FormatNumber(amount), targetName, target), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_gave_to_id', { format_number = tostring(Sunset.FormatNumber(amount)), target_name = tostring(targetName), target = math.floor(tonumber(target) or 0) }), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.you_received_value_from_administrator_value', Sunset.FormatNumber(amount), adminName), 'success')
     pcall(function() exports.sunset_admin:BroadcastStaff(('[ECONOMY] %s i-a dat $%s lui %s (#%d).'):format(adminName, Sunset.FormatNumber(amount), targetName, target)) end)
 end, false)
@@ -1322,11 +1318,11 @@ registerServerCommand('giverpall', function(source, args)
     if source ~= 0 and not requirePerm(source, 'giverpall') then return end
     local amount = tonumber(args[1])
     if not amount or amount <= 0 then
-        return notify(source, 'Usage: /giverpall [suma RP]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_giverpall_suma_rp'), 'error')
     end
     amount = math.floor(amount) -- [SEC3] whole, bounded
     if amount < 1 or amount > 1000000 then
-        return notify(source, 'RP amount must be between 1 and 1,000,000.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.rp_amount_must_be_between_1'), 'error')
     end
 
     local adminName = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
@@ -1347,11 +1343,11 @@ registerServerCommand('giverpall', function(source, args)
     TriggerClientEvent('sunset:chat:message', -1, {
         id = 0,
         name = 'SERVER',
-        message = ('Admin %s granted %d Respect Points to all online players!'):format(adminName, amount),
+        message = exports.sunset_core:TFor(source, 'admin.ui.admin_granted_respect_points_to_all', { admin_name = tostring(adminName), amount = math.floor(tonumber(amount) or 0) }),
         time = os.date('%H:%M:%S'),
         type = 'announce',
     })
-    notify(source, ('You granted %d RP to %d online player(s).'):format(amount, count), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_granted_rp_to_online_player', { amount = math.floor(tonumber(amount) or 0), count = math.floor(tonumber(count) or 0) }), 'success')
 end, false)
 
 local RespawnCarsRunning = false
@@ -1359,7 +1355,7 @@ local RespawnCarsRunning = false
 registerServerCommand('respawncars', function(source, args)
     if source ~= 0 and not requirePerm(source, 'respawncars') then return end
     if RespawnCarsRunning then
-        return notify(source, 'Un respawn de masini este deja in desfasurare.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.un_respawn_de_masini_este_deja'), 'error')
     end
     RespawnCarsRunning = true
 
@@ -1409,9 +1405,9 @@ registerServerCommand('afklist', function(source, args)
         end
     end
     if #list == 0 then
-        notify(source, 'No players are currently on /sleep or AFK.', 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_players_are_currently_on_sleep'), 'info')
     else
-        notify(source, ('─── Jucatori pe /sleep sau AFK (%d) ───'):format(#list), 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.jucatori_pe_sleep_sau_afk', { count = #list }), 'info')
         for _, line in ipairs(list) do
             notify(source, line, 'info')
         end
@@ -1425,8 +1421,8 @@ registerServerCommand('togfind', function(source, args)
     local nextState = not current
     Player(source).state:set('untraceable', nextState, true)
     notify(source, nextState
-        and 'Untraceable mode is now ENABLED. You can no longer be tracked by police, detectives or hitmen.'
-        or 'Untraceable mode is now DISABLED.', 'info')
+        and exports.sunset_core:TFor(source, 'admin.msg.untraceable_mode_is_now_enabled_you')
+        or exports.sunset_core:TFor(source, 'admin.msg.untraceable_mode_is_now_disabled'), 'info')
 end, false)
 
 registerServerCommand('check', function(source, args)
@@ -1449,34 +1445,25 @@ registerServerCommand('check', function(source, args)
         warns = tonumber(MySQL.scalar.await('SELECT COUNT(*) FROM admin_sanctions WHERE action = "warn" AND target_license = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)', { license })) or 0
     end)
 
-    notify(source, ('═══════════ STATISTICI JUCATOR: %s (ID %d) ═══════════'):format(name, target), 'info')
-    notify(source, ('Cont: #%s | Username: %s | Admin: Lvl %d | Helper: Lvl %d'):format(
-        p and tostring(p.account_id) or '?', p and tostring(p.username) or '?', aLvl, hLvl), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.statistici_jucator_id', { name = tostring(name), target = math.floor(tonumber(target) or 0) }), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.cont_username_admin_lvl_helper_lvl', { p = tostring(p and tostring(p.account_id) or '?'), p_2 = tostring(p and tostring(p.username) or '?'), a_lvl = math.floor(tonumber(aLvl) or 0), h_lvl = math.floor(tonumber(hLvl) or 0) }), 'info')
     if char then
-        local jobName = (char.job and Sunset.CivilianJobs and Sunset.CivilianJobs[char.job]) and Sunset.CivilianJobs[char.job].label or (char.job or 'Somer')
+        local jobName = (char.job and Sunset.CivilianJobs and Sunset.CivilianJobs[char.job]) and Sunset.CivilianJobs[char.job].label or (char.job or exports.sunset_core:TFor(source, 'admin.word.unemployed'))
         local fId = select(1, Sunset.GetCharacterFaction(char))
-        local fName = (fId and Sunset.Factions and Sunset.Factions[fId]) and Sunset.Factions[fId].label or (fId or 'Civil')
-        notify(source, ('Caracter: %s %s (Lvl %d, %d RP)'):format(char.first_name or '', char.last_name or '', char.level or 1, char.respect_points or 0), 'info')
-        notify(source, ('Bani: $%s (Cash) | $%s (Banca) | BlazePoints: %s'):format(
-            Sunset.FormatNumber(char.cash or 0), Sunset.FormatNumber(char.bank or 0), Sunset.FormatNumber(char.premium_points or 0)), 'info')
-        notify(source, ('Factiune: %s | Job: %s'):format(fName, jobName), 'info')
-        notify(source, ('Ore jucate: %s | Paydays: %d'):format(
-            tostring(math.floor((p and p.playtime or 0) / 60)), char.paydays_received or 0), 'info')
+        local fName = (fId and Sunset.Factions and Sunset.Factions[fId]) and Sunset.Factions[fId].label or (fId or exports.sunset_core:TFor(source, 'admin.word.civilian'))
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.caracter_lvl_rp', { first_name = tostring(char.first_name or ''), last_name = tostring(char.last_name or ''), level = math.floor(tonumber(char.level or 1) or 0), respect_points = math.floor(tonumber(char.respect_points or 0) or 0) }), 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.bani_cash_banca_blazepoints', { format_number = tostring(Sunset.FormatNumber(char.cash or 0)), format_number_2 = tostring(Sunset.FormatNumber(char.bank or 0)), format_number_3 = tostring(Sunset.FormatNumber(char.premium_points or 0)) }), 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.factiune_job', { f_name = tostring(fName), job_name = tostring(jobName) }), 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.ore_jucate_paydays', { value = tostring(math.floor((p and p.playtime or 0) / 60)), paydays_received = math.floor(tonumber(char.paydays_received or 0) or 0) }), 'info')
     end
-    notify(source, ('Warns: %d/3 | Mute: %s | NMute: %s | VW: %d | Ping: %d ms'):format(
-        warns,
-        isMuted and ('DA (%d min)'):format(mRem or 0) or 'NU',
-        isNMuted and ('DA (%d min)'):format(nmRem or 0) or 'NU',
-        GetPlayerRoutingBucket(target) or 0,
-        GetPlayerPing(target) or 0
-    ), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.warns_3_mute_nmute_vw_ping', { warns = math.floor(tonumber(warns) or 0), is_muted = isMuted and exports.sunset_core:TFor(source, 'admin.msg.da_min', { m_rem = math.floor(tonumber(mRem or 0) or 0) }) or exports.sunset_core:TFor(source, 'admin.msg.nu'), is_nmuted = isNMuted and exports.sunset_core:TFor(source, 'admin.msg.da_min_2', { nm_rem = math.floor(tonumber(nmRem or 0) or 0) }) or exports.sunset_core:TFor(source, 'admin.msg.nu'), player_routing_bucket = math.floor(tonumber(GetPlayerRoutingBucket(target) or 0) or 0), player_ping = math.floor(tonumber(GetPlayerPing(target) or 0) or 0) }), 'info')
     notify(source, '═══════════════════════════════════════════════════════', 'info')
 end, false)
 
 -- /pm [id] [text] — PM pentru toti adminii si helperii (culoare galbena spre portocaliu)
 registerServerCommand('pm', function(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'The /pm command is available only for staff (admins and helpers).', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.the_pm_command_is_available_only'), 'error')
     end
 
     local target = getTarget(source, args[1], 'Usage: /pm [player id] [mesaj]')
@@ -1484,7 +1471,7 @@ registerServerCommand('pm', function(source, args)
 
     local msg = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if msg == '' then
-        return notify(source, 'Usage: /pm [player id] [mesaj]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_pm_player_id_mesaj'), 'error')
     end
 
     local senderName = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
@@ -1519,7 +1506,7 @@ registerServerCommand('anno', function(source, args)
     if source ~= 0 and not requirePerm(source, 'anno') then return end
     local msg = table.concat(args, ' '):gsub('^%s*(.-)%s*$', '%1')
     if msg == '' then
-        return notify(source, 'Usage: /anno [text anunt]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_anno_text_anunt'), 'error')
     end
     local from = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
 
@@ -1537,30 +1524,30 @@ registerServerCommand('sett', function(source, args)
     local hour = tonumber(args[1])
     local minute = tonumber(args[2]) or 0
     if hour == nil then
-        return notify(source, 'Usage: /sett [hour 0-23] [minute 0-59]. Example: /sett 14 30', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_sett_hour_0_23_minute'), 'error')
     end
     if hour < 0 or hour > 23 or minute < 0 or minute > 59 then
-        return notify(source, 'Invalid time. Hour 0-23, minute 0-59.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_time_hour_0_23_minute'), 'error')
     end
     exports.sunset_economy:SetWorldTime(hour, minute, true)
-    notify(source, ('World time set to %02d:%02d for all players.'):format(hour, minute), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.world_time_set_to_for_all', { hour = string.format('%02d', hour), minute = string.format('%02d', minute) }), 'success')
 end)
 
 registerServerCommand('setw', function(source, args)
     if not requirePerm(source, 'setw') then return end
     local weather = string.upper(tostring(args[1] or ''))
     if weather == '' then
-        return notify(source, 'Usage: /setw [CLEAR|EXTRASUNNY|CLOUDS|OVERCAST|RAIN|THUNDER|FOGGY|...]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_setw_clear_extrasunny_clouds_overcast'), 'error')
     end
     if weather == 'RESET' or weather == 'DEFAULT' then
         exports.sunset_economy:ClearWorldWeather()
-        return notify(source, 'Weather reset to default.', 'success')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.weather_reset_to_default'), 'success')
     end
     local ok, err = exports.sunset_economy:SetWorldWeather(weather)
     if not ok then
-        return notify(source, err or 'Invalid weather type.', 'error')
+        return notify(source, err or exports.sunset_core:TFor(source, 'admin.msg.invalid_weather_type'), 'error')
     end
-    notify(source, ('Weather set to %s for all players.'):format(weather), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.weather_set_to_for_all_players', { weather = tostring(weather) }), 'success')
 end)
 
 -- /setadmin [id|username] [level]
@@ -1580,28 +1567,28 @@ registerServerCommand('setadmin', function(source, args)
     local arg1 = args[1]
     local level = tonumber(args[2]) or 1
     if not arg1 then
-        notify(source ~= 0 and source or 0, 'Usage: /setadmin [id|username] [level]', 'error')
+        notify(source ~= 0 and source or 0, exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.usage_setadmin_id_username_level'), 'error')
         return
     end
     -- [SEC3] level must be a whole number 0-6 (was unbounded), and a non-console caller cannot
     -- touch an account at or above their own level or grant above it.
     if level ~= level or level < 0 or level > 6 or level ~= math.floor(level) then
-        notify(source ~= 0 and source or 0, 'Admin level must be a whole number from 0 to 6.', 'error')
+        notify(source ~= 0 and source or 0, exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.admin_level_must_be_a_whole'), 'error')
         return
     end
 
     local target = tonumber(arg1)
     if target and GetPlayerName(target) then
         local license = Sunset.GetIdentifier(target, 'license')
-        if not license then return notify(source, 'Could not resolve player license.', 'error') end -- [SEC3]
+        if not license then return notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_resolve_player_license'), 'error') end -- [SEC3]
         SetAdmin(license, level, getDisplayName(target), getDisplayName(source))
         local title = (SunsetAdmin.Levels and SunsetAdmin.Levels[level]) or 'level ' .. level
         if level > 0 then
-            notify(target, ('Your staff level is now %d (%s).'):format(level, title), 'success', 10000)
+            notify(target, exports.sunset_core:TFor(target, 'admin.msg.your_staff_level_is_now', { level = math.floor(tonumber(level) or 0), title = tostring(title) }), 'success', 10000)
         else
-            notify(target, 'Your staff level was removed.', 'warning', 10000)
+            notify(target, exports.sunset_core:TFor(target, 'admin.msg.your_staff_level_was_removed'), 'warning', 10000)
         end
-        if source ~= 0 then notify(source, ('Admin level for %s set to %d (%s).'):format(getDisplayName(target), level, title), 'success') end
+        if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.admin_level_for_set_to', { display_name = tostring(getDisplayName(target)), level = math.floor(tonumber(level) or 0), title = tostring(title) }), 'success') end
         announceStaffChange(source, getDisplayName(target), level)
         return
     end
@@ -1609,7 +1596,7 @@ registerServerCommand('setadmin', function(source, args)
     local account = MySQL.single.await('SELECT id, username FROM accounts WHERE LOWER(username) = LOWER(?)', { arg1 })
     if not account then
         notify(source ~= 0 and source or 0,
-            ('No account found for "%s". Use a username or account id from the database.'):format(tostring(arg1 or '?')),
+            exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.no_account_found_for_use_a', { arg1 = tostring(arg1 or '?') }),
             'error')
         return
     end
@@ -1629,13 +1616,13 @@ registerServerCommand('setadmin', function(source, args)
             loadAdmin(src)
             local title = (SunsetAdmin.Levels and SunsetAdmin.Levels[level]) or 'level ' .. level
             if level > 0 then
-                notify(src, ('Your staff level is now %d (%s).'):format(level, title), 'success', 10000)
+                notify(src, exports.sunset_core:TFor(src, 'admin.msg.your_staff_level_is_now', { level = math.floor(tonumber(level) or 0), title = tostring(title) }), 'success', 10000)
             else
-                notify(src, 'Your staff level was removed.', 'warning', 10000)
+                notify(src, exports.sunset_core:TFor(src, 'admin.msg.your_staff_level_was_removed'), 'warning', 10000)
             end
         end
     end
-    if source ~= 0 then notify(source, 'Admin set for account ' .. account.username, 'success') end
+    if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.admin_set_for_account', { username = tostring(account.username) }), 'success') end
     announceStaffChange(source, account.username, level)
 end, false)
 
@@ -1646,11 +1633,11 @@ registerServerCommand('sethelper', function(source, args)
     local arg1 = args[1]
     local level = tonumber(args[2]) or 1
     if not arg1 then
-        notify(source ~= 0 and source or 0, 'Usage: /sethelper [id|username] [level (0-3)]', 'error')
+        notify(source ~= 0 and source or 0, exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.usage_sethelper_id_username_level_0'), 'error')
         return
     end
     if level ~= level or level < 0 or level > 3 or level ~= math.floor(level) then -- [SEC3]
-        notify(source ~= 0 and source or 0, 'Helper level must be a whole number from 0 to 3.', 'error')
+        notify(source ~= 0 and source or 0, exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.helper_level_must_be_a_whole'), 'error')
         return
     end
 
@@ -1660,17 +1647,17 @@ registerServerCommand('sethelper', function(source, args)
         SetHelper(license, level, getDisplayName(target), getDisplayName(source))
         local title = (SunsetAdmin.HelperLevels and SunsetAdmin.HelperLevels[level]) or 'Helper Level ' .. level
         if level > 0 then
-            notify(target, ('Nivelul tau de helper este acum %d (%s).'):format(level, title), 'success', 10000)
+            notify(target, exports.sunset_core:TFor(target, 'admin.msg.nivelul_tau_de_helper_este_acum', { level = math.floor(tonumber(level) or 0), title = tostring(title) }), 'success', 10000)
         else
-            notify(target, 'Accesul tau de helper a fost revocat.', 'warning', 10000)
+            notify(target, exports.sunset_core:TFor(target, 'admin.msg.accesul_tau_de_helper_a_fost'), 'warning', 10000)
         end
-        if source ~= 0 then notify(source, ('Helper level for %s set to %d (%s).'):format(getDisplayName(target), level, title), 'success') end
+        if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.helper_level_for_set_to', { display_name = tostring(getDisplayName(target)), level = math.floor(tonumber(level) or 0), title = tostring(title) }), 'success') end
         return
     end
 
     local account = MySQL.single.await('SELECT id, username FROM accounts WHERE LOWER(username) = LOWER(?)', { arg1 })
     if not account then
-        notify(source ~= 0 and source or 0, ('No account found for "%s".'):format(tostring(arg1 or '?')), 'error')
+        notify(source ~= 0 and source or 0, exports.sunset_core:TFor(source ~= 0 and source or 0, 'admin.msg.no_account_found_for', { arg1 = tostring(arg1 or '?') }), 'error')
         return
     end
 
@@ -1687,7 +1674,7 @@ registerServerCommand('sethelper', function(source, args)
             loadAdmin(src)
         end
     end
-    if source ~= 0 then notify(source, 'Helper set for account ' .. account.username, 'success') end
+    if source ~= 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.helper_set_for_account', { username = tostring(account.username) }), 'success') end
 end, false)
 
 -- /coords [v4] — client also registers /getpos and /pos for NUI chat
@@ -1734,17 +1721,17 @@ RegisterNetEvent('sunset:admin:setcp', function(name, x, y, z, heading)
 
     name = name and tostring(name):gsub('^%s+', ''):gsub('%s+$', '') or ''
     if name == '' then
-        return notify(source, 'Usage: /setcp [name]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_setcp_name'), 'error')
     end
 
     x, y, z, heading = tonumber(x), tonumber(y), tonumber(z), tonumber(heading)
     if not x or not y or not z then
-        return notify(source, 'Could not read your position — wait until you have fully spawned in.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.could_not_read_your_position_wait'), 'error')
     end
     -- [SEC3] client-supplied coords: finite and inside world bounds (NaN/inf broke the DB write and poisoned /gotocp)
     local function sane(v) return v == v and v > -20000 and v < 20000 end
     if not (sane(x) and sane(y) and sane(z)) or (heading and not (heading == heading and heading > -1000 and heading < 1000)) then
-        return notify(source, 'Invalid position.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_position'), 'error')
     end
 
     local createdBy = getDisplayName(source)
@@ -1753,7 +1740,7 @@ RegisterNetEvent('sunset:admin:setcp', function(name, x, y, z, heading)
         return notify(source, result, 'error')
     end
 
-    notify(source, ('Checkpoint saved as "%s". Use /gotocp %s to teleport here.'):format(result, result), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.checkpoint_saved_as_use_gotocp_to', { result = tostring(result), result_2 = tostring(result) }), 'success')
 end)
 
 RegisterNetEvent('sunset:admin:delcp', function(name)
@@ -1763,7 +1750,7 @@ RegisterNetEvent('sunset:admin:delcp', function(name)
 
     name = name and tostring(name):gsub('^%s+', ''):gsub('%s+$', '') or ''
     if name == '' then
-        return notify(source, 'Usage: /delcp [name]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_delcp_name'), 'error')
     end
 
     local ok, result = SunsetAdmin.DeleteCheckpoint(name)
@@ -1771,7 +1758,7 @@ RegisterNetEvent('sunset:admin:delcp', function(name)
         return notify(source, result, 'error')
     end
 
-    notify(source, ('Deleted checkpoint "%s".'):format(result), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.deleted_checkpoint', { result = tostring(result) }), 'success')
 end)
 
 RegisterNetEvent('sunset:admin:gotocp', function(query)
@@ -1787,11 +1774,11 @@ RegisterNetEvent('sunset:admin:gotocp', function(query)
 
     local cp = SunsetAdmin.FindPlacedCheckpoint(query)
     if not cp then
-        return notify(source, ('Unknown checkpoint "%s". Use /gotocp or /gotocp list to see saved names.'):format(query), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.unknown_checkpoint_use_gotocp_or_gotocp', { query = tostring(query) }), 'error')
     end
 
     TriggerClientEvent('sunset:admin:teleport', source, cp.x, cp.y, cp.z)
-    notify(source, ('Teleported to checkpoint %s (%s)'):format(cp.label or cp.id, cp.id), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.teleported_to_checkpoint', { label = tostring(cp.label or cp.id), id = tostring(cp.id) }), 'success')
 end)
 
 RegisterNetEvent('sunset:admin:gotoloc', function(query)
@@ -1807,12 +1794,12 @@ RegisterNetEvent('sunset:admin:gotoloc', function(query)
 
     local loc = SunsetAdmin.FindLocation(query)
     if not loc then
-        return notify(source, ('Unknown location "%s". Use /gotoloc or /gotoloc list to see IDs.'):format(query), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.unknown_location_use_gotoloc_or_gotoloc', { query = tostring(query) }), 'error')
     end
 
     local c = loc.coords
     TriggerClientEvent('sunset:admin:teleport', source, c.x, c.y, c.z)
-    notify(source, ('Teleported to %s (%s)'):format(loc.label, loc.id), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.teleported_to', { label = tostring(loc.label), id = tostring(loc.id) }), 'success')
 end)
 
 RegisterNetEvent('sunset:admin:requestSpeed', function(arg)
@@ -1976,13 +1963,13 @@ registerServerCommand('report', function(source, args)
     if source == 0 then return end
     local text = table.concat(args, ' '):gsub('^%s*(.-)%s*$', '%1')
     if text == '' or #text < 3 then
-        return notify(source, 'Usage: /report [text]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_report_text'), 'error')
     end
     text = text:sub(1, 300) -- [SEC3] bound ticket text broadcast to staff
 
     local now = os.time()
     if now - (LastReportTime[source] or 0) < 15 then
-        return notify(source, ('Asteapta %d secunde inainte de a trimite un alt report.'):format(15 - (now - (LastReportTime[source] or 0))), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.asteapta_secunde_inainte_de_a_trimite', { value = math.floor(tonumber(15 - (now - (LastReportTime[source] or 0))) or 0) }), 'error')
     end
     LastReportTime[source] = now
 
@@ -2006,7 +1993,7 @@ registerServerCommand('report', function(source, args)
     ActivePlayerReports[source] = report
     ActiveReports[ticketId] = report
 
-    notify(source, 'Your report has been sent to online administrators.', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.your_report_has_been_sent_to'), 'success')
 
     -- Sent in RED to all on-duty admins (or all admins if none on duty)
     local sentCount = 0
@@ -2044,7 +2031,7 @@ registerServerCommand('ar', function(source, args)
 
     local targetArg = tonumber(args[1])
     if not targetArg then
-        return notify(source, 'Usage: /ar [player id sau report id]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_ar_player_id_sau_report'), 'error')
     end
 
     local adminName = getDisplayName(source)
@@ -2069,7 +2056,7 @@ registerServerCommand('ar', function(source, args)
             TriggerClientEvent('sunset:chat:system', foundQuestion.src,
                 ('%s (ID: %d) a preluat intrebarea ta. Poti primi raspunsul prin /an.'):format(adminName, source), 'info')
         end
-        return notify(source, ('You picked up the question from %s (#%d).'):format(foundQuestion.name, foundQuestion.src), 'success')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_picked_up_the_question_from', { name = tostring(foundQuestion.name), src = math.floor(tonumber(foundQuestion.src) or 0) }), 'success')
     end
 
     -- Check reports
@@ -2084,7 +2071,7 @@ registerServerCommand('ar', function(source, args)
     end
 
     if not report then
-        return notify(source, ('No active report/question found for ID %d.'):format(targetArg), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_active_report_question_found_for', { target_arg = math.floor(tonumber(targetArg) or 0) }), 'error')
     end
 
     report.status = 'claimed'
@@ -2103,7 +2090,7 @@ registerServerCommand('ar', function(source, args)
                 ('Adminul %s a preluat report-ul lui %s (ID: %d).'):format(adminName, report.name, targetSrc), 'info')
         end
     end
-    notify(source, ('You picked up the report from %s (#%d).'):format(report.name, targetSrc), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_picked_up_the_report_from', { name = tostring(report.name), target_src = math.floor(tonumber(targetSrc) or 0) }), 'success')
 end)
 
 registerServerCommand('cr', function(source, args)
@@ -2111,7 +2098,7 @@ registerServerCommand('cr', function(source, args)
 
     local targetArg = tonumber(args[1])
     if not targetArg then
-        return notify(source, 'Usage: /cr [player id sau report id] [motiv (optional)]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_cr_player_id_sau_report'), 'error')
     end
 
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
@@ -2139,7 +2126,7 @@ registerServerCommand('cr', function(source, args)
             TriggerClientEvent('sunset:chat:system', qSrc,
                 ('Your question was closed by %s (ID: %d). Reason: %s'):format(adminName, source, reason), 'info')
         end
-        notify(source, ('Ai inchis intrebarea lui %s (#%d).'):format(foundQuestion.name, qSrc), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.ai_inchis_intrebarea_lui', { name = tostring(foundQuestion.name), q_src = math.floor(tonumber(qSrc) or 0) }), 'success')
         return
     end
 
@@ -2155,7 +2142,7 @@ registerServerCommand('cr', function(source, args)
     end
 
     if not report then
-        return notify(source, ('No active report/question found for ID %d.'):format(targetArg), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_active_report_question_found_for', { target_arg = math.floor(tonumber(targetArg) or 0) }), 'error')
     end
 
     local targetSrc = report.src
@@ -2175,20 +2162,20 @@ registerServerCommand('cr', function(source, args)
             TriggerClientEvent('sunset:chat:system', p, staffAlert, 'warning')
         end
     end
-    notify(source, ('Ai inchis report-ul lui %s (#%d).'):format(report.name, targetSrc), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.ai_inchis_report_ul_lui', { name = tostring(report.name), target_src = math.floor(tonumber(targetSrc) or 0) }), 'success')
 end)
 
 registerServerCommand('reports', function(source, args)
     if source ~= 0 and not requirePerm(source, 'reports') then return end
 
     local count = 0
-    notify(source, '─── Active Reports ───', 'info')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.active_reports'), 'info')
     for src, rep in pairs(ActivePlayerReports) do
         count = count + 1
-        notify(source, ('[%d] %s: "%s" (Inchide cu /cr %d [motiv])'):format(src, rep.name, rep.text, src), 'warning')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.inchide_cu_cr_motiv', { src = math.floor(tonumber(src) or 0), name = tostring(rep.name), text = tostring(rep.text), src_2 = math.floor(tonumber(src) or 0) }), 'warning')
     end
     if count == 0 then
-        notify(source, 'Nu exista rapoarte active.', 'success')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.nu_exista_rapoarte_active'), 'success')
     end
 end)
 
@@ -2203,13 +2190,13 @@ local function handleNewbieQuestion(source, args, cmdName)
 
     local text = table.concat(args, ' '):gsub('^%s*(.-)%s*$', '%1')
     if text == '' or #text < 3 then
-        return notify(source, ('Usage: /%s [intrebare]'):format(cmdName), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_intrebare', { cmd_name = tostring(cmdName) }), 'error')
     end
     text = text:sub(1, 300) -- [SEC3]
 
     local now = os.time()
     if now - (LastNewbAsk[source] or 0) < 15 then
-        return notify(source, ('Asteapta %d secunde inainte de o noua intrebare.'):format(15 - (now - (LastNewbAsk[source] or 0))), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.asteapta_secunde_inainte_de_o_noua', { value = math.floor(tonumber(15 - (now - (LastNewbAsk[source] or 0))) or 0) }), 'error')
     end
     LastNewbAsk[source] = now
 
@@ -2230,7 +2217,7 @@ local function handleNewbieQuestion(source, args, cmdName)
         isHelpme = true,
     }
 
-    notify(source, 'Your question has been sent to the helper team.', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.your_question_has_been_sent_to'), 'success')
 
     -- Sent in DARK GREEN to asking player so they see their question confirmed in chat
     TriggerClientEvent('sunset:chat:message', source, {
@@ -2277,18 +2264,18 @@ registerServerCommand('helpme', function(source, args) handleNewbieQuestion(sour
 
 local function handleNewbieAnswer(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'This command is available only for helpers and admins.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.this_command_is_available_only_for'), 'error')
     end
 
     local targetId = tonumber(args[1])
     if not targetId then
         local count = 0
-        notify(source, '─── Active questions from players ───', 'info')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.active_questions_from_players'), 'info')
         for qSrc, q in pairs(ActiveNewbieQuestions) do
             count = count + 1
-            notify(source, ('[%d] %s: "%s" (Raspunde cu /an %d [raspuns])'):format(qSrc, q.name, q.text, qSrc), 'info')
+            notify(source, exports.sunset_core:TFor(source, 'admin.msg.raspunde_cu_an_raspuns', { q_src = math.floor(tonumber(qSrc) or 0), name = tostring(q.name), text = tostring(q.text), q_src_2 = math.floor(tonumber(qSrc) or 0) }), 'info')
         end
-        if count == 0 then notify(source, 'No active questions from players.', 'success') end
+        if count == 0 then notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_active_questions_from_players'), 'success') end
         return
     end
 
@@ -2305,12 +2292,12 @@ local function handleNewbieAnswer(source, args)
     end
 
     if not q then
-        return notify(source, ('No active question found for ID %d.'):format(targetId), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_active_question_found_for_id', { target_id = math.floor(tonumber(targetId) or 0) }), 'error')
     end
 
     local answer = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if answer == '' then
-        return notify(source, ('Usage: /an %d [raspuns helper]'):format(targetId), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_an_raspuns_helper', { target_id = math.floor(tonumber(targetId) or 0) }), 'error')
     end
 
     ActiveNewbieQuestions[qSrc] = nil
@@ -2331,7 +2318,7 @@ local function handleNewbieAnswer(source, args)
         time = os.date('%H:%M:%S'),
         type = 'newbie_qa',
     })
-    notify(source, ('Ai raspuns la intrebarea lui %s.'):format(q.name), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.ai_raspuns_la_intrebarea_lui', { name = tostring(q.name) }), 'success')
 end
 
 registerServerCommand('an', handleNewbieAnswer)
@@ -2340,13 +2327,13 @@ registerServerCommand('nr', handleNewbieAnswer)
 
 registerServerCommand('nd', function(source, args)
     if source ~= 0 and not IsStaff(source) then
-        return notify(source, 'Comanda disponibila doar pentru helperi si admini.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.comanda_disponibila_doar_pentru_helperi_si'), 'error')
     end
 
     local targetId = tonumber(args[1])
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if not targetId or reason == '' then
-        return notify(source, 'Usage: /nd [player id] [reason]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.usage_nd_player_id_reason'), 'error')
     end
 
     local q = ActiveNewbieQuestions[targetId]
@@ -2362,7 +2349,7 @@ registerServerCommand('nd', function(source, args)
     end
 
     if not q then
-        return notify(source, ('No active question found for ID %d.'):format(targetId), 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.no_active_question_found_for_id', { target_id = math.floor(tonumber(targetId) or 0) }), 'error')
     end
 
     ActiveNewbieQuestions[qSrc] = nil
@@ -2382,7 +2369,7 @@ registerServerCommand('nd', function(source, args)
                 (('[ND] %s %s a sters intrebarea lui %s (#%d): "%s"'):format(staffRole, staffName, q.name, q.src, reason)), 'info')
         end
     end
-    notify(source, ('Ai sters intrebarea lui %s.'):format(q.name), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.ai_sters_intrebarea_lui', { name = tostring(q.name) }), 'success')
 end)
 
 -- [SEC2] a name change via the FNC modal is only valid when an admin forced it
@@ -2396,7 +2383,7 @@ local function handleFnc(source, args)
     if not requirePerm(source, 'fnc') then return end
 
     if not targetInput or targetInput == '' then
-        return notify(source, 'Utilizare: /fnc [id/nume] [motiv/nume_nou]', 'info')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.utilizare_fnc_id_nume_motiv_nume'), 'info')
     end
 
     local target = resolveTarget(source, targetInput)
@@ -2404,7 +2391,7 @@ local function handleFnc(source, args)
 
     local targetChar = exports.sunset_core:GetCharacter(target)
     if not targetChar or not targetChar.id then
-        return notify(source, 'Target player does not have a character loaded.', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.target_player_does_not_have_a'), 'error')
     end
 
     local adminName = getDisplayName(source)
@@ -2429,8 +2416,8 @@ local function handleFnc(source, args)
             tokens = 1
         })
 
-        notify(source, ('You forced a name change for %s (#%d). The name selection window has been opened.'):format(targetName, target), 'success')
-        notify(target, ('Admin %s has forced you to change your name (FNC)! Reason: %s. Choose a new name.'):format(adminName, reason), 'error')
+        notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_forced_a_name_change_for', { target_name = tostring(targetName), target = math.floor(tonumber(target) or 0) }), 'success')
+        notify(target, exports.sunset_core:TFor(target, 'admin.msg.admin_has_forced_you_to_change', { admin_name = tostring(adminName), reason = tostring(reason) }), 'error')
 
         TriggerClientEvent('chat:addMessage', -1, {
             color = { 255, 100, 100 },
@@ -2442,7 +2429,7 @@ local function handleFnc(source, args)
     -- Case B: /fnc [id] [NewName] -> Direct admin rename
     local cleanName = extraArg:gsub('^%s*(.-)%s*$', '%1')
     if #cleanName < 3 or #cleanName > 24 or not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return notify(source, 'Invalid name! Name must be between 3 and 24 characters (letters, digits, dots, hyphens).', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_name_name_must_be_between'), 'error')
     end
 
     local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
@@ -2461,7 +2448,7 @@ local function handleFnc(source, args)
     ]], { cleanName, cleanName, cleanName })
 
     if existing and tonumber(existing.id) ~= tonumber(targetChar.id) then
-        return notify(source, 'This name is already taken by another player!', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.this_name_is_already_taken_by'), 'error')
     end
 
     MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
@@ -2490,8 +2477,8 @@ local function handleFnc(source, args)
 
     local msg = ('^3[ADMIN] ^7Admin ^2%s^7 changed the name of ^1%s^7 to ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
-    notify(source, ('You changed the name of %s to %s.'):format(targetName, cleanName), 'success')
-    notify(target, ('Your name was changed to %s by admin %s.'):format(cleanName, adminName), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.you_changed_the_name_of_to', { target_name = tostring(targetName), clean_name = tostring(cleanName) }), 'success')
+    notify(target, exports.sunset_core:TFor(target, 'admin.msg.your_name_was_changed_to_by', { clean_name = tostring(cleanName), admin_name = tostring(adminName) }), 'info')
 end
 
 registerServerCommand('fnc', handleFnc)
@@ -2567,7 +2554,7 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
 
     local msg = ('^2[FNC] ^7Player ^3%s (#%d)^7 chose the new name ^2%s^7.'):format(oldName, source, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })
-    notify(source, ('Your name has been successfully changed to %s!'):format(cleanName), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'admin.msg.your_name_has_been_successfully_changed', { clean_name = tostring(cleanName) }), 'success')
 
     return true, cleanName
 end)
@@ -2602,7 +2589,7 @@ RegisterNetEvent('sunset:admin:weaponGiveFailed', function(adminSource, weapon)
     -- Only notify if the recipient is actually an admin (staff giving themselves
     -- a weapon is the sole legitimate flow).
     if adminSource and adminSource > 0 and IsAdmin(adminSource, 1) then
-        notify(adminSource, ('Invalid weapon "%s" - use a GTA weapon name like PISTOL or WEAPON_PISTOL.'):format(tostring(weapon or '?')), 'error')
+        notify(adminSource, exports.sunset_core:TFor(adminSource, 'admin.msg.invalid_weapon_use_a_gta_weapon', { weapon = tostring(weapon or '?') }), 'error')
     end
 end)
 

@@ -57,7 +57,7 @@
                 const pct = q.target > 0 ? Math.min(100, Math.floor(((q.progress || 0) / q.target) * 100)) : 0;
                 const r = q.reward || {};
                 const rewardBits = [];
-                if (r.money) rewardBits.push(`<span>$<b>${Number(r.money).toLocaleString('en-US')}</b></span>`);
+                if (r.money) rewardBits.push(`<span>$<b>${I18n.number(Number(r.money))}</b></span>`);
                 if (r.xp) rewardBits.push(`<span><b>${esc(r.xp)}</b> XP</span>`);
                 if (r.rp) rewardBits.push(`<span><b>${esc(r.rp)}</b> RP</span>`);
                 const rewardHtml = rewardBits.length

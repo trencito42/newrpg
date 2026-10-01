@@ -81,7 +81,7 @@ const InventoryForza = {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'inv-item';
-        item.title = row.usable ? `Select ${label}; double-click to use` : `Select ${label}`;
+        item.title = row.usable ? I18n.t('ui.inventory.select_use_hint', { label }) : I18n.t('ui.inventory.select_hint', { label });
         item.innerHTML = `
             ${this.itemIconHtml(row)}
             <div class="item-name">${label}</div>
@@ -133,10 +133,10 @@ const InventoryForza = {
             card.className = 'prox-player';
             card.dataset.playerId = String(player.id);
             card.innerHTML = `
-                <div class="prox-id">Player ID: ${player.id}</div>
-                <div class="prox-name">${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(player.name || `Player #${player.id}`)}</div>
+                <div class="prox-id">${I18n.t('ui.inventory.player_id', { id: player.id })}</div>
+                <div class="prox-name">${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(player.name || I18n.t('ui.inventory.player_hash', { id: player.id }))}</div>
                 <div class="prox-actions">
-                    <div class="prox-hint"><i class="ph-bold ph-handshake"></i> Click pt. Trade</div>
+                    <div class="prox-hint"><i class="ph-bold ph-handshake"></i> ${I18n.t('ui.inventory.click_to_trade')}</div>
                 </div>
             `;
             card.addEventListener('click', () => post('inventoryTradeRequest', { targetId: player.id }));

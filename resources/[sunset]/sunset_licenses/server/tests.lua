@@ -485,7 +485,7 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
                 if type(FinalizeLicenseExamReport) == 'function' then
                     FinalizeLicenseExamReport(session, 'failed')
                 end
-                clearTestSession(sender, 'FAILED', 'too many protected animal kills')
+                ClearLicenseTestSession(sender, 'FAILED', 'too many protected animal kills')
                 TriggerClientEvent('sunset:licenses:testAbort', sender)
                 TriggerClientEvent('sunset:client:notify', sender,
                     ('Exam failed: you shot %d protected animals (limit %d).'):format(

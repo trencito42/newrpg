@@ -153,14 +153,14 @@ local function executeDiceMatch(challengerSrc, targetSrc, bet)
             return
         end
 
-        local cDie1, cDie2 = math.random(1, 6), math.random(1, 6)
-        local tDie1, tDie2 = math.random(1, 6), math.random(1, 6)
+        local cDie1, cDie2 = CasinoRNG.Int(1, 6), CasinoRNG.Int(1, 6)
+        local tDie1, tDie2 = CasinoRNG.Int(1, 6), CasinoRNG.Int(1, 6)
         local cTotal = cDie1 + cDie2
         local tTotal = tDie1 + tDie2
 
         while cTotal == tTotal do
-            cDie1, cDie2 = math.random(1, 6), math.random(1, 6)
-            tDie1, tDie2 = math.random(1, 6), math.random(1, 6)
+            cDie1, cDie2 = CasinoRNG.Int(1, 6), CasinoRNG.Int(1, 6)
+            tDie1, tDie2 = CasinoRNG.Int(1, 6), CasinoRNG.Int(1, 6)
             cTotal = cDie1 + cDie2
             tTotal = tDie1 + tDie2
         end
@@ -190,6 +190,7 @@ local function executeDiceMatch(challengerSrc, targetSrc, bet)
         -- [AUDIT P5-07] Payout is terminal for this escrow. If AddMoney fails
         -- (DB hiccup), refund both wagers instead of destroying the pot.
         local paid = exports.sunset_core:AddMoney(winnerSrc, 'cash', prize, 'dice_win')
+        CasinoLog.Record(winnerSrc == challengerSrc and escrow.charIds[1] or escrow.charIds[2], 'dice', 'win', bet, prize, paid and 'paid' or 'refund')
         escrow.settled = true
         ActiveEscrows[escrowId] = nil
         if not paid then
@@ -252,7 +253,7 @@ RegisterCommand('barbut', function(source, args)
     local targetId = tonumber(args[1])
     local bet = tonumber(args[2])
 
-    if not targetId or not bet or bet < MIN_DICE_BET then
+    if not targetId or not CasinoRNG.IsInt(targetId) or not CasinoRNG.IsInt(bet) or bet < MIN_DICE_BET then
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'economy.message.usage_barbut_player_id_min_bet_value', MIN_DICE_BET), 'info')
         return
     end

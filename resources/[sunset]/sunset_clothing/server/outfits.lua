@@ -69,7 +69,7 @@ exports.sunset_core:RegisterCallback('sunset:outfits:save', function(source, nam
         }
     end
     local sanitized, err = sanitize(merged, base)
-    if not sanitized then return nil, err or 'Invalid appearance.' end
+    if not sanitized then return nil, err or exports.sunset_core:TFor(source, 'clothing.err.invalid_appearance') end
 
     if existing then
         MySQL.update.await(
@@ -96,7 +96,7 @@ exports.sunset_core:RegisterCallback('sunset:outfits:equip', function(source, ou
 
     local decoded = type(row.appearance) == 'string' and json.decode(row.appearance) or row.appearance
     local sanitized, err = sanitize(decoded, char.appearance)
-    if not sanitized then return nil, err or 'Stored outfit is corrupt.' end
+    if not sanitized then return nil, err or exports.sunset_core:TFor(source, 'clothing.err.stored_outfit_is_corrupt') end
 
     -- Equip = write onto the live character appearance (same path as shop
     -- purchase, minus the fee: outfits you already own are free to wear).

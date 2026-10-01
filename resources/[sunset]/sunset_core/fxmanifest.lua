@@ -53,6 +53,10 @@ client_scripts {
 exports {
     'GetPlayer',
     'GetCharacter',
+    'IsPlayerReady',
+    'AwaitGameReady',
+    'RequestModelSafe',
+    'CreateSafeBlip',
     'TriggerCallback',
     'BootLog',
     'BootLogVerbose',

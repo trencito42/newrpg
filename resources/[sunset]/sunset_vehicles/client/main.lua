@@ -779,7 +779,7 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
 
     local model = joaat(vehData.model)
     if not IsModelInCdimage(model) or not IsModelAVehicle(model) then
-        notify(exports.sunset_core:Translate('vehicles.message.invalid_vehicle_model') .. tostring(vehData.model), 'error')
+        notify(exports.sunset_core:Translate('vehicles.msg.invalid_vehicle_model', { model = tostring(vehData.model) }), 'error')
         return nil
     end
 
@@ -884,7 +884,7 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     markProtected(vehicle)
     fuel = vehFuel
     currentVeh = 0
-    notify(('Vehicle spawned: %s (fuel %d%%)'):format(vehData.plate, math.floor(vehFuel)), 'success')
+    notify(exports.sunset_core:Translate('vehicles.msg.vehicle_spawned_fuel', { plate = tostring(vehData.plate), veh_fuel = math.floor(tonumber(math.floor(vehFuel)) or 0) }), 'success')
     return vehicle
 end
 
@@ -924,7 +924,7 @@ AddEventHandler('sunset:nui:garageSpawn', function(data)
     CreateThread(function()
         local ok, err = Sunset.AwaitCallback('sunset:spawnVehicle', data.vehicleId)
         if not ok then
-            notify(err or 'Could not spawn vehicle', 'error')
+            notify(err or exports.sunset_core:Translate('vehicles.msg.could_not_spawn_vehicle'), 'error')
         end
         closeGarageUiUnlessMenu()
     end)
@@ -940,7 +940,7 @@ RegisterCommand('givekeys', function(_, args)
         end
         if not target or veh == 0 then return notify(exports.sunset_core:Translate('vehicles.message.usage_givekeys_id_near_your_vehicle'), 'error') end
         local ok, err = Sunset.AwaitCallback('sunset:giveVehicleKeys', target, plateOf(veh))
-        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_given'), 'success') else notify(err or 'Could not give keys', 'error') end
+        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_given'), 'success') else notify(err or exports.sunset_core:Translate('vehicles.msg.could_not_give_keys'), 'error') end
     end)
 end, false)
 
@@ -954,7 +954,7 @@ RegisterCommand('takekeys', function(_, args)
         end
         if not target or veh == 0 then return notify(exports.sunset_core:Translate('vehicles.message.usage_takekeys_id_near_your_vehicle'), 'error') end
         local ok, err = Sunset.AwaitCallback('sunset:takeVehicleKeys', target, plateOf(veh))
-        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_taken'), 'success') else notify(err or 'Could not take keys', 'error') end
+        if ok then notify(exports.sunset_core:Translate('vehicles.message.keys_taken'), 'success') else notify(err or exports.sunset_core:Translate('vehicles.msg.could_not_take_keys'), 'error') end
     end)
 end, false)
 
@@ -967,7 +967,7 @@ local function parkCurrentVehicle(closeMenuAfter)
         if result then
             notify(exports.sunset_core:Translate('vehicles.message.vehicle_parked_here_gps_and_future_spawns_will_use'), 'success')
             if closeMenuAfter then TriggerEvent('sunset:nui:menuClose') end
-        else notify(err or 'Could not park', 'error') end
+        else notify(err or exports.sunset_core:Translate('vehicles.msg.could_not_park'), 'error') end
     end)
 end
 
@@ -1043,7 +1043,7 @@ AddEventHandler('sunset:nui:garageStore', function(data)
         local ok, err = Sunset.AwaitCallback('sunset:storeOwnedVehicle', netId, plate, props,
             vehFuel, vehData.garage or 'legion', parked)
         if not ok then
-            notify(err or 'Vehicle could not be stored', 'error')
+            notify(err or exports.sunset_core:Translate('vehicles.message.vehicle_could_not_be_stored'), 'error')
             return
         end
         if entity and DoesEntityExist(entity) then
@@ -1060,7 +1060,7 @@ AddEventHandler('sunset:nui:garageLocate', function(data)
     if entity then
         local coords = GetEntityCoords(entity)
         SetNewWaypoint(coords.x, coords.y)
-        notify(exports.sunset_core:Translate('vehicles.message.gps_set_to') .. normalizePlate(data.plate), 'success')
+        notify(exports.sunset_core:Translate('vehicles.msg.gps_set_to_plate', { plate = tostring(normalizePlate(data.plate)) }), 'success')
         closeGarageUiUnlessMenu()
         return
     end
@@ -1073,7 +1073,7 @@ AddEventHandler('sunset:nui:garageLocate', function(data)
     local parked = vehData and getParkedCoords(vehData) or nil
     if parked then
         SetNewWaypoint(parked.x, parked.y)
-        notify(exports.sunset_core:Translate('vehicles.message.gps_set_to_parked_location') .. normalizePlate(data.plate or vehData.plate), 'success')
+        notify(exports.sunset_core:Translate('vehicles.msg.gps_set_to_parked_location_plate', { plate = tostring(normalizePlate(data.plate or vehData.plate)) }), 'success')
     else
         notify(exports.sunset_core:Translate('vehicles.message.vehicle_not_found_no_parked_location_saved'), 'error')
     end
@@ -1094,7 +1094,7 @@ AddEventHandler('sunset:nui:garageClaimInsurance', function(data)
                 TriggerEvent('sunset:menu:openVehicle')
             end
         else
-            notify(err or 'Insurance claim could not be processed.', 'error')
+            notify(err or exports.sunset_core:Translate('vehicles.msg.insurance_claim_could_not_be_processed'), 'error')
         end
     end)
 end)
@@ -1109,7 +1109,7 @@ AddEventHandler('sunset:nui:garageRenewInsurance', function(data)
                 TriggerEvent('sunset:menu:openVehicle')
             end
         else
-            notify(err or 'Insurance renewal could not be processed.', 'error')
+            notify(err or exports.sunset_core:Translate('vehicles.msg.insurance_renewal_could_not_be_processed'), 'error')
         end
     end)
 end)
@@ -1191,7 +1191,7 @@ RegisterNetEvent('sunset:client:storeVehicleRequest', function(garageId)
         local props = buildStoreProps(veh)
         local ok, err = Sunset.AwaitCallback('sunset:storeOwnedVehicle', VehToNet(veh), plate,
             props, vehFuel, garageId or 'legion', parked)
-        if not ok then return notify(err or 'Vehicle could not be stored', 'error') end
+        if not ok then return notify(err or exports.sunset_core:Translate('vehicles.message.vehicle_could_not_be_stored'), 'error') end
         deleteVehicleEntity(veh)
         untrackSpawnedOwned(veh)
         notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
@@ -1217,7 +1217,7 @@ AddEventHandler('sunset:world:garageStore', function(garageId)
         local props = buildStoreProps(veh)
         local ok, err = Sunset.AwaitCallback('sunset:storeOwnedVehicle', VehToNet(veh), plate,
             props, vehFuel, garageId or 'legion', parked)
-        if not ok then return notify(err or 'Vehicle could not be stored', 'error') end
+        if not ok then return notify(err or exports.sunset_core:Translate('vehicles.message.vehicle_could_not_be_stored'), 'error') end
         deleteVehicleEntity(veh)
         untrackSpawnedOwned(veh)
         notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
@@ -1260,15 +1260,14 @@ RegisterNetEvent('sunset:client:useGasCan', function()
             if insideFuel >= 99.5 then
                 notify(exports.sunset_core:Translate('vehicles.message.this_vehicle_already_has_a_full_tank_100_the'), 'info')
             else
-                notify(('Exit the vehicle and stand beside it to refuel. Current tank: %d%%.'):format(
-                    math.floor(insideFuel + 0.5)), 'warning')
+                notify(exports.sunset_core:Translate('vehicles.msg.exit_the_vehicle_and_stand_beside', { value = math.floor(tonumber(math.floor(insideFuel + 0.5)) or 0) }), 'warning')
             end
             return
         end
 
         local veh, err = getGasCanTargetVehicle()
         if not veh then
-            notify(err or 'No vehicle nearby', 'error')
+            notify(err or exports.sunset_core:Translate('vehicles.message.no_vehicle_nearby'), 'error')
             return
         end
 
@@ -1286,7 +1285,7 @@ RegisterNetEvent('sunset:client:useGasCan', function()
 
         local result, useErr = Sunset.AwaitCallback('sunset:useGasCanOnVehicle', plate, tankLiters, vehicleClass)
         if not result then
-            notify(useErr or 'Could not use gas can', 'error')
+            notify(useErr or exports.sunset_core:Translate('vehicles.msg.could_not_use_gas_can'), 'error')
             return
         end
 
@@ -1301,11 +1300,9 @@ RegisterNetEvent('sunset:client:useGasCan', function()
         local canLeft = result.canLiters
 
         if canLeft == nil or canLeft <= 0.1 then
-            notify(('Added %.0fL to vehicle (%.0fL → %.0fL / %.0fL)'):format(
-                poured, fromL, toL, cap), 'success')
+            notify(exports.sunset_core:Translate('vehicles.msg.added_l_to_vehicle_l_l', { poured = string.format('%.0f', poured), from_l = string.format('%.0f', fromL), to_l = string.format('%.0f', toL), cap = string.format('%.0f', cap) }), 'success')
         else
-            notify(('Added %.0fL to vehicle (%.0fL → %.0fL / %.0fL) — Gas can: %.0f/%.0f L'):format(
-                poured, fromL, toL, cap, canLeft, maxCan), 'success')
+            notify(exports.sunset_core:Translate('vehicles.msg.added_l_to_vehicle_l_l_2', { poured = string.format('%.0f', poured), from_l = string.format('%.0f', fromL), to_l = string.format('%.0f', toL), cap = string.format('%.0f', cap), can_left = string.format('%.0f', canLeft), max_can = string.format('%.0f', maxCan) }), 'success')
         end
     end)
 end)

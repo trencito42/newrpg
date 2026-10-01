@@ -722,14 +722,14 @@ function updatePriceLabel() {
 
 function updateInstallButton() {
     const cost = installQuote();
-    if (installCostEl) installCostEl.textContent = cost.toLocaleString('en-US');
+    if (installCostEl) installCostEl.textContent = I18n.number(cost);
     if (btnSave) {
         if (!hasTuningChanges()) {
             btnSave.classList.remove('btn-primary');
-            btnSave.title = 'No pending changes to install';
+            btnSave.title = I18n.t('tuning.ui.no_pending_changes');
         } else {
             btnSave.classList.add('btn-primary');
-            btnSave.title = `Install pending upgrades for $${cost.toLocaleString('en-US')}`;
+            btnSave.title = I18n.t('tuning.ui.install_pending', { cost: I18n.number(cost) });
         }
     }
     updatePriceLabel();
@@ -801,7 +801,7 @@ function hardwareParts(slotKey, maxLevel) {
         parts.push({
             id: `${slotKey}_${i}`,
             label: I18n.t('tuning.ui.level_upgrade', { level: i }),
-            price: isInst ? I18n.t('tuning.ui.installed') : `$${cost.toLocaleString('en-US')}`,
+            price: isInst ? I18n.t('tuning.ui.installed') : `$${I18n.number(cost)}`,
             isInstalled: isInst,
             isPreview: isPrev,
             apply: () => {
@@ -822,7 +822,7 @@ function renderOverviewParts() {
         parts.push({
             id: `stage_${stage}`,
             label: I18n.t('tuning.ui.stage_tune', { stage: stage.toUpperCase() }),
-            price: isInst ? I18n.t('tuning.ui.installed') : (stage === 'civil' ? I18n.t('tuning.ui.stock') : `$${(stage === 'sport' ? featureCosts.sportMap : featureCosts.raceMap || 0).toLocaleString('en-US')}`),
+            price: isInst ? I18n.t('tuning.ui.installed') : (stage === 'civil' ? I18n.t('tuning.ui.stock') : `$${I18n.number((stage === 'sport' ? featureCosts.sportMap : featureCosts.raceMap || 0))}`),
             isInstalled: isInst,
             isPreview: isPrev,
             apply: () => {
@@ -1254,9 +1254,9 @@ function renderPartList() {
 
         let badgeHtml = '';
         if (p.isInstalled) {
-            badgeHtml = '<span class="installed-badge">INSTALLED</span>';
+            badgeHtml = `<span class="installed-badge">${I18n.t('tuning.ui.installed_caps')}</span>`;
         } else if (p.isPreview) {
-            badgeHtml = '<span class="preview-badge">PENDING</span>';
+            badgeHtml = `<span class="preview-badge">${I18n.t('tuning.ui.pending_caps')}</span>`;
         }
 
         item.innerHTML = `<span class="item-label">${p.label}${badgeHtml}</span><span class="item-price">${p.price}</span>`;
@@ -1418,9 +1418,9 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.engine_output_ecu_mapping');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(sliderField('Horsepower Calibration', 'power', 0, powerLimit(), ' HP'));
-        tuneDetail.appendChild(sliderField('Torque Calibration', 'torque', 0, powerLimit(), ' NM'));
-        tuneDetail.appendChild(sliderField('Throttle Sensitivity', 'throttleResponse', -20, 30, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.horsepower_calibration'), 'power', 0, powerLimit(), ' HP'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.torque_calibration'), 'torque', 0, powerLimit(), ' NM'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.throttle_sensitivity'), 'throttleResponse', -20, 30, '%'));
     }
 
     if (activeTab === 'transmission') {
@@ -1429,7 +1429,7 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.transmission_gearing_shift_rates');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(sliderField('Shift Speed Response', 'shiftSpeed', -30, 50, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.shift_speed'), 'shiftSpeed', -30, 50, '%'));
     }
 
     if (activeTab === 'brakes') {
@@ -1438,7 +1438,7 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.brake_dynamics_energy_recovery');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(sliderField('Regen / Engine Braking', 'regenBraking', 0, 100, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.regen_braking'), 'regenBraking', 0, 100, '%'));
     }
 
     if (activeTab === 'turbo') {
@@ -1447,7 +1447,7 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.forced_induction_nitrous_oxide_nos');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(sliderField('Top Speed Governor', 'topSpeed', -10, 40, ' km/h'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.top_speed'), 'topSpeed', -10, 40, ' km/h'));
 
         if (activePartId === 'nitrous_sys' || !activePartId) {
             const nosTitle = document.createElement('div');
@@ -1456,7 +1456,7 @@ function renderDetailPanel() {
             nosTitle.textContent = I18n.t('dynamic.app.nitrous_injection_system_configuration');
             tuneDetail.appendChild(nosTitle);
 
-            tuneDetail.appendChild(toggleRow('Nitrous System Installed', 'nitrous.installed'));
+            tuneDetail.appendChild(toggleRow(I18n.t('tuning.field.nitrous_installed'), 'nitrous.installed'));
 
             if (tune?.nitrous?.installed) {
                 const tierLabel = document.createElement('label');
@@ -1540,10 +1540,10 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.chassis_handling_dynamics');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(sliderField('Steering Angle', 'handling.steering', 85, 120, '%'));
-        tuneDetail.appendChild(sliderField('Brake Power', 'handling.brakePower', 85, 140, '%'));
-        tuneDetail.appendChild(sliderField('Suspension Stiffness', 'handling.suspension', 80, 130, '%'));
-        tuneDetail.appendChild(sliderField('Traction Control', 'handling.traction', 75, 120, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.steering_angle'), 'handling.steering', 85, 120, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.brake_power'), 'handling.brakePower', 85, 140, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.suspension_stiffness'), 'handling.suspension', 80, 130, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.traction_control'), 'handling.traction', 75, 120, '%'));
     }
 
     if (activeTab === 'bodykit') {
@@ -1596,11 +1596,11 @@ function renderDetailPanel() {
             title.textContent = I18n.t('dynamic.app.neon_underglow_system');
             tuneDetail.appendChild(title);
 
-            tuneDetail.appendChild(cosmeticsToggleRow('Enable Underglow', 'neon.enabled'));
-            tuneDetail.appendChild(cosmeticsToggleRow('Front Tube', 'neon.front'));
-            tuneDetail.appendChild(cosmeticsToggleRow('Rear Tube', 'neon.back'));
-            tuneDetail.appendChild(cosmeticsToggleRow('Left Side Tube', 'neon.left'));
-            tuneDetail.appendChild(cosmeticsToggleRow('Right Side Tube', 'neon.right'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.enable_underglow'), 'neon.enabled'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.front_tube'), 'neon.front'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.rear_tube'), 'neon.back'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.left_tube'), 'neon.left'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.right_tube'), 'neon.right'));
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
@@ -1650,7 +1650,7 @@ function renderDetailPanel() {
             title.textContent = I18n.t('dynamic.app.xenon_headlight_system');
             tuneDetail.appendChild(title);
 
-            tuneDetail.appendChild(cosmeticsToggleRow('Xenon Headlights', 'xenon'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.xenon_headlights'), 'xenon'));
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
@@ -1747,7 +1747,7 @@ function renderDetailPanel() {
             const field = document.createElement('div');
             field.className = 'field';
             const lbl = document.createElement('label');
-            lbl.innerHTML = `<span>Wheel Paint Index</span><span>${cosmetics.wheel || 0}</span>`;
+            lbl.innerHTML = `<span>${I18n.t('tuning.field.wheel_paint_index')}</span><span>${cosmetics.wheel || 0}</span>`;
             const input = document.createElement('input');
             input.type = 'range';
             input.min = 0;
@@ -1769,7 +1769,7 @@ function renderDetailPanel() {
             title.textContent = I18n.t('dynamic.app.tyre_smoke_burnout_controls');
             tuneDetail.appendChild(title);
 
-            tuneDetail.appendChild(cosmeticsToggleRow('Enable Tyre Smoke', 'tyreSmoke'));
+            tuneDetail.appendChild(cosmeticsToggleRow(I18n.t('tuning.field.enable_tyre_smoke'), 'tyreSmoke'));
 
             const lbl = document.createElement('label');
             lbl.style.marginTop = '12px';
@@ -1846,9 +1846,9 @@ function renderDetailPanel() {
             });
             tuneDetail.appendChild(grid);
         } else if (activePartId === 'primary') {
-            tuneDetail.appendChild(cosmeticsColorField('Primary Body Paint', 'primary'));
+            tuneDetail.appendChild(cosmeticsColorField(I18n.t('tuning.field.primary_paint'), 'primary'));
         } else if (activePartId === 'secondary') {
-            tuneDetail.appendChild(cosmeticsColorField('Secondary Trim Paint', 'secondary'));
+            tuneDetail.appendChild(cosmeticsColorField(I18n.t('tuning.field.secondary_paint'), 'secondary'));
         } else if (activePartId === 'pearl') {
             const title = document.createElement('div');
             title.className = 'section-title section-title--compact';
@@ -1914,7 +1914,7 @@ function renderDetailPanel() {
             field.className = 'field';
             field.style.marginTop = '12px';
             const lbl = document.createElement('label');
-            lbl.innerHTML = `<span>Fine Pearl Color Index</span><span>${cosmetics.pearl || 0}</span>`;
+            lbl.innerHTML = `<span>${I18n.t('tuning.field.pearl_index')}</span><span>${cosmetics.pearl || 0}</span>`;
             const input = document.createElement('input');
             input.type = 'range';
             input.min = 0;
@@ -1955,7 +1955,7 @@ function renderDetailPanel() {
         } else if (activePartId === 'plate') {
             const plateField = document.createElement('div');
             plateField.className = 'field';
-            plateField.innerHTML = '<label><span>Custom Vanity License Plate (max 8)</span></label>';
+            plateField.innerHTML = `<label><span>${I18n.t('tuning.field.vanity_plate')}</span></label>`;
             const plateInput = document.createElement('input');
             plateInput.type = 'text';
             plateInput.maxLength = 8;
@@ -1977,10 +1977,10 @@ function renderDetailPanel() {
         title.textContent = I18n.t('dynamic.app.exhaust_pops_bangs_flames_calibration');
         tuneDetail.appendChild(title);
 
-        tuneDetail.appendChild(toggleRow('Exhaust Pops & Bangs Active', 'pop.enabled'));
-        tuneDetail.appendChild(sliderField('Pop RPM Activation Threshold', 'pop.rpmMax', 70, 100, '%'));
-        tuneDetail.appendChild(sliderField('Pop Burst Duration', 'pop.durationMs', 50, 300, ' ms'));
-        tuneDetail.appendChild(toggleRow('Spit Flames On Decel / Shift', 'flames.enabled'));
+        tuneDetail.appendChild(toggleRow(I18n.t('tuning.field.exhaust_pops'), 'pop.enabled'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.pop_rpm'), 'pop.rpmMax', 70, 100, '%'));
+        tuneDetail.appendChild(sliderField(I18n.t('tuning.field.pop_duration'), 'pop.durationMs', 50, 300, ' ms'));
+        tuneDetail.appendChild(toggleRow(I18n.t('tuning.field.spit_flames'), 'flames.enabled'));
     }
 
     if (activeTab === 'special') {
@@ -1990,10 +1990,10 @@ function renderDetailPanel() {
         tuneDetail.appendChild(title);
 
         if (cap('drift')) {
-            tuneDetail.appendChild(sliderField('Drift Mode Surface Grip', 'drift.grip', 20, 80, '%'));
+            tuneDetail.appendChild(sliderField(I18n.t('tuning.field.drift_grip'), 'drift.grip', 20, 80, '%'));
         }
         if (cap('antiLag')) {
-            tuneDetail.appendChild(sliderField('Anti-Lag Turbo Boost Intensity', 'antiLag.intensity', 0, 100, '%'));
+            tuneDetail.appendChild(sliderField(I18n.t('tuning.field.anti_lag'), 'antiLag.intensity', 0, 100, '%'));
         }
     }
 
@@ -2004,7 +2004,7 @@ function renderDetailPanel() {
         stats.innerHTML = `
             <div class="stat-box"><div class="val">${dyno.lastHp || 0}</div><div class="lbl">HP</div></div>
             <div class="stat-box"><div class="val">${dyno.lastTorque || 0}</div><div class="lbl">NM</div></div>
-            <div class="stat-box"><div class="val">$${costs.dyno || 250}</div><div class="lbl">RUN COST</div></div>`;
+            <div class="stat-box"><div class="val">$${costs.dyno || 250}</div><div class="lbl">${I18n.t('tuning.ui.run_cost')}</div></div>`;
         tuneDetail.appendChild(stats);
     }
 }
@@ -2023,7 +2023,7 @@ function renderCategories() {
         if (cat.id === activeTab) btn.classList.add('active');
 
         const hasMod = categoryHasChanges(cat.id);
-        const modDot = hasMod ? '<span class="modified-dot" title="Pending changes in this category"></span>' : '';
+        const modDot = hasMod ? `<span class="modified-dot" title="${I18n.t('tuning.ui.pending_category')}"></span>` : '';
 
         btn.innerHTML = `<i class="${cat.icon}"></i> <span>${I18n.t(cat.labelKey)}</span>${modDot}`;
         btn.addEventListener('click', () => {
@@ -2136,14 +2136,14 @@ window.addEventListener('message', (event) => {
         featureCosts = data.featureCosts || {};
         installedTune = ensureTune(data.tune);
         installedCosmetics = ensureCosmetics(data.cosmetics);
-        if (shopLabel) shopLabel.textContent = data.shop || 'ECU Bay';
+        if (shopLabel) shopLabel.textContent = data.shop || I18n.t('tuning.ui.shop_default');
         if (plateLabel) plateLabel.textContent = data.plate || cosmetics.plateText || '—';
         hardwareAvailability = data.hardwareAvailability || data.hardware || {};
         visualAvailability = data.visualAvailability || data.visual || {};
         vehicleCapabilities = data.capabilities || null;
         const drivetrainLabel = document.getElementById('drivetrainLabel');
         if (drivetrainLabel) {
-            drivetrainLabel.textContent = data.drivetrainLabel || (vehicleCapabilities && vehicleCapabilities.propulsion) || 'PETROL';
+            drivetrainLabel.textContent = data.drivetrainLabel || (vehicleCapabilities && vehicleCapabilities.propulsion) || I18n.t('tuning.ui.propulsion_default');
         }
         activeTab = 'overview';
         activePartId = null;

@@ -18,6 +18,7 @@ shared_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
+    '@sunset_casino/shared/rng.lua',
     'server/lottery.lua',
     'server/dice.lua',
     'server/main.lua',

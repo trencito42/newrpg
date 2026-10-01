@@ -25,7 +25,7 @@ exports.sunset_core:RegisterCallback('sunset:emsStabilize', function(source, tar
     local isAdmin = false
     pcall(function() isAdmin = exports.sunset_admin:IsAdmin(source, 2) end)
     if not isAdmin and not FactionCore.hasPerm(source, 'stabilize') and not FactionCore.hasPerm(source, 'heal') then
-        return nil, FactionCore.accessError(source, 'stabilize', 'stabilize a patient')
+        return nil, FactionCore.accessError(source, 'stabilize', { localeKey = 'factions.action.stabilize_a_patient' })
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
@@ -38,8 +38,8 @@ exports.sunset_core:RegisterCallback('sunset:emsStabilize', function(source, tar
     local ok, err = exports.sunset_death:StabilizePlayer(targetId)
     if not ok then return nil, err end
 
-    notify(targetId, 'A medic stabilized your injuries.', 'info')
-    notify(source, 'Patient stabilized.', 'success')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.a_medic_stabilized_your_injuries'), 'info')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.patient_stabilized'), 'success')
     recordActivity(source, 'stabilize', targetId, {})
     return true
 end)
@@ -48,7 +48,7 @@ exports.sunset_core:RegisterCallback('sunset:emsHeal', function(source, targetId
     local isAdmin = false
     pcall(function() isAdmin = exports.sunset_admin:IsAdmin(source, 2) end)
     if not isAdmin and not FactionCore.hasPerm(source, 'heal') then
-        return nil, FactionCore.accessError(source, 'heal', 'heal a patient')
+        return nil, FactionCore.accessError(source, 'heal', { localeKey = 'factions.action.heal_a_patient' })
     end
     targetId = tonumber(targetId) or source
     if not FactionCore.isOnline(targetId) then
@@ -65,9 +65,9 @@ exports.sunset_core:RegisterCallback('sunset:emsHeal', function(source, targetId
     end
 
     TriggerClientEvent('sunset:admin:heal', targetId)
-    notify(source, 'Patient treated.', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.patient_treated'), 'success')
     if targetId ~= source then
-        notify(targetId, 'You were treated by medical staff.', 'success')
+        notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_were_treated_by_medical_staff'), 'success')
     end
     recordActivity(source, 'heal', targetId, {})
     return true
@@ -77,7 +77,7 @@ exports.sunset_core:RegisterCallback('sunset:emsRevive', function(source, target
     local isAdmin = false
     pcall(function() isAdmin = exports.sunset_admin:IsAdmin(source, 2) end)
     if not isAdmin and not FactionCore.hasPerm(source, 'revive') then
-        return nil, FactionCore.accessError(source, 'revive', 'revive a patient')
+        return nil, FactionCore.accessError(source, 'revive', { localeKey = 'factions.action.revive_a_patient' })
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
@@ -96,8 +96,8 @@ exports.sunset_core:RegisterCallback('sunset:emsRevive', function(source, target
     local ok, err = exports.sunset_death:RevivePlayer(targetId)
     if not ok then return nil, err end
 
-    notify(source, 'Patient revived.', 'success')
-    notify(targetId, 'You were revived by medical staff.', 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.patient_revived'), 'success')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_were_revived_by_medical_staff'), 'success')
     recordActivity(source, 'revive', targetId, {})
 
     local call = nil
@@ -117,7 +117,7 @@ AddEventHandler('sunset:dispatch:serviceCommand', function(callerSource, service
             local char = FactionCore.getChar(src)
             local factionId = char and FactionCore.getFactionOf(char)
             if factionId and Sunset.FactionTypeMatches(factionId, 'ems') then
-                notify(src, ('Medic dispatch #%s — /accept medic %s'):format(callId, callId), 'warning', 10000)
+                notify(src, exports.sunset_core:TFor(src, 'factions.msg.medic_dispatch_accept_medic', { call_id = tostring(callId), call_id_2 = tostring(callId) }), 'warning', 10000)
             end
         end
     end
@@ -150,7 +150,7 @@ AddEventHandler('sunset:death:playerDowned', function(victimSource)
             if factionId and (Sunset.FactionTypeMatches(factionId, 'ems') or Sunset.FactionTypeMatches(factionId, 'fire_rescue')) then
                 local pos = FactionCore.playerCoords(src)
                 if FactionCore.distBetween(coords, pos) <= (Sunset.Death and Sunset.Death.emsNotifyRadius or 500.0) then
-                    notify(src, ('Injured civilian nearby (ID %s) — respond or /service medic'):format(victimSource), 'warning', 8000)
+                    notify(src, exports.sunset_core:TFor(src, 'factions.msg.injured_civilian_nearby_id_respond_or', { victim_source = tostring(victimSource) }), 'warning', 8000)
                 end
             end
         end

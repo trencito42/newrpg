@@ -31,21 +31,19 @@ function Sunset.CommandDenyAdmin(source, cmd)
         return exports.sunset_admin:GetAdminLevel(source)
     end)
     if ok then level = tonumber(lvl) or 0 end
-    push(source, ('Comanda /%s necesita Admin Level %d. Nivelul tau: %d.'):format(
-        tostring(cmd or 'comanda'), need, level
-    ), 'error')
+    push(source, Sunset.TFor(source, 'core.msg.comanda_necesita_admin_level_nivelul_tau', { cmd = tostring(cmd or 'comanda'), need = math.floor(tonumber(need) or 0), level = math.floor(tonumber(level) or 0) }), 'error')
     return true
 end
 
 function Sunset.CommandDenyHeal(source)
     push(source,
-        '/heal requires Admin level 2+, or on-duty EMS/LSFD with heal permission at your faction HQ.',
+        Sunset.TFor(source, 'core.msg.heal_requires_admin_level_2_or'),
         'error')
 end
 
 function Sunset.CommandDenyRevive(source)
     push(source,
-        '/revive requires Admin level 2+, or on-duty EMS with revive permission at Pillbox.',
+        Sunset.TFor(source, 'core.msg.revive_requires_admin_level_2_or'),
         'error')
 end
 
@@ -61,14 +59,14 @@ end
 function Sunset.CommandPlayerNotFound(source, idArg)
     local ids = Sunset.OnlinePlayerIds()
     local hint = #ids > 0
-        and (' Players online: ' .. table.concat(ids, ', ') .. '.')
-        or ' Nobody is online right now.'
-    push(source, ('No online player matches "%s".%s'):format(tostring(idArg or '?'), hint), 'error')
+        and Sunset.TFor(source, 'core.msg.players_online_list', { ids = table.concat(ids, ', ') })
+        or Sunset.TFor(source, 'core.msg.nobody_online')
+    push(source, Sunset.TFor(source, 'core.msg.no_online_player_matches', { id_arg = tostring(idArg or '?'), hint = tostring(hint) }), 'error')
 end
 
 function Sunset.CommandNoCharacter(source, targetId)
     push(source,
-        ('Player #%d is connected but has not loaded a character yet.'):format(tonumber(targetId) or 0),
+        Sunset.TFor(source, 'core.msg.player_is_connected_but_has_not', { target_id = math.floor(tonumber(tonumber(targetId) or 0) or 0) }),
         'error')
 end
 

@@ -245,11 +245,36 @@ end)
 
 AddEventHandler('onResourceStart', function(resource)
     if resource ~= GetCurrentResourceName() then return end
-    Wait(1000)
+    do -- readiness poll (was blind Wait(1000)), bounded 10 s
+        local deadline = GetGameTimer() + 10000
+        while GetGameTimer() < deadline do
+            local ok, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
+            if ok and ready then break end
+            Wait(250)
+        end
+    end
     local existing = exports.sunset_core:GetCharacter()
     if existing and existing.id then
         activateHud(existing)
     end
+end)
+
+-- [RESTART SAFETY] `restart sunset_ui` reloads the page empty: re-send the HUD.
+-- `restart sunset_hud`: hide the page HUD and give the radar back on stop.
+AddEventHandler('sunset:ui:ready', function()
+    lastHudHash = ''
+    if hudActive and char then
+        CreateThread(function()
+            Wait(300)
+            if hudActive then activateHud(char) end
+        end)
+    end
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    pcall(function() exports.sunset_ui:Send('hideHud', {}) end)
+    DisplayRadar(true)
 end)
 
 function GetPaydaySeconds()

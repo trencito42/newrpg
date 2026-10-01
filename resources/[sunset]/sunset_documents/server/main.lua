@@ -25,7 +25,7 @@ exports.sunset_core:RegisterCallback('sunset:getDocuments', function(source, kin
 
     local invLicenses = {}
     if exports.sunset_inventory:HasItem(source, 'id_card') then
-        invLicenses[#invLicenses + 1] = { license_type = 'id_card', label = 'ID Card', issued_at = 'Inventory item', valid = true }
+        invLicenses[#invLicenses + 1] = { license_type = 'id_card', label = exports.sunset_core:TFor(source, 'documents.ui.id_card'), issued_at = 'Inventory item', valid = true }
     end
 
     local allLicenses = licenses

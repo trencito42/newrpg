@@ -11,14 +11,14 @@ local function notify(message, kind, duration)
 end
 
 local function loadVehicleModel(modelName)
-    local hash = joaat(modelName)
-    if not IsModelInCdimage(hash) or not IsModelAVehicle(hash) then
+    local ok, hash = Sunset.RequestModelSafe(modelName, 8000)
+    if not ok or not hash then
+        return nil, { localeKey = 'dealership.message.the_vehicle_model_did_not_finish_loading_try_again' }
+    end
+    if not IsModelAVehicle(hash) then
+        SetModelAsNoLongerNeeded(hash)
         return nil, { localeKey = 'dealership.message.vehicle_model_value_is_not_available_in_this_game', formatArgs = { tostring(modelName) } }
     end
-    RequestModel(hash)
-    local timeout = GetGameTimer() + 8000
-    while not HasModelLoaded(hash) and GetGameTimer() < timeout do Wait(10) end
-    if not HasModelLoaded(hash) then return nil, { localeKey = 'dealership.message.the_vehicle_model_did_not_finish_loading_try_again' } end
     return hash
 end
 
@@ -125,7 +125,7 @@ end
 local function openDealer(asAdmin)
     if dealerOpen or testDriveActive or IsNuiFocused() then return end
     local data, err = Sunset.AwaitCallback('sunset:dealership:getCatalog', asAdmin == true)
-    if not data then return notify(err or 'The dealership catalog could not be loaded.', 'error') end
+    if not data then return notify(err or exports.sunset_core:Translate('dealership.msg.the_dealership_catalog_could_not_be'), 'error') end
     dealerOpen = true
     adminMode = asAdmin == true
     exports.sunset_ui:Send('dealershipShow', data)
@@ -164,12 +164,11 @@ AddEventHandler('sunset:nui:dealershipBuy', function(data)
     CreateThread(function()
         local result, err = Sunset.AwaitCallback('sunset:dealership:purchase', data.model, tonumber(data.color) or 0)
         if not result then
-            notify(err or 'The vehicle could not be purchased.', 'error', 7000)
+            notify(err or exports.sunset_core:Translate('dealership.msg.the_vehicle_could_not_be_purchased'), 'error', 7000)
             refreshDealer()
             return
         end
-        notify(('%s purchased. Plate %s is waiting at Legion Garage.'):format(
-            result.label or result.model, result.plate), 'success', 8000)
+        notify(exports.sunset_core:Translate('dealership.msg.purchased_plate_is_waiting_at_legion', { label = tostring(result.label or result.model), plate = tostring(result.plate) }), 'success', 8000)
         refreshDealer()
     end)
 end)
@@ -187,14 +186,14 @@ local function endTestDrive(message)
     local ret = Sunset.Dealership.testDriveReturn
     SetEntityCoordsNoOffset(ped, ret.x, ret.y, ret.z, false, false, false)
     SetEntityHeading(ped, ret.w or 0.0)
-    notify(message or 'Test drive finished. You have been returned to the dealership.', 'info', 6000)
+    notify(message or exports.sunset_core:Translate('dealership.msg.test_drive_finished_you_have_been'), 'info', 6000)
 end
 
 AddEventHandler('sunset:nui:dealershipTestDrive', function(data)
     if not dealerOpen or adminMode or not data or not data.model then return end
     CreateThread(function()
         local drive, err = Sunset.AwaitCallback('sunset:dealership:testDrive', data.model)
-        if not drive then return notify(err or 'Test drive is not available.', 'error') end
+        if not drive then return notify(err or exports.sunset_core:Translate('dealership.msg.test_drive_is_not_available'), 'error') end
         local hash, modelErr = loadVehicleModel(drive.model)
         if not hash then return notify(modelErr, 'error') end
         closeDealer()
@@ -240,13 +239,12 @@ end)
 AddEventHandler('sunset:nui:dealershipAdminSave', function(data)
     if not dealerOpen or not adminMode then return end
     if not data or not data.model or not IsModelInCdimage(joaat(data.model)) or not IsModelAVehicle(joaat(data.model)) then
-        return notify(('"%s" is not a valid vehicle spawn model in this game build.'):format(
-            data and tostring(data.model) or ''), 'error', 7000)
+        return notify(exports.sunset_core:Translate('dealership.msg.is_not_a_valid_vehicle_spawn', { data = tostring(data and tostring(data.model) or '') }), 'error', 7000)
     end
     CreateThread(function()
         local result, err = Sunset.AwaitCallback('sunset:dealership:adminSave', data)
-        if not result then return notify(err or 'The dealership entry could not be saved.', 'error', 7000) end
-        notify(('Dealership entry %s saved.'):format(data.model or ''), 'success')
+        if not result then return notify(err or exports.sunset_core:Translate('dealership.msg.the_dealership_entry_could_not_be'), 'error', 7000) end
+        notify(exports.sunset_core:Translate('dealership.msg.dealership_entry_saved', { model = tostring(data.model or '') }), 'success')
         exports.sunset_ui:Send('dealershipUpdate', {
             dealership = Sunset.Dealership.label, admin = true, vehicles = result.vehicles,
         })
@@ -257,9 +255,9 @@ AddEventHandler('sunset:nui:dealershipAdminDelete', function(data)
     if not dealerOpen or not adminMode or not data or not data.model then return end
     CreateThread(function()
         local result, err = Sunset.AwaitCallback('sunset:dealership:adminDelete', data.model)
-        if not result then return notify(err or 'The dealership entry could not be deleted.', 'error') end
+        if not result then return notify(err or exports.sunset_core:Translate('dealership.msg.the_dealership_entry_could_not_be_2'), 'error') end
         deletePreview()
-        notify(('Removed %s from the dealership catalog.'):format(data.model), 'success')
+        notify(exports.sunset_core:Translate('dealership.msg.removed_from_the_dealership_catalog', { model = tostring(data.model) }), 'success')
         exports.sunset_ui:Send('dealershipUpdate', {
             dealership = Sunset.Dealership.label, admin = true, vehicles = result.vehicles,
         })
@@ -268,16 +266,32 @@ end)
 
 local dealerBlip = nil
 CreateThread(function()
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
+    end
+
     local cfg = Sunset.Dealership
-    local blip = AddBlipForCoord(cfg.coords.x, cfg.coords.y, cfg.coords.z)
-    dealerBlip = blip
-    SetBlipSprite(blip, cfg.blip.sprite)
-    SetBlipColour(blip, cfg.blip.color)
-    SetBlipScale(blip, cfg.blip.scale)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(cfg.label)
-    EndTextCommandSetBlipName(blip)
+    if Sunset and Sunset.CreateSafeBlip then
+        dealerBlip = Sunset.CreateSafeBlip(cfg.coords, {
+            sprite = cfg.blip.sprite,
+            color = cfg.blip.color,
+            scale = cfg.blip.scale,
+            shortRange = true,
+            label = cfg.label,
+        })
+    else
+        pcall(function()
+            dealerBlip = exports.sunset_core:CreateSafeBlip(cfg.coords, {
+                sprite = cfg.blip.sprite,
+                color = cfg.blip.color,
+                scale = cfg.blip.scale,
+                shortRange = true,
+                label = cfg.label,
+            })
+        end)
+    end
 
     while true do
         local ped = PlayerPedId()

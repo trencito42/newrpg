@@ -150,7 +150,7 @@ local function scheduleTimeout(callId)
         pcall(function() persistStatus(callId, call.status, nil) end)
         local callerSrc = call.callerSource or findSourceByCharacterId(call.callerCharacterId)
         if callerSrc then
-            notify(callerSrc, 'Your service request timed out — no responders available', 'warning')
+            notify(callerSrc, exports.sunset_core:TFor(callerSrc, 'dispatch.msg.your_service_request_timed_out_no'), 'warning')
             emitClient('sunset:dispatch:callEnded', callerSrc, serializeCall(call, callerSrc))
         end
         broadcastProviders(call.callType, 'sunset:dispatch:callUpdated', serializeCall(call))
@@ -263,7 +263,7 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
     -- [SEC3] /service police_backup let any civilian raise officer-backup alerts to every responder
     -- (the 'backup' faction perm is only enforced on the police callback). Require an on-duty responder.
     if not isSystem and callType == 'police_backup' and not isEmergencyResponder(source) then
-        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_provider', params = { label = 'Officer Backup' } }
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_provider', params = { label = exports.sunset_core:TFor(source, 'dispatch.ui.officer_backup') } }
     end
     if not isSystem then
         local providers = 0
@@ -278,13 +278,13 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
         local rateKey = callType == 'police_backup' and 'backupMs' or 'createMs'
         if not checkRateLimit(source, rateKey) then
             return nil, callType == 'police_backup'
-                and 'Please wait before requesting backup again'
-                or 'Please wait before requesting another service'
+                and exports.sunset_core:TFor(source, 'dispatch.err.please_wait_before_requesting_backup_again')
+                or exports.sunset_core:TFor(source, 'dispatch.err.please_wait_before_requesting_another_servic')
         end
         if ServiceCore.getPlayerActiveCall(source, callType) then
             return nil, callType == 'police_backup'
-                and 'You already have an active backup request — use /cbackup to cancel'
-                or 'You already have an active service request'
+                and exports.sunset_core:TFor(source, 'dispatch.err.you_already_have_an_active_backup')
+                or exports.sunset_core:TFor(source, 'dispatch.err.you_already_have_an_active_service')
         end
     end
 
@@ -319,8 +319,8 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
     local label = Sunset.Dispatch.ServiceTypes[callType].label or callType
     if not isSystem then
         notify(source, callType == 'police_backup'
-            and 'Backup request sent — use /cbackup to cancel'
-            or ('%s request sent — waiting for a responder'):format(label), 'success')
+            and exports.sunset_core:TFor(source, 'dispatch.msg.backup_request_sent_use_cbackup_to')
+            or exports.sunset_core:TFor(source, 'dispatch.msg.request_sent_waiting_for_a_responder', { label = tostring(label) }), 'success')
     end
     if callType == 'police_backup' then
         broadcastBackupResponders('sunset:dispatch:backupAlert', payload, source)
@@ -329,7 +329,7 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
         TriggerEvent('sunset:jobs:notifyMechanicCall', {
             id = call.id,
             callType = callType,
-            label = description ~= '' and description or 'Mechanic service request',
+            label = description ~= '' and description or exports.sunset_core:TFor(source, 'dispatch.ui.mechanic_service_request'),
             coords = coords,
             callerName = callerName,
             description = description,
@@ -381,7 +381,7 @@ function ServiceCore.acceptCall(source, callType, callId)
 
         if call.status == Sunset.Dispatch.States.ASSIGNED and call.responderCharacterId == char.id then
             emitClient('sunset:dispatch:waypoint', source, call.coords)
-            notify(source, ('Call #%d GPS route updated'):format(callId), 'success')
+            notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.call_gps_route_updated', { call_id = math.floor(tonumber(callId) or 0) }), 'success')
             return serializeCall(call, source)
         end
 
@@ -410,11 +410,11 @@ function ServiceCore.acceptCall(source, callType, callId)
         local payload = serializeCall(call, source)
         local callerSrc = call.callerSource or findSourceByCharacterId(call.callerCharacterId)
         if callerSrc and callerSrc ~= source then
-            notify(callerSrc, ('%s accepted your request'):format(call.responderName), 'success')
+            notify(callerSrc, exports.sunset_core:TFor(callerSrc, 'dispatch.msg.accepted_your_request', { responder_name = tostring(call.responderName) }), 'success')
             emitClient('sunset:dispatch:callAccepted', callerSrc, payload)
         end
         emitClient('sunset:dispatch:waypoint', source, call.coords)
-        notify(source, ('Call #%d accepted (10-97 En Route) — GPS set'):format(callId), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'dispatch.msg.call_accepted_10_97_en_route', { call_id = math.floor(tonumber(callId) or 0) }), 'success')
         broadcastProviders(call.callType, 'sunset:dispatch:callTaken', { id = callId })
         broadcastProviders(call.callType, 'sunset:dispatch:callUpdated', payload)
         TriggerEvent('sunset:dispatch:callAccepted', callId, call.callType, source, callerSrc)
@@ -462,14 +462,14 @@ function ServiceCore.cancelCall(source, callType, callId, reason)
     local callerSrc = call.callerSource or findSourceByCharacterId(call.callerCharacterId)
     local responderSrc = call.responderSource or findSourceByCharacterId(call.responderCharacterId)
     if callerSrc and callerSrc ~= source then
-        notify(callerSrc, reason or 'Service call was cancelled', 'warning')
+        notify(callerSrc, reason or exports.sunset_core:TFor(callerSrc, 'dispatch.msg.service_call_was_cancelled'), 'warning')
         emitClient('sunset:dispatch:callEnded', callerSrc, payload)
     end
     if callType == 'police_backup' then
         broadcastBackupResponders('sunset:dispatch:backupEnded', payload)
     end
     if responderSrc and responderSrc ~= source then
-        notify(responderSrc, reason or 'Service call was cancelled', 'warning')
+        notify(responderSrc, reason or exports.sunset_core:TFor(responderSrc, 'dispatch.msg.service_call_was_cancelled'), 'warning')
         emitClient('sunset:dispatch:callEnded', responderSrc, payload)
     end
     broadcastProviders(callType, 'sunset:dispatch:callUpdated', payload)
@@ -566,7 +566,7 @@ function ServiceCore.handleDisconnect(source)
                 end)
                 local callerSrc = call.callerSource or findSourceByCharacterId(call.callerCharacterId)
                 if callerSrc then
-                    notify(callerSrc, 'Responder disconnected — searching for another provider', 'warning')
+                    notify(callerSrc, exports.sunset_core:TFor(callerSrc, 'dispatch.msg.responder_disconnected_searching_for_another'), 'warning')
                 end
                 broadcastProviders(call.callType, 'sunset:dispatch:newCall', serializeCall(call))
                 scheduleTimeout(callId)

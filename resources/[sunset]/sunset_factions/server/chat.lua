@@ -45,12 +45,12 @@ end
 local function resolveFactionMember(source)
     local char = FactionCore.getChar(source)
     if not char then
-        FactionCore.notify(source, 'Your character is not loaded. Reconnect and try again.', 'error')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'clans.message.your_character_is_not_loaded_reconnect_and_try_again'), 'error')
         return nil
     end
     local factionId, grade = FactionCore.ensureFactionMembership(source, char)
     if not factionId then
-        FactionCore.notify(source, 'You are not in a faction. Use /factions to browse or ask staff if you should be a member.', 'error')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.you_are_not_in_a_faction'), 'error')
         return nil
     end
     return char, factionId, grade
@@ -60,15 +60,15 @@ local function sendFactionChat(source, channel, args, filterFn)
     local char, factionId = resolveFactionMember(source)
     if not char then return end
     if not FactionCore.checkRateLimit(source, 'chat_' .. channel, CHAT_COOLDOWN_MS) then
-        return FactionCore.notify(source, 'Slow down — message rate limited', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'clans.msg.slow_down_message_rate_limited'), 'error')
     end
 
     local msg = table.concat(args, ' ')
     if msg == '' then
-        return FactionCore.notify(source, ('Usage: /%s [message]'):format(channel), 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.usage_message', { channel = tostring(channel) }), 'error')
     end
     if #msg > 256 then
-        return FactionCore.notify(source, 'Message too long', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'clans.msg.message_too_long'), 'error')
     end
 
     local name = exports.sunset_core:GetPlayerBaseName(source)
@@ -161,7 +161,7 @@ local function runRadioChat(source, args)
     local char, factionId = resolveFactionMember(source)
     if not char then return end
     if not isEmergencyDepartment(factionId) then
-        return FactionCore.notify(source, 'Faction radio (/r) is for LSPD, Sheriff, FIB, EMS, and LSFD — use /f instead.', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.faction_radio_r_is_for_lspd'), 'error')
     end
     sendFactionChat(source, 'r', args, function(src, c, senderFactionId)
         return memberInFaction(src, c, senderFactionId)
@@ -176,7 +176,7 @@ local function runDepartmentChat(source, args)
     local char, factionId = resolveFactionMember(source)
     if not char then return end
     if not isEmergencyDepartment(factionId) then
-        return FactionCore.notify(source, 'Department radio is for LSPD, Sheriff, FIB, EMS, and LSFD', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.department_radio_is_for_lspd_sheriff'), 'error')
     end
     sendFactionChat(source, 'd', args, function(src, c)
         local id = select(1, FactionCore.getFactionOf(c))
@@ -192,14 +192,14 @@ RegisterCommand('d', runDepartmentChat, false)
 local function runSpyToggle(source)
     if source == 0 then return end
     if GetResourceState('sunset_admin') ~= 'started' or not exports.sunset_admin:IsAdmin(source, SPY_ADMIN_LEVEL) then
-        return FactionCore.notify(source, 'No permission', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'admin.message.no_permission'), 'error')
     end
     if SpyEnabled[source] == false then
         SpyEnabled[source] = true
-        FactionCore.notify(source, 'Faction chat spy ON — you will see /f, /r, and /d traffic.', 'success')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.faction_chat_spy_on_you_will'), 'success')
     else
         SpyEnabled[source] = false
-        FactionCore.notify(source, 'Faction chat spy OFF.', 'info')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.faction_chat_spy_off'), 'info')
     end
 end
 
@@ -215,18 +215,18 @@ local function runGovAnnouncement(source, args)
     if not char then return end
     if not isGovEligible(source, char) then
         return FactionCore.notify(source,
-            'Only on-duty LSPD, Sheriff, FIB, EMS, or LSFD can send government announcements.', 'error')
+            exports.sunset_core:TFor(source, 'factions.msg.only_on_duty_lspd_sheriff_fib'), 'error')
     end
     if not FactionCore.checkRateLimit(source, 'chat_gov', 5000) then
-        return FactionCore.notify(source, 'Government announcements are rate limited — wait a few seconds.', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.government_announcements_are_rate_limited_wa'), 'error')
     end
 
     local msg = table.concat(args, ' ')
     if msg == '' then
-        return FactionCore.notify(source, 'Usage: /gov [announcement]', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.usage_gov_announcement'), 'error')
     end
     if #msg > 512 then
-        return FactionCore.notify(source, 'Government announcement too long (max 512 characters)', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.government_announcement_too_long_max_512'), 'error')
     end
 
     local factionId = select(1, FactionCore.getFactionOf(char))
@@ -259,13 +259,13 @@ RegisterCommand('gov', runGovAnnouncement, false)
 local function runMegaphone(source, args)
     if source == 0 then return end
     if not FactionCore.hasPerm(source, 'megaphone') then
-        return FactionCore.notify(source, 'No megaphone permission', 'error')
+        return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.no_megaphone_permission'), 'error')
     end
     if not FactionCore.checkRateLimit(source, 'megaphone', 2000) then return end
 
     local msg = table.concat(args, ' ')
-    if msg == '' then return FactionCore.notify(source, 'Usage: /m [message]', 'error') end
-    if #msg > 256 then return FactionCore.notify(source, 'Megaphone message is too long (maximum 256 characters)', 'error') end
+    if msg == '' then return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.usage_m_message'), 'error') end
+    if #msg > 256 then return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.megaphone_message_is_too_long_maximum'), 'error') end
 
     local pos = FactionCore.playerCoords(source)
     for _, id in ipairs(GetPlayers()) do
@@ -328,7 +328,7 @@ function RunChatCommand(source, name, args)
     local ok, err = pcall(handler, source, args)
     if not ok then
         print(('[sunset_factions] chat command /%s failed for #%s: %s'):format(name, tostring(source), tostring(err)))
-        FactionCore.notify(source, ('Faction chat failed: %s'):format(tostring(err)), 'error')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.faction_chat_failed', { err = tostring(err) }), 'error')
     end
     return true
 end

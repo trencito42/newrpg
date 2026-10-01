@@ -69,12 +69,12 @@ local function buildStoreActions(ctx)
     local shopLabel = (ctx and ctx.shopLabel) or '24/7 Store'
     actions[#actions + 1] = {
         id = 'open_shop_247',
-        label = ('Open %s'):format(shopLabel),
+        label = exports.sunset_core:Translate('world.ui.open', { shop_label = tostring(shopLabel) }),
         group = 'STORE',
     }
     actions[#actions + 1] = {
         id = 'sell_fish_247',
-        label = 'Sell Fish',
+        label = exports.sunset_core:Translate('fishingshop.menu.sell_fish'),
         group = 'STORE',
     }
 
@@ -82,13 +82,13 @@ local function buildStoreActions(ctx)
     if biz and not biz.owned and biz.forSale then
         actions[#actions + 1] = {
             id = 'buy_business',
-            label = ('Buy Business (%s)'):format(formatMoney(biz.price)),
+            label = exports.sunset_core:Translate('world.ui.buy_business', { format_money = tostring(formatMoney(biz.price)) }),
             group = 'BUSINESS',
         }
     elseif biz and biz.mine then
         actions[#actions + 1] = {
             id = 'manage_business',
-            label = 'Manage Business',
+            label = exports.sunset_core:Translate('fishingshop.menu.manage_business'),
             group = 'BUSINESS',
         }
     end
@@ -131,20 +131,39 @@ end
 
 local storeBlips = {}
 CreateThread(function()
-    Wait(1500)
+    if Sunset and Sunset.AwaitGameReady then
+        Sunset.AwaitGameReady()
+    else
+        pcall(function() exports.sunset_core:AwaitGameReady() end)
+    end
+
     local shopPreset = (Sunset.WorldBlips and Sunset.WorldBlips.shop) or { sprite = 52, color = 2, scale = 0.70 }
     for index, store in ipairs(Sunset.TwentyFourSevenStores or {}) do
         spawnCashier(store, index)
         if store.coords then
-            local blip = AddBlipForCoord(store.coords.x, store.coords.y, store.coords.z)
-            storeBlips[#storeBlips + 1] = blip
-            SetBlipSprite(blip, shopPreset.sprite or 52)
-            SetBlipColour(blip, shopPreset.color or 2)
-            SetBlipScale(blip, shopPreset.scale or 0.70)
-            SetBlipAsShortRange(blip, true)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentSubstringPlayerName(store.label or '24/7 Store')
-            EndTextCommandSetBlipName(blip)
+            local blip = nil
+            if Sunset and Sunset.CreateSafeBlip then
+                blip = Sunset.CreateSafeBlip(store.coords, {
+                    sprite = shopPreset.sprite or 52,
+                    color = shopPreset.color or 2,
+                    scale = shopPreset.scale or 0.70,
+                    shortRange = true,
+                    label = store.label or exports.sunset_core:Translate('fishingshop.menu.default_shop'),
+                })
+            else
+                pcall(function()
+                    blip = exports.sunset_core:CreateSafeBlip(store.coords, {
+                        sprite = shopPreset.sprite or 52,
+                        color = shopPreset.color or 2,
+                        scale = shopPreset.scale or 0.70,
+                        shortRange = true,
+                        label = store.label or exports.sunset_core:Translate('fishingshop.menu.default_shop'),
+                    })
+                end)
+            end
+            if blip then
+                storeBlips[#storeBlips + 1] = blip
+            end
         end
     end
 end)
@@ -225,7 +244,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 else
                     exports.sunset_ui:Send('fishingShopShow', {
                         mode = 'sell',
-                        title = '24/7 — SELL FISH',
+                        title = exports.sunset_core:Translate('fishingshop.ui.sell_fish_247_title'),
                         cash = invData.cash,
                         items = invData.items,
                     })
@@ -233,7 +252,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     shopOpen = true
                 end
             else
-                notify(err or 'Failed to load inventory.', 'error')
+                notify(err or exports.sunset_core:Translate('fishingshop.message.inventory_load_failed'), 'error')
             end
         end)
 
@@ -246,9 +265,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, err = Sunset.AwaitCallback('sunset:buyBusiness', biz.id)
             if ok then
-                notify(err or 'Business purchased.', 'success')
+                notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchased'), 'success')
             else
-                notify(err or 'Could not buy business.', 'error')
+                notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchase_failed'), 'error')
             end
         end)
 

@@ -30,7 +30,7 @@ local function playEmote(name)
     end
 
     local emote = Emotes[name]
-    if not emote then return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.message.unknown_emote') .. tostring(name), 'error') end
+    if not emote then return exports.sunset_ui:Notify(exports.sunset_core:Translate('emotes.msg.unknown_emote', { name = tostring(name) }), 'error') end
 
     local ped = PlayerPedId()
     -- [FIX] In a vehicle: only upper-body emotes (flag 49) are safe.

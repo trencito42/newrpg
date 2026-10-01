@@ -147,7 +147,7 @@ const TruckerLaptop = {
         );
         this._routeList.innerHTML = '';
         if (routes.length === 0) {
-            this._routeList.innerHTML = '<div class="tl-empty">No routes in this category</div>';
+            this._routeList.innerHTML = `<div class="tl-empty">${I18n.t('ui.trucker.no_routes')}</div>`;
             return;
         }
         for (const route of routes) {
@@ -158,17 +158,17 @@ const TruckerLaptop = {
             el.dataset.routeIdx = route.index;
             el.innerHTML = `
                 <div class="tl-route-main">
-                    <div class="tl-route-label">${route.label}</div>
+                    <div class="tl-route-label">${I18n.label(route.label)}</div>
                     <div class="tl-route-meta">
                         ${hasBonus
-                            ? `<span class="tl-rank-bonus"><i class="ph-bold ph-trend-up"></i> +${bonus}% rank bonus</span>`
-                            : `<span class="tl-rank-base"><i class="ph-bold ph-check-circle"></i> Available</span>`
+                            ? `<span class="tl-rank-bonus"><i class="ph-bold ph-trend-up"></i> ${I18n.t('ui.trucker.rank_bonus', { bonus })}</span>`
+                            : `<span class="tl-rank-base"><i class="ph-bold ph-check-circle"></i> ${I18n.t('ui.trucker.available')}</span>`
                         }
                     </div>
                 </div>
                 <div class="tl-route-pay">
-                    $${Number(route.pay).toLocaleString()}
-                    ${hasBonus ? `<span class="tl-base-pay">base $${Number(route.basePay).toLocaleString()}</span>` : ''}
+                    $${I18n.number(Number(route.pay))}
+                    ${hasBonus ? `<span class="tl-base-pay">${I18n.t('ui.trucker.base_pay', { amount: I18n.number(Number(route.basePay)) })}</span>` : ''}
                 </div>
             `;
             el.addEventListener('click', () => this._selectRoute(route));
@@ -196,7 +196,7 @@ const TruckerLaptop = {
         const sel = this._state?.selectedRoute;
         this._acceptBtn.disabled = !sel;
         this._acceptBtn.querySelector('.st-btn-text').textContent =
-            sel ? `ACCEPT ROUTE` : 'SELECT A ROUTE';
+            sel ? I18n.t('ui.trucker.accept_route') : I18n.t('ui.trucker.select_route');
     },
 
     // ── Accept ───────────────────────────────────────────────

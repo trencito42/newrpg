@@ -44,7 +44,7 @@ RegisterNetEvent('sunset:client:glueApply', function(targetSrc, vehicleNetId, ox
         local veh = NetworkGetEntityFromNetworkId(vehicleNetId)
         local plate = veh ~= 0 and GetVehicleNumberPlateText(veh) or '???'
         plate = plate:match('^%s*(.-)%s*$')
-        notify(('Glued to [%s]. /unglue to detach.'):format(plate), 'success')
+        notify(exports.sunset_core:Translate('world.msg.glued_to_unglue_to_detach', { plate = tostring(plate) }), 'success')
 
         -- Disable controls while glued (checked per-frame via a one-shot thread
         -- that exits when the entity is no longer attached).

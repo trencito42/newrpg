@@ -90,7 +90,7 @@ local function syncIncidents(list, routeFirst)
     end
     if routeFirst and list and list[1] then
         SetNewWaypoint(list[1].coords.x, list[1].coords.y)
-        notify(('GPS set to fire incident #%s'):format(list[1].id), 'success')
+        notify(exports.sunset_core:Translate('fire.msg.gps_set_to_fire_incident', { id = tostring(list[1].id) }), 'success')
     end
 end
 
@@ -99,7 +99,7 @@ RegisterNetEvent('sunset:fire:newIncident', function(inc)
     inc = storeIncident(inc)
     spawnIncidentVehicle(inc)
     SetNewWaypoint(inc.coords.x, inc.coords.y)
-    notify(('Vehicle fire reported — incident #%s'):format(inc.id), 'warning', 8000)
+    notify(exports.sunset_core:Translate('fire.msg.vehicle_fire_reported_incident', { id = tostring(inc.id) }), 'warning', 8000)
 end)
 
 RegisterNetEvent('sunset:fire:incidentUpdate', function(inc)
@@ -163,12 +163,11 @@ end)
 RegisterCommand('firecalls', function()
     CreateThread(function()
         local list, err = Sunset.AwaitCallback('sunset:fireGetIncidents')
-        if not list then return notify(err or 'Could not load fire incidents', 'error') end
+        if not list then return notify(err or exports.sunset_core:Translate('fire.msg.could_not_load_fire_incidents'), 'error') end
         if #list < 1 then return notify(exports.sunset_core:Translate('fire.message.no_active_fire_incidents_use_firestart'), 'info') end
         syncIncidents(list, true)
         for _, inc in ipairs(list) do
-            notify(('#%s — %s (%s%% remaining)'):format(
-                inc.id, inc.label, math.floor((inc.fireHealth / inc.maxHealth) * 100)), 'info', 6000)
+            notify(exports.sunset_core:Translate('fire.msg.remaining', { id = tostring(inc.id), label = tostring(inc.label), value = tostring(math.floor((inc.fireHealth / inc.maxHealth) * 100)) }), 'info', 6000)
         end
     end)
 end, false)
@@ -176,9 +175,9 @@ end, false)
 RegisterCommand('firestart', function()
     CreateThread(function()
         local result, err = Sunset.AwaitCallback('sunset:fireRequestIncident')
-        if not result then return notify(err or 'Could not request incident', 'error') end
+        if not result then return notify(err or exports.sunset_core:Translate('fire.msg.could_not_request_incident'), 'error') end
         syncIncidents(result.incidents or {}, true)
-        notify(result.existing and 'Existing LSFD incident loaded' or 'New LSFD incident dispatched', 'warning')
+        notify(result.existing and exports.sunset_core:Translate('fire.msg.existing_lsfd_incident_loaded') or exports.sunset_core:Translate('fire.msg.new_lsfd_incident_dispatched'), 'warning')
     end)
 end, false)
 

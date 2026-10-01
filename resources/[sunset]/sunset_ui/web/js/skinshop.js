@@ -90,7 +90,7 @@ const SkinShopUI = (() => {
             row.className = 'sk-skin-row' + (selectedSkin?.model === skin.model ? ' is-active' : '');
             row.dataset.model = skin.model;
 
-            const priceText = skin.isDefault ? I18n.t('skinshop.original_outfit') : (skin.battlepass ? I18n.t('skinshop.battlepass') : (skin.owned ? I18n.t('skinshop.owned') : `$${(skin.priceCash || 0).toLocaleString()}`));
+            const priceText = skin.isDefault ? I18n.t('skinshop.original_outfit') : (skin.battlepass ? I18n.t('skinshop.battlepass') : (skin.owned ? I18n.t('skinshop.owned') : `$${I18n.number((skin.priceCash || 0))}`));
             let badge = '';
             if (skin.isDefault)       badge = '<span class="sk-skin-row-badge badge-owned">★</span>';
             else if (skin.owned)      badge = '<span class="sk-skin-row-badge badge-owned">✓</span>';
@@ -140,7 +140,7 @@ const SkinShopUI = (() => {
         if (!skin.battlepass) {
             const cashEl = $('#sk-price-cash');
             const ppEl   = $('#sk-price-pp');
-            if (cashEl) cashEl.textContent = `$${(skin.priceCash || 0).toLocaleString()}`;
+            if (cashEl) cashEl.textContent = `$${I18n.number((skin.priceCash || 0))}`;
             if (ppEl)   ppEl.textContent   = `${skin.pricePP || 0} PP`;
         }
 

@@ -26,7 +26,7 @@ const Scoreboard = {
         const max = data.max || 48;
         const title = document.getElementById('sb-title-text');
         const countEl = document.getElementById('sb-title-count');
-        if (title) title.textContent = data.serverName || 'Los Santos';
+        if (title) title.textContent = data.serverName || I18n.t('ui.mdc.los_santos');
         if (countEl) countEl.textContent = `${count} / ${max}`;
 
         const stats = data.stats || {};
@@ -48,7 +48,7 @@ const Scoreboard = {
             const identity = window.SunsetPlayerIdentity;
             const playerName = identity
                 ? identity.formatNameHtml(player)
-                : this.escape(player.name || 'Player');
+                : this.escape(player.name || I18n.t('common.player'));
             row.innerHTML = `
                 <div class="sb-id">${player.id}</div>
                 <div class="sb-name">${playerName}</div>

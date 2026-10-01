@@ -1,7 +1,4 @@
-// Template replacement with language
-for (let i = 1; i <= 12; i++) {
-  $('#target' + i).text(languages[config.language]['target' + i]);
-}
+// Static labels are translated by I18n (data-i18n in ui.html); dynamic labels below use I18n.t.
 
 const SLOTS_PER_REEL = 12;
 const REEL_RADIUS = 209;
@@ -121,11 +118,11 @@ function endWithWin(x, sound, canGamble) {
   $('#win').empty().append(x);
   $('.win').show();
 
-  $('.betUp').empty().append(languages[config.language].red).css({
+  $('.betUp').empty().append(I18n.t('ui.slots.red')).css({
     "background-color": "#B9384B"
   });
-  $('.AllIn').empty().append(languages[config.language].black);
-  $('.go').empty().append(languages[config.language].take_money);
+  $('.AllIn').empty().append(I18n.t('ui.slots.black'));
+  $('.go').empty().append(I18n.t('ui.slots.take_money'));
 
 
 
@@ -150,9 +147,9 @@ function looseDouble() {
   dubleDate = 0;
   $('.win').hide();
 
-  $('.betUp').empty().append(languages[config.language].more_bet).css("background-color", "#4F4B4B").prop("disabled",false);
-  $('.AllIn').empty().append(languages[config.language].allin).css("background-color", "#011627").prop("disabled",false);
-  $('.go').empty().append(languages[config.language].roll);
+  $('.betUp').empty().append(I18n.t('ui.slots.bet')).css("background-color", "#4F4B4B").prop("disabled",false);
+  $('.AllIn').empty().append(I18n.t('ui.slots.all_in')).css("background-color", "#011627").prop("disabled",false);
+  $('.go').empty().append(I18n.t('ui.slots.girar'));
 }
 
 function showHistory(drawn) {

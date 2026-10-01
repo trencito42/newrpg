@@ -14,9 +14,9 @@ const JobHud = (() => {
     const t = (key, params) => (window.I18n && window.I18n.t ? window.I18n.t(key, params) : key);
     const TONES = { info: 1, warn: 1, danger: 1, success: 1 };
     const KINDS = {
-        success: { tone: 'success', title: 'ui.jobhud.result_success' },
-        fail: { tone: 'danger', title: 'ui.jobhud.result_fail' },
-        cancel: { tone: 'warn', title: 'ui.jobhud.result_cancel' },
+        success: { tone: 'success', title: 'ui.jobhud.result_success' }, // i18n-ignore: value is an I18n key
+        fail: { tone: 'danger', title: 'ui.jobhud.result_fail' }, // i18n-ignore: value is an I18n key
+        cancel: { tone: 'warn', title: 'ui.jobhud.result_cancel' }, // i18n-ignore: value is an I18n key
     };
 
     let root = null;
@@ -82,7 +82,7 @@ const JobHud = (() => {
         return n >= 1000 ? `${(n / 1000).toFixed(1)} km` : `${n} m`;
     }
     function fmtMoney(v) {
-        return `$${Math.round(v).toLocaleString('en-US')}`;
+        return `$${I18n.number(Math.round(v))}`;
     }
     function fmtClock(sec) {
         const s = Math.max(0, Math.floor(sec));

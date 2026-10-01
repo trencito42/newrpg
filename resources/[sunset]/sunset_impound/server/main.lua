@@ -34,7 +34,7 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
     for _, r in ipairs(Cfg.reasons or {}) do
         if r.id == reasonId then reasonRow = r break end
     end
-    if not reasonRow then reasonRow = { id = 'other', label = 'Other', fee = Cfg.baseFee or 500 } end
+    if not reasonRow then reasonRow = { id = 'other', label = exports.sunset_core:TFor(source, 'impound.ui.other'), fee = Cfg.baseFee or 500 } end
 
     -- Get vehicle info
     local veh = nil
@@ -96,15 +96,14 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
         exports.sunset_vehicles:DeleteVehicleEntity(vehicleId)
     end)
 
-    notify(source, ('Vehicle impounded: %s (%s).'):format(veh.plate or 'Unknown', reasonRow.label), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'impound.msg.vehicle_impounded', { plate = veh.plate or exports.sunset_core:TFor(source, 'impound.word.unknown'), label = tostring(reasonRow.label) }), 'success')
 
     -- Notify owner if online
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         local cid = getCharId(src)
         if cid == ownerCharId then
-            notify(src, ('Your vehicle %s has been impounded by %s. Reason: %s. Recover it at the impound lot.'):format(
-                veh.plate or 'Unknown', impoundedByName, reasonRow.label), 'error', 10000)
+            notify(src, exports.sunset_core:TFor(src, 'impound.msg.your_vehicle_has_been_impounded_by', { plate = veh.plate or exports.sunset_core:TFor(src, 'impound.word.unknown'), impounded_by_name = tostring(impoundedByName), label = tostring(reasonRow.label) }), 'error', 10000)
         end
     end
 
@@ -217,7 +216,7 @@ exports.sunset_core:RegisterCallback('sunset:impound:recover', function(source, 
         exports.sunset_vehicles:SpawnVehicleAt(source, row.vehicle_id, Cfg.lot, Cfg.lotHeading)
     end)
 
-    notify(source, ('Vehicle %s recovered for $%s.'):format(row.plate or 'Unknown', totalFee), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'impound.msg.vehicle_recovered_for_2', { plate = row.plate or exports.sunset_core:TFor(source, 'impound.word.unknown'), total_fee = tostring(totalFee) }), 'success')
     return { plate = row.plate, fee = totalFee }
 end)
 

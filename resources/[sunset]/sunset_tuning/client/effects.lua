@@ -308,7 +308,7 @@ CreateThread(function()
             SetTextColour(255, 153, 51, 215)
             SetTextOutline()
             SetTextEntry('STRING')
-            AddTextComponentSubstringPlayerName(('ECU %s  |  %d km/h  |  RPM %d%%  |  BOOST %d%%'):format(stage, speed, rpm, boost))
+            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('tuning.msg.ecu_km_h_rpm_boost', { stage = tostring(stage), speed = math.floor(tonumber(speed) or 0), rpm = math.floor(tonumber(rpm) or 0), boost = math.floor(tonumber(boost) or 0) }))
             DrawText(0.015, 0.92)
         end
 

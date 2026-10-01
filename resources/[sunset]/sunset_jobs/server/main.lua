@@ -82,7 +82,7 @@ local function quitCivilianJob(source, reason)
         return nil, { localeKey = 'jobs.message.could_not_clear_your_civilian_job_try_again_after' }
     end
     exports.sunset_core:CommandReply(source,
-        'Civilian job resigned. Your faction membership is unchanged.', 'success')
+        exports.sunset_core:TFor(source, 'jobs.msg.civilian_job_resigned_your_faction_membershi'), 'success')
     return true
 end
 
@@ -121,8 +121,7 @@ local function hireCivilianJob(source, jobId)
         local dist = (playerCoords and npcCoords) and #(playerCoords - npcCoords) or 999.0
 
         if dist > 12.0 then
-            return nil, ('%s requires in-person application at %s (%s). Use "Set GPS" to navigate.'):format(
-                wp.jobLabel or jobId, wp.locationLabel or 'its workplace', wp.npc and wp.npc.name or 'Supervisor')
+            return nil, exports.sunset_core:TFor(source, 'jobs.err.requires_in_person_application_at_use', { job_label = tostring(wp.jobLabel or jobId), location_label = wp.locationLabel or exports.sunset_core:TFor(source, 'jobs.word.its_workplace'), npc = wp.npc and wp.npc.name or exports.sunset_core:TFor(source, 'jobs.word.supervisor') })
         end
     end
 
@@ -134,7 +133,7 @@ local function hireCivilianJob(source, jobId)
     -- [JOBS AUDIT] licence/level requirements were only enforced by the workplace NPC apply path.
     if SunsetJobs_CheckRequirements then
         local reqOk, reqErr = SunsetJobs_CheckRequirements(source, jobId)
-        if not reqOk then return nil, reqErr or 'You do not meet the job requirements.' end
+        if not reqOk then return nil, reqErr or exports.sunset_core:TFor(source, 'jobs.err.you_do_not_meet_the_job') end
     end
 
     if currentJob ~= 'unemployed' then
@@ -144,7 +143,7 @@ local function hireCivilianJob(source, jobId)
         TriggerClientEvent('sunset:jobs:forceClearHud', source)
         local current = Sunset.CivilianJobs[currentJob]
         exports.sunset_core:CommandReply(source,
-            ('Left %s.'):format(current and current.label or currentJob), 'info')
+            exports.sunset_core:TFor(source, 'jobs.msg.left', { current = tostring(current and current.label or currentJob) }), 'info')
     end
 
     local setOk = exports.sunset_core:SetJob(source, jobId, 0)
@@ -156,7 +155,7 @@ local function hireCivilianJob(source, jobId)
 
     local hiredLabel = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
     exports.sunset_core:CommandReply(source,
-        ('Hired as %s. Speak to your supervisor or use /work to start.'):format(hiredLabel), 'success')
+        exports.sunset_core:TFor(source, 'jobs.msg.hired_as_speak_to_your_supervisor', { hired_label = tostring(hiredLabel) }), 'success')
     TriggerClientEvent('sunset:jobs:waypointToWork', source, jobId)
     TriggerEvent('sunset:quest:progress', char.id, 'job_hired', 1, { jobId = jobId })
     return true
@@ -222,7 +221,7 @@ local function runSetJob(source, args)
     local grade = tonumber(args[3]) or 0
     if not targetArg or not jobId then
         reply(source,
-            'Usage: /setjob [server id|username] [job] [grade] — jobs: ' .. listCivilianJobs(),
+            exports.sunset_core:TFor(source, 'jobs.msg.usage_setjob_server_id_username_job', { list_civilian_jobs = tostring(listCivilianJobs()) }),
             'error')
         return
     end
@@ -240,30 +239,29 @@ local function runSetJob(source, args)
 
     if Sunset.Factions[jobId] then
         reply(source,
-            ('"%s" is a faction, not a civilian job. Use /setfaction %s %s [grade].'):format(jobId, targetArg, jobId),
+            exports.sunset_core:TFor(source, 'jobs.msg.is_a_faction_not_a_civilian', { job_id = tostring(jobId), target_arg = tostring(targetArg), job_id_2 = tostring(jobId) }),
             'error')
         return
     end
 
     if not Sunset.CivilianJobs[jobId] then
         reply(source,
-            ('Unknown civilian job "%s". Valid jobs: %s'):format(jobId, listCivilianJobs()),
+            exports.sunset_core:TFor(source, 'jobs.msg.unknown_civilian_job_valid_jobs', { job_id = tostring(jobId), list_civilian_jobs = tostring(listCivilianJobs()) }),
             'error')
         return
     end
 
     if not exports.sunset_core:SetJob(target, jobId, grade) then
         reply(source,
-            ('Grade %d is invalid for %s. Most civilian jobs use grade 0.'):format(grade, jobId),
+            exports.sunset_core:TFor(source, 'jobs.msg.grade_is_invalid_for_most_civilian', { grade = math.floor(tonumber(grade) or 0), job_id = tostring(jobId) }),
             'error')
         return
     end
 
     local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-    reply(target, ('Your civilian job was set to %s.'):format(label), 'success')
+    reply(target, exports.sunset_core:TFor(target, 'jobs.msg.your_civilian_job_was_set_to', { label = tostring(label) }), 'success')
     if source ~= 0 then
-        reply(source, ('Set %s (#%d) civilian job to %s (grade %d).'):format(
-            exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, label, grade), 'success')
+        reply(source, exports.sunset_core:TFor(source, 'jobs.msg.set_civilian_job_to_grade', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'jobs.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), label = tostring(label), grade = math.floor(tonumber(grade) or 0) }), 'success')
     end
 end
 
@@ -275,7 +273,7 @@ local function runSetFaction(source, args)
     local grade = tonumber(args[3]) or 0
     if not targetArg or not factionId then
         reply(source,
-            'Usage: /setfaction [server id|username] [faction|none] [grade] — factions: ' .. listFactions(),
+            exports.sunset_core:TFor(source, 'jobs.msg.usage_setfaction_server_id_username_faction', { list_factions = tostring(listFactions()) }),
             'error')
         return
     end
@@ -293,16 +291,16 @@ local function runSetFaction(source, args)
 
     if factionId == 'none' or factionId == 'clear' then
         exports.sunset_core:SetFaction(target, nil, 0)
-        reply(target, 'Your faction membership was cleared.', 'success')
+        reply(target, exports.sunset_core:TFor(target, 'jobs.msg.your_faction_membership_was_cleared'), 'success')
         if source ~= 0 then
-            reply(source, ('Cleared faction for %s (#%d).'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target), 'success')
+            reply(source, exports.sunset_core:TFor(source, 'jobs.msg.cleared_faction_for', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'jobs.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0) }), 'success')
         end
         return
     end
 
     if not Sunset.Factions[factionId] then
         reply(source,
-            ('Unknown faction "%s". Valid factions: %s'):format(factionId, listFactions()),
+            exports.sunset_core:TFor(source, 'jobs.msg.unknown_faction_valid_factions', { faction_id = tostring(factionId), list_factions = tostring(listFactions()) }),
             'error')
         return
     end
@@ -310,17 +308,15 @@ local function runSetFaction(source, args)
     if not exports.sunset_core:SetFaction(target, factionId, grade) then
         local faction = Sunset.Factions[factionId]
         reply(source,
-            ('Grade %d does not exist for %s. Check faction grades in config.'):format(
-                grade, faction and faction.label or factionId),
+            exports.sunset_core:TFor(source, 'jobs.msg.grade_does_not_exist_for_check', { grade = math.floor(tonumber(grade) or 0), faction = tostring(faction and faction.label or factionId) }),
             'error')
         return
     end
 
     local label = Sunset.Factions[factionId].label
-    reply(target, ('Your faction was set to %s.'):format(label), 'success')
+    reply(target, exports.sunset_core:TFor(target, 'jobs.msg.your_faction_was_set_to', { label = tostring(label) }), 'success')
     if source ~= 0 then
-        reply(source, ('Set %s (#%d) faction to %s (grade %d).'):format(
-            exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, label, grade), 'success')
+        reply(source, exports.sunset_core:TFor(source, 'jobs.msg.set_faction_to_grade', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'jobs.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), label = tostring(label), grade = math.floor(tonumber(grade) or 0) }), 'success')
     end
 end
 

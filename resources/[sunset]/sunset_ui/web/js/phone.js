@@ -209,9 +209,7 @@ const Phone = {
     updateHomeDate(now = new Date()) {
         const el = $('#phone-home-date');
         if (!el) return;
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        el.textContent = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+        el.textContent = I18n.date(now, { weekday: 'long', month: 'long', day: 'numeric' });
     },
 
     formatMsgTime(raw) {
@@ -221,9 +219,9 @@ const Phone = {
         const now = new Date();
         const sameDay = d.toDateString() === now.toDateString();
         if (sameDay) {
-            return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            return I18n.time(d, { hour: 'numeric', minute: '2-digit' });
         }
-        return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return I18n.date(d, { month: 'short', day: 'numeric' });
     },
 
     show(payload) {
@@ -275,9 +273,9 @@ const Phone = {
                 if (this.chatTarget.isEmergency) {
                     sub.textContent = I18n.t('dynamic.phone.imessage_dispatch_112');
                 } else if (phone) {
-                    sub.textContent = `${phone} · ${this.chatTarget.online ? 'iMessage' : 'Offline'}`;
+                    sub.textContent = `${phone} · ${this.chatTarget.online ? 'iMessage' : I18n.t('ui.factions.offline')}`;
                 } else {
-                    sub.textContent = this.chatTarget.online ? 'iMessage' : 'Offline';
+                    sub.textContent = this.chatTarget.online ? 'iMessage' : I18n.t('ui.factions.offline');
                 }
             }
             this.renderChat(this.chatTarget);
@@ -401,8 +399,8 @@ const Phone = {
             const isMine = m.sender_character_id === myId;
             const otherCharId = isMine ? m.receiver_character_id : m.sender_character_id;
             const is112 = otherCharId === 0 || otherCharId === -112 || String(otherCharId) === '-112';
-            let otherName = isMine ? (m.receiver_name || 'Player') : (m.sender_name || 'Player');
-            if (is112) otherName = '112 Emergency';
+            let otherName = isMine ? (m.receiver_name || I18n.t('common.player')) : (m.sender_name || I18n.t('common.player'));
+            if (is112) otherName = I18n.t('ui.phone.emergency_112');
 
             const key = String(otherCharId);
             const existing = threads.get(key) || {
@@ -426,7 +424,7 @@ const Phone = {
                     charId: c.characterId,
                     name: this.contactLabel(c),
                     isEmergency: false,
-                    preview: 'No messages yet',
+                    preview: I18n.t('ui.phone.no_messages_yet'),
                     messages: [],
                     online: c.online === true,
                 });
@@ -455,7 +453,7 @@ const Phone = {
         const name = String(contact?.name || '').trim();
         if (name) return name;
         if (contact?.phone) return String(contact.phone);
-        return 'Unknown';
+        return I18n.t('ui.mdc.unknown');
     },
 
     renderThreads() {
@@ -476,9 +474,9 @@ const Phone = {
             list.innerHTML = `
                 <div class="phone-empty-state">
                     <div class="phone-empty-state__icon">💬</div>
-                    <div class="phone-empty-state__title">No Messages</div>
+                    <div class="phone-empty-state__title">${I18n.t('ui.phone.no_messages')}</div>
                     <p class="phone-empty-state__desc">
-                        ${query ? 'No conversations matched your search.' : 'Tap + in Contacts or message someone online to start a chat.'}
+                        ${query ? I18n.t('ui.phone.no_conversations_match') : I18n.t('ui.phone.start_chat_hint')}
                     </p>
                 </div>
             `;
@@ -568,8 +566,8 @@ const Phone = {
             list.innerHTML = `
                 <div class="phone-empty-state">
                     <div class="phone-empty-state__icon">👥</div>
-                    <div class="phone-empty-state__title">No Results</div>
-                    <p class="phone-empty-state__desc">No contacts match "${this.escapeHtml(query)}"</p>
+                    <div class="phone-empty-state__title">${I18n.t('common.no_results')}</div>
+                    <p class="phone-empty-state__desc">${I18n.t('ui.phone.no_contacts_match', { query: this.escapeHtml(query) })}</p>
                 </div>
             `;
             return;
@@ -580,28 +578,28 @@ const Phone = {
             const emRow = document.createElement('div');
             emRow.className = 'phone-contact-row phone-contact-row--emergency';
             emRow.innerHTML = `
-                <button type="button" class="phone-contact-row__main" title="Call 112 Emergency">
+                <button type="button" class="phone-contact-row__main" title="${I18n.t('ui.phone.call_112_emergency')}">
                     <div class="phone-contact-row__avatar phone-contact-row__avatar--emergency">
                         <svg viewBox="0 0 24 24" fill="white" class="phone-contact-row__sos-icon"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
                         <span class="phone-contact-row__status-dot is-online"></span>
                     </div>
                     <div class="phone-contact-row__details">
                         <div class="phone-contact-row__name">
-                            112 Emergency
+                            ${I18n.t('ui.phone.emergency_112')}
                             <span class="phone-contact-badge phone-contact-badge--emergency">SOS</span>
                         </div>
                         <div class="phone-contact-row__meta">
                             <span class="phone-contact-num">112</span>
                             <span>·</span>
-                            <span class="phone-contact-desc">Police / Medical / Fire</span>
+                            <span class="phone-contact-desc">${I18n.t('ui.phone.emergency_services')}</span>
                         </div>
                     </div>
                 </button>
                 <div class="phone-contact-row__actions">
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="Call 112 Dispatch">
+                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="${I18n.t('ui.phone.call_112_dispatch')}">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.053 15.053 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.9c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.02z"/></svg>
                     </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="Send iMessage to 112">
+                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="${I18n.t('ui.phone.message_112')}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     </button>
                 </div>
@@ -659,13 +657,13 @@ const Phone = {
                     </div>
                 </button>
                 <div class="phone-contact-row__actions">
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="Call">
+                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="${I18n.t('ui.phone.call')}">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.053 15.053 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.9c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.02z"/></svg>
                     </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="Send iMessage">
+                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="${I18n.t('ui.phone.send_imessage')}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--del" title="Delete Contact">
+                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--del" title="${I18n.t('ui.phone.delete_contact')}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                     </button>
                 </div>
@@ -736,16 +734,16 @@ const Phone = {
         const is112 = target.isEmergency || target.charId === -112 || String(target.charId) === '-112' || target.phone === '112';
 
         const titleEl = $('#phone-chat-title');
-        if (titleEl) titleEl.textContent = target.name || target.phone || 'Chat';
+        if (titleEl) titleEl.textContent = target.name || target.phone || I18n.t('ui.phone.chat');
 
         const sub = $('#phone-chat-subtitle');
         if (sub) {
             if (is112) {
                 sub.textContent = I18n.t('dynamic.phone.imessage_112_dispatch');
             } else if (target.phone) {
-                sub.textContent = `${target.phone} · ${online ? 'iMessage' : 'Offline'}`;
+                sub.textContent = `${target.phone} · ${online ? 'iMessage' : I18n.t('ui.factions.offline')}`;
             } else {
-                sub.textContent = online ? 'iMessage' : 'Offline';
+                sub.textContent = online ? 'iMessage' : I18n.t('ui.factions.offline');
             }
         }
 
@@ -769,7 +767,7 @@ const Phone = {
 
         const input = $('#phone-chat-input');
         if (input) {
-            input.placeholder = is112 ? 'Message to 112...' : 'iMessage';
+            input.placeholder = is112 ? I18n.t('ui.phone.message_to_112') : 'iMessage';
             input.value = '';
         }
         const sendBtn = $('#phone-chat-send');
@@ -800,16 +798,16 @@ const Phone = {
         const infoBanner = document.createElement('div');
         infoBanner.className = 'phone-chat__info-banner';
         infoBanner.innerHTML = is112
-            ? '<span>🚨 National 112 Dispatch - Official Service</span>'
-            : '<span>iMessage with ' + this.escapeHtml(target.name || 'Contact') + '</span>';
+            ? `<span>🚨 ${I18n.t('ui.phone.dispatch_banner')}</span>`
+            : '<span>' + I18n.t('ui.phone.imessage_with', { name: this.escapeHtml(target.name || I18n.t('ui.phone.contact')) }) + '</span>';
         wrap.appendChild(infoBanner);
 
         if (!msgs.length) {
             const emptyEl = document.createElement('div');
             emptyEl.className = 'phone-chat__empty';
             emptyEl.innerHTML = is112
-                ? '<div class="phone-chat__empty-icon">🚨</div><p>Direct SMS channel with 112 Dispatch.<br>Send your location and emergency, or use the call button.</p>'
-                : '<div class="phone-chat__empty-icon">👋</div><p>Say hi to ' + this.escapeHtml(target.name || 'them') + '</p>';
+                ? '<div class="phone-chat__empty-icon">🚨</div><p>' + I18n.t('ui.phone.dispatch_empty') + '</p>'
+                : '<div class="phone-chat__empty-icon">👋</div><p>' + I18n.t('ui.phone.say_hi', { name: this.escapeHtml(target.name || I18n.t('ui.phone.them')) }) + '</p>';
             wrap.appendChild(emptyEl);
             return;
         }
@@ -866,17 +864,17 @@ const Phone = {
 
     bankReasonLabel(reason) {
         const map = {
-            payday: 'Faction Salary',
-            shop: 'Shop Purchase',
-            shop_refund: 'Shop Refund',
-            atm_deposit: 'ATM Deposit',
-            atm_withdraw: 'ATM Withdrawal',
-            bank_transfer_out: 'Transfer Bancar',
-            bank_transfer_in: 'Transfer Primit',
-            buy_level: 'Level Purchase',
+            payday: I18n.t('ui.phone.tx_payday'),
+            shop: I18n.t('ui.phone.tx_shop'),
+            shop_refund: I18n.t('ui.phone.tx_shop_refund'),
+            atm_deposit: I18n.t('ui.phone.tx_atm_deposit'),
+            atm_withdraw: I18n.t('ui.phone.tx_atm_withdraw'),
+            bank_transfer_out: I18n.t('ui.phone.tx_transfer_out'),
+            bank_transfer_in: I18n.t('ui.phone.tx_transfer_in'),
+            buy_level: I18n.t('ui.phone.tx_buy_level'),
         };
         const key = String(reason || '').toLowerCase();
-        return map[key] || reason || 'Transaction';
+        return map[key] || reason || I18n.t('ui.phone.tx_default');
     },
 
     formatTxDate(raw) {
@@ -888,10 +886,10 @@ const Phone = {
         const yesterday = new Date(now);
         yesterday.setDate(now.getDate() - 1);
         const isYesterday = d.toDateString() === yesterday.toDateString();
-        const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        if (sameDay) return `Today, ${time}`;
-        if (isYesterday) return `Yesterday, ${time}`;
-        return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + `, ${time}`;
+        const time = I18n.time(d, { hour: '2-digit', minute: '2-digit' });
+        if (sameDay) return I18n.t('ui.phone.today_time', { time });
+        if (isYesterday) return I18n.t('ui.phone.yesterday_time', { time });
+        return I18n.date(d, { day: 'numeric', month: 'short' }) + `, ${time}`;
     },
 
     renderBankTransactions(transactions) {
@@ -920,7 +918,7 @@ const Phone = {
         });
 
         if (!list.children.length) {
-            list.innerHTML = '<p class="phone-fleeca__tx-empty">No transactions recorded yet.</p>';
+            list.innerHTML = `<p class="phone-fleeca__tx-empty">${I18n.t('ui.phone.no_transactions')}</p>`;
         }
     },
 
@@ -947,15 +945,15 @@ const Phone = {
         const targetId = Number($('#phone-bank-target-id')?.value);
         const amount = Number($('#phone-bank-amount')?.value);
         if (!targetId || targetId < 1) {
-            this.showBankNotify('Invalid player ID!', true);
+            this.showBankNotify(I18n.t('ui.phone.invalid_player_id'), true);
             return;
         }
         if (!amount || amount < 1) {
-            this.showBankNotify('Invalid amount!', true);
+            this.showBankNotify(I18n.t('ui.phone.invalid_amount'), true);
             return;
         }
         if (amount > Number(this.data?.bank || 0)) {
-            this.showBankNotify('Fonduri insuficiente!', true);
+            this.showBankNotify(I18n.t('ui.phone.insufficient_funds'), true);
             return;
         }
         post('phoneBankTransfer', { targetId, amount });
@@ -964,7 +962,7 @@ const Phone = {
 
     renderSettings() {
         const d = this.data || {};
-        const name = d.myName || 'Player';
+        const name = d.myName || I18n.t('common.player');
         $('#phone-settings-name').textContent = name;
         $('#phone-settings-id').textContent = I18n.t('dynamic.phone.player_id_value0', { value0: d.myId || '—' });
         const avatar = $('#phone-settings-avatar');
@@ -1051,7 +1049,7 @@ const Phone = {
         if (completeBtn) {
             const canComplete = d.nearDestination === true;
             completeBtn.disabled = !canComplete;
-            completeBtn.title = canComplete ? '' : 'Drive to the destination first';
+            completeBtn.title = canComplete ? '' : I18n.t('ui.phone.drive_to_destination');
         }
     },
 
@@ -1073,7 +1071,7 @@ const Phone = {
         if (!dest) return;
         this.taxiDest = dest;
         const labelEl = $('#phone-taxi-dest-label');
-        if (labelEl) labelEl.textContent = dest.label || 'Selected pin';
+        if (labelEl) labelEl.textContent = dest.label || I18n.t('ui.phone.selected_pin');
         const requestBtn = $('#phone-taxi-request');
         if (requestBtn) requestBtn.disabled = false;
         if (window.TaxiPhoneMap?.map) TaxiPhoneMap.setDestination(dest.x, dest.y);
@@ -1107,43 +1105,43 @@ const Phone = {
 
         return `
             <div class="phone-taxi-card">
-                <div class="phone-taxi-card__label">Where to?</div>
+                <div class="phone-taxi-card__label">${I18n.t('ui.phone.where_to')}</div>
                 <div class="phone-taxi-modes phone-taxi-modes--two">
-                    <button type="button" class="phone-taxi-mode ${mode === 'map' ? 'is-active' : ''}" data-taxi-mode="map">Map</button>
-                    <button type="button" class="phone-taxi-mode ${mode === 'list' ? 'is-active' : ''}" data-taxi-mode="list">Places</button>
+                    <button type="button" class="phone-taxi-mode ${mode === 'map' ? 'is-active' : ''}" data-taxi-mode="map">${I18n.t('ui.phone.map')}</button>
+                    <button type="button" class="phone-taxi-mode ${mode === 'list' ? 'is-active' : ''}" data-taxi-mode="list">${I18n.t('ui.phone.places')}</button>
                 </div>
 
                 <div class="phone-taxi-panel ${mode === 'map' ? '' : 'hidden'}" data-panel="map">
-                    <p class="phone-taxi-hint">Tap the map to set your destination. Yellow pin = where you want to go.</p>
+                    <p class="phone-taxi-hint">${I18n.t('ui.phone.map_hint')}</p>
                     <div class="phone-taxi-map" id="phone-taxi-map">
                         <div class="phone-taxi-map__leaflet" id="phone-taxi-leaflet"></div>
                     </div>
                 </div>
 
                 <div class="phone-taxi-panel ${mode === 'list' ? '' : 'hidden'}" data-panel="list">
-                    <input type="search" class="phone-taxi-search" id="phone-taxi-search" placeholder="Search: garage, hospital, taxi, shop..." value="${this.taxiSearch || ''}">
+                    <input type="search" class="phone-taxi-search" id="phone-taxi-search" placeholder="${I18n.t('ui.phone.search_places')}" value="${this.taxiSearch || ''}">
                     <div class="phone-taxi-places" id="phone-taxi-places">
                         ${filtered.slice(0, 40).map((p) => `
                             <button type="button" class="phone-taxi-place" data-place-id="${p.id}">
                                 <span class="phone-taxi-place__name">${this.escapeHtml(p.label)}</span>
                                 <span class="phone-taxi-place__cat">${this.escapeHtml(p.category || '')}</span>
                             </button>`).join('')}
-                        ${filtered.length > 40 ? `<p class="phone-taxi-hint">${filtered.length - 40} more — refine search</p>` : ''}
-                        ${!filtered.length ? '<p class="phone-taxi-hint">No places found</p>' : ''}
+                        ${filtered.length > 40 ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.more_refine', { count: filtered.length - 40 })}</p>` : ''}
+                        ${!filtered.length ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.no_places')}</p>` : ''}
                     </div>
                 </div>
 
                 <div class="phone-taxi-dest-summary">
-                    <span>Destination</span>
-                    <strong id="phone-taxi-dest-label">${this.escapeHtml(this.taxiDest?.label || 'Not selected')}</strong>
+                    <span>${I18n.t('ui.phone.destination')}</span>
+                    <strong id="phone-taxi-dest-label">${this.escapeHtml(this.taxiDest?.label || I18n.t('ui.phone.not_selected'))}</strong>
                 </div>
                 <div class="phone-taxi-estimate">
-                    <div><span>Distance</span><strong id="phone-taxi-distance">—</strong></div>
-                    <div><span>Estimated fare</span><strong id="phone-taxi-fare">—</strong></div>
+                    <div><span>${I18n.t('ui.phone.distance')}</span><strong id="phone-taxi-distance">—</strong></div>
+                    <div><span>${I18n.t('ui.phone.estimated_fare')}</span><strong id="phone-taxi-fare">—</strong></div>
                 </div>
-                <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-request" ${this.taxiDest ? '' : 'disabled'}>Request cab</button>
+                <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-request" ${this.taxiDest ? '' : 'disabled'}>${I18n.t('ui.phone.request_cab')}</button>
             </div>
-            <p class="phone-taxi-hint">Pickup is your current location. Drivers accept rides in the same app.</p>`;
+            <p class="phone-taxi-hint">${I18n.t('ui.phone.pickup_hint')}</p>`;
     },
 
     setTaxiEstimate(payload) {
@@ -1163,12 +1161,12 @@ const Phone = {
         if (!d || !d.destinations) {
             if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
             body.dataset.taxiView = 'empty';
-            body.innerHTML = `<p class="phone-empty">${this.escapeHtml(d?.error || 'Loading cab app...')}</p>`;
+            body.innerHTML = `<p class="phone-empty">${this.escapeHtml(d?.error || I18n.t('ui.phone.loading_cab'))}</p>`;
             if (title) title.textContent = I18n.t('dynamic.phone.downtown_cab');
             return;
         }
 
-        if (title) title.textContent = d.appName || 'Downtown Cab';
+        if (title) title.textContent = d.appName || I18n.t('dynamic.phone.downtown_cab');
 
         const ride = d.activeRide;
         const isDriver = d.isDriver && d.onDuty;
@@ -1191,16 +1189,16 @@ const Phone = {
             if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
             const stats = d.driverStats || {};
             html += `<div class="phone-taxi-card">
-                <div class="phone-taxi-card__label">Driver mode</div>
+                <div class="phone-taxi-card__label">${I18n.t('ui.phone.driver_mode')}</div>
                 <div class="phone-taxi-toggle">
-                    <span>Available for rides</span>
-                    <button type="button" class="phone-taxi-switch ${d.driverAvailable ? 'is-on' : ''}" id="phone-taxi-available-toggle">${d.driverAvailable ? 'ON' : 'OFF'}</button>
+                    <span>${I18n.t('ui.phone.available_for_rides')}</span>
+                    <button type="button" class="phone-taxi-switch ${d.driverAvailable ? 'is-on' : ''}" id="phone-taxi-available-toggle">${d.driverAvailable ? I18n.t('ui.phone.on_caps') : I18n.t('ui.phone.off_caps')}</button>
                 </div>
                 <div class="phone-taxi-estimate phone-taxi-estimate--stats">
-                    <div><span>Today</span><strong>${stats.todayRides || 0} rides · ${this.formatMoney(stats.todayEarnings || 0)}</strong></div>
-                    <div><span>This shift</span><strong>${stats.sessionRides || 0} rides · ${this.formatMoney(stats.sessionEarnings || 0)}</strong></div>
+                    <div><span>${I18n.t('ui.phone.today')}</span><strong>${I18n.t('ui.phone.rides_count', { count: stats.todayRides || 0 })} · ${this.formatMoney(stats.todayEarnings || 0)}</strong></div>
+                    <div><span>${I18n.t('ui.phone.this_shift')}</span><strong>${I18n.t('ui.phone.rides_count', { count: stats.sessionRides || 0 })} · ${this.formatMoney(stats.sessionEarnings || 0)}</strong></div>
                 </div>
-                <p class="phone-taxi-hint">Spawn a cab at the depot marker, then accept rides here. Company keeps ${d.pricing?.companyCut || 12}%.</p>
+                <p class="phone-taxi-hint">${I18n.t('ui.phone.driver_hint', { percent: d.pricing?.companyCut || 12 })}</p>
             </div>`;
 
             if (ride) {
@@ -1208,20 +1206,20 @@ const Phone = {
             } else {
                 const offers = d.pendingOffers || [];
                 if (offers.length) {
-                    html += `<div class="phone-taxi-section-title">Incoming requests</div>`;
+                    html += `<div class="phone-taxi-section-title">${I18n.t('ui.phone.incoming_requests')}</div>`;
                     offers.forEach((offer) => {
                         html += `<div class="phone-taxi-offer">
                             <div class="phone-taxi-offer__top">
-                                <strong>${this.escapeHtml(offer.passengerName || 'Passenger')}</strong>
+                                <strong>${this.escapeHtml(offer.passengerName || I18n.t('ui.phone.passenger'))}</strong>
                                 <span class="phone-taxi-fare">${this.formatMoney(offer.fare)}</span>
                             </div>
-                            <div class="phone-taxi-offer__route">→ ${this.escapeHtml(offer.destination?.label || 'Destination')}</div>
+                            <div class="phone-taxi-offer__route">→ ${this.escapeHtml(offer.destination?.label || I18n.t('ui.phone.destination'))}</div>
                             <div class="phone-taxi-offer__meta">${(offer.distanceKm || 0).toFixed(1)} km</div>
-                            <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" data-taxi-accept="${offer.id}">Accept ride</button>
+                            <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" data-taxi-accept="${offer.id}">${I18n.t('ui.phone.accept_ride')}</button>
                         </div>`;
                     });
                 } else {
-                    html += `<p class="phone-empty">No ride requests right now.<br>Stay available and wait for passengers.</p>`;
+                    html += `<p class="phone-empty">${I18n.t('ui.phone.no_ride_requests')}</p>`;
                 }
             }
         } else if (ride) {
@@ -1252,8 +1250,8 @@ const Phone = {
                     <span class="phone-taxi-place__name">${this.escapeHtml(p.label)}</span>
                     <span class="phone-taxi-place__cat">${this.escapeHtml(p.category || '')}</span>
                 </button>`).join('')}
-            ${filtered.length > 40 ? `<p class="phone-taxi-hint">${filtered.length - 40} more — refine search</p>` : ''}
-            ${!filtered.length ? '<p class="phone-taxi-hint">No places found</p>' : ''}
+            ${filtered.length > 40 ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.more_refine', { count: filtered.length - 40 })}</p>` : ''}
+            ${!filtered.length ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.no_places')}</p>` : ''}
         `;
 
         placesContainer.querySelectorAll('[data-place-id]').forEach((btn) => {
@@ -1264,61 +1262,61 @@ const Phone = {
     renderActiveRideCard(ride, isDriver) {
         const d = this.taxiData || {};
         const statusLabels = {
-            pending: 'Looking for a driver...',
-            accepted: isDriver ? 'Go pick up passenger' : (d.driverStatusText || 'Driver on the way'),
-            in_progress: 'Trip in progress',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
+            pending: I18n.t('ui.phone.ride_pending'),
+            accepted: isDriver ? I18n.t('ui.phone.ride_pickup') : (d.driverStatusText || I18n.t('ui.phone.ride_on_the_way')),
+            in_progress: I18n.t('ui.phone.ride_in_progress'),
+            completed: I18n.t('ui.phone.ride_completed'),
+            cancelled: I18n.t('ui.phone.ride_cancelled'),
         };
         let actions = '';
         if (isDriver) {
             if (ride.status === 'accepted') {
-                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-pickup">Passenger picked up</button>
-                           <button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">Cancel ride</button>`;
+                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-pickup">${I18n.t('ui.phone.passenger_picked_up')}</button>
+                           <button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">${I18n.t('ui.phone.cancel_ride')}</button>`;
             } else if (ride.status === 'in_progress') {
                 const canComplete = d.nearDestination === true;
-                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-complete" ${canComplete ? '' : 'disabled'} title="${canComplete ? '' : 'Drive to the destination first'}">Complete trip & charge</button>`;
+                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-complete" ${canComplete ? '' : 'disabled'} title="${canComplete ? '' : I18n.t('ui.phone.drive_to_destination')}">${I18n.t('ui.phone.complete_trip')}</button>`;
             }
         } else if (ride.status === 'pending' || ride.status === 'accepted') {
-            actions = `<button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">Cancel ride</button>`;
+            actions = `<button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">${I18n.t('ui.phone.cancel_ride')}</button>`;
         } else if (!isDriver && ride.status === 'in_progress') {
             const tips = (this.taxiData?.tipOptions || [25, 50, 100]).map((amt) =>
-                `<button type="button" class="phone-taxi-btn phone-taxi-btn--tip" data-taxi-tip="${amt}">Tip $${amt}</button>`
+                `<button type="button" class="phone-taxi-btn phone-taxi-btn--tip" data-taxi-tip="${amt}">${I18n.t('ui.phone.tip_amount', { amount: amt })}</button>`
             ).join('');
-            actions = `<div class="phone-taxi-tips"><span>Tip your driver</span><div class="phone-taxi-tip-row">${tips}</div></div>`;
+            actions = `<div class="phone-taxi-tips"><span>${I18n.t('ui.phone.tip_driver')}</span><div class="phone-taxi-tip-row">${tips}</div></div>`;
         }
 
         let distanceRows = '';
         if (!isDriver && (ride.status === 'accepted' || ride.status === 'in_progress')) {
             distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
-                <span>Driver</span>
-                <strong id="phone-taxi-driver-status">${this.escapeHtml(d.driverStatusText || 'Driver en route')}</strong>
+                <span>${I18n.t('ui.phone.driver')}</span>
+                <strong id="phone-taxi-driver-status">${this.escapeHtml(d.driverStatusText || I18n.t('ui.phone.driver_en_route'))}</strong>
             </div>
             <div class="phone-taxi-row phone-taxi-row--live">
-                <span>Distance</span>
+                <span>${I18n.t('ui.phone.distance')}</span>
                 <strong id="phone-taxi-driver-dist">${this.formatTaxiDistance(d.driverDistanceKm)}</strong>
             </div>`;
         }
         if (isDriver && ride.status === 'accepted') {
             distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
-                <span>Passenger</span>
-                <strong id="phone-taxi-passenger-status">${this.escapeHtml(d.passengerStatusText || 'En route to passenger')}</strong>
+                <span>${I18n.t('ui.phone.passenger')}</span>
+                <strong id="phone-taxi-passenger-status">${this.escapeHtml(d.passengerStatusText || I18n.t('ui.phone.en_route_to_passenger'))}</strong>
             </div>
             <div class="phone-taxi-row phone-taxi-row--live">
-                <span>Distance</span>
+                <span>${I18n.t('ui.phone.distance')}</span>
                 <strong id="phone-taxi-passenger-dist">${this.formatTaxiDistance(d.passengerDistanceKm)}</strong>
             </div>`;
         }
         if (isDriver && ride.status === 'in_progress' && !d.nearDestination) {
-            distanceRows += `<p class="phone-taxi-hint phone-taxi-hint--warn">Drive to the destination to complete the trip.</p>`;
+            distanceRows += `<p class="phone-taxi-hint phone-taxi-hint--warn">${I18n.t('ui.phone.drive_to_complete')}</p>`;
         }
 
         return `<div class="phone-taxi-card phone-taxi-card--active">
             <div class="phone-taxi-status phone-taxi-status--${this.escapeHtml(ride.status)}">${this.escapeHtml(statusLabels[ride.status] || ride.status)}</div>
-            <div class="phone-taxi-row"><span>Destination</span><strong>${this.escapeHtml(ride.destination?.label || '—')}</strong></div>
-            <div class="phone-taxi-row"><span>Fare</span><strong>${this.formatMoney(ride.fare)}</strong></div>
-            ${ride.driverName ? `<div class="phone-taxi-row"><span>Driver</span><strong>${ride.driverName}</strong></div>` : ''}
-            ${ride.passengerName && isDriver ? `<div class="phone-taxi-row"><span>Passenger</span><strong>${ride.passengerName}</strong></div>` : ''}
+            <div class="phone-taxi-row"><span>${I18n.t('ui.phone.destination')}</span><strong>${this.escapeHtml(ride.destination?.label || '—')}</strong></div>
+            <div class="phone-taxi-row"><span>${I18n.t('ui.phone.fare')}</span><strong>${this.formatMoney(ride.fare)}</strong></div>
+            ${ride.driverName ? `<div class="phone-taxi-row"><span>${I18n.t('ui.phone.driver')}</span><strong>${ride.driverName}</strong></div>` : ''}
+            ${ride.passengerName && isDriver ? `<div class="phone-taxi-row"><span>${I18n.t('ui.phone.passenger')}</span><strong>${ride.passengerName}</strong></div>` : ''}
             ${distanceRows}
             ${actions}
         </div>`;

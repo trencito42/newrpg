@@ -114,9 +114,9 @@ local function refreshPhoneTaxi()
                 appName = Sunset.Taxi and Sunset.Taxi.appName or 'Downtown Cab',
                 destinations = {},
                 playerPos = nil,
-                error = err or 'Could not load taxi app',
+                error = err or exports.sunset_core:Translate('taxi.msg.could_not_load_taxi_app'),
             })
-            notify(err or 'Could not load taxi app', 'error')
+            notify(err or exports.sunset_core:Translate('taxi.msg.could_not_load_taxi_app'), 'error')
         end
     end)
 end
@@ -135,7 +135,7 @@ RegisterNetEvent('sunset:client:taxiRefresh', function()
 end)
 
 RegisterNetEvent('sunset:client:taxiNewOffer', function(ride)
-    notify(('New ride: $%s → %s'):format(ride.fare or 0, ride.destination and ride.destination.label or '?'), 'info')
+    notify(exports.sunset_core:Translate('taxi.msg.new_ride', { fare = tostring(ride.fare or 0), destination = tostring(ride.destination and ride.destination.label or '?') }), 'info')
     refreshPhoneTaxi()
 end)
 
@@ -194,7 +194,7 @@ AddEventHandler('sunset:nui:taxiRequestRide', function(data)
             ride, err = Sunset.AwaitCallback('sunset:taxiRequestRide', data.destinationId, getPickupCoords())
         end
         if not ride then
-            notify(err or 'Could not request ride', 'error')
+            notify(err or exports.sunset_core:Translate('taxi.msg.could_not_request_ride'), 'error')
             return
         end
         refreshPhoneTaxi()
@@ -239,7 +239,7 @@ AddEventHandler('sunset:nui:taxiAcceptRide', function(data)
     CreateThread(function()
         if not requireTaxiVehicle() then return end
         local ride, err = Sunset.AwaitCallback('sunset:taxiAcceptRide', data.rideId)
-        if not ride then notify(err or 'Could not accept', 'error') end
+        if not ride then notify(err or exports.sunset_core:Translate('taxi.msg.could_not_accept'), 'error') end
         refreshPhoneTaxi()
     end)
 end)
@@ -247,7 +247,7 @@ end)
 AddEventHandler('sunset:nui:taxiCancelRide', function()
     CreateThread(function()
         local ok, err = Sunset.AwaitCallback('sunset:taxiCancelRide')
-        if ok then notify(exports.sunset_core:Translate('taxi.message.ride_cancelled'), 'warning') else notify(err or 'Failed', 'error') end
+        if ok then notify(exports.sunset_core:Translate('taxi.message.ride_cancelled'), 'warning') else notify(err or exports.sunset_core:Translate('taxi.msg.failed'), 'error') end
         refreshPhoneTaxi()
     end)
 end)
@@ -256,7 +256,7 @@ AddEventHandler('sunset:nui:taxiPickup', function()
     CreateThread(function()
         if not requireTaxiVehicle() then return end
         local ride, err = Sunset.AwaitCallback('sunset:taxiPickupPassenger')
-        if not ride then notify(err or 'Failed', 'error') end
+        if not ride then notify(err or exports.sunset_core:Translate('taxi.msg.failed'), 'error') end
         refreshPhoneTaxi()
     end)
 end)
@@ -265,7 +265,7 @@ AddEventHandler('sunset:nui:taxiComplete', function()
     CreateThread(function()
         if not requireTaxiVehicle() then return end
         local ok, err = Sunset.AwaitCallback('sunset:taxiCompleteRide')
-        if not ok then notify(err or 'Failed', 'error') end
+        if not ok then notify(err or exports.sunset_core:Translate('taxi.msg.failed'), 'error') end
         refreshPhoneTaxi()
     end)
 end)
@@ -281,7 +281,7 @@ AddEventHandler('sunset:nui:taxiTip', function(data)
     CreateThread(function()
         local ok, err = Sunset.AwaitCallback('sunset:taxiTip', tonumber(data.amount))
         if ok then notify(exports.sunset_core:Translate('taxi.message.tip_sent_thank_you'), 'success')
-        else notify(err or 'Could not send tip', 'error') end
+        else notify(err or exports.sunset_core:Translate('taxi.msg.could_not_send_tip'), 'error') end
     end)
 end)
 

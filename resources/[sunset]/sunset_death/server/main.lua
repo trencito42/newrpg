@@ -337,6 +337,15 @@ exports.sunset_core:RegisterCallback('sunset:revivePlayer', function(source, tar
     pcall(function() isEms = exports.sunset_factions:HasFactionPerm(source, 'revive') end)
     if not isAdmin and not isEms then return nil, { localeKey = 'death.message.not_on_duty_or_no_permission' } end
 
+    -- [SEC3] non-admin EMS must be next to the patient (faction path revived anyone map-wide)
+    if not isAdmin and targetId ~= source then
+        local p1, p2 = GetPlayerPed(source), GetPlayerPed(targetId)
+        if not p1 or p1 == 0 or not p2 or p2 == 0
+            or GetPlayerRoutingBucket(source) ~= GetPlayerRoutingBucket(targetId)
+            or #(GetEntityCoords(p1) - GetEntityCoords(p2)) > 25.0 then
+            return nil, { localeKey = 'death.message.not_on_duty_or_no_permission' }
+        end
+    end
     local ok, err = RevivePlayer(targetId)
     if not ok then return nil, err end
     return true

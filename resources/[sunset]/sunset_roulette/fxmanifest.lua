@@ -17,6 +17,8 @@ client_scripts {
 }
 
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
+    '@sunset_casino/shared/rng.lua',
     '@sunset_core/shared/config.lua',
     'server.lua',
 }

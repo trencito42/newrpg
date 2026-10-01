@@ -40,8 +40,9 @@ const SpawnSelector = {
         if (!item || !statusEl || !riskEl) return;
         const status = item.dataset.status || 'Safe';
         const risk = item.dataset.risk || 'Low';
-        statusEl.textContent = status;
-        riskEl.textContent = risk;
+        const slug = (v) => String(v).toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        statusEl.textContent = I18n.t('ui.spawn.status.' + slug(status));
+        riskEl.textContent = I18n.t('ui.spawn.risk.' + slug(risk));
         statusEl.className = 'spawn-detail-value ' + (status === 'Public' ? '' : 'val-safe');
         riskEl.className = 'spawn-detail-value ' + (risk === 'High' ? 'val-danger' : '');
     },
@@ -87,7 +88,7 @@ const SpawnSelector = {
             house.disabled = !home;
             house.dataset.propertyId = home?.id || '';
             const label = house.querySelector('.spawn-loc-label');
-            if (label) label.textContent = home?.label || 'Property';
+            if (label) label.textContent = home?.label || I18n.t('ui.spawn.status.property');
             const meta = SPAWN_META.house;
             house.dataset.status = home?.access_type === 'owner' ? 'Property' : 'Rental';
             house.dataset.risk = meta.risk;
@@ -100,7 +101,7 @@ const SpawnSelector = {
             hqItem.classList.toggle('hidden', !hasHq);
             hqItem.disabled = !hasHq;
             const label = hqItem.querySelector('.spawn-loc-label');
-            if (label) label.textContent = hq?.label || 'Faction HQ';
+            if (label) label.textContent = hq?.label || I18n.t('ui.spawn.status.faction_hq');
             hqItem.dataset.status = hq?.hidden ? 'Hidden HQ' : 'Faction HQ';
             hqItem.dataset.risk = SPAWN_META.hq.risk;
         }

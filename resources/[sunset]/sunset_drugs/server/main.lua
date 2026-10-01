@@ -170,7 +170,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:harvestComplete', function(so
     end
 
     HarvestCooldowns[source] = now
-    notify(source, ('Harvested %dx %s.'):format(yieldCount, drug.rawLabel or drug.label), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.harvested_x', { yield_count = math.floor(tonumber(yieldCount) or 0), raw_label = tostring(drug.rawLabel or drug.label) }), 'success')
     dlog(('harvestComplete ok src=%d drug=%s x%d'):format(source, pending.drugType, yieldCount))
     return { drugType = pending.drugType, amount = yieldCount, raw = drug.raw, rawLabel = drug.rawLabel }
 end)
@@ -240,11 +240,11 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processComplete', function(so
     end)
     if not ok or converted ~= true then
         dlog(('processComplete ConvertItems FAILED src=%d err=%s'):format(source, tostring(convErr)))
-        return nil, convErr or 'Processing failed — your materials were not consumed.'
+        return nil, convErr or exports.sunset_core:TFor(source, 'drugs.err.processing_failed_your_materials_were_not')
     end
 
     ProcessCooldowns[source] = now
-    notify(source, ('Processed %dx %s → 1x %s.'):format(ratio, drug.rawLabel or drug.label, drug.productLabel or drug.label), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.processed_x_1x', { ratio = math.floor(tonumber(ratio) or 0), raw_label = tostring(drug.rawLabel or drug.label), product_label = tostring(drug.productLabel or drug.label) }), 'success')
     dlog(('processComplete ok src=%d drug=%s'):format(source, pending.drugType))
     return { drugType = pending.drugType, product = drug.product, productLabel = drug.productLabel }
 end)
@@ -298,7 +298,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:sell', function(source, drugT
     end
 
     SellCooldowns[source] = now
-    notify(source, ('Sold %dx %s for $%s.'):format(amount, drug.productLabel or drug.label, price), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.sold_x_for', { amount = math.floor(tonumber(amount) or 0), product_label = tostring(drug.productLabel or drug.label), price = tostring(price) }), 'success')
     dlog(('sell ok src=%d drug=%s x%d price=%d'):format(source, drugType, amount, price))
     return { drugType = drugType, amount = amount, price = price }
 end)

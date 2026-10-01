@@ -71,7 +71,7 @@ AddEventHandler('sunset:world:registerElevator', function(factionId, lift, facti
         id = factionId .. ':lobby',
         coords = vector3(lift.lobby.x, lift.lobby.y, lift.lobby.z),
         radius = lift.radius or 1.8,
-        hint = ('[E] %s — Motor Pool'):format(label),
+        hint = exports.sunset_core:Translate('world.ui.e_motor_pool', { label = tostring(label) }),
         markerColor = color,
         factionId = factionId,
         onInteract = function()
@@ -87,7 +87,7 @@ AddEventHandler('sunset:world:registerElevator', function(factionId, lift, facti
         id = factionId .. ':garage',
         coords = vector3(lift.garage.x, lift.garage.y, lift.garage.z),
         radius = lift.garageRadius or 2.5,
-        hint = ('[E] %s — Lobby'):format(label),
+        hint = exports.sunset_core:Translate('world.ui.e_lobby', { label = tostring(label) }),
         markerColor = color,
         factionId = factionId,
         onInteract = function()

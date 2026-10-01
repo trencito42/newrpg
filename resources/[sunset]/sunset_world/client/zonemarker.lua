@@ -75,7 +75,7 @@ local function drawLoop()
                 local hit, p = groundRaycast()
                 if hit then
                     points[#points + 1] = { x = p.x, y = p.y, z = p.z }
-                    notify(('Point %d placed: %.2f, %.2f, %.2f'):format(#points, p.x, p.y, p.z), 'info')
+                    notify(exports.sunset_core:Translate('world.msg.point_placed', { count = #points, value = string.format('%.2f', p.x), y = string.format('%.2f', p.y), z = string.format('%.2f', p.z) }), 'info')
                 else
                     notify(exports.sunset_core:Translate('world.message.could_not_detect_ground_aim_at_a_surface'), 'error')
                 end

@@ -188,7 +188,7 @@ local function actionResult(row)
         ]], { targetAccount.id, targetAccount.username, license, actorAccount.id, actorAccount.username, row.reason, durationMin })
 
         if targetSrc then
-            DropPlayer(targetSrc, ('[Sunset RPG] Banned by %s: %s'):format(actorAccount.username, row.reason))
+            DropPlayer(targetSrc, exports.sunset_core:TFor(targetSrc, 'panel_bridge.msg.sunset_rpg_banned_by', { username = tostring(actorAccount.username), reason = tostring(row.reason) }))
         end
         return true, { durationMin = durationMin }
     end
@@ -237,7 +237,7 @@ local function actionResult(row)
             ]], { targetAccount.id, targetAccount.username, license, actorAccount.id })
 
             if targetSrc then
-                DropPlayer(targetSrc, ('[Sunset RPG] Auto-banned 24h for accumulating 3 warnings. Last: %s'):format(row.reason))
+                DropPlayer(targetSrc, exports.sunset_core:TFor(targetSrc, 'panel_bridge.msg.sunset_rpg_auto_banned_24h_for', { reason = tostring(row.reason) }))
             end
         elseif targetSrc then
             TriggerClientEvent('sunset:client:notify', targetSrc,

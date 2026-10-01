@@ -7,14 +7,14 @@
 
     formatMoney(value) {
         const amount = Math.max(0, Math.floor(Number(value) || 0));
-        return '$' + amount.toLocaleString('en-US');
+        return '$' + I18n.number(amount);
     },
 
     showInvite(data = {}) {
         const modal = document.getElementById('trade-invite-modal');
         const desc = document.getElementById('trade-invite-desc');
         if (!modal) return;
-        const name = data.requesterName || 'Juctor';
+        const name = data.requesterName || I18n.t('common.player');
         const id = data.requesterId || '?';
         if (desc) {
             // [AUDIT P8-04] Escape the requester name: it can fall back to the raw
@@ -22,7 +22,7 @@
             const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
             }[c]));
-            desc.innerHTML = `<span>${esc(name)}</span> (ID: ${esc(Number(id) || '?')})<br>wants to start a trade.`;
+            desc.innerHTML = `<span>${esc(name)}</span> ${I18n.t('ui.trade.invite_text', { id: esc(Number(id) || '?') })}`;
         }
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
@@ -179,18 +179,18 @@
         theirPanel?.classList.toggle('is-locked-their', data.theirAccepted === true);
 
         if (myStatus) {
-            myStatus.textContent = data.myAccepted ? 'Ready' : 'Editing...';
+            myStatus.textContent = data.myAccepted ? I18n.t('ui.trade.ready') : I18n.t('ui.trade.editing_dots');
         }
         if (theirStatus) {
-            theirStatus.textContent = data.theirAccepted ? 'Offer Locked' : 'Editing';
+            theirStatus.textContent = data.theirAccepted ? I18n.t('ui.trade.offer_locked') : I18n.t('ui.trade.editing');
             theirStatus.style.background = data.theirAccepted ? '' : 'var(--text-muted, rgba(255,255,255,0.4))';
         }
         if (lockBtn) {
             lockBtn.classList.toggle('is-locked', data.myAccepted === true);
             lockBtn.disabled = data.myAccepted === true || data.finalizing === true;
             lockBtn.innerHTML = data.myAccepted
-                ? '<i class="ph-bold ph-lock-key-open"></i> Offer Locked'
-                : '<i class="ph-bold ph-lock-key"></i> Lock Offer';
+                ? `<i class="ph-bold ph-lock-key-open"></i> ${I18n.t('ui.trade.offer_locked')}`
+                : `<i class="ph-bold ph-lock-key"></i> ${I18n.t('ui.trade.lock_offer')}`;
         }
         if (addBtn) {
             const canEdit = !data.myAccepted && data.finalizing !== true;
@@ -211,14 +211,14 @@
         btnEl?.classList.add('active');
 
         const titles = {
-            cash: 'Add Amount',
-            items: 'Select Items',
-            vehicles: 'Select Vehicle',
-            properties: 'Select Property',
-            businesses: 'Select Business',
+            cash: I18n.t('ui.trade.add_amount'),
+            items: I18n.t('ui.trade.select_items'),
+            vehicles: I18n.t('ui.trade.select_vehicle'),
+            properties: I18n.t('ui.trade.select_property'),
+            businesses: I18n.t('ui.trade.select_business'),
         };
         const titleEl = document.getElementById('trade-sc-title');
-        if (titleEl) titleEl.textContent = titles[tabId] || 'Choose Source';
+        if (titleEl) titleEl.textContent = titles[tabId] || I18n.t('ui.trade.choose_source');
 
         const balance = document.getElementById('trade-sc-balance');
         if (balance) balance.style.display = tabId === 'cash' ? 'flex' : 'none';
@@ -245,7 +245,7 @@
 
         const balance = document.getElementById('trade-sc-balance');
         if (balance) {
-            balance.innerHTML = `<span>Available:</span> ${this.formatMoney(this._maxCash)}`;
+            balance.innerHTML = `<span>${I18n.t('ui.trade.available')}</span> ${this.formatMoney(this._maxCash)}`;
         }
 
         this._renderSelectorItems(inventoryItems);
@@ -272,7 +272,7 @@
         this._cashDraft += Number(amount) || 0;
         if (this._cashDraft > this._maxCash) this._cashDraft = this._maxCash;
         const el = document.getElementById('trade-cash-value');
-        if (el) el.textContent = this._cashDraft.toLocaleString('en-US');
+        if (el) el.textContent = I18n.number(this._cashDraft);
     },
 
     clearCashDraft() {
@@ -287,7 +287,7 @@
         grid.innerHTML = '';
         const rows = Array.isArray(items) ? items.filter((row) => row && row.item) : [];
         if (!rows.length) {
-            grid.innerHTML = '<div class="selector-empty">No items in your inventory</div>';
+            grid.innerHTML = `<div class="selector-empty">${I18n.t('ui.trade.no_items')}</div>`;
             return;
         }
         rows.forEach((row) => {
@@ -319,7 +319,7 @@
         grid.innerHTML = '';
         const rows = Array.isArray(items) ? items : [];
         if (!rows.length) {
-            grid.innerHTML = '<div class="selector-empty">Nothing available</div>';
+            grid.innerHTML = `<div class="selector-empty">${I18n.t('ui.trade.nothing_available')}</div>`;
             return;
         }
         rows.forEach((asset) => {

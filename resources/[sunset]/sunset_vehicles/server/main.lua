@@ -1096,12 +1096,12 @@ local function runGiveCar(source, args)
     local target = tonumber(args[1])
     local model = string.lower((args[2] or 'sultan'):gsub('%s+', ''))
     if not target then
-        notifyPlayer(source, 'Usage: /givecar [player id] [model]', 'error')
+        notifyPlayer(source, exports.sunset_core:TFor(source, 'vehicles.msg.usage_givecar_player_id_model'), 'error')
         return
     end
 
     if not GetPlayerName(target) then
-        notifyPlayer(source, ('Player #%d is not online. Check F10 for current server IDs.'):format(target), 'error')
+        notifyPlayer(source, exports.sunset_core:TFor(source, 'vehicles.msg.player_is_not_online_check_f10', { target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
 
@@ -1129,8 +1129,7 @@ local function runGiveCar(source, args)
     if not vehicleId then
         local name = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target) or '?'
         notifyPlayer(source,
-            ('Could not store %s in Legion garage for %s (#%d) — database insert failed after 8 plate attempts.'):format(
-                model, name, target), 'error')
+            exports.sunset_core:TFor(source, 'vehicles.msg.could_not_store_in_legion_garage', { model = tostring(model), name = tostring(name), target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
 
@@ -1138,7 +1137,7 @@ local function runGiveCar(source, args)
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'vehicles.message.you_received_a_vehicle_value', model), 'success')
     notifyPlayer(
         source,
-        ('Gave %s to %s (#%d) — stored in Legion garage'):format(model, targetName, target),
+        exports.sunset_core:TFor(source, 'vehicles.msg.gave_to_stored_in_legion_garage', { model = tostring(model), target_name = tostring(targetName), target = math.floor(tonumber(target) or 0) }),
         'success'
     )
 end

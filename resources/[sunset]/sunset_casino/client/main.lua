@@ -72,17 +72,24 @@ end, false)
 -- 'casino_main' does NOT exist; we do NOT call RequestIpl on it.
 
 -- ── Map blip ──
-CreateThread(function()
-    Wait(5000) -- wait for world to load
+local function setupCasinoBlip()
     if casinoBlip and DoesBlipExist(casinoBlip) then RemoveBlip(casinoBlip) end
-    casinoBlip = AddBlipForCoord(Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z)
-    SetBlipSprite(casinoBlip, 679) -- Diamond Casino icon
-    SetBlipColour(casinoBlip, 0)   -- White / Silver Diamond
-    SetBlipScale(casinoBlip, 0.9)
-    SetBlipAsShortRange(casinoBlip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('blip.casino'))
-    EndTextCommandSetBlipName(casinoBlip)
+    casinoBlip = Sunset.CreateSafeBlip(Cfg.entrance, {
+        sprite = 679,
+        color = 0,
+        scale = 0.9,
+        name = exports.sunset_core:Translate('blip.casino'),
+        shortRange = true
+    })
+end
+
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupCasinoBlip()
+end)
+
+CreateThread(function()
+    Sunset.AwaitGameReady()
+    setupCasinoBlip()
 end)
 
 local function DrawText3D(coords, text)
@@ -258,7 +265,7 @@ AddEventHandler('sunset:nui:casinoBlackjackStart', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:blackjackStart', tonumber(data.bet))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not start the game.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_start_the_game'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoBlackjackUpdate', res)
@@ -269,7 +276,7 @@ AddEventHandler('sunset:nui:casinoBlackjackHit', function()
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:blackjackHit')
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not hit.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_hit'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoBlackjackUpdate', res)
@@ -280,7 +287,7 @@ AddEventHandler('sunset:nui:casinoBlackjackStand', function()
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:blackjackStand')
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not stand.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_stand'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoBlackjackUpdate', res)
@@ -291,7 +298,7 @@ AddEventHandler('sunset:nui:casinoSlotsSpin', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:slotsSpin', tonumber(data.bet))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not spin.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_spin'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoSlotsResult', res)
@@ -303,7 +310,7 @@ AddEventHandler('sunset:nui:casinoRouletteSpin', function(data)
         local res, err = Sunset.AwaitCallback('sunset:casino:rouletteSpin',
             tonumber(data.bet), tostring(data.betType), tonumber(data.betValue))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not spin.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_spin'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoRouletteResult', res)
@@ -315,7 +322,7 @@ AddEventHandler('sunset:nui:casinoWheelSpin', function()
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:wheelSpin')
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not spin the wheel.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_spin_the_wheel'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoWheelResult', res)
@@ -327,11 +334,11 @@ AddEventHandler('sunset:nui:casinoBuyChips', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:buyChips', tonumber(data.amount))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not buy chips.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_buy_chips'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoCashierUpdate', res)
-        exports.sunset_ui:Notify(('Bought %s chips for $%s.'):format(res.chips, res.cost), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('casino.msg.bought_chips_for', { chips = tostring(res.chips), cost = tostring(res.cost) }), 'success')
     end)
 end)
 
@@ -339,11 +346,11 @@ AddEventHandler('sunset:nui:casinoSellChips', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:sellChips', tonumber(data.amount))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not sell chips.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_sell_chips'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoCashierUpdate', res)
-        exports.sunset_ui:Notify(('Sold %s chips for $%s.'):format(res.chips, res.earned), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('casino.msg.sold_chips_for', { chips = tostring(res.chips), earned = tostring(res.earned) }), 'success')
     end)
 end)
 
@@ -352,11 +359,11 @@ AddEventHandler('sunset:nui:casinoBuyDrink', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:casino:buyDrink', tostring(data.drinkId))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not buy the drink.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('casino.msg.could_not_buy_the_drink'), 'error')
             return
         end
         exports.sunset_ui:Send('casinoBarUpdate', res)
-        exports.sunset_ui:Notify(('Bought %s for $%s.'):format(res.label, res.price), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('casino.msg.bought_for', { label = tostring(res.label), price = tostring(res.price) }), 'success')
     end)
 end)
 

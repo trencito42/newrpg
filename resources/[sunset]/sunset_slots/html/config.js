@@ -13,51 +13,7 @@ var config = {
     cuadrupleMultipliers: [1,1.8,1.9,2,2.1,2.2,2.3,2.4],
     quintupleMultipliers: [1,2.5,2.6,2.7,2.8,2.9,3,4],
     betCap: 300, // Bet limit
-    maxDoubleCap: 700, // Limit to double bets
-    language: 'en' // language from languages array
+    maxDoubleCap: 700 // Limit to double bets
 };
 
-var languages = {
-    en: {
-        red: 'RED',
-        black: 'BLACK',
-        take_money: 'TAKE MONEY',
-        more_bet: '+ BET',
-        allin: 'ALLIN',
-        roll: 'ROLL',
-        target1: 'YOU WON',
-        target2: '$',
-        target3: '! - ¿Double?',
-        target4: 'Credits:',
-        target5: '$',
-        target6: 'Bet: ',
-        target7: '$',
-        target8: 'History:',
-        target9: '+BET',
-        target10: 'ALL IN',
-        target11: 'ROLL',
-        target12: 'Sound effects',
-    },
-    es: {
-      red: 'ROJO',
-      black: 'NEGRO',
-      take_money: 'RECOGER GANANCIA',
-      more_bet: '+ BET',
-      allin: 'ALLIN',
-      roll: 'ROLL',
-      target1: '¡GANAS',
-      target2: '$',
-      target3: '! - ¿Doblas?',
-      target4: 'Créditos:',
-      target5: '$',
-      target6: 'Apuesta: ',
-      target7: '$',
-      target8: 'Historial:',
-      target9: '+BET',
-      target10: 'ALL IN',
-      target11: 'GIRAR',
-      target12: 'Efectos de sonido',
-    },
-};
-
-
+// Text is localized through the shared I18n catalog (ui.slots.* in sunset_ui/web/js); no per-resource dictionary.

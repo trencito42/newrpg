@@ -363,15 +363,8 @@ local function charge(source, amount, reason)
 end
 
 local function creditOwner(characterId, amount)
-    for _, playerId in ipairs(GetPlayers()) do
-        local src = tonumber(playerId)
-        local online = exports.sunset_core:GetCharacter(src)
-        if online and tonumber(online.id) == tonumber(characterId) then
-            exports.sunset_core:AddMoney(src, 'bank', amount, 'house_rent_income')
-            return
-        end
-    end
-    MySQL.update.await('UPDATE characters SET bank=bank+? WHERE id=?', { amount, characterId })
+    -- core-owned atomic credit (online cache refresh or offline UPDATE + ledger)
+    return exports.sunset_core:AddMoneyToCharacter(characterId, 'bank', amount, 'house_rent_income')
 end
 
 local function clearHome(characterId, propertyId, reason)
@@ -424,10 +417,8 @@ exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
                 WHERE id=? AND enabled=1 AND for_sale=1 AND owner_character_id IS NULL]],
                 { char.id, defaultRent, prop.id })
             if tonumber(claimed) ~= 1 then return false end
-            local charged = query.await(
-                ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(paidFrom, paidFrom, paidFrom),
-                { price, char.id, price })
-            if tonumber(charged) ~= 1 then return false end
+            local charged = exports.sunset_core:DebitMoneyInTransaction(char.id, paidFrom, price, query.await, 'property_purchase')
+            if not charged then return false end
             query.await('UPDATE property_rentals SET active=0 WHERE character_id=?', { char.id })
             local homeSaved = query.await('UPDATE characters SET home_property_id=? WHERE id=?', { prop.id, char.id })
             return tonumber(homeSaved) == 1
@@ -467,18 +458,15 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
                 or not dbBool(current.rent_enabled)
                 or (tonumber(current.rent_price) or 0) ~= price -- [SEC3] owner changed the price after the client saw it
                 or tonumber(current.renter_count or 0) >= tonumber(current.max_renters or 0) then return false end
-            local charged = query.await(
-                ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(paidFrom, paidFrom, paidFrom),
-                { price, char.id, price })
-            if tonumber(charged) ~= 1 then return false end
+            local charged = exports.sunset_core:DebitMoneyInTransaction(char.id, paidFrom, price, query.await, 'property_rent')
+            if not charged then return false end
             query.await('UPDATE property_rentals SET active=0 WHERE character_id=?', { char.id })
             query.await([[INSERT INTO property_rentals(property_id,character_id,rent_price,active,last_paid_at)
                 VALUES(?,?,?,1,NOW()) ON DUPLICATE KEY UPDATE property_id=VALUES(property_id),rent_price=VALUES(rent_price),
                 active=1,started_at=NOW(),last_paid_at=NOW()]], { prop.id,char.id,price })
             local homeSaved = query.await('UPDATE characters SET home_property_id=? WHERE id=?', { prop.id, char.id })
             if tonumber(homeSaved) ~= 1 then return false end
-            local ownerPaid = query.await('UPDATE characters SET bank=bank+? WHERE id=?', { price, ownerId })
-            return tonumber(ownerPaid) == 1
+            return exports.sunset_core:CreditMoneyInTransaction(ownerId, 'bank', price, query.await, 'house_rent_income') == true
         end)
     end)
     if not callOk or not committed then
@@ -774,7 +762,7 @@ end)
 
 RegisterNetEvent('sunset:server:exitProperty',function()
     local src=source; local id=Inside[src]
-    if not id then return message(src,'You are not inside a house.','error') end
+    if not id then return message(src,exports.sunset_core:TFor(src, 'property_not_inside'),'error') end
     local prop=property(id); Inside[src]=nil; SetPlayerRoutingBucket(src,0); Player(src).state:set('sunsetPropertyExit',nil,false)
     if prop then TriggerClientEvent('sunset:client:propertyExited',src,{id=prop.id,entry=decodePos(prop.exit_pos) or decodePos(prop.entry)}) end
 end)
@@ -798,11 +786,21 @@ end)
 AddEventHandler('playerDropped',function() Inside[source]=nil end)
 AddEventHandler('onResourceStop',function(resource)
     if resource~=GetCurrentResourceName() then return end
-    for player in pairs(Inside) do SetPlayerRoutingBucket(player,0) end
+    -- [RESTART SAFETY] Inside[] dies with the resource: walk everyone out to the
+    -- entrance (bucket 0 + exit teleport + client radar/state reset) instead of
+    -- leaving them in an interior with no server-side way to exit.
+    for player,id in pairs(Inside) do
+        SetPlayerRoutingBucket(player,0)
+        if GetPlayerName(player) then
+            local prop=property(id)
+            Player(player).state:set('sunsetPropertyExit',nil,false)
+            TriggerClientEvent('sunset:client:propertyExited',player,prop and {id=prop.id,entry=decodePos(prop.exit_pos) or decodePos(prop.entry)} or {})
+        end
+    end
 end)
 
 registerPropertyCommand('acreatehouse',function(source,args)
-    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,'Admin level 3 is required to create houses.','error') end
+    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,exports.sunset_core:TFor(source, 'properties.msg.admin_level_3_is_required_to'),'error') end
     local price = tonumber(args[1])
     local interior = tostring(args[2] or ''):lower()
     local level = tonumber(args[3])
@@ -811,121 +809,121 @@ registerPropertyCommand('acreatehouse',function(source,args)
         local list = {}
         for id in pairs(SunsetProperties.Interiors) do list[#list+1] = id end
         table.sort(list)
-        return message(source, ('Usage: /acreatehouse [pret] [interior] [nivel minim] [nume]\nInterioare: %s'):format(table.concat(list, ', ')), 'error')
+        return message(source, exports.sunset_core:TFor(source, 'properties.msg.usage_acreatehouse_pret_interior_nivel_minim', { concat = table.concat(list, ', ') }), 'error')
     end
     local label = table.concat(args, ' ', 4):sub(1, 64)
-    if #label < 3 then return message(source, 'Add a name for the house after the minimum level.', 'error') end
+    if #label < 3 then return message(source, exports.sunset_core:TFor(source, 'properties.msg.add_a_name_for_the_house'), 'error') end
     local ped = GetPlayerPed(source)
-    if ped == 0 then return message(source, 'Player position unavailable. Try again.', 'error') end
+    if ped == 0 then return message(source, exports.sunset_core:TFor(source, 'properties.msg.player_position_unavailable_try_again'), 'error') end
     local pos, heading = GetEntityCoords(ped), GetEntityHeading(ped)
     local id = MySQL.insert.await([[INSERT INTO properties(label,price,interior,entry,interior_pos,exit_pos,minimum_level,for_sale,enabled)
       VALUES(?,?,?,?,?,?,?,1,1)]], {label, math.floor(price), interior, encodePos(pos, heading), encodePos(preset.coords, preset.coords.w), encodePos(pos, heading), math.floor(level)})
     notifyPropertiesChanged()
-    message(source, ('Casa #%d "%s" a fost creata: $%d, interior %s, level %d.'):format(id, label, price, interior, level), 'success')
+    message(source, exports.sunset_core:TFor(source, 'properties.msg.casa_a_fost_creata_interior_level', { id = math.floor(tonumber(id) or 0), label = tostring(label), price = math.floor(tonumber(price) or 0), interior = tostring(interior), level = math.floor(tonumber(level) or 0) }), 'success')
 end)
 
 registerPropertyCommand('houseinteriors',function(source)
     local list={}; for id,preset in pairs(SunsetProperties.Interiors) do list[#list+1]=id..' ('..preset.label..')' end; table.sort(list)
-    message(source,'Available interiors: '..table.concat(list,', '),'info')
+    message(source,exports.sunset_core:TFor(source, 'properties.msg.available_interiors', { concat = table.concat(list,', ') }),'info')
 end)
 
 registerPropertyCommand('houselock',function(source,args) local ok,msg=toggleLock(source,tonumber(args[1])); message(source,msg,ok and 'success' or 'error') end)
 
 registerPropertyCommand('houserent',function(source,args)
     local price=tonumber(args[1]); local _,prop,err=ownedProperty(source,tonumber(args[2])); if not prop then return message(source,err,'error') end
-    if args[1]=='off' then MySQL.update.await('UPDATE properties SET rent_enabled=0 WHERE id=?',{prop.id}); TriggerClientEvent('sunset:client:propertiesChanged',-1); return message(source,'New rentals disabled; existing renters keep access.','success') end
-    if not price or price<SunsetProperties.RentMin or price>SunsetProperties.RentMax then return message(source,('Usage: /houserent [price|off] [house id]. Limit: $%d-$%d per payday.'):format(SunsetProperties.RentMin,SunsetProperties.RentMax),'error') end
+    if args[1]=='off' then MySQL.update.await('UPDATE properties SET rent_enabled=0 WHERE id=?',{prop.id}); TriggerClientEvent('sunset:client:propertiesChanged',-1); return message(source,exports.sunset_core:TFor(source, 'properties.msg.new_rentals_disabled_existing_renters_keep'),'success') end
+    if not price or price<SunsetProperties.RentMin or price>SunsetProperties.RentMax then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_houserent_price_off_house_id', { rent_min = math.floor(tonumber(SunsetProperties.RentMin) or 0), rent_max = math.floor(tonumber(SunsetProperties.RentMax) or 0) }),'error') end
     MySQL.update.await('UPDATE properties SET rent_enabled=1,rent_price=? WHERE id=?',{math.floor(price),prop.id}); TriggerClientEvent('sunset:client:propertiesChanged',-1)
-    message(source,('Rent enabled at $%d per payday.'):format(price),'success')
+    message(source,exports.sunset_core:TFor(source, 'properties.msg.rent_enabled_at_per_payday', { price = math.floor(tonumber(price) or 0) }),'success')
 end)
 
 registerPropertyCommand('housemaxrenters',function(source,args)
     local count=tonumber(args[1]); local _,prop,err=ownedProperty(source,tonumber(args[2])); if not prop then return message(source,err,'error') end
-    if not count or count<SunsetProperties.MaxRentersMin or count>SunsetProperties.MaxRentersMax then return message(source,('Usage: /housemaxrenters [%d-%d] [house id].'):format(SunsetProperties.MaxRentersMin,SunsetProperties.MaxRentersMax),'error') end
-    MySQL.update.await('UPDATE properties SET max_renters=? WHERE id=?',{math.floor(count),prop.id}); TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,('Maximum renters set to %d.'):format(count),'success')
+    if not count or count<SunsetProperties.MaxRentersMin or count>SunsetProperties.MaxRentersMax then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_housemaxrenters_house_id', { max_renters_min = math.floor(tonumber(SunsetProperties.MaxRentersMin) or 0), max_renters_max = math.floor(tonumber(SunsetProperties.MaxRentersMax) or 0) }),'error') end
+    MySQL.update.await('UPDATE properties SET max_renters=? WHERE id=?',{math.floor(count),prop.id}); TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,exports.sunset_core:TFor(source, 'properties.msg.maximum_renters_set_to', { count = math.floor(tonumber(count) or 0) }),'success')
 end)
 
 registerPropertyCommand('houseinterior',function(source,args)
     local key=tostring(args[1] or ''); local preset=SunsetProperties.Interiors[key]
-    if not preset then return message(source,'Unknown interior. Use /houseinteriors to see valid names.','error') end
+    if not preset then return message(source,exports.sunset_core:TFor(source, 'properties.msg.unknown_interior_use_houseinteriors_to_see'),'error') end
     local _,prop,err=ownedProperty(source,tonumber(args[2])); if not prop then return message(source,err,'error') end
-    for player,id in pairs(Inside) do if id==prop.id and tonumber(player)~=source then return message(source,'Everyone else must leave before the interior is changed.','error') end end
+    for player,id in pairs(Inside) do if id==prop.id and tonumber(player)~=source then return message(source,exports.sunset_core:TFor(source, 'properties.msg.everyone_else_must_leave_before_the'),'error') end end
     MySQL.update.await('UPDATE properties SET interior=?,interior_pos=? WHERE id=?',{key,encodePos(preset.coords,preset.coords.w),prop.id})
-    message(source,('Interior changed to %s. Re-enter to see it.'):format(preset.label),'success')
+    message(source,exports.sunset_core:TFor(source, 'properties.msg.interior_changed_to_re_enter_to', { label = tostring(preset.label) }),'success')
 end)
 
 registerPropertyCommand('hdescription',function(source,args)
     local _,prop,err=ownedProperty(source,nil); if not prop then return message(source,err,'error') end
     local text=table.concat(args,' '):match('^%s*(.-)%s*$')
-    if text=='' then return message(source,'Usage: /hdescription [text], or /hdescription off to remove it. Maximum 160 characters.','error') end
-    if text:lower()=='off' then text=nil elseif #text>160 then return message(source,'House description is too long. Maximum: 160 characters.','error') end
+    if text=='' then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_hdescription_text_or_hdescription_off'),'error') end
+    if text:lower()=='off' then text=nil elseif #text>160 then return message(source,exports.sunset_core:TFor(source, 'properties.msg.house_description_is_too_long_maximum'),'error') end
     MySQL.update.await('UPDATE properties SET description=? WHERE id=?',{text,prop.id})
     notifyPropertiesChanged()
-    message(source,text and ('House description updated: '..text) or 'House description removed.','success')
+    message(source,text and exports.sunset_core:TFor(source, 'properties.msg.house_description_updated', { text = tostring(text) }) or exports.sunset_core:TFor(source, 'properties.msg.house_description_removed'),'success')
 end)
 
 registerPropertyCommand('houserenters',function(source,args)
     local _,prop,err=ownedProperty(source,tonumber(args[1])); if not prop then return message(source,err,'error') end
     local rows=MySQL.query.await([[SELECT r.character_id,TRIM(CONCAT(c.firstname,' ',c.lastname)) name,r.rent_price,r.last_paid_at
       FROM property_rentals r JOIN characters c ON c.id=r.character_id WHERE r.property_id=? AND r.active=1 ORDER BY r.started_at]],{prop.id}) or {}
-    if #rows==0 then return message(source,'This house currently has no renters.','info') end
+    if #rows==0 then return message(source,exports.sunset_core:TFor(source, 'properties.msg.this_house_currently_has_no_renters'),'info') end
     local list={}; for _,row in ipairs(rows) do list[#list+1]=('#%d %s ($%d/payday)'):format(row.character_id,row.name,row.rent_price) end
-    message(source,'Renters: '..table.concat(list,', '),'info')
+    message(source,exports.sunset_core:TFor(source, 'properties.msg.renters', { concat = table.concat(list,', ') }),'info')
 end)
 
 registerPropertyCommand('housekickrenter',function(source,args)
     local characterId=tonumber(args[1]); local _,prop,err=ownedProperty(source,tonumber(args[2])); if not prop then return message(source,err,'error') end
-    if not characterId then return message(source,'Usage: /housekickrenter [character id] [house id]','error') end
+    if not characterId then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_housekickrenter_character_id_house_id'),'error') end
     local changed=MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=? AND character_id=? AND active=1',{prop.id,characterId})
-    if changed<1 then return message(source,'That character is not an active renter in this house.','error') end
+    if changed<1 then return message(source,exports.sunset_core:TFor(source, 'properties.msg.that_character_is_not_an_active'),'error') end
     clearHome(characterId,prop.id,('The owner removed you from %s. Your job and faction were not changed.'):format(prop.label))
-    notifyPropertiesChanged(); message(source,('Renter #%d was removed.'):format(characterId),'success')
+    notifyPropertiesChanged(); message(source,exports.sunset_core:TFor(source, 'properties.msg.renter_was_removed', { character_id = math.floor(tonumber(characterId) or 0) }),'success')
 end)
 
 registerPropertyCommand('sellhouse',function(source,args)
     local id=tonumber(args[1]); local owner,prop,err=ownedProperty(source,id); if not prop then return message(source,err,'error') end
-    if tostring(args[2] or ''):lower()~='confirm' then return message(source,('This permanently sells %s for 70%% ($%d). Use /sellhouse %d confirm.'):format(prop.label,math.floor(prop.price*0.7),prop.id),'error') end
+    if tostring(args[2] or ''):lower()~='confirm' then return message(source,exports.sunset_core:TFor(source, 'properties.msg.this_permanently_sells_for_70_use', { label = tostring(prop.label), value = math.floor(tonumber(math.floor(prop.price*0.7)) or 0), id = math.floor(tonumber(prop.id) or 0) }),'error') end
     local refund=math.floor((tonumber(prop.price) or 0)*0.7)
     -- [SEC3] atomic claim first (double-refund race), then evict renters
     local sold=MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
-    if tonumber(sold)~=1 then return message(source,'You do not own this house.','error') end
+    if tonumber(sold)~=1 then return message(source,exports.sunset_core:TFor(source, 'properties.msg.you_do_not_own_this_house'),'error') end
     local renters=MySQL.query.await('SELECT character_id FROM property_rentals WHERE property_id=? AND active=1',{prop.id}) or {}
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=?',{prop.id})
     for _,renter in ipairs(renters) do clearHome(renter.character_id,prop.id,('Your rental at %s ended because the house was sold.'):format(prop.label)) end
     MySQL.update.await('UPDATE characters SET home_property_id=NULL WHERE home_property_id=?',{prop.id})
     exports.sunset_core:SetHomeProperty(source,nil); exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
-    notifyPropertiesChanged(); message(source,('House sold. $%d was deposited in your bank.'):format(refund),'success')
+    notifyPropertiesChanged(); message(source,exports.sunset_core:TFor(source, 'properties.msg.house_sold_was_deposited_in_your', { refund = math.floor(tonumber(refund) or 0) }),'success')
 end)
 
 registerPropertyCommand('ahouseedit',function(source,args)
-    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,'Admin level 3 is required.','error') end
+    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,exports.sunset_core:TFor(source, 'properties.msg.admin_level_3_is_required'),'error') end
     local id,field=tonumber(args[1]),tostring(args[2] or ''):lower(); local fields={price='price',level='minimum_level',name='label',description='description',sale='for_sale',enabled='enabled'}
-    if not id or not fields[field] then return message(source,'Usage: /ahouseedit [id] [price|level|name|description|sale|enabled] [value]','error') end
+    if not id or not fields[field] then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_ahouseedit_id_price_level_name'),'error') end
     local value=table.concat(args,' ',3); if field~='name' then value=tonumber(value) end
     if field=='name' or field=='description' then value=table.concat(args,' ',3) end
-    if value==nil or ((field~='name' and field~='description') and value<0) or (field=='name' and #value<3) or (field=='description' and #value>160) then return message(source,'Enter a valid value. Descriptions may contain up to 160 characters.','error') end
+    if value==nil or ((field~='name' and field~='description') and value<0) or (field=='name' and #value<3) or (field=='description' and #value>160) then return message(source,exports.sunset_core:TFor(source, 'properties.msg.enter_a_valid_value_descriptions_may'),'error') end
     local changed=MySQL.update.await(('UPDATE properties SET %s=? WHERE id=?'):format(fields[field]),{value,id})
-    if changed<1 then return message(source,'House not found or value unchanged.','error') end
-    notifyPropertiesChanged(); message(source,('House #%d updated: %s = %s.'):format(id,field,tostring(value)),'success')
+    if changed<1 then return message(source,exports.sunset_core:TFor(source, 'properties.msg.house_not_found_or_value_unchanged'),'error') end
+    notifyPropertiesChanged(); message(source,exports.sunset_core:TFor(source, 'properties.msg.house_updated', { id = math.floor(tonumber(id) or 0), field = tostring(field), value = tostring(value) }),'success')
 end)
 
 registerPropertyCommand('aenablerent', function(source, args)
-    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,'Admin level 3 is required.','error') end
+    if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,exports.sunset_core:TFor(source, 'properties.msg.admin_level_3_is_required'),'error') end
     local price = math.floor(tonumber(args[1]) or SunsetProperties.DefaultRentPrice or 500)
     local changed = MySQL.update.await(
         'UPDATE properties SET rent_enabled=1, rent_price=? WHERE owner_character_id IS NOT NULL AND rent_enabled=0',
         { price }
     )
     notifyPropertiesChanged()
-    message(source, ('Rent enabled on %d owned houses at $%d per payday.'):format(tonumber(changed) or 0, price), 'success')
+    message(source, exports.sunset_core:TFor(source, 'properties.msg.rent_enabled_on_owned_houses_at', { changed = math.floor(tonumber(tonumber(changed) or 0) or 0), price = math.floor(tonumber(price) or 0) }), 'success')
 end, false)
 
-registerPropertyCommand('renthouse',function(source) message(source,'Stand at a house marker, press E, then choose RENT. Owner must have rent enabled. /properties lists all houses.','info') end)
+registerPropertyCommand('renthouse',function(source) message(source,exports.sunset_core:TFor(source, 'properties.msg.stand_at_a_house_marker_press'),'info') end)
 registerPropertyCommand('unrent',function(source)
     local char=exports.sunset_core:GetCharacter(source); if not char then return end; local rent=activeRental(char.id)
-    if not rent then return message(source,'You do not currently rent a house.','error') end
+    if not rent then return message(source,exports.sunset_core:TFor(source, 'properties.msg.you_do_not_currently_rent_a'),'error') end
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id}); if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
-    notifyPropertiesChanged(); message(source,'Rental ended. Your civilian job and faction are unchanged.','success')
+    notifyPropertiesChanged(); message(source,exports.sunset_core:TFor(source, 'properties.msg.rental_ended_your_civilian_job_and'),'success')
 end)
 
 function ProcessRentPayday(source)
@@ -935,7 +933,7 @@ function ProcessRentPayday(source)
     local price=tonumber(rent.rent_price) or 0
     if not charge(source,price,'house_rent_payday') then
         MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id}); if tonumber(char.home_property_id)==tonumber(rent.property_id) then clearHome(char.id,rent.property_id) end
-        message(source,('Rental at %s ended because you could not pay $%d.'):format(rent.label,price),'error'); return {charged=0,evicted=true}
+        message(source,exports.sunset_core:TFor(source, 'properties.msg.rental_at_ended_because_you_could', { label = tostring(rent.label), price = math.floor(tonumber(price) or 0) }),'error'); return {charged=0,evicted=true}
     end
     MySQL.update.await('UPDATE property_rentals SET last_paid_at=NOW() WHERE id=?',{rent.id}); creditOwner(rent.owner_character_id,price)
     return {charged=price,label=rent.label}

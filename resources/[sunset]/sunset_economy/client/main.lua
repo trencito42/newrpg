@@ -41,7 +41,7 @@ RegisterNetEvent('sunset:client:payday', function(net, tax, breakdown)
     if (breakdown.rent or 0) > 0 then details = details .. (' | rent -$%s%s'):format(breakdown.rent, breakdown.rentProperty and (' (' .. breakdown.rentProperty .. ')') or '') end
     if (breakdown.respect or 0) > 0 then details = details .. (' | +%s RP'):format(breakdown.respect) end
     if (breakdown.robPoints or 0) > 0 then details = details .. (' | +%s rob points'):format(breakdown.robPoints) end
-    exports.sunset_ui:Notify(('Payday: +$%s (tax: $%s)%s'):format(net, tax, details), 'success', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('economy.msg.payday_tax', { net = tostring(net), tax = tostring(tax), details = tostring(details) }), 'success', 8000)
 end)
 
 exports('GetNextPayday', function() return nextPaydayLabel end)
@@ -120,7 +120,7 @@ AddEventHandler('sunset:nui:shopBuy', function(data)
     if ok then
         exports.sunset_ui:Notify(exports.sunset_core:Translate('economy.message.purchase_successful'), 'success')
     else
-        exports.sunset_ui:Notify(err or 'Purchase failed', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('economy.msg.purchase_failed'), 'error')
     end
     -- [GUNSHOP FIX] Tell the store UI the server answered so it re-arms the
     -- buy button (previously it reset on a timer and double-fires hit the
@@ -143,8 +143,8 @@ AddEventHandler('sunset:nui:atmAction', function(data)
         result.txId = string.format('TX-%d', math.random(100000, 999999))
         exports.sunset_ui:Send('atmUpdate', result)
     else
-        exports.sunset_ui:Notify(err or 'Transaction failed', 'error')
-        exports.sunset_ui:Send('atmUpdate', { error = err or 'Transaction failed' })
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('economy.msg.transaction_failed'), 'error')
+        exports.sunset_ui:Send('atmUpdate', { error = err or exports.sunset_core:Translate('economy.msg.transaction_failed') })
     end
 end)
 

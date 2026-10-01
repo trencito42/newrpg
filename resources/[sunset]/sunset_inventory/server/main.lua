@@ -647,7 +647,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:useItem', function(source, item)
     local used, reason = UseItem(source, item)
     if used then return true end
-    return nil, reason or 'This item cannot be used right now. It was not consumed.'
+    return nil, reason or exports.sunset_core:TFor(source, 'inventory.err.this_item_cannot_be_used_right')
 end)
 
 exports.sunset_core:RegisterCallback('sunset:getGasCanLiters', function(source)

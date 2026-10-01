@@ -22,32 +22,32 @@
                     <div class="fnc-header">
                         <div class="fnc-icon-badge"><i class="ph-fill ph-identification-card"></i></div>
                         <div>
-                            <h2 class="fnc-title" id="fnc-modal-title">FORCE NAME CHANGE</h2>
-                            <p class="fnc-subtitle" id="fnc-modal-subtitle">An admin has requested a name change</p>
+                            <h2 class="fnc-title" id="fnc-modal-title">${I18n.t('ui.fnc.forced_title')}</h2>
+                            <p class="fnc-subtitle" id="fnc-modal-subtitle">${I18n.t('ui.fnc.requested_sub')}</p>
                         </div>
                     </div>
                     <div class="fnc-body">
                         <div class="fnc-info-row">
-                            <span class="fnc-label">Current Name:</span>
-                            <span class="fnc-val" id="fnc-current-name">Player</span>
+                            <span class="fnc-label">${I18n.t('ui.fnc.current_name')}</span>
+                            <span class="fnc-val" id="fnc-current-name">${I18n.t('common.player')}</span>
                         </div>
                         <div class="fnc-info-row" id="fnc-reason-row" style="display:none;">
-                            <span class="fnc-label">Admin Reason:</span>
-                            <span class="fnc-val fnc-val--reason" id="fnc-reason-text">Name violates rules</span>
+                            <span class="fnc-label">${I18n.t('ui.fnc.admin_reason')}</span>
+                            <span class="fnc-val fnc-val--reason" id="fnc-reason-text">${I18n.t('ui.fnc.default_reason')}</span>
                         </div>
                         <div class="fnc-field-group">
-                            <label for="fnc-input-name" class="fnc-input-label">Your New Nickname</label>
+                            <label for="fnc-input-name" class="fnc-input-label">${I18n.t('ui.fnc.new_nickname')}</label>
                             <div class="fnc-input-wrap">
                                 <i class="ph-bold ph-user fnc-input-icon"></i>
-                                <input type="text" id="fnc-input-name" class="fnc-input" placeholder="ex: diablo69, alex.ro, Viper_99" maxlength="24" autocomplete="off" spellcheck="false" />
+                                <input type="text" id="fnc-input-name" class="fnc-input" placeholder="${I18n.t('ui.fnc.placeholder')}" maxlength="24" autocomplete="off" spellcheck="false" />
                             </div>
-                            <div class="fnc-hint" id="fnc-hint-text">3 - 24 caractere (litere, cifre, puncte, liniuțe).</div>
+                            <div class="fnc-hint" id="fnc-hint-text">${I18n.t('ui.fnc.hint')}</div>
                             <div class="fnc-error-msg hidden" id="fnc-error-box"></div>
                         </div>
                     </div>
                     <div class="fnc-actions">
-                        <button type="button" class="fnc-btn fnc-btn-cancel" id="fnc-btn-cancel"><i class="ph-bold ph-x"></i> Cancel</button>
-                        <button type="button" class="fnc-btn fnc-btn-confirm" id="fnc-btn-submit"><i class="ph-bold ph-check"></i> Change Name</button>
+                        <button type="button" class="fnc-btn fnc-btn-cancel" id="fnc-btn-cancel"><i class="ph-bold ph-x"></i> ${I18n.t('common.cancel')}</button>
+                        <button type="button" class="fnc-btn fnc-btn-confirm" id="fnc-btn-submit"><i class="ph-bold ph-check"></i> ${I18n.t('ui.fnc.change_name')}</button>
                     </div>
                 </div>
             `;
@@ -76,12 +76,12 @@
                 this.clearError();
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Checking...';
+                    submitBtn.innerHTML = `<i class="ph-bold ph-spinner ph-spin"></i> ${I18n.t('ui.fnc.checking')}`;
                 }
                 post('fncSubmit', { name: val }).then(() => {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="ph-bold ph-check"></i> Change Name';
+                        submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> ${I18n.t('ui.fnc.change_name')}`;
                     }
                 });
             };
@@ -102,7 +102,7 @@
             this.ensureDom();
             this.active = true;
             this.forced = data?.forced !== false;
-            this.currentName = data?.currentName || 'Player';
+            this.currentName = data?.currentName || I18n.t('common.player');
             this.reason = data?.reason || '';
             this.tokens = data?.tokens || 1;
 
@@ -124,8 +124,8 @@
                 if (reasonRow) reasonRow.style.display = 'none';
             }
 
-            if (titleEl) titleEl.textContent = this.forced ? 'FORCE NAME CHANGE (FNC)' : 'NAME CHANGE';
-            if (subEl) subEl.textContent = this.forced ? 'An admin has required you to change your in-game name' : 'Choose your new name';
+            if (titleEl) titleEl.textContent = this.forced ? I18n.t('ui.fnc.forced_title_fnc') : I18n.t('ui.fnc.title');
+            if (subEl) subEl.textContent = this.forced ? I18n.t('ui.fnc.required_sub') : I18n.t('ui.fnc.choose_sub');
 
             if (cancelBtn) {
                 cancelBtn.style.display = this.forced ? 'none' : 'inline-flex';
@@ -172,7 +172,7 @@
         } else if (action === 'fncModalHide') {
             FncUI.hide();
         } else if (action === 'fncModalError') {
-            FncUI.showError(data?.error || 'Failed to change name.');
+            FncUI.showError(data?.error || I18n.t('ui.fnc.failed'));
         } else if (action === 'sessionForceClose') {
             FncUI.hide();
         }

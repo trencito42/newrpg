@@ -356,7 +356,7 @@ RegisterNetEvent('sunset:anticheat:clientTick', function(payload)
     }
 
     -- [LEDGER] weapon/ammo list (every 5th tick = 5 s, sent by sampler).
-    if type(payload.weapons) == 'table' and Anticheat.Ledger then
+    if type(payload.weapons) == 'table' and #payload.weapons <= 64 and Anticheat.Ledger then -- [SEC3] bound client array (CPU DoS)
         for _, w in ipairs(payload.weapons) do
             if type(w) == 'table' then
                 pcall(Anticheat.Ledger.OnAmmoReport, src, w.hash, w.ammo)

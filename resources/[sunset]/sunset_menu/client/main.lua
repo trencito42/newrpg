@@ -50,7 +50,16 @@ AddEventHandler('sunset:client:onCharacterLoaded', function()
 end)
 
 AddEventHandler('onResourceStop', function(resource)
-    if resource == GetCurrentResourceName() then releaseMugshot() end
+    if resource ~= GetCurrentResourceName() then return end
+    releaseMugshot()
+    -- [RESTART SAFETY] release the cursor if the menu was open
+    if menuOpen then
+        menuOpen = false
+        pcall(function()
+            exports.sunset_ui:Send('menuHide', {})
+            exports.sunset_ui:SetFocus(false, false, false)
+        end)
+    end
 end)
 
 local function controlsBlocked()
@@ -223,6 +232,8 @@ local function openMenu(initialTab, opts)
     end
     local char = exports.sunset_core and exports.sunset_core:GetCharacter()
     if not char then return end
+    local okReady, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
+    if okReady and not ready then return end -- gate: login/spawn not finished
 
     local ok, data = pcall(buildMenuData, true)
     if not ok or not data then
@@ -400,7 +411,7 @@ AddEventHandler('sunset:nui:menuAction', function(data)
         CreateThread(function()
             local ok, message = Sunset.AwaitCallback('sunset:buyLevel')
             exports.sunset_ui:Send('menuAlert', {
-                message = message or (ok and 'Level purchased.' or 'Level purchase failed.'),
+                message = message or (ok and exports.sunset_core:Translate('menu.ui.level_purchased') or exports.sunset_core:Translate('menu.ui.level_purchase_failed')),
                 type = ok and 'success' or 'error',
             })
             if not menuOpen then return end
@@ -432,7 +443,7 @@ AddEventHandler('sunset:nui:menuVehicleAction', function(data)
             if ok then
                 closeMenu()
             else
-                exports.sunset_ui:Notify(err or 'Could not spawn', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.could_not_spawn'), 'error')
             end
         elseif data.action == 'claim_insurance' then
             TriggerEvent('sunset:nui:garageClaimInsurance', { vehicleId = tonumber(data.vehicleId), fromMenu = true })
@@ -471,7 +482,7 @@ AddEventHandler('sunset:nui:menuJobAction', function(data)
         if data.action == 'duty' then
             local state, err = Sunset.AwaitCallback('sunset:toggleDuty')
             if state == nil then
-                exports.sunset_ui:Notify(err or 'Cannot toggle duty', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.cannot_toggle_duty'), 'error')
             else
                 cachedExtrasAt = 0
             end
@@ -481,7 +492,7 @@ AddEventHandler('sunset:nui:menuJobAction', function(data)
                 cachedExtrasAt = 0
                 closeMenu()
             else
-                exports.sunset_ui:Notify(err or 'Failed', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.failed'), 'error')
             end
         elseif data.action == 'quit_civilian' then
             local ok, err = Sunset.AwaitCallback('sunset:quitCivilianJob')
@@ -492,7 +503,7 @@ AddEventHandler('sunset:nui:menuJobAction', function(data)
                 cachedExtrasAt = 0
                 closeMenu()
             else
-                exports.sunset_ui:Notify(err or 'Could not quit civilian job', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.could_not_quit_civilian_job'), 'error')
             end
         elseif data.action == 'faction' then
             closeMenu()

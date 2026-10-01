@@ -107,7 +107,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             SetVehicleDirtLevel(veh, 0.0)
             notify(exports.sunset_core:Translate('tuning.message.vehicle_repaired_250'), 'success')
         else
-            notify(err or 'Repair failed.', 'error')
+            notify(err or exports.sunset_core:Translate('tuning.msg.repair_failed'), 'error')
         end
 
     elseif action == 'lsc_tune' then

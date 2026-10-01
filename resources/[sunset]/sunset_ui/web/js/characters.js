@@ -8,7 +8,7 @@ const Characters = {
 
     init(data) {
         this.list = data.characters || [];
-        $('#player-name').textContent = data.playerName || 'Player';
+        $('#player-name').textContent = data.playerName || I18n.t('common.player');
 
         const container = $('#characters-list');
         container.innerHTML = '';
@@ -20,7 +20,7 @@ const Characters = {
         if (this.list.length < (data.maxSlots || 3)) {
             const empty = document.createElement('div');
             empty.className = 'slot slot--empty';
-            empty.textContent = '+ Empty Slot';
+            empty.textContent = '+ ' + I18n.t('ui.characters.empty_slot');
             empty.addEventListener('click', () => this.openCreate());
             container.appendChild(empty);
         }
@@ -33,11 +33,11 @@ const Characters = {
         el.className = 'slot';
 
         const lastPlayed = char.last_played
-            ? new Date(char.last_played).toLocaleDateString('en-US')
+            ? I18n.date(char.last_played)
             : '—';
 
         el.innerHTML = `
-            <button class="slot__delete" title="Delete">✕</button>
+            <button class="slot__delete" title="${I18n.t('common.delete')}">✕</button>
             <div class="slot__name">${String(char.firstname ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))} ${String(char.lastname ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
             <div class="slot__meta">$${char.cash} · ${lastPlayed}</div>
         `;
@@ -64,7 +64,7 @@ const Characters = {
         (data.nationalities || this.nationalities).forEach(n => {
             const opt = document.createElement('option');
             opt.value = n;
-            opt.textContent = n;
+            opt.textContent = I18n.t('ui.characters.nat.' + String(n).toLowerCase().replace(/[^a-z]+/g, '_')) || n;
             sel.appendChild(opt);
         });
 
@@ -74,7 +74,7 @@ const Characters = {
             $('#firstname').value = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
             $('#lastname').value = parts[1]
                 ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
-                : 'Player';
+                : I18n.t('common.player');
         } else {
             $('#firstname').value = '';
             $('#lastname').value = '';

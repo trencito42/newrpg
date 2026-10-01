@@ -174,9 +174,9 @@
         ctx.font = "italic 700 14px Montserrat, 'Chakra Petch', sans-serif";
         ctx.fillText('KM/H', CX, CY + 35);
 
-        drawDashboardIcon(CX - 50, CY - 85, 'ENG', state.engineOn, theme.success);
-        drawDashboardIcon(CX, CY - 100, 'LCK', state.locked, theme.warning);
-        drawDashboardIcon(CX + 50, CY - 85, 'BLT', state.seatbelt, theme.success);
+        drawDashboardIcon(CX - 50, CY - 85, I18n.t('ui.speedo.engine_short'), state.engineOn, theme.success);
+        drawDashboardIcon(CX, CY - 100, I18n.t('ui.speedo.lock_short'), state.locked, theme.warning);
+        drawDashboardIcon(CX + 50, CY - 85, I18n.t('ui.speedo.belt_short'), state.seatbelt, theme.success);
 
         const barWidth = 80;
         const barHeight = 4;
@@ -185,7 +185,7 @@
         ctx.fillStyle = theme.muted;
         ctx.font = "bold 10px Montserrat, 'Chakra Petch', sans-serif";
         ctx.textAlign = 'left';
-        ctx.fillText('FUEL', fuelX, barY - 6);
+        ctx.fillText(I18n.t('ui.speedo.fuel_short'), fuelX, barY - 6);
         drawRoundedRect(fuelX, barY, barWidth, barHeight, 2, 'rgba(255,255,255,0.1)');
         drawRoundedRect(fuelX, barY, barWidth * state.currentFuel / 100, barHeight, 2,
             state.currentFuel < 20 ? theme.redline : theme.white);
@@ -193,7 +193,7 @@
         const healthX = CX + 15;
         ctx.fillStyle = theme.muted;
         ctx.textAlign = 'right';
-        ctx.fillText('HLTH', healthX + barWidth, barY - 6);
+        ctx.fillText(I18n.t('ui.speedo.health_short'), healthX + barWidth, barY - 6);
         drawRoundedRect(healthX, barY, barWidth, barHeight, 2, 'rgba(255,255,255,0.1)');
         drawRoundedRect(healthX, barY, barWidth * state.currentHealth / 100, barHeight, 2,
             state.currentHealth < 35 ? theme.redline : theme.success);
@@ -201,7 +201,7 @@
         ctx.fillStyle = theme.muted;
         ctx.font = "bold 11px Montserrat, 'Chakra Petch', sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText(`ODO  ${state.odo.toFixed(1).padStart(7, '0')}`, CX, CY + 125);
+        ctx.fillText(`${I18n.t('ui.speedo.odo_short')}  ${state.odo.toFixed(1).padStart(7, '0')}`, CX, CY + 125);
 
         if (state.hasNos) {
             const nosBarWidth = 110;
@@ -211,7 +211,7 @@
             ctx.fillStyle = state.nosActive ? '#00e5ff' : theme.muted;
             ctx.font = "bold 9px Montserrat, 'Chakra Petch', sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText(state.nosActive ? 'N2O ACTIVE' : 'N2O', CX, nosY - 4);
+            ctx.fillText(state.nosActive ? I18n.t('ui.speedo.nos_active') : 'N2O', CX, nosY - 4);
             drawRoundedRect(nosX, nosY, nosBarWidth, nosBarHeight, 2, 'rgba(255,255,255,0.1)');
             const nosPct = clamp(state.currentNos / 100, 0, 1, 0);
             drawRoundedRect(nosX, nosY, nosBarWidth * nosPct, nosBarHeight, 2,

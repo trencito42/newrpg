@@ -123,7 +123,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRoutes', function(s
         routes[#routes + 1] = {
             id         = route.id or ('route_' .. i),
             index      = i,
-            label      = route.label or ('Route ' .. i),
+            label      = route.label or (exports.sunset_core:TFor(source, 'jobs.ui.route', { index = tostring(i) })),
             category   = route.category or 'general',
             basePay    = basePay,
             pay        = effectivePay,   -- pay with rank bonus already applied
@@ -256,7 +256,7 @@ local function handleTruckerStart(source, selectedRouteParam)
     })
     if not session then
         tdbg(('[TRUCKER SERVER] SunsetJobs_StartSession FAIL: %s'):format(tostring(err)))
-        return nil, err or 'Could not create trucker session'
+        return nil, err or exports.sunset_core:TFor(source, 'jobs.err.could_not_create_trucker_session')
     end
     return session.data
 end

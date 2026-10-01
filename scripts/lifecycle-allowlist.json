@@ -1,0 +1,27 @@
+{
+  "A": {
+    "sunset_auth": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_businesses": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_characters": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_clans": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_crafting": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_documents": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_economy": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_emotes": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_impound": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created",
+    "sunset_marriage": "NUI focus released centrally by sunset_ui onClientResourceStop janitor (legacy/own-name owner); no entities/cams/blips created"
+  },
+  "B": {
+    "sunset_fishingshop/client/main.lua": "owned by jobs agent; loop only sends on state edges (verify live)",
+    "sunset_jobs/client/diver.lua": "jobs owner; JobHud() de-dupes identical payloads centrally",
+    "sunset_jobs/client/hunter.lua": "jobs owner; JobHud() de-dupes identical payloads centrally",
+    "sunset_turfs/client/main.lua": "turfs owner; fast loop is render-only, Send gated by state edges (verify live)"
+  },
+  "C": {
+    "sunset_auth/client/main.lua": "post-login save snapshot; ordered after authenticationComplete event, not a resource wait",
+    "sunset_characters/client/main.lua": "reads LocalPlayer.state flags, not another resource's exports; bounded one-shot",
+    "sunset_chat/client/main.lua": "calls its OWN exports after ui:ready (own resource, always started)",
+    "sunset_death/client/main.lua": "wrapped in pcall, only toggles active flag; harmless if core absent",
+    "sunset_factions/client/loadout.lua": "first wait is own-event debounce, readiness poll follows in the 350 thread"
+  }
+}

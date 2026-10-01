@@ -335,7 +335,7 @@ RegisterCommand('clothingtest', function(source, args)
             for _, err in ipairs(issues) do
                 print('  - ' .. err)
             end
-            exports.sunset_ui:Notify(('Clothing test completed: %d failed'):format(failed), 'error')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.msg.clothing_test_completed_failed', { failed = math.floor(tonumber(failed) or 0) }), 'error')
         else
             print('^2[clothingtest] ALL CLOTHING COMPATIBILITY ACCEPTANCE TESTS PASSED!^7')
             exports.sunset_ui:Notify(exports.sunset_core:Translate('clothing.message.all_clothing_compatibility_checks_passed'), 'success')

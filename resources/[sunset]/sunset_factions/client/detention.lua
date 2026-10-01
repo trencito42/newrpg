@@ -173,19 +173,19 @@ local function detentionCmd(name, callbackName, usage)
     end, false)
 end
 
-detentionCmd('escort', 'sunset:detentionEscort', 'Usage: /escort [id]')
-detentionCmd('drag', 'sunset:detentionEscort', 'Usage: /drag [id]')
-detentionCmd('putinveh', 'sunset:detentionPutInVehicle', 'Usage: /putinveh [id]')
-detentionCmd('takeout', 'sunset:detentionTakeOut', 'Usage: /takeout [id]')
+detentionCmd('escort', 'sunset:detentionEscort', exports.sunset_core:Translate('factions.msg.usage_escort_id'))
+detentionCmd('drag', 'sunset:detentionEscort', exports.sunset_core:Translate('factions.msg.usage_drag_id'))
+detentionCmd('putinveh', 'sunset:detentionPutInVehicle', exports.sunset_core:Translate('factions.msg.usage_putinveh_id'))
+detentionCmd('takeout', 'sunset:detentionTakeOut', exports.sunset_core:Translate('factions.msg.usage_takeout_id'))
 
 RegisterCommand('frisk', function(_, args)
     local target = tonumber(args[1])
     if not target then return exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.usage_frisk_id'), 'error') end
     local items, err = Sunset.AwaitCallback('sunset:detentionFrisk', target)
-    if not items then return exports.sunset_ui:Notify(err or 'Frisk failed. Check duty, rank, target ID and 3m distance.', 'error') end
-    exports.sunset_ui:Send('chatMessage', { id = 0, name = 'FRI SK', message = ('=== Frisk #%d ==='):format(target), time = '' })
+    if not items then return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('factions.msg.frisk_failed_check_duty_rank_target'), 'error') end
+    exports.sunset_ui:Send('chatMessage', { id = 0, name = 'FRI SK', message = exports.sunset_core:Translate('factions.ui.frisk', { target = math.floor(tonumber(target) or 0) }), time = '' })
     if #items == 0 then
-        exports.sunset_ui:Send('chatMessage', { id = 0, name = 'FRI SK', message = 'No items found', time = '' })
+        exports.sunset_ui:Send('chatMessage', { id = 0, name = 'FRI SK', message = exports.sunset_core:Translate('factions.ui.no_items_found'), time = '' })
         return
     end
     for _, row in ipairs(items) do

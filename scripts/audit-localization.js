@@ -36,8 +36,14 @@ function scan(file) {
     lines.forEach((line, index) => {
         if (intentional(line) || /^\s*(?:--|\/\/|\/\*|\*)/.test(line)) return;
         let reason = null;
-        if (ext === '.lua' && /(?:Notify|notify|uiNotify|CommandReply|chat:addMessage|AddTextComponent|BeginTextCommand|return\s+(?:nil|false)\s*,)\s*\(?\s*['"][A-Za-z]/.test(line)) reason = 'Lua player-facing literal';
-        if (ext === '.lua' && hasLiteralArgument(line,
+        // Already-localized calls (Translate('key'), TFor(src, 'key'), Sunset.T('key'), tr('key')) are not literals.
+        const luaLine = ext === '.lua'
+            ? line.replace(/(?:exports\.sunset_core:)?(?:Translate|TFor|Sunset\.TFor|Sunset\.T|tr|T)\s*\(\s*(?:[A-Za-z_][\w.]*\s*,\s*)?['"][a-z][\w.]*['"]/g, 'L10N(')
+            : line;
+        if (ext === '.lua' && /(?:Notify|notify|uiNotify|CommandReply|chat:addMessage|AddTextComponent|BeginTextCommand)\s*\(?\s*['"][A-Za-z]/.test(luaLine)) reason = 'Lua player-facing literal';
+        // `return nil, 'text'` error returns: protocol codes (snake_case / UPPER_CODE, no spaces) are not player text.
+        if (ext === '.lua' && /return\s+(?:nil|false)\s*,\s*['"][A-Za-z][^'"]*\s[^'"]*['"]/.test(luaLine)) reason = 'Lua player-facing literal';
+        if (ext === '.lua' && hasLiteralArgument(luaLine,
             'showHint|ShowHelpNotification|DrawText|AddTextComponent(?:String|SubstringPlayerName)|chat:addSuggestion')) {
             reason = 'Lua visible call literal';
         }

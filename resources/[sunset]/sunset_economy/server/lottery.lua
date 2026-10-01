@@ -107,7 +107,7 @@ end
 function SunsetLottery.Draw()
     local periodKey = os.date('%Y%m%d%H')
     if MySQL.scalar.await('SELECT 1 FROM lottery_draws WHERE period_key=? LIMIT 1', { periodKey }) then return false end
-    local winningNumber = math.random(1, 100)
+    local winningNumber = CasinoRNG.Int(1, 100)
     local draw = { tickets = {}, total = 0, jackpot = CurrentJackpot, share = 0 }
     local callOk, committed = pcall(function()
         return MySQL.startTransaction(function(query)

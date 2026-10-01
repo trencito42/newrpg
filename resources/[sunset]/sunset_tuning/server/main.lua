@@ -182,7 +182,7 @@ local function saveTuneImpl(source, plate, tune, flash, cosmetics)
         if paidAccount and cost > 0 then
             exports.sunset_core:AddMoney(source, paidAccount, cost, 'ecu_tune_refund')
         end
-        return nil, failure or 'The tune was not saved and you were not charged. Try again.'
+        return nil, failure or exports.sunset_core:TFor(source, 'tuning.err.the_tune_was_not_saved_and')
     end
 
     local veh = activeVehicle(source, plate, true)
@@ -278,7 +278,7 @@ exports.sunset_core:RegisterCallback('sunset:tuning:finishDyno', function(source
     local callOk, ok, err = pcall(saveTuneToVehicle, char.id, plate, tune, nil)
     if not callOk or not ok then
         exports.sunset_core:AddMoney(source, 'bank', SunsetTuning.DynoCost, 'Dyno error refund')
-        return nil, callOk and (err or 'Dyno save failed') or 'Dyno database error; your money was refunded'
+        return nil, callOk and (err or exports.sunset_core:TFor(source, 'tuning.err.dyno_save_failed')) or exports.sunset_core:TFor(source, 'tuning.err.dyno_database_error_your_money_was')
     end
 
     return tune.dyno

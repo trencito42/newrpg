@@ -95,7 +95,7 @@ local function spawnTestVehicle(model, spawn, opts)
     if not registered then
         DeleteEntity(veh)
         testVehicle = 0
-        return nil, registerError or 'The training vehicle could not be verified by the server.'
+        return nil, registerError or exports.sunset_core:Translate('licenses.err.the_training_vehicle_could_not_be')
     end
     return veh
 end
@@ -126,7 +126,7 @@ local function refreshCheckpointNavigation(cfg, cpIndex, color)
         setActiveCheckpointBlip(checkpoints[cpIndex], {
             color = color or 47,
             route = true,
-            label = ('Checkpoint %d/%d'):format(cpIndex, #checkpoints),
+            label = exports.sunset_core:Translate('licenses.ui.checkpoint', { cp_index = math.floor(tonumber(cpIndex) or 0), count = #checkpoints }),
         })
         return
     end
@@ -151,7 +151,7 @@ local function drawCheckpointMarker(point, radius, alpha)
 end
 
 local function failTest(msg)
-    notify(msg or 'License test failed.', 'error')
+    notify(msg or exports.sunset_core:Translate('licenses.msg.license_test_failed'), 'error')
     Sunset.AwaitCallback('sunset:license:abortTest')
     CleanupPracticalTest()
 end
@@ -234,7 +234,7 @@ local function runBriefing(licenseType, cfg, spawn, onComplete)
     ShowLicenseTestHud({
         licenseType = licenseType,
         state = licenseType,
-        title = steps[1].title or (licenseType == 'driver' and 'Driving School' or 'License Test'),
+        title = steps[1].title or (licenseType == 'driver' and exports.sunset_core:Translate('licenses.test.title.driving_school') or exports.sunset_core:Translate('licenses.ui.license_test')),
         step = 1,
         total = #steps,
         message = steps[1].message,
@@ -262,7 +262,7 @@ local function runBriefing(licenseType, cfg, spawn, onComplete)
             UpdateLicenseTestHud({
                 licenseType = licenseType,
                 state = licenseType,
-                title = step.title or (licenseType == 'driver' and 'Driving School' or 'License Test'),
+                title = step.title or (licenseType == 'driver' and exports.sunset_core:Translate('licenses.test.title.driving_school') or exports.sunset_core:Translate('licenses.ui.license_test')),
                 step = stepIndex,
                 total = #steps,
                 message = step.message,
@@ -313,7 +313,7 @@ end
 
 local function failOnPenalties(penalties, reason)
     if penalties.count >= penalties.max then
-        failTest(reason or ('Too many penalties (%d/%d) — test failed.'):format(penalties.count, penalties.max))
+        failTest(reason or exports.sunset_core:Translate('licenses.msg.too_many_penalties_test_failed', { count = math.floor(tonumber(penalties.count) or 0), max = math.floor(tonumber(penalties.max) or 0) }))
         return true
     end
     return false
@@ -491,7 +491,7 @@ local function runDriverBriefing(cfg, spawn)
                 UpdateLicenseTestHud({
                     licenseType = 'driver',
                     state = 'driver',
-                    title = step.title or 'Driving School',
+                    title = step.title or exports.sunset_core:Translate('licenses.test.title.driving_school'),
                     step = stepIndex,
                     total = #steps,
                     message = step.message,
@@ -583,7 +583,7 @@ local function runDriverRoute(cfg, vehicle)
         while practicalState and practicalState.licenseType == 'driver' do
             Wait(0)
             if cfg.maxTimeSec and (GetGameTimer() - started) > cfg.maxTimeSec * 1000 then
-                return failTest('Time expired — test failed.')
+                return failTest(exports.sunset_core:Translate('licenses.msg.time_expired_test_failed'))
             end
 
             local ped = PlayerPedId()
@@ -667,18 +667,18 @@ end
 
 local function runDriverTest(cfg)
     local spawn = pickTestSpawn(cfg)
-    if not spawn then return failTest('Driving test spawn is not configured.') end
+    if not spawn then return failTest(exports.sunset_core:Translate('licenses.msg.driving_test_spawn_is_not_configured')) end
 
     local vehicle, spawnError = spawnTestVehicle(cfg.vehicle or 'blista', spawn, {
         engineOff = cfg.engineOffOnSpawn == true,
     })
-    if not vehicle then return failTest(spawnError or 'Could not spawn the training vehicle.') end
+    if not vehicle then return failTest(spawnError or exports.sunset_core:Translate('licenses.msg.could_not_spawn_the_training_vehicle')) end
 
     local steps = cfg.briefing or {}
     ShowLicenseTestHud({
         licenseType = 'driver',
         state = 'driver',
-        title = (steps[1] and steps[1].title) or 'Driving School',
+        title = (steps[1] and steps[1].title) or exports.sunset_core:Translate('licenses.test.title.driving_school'),
         step = #steps > 0 and 1 or nil,
         total = #steps > 0 and #steps or nil,
         checkpoint = 0,
@@ -717,7 +717,7 @@ local function runWeaponTest(cfg)
         if registered then break end
         Wait(100)
     end
-    if not registered then return failTest(registerError or 'The range targets could not be verified.') end
+    if not registered then return failTest(registerError or exports.sunset_core:Translate('licenses.msg.the_range_targets_could_not_be')) end
     weaponServerHits = 0
 
     runBriefing('weapon', cfg, nil, function()
@@ -790,7 +790,7 @@ end)
 local function runHuntingTest(cfg)
     -- Ask the server to spawn peds and issue us the weapon
     local result, err = Sunset.AwaitCallback('sunset:license:startHuntingExam')
-    if not result then return failTest(err or 'Could not start hunting exam.') end
+    if not result then return failTest(err or exports.sunset_core:Translate('licenses.msg.could_not_start_hunting_exam')) end
 
     huntingServerHits    = 0
     huntingServerMistakes = 0
@@ -836,7 +836,7 @@ end)
 
 RegisterNetEvent('sunset:licenses:huntingMistake', function(mistakes, maxAllowed)
     huntingServerMistakes = tonumber(mistakes) or 0
-    notify(('Warning: protected animal hit! (%d/%d mistakes)'):format(huntingServerMistakes, tonumber(maxAllowed) or 1), 'error')
+    notify(exports.sunset_core:Translate('licenses.msg.warning_protected_animal_hit_mistakes', { hunting_server_mistakes = math.floor(tonumber(huntingServerMistakes) or 0), max_allowed = math.floor(tonumber(tonumber(maxAllowed) or 1) or 0) }), 'error')
     UpdateLicenseTestHud({
         licenseType     = 'hunting',
         state           = 'hunting',
@@ -865,13 +865,13 @@ local function runCheckpointTest(licenseType, cfg, facility)
             local vehicle, spawnError = spawnTestVehicle(model, spawn, {
                 engineOff = cfg.engineOffOnSpawn == true,
             })
-            if not vehicle then return failTest(spawnError or 'Could not spawn the test vehicle.') end
+            if not vehicle then return failTest(spawnError or exports.sunset_core:Translate('licenses.msg.could_not_spawn_the_test_vehicle')) end
         end
     elseif cfg.spawn and cfg.vehicle then
         local vehicle, spawnError = spawnTestVehicle(cfg.vehicle, cfg.spawn, {
             engineOff = cfg.engineOffOnSpawn == true,
         })
-        if not vehicle then return failTest(spawnError or 'Could not spawn the training vehicle.') end
+        if not vehicle then return failTest(spawnError or exports.sunset_core:Translate('licenses.msg.could_not_spawn_the_training_vehicle')) end
     end
 
     CreateThread(function()
@@ -880,7 +880,7 @@ local function runCheckpointTest(licenseType, cfg, facility)
         while practicalState and practicalState.licenseType == licenseType do
             Wait(0)
             if cfg.maxTimeSec and (GetGameTimer() - started) > cfg.maxTimeSec * 1000 then
-                return failTest('Time expired — test failed.')
+                return failTest(exports.sunset_core:Translate('licenses.msg.time_expired_test_failed'))
             end
             local ped = PlayerPedId()
             local pos = GetEntityCoords(ped)
@@ -900,7 +900,7 @@ local function runCheckpointTest(licenseType, cfg, facility)
                     if ok then
                         cpIndex = cpIndex + 1
                         refreshCheckpointNavigation(cfg, cpIndex, 2)
-                        notify(('Checkpoint %d/%d passed.'):format(cpIndex - 1, #cps), 'success')
+                        notify(exports.sunset_core:Translate('licenses.msg.checkpoint_passed', { value = math.floor(tonumber(cpIndex - 1) or 0), count = #cps }), 'success')
                     elseif err then
                         notify(err, 'error')
                     end
@@ -933,7 +933,7 @@ function StartPracticalTest(licenseType, payload)
     practicalState = { licenseType = licenseType }
     local cfg = resolvePracticalCfg(licenseType, payload)
     local facility = payload and payload.facility
-    if not cfg then return failTest('Practical test not configured.') end
+    if not cfg then return failTest(exports.sunset_core:Translate('licenses.msg.practical_test_not_configured')) end
     if licenseType == 'weapon' then
         runWeaponTest(cfg)
     elseif licenseType == 'hunting' then

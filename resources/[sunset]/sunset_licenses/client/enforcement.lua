@@ -27,7 +27,7 @@ CreateThread(function()
                         if not blockedVehicle then
                             blockedVehicle = true
                             local def = SunsetLicenses.Types[licenseType]
-                            notify(('You need a valid %s. Visit the school on your map.'):format(def and def.label or licenseType))
+                            notify(exports.sunset_core:Translate('licenses.msg.you_need_a_valid_visit_the', { def = tostring(def and def.label or licenseType) }))
                         end
                     else
                         blockedVehicle = false

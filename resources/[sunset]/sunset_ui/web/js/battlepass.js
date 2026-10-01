@@ -20,16 +20,16 @@
         bpTiers.push({
             level: i,
             free: { name: `$${i * 1000}`, icon: '💵', claimed: i < 3 },
-            premium: { name: i % 5 === 0 ? 'VIP Vehicle' : `Crate Lvl ${i}`, icon: i % 5 === 0 ? '🏎️' : '📦', claimed: false }
+            premium: { name: i % 5 === 0 ? I18n.t('ui.battlepass.reward_vip_vehicle') : I18n.t('ui.battlepass.reward_crate_level', { level: i }), icon: i % 5 === 0 ? '🏎️' : '📦', claimed: false }
         });
     }
 
     let missions = [
-        { id: 1, type: 'daily', title: 'Model Driver', desc: 'Drive a total of 15km without hitting a vehicle.', progress: 15, max: 15, reward: '500 XP', claimed: false },
-        { id: 2, type: 'daily', title: 'Hard Worker', desc: 'Complete 3 shifts as a Courier.', progress: 1, max: 3, reward: '300 XP', claimed: false },
-        { id: 3, type: 'daily', title: 'Time with Friends', desc: 'Spend 2 hours active on the server.', progress: 120, max: 120, reward: '400 XP', claimed: true },
-        { id: 4, type: 'weekly', title: 'Local Magnate', desc: 'Earn a total of $50,000.', progress: 32000, max: 50000, reward: '2500 XP', claimed: false },
-        { id: 5, type: 'weekly', title: 'Wanted Criminal', desc: 'Successfully escape from 3 car robberies.', progress: 3, max: 3, reward: '3000 XP', claimed: false }
+        { id: 1, type: 'daily', title: I18n.t('ui.battlepass.mock_driver_title'), desc: I18n.t('ui.battlepass.mock_driver_desc'), progress: 15, max: 15, reward: '500 XP', claimed: false },
+        { id: 2, type: 'daily', title: I18n.t('ui.battlepass.mock_worker_title'), desc: I18n.t('ui.battlepass.mock_worker_desc'), progress: 1, max: 3, reward: '300 XP', claimed: false },
+        { id: 3, type: 'daily', title: I18n.t('ui.battlepass.mock_friends_title'), desc: I18n.t('ui.battlepass.mock_friends_desc'), progress: 120, max: 120, reward: '400 XP', claimed: true },
+        { id: 4, type: 'weekly', title: I18n.t('ui.battlepass.mock_magnate_title'), desc: I18n.t('ui.battlepass.mock_magnate_desc'), progress: 32000, max: 50000, reward: '2500 XP', claimed: false },
+        { id: 5, type: 'weekly', title: I18n.t('ui.battlepass.mock_criminal_title'), desc: I18n.t('ui.battlepass.mock_criminal_desc'), progress: 3, max: 3, reward: '3000 XP', claimed: false }
     ];
 
     function updatePlayerStats() {
@@ -46,12 +46,12 @@
         }
         if (premBox) {
             if (playerData.hasPremium) {
-                premBox.innerHTML = `<div style="text-align:center; color:#b829ff; font-weight:800; font-size:12px; letter-spacing:1px;">✔️ PREMIUM ACTIVE</div>`;
+                premBox.innerHTML = `<div style="text-align:center; color:#b829ff; font-weight:800; font-size:12px; letter-spacing:1px;">✔️ ${I18n.t('ui.battlepass.premium_active')}</div>`;
             } else {
                 premBox.innerHTML = `
                     <button class="bp-btn-upgrade" id="bp-btn-buy-premium">
                         <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>
-                        Buy Premium
+                        ${I18n.t('ui.battlepass.buy_premium')}
                     </button>`;
                 document.getElementById('bp-btn-buy-premium')?.addEventListener('click', buyPremium);
             }
@@ -79,9 +79,9 @@
 
             let freeBtnHtml = '';
             if (tier.free.claimed) {
-                freeBtnHtml = `<button class="bp-btn-claim claimed">Luat</button>`;
+                freeBtnHtml = `<button class="bp-btn-claim claimed">${I18n.t('ui.battlepass.claimed')}</button>`;
             } else if (playerData.level >= tier.level) {
-                freeBtnHtml = `<button class="bp-btn-claim" data-claim-lvl="${tier.level}" data-claim-type="free">Claim</button>`;
+                freeBtnHtml = `<button class="bp-btn-claim" data-claim-lvl="${tier.level}" data-claim-type="free">${I18n.t('ui.battlepass.claim')}</button>`;
             } else {
                 freeBtnHtml = `<button class="bp-btn-claim" style="display:none;"></button>`;
             }
@@ -92,13 +92,13 @@
                 premLockHtml = `
                     <div class="bp-reward-locked-overlay">
                         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <span class="bp-lock-text">LOCKED</span>
+                        <span class="bp-lock-text">${I18n.t('ui.battlepass.locked')}</span>
                     </div>`;
             } else {
                 if (tier.premium.claimed) {
-                    premBtnHtml = `<button class="bp-btn-claim claimed">Luat</button>`;
+                    premBtnHtml = `<button class="bp-btn-claim claimed">${I18n.t('ui.battlepass.claimed')}</button>`;
                 } else if (playerData.level >= tier.level) {
-                    premBtnHtml = `<button class="bp-btn-claim" style="background:#b829ff; color:white;" data-claim-lvl="${tier.level}" data-claim-type="premium">Claim</button>`;
+                    premBtnHtml = `<button class="bp-btn-claim" style="background:#b829ff; color:white;" data-claim-lvl="${tier.level}" data-claim-type="premium">${I18n.t('ui.battlepass.claim')}</button>`;
                 }
             }
 
@@ -106,14 +106,14 @@
             tierEl.className = `bp-tier ${classState}`;
             tierEl.innerHTML = `
                 <div class="bp-reward-card">
-                    <span class="bp-reward-type-label">FREE</span>
+                    <span class="bp-reward-type-label">${I18n.t('ui.battlepass.free')}</span>
                     <div class="bp-reward-icon">${tier.free.icon}</div>
                     <div class="bp-reward-name">${tier.free.name}</div>
                     ${freeBtnHtml}
                 </div>
                 <div class="bp-level-marker">${tier.level}</div>
                 <div class="bp-reward-card bp-reward-premium">
-                    <span class="bp-reward-type-label bp-label-premium">PREMIUM</span>
+                    <span class="bp-reward-type-label bp-label-premium">${I18n.t('ui.battlepass.premium')}</span>
                     ${premLockHtml}
                     <div class="bp-reward-icon">${tier.premium.icon}</div>
                     <div class="bp-reward-name">${tier.premium.name}</div>
@@ -152,11 +152,11 @@
 
             let btnHtml = '';
             if (m.claimed) {
-                btnHtml = `<button class="bp-btn" disabled>Colectat</button>`;
+                btnHtml = `<button class="bp-btn" disabled>${I18n.t('ui.battlepass.collected')}</button>`;
             } else if (isDone) {
-                btnHtml = `<button class="bp-btn bp-btn-primary" data-mission-id="${m.id}">Collect</button>`;
+                btnHtml = `<button class="bp-btn bp-btn-primary" data-mission-id="${m.id}">${I18n.t('ui.battlepass.collect')}</button>`;
             } else {
-                btnHtml = `<button class="bp-btn" disabled>In Progress</button>`;
+                btnHtml = `<button class="bp-btn" disabled>${I18n.t('ui.battlepass.in_progress')}</button>`;
             }
 
             const cardHtml = `

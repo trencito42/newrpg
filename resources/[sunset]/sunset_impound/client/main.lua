@@ -35,7 +35,7 @@ local function openImpoundUI()
     impoundOpen = true
     local list, err = Sunset.AwaitCallback('sunset:impound:list')
     if not list then
-        exports.sunset_ui:Notify(err or 'Could not load impound list.', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('impound.msg.could_not_load_impound_list'), 'error')
         impoundOpen = false
         return
     end
@@ -75,7 +75,7 @@ RegisterCommand('impound', function(source, args)
 
     local ok, err = Sunset.AwaitCallback('sunset:impound:confiscate', vehicleId, reasonId)
     if not ok then
-        return exports.sunset_ui:Notify(err or 'Could not impound this vehicle.', 'error')
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('impound.msg.could_not_impound_this_vehicle'), 'error')
     end
 
     -- Delete the entity locally
@@ -93,10 +93,10 @@ AddEventHandler('sunset:nui:impoundRecover', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:impound:recover', tonumber(data.impoundId))
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not recover the vehicle.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('impound.msg.could_not_recover_the_vehicle'), 'error')
             return
         end
-        exports.sunset_ui:Notify(('Vehicle %s recovered for $%s!'):format(res.plate or 'Unknown', res.fee or 0), 'success', 8000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('impound.msg.vehicle_recovered_for', { plate = res.plate or exports.sunset_core:Translate('impound.word.unknown'), fee = tostring(res.fee or 0) }), 'success', 8000)
         -- Refresh the list
         local list = Sunset.AwaitCallback('sunset:impound:list')
         if list then

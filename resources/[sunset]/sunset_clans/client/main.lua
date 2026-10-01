@@ -1,7 +1,7 @@
 local function openClanPanel()
     local data, err = Sunset.AwaitCallback('sunset:clanDashboard')
     if not data then
-        return exports.sunset_ui:Notify(err or 'Clan panel could not be opened.', 'error', 7000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.clan_panel_could_not_be_opened'), 'error', 7000)
     end
     exports.sunset_ui:Send('clanPanelShow', data)
     exports.sunset_ui:SetFocus(true, true)
@@ -10,7 +10,7 @@ end
 local function openClanDirectory()
     local data, err = Sunset.AwaitCallback('sunset:clanDirectory')
     if not data then
-        return exports.sunset_ui:Notify(err or 'Clan directory could not be opened.', 'error', 7000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.clan_directory_could_not_be_opened'), 'error', 7000)
     end
     exports.sunset_ui:Send('clanDirectoryShow', { clans = data })
     exports.sunset_ui:SetFocus(true, true)
@@ -35,7 +35,7 @@ AddEventHandler('sunset:nui:clanBrowse', function()
     local data, err = Sunset.AwaitCallback('sunset:clanDirectory')
     if not data then
         exports.sunset_ui:Send('clanBrowseInline', { clans = {}, error = err })
-        return exports.sunset_ui:Notify(err or 'Clan directory could not be loaded.', 'error', 7000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.clan_directory_could_not_be_loaded'), 'error', 7000)
     end
     exports.sunset_ui:Send('clanBrowseInline', { clans = data })
 end)
@@ -44,7 +44,7 @@ AddEventHandler('sunset:nui:clanProfile', function(data)
     local clanId = tonumber(data and data.clanId)
     local profile, err = Sunset.AwaitCallback('sunset:clanProfile', clanId)
     if not profile then
-        exports.sunset_ui:Notify(err or 'Could not load clan profile.', 'error', 7000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.could_not_load_clan_profile'), 'error', 7000)
         return
     end
     exports.sunset_ui:Send('clanProfileShow', profile)
@@ -54,14 +54,14 @@ RegisterCommand('cmotd', function(_, args)
     local msg = table.concat(args, ' ')
     if msg == '' then
         local data, err = Sunset.AwaitCallback('sunset:clanGetMotd')
-        if not data then return exports.sunset_ui:Notify(err or 'Clan MOTD could not be loaded.', 'error') end
+        if not data then return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.clan_motd_could_not_be_loaded'), 'error') end
         exports.sunset_ui:Send('chatMessage', {
             id = 0,
             type = 'clan_motd',
             clanTag = data.tag,
             clanName = data.name,
             name = data.name,
-            message = data.message ~= '' and data.message or 'No message of the day has been set.',
+            message = data.message ~= '' and data.message or exports.sunset_core:Translate('factions.ui.no_message_of_the_day_has'),
             command = '/cmotd',
             time = '',
         })
@@ -69,16 +69,16 @@ RegisterCommand('cmotd', function(_, args)
     end
     local ok, err = Sunset.AwaitCallback('sunset:clanManage', { action = 'motd', message = msg })
     if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_motd_updated'), 'success')
-    else exports.sunset_ui:Notify(err or 'MOTD update failed. Officers can set it with /cmotd [message].', 'error') end
+    else exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.motd_update_failed_officers_can_set'), 'error') end
 end, false)
 TriggerEvent('chat:addSuggestion', '/cmotd', 'Read clan MOTD, or set it if you are an officer', { { name = 'message', help = 'optional new MOTD' } })
 
 RegisterCommand('acceptclan', function()
     local data, err = Sunset.AwaitCallback('sunset:clanAcceptInvite')
     if not data then
-        return exports.sunset_ui:Notify(err or 'Could not accept clan invite.', 'error', 8000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.could_not_accept_clan_invite'), 'error', 8000)
     end
-    exports.sunset_ui:Notify(('You joined %s.'):format(data.name or 'the clan'), 'success', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.msg.you_joined', { name = data.name or exports.sunset_core:Translate('clans.word.the_clan') }), 'success', 8000)
     exports.sunset_ui:Send('clanPanelShow', data)
 end, false)
 TriggerEvent('chat:addSuggestion', '/acceptclan', 'Accept a pending clan invitation')
@@ -86,7 +86,7 @@ TriggerEvent('chat:addSuggestion', '/acceptclan', 'Accept a pending clan invitat
 RegisterCommand('declineclan', function()
     local ok, err = Sunset.AwaitCallback('sunset:clanDeclineInvite')
     if not ok then
-        return exports.sunset_ui:Notify(err or 'Could not decline invite.', 'error', 7000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.could_not_decline_invite'), 'error', 7000)
     end
     exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_invite_declined'), 'info')
 end, false)
@@ -108,7 +108,7 @@ local function clanWarnCommand(_, args)
         exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_warning_issued'), 'warning')
         exports.sunset_ui:Send('clanPanelShow', ok)
     else
-        exports.sunset_ui:Notify(err or 'Clan warning failed.', 'error', 8000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.clan_warning_failed'), 'error', 8000)
     end
 end
 
@@ -125,7 +125,7 @@ local function handleClanManageUi(data)
     if action == 'create' then
         ok, err = Sunset.AwaitCallback('sunset:clanCreate', data)
         if ok then
-            exports.sunset_ui:Notify(('Clan %s created.'):format(ok.name or ''), 'success', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.msg.clan_created', { name = tostring(ok.name or '') }), 'success', 8000)
             exports.sunset_ui:Send('clanPanelShow', ok)
             return
         end
@@ -164,7 +164,7 @@ local function handleClanManageUi(data)
     if err and tostring(err) ~= '' then
         exports.sunset_ui:Notify(tostring(err), 'error', 8000)
     else
-        exports.sunset_ui:Notify(('Clan action failed (%s).'):format(tostring(action or 'unknown')), 'error', 8000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.msg.clan_action_failed', { action = tostring(action or 'unknown') }), 'error', 8000)
     end
     print(('[sunset_clans] clanManage failed (%s): %s'):format(tostring(action or 'unknown'), tostring(err or 'nil')))
 end

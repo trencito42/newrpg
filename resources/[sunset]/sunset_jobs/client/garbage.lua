@@ -52,8 +52,8 @@ local function pointToBin(cfg, bin, label)
     if not bin then return end
     local pos = vector3(bin.x, bin.y, bin.z)
     JC.clearBlips()
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
-    JC.addBlip(pos, { sprite = 318, color = 2, scale = 0.8 }, label or 'Trash Bin')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.garbage_depot'))
+    JC.addBlip(pos, { sprite = 318, color = 2, scale = 0.8 }, label or exports.sunset_core:Translate('jobs.msg.trash_bin'))
     JC.setWaypoint(pos)
     setGarbageCheckpoint(pos, 46, 204, 113)
 end
@@ -117,7 +117,7 @@ local function registerTruckWithRetry(truck)
     if not truck or not DoesEntityExist(truck) then return false end
     local ok, err = JC.registerVehiclesWithServer()
     if ok then return true end
-    JC.notify(err or 'Could not register work truck — try /work again', 'error')
+    JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_register_work_truck_try'), 'error')
     return false
 end
 
@@ -151,14 +151,14 @@ end
 local function startGarbage()
     local data, err = Sunset.AwaitCallback('sunset:jobs:garbage:start')
     if not data then
-        JC.notify(err or 'Could not start garbage route', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_garbage_route'), 'error')
         return
     end
 
     local cfg = Sunset.GetJobConfig('garbage')
     JC.deleteVehicles()
     JC.clearBlips()
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.garbage_depot'))
 
     local truck = JC.spawnVehicle(cfg.truckModel, cfg.depot.spawn, true)
     if not truck then
@@ -176,11 +176,11 @@ local function startGarbage()
 
     local firstBin = data.bins and data.bins[data.binIndex or 1]
     if firstBin then
-        pointToBin(cfg, firstBin, 'Trash Bin 1')
+        pointToBin(cfg, firstBin, exports.sunset_core:Translate('jobs.msg.trash_bin_1'))
     else
         JC.setWaypoint(cfg.depot.coords)
     end
-    JC.notify(exports.sunset_core:Translate('jobs.message.collect_bins_on_your_route_truck_capacity') .. (data.capacity or 8), 'info')
+    JC.notify(exports.sunset_core:Translate('jobs.msg.collect_bins_capacity', { capacity = tostring(data.capacity or 8) }), 'info')
 
     CreateThread(function()
         local busy = false
@@ -219,7 +219,7 @@ local function startGarbage()
                             updateObjective(cfg, newData)
                             JC.notify(exports.sunset_core:Translate('jobs.message.take_the_bag_to_the_back_of_your_truck'), 'info')
                         else
-                            JC.notify(err2 or 'Could not pick up trash from the bin', 'error')
+                            JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_pick_up_trash_from'), 'error')
                         end
                     end
                 end
@@ -244,22 +244,21 @@ local function startGarbage()
                             detachBag()
                             JC.sessionData = newData
                             JC.addEarned(cfg.payPerBin or 65)
-                            JC.notify(('Collected (%d/%d) +$%s'):format(
-                                newData.collected, newData.capacity, cfg.payPerBin or 65), 'success')
+                            JC.notify(exports.sunset_core:Translate('jobs.msg.collected', { collected = math.floor(tonumber(newData.collected) or 0), capacity = math.floor(tonumber(newData.capacity) or 0), pay_per_bin = tostring(cfg.payPerBin or 65) }), 'success')
                             updateObjective(cfg, newData)
                             if newData.stage == 'return_unload' then
                                 local unload = cfg.depot.unload or cfg.depot.coords
                                 JC.clearBlips()
-                                JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Garbage Depot')
+                                JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.garbage_depot'))
                                 JC.setWaypoint(unload)
                                 setGarbageCheckpoint(unload, 52, 152, 219)
                                 JC.notify(exports.sunset_core:Translate('jobs.message.truck_full_return_to_depot_to_unload'), 'info')
                             else
                                 local nextBin = newData.bins and newData.bins[newData.binIndex or 1]
-                                pointToBin(cfg, nextBin, 'Trash Bin ' .. tostring(newData.binIndex or 1))
+                                pointToBin(cfg, nextBin, exports.sunset_core:Translate('jobs.msg.trash_bin_2', { bin_index = tostring(newData.binIndex or 1) }))
                             end
                         else
-                            JC.notify(err2 or 'Could not dump the bag at your truck', 'error')
+                            JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_dump_the_bag_at'), 'error')
                         end
                     end
                 else
@@ -270,7 +269,7 @@ local function startGarbage()
                 JC.drawMarker(unload, 52, 152, 219)
                 JC.hudDistance(unload)
                 if JC.isNear(unload, 8.0) and IsPedInAnyVehicle(PlayerPedId(), false) then
-                    draw3DText(unload, 'Drive In to Unload')
+                    draw3DText(unload, exports.sunset_core:Translate('jobs.msg.drive_in_to_unload'))
                 end
                 if JC.isNear(unload, 8.0) and IsPedInAnyVehicle(PlayerPedId(), false) and not busy then
                     busy = true
@@ -281,7 +280,7 @@ local function startGarbage()
                         detachBag()
                         JC.deleteVehicles()
                         JC.addEarned(result.bonus or 0)
-                        JC.notify(('Shift complete! Unload bonus +$%s'):format(result.bonus or 0), 'success')
+                        JC.notify(exports.sunset_core:Translate('jobs.msg.shift_complete_unload_bonus', { bonus = tostring(result.bonus or 0) }), 'success')
                         break
                     elseif err2 then
                         JC.notify(err2, 'error')

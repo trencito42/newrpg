@@ -40,7 +40,7 @@ const RadarHud = {
         this._hits.innerHTML = rows.map((hit) => {
             const over = Number(hit.over) || 0;
             return `<div class="radar__hit">
-                <span>${this._esc(hit.plate || '--------')}  ${this._esc(hit.name || 'Unknown')}</span>
+                <span>${this._esc(hit.plate || '--------')}  ${this._esc(hit.name || I18n.t('ui.mdc.unknown'))}</span>
                 <span class="radar__hit-over">${this._esc(hit.speed || 0)} km/h  +${over}</span>
             </div>`;
         }).join('');
@@ -56,9 +56,9 @@ const RadarHud = {
         this._panel.className = `radar-shell state-${state} is-visible`;
         this._panel.classList.remove('hidden');
 
-        if (this._title) this._title.textContent = data.title || 'Mobile Radar';
+        if (this._title) this._title.textContent = data.title || I18n.t('ui.radar.mobile_radar');
         if (this._meta) this._meta.textContent = I18n.t('dynamic.radar.limit_value0_km_h', { value0: limit });
-        if (this._message) this._message.textContent = data.message || 'Scanning lane…';
+        if (this._message) this._message.textContent = data.message || I18n.t('ui.radar.scanning');
         if (this._speed) this._speed.textContent = String(speed).padStart(3, '0');
         if (this._plate) this._plate.textContent = data.plate || '--------';
         if (this._driver) this._driver.textContent = data.name || '—';
@@ -172,10 +172,10 @@ const RadarAlert = {
         const duration = Math.max(2500, Number(data.duration) || 7500);
 
         if (this._title) {
-            this._title.textContent = data.title || (data.type === 'mobile' ? 'HIGHWAY PATROL - RADAR' : 'FIXED RADAR - SPEED CAMERA');
+            this._title.textContent = data.title || (data.type === 'mobile' ? I18n.t('ui.radar.title_mobile') : I18n.t('ui.radar.title_fixed'));
         }
         if (this._meta) {
-            this._meta.textContent = data.location ? `${String(data.location).toUpperCase()} · SPEED LIMIT ${limit} KM/H` : `SPEED LIMIT: ${limit} KM/H`;
+            this._meta.textContent = data.location ? `${String(data.location).toUpperCase()} · ${I18n.t('ui.radar.speed_limit', { limit })}` : I18n.t('ui.radar.speed_limit_colon', { limit });
         }
         if (this._badge) {
             this._badge.textContent = `+${over} KM/H`;
@@ -186,8 +186,8 @@ const RadarAlert = {
         if (this._sub) {
             if (fine > 0) {
                 this._sub.textContent = paid
-                    ? `AUTOMATIC FINE: -$${fine.toLocaleString('en-US')} (CHARGED TO ACCOUNT)`
-                    : `AUTOMATIC FINE: $${fine.toLocaleString('en-US')} (UNPAID)`;
+                    ? I18n.t('ui.radar.fine_charged', { fine: I18n.number(fine) })
+                    : I18n.t('ui.radar.fine_unpaid', { fine: I18n.number(fine) });
                 this._sub.style.display = 'inline-block';
             } else if (data.officer) {
                 this._sub.textContent = I18n.t('dynamic.radar.recorded_by_value0', { value0: String(data.officer).toUpperCase() });
@@ -203,9 +203,9 @@ const RadarAlert = {
         if (this._statOver) this._statOver.textContent = `+${over} km/h`;
         if (this._statFine) {
             if (fine > 0) {
-                this._statFine.textContent = paid ? `-$${fine.toLocaleString('en-US')}` : `$${fine.toLocaleString('en-US')}`;
+                this._statFine.textContent = paid ? `-$${I18n.number(fine)}` : `$${I18n.number(fine)}`;
                 this._statFine.className = paid ? 'radar-alert__stat-value is-paid' : 'radar-alert__stat-value is-fine';
-                if (this._statFineLabel) this._statFineLabel.textContent = paid ? 'Charged to Account' : 'Unpaid Fine';
+                if (this._statFineLabel) this._statFineLabel.textContent = paid ? I18n.t('ui.radar.charged_to_account') : I18n.t('ui.radar.unpaid_fine');
             } else {
                 this._statFine.textContent = I18n.t('dynamic.radar.warning');
                 this._statFine.className = 'radar-alert__stat-value is-danger';

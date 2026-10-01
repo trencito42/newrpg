@@ -27,7 +27,7 @@ RegisterNetEvent('sunset:dispatch:newCall', function(call)
     local label = Sunset.Dispatch.ServiceTypes[call.callType]
         and Sunset.Dispatch.ServiceTypes[call.callType].label
         or call.callType
-    notify(('New %s call #%d — /accept %s %d'):format(label, call.id, call.callType, call.id), 'warning')
+    notify(exports.sunset_core:Translate('dispatch.msg.new_call_accept', { label = tostring(label), id = math.floor(tonumber(call.id) or 0), call_type = tostring(call.callType), id_2 = math.floor(tonumber(call.id) or 0) }), 'warning')
     TriggerEvent('sunset:jobs:dispatchNewCall', call)
 end)
 
@@ -41,14 +41,14 @@ RegisterNetEvent('sunset:dispatch:backupAlert', function(call)
     if not call or not call.coords then return end
     local officerId = call.callerSource or call.callerServerId or 0
     local officerName = call.callerName or ('Officer #%d'):format(officerId)
-    notify(('BACKUP requested by %s (#%d)'):format(officerName, officerId), 'warning', 12000)
+    notify(exports.sunset_core:Translate('dispatch.msg.backup_requested_by', { officer_name = tostring(officerName), officer_id = math.floor(tonumber(officerId) or 0) }), 'warning', 12000)
     removeBackupBlip(call.id)
     local blip = AddBlipForCoord(call.coords.x, call.coords.y, call.coords.z)
     SetBlipSprite(blip, 161)
     SetBlipColour(blip, 3)
     SetBlipScale(blip, 1.1)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(('Backup #%d'):format(officerId))
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('dispatch.msg.backup', { officer_id = math.floor(tonumber(officerId) or 0) }))
     EndTextCommandSetBlipName(blip)
     backupBlips[call.id] = blip
     SetTimeout(60000, function()
@@ -111,7 +111,7 @@ end)
 RegisterCommand('calls', function()
     local data, err = Sunset.AwaitCallback('sunset:dispatchPanelData')
     if not data then
-        notify(err or 'Cannot open dispatch panel', 'error')
+        notify(err or exports.sunset_core:Translate('dispatch.msg.cannot_open_dispatch_panel'), 'error')
         return
     end
     TriggerEvent('sunset:ui:serviceCalls', data)
@@ -129,11 +129,11 @@ AddEventHandler('sunset:ui:serviceCallsAcceptRequest', function(data)
 
     local accepted, err = Sunset.AwaitCallback('sunset:dispatchAccept', call.callType, callId)
     if accepted then
-        notify(('Accepted call #%d'):format(callId), 'success')
+        notify(exports.sunset_core:Translate('dispatch.msg.accepted_call', { call_id = math.floor(tonumber(callId) or 0) }), 'success')
         exports.sunset_ui:Send('serviceCallsHide', {})
         exports.sunset_ui:SetFocus(false, false)
     else
-        notify(err or 'Could not accept call', 'error')
+        notify(err or exports.sunset_core:Translate('dispatch.message.could_not_accept_call'), 'error')
     end
 end)
 

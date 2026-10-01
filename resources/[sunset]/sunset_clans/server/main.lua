@@ -310,12 +310,17 @@ local function spendCoins(source, amount)
         return false, { localeKey = 'clans.message.you_need_value_blaze_points_you_have_value', formatArgs = { amount, balance } }
     end
     local ok, err = setPremiumPoints(source, balance - amount)
-    if not ok then return false, err or 'Could not spend Blaze Points.' end
+    if not ok then return false, err or exports.sunset_core:TFor(source, 'clans.err.could_not_spend_blaze_points') end
     return true
 end
 
 local function broadcastClanManagement(clanId, actorSource, message)
     clanId = tonumber(clanId)
+    local messageDesc
+    if type(message) == 'table' and type(message.localeKey) == 'string' then
+        messageDesc = message
+        message = exports.sunset_core:TFor(0, messageDesc.localeKey, messageDesc.params)
+    end
     message = tostring(message or ''):gsub('^%s+', ''):gsub('%s+$', '')
     if not clanId or message == '' then return end
 
@@ -348,6 +353,8 @@ local function broadcastClanManagement(clanId, actorSource, message)
         id = actorSource or 0,
         name = actorName,
         message = message,
+        messageKey = messageDesc and messageDesc.localeKey or nil,
+        messageParams = messageDesc and messageDesc.params or nil,
         time = os.date('%H:%M:%S'),
         type = 'clan_action',
         clanId = clanId,
@@ -418,7 +425,7 @@ local function showClanMotd(source)
         clanTag = row.tag,
         clanName = row.name,
         name = row.name,
-        message = message ~= '' and message or 'No message of the day has been set.',
+        message = message ~= '' and message or exports.sunset_core:TFor(source, 'factions.ui.no_message_of_the_day_has'),
         command = '/cmotd',
     })
     return true
@@ -432,7 +439,7 @@ local function applyClanMotd(source, message)
     MySQL.update.await('UPDATE clans SET motd = ? WHERE id = ?', { motd, row.clan_id })
     safeAudit(row.clan_id, cid, 'motd', { motd = motd })
     safeBroadcast(row.clan_id, source,
-        motd ~= '' and ('updated the clan MOTD: %s'):format(motd) or 'cleared the clan MOTD.')
+        motd ~= '' and { localeKey = 'clans.msg.updated_the_clan_motd', params = { motd = tostring(motd) } } or { localeKey = 'clans.msg.cleared_the_clan_motd' })
     safeSyncMembers(row.clan_id)
     return clanManageDashboard(source, cid)
 end
@@ -577,7 +584,7 @@ ClanCreateImpl = function(source, payload)
         print(('[sunset_clans] clanCreate dashboard failed for %s: %s'):format(source, tostring(payload)))
         return nil, { localeKey = 'clans.message.clan_created_reopen_clan_to_view_your_clan_page' }
     end
-    safeBroadcast(clanId, source, ('founded the clan %s [%s].'):format(name, tag))
+    safeBroadcast(clanId, source, { localeKey = 'clans.msg.founded_the_clan', params = { name = tostring(name), tag = tostring(tag) } })
     return payload
 end
 
@@ -625,7 +632,7 @@ local function handleClanManage(source, payload)
             { description, tag, tagColor, tagStyle, row.clan_id }
         )
         safeAudit(row.clan_id, cid, 'settings', { tag = tag, tagColor = tagColor, tagStyle = tagStyle })
-        safeBroadcast(row.clan_id, source, 'updated clan settings.')
+        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.updated_clan_settings' })
         safeSyncMembers(row.clan_id)
         return clanManageDashboard(source, cid)
     end
@@ -663,10 +670,10 @@ local function handleClanManage(source, payload)
             expiresAt = expiresAt,
             invitedBy = source,
         }
-        notify(targetId, ('Clan invite from %s [%s]. Use /acceptclan or /declineclan.'):format(row.name, row.tag), 'info', 12000)
+        notify(targetId, exports.sunset_core:TFor(targetId, 'clans.msg.clan_invite_from_use_acceptclan_or', { name = tostring(row.name), tag = tostring(row.tag) }), 'info', 12000)
         safeAudit(row.clan_id, cid, 'invite', { targetCharacterId = targetCid, targetId = targetId })
         safeBroadcast(row.clan_id, source,
-            ('invited %s to join the clan.'):format(exports.sunset_core:GetPlayerDisplayName(targetId)))
+            { localeKey = 'clans.msg.invited_to_join_the_clan', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)) } })
         return clanManageDashboard(source, cid)
     end
 
@@ -713,11 +720,11 @@ local function handleClanManage(source, payload)
             return nil, { localeKey = 'clans.message.you_cannot_remove_the_clan_leader' }
         end
         safeBroadcast(row.clan_id, source,
-            ('removed %s from the clan.'):format(playerName(targetCid)))
+            { localeKey = 'clans.msg.removed_from_the_clan', params = { player_name = tostring(playerName(targetCid)) } })
         MySQL.update.await('DELETE FROM clan_members WHERE clan_id = ? AND character_id = ?', { row.clan_id, targetCid })
         if targetId then
             ClanDisplay.sync(targetId)
-            notify(targetId, ('You were removed from %s.'):format(row.name), 'warning')
+            notify(targetId, exports.sunset_core:TFor(targetId, 'clans.msg.you_were_removed_from', { name = tostring(row.name) }), 'warning')
         end
         safeAudit(row.clan_id, cid, 'kick', { targetCharacterId = targetCid })
         return clanManageDashboard(source, cid)
@@ -751,14 +758,12 @@ local function handleClanManage(source, payload)
         })
         local labels = clanRankLabels(row)
         if targetId then
-            notify(targetId, ('Your clan rank is now %s (rank %d).'):format(
-                SunsetClans.getRankLabel(labels, nextRank), nextRank), 'info')
+            notify(targetId, exports.sunset_core:TFor(targetId, 'clans.msg.your_clan_rank_is_now_rank', { rank_label = tostring(SunsetClans.getRankLabel(labels, nextRank)), next_rank = math.floor(tonumber(nextRank) or 0) }), 'info')
         end
         safeAudit(row.clan_id, cid, action, { targetCharacterId = targetCid, rank = nextRank })
-        local verb = action == 'rankUp' and 'promoted' or 'demoted'
+        local rankKey = action == 'rankUp' and 'clans.msg.promoted_to_rank' or 'clans.msg.demoted_to_rank'
         safeBroadcast(row.clan_id, source,
-            ('%s %s to %s (rank %d).'):format(
-                verb, playerName(targetCid), SunsetClans.getRankLabel(labels, nextRank), nextRank))
+            { localeKey = rankKey, params = { player_name = tostring(playerName(targetCid)), rank_label = tostring(SunsetClans.getRankLabel(labels, nextRank)), next_rank = math.floor(tonumber(nextRank) or 0) } })
         syncClanMembers(row.clan_id)
         return clanManageDashboard(source, cid)
     end
@@ -779,13 +784,13 @@ local function handleClanManage(source, payload)
         local nextWarns = warns + 1
         if nextWarns >= SunsetClans.MaxWarns then
             safeBroadcast(row.clan_id, source,
-                ('removed %s from the clan after 3/3 warnings: %s'):format(playerName(targetCid), reason))
+                { localeKey = 'clans.msg.removed_from_the_clan_after_3', params = { player_name = tostring(playerName(targetCid)), reason = tostring(reason) } })
             MySQL.update.await('DELETE FROM clan_members WHERE clan_id = ? AND character_id = ?', {
                 row.clan_id, targetCid,
             })
             if targetId then
                 ClanDisplay.sync(targetId)
-                notify(targetId, ('Clan warning 3/3 — removed from %s: %s'):format(row.name, reason), 'error', 10000)
+                notify(targetId, exports.sunset_core:TFor(targetId, 'clans.msg.clan_warning_3_3_removed_from', { name = tostring(row.name), reason = tostring(reason) }), 'error', 10000)
             end
             safeAudit(row.clan_id, cid, 'warn_kick', { targetCharacterId = targetCid, reason = reason })
         else
@@ -793,13 +798,13 @@ local function handleClanManage(source, payload)
                 nextWarns, row.clan_id, targetCid,
             })
             if targetId then
-                notify(targetId, ('Clan warning %d/3: %s'):format(nextWarns, reason), 'warning', 8000)
+                notify(targetId, exports.sunset_core:TFor(targetId, 'clans.msg.clan_warning_3', { next_warns = math.floor(tonumber(nextWarns) or 0), reason = tostring(reason) }), 'warning', 8000)
             end
             safeAudit(row.clan_id, cid, 'warn', { targetCharacterId = targetCid, reason = reason, warns = nextWarns })
             safeBroadcast(row.clan_id, source,
-                ('issued a clan warning (%d/3) to %s: %s'):format(nextWarns, playerName(targetCid), reason))
+                { localeKey = 'clans.msg.issued_a_clan_warning_3_to', params = { next_warns = math.floor(tonumber(nextWarns) or 0), player_name = tostring(playerName(targetCid)), reason = tostring(reason) } })
         end
-        notify(source, ('Warning issued (%d/3): %s'):format(math.min(nextWarns, SunsetClans.MaxWarns), reason), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'clans.msg.warning_issued_3', { next_warns = math.floor(tonumber(math.min(nextWarns, SunsetClans.MaxWarns)) or 0), reason = tostring(reason) }), 'success')
         syncClanMembers(row.clan_id)
         return clanManageDashboard(source, cid)
     end
@@ -819,7 +824,7 @@ local function handleClanManage(source, payload)
             SunsetClans.encodeRankLabels(labels), row.clan_id,
         })
         safeAudit(row.clan_id, cid, 'rank_labels', { labels = labels })
-        safeBroadcast(row.clan_id, source, 'updated clan rank names.')
+        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.updated_clan_rank_names' })
         safeSyncMembers(row.clan_id)
         return clanManageDashboard(source, cid)
     end
@@ -831,7 +836,7 @@ local function handleClanManage(source, payload)
         end
         local clanId = row.clan_id
         safeAudit(clanId, cid, 'leave', {})
-        safeBroadcast(clanId, source, 'left the clan.')
+        safeBroadcast(clanId, source, { localeKey = 'clans.msg.left_the_clan' })
         MySQL.update.await('DELETE FROM clan_members WHERE clan_id = ? AND character_id = ?', { clanId, cid })
         ClanDisplay.sync(source)
         print(('^2[sunset_clans]^7 leave ok src=%s cid=%s clan=%s'):format(tostring(source), tostring(cid), tostring(clanId)))
@@ -843,7 +848,7 @@ local function handleClanManage(source, payload)
         local clanId = row.clan_id
         local members = MySQL.query.await('SELECT character_id FROM clan_members WHERE clan_id = ?', { clanId }) or {}
         safeAudit(clanId, cid, 'dissolve', {})
-        safeBroadcast(clanId, source, 'dissolved the clan.')
+        safeBroadcast(clanId, source, { localeKey = 'clans.msg.dissolved_the_clan' })
         -- [AUDIT P6-12] End active turf wars and release turf ownership BEFORE the
         -- clan row disappears (turfs.owner_clan_id has no FK; a dangling id left
         -- the turf unattackable-as-neutral while payouts silently stopped).
@@ -915,7 +920,7 @@ local function acceptInvite(source)
     -- [QUESTS 7-9] clan chain: joining a clan drives quest progress.
     TriggerEvent('sunset:quest:progress', cid, 'clan_joined', 1, { clanId = invite.clan_id, via = 'invite' })
     safeAudit(invite.clan_id, cid, 'join', {})
-    safeBroadcast(invite.clan_id, source, 'joined the clan.')
+    safeBroadcast(invite.clan_id, source, { localeKey = 'clans.msg.joined_the_clan' })
     return clanManageDashboard(source, cid)
 end
 
@@ -940,7 +945,7 @@ exports.sunset_core:RegisterCallback('sunset:clanDeclineInvite', function(source
         MySQL.update.await('DELETE FROM clan_invites WHERE character_id = ?', { cid })
     end
     if clanId then
-        safeBroadcast(clanId, source, 'declined the clan invitation.')
+        safeBroadcast(clanId, source, { localeKey = 'clans.msg.declined_the_clan_invitation' })
     end
     return true
 end)

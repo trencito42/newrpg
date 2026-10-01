@@ -33,7 +33,7 @@ AddEventHandler('sunset:nui:licenseQuizSubmit', function(data)
     closeQuiz()
     local result, err = Sunset.AwaitCallback('sunset:license:submitTheory', licenseType, answers)
     if not result then
-        exports.sunset_ui:Notify(err or 'Theory exam failed.', 'error', 8000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('licenses.msg.theory_exam_failed'), 'error', 8000)
         TriggerEvent('sunset:licenses:testAbort')
         return
     end

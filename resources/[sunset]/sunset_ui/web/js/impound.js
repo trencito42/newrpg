@@ -48,13 +48,13 @@ const Impound = {
                     <div class="impound-vehicle__plate">${this.esc(v.plate)}</div>
                     <div class="impound-vehicle__meta">
                         <span>${this.esc(v.model)}</span>
-                        <span>Reason: ${this.esc(v.reason)}</span>
-                        <span>${v.daysHeld > 0 ? `${v.daysHeld} day(s) held` : 'Today'}</span>
-                        <span>By: ${this.esc(v.impoundedBy)}</span>
+                        <span>${I18n.t('ui.impound.reason')}: ${this.esc(v.reason)}</span>
+                        <span>${v.daysHeld > 0 ? I18n.t('ui.impound.days_held', { days: v.daysHeld }) : I18n.t('ui.impound.today')}</span>
+                        <span>${I18n.t('ui.impound.by')}: ${this.esc(v.impoundedBy)}</span>
                     </div>
                 </div>
-                <div class="impound-vehicle__fee">$${Number(v.fee).toLocaleString()}</div>
-                <button type="button" class="impound-vehicle__btn" data-impound-recover="${v.impoundId}">Recover</button>
+                <div class="impound-vehicle__fee">$${I18n.number(Number(v.fee))}</div>
+                <button type="button" class="impound-vehicle__btn" data-impound-recover="${v.impoundId}">${I18n.t('ui.impound.recover')}</button>
             </div>
         `).join('');
 

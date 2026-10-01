@@ -38,6 +38,11 @@ local LastBroadcastAt = 0
 local RecentBroadcasts = {} -- sliding window for the 5/min cap
 
 local function broadcastPublic(text)
+    local textKey, textParams
+    if type(text) == 'table' and type(text.localeKey) == 'string' then
+        textKey, textParams = text.localeKey, text.params
+        text = exports.sunset_core:TFor(0, textKey, textParams)
+    end
     local cfg = SunsetAdmin.Broadcast or {}
     local now = os.time()
     if cfg.cooldownSec and (now - LastBroadcastAt) < cfg.cooldownSec then return end
@@ -49,7 +54,7 @@ local function broadcastPublic(text)
     RecentBroadcasts[#RecentBroadcasts + 1] = now
     LastBroadcastAt = now
     TriggerClientEvent('sunset:chat:message', -1, {
-        id = 0, name = 'SANCTION', message = text, type = 'admin_action',
+        id = 0, name = 'SANCTION', message = text, messageKey = textKey, messageParams = textParams, type = 'admin_action',
     })
 end
 
@@ -115,7 +120,7 @@ function Sanctions.warn(source, target, reason)
     TriggerClientEvent('sunset:chat:system', target, ('You received a warning from %s: %s'):format(aName, reason), 'error')
 
     if (SunsetAdmin.Broadcast or {}).warn ~= false then
-        broadcastPublic(('Warning issued to %s by %s: %s'):format(id.name, aName, reason))
+        broadcastPublic({ localeKey = 'admin.msg.warning_issued_to_by', params = { name = tostring(id.name), a_name = tostring(aName), reason = tostring(reason) } })
     end
 
     local prior = recentWarnCount(id.license)
@@ -126,7 +131,7 @@ function Sanctions.warn(source, target, reason)
     -- auto-escalation: 3/3 warns -> automatic account ban (7 days)
     if totalWarns >= 3 then
         local banReason = ('3/3 warns accumulated (last: %s)'):format(reason)
-        broadcastPublic(('Player %s has been account banned (7 days) for accumulating 3/3 warns.'):format(id.name))
+        broadcastPublic({ localeKey = 'admin.msg.player_has_been_account_banned_7', params = { name = tostring(id.name) } })
         Sanctions.ban(source, target, 7 * 1440, banReason)
         return { warns = totalWarns, reason = reason, banned = true }
     end
@@ -192,9 +197,9 @@ function Sanctions.kick(source, target, reason)
     reason = tostring(reason or ''):sub(1, 200) -- [SEC3]
     local id = Sanctions.record('kick', target, source, reason)
     local aName = adminName(source)
-    DropPlayer(target, ('You were kicked by %s: %s'):format(aName, reason))
+    DropPlayer(target, exports.sunset_core:TFor(target, 'admin.msg.you_were_kicked_by', { a_name = tostring(aName), reason = tostring(reason) }))
     if (SunsetAdmin.Broadcast or {}).kick ~= false then
-        broadcastPublic(('%s was kicked by %s: %s'):format(id.name, aName, reason))
+        broadcastPublic({ localeKey = 'admin.msg.was_kicked_by', params = { name = tostring(id.name), a_name = tostring(aName), reason = tostring(reason) } })
     end
     broadcastStaff(('[SANCTION] %s kicked %s (#%d, %s): "%s"'):format(aName, id.name, target, tostring(id.license), reason))
     return true
@@ -248,16 +253,17 @@ function Sanctions.ban(source, target, durationMin, reason)
         end
     end)
 
-    DropPlayer(target, ('Banned by %s: %s%s'):format(aName, reason,
-        durationMin and (' (expires in %d min)'):format(durationMin) or ' (permanent)'))
+    DropPlayer(target, durationMin
+        and exports.sunset_core:TFor(target, 'admin.msg.banned_by_timed', { a_name = tostring(aName), reason = tostring(reason), duration_min = math.floor(tonumber(durationMin) or 0) })
+        or exports.sunset_core:TFor(target, 'admin.msg.banned_by_permanent', { a_name = tostring(aName), reason = tostring(reason) }))
 
     if (SunsetAdmin.Broadcast or {}).ban ~= false then
         local showReason = ((SunsetAdmin.Broadcast or {}).showReason or {}).ban ~= false
         local reasonPart = showReason and (': ' .. reason) or ''
         if durationMin then
-            broadcastPublic(('%s was banned for %d minutes by %s%s'):format(id.name, durationMin, aName, reasonPart))
+            broadcastPublic({ localeKey = 'admin.msg.was_banned_for_minutes_by', params = { name = tostring(id.name), duration_min = math.floor(tonumber(durationMin) or 0), a_name = tostring(aName), reason_part = tostring(reasonPart) } })
         else
-            broadcastPublic(('%s was permanently banned by %s%s'):format(id.name, aName, reasonPart))
+            broadcastPublic({ localeKey = 'admin.msg.was_permanently_banned_by', params = { name = tostring(id.name), a_name = tostring(aName), reason_part = tostring(reasonPart) } })
         end
     end
     broadcastStaff(('[SANCTION] %s banned %s (%s)%s: "%s"'):format(
@@ -287,12 +293,12 @@ function Sanctions.banIP(source, target, reason)
         end
     end)
 
-    DropPlayer(target, ('IP Banned by %s: %s (permanent)'):format(aName, reason))
+    DropPlayer(target, exports.sunset_core:TFor(target, 'admin.msg.ip_banned_by_permanent', { a_name = tostring(aName), reason = tostring(reason) }))
 
     if (SunsetAdmin.Broadcast or {}).ban ~= false then
         local showReason = ((SunsetAdmin.Broadcast or {}).showReason or {}).ban ~= false
         local reasonPart = showReason and (': ' .. reason) or ''
-        broadcastPublic(('%s was permanently IP-banned by %s%s'):format(id.name, aName, reasonPart))
+        broadcastPublic({ localeKey = 'admin.msg.was_permanently_ip_banned_by', params = { name = tostring(id.name), a_name = tostring(aName), reason_part = tostring(reasonPart) } })
     end
     broadcastStaff(('[SANCTION] %s permanently IP-banned %s (IP: %s, %s): "%s"'):format(
         aName, id.name, tostring(ip or 'unknown'), tostring(license), reason))
@@ -307,7 +313,7 @@ function Sanctions.unbanRecord(source, license, targetName)
         ]], { tostring(targetName or license), tostring(license), adminAccountId(source), adminName(source) })
     end)
     if (SunsetAdmin.Broadcast or {}).unban == true then
-        broadcastPublic(('%s ban was lifted by %s'):format(tostring(targetName or license), adminName(source)))
+        broadcastPublic({ localeKey = 'admin.msg.ban_was_lifted_by', params = { target_name = tostring(targetName or license), admin_name = tostring(adminName(source)) } })
     end
     broadcastStaff(('[SANCTION] %s unbanned %s'):format(adminName(source), tostring(license)))
 end
@@ -317,7 +323,7 @@ function Sanctions.jail(source, target, minutes, reason)
     local id = Sanctions.record('jail', target, source, reason, minutes)
     local aName = adminName(source)
     if (SunsetAdmin.Broadcast or {}).jail ~= false then
-        broadcastPublic(('%s was jailed for %d min by %s: %s'):format(id.name, minutes, aName, reason))
+        broadcastPublic({ localeKey = 'admin.msg.was_jailed_for_min_by', params = { name = tostring(id.name), minutes = math.floor(tonumber(minutes) or 0), a_name = tostring(aName), reason = tostring(reason) } })
     end
     broadcastStaff(('[SANCTION] %s jailed %s (#%d) for %d min: "%s"'):format(aName, id.name, target, minutes, reason))
 end

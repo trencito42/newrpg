@@ -100,7 +100,7 @@ CreateThread(function()
                 SetTextScale(0.3, 0.3)
                 SetTextColour(0, 255, 204, 255)
                 SetTextEntry('STRING')
-                AddTextComponentString('INSPECTOR')
+                AddTextComponentString(exports.sunset_core:Translate('admintools.msg.inspector'))
                 DrawText(0.02, 0.30)
                 for i, line in ipairs(lines) do
                     SetTextFont(4)
@@ -125,7 +125,7 @@ RegisterCommand('inspect', function()
             return
         end
         inspectActive = not inspectActive
-        exports.sunset_ui:Notify(inspectActive and 'Laser inspector ON — aim at any entity.' or 'Laser inspector OFF.', 'info')
+        exports.sunset_ui:Notify(inspectActive and exports.sunset_core:Translate('admintools.msg.laser_inspector_on_aim_at_any') or exports.sunset_core:Translate('admintools.msg.laser_inspector_off'), 'info')
         if not inspectActive then InspectTrack = {} end
     end)
 end, false)

@@ -422,7 +422,7 @@ const Menu = {
                         <h2 class="vd-name">${displayName}</h2>
                     </div>
                     <div class="vd-plate-box">
-                        <div class="vd-plate-state">San Andreas</div>
+                        <div class="vd-plate-state">${this.t('ui.mdc.san_andreas')}</div>
                         <div class="vd-plate-text">${plate}</div>
                     </div>
                 </div>
@@ -615,7 +615,7 @@ const Menu = {
         }
         const cidEl = $('#menu-cid');
         if (cidEl) cidEl.textContent = data.cid ? ('CID: ' + data.cid) : 'CID: —';
-        $('#menu-rank').textContent = data.rank || 'PLAYER';
+        $('#menu-rank').textContent = data.rank || I18n.t('ui.menu.default_rank');
         $('#menu-cash').textContent = formatMoney(data.cash || 0);
         $('#menu-bank').textContent = formatMoney(data.bank || 0);
         $('#menu-premium').textContent = `${this.formatXp(data.premium ?? 0)} BP`;
@@ -713,7 +713,7 @@ const Menu = {
         if (closeBtn) {
             if (!this._closeHtml) this._closeHtml = closeBtn.innerHTML;
             closeBtn.innerHTML = this.soloMode === 'vehicle'
-                ? '<span class="menu-keycap">V</span> CLOSE'
+                ? '<span class="menu-keycap">V</span> ' + I18n.t('common.close').toUpperCase()
                 : this._closeHtml;
         }
 

@@ -47,7 +47,7 @@ const Missions = (() => {
         }).catch(() => {});
     }
 
-    function fmt(n) { return '$' + Number(n).toLocaleString('en-US'); }
+    function fmt(n) { return '$' + I18n.number(Number(n)); }
     function fmtTime(sec) {
         if (sec < 60) return `${sec}s`;
         return `${Math.floor(sec / 60)}m ${sec % 60}s`;
@@ -60,7 +60,7 @@ const Missions = (() => {
 
         // Panel header: "RICO — MISSION OFFER"
         const hdr = $('#offer-contact-label');
-        if (hdr) hdr.textContent = (data.contact ? data.contact + ' — ' : '') + 'MISSION OFFER';
+        if (hdr) hdr.textContent = (data.contact ? data.contact + ' — ' : '') + I18n.t('ui.missions.mission_offer');
 
         // Logo
         const logo = $('#offer-logo');
@@ -229,10 +229,10 @@ const Missions = (() => {
         if (rows) {
             rows.innerHTML = '';
             [
-                ['Base Pay',         reward.base],
-                ['Condition Bonus',  reward.conditionBonus],
-                ['Escape Bonus',     reward.escapeBonus],
-                ['Reputation Bonus', reward.reputationBonus],
+                [I18n.t('ui.missions.base_pay'),         reward.base],
+                [I18n.t('ui.missions.condition_bonus'),  reward.conditionBonus],
+                [I18n.t('ui.missions.escape_bonus'),     reward.escapeBonus],
+                [I18n.t('ui.missions.reputation_bonus'), reward.reputationBonus],
             ].forEach(([label, val]) => {
                 if (!val) return;
                 const row = document.createElement('div');
@@ -254,7 +254,7 @@ const Missions = (() => {
         if (total) total.textContent = fmt(reward.total || 0);
 
         const rep = $('#complete-rep');
-        if (rep) rep.textContent = '+25 REP with contact';
+        if (rep) rep.textContent = I18n.t('ui.missions.rep_with_contact', { rep: 25 });
 
         const btn = $('#btn-complete');
         if (btn) btn.onclick = () => post('missionCompleteClose', {});

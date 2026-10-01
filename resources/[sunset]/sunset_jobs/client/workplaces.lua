@@ -91,43 +91,42 @@ local function spawnWorkplaceNpc(key, workplace)
         spawnedNpcs[key] = nil
     end
 
-    local modelHash = joaat(npcDef.model or 'mp_m_shopkeep_01')
-    RequestModel(modelHash)
-    local timeout = GetGameTimer() + 10000
-    while not HasModelLoaded(modelHash) and GetGameTimer() < timeout do Wait(50) end
-    if not HasModelLoaded(modelHash) then
-        print(('[sunset_jobs] ERR: failed to load NPC model %s for %s'):format(npcDef.model, key))
-        return
+    local modelName = npcDef.model or 'mp_m_shopkeep_01'
+    local okModel, modelHash = false, nil
+    if Sunset and Sunset.RequestModelSafe then
+        okModel, modelHash = Sunset.RequestModelSafe(modelName, 5000)
+    else
+        local okR, rHash = pcall(function() return exports.sunset_core:RequestModelSafe(modelName, 5000) end)
+        okModel, modelHash = (okR and rHash ~= false), rHash
     end
 
+    local ped = nil
     local c = npcDef.coords
+    if okModel and modelHash then
+        -- Clear any ghost / duplicate peds lingering at the exact spawn point
+        deleteNearbyGhostPeds(c, modelHash)
 
-    -- Clear any ghost / duplicate peds lingering at the exact spawn point
-    deleteNearbyGhostPeds(c, modelHash)
+        ped = CreatePed(4, modelHash, c.x, c.y, c.z - 1.0, c.w or c.h or 0.0, false, true)
+        if ped and ped ~= 0 and DoesEntityExist(ped) then
+            SetEntityAsMissionEntity(ped, true, true)
+            FreezeEntityPosition(ped, true)
+            SetEntityInvincible(ped, true)
+            SetBlockingOfNonTemporaryEvents(ped, true)
+            SetEntityCanBeDamaged(ped, false)
+            SetPedCanRagdoll(ped, false)
+            SetPedFleeAttributes(ped, 0, false)
+            SetPedCombatAttributes(ped, 46, true)
 
-    local ped = CreatePed(4, modelHash, c.x, c.y, c.z - 1.0, c.w or c.h or 0.0, false, true)
-    if not ped or ped == 0 or not DoesEntityExist(ped) then
+            if npcDef.scenario then
+                TaskStartScenarioInPlace(ped, npcDef.scenario, 0, true)
+            end
+        end
         SetModelAsNoLongerNeeded(modelHash)
-        return
+    else
+        print(('[sunset_jobs] Optional NPC model %s failed to load for %s; skipping ped'):format(tostring(modelName), tostring(key)))
     end
-
-    SetEntityAsMissionEntity(ped, true, true)
-    FreezeEntityPosition(ped, true)
-    SetEntityInvincible(ped, true)
-    SetBlockingOfNonTemporaryEvents(ped, true)
-    SetEntityCanBeDamaged(ped, false)
-    SetPedCanRagdoll(ped, false)
-    SetPedFleeAttributes(ped, 0, false)
-    SetPedCombatAttributes(ped, 46, true)
-
-    if npcDef.scenario then
-        TaskStartScenarioInPlace(ped, npcDef.scenario, 0, true)
-    end
-
-    SetModelAsNoLongerNeeded(modelHash)
 
     -- Add blip
-    local blip = AddBlipForCoord(c.x, c.y, c.z)
     local sprite = 407
     if workplace.jobId == 'trucker' then sprite = 477
     elseif workplace.jobId == 'garbage' then sprite = 318
@@ -136,13 +135,28 @@ local function spawnWorkplaceNpc(key, workplace)
     elseif workplace.jobId == 'hunter' then sprite = 153
     elseif workplace.jobId == 'diver' then sprite = 64
     end
-    SetBlipSprite(blip, sprite)
-    SetBlipColour(blip, 5)
-    SetBlipScale(blip, 0.8)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(workplace.jobLabel .. ' Workplace')
-    EndTextCommandSetBlipName(blip)
+
+    local blipLabel = exports.sunset_core:Translate('jobs.msg.workplace', { job_label = tostring(workplace.jobLabel) })
+    local blip = nil
+    if Sunset and Sunset.CreateSafeBlip then
+        blip = Sunset.CreateSafeBlip(c, {
+            sprite = sprite,
+            color = 5,
+            scale = 0.8,
+            shortRange = true,
+            label = blipLabel,
+        })
+    else
+        pcall(function()
+            blip = exports.sunset_core:CreateSafeBlip(c, {
+                sprite = sprite,
+                color = 5,
+                scale = 0.8,
+                shortRange = true,
+                label = blipLabel,
+            })
+        end)
+    end
 
     spawnedNpcs[key] = {
         ped = ped,
@@ -203,7 +217,7 @@ local function openWorkplaceMenu(workplace)
     CreateThread(function()
         local state, err = Sunset.AwaitCallback('sunset:jobs:getWorkplaceState', workplace.jobId)
         if not state then
-            exports.sunset_ui:Notify(err or 'Could not reach workplace supervisor.', 'error', 5000)
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_reach_workplace_supervisor'), 'error', 5000)
             return
         end
 
@@ -233,20 +247,20 @@ local function openWorkplaceMenu(workplace)
             if state.onShift then
                 actions[#actions + 1] = {
                     id = 'workplace_stop_shift',
-                    label = 'End Active Shift',
+                    label = exports.sunset_core:Translate('jobs.ui.end_active_shift'),
                     group = 'SHIFT',
                 }
             else
                 if workplace.jobId == 'trucker' then
                     actions[#actions + 1] = {
                         id = 'workplace_open_laptop',
-                        label = 'Open Route Laptop',
+                        label = exports.sunset_core:Translate('jobs.ui.open_route_laptop'),
                         group = 'DISPATCH',
                     }
                 else
                     actions[#actions + 1] = {
                         id = 'workplace_start_shift',
-                        label = ('Start %s Route'):format(workplace.jobLabel),
+                        label = exports.sunset_core:Translate('jobs.ui.start_route', { job_label = tostring(workplace.jobLabel) }),
                         group = 'SHIFT',
                     }
                 end
@@ -268,7 +282,7 @@ local function openWorkplaceMenu(workplace)
         if workplace.guide then
             actions[#actions + 1] = {
                 id = 'workplace_guide',
-                label = ('%s Guide'):format(workplace.jobLabel),
+                label = exports.sunset_core:Translate('jobs.ui.guide', { job_label = tostring(workplace.jobLabel) }),
                 group = 'INFO',
             }
         end
@@ -277,7 +291,7 @@ local function openWorkplaceMenu(workplace)
         if state.isEmployed then
             actions[#actions + 1] = {
                 id = 'workplace_quit',
-                label = ('Resign as %s'):format(workplace.jobLabel),
+                label = exports.sunset_core:Translate('jobs.ui.resign_as', { job_label = tostring(workplace.jobLabel) }),
                 group = 'EMPLOYMENT',
             }
         end
@@ -372,9 +386,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:startContract', contractId)
             if not result then
-                exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_contract'), 'error', 5000)
             else
-                exports.sunset_ui:Notify(('Contract accepted: travel to %s'):format(result.zone and result.zone.label or contractId), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.contract_accepted_travel_to', { zone = tostring(result.zone and result.zone.label or contractId) }), 'success', 6000)
                 TriggerEvent('sunset:hunting:contractStarted', result)
             end
         end)
@@ -394,9 +408,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             end
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:startContract', siteId)
             if not result then
-                exports.sunset_ui:Notify(err or 'Could not start contract.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_contract'), 'error', 5000)
             else
-                exports.sunset_ui:Notify(('Dive contract accepted: %s · $%d'):format(siteId, result.pay or 0), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.dive_contract_accepted', { site_id = tostring(siteId), pay = math.floor(tonumber(result.pay or 0) or 0) }), 'success', 6000)
                 TriggerEvent('sunset:diving:contractStarted', result)
             end
         end)
@@ -416,9 +430,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             end
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentGear', tier)
             if not result then
-                exports.sunset_ui:Notify(err or 'Could not rent gear.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_rent_gear'), 'error', 5000)
             else
-                exports.sunset_ui:Notify(('Gear rented: %s · O2: %ds'):format(tier, result.o2Duration or 120), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.gear_rented_o2_s', { tier = tostring(tier), o2_duration = math.floor(tonumber(result.o2Duration or 120) or 0) }), 'success', 6000)
                 TriggerEvent('sunset:diving:gearRented', result.o2Duration or 120)
             end
         end)
@@ -437,14 +451,14 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, err = Sunset.AwaitCallback('sunset:jobs:workplaceApply', wp.jobId)
             if ok then
-                exports.sunset_ui:Notify(('You are now employed as %s!'):format(wp.jobLabel), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.you_are_now_employed_as', { job_label = tostring(wp.jobLabel) }), 'success', 6000)
                 if wp.secondaryLocation and wp.secondaryLocation.coords then
                     local sc = wp.secondaryLocation.coords
                     SetNewWaypoint(sc.x, sc.y)
-                    exports.sunset_ui:Notify(('GPS waypoint set to %s.'):format(wp.secondaryLocation.label or 'workplace'), 'info', 6000)
+                    exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.gps_waypoint_set_to', { label = wp.secondaryLocation.label or exports.sunset_core:Translate('jobs.word.workplace') }), 'info', 6000)
                 end
             else
-                exports.sunset_ui:Notify(err or 'Could not complete application.', 'error', 7000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_complete_application'), 'error', 7000)
             end
             inCooldown = false
         end)
@@ -460,7 +474,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             CreateThread(function()
                 local data, err = Sunset.AwaitCallback('sunset:jobs:hunter:start')
                 if not data then
-                    exports.sunset_ui:Notify(err or 'Could not start Hunter shift.', 'error', 5000)
+                    exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_hunter_shift'), 'error', 5000)
                 else
                     exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.hunter_shift_started_visit_mason_to_pick_a_contract'), 'success', 5000)
                 end
@@ -469,7 +483,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             CreateThread(function()
                 local data, err = Sunset.AwaitCallback('sunset:jobs:diver:start')
                 if not data then
-                    exports.sunset_ui:Notify(err or 'Could not start Diver shift.', 'error', 5000)
+                    exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_diver_shift'), 'error', 5000)
                 else
                     exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.diver_shift_started_rent_gear_and_pick_a_contract'), 'success', 5000)
                 end
@@ -490,7 +504,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 SetWaypointOff()
                 exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.shift_cancelled'), 'info', 4000)
             else
-                exports.sunset_ui:Notify(err or 'Could not cancel shift.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_cancel_shift'), 'error')
             end
         end)
 
@@ -505,9 +519,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     Sunset.JobClient.cleanup()
                     Sunset.JobClient.hideObjective()
                 end
-                exports.sunset_ui:Notify(('Resigned as %s.'):format(wp.jobLabel), 'info', 5000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.resigned_as', { job_label = tostring(wp.jobLabel) }), 'info', 5000)
             else
-                exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.resign_failed'), 'error')
             end
         end)
 
@@ -532,18 +546,18 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         elseif specId == 'contracts' and wp.jobId == 'hunter' then
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:hunter:getContracts')
             if not contracts or #contracts == 0 then
-                exports.sunset_ui:Notify(err or 'No contracts available at your rank yet.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.no_contracts_available_at_your_rank'), 'error', 5000)
             else
                 local items = {}
                 for _, c in ipairs(contracts) do
                     items[#items + 1] = {
                         id = 'workplace_take_contract_' .. c.id,
                         label = ('%s  $%d'):format(c.label or c.id, c.pay or 0),
-                        detail = ('Rank %d · Harvest %d × %s'):format(c.minRank, c.requiredHarvests, c.species or '?'),
+                        detail = exports.sunset_core:Translate('jobs.ui.rank_harvest', { min_rank = math.floor(tonumber(c.minRank) or 0), required_harvests = math.floor(tonumber(c.requiredHarvests) or 0), species = tostring(c.species or '?') }),
                         group = 'CONTRACTS',
                     }
                 end
-                items[#items + 1] = { id = 'workplace_back', label = '← Back', group = 'NAV' }
+                items[#items + 1] = { id = 'workplace_back', label = exports.sunset_core:Translate('jobs.ui.back'), group = 'NAV' }
                 exports.sunset_ui:Send('playerInteractionShow', {
                     menuTitle = 'Hunting Contracts',
                     target = { name = 'Mason', id = '' },
@@ -556,9 +570,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         elseif specId == 'sell_harvest' and wp.jobId == 'hunter' then
             local result, err = Sunset.AwaitCallback('sunset:jobs:hunter:sellHarvest')
             if not result then
-                exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.nothing_to_sell'), 'error', 5000)
             else
-                exports.sunset_ui:Notify(('Sold %d items for $%d!'):format(result.count, result.total), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.sold_items_for', { count = math.floor(tonumber(result.count) or 0), total = math.floor(tonumber(result.total) or 0) }), 'success', 6000)
             end
 
         elseif specId == 'equipment' and wp.jobId == 'hunter' then
@@ -570,7 +584,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             Sunset.AwaitCallback('sunset:jobs:diver:start')
             local contracts, err = Sunset.AwaitCallback('sunset:jobs:diver:getContracts')
             if not contracts or #contracts == 0 then
-                exports.sunset_ui:Notify(err or 'No contracts available at your rank.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.no_contracts_available_at_your_rank_2'), 'error', 5000)
             else
                 local items = {}
                 for _, c in ipairs(contracts) do
@@ -578,12 +592,11 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     items[#items + 1] = {
                         id = 'workplace_take_dive_contract_' .. c.id,
                         label = ('%s  $%d'):format(c.label or c.id, c.pay or 0),
-                        detail = ('Rank %d · %s%s · Recover %d'):format(
-                            c.minRank, c.difficulty or 'easy', boatTag, c.requiredSalvage or 3),
+                        detail = exports.sunset_core:Translate('jobs.ui.rank_recover', { min_rank = math.floor(tonumber(c.minRank) or 0), difficulty = c.difficulty or exports.sunset_core:Translate('jobs.word.easy'), boat_tag = tostring(boatTag), required_salvage = math.floor(tonumber(c.requiredSalvage or 3) or 0) }),
                         group = 'CONTRACTS',
                     }
                 end
-                items[#items + 1] = { id = 'workplace_back', label = '← Back', group = 'NAV' }
+                items[#items + 1] = { id = 'workplace_back', label = exports.sunset_core:Translate('jobs.ui.back'), group = 'NAV' }
                 exports.sunset_ui:Send('playerInteractionShow', {
                     menuTitle = 'Salvage Contracts',
                     target = { name = 'Terry', id = '' },
@@ -597,10 +610,10 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             local cfgDiver = Sunset.JobsConfig and Sunset.JobsConfig.diver
             local gear = cfgDiver and cfgDiver.gear or {}
             local items = {
-                { id = 'workplace_gear_basic',    label = 'Basic Gear  $30',    detail = '2 min O2 · Rank 1', group = 'GEAR' },
-                { id = 'workplace_gear_standard', label = 'Standard Gear  $60', detail = '3 min O2 · Rank 2', group = 'GEAR' },
-                { id = 'workplace_gear_advanced', label = 'Advanced Gear  $100',detail = '5 min O2 · Rank 3', group = 'GEAR' },
-                { id = 'workplace_back', label = '← Back', group = 'NAV' },
+                { id = 'workplace_gear_basic',    label = exports.sunset_core:Translate('jobs.ui.basic_gear_30'),    detail = exports.sunset_core:Translate('jobs.ui.2_min_o2_rank_1'), group = 'GEAR' },
+                { id = 'workplace_gear_standard', label = exports.sunset_core:Translate('jobs.ui.standard_gear_60'), detail = exports.sunset_core:Translate('jobs.ui.3_min_o2_rank_2'), group = 'GEAR' },
+                { id = 'workplace_gear_advanced', label = exports.sunset_core:Translate('jobs.ui.advanced_gear_100'),detail = exports.sunset_core:Translate('jobs.ui.5_min_o2_rank_3'), group = 'GEAR' },
+                { id = 'workplace_back', label = exports.sunset_core:Translate('jobs.ui.back'), group = 'NAV' },
             }
             exports.sunset_ui:Send('playerInteractionShow', {
                 menuTitle = 'Rent Diving Gear',
@@ -615,15 +628,15 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             Sunset.AwaitCallback('sunset:jobs:diver:start')
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:rentBoat')
             if not result then
-                exports.sunset_ui:Notify(err or 'Cannot rent boat.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.cannot_rent_boat'), 'error', 5000)
             end
 
         elseif specId == 'sell' and wp.jobId == 'diver' then
             local result, err = Sunset.AwaitCallback('sunset:jobs:diver:sell')
             if not result then
-                exports.sunset_ui:Notify(err or 'Nothing to sell.', 'error', 5000)
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.nothing_to_sell'), 'error', 5000)
             else
-                exports.sunset_ui:Notify(('Sold %d items for $%d!'):format(result.count, result.total), 'success', 6000)
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.sold_items_for', { count = math.floor(tonumber(result.count) or 0), total = math.floor(tonumber(result.total) or 0) }), 'success', 6000)
             end
         end
 

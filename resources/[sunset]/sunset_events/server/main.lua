@@ -91,7 +91,7 @@ function startEvent(ev, overrideDuration, instanceId)
         isDevTest  = ev.isDevTest or false,
     }
 
-    broadcast(('🎉 %s is starting! Head to the event location.'):format(ev.label), 'success')
+    broadcast({ localeKey = 'events.msg.is_starting_head_to_the_event', params = { label = tostring(ev.label) } }, 'success')
 
     -- [SERVER-SIDE] Notify other server resources
     TriggerEvent('sunset:events:serverStart', ActiveEvent)
@@ -110,7 +110,7 @@ function startEvent(ev, overrideDuration, instanceId)
             if ActiveEvent and ActiveEvent.type == ev.type then
                 local remaining = math.floor((ActiveEvent.endTime - os.time()) / 60)
                 if remaining > 0 then
-                    broadcast(('🎉 %s in progress — %d minutes remaining!'):format(ev.label, remaining), 'info')
+                    broadcast({ localeKey = 'events.msg.in_progress_minutes_remaining', params = { label = tostring(ev.label), remaining = math.floor(tonumber(remaining) or 0) } }, 'info')
                 end
             end
         end
@@ -150,10 +150,10 @@ function endEvent()
                 pcall(function()
                     exports.sunset_core:AddXP(src, reward.xp)
                 end)
-                notify(src, ('🏆 %s complete! Reward: $%s + %d XP.'):format(ev.label, reward.cash, reward.xp), 'success', 10000)
+                notify(src, exports.sunset_core:TFor(src, 'events.msg.complete_reward_xp', { label = tostring(ev.label), cash = tostring(reward.cash), xp = math.floor(tonumber(reward.xp) or 0) }), 'success', 10000)
             end
         end
-        broadcast(('🏁 %s has ended. %d participants rewarded.'):format(ev.label, participantCount), 'info')
+        broadcast({ localeKey = 'events.msg.has_ended_participants_rewarded', params = { label = tostring(ev.label), participant_count = math.floor(tonumber(participantCount) or 0) } }, 'info')
     end
 
     -- Notify all clients to clean up
@@ -197,7 +197,7 @@ exports.sunset_core:RegisterCallback('sunset:events:join', function(source)
     end
 
     EventParticipants[source] = { type = ActiveEvent.type, joinedAt = os.time(), score = 0 }
-    notify(source, ('Joined %s!'):format(ActiveEvent.label), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'events.msg.joined', { label = tostring(ActiveEvent.label) }), 'success')
     return { type = ActiveEvent.type, label = ActiveEvent.label }
 end)
 

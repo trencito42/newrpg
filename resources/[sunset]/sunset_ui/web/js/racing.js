@@ -55,10 +55,10 @@ const Racing = {
             const canStart = count >= minMulti;
             body.innerHTML = `${banner}
                 <div class="racing-route is-selected">
-                    <div class="racing-route__name">LOBBY — ${this.esc(lobbyInfo.routeId || '')}</div>
+                    <div class="racing-route__name">${I18n.t('ui.racing.lobby')} — ${this.esc(lobbyInfo.routeId || '')}</div>
                     <div class="racing-route__meta">
-                        <span>${canStart ? 'READY TO START' : 'WAITING FOR RACERS'} — ${count}/${minMulti}</span>
-                        <span>Entry: $${entryFee.toLocaleString()}</span>
+                        <span>${canStart ? I18n.t('ui.racing.ready_to_start') : I18n.t('ui.racing.waiting_for_racers')} — ${count}/${minMulti}</span>
+                        <span>${I18n.t('ui.racing.entry', { fee: I18n.number(entryFee) })}</span>
                     </div>
                     <div class="racing-lobby-players">${players}</div>
                 </div>
@@ -71,15 +71,15 @@ const Racing = {
                         <div class="racing-route__desc">${this.esc(r.description || '')}</div>
                         <div class="racing-route__meta">
                             <span>${(r.checkpoints || []).length} CP</span>
-                            <span>Solo: $${soloReward.toLocaleString()} · Multi entry: $${entryFee.toLocaleString()}</span>
+                            <span>${I18n.t('ui.racing.route_fees', { solo: I18n.number(soloReward), multi: I18n.number(entryFee) })}</span>
                         </div>
                     </div>
                 `).join('')}
                 <div class="racing-solo-note">
                     ${soloOnCooldown
-                        ? 'Solo time trial on cooldown — try again later.'
-                        : `Solo time trial: free entry, reward $${soloReward.toLocaleString()} (5 min cooldown).`}
-                    Multiplayer: $${entryFee.toLocaleString()} entry, winner takes ${(entryFee * minMulti * 0.8 | 0).toLocaleString()}+ pot.
+                        ? I18n.t('ui.racing.solo_cooldown')
+                        : I18n.t('ui.racing.solo_info', { reward: I18n.number(soloReward) })}
+                    ${I18n.t('ui.racing.multi_info', { fee: I18n.number(entryFee), pot: I18n.number((entryFee * minMulti * 0.8 | 0)) })}
                 </div>
             `;
 
@@ -112,7 +112,7 @@ const Racing = {
             if (startBtn) {
                 startBtn.classList.remove('hidden');
                 startBtn.disabled = count < minMulti;
-                startBtn.textContent = count >= minMulti ? `START RACE (${count}/${minMulti}+)` : `WAITING (${count}/${minMulti})`;
+                startBtn.textContent = count >= minMulti ? I18n.t('ui.racing.start_race_n', { count, min: minMulti }) : I18n.t('ui.racing.waiting_count', { count, min: minMulti });
             }
             if (leaveBtn) leaveBtn.classList.remove('hidden');
         } else {
@@ -121,7 +121,7 @@ const Racing = {
             if (soloBtn) {
                 soloBtn.classList.remove('hidden');
                 soloBtn.disabled = !hasSel || cooldown;
-                soloBtn.textContent = cooldown ? 'SOLO ON COOLDOWN' : 'START SOLO';
+                soloBtn.textContent = cooldown ? I18n.t('ui.racing.solo_on_cooldown') : I18n.t('ui.racing.start_solo');
             }
             if (joinBtn) {
                 joinBtn.classList.remove('hidden');
@@ -142,9 +142,9 @@ const Racing = {
             document.body.appendChild(hud);
         }
         hud.classList.remove('hidden');
-        const soloTag = data.isSolo ? ' <span class="racing-hud__solo">TIME TRIAL</span>' : '';
+        const soloTag = data.isSolo ? ` <span class="racing-hud__solo">${I18n.t('ui.racing.time_trial')}</span>` : '';
         hud.innerHTML = `
-            <div class="racing-hud__label">${this.esc(data.label || 'Race')}${soloTag}</div>
+            <div class="racing-hud__label">${this.esc(data.label || I18n.t('ui.racing.race'))}${soloTag}</div>
             <div class="racing-hud__progress">${data.currentCheckpoint || 0} / ${data.totalCheckpoints || 0}</div>
         `;
     },
@@ -163,7 +163,7 @@ const Racing = {
         if (!hud) return;
         const cd = hud.querySelector('.racing-hud__countdown');
         if (cd) cd.remove();
-        hud.innerHTML += '<div class="racing-hud__go">GO!</div>';
+        hud.innerHTML += `<div class="racing-hud__go">${I18n.t('ui.racing.go')}</div>`;
         setTimeout(() => {
             const go = hud.querySelector('.racing-hud__go');
             if (go) go.remove();

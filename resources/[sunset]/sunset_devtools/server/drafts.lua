@@ -55,7 +55,18 @@ end
 loadFromDisk()
 
 function DevToolsDrafts.save(entry)
-    if type(entry) ~= 'table' or not entry.key then return end
+    if type(entry) ~= 'table' or type(entry.key) ~= 'string' then return end
+    -- [SEC3] client-supplied draft: bound sizes and shape (disk write + later v4.x indexing)
+    local function str(v, n) return type(v) == 'string' and v:sub(1, n) or nil end
+    local v4 = entry.v4
+    if type(v4) ~= 'table' then return end
+    for _, k in ipairs({ 'x', 'y', 'z', 'w' }) do
+        local n = tonumber(v4[k]); if not n or n ~= n or math.abs(n) > 1e5 then return end
+        v4[k] = n
+    end
+    entry = { adapter = str(entry.adapter, 64), key = str(entry.key, 128), label = str(entry.label, 128),
+              v4 = { x = v4.x, y = v4.y, z = v4.z, w = v4.w }, snippet = str(entry.snippet, 2048) }
+    if not entry.key then return end
     local key = (entry.adapter or 'unknown') .. '/' .. entry.key
     drafts[key] = {
         adapter = entry.adapter,
@@ -75,7 +86,7 @@ end
 function DevToolsDrafts.clear(adapterKey)
     if adapterKey then
         for k in pairs(drafts) do
-            if k:match('^' .. adapterKey .. '/') then
+            if k:sub(1, #tostring(adapterKey) + 1) == tostring(adapterKey) .. '/' then -- [SEC3] plain prefix, no pattern injection
                 drafts[k] = nil
             end
         end

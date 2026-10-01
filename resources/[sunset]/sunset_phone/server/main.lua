@@ -367,7 +367,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
             return nil, { localeKey = 'phone.message.the_112_dispatch_is_currently_unavailable_the_message_was' }
         end
         if not dispatchResult or not dispatchResult.ok then
-            return nil, dispatchErr or 'The 112 call could not be registered. Try again.'
+            return nil, dispatchErr or exports.sunset_core:TFor(source, 'phone.err.the_112_call_could_not_be')
         end
 
         -- Character id 0 is reserved for system messages. The columns are

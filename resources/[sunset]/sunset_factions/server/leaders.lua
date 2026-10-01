@@ -18,7 +18,7 @@ local function requireLeaderPerm(source, perm)
     if not factionId then return nil, { localeKey = 'factions.message.no_faction' } end
     if FactionCore.isFactionLeader(char.id, factionId) then return char, factionId end
     if not FactionCore.hasManagePerm(source, perm) then
-        return nil, FactionCore.manageAccessError(source, perm, 'manage faction members')
+        return nil, FactionCore.manageAccessError(source, perm, { localeKey = 'factions.action.manage_faction_members' })
     end
     return char, factionId
 end
@@ -71,7 +71,7 @@ local function handleSetLeader(source, args)
     if not Sunset.Factions[factionId] then
         local list = exports.sunset_core:CommandListKeys(Sunset.Factions, 10)
         exports.sunset_core:CommandReply(source,
-            ('Unknown faction "%s". Valid factions: %s'):format(factionId, list), 'error')
+            exports.sunset_core:TFor(source, 'factions.msg.unknown_faction_valid_factions', { faction_id = tostring(factionId), list = tostring(list) }), 'error')
         return true
     end
     local char = FactionCore.getChar(target)
@@ -84,14 +84,12 @@ local function handleSetLeader(source, args)
     if current ~= factionId then
         if not exports.sunset_core:SetFaction(target, factionId, topGrade) then
             exports.sunset_core:CommandReply(source,
-                ('Could not add %s (#%d) to %s — invalid faction grade in config.'):format(
-                    exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'error')
+                exports.sunset_core:TFor(source, 'factions.msg.could_not_add_to_invalid_faction', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'factions.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), faction_id = tostring(factionId) }), 'error')
             return true
         end
     elseif not exports.sunset_core:SetFaction(target, factionId, topGrade) then
         exports.sunset_core:CommandReply(source,
-            ('Could not set %s (#%d) to top rank in %s.'):format(
-                exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'error')
+            exports.sunset_core:TFor(source, 'factions.msg.could_not_set_to_top_rank', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'factions.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), faction_id = tostring(factionId) }), 'error')
         return true
     end
     MySQL.insert.await(
@@ -99,10 +97,10 @@ local function handleSetLeader(source, args)
         { char.id, factionId, source == 0 and 'console' or (exports.sunset_core:GetPlayerDisplayName(source) or ('Player %d'):format(source)) }
     )
     FactionCore.auditLog(factionId, char.id, 'setleader', char.id, { by = source })
-    FactionCore.notify(target, 'You are now a faction leader', 'success')
+    FactionCore.notify(target, exports.sunset_core:TFor(target, 'factions.msg.you_are_now_a_faction_leader'), 'success')
     if source ~= 0 then
         exports.sunset_core:CommandReply(source,
-            ('Made %s (#%d) leader of %s.'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'success')
+            exports.sunset_core:TFor(source, 'factions.msg.made_leader_of', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'factions.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), faction_id = tostring(factionId) }), 'success')
     end
     return true
 end
@@ -122,7 +120,7 @@ local function handleRemoveLeader(source, args)
     if not Sunset.Factions[factionId] then
         local list = exports.sunset_core:CommandListKeys(Sunset.Factions, 10)
         exports.sunset_core:CommandReply(source,
-            ('Unknown faction "%s". Valid factions: %s'):format(factionId, list), 'error')
+            exports.sunset_core:TFor(source, 'factions.msg.unknown_faction_valid_factions', { faction_id = tostring(factionId), list = tostring(list) }), 'error')
         return true
     end
     local char = FactionCore.getChar(target)
@@ -139,15 +137,15 @@ local function handleRemoveLeader(source, args)
         exports.sunset_core:SetFaction(target, factionId, math.max(0, topGrade - 1))
     end
     FactionCore.broadcastManagement(factionId, target,
-        ('was removed as faction leader (still a member of %s).'):format(factionLabel), {
+        { localeKey = 'factions.msg.was_removed_as_faction_leader_still', params = { faction_label = tostring(factionLabel) } }, {
             omitRank = true,
         })
     FactionCore.notify(target,
-        ('Your leader role in %s was removed. You are still a member — use /quitgroup to leave.'):format(factionLabel),
+        exports.sunset_core:TFor(target, 'factions.msg.your_leader_role_in_was_removed', { faction_label = tostring(factionLabel) }),
         'info', 10000)
     if source ~= 0 then
         exports.sunset_core:CommandReply(source,
-            ('Removed %s (#%d) as leader of %s.'):format(exports.sunset_core:GetPlayerDisplayName(target) or ('Player %d'):format(target), target, factionId), 'success')
+            exports.sunset_core:TFor(source, 'factions.msg.removed_as_leader_of', { player_display_name = exports.sunset_core:GetPlayerDisplayName(target) or exports.sunset_core:TFor(source, 'factions.msg.player', { target = math.floor(tonumber(target) or 0) }), target = math.floor(tonumber(target) or 0), faction_id = tostring(factionId) }), 'success')
     end
     return true
 end
@@ -206,10 +204,10 @@ exports.sunset_core:RegisterCallback('sunset:factionUninvite', function(source, 
     end
 
     FactionCore.broadcastManagement(factionId, source,
-        ('removed %s from the faction.'):format(exports.sunset_core:GetPlayerDisplayName(targetId)))
+        { localeKey = 'factions.msg.removed_from_the_faction_3', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)) } })
     exports.sunset_core:SetFaction(targetId, nil, 0)
     FactionCore.auditLog(factionId, char.id, 'uninvite', target.id, {})
-    FactionCore.notify(targetId, 'You were removed from the faction', 'warning')
+    FactionCore.notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_were_removed_from_the_faction'), 'warning')
     return true
 end)
 
@@ -254,9 +252,9 @@ exports.sunset_core:RegisterCallback('sunset:factionGiveRank', function(source, 
     local gradeLabel = FactionLabels.get(factionId, newGrade)
     FactionCore.auditLog(factionId, char.id, 'giverank', target.id, { grade = newGrade })
     FactionCore.broadcastManagement(factionId, source,
-        ('set %s\'s rank to %s.'):format(exports.sunset_core:GetPlayerDisplayName(targetId), gradeLabel))
-    FactionCore.notify(targetId, ('Rank set to %s'):format(gradeLabel), 'success')
-    FactionCore.notify(source, ('Set rank to %s'):format(gradeLabel), 'success')
+        { localeKey = 'factions.msg.set_s_rank_to', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), grade_label = tostring(gradeLabel) } })
+    FactionCore.notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.rank_set_to', { grade_label = tostring(gradeLabel) }), 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.set_rank_to', { grade_label = tostring(gradeLabel) }), 'success')
     return true
 end)
 
@@ -302,10 +300,9 @@ exports.sunset_core:RegisterCallback('sunset:factionWarn', function(source, targ
     local nextCount = warnCount + 1
     FactionCore.auditLog(factionId, char.id, 'fwarn', target.id, { reason = reason, count = nextCount })
     FactionCore.broadcastManagement(factionId, source,
-        ('issued a faction warning (%d/3) to %s: %s'):format(
-            nextCount, exports.sunset_core:GetPlayerDisplayName(targetId), reason))
-    FactionCore.notify(targetId, ('Faction warning %d/3: %s'):format(nextCount, reason), 'warning', 8000)
-    FactionCore.notify(source, ('Warning issued (%d/3): %s'):format(nextCount, reason), 'success')
+        { localeKey = 'factions.msg.issued_a_faction_warning_3_to_2', params = { next_count = math.floor(tonumber(nextCount) or 0), player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), reason = tostring(reason) } })
+    FactionCore.notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.faction_warning_3', { next_count = math.floor(tonumber(nextCount) or 0), reason = tostring(reason) }), 'warning', 8000)
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.warning_issued_3', { next_count = math.floor(tonumber(nextCount) or 0), reason = tostring(reason) }), 'success')
     return { warns = nextCount, count = nextCount }
 end)
 
@@ -350,12 +347,12 @@ function RunFactionMotdCommand(source, args)
     if msg == '' then
         local char = FactionCore.getChar(source)
         if not char then
-            FactionCore.notify(source, 'Your character is not loaded. Reconnect and select it again.', 'error')
+            FactionCore.notify(source, exports.sunset_core:TFor(source, 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it'), 'error')
             return true
         end
         local factionId = select(1, FactionCore.getFactionOf(char))
         if not factionId then
-            FactionCore.notify(source, 'You are not a member of a faction.', 'error')
+            FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.message.you_are_not_a_member_of_a_faction'), 'error')
             return true
         end
         local faction = Sunset.Factions[factionId]
@@ -367,16 +364,16 @@ function RunFactionMotdCommand(source, args)
             factionId = factionId,
             factionLabel = faction and faction.label or factionId,
             name = faction and faction.label or factionId,
-            message = message ~= '' and message or 'No message of the day has been set.',
+            message = message ~= '' and message or exports.sunset_core:TFor(source, 'factions.ui.no_message_of_the_day_has'),
             command = '/fmotd',
         })
         return true
     end
     local ok, err = setFactionMotd(source, msg)
     if ok then
-        FactionCore.notify(source, 'Faction MOTD updated.', 'success')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.message.faction_motd_updated_caa52e'), 'success')
     else
-        FactionCore.notify(source, err or 'MOTD update failed. Check your faction permission and message.', 'error')
+        FactionCore.notify(source, err or exports.sunset_core:TFor(source, 'factions.msg.motd_update_failed_check_your_faction'), 'error')
     end
     return true
 end

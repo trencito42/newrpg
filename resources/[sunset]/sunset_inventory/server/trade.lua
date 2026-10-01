@@ -210,7 +210,7 @@ local function buildTradeCatalog(source)
                 assetType = 'vehicle',
                 id = tonumber(row.id),
                 label = ('%s · %s'):format(string.upper(row.model or 'vehicle'), row.plate or '?'),
-                detail = 'Garage stored',
+                detail = exports.sunset_core:TFor(source, 'inventory.ui.garage_stored'),
             }
         end
     end
@@ -225,8 +225,8 @@ local function buildTradeCatalog(source)
             properties[#properties + 1] = {
                 assetType = 'property',
                 id = tonumber(row.id),
-                label = row.label or ('House #%d'):format(row.id),
-                detail = 'Owned property',
+                label = row.label or exports.sunset_core:TFor(source, 'inventory.ui.house', { id = math.floor(tonumber(row.id) or 0) }),
+                detail = exports.sunset_core:TFor(source, 'inventory.ui.owned_property'),
             }
         end
     end
@@ -238,8 +238,8 @@ local function buildTradeCatalog(source)
                 businesses[#businesses + 1] = {
                     assetType = 'business',
                     id = tonumber(row.id),
-                    label = row.label or ('Business #%d'):format(row.id),
-                    detail = row.catalogKey or 'Player business',
+                    label = row.label or exports.sunset_core:TFor(source, 'inventory.ui.business', { id = math.floor(tonumber(row.id) or 0) }),
+                    detail = row.catalogKey or exports.sunset_core:TFor(source, 'inventory.ui.player_business'),
                 }
             end
         end
@@ -287,7 +287,15 @@ local function endTrade(trade, message, kind)
     TradesByPlayer[trade.b] = nil
     for _, source in ipairs({ trade.a, trade.b }) do
         if GetPlayerName(source) then
-            TriggerClientEvent('sunset:inventory:tradeEnded', source, message, kind or 'info')
+            local text = message
+            if type(message) == 'table' and type(message.localeKey) == 'string' then
+                if type(message.formatArgs) == 'table' then
+                    text = exports.sunset_core:TFor(source, message.localeKey, table.unpack(message.formatArgs))
+                else
+                    text = exports.sunset_core:TFor(source, message.localeKey, message.params)
+                end
+            end
+            TriggerClientEvent('sunset:inventory:tradeEnded', source, text, kind or 'info')
         end
     end
 end
@@ -549,7 +557,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeRequest', function(s
     end
     TradeInvites[target] = { from = source, expiresAt = os.time() + INVITE_SECONDS }
     TriggerClientEvent('sunset:inventory:tradeInvite', target, source, displayName(source))
-    return { message = ('Trade request sent to %s.'):format(displayName(target)), kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.trade_request_sent_to', { display_name = tostring(displayName(target)) }), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeAccept', function(source)
@@ -566,7 +574,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeAccept', function(so
     trade.assets[trade.a], trade.assets[trade.b] = {}, {}
     TradesByPlayer[trade.a], TradesByPlayer[trade.b] = trade, trade
     sendTradeState(trade)
-    return { message = ('Trade opened with %s.'):format(displayName(invite.from)) }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.trade_opened_with', { display_name = tostring(displayName(invite.from)) }) }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeDecline', function(source)
@@ -576,7 +584,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeDecline', function(s
     if GetPlayerName(invite.from) then
         TriggerClientEvent('sunset:client:notify', invite.from, exports.sunset_core:TFor(invite.from, 'inventory.message.value_declined_your_trade_request', displayName(source)), 'info')
     end
-    return { message = 'Trade request declined.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.trade_request_declined'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeOffer', function(source, data)
@@ -593,7 +601,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOffer', function(sou
     trade.countdown = 0
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
-    return { message = 'Item added to your offer.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.item_added_to_your_offer'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemove', function(source, data)
@@ -604,7 +612,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemove', function(so
     trade.countdown = 0
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
-    return { message = 'Item removed from your offer.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.item_removed_from_your_offer'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferCash', function(source, data)
@@ -623,9 +631,9 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferCash', function
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
     if amount > 0 then
-        return { message = ('$%s added to your offer.'):format(amount), kind = 'info' }
+        return { message = exports.sunset_core:TFor(source, 'inventory.ui.added_to_your_offer', { amount = tostring(amount) }), kind = 'info' }
     end
-    return { message = 'Cash removed from your offer.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.cash_removed_from_your_offer'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeCatalog', function(source)
@@ -682,7 +690,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferAsset', functio
     trade.countdown = 0
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
-    return { message = ('%s added to your offer.'):format(match.label), kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.added_to_your_offer_2', { label = tostring(match.label) }), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveAsset', function(source, data)
@@ -695,7 +703,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveAsset', functi
     trade.countdown = 0
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
-    return { message = 'Asset removed from your offer.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.asset_removed_from_your_offer'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveCash', function(source)
@@ -706,7 +714,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeRemoveCash', functio
     trade.countdown = 0
     trade.accepted[trade.a], trade.accepted[trade.b] = false, false
     sendTradeState(trade)
-    return { message = 'Cash removed from your offer.', kind = 'info' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.cash_removed_from_your_offer'), kind = 'info' }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeConfirm', function(source)
@@ -717,7 +725,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeConfirm', function(s
     trade.accepted[source] = true
     if not (trade.accepted[trade.a] and trade.accepted[trade.b]) then
         sendTradeState(trade)
-        return { message = 'Offer locked. Waiting for the other player.', kind = 'info' }
+        return { message = exports.sunset_core:TFor(source, 'inventory.ui.offer_locked_waiting_for_the_other'), kind = 'info' }
     end
 
     -- Both players have accepted! Initiate 5-second final review & decline countdown
@@ -760,24 +768,95 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeConfirm', function(s
                 end
                 return
             end
-            endTrade(trade, 'Trade completed securely.', 'success')
+            endTrade(trade, { localeKey = 'inventory.msg.trade_completed_securely' }, 'success')
         end)
-        return { message = 'Both accepted! Finalizing in 5 seconds (Cancel anytime).', kind = 'info' }
+        return { message = exports.sunset_core:TFor(source, 'inventory.ui.both_accepted_finalizing_in_5_seconds'), kind = 'info' }
     end
-    return { message = 'Offer locked.' }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.offer_locked') }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:tradeCancel', function(source)
     local trade = TradesByPlayer[source]
     if not trade then return nil, { localeKey = 'inventory.message.no_active_trade' } end
     trade.finalizing = false
-    endTrade(trade, ('Trade cancelled by %s.'):format(displayName(source)), 'info')
-    return { message = 'Trade cancelled.', kind = 'info' }
+    endTrade(trade, { localeKey = 'inventory.msg.trade_cancelled_by', params = { display_name = tostring(displayName(source)) } }, 'info')
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.trade_cancelled'), kind = 'info' }
 end)
 
-local function broadcastDrop(action, drop)
-    TriggerClientEvent('sunset:inventory:dropSync', -1, action, drop)
+-- [DROP SYNC] Interest-managed delivery (was a -1 broadcast to every player).
+-- A drop is sent only to players whose server-side ped is within DROP_SYNC_RADIUS
+-- AND in the same routing bucket. DropKnown[src][dropId] records what each client
+-- holds, so (a) removals go only to holders, (b) a 2s reconcile pass sends 'add'
+-- when a player comes into range / changes bucket / joins and 'remove' when they
+-- leave range or bucket (full-state sync, batched per player, idle when no drops).
+local DROP_SYNC_RADIUS = 150.0
+local DropKnown = {}
+
+local function publicDrop(drop)
+    local copy = {}
+    for k, v in pairs(drop) do if k ~= 'bucket' then copy[k] = v end end
+    return copy
 end
+
+local function inDropRange(src, drop)
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then return false end
+    if (drop.bucket or 0) ~= GetPlayerRoutingBucket(src) then return false end
+    local c = drop.coords
+    return #(GetEntityCoords(ped) - vector3(c.x, c.y, c.z)) <= DROP_SYNC_RADIUS
+end
+
+local function reconcileDropsFor(src)
+    local known = DropKnown[src]
+    if not known then known = {}; DropKnown[src] = known end
+    for id, drop in pairs(Drops) do
+        local want = inDropRange(src, drop)
+        if want and not known[id] then
+            known[id] = true
+            TriggerClientEvent('sunset:inventory:dropSync', src, 'add', publicDrop(drop))
+        elseif not want and known[id] then
+            known[id] = nil
+            TriggerClientEvent('sunset:inventory:dropSync', src, 'remove', { id = id })
+        end
+    end
+    for id in pairs(known) do
+        if not Drops[id] then
+            known[id] = nil
+            TriggerClientEvent('sunset:inventory:dropSync', src, 'remove', { id = id })
+        end
+    end
+end
+
+local function broadcastDrop(action, drop)
+    if action == 'add' then
+        for _, playerId in ipairs(GetPlayers()) do
+            local src = tonumber(playerId)
+            if src and inDropRange(src, drop) then
+                DropKnown[src] = DropKnown[src] or {}
+                DropKnown[src][drop.id] = true
+                TriggerClientEvent('sunset:inventory:dropSync', src, 'add', publicDrop(drop))
+            end
+        end
+    else
+        for src, known in pairs(DropKnown) do
+            if known[drop.id] then
+                known[drop.id] = nil
+                TriggerClientEvent('sunset:inventory:dropSync', src, 'remove', { id = drop.id })
+            end
+        end
+    end
+end
+
+CreateThread(function()
+    while true do
+        Wait(2000)
+        if next(Drops) ~= nil then
+            for _, playerId in ipairs(GetPlayers()) do
+                reconcileDropsFor(tonumber(playerId))
+            end
+        end
+    end
+end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:drop', function(source, data)
     local rowId = tonumber(type(data) == 'table' and data.rowId)
@@ -799,6 +878,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:drop', function(source, d
         metadata = row.metadata,
         coords = { x = coords.x, y = coords.y, z = coords.z - 0.85 },
         expiresAt = os.time() + DROP_SECONDS,
+        bucket = GetPlayerRoutingBucket(source),
     }
     Drops[drop.id] = drop
     broadcastDrop('add', drop)
@@ -809,7 +889,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:drop', function(source, d
             broadcastDrop('remove', { id = drop.id })
         end
     end)
-    return { message = ('Dropped %s x%d for 5 minutes.'):format(drop.label, count) }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.dropped_x_for_5_minutes', { label = tostring(drop.label), count = math.floor(tonumber(count) or 0) }) }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:inventory:pickupDrop', function(source, dropId)
@@ -829,22 +909,24 @@ exports.sunset_core:RegisterCallback('sunset:inventory:pickupDrop', function(sou
     Drops[dropId] = nil
     DropLocks[dropId] = nil
     broadcastDrop('remove', { id = dropId })
-    return { message = ('Picked up %s x%d.'):format(drop.label, drop.count) }
+    return { message = exports.sunset_core:TFor(source, 'inventory.ui.picked_up_x', { label = tostring(drop.label), count = math.floor(tonumber(drop.count) or 0) }) }
 end)
 
 RegisterNetEvent('sunset:server:inventoryRequestDrops', function()
     local source = source
     -- [AUDIT P2-10] Throttle the full drop-table dump to prevent DoS amplification.
     if not exports.sunset_core:RateLimit(source, 'requestDrops', 5000) then return end
-    for _, drop in pairs(Drops) do TriggerClientEvent('sunset:inventory:dropSync', source, 'add', drop) end
+    DropKnown[source] = nil -- force a full resend
+    reconcileDropsFor(source)
 end)
 
 AddEventHandler('playerDropped', function()
     local source = source
     TradeInvites[source] = nil
     for target, invite in pairs(TradeInvites) do if invite.from == source then TradeInvites[target] = nil end end
+    DropKnown[source] = nil
     local trade = TradesByPlayer[source]
-    if trade then endTrade(trade, 'Trade cancelled because a player disconnected.', 'error') end
+    if trade then endTrade(trade, { localeKey = 'inventory.msg.trade_cancelled_player_disconnected' }, 'error') end
 end)
 
 -- [AUDIT P8-14] End any active trade when a party is downed or jailed, so the
@@ -858,9 +940,9 @@ local function endTradeForSource(src, reason)
 end
 
 AddEventHandler('sunset:death:playerDowned', function(src)
-    endTradeForSource(src, 'Trade cancelled because a player was downed.')
+    endTradeForSource(src, { localeKey = 'inventory.msg.trade_cancelled_player_downed' })
 end)
 
 AddEventHandler('sunset:faction:playerJailed', function(src)
-    endTradeForSource(src, 'Trade cancelled because a player was jailed.')
+    endTradeForSource(src, { localeKey = 'inventory.msg.trade_cancelled_player_jailed' })
 end)

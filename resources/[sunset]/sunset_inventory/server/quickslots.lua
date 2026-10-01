@@ -216,7 +216,7 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
                 }
             end
             local used, reason = UseItem(source, resolved.item)
-            if not used then return nil, reason or 'Cannot use this item.' end
+            if not used then return nil, reason or exports.sunset_core:TFor(source, 'inventory.err.cannot_use_this_item') end
             return { action = 'used_item', slot = slot, slots = BuildHotbarView(source, true) }
         end
         if def.weapon then

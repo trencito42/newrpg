@@ -110,7 +110,7 @@ const ClanPanels = {
 
     splitTaggedParts(tag, baseName, style) {
         tag = String(tag || '').trim();
-        baseName = String(baseName || 'Player').trim() || 'Player';
+        baseName = String(baseName || I18n.t('common.player')).trim() || I18n.t('common.player');
         if (!tag) return { prefix: '', name: baseName, suffix: '', tag: '' };
         switch (style) {
             case 'prefix_dot': return { prefix: `${tag}.`, name: baseName, suffix: '', tag };
@@ -150,11 +150,11 @@ const ClanPanels = {
         select.innerHTML = '';
         const rows = (styles && styles.length) ? styles : [
             { id: 'brackets', label: '[TAG]Name' },
-            { id: 'prefix_dot', label: 'TAG.Name' },
-            { id: 'suffix_brackets', label: 'Name[TAG]' },
-            { id: 'suffix_dot', label: 'Name.TAG' },
-            { id: 'glued_prefix', label: 'TAGName' },
-            { id: 'glued_suffix', label: 'NameTAG' },
+            { id: 'prefix_dot', label: 'TAG.Name' }, // i18n-ignore: literal tag-format example, not translatable
+            { id: 'suffix_brackets', label: 'Name[TAG]' }, // i18n-ignore: literal tag-format example, not translatable
+            { id: 'suffix_dot', label: 'Name.TAG' }, // i18n-ignore: literal tag-format example, not translatable
+            { id: 'glued_prefix', label: 'TAGName' }, // i18n-ignore: literal tag-format example, not translatable
+            { id: 'glued_suffix', label: 'NameTAG' }, // i18n-ignore: literal tag-format example, not translatable
         ];
         rows.forEach((row) => {
             const option = document.createElement('option');
@@ -172,7 +172,7 @@ const ClanPanels = {
         const tag = form.querySelector('[name="tag"]')?.value || 'uS';
         const style = form.querySelector('[name="tagStyle"]')?.value || 'brackets';
         const color = form.querySelector('[name="tagColor"]')?.value || '#00ffcc';
-        this.paintPreview(preview, tag, 'YourName', style, color);
+        this.paintPreview(preview, tag, I18n.t('ui.clans.your_name_sample'), style, color);
     },
 
     updateSettingsPreview() {
@@ -182,7 +182,7 @@ const ClanPanels = {
         const tag = form.querySelector('[name="tag"]')?.value || this.dashboard.tag || 'uS';
         const style = form.querySelector('[name="tagStyle"]')?.value || this.dashboard.tagStyle || 'brackets';
         const color = form.querySelector('[name="tagColor"]')?.value || this.dashboard.tagColor || '#00ffcc';
-        this.paintPreview(preview, tag, 'YourName', style, color);
+        this.paintPreview(preview, tag, I18n.t('ui.clans.your_name_sample'), style, color);
     },
 
     /* --- DASHBOARD DISPLAY --- */
@@ -201,12 +201,12 @@ const ClanPanels = {
 
         if (inClan) {
             const color = this.escape(payload.tagColor || '#00ffcc');
-            const clanName = this.escape(payload.name || 'Clan');
+            const clanName = this.escape(payload.name || I18n.t('ui.clans.clan_default'));
             const clanTag = this.escape(payload.tag || '');
             if (title) {
                 title.innerHTML = clanTag
-                    ? `CLAN <span>${clanName} · <span style="color:${color}">[${clanTag}]</span></span>`
-                    : `CLAN <span>${clanName}</span>`;
+                    ? `${I18n.t('ui.clans.clan')} <span>${clanName} · <span style="color:${color}">[${clanTag}]</span></span>`
+                    : `${I18n.t('ui.clans.clan')} <span>${clanName}</span>`;
             }
             if (typeEl) typeEl.textContent = I18n.t('dynamic.clans.private_organization');
 
@@ -224,8 +224,8 @@ const ClanPanels = {
             const rankEl = $('#clan-rank');
             if (rankEl) {
                 rankEl.textContent = payload.rank
-                    ? `R${payload.rank} · ${payload.rankLabel || 'Member'}`
-                    : (payload.rankLabel || 'Member');
+                    ? `R${payload.rank} · ${payload.rankLabel || I18n.t('ui.clans.member')}`
+                    : (payload.rankLabel || I18n.t('ui.clans.member'));
             }
 
             const onlineCount = (payload.members || []).filter((m) => m.online).length;
@@ -243,15 +243,15 @@ const ClanPanels = {
             if (styleLabel) styleLabel.textContent = this.tagStyleLabel(payload.tagStyle);
 
             const motdEl = $('#clan-motd');
-            if (motdEl) motdEl.textContent = payload.motd || 'No MOTD posted. Officers use /cmotd.';
+            if (motdEl) motdEl.textContent = payload.motd || I18n.t('ui.clans.no_motd_posted_officers_use_cmotd');
 
             const descEl = $('#clan-description');
-            if (descEl) descEl.textContent = payload.description || 'No unit intel on file.';
+            if (descEl) descEl.textContent = payload.description || I18n.t('ui.clans.no_description');
 
             this.paintPreview(
                 $('#clan-overview-preview'),
                 payload.tag,
-                payload.previewName ? payload.previewName.replace(/\[.*?\]|\(.*?\)/g, '').trim() : 'Player',
+                payload.previewName ? payload.previewName.replace(/\[.*?\]|\(.*?\)/g, '').trim() : I18n.t('common.player'),
                 payload.tagStyle,
                 payload.tagColor
             );
@@ -321,7 +321,7 @@ const ClanPanels = {
                 );
                 const costEl = $('#clan-create-cost');
                 if (costEl) {
-                    costEl.textContent = I18n.t('dynamic.clans.cost_value0_blaze_points_you_have_value1_bp', { value0: Number(payload.creationCost || 500).toLocaleString(), value1: Number(payload.accountCoins || 0).toLocaleString() });
+                    costEl.textContent = I18n.t('dynamic.clans.cost_value0_blaze_points_you_have_value1_bp', { value0: I18n.number(Number(payload.creationCost || 500)), value1: I18n.number(Number(payload.accountCoins || 0)) });
                 }
             }
             this.updateCreatePreview();
@@ -350,8 +350,8 @@ const ClanPanels = {
                 <div class="premium-clan__roster-info">
                     <div class="premium-clan__status-dot ${dotClass}" title="${member.online ? 'Online' : 'Offline'}"></div>
                     <div>
-                        <div class="premium-clan__member-name">${this.escape(member.name || 'Unknown')} ${serverIdBadge}</div>
-                        <div class="premium-clan__member-rank">${member.leader ? '<span style="color:var(--pf-accent-orange);font-weight:800;">LEADER</span> · ' : ''}${this.escape(member.rankLabel || 'Member')}</div>
+                        <div class="premium-clan__member-name">${this.escape(member.name || I18n.t('ui.clans.unknown'))} ${serverIdBadge}</div>
+                        <div class="premium-clan__member-rank">${member.leader ? '<span style="color:var(--pf-accent-orange);font-weight:800;">' + I18n.t('ui.clans.leader_caps') + '</span> · ' : ''}${this.escape(member.rankLabel || I18n.t('ui.clans.member'))}</div>
                     </div>
                 </div>
                 <div class="premium-clan__member-id">R${member.rank || 1}</div>
@@ -360,7 +360,7 @@ const ClanPanels = {
         });
 
         if (!members || !members.length) {
-            roster.innerHTML = '<p class="premium-clan__empty">No members registered in this clan.</p>';
+            roster.innerHTML = `<p class="premium-clan__empty">${I18n.t('ui.clans.no_members_registered')}</p>`;
         }
     },
 
@@ -435,8 +435,8 @@ const ClanPanels = {
             const field = document.createElement('div');
             field.className = 'clan-rank-item';
             field.innerHTML = `
-                <span>GRADUL ${i}</span>
-                <input type="text" class="premium-clan__form-control" data-rank-label="${i}" maxlength="48" value="${this.escape(source[i] || source[String(i)] || '')}" placeholder="Rank ${i} Name">
+                <span>${I18n.t('ui.clans.rank_n', { n: i })}</span>
+                <input type="text" class="premium-clan__form-control" data-rank-label="${i}" maxlength="48" value="${this.escape(source[i] || source[String(i)] || '')}" placeholder="${this.escape(I18n.t('ui.clans.rank_n_name', { n: i }))}">
             `;
             wrap.appendChild(field);
         }
@@ -479,7 +479,7 @@ const ClanPanels = {
             const isFull = total >= maxMembers;
             const turfs = Number(clan.turfs) || 0;
             const isLeader = idx === 0 && turfs > 0 && turfs >= maxTurfs;
-            const crown = isLeader ? ' <span title="Turf leader" style="color:#f59e0b;">&#9819;</span>' : '';
+            const crown = isLeader ? ` <span title="${this.escape(I18n.t('ui.clans.turf_leader'))}" style="color:#f59e0b;">&#9819;</span>` : '';
 
             card.innerHTML = `
                 <div class="premium-factions-dir__card-head">
@@ -487,28 +487,28 @@ const ClanPanels = {
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;max-width:20px;max-height:20px;fill:none;stroke:currentColor;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                     </div>
                     <div>
-                        <div class="premium-factions-dir__card-name">${this.escape(clan.name || 'Clan')}${crown}</div>
-                        <div class="premium-factions-dir__card-type" style="color:${tagColor};font-weight:800;">[${this.escape(clan.tag || '')}] · ${this.escape(clan.tagStyleLabel || 'Clan Unit')}</div>
+                        <div class="premium-factions-dir__card-name">${this.escape(clan.name || I18n.t('ui.clans.clan_default'))}${crown}</div>
+                        <div class="premium-factions-dir__card-type" style="color:${tagColor};font-weight:800;">[${this.escape(clan.tag || '')}] · ${this.escape(clan.tagStyleLabel || I18n.t('ui.clans.clan_unit'))}</div>
                     </div>
                 </div>
 
                 <div class="premium-factions-dir__card-stats">
                     <div class="premium-factions-dir__stat-row">
-                        <span>Leader:</span>
-                        <b>${this.escape(clan.leader || 'Unknown')}</b>
+                        <span>${I18n.t('ui.clans.leader_colon')}</span>
+                        <b>${this.escape(clan.leader || I18n.t('ui.clans.unknown'))}</b>
                     </div>
                     <div class="premium-factions-dir__stat-row">
-                        <span>Members:</span>
+                        <span>${I18n.t('ui.clans.members_colon')}</span>
                         <b><span class="highlight">${Number(clan.online) || 0}</span> / ${total}</b>
                     </div>
                     <div class="premium-factions-dir__stat-row">
-                        <span>Teritorii:</span>
+                        <span>${I18n.t('ui.clans.territories_colon')}</span>
                         <b style="color:${turfs > 0 ? '#00ffcc' : 'inherit'};">${turfs} ${turfs > 0 ? '&#9873;' : ''}</b>
                     </div>
                 </div>
 
                 <div class="premium-factions-dir__recruit ${isFull ? 'is-closed' : 'is-open'}">
-                    <div class="dot"></div>${isFull ? 'Recruiting Closed' : 'Recruiting Open'}
+                    <div class="dot"></div>${isFull ? I18n.t('ui.clans.recruiting_closed') : I18n.t('ui.clans.recruiting_open')}
                 </div>
             `;
 
@@ -517,7 +517,7 @@ const ClanPanels = {
         });
 
         if (!clans || !clans.length) {
-            list.innerHTML = '<p class="premium-clans-dir__empty">No active clans found on the server.</p>';
+            list.innerHTML = `<p class="premium-clans-dir__empty">${I18n.t('ui.clans.no_active_clans')}</p>`;
         }
     },
 
@@ -534,20 +534,20 @@ const ClanPanels = {
         }
 
         const titleEl = $('#clan-dir-modal-title');
-        if (titleEl) titleEl.textContent = clan.name || 'Clan';
+        if (titleEl) titleEl.textContent = clan.name || I18n.t('ui.clans.clan_default');
 
         const descEl = $('#clan-dir-modal-desc');
-        if (descEl) descEl.textContent = clan.description || 'No public description provided.';
+        if (descEl) descEl.textContent = clan.description || I18n.t('ui.clans.no_public_description');
 
         const leaderEl = $('#clan-dir-modal-leader');
-        if (leaderEl) leaderEl.textContent = clan.leader || 'Unknown';
+        if (leaderEl) leaderEl.textContent = clan.leader || I18n.t('ui.clans.unknown');
 
         const motdEl = $('#clan-dir-modal-motd');
-        if (motdEl) motdEl.textContent = clan.motd || 'No MOTD published.';
+        if (motdEl) motdEl.textContent = clan.motd || I18n.t('ui.clans.no_motd_published');
 
         const roster = $('#clan-dir-modal-roster');
         if (roster) {
-            roster.innerHTML = '<p class="premium-clans-dir__empty">Loading members...</p>';
+            roster.innerHTML = `<p class="premium-clans-dir__empty">${I18n.t('ui.clans.loading_members')}</p>`;
         }
 
         // Request clan profile (members)
@@ -567,14 +567,14 @@ const ClanPanels = {
             const row = document.createElement('div');
             row.className = 'premium-clans-dir__modal-member';
             row.innerHTML = `
-                <strong>${this.escape(m.name || 'Necunoscut')}</strong>
-                <span>${this.escape(m.rankLabel || 'Member')}${m.online ? ' · ONLINE' : ''}${m.leader ? ' · LEADER' : ''}</span>
+                <strong>${this.escape(m.name || I18n.t('ui.clans.unknown'))}</strong>
+                <span>${this.escape(m.rankLabel || I18n.t('ui.clans.member'))}${m.online ? ' · ' + I18n.t('ui.clans.online_caps') : ''}${m.leader ? ' · ' + I18n.t('ui.clans.leader_caps') : ''}</span>
             `;
             roster.appendChild(row);
         });
 
         if (!members.length) {
-            roster.innerHTML = '<p class="premium-clans-dir__empty">No members found.</p>';
+            roster.innerHTML = `<p class="premium-clans-dir__empty">${I18n.t('ui.clans.no_members_found')}</p>`;
         }
     },
 

@@ -136,7 +136,7 @@ const WardrobeUI = {
             list.appendChild(btn);
         });
         const title = this._$('#wardrobe-active-cat');
-        if (title) title.textContent = this.state.activeDisplay || 'Clothing';
+        if (title) title.textContent = this.state.activeDisplay || I18n.t('ui.panels.clothing');
     },
 
     renderValues() {
@@ -164,7 +164,7 @@ const WardrobeUI = {
         if (textureMax) textureMax.textContent = String(this.state.maxTexture);
         if (modelTrack) modelTrack.style.width = `${pctModel}%`;
         if (textureTrack) textureTrack.style.width = `${pctTexture}%`;
-        if (cartPrice) cartPrice.textContent = `$${Number(this.state.cartTotal || 0).toLocaleString('en-US')}`;
+        if (cartPrice) cartPrice.textContent = `$${I18n.number(Number(this.state.cartTotal || 0))}`;
 
         const buyBtn = this._$('#wardrobe-buy');
         if (buyBtn) buyBtn.disabled = !this.state.hasChanges;
@@ -234,7 +234,7 @@ const WardrobeUI = {
         if (bar) bar.style.width = '0%';
         const text = this._$('#wardrobe-buy-text');
         if (text) {
-            text.innerHTML = '<span class="wr-key-hint">ENTER</span> Pay';
+            text.innerHTML = '<span class="wr-key-hint">ENTER</span> ' + I18n.t('store.pay');
             text.style.color = '';
         }
         const btn = this._$('#wardrobe-buy');

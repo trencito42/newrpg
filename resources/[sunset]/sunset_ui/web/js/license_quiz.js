@@ -81,7 +81,7 @@ const LicenseQuiz = {
             }
             if (left <= 0) {
                 this._stopTimer();
-                this._showFeedback('TIME EXPIRED — EXAM FAILED', false, true);
+                this._showFeedback(I18n.t('ui.licenses.time_expired'), false, true);
                 setTimeout(() => this.close(), 1400);
             }
         }, 250);
@@ -137,12 +137,12 @@ const LicenseQuiz = {
                 this._state.locked = false;
                 this._state.answers[idx + 1] = null;
                 this._renderQuestion();
-                this._showFeedback(payload?.error || 'COULD NOT VERIFY ANSWER', false, true);
+                this._showFeedback(payload?.error || I18n.t('ui.licenses.verify_failed'), false, true);
                 return;
             }
             const correct = payload.correct === true;
             this._state.results[idx + 1] = correct;
-            this._showFeedback(correct ? 'CORRECT' : 'WRONG', correct);
+            this._showFeedback(correct ? I18n.t('ui.licenses.correct') : I18n.t('ui.licenses.wrong'), correct);
             setTimeout(() => {
                 this._hideFeedback();
                 this._state.locked = false;
@@ -155,7 +155,7 @@ const LicenseQuiz = {
             }, 1300);
         } catch (_) {
             this._state.locked = false;
-            this._showFeedback('COULD NOT VERIFY ANSWER', false, true);
+            this._showFeedback(I18n.t('ui.licenses.verify_failed'), false, true);
         }
     },
 
@@ -240,11 +240,11 @@ const LicenseQuiz = {
         this._state.examFee = Number(data.examFee) || 0;
         this._state.deadlineAt = Number(data.deadlineAt)
             || Math.floor(Date.now() / 1000) + (Number(data.theoryTimeSec) || 600);
-        if (this._title) this._title.textContent = data.title || 'Theory Exam';
+        if (this._title) this._title.textContent = data.title || I18n.t('ui.licenses.theory_exam');
         if (this._intro) this._intro.textContent = data.intro || '';
         if (this._meta) {
             const fee = this._state.examFee;
-            this._meta.textContent = fee > 0 ? `Fee paid: $${fee}` : '';
+            this._meta.textContent = fee > 0 ? I18n.t('ui.licenses.fee_paid', { fee: I18n.number(fee) }) : '';
         }
         if (this._timer) this._timer.textContent = this._formatTime(this._state.deadlineAt - Math.floor(Date.now() / 1000));
         this._hideFeedback();

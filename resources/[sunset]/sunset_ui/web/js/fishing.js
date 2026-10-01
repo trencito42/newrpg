@@ -50,7 +50,7 @@ const Fishing = {
 
     _setBag(carried, capacity, bagLabel) {
         if (!this._bag) return;
-        const label = bagLabel || 'Bag';
+        const label = bagLabel || I18n.t('ui.fishing.bag');
         if (carried === undefined && capacity === undefined) {
             this._bag.classList.add('hidden');
             return;
@@ -83,7 +83,7 @@ const Fishing = {
     _fullMessage(data = {}) {
         const c = Math.max(0, Number(data.carried) || 0);
         const cap = Math.max(1, Number(data.capacity) || 2);
-        return data.message || `Bag full ${c}/${cap} — yellow marker or /sellfish to sell`;
+        return data.message || I18n.t('ui.fishing.bag_full_msg', { carried: c, capacity: cap });
     },
 
     show(data = {}) {
@@ -96,7 +96,7 @@ const Fishing = {
 
         const state = this._resolveState(data);
         if (state === 'waiting') {
-            this._applyState('state-waiting', data.title || 'Line cast', data.message || 'Waiting for a bite…');
+            this._applyState('state-waiting', data.title || I18n.t('ui.fishing.line_cast'), data.message || I18n.t('ui.fishing.waiting_bite'));
             if (this._progress) {
                 this._progress.style.transition = 'none';
                 this._progress.style.width = '0%';
@@ -104,13 +104,13 @@ const Fishing = {
         } else if (state === 'bite') {
             this.startBite(data.windowMs || 1500, data);
         } else if (state === 'success') {
-            this._applyState('state-success', data.title || 'Success', data.message || 'You caught a fish!');
+            this._applyState('state-success', data.title || I18n.t('ui.fishing.success'), data.message || I18n.t('ui.fishing.caught_fish'));
             if (this._progress) {
                 this._progress.style.transition = 'width 0.3s ease';
                 this._progress.style.width = '100%';
             }
         } else if (state === 'failed') {
-            this._applyState('state-failed', data.title || 'Missed', data.message || 'The fish escaped');
+            this._applyState('state-failed', data.title || I18n.t('ui.fishing.missed'), data.message || I18n.t('ui.fishing.fish_escaped'));
             if (this._progress) {
                 this._progress.style.transition = 'none';
                 this._progress.style.width = '0%';
@@ -118,7 +118,7 @@ const Fishing = {
         } else if (state === 'full') {
             this._applyState(
                 'state-full',
-                data.title || 'Bag Full',
+                data.title || I18n.t('ui.fishing.bag_full'),
                 this._fullMessage(data)
             );
             if (this._progress) {
@@ -128,8 +128,8 @@ const Fishing = {
         } else if (state === 'shift') {
             this._applyState(
                 'state-shift',
-                data.title || 'Fisherman',
-                data.message || 'Fishing zone: E or /fish · /sellfish marks the buyer'
+                data.title || I18n.t('ui.fishing.fisherman'),
+                data.message || I18n.t('ui.fishing.zone_hint')
             );
             if (this._progress) {
                 this._progress.style.transition = 'none';
@@ -138,8 +138,8 @@ const Fishing = {
         } else if (state === 'work') {
             this._applyState(
                 'state-work',
-                data.title || 'Work',
-                data.message || 'Working...'
+                data.title || I18n.t('ui.fishing.work'),
+                data.message || I18n.t('ui.fishing.working')
             );
             const ms = Math.max(500, Number(data.windowMs) || 5000);
             if (this._progress) {
@@ -153,8 +153,8 @@ const Fishing = {
             if (this._bag) this._bag.classList.add('hidden');
             this._applyState(
                 'state-jail',
-                data.title || 'Prison',
-                data.message || 'Serving sentence'
+                data.title || I18n.t('ui.fishing.prison'),
+                data.message || I18n.t('ui.fishing.serving_sentence')
             );
             const total = Math.max(1, Number(data.totalSec) || 1);
             const rem = Math.max(0, Number(data.remainingSec) || 0);
@@ -218,8 +218,8 @@ const Fishing = {
         this._panel.classList.remove('hidden');
         this._applyState(
             'state-bite',
-            data.title || 'Bite!',
-            data.message || `Press ${this._keyHtml()} now!`
+            data.title || I18n.t('ui.fishing.bite'),
+            data.message || I18n.t('ui.fishing.press_now', { key: this._keyHtml() })
         );
 
         const ms = Math.max(300, Number(windowMs) || 1500);

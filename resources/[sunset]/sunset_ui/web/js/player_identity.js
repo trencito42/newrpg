@@ -41,7 +41,7 @@ const SunsetPlayerIdentity = {
     },
 
     stripServerId(name) {
-        return String(name || 'Player').trim().replace(/\s*\(\d+\)\s*$/, '') || 'Player';
+        return String(name || I18n.t('common.player')).trim().replace(/\s*\(\d+\)\s*$/, '') || I18n.t('common.player');
     },
 
     formatNameHtml(row, options = {}) {
@@ -57,7 +57,7 @@ const SunsetPlayerIdentity = {
         let dutyPrefix = '';
         if (row.adminDuty) {
             const level = Number(row.adminLevel) || 1;
-            const label = level >= 2 ? 'STAFF' : 'HELPER';
+            const label = level >= 2 ? I18n.t('ui.identity.staff_caps') : I18n.t('ui.identity.helper_caps');
             const color = level >= 3 ? '#ff6b6b' : level >= 2 ? '#ffb74d' : '#00ffcc';
             dutyPrefix = `<span class="player-identity__duty" style="color:${esc(color)}">[${label}]</span> `;
         }
@@ -77,13 +77,13 @@ const SunsetPlayerIdentity = {
     },
 
     formatFactionHtml(row) {
-        const label = String(row.factionLabel || row.job || 'Unemployed').trim();
+        const label = String(row.factionLabel || row.job || I18n.t('menu.profile.unemployed')).trim();
         const color = row.factionColor || this.factionColor(row.factionId);
         return `<span class="player-identity__faction" style="color:${this.escape(color)}">${this.escape(label)}</span>`;
     },
 
     stripTaggedName(name, tag, style) {
-        name = String(name || 'Player').trim() || 'Player';
+        name = String(name || I18n.t('common.player')).trim() || I18n.t('common.player');
         tag = String(tag || '').trim();
         if (!tag) return name;
         const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

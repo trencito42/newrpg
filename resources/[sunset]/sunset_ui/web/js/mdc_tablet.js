@@ -193,7 +193,7 @@
                     const input = $('#mdc-radar-custom-input');
                     if (input) input.value = limit;
                     const display = $('#mdc-radar-limit-val');
-                    if (display) display.innerHTML = `${limit} <small>KM/H</small>`;
+                    if (display) display.innerHTML = `${limit} <small>${I18n.t('ui.mdc.kmh')}</small>`;
                 });
             });
 
@@ -337,15 +337,21 @@
             });
         },
 
+        statusLabel(status) {
+            const key = 'ui.mdc.call_status_' + String(status || '').toLowerCase();
+            const known = ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'];
+            return known.includes(String(status || '').toLowerCase()) ? I18n.t(key) : String(status || '');
+        },
+
         open(data = {}) {
             this.init();
             this.officer = data.officer || {
                 department: 'police',
-                departmentLabel: 'Los Santos Police Department',
+                departmentLabel: I18n.t('ui.mdc.dept_lspd'),
                 shortDept: 'LSPD',
-                rank: 'Officer',
+                rank: I18n.t('ui.mdc.officer'),
                 callsign: '1-UNIT-01',
-                name: 'Officer',
+                name: I18n.t('ui.mdc.officer'),
                 status: '10-8',
             };
             this.calls = data.calls || [];
@@ -382,17 +388,17 @@
             if (deptBadge) deptBadge.innerHTML = badgeIcon;
 
             const deptTitle = $('#mdc-dept-title');
-            if (deptTitle) deptTitle.textContent = this.officer.departmentLabel || 'Police Department';
+            if (deptTitle) deptTitle.textContent = this.officer.departmentLabel || I18n.t('ui.mdc.dept_police');
 
             const deptSub = $('#mdc-dept-sub');
-            if (deptSub) deptSub.textContent = `${this.officer.shortDept || 'LSPD'} MOBILE DATA TERMINAL v4.8`;
+            if (deptSub) deptSub.textContent = I18n.t('ui.mdc.terminal_title', { dept: this.officer.shortDept || 'LSPD' });
 
             const callsignTag = $('#mdc-callsign-tag');
             if (callsignTag) callsignTag.textContent = this.officer.callsign || 'PATROL-UNIT';
 
             // Update Officer Profile
             const offName = $('#mdc-officer-name');
-            if (offName) offName.textContent = this.officer.name || 'Officer';
+            if (offName) offName.textContent = this.officer.name || I18n.t('ui.mdc.officer');
 
             const offRank = $('#mdc-officer-rank');
             if (offRank) offRank.textContent = `${this.officer.rank || 'Officer'} · ${this.officer.shortDept || 'LSPD'}`;
@@ -466,7 +472,7 @@
                 else indicator.classList.remove('is-active');
             }
             if (stateText) {
-                stateText.textContent = this.radarActive ? 'RADAR ACTIVE & SCANNING' : 'RADAR INACTIVE';
+                stateText.textContent = this.radarActive ? I18n.t('ui.mdc.radar_active') : I18n.t('ui.mdc.radar_inactive');
             }
             if (startBtn && stopBtn) {
                 if (this.radarActive) {
@@ -478,7 +484,7 @@
                 }
             }
             if (limitVal) {
-                limitVal.innerHTML = `${this.radarLimit || 90} <small>KM/H</small>`;
+                limitVal.innerHTML = `${this.radarLimit || 90} <small>${I18n.t('ui.mdc.kmh')}</small>`;
             }
         },
 
@@ -539,8 +545,8 @@
                         <div style="display: flex; justify-content: center; margin-bottom: 8px;">
                             <svg style="width: 36px; height: 36px; stroke: #475569;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
                         </div>
-                        <div style="font-size: 15px; font-weight: 700; color: #94a3b8;">NO ACTIVE 112 DISPATCH CALLS</div>
-                        <div style="font-size: 12px; margin-top: 4px;">Emergency frequency clear · Units on routine patrol</div>
+                        <div style="font-size: 15px; font-weight: 700; color: #94a3b8;">${I18n.t('ui.mdc.no_calls')}</div>
+                        <div style="font-size: 12px; margin-top: 4px;">${I18n.t('ui.mdc.no_calls_sub')}</div>
                     </div>
                 `;
                 return;
@@ -562,18 +568,18 @@
                         <div class="mdc-call-card__head">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="mdc-call-id">#${esc(call.id)}</span>
-                                <span class="mdc-call-category">${esc(call.category || 'Emergency')}</span>
-                                ${call.isPanic ? '<span class="mdc-pill mdc-pill--wanted" style="animation: mdcBlink 0.8s infinite;">[10-99 PANIC]</span>' : ''}
+                                <span class="mdc-call-category">${esc(call.category || I18n.t('ui.mdc.emergency'))}</span>
+                                ${call.isPanic ? `<span class="mdc-pill mdc-pill--wanted" style="animation: mdcBlink 0.8s infinite;">[10-99 ${I18n.t('ui.mdc.panic')}]</span>` : ''}
                             </div>
                             <span class="mdc-call-status ${isAssigned ? 'is-assigned' : 'is-pending'}">
-                                ${call.status || 'PENDING'}
+                                ${this.statusLabel(call.status || 'PENDING')}
                             </span>
                         </div>
-                        <div class="mdc-call-desc">${esc(call.description || 'No details provided')}</div>
+                        <div class="mdc-call-desc">${esc(call.description || I18n.t('ui.mdc.no_details'))}</div>
                         <div class="mdc-call-meta">
-                            <span>LOC: <strong>${esc(call.street)}</strong>, ${esc(call.area)}</span>
-                            <span>CALLER: <strong>${esc(call.callerName)}</strong> (${esc(call.callerPhone)})</span>
-                            ${call.responderName ? `<span>UNIT: <strong>${esc(call.responderName)}</strong></span>` : ''}
+                            <span>${I18n.t('ui.mdc.loc')}: <strong>${esc(call.street)}</strong>, ${esc(call.area)}</span>
+                            <span>${I18n.t('ui.mdc.caller')}: <strong>${esc(call.callerName)}</strong> (${esc(call.callerPhone)})</span>
+                            ${call.responderName ? `<span>${I18n.t('ui.mdc.unit')}: <strong>${esc(call.responderName)}</strong></span>` : ''}
                         </div>
                         <div class="mdc-call-actions">
                             <button type="button" class="mdc-btn mdc-btn--outline mdc-btn--sm btn-call-waypoint" data-x="${call.coords.x}" data-y="${call.coords.y}">
@@ -644,23 +650,23 @@
             $('#mdc-citizen-content')?.classList.remove('hidden');
 
             // ID Details
-            $('#mdc-cit-name').textContent = citizen.name || 'Unknown';
+            $('#mdc-cit-name').textContent = citizen.name || I18n.t('ui.mdc.unknown');
             $('#mdc-cit-doc-id').textContent = I18n.t('dynamic.mdc_tablet.doc_id_sa_value0', { value0: String(citizen.id).padStart(4, '0') });
             $('#mdc-cit-id').textContent = `#${citizen.id}`;
-            $('#mdc-cit-server-id').textContent = citizen.isOnline ? `ONLINE (#${citizen.serverId})` : 'OFFLINE';
+            $('#mdc-cit-server-id').textContent = citizen.isOnline ? `${I18n.t('ui.clans.online_caps')} (#${citizen.serverId})` : I18n.t('ui.mdc.offline_caps');
             $('#mdc-cit-server-id').style.color = citizen.isOnline ? '#10b981' : '#64748b';
             $('#mdc-cit-dob').textContent = citizen.dob || '—';
             $('#mdc-cit-gender').textContent = citizen.gender || '—';
-            $('#mdc-cit-nat').textContent = citizen.nationality || 'San Andreas';
+            $('#mdc-cit-nat').textContent = citizen.nationality || I18n.t('ui.mdc.san_andreas');
             $('#mdc-cit-phone').textContent = citizen.phone || '—';
-            $('#mdc-cit-job').textContent = citizen.job || 'Unemployed';
+            $('#mdc-cit-job').textContent = citizen.job || I18n.t('menu.profile.unemployed');
 
             // Wanted Status Pill
             const wantedPill = $('#mdc-cit-wanted-pill');
             if (wantedPill) {
                 if (citizen.wanted) {
                     wantedPill.className = 'mdc-pill mdc-pill--wanted';
-                    wantedPill.textContent = `★ WANTED LEVEL ${citizen.wantedLevel || 1}`;
+                    wantedPill.textContent = `★ ${I18n.t('ui.mdc.wanted_level', { level: citizen.wantedLevel || 1 })}`;
                 } else {
                     wantedPill.className = 'mdc-pill mdc-pill--clean';
                     wantedPill.textContent = I18n.t('dynamic.mdc_tablet.no_active_warrants');
@@ -694,7 +700,7 @@
             // Update Action Buttons State
             const boloBtn = $('#mdc-act-bolo');
             if (boloBtn) {
-                boloBtn.textContent = citizen.bolo ? 'CLEAR BOLO' : 'FLAG BOLO';
+                boloBtn.textContent = citizen.bolo ? I18n.t('ui.mdc.clear_bolo') : I18n.t('ui.mdc.flag_bolo');
             }
 
             const unjailBtn = $('#mdc-act-unjail');
@@ -712,10 +718,10 @@
             if (licContainer) {
                 const licenses = citizen.licenses || [];
                 if (licenses.length === 0) {
-                    licContainer.innerHTML = '<span class="mdc-lic-badge mdc-lic-badge--none">NO LICENSES ON RECORD</span>';
+                    licContainer.innerHTML = `<span class="mdc-lic-badge mdc-lic-badge--none">${I18n.t('ui.mdc.no_licenses')}</span>`;
                 } else {
                     licContainer.innerHTML = licenses.map((lic) => `
-                        <span class="mdc-lic-badge">[LIC] ${esc(lic.type || 'License')}</span>
+                        <span class="mdc-lic-badge">[LIC] ${esc(lic.type || I18n.t('ui.mdc.license'))}</span>
                     `).join('');
                 }
             }
@@ -725,7 +731,7 @@
             if (vehContainer) {
                 const vehicles = citizen.vehicles || [];
                 if (vehicles.length === 0) {
-                    vehContainer.innerHTML = '<div style="color: #64748b; font-size: 12px;">No vehicles registered to this citizen.</div>';
+                    vehContainer.innerHTML = `<div style="color: #64748b; font-size: 12px;">${I18n.t('ui.mdc.no_vehicles_registered')}</div>`;
                 } else {
                     vehContainer.innerHTML = vehicles.map((v) => `
                         <div class="mdc-veh-row btn-view-veh-plate" data-plate="${esc(v.plate)}" style="cursor: pointer;">
@@ -734,8 +740,8 @@
                                 <span class="mdc-veh-model">${esc(v.model)}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="mdc-veh-status">${v.stored ? 'IN GARAGE' : 'OUT IN CITY'}</span>
-                                ${v.bolo ? '<span class="mdc-pill mdc-pill--wanted">BOLO STOLEN</span>' : ''}
+                                <span class="mdc-veh-status">${v.stored ? I18n.t('ui.mdc.in_garage') : I18n.t('ui.mdc.out_in_city')}</span>
+                                ${v.bolo ? `<span class="mdc-pill mdc-pill--wanted">${I18n.t('ui.mdc.bolo_stolen')}</span>` : ''}
                             </div>
                         </div>
                     `).join('');
@@ -759,12 +765,12 @@
             if (cazierTable) {
                 const cazier = citizen.cazier || [];
                 if (cazier.length === 0) {
-                    cazierTable.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 14px;">Clean Record — No prior convictions or sentences on file.</td></tr>';
+                    cazierTable.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 14px;">${I18n.t('ui.mdc.clean_record')}</td></tr>`;
                 } else {
                     cazierTable.innerHTML = cazier.map((s) => `
                         <tr>
                             <td>${esc(s.date || '—')}</td>
-                            <td><strong style="color: #f87171;">${esc(s.reason || 'Charge')}</strong></td>
+                            <td><strong style="color: #f87171;">${esc(s.reason || I18n.t('ui.mdc.charge'))}</strong></td>
                             <td>${esc(s.duration || 0)} min</td>
                             <td><span class="mdc-pill ${s.status === 'served' ? 'mdc-pill--clean' : 'mdc-pill--jailed'}">${esc(s.status || 'served')}</span></td>
                         </tr>
@@ -774,20 +780,20 @@
 
             // Citations History
             const finesTotal = $('#mdc-cit-unpaid-fines');
-            if (finesTotal) finesTotal.textContent = `$${(citizen.unpaidFines || 0).toLocaleString()}`;
+            if (finesTotal) finesTotal.textContent = `$${I18n.number((citizen.unpaidFines || 0))}`;
 
             const ticketsTable = $('#mdc-cit-tickets-body');
             if (ticketsTable) {
                 const tickets = citizen.tickets || [];
                 if (tickets.length === 0) {
-                    ticketsTable.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 14px;">No traffic citations or fines on file.</td></tr>';
+                    ticketsTable.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 14px;">${I18n.t('ui.mdc.no_tickets')}</td></tr>`;
                 } else {
                     ticketsTable.innerHTML = tickets.map((t) => `
                         <tr>
                             <td>${esc(t.date || '—')}</td>
-                            <td>${esc(t.reason || 'Violation')}</td>
-                            <td><strong>$${(t.amount || 0).toLocaleString()}</strong></td>
-                            <td><span class="mdc-pill ${t.paid ? 'mdc-pill--clean' : 'mdc-pill--wanted'}">${t.paid ? 'PAID' : 'UNPAID'}</span></td>
+                            <td>${esc(t.reason || I18n.t('ui.mdc.violation'))}</td>
+                            <td><strong>$${I18n.number((t.amount || 0))}</strong></td>
+                            <td><span class="mdc-pill ${t.paid ? 'mdc-pill--clean' : 'mdc-pill--wanted'}">${t.paid ? I18n.t('ui.mdc.paid') : I18n.t('ui.mdc.unpaid_caps')}</span></td>
                         </tr>
                     `).join('');
                 }
@@ -826,16 +832,16 @@
                 if (tune && tune.tuned) {
                     const chips = (tune.chips || []).slice(0, 6).map((c) => `<span class="mdc-chip-tune">${esc(c)}</span>`).join('');
                     const lines = (tune.lines || []).slice(0, 8).map((l) => `<div class="mdc-tune-line"><span>${esc(l.label)}:</span><strong>${esc(l.value)}</strong></div>`).join('');
-                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${esc(m)}</strong></div>`).join('');
+                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>${I18n.t('ui.mdc.mod')}</span><strong>${esc(m)}</strong></div>`).join('');
                     tuningHtml = `
                         <div class="mdc-dmv-tuning-box is-tuned">
                             <div class="mdc-tuning-header">
-                                <span class="mdc-tuning-badge is-tuned">[MODIFIED] STAGE TUNE</span>
-                                <button type="button" class="mdc-tuning-toggle-btn" data-plate="${esc(v.plate)}">Tuning Record ▼</button>
+                                <span class="mdc-tuning-badge is-tuned">${I18n.t('ui.mdc.tune_modified')}</span>
+                                <button type="button" class="mdc-tuning-toggle-btn" data-plate="${esc(v.plate)}">${I18n.t('ui.mdc.tuning_record')} ▼</button>
                             </div>
                             <div class="mdc-tuning-chips">${chips}</div>
                             <div class="mdc-tuning-details hidden" id="tune-details-${esc(v.plate)}">
-                                <div class="mdc-tuning-summary">${esc(tune.summary || 'ECU / Engine Modifications')}</div>
+                                <div class="mdc-tuning-summary">${esc(tune.summary || I18n.t('ui.mdc.tune_summary_default'))}</div>
                                 <div class="mdc-tuning-grid">
                                     ${lines}
                                     ${mods}
@@ -844,11 +850,11 @@
                         </div>
                     `;
                 } else if (tune) {
-                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${esc(m)}</strong></div>`).join('');
+                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>${I18n.t('ui.mdc.mod')}</span><strong>${esc(m)}</strong></div>`).join('');
                     tuningHtml = `
                         <div class="mdc-dmv-tuning-box is-stock">
                             <div class="mdc-tuning-header">
-                                <span class="mdc-tuning-badge is-stock">[COMPLIANT] FACTORY STOCK (DMV)</span>
+                                <span class="mdc-tuning-badge is-stock">${I18n.t('ui.mdc.tune_stock')}</span>
                             </div>
                             ${mods ? `<div class="mdc-tuning-grid" style="margin-top: 4px;">${mods}</div>` : ''}
                         </div>
@@ -857,7 +863,7 @@
                     tuningHtml = `
                         <div class="mdc-dmv-tuning-box is-stock">
                             <div class="mdc-tuning-header">
-                                <span class="mdc-tuning-badge is-stock">[COMPLIANT] FACTORY STOCK (DMV)</span>
+                                <span class="mdc-tuning-badge is-stock">${I18n.t('ui.mdc.tune_stock')}</span>
                             </div>
                         </div>
                     `;
@@ -865,18 +871,18 @@
 
                 return `
                     <div class="mdc-dmv-card ${v.bolo ? 'is-bolo' : ''}">
-                        ${v.bolo ? '<div class="mdc-bolo-banner">SUSPECT VEHICLE · ACTIVE BOLO BROADCAST</div>' : ''}
+                        ${v.bolo ? `<div class="mdc-bolo-banner">${I18n.t('ui.mdc.bolo_banner')}</div>` : ''}
                         <div class="mdc-dmv-card__head">
                             <span class="mdc-plate-badge">${esc(v.plate)}</span>
                             <span class="mdc-veh-model">${esc(v.model)}</span>
                         </div>
                         <div class="mdc-dmv-card__owner">
-                            <div>Registered Owner: <strong class="btn-goto-owner" data-owner="${esc(v.ownerName)}">${esc(v.ownerName)}</strong></div>
-                            <div style="font-size: 11px; margin-top: 2px;">Phone: ${esc(v.ownerPhone)} · Garage: ${esc(v.garage)}</div>
+                            <div>${I18n.t('ui.mdc.registered_owner')}: <strong class="btn-goto-owner" data-owner="${esc(v.ownerName)}">${esc(v.ownerName)}</strong></div>
+                            <div style="font-size: 11px; margin-top: 2px;">${I18n.t('ui.mdc.phone')}: ${esc(v.ownerPhone)} · ${I18n.t('ui.mdc.garage')}: ${esc(v.garage)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8;">
-                            <span>Status: ${v.stored ? 'Stored in Garage' : 'Impounded / On Street'}</span>
-                            <span>Fuel: ${esc(v.fuel)}%</span>
+                            <span>${I18n.t('ui.mdc.status')}: ${v.stored ? I18n.t('ui.mdc.stored_in_garage') : I18n.t('ui.mdc.impounded_or_street')}</span>
+                            <span>${I18n.t('ui.mdc.fuel')}: ${esc(v.fuel)}%</span>
                         </div>
                         ${tuningHtml}
                         <div style="display: flex; gap: 8px; margin-top: 6px;">
@@ -905,7 +911,7 @@
                     const details = $(`#tune-details-${plate}`);
                     if (details) {
                         const isHidden = details.classList.toggle('hidden');
-                        btn.textContent = isHidden ? 'Tuning Record ▼' : 'Close ▲';
+                        btn.textContent = isHidden ? I18n.t('ui.mdc.tuning_record') + ' ▼' : I18n.t('common.close') + ' ▲';
                     }
                 });
             });
@@ -949,8 +955,8 @@
                         <div style="display: flex; justify-content: center; margin-bottom: 8px;">
                             <svg style="width: 36px; height: 36px; stroke: #475569;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </div>
-                        <div style="font-size: 15px; font-weight: 700; color: #94a3b8;">NO ACTIVE ARREST WARRANTS</div>
-                        <div style="font-size: 12px; margin-top: 4px;">All suspects processed · Clean warrant docket</div>
+                        <div style="font-size: 15px; font-weight: 700; color: #94a3b8;">${I18n.t('ui.mdc.no_warrants')}</div>
+                        <div style="font-size: 12px; margin-top: 4px;">${I18n.t('ui.mdc.no_warrants_sub')}</div>
                     </div>
                 `;
                 return;
@@ -964,11 +970,11 @@
                             <span class="mdc-wanted-stars">${stars}</span>
                             <div>
                                 <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">
-                                    ${esc(row.name || 'Suspect')} <span style="font-size: 12px; color: #38bdf8;">(#${esc(row.id)})</span>
+                                    ${esc(row.name || I18n.t('ui.mdc.suspect'))} <span style="font-size: 12px; color: #38bdf8;">(#${esc(row.id)})</span>
                                 </div>
                                 <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
-                                    Reason: <strong style="color: #cbd5e1;">${esc(row.reason || 'Unspecified')}</strong> ·
-                                    ${row.surrenderable === false ? '<span style="color: #ef4444; font-weight: 700;">NO SURRENDER</span>' : 'SURRENDER ALLOWED'}
+                                    ${I18n.t('ui.impound.reason')}: <strong style="color: #cbd5e1;">${esc(row.reason || I18n.t('ui.mdc.unspecified'))}</strong> ·
+                                    ${row.surrenderable === false ? '<span style="color: #ef4444; font-weight: 700;">' + I18n.t('ui.mdc.no_surrender') + '</span>' : I18n.t('ui.mdc.surrender_allowed_caps')}
                                 </div>
                             </div>
                         </div>
@@ -1025,7 +1031,7 @@
             if (!container) return;
 
             if (this.units.length === 0) {
-                container.innerHTML = '<div style="color: #64748b; padding: 24px;">No other law enforcement units logged on.</div>';
+                container.innerHTML = `<div style="color: #64748b; padding: 24px;">${I18n.t('ui.mdc.no_units')}</div>`;
                 return;
             }
 
@@ -1036,7 +1042,7 @@
                     <div class="mdc-unit-card" style="display: flex; align-items: center; justify-content: space-between;">
                         <div>
                             <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">
-                                ${esc(unit.name)} ${unit.isMe ? '<span style="color: #38bdf8; font-size: 11px;">(YOU)</span>' : ''}
+                                ${esc(unit.name)} ${unit.isMe ? '<span style="color: #38bdf8; font-size: 11px;">(' + I18n.t('ui.mdc.you_caps') + ')</span>' : ''}
                             </div>
                             <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">
                                 ${unit.rank} · ${unit.shortDept || 'LSPD'}
@@ -1087,7 +1093,7 @@
             const targetLabel = $('#mdc-bolo-target-label');
             const customInput = $('#mdc-bolo-custom-reason');
 
-            if (title) title.textContent = type === 'vehicle' ? `Flag Vehicle BOLO: ${key}` : `Flag Citizen BOLO: ${key}`;
+            if (title) title.textContent = I18n.t(type === 'vehicle' ? 'ui.mdc.flag_vehicle_bolo' : 'ui.mdc.flag_citizen_bolo', { key });
             if (targetLabel) targetLabel.textContent = I18n.t('dynamic.mdc_tablet.target_value0_value1', { value0: key, value1: type.toUpperCase() });
             if (customInput) customInput.value = defaultReason || '';
 
@@ -1126,7 +1132,7 @@
                         <div class="mdc-select-item" data-code="${esc(ch.code)}">
                             <div>
                                 <div style="font-weight: 700; color: #f8fafc;">${esc(ch.label)}</div>
-                                <div style="font-size: 11px; color: #94a3b8;">Sentence: ~${ch.jailMinutes || 5} min jail · ${ch.surrenderable !== false ? 'Surrender Allowed' : 'No Surrender'}</div>
+                                <div style="font-size: 11px; color: #94a3b8;">${I18n.t('ui.mdc.sentence_minutes', { minutes: ch.jailMinutes || 5 })} · ${ch.surrenderable !== false ? I18n.t('ui.mdc.surrender_allowed') : I18n.t('ui.mdc.no_surrender_plain')}</div>
                             </div>
                             <span style="font-size: 14px; font-weight: 800; color: #f59e0b;">${stars}</span>
                         </div>
@@ -1177,7 +1183,7 @@
                                 <div style="font-weight: 700; color: #f8fafc;">${esc(v.label)}</div>
                                 <div style="font-size: 11px; color: #94a3b8;">Violation Code: ${esc(v.code)}</div>
                             </div>
-                            <span style="font-size: 14px; font-weight: 800; color: #10b981;">$${(v.amount || 100).toLocaleString()}</span>
+                            <span style="font-size: 14px; font-weight: 800; color: #10b981;">$${I18n.number((v.amount || 100))}</span>
                         </div>
                     `;
                 }).join('');
@@ -1225,8 +1231,8 @@
         open112(data = {}) {
             this.init();
             this.current112Data = data;
-            const street = data.street || 'Current Location';
-            const area = data.area || 'Los Santos';
+            const street = data.street || I18n.t('ui.mdc.current_location');
+            const area = data.area || I18n.t('ui.mdc.los_santos');
             $('#dispatch-112-location').textContent = `${street} · ${area}`;
             $('#dispatch-112-details').value = '';
 

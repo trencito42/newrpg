@@ -178,7 +178,7 @@
         clockTimer: null,
 
         data: {
-            name: 'Citizen',
+            name: I18n.t('ui.atm.citizen'),
             cash: 0,
             bank: 0,
             cid: 1,
@@ -265,7 +265,7 @@
             $('#atm-custom-amount-input')?.addEventListener('input', (e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 12);
                 this.customAmount = val;
-                e.target.value = val ? Number(val).toLocaleString('en-US') : '';
+                e.target.value = val ? I18n.number(Number(val)) : '';
             });
 
             // Global Keyboard Handler while ATM is open
@@ -305,7 +305,7 @@
         // Format currency helper
         fmt(amount) {
             const n = Math.floor(Number(amount) || 0);
-            return '$' + n.toLocaleString('en-US');
+            return '$' + I18n.number(n);
         },
 
         // ----------------------------------------------------------------------
@@ -317,7 +317,7 @@
             this.startClock();
 
             // Merge incoming character/balance data
-            this.data.name = payload.name || this.data.name || 'Citizen';
+            this.data.name = payload.name || this.data.name || I18n.t('ui.atm.citizen');
             this.data.cash = Number(payload.cash !== undefined ? payload.cash : this.data.cash || 0);
             this.data.bank = Number(payload.bank !== undefined ? payload.bank : this.data.bank || 0);
             this.data.cid = payload.cid || this.data.cid || 1;
@@ -501,7 +501,7 @@
                     this.customAmount += key;
                     const input = $('#atm-custom-amount-input');
                     if (input) {
-                        input.value = Number(this.customAmount).toLocaleString('en-US');
+                        input.value = I18n.number(Number(this.customAmount));
                     }
                 }
             }
@@ -540,8 +540,8 @@
 
         openCustomAmount(action) {
             this.customAction = action;
-            $('#atm-custom-title').textContent = action === 'withdraw' ? 'CASH WITHDRAWAL - CUSTOM AMOUNT' : 'CASH DEPOSIT - CUSTOM AMOUNT';
-            $('#atm-custom-submit-label').textContent = action === 'withdraw' ? 'Confirm Withdrawal' : 'Confirm Deposit';
+            $('#atm-custom-title').textContent = action === 'withdraw' ? I18n.t('ui.atm.custom_withdraw_title') : I18n.t('ui.atm.custom_deposit_title');
+            $('#atm-custom-submit-label').textContent = action === 'withdraw' ? I18n.t('ui.atm.confirm_withdrawal') : I18n.t('ui.atm.confirm_deposit');
             this.switchPane('CUSTOM');
         },
 
@@ -571,7 +571,7 @@
         startTransaction(action, amount) {
             this.switchPane('PROCESSING');
 
-            $('#atm-proc-action').textContent = action === 'withdraw' ? 'CASH WITHDRAWAL' : 'CASH DEPOSIT';
+            $('#atm-proc-action').textContent = action === 'withdraw' ? I18n.t('ui.atm.cash_withdrawal') : I18n.t('ui.atm.cash_deposit');
             $('#atm-proc-amount').textContent = this.fmt(amount);
             $('#atm-proc-status').textContent = I18n.t('dynamic.atm.contacting_bank_counting_bills');
 
@@ -590,8 +590,8 @@
             shutter?.classList.add('is-dispensing');
 
             $('#atm-proc-status').textContent = action === 'withdraw'
-                ? 'Transaction Approved! Please take the cash from the dispenser.'
-                : 'Deposit Successful! Funds have been credited to your account.';
+                ? I18n.t('ui.atm.withdraw_approved')
+                : I18n.t('ui.atm.deposit_success');
 
             setTimeout(() => {
                 shutter?.classList.remove('is-active', 'is-dispensing');
@@ -604,19 +604,19 @@
 
             const tx = this.lastTxData || {
                 txId: 'TX-' + Math.floor(100000 + Math.random() * 900000),
-                action: 'Inquiry',
+                action: 'inquiry',
                 amount: 0,
             };
 
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('ro-RO');
-            const dateStr = now.toLocaleDateString('ro-RO');
+            const timeStr = I18n.time(now);
+            const dateStr = I18n.date(now);
 
             $('#rcpt-date').textContent = `${dateStr} ${timeStr}`;
             $('#rcpt-txid').textContent = tx.txId || 'TX-902144';
             $('#rcpt-name').textContent = this.data.name;
             $('#rcpt-account').textContent = this.data.account;
-            $('#rcpt-action').textContent = (tx.action || 'BALANCE INQUIRY').toUpperCase();
+            $('#rcpt-action').textContent = ({ withdraw: I18n.t('ui.atm.cash_withdrawal'), deposit: I18n.t('ui.atm.cash_deposit') }[String(tx.action || '').toLowerCase()] || I18n.t('ui.atm.balance_inquiry')).toUpperCase();
             $('#rcpt-amount').textContent = tx.amount ? this.fmt(tx.amount) : '—';
             $('#rcpt-bank-balance').textContent = this.fmt(this.data.bank);
             $('#rcpt-cash-balance').textContent = this.fmt(this.data.cash);

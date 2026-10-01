@@ -18,20 +18,25 @@ local function setupBlips()
     local cfg = Config.CNN or {}
     local blipCfg = cfg.blip or {}
     for _, loc in ipairs(cfg.locations or {}) do
-        local blip = AddBlipForCoord(loc.coords.x, loc.coords.y, loc.coords.z)
-        SetBlipSprite(blip, blipCfg.sprite or 459)
-        SetBlipDisplay(blip, 4)
-        SetBlipScale(blip, blipCfg.scale or 0.8)
-        SetBlipColour(blip, blipCfg.color or 2)
-        SetBlipAsShortRange(blip, true)
-        BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(tr(blipCfg.labelKey or 'cnn.blip.announcements'))
-        EndTextCommandSetBlipName(blip)
-        Blips[#Blips + 1] = blip
+        local blip = exports.sunset_core:CreateSafeBlip(loc.coords, {
+            sprite = blipCfg.sprite or 459,
+            color = blipCfg.color or 2,
+            scale = blipCfg.scale or 0.8,
+            name = tr(blipCfg.labelKey or 'cnn.blip.announcements'),
+            shortRange = true
+        })
+        if blip then
+            Blips[#Blips + 1] = blip
+        end
     end
 end
 
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupBlips()
+end)
+
 CreateThread(function()
+    exports.sunset_core:AwaitGameReady()
     setupBlips()
 
     -- Proximity marker thread

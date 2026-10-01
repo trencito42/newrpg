@@ -8,7 +8,7 @@ local function runCraftProgress(ms, label)
     if hasOx() then
         return exports.ox_lib:progressBar({
             duration = ms,
-            label = label or 'Crafting...',
+            label = label or exports.sunset_core:Translate('crafting.ui.crafting'),
             useWhileDead = false,
             canCancel = true,
             disable = { move = true, car = true, combat = true },
@@ -22,7 +22,7 @@ AddEventHandler('sunset:world:openCrafting', function(stationId, station)
     if IsNuiFocused() then return end
     local data, err = Sunset.AwaitCallback('sunset:getCraftingMenu', stationId)
     if not data then
-        exports.sunset_ui:Notify(err or 'Cannot open crafting', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('crafting.msg.cannot_open_crafting'), 'error')
         return
     end
     craftingOpen = true
@@ -45,9 +45,9 @@ AddEventHandler('sunset:nui:craftingCraft', function(data)
     else
         local ok, err = Sunset.AwaitCallback('sunset:craftItem', data.stationId, data.recipeId)
         if ok then
-            exports.sunset_ui:Notify(('Crafted %s successfully'):format(label), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.msg.crafted_successfully', { label = tostring(label) }), 'success')
         else
-            exports.sunset_ui:Notify(err or 'Craft failed', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('crafting.msg.craft_failed'), 'error')
         end
     end
 
@@ -95,8 +95,7 @@ RegisterCommand('crafting', function()
         return
     end
     SetNewWaypoint(closest.coords.x, closest.coords.y)
-    exports.sunset_ui:Notify(('GPS set to %s. Enter its marker and press E; materials come from your inventory.'):format(
-        closest.label or 'crafting station'), 'info', 9000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.msg.gps_set_to_enter_its_marker', { label = closest.label or exports.sunset_core:Translate('crafting.word.crafting_station') }), 'info', 9000)
 end, false)
 
 CreateThread(function()

@@ -100,7 +100,7 @@ local function activateScuba()
     if ScubaActive then return end
     ScubaActive = true
     SetPedDiesInWater(PlayerPedId(), false)
-    exports.sunset_core:ShowNotification('~b~Scuba gear active. O2: ' .. math.max(0, O2Remaining) .. 's')
+    exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.b_scuba_gear_active_o2_s', { value = tostring(math.max(0, O2Remaining)) }))
 end
 
 -- Called when gear is rented or a new contract starts — this is the only place O2 resets to full.
@@ -117,9 +117,9 @@ local function deactivateScuba(reason)
     SetPedDiesInWater(PlayerPedId(), true)
     if reason == 'depleted' then
         -- [SECTION 42] Surfacing does NOT refill O2. Player must return to Terry.
-        exports.sunset_core:ShowNotification('~r~O2 depleted! Surface and return to Terry for a new tank.')
+        exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.r_o2_depleted_surface_and_return'))
     elseif reason == 'surfaced' then
-        exports.sunset_core:ShowNotification('~b~Scuba gear deactivated — surfaced')
+        exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.b_scuba_gear_deactivated_surfaced'))
     end
     -- [SECTIONS 27-28] Persist O2 remaining to server on every surface event so
     -- reconnects restore the correct (partially-used) value instead of resetting to max.
@@ -294,7 +294,7 @@ local function setSiteBlip(result)
     SetBlipScale(SiteBlip, 0.9)
     SetBlipAsShortRange(SiteBlip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(('Dive Site: %s'):format(result.siteId or '?'))
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.msg.dive_site', { site_id = tostring(result.siteId or '?') }))
     EndTextCommandSetBlipName(SiteBlip)
 
     -- Set GPS waypoint to dive entry (not exact salvage — sonar handles that)
@@ -346,7 +346,7 @@ CreateThread(function()
                 -- [SECTION 33-34] Phase 1: request hold token from server
                 local beginResult, beginErr = Sunset.AwaitCallback('sunset:jobs:diver:beginSalvage', nearest.idx)
                 if not beginResult then
-                    exports.sunset_ui:Notify(beginErr or 'Cannot begin salvage', 'error', 4000)
+                    exports.sunset_ui:Notify(beginErr or exports.sunset_core:Translate('jobs.msg.cannot_begin_salvage'), 'error', 4000)
                 else
                     -- Phase 2: show 4-second progress bar; cancel if player moves away
                     local token       = beginResult.token
@@ -357,7 +357,7 @@ CreateThread(function()
                     local startPos    = GetEntityCoords(PlayerPedId())
 
                     exports.sunset_ui:Send('progressBar', {
-                        label    = 'Recovering salvage...',
+                        label    = exports.sunset_core:Translate('jobs.ui.recovering_salvage'),
                         duration = holdMs,
                     })
 
@@ -381,7 +381,7 @@ CreateThread(function()
                         local result, err = Sunset.AwaitCallback(
                             'sunset:jobs:diver:completeSalvage', nearest.idx, token)
                         if not result then
-                            exports.sunset_ui:Notify(err or 'Salvage failed', 'error', 4000)
+                            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.salvage_failed'), 'error', 4000)
                         else
                             nearest.claimed = true
                             if ContractData then
@@ -389,8 +389,7 @@ CreateThread(function()
                                 updateShiftHud()
                             end
                             exports.sunset_ui:Notify(
-                                ('Salvaged: %s (%s, $%d)'):format(
-                                    result.item or '?', result.condition or '?', result.value or 0),
+                                exports.sunset_core:Translate('jobs.msg.salvaged', { item = tostring(result.item or '?'), condition = tostring(result.condition or '?'), value = math.floor(tonumber(result.value or 0) or 0) }),
                                 'success', 4000)
                             -- result.completed → server sends returnToTerry event
                         end
@@ -407,19 +406,16 @@ end)
 -- [SECTION 32] Server asks client to spawn the boat; client echoes back token+netId
 -- so the server can validate the spawn before registering it.
 RegisterNetEvent('sunset:diving:spawnBoat', function(model, spawnCoords, cost, serverToken)
-    local hash = GetHashKey(model)
-    RequestModel(hash)
-    local t = 0
-    while not HasModelLoaded(hash) and t < 5000 do Wait(100); t = t + 100 end
-    if not HasModelLoaded(hash) then
-        exports.sunset_core:ShowNotification('~r~Failed to spawn boat. Model not loaded.')
+    local ok, hash = Sunset.RequestModelSafe(model, 5000)
+    if not ok or not hash then
+        exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.r_failed_to_spawn_boat_model'))
         return
     end
     local boat = CreateVehicle(hash,
         spawnCoords.x, spawnCoords.y, spawnCoords.z,
         spawnCoords.h or 0.0, true, false)
     if not DoesEntityExist(boat) then
-        exports.sunset_core:ShowNotification('~r~Failed to spawn boat. Try again.')
+        exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.r_failed_to_spawn_boat_try'))
         return
     end
     SetEntityAsMissionEntity(boat, true, true)
@@ -427,12 +423,12 @@ RegisterNetEvent('sunset:diving:spawnBoat', function(model, spawnCoords, cost, s
     BoatNetId = VehicleToNet(boat)
     -- Echo the server-issued token back so the server can validate this spawn
     TriggerServerEvent('sunset:diving:boatSpawned', BoatNetId, serverToken)
-    exports.sunset_core:ShowNotification(('~g~Work boat rented for ~y~$%d~g~. Good luck!'):format(cost))
+    exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.g_work_boat_rented_for_y', { cost = math.floor(tonumber(cost) or 0) }))
 end)
 
 RegisterNetEvent('sunset:diving:boatReturned', function()
     BoatNetId = nil
-    exports.sunset_core:ShowNotification('~b~Work boat returned.')
+    exports.sunset_core:ShowNotification(exports.sunset_core:Translate('jobs.msg.b_work_boat_returned'))
 end)
 
 -- ── Contract Complete ─────────────────────────────────────────
@@ -499,12 +495,11 @@ CreateThread(function()
                 CreateThread(function()
                     local result, err = Sunset.AwaitCallback('sunset:jobs:diver:handoff')
                     if not result then
-                        exports.sunset_ui:Notify(err or 'Handoff failed', 'error', 5000)
+                        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.handoff_failed'), 'error', 5000)
                         TerryHandoffReady = true  -- re-enable if failed
                     else
                         exports.sunset_ui:Notify(
-                            ('Contract complete! Terry paid $%d + %d XP'):format(
-                                result.total or 0, result.xp or 0),
+                            exports.sunset_core:Translate('jobs.msg.contract_complete_terry_paid_xp', { total = math.floor(tonumber(result.total or 0) or 0), xp = math.floor(tonumber(result.xp or 0) or 0) }),
                             'success', 7000)
                     end
                 end)

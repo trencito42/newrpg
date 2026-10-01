@@ -888,7 +888,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:track', function(source
     end
 
     if not nearest or nearestDist > (Sunset.JobsConfig.hunter.trackingClueRadius or 80.0) then
-        return { type = 'no_tracks', message = 'No fresh tracks in this area. Move deeper into the zone.' }
+        return { type = 'no_tracks', message = exports.sunset_core:TFor(source, 'jobs.ui.no_fresh_tracks_in_this_area') }
     end
 
     -- Direction from player to animal
@@ -909,7 +909,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:track', function(source
         type      = clue,
         direction = dirLabel,
         distance  = fuzzyDist,
-        message   = ('Fresh sign found. Direction: %s  ≈%dm'):format(dirLabel, fuzzyDist),
+        message   = exports.sunset_core:TFor(source, 'jobs.ui.fresh_sign_found_direction_m', { dir_label = tostring(dirLabel), fuzzy_dist = math.floor(tonumber(fuzzyDist) or 0) }),
     }
 end)
 

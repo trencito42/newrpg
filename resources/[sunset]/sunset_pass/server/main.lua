@@ -176,7 +176,7 @@ local function grantReward(source, reward)
         if amount <= 0 then return false, { localeKey = 'pass.message.invalid_coin_amount' } end
         local nextValue = (tonumber(player.premium_points) or 0) + amount
         local ok, err = setPremiumPoints(source, nextValue)
-        if not ok then return false, err or 'Could not add Blaze Points.' end
+        if not ok then return false, err or exports.sunset_core:TFor(source, 'core.message.could_not_add_blaze_points') end
         return true
     end
 
@@ -367,7 +367,7 @@ exports.sunset_core:RegisterCallback('sunset:pass:claim', function(source, data)
         if not ok then
             claimed[key] = false
             saveRow(char.id, xp, premium, claimed, decodeJson(row.mission_progress))
-            return nil, err or 'Could not grant reward.'
+            return nil, err or exports.sunset_core:TFor(source, 'pass.err.could_not_grant_reward')
         end
 
         passAnnounce(source, exports.sunset_core:TFor(source, 'pass.announce.reward_claimed'), exports.sunset_core:TFor(source, 'pass.announce.reward_claimed_body', { level = level, reward = reward.label or exports.sunset_core:TFor(source, 'pass.announce.reward_default') }), 'success')
@@ -384,7 +384,7 @@ exports.sunset_core:RegisterCallback('sunset:pass:buyPremium', function(source)
         if isPremiumRow(row) then return nil, { localeKey = 'pass.message.premium_pass_already_unlocked' } end
 
         local paid, payment, payErr = chargePremiumPayment(source)
-        if not paid then return nil, payErr or 'Premium pass payment failed.' end
+        if not paid then return nil, payErr or exports.sunset_core:TFor(source, 'pass.err.premium_pass_payment_failed') end
 
         upsertRow(char.id, tonumber(row.xp) or 0, true, decodeJson(row.claimed), decodeJson(row.mission_progress))
         local saved = loadRow(char.id)

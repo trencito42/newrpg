@@ -64,10 +64,10 @@ RegisterCommand('trunk', function(source, args)
         end
         local res, err = Sunset.AwaitCallback('sunset:container:deposit', 'trunk', plate, item, count)
         if res and res.ok then
-            exports.sunset_ui:Notify(('Put x%d %s in the trunk.'):format(count, item), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.msg.put_x_in_the_trunk', { count = math.floor(tonumber(count) or 0), item = tostring(item) }), 'success')
             printContainerList('TRUNK ' .. plate, res)
         else
-            exports.sunset_ui:Notify(err or 'Deposit failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.deposit_failed'), 'error')
         end
         return
     elseif sub == 'take' or sub == 'ia' then
@@ -78,10 +78,10 @@ RegisterCommand('trunk', function(source, args)
         end
         local res, err = Sunset.AwaitCallback('sunset:container:withdraw', 'trunk', plate, item, count)
         if res and res.ok then
-            exports.sunset_ui:Notify(('Took x%d %s from the trunk.'):format(count, item), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.msg.took_x_from_the_trunk', { count = math.floor(tonumber(count) or 0), item = tostring(item) }), 'success')
             printContainerList('TRUNK ' .. plate, res)
         else
-            exports.sunset_ui:Notify(err or 'Withdraw failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('businesses.message.withdraw_failed'), 'error')
         end
         return
     end
@@ -96,7 +96,7 @@ RegisterCommand('trunk', function(source, args)
     if res then
         printContainerList('TRUNK ' .. plate, res)
     else
-        exports.sunset_ui:Notify(err or 'Could not open the trunk.', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.could_not_open_the_trunk'), 'error')
     end
 end, false)
 
@@ -132,10 +132,10 @@ RegisterCommand('glovebox', function(source, args)
         end
         local res, err = Sunset.AwaitCallback('sunset:container:deposit', 'glovebox', plate, item, count)
         if res and res.ok then
-            exports.sunset_ui:Notify(('Put x%d %s in the glovebox.'):format(count, item), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.msg.put_x_in_the_glovebox', { count = math.floor(tonumber(count) or 0), item = tostring(item) }), 'success')
             printContainerList('GLOVEBOX ' .. plate, res)
         else
-            exports.sunset_ui:Notify(err or 'Deposit failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.deposit_failed'), 'error')
         end
         return
     elseif sub == 'take' or sub == 'ia' then
@@ -146,10 +146,10 @@ RegisterCommand('glovebox', function(source, args)
         end
         local res, err = Sunset.AwaitCallback('sunset:container:withdraw', 'glovebox', plate, item, count)
         if res and res.ok then
-            exports.sunset_ui:Notify(('Took x%d %s from the glovebox.'):format(count, item), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.msg.took_x_from_the_glovebox', { count = math.floor(tonumber(count) or 0), item = tostring(item) }), 'success')
             printContainerList('GLOVEBOX ' .. plate, res)
         else
-            exports.sunset_ui:Notify(err or 'Withdraw failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('businesses.message.withdraw_failed'), 'error')
         end
         return
     end
@@ -158,7 +158,7 @@ RegisterCommand('glovebox', function(source, args)
     if res then
         printContainerList('GLOVEBOX ' .. plate, res)
     else
-        exports.sunset_ui:Notify(err or 'Could not open the glovebox.', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.could_not_open_the_glovebox'), 'error')
     end
 end, false)
 

@@ -110,7 +110,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source
     local s, err = MSN_RequireSession(source, data.mission)
     if not s then return nil, err end
     local ok, why = MSN_RequestTransition(source, s, data.stage)
-    if not ok then return nil, 'Invalid stage transition: ' .. tostring(s.state) .. ' -> ' .. tostring(data.stage) .. ' (' .. tostring(why) .. ')' end
+    if not ok then return nil, exports.sunset_core:TFor(source, 'missions.err.invalid_stage_transition', { state = tostring(s.state), stage = tostring(data.stage), why = tostring(why) }) end
     return true
 end)
 

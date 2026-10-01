@@ -47,6 +47,41 @@ AddEventHandler('sunset:client:playerSpawned', function()
     Wait(1500)
     refreshProperties()
 end)
+-- [RESTART SAFETY] Re-init for already-connected players after `restart sunset_properties`
+-- and release the radar/cursor if the resource stops while the panel is open.
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    CreateThread(function()
+        local deadline = GetGameTimer() + 15000
+        while GetGameTimer() < deadline do
+            local ok, char = pcall(function() return exports.sunset_core:GetCharacter() end)
+            if ok and char and char.id then
+                insideProperty = nil
+                transState = TRANS_NONE
+                pcall(refreshProperties)
+                return
+            end
+            Wait(1000)
+        end
+    end)
+end)
+
+AddEventHandler('sunset:properties:requestRefresh', function()
+    CreateThread(function() pcall(refreshProperties) end)
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    DisplayRadar(true)
+    if propertiesPanelOpen then
+        propertiesPanelOpen = false
+        pcall(function()
+            exports.sunset_ui:Send('propertiesHide', {})
+            exports.sunset_ui:SetFocus(false, false, false, 'legacy')
+        end)
+    end
+end)
+
 RegisterNetEvent('sunset:client:respawn', function()
     insideProperty = nil
     transState = TRANS_NONE

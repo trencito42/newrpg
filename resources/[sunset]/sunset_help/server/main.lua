@@ -46,7 +46,7 @@ local function buildAdminCategory(source)
     table.sort(entries, function(a, b) return a.cmd < b.cmd end)
 
     return {
-        title = 'Admin (' .. label .. ')',
+        title = exports.sunset_core:TFor(source, 'help.ui.admin', { label = tostring(label) }),
         entries = entries,
     }
 end
@@ -107,7 +107,7 @@ local function buildFactionCategory(source, char)
     end
 
     return {
-        title = 'Faction (' .. (faction.label or factionId) .. ')',
+        title = exports.sunset_core:TFor(source, 'help.ui.faction', { label = tostring(faction.label or factionId) }),
         entries = entries,
     }
 end
@@ -147,7 +147,7 @@ local function buildOnDutyCategory(source, char)
     end
 
     return {
-        title = 'On Duty',
+        title = exports.sunset_core:TFor(source, 'help.ui.on_duty'),
         entries = entries,
     }
 end
@@ -158,7 +158,7 @@ local function buildHelp(source)
 
     local categories = {
         {
-            title = 'General',
+            title = exports.sunset_core:TFor(source, 'help.ui.general'),
             entries = copyEntries(Sunset.HelpGeneralEntries),
         },
     }

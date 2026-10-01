@@ -4,12 +4,7 @@ const FACTION_ICONS = {
     service: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
 };
 
-const FACTION_FILTER_TITLES = {
-    all: 'All Factions',
-    legal: 'Departamente Legale',
-    illegal: 'Mafii / Gang-uri',
-    service: 'Servicii / Afaceri',
-};
+const factionFilterTitle = (key) => I18n.t('ui.factions.filter.' + (['all', 'legal', 'illegal', 'service'].includes(key) ? key : 'all'));
 
 const FactionPanels = {
     dashboard: null,
@@ -89,7 +84,7 @@ const FactionPanels = {
     },
 
     formatMoney(amount) {
-        return `$${Number(amount || 0).toLocaleString('en-US')}`;
+        return `$${I18n.number(Number(amount || 0))}`;
     },
 
     factionCategory(faction) {
@@ -102,15 +97,15 @@ const FactionPanels = {
 
     factionTypeLabel(faction) {
         const map = {
-            law_enforcement: 'Public Department',
-            ems: 'Medical Service',
-            fire_rescue: 'Fire / Rescue',
-            transport: 'Transport',
-            mechanic: 'Mechanics / Tuning',
-            education: 'Education / Licenses',
-            criminal_org: 'Criminal Organization',
+            law_enforcement: I18n.t('ui.factions.type_law_enforcement'),
+            ems: I18n.t('ui.factions.type_ems'),
+            fire_rescue: I18n.t('ui.factions.type_fire_rescue'),
+            transport: I18n.t('ui.factions.type_transport'),
+            mechanic: I18n.t('ui.factions.type_mechanic'),
+            education: I18n.t('ui.factions.type_education'),
+            criminal_org: I18n.t('ui.factions.type_criminal_org'),
         };
-        return map[faction?.factionType] || String(faction?.factionType || 'Organization').replaceAll('_', ' ');
+        return map[faction?.factionType] || String(faction?.factionType || I18n.t('ui.factions.type_organization')).replaceAll('_', ' ');
     },
 
     renderCommands(commands) {
@@ -123,7 +118,7 @@ const FactionPanels = {
             list.appendChild(li);
         });
         if (!list.children.length) {
-            list.innerHTML = '<li class="premium-faction__empty">No special commands for your rank.</li>';
+            list.innerHTML = `<li class="premium-faction__empty">${I18n.t('ui.factions.no_special_commands')}</li>`;
         }
     },
 
@@ -190,12 +185,12 @@ const FactionPanels = {
     populateManageSelect(members, viewerCharacterId) {
         const select = $('#faction-manage-select');
         if (!select) return;
-        select.innerHTML = '<option value="" disabled selected>Select a member...</option>';
+        select.innerHTML = `<option value="" disabled selected>${I18n.t('ui.factions.select_member_ellipsis')}</option>`;
         (members || []).forEach((member) => {
             if (Number(member.characterId) === Number(viewerCharacterId)) return;
             const opt = document.createElement('option');
             opt.value = String(member.characterId);
-            opt.textContent = `${member.name} (${member.gradeLabel || 'Member'})`;
+            opt.textContent = `${member.name} (${member.gradeLabel || I18n.t('ui.factions.member')})`;
             select.appendChild(opt);
         });
     },
@@ -239,10 +234,10 @@ const FactionPanels = {
             return;
         }
         const days = member.daysInFaction;
-        const daysTxt = days == null ? 'joined: unknown' : `joined ${days}d ago${days < 14 ? ' (NEW - kick with FP if they leave early)' : ''}`;
+        const daysTxt = days == null ? I18n.t('ui.factions.joined_unknown') : I18n.t(days < 14 ? 'ui.factions.joined_days_new' : 'ui.factions.joined_days', { days });
         const fpTxt = member.fp > 0 ? ` · FP: ${member.fp}` : '';
         box.classList.remove('hidden');
-        box.innerHTML = `<span>${this.escape(member.name)}</span> · ${this.escape(member.gradeLabel || 'Member')} · ${this.escape(daysTxt)}${fpTxt}`;
+        box.innerHTML = `<span>${this.escape(member.name)}</span> · ${this.escape(member.gradeLabel || I18n.t('ui.factions.member'))} · ${this.escape(daysTxt)}${fpTxt}`;
     },
 
     // [FP SYSTEM] Resignation requests board (leaders/managers).
@@ -257,7 +252,7 @@ const FactionPanels = {
         if (!wrap) return;
         wrap.innerHTML = '';
         if (!list.length) {
-            wrap.innerHTML = '<p class="premium-faction__empty">No pending resignation requests.</p>';
+            wrap.innerHTML = `<p class="premium-faction__empty">${I18n.t('ui.factions.no_resignations')}</p>`;
             return;
         }
         list.forEach((req) => {
@@ -273,7 +268,7 @@ const FactionPanels = {
             const meta = document.createElement('div');
             meta.className = 'premium-faction__member-rank';
             const days = req.daysInFaction == null ? '' : ` · ${req.daysInFaction}d in faction`;
-            meta.textContent = `${req.reason ? this.escape(req.reason) : 'No reason given'}${days}`;
+            meta.textContent = `${req.reason ? this.escape(req.reason) : I18n.t('ui.factions.no_reason')}${days}`;
             text.append(name, meta);
             info.appendChild(text);
 
@@ -320,7 +315,7 @@ const FactionPanels = {
 
             const dot = document.createElement('div');
             dot.className = `premium-faction__status-dot ${member.online ? 'is-online' : 'is-offline'}`;
-            dot.title = member.online ? 'Online' : 'Offline';
+            dot.title = member.online ? I18n.t('ui.factions.online') : I18n.t('ui.factions.offline');
 
             const text = document.createElement('div');
             const name = document.createElement('div');
@@ -329,13 +324,13 @@ const FactionPanels = {
             const rank = document.createElement('div');
             rank.className = 'premium-faction__member-rank';
             const extras = [];
-            if (member.leader) extras.push('LEADER');
-            if (member.onDuty) extras.push('ON SHIFT');
+            if (member.leader) extras.push(I18n.t('ui.factions.leader_caps'));
+            if (member.onDuty) extras.push(I18n.t('ui.factions.on_shift_caps'));
             if (member.warns) extras.push(`${member.warns}/3 FW`);
             // [FP SYSTEM] new-member badge + FP indicator for leaders.
-            if (member.daysInFaction != null && member.daysInFaction < 14 && !member.leader) extras.push('NEW');
+            if (member.daysInFaction != null && member.daysInFaction < 14 && !member.leader) extras.push(I18n.t('ui.factions.new_caps'));
             if (member.fp > 0) extras.push(`FP ${member.fp}`);
-            rank.textContent = `${member.gradeLabel || 'Member'} · G${member.grade ?? 0}${extras.length ? ` · ${extras.join(' · ')}` : ''}`;
+            rank.textContent = `${member.gradeLabel || I18n.t('ui.factions.member')} · G${member.grade ?? 0}${extras.length ? ` · ${extras.join(' · ')}` : ''}`;
             text.append(name, rank);
             info.append(dot, text);
 
@@ -355,13 +350,13 @@ const FactionPanels = {
                 const up = document.createElement('button');
                 up.type = 'button';
                 up.className = 'premium-faction__btn premium-faction__btn--secondary';
-                up.title = 'Promote';
+                up.title = I18n.t('ui.clans.promote');
                 up.innerHTML = '<i class="ph-bold ph-caret-up"></i>';
                 up.addEventListener('click', () => this.postAction('rankDelta', { characterId: member.characterId, delta: 1 }));
                 const down = document.createElement('button');
                 down.type = 'button';
                 down.className = 'premium-faction__btn premium-faction__btn--secondary';
-                down.title = 'Demote';
+                down.title = I18n.t('ui.clans.demote');
                 down.innerHTML = '<i class="ph-bold ph-caret-down"></i>';
                 down.addEventListener('click', () => this.postAction('rankDelta', { characterId: member.characterId, delta: -1 }));
                 actions.append(up, down);
@@ -370,10 +365,10 @@ const FactionPanels = {
                 const kick = document.createElement('button');
                 kick.type = 'button';
                 kick.className = 'premium-faction__btn premium-faction__btn--danger';
-                kick.innerHTML = '<i class="ph-bold ph-sign-out"></i> Kick';
+                kick.innerHTML = '<i class="ph-bold ph-sign-out"></i> ' + I18n.t('ui.clans.kick');
                 kick.title = member.daysInFaction != null && member.daysInFaction < 14
-                    ? 'New member (<14d) - consider Kick + FP'
-                    : 'Remove without FP';
+                    ? I18n.t('ui.factions.kick_new_hint')
+                    : I18n.t('ui.factions.kick_hint');
                 kick.disabled = !canKick;
                 kick.addEventListener('click', () => this.postAction('kick', {
                     characterId: member.characterId,
@@ -383,8 +378,8 @@ const FactionPanels = {
                 const kickFp = document.createElement('button');
                 kickFp.type = 'button';
                 kickFp.className = 'premium-faction__btn premium-faction__btn--warn';
-                kickFp.innerHTML = '<i class="ph-bold ph-gavel"></i> Kick + FP';
-                kickFp.title = 'Remove and apply 60 FP (faction punish)';
+                kickFp.innerHTML = '<i class="ph-bold ph-gavel"></i> ' + I18n.t('ui.factions.kick_plus_fp');
+                kickFp.title = I18n.t('ui.factions.kick_fp_hint');
                 kickFp.disabled = !canKick;
                 kickFp.addEventListener('click', () => this.postAction('kick', {
                     characterId: member.characterId,
@@ -397,7 +392,7 @@ const FactionPanels = {
                 warn.type = 'button';
                 warn.className = 'premium-faction__btn premium-faction__btn--warn';
                 warn.innerHTML = '<i class="ph-bold ph-warning"></i> FW';
-                warn.title = 'Faction warning';
+                warn.title = I18n.t('ui.factions.faction_warning');
                 warn.addEventListener('click', () => this.postAction('warn', { characterId: member.characterId, reason: 'Faction disciplinary warning' }));
                 actions.append(warn);
             }
@@ -408,7 +403,7 @@ const FactionPanels = {
         });
 
         if (!members?.length) {
-            roster.innerHTML = '<p class="premium-faction__empty">No roster entries found.</p>';
+            roster.innerHTML = `<p class="premium-faction__empty">${I18n.t('ui.factions.no_roster')}</p>`;
         }
     },
 
@@ -430,24 +425,24 @@ const FactionPanels = {
         const online = members.filter((m) => m.online).length;
 
         const title = $('#faction-panel-title');
-        if (title) title.textContent = data.label || 'Faction';
+        if (title) title.textContent = data.label || I18n.t('chat.badge.faction');
         const typeEl = $('#faction-panel-type');
         if (typeEl) typeEl.textContent = this.factionTypeLabel(data);
 
-        $('#faction-rank').textContent = `${data.gradeLabel || 'Member'}${data.leader ? ' · COMMAND' : ''}`;
+        $('#faction-rank').textContent = `${data.gradeLabel || I18n.t('ui.factions.member')}${data.leader ? ' · ' + I18n.t('ui.factions.command_caps') : ''}`;
         $('#faction-online-count').textContent = String(online);
         $('#faction-member-count').textContent = String(members.length);
 
         const dutyEl = $('#faction-duty');
         if (dutyEl) {
-            dutyEl.textContent = data.onDuty ? 'ON SHIFT' : 'OFF SHIFT';
+            dutyEl.textContent = data.onDuty ? I18n.t('ui.factions.on_shift_caps') : I18n.t('ui.factions.off_shift_caps');
             dutyEl.className = data.onDuty ? 'is-duty' : 'is-off';
         }
-        $('#faction-salary').textContent = `$${Number(data.salary || 0).toLocaleString()}/HR`;
-        $('#faction-motd').textContent = data.motd || 'No MOTD posted. Leaders use /fmotd.';
-        $('#faction-description').textContent = data.description || 'No department intel on file.';
-        $('#faction-depot').textContent = I18n.t('dynamic.factions.motor_pool_value0', { value0: data.depot || 'Not configured' });
-        $('#faction-report-value').textContent = target > 0 ? `${current} / ${target} ops` : `${current} ops logged`;
+        $('#faction-salary').textContent = `$${I18n.number(Number(data.salary || 0))}/HR`;
+        $('#faction-motd').textContent = data.motd || I18n.t('ui.factions.no_motd_leaders');
+        $('#faction-description').textContent = data.description || I18n.t('ui.factions.no_description');
+        $('#faction-depot').textContent = I18n.t('dynamic.factions.motor_pool_value0', { value0: data.depot || I18n.t('ui.factions.not_configured') });
+        $('#faction-report-value').textContent = target > 0 ? I18n.t('ui.factions.ops_progress', { current, target }) : I18n.t('ui.factions.ops_logged', { current });
         const reportBar = $('#faction-report-bar');
         if (reportBar) reportBar.style.width = `${percent}%`;
 
@@ -463,7 +458,7 @@ const FactionPanels = {
         const rosterMeta = $('#faction-roster-meta');
         if (rosterMeta) {
             const onDuty = members.filter((m) => m.onDuty).length;
-            rosterMeta.textContent = `${online} online · ${onDuty} on shift · ${members.length} total`;
+            rosterMeta.textContent = I18n.t('ui.factions.roster_meta', { online, onDuty, total: members.length });
         }
 
         // [FP SYSTEM] my FP card + note (any member with FP sees it).
@@ -517,7 +512,7 @@ const FactionPanels = {
             });
         }
         const title = $('#faction-dir-title');
-        if (title) title.textContent = FACTION_FILTER_TITLES[this.dirFilter] || FACTION_FILTER_TITLES.all;
+        if (title) title.textContent = factionFilterTitle(this.dirFilter);
         this.renderDirectoryCards();
     },
 
@@ -543,9 +538,9 @@ const FactionPanels = {
                 card.style.setProperty('--pf-card-accent', `rgb(${marker[0]}, ${marker[1]}, ${marker[2]})`);
             }
 
-            const leaders = Array.isArray(faction.leaders) && faction.leaders.length ? faction.leaders[0] : 'Vacant';
+            const leaders = Array.isArray(faction.leaders) && faction.leaders.length ? faction.leaders[0] : I18n.t('ui.factions.vacant');
             const recruitClass = faction.applicationsOpen ? 'is-open' : 'is-closed';
-            const recruitLabel = faction.applicationsOpen ? 'Recruiting Open' : 'Recruiting Closed';
+            const recruitLabel = faction.applicationsOpen ? I18n.t('ui.clans.recruiting_open') : I18n.t('ui.clans.recruiting_closed');
 
             card.innerHTML = `
                 <div class="premium-factions-dir__card-head">
@@ -556,8 +551,8 @@ const FactionPanels = {
                     </div>
                 </div>
                 <div class="premium-factions-dir__card-stats">
-                    <div class="premium-factions-dir__stat-row"><span>Leader:</span><b>${this.escape(leaders)}</b></div>
-                    <div class="premium-factions-dir__stat-row"><span>Members:</span><b><span class="highlight">${Number(faction.online) || 0}</span> / ${Number(faction.total) || 0}</b></div>
+                    <div class="premium-factions-dir__stat-row"><span>${I18n.t('ui.clans.leader_colon')}</span><b>${this.escape(leaders)}</b></div>
+                    <div class="premium-factions-dir__stat-row"><span>${I18n.t('ui.clans.members_colon')}</span><b><span class="highlight">${Number(faction.online) || 0}</span> / ${Number(faction.total) || 0}</b></div>
                 </div>
                 <div class="premium-factions-dir__recruit ${recruitClass}"><div class="dot"></div>${recruitLabel}</div>
             `;
@@ -567,7 +562,7 @@ const FactionPanels = {
         });
 
         if (!list.children.length) {
-            list.innerHTML = '<p class="premium-factions-dir__empty">No factions in this category.</p>';
+            list.innerHTML = `<p class="premium-factions-dir__empty">${I18n.t('ui.factions.none_in_category')}</p>`;
         }
     },
 
@@ -582,10 +577,10 @@ const FactionPanels = {
         const icon = $('#faction-dir-modal-icon');
         if (icon) icon.innerHTML = FACTION_ICONS[cat] || FACTION_ICONS.service;
         $('#faction-dir-modal-title').textContent = faction.label || faction.id;
-        $('#faction-dir-modal-desc').textContent = faction.description || 'No public intel.';
+        $('#faction-dir-modal-desc').textContent = faction.description || I18n.t('ui.factions.no_public_intel');
         $('#faction-dir-modal-motd').textContent = I18n.t('dynamic.factions.loading');
-        $('#faction-dir-modal-leaders').innerHTML = '<li>Loading...</li>';
-        $('#faction-dir-modal-roster').innerHTML = '<p class="premium-factions-dir__empty">Loading...</p>';
+        $('#faction-dir-modal-leaders').innerHTML = `<li>${I18n.t('common.loading')}</li>`;
+        $('#faction-dir-modal-roster').innerHTML = `<p class="premium-factions-dir__empty">${I18n.t('common.loading')}</p>`;
         $('#faction-dir-modal-recruit').innerHTML = `<li>${this.escape(faction.applicationLabel || '—')}</li>`;
 
         const btn = $('#faction-dir-modal-btn');
@@ -612,11 +607,11 @@ const FactionPanels = {
             return;
         }
 
-        $('#faction-dir-modal-motd').textContent = detail.motd || 'No MOTD published.';
+        $('#faction-dir-modal-motd').textContent = detail.motd || I18n.t('ui.clans.no_motd_published');
         const leaders = $('#faction-dir-modal-leaders');
         if (leaders) {
             leaders.innerHTML = '';
-            const list = Array.isArray(detail.leaders) && detail.leaders.length ? detail.leaders : ['Vacant'];
+            const list = Array.isArray(detail.leaders) && detail.leaders.length ? detail.leaders : [I18n.t('ui.factions.vacant')];
             list.forEach((name) => {
                 const li = document.createElement('li');
                 li.textContent = name;
@@ -630,11 +625,11 @@ const FactionPanels = {
             (detail.members || []).forEach((m) => {
                 const row = document.createElement('div');
                 row.className = 'premium-factions-dir__modal-member';
-                row.innerHTML = `<strong>${this.escape(m.name)}</strong><span>${this.escape(m.rank || '')}${m.online ? ' · ONLINE' : ''}${m.leader ? ' · LEADER' : ''}</span>`;
+                row.innerHTML = `<strong>${this.escape(m.name)}</strong><span>${this.escape(m.rank || '')}${m.online ? ' · ' + I18n.t('ui.clans.online_caps') : ''}${m.leader ? ' · ' + I18n.t('ui.clans.leader_caps') : ''}</span>`;
                 roster.appendChild(row);
             });
             if (!roster.children.length) {
-                roster.innerHTML = '<p class="premium-factions-dir__empty">No members registered.</p>';
+                roster.innerHTML = `<p class="premium-factions-dir__empty">${I18n.t('ui.factions.no_members')}</p>`;
             }
         }
 
@@ -643,8 +638,8 @@ const FactionPanels = {
             recruit.innerHTML = '';
             const li = document.createElement('li');
             li.textContent = detail.type === 'illegal'
-                ? 'Invite only — contact leadership in character.'
-                : (detail.applicationsOpen ? 'Recruiting — apply on Discord/site, leaders invite in-game.' : 'Not recruiting — leadership invites only.');
+                ? I18n.t('ui.factions.invite_only')
+                : I18n.t(detail.applicationsOpen ? 'ui.factions.recruiting_apply' : 'ui.factions.not_recruiting');
             recruit.appendChild(li);
         }
     },

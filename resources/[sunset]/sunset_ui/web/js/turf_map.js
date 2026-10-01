@@ -412,7 +412,7 @@
                     textTag.setAttribute('y', (centerPt.y + 8).toFixed(1));
                     textTag.setAttribute('class', 'turf-tag-text');
                     textTag.setAttribute('fill', isWar ? '#ff4757' : ownerColor);
-                    textTag.textContent = isWar ? '⚔ WAR ⚔' : (hasOwner ? (turf.ownerTag ? `[${turf.ownerTag}]` : turf.ownerName) : 'FREE');
+                    textTag.textContent = isWar ? '⚔ ' + I18n.t('ui.turf.war_caps') + ' ⚔' : (hasOwner ? (turf.ownerTag ? `[${turf.ownerTag}]` : turf.ownerName) : I18n.t('ui.turf.free_caps'));
                     labelGroup.appendChild(textTag);
 
                     polygonsLayer.appendChild(labelGroup);
@@ -555,7 +555,7 @@
 
             if (incomeEl) {
                 const payout = turf.payout || 1500;
-                incomeEl.textContent = `$${payout.toLocaleString()} / interval`;
+                incomeEl.textContent = I18n.t('ui.turf.income_interval', { amount: I18n.number(payout) });
             }
 
             tooltip.classList.remove('hidden');

@@ -6,7 +6,7 @@ RegisterCommand('stabilize', function(_, args)
     local target = tonumber(args[1])
     if not target then return notify(exports.sunset_core:Translate('factions.message.usage_stabilize_id'), 'error') end
     local ok, err = Sunset.AwaitCallback('sunset:emsStabilize', target)
-    if not ok then notify(err or 'Stabilization failed. Check duty, rank, patient ID, distance and downed state.', 'error') end
+    if not ok then notify(err or exports.sunset_core:Translate('factions.msg.stabilization_failed_check_duty_rank_patient'), 'error') end
 end, false)
 
 CreateThread(function()

@@ -174,11 +174,8 @@ local function equipRod()
         end
     end
 
-    local model = joaat('prop_fishing_rod_01')
-    RequestModel(model)
-    local timeout = GetGameTimer() + 5000
-    while not HasModelLoaded(model) and GetGameTimer() < timeout do Wait(10) end
-    if not HasModelLoaded(model) then return false end
+    local ok, model = Sunset.RequestModelSafe('prop_fishing_rod_01', 5000)
+    if not ok or not model then return false end
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
     rod = CreateObject(model, coords.x, coords.y, coords.z, true, true, false)
@@ -263,7 +260,7 @@ local function stopShift()
         JC.clearBlips()
         JC.hideObjective()
     else
-        JC.notify(err or 'Could not end shift.', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_end_shift'), 'error')
     end
 end
 
@@ -276,7 +273,7 @@ local function startFisherman()
 
     local data, err = Sunset.AwaitCallback('sunset:jobs:fisherman:start')
     if not data then
-        JC.notify(err or 'Could not start fishing', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_fishing'), 'error')
         return
     end
     JC.jobId = 'fisherman'
@@ -298,7 +295,7 @@ local function attemptFish()
                 JC.state = 'ACTIVE'
                 applyShiftBlips()
             else
-                return JC.notify(err or 'Could not start shift.', 'error')
+                return JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_shift'), 'error')
             end
         else
             return JC.notify(exports.sunset_core:Translate('jobs.message.you_must_be_a_fisherman_speak_with_billy_ray_43c2b4'), 'error')
@@ -314,7 +311,7 @@ local function attemptFish()
     local cast, err = Sunset.AwaitCallback('sunset:jobs:fisherman:cast', spotIdx)
     if not cast then
         fishing = false
-        return JC.notify(err or 'Could not cast', 'error', 8000)
+        return JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_cast'), 'error', 8000)
     end
 
     -- Avertizare fara momeala
@@ -353,7 +350,7 @@ local function attemptFish()
     local result, reelErr
     if early then
         Sunset.AwaitCallback('sunset:jobs:fisherman:miss', token)
-        showFishingState('failed', { message = 'You pulled too early!' })
+        showFishingState('failed', { message = exports.sunset_core:Translate('jobs.ui.you_pulled_too_early') })
         Wait(2200)
     else
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
@@ -371,17 +368,17 @@ local function attemptFish()
             if result then
                 local fishLabel = (result.fishItem or 'fish'):gsub('fish_', ''):gsub('^%l', string.upper)
                 showFishingState('success', {
-                    message = ('%s caught! %.1f kg — $%s'):format(fishLabel, result.fishKg or 0, result.value or 0),
+                    message = exports.sunset_core:Translate('jobs.ui.caught_kg', { fish_label = tostring(fishLabel), fish_kg = string.format('%.1f', result.fishKg or 0), value = tostring(result.value or 0) }),
                     value = result.value,
                 })
                 Wait(1800)
             else
-                showFishingState('failed', { message = reelErr or 'The fish escaped' })
+                showFishingState('failed', { message = reelErr or exports.sunset_core:Translate('jobs.ui.the_fish_escaped') })
                 Wait(1800)
             end
         else
             Sunset.AwaitCallback('sunset:jobs:fisherman:miss', token)
-            showFishingState('failed', { message = 'Too slow — the fish escaped' })
+            showFishingState('failed', { message = exports.sunset_core:Translate('jobs.ui.too_slow_the_fish_escaped') })
             Wait(1800)
         end
     end
@@ -391,8 +388,7 @@ local function attemptFish()
 
     if result then
         local fishLabel2 = ((result.fishItem or 'fish'):gsub('fish_', ''):gsub('^%l', string.upper))
-        JC.notify(('%s %.1f kg +$%s. Sell your fish at any 24/7 store.'):format(
-            fishLabel2, result.fishKg or 0, result.value or 0), 'success', 5000)
+        JC.notify(exports.sunset_core:Translate('jobs.msg.kg_sell_your_fish_at_any', { fish_label2 = tostring(fishLabel2), fish_kg = string.format('%.1f', result.fishKg or 0), value = tostring(result.value or 0) }), 'success', 5000)
     elseif not early and reelErr then
         JC.notify(reelErr, 'warning')
     elseif not early then
@@ -414,7 +410,7 @@ local fishDebugEnabled = false
 RegisterCommand('fishdebug', function()
     if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     fishDebugEnabled = not fishDebugEnabled
-    JC.notify(fishDebugEnabled and 'Fish debug ON — polygon + values drawn.' or 'Fish debug OFF.', 'info')
+    JC.notify(fishDebugEnabled and exports.sunset_core:Translate('jobs.msg.fish_debug_on_polygon_values_drawn') or exports.sunset_core:Translate('jobs.msg.fish_debug_off'), 'info')
 end, false)
 
 CreateThread(function()

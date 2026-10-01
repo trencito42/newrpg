@@ -290,15 +290,15 @@ local bettingTimer = 0
 
 local function updateText()
     CreateThread(function()
-        lib.showTextUI(string.format('↑ - Increase bet  \n ↓ - Decrease bet  \n ⌫ - Leave  \n Current bet: %s', possibleBets[currentBet]))
+        lib.showTextUI(exports.sunset_core:Translate('roulette.msg.increase_bet_decrease_bet_leave_current', { possible_bets = tostring(possibleBets[currentBet]) }))
         local oldBet, oldTimer = possibleBets[currentBet], bettingTimer
         while sittingInAChair do
             if oldBet ~= possibleBets[currentBet] or oldTimer ~= bettingTimer then
                 oldBet, oldTimer = possibleBets[currentBet], bettingTimer
                 if bettingTimer > 0 then
-                    lib.showTextUI(string.format('↑ - Increase bet  \n ↓ - Decrease bet  \n ⌫ - Leave  \n Current bet: %s  \n Betting time: %s', possibleBets[currentBet], bettingTimer))
+                    lib.showTextUI(exports.sunset_core:Translate('roulette.msg.increase_bet_decrease_bet_leave_current_2', { possible_bets = tostring(possibleBets[currentBet]), betting_timer = tostring(bettingTimer) }))
                 else
-                    lib.showTextUI(string.format('↑ - Increase bet  \n ↓ - Decrease bet  \n ⌫ - Leave  \n Current bet: %s', possibleBets[currentBet]))
+                    lib.showTextUI(exports.sunset_core:Translate('roulette.msg.increase_bet_decrease_bet_leave_current', { possible_bets = tostring(possibleBets[currentBet]) }))
                 end
             end
             Wait(0)
@@ -362,7 +362,7 @@ local function enterClosestChair(rouletteIndex)
             end
         end
     end
-    if not sittingInAChair then lib.notify({ id = 'roulette_Chair', title = 'This seat isn\'t available', type = 'error' }) end
+    if not sittingInAChair then lib.notify({ id = 'roulette_Chair', title = exports.sunset_core:Translate('roulette.ui.this_seat_isn_t_available'), type = 'error' }) end
 end
 
 CreateThread(function()
@@ -372,7 +372,7 @@ CreateThread(function()
         for i = 1, #RouletteLocations do
             if #(playerCoords - RouletteLocations[i].coords.xyz) < 2.4 and not sittingInAChair then
                 sleep = 0
-                DrawText3D(RouletteLocations[i].coords.xyz + vec3(0, 0, 1.2), "~o~E~w~ - Enter")
+                DrawText3D(RouletteLocations[i].coords.xyz + vec3(0, 0, 1.2), exports.sunset_core:Translate('roulette.msg.o_e_w_enter'))
                 if IsControlJustReleased(0, 38) then
                     enterClosestChair(i)
                 end

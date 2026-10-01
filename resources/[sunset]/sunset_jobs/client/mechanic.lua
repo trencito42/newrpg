@@ -5,8 +5,7 @@ local repairing = false
 RegisterNetEvent('sunset:jobs:mechanic:newCall', function(callData)
     if JC.jobId ~= 'mechanic' or JC.state == 'IDLE' then return end
     activeCall = callData
-    JC.notify(('Mechanic call #%s: %s — press E to accept'):format(
-        callData and callData.id or '?', callData and callData.label or 'Service request'), 'info')
+    JC.notify(exports.sunset_core:Translate('jobs.msg.mechanic_call_press_e_to_accept', { call_data = tostring(callData and callData.id or '?'), call_data_2 = callData and callData.label or exports.sunset_core:Translate('jobs.word.service_request') }), 'info')
     JC.hud({
         title = exports.sunset_core:Translate('jobs.hud.mechanic.title'),
         objective = exports.sunset_core:Translate('jobs.hud.mechanic.incoming', { id = callData and callData.id or '?', label = callData and callData.label or '' }),
@@ -23,7 +22,7 @@ AddEventHandler('sunset:jobs:dispatchNewCall', function(call)
     if JC.jobId ~= 'mechanic' or JC.state == 'IDLE' then return end
     TriggerEvent('sunset:jobs:mechanic:newCall', {
         id = call.id,
-        label = call.description or 'Mechanic service request',
+        label = call.description or exports.sunset_core:Translate('jobs.ui.mechanic_service_request'),
         coords = call.coords,
         callerName = call.callerName,
     })
@@ -71,13 +70,13 @@ end
 local function startMechanic()
     local data, err = Sunset.AwaitCallback('sunset:jobs:mechanic:start')
     if not data then
-        JC.notify(err or 'Could not go on duty', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_go_on_duty'), 'error')
         return
     end
 
     local cfg = Sunset.GetJobConfig('mechanic')
     JC.clearBlips()
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Mechanic Depot')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.mechanic_depot'))
     JC.sessionData = data
     JC.setWaypoint(cfg.depot.coords)
     JC.hud({ title = exports.sunset_core:Translate('jobs.hud.mechanic.title'), objective = exports.sunset_core:Translate('jobs.hud.mechanic.wait') })
@@ -97,7 +96,7 @@ local function startMechanic()
                         JC.notify(exports.sunset_core:Translate('jobs.message.call_accepted_go_to_customer'), 'success')
                     else
                         activeCall = nil
-                        JC.notify(acceptErr or 'Could not accept call', 'error')
+                        JC.notify(acceptErr or exports.sunset_core:Translate('dispatch.message.could_not_accept_call'), 'error')
                     end
                 end
             end
@@ -109,7 +108,7 @@ local function startMechanic()
                 if IsControlJustPressed(0, 38) then
                     repairing = true
                     JC.playAnim('mini@repair', 'fixing_a_player', cfg.repairDurationMs or 12000)
-                    JC.progress('Repairing vehicle...', cfg.repairDurationMs or 12000)
+                    JC.progress(exports.sunset_core:Translate('jobs.msg.repairing_vehicle'), cfg.repairDurationMs or 12000)
                     local result, err2 = Sunset.AwaitCallback('sunset:jobs:mechanic:repair', target)
                     repairing = false
                     ClearPedTasks(PlayerPedId())
@@ -118,7 +117,7 @@ local function startMechanic()
                         if JC.sessionData then JC.sessionData.stage = 'on_duty' end
                         JC.addEarned(result.pay or 0)
                         JC.hud({ title = exports.sunset_core:Translate('jobs.hud.mechanic.title'), objective = exports.sunset_core:Translate('jobs.hud.mechanic.done'), tone = 'success' })
-                        JC.notify(('Repair complete +$%s'):format(result.pay or 0), 'success')
+                        JC.notify(exports.sunset_core:Translate('jobs.msg.repair_complete', { pay = tostring(result.pay or 0) }), 'success')
                     elseif err2 then
                         JC.notify(err2, 'error')
                     end

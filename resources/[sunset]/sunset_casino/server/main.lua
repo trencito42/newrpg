@@ -8,6 +8,7 @@ local Cfg = SunsetCasino.Config
 local GameCooldowns = {}
 local DailyLosses = {}  -- [charId] = { date = 'YYYY-MM-DD', total = n }
 local ActiveBlackjack = {}  -- [src] = { deck, playerHand, dealerHand, bet, done }
+local BlackjackStarting = {}
 
 local function notify(source, msg, kind, duration)
     TriggerClientEvent('sunset:client:notify', source, msg, kind or 'info', duration or 5000)
@@ -84,6 +85,16 @@ local function takeChips(source, amount)
     return ok and res == true
 end
 
+-- [CASINO-AUTH] Single payout path for every casino game in this resource:
+-- credits the inventory, or persists the chips if the player cannot receive them.
+local function settleChips(source, charId, amount, game, reason)
+    amount = math.floor(tonumber(amount) or 0)
+    if amount <= 0 then return true end
+    if giveChips(source, amount) then return true end
+    CasinoPending.Add(charId, amount, game .. '_' .. reason)
+    return false
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  BLACKJACK
 -- ═══════════════════════════════════════════════════════════════
@@ -103,10 +114,7 @@ local function buildDeck()
         end
     end
     -- Shuffle (Fisher-Yates)
-    for i = #deck, 2, -1 do
-        local j = math.random(i)
-        deck[i], deck[j] = deck[j], deck[i]
-    end
+    CasinoRNG.Shuffle(deck) -- CSPRNG (shared/rng.lua)
     return deck
 end
 
@@ -160,6 +168,10 @@ local function settleBlackjack(source, game)
         result = 'bust'
         payout = 0
         recordLoss(charId, bet)
+    elseif isBlackjack(game.dealerHand) and not isBlackjack(game.playerHand) then
+        result = 'lose'
+        payout = 0
+        recordLoss(charId, bet)
     elseif isBlackjack(game.playerHand) and not isBlackjack(game.dealerHand) then
         result = 'blackjack'
         payout = bet + math.floor(bet * (Cfg.blackjackPayout or 1.5))
@@ -178,11 +190,9 @@ local function settleBlackjack(source, game)
         recordLoss(charId, bet)
     end
 
-    if payout > 0 then
-        giveChips(source, payout)
-    end
-
     ActiveBlackjack[source] = nil
+    settleChips(source, charId, payout, 'blackjack', 'payout')
+    CasinoLog.Record(charId, 'blackjack', result, bet, payout, '')
 
     return {
         result = result,
@@ -196,8 +206,8 @@ local function settleBlackjack(source, game)
 end
 
 exports.sunset_core:RegisterCallback('sunset:casino:blackjackStart', function(source, bet)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
-    bet = math.floor(tonumber(bet) or 0)
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
+    if not CasinoRNG.IsInt(bet) then return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } } end
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
@@ -209,14 +219,22 @@ exports.sunset_core:RegisterCallback('sunset:casino:blackjackStart', function(so
     if not checkDailyLoss(charId, bet) then
         return nil, { localeKey = 'casino.message.daily_loss_limit_reached_value_come_back_tomorrow', formatArgs = { Cfg.dailyLossLimit or 500000 } }
     end
-    if ActiveBlackjack[source] then
+    if ActiveBlackjack[source] or BlackjackStarting[source] then
         return nil, { localeKey = 'casino.message.you_already_have_an_active_blackjack_hand' }
     end
+    BlackjackStarting[source] = true -- lock before the yielding chip removal
     if countChips(source) < bet then
+        BlackjackStarting[source] = nil
         return nil, { localeKey = 'casino.message.you_do_not_have_enough_chips_buy_chips_at' }
     end
     if not takeChips(source, bet) then
+        BlackjackStarting[source] = nil
         return nil, { localeKey = 'casino.message.could_not_take_chips_from_your_inventory' }
+    end
+    BlackjackStarting[source] = nil
+    if not GetPlayerName(source) then
+        CasinoPending.Add(charId, bet, 'blackjack_start_dropped')
+        return nil
     end
 
     local deck = buildDeck()
@@ -225,6 +243,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:blackjackStart', function(so
         playerHand = { table.remove(deck, 1), table.remove(deck, 1) },
         dealerHand = { table.remove(deck, 1), table.remove(deck, 1) },
         bet = bet,
+        charId = charId,
         done = false,
     }
     ActiveBlackjack[source] = game
@@ -284,8 +303,8 @@ end)
 local SLOT_SYMBOLS = { '🍒', '🍋', '🍊', '🍇', '💎', '7️⃣', '🔔', '⭐' }
 
 exports.sunset_core:RegisterCallback('sunset:casino:slotsSpin', function(source, bet)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
-    bet = math.floor(tonumber(bet) or 0)
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
+    if not CasinoRNG.IsInt(bet) then return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } } end
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
@@ -307,7 +326,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:slotsSpin', function(source,
     -- Spin 3 reels
     local reels = {}
     for i = 1, 3 do
-        reels[i] = SLOT_SYMBOLS[math.random(#SLOT_SYMBOLS)]
+        reels[i] = SLOT_SYMBOLS[CasinoRNG.Int(1, #SLOT_SYMBOLS)]
     end
 
     -- Count matches
@@ -325,10 +344,11 @@ exports.sunset_core:RegisterCallback('sunset:casino:slotsSpin', function(source,
     local payout = bet * multiplier
 
     if payout > 0 then
-        giveChips(source, payout)
+        settleChips(source, charId, payout, 'slots3', 'payout')
     else
         recordLoss(charId, bet)
     end
+    CasinoLog.Record(charId, 'slots3', 'spin', bet, payout, '')
 
     return {
         reels = reels,
@@ -353,8 +373,8 @@ local function isRed(n)
 end
 
 exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(source, bet, betType, betValue)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
-    bet = math.floor(tonumber(bet) or 0)
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
+    if not CasinoRNG.IsInt(bet) then return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } } end
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
     end
@@ -374,7 +394,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(sour
     end
 
     -- Spin: 0-36
-    local result = math.random(0, 36)
+    local result = CasinoRNG.Int(0, 36)
     local resultColor = result == 0 and 'green' or (isRed(result) and 'red' or 'black')
 
     -- Evaluate bet
@@ -422,10 +442,11 @@ exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(sour
 
     local payout = won and (bet + bet * multiplier) or 0
     if payout > 0 then
-        giveChips(source, payout)
+        settleChips(source, charId, payout, 'roulette1', 'payout')
     else
         recordLoss(charId, bet)
     end
+    CasinoLog.Record(charId, 'roulette1', 'spin', bet, payout, 'n=' .. result)
 
     return {
         result = result,
@@ -442,28 +463,51 @@ end)
 --  LUCKY WHEEL
 -- ═══════════════════════════════════════════════════════════════
 
-local WheelCooldowns = {}  -- [charId] = lastSpinTime
+-- [CASINO-AUTH] Cooldown persisted in casino_wheel_cooldown (shared with sunset_luckywheel) and
+-- claimed with ONE atomic upsert, so restarts/relogs/concurrent requests cannot bypass it.
+local wheelTableReady = false
+local function claimWheelCooldown(charId, cooldownSec)
+    if not wheelTableReady then
+        wheelTableReady = true
+        pcall(function()
+            MySQL.query.await([[CREATE TABLE IF NOT EXISTS casino_wheel_cooldown (
+                character_id INT UNSIGNED PRIMARY KEY,
+                next_at BIGINT NOT NULL DEFAULT 0)]])
+        end)
+    end
+    local now = os.time()
+    local ok, affected = pcall(function()
+        return MySQL.update.await([[INSERT INTO casino_wheel_cooldown (character_id, next_at) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE next_at = IF(next_at <= ?, VALUES(next_at), next_at)]],
+            { charId, now + cooldownSec, now })
+    end)
+    if not ok then return false, cooldownSec end
+    if (tonumber(affected) or 0) >= 1 then return true end
+    local okR, nextAt = pcall(function()
+        return MySQL.scalar.await('SELECT next_at FROM casino_wheel_cooldown WHERE character_id = ?', { charId })
+    end)
+    return false, math.max(60, (okR and tonumber(nextAt) or now + cooldownSec) - now)
+end
 
 exports.sunset_core:RegisterCallback('sunset:casino:wheelSpin', function(source)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
     local charId = getCharId(source)
     if not charId then return nil end
-
-    -- Cooldown check (1 hour)
-    local now = GetGameTimer()
-    if WheelCooldowns[charId] and now - WheelCooldowns[charId] < (Cfg.luckyWheelCooldownMs or 3600000) then
-        local remaining = math.ceil(((Cfg.luckyWheelCooldownMs or 3600000) - (now - WheelCooldowns[charId])) / 60000)
-        return nil, { localeKey = 'casino.message.wheel_on_cooldown_try_again_in_value_minutes', formatArgs = { remaining } }
-    end
 
     if not checkCooldown(source) then
         return nil, { localeKey = 'casino.message.wait_a_moment_before_spinning_again' }
     end
 
+    local cdSec = math.floor((Cfg.luckyWheelCooldownMs or 3600000) / 1000)
+    local claimed, remainingSec = claimWheelCooldown(charId, cdSec)
+    if not claimed then
+        return nil, { localeKey = 'casino.message.wheel_on_cooldown_try_again_in_value_minutes', formatArgs = { math.ceil((remainingSec or cdSec) / 60) } }
+    end
+
     -- Pick random prize
     local prizes = Cfg.luckyWheelPrizes or {}
     if #prizes == 0 then return nil, { localeKey = 'casino.message.no_prizes_configured' } end
-    local prizeIdx = math.random(#prizes)
+    local prizeIdx = CasinoRNG.Int(1, #prizes)
     local prize = prizes[prizeIdx]
 
     -- Apply prize
@@ -472,14 +516,14 @@ exports.sunset_core:RegisterCallback('sunset:casino:wheelSpin', function(source)
     elseif prize.type == 'chips' then
         giveChips(source, prize.value)
     elseif prize.type == 'discount' then
-        notify(source, ('You won a %d%% vehicle discount!'):format(prize.value), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'casino.msg.you_won_a_vehicle_discount', { value = math.floor(tonumber(prize.value) or 0) }), 'success')
     elseif prize.type == 'mystery' then
-        local mysteryCash = math.random(1000, 50000)
+        local mysteryCash = CasinoRNG.Int(1000, 50000)
         exports.sunset_core:AddMoney(source, 'cash', mysteryCash, 'casino_wheel_mystery')
-        prize = { label = ('$%s (Mystery)'):format(mysteryCash), type = 'cash', value = mysteryCash }
+        prize = { label = exports.sunset_core:TFor(source, 'casino.ui.mystery', { mystery_cash = tostring(mysteryCash) }), type = 'cash', value = mysteryCash }
     end
 
-    WheelCooldowns[charId] = now
+    CasinoLog.Record(charId, 'wheel1', 'prize', 0, tonumber(prize.value) or 0, tostring(prize.type))
 
     return {
         prizeIndex = prizeIdx,
@@ -495,7 +539,7 @@ end)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:casino:buyChips', function(source, amount)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
     amount = math.floor(tonumber(amount) or 0)
     if amount < (Cfg.minChipExchange or 100) then
         return nil, { localeKey = 'casino.message.minimum_chip_exchange_is_value', formatArgs = { Cfg.minChipExchange or 100 } }
@@ -521,7 +565,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:buyChips', function(source, 
 end)
 
 exports.sunset_core:RegisterCallback('sunset:casino:sellChips', function(source, amount)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
     amount = math.floor(tonumber(amount) or 0)
     if amount < 1 then return nil, { localeKey = 'casino.message.enter_an_amount_to_sell' } end
 
@@ -554,7 +598,7 @@ end)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:casino:buyDrink', function(source, drinkId)
-    if not nearCasino(source) then return nil, 'You must be at the casino.' end
+    if not nearCasino(source) then return nil, exports.sunset_core:TFor(source, 'casino.err.you_must_be_at_the_casino') end
     drinkId = tostring(drinkId or '')
     local drink = nil
     for _, d in ipairs(Cfg.barDrinks or {}) do
@@ -599,14 +643,38 @@ exports.sunset_core:RegisterCallback('sunset:casino:status', function(source)
         cash = exports.sunset_core:GetMoney(source, 'cash'),
         drinks = Cfg.barDrinks or {},
         prizes = Cfg.luckyWheelPrizes or {},
+        pendingClaimed = (function()
+            local cid = getCharId(source)
+            return cid and CasinoPending.Claim(cid, function(n) return giveChips(source, n) end) or 0
+        end)(),
         wheelCooldownMs = Cfg.luckyWheelCooldownMs or 3600000,
     }
 end)
 
+-- A hand abandoned by disconnect is settled as a forfeit (stake already taken, never paid twice).
 AddEventHandler('playerDropped', function()
     local src = source
+    local g = ActiveBlackjack[src]
+    if g and not g.done then
+        g.done = true
+        CasinoLog.Record(g.charId or 0, 'blackjack', 'forfeit', g.bet, 0, 'dropped')
+    end
     ActiveBlackjack[src] = nil
+    BlackjackStarting[src] = nil
     GameCooldowns[src] = nil
+end)
+
+-- Resource stop mid-hand: refund every unsettled stake exactly once.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    for src, g in pairs(ActiveBlackjack) do
+        if not g.done then
+            g.done = true
+            settleChips(src, g.charId, g.bet, 'blackjack', 'stop_refund')
+            CasinoLog.Record(g.charId or 0, 'blackjack', 'refund', g.bet, g.bet, 'resource_stop')
+        end
+    end
+    ActiveBlackjack = {}
 end)
 
 -- [DISCOVERY] Mirror client probe output into the server log so it can be

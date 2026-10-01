@@ -80,13 +80,13 @@ const Drugs = {
         const sub = $('#drugs-sub');
         if (!body) return;
 
-        const modeNames = { harvest: 'Harvest', process: 'Process Lab', sell: 'Dealer' };
-        if (title) title.textContent = modeNames[this.mode] || 'Drugs';
+        const modeNames = { harvest: I18n.t('ui.drugs.mode_harvest'), process: I18n.t('ui.drugs.mode_process'), sell: I18n.t('ui.drugs.mode_sell') };
+        if (title) title.textContent = modeNames[this.mode] || I18n.t('ui.drugs.title');
 
         const drugs = this.status.drugs || {};
         const entries = Object.entries(drugs);
         if (!entries.length) {
-            body.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,245,235,0.35);">No drug data available.</div>';
+            body.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,245,235,0.35);">${I18n.t('ui.drugs.no_data')}</div>`;
             return;
         }
 
@@ -97,18 +97,18 @@ const Drugs = {
             const spotDrug = spotInfo.drug;
             const drug = spotDrug ? drugs[spotDrug] : null;
             if (sub) sub.textContent = spotInfo.label
-                ? `Field — ${this.esc(spotInfo.label)}`
-                : 'Pick raw materials from the field';
+                ? I18n.t('ui.drugs.field_named', { label: this.esc(spotInfo.label) })
+                : I18n.t('ui.drugs.pick_raw');
             if (!drug) {
-                body.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,245,235,0.35);">This field has nothing to harvest.</div>';
+                body.innerHTML = `<div style="text-align:center;padding:30px;color:rgba(255,245,235,0.35);">${I18n.t('ui.drugs.nothing_to_harvest')}</div>`;
                 return;
             }
             body.innerHTML = `
                 <div class="drugs-drug">
                     <div class="drugs-drug__name">${this.esc(drug.rawLabel || drug.label)}</div>
-                    <div class="drugs-drug__meta"><span>You have: ${drug.rawCount}x</span></div>
+                    <div class="drugs-drug__meta"><span>${I18n.t('ui.drugs.you_have', { count: drug.rawCount })}</span></div>
                     <div class="drugs-drug__actions">
-                        <button type="button" class="drugs-btn" data-drugs-harvest="1">Harvest (5s)</button>
+                        <button type="button" class="drugs-btn" data-drugs-harvest="1">${I18n.t('ui.drugs.harvest_5s')}</button>
                     </div>
                 </div>`;
         } else if (this.mode === 'process') {
@@ -148,12 +148,12 @@ const Drugs = {
                 <div class="drugs-drug">
                     <div class="drugs-drug__name">${this.esc(d.productLabel || d.label)}</div>
                     <div class="drugs-drug__meta">
-                        <span>You have: ${d.productCount}x</span>
-                        <span>Est. $${lo.toLocaleString()}–$${hi.toLocaleString()} each</span>
+                        <span>${I18n.t('ui.drugs.you_have', { count: d.productCount })}</span>
+                        <span>${I18n.t('ui.drugs.est_each', { lo: I18n.number(lo), hi: I18n.number(hi) })}</span>
                     </div>
                     <div class="drugs-drug__actions">
                         ${amountRow}
-                        <button type="button" class="drugs-btn drugs-btn--sell" data-drugs-sell="${this.esc(type)}" data-drugs-disabled="${canSell ? '0' : '1'}" ${canSell && !this.busy ? '' : 'disabled'}>Sell</button>
+                        <button type="button" class="drugs-btn drugs-btn--sell" data-drugs-sell="${this.esc(type)}" data-drugs-disabled="${canSell ? '0' : '1'}" ${canSell && !this.busy ? '' : 'disabled'}>${I18n.t('ui.drugs.sell')}</button>
                     </div>
                 </div>`;
             }).join('');

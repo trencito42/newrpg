@@ -146,7 +146,7 @@ local function applyAtWorkplace(source, jobId)
     -- Verify requirements
     local reqOk, reqReason = checkRequirements(source, char, workplace.requirements)
     if not reqOk then
-        return false, reqReason or 'You do not meet the job requirements.'
+        return false, reqReason or exports.sunset_core:TFor(source, 'jobs.err.you_do_not_meet_the_job')
     end
 
     local currentJob = select(1, Sunset.GetCharacterJob(char))
@@ -161,7 +161,7 @@ local function applyAtWorkplace(source, jobId)
         end
         TriggerClientEvent('sunset:jobs:forceClearHud', source)
         local prevDef = Sunset.CivilianJobs and Sunset.CivilianJobs[currentJob]
-        exports.sunset_core:CommandReply(source, ('Resigned from previous job: %s.'):format(prevDef and prevDef.label or currentJob), 'info')
+        exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'jobs.msg.resigned_from_previous_job', { prev_def = tostring(prevDef and prevDef.label or currentJob) }), 'info')
     end
 
     local setOk = exports.sunset_core:SetJob(source, jobId, 0)
@@ -170,7 +170,7 @@ local function applyAtWorkplace(source, jobId)
     end
 
     local hiredLabel = workplace.jobLabel or (Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label) or jobId
-    exports.sunset_core:CommandReply(source, ('Hired as %s! Speak to the supervisor or check your guide to begin.'):format(hiredLabel), 'success')
+    exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'jobs.msg.hired_as_speak_to_the_supervisor', { hired_label = tostring(hiredLabel) }), 'success')
 
     -- Quest progress trigger
     TriggerEvent('sunset:quest:progress', char.id, 'job_hired', 1, { jobId = jobId })
@@ -205,7 +205,7 @@ local function quitAtWorkplace(source, jobId)
     end
 
     local label = (Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId] and Sunset.JobWorkplaces[jobId].jobLabel) or jobId
-    exports.sunset_core:CommandReply(source, ('You have resigned as %s.'):format(label), 'info')
+    exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'jobs.msg.you_have_resigned_as', { label = tostring(label) }), 'info')
     return true
 end
 

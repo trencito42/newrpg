@@ -347,7 +347,15 @@ end)
 -- so the player is not left in civilian clothes (or with unremovable weapons)
 -- mid-shift.
 CreateThread(function()
-    Wait(2500)
+    -- readiness handshake (was blind Wait(2500)); bounded 15 s, then proceeds as before
+    do
+        local deadline = GetGameTimer() + 15000
+        while GetGameTimer() < deadline do
+            local ok, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
+            if ok and ready then break end
+            Wait(250)
+        end
+    end
     local char = getChar()
     if not char then return end
     local okDuty, onDuty = pcall(function() return exports.sunset_factions:IsOnDuty() end)
@@ -425,7 +433,7 @@ RegisterCommand('fskin', function(_, args)
     end
 
     ApplyFactionLoadout(fid, grade, chosen.model)
-    exports.sunset_ui:Notify(('Uniform / Skin equipped: %s'):format(chosen.label), 'success')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.uniform_skin_equipped', { label = tostring(chosen.label) }), 'success')
 end, false)
 
 CreateThread(function()

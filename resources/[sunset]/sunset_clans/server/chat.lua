@@ -32,19 +32,19 @@ local function runClanChat(source, args)
 
     local row = ClanDisplay.getMembership(cid)
     if not row then
-        return notify(source, 'You are not in a clan', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'clans.msg.you_are_not_in_a_clan'), 'error')
     end
 
     if not checkRateLimit(source, 'clan_chat', CHAT_COOLDOWN_MS) then
-        return notify(source, 'Slow down — message rate limited', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'clans.msg.slow_down_message_rate_limited'), 'error')
     end
 
     local msg = table.concat(args, ' ')
     if msg == '' then
-        return notify(source, 'Usage: /c [message]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'clans.msg.usage_c_message'), 'error')
     end
     if #msg > 256 then
-        return notify(source, 'Message too long', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'clans.msg.message_too_long'), 'error')
     end
 
     local rank = SunsetClans.normalizeRank(row.rank)

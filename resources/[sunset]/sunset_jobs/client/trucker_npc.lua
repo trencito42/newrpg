@@ -50,15 +50,25 @@ end)
 
 -- ── Spawn Laptop Blip ─────────────────────────────────────────
 
+local truckerLaptopBlip = nil
+local function setupLaptopBlip()
+    if truckerLaptopBlip and DoesBlipExist(truckerLaptopBlip) then RemoveBlip(truckerLaptopBlip) end
+    truckerLaptopBlip = Sunset.CreateSafeBlip(LAPTOP_COORDS, {
+        sprite = 521,
+        color = 5,
+        scale = 0.7,
+        name = exports.sunset_core:Translate('jobs.msg.route_laptop'),
+        shortRange = true
+    })
+end
+
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupLaptopBlip()
+end)
+
 CreateThread(function()
-    local lapBlip = AddBlipForCoord(LAPTOP_COORDS.x, LAPTOP_COORDS.y, LAPTOP_COORDS.z)
-    SetBlipSprite(lapBlip, 521)
-    SetBlipColour(lapBlip, 5)
-    SetBlipScale(lapBlip, 0.7)
-    SetBlipAsShortRange(lapBlip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString('Route Laptop')
-    EndTextCommandSetBlipName(lapBlip)
+    Sunset.AwaitGameReady()
+    setupLaptopBlip()
 end)
 
 -- ── Proximity loop for Laptop Terminal ────────────────────────

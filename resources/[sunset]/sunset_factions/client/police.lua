@@ -39,8 +39,8 @@ local function showJailHud(remainingSec)
     local totalSec = math.max(remainingSec, tonumber(jailSentenceTotal) or remainingSec, 60)
     exports.sunset_ui:Send('fishingShow', {
         state = 'jail',
-        title = 'Prison sentence',
-        message = ('Time remaining: %d:%02d'):format(math.floor(remainingSec / 60), remainingSec % 60),
+        title = exports.sunset_core:Translate('factions.ui.prison_sentence'),
+        message = exports.sunset_core:Translate('factions.ui.time_remaining', { value = math.floor(tonumber(math.floor(remainingSec / 60)) or 0), value_2 = string.format('%02d', remainingSec % 60) }),
         icon = 'jail',
         remainingSec = remainingSec,
         totalSec = totalSec,
@@ -101,7 +101,7 @@ local function chatLine(name, message, messageType)
 end
 
 local function actionError(err, fallback)
-    exports.sunset_ui:Notify(err or fallback or 'The action could not be completed. Check your duty, rank, target ID and distance.', 'error', 8000)
+    exports.sunset_ui:Notify(err or fallback or exports.sunset_core:Translate('factions.msg.the_action_could_not_be_completed'), 'error', 8000)
 end
 
 local function nearestBookingPoint(setWaypoint)
@@ -124,7 +124,7 @@ RegisterNetEvent('sunset:police:chatAlert', function(data)
     elseif msgType ~= 'radar' then
         msgType = 'hq'
     end
-    chatLine(data.tag or 'HQ', data.message or 'Police activity nearby.', msgType)
+    chatLine(data.tag or 'HQ', data.message or exports.sunset_core:Translate('factions.msg.police_activity_nearby'), msgType)
 end)
 
 local function kmhFromEntity(entity)
@@ -255,8 +255,8 @@ local function pushRadarUi(extra)
     local info = extra.info or { plate = '--------', name = '—', speed = 0 }
     exports.sunset_ui:Send('radarShow', {
         state = extra.state or 'scan',
-        title = extra.title or 'Mobile Radar',
-        message = extra.message or 'Aim at a vehicle…',
+        title = extra.title or exports.sunset_core:Translate('factions.ui.mobile_radar'),
+        message = extra.message or exports.sunset_core:Translate('factions.ui.aim_at_a_vehicle'),
         limit = radarLimitKmh,
         speed = info.speed or 0,
         plate = info.plate,
@@ -290,10 +290,10 @@ RegisterNetEvent('sunset:police:summonAlert', function(data)
     TriggerEvent('sunset:ui:policeOrder', {
         officer = data.officer or 'Law Enforcement',
         officerId = data.officerId,
-        message = data.message or 'You are being summoned — stop and comply',
+        message = data.message or exports.sunset_core:Translate('factions.ui.you_are_being_summoned_stop_and'),
         duration = 15000,
     })
-    exports.sunset_ui:Notify(data.message or 'You are being summoned by law enforcement — stop and comply', 'warning', 15000)
+    exports.sunset_ui:Notify(data.message or exports.sunset_core:Translate('factions.msg.you_are_being_summoned_by_law'), 'warning', 15000)
     PlaySoundFrontend(-1, 'TIMER_STOP', 'HUD_MINI_GAME_SOUNDSET', true)
 end)
 
@@ -346,7 +346,7 @@ RegisterNetEvent('sunset:police:jail', function(payload)
         Sunset.World.SafeTeleport(vector4(coords.x, coords.y, coords.z, coords.w or 0.0))
     end
 
-    exports.sunset_ui:Notify(('Sentenced — %d minutes remaining'):format(minutes), 'error', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.sentenced_minutes_remaining', { minutes = math.floor(tonumber(minutes) or 0) }), 'error', 8000)
     showJailHud(math.max(0, releaseAt - GetCloudTimeAsInt()))
 end)
 
@@ -438,8 +438,8 @@ CreateThread(function()
                     if speed > radarLimitKmh then
                         pushRadarUi({
                             state = 'lock',
-                            title = 'Radar Lock',
-                            message = ('%s  %d km/h  +%d'):format(info.plate, speed, speed - radarLimitKmh),
+                            title = exports.sunset_core:Translate('factions.ui.radar_lock'),
+                            message = exports.sunset_core:Translate('factions.ui.km_h', { plate = tostring(info.plate), speed = math.floor(tonumber(speed) or 0), value = math.floor(tonumber(speed - radarLimitKmh) or 0) }),
                             info = info,
                         })
                         if now - lastRadarLock >= (cfg.lockCooldownMs or 4000) then
@@ -455,8 +455,8 @@ CreateThread(function()
                                 if #radarHits > 5 then radarHits[6] = nil end
                                 pushRadarUi({
                                     state = 'lock',
-                                    title = 'Radar Lock',
-                                    message = result.message or ('%s caught at %d km/h'):format(info.plate, speed),
+                                    title = exports.sunset_core:Translate('factions.ui.radar_lock'),
+                                    message = result.message or exports.sunset_core:Translate('factions.ui.caught_at_km_h', { plate = tostring(info.plate), speed = math.floor(tonumber(speed) or 0) }),
                                     info = info,
                                 })
                             end
@@ -464,16 +464,16 @@ CreateThread(function()
                     else
                         pushRadarUi({
                             state = 'track',
-                            title = 'Mobile Radar',
-                            message = ('%s in view — legal'):format(info.plate),
+                            title = exports.sunset_core:Translate('factions.ui.mobile_radar'),
+                            message = exports.sunset_core:Translate('factions.ui.in_view_legal', { plate = tostring(info.plate) }),
                             info = info,
                         })
                     end
                 else
                     pushRadarUi({
                         state = 'scan',
-                        title = 'Mobile Radar',
-                        message = 'Aim at a vehicle…',
+                        title = exports.sunset_core:Translate('factions.ui.mobile_radar'),
+                        message = exports.sunset_core:Translate('factions.ui.aim_at_a_vehicle'),
                     })
                 end
             end
@@ -490,15 +490,13 @@ RegisterCommand('su', function(_, args)
 
     if not target then
         local reasons, err = Sunset.AwaitCallback('sunset:policeReasons')
-        chatLine('LSPD', '=== Set Wanted (/su [id] [reason]) ===')
+        chatLine('LSPD', exports.sunset_core:Translate('factions.msg.set_wanted_su_id_reason'))
         if reasons then
             for _, row in ipairs(reasons) do
-                chatLine('LSPD', ('%s — %s (★%d, %d min if arrested, %s)'):format(
-                    row.code, row.label, row.stars, row.jailMinutes,
-                    row.surrenderable == false and 'NO SURRENDER' or 'surrender allowed'))
+                chatLine('LSPD', exports.sunset_core:Translate('factions.msg.min_if_arrested', { code = tostring(row.code), label = tostring(row.label), stars = math.floor(tonumber(row.stars) or 0), jail_minutes = math.floor(tonumber(row.jailMinutes) or 0), value = row.surrenderable == false and exports.sunset_core:Translate('factions.word.no_surrender_2') or exports.sunset_core:Translate('factions.word.surrender_allowed') }))
             end
         else
-            actionError(err, 'Cannot view wanted reasons: go on duty as law enforcement first.')
+            actionError(err, exports.sunset_core:Translate('factions.msg.cannot_view_wanted_reasons_go_on'))
         end
         return
     end
@@ -509,7 +507,7 @@ RegisterCommand('su', function(_, args)
     end
 
     local ok, err = Sunset.AwaitCallback('sunset:policeSetWanted', target, reasonCode)
-    if not ok then actionError(err, 'Wanted charge was not added. Use /su without arguments to see valid reasons.') end
+    if not ok then actionError(err, exports.sunset_core:Translate('factions.msg.wanted_charge_was_not_added_use')) end
 end, false)
 
 RegisterCommand('so', function(_, args)
@@ -519,7 +517,7 @@ RegisterCommand('so', function(_, args)
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeSummon', target)
-    if not ok then actionError(err, 'Stop order was not sent.') end
+    if not ok then actionError(err, exports.sunset_core:Translate('factions.msg.stop_order_was_not_sent')) end
 end, false)
 
 RegisterCommand('clear', function(_, args)
@@ -529,8 +527,8 @@ RegisterCommand('clear', function(_, args)
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeClearWanted', target)
-    if ok then exports.sunset_ui:Notify(('Cleared wanted for #%d'):format(target), 'success')
-    else actionError(err, 'Wanted status was not cleared.') end
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.cleared_wanted_for', { target = math.floor(tonumber(target) or 0) }), 'success')
+    else actionError(err, exports.sunset_core:Translate('factions.msg.wanted_status_was_not_cleared')) end
 end, false)
 
 RegisterCommand('unjail', function(_, args)
@@ -540,8 +538,8 @@ RegisterCommand('unjail', function(_, args)
         return
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeUnjail', target)
-    if ok then exports.sunset_ui:Notify(('Released #%d from jail'):format(target), 'success')
-    else actionError(err, 'Prisoner could not be released.') end
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.released_from_jail', { target = math.floor(tonumber(target) or 0) }), 'success')
+    else actionError(err, exports.sunset_core:Translate('factions.msg.prisoner_could_not_be_released')) end
 end, false)
 
 local activeTracking = nil -- { targetId = number, blip = blip, active = bool }
@@ -555,7 +553,7 @@ local function stopTracking(showNotification)
     activeTracking = nil
     SetWaypointOff()
     if showNotification then
-        exports.sunset_ui:Notify(('GPS tracking stopped for suspect #%d.'):format(targetId or 0), 'info', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.gps_tracking_stopped_for_suspect', { target_id = math.floor(tonumber(targetId or 0) or 0) }), 'info', 5000)
     end
     return true
 end
@@ -575,7 +573,7 @@ local function startTracking(targetId)
 
     local initial, err = Sunset.AwaitCallback('sunset:policeFindWanted', targetId)
     if not initial then
-        return actionError(err, 'Could not track that suspect. Go on duty as law enforcement and use a valid wanted player ID.')
+        return actionError(err, exports.sunset_core:Translate('factions.msg.could_not_track_that_suspect_go'))
     end
 
     local trackObj = {
@@ -593,7 +591,7 @@ local function startTracking(targetId)
     SetBlipScale(blip, 1.0)
     SetBlipAsShortRange(blip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(('Wanted #%d — %s'):format(targetId, initial.name or 'Suspect'))
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('factions.msg.wanted', { target_id = math.floor(tonumber(targetId) or 0), name = initial.name or exports.sunset_core:Translate('factions.word.suspect') }))
     EndTextCommandSetBlipName(blip)
     trackObj.blip = blip
 
@@ -601,8 +599,7 @@ local function startTracking(targetId)
     SetNewWaypoint(initial.x + 0.0, initial.y + 0.0)
 
     exports.sunset_ui:Notify(
-        ('Tracking started on %s (%d) — wanted ★%d (%s). Live GPS route active. Use /cfind to cancel.'):format(
-            initial.name or 'Suspect', targetId, initial.level or 1, initial.reason or 'active'),
+        exports.sunset_core:Translate('factions.msg.tracking_started_on_wanted_live_gps', { name = initial.name or exports.sunset_core:Translate('factions.word.suspect'), target_id = math.floor(tonumber(targetId) or 0), level = math.floor(tonumber(initial.level or 1) or 0), reason = initial.reason or exports.sunset_core:Translate('factions.word.active') }),
         'success', 8000)
 
     CreateThread(function()
@@ -614,7 +611,7 @@ local function startTracking(targetId)
             local updated, updateErr = Sunset.AwaitCallback('sunset:policeFindWanted', current.targetId)
             if not updated then
                 exports.sunset_ui:Notify(
-                    updateErr or ('Tracking lost on suspect #%d (suspect is no longer wanted or offline).'):format(current.targetId),
+                    updateErr or exports.sunset_core:Translate('factions.msg.tracking_lost_on_suspect_suspect_is', { target_id = math.floor(tonumber(current.targetId) or 0) }),
                     'warning', 8000)
                 if activeTracking == current then
                     stopTracking(false)
@@ -663,22 +660,20 @@ end, false)
 RegisterCommand('wanted', function()
     local list, err = Sunset.AwaitCallback('sunset:policeWantedList')
     if not list then
-        actionError(err, 'Wanted list could not be opened.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.wanted_list_could_not_be_opened'))
         return
     end
 
-    chatLine('LSPD', '=== Active Wanted (persisted) ===')
+    chatLine('LSPD', exports.sunset_core:Translate('factions.msg.active_wanted_persisted'))
     if #list == 0 then
-        chatLine('LSPD', 'No active wanted records')
+        chatLine('LSPD', exports.sunset_core:Translate('factions.msg.no_active_wanted_records'))
         return
     end
 
     for _, row in ipairs(list) do
         local mins = math.ceil((row.remainingSec or 0) / 60)
         local status = row.online and ('#' .. tostring(row.id)) or ('CID ' .. tostring(row.characterId) .. ' [offline]')
-        chatLine('LSPD', ('%s %s — ★%d %s — %s (%d min to next star)'):format(
-            status, row.name or 'Unknown', row.level, row.reason or '—',
-            row.surrenderable == false and 'NO SURRENDER' or 'surrender allowed', mins))
+        chatLine('LSPD', exports.sunset_core:Translate('factions.msg.min_to_next_star', { status = tostring(status), name = row.name or exports.sunset_core:Translate('impound.word.unknown'), level = math.floor(tonumber(row.level) or 0), reason = tostring(row.reason or '—'), value = row.surrenderable == false and exports.sunset_core:Translate('factions.word.no_surrender_2') or exports.sunset_core:Translate('factions.word.surrender_allowed'), mins = math.floor(tonumber(mins) or 0) }))
     end
 end, false)
 
@@ -690,7 +685,7 @@ RegisterCommand('arrest', function(_, args)
     end
     local ok, err = Sunset.AwaitCallback('sunset:policeArrest', target)
     if not ok then
-        actionError(err, 'Arrest failed: cuff the wanted suspect, escort them into a booking marker, then retry.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.arrest_failed_cuff_the_wanted_suspect'))
         if type(err) == 'string' and err:find('/booking', 1, true) then nearestBookingPoint(true) end
     end
 end, false)
@@ -698,22 +693,21 @@ end, false)
 RegisterCommand('booking', function()
     local point, distance = nearestBookingPoint(true)
     if not point then
-        return actionError(nil, 'No police booking locations are configured. Report this to staff.')
+        return actionError(nil, exports.sunset_core:Translate('factions.msg.no_police_booking_locations_are_configured'))
     end
-    exports.sunset_ui:Notify(('GPS set to %s (%.0fm). Bring the cuffed wanted suspect into the blue marker, then use /arrest [id].'):format(
-        point.label, distance or 0.0), 'info', 10000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.gps_set_to_m_bring_the', { label = tostring(point.label), distance = string.format('%.0f', distance or 0.0) }), 'info', 10000)
 end, false)
 
 RegisterCommand('backup', function()
     local ok, err = Sunset.AwaitCallback('sunset:policeBackup')
-    if ok then exports.sunset_ui:Notify(('Backup request #%d sent — /cbackup to cancel'):format(ok), 'success')
-    else actionError(err, 'Backup was not sent. Check duty, rank and Dispatch availability.') end
+    if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.backup_request_sent_cbackup_to_cancel', { ok = math.floor(tonumber(ok) or 0) }), 'success')
+    else actionError(err, exports.sunset_core:Translate('factions.msg.backup_was_not_sent_check_duty')) end
 end, false)
 
 RegisterCommand('cbackup', function()
     local ok, err = Sunset.AwaitCallback('sunset:policeCancelBackup')
     if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.backup_request_cancelled'), 'success')
-    else actionError(err, 'Backup could not be cancelled. You may not have an active request.') end
+    else actionError(err, exports.sunset_core:Translate('factions.msg.backup_could_not_be_cancelled_you')) end
 end, false)
 
 local isMdtOpen = false
@@ -766,7 +760,7 @@ RegisterCommand('mdc', function()
 
     local mdcData, err = Sunset.AwaitCallback('sunset:policeMdcData')
     if not mdcData then
-        return actionError(err, 'MDT could not open. Check duty and rank.')
+        return actionError(err, exports.sunset_core:Translate('factions.msg.mdt_could_not_open_check_duty'))
     end
 
     exports.sunset_ui:Send('mdcShow', mdcData)
@@ -791,7 +785,7 @@ end, false)
 
 RegisterCommand('ticket', function(_, args)
     local violations, err = Sunset.AwaitCallback('sunset:policeViolations')
-    if not violations then return actionError(err, 'Cannot open citations: go on duty as law enforcement first.') end
+    if not violations then return actionError(err, exports.sunset_core:Translate('factions.msg.cannot_open_citations_go_on_duty')) end
     exports.sunset_ui:Send('ticketShow', { violations = violations, targetId = tonumber(args[1]) })
     exports.sunset_ui:SetFocus(true, true)
 end, false)
@@ -803,8 +797,8 @@ RegisterCommand('confiscate', function(_, args)
         return
     end
     local removed, err = Sunset.AwaitCallback('sunset:policeConfiscate', target)
-    if not removed then return actionError(err, 'Confiscation failed. Check duty, rank, ID, distance and target inventory.') end
-    chatLine('LSPD', ('=== Confiscated from #%d ==='):format(target))
+    if not removed then return actionError(err, exports.sunset_core:Translate('factions.msg.confiscation_failed_check_duty_rank_id')) end
+    chatLine('LSPD', exports.sunset_core:Translate('factions.msg.confiscated_from', { target = math.floor(tonumber(target) or 0) }))
     for _, row in ipairs(removed) do
         chatLine('LSPD', ('%s x%d'):format(row.label or row.item, row.count))
     end
@@ -813,21 +807,21 @@ end, false)
 
 local function tryStartRadar(requestedLimit)
     if radarActive then
-        return radarFeedback(('Radar is already active at %d km/h. Use /stopradar first.'):format(radarLimitKmh), 'warning')
+        return radarFeedback(exports.sunset_core:Translate('factions.msg.radar_is_already_active_at_km', { radar_limit_kmh = math.floor(tonumber(radarLimitKmh) or 0) }), 'warning')
     end
     local cfg = Sunset.Police and Sunset.Police.radar or {}
     local limit = tonumber(requestedLimit) or cfg.defaultLimitKmh or 90
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(ped, false)
     if vehicle == 0 or GetPedInVehicleSeat(vehicle, -1) ~= ped then
-        return radarFeedback('Sit in the driver seat of an LSPD patrol car, then use /startradar 90.', 'error')
+        return radarFeedback(exports.sunset_core:Translate('factions.msg.sit_in_the_driver_seat_of'), 'error')
     end
     if not isAuthorizedRadarVehicle(vehicle) then
-        return radarFeedback('This is not an LSPD patrol car. Use the MRPD garage or a marked cruiser.', 'error')
+        return radarFeedback(exports.sunset_core:Translate('factions.msg.this_is_not_an_lspd_patrol'), 'error')
     end
     local result, err = Sunset.AwaitCallback('sunset:policeRadarStart', NetworkGetNetworkIdFromEntity(vehicle), limit)
     if not result then
-        radarFeedback(err or 'Cannot start radar. Go on duty as LSPD first.', 'error')
+        radarFeedback(err or exports.sunset_core:Translate('factions.msg.cannot_start_radar_go_on_duty'), 'error')
         return
     end
 
@@ -841,10 +835,10 @@ local function tryStartRadar(requestedLimit)
     radarHits = {}
     pushRadarUi({
         state = 'scan',
-        title = 'Mobile Radar',
-        message = 'Scanning traffic…',
+        title = exports.sunset_core:Translate('factions.ui.mobile_radar'),
+        message = exports.sunset_core:Translate('factions.ui.scanning_traffic'),
     })
-    radarFeedback(('Mobile radar active: %d km/h — anchored vehicle. Stop the radar (/stopradar or from the MDC) to drive.'):format(radarLimitKmh), 'success')
+    radarFeedback(exports.sunset_core:Translate('factions.msg.mobile_radar_active_km_h_anchored', { radar_limit_kmh = math.floor(tonumber(radarLimitKmh) or 0) }), 'success')
 end
 
 RegisterNetEvent('sunset:police:tryStartRadar', function(limit)
@@ -852,7 +846,7 @@ RegisterNetEvent('sunset:police:tryStartRadar', function(limit)
 end)
 
 RegisterNetEvent('sunset:police:tryStopRadar', function()
-    if not radarActive then return radarFeedback('Radar is not active. Start it with /startradar 90.', 'info') end
+    if not radarActive then return radarFeedback(exports.sunset_core:Translate('factions.msg.radar_is_not_active_start_it'), 'info') end
     stopRadar(true)
 end)
 
@@ -869,20 +863,20 @@ RegisterCommand('radar', function(_, args)
 end, false)
 
 RegisterCommand('stopradar', function()
-    if not radarActive then return radarFeedback('Radar is not active. Start it with /startradar 90.', 'info') end
+    if not radarActive then return radarFeedback(exports.sunset_core:Translate('factions.msg.radar_is_not_active_start_it'), 'info') end
     stopRadar(true)
 end, false)
 
 RegisterCommand('radars', function()
     local list, err = Sunset.AwaitCallback('sunset:policeFixedRadars')
-    if not list then return actionError(err, 'Fixed radar locations could not be loaded. Go on duty as law enforcement.') end
-    chatLine('LSPD', '=== Fixed Speed Cameras ===')
+    if not list then return actionError(err, exports.sunset_core:Translate('factions.msg.fixed_radar_locations_could_not_be')) end
+    chatLine('LSPD', exports.sunset_core:Translate('factions.msg.fixed_speed_cameras'))
     if #list == 0 then
-        chatLine('LSPD', 'No fixed cameras configured')
+        chatLine('LSPD', exports.sunset_core:Translate('factions.msg.no_fixed_cameras_configured'))
         return
     end
     for _, row in ipairs(list) do
-        chatLine('LSPD', ('%s — %d mph limit (%.0f, %.0f)'):format(row.label, row.limitMph, row.x, row.y))
+        chatLine('LSPD', exports.sunset_core:Translate('factions.msg.mph_limit', { label = tostring(row.label), limit_mph = math.floor(tonumber(row.limitMph) or 0), value = string.format('%.0f', row.x), y = string.format('%.0f', row.y) }))
     end
 end, false)
 
@@ -902,7 +896,7 @@ AddEventHandler('sunset:nui:ticketIssue', function(data)
         exports.sunset_ui:SetFocus(false, false)
         exports.sunset_ui:Send('ticketHide', {})
         exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.citation_issued'), 'success')
-    else actionError(err, 'Citation was not issued. Check the target ID, violation and distance.') end
+    else actionError(err, exports.sunset_core:Translate('factions.msg.citation_was_not_issued_check_the')) end
 end)
 
 local function getPlayerMugshot(targetServerId)
@@ -948,11 +942,11 @@ AddEventHandler('sunset:ui:mdcToggleBolo', function(data)
     if not data or not data.key then return end
     local res, err = Sunset.AwaitCallback('sunset:policeMdcToggleBolo', data.type, data.key, data.reason, data.notes)
     if res and res.ok then
-        exports.sunset_ui:Notify(res.active and ('BOLO issued for %s.'):format(res.key) or ('BOLO cleared for %s.'):format(res.key), 'success')
+        exports.sunset_ui:Notify(res.active and exports.sunset_core:Translate('factions.msg.bolo_issued_for', { key = tostring(res.key) }) or exports.sunset_core:Translate('factions.msg.bolo_cleared_for', { key = tostring(res.key) }), 'success')
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err or (res and res.error), 'Failed to update BOLO.')
+        actionError(err or (res and res.error), exports.sunset_core:Translate('factions.msg.failed_to_update_bolo'))
     end
 end)
 
@@ -960,11 +954,11 @@ AddEventHandler('sunset:ui:mdcSetUnitStatus', function(data)
     if not data or not data.status then return end
     local res, err = Sunset.AwaitCallback('sunset:policeMdcSetUnitStatus', data.status)
     if res and res.ok then
-        exports.sunset_ui:Notify(('Unit status updated: %s'):format(res.status), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.unit_status_updated', { status = tostring(res.status) }), 'success')
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err or (res and res.error), 'Failed to update unit status.')
+        actionError(err or (res and res.error), exports.sunset_core:Translate('factions.msg.failed_to_update_unit_status'))
     end
 end)
 
@@ -972,11 +966,11 @@ AddEventHandler('sunset:ui:mdcSetCallStatus', function(data)
     if not data or not data.callId or not data.action then return end
     local res, err = Sunset.AwaitCallback('sunset:policeMdcSetCallStatus', data.callId, data.action)
     if res and res.ok then
-        exports.sunset_ui:Notify(data.action == 'respond' and 'Attached to 112 emergency (10-97 En Route).' or '112 call cleared (10-98 Complete).', 'success')
+        exports.sunset_ui:Notify(data.action == 'respond' and exports.sunset_core:Translate('factions.msg.attached_to_112_emergency_10_97') or exports.sunset_core:Translate('factions.msg.112_call_cleared_10_98_complete'), 'success')
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err or (res and res.error), 'Failed to update call status.')
+        actionError(err or (res and res.error), exports.sunset_core:Translate('factions.msg.failed_to_update_call_status'))
     end
 end)
 
@@ -992,7 +986,7 @@ AddEventHandler('sunset:ui:mdcSetUnitWaypoint', function(data)
     if data and data.x and data.y then
         SetNewWaypoint(tonumber(data.x) + 0.0, tonumber(data.y) + 0.0)
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
-        exports.sunset_ui:Notify(('GPS route set to Unit %s.'):format(data.name or 'Officer'), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.gps_route_set_to_unit', { name = data.name or exports.sunset_core:Translate('factions.word.officer') }), 'success')
     end
 end)
 
@@ -1000,7 +994,7 @@ AddEventHandler('sunset:ui:mdcBookingGps', function()
     local point, distance = nearestBookingPoint(true)
     if point then
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
-        exports.sunset_ui:Notify(('GPS set to %s (%.0fm).'):format(point.label, distance or 0.0), 'info', 8000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.gps_set_to_m', { label = tostring(point.label), distance = string.format('%.0f', distance or 0.0) }), 'info', 8000)
     else
         exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.no_booking_points_found'), 'error')
     end
@@ -1016,12 +1010,12 @@ AddEventHandler('sunset:ui:mdcRequestBackup', function(data)
             exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.message.10_99_panic_alarm_broadcasted_code_3_distress_active'), 'error', 10000)
         else
             PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-            exports.sunset_ui:Notify(('Backup request #%d sent (%s)'):format(ok, priority == 'code3' and 'CODE 3' or 'Code 2'), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.backup_request_sent', { ok = math.floor(tonumber(ok) or 0), value = priority == 'code3' and exports.sunset_core:Translate('factions.msg.code_3') or exports.sunset_core:Translate('factions.msg.code_2') }), 'success')
         end
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'Backup was not sent. Check duty and availability.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.backup_was_not_sent_check_duty_2'))
     end
 end)
 
@@ -1033,7 +1027,7 @@ AddEventHandler('sunset:ui:mdcCancelBackup', function()
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'No active backup request to cancel.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.no_active_backup_request_to_cancel'))
     end
 end)
 
@@ -1042,14 +1036,14 @@ AddEventHandler('sunset:ui:mdcSetWanted', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:policeSetWanted', tonumber(data.targetId), data.reasonCode)
     if ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify(('Wanted charge added to #%d (%s)'):format(tonumber(data.targetId), data.reasonCode), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.wanted_charge_added_to', { target_id = math.floor(tonumber(tonumber(data.targetId)) or 0), reason_code = tostring(data.reasonCode) }), 'success')
         -- Refresh citizen dossier if open
         local citizenResult = Sunset.AwaitCallback('sunset:policeMdcLookup', tostring(data.targetId))
         if citizenResult then exports.sunset_ui:Send('mdcUpdateCitizen', { citizen = citizenResult }) end
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'Could not add wanted charge.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.could_not_add_wanted_charge'))
     end
 end)
 
@@ -1067,7 +1061,7 @@ AddEventHandler('sunset:ui:mdcClearWanted', function(data)
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'Wanted status could not be cleared.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.wanted_status_could_not_be_cleared'))
     end
 end)
 
@@ -1077,7 +1071,7 @@ AddEventHandler('sunset:ui:mdcSummon', function(data)
     if ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
     else
-        actionError(err, 'Stop order failed to send.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.stop_order_failed_to_send'))
     end
 end)
 
@@ -1087,9 +1081,9 @@ AddEventHandler('sunset:ui:mdcFindWanted', function(data)
     if result then
         SetNewWaypoint(result.x + 0.0, result.y + 0.0)
         PlaySoundFrontend(-1, 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET', true)
-        exports.sunset_ui:Notify(('GPS set on %s (#%d) — ★%d %s'):format(result.name or 'Suspect', tonumber(data.targetId), result.level or 1, result.reason or ''), 'success', 10000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.gps_set_on', { name = result.name or exports.sunset_core:Translate('factions.word.suspect'), target_id = math.floor(tonumber(tonumber(data.targetId)) or 0), level = math.floor(tonumber(result.level or 1) or 0), reason = tostring(result.reason or '') }), 'success', 10000)
     else
-        actionError(err, 'Could not locate suspect.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.could_not_locate_suspect'))
     end
 end)
 
@@ -1098,13 +1092,13 @@ AddEventHandler('sunset:ui:mdcUnjail', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:policeUnjail', tonumber(data.targetId))
     if ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify(('Released #%d from custody'):format(tonumber(data.targetId)), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.released_from_custody', { target_id = math.floor(tonumber(tonumber(data.targetId)) or 0) }), 'success')
         local citizenResult = Sunset.AwaitCallback('sunset:policeMdcLookup', tostring(data.targetId))
         if citizenResult then exports.sunset_ui:Send('mdcUpdateCitizen', { citizen = citizenResult }) end
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'Prisoner could not be released.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.prisoner_could_not_be_released'))
     end
 end)
 
@@ -1113,13 +1107,13 @@ AddEventHandler('sunset:ui:mdcIssueCitation', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:policeIssueTicket', tonumber(data.targetId), tonumber(data.amount) or 100, data.reason, data.reasonCode)
     if ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify(('Citation #%d issued to #%d'):format(ok, tonumber(data.targetId)), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.citation_issued_to', { ok = math.floor(tonumber(ok) or 0), target_id = math.floor(tonumber(tonumber(data.targetId)) or 0) }), 'success')
         local citizenResult = Sunset.AwaitCallback('sunset:policeMdcLookup', tostring(data.targetId))
         if citizenResult then exports.sunset_ui:Send('mdcUpdateCitizen', { citizen = citizenResult }) end
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(err, 'Failed to issue citation.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.failed_to_issue_citation'))
     end
 end)
 
@@ -1128,13 +1122,13 @@ AddEventHandler('sunset:ui:mdcSuspendLicense', function(data)
     local res, err = Sunset.AwaitCallback('sunset:policeMdcSuspendLicense', tonumber(data.targetId), data.licenseType or 'driver', data.reason)
     if res and res.ok then
         PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
-        exports.sunset_ui:Notify(('License successfully suspended for #%d (%s)'):format(tonumber(data.targetId), data.licenseType or 'driver'), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.license_successfully_suspended_for', { target_id = math.floor(tonumber(tonumber(data.targetId)) or 0), license_type = data.licenseType or exports.sunset_core:Translate('factions.word.driver') }), 'success')
         local citizenResult = Sunset.AwaitCallback('sunset:policeMdcLookup', tostring(data.targetId))
         if citizenResult then exports.sunset_ui:Send('mdcUpdateCitizen', { citizen = citizenResult }) end
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
     else
-        actionError(res and res.error or err, 'Could not suspend the license.')
+        actionError(res and res.error or err, exports.sunset_core:Translate('factions.msg.could_not_suspend_the_license'))
     end
 end)
 
@@ -1153,7 +1147,7 @@ end)
 
 RegisterNetEvent('sunset:dispatch:112CallAlert', function(callData)
     PlaySoundFrontend(-1, 'Event_Start_Text', 'GTAO_FM_Events_Soundset', true)
-    exports.sunset_ui:Notify(('🚨 112 CALL: %s at %s (%s)'):format(callData.category or 'Emergency', callData.street or 'Unknown', callData.caller or 'Citizen'), 'warning', 10000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.112_call_at', { category = callData.category or exports.sunset_core:Translate('factions.word.emergency'), street = callData.street or exports.sunset_core:Translate('impound.word.unknown'), caller = callData.caller or exports.sunset_core:Translate('factions.word.citizen') }), 'warning', 10000)
     if isMdtOpen then
         local freshData = Sunset.AwaitCallback('sunset:policeMdcData')
         if freshData then exports.sunset_ui:Send('mdcRefresh', freshData) end
@@ -1171,7 +1165,7 @@ AddEventHandler('sunset:ui:ticketPayRequest', function(data)
         -- leaving it open with no other close path trapped the cursor.
         exports.sunset_ui:Send('ticketReceiveHide', {})
         exports.sunset_ui:SetFocus(false, false)
-        actionError(err, 'Citation payment failed. Check that it is still active and that you have enough bank or cash funds.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.citation_payment_failed_check_that_it'))
     end
 end)
 
@@ -1184,7 +1178,7 @@ AddEventHandler('sunset:ui:ticketRefuseRequest', function(data)
         -- [AUDIT P8-11] Same guaranteed close on the refuse failure path.
         exports.sunset_ui:Send('ticketReceiveHide', {})
         exports.sunset_ui:SetFocus(false, false)
-        actionError(err, 'Citation could not be refused. It may already have been handled.')
+        actionError(err, exports.sunset_core:Translate('factions.msg.citation_could_not_be_refused_it'))
     end
 end)
 
@@ -1266,7 +1260,7 @@ CreateThread(function()
                         false, false, 2, false, nil, nil, false)
                     if distance < 4.0 then
                         BeginTextCommandDisplayHelp('STRING')
-                        AddTextComponentSubstringPlayerName('Police booking: cuff + wanted + /arrest [id]')
+                        AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('factions.msg.police_booking_cuff_wanted_arrest_id'))
                         EndTextCommandDisplayHelp(0, false, true, -1)
                     end
                 end
@@ -1317,7 +1311,7 @@ CreateThread(function()
         SetBlipAsShortRange(blip, true)
         BeginTextCommandSetBlipName('STRING')
         local limit = radar.limitKmh or math.floor((radar.limitMph or 50) * 1.60934)
-        AddTextComponentSubstringPlayerName(('Radar Fix [%d km/h]'):format(limit))
+        AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('factions.msg.radar_fix_km_h', { limit = math.floor(tonumber(limit) or 0) }))
         EndTextCommandSetBlipName(blip)
         fixedRadarBlips[idx] = blip
     end
@@ -1344,7 +1338,7 @@ CreateThread(function()
                             clientRadarCooldowns[idx] = now
 
                             if isEmergencyExempt(ped, veh) then
-                                exports.sunset_ui:Notify(('RADAR FIX: Authorized emergency vehicle (%d km/h — exempt from the fine).'):format(speedKmh), 'info', 4000)
+                                exports.sunset_ui:Notify(exports.sunset_core:Translate('factions.msg.radar_fix_authorized_emergency_vehicle_km', { speed_kmh = math.floor(tonumber(speedKmh) or 0) }), 'info', 4000)
                             else
                                 CreateThread(function()
                                     PlaySoundFrontend(-1, 'Camera_Shoot', 'Phone_SoundSet_Default', true)
@@ -1384,7 +1378,7 @@ RegisterCommand('testradaralert', function(_, args)
     local fine = math.min(1500, math.max(100, 100 + over * 12))
     exports.sunset_ui:Send('radarAlertShow', {
         type = 'fixed',
-        title = 'RADAR FIX — DEL PERRO FREEWAY',
+        title = exports.sunset_core:Translate('factions.ui.radar_fix_del_perro_freeway'),
         location = 'Del Perro Freeway',
         limit = limit,
         speed = speed,

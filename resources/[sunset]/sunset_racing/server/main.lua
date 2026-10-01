@@ -196,9 +196,7 @@ exports.sunset_core:RegisterCallback('sunset:racing:join', function(source, rout
 
     -- Notify lobby
     for src in pairs(Lobbies[routeId].players) do
-        notify(src, ('%s joined %s lobby (%d/%d).'):format(
-            exports.sunset_core:GetPlayerDisplayName(src) or 'Someone',
-            route.label, count, Cfg.minMultiPlayers or 2), 'info')
+        notify(src, exports.sunset_core:TFor(src, 'racing.msg.joined_lobby', { player_display_name = exports.sunset_core:GetPlayerDisplayName(src) or exports.sunset_core:TFor(src, 'racing.word.someone'), label = tostring(route.label), count = math.floor(tonumber(count) or 0), min_multi_players = math.floor(tonumber(Cfg.minMultiPlayers or 2) or 0) }), 'info')
     end
 
     -- Auto-start countdown when minimum reached
@@ -228,7 +226,7 @@ exports.sunset_core:RegisterCallback('sunset:racing:leave', function(source)
 
     -- Refund entry fee (once)
     exports.sunset_core:AddMoney(source, 'cash', Cfg.entryFee or 1000, 'race_refund')
-    notify(source, 'Left the race lobby. Entry fee refunded.', 'info')
+    notify(source, exports.sunset_core:TFor(source, 'racing.msg.left_the_race_lobby_entry_fee'), 'info')
     dlog(('leave src=%d route=%s refunded'):format(source, routeId))
     return true
 end)
@@ -540,14 +538,14 @@ function endRace(reason)
             end
             if not plausible then
                 print(('[RACING] solo payout withheld src=%s reason=implausible_time'):format(tostring(winner)))
-                notify(winner, ('⏱ Time trial complete! (Time not verified, no reward)'), 'info', 8000)
+                notify(winner, (exports.sunset_core:TFor(winner, 'racing.msg.time_trial_complete_time_not_verified')), 'info', 8000)
             elseif charId and (not SoloCooldowns[charId] or (now - SoloCooldowns[charId]) > (Cfg.soloCooldownMs or 300000)) then
                 if not exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward') then
                     exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward_retry')
                 end
-                notify(winner, ('⏱ Time trial complete! Reward: $%s.'):format(Cfg.soloReward or 500), 'success', 10000)
+                notify(winner, exports.sunset_core:TFor(winner, 'racing.msg.time_trial_complete_reward', { solo_reward = tostring(Cfg.soloReward or 500) }), 'success', 10000)
             else
-                notify(winner, '⏱ Time trial complete! (Reward on cooldown)', 'info', 8000)
+                notify(winner, exports.sunset_core:TFor(winner, 'racing.msg.time_trial_complete_reward_on_cooldown'), 'info', 8000)
             end
             if charId then SoloCooldowns[charId] = now end
         else
@@ -558,9 +556,9 @@ function endRace(reason)
                 and not exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize_retry') then
                 print(('[RACING] CRITICAL: prize $%d payout failed for src %s - manual compensation required'):format(prize, tostring(winner)))
             end
-            notify(winner, ('🏆 You won the race! Prize: $%s.'):format(prize), 'success', 10000)
+            notify(winner, exports.sunset_core:TFor(winner, 'racing.msg.you_won_the_race_prize', { prize = tostring(prize) }), 'success', 10000)
             for i = 2, #ActiveRace.finished do
-                notify(ActiveRace.finished[i], ('Race finished — position #%d.'):format(i), 'info', 8000)
+                notify(ActiveRace.finished[i], exports.sunset_core:TFor(ActiveRace.finished[i], 'racing.msg.race_finished_position', { index = math.floor(tonumber(i) or 0) }), 'info', 8000)
             end
         end
 
@@ -619,7 +617,7 @@ exports('CancelPlayerRace', cancelPlayerRace)
 
 exports.sunset_core:RegisterCallback('sunset:racing:quit', function(source)
     if not ActiveRace then return false, { localeKey = 'racing.message.no_race_in_progress' } end
-    if cancelPlayerRace(source, 'You abandoned the race.') then
+    if cancelPlayerRace(source, exports.sunset_core:TFor(source, 'racing.msg.you_abandoned_the_race')) then
         return true
     end
     return false, { localeKey = 'racing.message.you_are_not_actively_racing' }
@@ -628,10 +626,10 @@ end)
 -- [JOBS AUDIT] A downed/jailed racer stayed in the single global race until the 600s timeout,
 -- blocking every other racer. End their participation like /quitrace.
 AddEventHandler('sunset:death:playerDowned', function(src)
-    cancelPlayerRace(src, 'You were downed - race over.')
+    cancelPlayerRace(src, exports.sunset_core:TFor(src, 'racing.msg.you_were_downed_race_over'))
 end)
 AddEventHandler('sunset:faction:playerJailed', function(src)
-    cancelPlayerRace(src, 'You were jailed - race over.')
+    cancelPlayerRace(src, exports.sunset_core:TFor(src, 'racing.msg.you_were_jailed_race_over'))
 end)
 
 -- ═══ DISCONNECT ═══
@@ -696,7 +694,7 @@ end)
 exports('StartRaceNight', function()
     RaceNightActive = true
     RaceNightPoints = {}
-    broadcast('🏁 Race Night is LIVE! Head to the race hub and press E to race.', 'success')
+    broadcast({ localeKey = 'racing.msg.race_night_is_live_head_to' }, 'success')
 end)
 
 exports('EndRaceNight', function()
@@ -715,8 +713,7 @@ exports('EndRaceNight', function()
                 if getCharId(src) == charId then
                     exports.sunset_core:AddMoney(src, 'cash', reward.cash, 'race_night_reward')
                     pcall(function() exports.sunset_core:AddXP(src, reward.xp) end)
-                    notify(src, ('🏆 Race Night complete! %s: $%s + %d XP (%d pts).'):format(
-                        reward.label, reward.cash, reward.xp, points), 'success', 12000)
+                    notify(src, exports.sunset_core:TFor(src, 'racing.msg.race_night_complete_xp_pts', { label = tostring(reward.label), cash = tostring(reward.cash), xp = math.floor(tonumber(reward.xp) or 0), points = math.floor(tonumber(points) or 0) }), 'success', 12000)
                     rewarded = rewarded + 1
                     break
                 end
@@ -724,7 +721,7 @@ exports('EndRaceNight', function()
         end
     end
 
-    broadcast(('🏁 Race Night ended. %d racers rewarded.'):format(rewarded), 'info')
+    broadcast({ localeKey = 'racing.msg.race_night_ended_racers_rewarded', params = { rewarded = math.floor(tonumber(rewarded) or 0) } }, 'info')
     RaceNightPoints = {}
 end)
 

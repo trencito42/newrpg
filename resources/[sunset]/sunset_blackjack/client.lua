@@ -260,20 +260,20 @@ Citizen.CreateThread(function()
 
 		if renderTime == true and timeLeft ~= nil then
 			if timeLeft > 0 then
-				DrawTimerBar(barCount, "TIME", s2m(timeLeft))
+				DrawTimerBar(barCount, exports.sunset_core:Translate('blackjack.msg.time'), s2m(timeLeft))
 			end
 		end
 
 		if renderBet == true then
-			DrawTimerBar(barCount, "BET", bet)
+			DrawTimerBar(barCount, exports.sunset_core:Translate('blackjack.msg.bet'), bet)
 		end
 
 		if renderHand == true then
 			if #splitHand > 0 then
-				DrawTimerBar(barCount, "SPLIT", handValue(splitHand))
+				DrawTimerBar(barCount, exports.sunset_core:Translate('blackjack.msg.split'), handValue(splitHand))
 			end
-			DrawTimerBar(barCount, "HAND", handValue(hand))
-			DrawTimerBar(barCount, "DEALER", dealerValue[g_seat])
+			DrawTimerBar(barCount, exports.sunset_core:Translate('blackjack.msg.hand'), handValue(hand))
+			DrawTimerBar(barCount, exports.sunset_core:Translate('blackjack.msg.dealer'), dealerValue[g_seat])
 		end
 		
 		if atTable == true then
@@ -322,7 +322,7 @@ Citizen.CreateThread(function()
 				SetTextOutline()
 				SetTextCentre(1)
 				SetTextEntry("STRING")
-				AddTextComponentString("HAND VALUE: "..handValue(hand))
+				AddTextComponentString(exports.sunset_core:Translate('blackjack.msg.hand_value', { hand_value = tostring(handValue(hand)) }))
 				DrawText(0.90, 0.15)
 				
 				for i,v in ipairs(hand) do
@@ -351,7 +351,7 @@ Citizen.CreateThread(function()
 					SetTextOutline()
 					SetTextCentre(1)
 					SetTextEntry("STRING")
-					AddTextComponentString("CAN SPLIT HAND")
+					AddTextComponentString(exports.sunset_core:Translate('blackjack.msg.can_split_hand'))
 					DrawText(0.90, 0.125)
 				end
 				
@@ -928,7 +928,7 @@ AddEventHandler("BLACKJACK:RequestBets", function(index, _timeLeft)
 					end
 					return
 				else
-					DisplayHelpText("You don't have enough money for the bet.", 5000)
+					DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_don_t_have_enough_money'), 5000)
 				end
 			end
 		end
@@ -1106,7 +1106,7 @@ AddEventHandler("BLACKJACK:RequestMove", function(_timeLeft)
 
 					return
 				else
-					DisplayHelpText("You don't have enough money to double down.", 5000)
+					DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_don_t_have_enough_money_2'), 5000)
 				end
 			end
 			if IsControlJustPressed(1, 209) and CanSplitHand(hand) == true then
@@ -1165,7 +1165,7 @@ AddEventHandler("BLACKJACK:RequestMove", function(_timeLeft)
 
 					return
 				else
-					DisplayHelpText("You don't have enough money to split.", 5000)
+					DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_don_t_have_enough_money_3'), 5000)
 				end
 			end
 			
@@ -1184,11 +1184,11 @@ AddEventHandler("BLACKJACK:GameEndReaction", function(result)
 	Citizen.CreateThread(function()
 		
 		if #hand == 2 and handValue(hand) == 21 and result == "good" then
-			DisplayHelpText("You have Blackjack!", 5000)
+			DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_have_blackjack'), 5000)
 		elseif handValue(hand) > 21 and result ~= "good" then
-			DisplayHelpText("You went bust.", 5000)
+			DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_went_bust'), 5000)
 		else
-			DisplayHelpText("You "..resultNames[result].." with "..handValue(hand)..".", 5000)
+			DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.you_with', { result_names = tostring(resultNames[result]), hand_value = tostring(handValue(hand)) }), 5000)
 		end
 		
 		hand = {}
@@ -1394,9 +1394,9 @@ function ProcessTables()
 
 						if GetDistanceBetweenCoords(coords, GetEntityCoords(PlayerPedId()), true) < 1.5 and not IsSeatOccupied(coords, 0.5) and canSit then
 							if highStakes then
-								DisplayHelpText("Press ~INPUT_CONTEXT~ to play High-Limit Blackjack.")
+								DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.press_input_context_to_play_high'))
 							else
-								DisplayHelpText("Press ~INPUT_CONTEXT~ to play Blackjack.")
+								DisplayHelpText(exports.sunset_core:Translate('blackjack.msg.press_input_context_to_play_blackjack'))
 							end
 							
 							if _DEBUG == true then
@@ -1411,7 +1411,7 @@ function ProcessTables()
 								SetTextEntry("STRING")
 								SetTextCentre(1)
 								SetDrawOrigin(cord.x, cord.y, cord.z)
-								AddTextComponentString("table = "..i)
+								AddTextComponentString(exports.sunset_core:Translate('blackjack.msg.table', { index = tostring(i) }))
 								DrawText(0.0, 0.0)
 								ClearDrawOrigin()
 							end
@@ -1578,7 +1578,7 @@ Citizen.CreateThread(function()
 		Citizen.CreateThread(CreatePeds)
 	else
 		ThefeedSetAnimpostfxColor(255, 0, 0, 255)
-		Notification("This server is missing objects required for KGV-Blackjack!", nil, true)
+		Notification(exports.sunset_core:Translate('blackjack.msg.this_server_is_missing_objects_required'), nil, true)
 	end
 end)
 

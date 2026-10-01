@@ -16,7 +16,6 @@
 
 local FP_SELF_LEAVE = 60
 local FP_KICK = 60
-local FP_JOIN_BLOCK_LABEL = 'You are faction-punished (FP)'
 
 FactionManagement = FactionManagement or {}
 
@@ -91,8 +90,10 @@ end
 function FactionManagement.assertCanJoin(characterId)
     local fp, reason = FactionManagement.getFP(characterId)
     if fp > 0 then
-        return false, ('%s: %d FP remaining (%s). FP decays by 1 each payday; a leader can pardon you.'):format(
-            FP_JOIN_BLOCK_LABEL, fp, reason or 'no reason')
+        return false, { localeKey = 'factions.err.fp_join_blocked', params = {
+            fp = math.floor(tonumber(fp) or 0),
+            reason = reason or { localeKey = 'factions.word.no_reason' },
+        } }
     end
     return true
 end
@@ -117,7 +118,7 @@ exports.sunset_core:RegisterCallback('sunset:factionResignSubmit', function(sour
         'INSERT INTO faction_resignations (faction_id, character_id, reason) VALUES (?, ?, ?)',
         { factionId, char.id, reason == '' and nil or reason })
     FactionCore.auditLog(factionId, char.id, 'resign_submitted', char.id, { reason = reason })
-    FactionCore.broadcastManagement(factionId, source, 'submitted a resignation request.')
+    FactionCore.broadcastManagement(factionId, source, { localeKey = 'factions.msg.submitted_a_resignation_request' })
     return true
 end)
 
@@ -185,7 +186,7 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
         if (tonumber(claimed) or 0) < 1 then return nil, { localeKey = 'factions.message.that_resignation_request_no_longer_exists' } end
         FactionCore.auditLog(factionId, char.id, 'resign_declined', targetCharId, {})
         local targetName = FactionCore.memberDisplayName(targetCharId)
-        FactionCore.broadcastManagement(factionId, source, ('declined the resignation of %s.'):format(targetName))
+        FactionCore.broadcastManagement(factionId, source, { localeKey = 'factions.msg.declined_the_resignation_of', params = { target_name = tostring(targetName) } })
         return true
     end
 
@@ -231,7 +232,7 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     local targetName = FactionCore.memberDisplayName(targetCharId)
     FactionCore.auditLog(factionId, char.id, withFp and 'resign_accepted_fp' or 'resign_accepted', targetCharId, {})
     FactionCore.broadcastManagement(factionId, source,
-        ('accepted the resignation of %s%s.'):format(targetName, withFp and ' (with FP)' or ''))
+        { localeKey = withFp and 'factions.msg.accepted_the_resignation_of_fp' or 'factions.msg.accepted_the_resignation_of', params = { target_name = tostring(targetName) } })
     if targetSource then
         TriggerClientEvent('sunset:client:notify', targetSource,
             withFp and ('Your resignation was accepted WITH faction punish (%d FP).'):format(FP_KICK)
@@ -252,7 +253,7 @@ exports.sunset_core:RegisterCallback('sunset:factionPardonFP', function(source, 
     if fp <= 0 then return nil, { localeKey = 'factions.message.that_character_has_no_fp_to_pardon' } end
     FactionManagement.setFP(targetCharacterId, 0)
     FactionCore.auditLog(factionId, char.id, 'fp_pardon', targetCharacterId, { previousFp = fp })
-    FactionCore.notify(source, ('Pardoned %d FP for %s.'):format(fp, FactionCore.memberDisplayName(targetCharacterId)), 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.pardoned_fp_for', { fp = math.floor(tonumber(fp) or 0), member_display_name = tostring(FactionCore.memberDisplayName(targetCharacterId)) }), 'success')
     return true
 end)
 

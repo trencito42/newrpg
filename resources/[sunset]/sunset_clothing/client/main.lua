@@ -290,7 +290,7 @@ AddEventHandler('sunset:nui:wardrobePurchase', function()
         local amount = cartTotal
         local paid, payErr = Sunset.AwaitCallback('sunset:payAppearance', amount)
         if not paid then
-            notify(payErr or 'Not enough money', 'error')
+            notify(payErr or exports.sunset_core:Translate('economy.message.not_enough_money'), 'error')
             return
         end
         local saved, saveErr = persistWardrobe()
@@ -298,11 +298,11 @@ AddEventHandler('sunset:nui:wardrobePurchase', function()
             -- [CLOTHING FIX B4] Money was taken but the save failed: refund via
             -- the server so the player never loses cash silently.
             Sunset.AwaitCallback('sunset:refundAppearance', amount)
-            notify(saveErr or 'Could not save appearance. You were refunded.', 'error')
+            notify(saveErr or exports.sunset_core:Translate('clothing.msg.could_not_save_appearance_you_were'), 'error')
             restoreSnapshot()
             return
         end
-        notify(('Outfit purchased ($%s)'):format(amount), 'success')
+        notify(exports.sunset_core:Translate('clothing.msg.outfit_purchased', { amount = tostring(amount) }), 'success')
     end)
 end)
 
@@ -322,7 +322,7 @@ AddEventHandler('sunset:nui:clothingApply', function(data)
         if true then -- [SEC3] barber always pays; server enforces token on saveAppearance
             local ok, err = Sunset.AwaitCallback('sunset:payAppearance', 50)
             if not ok then
-                notify(err or 'Not enough money', 'error')
+                notify(err or exports.sunset_core:Translate('economy.message.not_enough_money'), 'error')
                 return
             end
         end
@@ -334,7 +334,7 @@ AddEventHandler('sunset:nui:clothingApply', function(data)
         appearance.hair.texture = 0
         local saved, saveErr = Sunset.AwaitCallback('sunset:saveAppearance', appearance, char.gender, char.id)
         if not saved then
-            notify(saveErr or 'Could not save appearance', 'error')
+            notify(saveErr or exports.sunset_core:Translate('clothing.msg.could_not_save_appearance'), 'error')
             restoreSnapshot()
             return
         end
@@ -401,7 +401,7 @@ RegisterCommand('wardrobe', function()
     if allowed then
         openWardrobe(fromHouse)
     else
-        notify(msg or 'You cannot open the wardrobe here.', 'error')
+        notify(msg or exports.sunset_core:Translate('clothing.msg.you_cannot_open_the_wardrobe_here'), 'error')
     end
 end, false)
 
@@ -471,9 +471,9 @@ RegisterCommand('outfits', function(_, args)
         local snapshot = SunsetAppearance.GetClothingSnapshot(PlayerPedId())
         local ok, kind = Sunset.AwaitCallback('sunset:outfits:save', name, snapshot)
         if ok then
-            notify(kind == 'existing' and 'Outfit updated.' or 'Outfit saved.', 'success')
+            notify(kind == 'existing' and exports.sunset_core:Translate('clothing.msg.outfit_updated') or exports.sunset_core:Translate('clothing.msg.outfit_saved'), 'success')
         else
-            notify(kind or 'Could not save the outfit.', 'error')
+            notify(kind or exports.sunset_core:Translate('clothing.msg.could_not_save_the_outfit'), 'error')
         end
         return
     end
@@ -483,8 +483,8 @@ RegisterCommand('outfits', function(_, args)
         local idx = tonumber(args[2])
         if not res or not idx or not res.outfits[idx] then notify(exports.sunset_core:Translate('clothing.message.invalid_number_use_outfits_list'), 'error') return end
         local ok, err = Sunset.AwaitCallback('sunset:outfits:equip', res.outfits[idx].id)
-        if ok then notify(('Outfit "%s" equipped.'):format(res.outfits[idx].name), 'success')
-        else notify(err or 'Failed to equip the outfit.', 'error') end
+        if ok then notify(exports.sunset_core:Translate('clothing.msg.outfit_equipped', { name = tostring(res.outfits[idx].name) }), 'success')
+        else notify(err or exports.sunset_core:Translate('clothing.msg.failed_to_equip_the_outfit'), 'error') end
         return
     end
 
@@ -493,7 +493,7 @@ RegisterCommand('outfits', function(_, args)
         local idx = tonumber(args[2])
         if not res or not idx or not res.outfits[idx] then notify(exports.sunset_core:Translate('clothing.message.invalid_number'), 'error') return end
         local ok = Sunset.AwaitCallback('sunset:outfits:delete', res.outfits[idx].id)
-        notify(ok and 'Outfit deleted.' or 'Delete failed.', ok and 'success' or 'error')
+        notify(ok and exports.sunset_core:Translate('clothing.msg.outfit_deleted') or exports.sunset_core:Translate('clothing.msg.delete_failed'), ok and 'success' or 'error')
         return
     end
 

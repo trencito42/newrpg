@@ -157,7 +157,7 @@ local function flagEconomy(src, charId, row)
     end
 
     if kickNow and src and GetPlayerName(src) then
-        DropPlayer(src, 'Disconnected: economy anomaly detected. Contact staff if this was a mistake.')
+        DropPlayer(src, exports.sunset_core:TFor(src, 'anticheat.msg.disconnected_economy_anomaly_detected_contac'))
     end
 end
 

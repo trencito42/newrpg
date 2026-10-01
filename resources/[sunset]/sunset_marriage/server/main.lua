@@ -80,8 +80,8 @@ exports.sunset_core:RegisterCallback('sunset:marriage:propose', function(source,
     PendingProposals[targetId] = { from = source, fromCharId = myCharId, expiresAt = os.time() + 120 }
 
     local myName = exports.sunset_core:GetPlayerDisplayName(source) or 'Someone'
-    notify(targetId, ('💍 %s proposed to you! Accept or decline within 2 minutes.'):format(myName), 'success', 15000)
-    notify(source, 'Proposal sent! Waiting for their answer...', 'info')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'marriage.msg.proposed_to_you_accept_or_decline', { my_name = tostring(myName) }), 'success', 15000)
+    notify(source, exports.sunset_core:TFor(source, 'marriage.msg.proposal_sent_waiting_for_their_answer'), 'info')
 
     TriggerClientEvent('sunset:marriage:proposalReceived', targetId, {
         from = source,
@@ -109,8 +109,8 @@ exports.sunset_core:RegisterCallback('sunset:marriage:respond', function(source,
     if not accept then
         -- Refund proposal fee
         exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')
-        notify(fromSrc, 'Your proposal was declined. Fee refunded.', 'warning')
-        notify(source, 'You declined the proposal.', 'info')
+        notify(fromSrc, exports.sunset_core:TFor(fromSrc, 'marriage.msg.your_proposal_was_declined_fee_refunded'), 'warning')
+        notify(source, exports.sunset_core:TFor(source, 'marriage.msg.you_declined_the_proposal'), 'info')
         return { accepted = false }
     end
 
@@ -177,11 +177,11 @@ exports.sunset_core:RegisterCallback('sunset:marriage:divorce', function(source)
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         if getCharId(src) == partnerId then
-            notify(src, '💔 Your partner filed for divorce. You are now single.', 'warning', 10000)
+            notify(src, exports.sunset_core:TFor(src, 'marriage.msg.your_partner_filed_for_divorce_you'), 'warning', 10000)
         end
     end
 
-    notify(source, 'Divorce finalized. You are now single.', 'info')
+    notify(source, exports.sunset_core:TFor(source, 'marriage.msg.divorce_finalized_you_are_now_single'), 'info')
     return true
 end)
 

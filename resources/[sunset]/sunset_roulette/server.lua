@@ -28,8 +28,32 @@ local function takeChips(source, amount)
     return ok and res == true
 end
 
-local function notify(source, msg, kind)
-    TriggerClientEvent('sunset:client:notify', source, msg, kind or 'info', 5000)
+local function notify(source, key, kind, ...)
+    local args = { ... }
+    local ok, msg = pcall(function() return exports.sunset_core:TFor(source, key, table.unpack(args)) end)
+    TriggerClientEvent('sunset:client:notify', source, ok and msg or key, kind or 'info', 5000)
+end
+
+-- [CASINO-AUTH] limits (server-side only)
+local MIN_BET, MAX_BET, MAX_TOTAL_BET, MAX_BET_LINES = 10, 50000, 200000, 40
+
+local function charIdOf(src)
+    local ok, char = pcall(function() return exports.sunset_core:GetCharacter(src) end)
+    return ok and char and tonumber(char.id) or nil
+end
+
+-- In-flight stakes (charged, not yet settled) so a resource stop refunds them once.
+local Escrows = {}
+
+-- Single credit path: online + same character -> inventory, else persisted.
+local function settleCredit(entry, amount, reason)
+    amount = math.floor(amount)
+    if amount <= 0 then return end
+    local delivered = false
+    if GetPlayerName(entry.source) and charIdOf(entry.source) == entry.charId then
+        delivered = giveChips(entry.source, amount)
+    end
+    if not delivered then CasinoPending.Add(entry.charId, amount, 'roulette_' .. reason) end
 end
 
 RegisterNetEvent('dc-casino:roulette:server:syncChairs', function(actionType, chairCoords)
@@ -91,7 +115,7 @@ local function startTableHandler(tableIndex)
                 local pSrc = activeTables[tableIndex][i]
                 local okIn, clientInput = pcall(lib.callback.await, 'dc-casino:roulette:callback:getClientInput', pSrc)
                 local clean, total = {}, 0
-                if okIn and type(clientInput) == 'table' and #clientInput <= 40 then
+                if okIn and type(clientInput) == 'table' and #clientInput <= MAX_BET_LINES then
                     for j = 1, #clientInput do
                         local c = clientInput[j]
                         local amount = type(c) == 'table' and tonumber(c.amount) or nil
@@ -105,22 +129,28 @@ local function startTableHandler(tableIndex)
                             end
                             if not RouletteRewards[#nums] then valid = false end
                         end
-                        if valid and amount and amount == amount and amount >= 1 and amount <= 1000000 and amount == math.floor(amount) then
+                        if valid and amount and amount == amount and amount >= MIN_BET and amount <= MAX_BET and amount == math.floor(amount) then
                             clean[#clean + 1] = { amount = amount, bets = nums }
                             total = total + amount
                         end
                     end
                 end
-                if total > 0 then
-                    if countChips(pSrc) >= total and takeChips(pSrc, total) then
-                        playerBets[#playerBets + 1] = { source = pSrc, chosen = clean, total = total }
+                if total > MAX_TOTAL_BET then
+                    notify(pSrc, 'roulette.message.bet_limit_exceeded', 'error', MAX_TOTAL_BET)
+                elseif total > 0 then
+                    local cid = charIdOf(pSrc)
+                    if cid and countChips(pSrc) >= total and takeChips(pSrc, total) then
+                        local entry = { source = pSrc, charId = cid, chosen = clean, total = total }
+                        playerBets[#playerBets + 1] = entry
+                        Escrows[entry] = true
                     else
-                        notify(pSrc, 'You do not have enough chips for these bets.', 'error')
+                        notify(pSrc, 'roulette.message.not_enough_chips', 'error')
                     end
                 end
             end
 
-            local randomResult = math.random(1, 38)
+            -- Result is generated only AFTER every stake was charged; server CSPRNG.
+            local randomResult = CasinoRNG.Int(1, 38)
             TriggerClientEvent('dc-casino:roulette:client:startRoulette', -1, randomResult, tableIndex)
             lib.callback.await('dc-casino:roulette:callback:checkObject', activeTables[tableIndex][1])
 
@@ -136,11 +166,18 @@ local function startTableHandler(tableIndex)
                         end
                     end
                 end
-                if potentialReward > 0 then
-                    giveChips(pSrc, potentialReward)
-                    notify(pSrc, ('You won %d chips on Roulette!'):format(potentialReward), 'success')
-                else
-                    notify(pSrc, 'No win this round.', 'info')
+                local entry = playerBets[i]
+                if Escrows[entry] then
+                    Escrows[entry] = nil -- settle exactly once
+                    settleCredit(entry, potentialReward, 'win')
+                    CasinoLog.Record(entry.charId, 'roulette', 'settle', entry.total, potentialReward, 'number=' .. randomResult)
+                    if GetPlayerName(pSrc) then
+                        if potentialReward > 0 then
+                            notify(pSrc, 'roulette.message.you_won_value_chips', 'success', potentialReward)
+                        else
+                            notify(pSrc, 'roulette.message.no_win_this_round', 'info')
+                        end
+                    end
                 end
             end
 
@@ -175,5 +212,16 @@ AddEventHandler('playerDropped', function()
     if takenChair[src] then
         TriggerClientEvent('dc-casino:roulette:client:syncChairs', -1, 'leave', takenChair[src])
         takenChair[src] = nil
+    end
+end)
+
+
+-- [CASINO-AUTH] Resource stop mid-round: refund every charged-but-unsettled stake once.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    for entry in pairs(Escrows) do
+        Escrows[entry] = nil
+        settleCredit(entry, entry.total, 'stop_refund')
+        CasinoLog.Record(entry.charId, 'roulette', 'refund', entry.total, entry.total, 'resource_stop')
     end
 end)

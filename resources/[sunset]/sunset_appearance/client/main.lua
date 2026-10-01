@@ -266,7 +266,7 @@ AddEventHandler('sunset:nui:appearanceSave', function()
         if not ok then
             saving = false
             exports.sunset_ui:Send('appearanceSaveFailed', {})
-            exports.sunset_ui:Notify(tostring(err) or 'Could not save appearance', 'error')
+            exports.sunset_ui:Notify(tostring(err) or exports.sunset_core:Translate('appearance.msg.could_not_save_appearance'), 'error')
             return
         end
 

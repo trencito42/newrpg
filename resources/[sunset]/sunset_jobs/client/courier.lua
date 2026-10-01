@@ -56,8 +56,8 @@ local function pointToDelivery(cfg, target, label)
     if not target then return end
     local pos = vector3(target.coords.x, target.coords.y, target.coords.z)
     JC.clearBlips()
-    JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, 'Courier Depot')
-    JC.addBlip(pos, { sprite = 478, color = 3, scale = 0.85 }, label or 'Delivery')
+    JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, exports.sunset_core:Translate('jobs.msg.courier_depot'))
+    JC.addBlip(pos, { sprite = 478, color = 3, scale = 0.85 }, label or exports.sunset_core:Translate('jobs.msg.delivery'))
     JC.setWaypoint(pos)
     setCourierCheckpoint(pos, 46, 204, 113)
 end
@@ -129,15 +129,15 @@ local function updateObjective(cfg, data)
     if data.stage == 'loading' then
         if data.carryingPackage then
             showCourierUi('working', {
-                counter = ('Loading %d/%d'):format(loaded + 1, total),
-                message = 'Carry package to your van',
+                counter = exports.sunset_core:Translate('jobs.ui.loading', { value = math.floor(tonumber(loaded + 1) or 0), total = math.floor(tonumber(total) or 0) }),
+                message = exports.sunset_core:Translate('jobs.ui.carry_package_to_your_van'),
                 detail = exports.sunset_core:Translate('jobs.courier.detail.go_rear_doors'),
                 progress = math.floor((loaded / total) * 100),
             })
         else
             showCourierUi('route', {
-                counter = ('Loaded %d/%d'):format(loaded, total),
-                message = 'Pick up parcel from loading dock',
+                counter = exports.sunset_core:Translate('jobs.ui.loaded', { loaded = math.floor(tonumber(loaded) or 0), total = math.floor(tonumber(total) or 0) }),
+                message = exports.sunset_core:Translate('jobs.ui.pick_up_parcel_from_loading_dock'),
                 detail = exports.sunset_core:Translate('jobs.courier.detail.go_package_stack'),
                 progress = math.floor((loaded / total) * 100),
             })
@@ -145,9 +145,9 @@ local function updateObjective(cfg, data)
     elseif data.stage == 'delivering' then
         local target = data.deliveries and data.deliveries[idx]
         showCourierUi('route', {
-            counter = ('Package %d/%d'):format(delivered + 1, total),
-            message = 'Follow GPS to delivery address',
-            detail = target and target.label or 'Customer location',
+            counter = exports.sunset_core:Translate('jobs.ui.package', { value = math.floor(tonumber(delivered + 1) or 0), total = math.floor(tonumber(total) or 0) }),
+            message = exports.sunset_core:Translate('jobs.ui.follow_gps_to_delivery_address'),
+            detail = target and target.label or exports.sunset_core:Translate('jobs.ui.customer_location'),
             progress = pct,
         })
     end
@@ -156,14 +156,14 @@ end
 local function startCourier()
     local data, err = Sunset.AwaitCallback('sunset:jobs:courier:start')
     if not data then
-        JC.notify(err or 'Could not start courier shift', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_courier_shift'), 'error')
         return
     end
 
     local cfg = Sunset.GetJobConfig('courier')
     JC.deleteVehicles()
     JC.clearBlips()
-    JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, 'Courier Depot')
+    JC.addBlip(cfg.warehouse.coords, cfg.warehouse.blip, exports.sunset_core:Translate('jobs.msg.courier_depot'))
     JC.sessionData = data
 
     -- Spawn delivery van at parking lot
@@ -179,7 +179,7 @@ local function startCourier()
     if not ok then
         JC.deleteVehicles()
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify(registerErr or 'Could not register van', 'error')
+        JC.notify(registerErr or exports.sunset_core:Translate('jobs.msg.could_not_register_van'), 'error')
         return
     end
     JC.monitorVehicles()
@@ -190,7 +190,7 @@ local function startCourier()
     JC.setWaypoint(pickupV3)
     setCourierCheckpoint(pickupV3, 255, 180, 0)
     updateObjective(cfg, data)
-    JC.notify(('Load all %d parcels into your van at the loading dock.'):format(data.total or 6), 'info')
+    JC.notify(exports.sunset_core:Translate('jobs.msg.load_all_parcels_into_your_van', { total = math.floor(tonumber(data.total or 6) or 0) }), 'info')
 
     CreateThread(function()
         local busy = false
@@ -220,14 +220,14 @@ local function startCourier()
                                 updateObjective(cfg, newData)
                                 JC.notify(exports.sunset_core:Translate('jobs.message.take_the_parcel_to_the_back_doors_of_your'), 'info')
                             else
-                                JC.notify(err2 or 'Could not pick up package', 'error')
+                                JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_pick_up_package'), 'error')
                             end
                         end
                     elseif nearPickup and not onFoot then
                         showCourierUi('blocked', {
                             counter = ('%d/%d'):format(session.loaded or 0, session.total or 6),
-                            message = 'Exit the vehicle',
-                            detail = 'Pick up packages on foot',
+                            message = exports.sunset_core:Translate('jobs.ui.exit_the_vehicle'),
+                            detail = exports.sunset_core:Translate('jobs.message.pick_up_packages_on_foot'),
                             progress = 0,
                         })
                     else
@@ -256,16 +256,16 @@ local function startCourier()
                                         clearCourierCheckpoint()
                                         local firstTarget = newData.deliveries and newData.deliveries[1]
                                         if firstTarget then
-                                            pointToDelivery(cfg, firstTarget, 'Delivery 1: ' .. (firstTarget.label or ''))
+                                            pointToDelivery(cfg, firstTarget, exports.sunset_core:Translate('jobs.msg.delivery_1', { label = tostring(firstTarget.label or '') }))
                                         end
                                         updateObjective(cfg, newData)
-                                        JC.notify(('Van fully loaded with %d packages! Drive to delivery locations.'):format(newData.total or 6), 'success')
+                                        JC.notify(exports.sunset_core:Translate('jobs.msg.van_fully_loaded_with_packages_drive', { total = math.floor(tonumber(newData.total or 6) or 0) }), 'success')
                                     else
                                         updateObjective(cfg, newData)
-                                        JC.notify(('Package loaded (%d/%d). Pick up the next package.'):format(newData.loaded or 0, newData.total or 6), 'success')
+                                        JC.notify(exports.sunset_core:Translate('jobs.msg.package_loaded_pick_up_the_next', { loaded = math.floor(tonumber(newData.loaded or 0) or 0), total = math.floor(tonumber(newData.total or 6) or 0) }), 'success')
                                     end
                                 else
-                                    JC.notify(err2 or 'Could not load package into van', 'error')
+                                    JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_load_package_into_van'), 'error')
                                 end
                             end
                         end
@@ -301,8 +301,8 @@ local function startCourier()
                             local nearRear = JC.isNear(rearPos, cfg.dumpRadius or 3.8)
                             JC.drawMarker(rearPos, 255, 180, 0)
                             showCourierUi('working', {
-                                counter = ('Package %d/%d'):format(idx, total),
-                                message = 'Get the parcel from your van',
+                                counter = exports.sunset_core:Translate('jobs.ui.package_2', { idx = math.floor(tonumber(idx) or 0), total = math.floor(tonumber(total) or 0) }),
+                                message = exports.sunset_core:Translate('jobs.ui.get_the_parcel_from_your_van'),
                                 detail = nearRear and exports.sunset_core:Translate('jobs.courier.detail.open_rear_doors') or exports.sunset_core:Translate('jobs.courier.detail.walk_to_rear'),
                                 progress = pct,
                             })
@@ -330,9 +330,9 @@ local function startCourier()
                             if not busy and IsControlJustPressed(0, 38) then
                                 busy = true
                                 showCourierUi('working', {
-                                    counter = ('Package %d/%d'):format(idx, total),
-                                    message = 'Handing over package',
-                                    detail = target.label or 'Delivery address',
+                                    counter = exports.sunset_core:Translate('jobs.ui.package_2', { idx = math.floor(tonumber(idx) or 0), total = math.floor(tonumber(total) or 0) }),
+                                    message = exports.sunset_core:Translate('jobs.ui.handing_over_package'),
+                                    detail = target.label or exports.sunset_core:Translate('jobs.ui.delivery_address'),
                                     progress = pct,
                                 }, true)
                                 JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 2000)
@@ -342,13 +342,13 @@ local function startCourier()
                                     detachPackage()
                                     retrievedFromVan = false
                                     local newDelivered = (session.delivered or 0) + 1
-                                    JC.notify(('Delivered +$%d (%d/%d)'):format(result.pay or 0, newDelivered, total), 'success')
+                                    JC.notify(exports.sunset_core:Translate('jobs.msg.delivered', { pay = math.floor(tonumber(result.pay or 0) or 0), new_delivered = math.floor(tonumber(newDelivered) or 0), total = math.floor(tonumber(total) or 0) }), 'success')
                                     if result.completed then
                                         clearCourierCheckpoint()
                                         showCourierUi('complete', {
-                                            counter = ('Package %d/%d'):format(total, total),
-                                            message = 'Route complete!',
-                                            detail = 'All packages delivered successfully',
+                                            counter = exports.sunset_core:Translate('jobs.ui.package_3', { total = math.floor(tonumber(total) or 0), total_2 = math.floor(tonumber(total) or 0) }),
+                                            message = exports.sunset_core:Translate('jobs.ui.route_complete'),
+                                            detail = exports.sunset_core:Translate('jobs.ui.all_packages_delivered_successfully'),
                                             progress = 100,
                                         }, true)
                                         Wait(2000)
@@ -362,18 +362,18 @@ local function startCourier()
                                         local nextTarget = result.data.deliveries and result.data.deliveries[nextIdx]
                                         if nextTarget then
                                             pointToDelivery(cfg, nextTarget,
-                                                ('Delivery %d: '):format(nextIdx) .. (nextTarget.label or ''))
+                                                exports.sunset_core:Translate('jobs.msg.delivery_2', { next_idx = math.floor(tonumber(nextIdx) or 0), label = tostring(nextTarget.label or '') }))
                                         end
                                         updateObjective(cfg, result.data)
                                     end
                                 else
-                                    JC.notify(err2 or 'Could not deliver the package', 'error')
+                                    JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_deliver_the_package'), 'error')
                                     courierUiKey = nil
                                 end
                             end
                         elseif nearDelivery and not onFoot then
                             draw3DText(pos, exports.sunset_core:Translate('hint.jobs.courier.deliver_package'))
-                            JC.showHelp('Exit the vehicle to deliver the package')
+                            JC.showHelp(exports.sunset_core:Translate('jobs.msg.exit_the_vehicle_to_deliver_the'))
                         else
                             updateObjective(cfg, session)
                         end

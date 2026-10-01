@@ -159,7 +159,7 @@ local function recoverTrailer()
     end
     local recovery, err = Sunset.AwaitCallback('sunset:jobs:recoverTrailer')
     if not recovery then
-        return JC.notify(err or 'Trailer recovery is not available', 'error')
+        return JC.notify(err or exports.sunset_core:Translate('jobs.msg.trailer_recovery_is_not_available'), 'error')
     end
 
     if recovery.respawn then
@@ -169,10 +169,9 @@ local function recoverTrailer()
         end
         local spawned, spawnErr = JC.respawnTrailer(truck, recovery.trailerModel)
         if not spawned then
-            return JC.notify(spawnErr or 'Could not spawn replacement trailer', 'error')
+            return JC.notify(spawnErr or exports.sunset_core:Translate('jobs.message.could_not_spawn_replacement_trailer'), 'error')
         end
-        return JC.notify(('Replacement trailer spawned. %d recoveries remain this shift.'):format(
-            recovery.remaining or 0), 'success')
+        return JC.notify(exports.sunset_core:Translate('jobs.msg.replacement_trailer_spawned_recoveries_remai_2', { remaining = math.floor(tonumber(recovery.remaining or 0) or 0) }), 'success')
     end
 
     local truck = NetworkGetEntityFromNetworkId(recovery.truckNetId or 0)
@@ -208,14 +207,13 @@ local function recoverTrailer()
         return JC.notify(exports.sunset_core:Translate('jobs.message.trailer_is_upright_but_could_not_attach_automatically_reverse'), 'warning')
     end
     TriggerServerEvent('sunset:jobs:syncTrailerStatus', true)
-    JC.notify(('Trailer recovered and attached. %d recoveries remain this shift.'):format(
-        recovery.remaining or 0), 'success')
+    JC.notify(exports.sunset_core:Translate('jobs.msg.trailer_recovered_and_attached_recoveries_re', { remaining = math.floor(tonumber(recovery.remaining or 0) or 0) }), 'success')
 end
 
 local function startTrucker(selectedRouteIdx)
     local data, err = Sunset.AwaitCallback('sunset:jobs:trucker:start', selectedRouteIdx)
     if not data then
-        JC.notify(err or 'Could not start trucker shift', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_start_trucker_shift'), 'error')
         return
     end
 
@@ -228,7 +226,7 @@ local function startTrucker(selectedRouteIdx)
 
     JC.sessionData = data
     JC.clearBlips()
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.trucker_depot'))
 
     -- Clear any task/animation before warping into the vehicle
     ClearPedTasksImmediately(PlayerPedId())
@@ -266,7 +264,7 @@ local function startTrucker(selectedRouteIdx)
     if not registered then
         JC.deleteVehicles()
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify(registerErr or 'Could not register the truck', 'error')
+        JC.notify(registerErr or exports.sunset_core:Translate('jobs.msg.could_not_register_the_truck'), 'error')
         return
     end
     JC.monitorVehicles()
@@ -302,8 +300,8 @@ local function startTrucker(selectedRouteIdx)
     local pickup = data.pickup and vector3(data.pickup.x, data.pickup.y, data.pickup.z)
                    or vector3(cfg.depot.trailerSpawn.x, cfg.depot.trailerSpawn.y, cfg.depot.trailerSpawn.z)
     JC.clearBlips()
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')
-    local pickupBlip = JC.addBlip(pickup, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.trucker_depot'))
+    local pickupBlip = JC.addBlip(pickup, { sprite = 477, color = 5, scale = 0.9 }, exports.sunset_core:Translate('jobs.msg.trailer_yard'))
     SetBlipRoute(pickupBlip, true)
     SetBlipRouteColour(pickupBlip, 5)
     JC.setWaypoint(pickup)
@@ -331,7 +329,7 @@ local function startTrucker(selectedRouteIdx)
                             if attached then
                                 draw3DText(p, exports.sunset_core:Translate('hint.jobs.trucker.confirm_trailer'))
                             else
-                                draw3DText(p, 'Back up to attach the trailer')
+                                draw3DText(p, exports.sunset_core:Translate('jobs.msg.back_up_to_attach_the_trailer'))
                             end
                         end
                     end
@@ -345,16 +343,16 @@ local function startTrucker(selectedRouteIdx)
                                 JC.sessionData.stage = result.stage or 'to_delivery'
                                 local delivery = vector3(result.delivery.x, result.delivery.y, result.delivery.z)
                                 JC.clearBlips()
-                                JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Trucker Depot')
-                                local delivBlip = JC.addBlip(delivery, { sprite = 478, color = 2, scale = 0.95 }, 'Delivery: ' .. (result.label or 'Cargo'))
+                                JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.trucker_depot'))
+                                local delivBlip = JC.addBlip(delivery, { sprite = 478, color = 2, scale = 0.95 }, exports.sunset_core:Translate('jobs.msg.delivery_3', { label = result.label or exports.sunset_core:Translate('jobs.word.cargo') }))
                                 SetBlipRoute(delivBlip, true)
                                 SetBlipRouteColour(delivBlip, 2)
                                 JC.setWaypoint(result.delivery)
                                 setTruckerCheckpoint(delivery, 46, 204, 113)
                                 JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.deliver', { label = result.label or '?' }), progress = { pct = 30 } })
-                                JC.notify(exports.sunset_core:Translate('jobs.message.trailer_attached_deliver_to') .. (result.label or 'destination') .. '. Follow the map.', 'success', 8000)
+                                JC.notify(exports.sunset_core:Translate('jobs.msg.follow_the_map', { label = result.label or exports.sunset_core:Translate('jobs.word.destination') }), 'success', 8000)
                             else
-                                JC.notify(pickErr or 'Could not confirm pickup', 'error')
+                                JC.notify(pickErr or exports.sunset_core:Translate('jobs.msg.could_not_confirm_pickup'), 'error')
                             end
                         end
                     end
@@ -404,7 +402,7 @@ local function startTrucker(selectedRouteIdx)
                                 if isDocked then
                                     draw3DText(bay, exports.sunset_core:Translate('hint.jobs.trucker.manual_park'))
                                 else
-                                    draw3DText(bay, 'Align Trailer in Bay for ~g~2X BONUS~s~')
+                                    draw3DText(bay, exports.sunset_core:Translate('jobs.msg.align_trailer_in_bay_for_g'))
                                 end
                             end
                         end
@@ -423,7 +421,7 @@ local function startTrucker(selectedRouteIdx)
                                         JC.deleteVehicles(true)
                                         JC.clearBlips()
                                         local retPoint = (cfg.depot.returnCoords and vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)) or (cfg.depot.spawn and vector3(cfg.depot.spawn.x, cfg.depot.spawn.y, cfg.depot.spawn.z)) or cfg.depot.coords
-                                        local depBlip = JC.addBlip(retPoint, cfg.depot.blip, 'Return Depot')
+                                        local depBlip = JC.addBlip(retPoint, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.return_depot'))
                                         SetBlipRoute(depBlip, true)
                                         SetBlipRouteColour(depBlip, 3)
                                         JC.setWaypoint(retPoint)
@@ -432,18 +430,17 @@ local function startTrucker(selectedRouteIdx)
                                         JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.return'), progress = { pct = 90 } })
 
                                         -- [JOBS AUDIT] the server verifies the docking; show the bonus only if granted.
-                                        local bonusStr = result.isManual and ' (2X MANUAL DOCK BONUS)' or ' (dock not verified - standard pay)'
+                                        local bonusStr = ' ' .. (result.isManual and exports.sunset_core:Translate('jobs.msg.bonus_manual_dock') or exports.sunset_core:Translate('jobs.msg.bonus_dock_unverified'))
                                         if result.bonusPct and result.bonusPct > 0 then
-                                            bonusStr = bonusStr .. (' (+%d%% rank bonus)'):format(result.bonusPct)
+                                            bonusStr = bonusStr .. ' ' .. exports.sunset_core:Translate('jobs.msg.bonus_rank_pct', { pct = math.floor(result.bonusPct) })
                                         end
-                                        JC.notify(('Delivered! +$%d%s — return the truck to the depot'):format(
-                                            result.pay or 0, bonusStr), 'success', 8000)
+                                        JC.notify(exports.sunset_core:Translate('jobs.msg.delivered_return_the_truck_to_the', { pay = math.floor(tonumber(result.pay or 0) or 0), bonus_str = tostring(bonusStr) }), 'success', 8000)
                                     else
-                                        JC.notify(err2 or 'Could not deliver cargo', 'error')
+                                        JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_deliver_cargo'), 'error')
                                     end
                                 end
                             elseif distToBay <= 45.0 then
-                                JC.showHelp('Reverse trailer into the glowing box for ~g~2X BONUS~s~')
+                                JC.showHelp(exports.sunset_core:Translate('jobs.msg.reverse_trailer_into_the_glowing_box'))
                             end
                         end
                     else
@@ -469,7 +466,7 @@ local function startTrucker(selectedRouteIdx)
                                     JC.deleteVehicles(true)
                                     JC.clearBlips()
                                     local retPoint = (cfg.depot.returnCoords and vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)) or (cfg.depot.spawn and vector3(cfg.depot.spawn.x, cfg.depot.spawn.y, cfg.depot.spawn.z)) or cfg.depot.coords
-                                    local depBlip = JC.addBlip(retPoint, cfg.depot.blip, 'Return Depot')
+                                    local depBlip = JC.addBlip(retPoint, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.return_depot'))
                                     SetBlipRoute(depBlip, true)
                                     SetBlipRouteColour(depBlip, 3)
                                     JC.setWaypoint(retPoint)
@@ -479,17 +476,16 @@ local function startTrucker(selectedRouteIdx)
 
                                     local bonusStr = ''
                                     if result.bonusPct and result.bonusPct > 0 then
-                                        bonusStr = bonusStr .. (' (+%d%% rank bonus)'):format(result.bonusPct)
+                                        bonusStr = bonusStr .. ' ' .. exports.sunset_core:Translate('jobs.msg.bonus_rank_pct', { pct = math.floor(result.bonusPct) })
                                     end
-                                    JC.notify(('Delivered! +$%d%s — return the truck to the depot'):format(
-                                        result.pay or 0, bonusStr), 'success', 8000)
+                                    JC.notify(exports.sunset_core:Translate('jobs.msg.delivered_return_the_truck_to_the', { pay = math.floor(tonumber(result.pay or 0) or 0), bonus_str = tostring(bonusStr) }), 'success', 8000)
                                 else
-                                    JC.notify(err2 or 'Could not deliver cargo', 'error')
+                                    JC.notify(err2 or exports.sunset_core:Translate('jobs.msg.could_not_deliver_cargo'), 'error')
                                 end
                             elseif IsControlJustPressed(0, 47) then -- G -> Switch to manual docking mode
                                 isManualDockingMode = true
                                 JC.clearBlips()
-                                local bayBlip = JC.addBlip(bay, { sprite = 478, color = 2, scale = 0.95 }, 'Parking Bay (2X Bonus)')
+                                local bayBlip = JC.addBlip(bay, { sprite = 478, color = 2, scale = 0.95 }, exports.sunset_core:Translate('jobs.msg.parking_bay_2x_bonus'))
                                 SetBlipRoute(bayBlip, true)
                                 SetBlipRouteColour(bayBlip, 2)
                                 JC.setWaypoint(bay)
@@ -522,7 +518,7 @@ local function startTrucker(selectedRouteIdx)
                             SetWaypointOff()
                             break
                         else
-                            JC.notify(err3 or 'Could not return the truck to the depot', 'error')
+                            JC.notify(err3 or exports.sunset_core:Translate('jobs.msg.could_not_return_the_truck_to'), 'error')
                         end
                     end
                 end
@@ -552,8 +548,8 @@ RegisterCommand('truckroute', function()
         local p = session.pickup and vector3(session.pickup.x, session.pickup.y, session.pickup.z)
                   or vector3(cfg.depot.trailerSpawn.x, cfg.depot.trailerSpawn.y, cfg.depot.trailerSpawn.z)
         JC.clearBlips()
-        JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard')
-        SetBlipRoute(JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, 'Trailer Yard'), true)
+        JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, exports.sunset_core:Translate('jobs.msg.trailer_yard'))
+        SetBlipRoute(JC.addBlip(p, { sprite = 477, color = 5, scale = 0.9 }, exports.sunset_core:Translate('jobs.msg.trailer_yard')), true)
         JC.setWaypoint(p)
         setTruckerCheckpoint(p, 255, 165, 0)
         JC.notify(exports.sunset_core:Translate('jobs.message.gps_refreshed_to_trailer_yard'), 'success')
@@ -561,16 +557,16 @@ RegisterCommand('truckroute', function()
         local d = routePoint(session, 'delivery')
         if d then
             JC.clearBlips()
-            local delivBlip = JC.addBlip(d, { sprite = 478, color = 2, scale = 0.95 }, 'Delivery: ' .. (session.label or 'Cargo'))
+            local delivBlip = JC.addBlip(d, { sprite = 478, color = 2, scale = 0.95 }, exports.sunset_core:Translate('jobs.msg.delivery_3', { label = session.label or exports.sunset_core:Translate('jobs.word.cargo') }))
             SetBlipRoute(delivBlip, true)
             SetBlipRouteColour(delivBlip, 2)
             JC.setWaypoint(d)
             setTruckerCheckpoint(d, 46, 204, 113)
-            JC.notify(exports.sunset_core:Translate('jobs.message.gps_route_refreshed_to') .. (session.label or 'Destination'), 'success')
+            JC.notify(exports.sunset_core:Translate('jobs.msg.gps_route_refreshed_to', { label = tostring(session.label or exports.sunset_core:Translate('jobs.word.destination_2')) }), 'success')
         end
     elseif stage == 'return_depot' and cfg and cfg.depot then
         JC.clearBlips()
-        local depBlip = JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Return Depot')
+        local depBlip = JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.msg.return_depot'))
         SetBlipRoute(depBlip, true)
         SetBlipRouteColour(depBlip, 3)
         JC.setWaypoint(cfg.depot.coords)
@@ -726,7 +722,7 @@ local function teleportRig(targetArg)
 
     SetVehicleHandbrake(truck, false)
     SetVehicleEngineOn(truck, true, true, false)
-    JC.notify(('Teleported rig & trailer to %s!'):format(label), 'success', 7000)
+    JC.notify(exports.sunset_core:Translate('jobs.msg.teleported_rig_trailer_to', { label = tostring(label) }), 'success', 7000)
 end
 
 RegisterNetEvent('sunset:jobs:trucker:teleportRig', function(targetArg)

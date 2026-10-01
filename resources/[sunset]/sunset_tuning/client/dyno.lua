@@ -109,11 +109,7 @@ local function drawDynoHud()
     SetTextOutline()
     SetTextEntry('STRING')
     AddTextComponentSubstringPlayerName(
-        ('RPM %d%%  |  MAX %d%%  |  %ds'):format(
-            math.floor(dynoHud.rpm * 100),
-            math.floor(dynoHud.peakRpm * 100),
-            math.max(0, dynoHud.secondsLeft)
-        )
+        exports.sunset_core:Translate('tuning.msg.rpm_max_s', { value = math.floor(tonumber(math.floor(dynoHud.rpm * 100)) or 0), value_2 = math.floor(tonumber(math.floor(dynoHud.peakRpm * 100)) or 0), value_3 = math.floor(tonumber(math.max(0, dynoHud.secondsLeft)) or 0) })
     )
     DrawText(0.5, 0.835)
 
@@ -214,7 +210,7 @@ function RunDynoTest(shop, onComplete)
     }
 
     if onComplete then onComplete(dynoResult) end
-    notify(('Dyno complete: %d HP / %d Nm (max RPM %d%%)'):format(hp, torque, dynoResult.peakRpm), 'success')
+    notify(exports.sunset_core:Translate('tuning.msg.dyno_complete_hp_nm_max_rpm', { hp = math.floor(tonumber(hp) or 0), torque = math.floor(tonumber(torque) or 0), peak_rpm = math.floor(tonumber(dynoResult.peakRpm) or 0) }), 'success')
 end
 
 function IsDynoActive()

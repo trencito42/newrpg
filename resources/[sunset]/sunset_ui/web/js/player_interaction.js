@@ -173,7 +173,7 @@
     function showInputPanel(action) {
         pendingInputAction = action;
         const input = action.input || {};
-        if (inputLabel) inputLabel.textContent = action.label || 'Enter value';
+        if (inputLabel) inputLabel.textContent = action.label || I18n.t('ui.interaction.enter_value');
 
         if (input.type === 'select' && Array.isArray(input.options)) {
             // [DROPDOWN] Replace text input with a <select> for predefined options
@@ -287,7 +287,7 @@
             root.classList.remove('hidden');
             root.setAttribute('aria-hidden', 'false');
 
-            if (targetNameEl) targetNameEl.textContent = payload.name || 'PLAYER';
+            if (targetNameEl) targetNameEl.textContent = payload.name || I18n.t('common.player').toUpperCase();
             if (keyLetterEl) keyLetterEl.textContent = payload.key || 'G';
 
             const x = Number(payload.x);

@@ -24,7 +24,7 @@ const Overlays = {
         const el = $('#server-announce');
         if (!el) return;
 
-        $('#server-announce-badge').textContent = data?.badge || 'ANNOUNCEMENT';
+        $('#server-announce-badge').textContent = data?.badge || I18n.t('chat.badge.announcement').toUpperCase();
         $('#server-announce-msg').textContent = data?.message || '';
         $('#server-announce-meta').textContent = data?.meta || '';
 
@@ -46,7 +46,7 @@ const Overlays = {
         const el = $('#police-order');
         if (!el) return;
 
-        $('#police-order-msg').textContent = data?.message || 'Stop and comply with law enforcement';
+        $('#police-order-msg').textContent = data?.message || I18n.t('ui.overlays.police_order_default');
         const meta = [];
         if (data?.officer) meta.push(data.officer);
         if (data?.officerId) meta.push(`#${data.officerId}`);
@@ -108,7 +108,7 @@ const Overlays = {
         this.init();
         if (!window.Hud) return;
 
-        const tag = data?.tag || data?.jobLabel || 'JOB';
+        const tag = data?.tag || data?.jobLabel || I18n.t('ui.overlays.job_tag');
         const title = data?.title || data?.objective || '—';
         const desc = data?.description || data?.subtitle || data?.hint || '';
         const progress = data?.progress;

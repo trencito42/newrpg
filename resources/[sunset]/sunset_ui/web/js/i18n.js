@@ -542,7 +542,7 @@
             'store.pay': 'Plătește', 'store.sell': 'Vinde', 'store.processing': 'Se procesează…',
             'store.select_product': 'Alege un produs\nde pe raft',
             'store.close_hint': 'Apasă [ESC] pentru a închide', 'store.empty_category': 'Nu există produse în această categorie',
-            'store.level_requirement': 'Nivel {level}', 'store.firearm_license': 'Permis de port-armă',
+            'store.level_requirement': 'Nivel {level}', 'store.firearm_license': 'Licență de port-armă',
             'store.weight': 'Greutate: {weight} kg',
             'store.category.all': 'Toate produsele', 'store.category.food': 'Mâncare',
             'store.category.drinks': 'Băuturi', 'store.category.medical': 'Produse medicale',
@@ -600,7 +600,7 @@
             'tuning.category.overview': 'Setare rapidă', 'tuning.category.powertrain': 'Motor',
             'tuning.category.transmission': 'Transmisie', 'tuning.category.brakes': 'Frâne',
             'tuning.category.suspension': 'Suspensie', 'tuning.category.turbo': 'Turbo și ECU',
-            'tuning.category.handling': 'Manevrabilitate', 'tuning.category.exhaust': 'Evacuare',
+            'tuning.category.handling': 'Manevrabilitate', 'tuning.category.exhaust': 'Eșapament',
             'tuning.category.bodykit': 'Caroserie și aerodinamică', 'tuning.category.lighting': 'Neon și faruri',
             'tuning.category.wheels': 'Roți și jante', 'tuning.category.visual': 'Vopsea și geamuri',
             'tuning.category.dyno': 'Dyno', 'tuning.category.special': 'Special',
@@ -611,7 +611,7 @@
             'tuning.title.suspension': 'Suspensie și gardă la sol',
             'tuning.title.turbo': 'Turbocompresor și viteză maximă',
             'tuning.title.handling': 'Reglaje fine de manevrabilitate',
-            'tuning.title.exhaust': 'Profilul evacuării și pocnituri',
+            'tuning.title.exhaust': 'Profil eșapament și pocnituri',
             'tuning.title.bodykit': 'Caroserie și aerodinamică',
             'tuning.title.lighting': 'Neon și faruri',
             'tuning.title.wheels': 'Roți, jante și fum de pneuri',
@@ -620,7 +620,7 @@
             'tuning.title.special': 'Funcții ECU speciale',
             'tuning.body.spoiler': 'Eleron', 'tuning.body.front_bumper': 'Bară față',
             'tuning.body.rear_bumper': 'Bară spate', 'tuning.body.side_skirt': 'Praguri laterale',
-            'tuning.body.exhaust': 'Ornamente evacuare', 'tuning.body.hood': 'Capotă',
+            'tuning.body.exhaust': 'Terminații eșapament', 'tuning.body.hood': 'Capotă',
             'tuning.body.grille': 'Grilă', 'tuning.body.roof': 'Plafon',
             'tuning.body.left_fender': 'Aripă stânga', 'tuning.body.right_fender': 'Aripă dreapta',
             'tuning.body.roll_cage': 'Roll cage / interior', 'tuning.body.livery': 'Livrea / autocolante',
@@ -671,9 +671,9 @@
             'tuning.smoke.green': 'Fum verde', 'tuning.smoke.purple': 'Fum mov',
             'tuning.smoke.black': 'Fum negru',
             'locale.changed': 'Limba a fost schimbată în română.', 'locale.failed': 'Limba nu a putut fi salvată.',
-            'ui.jobhud.title_default': 'Muncă', 'ui.jobhud.distance': 'Distanță', 'ui.jobhud.earnings': 'Câștigat',
+            'ui.jobhud.title_default': 'Serviciu', 'ui.jobhud.distance': 'Distanță', 'ui.jobhud.earnings': 'Câștigat',
             'ui.jobhud.timer': 'Timp', 'ui.jobhud.vehicle': 'Vehicul', 'ui.jobhud.total_earned': 'Total câștigat',
-            'ui.jobhud.result_success': 'Muncă finalizată', 'ui.jobhud.result_fail': 'Muncă eșuată', 'ui.jobhud.result_cancel': 'Muncă anulată',
+            'ui.jobhud.result_success': 'Serviciu finalizat', 'ui.jobhud.result_fail': 'Serviciu eșuat', 'ui.jobhud.result_cancel': 'Serviciu anulat',
         },
     };
 
@@ -724,6 +724,17 @@
     window.I18n = Object.freeze({
         t, setLocale, translateTree, getLocale: () => locale,
         hasLocale: valid,
+        // Staff-authored data labels (route/place names from JSON/config): Romanian looks up label.<slug>, English keeps the data value.
+        label: (text) => {
+            const raw = String(text ?? '');
+            if (locale === 'en') return raw;
+            const key = 'label.' + raw.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            return dictionaries[locale][key] || raw;
+        },
+        intlLocale: numberLocale,
+        // Locale-aware date/time helpers (account language, not the CEF default).
+        date: (value, options) => new Date(value).toLocaleDateString(numberLocale(), options),
+        time: (value, options) => new Date(value).toLocaleTimeString(numberLocale(), options),
         number: (value, options) => new Intl.NumberFormat(numberLocale(), options).format(Number(value) || 0),
         money: (value) => '$' + new Intl.NumberFormat(numberLocale(), { maximumFractionDigits: 0 }).format(Number(value) || 0),
         distance: (metres) => Number(metres) >= 1000

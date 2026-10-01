@@ -150,7 +150,7 @@ AddEventHandler('sunset:nui:spawnSelect', function(data)
     local resolved, err = Sunset.AwaitCallbackTimeout('sunset:resolveSpawnChoice', 3000, choice, tonumber(data and data.propertyId))
     if not resolved then
         exports.sunset_ui:Send('spawnSelectFailed', {})
-        return exports.sunset_ui:Notify(err or 'That spawn location is unavailable.', 'error', 6000)
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.that_spawn_location_is_unavailable'), 'error', 6000)
     end
     local char = pendingSpawnCharacter
     pendingSpawnCharacter = nil
@@ -166,7 +166,7 @@ end)
 local function showCharacterList()
     local characters, err = Sunset.AwaitCallbackTimeout('sunset:getCharacters', 4000)
     if type(characters) ~= 'table' then
-        exports.sunset_ui:Notify(err or 'Could not load your characters', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_load_your_characters'), 'error')
         return
     end
     exports.sunset_ui:Show('characters', {
@@ -214,7 +214,7 @@ local function autoEnterGame()
         exports.sunset_ui:Show('auth', {})
         exports.sunset_ui:SetFocus(true, true)
     end
-    exports.sunset_ui:Notify(err or 'Could not load your character', 'error')
+    exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_load_your_character'), 'error')
 end
 
 AddEventHandler('sunset:client:authenticationComplete', function()
@@ -248,7 +248,7 @@ AddEventHandler('sunset:nui:select', function(data)
     CreateThread(function()
         local char, err = Sunset.AwaitCallbackTimeout('sunset:selectCharacter', 4000, tonumber(data and data.charId))
         if not char then
-            exports.sunset_ui:Notify(err or 'Could not select that character', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_select_that_character'), 'error')
             return
         end
         spawnCharacter(char)
@@ -259,7 +259,7 @@ AddEventHandler('sunset:nui:create', function(data)
     CreateThread(function()
         local char, err = Sunset.AwaitCallbackTimeout('sunset:createCharacter', 5000, data or {})
         if not char then
-            exports.sunset_ui:Notify(err or 'Could not create the character', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_create_the_character'), 'error')
             return
         end
         spawnCharacter(char)
@@ -270,7 +270,7 @@ AddEventHandler('sunset:nui:delete', function(data)
     CreateThread(function()
         local deleted, err = Sunset.AwaitCallbackTimeout('sunset:deleteCharacter', 4000, tonumber(data and data.charId))
         if not deleted then
-            exports.sunset_ui:Notify(err or 'Could not delete that character', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_delete_that_character'), 'error')
             return
         end
         exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.character_deleted'), 'success')

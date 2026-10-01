@@ -290,7 +290,7 @@ RegisterNUICallback('licenseQuizAnswer', function(data, cb)
     local questionIndex = tonumber(data.questionIndex)
     local answer = tonumber(data.answer)
     if not licenseType or not questionIndex or not answer then
-        cb({ ok = false, error = 'Missing answer data.' })
+        cb({ ok = false, error = exports.sunset_core:Translate('ui.ui.missing_answer_data') })
         return
     end
 
@@ -552,9 +552,9 @@ AddEventHandler('sunset:nui:submit112Call', function(data)
     data = data or {}
     exports.sunset_core:TriggerCallback('sunset:dispatch:call112', function(res, err)
         if res and res.ok then
-            exports.sunset_ui:Notify(('112 Dispatch: Emergency call registered at %s. Units notified.'):format(res.street or 'your location'), 'success', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('ui.msg.112_dispatch_emergency_call_registered_at', { street = res.street or exports.sunset_core:Translate('ui.word.your_location') }), 'success', 8000)
         else
-            exports.sunset_ui:Notify(err or 'Could not transmit 112 call.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('ui.msg.could_not_transmit_112_call'), 'error')
         end
     end, data.category, data.description, data.street, data.area, data.coords)
     Send('dispatch112Hide', {})

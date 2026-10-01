@@ -62,7 +62,7 @@ local function spawnGasAttendant(station, index)
             badgeClass = 'gas',
             bodyClass = 'gas',
             icon = 'ph-gas-pump',
-            title = 'Gas Station Operator',
+            title = exports.sunset_core:Translate('world.ui.gas_station_operator'),
             desc = 'Business / Interaction',
             key = 'E',
         },

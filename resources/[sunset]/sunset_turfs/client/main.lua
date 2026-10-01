@@ -99,9 +99,7 @@ local function applyTurfBlipStyle(turf, row, atWar)
         SetBlipFlashes(row.center, atWar)
         BeginTextCommandSetBlipName('STRING')
         local suffix = atWar and ' | RAZBOI' or ''
-        AddTextComponentSubstringPlayerName(('Turf #%d: %s [%s]%s'):format(
-            turf.id, turf.name, turf.ownerTag or 'LIBER', suffix
-        ))
+        AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('turfs.msg.turf', { id = math.floor(tonumber(turf.id) or 0), name = tostring(turf.name), owner_tag = turf.ownerTag or exports.sunset_core:Translate('turfs.word.liber'), suffix = tostring(suffix) }))
         EndTextCommandSetBlipName(row.center)
     end
 end
@@ -109,13 +107,22 @@ end
 local function refreshBlips()
     clearTurfBlips()
     for id, t in pairs(LocalTurfs) do
-        if not t.coords then goto continue end
+        if not t.coords or not t.coords.x or not t.coords.y or not t.coords.z then goto continue end
         local atWar = turfAtWar(id)
-        local radius = t.radius or 110.0
-        local zoneBlip = AddBlipForRadius(t.coords.x, t.coords.y, t.coords.z, radius)
-        local centerBlip = AddBlipForCoord(t.coords.x, t.coords.y, t.coords.z)
-        TurfBlips[id] = { area = zoneBlip, center = centerBlip }
-        applyTurfBlipStyle(t, TurfBlips[id], atWar)
+        local radius = tonumber(t.radius) or 110.0
+        local okRadius, zoneBlip = pcall(AddBlipForRadius, tonumber(t.coords.x) + 0.0, tonumber(t.coords.y) + 0.0, tonumber(t.coords.z) + 0.0, radius + 0.0)
+        local centerBlip = exports.sunset_core:CreateSafeBlip(t.coords, {
+            sprite = 84,
+            scale = 0.7,
+            shortRange = false
+        })
+        if okRadius and DoesBlipExist(zoneBlip) then
+            TurfBlips[id] = { area = zoneBlip, center = centerBlip }
+            applyTurfBlipStyle(t, TurfBlips[id], atWar)
+        elseif centerBlip then
+            TurfBlips[id] = { center = centerBlip }
+            applyTurfBlipStyle(t, TurfBlips[id], atWar)
+        end
         ::continue::
     end
 end
@@ -199,9 +206,9 @@ local function syncWarPlayerBlips()
 
         BeginTextCommandSetBlipName('STRING')
         if isFriendly then
-            AddTextComponentSubstringPlayerName(('FRIENDLY %s'):format(Player(sid).state.clanTag or 'CLAN'))
+            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('turfs.msg.friendly', { clan_tag = Player(sid).state.clanTag or exports.sunset_core:Translate('turfs.word.clan') }))
         else
-            AddTextComponentSubstringPlayerName(('ENEMY %s'):format(Player(sid).state.clanTag or 'CLAN'))
+            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('turfs.msg.enemy', { clan_tag = Player(sid).state.clanTag or exports.sunset_core:Translate('turfs.word.clan') }))
         end
         EndTextCommandSetBlipName(blip)
 
@@ -258,11 +265,7 @@ RegisterNetEvent('sunset:turfs:warStart', function(war)
     end
     if war.isNeutralCapture then
         exports.sunset_ui:Notify(
-            ('Capturing %s: hold the zone for %d seconds (%d players = faster).'):format(
-                war.turfName or 'turf',
-                war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180,
-                1
-            ),
+            exports.sunset_core:Translate('turfs.msg.capturing_hold_the_zone_for_seconds', { turf_name = war.turfName or exports.sunset_core:Translate('turfs.word.turf'), capture_target = math.floor(tonumber(war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180) or 0), value = math.floor(tonumber(1) or 0) }),
             'info',
             9000
         )
@@ -351,7 +354,7 @@ CreateThread(function()
                     and ('[%s] %s'):format(insideAny.ownerTag, insideAny.ownerName)
                     or 'Free'
                 exports.sunset_ui:Notify(
-                    ('Territory: %s (%s)'):format(insideAny.name, ownerStr),
+                    exports.sunset_core:Translate('turfs.msg.territory', { name = tostring(insideAny.name), owner_str = tostring(ownerStr) }),
                     'info',
                     4500
                 )
@@ -411,7 +414,7 @@ CreateThread(function()
                 SetTextColour(255, 255, 255, 240)
                 SetTextOutline()
                 BeginTextCommandDisplayText('STRING')
-                AddTextComponentSubstringPlayerName(('~y~[TURF EDITOR: #%d]~s~ Vertices: ~g~%d~s~\n~b~[E]~s~ Add Point | ~r~[X]~s~ Remove Last | ~o~[Z]~s~ Clear\n~g~[ENTER]~s~ Save Polygon | ~s~[ESC/BACKSPACE] Cancel'):format(editTurfId or 0, n))
+                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('turfs.msg.y_turf_editor_s_vertices_g', { edit_turf_id = math.floor(tonumber(editTurfId or 0) or 0), count = math.floor(tonumber(n) or 0) }))
                 EndTextCommandDisplayText(0.02, 0.02)
 
                 -- Key bindings for editor
@@ -438,11 +441,11 @@ CreateThread(function()
                         CreateThread(function()
                             local ok, msg = Sunset.AwaitCallback('sunset:turfs:savePolygon', editTurfId, editVertices)
                             if ok then
-                                exports.sunset_ui:Notify(msg or 'Polygon saved successfully!', 'success', 6000)
+                                exports.sunset_ui:Notify(msg or exports.sunset_core:Translate('turfs.msg.polygon_saved_successfully'), 'success', 6000)
                                 turfEditActive = false
                                 editVertices = {}
                             else
-                                exports.sunset_ui:Notify(msg or 'Failed to save polygon.', 'error', 6000)
+                                exports.sunset_ui:Notify(msg or exports.sunset_core:Translate('turfs.msg.failed_to_save_polygon'), 'error', 6000)
                             end
                         end)
                     else
@@ -465,7 +468,7 @@ end)
 RegisterCommand('turfdebug', function()
     if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     turfDebugActive = not turfDebugActive
-    exports.sunset_ui:Notify(('Turf polygon wireframe visualizer: %s'):format(turfDebugActive and 'ACTIVAT' or 'DEZACTIVAT'), turfDebugActive and 'success' or 'info', 4000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.msg.turf_polygon_wireframe_visualizer', { turf_debug_active = turfDebugActive and exports.sunset_core:Translate('turfs.word.activat') or exports.sunset_core:Translate('turfs.word.dezactivat') }), turfDebugActive and 'success' or 'info', 4000)
 end, false)
 
 local function startEditingTurf(turfId)
@@ -484,7 +487,7 @@ local function startEditingTurf(turfId)
         end
     end
     turfEditActive = true
-    exports.sunset_ui:Notify(('Editing polygon for Turf #%d (%s). Stand at vertices and press [E] to mark points.'):format(turfId, LocalTurfs[turfId].name), 'info', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.msg.editing_polygon_for_turf_stand_at', { turf_id = math.floor(tonumber(turfId) or 0), name = tostring(LocalTurfs[turfId].name) }), 'info', 8000)
 end
 
 RegisterCommand('turfedit', function(_, args)
@@ -602,10 +605,10 @@ AddEventHandler('sunset:nui:warTakeLoadout', function(data)
     CreateThread(function()
         local ok, name = Sunset.AwaitCallback('sunset:turfs:takeLoadout', data and data.loadoutId)
         if ok then
-            exports.sunset_ui:Notify(('Package equipped: %s'):format(tostring(name or '')), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('turfs.msg.package_equipped', { name = tostring(name or '') }), 'success')
             closeArmory()
         else
-            exports.sunset_ui:Notify(name or 'Could not equip the package.', 'error')
+            exports.sunset_ui:Notify(name or exports.sunset_core:Translate('turfs.msg.could_not_equip_the_package'), 'error')
         end
     end)
 end)
@@ -858,7 +861,7 @@ exports('IsInWar', function() return warParticipant == true end)
 RegisterNetEvent('sunset:turfs:warKill', function(data)
     if not data then return end
     exports.sunset_ui:Notify(
-                    ('WAR: %s [%s] took down %s'):format(tostring(data.killer), tostring(data.clanTag or ''), tostring(data.victim)),
+                    exports.sunset_core:Translate('turfs.msg.war_took_down', { killer = tostring(data.killer), clan_tag = tostring(data.clanTag or ''), victim = tostring(data.victim) }),
         'error', 4000)
 end)
 

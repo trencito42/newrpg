@@ -543,9 +543,9 @@ local function submitAdLocked(source, text)
     local insertId
     print(('[CNN AD TRACE] 8 transaction started: player=%s character=%s'):format(src, char.id))
     local committed = MySQL.startTransaction(function(query)
-        local changed = query.await(('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(account, account, account), { price, char.id, price })
-        if tonumber(changed) ~= 1 then
-            print(('[CNN AD TRACE] 9 debit FAILED: player=%s char=%s changed=%s'):format(src, char.id, tostring(changed)))
+        local changed = exports.sunset_core:DebitMoneyInTransaction(char.id, account, price, query.await, 'CNN Ad Submission')
+        if not changed then
+            print(('[CNN AD TRACE] 9 debit FAILED: player=%s char=%s'):format(src, char.id))
             return false
         end
         print(('[CNN AD TRACE] 9 debit completed: ok player=%s char=%s account=%s price=%s'):format(src, char.id, account, price))

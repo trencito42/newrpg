@@ -119,7 +119,7 @@ const Hud = {
                 ? `${data.voiceRange || 'Normal'} · ${Number(data.voiceRangeMeters).toFixed(1)}m`
                 : String(data.voiceRange || 'Normal · 3.0m'));
         range.textContent = display;
-        range.title = `Voice range: ${display}`;
+        range.title = I18n.t('ui.hud.voice_range_title', { range: display });
 
         if (data.voiceTalking !== undefined) {
             icon.classList.toggle('talking', data.voiceTalking === true);
@@ -148,7 +148,7 @@ const Hud = {
 
         const iconKey = data.icon || data.iconKey || (data.licenseType ? 'license' : 'default');
         const iconSvg = data.iconSVG || this.taskIcons[iconKey] || this.taskIcons.default;
-        const titleText = data.title || data.tag || 'TASK';
+        const titleText = data.title || data.tag || I18n.t('ui.hud.task');
         if (title) title.innerHTML = `${iconSvg} ${this.escapeHtml(titleText)}`;
 
         if (desc) {

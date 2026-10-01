@@ -121,8 +121,7 @@ function FinalizeLicenseExamReport(session, result)
         result = result,
     })
     if session.instructor and GetPlayerName(session.instructor) then
-        reviewNotify(session.instructor, ('Exam report #%d was saved as %s and is waiting for rank 5+ QA review.'):format(
-            session.reportId, result), result == 'passed' and 'success' or 'warning')
+        reviewNotify(session.instructor, exports.sunset_core:TFor(session.instructor, 'licenses.msg.exam_report_was_saved_as_and', { report_id = math.floor(tonumber(session.reportId) or 0), result = tostring(result) }), result == 'passed' and 'success' or 'warning')
     end
 end
 
@@ -176,7 +175,7 @@ function RunLssiReviewsCommand(source, args)
     if mode == 'all' then
         where = "r.result <> 'in_progress'"
     elseif mode ~= 'pending' then
-        reviewNotify(source, 'Usage: /lssireviews [pending|all]', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.usage_lssireviews_pending_all'), 'error')
         return true
     end
     local ok, rows = pcall(MySQL.query.await, ([=[
@@ -189,16 +188,13 @@ function RunLssiReviewsCommand(source, args)
         JOIN characters cc ON cc.id = r.candidate_character_id
         WHERE %s ORDER BY r.completed_at DESC, r.id DESC LIMIT 20
     ]=]):format(where), params)
-    if not ok then reviewNotify(source, 'Review list unavailable. Apply the LSSI review database migration.', 'error') return true end
+    if not ok then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.review_list_unavailable_apply_the_lssi'), 'error') return true end
     rows = rows or {}
-    reviewChat(source, ('%s exam reports (%d shown):'):format(mode == 'all' and 'Recent' or 'Pending', #rows), 'info')
+    reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.exam_reports_shown', { value = mode == 'all' and exports.sunset_core:TFor(source, 'licenses.word.recent') or exports.sunset_core:TFor(source, 'licenses.word.pending'), count = #rows }), 'info')
     for _, row in ipairs(rows) do
-        reviewChat(source, ('#%d | %s | instructor %s | candidate %s | %s | theory %s/%s | practical %s/%s | candidate mistakes %.1f | %s'):format(
-            row.id, string.upper(row.license_type), row.instructor_name, row.candidate_name, row.result,
-            row.theory_score or '-', row.theory_total or '-', row.checkpoints_completed or 0,
-            row.checkpoints_total or 0, tonumber(row.candidate_mistakes) or 0, row.review_status), 'info')
+        reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.instructor_candidate_theory_practical_candid', { id = math.floor(tonumber(row.id) or 0), upper = tostring(string.upper(row.license_type)), instructor_name = tostring(row.instructor_name), candidate_name = tostring(row.candidate_name), result = tostring(row.result), theory_score = tostring(row.theory_score or '-'), theory_total = tostring(row.theory_total or '-'), checkpoints_completed = tostring(row.checkpoints_completed or 0), checkpoints_total = tostring(row.checkpoints_total or 0), candidate_mistakes = string.format('%.1f', tonumber(row.candidate_mistakes) or 0), review_status = tostring(row.review_status) }), 'info')
     end
-    if #rows == 0 then reviewChat(source, 'No matching exam reports.', 'info') end
+    if #rows == 0 then reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.no_matching_exam_reports'), 'info') end
     return true
 end
 
@@ -227,13 +223,13 @@ function RunLssiMarkCommand(source, args)
     local points = tonumber(args[2])
     local reason = cleanNotes(table.concat(args, ' ', 3))
     if (points ~= 0.5 and points ~= 1.0) or reason == '' then
-        reviewNotify(source, 'Usage: /lssimark [candidate id] [0.5|1] [observed mistake]', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.usage_lssimark_candidate_id_0_5'), 'error')
         return true
     end
     session.candidateMarks = session.candidateMarks or {}
     session.candidateMistakes = tonumber(session.candidateMistakes) or 0
     if session.candidateMistakes + points > 10 then
-        reviewNotify(source, 'The candidate already reached the maximum recorded mistake score.', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.the_candidate_already_reached_the_maximum'), 'error')
         return true
     end
     session.candidateMarks[#session.candidateMarks + 1] = {
@@ -246,10 +242,8 @@ function RunLssiMarkCommand(source, args)
                 { session.candidateMistakes, json.encode(session.candidateMarks), session.reportId })
         end)
     end
-    reviewNotify(source, ('Recorded %.1f mistake for candidate #%d: %s (total %.1f/%.1f).'):format(
-        points, target, reason, session.candidateMistakes, SunsetLicenses.CandidateFailMistakes or 3), 'warning')
-    reviewNotify(target, ('Your instructor recorded %.1f mistake: %s (total %.1f/%.1f).'):format(
-        points, reason, session.candidateMistakes, SunsetLicenses.CandidateFailMistakes or 3), 'warning')
+    reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.recorded_mistake_for_candidate_total', { points = string.format('%.1f', points), target = math.floor(tonumber(target) or 0), reason = tostring(reason), candidate_mistakes = string.format('%.1f', session.candidateMistakes), candidate_fail_mistakes = string.format('%.1f', SunsetLicenses.CandidateFailMistakes or 3) }), 'warning')
+    reviewNotify(target, exports.sunset_core:TFor(target, 'licenses.msg.your_instructor_recorded_mistake_total', { points = string.format('%.1f', points), reason = tostring(reason), candidate_mistakes = string.format('%.1f', session.candidateMistakes), candidate_fail_mistakes = string.format('%.1f', SunsetLicenses.CandidateFailMistakes or 3) }), 'warning')
     return true
 end
 
@@ -258,7 +252,7 @@ function RunLssiUnmarkCommand(source, args)
     if not session then reviewNotify(source, err, 'error') return true end
     local marks = session.candidateMarks or {}
     local removed = table.remove(marks)
-    if not removed then reviewNotify(source, 'No candidate mistake is available to undo.', 'error') return true end
+    if not removed then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.no_candidate_mistake_is_available_to'), 'error') return true end
     session.candidateMistakes = math.max(0, (tonumber(session.candidateMistakes) or 0) - (tonumber(removed.points) or 0))
     if session.reportId then
         pcall(function()
@@ -266,10 +260,8 @@ function RunLssiUnmarkCommand(source, args)
                 { session.candidateMistakes, json.encode(marks), session.reportId })
         end)
     end
-    reviewNotify(source, ('Removed the last %.1f mark from candidate #%d. New total: %.1f.'):format(
-        tonumber(removed.points) or 0, target, session.candidateMistakes), 'success')
-    reviewNotify(target, ('Your instructor corrected the last mark. New mistake total: %.1f.'):format(
-        session.candidateMistakes), 'info')
+    reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.removed_the_last_mark_from_candidate', { points = string.format('%.1f', tonumber(removed.points) or 0), target = math.floor(tonumber(target) or 0), candidate_mistakes = string.format('%.1f', session.candidateMistakes) }), 'success')
+    reviewNotify(target, exports.sunset_core:TFor(target, 'licenses.msg.your_instructor_corrected_the_last_mark', { candidate_mistakes = string.format('%.1f', session.candidateMistakes) }), 'info')
     return true
 end
 
@@ -281,11 +273,11 @@ function RunLssiReviewCommand(source, args)
     local verdict = string.lower(tostring(args[3] or ''))
     local notes = cleanNotes(table.concat(args, ' ', 4))
     if not reportId or mistakes == nil or (verdict ~= 'approved' and verdict ~= 'improve') or notes == '' then
-        reviewNotify(source, 'Usage: /lssireview [report id] [mistakes: 0, 0.5, 1...] [approved|improve] [notes]', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.usage_lssireview_report_id_mistakes_0'), 'error')
         return true
     end
     if mistakes < 0 or mistakes > 20 or math.abs(mistakes * 2 - math.floor(mistakes * 2 + 0.5)) > 0.001 then
-        reviewNotify(source, 'Mistakes must be between 0 and 20, in steps of 0.5.', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.mistakes_must_be_between_0_and'), 'error')
         return true
     end
     local ok, report = pcall(MySQL.single.await, [[
@@ -294,14 +286,14 @@ function RunLssiReviewCommand(source, args)
         JOIN characters ci ON ci.id = r.instructor_character_id
         WHERE r.id = ? AND r.result <> 'in_progress' LIMIT 1
     ]], { reportId })
-    if not ok then reviewNotify(source, 'Review storage is unavailable.', 'error') return true end
-    if not report then reviewNotify(source, 'That completed exam report does not exist.', 'error') return true end
+    if not ok then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.review_storage_is_unavailable'), 'error') return true end
+    if not report then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.that_completed_exam_report_does_not'), 'error') return true end
     if report.review_status ~= 'pending' then
-        reviewNotify(source, ('Report #%d was already reviewed and cannot be silently overwritten.'):format(reportId), 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.report_was_already_reviewed_and_cannot', { report_id = math.floor(tonumber(reportId) or 0) }), 'error')
         return true
     end
     if tonumber(report.instructor_character_id) == tonumber(actor.id) then
-        reviewNotify(source, 'You cannot review your own instructor activity.', 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.you_cannot_review_your_own_instructor'), 'error')
         return true
     end
     local instructorMetadata = report.instructor_metadata
@@ -313,8 +305,7 @@ function RunLssiReviewCommand(source, args)
     local _, reviewerGrade = characterFaction(actor)
     local isLeader = exports.sunset_factions:IsFactionLeader(source) == true
     if instructorGrade >= reviewerGrade and not isLeader then
-        reviewNotify(source, ('You cannot QA an instructor at rank %d while you are rank %d. A higher rank or LSSI leader must review it.'):format(
-            instructorGrade, reviewerGrade), 'error')
+        reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.you_cannot_qa_an_instructor_at', { instructor_grade = math.floor(tonumber(instructorGrade) or 0), reviewer_grade = math.floor(tonumber(reviewerGrade) or 0) }), 'error')
         return true
     end
     local status = verdict == 'approved' and 'approved' or 'needs_improvement'
@@ -323,11 +314,11 @@ function RunLssiReviewCommand(source, args)
             instructor_mistakes = ?, review_notes = ?, reviewed_at = CURRENT_TIMESTAMP
         WHERE id = ? AND review_status = 'pending'
     ]], { status, actor.id, mistakes, notes, reportId })
-    if tonumber(changed) ~= 1 then reviewNotify(source, 'The report changed before your review was saved. Re-open the list.', 'error') return true end
+    if tonumber(changed) ~= 1 then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.the_report_changed_before_your_review'), 'error') return true end
     writeFactionAudit(actor.id, 'license_exam_reviewed', report.instructor_character_id, {
         reportId = reportId, mistakes = mistakes, verdict = status, notes = notes,
     })
-    reviewNotify(source, ('Exam #%d reviewed: %s, %.1f instructor mistakes.'):format(reportId, status, mistakes), 'success')
+    reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.exam_reviewed_instructor_mistakes', { report_id = math.floor(tonumber(reportId) or 0), status = tostring(status), mistakes = string.format('%.1f', mistakes) }), 'success')
     return true
 end
 
@@ -335,7 +326,7 @@ function RunLssiReportCommand(source, args)
     local actor, err = canReview(source)
     if not actor then reviewNotify(source, err, 'error') return true end
     local reportId = tonumber(args[1])
-    if not reportId then reviewNotify(source, 'Usage: /lssireport [report id]', 'error') return true end
+    if not reportId then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.usage_lssireport_report_id'), 'error') return true end
     local ok, row = pcall(MySQL.single.await, [[
         SELECT r.*, CONCAT(ci.firstname, ' ', ci.lastname) AS instructor_name,
             CONCAT(cc.firstname, ' ', cc.lastname) AS candidate_name,
@@ -346,14 +337,10 @@ function RunLssiReportCommand(source, args)
         LEFT JOIN characters cr ON cr.id = r.reviewer_character_id
         WHERE r.id = ? LIMIT 1
     ]], { reportId })
-    if not ok then reviewNotify(source, 'Report storage is unavailable.', 'error') return true end
-    if not row then reviewNotify(source, 'That exam report does not exist.', 'error') return true end
-    reviewChat(source, ('Report #%d | %s | %s | instructor %s | candidate %s | duration %ss'):format(
-        row.id, string.upper(row.license_type), row.result, row.instructor_name, row.candidate_name,
-        row.duration_seconds or '-'), 'info')
-    reviewChat(source, ('Theory %s/%s | practical %s/%s | candidate mistakes %.1f'):format(
-        row.theory_score or '-', row.theory_total or '-', row.checkpoints_completed or 0,
-        row.checkpoints_total or 0, tonumber(row.candidate_mistakes) or 0), 'info')
+    if not ok then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.report_storage_is_unavailable'), 'error') return true end
+    if not row then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.that_exam_report_does_not_exist'), 'error') return true end
+    reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.report_instructor_candidate_duration_s', { id = math.floor(tonumber(row.id) or 0), upper = tostring(string.upper(row.license_type)), result = tostring(row.result), instructor_name = tostring(row.instructor_name), candidate_name = tostring(row.candidate_name), duration_seconds = tostring(row.duration_seconds or '-') }), 'info')
+    reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.theory_practical_candidate_mistakes', { theory_score = tostring(row.theory_score or '-'), theory_total = tostring(row.theory_total or '-'), checkpoints_completed = tostring(row.checkpoints_completed or 0), checkpoints_total = tostring(row.checkpoints_total or 0), candidate_mistakes = string.format('%.1f', tonumber(row.candidate_mistakes) or 0) }), 'info')
     local marks = row.candidate_marks
     if type(marks) == 'string' then
         local decoded, valid = nil, false
@@ -361,8 +348,7 @@ function RunLssiReportCommand(source, args)
         marks = valid and decoded or {}
     end
     for index, mark in ipairs(type(marks) == 'table' and marks or {}) do
-        reviewChat(source, ('Candidate mark %d: %.1f — %s'):format(
-            index, tonumber(mark.points) or 0, tostring(mark.reason or 'No reason')), 'warning')
+        reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.candidate_mark', { index = math.floor(tonumber(index) or 0), points = string.format('%.1f', tonumber(mark.points) or 0), reason = tostring(mark.reason or 'No reason') }), 'warning')
     end
     local evidence = row.practical_evidence
     if type(evidence) == 'string' then
@@ -370,13 +356,11 @@ function RunLssiReportCommand(source, args)
         evidence = valid and decoded or {}
     end
     evidence = type(evidence) == 'table' and evidence or {}
-    reviewChat(source, ('Server-validated practical evidence: %d ordered events recorded.'):format(#evidence), 'info')
+    reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.server_validated_practical_evidence_ordered_', { count = #evidence }), 'info')
     if row.review_status == 'pending' then
-        reviewChat(source, 'QA review pending. Use /lssireview after checking this evidence.', 'warning')
+        reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.qa_review_pending_use_lssireview_after'), 'warning')
     else
-        reviewChat(source, ('QA: %s by %s | instructor mistakes %.1f | %s'):format(
-            row.review_status, row.reviewer_name or 'unknown', tonumber(row.instructor_mistakes) or 0,
-            row.review_notes or 'No notes'), 'info')
+        reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.qa_by_instructor_mistakes', { review_status = tostring(row.review_status), reviewer_name = row.reviewer_name or exports.sunset_core:TFor(source, 'licenses.word.unknown'), instructor_mistakes = string.format('%.1f', tonumber(row.instructor_mistakes) or 0), review_notes = row.review_notes or exports.sunset_core:TFor(source, 'licenses.word.no_notes') }), 'info')
     end
     return true
 end
@@ -384,26 +368,23 @@ end
 function RunLssiPerformanceCommand(source, args)
     local actor = character(source)
     local factionId, grade = characterFaction(actor)
-    if factionId ~= 'lssi' then reviewNotify(source, 'This command is for LSSI members.', 'error') return true end
+    if factionId ~= 'lssi' then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.this_command_is_for_lssi_members'), 'error') return true end
     local targetId = tonumber(args[1])
     local targetChar = actor
     if targetId then
-        if grade < REVIEW_MIN_GRADE then reviewNotify(source, 'Rank 5+ is required to view another instructor.', 'error') return true end
+        if grade < REVIEW_MIN_GRADE then reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.rank_5_is_required_to_view'), 'error') return true end
         targetChar = character(targetId)
         if not targetChar or select(1, characterFaction(targetChar)) ~= 'lssi' then
-            reviewNotify(source, 'That online player is not an LSSI member.', 'error') return true
+            reviewNotify(source, exports.sunset_core:TFor(source, 'licenses.msg.that_online_player_is_not_an'), 'error') return true
         end
     end
     local stats, err = performance(targetChar.id)
     if not stats then reviewNotify(source, err, 'error') return true end
-    reviewChat(source, ('Instructor performance — %s: %d exams, %d reviewed, %d pending, %d approved, %d improvement, %.2f average mistakes.'):format(
-        exports.sunset_core:GetPlayerDisplayName(targetId or source), stats.total, stats.reviewed, stats.pending,
-        stats.approved, stats.needsImprovement, stats.averageMistakes), 'info')
+    reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.instructor_performance_exams_reviewed_pendin', { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId or source)), total = math.floor(tonumber(stats.total) or 0), reviewed = math.floor(tonumber(stats.reviewed) or 0), pending = math.floor(tonumber(stats.pending) or 0), approved = math.floor(tonumber(stats.approved) or 0), needs_improvement = math.floor(tonumber(stats.needsImprovement) or 0), average_mistakes = string.format('%.2f', stats.averageMistakes) }), 'info')
     local _, targetGrade = characterFaction(targetChar)
     local nextRequirement = SunsetLicenses.InstructorPromotionRequirements[targetGrade + 1]
     if nextRequirement then
-        reviewChat(source, ('Next rank QA target: %d/%d reviewed exams; %.2f/%.2f maximum average mistakes.'):format(
-            stats.reviewed, nextRequirement.reviewed, stats.averageMistakes, nextRequirement.maxAverageMistakes), 'info')
+        reviewChat(source, exports.sunset_core:TFor(source, 'licenses.msg.next_rank_qa_target_reviewed_exams', { reviewed = math.floor(tonumber(stats.reviewed) or 0), reviewed_2 = math.floor(tonumber(nextRequirement.reviewed) or 0), average_mistakes = string.format('%.2f', stats.averageMistakes), max_average_mistakes = string.format('%.2f', nextRequirement.maxAverageMistakes) }), 'info')
     end
     return true
 end

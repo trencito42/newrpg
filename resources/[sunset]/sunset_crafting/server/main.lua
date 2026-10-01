@@ -101,40 +101,40 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
         return result, err
     end
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return done(nil, 'Your character is not loaded. Reconnect and try again.') end
+    if not char then return done(nil, exports.sunset_core:TFor(source, 'clans.message.your_character_is_not_loaded_reconnect_and_try_again')) end
 
     local station = Sunset.CraftingStations[stationId]
     local recipe = Sunset.CraftingRecipes[recipeId]
     if not station or not recipe or recipe.station ~= stationId then
-        return done(nil, 'That recipe does not belong to this crafting station. Close and reopen the menu.')
+        return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.that_recipe_does_not_belong_to'))
     end
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - station.coords) > 4.0 then
-        return done(nil, ('You moved too far away from %s. Return to its marker.'):format(station.label or 'the crafting station'))
+        return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.you_moved_too_far_away_from', { label = station.label or exports.sunset_core:TFor(source, 'crafting.word.the_crafting_station') }))
     end
 
     local factionId, grade = Sunset.GetCharacterFaction(char)
 
     if station.access == 'faction' then
-        if factionId ~= station.faction then return done(nil, 'This crafting station belongs to another faction.') end
-        if (grade or 0) < (station.minGrade or 0) then return done(nil, 'Your faction rank is too low for this station.') end
-        if not exports.sunset_factions:IsOnDuty(source) then return done(nil, 'Go on duty before using this faction station.') end
+        if factionId ~= station.faction then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.this_crafting_station_belongs_to_another')) end
+        if (grade or 0) < (station.minGrade or 0) then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.your_faction_rank_is_too_low')) end
+        if not exports.sunset_factions:IsOnDuty(source) then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.go_on_duty_before_using_this')) end
     end
-    if recipe.faction and factionId ~= recipe.faction then return done(nil, 'This recipe belongs to another faction.') end
-    if recipe.minGrade and (grade or 0) < recipe.minGrade then return done(nil, 'Your faction rank is too low for this recipe.') end
+    if recipe.faction and factionId ~= recipe.faction then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.this_recipe_belongs_to_another_faction')) end
+    if recipe.minGrade and (grade or 0) < recipe.minGrade then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.your_faction_rank_is_too_low_2')) end
     if recipe.illegal then
-        if not exports.sunset_factions:IsOnDuty(source) then return done(nil, 'Go on duty before crafting this item.') end
+        if not exports.sunset_factions:IsOnDuty(source) then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.go_on_duty_before_crafting_this')) end
         if not Sunset.HasFactionPerm(factionId, grade, 'craft_illegal') then
-            return done(nil, 'Your rank does not permit illegal crafting.')
+            return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.your_rank_does_not_permit_illegal'))
         end
     end
 
     local out = recipe.output
     local outDef = Sunset.Items[out.item]
-    if not outDef then return done(nil, 'This recipe output is not configured. Nothing was consumed.') end
+    if not outDef then return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.this_recipe_output_is_not_configured')) end
     if outDef.weapon and GetResourceState('sunset_licenses') == 'started'
         and not exports.sunset_licenses:HasLicense(source, 'weapon') then
-        return done(nil, 'A valid weapon license is required before crafting a firearm.')
+        return done(nil, exports.sunset_core:TFor(source, 'crafting.msg.a_valid_weapon_license_is_required'))
     end
 
     local failure
@@ -204,7 +204,7 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
         end
     end)
     if not crafted then
-        return done(nil, failure or 'Crafting could not be committed. Nothing was consumed; try again.')
+        return done(nil, failure or exports.sunset_core:TFor(source, 'crafting.msg.crafting_could_not_be_committed_nothing'))
     end
     exports.sunset_inventory:ReloadInventory(source)
 

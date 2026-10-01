@@ -77,7 +77,7 @@ function RobberyPolice.alert(session, stage)
                 exports.sunset_factions:AddWantedCharge(session.source, 3, 'Armed Robbery (Local Alarm)')
             end
         end)
-        RobberyAdapter.notify(session.source, 'Alarma silentioasa a pornit! Politia locala a fost alertata (Wanted ★★★).', 'error', 10000)
+        RobberyAdapter.notify(session.source, exports.sunset_core:TFor(session.source, 'robbery.msg.alarma_silentioasa_a_pornit_politia_locala'), 'error', 10000)
     end
 
     if stage == 'first' and GetResourceState('sunset_dispatch') == 'started' then

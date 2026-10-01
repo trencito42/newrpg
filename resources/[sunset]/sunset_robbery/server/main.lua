@@ -91,9 +91,9 @@ RegisterNetEvent('sunset:robbery:tryStart', function(locationId)
     if not RobberySessions.rateOk(source) then return end
     locationId = type(locationId) == 'string' and locationId or 'luxury_store'
     local loc = SunsetRobbery.Locations[locationId]
-    if not loc then return RobberyAdapter.notify(source, 'Unknown robbery location', 'error') end
+    if not loc then return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.unknown_robbery_location'), 'error') end
     if not nearPoint(source, loc.coords, loc.radius or SunsetRobbery.StartRadius) then
-        return RobberyAdapter.notify(source, 'You are not at a robbery location', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.message.you_are_not_at_a_robbery_location'), 'error')
     end
     local session, err = RobberySessions.begin(source, locationId, false)
     if not session then return RobberyAdapter.notify(source, err, 'error') end
@@ -103,7 +103,7 @@ RegisterNetEvent('sunset:robbery:tryStart', function(locationId)
         bagCap = session.bagCap,
         stage = session.stage,
     })
-    RobberyAdapter.notify(source, 'Security live — reach the terminal and bypass it.', 'warning', 6000)
+    RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.security_live_reach_the_terminal_and'), 'warning', 6000)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:robbery:start', function(source, locationId)
@@ -129,7 +129,7 @@ RegisterNetEvent('sunset:robbery:hackOpen', function()
     local session = RobberySessions.get(source)
     if not session or session.stage ~= 'HACKING' then return end
     if not nearPoint(source, session.location.hackTerminal.coords, 4.0) then
-        return RobberyAdapter.notify(source, 'Stay at the security terminal', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.stay_at_the_security_terminal'), 'error')
     end
     if not session.hack.startedAt then
         session.hack.startedAt = os.time()
@@ -145,7 +145,7 @@ RegisterNetEvent('sunset:robbery:hackClick', function(nodeId)
     local session = RobberySessions.get(source)
     if not session or session.stage ~= 'HACKING' then return end
     if not nearPoint(source, session.location.hackTerminal.coords, 4.0) then
-        return RobberyAdapter.notify(source, 'Stay at the security terminal', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.stay_at_the_security_terminal'), 'error')
     end
     local hack = session.hack
     if not hack.startedAt then
@@ -241,7 +241,7 @@ RegisterNetEvent('sunset:robbery:smash', function(displayId)
     end
     if not displayCfg then return end
     if not nearPoint(source, displayCfg.coords, SunsetRobbery.StoreInteractRadius + 0.4) then
-        return RobberyAdapter.notify(source, 'Get closer to the display', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.get_closer_to_the_display'), 'error')
     end
     local slot = session.displays[displayId]
     if slot.smashed then
@@ -292,7 +292,7 @@ RegisterNetEvent('sunset:robbery:takeItem', function(displayId, uid)
     end
     if not item or item.taken or item.taking then return end
     if session.bagUsed + (item.weight or 1) > session.bagCap then
-        return RobberyAdapter.notify(source, 'Duffel bag is full — escape or drop the extra score', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.duffel_bag_is_full_escape_or'), 'error')
     end
     -- Reserve before the database write yields so two concurrent NUI events cannot
     -- both receive the same item or race for the same inventory slot.
@@ -310,7 +310,7 @@ RegisterNetEvent('sunset:robbery:takeItem', function(displayId, uid)
     }) then
         item.taking = nil
         session.lootBusy = nil
-        return RobberyAdapter.notify(source, 'Inventory is full', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.inventory_is_full'), 'error')
     end
     if RobberySessions.get(source) ~= session or session.stage ~= 'LOOTING' then
         item.taking = nil
@@ -470,7 +470,7 @@ CreateThread(function()
         local now = os.time()
         for source, session in pairs(RobberySessions.bySource) do
             if RobberyAdapter.isDead(source) then
-                RobberySessions.fail(source, 'You went down — robbery over')
+                RobberySessions.fail(source, exports.sunset_core:TFor(source, 'robbery.msg.you_went_down_robbery_over'))
             elseif session.stage == 'HACKING' and session.hack and session.hack.startedAt
                 and now - session.hack.startedAt >= session.hack.timeLimit then
                 applyHackResult(session, 'failed')
@@ -510,7 +510,7 @@ AddEventHandler('playerDropped', function()
         end
     end
     if RobberySessions.get(source) then
-        RobberySessions.fail(source, 'Disconnected')
+        RobberySessions.fail(source, exports.sunset_core:TFor(source, 'robbery.msg.disconnected'))
     end
 end)
 
@@ -523,7 +523,7 @@ end)
 
 AddEventHandler('sunset:death:playerDowned', function(source)
     if RobberySessions.get(source) then
-        RobberySessions.fail(source, 'You went down — robbery over')
+        RobberySessions.fail(source, exports.sunset_core:TFor(source, 'robbery.msg.you_went_down_robbery_over'))
     end
 end)
 
@@ -535,15 +535,15 @@ end, false)
 local function runRobDebug(source, args)
     if source == 0 then return end
     if not SunsetRobbery.Debug then
-        return RobberyAdapter.notify(source, 'Robbery debug is disabled', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.robbery_debug_is_disabled'), 'error')
     end
     if not RobberyAdapter.isAdmin(source) then
-        return RobberyAdapter.notify(source, 'Robbery debug requires administrator access', 'error')
+        return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.robbery_debug_requires_administrator_access'), 'error')
     end
     local action = string.lower(tostring(args[1] or ''))
     if action == 'reset' then
         RobberySessions.resetCooldowns(source, 'luxury_store')
-        RobberyAdapter.notify(source, 'Cooldowns cleared', 'success')
+        RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.cooldowns_cleared'), 'success')
     elseif action == 'force' then
         local session, err = RobberySessions.begin(source, 'luxury_store', true)
         if not session then return RobberyAdapter.notify(source, err, 'error') end
@@ -555,9 +555,9 @@ local function runRobDebug(source, args)
         })
     elseif action == 'points' then
         exports.sunset_core:AddRobPoints(source, tonumber(args[2]) or 5)
-        RobberyAdapter.notify(source, 'Rob points granted', 'success')
+        RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.rob_points_granted'), 'success')
     else
-        RobberyAdapter.notify(source, 'Usage: /robdebug reset|force|points', 'info')
+        RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.usage_robdebug_reset_force_points'), 'info')
     end
 end
 

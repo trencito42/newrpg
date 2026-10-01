@@ -403,14 +403,14 @@ if (new URLSearchParams(window.location.search).get('qa') === '1') {
                 unlocked: i < 4,
                 current: i === 3,
                 free: { level: i + 1, type: 'cash', label: `$${(i + 1) * 1000}`, icon: 'cash', claimed: i < 2 },
-                premium: { level: i + 1, type: 'item', label: i % 3 === 0 ? 'VIP Vehicle' : `Crate Lvl ${i + 1}`, icon: i % 3 === 0 ? 'veh_engine' : 'backpack', claimed: false },
+                premium: { level: i + 1, type: 'item', label: i % 3 === 0 ? 'VIP Vehicle' : `Crate Lvl ${i + 1}`, icon: i % 3 === 0 ? 'veh_engine' : 'backpack', claimed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
             })),
             missions: [
-                { id: '1', type: 'daily', title: 'Șofer Model', description: 'Condu un total de 15km fără a lovi vehiculul.', progress: 15, goal: 15, xp: 500, icon: 'veh_engine', completed: true },
-                { id: '2', type: 'daily', title: 'Harnic', description: 'Completează 3 ture la jobul de Livrator.', progress: 1, goal: 3, xp: 300, icon: 'backpack', completed: false },
-                { id: '3', type: 'daily', title: 'Timp cu Prietenii', description: 'Petrece 2 ore activ pe server.', progress: 120, goal: 120, xp: 400, icon: 'cash_stack', completed: true },
-                { id: '4', type: 'weekly', title: 'Magnat Local', description: 'Câștigă un total de $50,000.', progress: 32000, goal: 50000, xp: 2500, icon: 'bank_card', completed: false },
-                { id: '5', type: 'weekly', title: 'Infractor Căutat', description: 'Evadează cu succes din 3 jafuri auto.', progress: 3, goal: 3, xp: 3000, icon: 'golden_watch', completed: true },
+                { id: '1', type: 'daily', title: 'Șofer Model', description: 'Condu un total de 15km fără a lovi vehiculul.', progress: 15, goal: 15, xp: 500, icon: 'veh_engine', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '2', type: 'daily', title: 'Harnic', description: 'Completează 3 ture la jobul de Livrator.', progress: 1, goal: 3, xp: 300, icon: 'backpack', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '3', type: 'daily', title: 'Timp cu Prietenii', description: 'Petrece 2 ore activ pe server.', progress: 120, goal: 120, xp: 400, icon: 'cash_stack', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '4', type: 'weekly', title: 'Magnat Local', description: 'Câștigă un total de $50,000.', progress: 32000, goal: 50000, xp: 2500, icon: 'bank_card', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '5', type: 'weekly', title: 'Infractor Căutat', description: 'Evadează cu succes din 3 jafuri auto.', progress: 3, goal: 3, xp: 3000, icon: 'golden_watch', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
             ],
         },
     });

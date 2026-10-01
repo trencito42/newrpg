@@ -16,7 +16,7 @@
         admin: false,
         money: null,
         testDriveSeconds: 60,
-        dealership: 'Vehicle Dealership',
+        dealership: null,
     };
     let buyProgress = 0;
     let buyRaf = null;
@@ -34,7 +34,7 @@
 
     const formatMoney = (amount) => {
         const n = Math.floor(Number(amount) || 0);
-        return `$${n.toLocaleString('en-US')}`;
+        return `$${I18n.number(n)}`;
     };
 
     const formatShortPrice = (amount) => {
@@ -84,7 +84,7 @@
             const bar = $('#dl-buy-progress');
             const text = $('#dl-buy-text');
             if (bar) bar.style.width = '0%';
-            if (text) text.innerHTML = '<span class="dl-key-hint">ENTER</span> Hold to Purchase';
+            if (text) text.innerHTML = '<span class="dl-key-hint">ENTER</span> ' + I18n.t('ui.dealership.hold_to_purchase');
         }
     };
 
@@ -129,7 +129,7 @@
         if (title) {
             title.textContent = vehicle?.category
                 ? String(vehicle.category).replace(/_/g, ' ')
-                : 'Catalog';
+                : I18n.t('ui.dealership.catalog');
         }
         list.innerHTML = '';
         (state.vehicles || []).forEach((v) => {
@@ -174,7 +174,7 @@
         const priceEl = $('#dl-price');
         if (priceEl) {
             priceEl.textContent = vehicle
-                ? Number(vehicle.price || 0).toLocaleString('en-US')
+                ? I18n.number(Number(vehicle.price || 0))
                 : '—';
         }
         const priceLabel = $('#dl-price-label');
@@ -315,7 +315,7 @@
             admin: data?.admin !== undefined ? data.admin === true : state.admin,
             money: data?.money !== undefined ? data.money : state.money,
             testDriveSeconds: data?.testDriveSeconds ?? state.testDriveSeconds ?? 60,
-            dealership: data?.dealership ?? state.dealership ?? 'Vehicle Dealership',
+            dealership: data?.dealership ?? state.dealership ?? I18n.t('ui.dealership.default_name'),
         };
         if (opening) state.selected = null;
         $('#dl-admin-toggle')?.classList.toggle('hidden', !state.admin);

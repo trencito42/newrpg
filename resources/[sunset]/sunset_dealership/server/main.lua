@@ -136,24 +136,23 @@ exports.sunset_core:RegisterCallback('sunset:dealership:purchase', function(sour
     end
 
     local char = exports.sunset_core:GetCharacter(source)
-    if not char then return finish(nil, 'Your character is not loaded. Reconnect and select it again.') end
+    if not char then return finish(nil, exports.sunset_core:TFor(source, 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it')) end
     local row = MySQL.single.await(
         'SELECT model, label, price, stock FROM dealership_vehicles WHERE model = ? AND available = 1',
         { model })
-    if not row then return finish(nil, 'That vehicle is unavailable or was removed from sale.') end
+    if not row then return finish(nil, exports.sunset_core:TFor(source, 'dealership.msg.that_vehicle_is_unavailable_or_was')) end
 
     local price = math.max(1, math.floor(tonumber(row.price) or 0))
     local account
     if (char.bank or 0) >= price then account = 'bank'
     elseif (char.cash or 0) >= price then account = 'cash'
     else
-        return finish(nil, ('You need $%d. Bank: $%d, cash: $%d.'):format(
-            price, char.bank or 0, char.cash or 0))
+        return finish(nil, exports.sunset_core:TFor(source, 'dealership.msg.you_need_bank_cash', { price = math.floor(tonumber(price) or 0), bank = math.floor(tonumber(char.bank or 0) or 0), cash = math.floor(tonumber(char.cash or 0) or 0) }))
     end
 
     local plate = generatePlate()
     if not plate then
-        return finish(nil, 'A unique license plate could not be generated. No money was charged.')
+        return finish(nil, exports.sunset_core:TFor(source, 'dealership.msg.a_unique_license_plate_could_not'))
     end
 
     local insuranceCost = math.max(250, math.min(15000, math.floor(price * 0.015)))
@@ -199,7 +198,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:purchase', function(sour
         end)
     end)
     if not callOk or not committed or not vehicleId then
-        return finish(nil, 'Purchase could not be completed because the stock or balance changed. No money was charged and no vehicle was created.')
+        return finish(nil, exports.sunset_core:TFor(source, 'dealership.msg.purchase_could_not_be_completed_because'))
     end
     exports.sunset_core:RefreshMoney(source)
 

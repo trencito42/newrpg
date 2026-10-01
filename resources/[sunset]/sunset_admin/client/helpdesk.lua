@@ -13,7 +13,7 @@ local function openHelpdesk()
     if helpdeskOpen then return end
     local data, err = Sunset.AwaitCallback('sunset:helpdesk:panel')
     if not data then
-        exports.sunset_ui:Notify(err or 'Helpdesk could not be opened.', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('admin.msg.helpdesk_could_not_be_opened'), 'error')
         return
     end
     helpdeskOpen = true
@@ -91,7 +91,7 @@ end)
 
 RegisterNetEvent('sunset:anticheat:shieldHudToggle', function(enabled)
     shieldHudEnabled = enabled == true
-    exports.sunset_ui:Notify(shieldHudEnabled and 'Shield HUD enabled.' or 'Shield HUD disabled.', 'info')
+    exports.sunset_ui:Notify(shieldHudEnabled and exports.sunset_core:Translate('admin.msg.shield_hud_enabled') or exports.sunset_core:Translate('admin.msg.shield_hud_disabled'), 'info')
     if not shieldHudEnabled then
         exports.sunset_ui:Send('shieldHudHide', {})
     end

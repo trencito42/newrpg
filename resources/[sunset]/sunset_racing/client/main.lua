@@ -43,17 +43,24 @@ CreateThread(function()
 end)
 
 -- ── Hub blip ──
-CreateThread(function()
-    Wait(3000)
+local function setupHubBlip()
     if hubBlip and DoesBlipExist(hubBlip) then RemoveBlip(hubBlip) end
-    hubBlip = AddBlipForCoord(Cfg.raceHub.x, Cfg.raceHub.y, Cfg.raceHub.z)
-    SetBlipSprite(hubBlip, 315) -- Checkered Race Flag
-    SetBlipColour(hubBlip, 5)   -- Yellow
-    SetBlipScale(hubBlip, 0.85)
-    SetBlipAsShortRange(hubBlip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString('Race Hub')
-    EndTextCommandSetBlipName(hubBlip)
+    hubBlip = Sunset.CreateSafeBlip(Cfg.raceHub, {
+        sprite = 315,
+        color = 5,
+        scale = 0.85,
+        name = exports.sunset_core:Translate('racing.msg.race_hub'),
+        shortRange = true
+    })
+end
+
+RegisterNetEvent('sunset:client:languageChanged', function()
+    setupHubBlip()
+end)
+
+CreateThread(function()
+    Sunset.AwaitGameReady()
+    setupHubBlip()
 end)
 
 local isRacingUiOpen = false
@@ -95,7 +102,7 @@ local function createCheckpointBlip(index, total, checkpoint, isActive)
     SetBlipRoute(blip, isActive)
     SetBlipAsShortRange(blip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString(('CP %d/%d'):format(index, total))
+    AddTextComponentString(exports.sunset_core:Translate('racing.msg.cp', { index = math.floor(tonumber(index) or 0), total = math.floor(tonumber(total) or 0) }))
     EndTextCommandSetBlipName(blip)
     raceBlips[#raceBlips + 1] = blip
     return blip
@@ -150,7 +157,7 @@ RegisterNetEvent('sunset:racing:checkpointReached', function(data)
 
     exports.sunset_ui:Send('racingHud', {
         raceId = data.raceId,
-        label = raceData and raceData.label or 'Race',
+        label = raceData and raceData.label or exports.sunset_core:Translate('racing.ui.race'),
         totalCheckpoints = raceData and raceData.checkpoints and #raceData.checkpoints or 0,
         currentCheckpoint = data.current,
     })
@@ -167,7 +174,7 @@ RegisterNetEvent('sunset:racing:dnf', function(data)
     checkpointPending = false
     clearRaceBlips()
     exports.sunset_ui:Send('racingHudHide', {})
-    exports.sunset_ui:Notify(data and data.reason or 'DNF — race over.', 'error', 8000)
+    exports.sunset_ui:Notify(data and data.reason or exports.sunset_core:Translate('racing.msg.dnf_race_over'), 'error', 8000)
 end)
 
 RegisterNetEvent('sunset:racing:end', function(data)
@@ -293,11 +300,10 @@ AddEventHandler('sunset:nui:racingJoin', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:racing:join', routeId)
         if not res then
-            exports.sunset_ui:Notify(err or 'Race join failed. Check F8/server logs.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('racing.msg.race_join_failed_check_f8_server'), 'error')
             return
         end
-        exports.sunset_ui:Notify(('Joined %s lobby (%d/%d players).'):format(
-            routeId, res.players, res.minPlayers), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.msg.joined_lobby_players', { route_id = tostring(routeId), players = math.floor(tonumber(res.players) or 0), min_players = math.floor(tonumber(res.minPlayers) or 0) }), 'success')
         closeRaceUI()
     end)
 end)
@@ -314,7 +320,7 @@ AddEventHandler('sunset:nui:racingStartSolo', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:racing:startSolo', routeId)
         if not res then
-            exports.sunset_ui:Notify(err or 'Solo start failed. Check F8/server logs.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('racing.msg.solo_start_failed_check_f8_server'), 'error')
             return
         end
         closeRaceUI()
@@ -333,7 +339,7 @@ AddEventHandler('sunset:nui:racingStartMulti', function(data)
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:racing:startMulti', routeId)
         if not res then
-            exports.sunset_ui:Notify(err or 'Multiplayer start failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('racing.msg.multiplayer_start_failed'), 'error')
             return
         end
         closeRaceUI()
@@ -344,7 +350,7 @@ AddEventHandler('sunset:nui:racingLeave', function()
     CreateThread(function()
         local res, err = Sunset.AwaitCallback('sunset:racing:leave')
         if not res then
-            exports.sunset_ui:Notify(err or 'Could not leave the lobby.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('racing.msg.could_not_leave_the_lobby'), 'error')
             return
         end
         closeRaceUI()
@@ -377,7 +383,7 @@ RegisterCommand('quitrace', function()
         if ok then
             exports.sunset_ui:Notify(exports.sunset_core:Translate('racing.message.race_abandoned'), 'info')
         else
-            exports.sunset_ui:Notify(err or 'Race cleared.', 'info')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('racing.msg.race_cleared'), 'info')
         end
     end)
 end, false)

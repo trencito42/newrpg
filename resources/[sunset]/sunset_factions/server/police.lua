@@ -108,7 +108,11 @@ local function broadcastToPolice(tag, message)
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         if src and FactionCore.isLawEnforcementMember(src) then
-            policeChat(src, 'HQ', message, 'hq')
+            local text = message
+            if type(message) == 'table' and type(message.localeKey) == 'string' then
+                text = exports.sunset_core:TFor(src, message.localeKey, message.params)
+            end
+            policeChat(src, 'HQ', text, 'hq')
         end
     end
 end
@@ -283,8 +287,7 @@ local function setWanted(targetId, level, reason, reasonCode, jailMinutes, issue
         name = exports.sunset_core:GetPlayerDisplayName(targetId) or name
     end)
     if not silent then
-        broadcastToPolice('WANTED', ('%s (#%d) is now wanted ★%d — %s — %s'):format(
-            name, targetId, data.level, data.reason, data.surrenderable and 'RIGHT TO SURRENDER' or 'NO RIGHT TO SURRENDER'))
+        broadcastToPolice('WANTED', { localeKey = 'factions.msg.is_now_wanted', params = { name = tostring(name), target_id = math.floor(tonumber(targetId) or 0), level = math.floor(tonumber(data.level) or 0), reason = tostring(data.reason), surrenderable = data.surrenderable and { localeKey = 'factions.word.right_to_surrender' } or { localeKey = 'factions.word.no_right_to_surrender' } } })
     end
     return data
 end
@@ -428,12 +431,9 @@ local function captureWantedAfterDeath(targetId)
 
     local suspectName = exports.sunset_core:GetPlayerDisplayName(targetId)
     local officerName = exports.sunset_core:GetPlayerDisplayName(officer)
-    notify(targetId, ('You died while wanted near law enforcement — jailed for %s (former wanted ★%d, no-surrender sentence).'):format(
-        formatDuration(sentenceSeconds), level), 'error', 10000)
-    notify(officer, ('Wanted suspect %s (#%d) was taken into custody after being downed nearby.'):format(
-        suspectName, targetId), 'success', 8000)
-    broadcastToPolice('SUSPECT IN CUSTODY', ('%s (#%d) was downed near %s (#%d) and jailed for %s: %s.'):format(
-        suspectName, targetId, officerName, officer, formatDuration(sentenceSeconds), reason))
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_died_while_wanted_near_law', { format_duration = tostring(formatDuration(sentenceSeconds)), level = math.floor(tonumber(level) or 0) }), 'error', 10000)
+    notify(officer, exports.sunset_core:TFor(officer, 'factions.msg.wanted_suspect_was_taken_into_custody', { suspect_name = tostring(suspectName), target_id = math.floor(tonumber(targetId) or 0) }), 'success', 8000)
+    broadcastToPolice('SUSPECT IN CUSTODY', { localeKey = 'factions.msg.was_downed_near_and_jailed_for', params = { suspect_name = tostring(suspectName), target_id = math.floor(tonumber(targetId) or 0), officer_name = tostring(officerName), officer = math.floor(tonumber(officer) or 0), format_duration = tostring(formatDuration(sentenceSeconds)), reason = tostring(reason) } })
     FactionCore.auditLog('police', charId(officer), 'wanted_death_capture', charId(targetId), {
         wantedLevel = level,
         jailSeconds = sentenceSeconds,
@@ -552,7 +552,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:policeSetWanted', function(source, targetId, reasonCode)
     if not canIssueWanted(source) then
-        return nil, FactionCore.accessError(source, 'wanted', 'add a wanted charge', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'wanted', { localeKey = 'factions.action.add_a_wanted_charge' }, 'law_enforcement')
     end
 
     targetId = tonumber(targetId)
@@ -582,17 +582,14 @@ exports.sunset_core:RegisterCallback('sunset:policeSetWanted', function(source, 
     local wanted = setWanted(targetId, reasonRow.stars, reasonRow.label, reasonCode, reasonRow.jailMinutes,
         charId(source), false, reasonRow.surrenderable ~= false, maxLevel)
 
-    notify(targetId, ('New charge: %s (+★%d). Total wanted: ★%d — %s. One star expires per 15 minutes online.'):format(
-        reasonRow.label, reasonRow.stars, wanted.level,
-        wanted.surrenderable and 'you may surrender' or 'no right to surrender'), 'error', 10000)
-    notify(source, ('Wanted charge added to #%d — now ★%d, %s'):format(
-        targetId, wanted.level, wanted.surrenderable and 'surrender allowed' or 'no surrender'), 'success')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.new_charge_total_wanted_one_star', { label = tostring(reasonRow.label), stars = math.floor(tonumber(reasonRow.stars) or 0), level = math.floor(tonumber(wanted.level) or 0), surrenderable = wanted.surrenderable and exports.sunset_core:TFor(targetId, 'factions.word.you_may_surrender') or exports.sunset_core:TFor(targetId, 'factions.word.no_right_to_surrender_2') }), 'error', 10000)
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.wanted_charge_added_to_now', { target_id = math.floor(tonumber(targetId) or 0), level = math.floor(tonumber(wanted.level) or 0), surrenderable = wanted.surrenderable and exports.sunset_core:TFor(source, 'factions.word.surrender_allowed') or exports.sunset_core:TFor(source, 'factions.word.no_surrender') }), 'success')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeClearWanted', function(source, targetId, characterId)
     if not FactionCore.hasPerm(source, 'clear_wanted') and not FactionCore.hasPerm(source, 'wanted') then
-        return nil, FactionCore.accessError(source, 'clear_wanted', 'clear wanted status', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'clear_wanted', { localeKey = 'factions.action.clear_wanted_status' }, 'law_enforcement')
     end
 
     targetId = tonumber(targetId)
@@ -630,7 +627,7 @@ exports.sunset_core:RegisterCallback('sunset:policeClearWanted', function(source
 
     if onlineSrc and WantedOnline[onlineSrc] then
         clearWanted(onlineSrc, officerCharId)
-        notify(onlineSrc, 'Your wanted status has been cleared by law enforcement', 'success')
+        notify(onlineSrc, exports.sunset_core:TFor(onlineSrc, 'factions.msg.your_wanted_status_has_been_cleared'), 'success')
     elseif onlineSrc then
         syncWantedBag(onlineSrc, nil)
         syncWantedClient(onlineSrc, 0, '')
@@ -638,14 +635,14 @@ exports.sunset_core:RegisterCallback('sunset:policeClearWanted', function(source
 
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
     local targetName = (onlineSrc and exports.sunset_core:GetPlayerDisplayName(onlineSrc)) or ('Citizen #' .. tostring(targetCharId))
-    broadcastToPolice('WANTED CLEARED', ('Officer %s cleared wanted status for %s.'):format(officerName, targetName))
-    notify(source, ('Cleared wanted for %s'):format(targetName), 'success')
+    broadcastToPolice('WANTED CLEARED', { localeKey = 'factions.msg.officer_cleared_wanted_status_for', params = { officer_name = tostring(officerName), target_name = tostring(targetName) } })
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.cleared_wanted_for_2', { target_name = tostring(targetName) }), 'success')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeSummon', function(source, targetId)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return nil, FactionCore.accessError(source, 'mdc', 'issue a police stop order', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.issue_a_police_stop_order' }, 'law_enforcement')
     end
 
     targetId = tonumber(targetId)
@@ -665,7 +662,7 @@ exports.sunset_core:RegisterCallback('sunset:policeSummon', function(source, tar
     TriggerClientEvent('sunset:police:summonAlert', targetId, {
         officer = officerName,
         officerId = source,
-        message = 'You are being summoned by law enforcement — stop and comply immediately',
+        message = exports.sunset_core:TFor(source, 'factions.ui.you_are_being_summoned_by_law'),
     })
     local targetName = exports.sunset_core:GetPlayerDisplayName(targetId)
     local chatMessage = ('Officer %s (#%d) ordered %s (#%d) to stop and comply.'):format(
@@ -681,14 +678,13 @@ exports.sunset_core:RegisterCallback('sunset:policeSummon', function(source, tar
             policeChat(viewer, 'POLICE ALERT', chatMessage, 'police_alert')
         end
     end
-    notify(source, ('Stop order sent to %s (#%d); nearby players saw the chat alert.'):format(
-        targetName, targetId), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.stop_order_sent_to_nearby_players', { target_name = tostring(targetName), target_id = math.floor(tonumber(targetId) or 0) }), 'success')
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeWantedList', function(source)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return nil, FactionCore.accessError(source, 'mdc', 'view the wanted list', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.view_the_wanted_list' }, 'law_enforcement')
     end
     return buildWantedListRows()
 end)
@@ -697,7 +693,7 @@ exports.sunset_core:RegisterCallback('sunset:policeFindWanted', function(source,
     if not FactionCore.hasPerm(source, 'mdc')
         and not FactionCore.hasPerm(source, 'wanted')
         and not FactionCore.hasPerm(source, 'wanted_limited') then
-        return nil, FactionCore.accessError(source, 'mdc', 'track wanted suspects', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.track_wanted_suspects' }, 'law_enforcement')
     end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
@@ -715,7 +711,7 @@ exports.sunset_core:RegisterCallback('sunset:policeFindWanted', function(source,
         id = targetId,
         name = exports.sunset_core:GetPlayerDisplayName(targetId),
         level = wanted.level or 1,
-        reason = wanted.reason or 'Active wanted',
+        reason = wanted.reason or exports.sunset_core:TFor(source, 'factions.ui.active_wanted'),
         x = coords.x,
         y = coords.y,
         z = coords.z,
@@ -724,7 +720,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeArrest', function(source, targetId)
     if not FactionCore.hasPerm(source, 'arrest') then
-        return nil, FactionCore.accessError(source, 'arrest', 'arrest a suspect', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'arrest', { localeKey = 'factions.action.arrest_a_suspect' }, 'law_enforcement')
     end
 
     targetId = tonumber(targetId)
@@ -783,14 +779,9 @@ exports.sunset_core:RegisterCallback('sunset:policeArrest', function(source, tar
         LastBounty[tChar] = os.time()
     end
     if bounty > 0 then exports.sunset_core:AddMoney(source, 'bank', bounty, 'arrest_bounty') end
-    notify(source, ('Suspect arrested — %s jail (%s), $%s bounty'):format(
-        formatDuration(sentenceSeconds), surrenderable and 'surrender sentence' or 'no-surrender sentence', bounty), 'success')
-    notify(targetId, ('You have been arrested — %s (%s).'):format(
-        formatDuration(sentenceSeconds), surrenderable and 'right-to-surrender sentence' or 'no-surrender sentence'), 'error', 10000)
-    broadcastToPolice('ARREST', ('%s (#%d) arrested %s (#%d): %s, %s, %s.'):format(
-        exports.sunset_core:GetPlayerDisplayName(source), source,
-        exports.sunset_core:GetPlayerDisplayName(targetId), targetId, reason,
-        formatDuration(sentenceSeconds), surrenderable and 'surrenderable' or 'no surrender'))
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.suspect_arrested_jail_bounty', { format_duration = tostring(formatDuration(sentenceSeconds)), surrenderable = surrenderable and exports.sunset_core:TFor(source, 'factions.word.surrender_sentence') or exports.sunset_core:TFor(source, 'factions.word.no_surrender_sentence'), bounty = tostring(bounty) }), 'success')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_have_been_arrested', { format_duration = tostring(formatDuration(sentenceSeconds)), surrenderable = surrenderable and exports.sunset_core:TFor(targetId, 'factions.word.right_to_surrender_sentence') or exports.sunset_core:TFor(targetId, 'factions.word.no_surrender_sentence') }), 'error', 10000)
+    broadcastToPolice('ARREST', { localeKey = 'factions.msg.arrested', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(source)), source = math.floor(tonumber(source) or 0), player_display_name_2 = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), target_id = math.floor(tonumber(targetId) or 0), reason = tostring(reason), format_duration = tostring(formatDuration(sentenceSeconds)), surrenderable = surrenderable and { localeKey = 'factions.word.surrenderable' } or { localeKey = 'factions.word.no_surrender' } } })
     return true
 end)
 
@@ -798,7 +789,7 @@ exports.sunset_core:RegisterCallback('sunset:policeReasons', function(source)
     if not FactionCore.hasPerm(source, 'mdc')
         and not FactionCore.hasPerm(source, 'wanted')
         and not FactionCore.hasPerm(source, 'wanted_limited') then
-        return nil, FactionCore.accessError(source, 'wanted', 'view wanted reason codes', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'wanted', { localeKey = 'factions.action.view_wanted_reason_codes' }, 'law_enforcement')
     end
     local list = {}
     for code, row in pairs(Sunset.Police.reasons or {}) do
@@ -816,14 +807,14 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeViolations', function(source)
     if not FactionCore.hasPerm(source, 'ticket') and not FactionCore.hasPerm(source, 'fine') then
-        return nil, FactionCore.accessError(source, 'ticket', 'view the citation list', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'ticket', { localeKey = 'factions.action.view_the_citation_list' }, 'law_enforcement')
     end
     return Sunset.Police.violations or {}
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source, targetId)
     if not FactionCore.hasPerm(source, 'confiscate') then
-        return nil, FactionCore.accessError(source, 'confiscate', 'confiscate contraband', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'confiscate', { localeKey = 'factions.action.confiscate_contraband' }, 'law_enforcement')
     end
 
     targetId = tonumber(targetId)
@@ -866,11 +857,16 @@ exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source,
         end)
     end
 
-    notify(targetId, 'Contraband has been confiscated by law enforcement', 'error')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.contraband_has_been_confiscated_by_law'), 'error')
     return removed
 end)
 
 local function broadcastFactionAction(source, message, factionId)
+    local messageDesc
+    if type(message) == 'table' and type(message.localeKey) == 'string' then
+        messageDesc = message
+        message = exports.sunset_core:TFor(0, messageDesc.localeKey, messageDesc.params)
+    end
     local char = FactionCore.getChar(source)
     if not char then return end
     factionId = factionId or select(1, FactionCore.getFactionOf(char))
@@ -886,6 +882,8 @@ local function broadcastFactionAction(source, message, factionId)
         id = source,
         name = name,
         message = message,
+        messageKey = messageDesc and messageDesc.localeKey or nil,
+        messageParams = messageDesc and messageDesc.params or nil,
         time = os.date('%H:%M:%S'),
         type = 'faction_action',
         factionId = factionId,
@@ -911,7 +909,7 @@ end
 
 local function validateRadarVehicle(source, networkId)
     if not FactionCore.hasPerm(source, 'radar') then
-        return nil, FactionCore.accessError(source, 'radar', 'use the speed radar', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'radar', { localeKey = 'factions.action.use_the_speed_radar' }, 'law_enforcement')
     end
     local vehicle = NetworkGetEntityFromNetworkId(tonumber(networkId) or 0)
     local ped = GetPlayerPed(source)
@@ -952,7 +950,7 @@ exports.sunset_core:RegisterCallback('sunset:policeRadarStart', function(source,
             cfg.minLimitKmh or 20, cfg.maxLimitKmh or 250 } }
     end
     RadarSessions[source] = { networkId = NetworkGetNetworkIdFromEntity(vehicle), limitKmh = limit, lastPlate = '', lastAt = 0 }
-    broadcastFactionAction(source, ('placed a speed radar with a %d km/h limit.'):format(limit), 'police')
+    broadcastFactionAction(source, { localeKey = 'factions.msg.placed_a_speed_radar_with_a', params = { limit = math.floor(tonumber(limit) or 0) } }, 'police')
     return { limitKmh = limit }
 end)
 
@@ -1006,7 +1004,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeFixedRadars', function(source)
     if not FactionCore.hasPerm(source, 'radar') then
-        return nil, FactionCore.accessError(source, 'radar', 'view fixed radars', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'radar', { localeKey = 'factions.action.view_fixed_radars' }, 'law_enforcement')
     end
     local list = {}
     for _, row in ipairs(Sunset.Police.fixedRadars or {}) do
@@ -1092,7 +1090,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeBackup', function(source, priority)
     if not FactionCore.hasPerm(source, 'backup') then
-        return nil, FactionCore.accessError(source, 'backup', 'request police backup', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'backup', { localeKey = 'factions.action.request_police_backup' }, 'law_enforcement')
     end
     if GetResourceState('sunset_dispatch') ~= 'started' then
         return nil, { localeKey = 'factions.message.cannot_request_backup_dispatch_is_offline_contact_staff_no' }
@@ -1123,9 +1121,9 @@ exports.sunset_core:RegisterCallback('sunset:policeBackup', function(source, pri
     if not call then return nil, err end
 
     if isPanic then
-        broadcastToPolice('🚨 PANIC ALARM', ('OFFICER %s (#%d) ACTIVATED 10-99 PANIC BUTTON! ALL UNITS RESPOND CODE 3!'):format(name, source))
+        broadcastToPolice('🚨 PANIC ALARM', { localeKey = 'factions.msg.officer_activated_10_99_panic_button', params = { name = tostring(name), source = math.floor(tonumber(source) or 0) } })
     else
-        broadcastToPolice('BACKUP', ('%s (#%d) requested %s backup.'):format(name, source, isCode3 and 'CODE 3' or 'Code 2'))
+        broadcastToPolice('BACKUP', { localeKey = 'factions.msg.requested_backup', params = { name = tostring(name), source = math.floor(tonumber(source) or 0), is_code3 = isCode3 and { localeKey = 'factions.msg.code_3' } or { localeKey = 'factions.msg.code_2' } } })
     end
 
     return call.id
@@ -1133,7 +1131,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeCancelBackup', function(source)
     if not FactionCore.hasPerm(source, 'backup') then
-        return nil, FactionCore.accessError(source, 'backup', 'cancel police backup', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'backup', { localeKey = 'factions.action.cancel_police_backup' }, 'law_enforcement')
     end
     if GetResourceState('sunset_dispatch') ~= 'started' then
         return nil, { localeKey = 'factions.message.cannot_cancel_backup_dispatch_is_offline_contact_staff' }
@@ -1144,8 +1142,7 @@ exports.sunset_core:RegisterCallback('sunset:policeCancelBackup', function(sourc
 
     local ok, err = exports.sunset_dispatch:CancelCall(source, 'police_backup', call.id, 'Backup cancelled by officer')
     if not ok then return nil, err end
-    broadcastToPolice('BACKUP CANCELLED', ('Officer %s (#%d) cancelled their backup request.'):format(
-        exports.sunset_core:GetPlayerDisplayName(source), source))
+    broadcastToPolice('BACKUP CANCELLED', { localeKey = 'factions.msg.officer_cancelled_their_backup_request', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(source)), source = math.floor(tonumber(source) or 0) } })
     return true
 end)
 
@@ -1154,12 +1151,12 @@ RegisterNetEvent('sunset:server:jailComplete', function()
     local jail = JailedOnline[src]
     if not jail then return end
     if not jail.releaseAt or os.time() < jail.releaseAt then
-        notify(src, 'Your sentence is not complete yet', 'error')
+        notify(src, exports.sunset_core:TFor(src, 'factions.msg.your_sentence_is_not_complete_yet'), 'error')
         syncJailBag(src, { releaseAt = jail.releaseAt, minutes = math.max(1, math.ceil((jail.releaseAt - os.time()) / 60)) })
         return
     end
     endJail(src)
-    notify(src, 'Your sentence is complete — you are free', 'success', 6000)
+    notify(src, exports.sunset_core:TFor(src, 'factions.message.your_sentence_is_complete_you_are_free'), 'success', 6000)
 end)
 
 AddEventHandler('sunset:server:characterSelected', function(source, characterId)
@@ -1227,7 +1224,7 @@ CreateThread(function()
                 local cid = charId(src)
                 if newLevel <= 0 then
                     clearWanted(src, nil)
-                    notify(src, 'Your wanted level has expired', 'success')
+                    notify(src, exports.sunset_core:TFor(src, 'factions.msg.your_wanted_level_has_expired'), 'success')
                 else
                     w.level = newLevel
                     w.decayRemaining = wantedStarSeconds()
@@ -1235,7 +1232,7 @@ CreateThread(function()
                     w.jailMinutes = math.ceil(jailSecondsFor(newLevel, w.surrenderable, false) / 60)
                     if cid then Police.saveWantedToDb(cid, w, nil) end
                     applyWanted(src, w)
-                    notify(src, ('Wanted reduced to ★%d. Next star expires after 15 more minutes online.'):format(newLevel), 'info')
+                    notify(src, exports.sunset_core:TFor(src, 'factions.msg.wanted_reduced_to_next_star_expires', { new_level = math.floor(tonumber(newLevel) or 0) }), 'info')
                 end
             elseif w.decayAt then
                 w.decayRemaining = math.max(1, w.decayAt - now)
@@ -1301,7 +1298,7 @@ AddEventHandler('sunset:police:autoWanted', function(targetId, reasonCode, reaso
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then return end
     setWanted(targetId, 5, reasonLabel or 'Murder', reasonCode or 'murder', 50, nil, false, false)
-    notify(targetId, 'WANTED ★5: first-degree murder — no right to surrender. One star expires every 15 minutes online.', 'error', 10000)
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.wanted_5_first_degree_murder_no'), 'error', 10000)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:getJailSpawnLock', function(source)
@@ -1330,8 +1327,8 @@ exports.sunset_core:RegisterCallback('sunset:policeUnjail', function(source, tar
     end
     FactionCore.auditLog('police', charId(source), 'unjail', charId(targetId), { admin = isAdmin })
     endJail(targetId)
-    notify(targetId, 'You have been released from jail', 'success')
-    notify(source, ('Released #%d from jail'):format(targetId), 'success')
+    notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.you_have_been_released_from_jail'), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.released_from_jail_2', { target_id = math.floor(tonumber(targetId) or 0) }), 'success')
     return true
 end)
 
@@ -1350,7 +1347,7 @@ end
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcData', function(source)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return nil, FactionCore.accessError(source, 'mdc', 'access the MDT', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.access_the_mdt' }, 'law_enforcement')
     end
 
     local char = FactionCore.getChar(source)
@@ -1398,7 +1395,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcData', function(source)
                     category = meta.category or (c.callType == 'police_backup' and 'Officer Backup' or 'Emergency'),
                     street = meta.street or 'Unknown Location',
                     area = meta.area or 'Los Santos',
-                    description = c.description or 'Emergency reported',
+                    description = c.description or exports.sunset_core:TFor(source, 'factions.ui.emergency_reported'),
                     coords = c.coords or { x = 0, y = 0, z = 0 },
                     createdAt = c.createdAt or os.time(),
                     responderName = c.responderName,
@@ -1488,12 +1485,12 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcLookup', function(source, query)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return { error = FactionCore.accessError(source, 'mdc', 'search the MDT', 'law_enforcement') }
+        return { error = FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.search_the_mdt' }, 'law_enforcement') }
     end
 
     query = tostring(query or ''):sub(1, 64):gsub('^%s*(.-)%s*$', '%1') -- [SEC3] bound client string
     if query == '' then
-        return { error = 'Enter a citizen name, server ID, or citizen ID to search.' }
+        return { error = exports.sunset_core:TFor(source, 'factions.ui.enter_a_citizen_name_server_id') }
     end
 
     local targetChar = nil
@@ -1536,7 +1533,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcLookup', function(source, 
     end
 
     if not targetChar then
-        return { error = ('No citizen record found matching "%s".'):format(query) }
+        return { error = exports.sunset_core:TFor(source, 'factions.ui.no_citizen_record_found_matching', { query = tostring(query) }) }
     end
 
     local charId = targetChar.id
@@ -1601,7 +1598,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcLookup', function(source, 
     for _, s in ipairs(sentences) do
         cazierRows[#cazierRows + 1] = {
             id = s.id,
-            reason = s.reason or 'Sentence',
+            reason = s.reason or exports.sunset_core:TFor(source, 'factions.ui.sentence'),
             duration = s.duration_minutes,
             status = s.status or 'served',
             date = s.created_at and tostring(s.created_at):sub(1, 16) or '',
@@ -1708,10 +1705,10 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcVehicleLookup', function(source, query)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return { error = FactionCore.accessError(source, 'mdc', 'search vehicle DMV', 'law_enforcement') }
+        return { error = FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.search_vehicle_dmv' }, 'law_enforcement') }
     end
     query = tostring(query or ''):sub(1, 32):gsub('^%s*(.-)%s*$', '%1') -- [SEC3] bound client string
-    if query == '' then return { error = 'Enter a plate or model to search' } end
+    if query == '' then return { error = exports.sunset_core:TFor(source, 'factions.ui.enter_a_plate_or_model_to') } end
 
     local pattern = '%' .. query:upper() .. '%'
     local rows = MySQL.query.await([[
@@ -1763,7 +1760,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
         and not FactionCore.hasPerm(source, 'confiscate')
         and not FactionCore.hasPerm(source, 'arrest')
         and not FactionCore.hasPerm(source, 'mdc') then
-        return nil, FactionCore.accessError(source, 'ticket', 'suspend a license', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'ticket', { localeKey = 'factions.action.suspend_a_license' }, 'law_enforcement')
     end
 
     licenseType = tostring(licenseType or 'driver'):lower()
@@ -1831,21 +1828,20 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
 
     FactionCore.auditLog('police', charId(source), 'license_suspend', cid, { license = licenseType, reason = reason }) -- [SEC3]
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
-    local licLabelRo = licenseType == 'driver' and 'driving' or 'weapon'
+    local licLabelKey = licenseType == 'driver' and 'factions.word.license_driving' or 'factions.word.license_weapon'
 
     -- If suspect is online: refresh client cache and notify
     if onlineSrc then
         TriggerClientEvent('sunset:licenses:refresh', onlineSrc)
         TriggerClientEvent('sunset:client:notify', onlineSrc,
-            exports.sunset_core:TFor(onlineSrc, 'factions.message.license_suspended_your_value_license_has_been_confiscated_by_the_', licLabelRo, reason, officerName),
+            exports.sunset_core:TFor(onlineSrc, 'factions.message.license_suspended_your_value_license_has_been_confiscated_by_the_', exports.sunset_core:TFor(onlineSrc, licLabelKey), reason, officerName),
             'error', 12000)
     end
 
     -- Broadcast to police channels
-    broadcastToPolice('TRAFFIC', ('Officer %s (#%d) suspended the %s license of citizen %s (#%d). Reason: %s'):format(
-        officerName, source, licLabelRo, targetName, cid, reason))
+    broadcastToPolice('TRAFFIC', { localeKey = 'factions.msg.officer_suspended_the_license_of_citizen', params = { officer_name = tostring(officerName), source = math.floor(tonumber(source) or 0), license = { localeKey = licLabelKey }, target_name = tostring(targetName), cid = math.floor(tonumber(cid) or 0), reason = tostring(reason) } })
 
-    notify(source, ('You successfully suspended the %s license of %s (#%d).'):format(licLabelRo, targetName, cid), 'success', 8000)
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.you_successfully_suspended_the_license_of', { license = exports.sunset_core:TFor(source, licLabelKey), target_name = tostring(targetName), cid = math.floor(tonumber(cid) or 0) }), 'success', 8000)
 
     return {
         success = true,
@@ -1866,7 +1862,7 @@ RegisterCommand('suspendlicense', function(source, args)
     if source == 0 then return end
     local target = tonumber(args[1])
     if not target then
-        return notify(source, 'Syntax: /suspendlicense [id] [driver|weapon] [reason]', 'error')
+        return notify(source, exports.sunset_core:TFor(source, 'factions.msg.syntax_suspendlicense_id_driver_weapon_reaso'), 'error')
     end
     local licType = args[2] and tostring(args[2]):lower() or 'driver'
     local reasonParts = {}
@@ -1895,10 +1891,10 @@ end, false)
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcToggleBolo', function(source, targetType, targetKey, reason, notes)
     if not FactionCore.hasPerm(source, 'mdc') then
-        return { error = FactionCore.accessError(source, 'mdc', 'manage BOLOs', 'law_enforcement') }
+        return { error = FactionCore.accessError(source, 'mdc', { localeKey = 'factions.action.manage_bolos' }, 'law_enforcement') }
     end
     targetKey = tostring(targetKey or ''):sub(1, 40):upper():gsub('^%s*(.-)%s*$', '%1')
-    if targetKey == '' then return { error = 'Target identifier required' } end
+    if targetKey == '' then return { error = exports.sunset_core:TFor(source, 'factions.ui.target_identifier_required') } end
     -- [SEC3] bound client-supplied BOLO fields (were stored/broadcast verbatim, any type/length) and cap table size
     targetType = (targetType == 'citizen' or targetType == 'person') and targetType or 'vehicle'
     reason = type(reason) == 'string' and reason:gsub('[%c]', ' '):sub(1, 200) or nil
@@ -1906,33 +1902,33 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcToggleBolo', function(sour
     if not Bolos[targetKey] then
         local n = 0
         for _ in pairs(Bolos) do n = n + 1 end
-        if n >= 300 then return { error = 'BOLO list is full' } end
+        if n >= 300 then return { error = exports.sunset_core:TFor(source, 'factions.ui.bolo_list_is_full') } end
     end
 
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
     if Bolos[targetKey] then
         Bolos[targetKey] = nil
-        broadcastToPolice('BOLO', ('BOLO CLEARED: %s by %s'):format(targetKey, officerName))
+        broadcastToPolice('BOLO', { localeKey = 'factions.msg.bolo_cleared_by', params = { target_key = tostring(targetKey), officer_name = tostring(officerName) } })
         return { ok = true, active = false, key = targetKey }
     else
         Bolos[targetKey] = {
             type = targetType or 'vehicle',
             key = targetKey,
-            reason = reason or 'Wanted in connection with active police investigation',
+            reason = reason or 'Wanted in connection with active police investigation', -- i18n-ignore: stored default reason
             notes = notes or '',
             officer = officerName,
             officerId = source,
             date = os.date('%Y-%m-%d %H:%M'),
             createdAt = os.time(),
         }
-        broadcastToPolice('BOLO', ('NEW BOLO ISSUED: %s — %s (by %s)'):format(targetKey, reason or 'Active BOLO', officerName))
+        broadcastToPolice('BOLO', { localeKey = 'factions.msg.new_bolo_issued_by', params = { target_key = tostring(targetKey), reason = reason or { localeKey = 'factions.word.active_bolo' }, officer_name = tostring(officerName) } })
         return { ok = true, active = true, bolo = Bolos[targetKey] }
     end
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcSetUnitStatus', function(source, status)
     if not FactionCore.isLawEnforcementMember(source) or not FactionCore.isOnDuty(source) then
-        return { error = 'You must be on duty as law enforcement' }
+        return { error = exports.sunset_core:TFor(source, 'factions.ui.you_must_be_on_duty_as') }
     end
     status = tostring(status or '10-8'):sub(1, 16):upper() -- [SEC3]
     UnitStatuses[source] = status
@@ -1941,34 +1937,34 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:policeMdcSetCallStatus', function(source, callId, action)
     if not FactionCore.isLawEnforcementMember(source) or not FactionCore.isOnDuty(source) then
-        return { error = 'You must be on duty as law enforcement' }
+        return { error = exports.sunset_core:TFor(source, 'factions.ui.you_must_be_on_duty_as') }
     end
     callId = tonumber(callId)
-    if not callId then return { error = 'Invalid call ID' } end
+    if not callId then return { error = exports.sunset_core:TFor(source, 'factions.ui.invalid_call_id') } end
 
     if action == 'respond' then
         if GetResourceState('sunset_dispatch') == 'started' then
             local targetCall = exports.sunset_dispatch:GetCall(callId)
             local callType = (targetCall and targetCall.callType) or 'police'
             local res, err = exports.sunset_dispatch:AcceptCall(source, callType, callId)
-            if not res then return { error = err or 'Could not attach to call' } end
+            if not res then return { error = err or exports.sunset_core:TFor(source, 'factions.ui.could_not_attach_to_call') } end
             UnitStatuses[source] = '10-97'
             return { ok = true, status = 'ASSIGNED' }
         end
     elseif action == 'clear' then
         if GetResourceState('sunset_dispatch') == 'started' then
             local res, err = exports.sunset_dispatch:CompleteCall(callId, source)
-            if not res then return { error = err or 'Could not clear call' } end
+            if not res then return { error = err or exports.sunset_core:TFor(source, 'factions.ui.could_not_clear_call') } end
             UnitStatuses[source] = '10-8'
             return { ok = true, status = 'COMPLETED' }
         end
     end
-    return { error = 'Unknown action' }
+    return { error = exports.sunset_core:TFor(source, 'factions.ui.unknown_action') }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:policeIssueTicket', function(source, targetId, amount, reason, reasonCode)
     if not FactionCore.hasPerm(source, 'ticket') and not FactionCore.hasPerm(source, 'fine') then
-        return nil, FactionCore.accessError(source, 'ticket', 'issue a citation', 'law_enforcement')
+        return nil, FactionCore.accessError(source, 'ticket', { localeKey = 'factions.action.issue_a_citation' }, 'law_enforcement')
     end
     targetId = tonumber(targetId)
     if not targetId or not GetPlayerName(targetId) then
@@ -2012,11 +2008,11 @@ exports.sunset_core:RegisterCallback('sunset:policeIssueTicket', function(source
         ticketId = ticketId,
         id = ticketId,
         amount = amount,
-        reason = reason or 'Traffic violation',
+        reason = reason or exports.sunset_core:TFor(source, 'factions.ui.traffic_violation'),
         officer = exports.sunset_core:GetPlayerDisplayName(source),
         officerId = source,
     })
-    notify(source, ('Citation #%d issued to #%d'):format(ticketId, targetId), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.citation_issued_to_2', { ticket_id = math.floor(tonumber(ticketId) or 0), target_id = math.floor(tonumber(targetId) or 0) }), 'success')
     return ticketId
 end)
 
@@ -2045,7 +2041,7 @@ exports.sunset_core:RegisterCallback('sunset:policePayTicket', function(source, 
     end
 
     MySQL.update.await('UPDATE tickets SET paid = 1, paid_at = NOW() WHERE id = ? AND paid = 3', { ticketId })
-    notify(source, ('Paid citation $%s — %s'):format(row.amount, row.reason or ''), 'success')
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.paid_citation', { amount = tostring(row.amount), reason = tostring(row.reason or '') }), 'success')
     return true
 end)
 
@@ -2068,9 +2064,8 @@ exports.sunset_core:RegisterCallback('sunset:policeRefuseTicket', function(sourc
     if not refused or refused < 1 then return nil, { localeKey = 'factions.message.this_citation_was_already_handled_no_new_wanted_charge' } end
 
     local wanted = setWanted(source, 1, 'Refused citation: ' .. (row.reason or ''), 'evading', 4, nil, false, false)
-    notify(source, ('You refused citation #%d — wanted increased to ★%d.'):format(ticketId, wanted.level), 'error')
-    broadcastToPolice('CITATION REFUSED', ('%s (#%d) refused citation #%d (%s); wanted is now ★%d.'):format(
-        exports.sunset_core:GetPlayerDisplayName(source), source, ticketId, row.reason or 'violation', wanted.level))
+    notify(source, exports.sunset_core:TFor(source, 'factions.msg.you_refused_citation_wanted_increased_to', { ticket_id = math.floor(tonumber(ticketId) or 0), level = math.floor(tonumber(wanted.level) or 0) }), 'error')
+    broadcastToPolice('CITATION REFUSED', { localeKey = 'factions.msg.refused_citation_wanted_is_now', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(source)), source = math.floor(tonumber(source) or 0), ticket_id = math.floor(tonumber(ticketId) or 0), reason = row.reason or { localeKey = 'factions.word.violation' }, level = math.floor(tonumber(wanted.level) or 0) } })
     return true
 end)
 

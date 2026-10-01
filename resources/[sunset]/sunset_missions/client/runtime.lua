@@ -49,7 +49,7 @@ local function setStage(stage)
     else
         -- [MISSIONS AUTHORITY] server refused the transition: the server session is the truth, so end the run.
         print('[sunset_missions] setStage refused: ' .. tostring(err))
-        if MSN_AbortMission then MSN_AbortMission('Mission failed - invalid progress') end
+        if MSN_AbortMission then MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_failed_invalid_progress')) end
     end
 end
 
@@ -86,7 +86,7 @@ local function runVehicleRecovery(session)
     SetBlipAlpha(activeZoneBlip, 100)
 
     MSN_NUI_ShowHUD(
-        ('Search %s for the vehicle'):format(zone.label),
+        exports.sunset_core:Translate('missions.msg.search_for_the_vehicle', { label = tostring(zone.label) }),
         variant.vehicleLabel,
         { plate = ('...%s'):format(variant.vehiclePlate:sub(-3)), color = variant.vehicleColor.name }
     )
@@ -107,14 +107,14 @@ local function runVehicleRecovery(session)
     if not activeSession then return end
     RemoveBlip(activeZoneBlip) activeZoneBlip = nil
     addBlip(GetEntityCoords(missionVehicle), 225, 1, variant.vehicleLabel, 0.7)
-    MSN_NUI_UpdateHUD('Vehicle located — steal it', variant.vehicleLabel,
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.vehicle_located_steal_it'), variant.vehicleLabel,
         { plate = variant.vehiclePlate, color = variant.vehicleColor.name })
     notify(exports.sunset_core:Translate('missions.message.vehicle_located'), 'success')
 
     -- STEAL_VEHICLE — wait near vehicle, trigger lockpick, then enter
     setStage('STEAL_VEHICLE')
     if not activeSession then return end
-    MSN_NUI_UpdateHUD('Break in and steal the vehicle', variant.vehicleLabel)
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.break_in_and_steal_the_vehicle'), variant.vehicleLabel)
 
     -- Lockpick phase: player must approach and use E
     local lockpickDone    = false
@@ -163,8 +163,8 @@ local function runVehicleRecovery(session)
     if not activeSession then return end
 
     clearBlips()
-    addBlip(def.deliveryCoords, 1, 2, 'Delivery Point', 0.8)
-    MSN_NUI_UpdateHUD('Deliver the vehicle — avoid damage', variant.vehicleLabel, { plate = variant.vehiclePlate })
+    addBlip(def.deliveryCoords, 1, 2, exports.sunset_core:Translate('missions.msg.delivery_point'), 0.8)
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.deliver_the_vehicle_avoid_damage'), variant.vehicleLabel, { plate = variant.vehiclePlate })
     SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
     notify(exports.sunset_core:Translate('missions.message.deliver_the_vehicle_to_rico'), 'info')
 
@@ -179,7 +179,7 @@ local function runVehicleRecovery(session)
         Wait(pursuitDelay)
         if activeSession and (activeSession.state == 'PURSUIT' or activeSession.state == 'DELIVER') then
             MSN_StartPursuit(pursuitDef, variant)
-            MSN_NUI_UpdateHUD('Deliver the vehicle — lose the tail!', variant.vehicleLabel)
+            MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.deliver_the_vehicle_lose_the_tail'), variant.vehicleLabel)
         end
     end)
 
@@ -200,7 +200,7 @@ local function runVehicleRecovery(session)
     while activeSession do
         Wait(500)
         if missionVehicle and not DoesEntityExist(missionVehicle) then
-            MSN_AbortMission('Mission failed — vehicle was destroyed')
+            MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_failed_vehicle_was_destroyed'))
             return
         end
         local pos = GetEntityCoords(PlayerPedId())
@@ -212,13 +212,13 @@ local function runVehicleRecovery(session)
 
     setStage('DELIVER')
     if not activeSession then return end
-    MSN_NUI_UpdateHUD('Park inside the marker and deliver', nil, { condition = conditionPct })
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.park_inside_the_marker_and_deliver'), nil, { condition = conditionPct })
 
     while activeSession and activeSession.state == 'DELIVER' do
         Wait(0)
         -- Check vehicle still exists
         if missionVehicle and not DoesEntityExist(missionVehicle) then
-            MSN_AbortMission('Mission failed — vehicle was destroyed')
+            MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_failed_vehicle_was_destroyed'))
             return
         end
         local ped    = PlayerPedId()
@@ -232,7 +232,7 @@ local function runVehicleRecovery(session)
                 local wasEscaped = MSN_PursuitEscaped()
                 local ok, err = Sunset.AwaitCallback('sunset:missions:vr:deliver',
                     { condition = conditionPct, escaped = wasEscaped })
-                if not ok then notify(err or 'Could not confirm delivery', 'error') end
+                if not ok then notify(err or exports.sunset_core:Translate('missions.msg.could_not_confirm_delivery'), 'error') end
                 break
             end
         end
@@ -279,9 +279,9 @@ local function runContainer47(session)
 
     -- ENTER_PORT
     setStage('ENTER_PORT')
-    addBlip(def.portEnterCoords, 1, 5, 'Enter Port', 0.8)
+    addBlip(def.portEnterCoords, 1, 5, exports.sunset_core:Translate('missions.msg.enter_port'), 0.8)
     SetNewWaypoint(def.portEnterCoords.x, def.portEnterCoords.y)
-    MSN_NUI_ShowHUD('Enter the terminal port', nil, { row = variant.targetRow, id = '???' })
+    MSN_NUI_ShowHUD(exports.sunset_core:Translate('missions.msg.enter_the_terminal_port'), nil, { row = variant.targetRow, id = '???' })
 
     while activeSession and activeSession.state == 'ENTER_PORT' do
         Wait(400)
@@ -293,7 +293,7 @@ local function runContainer47(session)
 
     -- SEARCH — all containers shown as ??? until inspected; server validates identification
     clearBlips()
-    MSN_NUI_UpdateHUD(('Find container in row %s'):format(variant.targetRow), nil, { row = variant.targetRow })
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.find_container_in_row', { target_row = tostring(variant.targetRow) }), nil, { row = variant.targetRow })
 
     local containerPoints = {}
     for i, slot in ipairs(def.containerSlots) do
@@ -320,11 +320,11 @@ local function runContainer47(session)
                         local ok, err = Sunset.AwaitCallback('sunset:missions:c47:identify', { slotIndex = cp.slotIndex })
                         if ok then
                             identified = true
-                            notify(exports.sunset_core:Translate('missions.message.match_found') .. revealed, 'success')
+                            notify(exports.sunset_core:Translate('missions.msg.match_found', { revealed = tostring(revealed) }), 'success')
                             clearBlips()
                         elseif err == 'wrong_container' then
                             MSN_RaiseAlert(1)
-                            notify(revealed .. ' — not a match', 'warning')
+                            notify(exports.sunset_core:Translate('missions.msg.not_a_match', { revealed = tostring(revealed) }), 'warning')
                         end
                     end
                 end
@@ -335,7 +335,7 @@ local function runContainer47(session)
 
     -- BREAK_SEAL
     local tgtCoords = vector3(variant.targetCoords.x, variant.targetCoords.y, variant.targetCoords.z)
-    MSN_NUI_UpdateHUD('Cut the container seal', 'LS-0047')
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.cut_the_container_seal'), 'LS-0047')
     local waitingSeal = true
     while activeSession and waitingSeal do
         Wait(0)
@@ -364,7 +364,7 @@ local function runContainer47(session)
 
     -- TAKE_CARGO
     setStage('TAKE_CARGO')
-    MSN_NUI_UpdateHUD('Take the cargo', 'LS-0047')
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.take_the_cargo'), 'LS-0047')
 
     local cargoTaken = false
     while activeSession and not cargoTaken do
@@ -392,7 +392,7 @@ local function runContainer47(session)
     local exit    = def.exitPoints[exitIdx]
     addBlip(exit.coords, 1, 1, exit.label, 0.8)
     SetNewWaypoint(exit.coords.x, exit.coords.y)
-    MSN_NUI_UpdateHUD(('Escape via %s'):format(exit.label), 'Leave the port with the cargo')
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.escape_via', { label = tostring(exit.label) }), exports.sunset_core:Translate('missions.msg.leave_the_port_with_the_cargo'))
 
     while activeSession and activeSession.state == 'ESCAPE' do
         Wait(400)
@@ -404,9 +404,9 @@ local function runContainer47(session)
 
     -- DELIVER
     clearBlips()
-    addBlip(def.deliveryCoords, 1, 2, 'Delivery', 0.8)
+    addBlip(def.deliveryCoords, 1, 2, exports.sunset_core:Translate('missions.msg.delivery'), 0.8)
     SetNewWaypoint(def.deliveryCoords.x, def.deliveryCoords.y)
-    MSN_NUI_UpdateHUD('Deliver the cargo to Hank', nil)
+    MSN_NUI_UpdateHUD(exports.sunset_core:Translate('missions.msg.deliver_the_cargo_to_hank'), nil)
 
     while activeSession do
         Wait(0)
@@ -417,7 +417,7 @@ local function runContainer47(session)
             if IsControlJustReleased(0, 38) then
                 local ok, err = Sunset.AwaitCallback('sunset:missions:c47:deliver', {})
                 if not ok then
-                    notify(err or 'Could not confirm delivery', 'error')
+                    notify(err or exports.sunset_core:Translate('missions.msg.could_not_confirm_delivery'), 'error')
                 end
                 break
             end
@@ -449,7 +449,7 @@ end)
 AddEventHandler('onClientResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     if activeSession then
-        MSN_AbortMission('Resource stopped')
+        MSN_AbortMission(exports.sunset_core:Translate('missions.msg.resource_stopped'))
     end
 end)
 
@@ -466,7 +466,7 @@ function MSN_StartMissionRuntime(missionId, sessionData)
             if IsEntityDead(ped) or IsPedDeadOrDying(ped, true) then
                 Wait(2000)  -- let death screen appear first
                 if activeSession then
-                    MSN_AbortMission('Mission failed — you died')
+                    MSN_AbortMission(exports.sunset_core:Translate('missions.msg.mission_failed_you_died'))
                 end
                 break
             end
@@ -493,7 +493,7 @@ function MSN_AbortMission(reason)
     activeSession  = nil
     missionVehicle = nil
     cargoObject    = nil
-    exports.sunset_ui:Notify(reason or 'Mission abandoned', 'error')
+    exports.sunset_ui:Notify(reason or exports.sunset_core:Translate('missions.msg.mission_abandoned'), 'error')
 end
 
 function MSN_ActiveSession()

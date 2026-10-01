@@ -114,7 +114,7 @@ function JobClient.addBlip(coords, preset, label)
     SetBlipScale(blip, preset.scale or 0.7)
     SetBlipAsShortRange(blip, false)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(label or 'Job')
+    AddTextComponentSubstringPlayerName(label or exports.sunset_core:Translate('jobs.msg.job'))
     EndTextCommandSetBlipName(blip)
     JobClient.blips[#JobClient.blips + 1] = blip
     return blip
@@ -145,15 +145,9 @@ function JobClient.showHelp(text)
 end
 
 function JobClient.loadModel(model)
-    local hash = type(model) == 'string' and joaat(model) or model
-    if not IsModelInCdimage(hash) then return nil end
-    RequestModel(hash)
-    local timeout = GetGameTimer() + 8000
-    while not HasModelLoaded(hash) do
-        if GetGameTimer() > timeout then return nil end
-        Wait(10)
-    end
-    return hash
+    local ok, hash = Sunset.RequestModelSafe(model, 8000)
+    if ok and hash then return hash end
+    return nil
 end
 
 function JobClient.deleteVehicles(keepTruck)
@@ -379,7 +373,7 @@ function JobClient.registerVehiclesWithServer()
                 dlog(('attempt %d rejected: %s'):format(attempt, tostring(err)))
                 -- FATAL errors: do not retry (legacy string match kept for old servers).
                 if not err or not RETRYABLE_ERRORS[err] then
-                    return false, err or 'Registration failed unexpectedly. Check F8/server logs.'
+                    return false, err or exports.sunset_core:Translate('jobs.err.registration_failed_unexpectedly_check_f8_se')
                 end
             end
         end
@@ -388,8 +382,8 @@ function JobClient.registerVehiclesWithServer()
         if attempt >= 4 then delay = 500 end
     end
     return false, (lastErr and (lastErr == 'retryable' or RETRYABLE_ERRORS[lastErr]))
-        and 'Work vehicle has not propagated to the server yet. Check OneSync/entity networking.'
-        or (lastErr or 'Could not network the work vehicle')
+        and exports.sunset_core:Translate('jobs.err.work_vehicle_has_not_propagated_to')
+        or (lastErr or exports.sunset_core:Translate('jobs.err.could_not_network_the_work_vehicle'))
 end
 
 function JobClient.playAnim(dict, anim, duration)
@@ -491,8 +485,7 @@ function JobClient.monitorVehicles()
                     local cfg = Sunset.GetJobConfig('trucker')
                     local spawned, spawnErr = JobClient.respawnTrailer(truckEntity, result.trailerModel)
                     if spawned then
-                        JobClient.notify(('Replacement trailer spawned. %d recoveries remain.'):format(
-                            result.remaining or 0), 'success', 7000)
+                        JobClient.notify(exports.sunset_core:Translate('jobs.msg.replacement_trailer_spawned_recoveries_remai', { remaining = math.floor(tonumber(result.remaining or 0) or 0) }), 'success', 7000)
                     elseif spawnErr then
                         JobClient.notify(spawnErr, 'error')
                     end
@@ -554,7 +547,7 @@ function JobClient.setRouteTarget(coords, preset, label, keepDepotBlip)
         JobClient.clearBlips()
     end
     if coords then
-        JobClient.addBlip(coords, preset or { sprite = 1, color = 5 }, label or 'Objective')
+        JobClient.addBlip(coords, preset or { sprite = 1, color = 5 }, label or exports.sunset_core:Translate('jobs.msg.objective'))
         JobClient.setWaypoint(coords)
     end
 end
@@ -617,7 +610,7 @@ RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId, state, reason, opti
         JobClient.hudResult({ kind = 'success', title = exports.sunset_core:Translate('jobs.hud.result.complete'), message = label, earnings = earned })
     elseif state == 'FAILED' then
         JobClient.hudResult({ kind = 'fail', title = exports.sunset_core:Translate('jobs.hud.result.failed'), message = reason, ttl = 7000 })
-        JobClient.notify(reason or 'Shift failed', 'error')
+        JobClient.notify(reason or exports.sunset_core:Translate('jobs.hud.result.failed'), 'error')
     elseif state == 'CANCELLED' then
         JobClient.hudResult({ kind = 'cancel', title = exports.sunset_core:Translate('jobs.hud.result.cancelled'), message = reason })
     end
@@ -632,8 +625,7 @@ RegisterNetEvent('sunset:jobs:trailerRespawn', function(data)
     end
     local spawned, err = JobClient.respawnTrailer(truck, data.trailerModel)
     if spawned then
-        JobClient.notify(('Replacement trailer spawned. %d recoveries remain.'):format(
-            data.remaining or 0), 'success', 7000)
+        JobClient.notify(exports.sunset_core:Translate('jobs.msg.replacement_trailer_spawned_recoveries_remai', { remaining = math.floor(tonumber(data.remaining or 0) or 0) }), 'success', 7000)
     elseif err then
         JobClient.notify(err, 'error')
     end
@@ -643,10 +635,10 @@ RegisterNetEvent('sunset:jobs:waypointToWork', function(jobId, coords)
     if coords and coords.x then
         JobClient.setWaypoint(coords)
         local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-        JobClient.notify(exports.sunset_core:Translate('jobs.message.gps_set_to') .. label .. ' work location', 'info')
+        JobClient.notify(exports.sunset_core:Translate('jobs.msg.work_location', { label = tostring(label) }), 'info')
     elseif JobClient.waypointToJob(jobId) then
         local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId
-        JobClient.notify(exports.sunset_core:Translate('jobs.message.gps_set_to') .. label .. ' work location', 'info')
+        JobClient.notify(exports.sunset_core:Translate('jobs.msg.work_location', { label = tostring(label) }), 'info')
     end
 end)
 

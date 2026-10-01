@@ -6,7 +6,7 @@ const Courier = (() => {
         const target = get('courier-message');
         if (!target) return;
         target.replaceChildren();
-        const text = String(message || 'Follow the GPS route');
+        const text = String(message || I18n.t('ui.courier.follow_gps'));
         const marker = '{key}';
         const index = text.indexOf(marker);
         if (!key || index < 0) {
@@ -26,7 +26,7 @@ const Courier = (() => {
         const state = String(data.state || 'route').replace(/[^a-z-]/gi, '').toLowerCase() || 'route';
         panel.className = `courier-shell state-${state} is-visible`;
         panel.classList.remove('hidden');
-        if (get('courier-title')) get('courier-title').textContent = data.title || 'Courier';
+        if (get('courier-title')) get('courier-title').textContent = data.title || I18n.t('ui.courier.title');
         if (get('courier-counter')) get('courier-counter').textContent = data.counter || 'Package 0/0';
         if (get('courier-detail')) get('courier-detail').textContent = data.detail || '';
         if (get('courier-progress')) {

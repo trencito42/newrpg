@@ -23,7 +23,7 @@ end
 local function openInventory()
     local data, err = Sunset.AwaitCallback('sunset:getInventory')
     if not data then
-        return exports.sunset_ui:Notify(err or 'Inventory could not be loaded. Your character may still be loading; try again in a moment.', 'error')
+        return exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.inventory_could_not_be_loaded_your'), 'error')
     end
     inventoryOpen = true
     -- [BUGFIX] EnrichInventoryPayload was deleted with the quickbar but these
@@ -103,7 +103,7 @@ RegisterNetEvent('sunset:inventory:client:usedItem', function(item, category, ex
             end
         end
         local cleanName = tostring(weaponName or 'weapon'):gsub('^WEAPON_', '')
-        exports.sunset_ui:Notify(('Loaded %d rounds into %s.'):format(rounds, cleanName), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('inventory.msg.loaded_rounds_into', { rounds = math.floor(tonumber(rounds) or 0), clean_name = tostring(cleanName) }), 'success')
         return
     end
 
@@ -267,14 +267,14 @@ end)
 
 AddEventHandler('sunset:nui:inventoryUse', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:useItem', data.item)
-    if not ok then exports.sunset_ui:Notify(err or 'Cannot use item', 'error') end
+    if not ok then exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.cannot_use_item'), 'error') end
 end)
 
 local function inventoryAction(callbackName, data)
     CreateThread(function()
         local result, err = Sunset.AwaitCallback(callbackName, data or {})
         if not result then
-            exports.sunset_ui:Notify(err or 'Inventory action failed. Reopen the inventory and try again.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.inventory_action_failed_reopen_the_inventory'), 'error')
         elseif type(result) == 'table' and result.message then
             -- [FIX] Several server callbacks return plain `true` (e.g. trade
             -- confirm/accept); indexing a boolean crashed this handler.
@@ -319,7 +319,7 @@ AddEventHandler('sunset:nui:inventoryTradeCatalog', function()
         if catalog then
             exports.sunset_ui:Send('inventoryTradeCatalog', catalog)
         else
-            exports.sunset_ui:Notify(err or 'Could not load trade assets.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.could_not_load_trade_assets'), 'error')
         end
     end)
 end)
@@ -585,7 +585,7 @@ CreateThread(function()
         if closestId and IsControlJustReleased(0, 38) then
             local result, err = Sunset.AwaitCallback('sunset:inventory:pickupDrop', closestId)
             if not result then
-                exports.sunset_ui:Notify(err or 'Could not pick up this item.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('inventory.msg.could_not_pick_up_this_item'), 'error')
             elseif result.message then
                 exports.sunset_ui:Notify(result.message, 'success')
             end

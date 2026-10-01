@@ -104,7 +104,7 @@ end
 
 local function validateOfficerTarget(source, targetId, perm, range)
     if not FactionCore.hasPerm(source, perm) then
-        return nil, FactionCore.accessError(source, perm, 'interact with a suspect', 'law_enforcement')
+        return nil, FactionCore.accessError(source, perm, { localeKey = 'factions.action.interact_with_a_suspect' }, 'law_enforcement')
     end
     targetId = tonumber(targetId)
     if not targetId or not FactionCore.isOnline(targetId) then
@@ -141,7 +141,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionCuff', function(source, ta
     TriggerClientEvent('sunset:faction:cuff', target)
     -- [SEC3] was -1 broadcast; consumer ignores other ids, state bags (sunsetCuffed/sunsetDetention) sync late joiners
     TriggerClientEvent('sunset:detention:sync', target, target, { cuffed = true, state = Detention.States.CUFFED })
-    FactionCore.notify(source, 'Suspect restrained', 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.suspect_restrained'), 'success')
     return true
 end)
 
@@ -153,7 +153,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionUncuff', function(source, 
     Detention.setCuffed(target, false)
     TriggerClientEvent('sunset:faction:uncuff', target)
     TriggerClientEvent('sunset:detention:sync', target, target, { cuffed = false, escorted = false, state = Detention.States.FREE })
-    FactionCore.notify(source, 'Restraints removed', 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.message.restraints_removed'), 'success')
     return true
 end)
 
@@ -166,14 +166,14 @@ exports.sunset_core:RegisterCallback('sunset:detentionEscort', function(source, 
         Detention.setEscort(target, nil)
         TriggerClientEvent('sunset:detention:escort', target, nil)
         TriggerClientEvent('sunset:detention:escortOfficer', source, nil)
-        FactionCore.notify(source, 'Escort released', 'info')
+        FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.escort_released'), 'info')
         return false
     end
 
     Detention.setEscort(target, source)
     TriggerClientEvent('sunset:detention:escort', target, source)
     TriggerClientEvent('sunset:detention:escortOfficer', source, target)
-    FactionCore.notify(source, 'Escorting suspect — use /escort again to release', 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.escorting_suspect_use_escort_again_to'), 'success')
     return true
 end)
 
@@ -186,7 +186,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionPutInVehicle', function(so
     Detention.setEscort(target, nil)
     Detention.setInVehicle(target)
     TriggerClientEvent('sunset:detention:sync', target, target, { state = Detention.States.IN_VEHICLE })
-    FactionCore.notify(source, 'Placing suspect in vehicle', 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.placing_suspect_in_vehicle'), 'success')
     return true
 end)
 
@@ -200,7 +200,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionTakeOut', function(source,
         Detention.setState(target, Detention.States.CUFFED)
     end
     TriggerClientEvent('sunset:detention:sync', target, target, { state = Detention.States.CUFFED })
-    FactionCore.notify(source, 'Suspect removed from vehicle', 'success')
+    FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.suspect_removed_from_vehicle'), 'success')
     return true
 end)
 

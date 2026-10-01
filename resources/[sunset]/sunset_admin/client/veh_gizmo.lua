@@ -41,25 +41,25 @@ local function drawGizmoHUD(modelName, x, y, z, h, pitch, roll, speedLabel)
     -- Background card
     DrawRect(0.81, 0.28, 0.34, 0.38, 15, 23, 42, 225)
     DrawRect(0.81, 0.095, 0.34, 0.035, 255, 140, 0, 240)
-    drawText2D(0.81, 0.082, 'VEHICLE / TRAILER GIZMO (Placement Tool)', 0.38, 0, 0, 0, 255, 4, true)
+    drawText2D(0.81, 0.082, exports.sunset_core:Translate('admin.msg.vehicle_trailer_gizmo_placement_tool'), 0.38, 0, 0, 0, 255, 4, true)
 
     local startY = 0.125
     local gap = 0.024
-    drawText2D(0.65, startY + gap * 0, ('Model: ~y~%s~s~ | Speed: ~g~%s~s~'):format(modelName, speedLabel), 0.32)
-    drawText2D(0.65, startY + gap * 1, ('Position: ~b~X:~s~ %.2f  ~b~Y:~s~ %.2f  ~b~Z:~s~ %.2f'):format(x, y, z), 0.32)
-    drawText2D(0.65, startY + gap * 2, ('Heading: ~y~%.2f°~s~ | Pitch: %.1f° | Roll: %.1f°'):format(h, pitch, roll), 0.32)
+    drawText2D(0.65, startY + gap * 0, exports.sunset_core:Translate('admin.msg.model_y_s_speed_g_s', { model_name = tostring(modelName), speed_label = tostring(speedLabel) }), 0.32)
+    drawText2D(0.65, startY + gap * 1, exports.sunset_core:Translate('admin.msg.position_b_x_s_b_y', { value = string.format('%.2f', x), y = string.format('%.2f', y), z = string.format('%.2f', z) }), 0.32)
+    drawText2D(0.65, startY + gap * 2, exports.sunset_core:Translate('admin.msg.heading_y_s_pitch_roll', { h = string.format('%.2f', h), pitch = string.format('%.1f', pitch), roll = string.format('%.1f', roll) }), 0.32)
 
     -- Divider
     DrawRect(0.81, startY + gap * 3 + 0.008, 0.32, 0.002, 255, 255, 255, 60)
 
     local cY = startY + gap * 3.5
-    drawText2D(0.65, cY + gap * 0, '~y~[W/A/S/D]~s~ or ~y~[Arrows]~s~ : Move X / Y', 0.29)
-    drawText2D(0.65, cY + gap * 1, '~y~[PgUp / PgDn]~s~ / ~y~[Space / Ctrl]~s~ : Move Up / Down', 0.29)
-    drawText2D(0.65, cY + gap * 2, '~y~[Q / E]~s~ : Rotate Heading (Yaw)', 0.29)
-    drawText2D(0.65, cY + gap * 3, '~y~[Num 8/2]~s~ : Pitch | ~y~[Num 4/6]~s~ : Roll', 0.29)
-    drawText2D(0.65, cY + gap * 4, '~y~[G]~s~ : Snap to Ground | ~y~[R]~s~ : Reset Level', 0.29)
-    drawText2D(0.65, cY + gap * 5, '~y~[Shift]~s~ : Fast (x4) | ~y~[Alt]~s~ : Slow (0.1x)', 0.29)
-    drawText2D(0.65, cY + gap * 6, '~g~[ENTER]~s~ : Save & Export | ~r~[BACKSPACE / X]~s~ : Exit', 0.30)
+    drawText2D(0.65, cY + gap * 0, exports.sunset_core:Translate('admin.msg.y_w_a_s_d_s'), 0.29)
+    drawText2D(0.65, cY + gap * 1, exports.sunset_core:Translate('admin.msg.y_pgup_pgdn_s_y_space'), 0.29)
+    drawText2D(0.65, cY + gap * 2, exports.sunset_core:Translate('admin.msg.y_q_e_s_rotate_heading'), 0.29)
+    drawText2D(0.65, cY + gap * 3, exports.sunset_core:Translate('admin.msg.y_num_8_2_s_pitch'), 0.29)
+    drawText2D(0.65, cY + gap * 4, exports.sunset_core:Translate('admin.msg.y_g_s_snap_to_ground'), 0.29)
+    drawText2D(0.65, cY + gap * 5, exports.sunset_core:Translate('admin.msg.y_shift_s_fast_x4_y'), 0.29)
+    drawText2D(0.65, cY + gap * 6, exports.sunset_core:Translate('admin.msg.g_enter_s_save_export_r'), 0.30)
 end
 
 local function drawVehicleBox(veh)
@@ -133,7 +133,7 @@ function StartVehGizmo(veh)
         if joaat(name) == modelHash then modelName = name break end
     end
 
-    notify(('Vehicle Gizmo activated for %s. Use keyboard controls.'):format(modelName), 'info', 7000)
+    notify(exports.sunset_core:Translate('admin.msg.vehicle_gizmo_activated_for_use_keyboard', { model_name = tostring(modelName) }), 'info', 7000)
 
     CreateThread(function()
         while isGizmoActive do
@@ -296,7 +296,7 @@ function StartVehGizmo(veh)
                     x = rx, y = ry, z = rz, h = rh
                 })
 
-                notify(('Coords saved! %s — check F8 / chat'):format(v4Str), 'success', 9000)
+                notify(exports.sunset_core:Translate('admin.msg.coords_saved_check_f8_chat', { v4_str = tostring(v4Str) }), 'success', 9000)
                 break
             end
 
@@ -330,7 +330,7 @@ RegisterNetEvent('sunset:admin:spawnTrailerGizmo', function(model)
     model = model or 'tanker'
     local hash = joaat(model)
     if not IsModelInCdimage(hash) then
-        notify(('Invalid trailer model: %s'):format(model), 'error')
+        notify(exports.sunset_core:Translate('admin.msg.invalid_trailer_model', { model = tostring(model) }), 'error')
         return
     end
 

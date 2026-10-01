@@ -157,14 +157,14 @@ function FactionCore.hasManagePerm(source, perm)
 end
 
 function FactionCore.manageAccessError(source, perm, action)
-    action = action or 'use this action'
+    action = action or { localeKey = 'factions.action.use_this_action' }
     local char = FactionCore.getChar(source)
     if not char then
-        return ('Cannot %s: your character is not loaded. Reconnect and select it again.'):format(action)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_your_character_is_not_loaded', { action = action })
     end
     local factionId, grade = FactionCore.getFactionOf(char)
     if not factionId then
-        return ('Cannot %s: you are not in a faction.'):format(action)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_you_are_not_in_a', { action = action })
     end
     if perm and not Sunset.HasFactionPerm(factionId, grade, perm) then
         local faction = Sunset.Factions and Sunset.Factions[factionId]
@@ -179,40 +179,37 @@ function FactionCore.manageAccessError(source, perm, action)
             end
         end
         if requiredGrade then
-            return ('Cannot %s: requires %s (rank %d); your rank is %s (rank %d).'):format(
-                action, requiredLabel or 'a higher rank', requiredGrade,
-                currentGrade and currentGrade.label or 'Unknown', tonumber(grade) or 0)
+            return exports.sunset_core:TFor(source, 'factions.err.cannot_requires_rank_your_rank_is', { action = action, required_label = requiredLabel or exports.sunset_core:TFor(source, 'factions.word.a_higher_rank'), required_grade = math.floor(tonumber(requiredGrade) or 0), current_grade = currentGrade and currentGrade.label or exports.sunset_core:TFor(source, 'impound.word.unknown'), grade = math.floor(tonumber(tonumber(grade) or 0) or 0) })
         end
     end
-    return ('Cannot %s: your rank does not allow this.'):format(action)
+    return exports.sunset_core:TFor(source, 'factions.err.cannot_your_rank_does_not_allow', { action = action })
 end
 
 function FactionCore.accessError(source, perm, action, requiredType)
-    action = action or 'use this action'
+    action = action or { localeKey = 'factions.action.use_this_action' }
     local char = FactionCore.getChar(source)
     if not char then
-        return ('Cannot %s: your character is not loaded. Reconnect and select it again.'):format(action)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_your_character_is_not_loaded', { action = action })
     end
 
     local factionId, grade = FactionCore.getFactionOf(char)
     if not factionId then
-        return ('Cannot %s: you are not a member of a faction that provides this ability.'):format(action)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_you_are_not_a_member', { action = action })
     end
 
     local faction = Sunset.Factions and Sunset.Factions[factionId]
     local factionLabel = faction and faction.label or factionId
     if not FactionCore.isOnDuty(source) then
-        return ('Cannot %s: you are off duty. Go to %s HQ and press E or use /duty.'):format(
-            action, factionLabel)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_you_are_off_duty_go', { action = action, faction_label = tostring(factionLabel) })
     end
 
     local factionType = Sunset.GetFactionType(factionId)
     if requiredType and factionType ~= requiredType then
-        return ('Cannot %s: %s is not the required department for this action.'):format(action, factionLabel)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_is_not_the_required_department', { action = action, faction_label = tostring(factionLabel) })
     end
     if perm and perm ~= 'invite' and perm ~= 'promote'
         and not Sunset.CapabilityAllowedForFaction(factionId, perm) then
-        return ('Cannot %s: %s does not have this department capability.'):format(action, factionLabel)
+        return exports.sunset_core:TFor(source, 'factions.err.cannot_does_not_have_this_department', { action = action, faction_label = tostring(factionLabel) })
     end
     if perm and not Sunset.HasFactionPerm(factionId, grade, perm) then
         local currentGrade = Sunset.GetFactionGrade(factionId, grade)
@@ -226,12 +223,10 @@ function FactionCore.accessError(source, perm, action, requiredType)
             end
         end
         if requiredGrade then
-            return ('Cannot %s: requires %s (rank %d); your rank is %s (rank %d).'):format(
-                action, requiredLabel or 'a higher rank', requiredGrade,
-                currentGrade and currentGrade.label or 'Unknown', tonumber(grade) or 0)
+            return exports.sunset_core:TFor(source, 'factions.err.cannot_requires_rank_your_rank_is', { action = action, required_label = requiredLabel or exports.sunset_core:TFor(source, 'factions.word.a_higher_rank'), required_grade = math.floor(tonumber(requiredGrade) or 0), current_grade = currentGrade and currentGrade.label or exports.sunset_core:TFor(source, 'impound.word.unknown'), grade = math.floor(tonumber(tonumber(grade) or 0) or 0) })
         end
     end
-    return ('Cannot %s: the current faction state does not allow it. Toggle duty and try again.'):format(action)
+    return exports.sunset_core:TFor(source, 'factions.err.cannot_the_current_faction_state_does', { action = action })
 end
 
 function FactionCore.hasCapability(source, capability)
@@ -316,6 +311,11 @@ end
 function FactionCore.broadcastManagement(factionId, actorSource, message, opts)
     opts = opts or {}
     factionId = tostring(factionId or '')
+    local messageDesc
+    if type(message) == 'table' and type(message.localeKey) == 'string' then
+        messageDesc = message
+        message = exports.sunset_core:TFor(0, messageDesc.localeKey, messageDesc.params)
+    end
     message = tostring(message or ''):gsub('^%s+', ''):gsub('%s+$', '')
     if factionId == '' or message == '' then return end
 
@@ -357,6 +357,8 @@ function FactionCore.broadcastManagement(factionId, actorSource, message, opts)
         id = actorId,
         name = actorName,
         message = message,
+        messageKey = messageDesc and messageDesc.localeKey or nil,
+        messageParams = messageDesc and messageDesc.params or nil,
         time = os.date('%H:%M:%S'),
         type = 'faction_action',
         factionId = factionId,

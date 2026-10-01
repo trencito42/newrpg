@@ -70,7 +70,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(sourc
             end
             route = {
                 id = 'legacy_south_ls',
-                label = 'South Los Santos Loop',
+                label = exports.sunset_core:TFor(source, 'jobs.ui.south_los_santos_loop'),
                 bins = fallbackBins,
             }
         end
@@ -90,7 +90,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:start', function(sourc
 
     local session, err = SunsetJobs_StartSession(source, 'garbage', {
         routeId   = route.id,
-        label     = route.label or 'Garbage Route',
+        label     = route.label or exports.sunset_core:TFor(source, 'jobs.ui.garbage_route'),
         bins      = routeBins,
         collected = 0,
         capacity  = routeCapacity,
@@ -126,7 +126,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(source, vehicleNetId)
     return SunsetJobs_WithLock(source, 'garbage_dump', function()
         local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
-        if not session then return nil, err or 'No active garbage shift' end
+        if not session then return nil, err or exports.sunset_core:TFor(source, 'jobs.err.no_active_garbage_shift') end
         if session.data.stage ~= 'collecting' then return nil, { localeKey = 'jobs.message.unload_at_depot_first' } end
         if not session.data.carrying then return nil, { localeKey = 'jobs.message.pick_up_trash_from_the_bin_first' } end
 
@@ -139,7 +139,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(sou
         end
 
         local ok, truckErr = validateTruckRear(source, cfg, vehicleNetId)
-        if not ok then return nil, truckErr or 'Go to the back of your trash truck' end
+        if not ok then return nil, truckErr or exports.sunset_core:TFor(source, 'jobs.message.go_to_the_back_of_your_trash_truck') end
 
         -- State is advanced BEFORE the yielding payout (no double pay) and rolled back if unpaid.
         local prevIndex = session.data.binIndex or 1

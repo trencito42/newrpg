@@ -196,8 +196,7 @@ local function claimPendingRewards(source, charId)
                         end
                         logInfo('claimed pending reward char=%d rank=%d cash=%d xp=%d tournament=%s',
                             charId, rank, cash, xp, tId)
-                        notify(source, ('Fishing Tournament Claimed - Rank #%d! Reward: %s + %d XP.'):format(
-                            rank, formatMoney(cash), xp), 'success', 10000)
+                        notify(source, exports.sunset_core:TFor(source, 'fishing_tournament.msg.fishing_tournament_claimed_rank_reward_xp', { rank = math.floor(tonumber(rank) or 0), format_money = tostring(formatMoney(cash)), xp = math.floor(tonumber(xp) or 0) }), 'success', 10000)
                     end
                 elseif claimed == 1 then
                     -- player left / switched character between the select and the claim: put it back
@@ -551,28 +550,28 @@ end
 exports.sunset_core:RegisterCallback('sunset:fishingTournament:join', function(source)
     source = tonumber(source)
     if not source or source <= 0 then
-        return { ok = false, error = 'Invalid player session.' }
+        return { ok = false, error = exports.sunset_core:TFor(source, 'fishing_tournament.message.invalid_player_session') }
     end
     if TournamentData.state ~= 'ACTIVE' then
-        return { ok = false, error = 'No fishing tournament is currently active.' }
+        return { ok = false, error = exports.sunset_core:TFor(source, 'fishing_tournament.ui.no_fishing_tournament_is_currently_active') }
     end
     local charId = getCharId(source)
     if not charId then
-        return { ok = false, error = 'Character not loaded.' }
+        return { ok = false, error = exports.sunset_core:TFor(source, 'businesses.message.character_not_loaded') }
     end
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then
-        return { ok = false, error = 'Player entity not available.' }
+        return { ok = false, error = exports.sunset_core:TFor(source, 'fishing_tournament.ui.player_entity_not_available') }
     end
     local dist = #(GetEntityCoords(ped) - Cfg.joinLocation)
     if dist > (Cfg.joinRadius or 45.0) then
-        return { ok = false, error = 'You are too far from the tournament location.' }
+        return { ok = false, error = exports.sunset_core:TFor(source, 'fishing_tournament.ui.you_are_too_far_from_the') }
     end
 
     local p, already = registerParticipant(source, charId)
-    if not p then return { ok = false, error = 'Could not join right now.' } end
+    if not p then return { ok = false, error = exports.sunset_core:TFor(source, 'fishing_tournament.ui.could_not_join_right_now') } end
     if not already then
-        notify(source, 'Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
+        notify(source, exports.sunset_core:TFor(source, 'fishing_tournament.msg.fishing_tournament_joined_catch_at_least'), 'success', 8000)
     end
     local status = getParticipantStatus(charId)
     if not already then TriggerClientEvent('sunset:fishingTournament:syncHud', source, status) end
@@ -769,7 +768,7 @@ RegisterCommand('fishtournamentdebug', function(source, args, raw)
     local isConsole = (source == 0)
     local isAdmin = isConsole or exports.sunset_admin:IsAdmin(source, 3) -- sunset_core exports no IsPlayerAdmin
     if not isAdmin then
-        if source > 0 then notify(source, 'No permission.', 'error') end
+        if source > 0 then notify(source, exports.sunset_core:TFor(source, 'fishing_tournament.msg.no_permission'), 'error') end
         return
     end
 
@@ -861,7 +860,7 @@ exports('JoinTournament', function(source)
     local p, already = registerParticipant(source, charId)
     if not p then return nil, { localeKey = 'fishing_tournament.message.no_fishing_tournament_is_active' } end
     if not already then
-        notify(source, 'Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
+        notify(source, exports.sunset_core:TFor(source, 'fishing_tournament.msg.fishing_tournament_joined_catch_at_least'), 'success', 8000)
         TriggerClientEvent('sunset:fishingTournament:syncHud', source, getParticipantStatus(charId))
     end
     return { ok = true, alreadyJoined = already }

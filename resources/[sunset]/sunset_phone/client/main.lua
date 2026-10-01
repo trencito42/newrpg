@@ -81,6 +81,8 @@ end
 
 local function openPhone()
     if phoneOpen or phoneOpening then return end
+    local okReady, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
+    if okReady and not ready then return end -- no phone before login/spawn finished
     if IsNuiFocused() or isChatOpen() then
         return exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.close_the_current_menu_or_chat_before_opening_the'), 'info', 3500)
     end
@@ -90,7 +92,7 @@ local function openPhone()
         local data, err = Sunset.AwaitCallback('sunset:getPhoneData')
         if not data then
             phoneOpening = false
-            exports.sunset_ui:Notify(err or 'Could not load phone data', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('phone.msg.could_not_load_phone_data'), 'error')
             return
         end
 
@@ -203,11 +205,11 @@ AddEventHandler('sunset:nui:phoneSend', function(data)
             return Sunset.AwaitCallback('sunset:phoneSend', tonumber(data.targetCharacterId), data.message, data.phone, location)
         end)
         if not callOk then
-            exports.sunset_ui:Notify(tostring(sent) or 'Could not send the message', 'error')
+            exports.sunset_ui:Notify(tostring(sent) or exports.sunset_core:Translate('phone.msg.could_not_send_the_message'), 'error')
             return
         end
         if not sent then
-            exports.sunset_ui:Notify(sendErr or 'The server rejected this message. Check the recipient and try again.', 'error')
+            exports.sunset_ui:Notify(sendErr or exports.sunset_core:Translate('phone.msg.the_server_rejected_this_message_check'), 'error')
             return
         end
         local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
@@ -220,11 +222,11 @@ AddEventHandler('sunset:nui:phoneAddContact', function(data)
         data = data or {}
         local res, err = Sunset.AwaitCallback('sunset:phoneAddContact', data.name, data.phone)
         if res and res.ok then
-            exports.sunset_ui:Notify(('Contact "%s" added.'):format(res.contact and res.contact.name or 'friend'), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.msg.contact_added', { contact = res.contact and res.contact.name or exports.sunset_core:Translate('phone.word.friend') }), 'success')
             local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
             exports.sunset_ui:Send('phoneUpdate', refreshed)
         else
-            exports.sunset_ui:Notify(err or 'Could not save contact.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('phone.msg.could_not_save_contact'), 'error')
         end
     end)
 end)
@@ -238,7 +240,7 @@ AddEventHandler('sunset:nui:phoneDeleteContact', function(data)
             local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
             exports.sunset_ui:Send('phoneUpdate', refreshed)
         else
-            exports.sunset_ui:Notify(err or 'Could not delete contact.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('phone.msg.could_not_delete_contact'), 'error')
         end
     end)
 end)
@@ -248,10 +250,10 @@ AddEventHandler('sunset:nui:phoneBankTransfer', function(data)
         data = data or {}
         local res, err = Sunset.AwaitCallback('sunset:phoneBankTransfer', tonumber(data.targetId), tonumber(data.amount))
         if res then
-            exports.sunset_ui:Notify(('Transfer of $%s sent successfully.'):format(tonumber(data.amount) or 0), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.msg.transfer_of_sent_successfully', { amount = tostring(tonumber(data.amount) or 0) }), 'success')
             exports.sunset_ui:Send('phoneUpdate', res)
         else
-            exports.sunset_ui:Notify(err or 'Transfer failed.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('phone.msg.transfer_failed'), 'error')
         end
     end)
 end)
@@ -317,6 +319,16 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     removePhoneProp()
+    -- [RESTART SAFETY] never leave the phone cursor/anim behind
+    if phoneOpen or phoneOpening then
+        phoneOpen = false
+        phoneOpening = false
+        pcall(function()
+            ClearPedTasks(PlayerPedId())
+            exports.sunset_ui:Send('phoneHide', {})
+            exports.sunset_ui:SetFocus(false, false, false, 'phone')
+        end)
+    end
 end)
 
 -- [AVATAR] Capture the ped headshot ONCE at first spawn (civilian, no uniform)
@@ -330,7 +342,14 @@ AddEventHandler('sunset:client:playerSpawned', function(character)
     if not character then return end
 
     CreateThread(function()
-        Wait(2000) -- let the ped model fully load (civilian appearance)
+        -- readiness handshake instead of a blind Wait(2000); ped model settles right after spawn
+        local dl = GetGameTimer() + 15000
+        while GetGameTimer() < dl do
+            local okR, rdy = pcall(function() return exports.sunset_core:IsPlayerReady() end)
+            if okR and rdy then break end
+            Wait(250)
+        end
+        Wait(500)
         local char = exports.sunset_core:GetCharacter()
         if not char then return end
 

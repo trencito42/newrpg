@@ -1,3 +1,4 @@
+// i18n-ignore-file: developer-only route creator, loaded only when SUNSET_DEV=1; English by design.
 /* ═══════════════════════════════════════════════════════════════════
    SUNSET DEVTOOLS — Route Creator Web App (app.js)
    ═══════════════════════════════════════════════════════════════════ */

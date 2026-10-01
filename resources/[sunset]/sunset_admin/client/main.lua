@@ -199,13 +199,13 @@ end
 
 RegisterNetEvent('sunset:admin:toggleNoclip', function()
     noclip = not noclip
-    exports.sunset_ui:Notify(noclip and 'Noclip ON' or 'Noclip OFF', 'info')
+    exports.sunset_ui:Notify(noclip and exports.sunset_core:Translate('admin.msg.noclip_on') or exports.sunset_core:Translate('admin.msg.noclip_off'), 'info')
 end)
 
 RegisterNetEvent('sunset:admin:toggleGod', function()
     godmode = not godmode
     SetEntityInvincible(PlayerPedId(), godmode)
-    exports.sunset_ui:Notify(godmode and 'Godmode ON' or 'Godmode OFF', 'info')
+    exports.sunset_ui:Notify(godmode and exports.sunset_core:Translate('admin.msg.godmode_on') or exports.sunset_core:Translate('admin.msg.godmode_off'), 'info')
 end)
 
 -- ═══════════════════════════════════════════════════════════════
@@ -308,7 +308,7 @@ RegisterNetEvent('sunset:admin:spectateStart', function(targetSrc, initCoords)
     FreezeEntityPosition(ped, true)
     SetEntityCollision(ped, false, false)
     NetworkSetInSpectatorMode(true, ped)
-    exports.sunset_ui:Notify(('Spectating #%d. /spectate off to exit.'):format(targetSrc), 'info', 8000)
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.msg.spectating_spectate_off_to_exit', { target_src = math.floor(tonumber(targetSrc) or 0) }), 'info', 8000)
 end)
 
 RegisterNetEvent('sunset:admin:spectateSync', function(targetSrc, coords)
@@ -417,7 +417,7 @@ local function drawNoclipSpeedHud(speed)
     SetTextDropshadow(0, 0, 0, 0, 255)
     SetTextOutline()
     BeginTextCommandDisplayText('STRING')
-    AddTextComponentSubstringPlayerName(('NOCLIP SPEED: %.1f'):format(speed))
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('admin.msg.noclip_speed', { speed = string.format('%.1f', speed) }))
     EndTextCommandDisplayText(0.5, 0.02)
 end
 
@@ -528,7 +528,7 @@ local function setSpeedMultiplier(mult)
     if mult <= 1.01 then
         exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.message.speed_boost_disabled'), 'info')
     else
-        exports.sunset_ui:Notify(('Speed boost: %.1fx'):format(mult), 'success')
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.msg.speed_boost_x', { mult = string.format('%.1f', mult) }), 'success')
     end
 end
 
@@ -787,7 +787,7 @@ RegisterNetEvent('sunset:admin:toggleVehicleDebugLabels', function()
         debugLabelVehicles = {}
     end
     exports.sunset_ui:Notify(
-        vehicleDebugLabels and ('Vehicle debug labels ON (%dm radius)'):format(DL_RADIUS) or 'Vehicle debug labels OFF',
+        vehicleDebugLabels and exports.sunset_core:Translate('admin.msg.vehicle_debug_labels_on_m_radius', { dl_radius = math.floor(tonumber(DL_RADIUS) or 0) }) or exports.sunset_core:Translate('admin.msg.vehicle_debug_labels_off'),
         'info'
     )
 end)
@@ -880,8 +880,8 @@ RegisterNetEvent('sunset:admin:togglePropDebugLabels', function()
     propDebugLabels = not propDebugLabels
     if not propDebugLabels then debugLabelProps = {} end
     exports.sunset_ui:Notify(
-        propDebugLabels and ('Prop debug labels ON (%dm radius, max %d)'):format(DLP_RADIUS, DLP_MAX_OBJECTS)
-            or 'Prop debug labels OFF',
+        propDebugLabels and exports.sunset_core:Translate('admin.msg.prop_debug_labels_on_m_radius', { dlp_radius = math.floor(tonumber(DLP_RADIUS) or 0), dlp_max_objects = math.floor(tonumber(DLP_MAX_OBJECTS) or 0) })
+            or exports.sunset_core:Translate('admin.msg.prop_debug_labels_off'),
         'info'
     )
 end)
@@ -974,10 +974,10 @@ AddEventHandler('sunset:nui:fncSubmit', function(payload)
         if ok then
             exports.sunset_ui:Send('fncModalHide', {})
             exports.sunset_ui:SetFocus(false, false)
-            exports.sunset_ui:Notify(('Your name has been updated: %s'):format(tostring(result)), 'success')
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.msg.your_name_has_been_updated', { result = tostring(result) }), 'success')
             TriggerEvent('sunset:client:onCharacterUpdated', { name = result, firstname = result })
         else
-            exports.sunset_ui:Send('fncModalError', { error = result or 'Failed to change name.' })
+            exports.sunset_ui:Send('fncModalError', { error = result or exports.sunset_core:Translate('admin.ui.failed_to_change_name') })
         end
     end, name)
 end)

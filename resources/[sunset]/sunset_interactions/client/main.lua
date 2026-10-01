@@ -343,7 +343,7 @@ local function openMenu(requestedTarget)
     end
     if not context then
         cancelTargetLock(false)
-        return notify(err or 'The interaction menu could not be opened.', 'error', 6000)
+        return notify(err or exports.sunset_core:Translate('interactions.msg.the_interaction_menu_could_not_be'), 'error', 6000)
     end
 
     if not validateInteractionTarget(targetId, HOLD_VALIDATE_DISTANCE, true) then
@@ -448,7 +448,7 @@ local CallbackActions = {
 local function showInventoryResult(title, rows)
     exports.sunset_ui:Send('chatMessage', { id = 0, name = 'INTERACTION', message = title, time = '' })
     if type(rows) ~= 'table' or #rows == 0 then
-        exports.sunset_ui:Send('chatMessage', { id = 0, name = 'INTERACTION', message = 'No items found.', time = '' })
+        exports.sunset_ui:Send('chatMessage', { id = 0, name = 'INTERACTION', message = exports.sunset_core:Translate('interactions.ui.no_items_found'), time = '' })
         return
     end
     for _, row in ipairs(rows) do
@@ -486,16 +486,16 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     if action == 'give_cash' then
         result, err = Sunset.AwaitCallback('sunset:interactionGiveCash', activeTarget, value)
         if result then
-            notify(('You gave $%s to %s.'):format(result.amount, result.target), 'success')
+            notify(exports.sunset_core:Translate('interactions.msg.you_gave_to', { amount = tostring(result.amount), target = tostring(result.target) }), 'success')
         else
-            notify(err or 'Could not transfer cash.', 'error', 6000)
+            notify(err or exports.sunset_core:Translate('interactions.msg.could_not_transfer_cash'), 'error', 6000)
         end
     elseif action == 'trade' then
         local target = activeTarget
         closeMenu()
         local res, tradeErr = Sunset.AwaitCallback('sunset:inventory:tradeRequest', { targetId = target })
         if not res then
-            notify(tradeErr or 'Could not initiate trade.', 'error')
+            notify(tradeErr or exports.sunset_core:Translate('interactions.msg.could_not_initiate_trade'), 'error')
         elseif res.message then
             notify(res.message, res.kind or 'info')
         end
@@ -511,7 +511,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         contactBusy = false
         contactCooldownUntil = GetGameTimer() + 4000
         if result then
-            notify(('%s has been saved to your contacts (%s).'):format(result.name, result.phone), 'success')
+            notify(exports.sunset_core:Translate('interactions.msg.has_been_saved_to_your_contacts', { name = tostring(result.name), phone = tostring(result.phone) }), 'success')
             if GetResourceState('sunset_phone') == 'started' then
                 local refreshed = Sunset.AwaitCallback('sunset:getPhoneData')
                 if refreshed then exports.sunset_ui:Send('phoneUpdate', refreshed) end
@@ -526,7 +526,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         result, err = Sunset.AwaitCallback('sunset:policeSetWanted', activeTarget, tostring(value or ''))
     elseif action == 'taxi_fare' then
         result, err = Sunset.AwaitCallback('sunset:taxiFare', activeTarget, tonumber(value))
-        if result then notify(('Fare offer of $%d sent.'):format(result.amount or tonumber(value) or 0), 'success') end
+        if result then notify(exports.sunset_core:Translate('interactions.msg.fare_offer_of_sent', { amount = math.floor(tonumber(result.amount or tonumber(value) or 0) or 0) }), 'success') end
     elseif action == 'license_exam' then
         local licenseType = tostring(value or '')
         if licenseType ~= 'pilot' and licenseType ~= 'boat' and licenseType ~= 'weapon' then
@@ -539,8 +539,8 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         end
     elseif CallbackActions[action] then
         result, err = Sunset.AwaitCallback(CallbackActions[action], activeTarget)
-        if action == 'frisk' and result then showInventoryResult(('Search results for player #%d:'):format(activeTarget), result) end
-        if action == 'confiscate' and result then showInventoryResult(('Confiscated from player #%d:'):format(activeTarget), result) end
+        if action == 'frisk' and result then showInventoryResult(exports.sunset_core:Translate('interactions.msg.search_results_for_player', { active_target = math.floor(tonumber(activeTarget) or 0) }), result) end
+        if action == 'confiscate' and result then showInventoryResult(exports.sunset_core:Translate('interactions.msg.confiscated_from_player', { active_target = math.floor(tonumber(activeTarget) or 0) }), result) end
     else
         err = 'That interaction is no longer available. Reopen the menu.'
     end

@@ -25,19 +25,19 @@
                 <div class="war-hud hidden" id="war-hud">
                     <div class="hud-panel" style="border-right: 4px solid var(--war-accent, #00ffcc);">
                         <div>
-                            <div class="team-name" id="war-att-name">ATTACKERS</div>
+                            <div class="team-name" id="war-att-name">${I18n.t('ui.clanwar.attackers')}</div>
                             <div class="team-score"><i class="ph-fill ph-shield-check" style="color: var(--war-accent, #00ffcc);"></i> <span class="score-val" id="war-att-score">0</span></div>
                         </div>
                     </div>
                     <div class="hud-panel hud-timer">
                         <div>
                             <div id="war-timer">10:00</div>
-                            <div class="timer-label" id="war-turf-label">Turf</div>
+                            <div class="timer-label" id="war-turf-label">${I18n.t('ui.clanwar.turf')}</div>
                         </div>
                     </div>
                     <div class="hud-panel" style="border-left: 4px solid var(--war-enemy, #8b5cf6);">
                         <div style="text-align: right;">
-                            <div class="team-name" style="color: var(--war-enemy, #8b5cf6);" id="war-def-name">DEFENDERS</div>
+                            <div class="team-name" style="color: var(--war-enemy, #8b5cf6);" id="war-def-name">${I18n.t('ui.clanwar.defenders')}</div>
                             <div class="team-score" style="justify-content: flex-end;"><span class="score-val enemy" id="war-def-score">0</span> <i class="ph-fill ph-skull" style="color: var(--war-enemy, #8b5cf6);"></i></div>
                         </div>
                     </div>
@@ -46,19 +46,19 @@
                 <div class="armory-wrapper" id="war-armory">
                     <div class="sidebar">
                         <div class="sidebar-header">
-                            <h1>War Armory</h1>
-                            <p id="war-armory-sub">Choose your loadout for the war</p>
+                            <h1>${I18n.t('ui.clanwar.armory_title')}</h1>
+                            <p id="war-armory-sub">${I18n.t('ui.clanwar.armory_sub')}</p>
                         </div>
                         <div class="package-list" id="war-package-list"></div>
                     </div>
                     <div class="content">
                         <div class="content-header">
-                            <h2 class="ch-title" id="war-det-name">PACKAGE</h2>
+                            <h2 class="ch-title" id="war-det-name">${I18n.t('ui.clanwar.package')}</h2>
                         </div>
                         <div class="weapon-list" id="war-weapon-list"></div>
                         <div class="spawn-actions">
-                            <button class="btn btn-equip" id="war-equip-btn"><i class="ph-bold ph-crosshair-simple"></i> Equip Package</button>
-                            <button class="btn btn-close-war" id="war-armory-close"><i class="ph-bold ph-x"></i> Close</button>
+                            <button class="btn btn-equip" id="war-equip-btn"><i class="ph-bold ph-crosshair-simple"></i> ${I18n.t('ui.clanwar.equip_package')}</button>
+                            <button class="btn btn-close-war" id="war-armory-close"><i class="ph-bold ph-x"></i> ${I18n.t('common.close')}</button>
                         </div>
                     </div>
                 </div>
@@ -66,17 +66,17 @@
                 <div class="war-scoreboard" id="war-scoreboard">
                     <div class="sb-header">
                         <div>
-                            <h2 class="sb-title">War Stats</h2>
-                            <div class="sb-subtitle" id="war-sb-turf">Turf</div>
+                            <h2 class="sb-title">${I18n.t('ui.clanwar.war_stats')}</h2>
+                            <div class="sb-subtitle" id="war-sb-turf">${I18n.t('ui.clanwar.turf')}</div>
                         </div>
                         <i class="ph-bold ph-crosshair" style="color: var(--war-accent, #00ffcc); font-size: 24px; transform: skewX(5deg);"></i>
                     </div>
-                    <div class="sb-score-row"><span id="war-sb-att" style="color:var(--war-accent,#00ffcc);">ATK 0</span><span id="war-sb-target" style="color:rgba(255,255,255,0.4);">/ 300</span><span id="war-sb-def" style="color:var(--war-enemy,#8b5cf6);">0 DEF</span></div>
+                    <div class="sb-score-row"><span id="war-sb-att" style="color:var(--war-accent,#00ffcc);">${I18n.t('ui.clanwar.atk_short')} 0</span><span id="war-sb-target" style="color:rgba(255,255,255,0.4);">/ 300</span><span id="war-sb-def" style="color:var(--war-enemy,#8b5cf6);">0 ${I18n.t('ui.clanwar.def_short')}</span></div>
                     <div class="sb-list-container">
                         <div class="sb-col-headers">
-                            <div class="col-name">Player</div>
-                            <div class="col-stat">Kills</div>
-                            <div class="col-stat">Deaths</div>
+                            <div class="col-name">${I18n.t('common.player')}</div>
+                            <div class="col-stat">${I18n.t('ui.clanwar.kills')}</div>
+                            <div class="col-stat">${I18n.t('ui.clanwar.deaths')}</div>
                         </div>
                         <div id="war-sb-list"></div>
                     </div>
@@ -84,40 +84,40 @@
 
                 <div class="war-end-screen" id="war-end-screen">
                     <div class="end-banner" id="war-end-banner">
-                        <h1 class="end-status" id="war-end-title">TURF CAPTURED!</h1>
-                        <div class="end-turf" id="war-end-turf">Turf</div>
+                        <h1 class="end-status" id="war-end-title">${I18n.t('ui.clanwar.turf_captured')}</h1>
+                        <div class="end-turf" id="war-end-turf">${I18n.t('ui.clanwar.turf')}</div>
                     </div>
                     <div class="end-content">
                         <div class="final-score-row">
                             <div class="team-final">
-                                <span class="team-final-name" style="color: var(--war-accent,#00ffcc);" id="war-end-att-name">ATK</span>
+                                <span class="team-final-name" style="color: var(--war-accent,#00ffcc);" id="war-end-att-name">${I18n.t('ui.clanwar.atk_short')}</span>
                                 <span class="team-final-score" style="color: var(--war-accent,#00ffcc);" id="war-end-att-score">0</span>
                             </div>
-                            <div class="score-separator">VS</div>
+                            <div class="score-separator">${I18n.t('ui.clanwar.versus')}</div>
                             <div class="team-final">
-                                <span class="team-final-name" style="color: var(--war-enemy,#8b5cf6);" id="war-end-def-name">DEF</span>
+                                <span class="team-final-name" style="color: var(--war-enemy,#8b5cf6);" id="war-end-def-name">${I18n.t('ui.clanwar.def_short')}</span>
                                 <span class="team-final-score" style="color: var(--war-enemy,#8b5cf6);" id="war-end-def-score">0</span>
                             </div>
                         </div>
                         <div class="mvp-box" id="war-mvp-box">
                             <div class="mvp-icon"><i class="ph-fill ph-crown"></i></div>
                             <div class="mvp-details">
-                                <div class="mvp-label">War MVP</div>
+                                <div class="mvp-label">${I18n.t('ui.clanwar.war_mvp')}</div>
                                 <div class="mvp-name" id="war-mvp-name">—</div>
                                 <div class="mvp-stats">
-                                    <div>Kills: <span id="war-mvp-kills">0</span></div>
-                                    <div>Deaths: <span id="war-mvp-deaths">0</span></div>
+                                    <div>${I18n.t('ui.clanwar.kills')}: <span id="war-mvp-kills">0</span></div>
+                                    <div>${I18n.t('ui.clanwar.deaths')}: <span id="war-mvp-deaths">0</span></div>
                                 </div>
                             </div>
                         </div>
-                        <button class="btn-close" id="war-end-close">Close Summary</button>
+                        <button class="btn-close" id="war-end-close">${I18n.t('ui.clanwar.close_summary')}</button>
                     </div>
                 </div>
 
                 <div class="war-respawn-box hidden" id="war-respawn">
-                    <div class="rr-title">You were downed in the war</div>
+                    <div class="rr-title">${I18n.t('ui.clanwar.downed')}</div>
                     <div class="rr-count" id="war-respawn-count">5</div>
-                    <div class="rr-hint">Returning to the turf zone…</div>
+                    <div class="rr-hint">${I18n.t('ui.clanwar.returning')}</div>
                 </div>
             `;
             document.body.appendChild(wrap);
@@ -157,15 +157,15 @@
                 document.documentElement.style.setProperty('--war-enemy', data.defenderColor);
             }
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-            set('war-att-name', data.attackerName || 'ATTACKERS');
-            set('war-def-name', data.defenderName || 'DEFENDERS');
+            set('war-att-name', data.attackerName || I18n.t('ui.clanwar.attackers'));
+            set('war-def-name', data.defenderName || I18n.t('ui.clanwar.defenders'));
             set('war-att-score', String(data.attackerScore || 0));
             set('war-def-score', String(data.defenderScore || 0));
             const rem = Math.max(0, data.remainingSec || 0);
             set('war-timer', `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`);
             const label = data.scoreTarget
-                ? `Turf: ${data.turfName || ''} • ${data.scoreTarget} pts`
-                : `Turf: ${data.turfName || ''}`;
+                ? I18n.t('ui.clanwar.turf_with_target', { turf: data.turfName || '', target: data.scoreTarget })
+                : I18n.t('ui.clanwar.turf_named', { turf: data.turfName || '' });
             set('war-turf-label', label);
         },
 
@@ -182,7 +182,7 @@
             modal?.classList.add('active');
             this.armoryOpen = true;
             const sub = document.getElementById('war-armory-sub');
-            if (sub) sub.textContent = data.turfName ? `War: ${data.turfName} (${data.role === 'attacker' ? 'attacker' : 'defender'})` : 'Choose your weapons for the war';
+            if (sub) sub.textContent = data.turfName ? I18n.t('ui.clanwar.war_at', { turf: data.turfName, role: data.role === 'attacker' ? I18n.t('ui.clanwar.role_attacker') : I18n.t('ui.clanwar.role_defender') }) : I18n.t('ui.clanwar.armory_weapons_sub');
             this.renderPackages(data.packages || []);
         },
 
@@ -193,13 +193,13 @@
             packages.forEach((p) => {
                 const el = document.createElement('div');
                 el.className = `package-item ${this.selectedPkg === p.id ? 'selected' : ''}`;
-                const costLabel = p.cost > 0 ? `$${Number(p.cost).toLocaleString('en-US')}` : (p.rank > 1 ? `Free (Rank ${p.rank}+)` : 'Free');
+                const costLabel = p.cost > 0 ? `$${I18n.number(Number(p.cost))}` : (p.rank > 1 ? I18n.t('ui.clanwar.free_rank', { rank: p.rank }) : I18n.t('ui.clanwar.free'));
                 el.innerHTML = `
                     <div class="pkg-info">
                         <span class="pkg-name">${esc(p.name)}</span>
                         <span class="pkg-cost"><i class="ph-bold ph-coins"></i> ${esc(costLabel)}</span>
                     </div>
-                    ${p.rankOk ? '' : '<span class="pkg-locked">Rank locked</span>'}
+                    ${p.rankOk ? '' : `<span class="pkg-locked">${I18n.t('ui.clanwar.rank_locked')}</span>`}
                 `;
                 el.addEventListener('click', () => this.selectPackage(p.id));
                 list.appendChild(el);
@@ -244,9 +244,9 @@
             this.scoreboardVisible = true;
             if (!data) return;
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-            set('war-sb-turf', data.turfName || 'Turf');
-            set('war-sb-att', `${data.attackerName || 'ATK'} ${data.attackerScore || 0}`);
-            set('war-sb-def', `${data.defenderScore || 0} ${data.defenderName || 'DEF'}`);
+            set('war-sb-turf', data.turfName || I18n.t('ui.clanwar.turf'));
+            set('war-sb-att', `${data.attackerName || I18n.t('ui.clanwar.atk_short')} ${data.attackerScore || 0}`);
+            set('war-sb-def', `${data.defenderScore || 0} ${data.defenderName || I18n.t('ui.clanwar.def_short')}`);
             set('war-sb-target', data.scoreTarget ? `/ ${data.scoreTarget}` : '');
             const list = document.getElementById('war-sb-list');
             if (list) {
@@ -280,13 +280,13 @@
                 if (won && data.myRole !== 'attacker') {
                     title.textContent = I18n.t('dynamic.clanwar.turf_defended');
                 } else {
-                    title.textContent = won ? 'TURF CAPTURED!' : 'TURF PIERDUT!';
+                    title.textContent = won ? I18n.t('ui.clanwar.turf_captured') : I18n.t('ui.clanwar.turf_lost');
                 }
                 title.style.color = won ? 'var(--war-accent, #00ffcc)' : 'var(--war-danger, #ff3366)';
             }
-            set('war-end-turf', `Turf #${data.turfId || '?'} • ${data.turfName || ''}`);
-            set('war-end-att-name', data.attackerName || 'ATK');
-            set('war-end-def-name', data.defenderName || 'DEF');
+            set('war-end-turf', `${I18n.t('ui.clanwar.turf')} #${data.turfId || '?'} • ${data.turfName || ''}`);
+            set('war-end-att-name', data.attackerName || I18n.t('ui.clanwar.atk_short'));
+            set('war-end-def-name', data.defenderName || I18n.t('ui.clanwar.def_short'));
             set('war-end-att-score', String(data.attackerScore || 0));
             set('war-end-def-score', String(data.defenderScore || 0));
             const mvpBox = document.getElementById('war-mvp-box');

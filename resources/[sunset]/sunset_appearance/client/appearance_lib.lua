@@ -485,20 +485,20 @@ function SunsetAppearance.buildEditor(ped, appearance, gender)
 
     local function add(field) fields[#fields + 1] = field end
 
-    add({ type = 'skinTone', label = 'Skin Tone', min = 0, max = 45, value = appearance.headBlend.skinFirst or 0, camera = 'face' })
-    add({ type = 'shapeFirst', label = 'Face Shape A', min = 0, max = 45, value = appearance.headBlend.shapeFirst or 0, camera = 'face' })
-    add({ type = 'shapeSecond', label = 'Face Shape B', min = 0, max = 45, value = appearance.headBlend.shapeSecond or 0, camera = 'face' })
-    add({ type = 'shapeMix', label = 'Face Mix', min = 0, max = 100, value = math.floor((appearance.headBlend.shapeMix or 0.5) * 100), camera = 'face' })
-    add({ type = 'hairStyle', label = 'Hair Style', min = 0, max = drawableMax(ped, 2), value = appearance.hair.drawable or 0, camera = 'face' })
-    add({ type = 'hairColor', label = 'Hair Color', min = 0, max = 63, value = appearance.hair.color or 0, camera = 'face' })
-    add({ type = 'hairHighlight', label = 'Hair Highlight', min = 0, max = 63, value = appearance.hair.highlight or appearance.hair.color or 0, camera = 'face' })
+    add({ type = 'skinTone', label = exports.sunset_core:Translate('appearance.ui.skin_tone'), min = 0, max = 45, value = appearance.headBlend.skinFirst or 0, camera = 'face' })
+    add({ type = 'shapeFirst', label = exports.sunset_core:Translate('appearance.ui.face_shape_a'), min = 0, max = 45, value = appearance.headBlend.shapeFirst or 0, camera = 'face' })
+    add({ type = 'shapeSecond', label = exports.sunset_core:Translate('appearance.ui.face_shape_b'), min = 0, max = 45, value = appearance.headBlend.shapeSecond or 0, camera = 'face' })
+    add({ type = 'shapeMix', label = exports.sunset_core:Translate('appearance.ui.face_mix'), min = 0, max = 100, value = math.floor((appearance.headBlend.shapeMix or 0.5) * 100), camera = 'face' })
+    add({ type = 'hairStyle', label = exports.sunset_core:Translate('appearance.ui.hair_style'), min = 0, max = drawableMax(ped, 2), value = appearance.hair.drawable or 0, camera = 'face' })
+    add({ type = 'hairColor', label = exports.sunset_core:Translate('appearance.ui.hair_color'), min = 0, max = 63, value = appearance.hair.color or 0, camera = 'face' })
+    add({ type = 'hairHighlight', label = exports.sunset_core:Translate('appearance.ui.hair_highlight'), min = 0, max = 63, value = appearance.hair.highlight or appearance.hair.color or 0, camera = 'face' })
 
     if gender ~= 1 then
         local beardMax = overlayMax(1)
-        add({ type = 'beard', label = 'Beard Style', min = 0, max = beardMax, value = appearance.overlays['1'].index or 0, camera = 'face' })
-        add({ type = 'beardColor', label = 'Beard Color', min = 0, max = 63, value = appearance.overlays['1'].color or 0, camera = 'face' })
-        add({ type = 'eyebrows', label = 'Eyebrows', min = 0, max = overlayMax(2), value = appearance.overlays['2'].index or 0, camera = 'face' })
-        add({ type = 'eyebrowColor', label = 'Eyebrow Color', min = 0, max = 63, value = appearance.overlays['2'].color or 0, camera = 'face' })
+        add({ type = 'beard', label = exports.sunset_core:Translate('appearance.ui.beard_style'), min = 0, max = beardMax, value = appearance.overlays['1'].index or 0, camera = 'face' })
+        add({ type = 'beardColor', label = exports.sunset_core:Translate('appearance.ui.beard_color'), min = 0, max = 63, value = appearance.overlays['1'].color or 0, camera = 'face' })
+        add({ type = 'eyebrows', label = exports.sunset_core:Translate('appearance.ui.eyebrows'), min = 0, max = overlayMax(2), value = appearance.overlays['2'].index or 0, camera = 'face' })
+        add({ type = 'eyebrowColor', label = exports.sunset_core:Translate('appearance.ui.eyebrow_color'), min = 0, max = 63, value = appearance.overlays['2'].color or 0, camera = 'face' })
     end
 
     local clothes = {

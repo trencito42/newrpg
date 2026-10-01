@@ -2,7 +2,7 @@ AddEventHandler('sunset:world:openJobCenter', function(centerId, center)
     if IsNuiFocused() then return end
     local jobs, err = Sunset.AwaitCallback('sunset:jobs:getJobCenterJobs', centerId)
     if not jobs then
-        exports.sunset_ui:Notify(err or 'Could not load jobs', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('jobs.msg.could_not_load_jobs'), 'error')
         return
     end
     exports.sunset_ui:Send('jobCenterShow', {
@@ -17,7 +17,7 @@ AddEventHandler('sunset:nui:jobCenterHire', function(data)
     local ok, err = Sunset.AwaitCallback('sunset:hireJob', data.jobId)
     if ok then
         if data.jobId ~= 'unemployed' then
-            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_are_now_employed_as') .. (data.jobLabel or data.jobId), 'success', 6000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.msg.you_are_now_employed_as', { job_label = tostring(data.jobLabel or data.jobId) }), 'success', 6000)
         else
             exports.sunset_ui:Notify(exports.sunset_core:Translate('jobs.message.you_have_resigned'), 'info', 4000)
         end
@@ -57,6 +57,6 @@ RegisterCommand('quitjob', function()
             end
         end
         local ok, err = Sunset.AwaitCallback('sunset:quitCivilianJob')
-        if not ok then exports.sunset_ui:Notify(err or 'Could not quit civilian job', 'error') end
+        if not ok then exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.could_not_quit_civilian_job'), 'error') end
     end)
 end, false)

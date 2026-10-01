@@ -102,7 +102,7 @@ CreateThread(function()
                                     exports.sunset_ui:Send('fishingTournamentHudShow', res.status)
                                 end
                             else
-                                exports.sunset_ui:Notify(res and res.error or 'Failed to join tournament.', 'error')
+                                exports.sunset_ui:Notify(res and res.error or exports.sunset_core:Translate('fishing_tournament.msg.failed_to_join_tournament'), 'error')
                             end
                         end)
                     end

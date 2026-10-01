@@ -70,7 +70,7 @@
                 } else {
                     const count = data.fishCount || 0;
                     const min = data.minFish || 3;
-                    qualEl.textContent = `${count} / ${min} fish`;
+                    qualEl.textContent = I18n.t('ui.fishing_tournament.qual_progress', { count, min });
                     qualEl.className = 'ft-hud__qual-badge unqualified';
                 }
             }
@@ -90,7 +90,7 @@
                 }
             }
             if (catchesEl) {
-                catchesEl.textContent = `${data.fishCount || 0} fish`;
+                catchesEl.textContent = I18n.t('ui.fishing_tournament.fish_count', { count: data.fishCount || 0 });
             }
 
             // Timer
@@ -160,13 +160,13 @@
             const userEl = document.getElementById('ft-user-result');
             const subEl = document.getElementById('ft-results-sub');
 
-            if (subEl) subEl.textContent = data.instanceLabel || 'Tournament Concluded';
+            if (subEl) subEl.textContent = data.instanceLabel || I18n.t('ui.fishing_tournament.concluded');
 
             if (podiumEl) {
                 podiumEl.innerHTML = '';
                 const winners = data.winners || [];
                 if (winners.length === 0) {
-                    podiumEl.innerHTML = '<div class="ft-no-winners">No players caught enough fish to qualify.</div>';
+                    podiumEl.innerHTML = `<div class="ft-no-winners">${I18n.t('ui.fishing_tournament.no_winners')}</div>`;
                 } else {
                     winners.forEach((w) => {
                         const card = document.createElement('div');
@@ -177,7 +177,7 @@
                             <div class="ft-podium-name">${escapeHtml(w.name)}</div>
                             <div class="ft-podium-weight">${wKg} KG</div>
                             <div class="ft-podium-fish">${w.fishCount || 0} fish</div>
-                            ${w.rewardCash ? `<div class="ft-podium-reward">+$${w.rewardCash.toLocaleString()}</div>` : ''}
+                            ${w.rewardCash ? `<div class="ft-podium-reward">+$${I18n.number(w.rewardCash)}</div>` : ''}
                         `;
                         podiumEl.appendChild(card);
                     });
@@ -190,10 +190,10 @@
                     const mKg = typeof res.totalWeight === 'number' ? res.totalWeight.toFixed(1) : '0.0';
                     userEl.innerHTML = `
                         <div class="ft-user-box ${res.rank <= 3 && res.qualified ? 'is-winner' : ''}">
-                            <div class="ft-user-badge">YOUR RESULT</div>
-                            <div class="ft-user-rank">${res.qualified ? `#${res.rank}` : 'NOT QUALIFIED'}</div>
-                            <div class="ft-user-stats">${mKg} KG total · ${res.fishCount || 0} fish</div>
-                            ${res.rewardCash ? `<div class="ft-user-prize">Reward: $${res.rewardCash.toLocaleString()} + ${res.rewardXp || 0} XP</div>` : ''}
+                            <div class="ft-user-badge">${I18n.t('ui.fishing_tournament.your_result')}</div>
+                            <div class="ft-user-rank">${res.qualified ? `#${res.rank}` : I18n.t('ui.fishing_tournament.not_qualified')}</div>
+                            <div class="ft-user-stats">${I18n.t('ui.fishing_tournament.total_stats', { kg: mKg, count: res.fishCount || 0 })}</div>
+                            ${res.rewardCash ? `<div class="ft-user-prize">${I18n.t('ui.fishing_tournament.reward', { cash: I18n.number(res.rewardCash), xp: res.rewardXp || 0 })}</div>` : ''}
                         </div>
                     `;
                 } else {

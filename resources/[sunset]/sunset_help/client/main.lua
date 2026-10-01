@@ -17,7 +17,7 @@ end
 RegisterCommand('help', function()
     local data, err = Sunset.AwaitCallback('sunset:getHelp')
     if not data then
-        exports.sunset_ui:Notify(err or 'Could not load help', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('help.msg.could_not_load_help'), 'error')
         return
     end
     openHelp(data)

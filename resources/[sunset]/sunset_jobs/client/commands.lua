@@ -20,7 +20,7 @@ local function openJobsPanel()
     if IsNuiFocused() then return end
     local data, err = Sunset.AwaitCallback('sunset:jobs:getPanelData')
     if not data then
-        JC.notify(err or 'Could not load jobs', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_load_jobs'), 'error')
         return
     end
     TriggerEvent('sunset:ui:jobs', data)
@@ -29,7 +29,7 @@ end
 local function showSkills()
     local data, err = Sunset.AwaitCallback('sunset:jobs:getSkills')
     if not data then
-        JC.notify(err or 'Could not load skills', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_load_skills'), 'error')
         return
     end
     TriggerEvent('sunset:ui:skills', { skills = data.skills or {} })
@@ -54,17 +54,17 @@ local function startWork()
             if Sunset.Jobs and Sunset.Jobs.EnsureFishermanShift then
                 Sunset.Jobs.EnsureFishermanShift()
             end
-            JC.workFeedback('Fisherman shift is already active — stand in the fishing zone and press E.', 'info')
+            JC.workFeedback(exports.sunset_core:Translate('jobs.msg.fisherman_shift_is_already_active_stand'), 'info')
             return
         elseif JC.state ~= 'IDLE' then
-            JC.workFeedback('Already on a shift — finish or /work cancel', 'error')
+            JC.workFeedback(exports.sunset_core:Translate('jobs.msg.already_on_a_shift_finish_or'), 'error')
             return
         end
     end
 
     local jobId = JC.getCharacterJob()
     if jobId == 'unemployed' then
-        JC.workFeedback('You need a job first — visit the Job Center or /jobs', 'error')
+        JC.workFeedback(exports.sunset_core:Translate('jobs.msg.you_need_a_job_first_visit'), 'error')
         return
     end
 
@@ -74,20 +74,20 @@ local function startWork()
         -- "/work" and the Jobs panel Start button used to dead-end with a misleading message.
         local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[jobId]
         if wp then
-            JC.workFeedback(('Visit your %s supervisor to start a shift - GPS set.'):format(wp.jobLabel or jobId), 'info')
+            JC.workFeedback(exports.sunset_core:Translate('jobs.msg.visit_your_supervisor_to_start_a', { job_label = tostring(wp.jobLabel or jobId) }), 'info')
             local c = wp.npc and wp.npc.coords
             if c then SetNewWaypoint(c.x + 0.0, c.y + 0.0) end
         else
-            JC.workFeedback('No work loop for your job yet', 'error')
+            JC.workFeedback(exports.sunset_core:Translate('jobs.msg.no_work_loop_for_your_job'), 'error')
         end
         return
     end
 
     local def = Sunset.CivilianJobs[jobId]
-    JC.workFeedback(('Starting %s shift...'):format(def and def.label or jobId), 'info')
+    JC.workFeedback(exports.sunset_core:Translate('jobs.msg.starting_shift', { def = tostring(def and def.label or jobId) }), 'info')
     local ok, err = pcall(starter)
     if not ok then
-        JC.workFeedback('Work command failed — try again or contact staff.', 'error')
+        JC.workFeedback(exports.sunset_core:Translate('jobs.msg.work_command_failed_try_again_or'), 'error')
         print(('[sunset_jobs] /work error for %s: %s'):format(jobId, tostring(err)))
     end
 end
@@ -108,7 +108,7 @@ RegisterCommand('work', function(_, args)
         end
         JC.cleanup()
         JC.hideObjective()
-        JC.workFeedback('Shift cancelled', 'info')
+        JC.workFeedback(exports.sunset_core:Translate('jobs.hud.result.cancelled'), 'info')
         return
     end
     startWork()
@@ -139,9 +139,9 @@ AddEventHandler('sunset:ui:jobsSelectRequest', function(data)
     exports.sunset_ui:Send('jobsHide', {})
     local ok, err = Sunset.AwaitCallback('sunset:hireJob', data.jobId)
     if ok then
-        JC.notify(exports.sunset_core:Translate('jobs.message.you_are_now_employed_as') .. (data.jobLabel or data.jobId), 'success')
+        JC.notify(exports.sunset_core:Translate('jobs.msg.you_are_now_employed_as', { job_label = tostring(data.jobLabel or data.jobId) }), 'success')
     else
-        JC.notify(err or 'Could not get job', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.msg.could_not_get_job'), 'error')
     end
 end)
 
@@ -181,7 +181,7 @@ CreateThread(function()
             SetBlipScale(blip, depot.blip.scale or 0.7)
             SetBlipAsShortRange(blip, true)
             BeginTextCommandSetBlipName('STRING')
-            AddTextComponentSubstringPlayerName(depotLabels[jobId] or ((cfg.label or jobId) .. ' Work'))
+            AddTextComponentSubstringPlayerName(depotLabels[jobId] or (exports.sunset_core:Translate('jobs.msg.work', { label = tostring(cfg.label or jobId) })))
             EndTextCommandSetBlipName(blip)
         end
     end
@@ -195,7 +195,7 @@ CreateThread(function()
         SetBlipScale(blip, blipCfg.scale or 0.75)
         SetBlipAsShortRange(blip, true)
         BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName('Fish Buyer')
+        AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.msg.fish_buyer'))
         EndTextCommandSetBlipName(blip)
     end
 end)

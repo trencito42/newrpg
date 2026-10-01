@@ -134,7 +134,7 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:hireFisherman', functio
             err = 'Invalid job. Contact staff.'
         end
     end
-    return nil, err or 'Hiring failed. Please try again.'
+    return nil, err or exports.sunset_core:TFor(source, 'fishingshop.err.hiring_failed_please_try_again')
 end)
 
 local ROD_UPGRADES = {
@@ -203,7 +203,7 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:buyCart', function(sour
             if not validCartEntry(entry) then return nil, { localeKey = 'fishingshop.message.cart_is_empty' } end
             local price = priceMap[entry.item]
             -- [JOBS AUDIT] was `{ localeKey = ... } .. tostring(...)` (table concat -> runtime error)
-            if not price then return nil, 'Item invalid: ' .. tostring(entry.item) end
+            if not price then return nil, exports.sunset_core:TFor(source, 'fishingshop.err.item_invalid', { item = tostring(entry.item) }) end
             local amount = tonumber(entry.amount) or 1
             if amount ~= amount then amount = 1 end
             amount = math.max(1, math.min(math.floor(amount), 500))
@@ -251,7 +251,7 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellCart', function(sou
     for _, entry in ipairs(cart) do
         if not validCartEntry(entry) then return nil, { localeKey = 'fishingshop.message.sell_cart_is_empty' } end
         local fishItem = entry.item
-        if not FISH_PRICES[fishItem] then return nil, 'Item invalid: ' .. tostring(fishItem) end
+        if not FISH_PRICES[fishItem] then return nil, exports.sunset_core:TFor(source, 'fishingshop.err.item_invalid_2', { fish_item = tostring(fishItem) }) end
         local inInv = exports.sunset_inventory:CountItem(source, fishItem) or 0
         local reqAmount = tonumber(entry.amount) or 1
         if reqAmount ~= reqAmount then reqAmount = 1 end

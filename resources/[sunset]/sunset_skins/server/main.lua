@@ -152,14 +152,14 @@ RegisterCommand('giveskin', function(source, args)
         { target.id, model }
     )
     if already and #already > 0 then
-        exports.sunset_core:CommandReply(source, 'Player already owns that skin.')
+        exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'skins.msg.player_already_owns_that_skin'))
         return
     end
     MySQL.query.await(
         'INSERT INTO player_skins (player_id, model, source) VALUES (?, ?, ?)',
         { target.id, model, 'admin' }
     )
-    exports.sunset_core:CommandReply(source, ('Skin ~b~%s~w~ given to player %d.'):format(model, targetId))
+    exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'skins.msg.skin_b_w_given_to_player', { model = tostring(model), target_id = math.floor(tonumber(targetId) or 0) }))
     TriggerClientEvent('sunset:skins:notify', targetId, exports.sunset_core:TFor(targetId, 'skins.message.an_admin_gave_you_the_skin_value', model))
 end, false)
 
@@ -212,7 +212,7 @@ RegisterCommand('setskin', function(source, args)
     end
 
     TriggerClientEvent('sunset:skins:applyModel', targetSource, meta.skin or '')
-    exports.sunset_core:CommandReply(source, ('Skin for player %d set and saved permanently to ~b~%s~w~.'):format(targetSource, tostring(meta.skin or 'default')))
+    exports.sunset_core:CommandReply(source, exports.sunset_core:TFor(source, 'skins.msg.skin_for_player_set_and_saved', { target_source = math.floor(tonumber(targetSource) or 0), skin = tostring(meta.skin or 'default') }))
 end, false)
 
 -- NOTE: the characterSelected delayed applyModel was removed.
