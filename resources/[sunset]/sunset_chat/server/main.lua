@@ -288,8 +288,7 @@ RegisterCommand('e', function(source, args)
     end
 end, false)
 
--- /lc [message] — leader chat (Faction Leaders + Admins)
-RegisterCommand('lc', function(source, args)
+local function runLeaderChatCommand(source, args)
     if source == 0 then return end
     local isLeader = false
     local isAdmin = false
@@ -344,6 +343,10 @@ RegisterCommand('lc', function(source, args)
             })
         end
     end
+end
+
+RegisterCommand('lc', function(source, args)
+    runLeaderChatCommand(source, args)
 end, false)
 
 local function runDoCommand(source, args)
@@ -387,20 +390,124 @@ end
 local function runWhisperCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    if not args or #args < 2 then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.usage.whisper'), 'warning')
+        return
+    end
+
+    local targetId = tonumber(args[1])
+    if not targetId or targetId <= 0 or not GetPlayerName(targetId) or not hasCharacter(targetId) then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.whisper.player_not_found'), 'error')
+        return
+    end
+
+    local senderPed = GetPlayerPed(source)
+    local targetPed = GetPlayerPed(targetId)
+    if not senderPed or senderPed == 0 or not targetPed or targetPed == 0 then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.whisper.player_not_found'), 'error')
+        return
+    end
+
+    local dist = #(GetEntityCoords(senderPed) - GetEntityCoords(targetPed))
+    if dist > 4.5 then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.whisper.too_far'), 'error')
+        return
+    end
+
+    local rawMsg = table.concat(args, ' ', 2)
+    local msg = cleanChatText(rawMsg, 256)
     if not msg then return end
-    local identity = chatIdentity(source)
-    sendNearby(source, {
+
+    local senderIdent = chatIdentity(source)
+    local targetIdent = chatIdentity(targetId)
+
+    -- Message to sender
+    TriggerClientEvent('sunset:chat:message', source, {
         id = source,
-        name = identity.name,
-        factionId = identity.factionId,
-        clanTag = identity.clanTag,
-        clanTagColor = identity.clanTagColor,
-        clanTagStyle = identity.clanTagStyle,
-        message = msg,
+        name = senderIdent.name,
+        factionId = senderIdent.factionId,
+        clanTag = senderIdent.clanTag,
+        clanTagColor = senderIdent.clanTagColor,
+        clanTagStyle = senderIdent.clanTagStyle,
+        message = t(source, 'chat.whisper.to', { name = targetIdent.name, message = msg }),
         time = os.date('%H:%M:%S'),
         type = 'whisper',
-    }, 4.0)
+    })
+
+    -- Message to target
+    if targetId ~= source then
+        TriggerClientEvent('sunset:chat:message', targetId, {
+            id = source,
+            name = senderIdent.name,
+            factionId = senderIdent.factionId,
+            clanTag = senderIdent.clanTag,
+            clanTagColor = senderIdent.clanTagColor,
+            clanTagStyle = senderIdent.clanTagStyle,
+            message = t(targetId, 'chat.whisper.from', { name = senderIdent.name, message = msg }),
+            time = os.date('%H:%M:%S'),
+            type = 'whisper',
+        })
+    end
+
+    -- Proximity emote for bystanders within 2.2m
+    local sCoords = GetEntityCoords(senderPed)
+    for _, pid in ipairs(GetPlayers()) do
+        local p = tonumber(pid)
+        if p and p ~= source and p ~= targetId then
+            local pPed = GetPlayerPed(p)
+            if pPed and pPed ~= 0 and #(GetEntityCoords(pPed) - sCoords) <= 2.2 then
+                TriggerClientEvent('sunset:chat:message', p, {
+                    id = source,
+                    name = senderIdent.name,
+                    message = t(p, 'chat.whisper.nearby', { name = senderIdent.name, target = targetIdent.name }),
+                    time = os.date('%H:%M:%S'),
+                    type = 'me',
+                })
+            end
+        end
+    end
+end
+
+local function runCarWhisperCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
+    if checkMute(source) then return end
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 then return end
+    local veh = GetVehiclePedIsIn(ped, false)
+    if not veh or veh == 0 then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.whisper.not_in_vehicle'), 'error')
+        return
+    end
+
+    local rawMsg = table.concat(args, ' ')
+    local msg = cleanChatText(rawMsg, 256)
+    if not msg then
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'chat.usage.carwhisper'), 'warning')
+        return
+    end
+
+    local senderIdent = chatIdentity(source)
+
+    -- Send to all vehicle occupants
+    for _, pid in ipairs(GetPlayers()) do
+        local p = tonumber(pid)
+        if p then
+            local pPed = GetPlayerPed(p)
+            if pPed and pPed ~= 0 and GetVehiclePedIsIn(pPed, false) == veh then
+                TriggerClientEvent('sunset:chat:message', p, {
+                    id = source,
+                    name = senderIdent.name,
+                    factionId = senderIdent.factionId,
+                    clanTag = senderIdent.clanTag,
+                    clanTagColor = senderIdent.clanTagColor,
+                    clanTagStyle = senderIdent.clanTagStyle,
+                    message = t(p, 'chat.carwhisper.msg', { name = senderIdent.name, message = msg }),
+                    time = os.date('%H:%M:%S'),
+                    type = 'whisper',
+                })
+            end
+        end
+    end
 end
 
 local function runLowCommand(source, args)
@@ -463,6 +570,13 @@ RegisterCommand('whisper', function(source, args)
     runWhisperCommand(source, args)
 end, false)
 
+RegisterCommand('cw', function(source, args)
+    runCarWhisperCommand(source, args)
+end, false)
+RegisterCommand('carwhisper', function(source, args)
+    runCarWhisperCommand(source, args)
+end, false)
+
 RegisterCommand('l', function(source, args)
     runLowCommand(source, args)
 end, false)
@@ -478,10 +592,12 @@ function RunServerCommand(source, name, args)
     if source == 0 then return false end
     name = string.lower(tostring(name or ''))
     args = args or {}
+    if name == 'lc' then runLeaderChatCommand(source, args) return true end
     if name == 'me' then runMeCommand(source, args) return true end
     if name == 'do' then runDoCommand(source, args) return true end
     if name == 's' or name == 'shout' then runShoutCommand(source, args) return true end
     if name == 'w' or name == 'whisper' then runWhisperCommand(source, args) return true end
+    if name == 'cw' or name == 'carwhisper' then runCarWhisperCommand(source, args) return true end
     if name == 'l' or name == 'low' then runLowCommand(source, args) return true end
     if name == 'b' then runBCommand(source, args) return true end
     return false

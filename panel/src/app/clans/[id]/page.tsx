@@ -120,6 +120,7 @@ export default async function ClanDetailPage({ params }: Context) {
                   username={clan.owner_username}
                   clanTag={clan.tag}
                   clanColor={clan.tag_color}
+                  clanTagStyle={clan.tag_style}
                   size="sm"
                 />
               </div>

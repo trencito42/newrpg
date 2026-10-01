@@ -450,13 +450,19 @@ local function submitAdLocked(source, text)
     if src == 0 then return false, { localeKey = 'cnn.message.must_be_used_in_game' } end
 
     local char = exports.sunset_core:GetCharacter(src)
-    if not char then return false, { localeKey = 'cnn.message.character_not_loaded' } end
+    if not char then
+        print(('[CNN AD TRACE] 2 character loaded FAILED: player=%s'):format(src))
+        return false, { localeKey = 'cnn.message.character_not_loaded' }
+    end
+    print(('[CNN AD TRACE] 2 character loaded: charId=%s player=%s'):format(char.id, src))
 
     -- Location check
     local atCnn, locName = isPlayerAtCnn(src)
     if not atCnn then
+        print(('[CNN AD TRACE] 3 location validated FAILED (not at CNN): player=%s'):format(src))
         return false, { localeKey = 'cnn.message.you_must_be_at_a_cnn_weazel_news_station' }
     end
+    print(('[CNN AD TRACE] 3 location validated: atCnn=true locName=%s player=%s'):format(tostring(locName), src))
 
     -- Mute checks
     local okAdmin, isMuted, mMin, mReason = pcall(function() return exports.sunset_admin:IsMuted(src) end)
@@ -465,13 +471,16 @@ local function submitAdLocked(source, text)
         return false, { localeKey = 'cnn.message.could_not_submit_ad' }
     end
     if okAdmin and isMuted then
+        print(('[CNN AD TRACE] 4 mute validated FAILED (admin muted): player=%s'):format(src))
         return false, { localeKey = 'cnn.message.you_are_currently_muted_value_min_reason_value', formatArgs = { mMin or 1, mReason or 'Sanction' } }
     end
 
     local isAdMuted, admMin, admReason = IsAdMuted(src)
     if isAdMuted then
+        print(('[CNN AD TRACE] 4 mute validated FAILED (ad muted): player=%s'):format(src))
         return false, { localeKey = 'cnn.message.you_are_currently_ad_muted_value_min_reason_value', formatArgs = { admMin or 1, admReason or 'CNN Sanction' } }
     end
+    print(('[CNN AD TRACE] 4 mute validated: ok player=%s'):format(src))
 
     -- Queue limit check
     if #AdQueue >= (Config.CNN.maxPendingQueue or 50) then
@@ -484,27 +493,33 @@ local function submitAdLocked(source, text)
     local cd = Config.CNN.playerCooldown or 120
     if (now - lastAd) < cd then
         local remCd = cd - (now - lastAd)
+        print(('[CNN AD TRACE] 5 cooldown validated FAILED: player=%s remSec=%s'):format(src, remCd))
         return false, { localeKey = 'cnn.message.you_must_wait_value_more_seconds_before_placing_a', formatArgs = { remCd } }
     end
+    print(('[CNN AD TRACE] 5 cooldown validated: ok player=%s'):format(src))
 
     -- Clean & length check
     local clean = cleanText(text, Config.CNN.maxLength or 140)
     local length = clean and utf8.len(clean)
     if not length or length < (Config.CNN.minLength or 5) or length > (Config.CNN.maxLength or 140) then
+        print(('[CNN AD TRACE] 6 text validated FAILED: length=%s player=%s'):format(tostring(length), src))
         return false, { localeKey = 'cnn.message.ad_text_must_be_between_value_and_value_characters', formatArgs = {
             Config.CNN.minLength or 5, Config.CNN.maxLength or 140
          } }
     end
+    print(('[CNN AD TRACE] 6 text validated: len=%s clean="%s" player=%s'):format(length, clean, src))
 
     -- Price & Money check
     local price = Config.CNN.price or 500
     local cash = tonumber(char.cash) or 0
     local bank = tonumber(char.bank) or 0
     if cash < price and bank < price then
+        print(('[CNN AD TRACE] 7 account selected FAILED (insufficient money): player=%s cash=%s bank=%s price=%s'):format(src, cash, bank, price))
         return false, { localeKey = 'cnn.message.you_do_not_have_enough_money_to_pay_for', formatArgs = { price } }
     end
 
     local account = cash >= price and 'cash' or 'bank'
+    print(('[CNN AD TRACE] 7 account selected: %s price=%s player=%s'):format(account, price, src))
 
     local pName = getDisplayName(src)
     local phone = char.phone_number or char.phone or nil
@@ -523,15 +538,25 @@ local function submitAdLocked(source, text)
 
     -- Insert into DB
     local insertId
+    print(('[CNN AD TRACE] 8 transaction started: player=%s character=%s'):format(src, char.id))
     local committed = MySQL.startTransaction(function(query)
-        local charged = exports.sunset_core:DebitMoneyInTransaction(char.id, account, price, query.await)
-        if not charged then return false end
+        local changed = query.await(('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(account, account, account), { price, char.id, price })
+        if tonumber(changed) ~= 1 then
+            print(('[CNN AD TRACE] 9 debit FAILED: player=%s char=%s changed=%s'):format(src, char.id, tostring(changed)))
+            return false
+        end
+        print(('[CNN AD TRACE] 9 debit completed: ok player=%s char=%s account=%s price=%s'):format(src, char.id, account, price))
+
         insertId = query.await([[
             INSERT INTO cnn_ads (character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at)
             VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?))
         ]], { char.id, pName, phone, clean, price, scheduledAt })
+
+        print(('[CNN AD TRACE] 10 ad INSERT completed: insertId=%s player=%s'):format(tostring(insertId), src))
         return tonumber(insertId) ~= nil and tonumber(insertId) > 0
     end)
+
+    print(('[CNN AD TRACE] 11 transaction committed: %s player=%s character=%s'):format(tostring(committed), src, char.id))
     if not committed then
         log(('submission transaction rolled back player=%s character=%s'):format(src, char.id))
         return false, { localeKey = 'cnn.message.could_not_submit_ad' }
@@ -553,6 +578,8 @@ local function submitAdLocked(source, text)
     }
 
     AdQueue[#AdQueue + 1] = adObj
+    print(('[CNN AD TRACE] 12 queue updated: adId=%s queuePos=%s player=%s'):format(adObj.id, adObj.queuePosition, src))
+
     local refreshOk, refreshed = pcall(function() return exports.sunset_core:RefreshMoney(src) end)
     if not refreshOk or refreshed ~= true then
         log(('money refresh failed player=%s error=%s'):format(src, tostring(refreshed)))
@@ -571,6 +598,7 @@ local function submitAdLocked(source, text)
     local waitSec = math.max(1, adObj.scheduledAt - now)
     TriggerClientEvent('sunset:chat:system', src,
         t(src, 'cnn.message.submitted', { price = price, id = adObj.id, seconds = waitSec }), 'info')
+    print(('[CNN AD TRACE] 13 acknowledgement sent: adId=%s player=%s waitSec=%s'):format(adObj.id, src, waitSec))
 
     -- Send private staff preview
     sendStaffPreview(adObj)
@@ -838,6 +866,7 @@ function RunChatCommand(source, name, args)
     args = args or {}
     if name == 'ad' then
         local text = table.concat(args, ' ')
+        print(('[CNN AD TRACE] 1 command received: player=%s text="%s"'):format(source, text))
         if text == '' then
             TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
             return true

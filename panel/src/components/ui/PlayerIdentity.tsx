@@ -55,11 +55,14 @@ export function PlayerIdentity({
   const { prefix, suffix } = hasTag ? formatClanTag(clanTag!, clanTagStyle) : { prefix: "", suffix: "" };
 
   const content = (
-    <span className={cn("inline-flex items-center gap-1 font-medium leading-none", sizeClasses[size], className)}>
+    <span
+      data-player-preview={username.trim()}
+      className={cn("inline-flex items-center font-medium leading-none", sizeClasses[size], className)}
+    >
       {prefix && (
         <span
           style={{ color: resolvedClanColor }}
-          className="font-mono font-bold tracking-tight select-none mr-0.5"
+          className="font-mono font-bold tracking-tight select-none"
         >
           {prefix}
         </span>
@@ -76,7 +79,7 @@ export function PlayerIdentity({
       {suffix && (
         <span
           style={{ color: resolvedClanColor }}
-          className="font-mono font-bold tracking-tight select-none ml-0.5"
+          className="font-mono font-bold tracking-tight select-none"
         >
           {suffix}
         </span>

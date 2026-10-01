@@ -383,15 +383,21 @@ function A.aclear(source, args)
 end
 
 -- ── mass tools (level 3) ───────────────────────────────────────
-local PendingMass = {} -- [src] = { cmd, at }
+local PendingMass = {} -- [src] = { cmd, at, timer }
 
 local function requireConfirm(source, cmd)
     local pending = PendingMass[source]
-    if pending and pending.cmd == cmd and (os.time() - pending.at) < 30 then
+    local now = os.time()
+    local gameTimer = GetGameTimer()
+    if pending and pending.cmd == cmd and (now - pending.at) <= 30 then
+        -- Debounce: prevent same-frame double triggers from accidentally consuming the state
+        if (gameTimer - (pending.timer or 0)) < 400 then
+            return false
+        end
         PendingMass[source] = nil
         return true
     end
-    PendingMass[source] = { cmd = cmd, at = os.time() }
+    PendingMass[source] = { cmd = cmd, at = now, timer = gameTimer }
     return false
 end
 

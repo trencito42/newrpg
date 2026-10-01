@@ -87,6 +87,27 @@ export async function POST(req: NextRequest) {
       ]
     );
 
+    // Notify accused player
+    const accusedAcc = await queryOne<{ account_id: number }>(
+      "SELECT p.account_id FROM players p JOIN characters c ON c.player_id = p.id WHERE c.id = ? LIMIT 1",
+      [accusedChar.id]
+    );
+
+    if (accusedAcc && accusedAcc.account_id && accusedAcc.account_id !== user.accountId) {
+      await execute(
+        `INSERT INTO panel_notifications (account_id, type, title_en, title_ro, message_en, message_ro, link_url)
+         VALUES (?, 'complaint_created', ?, ?, ?, ?, ?)`,
+        [
+          accusedAcc.account_id,
+          "New Complaint Filed",
+          "Reclamație nouă împotriva ta",
+          `A complaint (${category}) was opened against you: "${title.slice(0, 100)}"`,
+          `A fost deschisă o reclamație (${category}) împotriva ta: "${title.slice(0, 100)}"`,
+          "/support/complaints",
+        ]
+      );
+    }
+
     return NextResponse.json({
       success: true,
       complaintId: insertRes.insertId,

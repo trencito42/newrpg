@@ -52,7 +52,15 @@ interface LicenseRow extends RowDataPacket {
 }
 
 interface BalanceRow extends RowDataPacket { cash: number; bank: number }
-interface VehicleRow extends RowDataPacket { id: number; model: string; plate: string; stored: number; insurance_level: number; destroyed: number }
+interface VehicleRow extends RowDataPacket {
+  id: number;
+  model: string;
+  plate: string;
+  stored: number;
+  insurance_level: number;
+  destroyed: number;
+  preview_url: string | null;
+}
 interface PropertyRow extends RowDataPacket { id: number; label: string; interior: string; description: string | null }
 
 export default async function PlayerProfilePage({
@@ -70,7 +78,23 @@ export default async function PlayerProfilePage({
     getViewerLocale(),
   ]);
 
-   const char = await dbQuerySingle<CharacterProfileRow & { clan_tag: string | null; clan_tag_color: string | null; clan_tag_style: string | null }>(
+  const char = await dbQuerySingle<
+    CharacterProfileRow & {
+      clan_id: number | null;
+      clan_name: string | null;
+      clan_tag: string | null;
+      clan_tag_color: string | null;
+      clan_tag_style: string | null;
+      clan_rank: number | null;
+      is_clan_owner: number | null;
+      is_faction_leader: number | null;
+      admin_level: number;
+      helper_level: number;
+      avatar_url: string | null;
+      featured_vehicle_id: number | null;
+      is_online: number;
+    }
+  >(
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
@@ -78,14 +102,27 @@ export default async function PlayerProfilePage({
        c.home_property_id, c.avatar, c.gender, c.nationality,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username,
+       a.admin_level,
+       a.helper_level,
+       cl.id AS clan_id,
+       cl.name AS clan_name,
        cl.tag AS clan_tag,
        cl.tag_color AS clan_tag_color,
-       cl.tag_style AS clan_tag_style
+       cl.tag_style AS clan_tag_style,
+       cm.rank AS clan_rank,
+       (cl.owner_character_id = c.id) AS is_clan_owner,
+       fl.id AS is_faction_leader,
+       pm.avatar_url,
+       pref.featured_vehicle_id,
+       (p.last_seen > NOW() - INTERVAL 3 MINUTE OR c.last_played > NOW() - INTERVAL 3 MINUTE) AS is_online
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
+     LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = c.job
      LEFT JOIN clan_members cm ON cm.character_id = c.id
      LEFT JOIN clans cl ON cl.id = cm.clan_id
+     LEFT JOIN panel_player_media pm ON pm.account_id = a.id
+     LEFT JOIN panel_preferences pref ON pref.account_id = a.id
      WHERE LOWER(a.username) = LOWER(?)
         OR (? > 0 AND c.id = ?)
         OR LOWER(c.firstname) = LOWER(?)
@@ -125,8 +162,12 @@ export default async function PlayerProfilePage({
       ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
       : null,
     dbQuery<VehicleRow>(
-      "SELECT id, model, plate, stored, insurance_level, destroyed FROM vehicles WHERE character_id = ? ORDER BY id DESC LIMIT 50",
-      [characterId]
+      `SELECT v.id, v.model, v.plate, v.stored, v.insurance_level, v.destroyed, vm.preview_url
+       FROM vehicles v
+       LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
+       WHERE v.character_id = ?
+       ORDER BY (v.id = ?) DESC, v.id DESC LIMIT 50`,
+      [characterId, char.featured_vehicle_id || 0]
     ),
     dbQuery<PropertyRow>(
       "SELECT id, label, interior, description FROM properties WHERE owner_character_id = ? ORDER BY id DESC LIMIT 50",
@@ -162,6 +203,54 @@ export default async function PlayerProfilePage({
   const hasFaction = isFaction(char.job);
   const factionLabel = hasFaction ? getFactionLabel(char.job) : null;
   const warningsCount = sanctionCountRow?.count || 0;
+  const featuredVehicle = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
+
+  // Derive role badges
+  const roleBadges: { label: string; color: string; tooltip: string; href?: string }[] = [];
+  if (char.admin_level > 0) {
+    roleBadges.push({
+      label: `ADMIN ${char.admin_level}`,
+      color: "#ef4444",
+      tooltip: `Server Administrator · Level ${char.admin_level}`,
+    });
+  }
+  if (char.helper_level > 0) {
+    roleBadges.push({
+      label: `HELPER ${char.helper_level}`,
+      color: "#3b82f6",
+      tooltip: `Server Helper · Level ${char.helper_level}`,
+    });
+  }
+  if (char.is_faction_leader || char.job_grade >= 7) {
+    roleBadges.push({
+      label: "FACTION LEADER",
+      color: "#10b981",
+      tooltip: `Leader of ${factionLabel || "Faction"}`,
+      href: `/factions/${char.job}`,
+    });
+  } else if (char.job_grade === 6) {
+    roleBadges.push({
+      label: "SUB-LEADER",
+      color: "#10b981",
+      tooltip: `Sub-Leader of ${factionLabel || "Faction"}`,
+      href: `/factions/${char.job}`,
+    });
+  }
+  if (char.is_clan_owner || (char.clan_rank && char.clan_rank >= 7)) {
+    roleBadges.push({
+      label: "CLAN OWNER",
+      color: char.clan_tag_color || "#f59e0b",
+      tooltip: `Owner of [${char.clan_tag}] ${char.clan_name || "Clan"}`,
+      href: char.clan_id ? `/clans/${char.clan_id}` : undefined,
+    });
+  } else if (char.clan_rank === 6) {
+    roleBadges.push({
+      label: "CLAN CO-LEADER",
+      color: char.clan_tag_color || "#f59e0b",
+      tooltip: `Co-Leader of [${char.clan_tag}] ${char.clan_name || "Clan"}`,
+      href: char.clan_id ? `/clans/${char.clan_id}` : undefined,
+    });
+  }
 
   return (
     <div className="space-y-5">
@@ -170,69 +259,151 @@ export default async function PlayerProfilePage({
         <PlayerActions accountId={char.account_id} characterId={char.id} adminLevel={session.adminLevel} locale={locale} />
       )}
 
-      {/* Header: Player Name, Level, Metadata */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
-        <div>
-          <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-bold tracking-tight">
-              <PlayerIdentity
-                username={char.account_username}
-                factionId={char.job}
-                clanTag={char.clan_tag}
-                clanColor={char.clan_tag_color}
-                clanTagStyle={char.clan_tag_style}
-                clickable={false}
-                size="lg"
-              />
-            </h1>
-            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-200 text-[#f1f1f1] border border-surface-border">
-              Level {char.level}
-            </span>
+      {/* Main Profile Header Card */}
+      <div className="p-4 sm:p-5 bg-[#101011] border border-surface-border rounded">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          {/* Left: Avatar + Identity + Metadata */}
+          <div className="flex items-start gap-4">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
+              {char.avatar_url ? (
+                <img
+                  src={char.avatar_url}
+                  alt={char.account_username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-[#52525b]">
+                  <span className="text-xl font-bold font-mono">GTA</span>
+                  <span className="text-[9px] uppercase tracking-wider">Skin</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight">
+                  <PlayerIdentity
+                    username={char.account_username}
+                    factionId={char.job}
+                    clanTag={char.clan_tag}
+                    clanColor={char.clan_tag_color}
+                    clanTagStyle={char.clan_tag_style}
+                    clickable={false}
+                    size="lg"
+                  />
+                </h1>
+
+                {/* Online Indicator */}
+                {Boolean(char.is_online) ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 rounded text-[11px] font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Online
+                  </span>
+                ) : (
+                  <span className="text-xs text-[#6f6f74] font-mono">
+                    {char.last_played ? `Last seen: ${formatDate(char.last_played, locale)}` : "Offline"}
+                  </span>
+                )}
+              </div>
+
+              {/* Role Badges */}
+              {roleBadges.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {roleBadges.map((b, idx) => (
+                    b.href ? (
+                      <Link
+                        key={idx}
+                        href={b.href}
+                        title={b.tooltip}
+                        style={{ borderColor: `${b.color}40`, color: b.color }}
+                        className="px-2 py-0.5 bg-[#18181b] border rounded text-[10px] font-mono font-bold tracking-tight uppercase hover:opacity-80 transition-opacity"
+                      >
+                        {b.label}
+                      </Link>
+                    ) : (
+                      <span
+                        key={idx}
+                        title={b.tooltip}
+                        style={{ borderColor: `${b.color}40`, color: b.color }}
+                        className="px-2 py-0.5 bg-[#18181b] border rounded text-[10px] font-mono font-bold tracking-tight uppercase"
+                      >
+                        {b.label}
+                      </span>
+                    )
+                  ))}
+                </div>
+              )}
+
+              {/* Sub-identity: Faction & Clan details */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8a8a90] pt-1">
+                {hasFaction ? (
+                  <span>
+                    Faction:{" "}
+                    <Link href={`/factions/${char.job}`} className="text-[#f1f1f1] font-medium hover:underline">
+                      {factionLabel}
+                    </Link>{" "}
+                    <span className="text-[#6f6f74]">(Rank {char.job_grade})</span>
+                  </span>
+                ) : (
+                  <span>
+                    Job: <span className="text-[#a5a5a8] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span>
+                  </span>
+                )}
+
+                {char.clan_id && char.clan_tag && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Clan:{" "}
+                      <Link href={`/clans/${char.clan_id}`} style={{ color: char.clan_tag_color || "#f59e0b" }} className="font-semibold hover:underline">
+                        [{char.clan_tag}] {char.clan_name}
+                      </Link>
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-2 text-xs text-[#6f6f74] mt-1">
-            {factionLabel && (
-              <>
-                <span className="text-[#a5a5a8] font-medium">{factionLabel}</span>
-                <span>•</span>
-              </>
-            )}
-            {!hasFaction && char.job && (
-              <>
-                <span className="capitalize text-[#a5a5a8]">{char.job.replace(/_/g, " ")}</span>
-                <span>•</span>
-              </>
-            )}
-            <span>Last seen: {char.last_played ? formatDate(char.last_played, locale) : "Never"}</span>
-          </div>
+          {/* Right: Featured Vehicle Preview */}
+          {featuredVehicle && (
+            <div className="flex items-center gap-3 p-2.5 bg-[#141416] border border-surface-border rounded lg:max-w-xs w-full">
+              <div className="w-20 h-14 bg-[#1b1b1e] rounded overflow-hidden shrink-0 flex items-center justify-center border border-surface-border">
+                {featuredVehicle.preview_url ? (
+                  <img src={featuredVehicle.preview_url} alt={featuredVehicle.model} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] font-mono text-[#6f6f74] uppercase">GTA V</span>
+                )}
+              </div>
+              <div className="min-w-0 text-xs">
+                <span className="text-[10px] text-[#6f6f74] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
+                <span className="font-bold text-[#f1f1f1] truncate block">{featuredVehicle.model}</span>
+                <span className="font-mono text-[11px] text-[#8a8a90] block">{featuredVehicle.plate}</span>
+              </div>
+            </div>
+          )}
         </div>
-
-        {marriage && (
-          <div className="text-xs text-[#8a8a90]">
-            Married to <PlayerName name={marriage.partner_username} />
-          </div>
-        )}
       </div>
 
-      {/* Overview Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Level</span>
+      {/* Horizontal Stats Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[#6f6f74] block font-medium">Level</span>
           <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{char.level}</span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Respect</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)}</span>
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[#6f6f74] block font-medium">Played Time</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)} hours</span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Hours</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)}h</span>
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[#6f6f74] block font-medium">Respect Points</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)} RP</span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Warnings</span>
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[#6f6f74] block font-medium">Warnings</span>
           <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{warningsCount} / 3</span>
         </div>
       </div>
@@ -267,37 +438,39 @@ export default async function PlayerProfilePage({
           </div>
 
           {vehicles.length > 0 ? (
-            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
-                  <tr>
-                    <th className="py-2 px-3">Model</th>
-                    <th className="py-2 px-3">Plate</th>
-                    <th className="py-2 px-3 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
-                  {vehicles.map((v) => (
-                    <tr key={v.id}>
-                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{v.model}</td>
-                      <td className="py-2 px-3 font-mono text-[#6f6f74]">{v.plate}</td>
-                      <td className="py-2 px-3 text-right">
-                        {v.destroyed ? (
-                          <span className="text-red-400">Destroyed</span>
-                        ) : v.stored ? (
-                          <span className="text-[#6f6f74]">Garage</span>
-                        ) : (
-                          <span className="text-emerald-400">Active</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {vehicles.map((v) => (
+                <div key={v.id} className="p-2.5 bg-[#101011] border border-surface-border rounded flex gap-3 items-center">
+                  <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
+                    {v.preview_url ? (
+                      <img src={v.preview_url} alt={v.model} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-mono text-[#52525b]">GTA V</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-[#f1f1f1] truncate">{v.model}</span>
+                      {v.destroyed ? (
+                        <span className="text-[10px] text-red-400 font-mono">Destroyed</span>
+                      ) : v.stored ? (
+                        <span className="text-[10px] text-[#6f6f74] font-mono">Garage</span>
+                      ) : (
+                        <span className="text-[10px] text-emerald-400 font-mono">Active</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-[#8a8a90] mt-0.5 font-mono">
+                      <span>{v.plate}</span>
+                      <span>•</span>
+                      <span>Ins. Lvl {v.insurance_level || 1}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
-              No vehicles.
+            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-[#101011]">
+              No vehicles registered.
             </p>
           )}
         </div>

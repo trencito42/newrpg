@@ -185,6 +185,18 @@ export async function POST(req: NextRequest, { params }: Context) {
       [statusVal, session.selectedCharacterId, resignationId]
     );
 
+    const orgLabel = type === "faction" ? `Faction ${orgId}` : `Clan ${orgId}`;
+    const resTitleEn = `Resignation ${statusVal.toUpperCase()}`;
+    const resTitleRo = `Demisie ${statusVal === "accepted" ? "ACCEPTATĂ" : (statusVal === "accepted_fp" ? "ACCEPTATĂ CU FP" : "RESPINSĂ")}`;
+    const resMsgEn = `Your resignation request for ${orgLabel} has been ${statusVal.replace(/_/g, " ")}. ${reason ? `Note: ${reason}` : ""}`;
+    const resMsgRo = `Cererea ta de demisie din ${orgLabel} a fost ${statusVal === "accepted" ? "acceptată" : (statusVal === "accepted_fp" ? "acceptată cu FP" : "respinsă")}. ${reason ? `Notă: ${reason}` : ""}`;
+
+    await conn.execute(
+      `INSERT INTO panel_notifications (account_id, type, title_en, title_ro, message_en, message_ro, link_url)
+       VALUES (?, 'resignation_decision', ?, ?, ?, ?, ?)`,
+      [reqRow.account_id, resTitleEn, resTitleRo, resMsgEn, resMsgRo, `/${type === "faction" ? "factions" : "clans"}/${orgId}`]
+    );
+
     if (action === "accept" || action === "accept_fp") {
       // Queue the kick / kick_fp action to domain
       const requestId = crypto.randomUUID();

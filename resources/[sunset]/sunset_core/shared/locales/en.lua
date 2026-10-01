@@ -203,8 +203,17 @@ Sunset.Locales['en'] = {
     ['chat.cleared']               = 'Chat was cleared by {name}.',
     ['chat.command.no_access']     = 'No access to /{command}. Requires {role} (admin level {required}). Your level: {current}.',
     ['chat.command.failed']        = '/{command} failed on the server.',
-    ['chat.command.unavailable']   = '/{command} could not be processed. Reconnect or contact staff.',
     ['chat.command.usage']         = 'Usage: /{command}',
+    ['chat.usage.whisper']         = 'Usage: /whisper [player_id] [message]',
+    ['chat.usage.carwhisper']      = 'Usage: /carwhisper [message]',
+    ['chat.whisper.not_in_vehicle'] = 'You must be inside a vehicle to use /carwhisper.',
+    ['chat.whisper.player_not_found'] = 'Player not found or not connected.',
+    ['chat.whisper.too_far']       = 'Player is too far away to whisper.',
+    ['chat.whisper.to']            = '(whisper to {name}) {message}',
+    ['chat.whisper.from']          = '(whisper from {name}) {message}',
+    ['chat.whisper.nearby']        = '* {name} whispers something to {target}.',
+    ['chat.carwhisper.msg']        = '(car whisper) {name}: {message}',
+    ['chat.carwhisper.nearby']     = '* {name} whispers to vehicle occupants.',
 
     -- Admin
     ['teleported_by_admin']        = 'You were teleported by an administrator.',

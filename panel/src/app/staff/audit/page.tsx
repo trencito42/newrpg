@@ -127,7 +127,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-[#6f6f74]">
-                      {new Date(l.created_at).toLocaleString()}
+                      {formatDate(l.created_at, locale)}
                     </td>
                   </tr>
                 ))

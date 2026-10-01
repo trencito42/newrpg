@@ -133,6 +133,7 @@ ensure sunset_marriage
 ensure sunset_fishing_tournament
 ensure sunset_missions
 ensure sunset_panel_bridge
+ensure sunset_profile_media
 
 ensure villa_island
 

@@ -267,6 +267,84 @@ export async function POST(req: NextRequest) {
         ]
       );
 
+      // Dispatch notification to target player if targetAccountId is present
+      if (targetAccountId && targetAccountId !== session.accountId) {
+        let titleEn = "Account Notification";
+        let titleRo = "Notificare Cont";
+        let msgEn = `A management action (${input.action}) was recorded: ${input.reason}`;
+        let msgRo = `O acțiune (${input.action}) a fost înregistrată: ${input.reason}`;
+        let linkUrl: string | null = null;
+
+        if (input.action === "warn") {
+          titleEn = "Warning Received";
+          titleRo = "Avertisment Primit (Warn)";
+          msgEn = `You received a warning. Reason: ${input.reason}`;
+          msgRo = `Ai primit un avertisment (Warn). Motiv: ${input.reason}`;
+        } else if (input.action === "mute") {
+          titleEn = "Muted";
+          titleRo = "Redus la tăcere (Mute)";
+          msgEn = `You have been muted for ${input.durationMin || 10} minutes. Reason: ${input.reason}`;
+          msgRo = `Ai primit mute pentru ${input.durationMin || 10} minute. Motiv: ${input.reason}`;
+        } else if (input.action === "ban") {
+          titleEn = "Account Suspended";
+          titleRo = "Cont Suspendat (Ban)";
+          msgEn = `Your account has been banned. Reason: ${input.reason}`;
+          msgRo = `Contul tău a fost suspendat. Motiv: ${input.reason}`;
+          linkUrl = "/support/unban";
+        } else if (input.action === "unban") {
+          titleEn = "Account Unbanned";
+          titleRo = "Cont Debanat";
+          msgEn = "Your account ban has been lifted.";
+          msgRo = "Suspendarea contului tău a fost revocată.";
+        } else if (input.action === "faction_set_rank" || input.action === "faction_set_member") {
+          titleEn = "Faction Rank Updated";
+          titleRo = "Grad Facțiune Modificat";
+          msgEn = `Your faction rank in ${input.factionId || "faction"} was updated to Rank ${input.factionGrade || 1}. Reason: ${input.reason}`;
+          msgRo = `Gradul tău în facțiunea ${input.factionId || "facțiune"} a fost setat la Rank ${input.factionGrade || 1}. Motiv: ${input.reason}`;
+          linkUrl = input.factionId ? `/factions/${input.factionId}` : null;
+        } else if (input.action === "faction_warn") {
+          titleEn = "Faction Warning (FW)";
+          titleRo = "Avertisment Facțiune (FW)";
+          msgEn = `You received a Faction Warning (FW) in ${input.factionId || "faction"}. Reason: ${input.reason}`;
+          msgRo = `Ai primit un Faction Warning (FW) în ${input.factionId || "facțiune"}. Motiv: ${input.reason}`;
+          linkUrl = input.factionId ? `/factions/${input.factionId}` : null;
+        } else if (input.action === "faction_kick" || input.action === "faction_kick_fp") {
+          titleEn = "Dismissed from Faction";
+          titleRo = "Demis din Facțiune";
+          msgEn = `You were dismissed from ${input.factionId || "faction"}${input.fp ? ` with ${input.fp} FP` : ""}. Reason: ${input.reason}`;
+          msgRo = `Ai fost demis din ${input.factionId || "facțiune"}${input.fp ? ` cu ${input.fp} FP` : ""}. Motiv: ${input.reason}`;
+        } else if (input.action === "clan_set_rank" || input.action === "clan_add_member") {
+          titleEn = "Clan Rank Updated";
+          titleRo = "Grad Clan Modificat";
+          msgEn = `Your clan rank was updated to Rank ${input.rank || 1}. Reason: ${input.reason}`;
+          msgRo = `Gradul tău în clan a fost modificat la Rank ${input.rank || 1}. Motiv: ${input.reason}`;
+          linkUrl = input.clanId ? `/clans/${input.clanId}` : null;
+        } else if (input.action === "clan_warn") {
+          titleEn = "Clan Warning (CW)";
+          titleRo = "Avertisment Clan (CW)";
+          msgEn = `You received a Clan Warning (CW). Reason: ${input.reason}`;
+          msgRo = `Ai primit un Clan Warning (CW). Motiv: ${input.reason}`;
+          linkUrl = input.clanId ? `/clans/${input.clanId}` : null;
+        } else if (input.action === "clan_kick") {
+          titleEn = "Dismissed from Clan";
+          titleRo = "Demis din Clan";
+          msgEn = `You were dismissed from the clan. Reason: ${input.reason}`;
+          msgRo = `Ai fost demis din clan. Motiv: ${input.reason}`;
+        } else if (input.action === "staff_set_admin" || input.action === "staff_set_helper") {
+          titleEn = "Staff Role Updated";
+          titleRo = "Rol Staff Modificat";
+          msgEn = `Your staff rank was updated to Level ${input.level || 1}. Reason: ${input.reason}`;
+          msgRo = `Rolul tău în echipa staff a fost actualizat la Level ${input.level || 1}. Motiv: ${input.reason}`;
+          linkUrl = "/staff/dashboard";
+        }
+
+        await conn.execute(
+          `INSERT INTO panel_notifications (account_id, type, title_en, title_ro, message_en, message_ro, link_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [targetAccountId, input.action, titleEn, titleRo, msgEn, msgRo, linkUrl]
+        );
+      }
+
       return insert.insertId;
     });
 

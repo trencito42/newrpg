@@ -8,6 +8,8 @@ import { Header } from "@/components/navigation/Header";
 import { MobileNav } from "@/components/navigation/MobileNav";
 import { panelBrand } from "@/lib/brand";
 
+import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
+
 export const metadata: Metadata = {
   title: `${panelBrand.name} — Companion Panel`,
   description: `Companion panel for ${panelBrand.name}. Characters, factions, and community polls.`,
@@ -35,31 +37,33 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark">
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
-        {/* Mobile Navigation */}
-        <MobileNav
-          locale={locale}
-          session={viewerSession}
-          serverOnline={serverStatus.online}
-          playerCount={serverStatus.playerCount}
-        />
-
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:flex flex-shrink-0">
-          <Sidebar
+        <PlayerPreviewProvider>
+          {/* Mobile Navigation */}
+          <MobileNav
             locale={locale}
             session={viewerSession}
             serverOnline={serverStatus.online}
             playerCount={serverStatus.playerCount}
           />
-        </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header locale={locale} session={viewerSession} />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-            {children}
-          </main>
-        </div>
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:flex flex-shrink-0">
+            <Sidebar
+              locale={locale}
+              session={viewerSession}
+              serverOnline={serverStatus.online}
+              playerCount={serverStatus.playerCount}
+            />
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <Header locale={locale} session={viewerSession} />
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+              {children}
+            </main>
+          </div>
+        </PlayerPreviewProvider>
       </body>
     </html>
   );
