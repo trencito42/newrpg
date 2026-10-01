@@ -83,6 +83,7 @@ server_exports {
     'SendDiscordLog',
     'AddMoney',
     'RefreshMoney',
+    'DebitMoneyInTransaction',
     'RemoveMoney',
     'MoveMoney',
     'TransferMoney',

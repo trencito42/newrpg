@@ -345,15 +345,8 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
     if victimNet and victimNet ~= 0 then
         local victimEnt = NetworkGetEntityFromNetworkId(victimNet)
         if victimEnt and victimEnt ~= 0 and IsPedAPlayer(victimEnt) then
-            local victimSrc = nil
-            for _, pid in ipairs(GetPlayers()) do
-                local src = tonumber(pid)
-                if src and src ~= sender and GetPlayerPed(src) == victimEnt then
-                    victimSrc = src
-                    break
-                end
-            end
-            if victimSrc then
+            local victimSrc = exports.sunset_core:GetSourceByPed(victimEnt)
+            if victimSrc and victimSrc ~= sender then
                 TriggerEvent('sunset:death:recordAttacker', victimSrc, sender)
             end
         end

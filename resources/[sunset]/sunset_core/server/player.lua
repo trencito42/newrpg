@@ -14,79 +14,80 @@ local function decodeChar(char)
     return char
 end
 
+local IsSavingCharacter = {}
+
 function Sunset.SaveCharacter(source)
     local player = Sunset.GetPlayer(source)
     if not player or not player.character then return false end
 
     local char = player.character
-    local position = nil
-    local ped = GetPlayerPed(source)
-    if ped and ped ~= 0 then
-        local coords = GetEntityCoords(ped)
-        local heading = GetEntityHeading(ped)
-        -- Instanced interiors reuse remote world coordinates. Persist their exterior
-        -- safe position so "Last Location" can never strand a player underground.
-        local safe = Player(source) and Player(source).state.sunsetPropertyExit
-        if type(safe) == 'table' and tonumber(safe.x) then
-            coords = vector3(safe.x, safe.y, safe.z)
-            heading = tonumber(safe.w) or heading
-        end
-        if coords and #(coords - vector3(0, 0, 0)) > 2.0 then
-            position = json.encode({ x = coords.x, y = coords.y, z = coords.z, w = heading })
-        end
-    end
-    if not position and char.position then
-        if type(char.position) == 'table' then
-            position = json.encode(char.position)
-        elseif type(char.position) == 'string' then
-            position = char.position
-        end
-    end
+    local cid = tonumber(char.id)
+    if not cid then return false end
 
-    -- [AUDIT P5-05] cash/bank/level/xp/respect_points/paydays_received are NO
-    -- LONGER written here. They are owned by atomic server operations (guarded
-    -- UPDATEs, payday/buyLevel transactions). The previous SELECT-then-UPDATE
-    -- pattern could silently roll back any concurrent money/progress op.
-    -- [AUDIT P5-10] metadata: merge DB-authoritative keys (rob_points, quickslots)
-    -- over the cached blob so autosave can never erase them.
-    local currentDb = MySQL.single.await('SELECT cash, bank, metadata FROM characters WHERE id = ?', { char.id })
-    if currentDb then
-        if currentDb.cash ~= nil then char.cash = currentDb.cash end
-        if currentDb.bank ~= nil then char.bank = currentDb.bank end
-    end
+    if IsSavingCharacter[cid] then return false end
+    IsSavingCharacter[cid] = true
 
-    char.metadata = type(char.metadata) == 'table' and char.metadata or {}
-    if currentDb and type(currentDb.metadata) == 'string' and currentDb.metadata ~= '' then
-        local ok, dbMeta = pcall(json.decode, currentDb.metadata)
-        if ok and type(dbMeta) == 'table' then
-            if dbMeta.rob_points ~= nil then char.metadata.rob_points = dbMeta.rob_points end
-            if dbMeta.quickslots ~= nil then char.metadata.quickslots = dbMeta.quickslots end
+    local success = false
+    local ok, err = pcall(function()
+        local position = nil
+        local ped = GetPlayerPed(source)
+        if ped and ped ~= 0 then
+            local coords = GetEntityCoords(ped)
+            local heading = GetEntityHeading(ped)
+            -- Instanced interiors reuse remote world coordinates. Persist their exterior
+            -- safe position so "Last Location" can never strand a player underground.
+            local safe = Player(source) and Player(source).state.sunsetPropertyExit
+            if type(safe) == 'table' and tonumber(safe.x) then
+                coords = vector3(safe.x, safe.y, safe.z)
+                heading = tonumber(safe.w) or heading
+            end
+            if coords and #(coords - vector3(0, 0, 0)) > 2.0 then
+                position = json.encode({ x = coords.x, y = coords.y, z = coords.z, w = heading })
+            end
         end
+        if not position and char.position then
+            if type(char.position) == 'table' then
+                position = json.encode(char.position)
+            elseif type(char.position) == 'string' then
+                position = char.position
+            end
+        end
+
+        -- [AUDIT P5-05] cash/bank/level/xp/respect_points/paydays_received are NO
+        -- LONGER written here. They are owned by atomic server operations (guarded
+        -- UPDATEs, payday/buyLevel transactions). The previous SELECT-then-UPDATE
+        -- pattern could silently roll back any concurrent money/progress op.
+        char.metadata = type(char.metadata) == 'table' and char.metadata or {}
+
+        MySQL.update.await([[
+            UPDATE characters SET
+                job = ?, job_grade = ?,
+                position = ?, appearance = ?, metadata = ?,
+                hunger = ?, thirst = ?, stress = ?,
+                is_dead = ?, home_property_id = ?, last_played = NOW()
+            WHERE id = ? AND player_id = ?
+        ]], {
+            char.job or 'unemployed',
+            char.job_grade or 0,
+            position,
+            json.encode(char.appearance or {}),
+            json.encode(char.metadata or {}),
+            char.hunger or 100,
+            char.thirst or 100,
+            char.stress or 0,
+            char.is_dead and 1 or 0,
+            char.home_property_id,
+            char.id,
+            player.id,
+        })
+        success = true
+    end)
+
+    IsSavingCharacter[cid] = nil
+    if not ok then
+        print(('^1[blaze.mp]^7 Error saving character %s: %s'):format(tostring(cid), tostring(err)))
     end
-
-    MySQL.update.await([[
-        UPDATE characters SET
-            job = ?, job_grade = ?,
-            position = ?, appearance = ?, metadata = ?,
-            hunger = ?, thirst = ?, stress = ?,
-            is_dead = ?, home_property_id = ?, last_played = NOW()
-        WHERE id = ? AND player_id = ?
-    ]], {
-        char.job or 'unemployed',
-        char.job_grade or 0,
-        position,
-        json.encode(char.appearance or {}),
-        json.encode(char.metadata or {}),
-        char.hunger or 100,
-        char.thirst or 100,
-        char.stress or 0,
-        char.is_dead and 1 or 0,
-        char.home_property_id,
-        char.id,
-        player.id,
-    })
-
-    return true
+    return success
 end
 
 local PersistentStatFields = {
@@ -260,6 +261,18 @@ function Sunset.RemoveMoney(source, account, amount, reason)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
     return true
 end
+
+-- Domain-owned debit on a caller's existing oxmysql transaction connection.
+-- The caller must commit its persisted purchase in that same transaction.
+exports('DebitMoneyInTransaction', function(characterId, account, amount, query)
+    if account ~= 'cash' and account ~= 'bank' then return false end
+    characterId, amount = tonumber(characterId), tonumber(amount)
+    if not characterId or not amount or amount < 0 or amount ~= math.floor(amount) then return false end
+    if amount == 0 then return true end
+    local changed = query(('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?')
+        :format(account, account, account), { amount, characterId, amount })
+    return tonumber(changed) == 1
+end)
 
 function Sunset.GetMoney(source, account)
     local char = Sunset.GetCharacter(source)

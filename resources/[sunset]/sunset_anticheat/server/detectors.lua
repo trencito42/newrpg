@@ -269,15 +269,8 @@ AddEventHandler('weaponDamageEvent', function(sender, data)
     local victimEnt = NetworkGetEntityFromNetworkId(victimNet)
     if not victimEnt or victimEnt == 0 or not IsPedAPlayer(victimEnt) then return end
 
-    local victimSrc = nil
-    for _, pid in ipairs(GetPlayers()) do
-        local s = tonumber(pid)
-        if s and s ~= sender and GetPlayerPed(s) == victimEnt then
-            victimSrc = s
-            break
-        end
-    end
-    if not victimSrc then return end
+    local victimSrc = exports.sunset_core:GetSourceByPed(victimEnt)
+    if not victimSrc or victimSrc == sender then return end
 
     local ped = victimEnt
     local hp = GetEntityHealth(ped) or 0

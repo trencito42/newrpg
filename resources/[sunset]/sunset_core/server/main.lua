@@ -18,6 +18,44 @@ local EXPENSIVE_CALLBACK_LIMITS = {
     ['sunset:propertyRent'] = 2,
 }
 
+-- ═══ HIGH-PERFORMANCE ONLINE STATE INDEXES ═══
+local SourceByCharacterId = {}
+local SourceByPlayerId = {}
+local SourceByAccountId = {}
+local PedToPlayerSource = {}
+
+local function indexRegisterPlayer(source, player)
+    if not source or not player then return end
+    if player.id then SourceByPlayerId[player.id] = source end
+    if player.account_id then SourceByAccountId[player.account_id] = source end
+    if player.character and player.character.id then
+        SourceByCharacterId[tonumber(player.character.id)] = source
+    end
+    local ped = GetPlayerPed(source)
+    if ped and ped ~= 0 then PedToPlayerSource[ped] = source end
+end
+
+local function indexUnregisterPlayer(source, player)
+    if not source then return end
+    if player then
+        if player.id and SourceByPlayerId[player.id] == source then SourceByPlayerId[player.id] = nil end
+        if player.account_id and SourceByAccountId[player.account_id] == source then SourceByAccountId[player.account_id] = nil end
+        if player.character and player.character.id then
+            SourceByCharacterId[tonumber(player.character.id)] = nil
+        end
+    end
+    for ped, src in pairs(PedToPlayerSource) do
+        if src == source then PedToPlayerSource[ped] = nil end
+    end
+end
+
+local function updatePedMapping(source)
+    local ped = GetPlayerPed(source)
+    if ped and ped ~= 0 then
+        PedToPlayerSource[ped] = source
+    end
+end
+
 RegisterNetEvent('sunset:server:flowTrace', function(stage, detail)
     local source = source
     if type(stage) ~= 'string' or #stage > 64 or type(detail) ~= 'string' or #detail > 160 then return end
@@ -33,6 +71,78 @@ Sunset.GetCharacter = function(source)
     local p = Players[source]
     return p and p.character or nil
 end
+
+function GetSourceByPed(pedEntity)
+    if not pedEntity or pedEntity == 0 then return nil end
+    local src = PedToPlayerSource[pedEntity]
+    if src and DoesEntityExist(pedEntity) and GetPlayerPed(src) == pedEntity then
+        return src
+    end
+    -- Fallback and refresh cache if ped recycled
+    for s, p in pairs(Players) do
+        local ped = GetPlayerPed(s)
+        if ped and ped ~= 0 then
+            PedToPlayerSource[ped] = s
+            if ped == pedEntity then
+                return s
+            end
+        end
+    end
+    return nil
+end
+exports('GetSourceByPed', GetSourceByPed)
+
+function GetSourceByCharacterId(characterId)
+    characterId = tonumber(characterId)
+    if not characterId then return nil end
+    local src = SourceByCharacterId[characterId]
+    if src and Players[src] and Players[src].character and tonumber(Players[src].character.id) == characterId then
+        return src
+    end
+    -- Fallback scan
+    for s, p in pairs(Players) do
+        if p.character and tonumber(p.character.id) == characterId then
+            SourceByCharacterId[characterId] = s
+            return s
+        end
+    end
+    SourceByCharacterId[characterId] = nil
+    return nil
+end
+exports('GetSourceByCharacterId', GetSourceByCharacterId)
+
+function GetSourceByPlayerId(playerId)
+    playerId = tonumber(playerId)
+    if not playerId then return nil end
+    local src = SourceByPlayerId[playerId]
+    if src and Players[src] and tonumber(Players[src].id) == playerId then
+        return src
+    end
+    return nil
+end
+exports('GetSourceByPlayerId', GetSourceByPlayerId)
+
+function GetSourceByAccountId(accountId)
+    accountId = tonumber(accountId)
+    if not accountId then return nil end
+    local src = SourceByAccountId[accountId]
+    if src and Players[src] and tonumber(Players[src].account_id) == accountId then
+        return src
+    end
+    return nil
+end
+exports('GetSourceByAccountId', GetSourceByAccountId)
+
+function GetOnlineCharacters()
+    local result = {}
+    for s, p in pairs(Players) do
+        if p.character and p.character.id then
+            result[tonumber(p.character.id)] = s
+        end
+    end
+    return result
+end
+exports('GetOnlineCharacters', GetOnlineCharacters)
 
 local function normalizeLocale(locale)
     locale = type(locale) == 'string' and locale:lower() or ''
@@ -55,8 +165,8 @@ function Sunset.SetConnectionLocale(source, locale)
     return true
 end
 
-function Sunset.TFor(source, key, params)
-    return Sunset.Translate(Sunset.GetPlayerLocale(source), key, params)
+function Sunset.TFor(source, key, params, ...)
+    return Sunset.Translate(Sunset.GetPlayerLocale(source), key, params, ...)
 end
 
 function Sunset.NotifyFor(source, key, params, notificationType, duration)
@@ -352,6 +462,7 @@ local function completeAuthentication(source, accountId, username)
         sessionStart = os.time(),
         character = nil,
     }
+    indexRegisterPlayer(source, Players[source])
 
     Player(source).state:set('sunsetName', username, true)
     Player(source).state:set('sunsetDisplayName', username, true)
@@ -527,6 +638,7 @@ local function loadCharacterForPlayer(source, player, charId)
     char.last_played_before = char.last_played
     MySQL.update.await('UPDATE characters SET last_played = NOW() WHERE id = ?', { charId })
     Players[source].character = char
+    indexRegisterPlayer(source, Players[source])
     Player(source).state:set('sunsetName', GetPlayerBaseName(source), true)
     Player(source).state:set('sunsetDisplayName', GetPlayerDisplayName(source), true)
     TriggerEvent('sunset:server:characterSelected', source, charId)
@@ -539,6 +651,7 @@ RegisterNetEvent('sunset:server:characterSpawned', function(characterId)
     local source = source
     local char = Players[source] and Players[source].character
     if not char or tonumber(characterId) ~= tonumber(char.id) then return end
+    updatePedMapping(source)
     TriggerClientEvent('sunset:client:characterLoaded', source, char)
 end)
 
@@ -581,6 +694,7 @@ AddEventHandler('playerDropped', function()
     if Players[source] and Players[source].character then
         Sunset.SaveCharacter(source)
     end
+    indexUnregisterPlayer(source, player)
     Players[source] = nil
     ConnectionLocales[source] = nil
     Sessions[source] = nil
