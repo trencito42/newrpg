@@ -182,6 +182,33 @@ export default async function AccountPage() {
           </div>
         </div>
 
+        {characters.length > 1 && (
+          <div className="md:col-span-2 space-y-2 text-xs">
+            <h2 className="font-semibold text-[#f1f1f1]">{locale === "ro" ? "Personaje" : "Characters"}</h2>
+            <div className="divide-y divide-surface-border">
+              {characters.map((character) => {
+                const name = `${character.firstname} ${character.lastname || ""}`.trim();
+                const selected = character.id === session.selectedCharacterId;
+                return (
+                  <div key={character.id} className="flex items-center justify-between py-2 gap-3">
+                    <span className="text-[#f1f1f1]">{name} <span className="text-[#8a8a90]">· {locale === "ro" ? "Nivel" : "Level"} {character.level}</span></span>
+                    {selected ? (
+                      <span className="text-[#8a8a90]">{locale === "ro" ? "Activ" : "Active"}</span>
+                    ) : (
+                      <form action="/api/auth/switch-character" method="post">
+                        <input type="hidden" name="characterId" value={character.id} />
+                        <button type="submit" aria-label={`${locale === "ro" ? "Selectează" : "Select"} ${name}`} className="text-[#f1f1f1] underline-offset-2 hover:underline">
+                          {locale === "ro" ? "Selectează" : "Select"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Active Sessions */}
         <div className="md:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">

@@ -29,7 +29,7 @@ test("successful login, owner finances, logout and anonymous denial", async ({ p
   expect(sessionCookie?.value.length).toBeGreaterThan(32);
   expect(await page.content()).not.toContain(sessionCookie!.value);
   await page.goto("/players/E2E_Citizen");
-  await expect(page.getByText("Cash on Hand (Private)")).toBeVisible();
+  await expect(page.getByText("Cash", { exact: true })).toBeVisible();
   await expect(page.getByText("$4,321")).toBeVisible();
   await expect(page.getByText("$9,876")).toBeVisible();
   await expect(page.getByText("PRIVATE_WARNING_DETAILS_SENTINEL")).toHaveCount(0);
@@ -42,16 +42,16 @@ test("successful login, owner finances, logout and anonymous denial", async ({ p
 test("character switch form and session revocation work", async ({ page, browser }) => {
   await login(page);
   await page.goto("/account");
-  await page.locator('form[action="/api/auth/switch-character"] button').first().click();
+  await page.getByRole("button", { name: "Select E2E Second" }).click();
   await page.reload();
-  await expect(page.getByText("E2E Second", { exact: true }).last().locator("xpath=../../..")).toContainText("Active Character");
+  await expect(page.getByText("E2E Second", { exact: false }).last().locator("..")).toContainText("Active");
 
   const otherContext = await browser.newContext();
   const otherPage = await otherContext.newPage();
   try {
     await login(otherPage);
     await page.goto("/account");
-    await page.getByRole("button", { name: "Revoke Others" }).click();
+    await page.getByRole("button", { name: "Logout Others" }).click();
     await expect.poll(async () => {
       const db = await fixtureDb();
       try {
@@ -94,8 +94,8 @@ test("poll vote, duplicate vote and cross-poll option are enforced", async ({ pa
   expect(cross).toBe(400);
   await page.goto(`/polls/${pollA}`);
   await page.getByText("Choice A", { exact: true }).first().click();
-  await page.getByRole("button", { name: "Submit Ballot" }).click();
-  await expect(page.getByText(/vote has been securely recorded|already cast your vote/i)).toBeVisible();
+  await page.getByRole("button", { name: "Vote", exact: true }).click();
+  await expect(page.getByText(/vote recorded|already cast your vote/i)).toBeVisible();
   await expect.poll(async () => {
     const check = await fixtureDb();
     try {
@@ -128,9 +128,9 @@ test("support ticket is created atomically", async ({ page }) => {
   expect(foreignBan).toBe(403);
   await page.goto("/support/tickets");
   const subject = `E2E ticket ${Date.now()}`;
-  await page.getByPlaceholder("Brief summary of your question").fill(subject);
-  await page.getByPlaceholder("Provide all relevant details for staff to assist you").fill("This is an isolated end-to-end ticket fixture.");
-  await page.getByRole("button", { name: "Submit Support Ticket" }).click();
+  await page.getByPlaceholder("Brief subject...").fill(subject);
+  await page.getByPlaceholder("Detailed message...").fill("This is an isolated end-to-end ticket fixture.");
+  await page.getByRole("button", { name: "Submit Ticket" }).click();
   await expect(page.getByText(subject)).toBeVisible();
 });
 
@@ -190,7 +190,7 @@ test("staff can queue actions, citizen cannot spoof actor or inspect another que
   } finally { await db.end(); }
   await login(page, "e2e_admin");
   await page.goto("/staff/dashboard");
-  await expect(page.getByText("Staff Moderation Center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Staff Panel" })).toBeVisible();
   await page.goto("/players/E2E_Citizen");
   await expect(page.getByText("Staff actions")).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
