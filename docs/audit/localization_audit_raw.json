@@ -1,0 +1,257 @@
+{
+  "enTotal": 3744,
+  "roTotal": 3744,
+  "mismatches": [],
+  "samples": [
+    {
+      "key": "locale.invalid",
+      "en": "Unsupported language. Choose English or Romanian.",
+      "ro": "Limba nu este disponibilă. Alege engleza sau româna."
+    },
+    {
+      "key": "locale.save_failed",
+      "en": "Could not save your language preference.",
+      "ro": "Preferința de limbă nu a putut fi salvată."
+    },
+    {
+      "key": "locale.changed",
+      "en": "Language changed to {language}.",
+      "ro": "Limba a fost schimbată în {language}."
+    },
+    {
+      "key": "locale.current",
+      "en": "Current language: {language}.",
+      "ro": "Limba curentă: {language}."
+    },
+    {
+      "key": "locale.usage",
+      "en": "Usage: /language [en|ro]",
+      "ro": "Utilizare: /language [en|ro]"
+    },
+    {
+      "key": "error.too_many_requests",
+      "en": "Too many requests. Wait a moment.",
+      "ro": "Prea multe solicitări. Așteaptă puțin."
+    },
+    {
+      "key": "error.action_too_fast",
+      "en": "You are requesting that action too quickly. Wait a second and try again.",
+      "ro": "Soliciți această acțiune prea repede. Așteaptă o secundă și încearcă din nou."
+    },
+    {
+      "key": "error.action_unavailable",
+      "en": "That action is currently unavailable.",
+      "ro": "Această acțiune nu este disponibilă momentan."
+    },
+    {
+      "key": "error.server_action_failed",
+      "en": "The server could not complete that action. Try again; if it continues, contact staff.",
+      "ro": "Serverul nu a putut finaliza acțiunea. Încearcă din nou; dacă problema persistă, contactează echipa."
+    },
+    {
+      "key": "auth.license_failed",
+      "en": "Could not verify your game license.",
+      "ro": "Licența jocului nu a putut fi verificată."
+    },
+    {
+      "key": "auth.logged_in_elsewhere",
+      "en": "Your account was logged in from another session.",
+      "ro": "Contul tău a fost conectat din altă sesiune."
+    },
+    {
+      "key": "auth.not_logged_in",
+      "en": "You are not logged in.",
+      "ro": "Nu ești conectat."
+    },
+    {
+      "key": "auth.email_invalid",
+      "en": "Enter a valid email address.",
+      "ro": "Introdu o adresă de email validă."
+    },
+    {
+      "key": "auth.email_too_long",
+      "en": "The email address is too long.",
+      "ro": "Adresa de email este prea lungă."
+    },
+    {
+      "key": "auth.username_length",
+      "en": "The username must contain 3–20 characters.",
+      "ro": "Numele de utilizator trebuie să aibă între 3 și 20 de caractere."
+    },
+    {
+      "key": "auth.username_characters",
+      "en": "The username may contain only letters, numbers, and underscores.",
+      "ro": "Numele de utilizator poate conține doar litere, cifre și liniuțe de subliniere."
+    },
+    {
+      "key": "auth.password_length",
+      "en": "The password must contain at least 6 characters.",
+      "ro": "Parola trebuie să conțină cel puțin 6 caractere."
+    },
+    {
+      "key": "auth.password_mismatch",
+      "en": "The passwords do not match.",
+      "ro": "Parolele introduse nu coincid."
+    },
+    {
+      "key": "auth.username_taken",
+      "en": "That username is already taken.",
+      "ro": "Acest nume de utilizator este deja folosit."
+    },
+    {
+      "key": "auth.email_taken",
+      "en": "That email address is already linked to another account.",
+      "ro": "Această adresă de email este deja asociată altui cont."
+    },
+    {
+      "key": "auth.password_setup_failed",
+      "en": "Password protection could not be initialized. Try again.",
+      "ro": "Protecția parolei nu a putut fi inițializată. Încearcă din nou."
+    },
+    {
+      "key": "auth.session_failed",
+      "en": "Could not establish an authenticated session.",
+      "ro": "Sesiunea autentificată nu a putut fi inițializată."
+    },
+    {
+      "key": "auth.password_required",
+      "en": "Enter your password.",
+      "ro": "Introdu parola."
+    },
+    {
+      "key": "auth.too_many_attempts",
+      "en": "Too many failed attempts. Try again in {seconds} seconds.",
+      "ro": "Prea multe încercări nereușite. Încearcă din nou peste {seconds} secunde."
+    },
+    {
+      "key": "auth.invalid_credentials",
+      "en": "Invalid username or password.",
+      "ro": "Numele de utilizator sau parola este greșită."
+    },
+    {
+      "key": "auth.saved_expired",
+      "en": "Saved login expired. Enter your password again.",
+      "ro": "Conectarea salvată a expirat. Introdu din nou parola."
+    },
+    {
+      "key": "auth.session_expired",
+      "en": "Your login session expired. Sign in again.",
+      "ro": "Sesiunea de conectare a expirat. Autentifică-te din nou."
+    },
+    {
+      "key": "auth.account_not_found",
+      "en": "Account not found. Sign in again.",
+      "ro": "Contul nu a fost găsit. Autentifică-te din nou."
+    },
+    {
+      "key": "auth.quick_save_failed",
+      "en": "You signed in, but Quick Login could not be saved on this PC.",
+      "ro": "Te-ai conectat, dar conectarea rapidă nu a putut fi salvată pe acest PC."
+    },
+    {
+      "key": "auth.already_logged_in",
+      "en": "You are already signed in.",
+      "ro": "Ești deja autentificat."
+    },
+    {
+      "key": "auth.login_failed",
+      "en": "Sign-in failed.",
+      "ro": "Autentificarea a eșuat."
+    },
+    {
+      "key": "auth.registration_failed",
+      "en": "Registration failed.",
+      "ro": "Înregistrarea a eșuat."
+    },
+    {
+      "key": "auth.account_created",
+      "en": "Account created. Signing in…",
+      "ro": "Cont creat. Se realizează conectarea…"
+    },
+    {
+      "key": "auth.email_save_failed",
+      "en": "Could not save the email address.",
+      "ro": "Adresa de email nu a putut fi salvată."
+    },
+    {
+      "key": "auth.email_saved",
+      "en": "Email address saved. Welcome back!",
+      "ro": "Adresa de email a fost salvată. Bine ai revenit!"
+    },
+    {
+      "key": "auth.session_not_ready",
+      "en": "Your session is not ready. Try again in a moment.",
+      "ro": "Sesiunea nu este încă pregătită. Încearcă din nou în câteva momente."
+    },
+    {
+      "key": "auth.fixlogin_help",
+      "en": "Reopen the sign-in screen if you only see a black screen.",
+      "ro": "Redeschide ecranul de conectare dacă vezi doar un ecran negru."
+    },
+    {
+      "key": "auth.signing_in",
+      "en": "Signing in…",
+      "ro": "Se realizează conectarea…"
+    },
+    {
+      "key": "auth.loading_character",
+      "en": "Loading character…",
+      "ro": "Se încarcă personajul…"
+    },
+    {
+      "key": "character.limit",
+      "en": "You can have at most {limit} characters.",
+      "ro": "Poți avea cel mult {limit} personaje."
+    },
+    {
+      "key": "character.invalid_birthdate",
+      "en": "Enter a valid date of birth. Characters must be at least 16 years old.",
+      "ro": "Introdu o dată de naștere validă. Personajele trebuie să aibă cel puțin 16 ani."
+    },
+    {
+      "key": "character.invalid_nationality",
+      "en": "Select a valid nationality.",
+      "ro": "Alege o naționalitate validă."
+    },
+    {
+      "key": "character.create_failed",
+      "en": "Could not create the character.",
+      "ro": "Personajul nu a putut fi creat."
+    },
+    {
+      "key": "character.invalid",
+      "en": "Invalid character.",
+      "ro": "Personaj invalid."
+    },
+    {
+      "key": "character.delete_active",
+      "en": "You cannot delete the character you are currently playing. Switch characters first.",
+      "ro": "Nu poți șterge personajul cu care joci. Schimbă mai întâi personajul."
+    },
+    {
+      "key": "character.not_owned",
+      "en": "That character does not belong to your account.",
+      "ro": "Acest personaj nu aparține contului tău."
+    },
+    {
+      "key": "not_near_location",
+      "en": "You are not near a valid location.",
+      "ro": "Nu ești lângă o locație validă."
+    },
+    {
+      "key": "action_cooldown",
+      "en": "This action is on cooldown. Please wait.",
+      "ro": "Această acțiune este în așteptare. Mai așteaptă puțin."
+    },
+    {
+      "key": "no_character",
+      "en": "You do not have an active character.",
+      "ro": "Nu ai un personaj activ."
+    },
+    {
+      "key": "invalid_target",
+      "en": "Invalid target player.",
+      "ro": "Jucătorul selectat nu este valid."
+    }
+  ]
+}

@@ -1,0 +1,669 @@
+{
+  "uiManifests": [
+    {
+      "resource": "sunset_auth_ui",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_auth_ui/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_devtools",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_devtools/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_missions",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_missions/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_pass",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_pass/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_robbery",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_robbery/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_slots",
+      "uiPage": "html/ui.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_slots/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_tuning",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_tuning/fxmanifest.lua"
+    },
+    {
+      "resource": "sunset_ui",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/[sunset]/sunset_ui/fxmanifest.lua"
+    },
+    {
+      "resource": "ox_inventory",
+      "uiPage": "web/build/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/ox_inventory/fxmanifest.lua"
+    },
+    {
+      "resource": "ox_lib",
+      "uiPage": "web/build/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/ox_lib/fxmanifest.lua"
+    },
+    {
+      "resource": "ox_target",
+      "uiPage": "web/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/ox_target/fxmanifest.lua"
+    },
+    {
+      "resource": "oxmysql",
+      "uiPage": "web/build/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/oxmysql/fxmanifest.lua"
+    },
+    {
+      "resource": "pma-voice",
+      "uiPage": "ui/index.html",
+      "fullPath": "/home/blipmade-rpg/htdocs/rpg.blipmade.com/resources/pma-voice/fxmanifest.lua"
+    }
+  ],
+  "registeredCallbacks": {
+    "authDomReady": [
+      "[sunset]/sunset_auth_ui/client/main.lua"
+    ],
+    "authVisibleRendered": [
+      "[sunset]/sunset_auth_ui/client/main.lua"
+    ],
+    "close": [
+      "[sunset]/sunset_devtools/client/route_creator.lua",
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "getRoutes": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "selectRoute": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "saveJobRoutes": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "reloadJobRoutes": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "teleportToCoords": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "testTeleport": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "captureFromTrailer": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "capturePlayerPosAsBin": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "capturePlayerPosAsPolygonPoint": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "capturePlayerPosAsSpawnPoint": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "capturePlayerPosAsLootPoint": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "capturePlayerPosAsField": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "previewRouteInWorld": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "startGizmoEdit": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "startCrosshairAddBin": [
+      "[sunset]/sunset_devtools/client/route_creator.lua"
+    ],
+    "missionAccept": [
+      "[sunset]/sunset_missions/client/nui.lua"
+    ],
+    "missionDecline": [
+      "[sunset]/sunset_missions/client/nui.lua"
+    ],
+    "missionCompleteClose": [
+      "[sunset]/sunset_missions/client/nui.lua"
+    ],
+    "lockpickResult": [
+      "[sunset]/sunset_missions/client/nui.lua"
+    ],
+    "sealResult": [
+      "[sunset]/sunset_missions/client/nui.lua"
+    ],
+    "passClose": [
+      "[sunset]/sunset_pass/client/main.lua"
+    ],
+    "passSetTab": [
+      "[sunset]/sunset_pass/client/main.lua"
+    ],
+    "passClaim": [
+      "[sunset]/sunset_pass/client/main.lua"
+    ],
+    "passBuyPremium": [
+      "[sunset]/sunset_pass/client/main.lua"
+    ],
+    "hackClick": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "hackClose": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "lootTake": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "lootClose": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "fenceSell": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "fenceClose": [
+      "[sunset]/sunset_robbery/client/nui.lua"
+    ],
+    "playSound": [
+      "[sunset]/sunset_robbery/client/nui.lua",
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "spin": [
+      "[sunset]/sunset_slots/client.lua"
+    ],
+    "collect": [
+      "[sunset]/sunset_slots/client.lua"
+    ],
+    "gamble": [
+      "[sunset]/sunset_slots/client.lua"
+    ],
+    "exitWith": [
+      "[sunset]/sunset_slots/client.lua"
+    ],
+    "tuningClose": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningPreview": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningTestFlame": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningGetQuote": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningCamRotate": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningFocusPart": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningSave": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningDyno": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "tuningLeaderboard": [
+      "[sunset]/sunset_tuning/client/main.lua"
+    ],
+    "turfMapClose": [
+      "[sunset]/sunset_turfs/client/main.lua"
+    ],
+    "nuiPong": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "transitionRendered": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "uiStageReady": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "gameplayVisible": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "bootEpoch": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "loadingTimeout": [
+      "[sunset]/sunset_ui/client/main.lua"
+    ],
+    "nuiError": [
+      "[sunset]/sunset_ui/client/main.lua",
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "nuiTrace": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "localeSet": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "playerInteractionClose": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "licenseQuizAnswer": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "modalSuperseded": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "uiModuleFailed": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "hudEditSave": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "hudEditClose": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "hudEditFocus": [
+      "[sunset]/sunset_ui/client/nui_bridge.lua"
+    ],
+    "uiLoaded": [
+      "ox_inventory/client.lua"
+    ],
+    "getItemData": [
+      "ox_inventory/client.lua"
+    ],
+    "removeComponent": [
+      "ox_inventory/client.lua"
+    ],
+    "removeAmmo": [
+      "ox_inventory/client.lua"
+    ],
+    "useItem": [
+      "ox_inventory/client.lua"
+    ],
+    "giveItem": [
+      "ox_inventory/client.lua"
+    ],
+    "useButton": [
+      "ox_inventory/client.lua"
+    ],
+    "exit": [
+      "ox_inventory/client.lua",
+      "oxmysql/ui.lua"
+    ],
+    "swapItems": [
+      "ox_inventory/client.lua"
+    ],
+    "buyItem": [
+      "ox_inventory/client.lua"
+    ],
+    "craftItem": [
+      "ox_inventory/client.lua"
+    ],
+    "getConfig": [
+      "ox_lib/resource/client.lua"
+    ],
+    "closeAlert": [
+      "ox_lib/resource/interface/client/alert.lua"
+    ],
+    "openContext": [
+      "ox_lib/resource/interface/client/context.lua"
+    ],
+    "clickContext": [
+      "ox_lib/resource/interface/client/context.lua"
+    ],
+    "closeContext": [
+      "ox_lib/resource/interface/client/context.lua"
+    ],
+    "inputData": [
+      "ox_lib/resource/interface/client/input.lua"
+    ],
+    "confirmSelected": [
+      "ox_lib/resource/interface/client/menu.lua"
+    ],
+    "changeIndex": [
+      "ox_lib/resource/interface/client/menu.lua"
+    ],
+    "changeSelected": [
+      "ox_lib/resource/interface/client/menu.lua"
+    ],
+    "changeChecked": [
+      "ox_lib/resource/interface/client/menu.lua"
+    ],
+    "closeMenu": [
+      "ox_lib/resource/interface/client/menu.lua"
+    ],
+    "progressComplete": [
+      "ox_lib/resource/interface/client/progress.lua"
+    ],
+    "radialClick": [
+      "ox_lib/resource/interface/client/radial.lua"
+    ],
+    "radialBack": [
+      "ox_lib/resource/interface/client/radial.lua"
+    ],
+    "radialClose": [
+      "ox_lib/resource/interface/client/radial.lua"
+    ],
+    "radialTransition": [
+      "ox_lib/resource/interface/client/radial.lua"
+    ],
+    "skillCheckOver": [
+      "ox_lib/resource/interface/client/skillcheck.lua"
+    ],
+    "init": [
+      "ox_lib/resource/locale/client.lua"
+    ],
+    "select": [
+      "ox_target/client/main.lua"
+    ],
+    "fetchResource": [
+      "oxmysql/ui.lua"
+    ],
+    "uiReady": [
+      "pma-voice/client/utils/Nui.lua"
+    ]
+  },
+  "postedCallbacks": {
+    "web": [
+      "[sunset]/sunset_auth_ui/web/index.html",
+      "[sunset]/sunset_auth_ui/web/index.html",
+      "[sunset]/sunset_devtools/web/index.html",
+      "[sunset]/sunset_devtools/web/index.html",
+      "[sunset]/sunset_missions/web/index.html",
+      "[sunset]/sunset_missions/web/index.html",
+      "[sunset]/sunset_pass/web/index.html",
+      "[sunset]/sunset_pass/web/index.html",
+      "[sunset]/sunset_robbery/web/index.html",
+      "[sunset]/sunset_robbery/web/index.html",
+      "[sunset]/sunset_slots/html/ui.html",
+      "[sunset]/sunset_slots/html/ui.html",
+      "[sunset]/sunset_tuning/web/index.html",
+      "[sunset]/sunset_tuning/web/index.html"
+    ],
+    "exitWith": [
+      "[sunset]/sunset_slots/html/script.js"
+    ],
+    "nuiError": [
+      "[sunset]/sunset_ui/web/index.html"
+    ],
+    "licenseQuizAnswer": [
+      "[sunset]/sunset_ui/web/js/license_quiz.js"
+    ],
+    "licenseQuizSubmit": [
+      "[sunset]/sunset_ui/web/js/license_quiz.js"
+    ],
+    "licenseQuizClose": [
+      "[sunset]/sunset_ui/web/js/license_quiz.js"
+    ],
+    "nuiTrace": [
+      "[sunset]/sunset_ui/web/js/player_interaction.js"
+    ],
+    "uiReady": [
+      "pma-voice/ui/js/app.js"
+    ]
+  },
+  "fonts": [
+    "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+    "inherit",
+    "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+    "monospace",
+    "'JetBrains Mono'",
+    "'Montserrat'",
+    "'Montserrat', sans-serif",
+    "'Montserrat', 'Inter', sans-serif",
+    "'Rajdhani', sans-serif",
+    "'Segoe UI', system-ui, sans-serif",
+    "Impact, Charcoal, sans-serif",
+    "Montserrat, sans-serif",
+    "\"Phosphor\"",
+    "\"Phosphor\" !important",
+    "\"Phosphor-Fill\"",
+    "\"Phosphor-Fill\" !important",
+    "\"Phosphor-Bold\"",
+    "\"Phosphor-Bold\" !important",
+    "var(--sunset-display, 'Chakra Petch', sans-serif)",
+    "'JetBrains Mono', monospace",
+    "var(--font-body)",
+    "var(--font-body, 'Outfit', sans-serif)",
+    "var(--font-display, 'Syne', sans-serif)",
+    "'Inter', sans-serif",
+    "var(--font-display)",
+    "var(--font-display, 'Chakra Petch', sans-serif)",
+    "var(--sunset-body, 'Rajdhani', sans-serif)",
+    "'Montserrat', 'Segoe UI', sans-serif",
+    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "'Chakra Petch'",
+    "'Rajdhani'",
+    "'Chakra Petch', 'Rajdhani', sans-serif",
+    "'Barlow Condensed', 'Inter', sans-serif",
+    "'Inter', monospace",
+    "'Rajdhani',sans-serif",
+    "'Rajdhani', var(--sunset-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)",
+    "'Chakra Petch', var(--sunset-title, sans-serif)",
+    "'Rajdhani', 'Segoe UI', sans-serif",
+    "'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "var(--os-data)",
+    "var(--sunset-display, inherit)",
+    "var(--os-title)",
+    "'Rajdhani', 'Inter', sans-serif",
+    "'Chakra Petch', 'Inter', sans-serif",
+    "'JetBrains Mono', 'Consolas', monospace",
+    "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif",
+    "'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif !important",
+    "'Montserrat', sans-serif !important",
+    "'Barlow Condensed', sans-serif",
+    "'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    "'JetBrains Mono', 'Fira Code', monospace",
+    "\"Helvetica Neue\", Arial, Helvetica, sans-serif",
+    "Roboto",
+    "Roboto Mono",
+    "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif",
+    "source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace}@keyframes progress-bar{0%{width:0%}to{width:100%}}::-webkit-scrollbar{background-color:transparent",
+    "\"Nunito\"",
+    "ui-sans-serif,system-ui,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",Segoe UI Symbol,\"Noto Color Emoji\"",
+    "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+    "Roboto}.text-2xl{font-size:1.5rem",
+    "Avenir,Helvetica,Arial,sans-serif"
+  ],
+  "zIndexSample": [
+    {
+      "file": "[sunset]/sunset_auth_ui/web/auth.css",
+      "z": 100
+    },
+    {
+      "file": "[sunset]/sunset_auth_ui/web/auth.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_auth_ui/web/auth.css",
+      "z": 200
+    },
+    {
+      "file": "[sunset]/sunset_auth_ui/web/auth.css",
+      "z": 300
+    },
+    {
+      "file": "[sunset]/sunset_devtools/web/css/style.css",
+      "z": 999
+    },
+    {
+      "file": "[sunset]/sunset_devtools/web/css/style.css",
+      "z": 1000
+    },
+    {
+      "file": "[sunset]/sunset_loadscreen/style.css",
+      "z": 0
+    },
+    {
+      "file": "[sunset]/sunset_loadscreen/style.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_loadscreen/style.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_missions/web/css/missions.css",
+      "z": 9100
+    },
+    {
+      "file": "[sunset]/sunset_missions/web/css/missions.css",
+      "z": 8900
+    },
+    {
+      "file": "[sunset]/sunset_missions/web/css/missions.css",
+      "z": 9200
+    },
+    {
+      "file": "[sunset]/sunset_missions/web/css/missions.css",
+      "z": 9300
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 2
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 5
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 12
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_pass/web/style.css",
+      "z": 100
+    },
+    {
+      "file": "[sunset]/sunset_robbery/web/style.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_robbery/web/style.css",
+      "z": 2
+    },
+    {
+      "file": "[sunset]/sunset_skins/web/css/skins.css",
+      "z": 1000
+    },
+    {
+      "file": "[sunset]/sunset_tuning/web/style.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_tuning/web/style.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_tuning/web/style.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_tuning/web/style.css",
+      "z": 20
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 9999
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 20
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 5
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 5
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 2
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/atm.css",
+      "z": 30
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/base.css",
+      "z": 2147483000
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/base.css",
+      "z": 0
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/base.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/battlepass.css",
+      "z": 9100
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/battlepass.css",
+      "z": 1
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/battlepass.css",
+      "z": 2
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/battlepass.css",
+      "z": 5
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/battlepass.css",
+      "z": 10
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/casino.css",
+      "z": 5200
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/casino.css",
+      "z": 2
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/chat.css",
+      "z": 35
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/chat.css",
+      "z": 40
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/chat.css",
+      "z": 5
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/clans.css",
+      "z": 210
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/clanwar.css",
+      "z": 9100
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/clanwar.css",
+      "z": 9500
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/clanwar.css",
+      "z": 9200
+    },
+    {
+      "file": "[sunset]/sunset_ui/web/css/clanwar.css",
+      "z": 9600
+    }
+  ],
+  "colorsCount": 1228
+}
