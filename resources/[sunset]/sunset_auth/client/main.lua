@@ -300,7 +300,12 @@ TriggerEvent('chat:addSuggestion', '/fixlogin', tr('auth.fixlogin_help'))
 RegisterNetEvent('sunset:client:playerReady', function()
     authenticated = true
     if GetResourceState('sunset_ui') == 'started' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false) end)
+        -- The auth flow normally releases its own focus before playerReady.
+        -- A late ready event must never release another surface's focus.
+        local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+        if ok and owner == 'auth' then
+            pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'auth') end)
+        end
     end
 end)
 

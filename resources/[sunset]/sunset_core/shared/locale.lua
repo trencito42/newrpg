@@ -28,11 +28,12 @@ local warnedMissing = {}
 -- -> 'Could not end shift') and log once. Debug builds keep the visible marker
 -- so developers still notice the gap.
 local function missingKey(key)
-    if not warnedMissing[key] then
+    local debugLocale = (Sunset.Config and Sunset.Config.Debug) or GetConvar('sunset_dev', '0') == '1'
+    if debugLocale and not warnedMissing[key] then
         warnedMissing[key] = true
         print(('[locale] missing translation key: %s'):format(key))
     end
-    if Sunset.Config and Sunset.Config.Debug then
+    if debugLocale then
         return ('[?%s]'):format(key)
     end
     local last = key:match('([^%.]+)$') or key
