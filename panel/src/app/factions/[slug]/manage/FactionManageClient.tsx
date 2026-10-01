@@ -480,12 +480,12 @@ export function FactionManageClient({
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
-                        <button
-                          onClick={() => setSelectedApp(app)}
+                        <Link
+                          href={`/factions/${slug}/applications/${app.id}`}
                           className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
                         >
-                          {locale === "ro" ? "Revizuiește" : "Review"}
-                        </button>
+                          {locale === "ro" ? "Vezi Discuția" : "Open Thread"}
+                        </Link>
                       </td>
                     </tr>
                   ))

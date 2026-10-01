@@ -40,11 +40,15 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
         throw new Error(data.error || (lang === "ro" ? "Eroare la trimitere." : "Submission failed."));
       }
 
-      setSuccess(true);
-      setAccusedName("");
-      setTitle("");
-      setEvidenceText("");
-      router.refresh();
+      if (data.complaintId) {
+        router.push(`/support/complaints/${data.complaintId}`);
+      } else {
+        setSuccess(true);
+        setAccusedName("");
+        setTitle("");
+        setEvidenceText("");
+        router.refresh();
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

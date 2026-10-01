@@ -212,6 +212,15 @@ export async function POST(req: NextRequest, { params }: Context) {
       [appId, session.accountId, decision, reason || null]
     );
 
+    // Add system decision comment to application thread
+    const decisionPost = `[APPLICATION ${finalStatus.toUpperCase()}]\nDecision by: ${session.username}\nReason: ${reason || "No specific reason provided."}`;
+    await conn.execute(
+      `INSERT INTO panel_org_application_comments 
+        (application_id, org_type, org_id, sender_account_id, sender_character_id, sender_username, role_badge, message)
+       VALUES (?, ?, ?, ?, ?, ?, 'DECISION', ?)`,
+      [appId, type, orgId, session.accountId, session.selectedCharacterId || null, session.username, decisionPost]
+    );
+
     // Create notification for applicant
     const orgLabel = type === "faction" ? `Faction ${orgId}` : `Clan ${orgId}`;
     const notifTitleEn = `Application ${finalStatus.toUpperCase()}`;
@@ -222,7 +231,7 @@ export async function POST(req: NextRequest, { params }: Context) {
     await conn.execute(
       `INSERT INTO panel_notifications (account_id, type, title_en, title_ro, message_en, message_ro, link_url)
        VALUES (?, 'application_decision', ?, ?, ?, ?, ?)`,
-      [app.account_id, notifTitleEn, notifTitleRo, notifMsgEn, notifMsgRo, `/${type === "faction" ? "factions" : "clans"}/${orgId}`]
+      [app.account_id, notifTitleEn, notifTitleRo, notifMsgEn, notifMsgRo, `/${type === "faction" ? "factions" : "clans"}/${orgId}/applications/${appId}`]
     );
 
     // If accepted and add member requested, queue the domain action!
