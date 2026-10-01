@@ -134,8 +134,23 @@ end
 --  AD MUTE SYSTEM
 -- ═══════════════════════════════════════════════════════════════
 
+local function getPlayerLicense(src)
+    if Sunset and Sunset.GetIdentifier then
+        local lic = Sunset.GetIdentifier(src, 'license')
+        if lic then return lic end
+    end
+    local num = GetNumPlayerIdentifiers(src)
+    for i = 0, num - 1 do
+        local id = GetPlayerIdentifier(src, i)
+        if id and string.sub(id, 1, 8) == 'license:' then
+            return id
+        end
+    end
+    return nil
+end
+
 function IsAdMuted(source)
-    local license = Sunset.GetIdentifier(source, 'license')
+    local license = getPlayerLicense(source)
     if not license or not AdMutes[license] then return false end
     local row = AdMutes[license]
     local now = os.time()
@@ -157,7 +172,7 @@ function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
     minutes = math.max(1, math.floor(minutes))
     reason = clampReason(reason, 200) or 'Advertisement abuse'
     local adminName = getDisplayName(adminSrc)
-    local license = Sunset.GetIdentifier(targetSrc, 'license')
+    local license = getPlayerLicense(targetSrc)
     if not license then return false, { localeKey = 'cnn.message.player_not_found_or_invalid_identifier' } end
 
     local char = exports.sunset_core:GetCharacter(targetSrc)
