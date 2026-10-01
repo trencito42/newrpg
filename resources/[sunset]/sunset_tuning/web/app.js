@@ -65,43 +65,43 @@ const categoryTitles = {
 };
 
 const BODYKIT_SLOTS = [
-    { key: 'spoiler', label: 'Spoiler / Wing' },
-    { key: 'frontBumper', label: 'Front Bumper' },
-    { key: 'rearBumper', label: 'Rear Bumper' },
-    { key: 'sideSkirt', label: 'Side Skirts' },
-    { key: 'exhaust', label: 'Exhaust Tips' },
-    { key: 'hood', label: 'Hood / Bonnet' },
-    { key: 'grille', label: 'Grille' },
-    { key: 'roof', label: 'Roof' },
-    { key: 'leftFender', label: 'Left Fender' },
-    { key: 'rightFender', label: 'Right Fender' },
-    { key: 'rollCage', label: 'Roll Cage / Interior' },
-    { key: 'livery', label: 'Livery / Decals' },
+    { key: 'spoiler', labelKey: 'tuning.body.spoiler' },
+    { key: 'frontBumper', labelKey: 'tuning.body.front_bumper' },
+    { key: 'rearBumper', labelKey: 'tuning.body.rear_bumper' },
+    { key: 'sideSkirt', labelKey: 'tuning.body.side_skirt' },
+    { key: 'exhaust', labelKey: 'tuning.body.exhaust' },
+    { key: 'hood', labelKey: 'tuning.body.hood' },
+    { key: 'grille', labelKey: 'tuning.body.grille' },
+    { key: 'roof', labelKey: 'tuning.body.roof' },
+    { key: 'leftFender', labelKey: 'tuning.body.left_fender' },
+    { key: 'rightFender', labelKey: 'tuning.body.right_fender' },
+    { key: 'rollCage', labelKey: 'tuning.body.roll_cage' },
+    { key: 'livery', labelKey: 'tuning.body.livery' },
 ];
 
 const WHEEL_TYPES = [
-    { id: 0, label: 'Sport' },
-    { id: 1, label: 'Muscle' },
-    { id: 2, label: 'Lowrider' },
-    { id: 3, label: 'SUV' },
-    { id: 4, label: 'Offroad' },
-    { id: 5, label: 'Tuner' },
-    { id: 7, label: 'High End' },
-    { id: 8, label: "Benny's Original" },
-    { id: 9, label: "Benny's Bespoke" },
-    { id: 10, label: 'Open Wheel' },
-    { id: 11, label: 'Street' },
-    { id: 12, label: 'Track' },
+    { id: 0, labelKey: 'tuning.wheel.sport' },
+    { id: 1, labelKey: 'tuning.wheel.muscle' },
+    { id: 2, labelKey: 'tuning.wheel.lowrider' },
+    { id: 3, labelKey: 'tuning.wheel.suv' },
+    { id: 4, labelKey: 'tuning.wheel.offroad' },
+    { id: 5, labelKey: 'tuning.wheel.tuner' },
+    { id: 7, labelKey: 'tuning.wheel.high_end' },
+    { id: 8, labelKey: 'tuning.wheel.bennys_original' },
+    { id: 9, labelKey: 'tuning.wheel.bennys_bespoke' },
+    { id: 10, labelKey: 'tuning.wheel.open' },
+    { id: 11, labelKey: 'tuning.wheel.street' },
+    { id: 12, labelKey: 'tuning.wheel.track' },
 ];
 
 const WINDOW_TINTS = [
-    { id: 0, label: 'None (Stock)' },
-    { id: 1, label: 'Pure Black (5%)' },
-    { id: 2, label: 'Dark Smoke (15%)' },
-    { id: 3, label: 'Light Smoke (35%)' },
-    { id: 4, label: 'Stock Clear' },
-    { id: 5, label: 'Limo (1%)' },
-    { id: 6, label: 'Green Tint' },
+    { id: 0, labelKey: 'tuning.tint.none' },
+    { id: 1, labelKey: 'tuning.tint.black' },
+    { id: 2, labelKey: 'tuning.tint.dark' },
+    { id: 3, labelKey: 'tuning.tint.light' },
+    { id: 4, labelKey: 'tuning.tint.clear' },
+    { id: 5, labelKey: 'tuning.tint.limo' },
+    { id: 6, labelKey: 'tuning.tint.green' },
 ];
 
 const XENON_COLORS = [
@@ -976,7 +976,7 @@ function renderPartList() {
                 const curLabel = cur === -1 ? 'Stock' : `Mod #${cur + 1}`;
                 parts.push({
                     id: `body_${slot.key}`,
-                    label: slot.label,
+                    label: I18n.t(slot.labelKey),
                     price: `${curLabel} (${avail} opts)`,
                     isInstalled: isInst,
                     isPreview: !isInst,
@@ -1024,7 +1024,7 @@ function renderPartList() {
             isActive: () => activePartId === 'xenon',
         });
     } else if (activeTab === 'wheels') {
-        const wt = WHEEL_TYPES.find((w) => w.id === (cosmetics?.wheelType ?? 0))?.label || 'Sport';
+        const wt = I18n.t(WHEEL_TYPES.find((w) => w.id === (cosmetics?.wheelType ?? 0))?.labelKey || 'tuning.wheel.sport');
         const wtInst = (installedCosmetics?.wheelType ?? 0) === (cosmetics?.wheelType ?? 0);
         parts.push({
             id: 'wheel_type',
@@ -1119,7 +1119,7 @@ function renderPartList() {
             apply: () => { activePartId = 'pearl'; post('tuningFocusPart', { part: 'overview' }); renderDetailPanel(); },
             isActive: () => activePartId === 'pearl',
         });
-        const tint = WINDOW_TINTS.find((t) => t.id === (cosmetics?.windowTint ?? 0))?.label || 'Stock';
+        const tint = I18n.t(WINDOW_TINTS.find((t) => t.id === (cosmetics?.windowTint ?? 0))?.labelKey || 'tuning.tint.none');
         parts.push({
             id: 'window_tint',
             label: 'Window Tint',
@@ -1518,7 +1518,7 @@ function renderDetailPanel() {
 
         const title = document.createElement('div');
         title.className = 'section-title section-title--compact';
-        title.textContent = `${slotInfo.label} Options (${count} available)`;
+        title.textContent = I18n.t('tuning.body.options', { part: I18n.t(slotInfo.labelKey), count });
         tuneDetail.appendChild(title);
 
         const grid = document.createElement('div');
@@ -1654,7 +1654,7 @@ function renderDetailPanel() {
             WHEEL_TYPES.forEach((wt) => {
                 const btn = document.createElement('button');
                 btn.className = `option-btn ${cosmetics.wheelType === wt.id ? 'active' : ''}`;
-                btn.textContent = wt.label;
+                btn.textContent = I18n.t(wt.labelKey);
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.wheelType = wt.id;
@@ -1906,7 +1906,7 @@ function renderDetailPanel() {
             WINDOW_TINTS.forEach((wt) => {
                 const btn = document.createElement('button');
                 btn.className = `option-btn ${cosmetics.windowTint === wt.id ? 'active' : ''}`;
-                btn.textContent = wt.label;
+                btn.textContent = I18n.t(wt.labelKey);
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.windowTint = wt.id;
