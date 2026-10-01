@@ -1228,7 +1228,12 @@ const Panels = {
             btn.type = 'button';
             btn.textContent = label;
             btn.className = `menu-vcard__btn ${className || ''}`;
-            btn.addEventListener('click', onClick);
+            btn.addEventListener('click', (e) => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                onClick(e);
+            });
             parent.appendChild(btn);
         };
 

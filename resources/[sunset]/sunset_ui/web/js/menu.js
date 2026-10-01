@@ -479,9 +479,15 @@ const Menu = {
 
         grid.querySelectorAll('[data-v-action]').forEach((btn) => {
             btn.addEventListener('click', () => {
+                const action = btn.dataset.vAction;
+                const vehicleId = btn.dataset.vId;
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                this._vehicleSnapKey = null;
                 post('menuVehicleAction', {
-                    action: btn.dataset.vAction,
-                    vehicleId: btn.dataset.vId,
+                    action: action,
+                    vehicleId: vehicleId,
                     plate: btn.dataset.vPlate,
                 });
             });

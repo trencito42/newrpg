@@ -249,7 +249,19 @@ exports.sunset_core:RegisterCallback('sunset:spawnVehicle', function(source, veh
         TriggerClientEvent('sunset:client:cleanupOwnedVehicles', -1, outPlates)
     end
     TriggerClientEvent('sunset:client:spawnOwnedVehicle', source, veh, spawnOpts)
-    return true
+    local updatedVehicle = {
+        id = veh.id,
+        plate = veh.plate,
+        model = veh.model,
+        stored = 0,
+        inWorld = true,
+        destroyed = 0,
+    }
+    TriggerClientEvent('sunset:client:vehicleStateChanged', source, {
+        action = 'spawned',
+        vehicle = updatedVehicle,
+    })
+    return { ok = true, success = true, vehicle = updatedVehicle }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:getVehicleById', function(source, vehicleId)
@@ -381,7 +393,22 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
         DeleteEntity(vehicle)
     end
     TriggerClientEvent('sunset:client:cleanupOwnedVehicles', -1, { { plate = plate } })
-    return true
+    local updatedVehicle = {
+        id = owned.id,
+        plate = plate,
+        stored = 1,
+        inWorld = false,
+        fuel = fuelLevel,
+        engine = engine,
+        body = body,
+        garage = tostring(garageId or 'legion'),
+        destroyed = 0,
+    }
+    TriggerClientEvent('sunset:client:vehicleStateChanged', source, {
+        action = 'stored',
+        vehicle = updatedVehicle,
+    })
+    return { ok = true, success = true, vehicle = updatedVehicle }
 end
 
 exports.sunset_core:RegisterCallback('sunset:storeOwnedVehicle', function(source, netId, plate, props, fuelLevel, garageId, parked)
@@ -528,6 +555,10 @@ exports.sunset_core:RegisterCallback('sunset:claimVehicleInsurance', function(so
         exports.sunset_core:TFor(source, 'vehicles.message.insurance_claim_approved_for_value_value_your_vehicle_has_been_re', claimCost, paidAccount),
         'success'
     )
+    TriggerClientEvent('sunset:client:vehicleStateChanged', source, {
+        action = 'claimed',
+        vehicleId = veh.id,
+    })
 
     return { ok = true, claimCost = claimCost }
 end)
@@ -592,6 +623,10 @@ exports.sunset_core:RegisterCallback('sunset:renewVehicleInsurance', function(so
         exports.sunset_core:TFor(source, 'vehicles.message.purchased_5_insurance_points_for_value_value', renewCost, paidAccount),
         'success'
     )
+    TriggerClientEvent('sunset:client:vehicleStateChanged', source, {
+        action = 'renewed',
+        vehicleId = veh.id,
+    })
 
     return { ok = true, renewCost = renewCost }
 end)

@@ -925,6 +925,9 @@ AddEventHandler('sunset:nui:garageSpawn', function(data)
         local ok, err = Sunset.AwaitCallback('sunset:spawnVehicle', data.vehicleId)
         if not ok then
             notify(err or exports.sunset_core:Translate('vehicles.msg.could_not_spawn_vehicle'), 'error')
+        else
+            TriggerEvent('sunset:client:vehicleUpdated', { id = tonumber(data.vehicleId), stored = 0, inWorld = true })
+            TriggerEvent('sunset:menu:refreshIfOpen')
         end
         closeGarageUiUnlessMenu()
     end)
@@ -1014,6 +1017,8 @@ AddEventHandler('sunset:nui:garageStore', function(data)
         end
         if vehData.stored == 1 then
             notify(exports.sunset_core:Translate('vehicles.message.already_in_garage'), 'info')
+            TriggerEvent('sunset:client:vehicleUpdated', { id = tonumber(data.vehicleId), stored = 1, inWorld = false })
+            TriggerEvent('sunset:menu:refreshIfOpen')
             return
         end
 
@@ -1051,6 +1056,8 @@ AddEventHandler('sunset:nui:garageStore', function(data)
         end
         if entity then untrackSpawnedOwned(entity) end
         notify(exports.sunset_core:Translate('vehicles.message.vehicle_successfully_stored'), 'success')
+        TriggerEvent('sunset:client:vehicleUpdated', { id = tonumber(data.vehicleId), stored = 1, inWorld = false })
+        TriggerEvent('sunset:menu:refreshIfOpen')
         closeGarageUiUnlessMenu()
     end)
 end)
@@ -1421,3 +1428,8 @@ CreateThread(function()
 end)
 
 exports('SetVehicleProp', SetVehicleProp)
+
+RegisterNetEvent('sunset:client:vehicleStateChanged', function(data)
+    TriggerEvent('sunset:client:vehicleUpdated', data and data.vehicle or {})
+    TriggerEvent('sunset:menu:refreshIfOpen')
+end)

@@ -438,42 +438,93 @@ end)
 AddEventHandler('sunset:nui:menuVehicleAction', function(data)
     if not data or not data.action then return end
     CreateThread(function()
+        local vehicleId = tonumber(data.vehicleId)
         if data.action == 'spawn' then
-            local ok, err = Sunset.AwaitCallback('sunset:spawnVehicle', tonumber(data.vehicleId))
+            local ok, err = Sunset.AwaitCallback('sunset:spawnVehicle', vehicleId)
             if ok then
-                closeMenu()
+                cachedExtras = nil
+                cachedExtrasAt = 0
+                Wait(50)
+                local refreshed, menuData = pcall(buildMenuData, true)
+                if refreshed and menuData then
+                    exports.sunset_ui:Send('menuUpdate', menuData)
+                end
             else
                 exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.could_not_spawn'), 'error')
             end
         elseif data.action == 'claim_insurance' then
-            TriggerEvent('sunset:nui:garageClaimInsurance', { vehicleId = tonumber(data.vehicleId), fromMenu = true })
+            TriggerEvent('sunset:nui:garageClaimInsurance', { vehicleId = vehicleId, fromMenu = true })
             cachedExtras = nil
             cachedExtrasAt = 0
-            Wait(400)
+            Wait(150)
             local refreshed, menuData = pcall(buildMenuData, true)
             if refreshed and menuData then
                 exports.sunset_ui:Send('menuUpdate', menuData)
             end
         elseif data.action == 'renew_insurance' then
-            TriggerEvent('sunset:nui:garageRenewInsurance', { vehicleId = tonumber(data.vehicleId), fromMenu = true })
+            TriggerEvent('sunset:nui:garageRenewInsurance', { vehicleId = vehicleId, fromMenu = true })
             cachedExtras = nil
             cachedExtrasAt = 0
-            Wait(400)
+            Wait(150)
             local refreshed, menuData = pcall(buildMenuData, true)
             if refreshed and menuData then
                 exports.sunset_ui:Send('menuUpdate', menuData)
             end
         elseif data.action == 'store' then
-            TriggerEvent('sunset:nui:garageStore', { vehicleId = tonumber(data.vehicleId) })
+            TriggerEvent('sunset:nui:garageStore', { vehicleId = vehicleId })
+            cachedExtras = nil
+            cachedExtrasAt = 0
+            Wait(150)
+            local refreshed, menuData = pcall(buildMenuData, true)
+            if refreshed and menuData then
+                exports.sunset_ui:Send('menuUpdate', menuData)
+            end
         elseif data.action == 'gps' then
             TriggerEvent('sunset:nui:garageLocate', {
                 plate = data.plate,
-                vehicleId = tonumber(data.vehicleId),
+                vehicleId = vehicleId,
             })
         elseif data.action == 'park' then
             TriggerEvent('sunset:vehicle:parkCurrent')
+            cachedExtras = nil
+            cachedExtrasAt = 0
+            Wait(150)
+            local refreshed, menuData = pcall(buildMenuData, true)
+            if refreshed and menuData then
+                exports.sunset_ui:Send('menuUpdate', menuData)
+            end
         end
     end)
+end)
+
+RegisterNetEvent('sunset:client:vehicleUpdated', function(update)
+    if not menuOpen then return end
+    cachedExtras = nil
+    cachedExtrasAt = 0
+    local ok, menuData = pcall(buildMenuData, true)
+    if ok and menuData then
+        exports.sunset_ui:Send('menuUpdate', menuData)
+    end
+end)
+
+RegisterNetEvent('sunset:client:vehicleStateChanged', function(data)
+    if not menuOpen then return end
+    cachedExtras = nil
+    cachedExtrasAt = 0
+    local ok, menuData = pcall(buildMenuData, true)
+    if ok and menuData then
+        exports.sunset_ui:Send('menuUpdate', menuData)
+    end
+end)
+
+RegisterNetEvent('sunset:client:propertiesChanged', function()
+    if not menuOpen then return end
+    cachedExtras = nil
+    cachedExtrasAt = 0
+    local ok, menuData = pcall(buildMenuData, true)
+    if ok and menuData then
+        exports.sunset_ui:Send('menuUpdate', menuData)
+    end
 end)
 
 AddEventHandler('sunset:nui:menuJobAction', function(data)
@@ -484,13 +535,22 @@ AddEventHandler('sunset:nui:menuJobAction', function(data)
             if state == nil then
                 exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.cannot_toggle_duty'), 'error')
             else
+                cachedExtras = nil
                 cachedExtrasAt = 0
+                local ok, menuData = pcall(buildMenuData, true)
+                if ok and menuData then
+                    exports.sunset_ui:Send('menuUpdate', menuData)
+                end
             end
         elseif data.action == 'leave' then
             local ok, err = Sunset.AwaitCallback('sunset:leaveFaction')
             if ok then
+                cachedExtras = nil
                 cachedExtrasAt = 0
-                closeMenu()
+                local refreshed, menuData = pcall(buildMenuData, true)
+                if refreshed and menuData then
+                    exports.sunset_ui:Send('menuUpdate', menuData)
+                end
             else
                 exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.failed'), 'error')
             end
@@ -500,8 +560,12 @@ AddEventHandler('sunset:nui:menuJobAction', function(data)
                 if Sunset.JobClient and Sunset.JobClient.clearWorkHud then
                     Sunset.JobClient.clearWorkHud()
                 end
+                cachedExtras = nil
                 cachedExtrasAt = 0
-                closeMenu()
+                local refreshed, menuData = pcall(buildMenuData, true)
+                if refreshed and menuData then
+                    exports.sunset_ui:Send('menuUpdate', menuData)
+                end
             else
                 exports.sunset_ui:Notify(err or exports.sunset_core:Translate('menu.msg.could_not_quit_civilian_job'), 'error')
             end
@@ -532,20 +596,17 @@ local lastMenuPush = nil
 CreateThread(function()
     while true do
         if menuOpen then
-            -- Solo /v garage does not need 1 Hz polling (causes visible NUI flicker).
-            if menuSoloMode ~= 'vehicle' then
-                local ok, data = pcall(buildMenuData)
-                if ok and data then
-                    -- [PERF] Change detection: skip the NUI message (and the page re-render)
-                    -- when nothing in the menu payload changed since the last push.
-                    local okJ, enc = pcall(json.encode, data)
-                    if not okJ or enc ~= lastMenuPush then
-                        lastMenuPush = okJ and enc or nil
-                        exports.sunset_ui:Send('menuUpdate', data)
-                    end
+            local ok, data = pcall(buildMenuData)
+            if ok and data then
+                -- [PERF] Change detection: skip the NUI message (and the page re-render)
+                -- when nothing in the menu payload changed since the last push.
+                local okJ, enc = pcall(json.encode, data)
+                if not okJ or enc ~= lastMenuPush then
+                    lastMenuPush = okJ and enc or nil
+                    exports.sunset_ui:Send('menuUpdate', data)
                 end
             end
-            Wait(1000)
+            Wait(800)
         else
             lastMenuPush = nil
             Wait(500)

@@ -144,6 +144,12 @@ AddEventHandler('sunset:nui:skinShopEquip', function(data)
                 exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.equip_failed'), 'error', 5000)
             end
         end
+        if shopOpen then
+            local skins = Sunset.AwaitCallback('skins:getAll')
+            if skins then
+                exports.sunset_ui:Send('skinShopUpdate', { skins = skins })
+            end
+        end
     else
         exports.sunset_ui:Notify(err or exports.sunset_core:Translate('skins.message.equip_failed'), 'error', 5000)
     end
