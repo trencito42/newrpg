@@ -14,26 +14,25 @@ Sunset = Sunset or {}
 --   help_opened, spawned_in_city
 Sunset.QuestChains = {
     onboarding = {
-        label = 'Welcome to Los Santos',
-        description = 'Learn the basics of life in the city.',
+        labelKey = 'quests.chain.onboarding',
         order = 1,
         enabled = true,
         quests = {
             {
                 key = 'onb_orientation',
-                label = 'City Orientation',
-                description = 'Open the help menu (/help) and the M menu to learn your controls.',
+                labelKey = 'quests.entry.onb_orientation.label',
+                descriptionKey = 'quests.entry.onb_orientation.description',
                 objectives = {
-                    { type = 'help_opened', target = 1, label = 'Open the help menu (/help)' },
+                    { type = 'help_opened', target = 1, labelKey = 'quests.entry.onb_orientation.objective' },
                 },
                 reward = { money = 100, xp = 20, rp = 1, reason = 'quest_onboarding' },
             },
             {
                 key = 'onb_jobcenter',
-                label = 'Find Work',
-                description = 'Visit the Job Center at City Hall and get hired for any job.',
+                labelKey = 'quests.entry.onb_jobcenter.label',
+                descriptionKey = 'quests.entry.onb_jobcenter.description',
                 objectives = {
-                    { type = 'job_hired', target = 1, label = 'Get hired at the Job Center' },
+                    { type = 'job_hired', target = 1, labelKey = 'quests.entry.onb_jobcenter.objective' },
                 },
                 reward = { money = 150, xp = 30, rp = 1, reason = 'quest_jobcenter' },
                 unlocksChain = 'first_job',
@@ -42,27 +41,26 @@ Sunset.QuestChains = {
     },
 
     first_job = {
-        label = 'Earning a Living',
-        description = 'Complete honest work and earn your first paycheck.',
+        labelKey = 'quests.chain.first_job',
         order = 2,
         enabled = true,
         requiresChain = 'onboarding',
         quests = {
             {
                 key = 'fj_first_shift',
-                label = 'First Shift',
-                description = 'Complete one work shift (delivery, catch, collection...).',
+                labelKey = 'quests.entry.fj_first_shift.label',
+                descriptionKey = 'quests.entry.fj_first_shift.description',
                 objectives = {
-                    { type = 'job_shift_completed', target = 1, label = 'Complete a work shift' },
+                    { type = 'job_shift_completed', target = 1, labelKey = 'quests.entry.fj_first_shift.objective' },
                 },
                 reward = { money = 250, xp = 40, rp = 2, reason = 'quest_first_shift' },
             },
             {
                 key = 'fj_dedication',
-                label = 'Dedication',
-                description = 'Complete 5 work shifts to prove your worth.',
+                labelKey = 'quests.entry.fj_dedication.label',
+                descriptionKey = 'quests.entry.fj_dedication.description',
                 objectives = {
-                    { type = 'job_shift_completed', target = 5, label = 'Complete 5 work shifts' },
+                    { type = 'job_shift_completed', target = 5, labelKey = 'quests.entry.fj_dedication.objective' },
                 },
                 reward = { money = 500, xp = 60, rp = 3, reason = 'quest_dedication' },
                 unlocksChain = 'driving',
@@ -71,27 +69,26 @@ Sunset.QuestChains = {
     },
 
     driving = {
-        label = 'Behind the Wheel',
-        description = 'Get your driving license and your first set of wheels.',
+        labelKey = 'quests.chain.driving',
         order = 3,
         enabled = true,
         requiresChain = 'first_job',
         quests = {
             {
                 key = 'drv_license',
-                label = 'Driving License',
-                description = 'Pass the driving exam at the LSSI to obtain your license.',
+                labelKey = 'quests.entry.drv_license.label',
+                descriptionKey = 'quests.entry.drv_license.description',
                 objectives = {
-                    { type = 'license_obtained', target = 1, license = 'driving', label = 'Obtain a driving license' },
+                    { type = 'license_obtained', target = 1, license = 'driving', labelKey = 'quests.entry.drv_license.objective' },
                 },
                 reward = { money = 300, xp = 50, rp = 2, reason = 'quest_license' },
             },
             {
                 key = 'drv_first_car',
-                label = 'First Car',
-                description = 'Purchase a vehicle from the dealership.',
+                labelKey = 'quests.entry.drv_first_car.label',
+                descriptionKey = 'quests.entry.drv_first_car.description',
                 objectives = {
-                    { type = 'vehicle_purchased', target = 1, label = 'Buy a vehicle' },
+                    { type = 'vehicle_purchased', target = 1, labelKey = 'quests.entry.drv_first_car.objective' },
                 },
                 reward = { money = 750, xp = 80, rp = 3, reason = 'quest_first_car' },
             },
@@ -102,29 +99,29 @@ Sunset.QuestChains = {
     -- ── ENABLED (emitters wired: contact_added, first_trade, property_rented,
     --    faction_joined) ──────────────────────────────────────────────────
     social = {
-        label = 'Making Connections', order = 4, enabled = true, requiresChain = 'driving',
+        labelKey = 'quests.chain.social', order = 4, enabled = true, requiresChain = 'driving',
         quests = {
-            { key = 'soc_contact', label = 'Stay in Touch', description = 'Add another player as a phone contact.',
-              objectives = { { type = 'contact_added', target = 1, label = 'Add a contact' } },
+            { key = 'soc_contact', labelKey = 'quests.entry.soc_contact.label', descriptionKey = 'quests.entry.soc_contact.description',
+              objectives = { { type = 'contact_added', target = 1, labelKey = 'quests.entry.soc_contact.objective' } },
               reward = { money = 100, xp = 20, rp = 1, reason = 'quest_contact' } },
-            { key = 'soc_trade', label = 'A Deal is a Deal', description = 'Complete a trade with another player.',
-              objectives = { { type = 'first_trade', target = 1, label = 'Complete a player trade' } },
+            { key = 'soc_trade', labelKey = 'quests.entry.soc_trade.label', descriptionKey = 'quests.entry.soc_trade.description',
+              objectives = { { type = 'first_trade', target = 1, labelKey = 'quests.entry.soc_trade.objective' } },
               reward = { money = 200, xp = 30, rp = 2, reason = 'quest_trade' }, unlocksChain = 'housing' },
         },
     },
     housing = {
-        label = 'A Place to Call Home', order = 5, enabled = true, requiresChain = 'social',
+        labelKey = 'quests.chain.housing', order = 5, enabled = true, requiresChain = 'social',
         quests = {
-            { key = 'hou_rent', label = 'First Rental', description = 'Rent a property to call home.',
-              objectives = { { type = 'property_rented', target = 1, label = 'Rent a property' } },
+            { key = 'hou_rent', labelKey = 'quests.entry.hou_rent.label', descriptionKey = 'quests.entry.hou_rent.description',
+              objectives = { { type = 'property_rented', target = 1, labelKey = 'quests.entry.hou_rent.objective' } },
               reward = { money = 400, xp = 50, rp = 2, reason = 'quest_rental' }, unlocksChain = 'faction' },
         },
     },
     faction = {
-        label = 'Joining the Ranks', order = 6, enabled = true, requiresChain = 'housing',
+        labelKey = 'quests.chain.faction', order = 6, enabled = true, requiresChain = 'housing',
         quests = {
-            { key = 'fac_join', label = 'Application', description = 'Join a faction.',
-              objectives = { { type = 'faction_joined', target = 1, label = 'Join a faction' } },
+            { key = 'fac_join', labelKey = 'quests.entry.fac_join.label', descriptionKey = 'quests.entry.fac_join.description',
+              objectives = { { type = 'faction_joined', target = 1, labelKey = 'quests.entry.fac_join.objective' } },
               reward = { money = 300, xp = 60, rp = 3, reason = 'quest_faction' } },
         },
     },
@@ -134,41 +131,38 @@ Sunset.QuestChains = {
     -- NPCs required; the black-market NPC from the design brief can replace
     -- the carjack objective later without touching the quest engine.
     advanced = {
-        label = 'Master of Your Craft', order = 7, enabled = true, requiresChain = 'faction',
-        description = 'Become a specialist: climb skill tiers and stack shifts.',
+        labelKey = 'quests.chain.advanced', order = 7, enabled = true, requiresChain = 'faction',
         quests = {
-            { key = 'adv_level3', label = 'Skilled Worker', description = 'Gain 3 skill levels in any civilian job (complete shifts to earn job XP).',
-              objectives = { { type = 'job_level_up', target = 3, label = 'Gain 3 skill levels' } },
+            { key = 'adv_level3', labelKey = 'quests.entry.adv_level3.label', descriptionKey = 'quests.entry.adv_level3.description',
+              objectives = { { type = 'job_level_up', target = 3, labelKey = 'quests.entry.adv_level3.objective' } },
               reward = { money = 800, xp = 100, rp = 4, reason = 'quest_skill_tier' } },
-            { key = 'adv_shifts20', label = 'Workhorse', description = 'Complete 20 work shifts across any jobs.',
-              objectives = { { type = 'job_shift_completed', target = 20, label = 'Complete 20 shifts' } },
+            { key = 'adv_shifts20', labelKey = 'quests.entry.adv_shifts20.label', descriptionKey = 'quests.entry.adv_shifts20.description',
+              objectives = { { type = 'job_shift_completed', target = 20, labelKey = 'quests.entry.adv_shifts20.objective' } },
               reward = { money = 1500, xp = 150, rp = 5, reason = 'quest_workhorse' }, unlocksChain = 'criminal' },
         },
     },
     criminal = {
-        label = 'The Other Side', order = 8, enabled = true, requiresChain = 'advanced',
-        description = 'Wanted stars have a price. Prove you can survive the other side of the law.',
+        labelKey = 'quests.chain.criminal', order = 8, enabled = true, requiresChain = 'advanced',
         quests = {
-            { key = 'crim_chop', label = 'Fast Cars, Fast Cash', description = 'Sell a stolen vehicle at the chop shop.',
-              objectives = { { type = 'carjack_sold', target = 1, label = 'Sell a stolen vehicle' } },
+            { key = 'crim_chop', labelKey = 'quests.entry.crim_chop.label', descriptionKey = 'quests.entry.crim_chop.description',
+              objectives = { { type = 'carjack_sold', target = 1, labelKey = 'quests.entry.crim_chop.objective' } },
               reward = { money = 1000, xp = 120, rp = 5, reason = 'quest_chop' } },
-            { key = 'crim_robbery', label = 'Smash and Grab', description = 'Complete a robbery and get away with the goods.',
-              objectives = { { type = 'robbery_completed', target = 1, label = 'Complete a robbery' } },
+            { key = 'crim_robbery', labelKey = 'quests.entry.crim_robbery.label', descriptionKey = 'quests.entry.crim_robbery.description',
+              objectives = { { type = 'robbery_completed', target = 1, labelKey = 'quests.entry.crim_robbery.objective' } },
               reward = { money = 2500, xp = 200, rp = 6, reason = 'quest_robbery' } },
-            { key = 'crim_three', label = 'Career Criminal', description = 'Complete 3 robberies. The heat is on.',
-              objectives = { { type = 'robbery_completed', target = 3, label = 'Complete 3 robberies' } },
+            { key = 'crim_three', labelKey = 'quests.entry.crim_three.label', descriptionKey = 'quests.entry.crim_three.description',
+              objectives = { { type = 'robbery_completed', target = 3, labelKey = 'quests.entry.crim_three.objective' } },
               reward = { money = 5000, xp = 300, rp = 8, reason = 'quest_career_criminal' }, unlocksChain = 'clan' },
         },
     },
     clan = {
-        label = 'Blood and Territory', order = 9, enabled = true, requiresChain = 'criminal',
-        description = 'Loyalty, colors, and turf. Join or found a clan and hold ground.',
+        labelKey = 'quests.chain.clan', order = 9, enabled = true, requiresChain = 'criminal',
         quests = {
-            { key = 'cln_join', label = 'Colors', description = 'Join a clan (or found your own) via /clan.',
-              objectives = { { type = 'clan_joined', target = 1, label = 'Join or create a clan' } },
+            { key = 'cln_join', labelKey = 'quests.entry.cln_join.label', descriptionKey = 'quests.entry.cln_join.description',
+              objectives = { { type = 'clan_joined', target = 1, labelKey = 'quests.entry.cln_join.objective' } },
               reward = { money = 1000, xp = 150, rp = 5, reason = 'quest_clan_join' } },
-            { key = 'cln_war', label = 'Hold the Line', description = 'Fight in a turf war and survive to the final scoreboard.',
-              objectives = { { type = 'turf_war_fought', target = 1, label = 'Fight in a turf war' } },
+            { key = 'cln_war', labelKey = 'quests.entry.cln_war.label', descriptionKey = 'quests.entry.cln_war.description',
+              objectives = { { type = 'turf_war_fought', target = 1, labelKey = 'quests.entry.cln_war.objective' } },
               reward = { money = 3000, xp = 250, rp = 8, reason = 'quest_clan_war' } },
         },
     },

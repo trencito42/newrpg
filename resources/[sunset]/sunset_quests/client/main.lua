@@ -45,12 +45,20 @@ RegisterCommand('quests', function()
     end
     openQuests()
 end, false)
-TriggerEvent('chat:addSuggestion', '/quests', 'Open your quest log / progression')
+TriggerEvent('chat:addSuggestion', '/quests', exports.sunset_core:Translate('quests.command.description'))
 
 AddEventHandler('sunset:nui:questLogClose', function()
     panelOpen = false
     exports.sunset_ui:Send('questLogHide', {})
     exports.sunset_ui:ReleaseFocusUnlessModal('quests')
+end)
+
+AddEventHandler('sunset:nui:questLocaleRefresh', function()
+    if not panelOpen then return end
+    local list = Sunset.AwaitCallback('sunset:quests:list')
+    if type(list) == 'table' then
+        exports.sunset_ui:Send('questLogShow', { quests = list, renderToken = panelRenderToken })
+    end
 end)
 
 AddEventHandler('sunset:nui:questClaim', function(data)
@@ -61,7 +69,7 @@ AddEventHandler('sunset:nui:questClaim', function(data)
         exports.sunset_ui:Notify(exports.sunset_core:Translate('quests.message.reward_claimed'), 'success')
         if panelOpen then openQuests() end
     else
-        exports.sunset_ui:Notify(err or 'Could not claim reward.', 'error')
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('quests.message.claim_failed'), 'error')
     end
 end)
 

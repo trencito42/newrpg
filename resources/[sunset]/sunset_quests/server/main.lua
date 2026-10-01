@@ -114,9 +114,9 @@ function AddProgress(source, eventType, amount, context)
                                 "UPDATE character_quests SET progress = ?, status = 'complete', completed_at = NOW() WHERE character_id = ? AND quest_key = ?",
                                 { newProgress, char.id, questKey })
                             TriggerClientEvent('sunset:quests:objectiveComplete', source, questKey)
-                            local label = def.quest.label or questKey
+                            local label = exports.sunset_core:TFor(source, def.quest.labelKey)
                             TriggerClientEvent('sunset:client:notify', source,
-                                ('Quest complete: %s — open /quests to claim.'):format(label), 'success', 7000)
+                                exports.sunset_core:TFor(source, 'quests.message.completed_claim', { label = label }), 'success', 7000)
                         else
                             MySQL.update.await(
                                 'UPDATE character_quests SET progress = ? WHERE character_id = ? AND quest_key = ?',
@@ -163,13 +163,14 @@ function GetProgress(source)
         out[#out + 1] = {
             questKey = questKey,
             chainKey = st.chain_key,
-            chainLabel = def and def.chain.label or st.chain_key,
-            label = def and def.quest.label or questKey,
-            description = def and def.quest.description or '',
+            chainLabel = def and exports.sunset_core:TFor(source, def.chain.labelKey) or st.chain_key,
+            label = def and exports.sunset_core:TFor(source, def.quest.labelKey) or questKey,
+            description = def and exports.sunset_core:TFor(source, def.quest.descriptionKey) or '',
             progress = st.progress or 0,
             target = st.target or 1,
             status = st.status,
-            objectiveLabel = def and def.quest.objectives and def.quest.objectives[1] and def.quest.objectives[1].label or '',
+            objectiveLabel = def and def.quest.objectives and def.quest.objectives[1]
+                and exports.sunset_core:TFor(source, def.quest.objectives[1].labelKey) or '',
             reward = def and def.quest.reward or nil,
         }
     end
@@ -216,9 +217,10 @@ function ClaimReward(source, questKey)
     -- Unlock the next quest in the chain / next chain.
     ensureActiveQuest(char.id)
     if def and def.quest.unlocksChain then
+        local unlocked = Sunset.QuestChains[def.quest.unlocksChain]
+        local label = unlocked and exports.sunset_core:TFor(source, unlocked.labelKey) or def.quest.unlocksChain
         TriggerClientEvent('sunset:client:notify', source,
-            ('New quest chain unlocked: %s'):format(Sunset.QuestChains[def.quest.unlocksChain] and Sunset.QuestChains[def.quest.unlocksChain].label or def.quest.unlocksChain),
-            'success', 8000)
+            exports.sunset_core:TFor(source, 'quests.message.chain_unlocked', { label = label }), 'success', 8000)
     end
     TriggerClientEvent('sunset:quests:claimed', source, questKey, reward)
     return true, reward
@@ -233,7 +235,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:quests:claim', function(source, questKey)
     local ok, res = ClaimReward(source, tostring(questKey or ''))
     if ok then return true end
-    return nil, type(res) == 'string' and res or 'Could not claim reward.'
+    return nil, type(res) == 'table' and res.localeKey
+        and exports.sunset_core:TFor(source, res.localeKey, res.params)
+        or exports.sunset_core:TFor(source, 'quests.message.claim_failed')
 end)
 
 -- Lifecycle ----------------------------------------------------

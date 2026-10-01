@@ -138,5 +138,6 @@
         if (!QuestLog.open) return;
         QuestLog.updateChrome();
         QuestLog.render();
+        post('questLocaleRefresh');
     });
 })();
