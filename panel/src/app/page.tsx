@@ -1,23 +1,13 @@
 import Link from "next/link";
-import {
-  Users,
-  Shield,
-  Map,
-  Radio,
-  ExternalLink,
-  Vote,
-} from "lucide-react";
+import { Radio, ExternalLink, Vote } from "lucide-react";
 import { getViewerLocale } from "@/lib/auth";
 import { getServerStatus, getAggregatedServerStats } from "@/lib/bridge";
-import { t, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
+import { t, formatNumber, formatCurrency } from "@/lib/i18n";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { panelBrand } from "@/lib/brand";
-import { PlayerName } from "@/components/ui/PlayerName";
-import { isFaction } from "@/lib/factions";
 
 interface PollRow extends RowDataPacket {
   id: number;
@@ -34,17 +24,6 @@ interface PollOptRow extends RowDataPacket {
   label_en: string;
   label_ro: string;
   votes_count: number;
-}
-
-interface RecentSanctionRow extends RowDataPacket {
-  id: number;
-  action: string;
-  admin_name: string;
-  target_name: string;
-  target_job: string | null;
-  reason: string;
-  duration_min: number | null;
-  created_at: string;
 }
 
 export default async function HomePage() {
@@ -73,19 +52,6 @@ export default async function HomePage() {
       [featuredPoll.id]
     );
   }
-
-  // Load recent sanctions
-  const recentSanctions = await dbQuery<RecentSanctionRow>(
-    `SELECT s.id, s.action, s.reason, s.duration_min, s.created_at,
-            a.username AS admin_name,
-            CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS target_name,
-            c.job AS target_job
-     FROM admin_sanctions s
-     JOIN accounts a ON a.id = s.admin_account_id
-     LEFT JOIN characters c ON c.id = s.target_character_id
-     ORDER BY s.id DESC
-     LIMIT 8`
-  );
 
   return (
     <div className="space-y-5">
@@ -132,9 +98,9 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Flat Stat Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+      {/* Server counts, without fabricated totals or decorative cards. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
+        <div>
           <span className="text-xs text-[#6f6f74] block font-medium">
             {t(locale, "home.players_online")}
           </span>
@@ -143,7 +109,7 @@ export default async function HomePage() {
           </span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+        <div>
           <span className="text-xs text-[#6f6f74] block font-medium">
             {t(locale, "home.registered_accounts")}
           </span>
@@ -152,29 +118,28 @@ export default async function HomePage() {
           </span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+        <div>
           <span className="text-xs text-[#6f6f74] block font-medium">
-            {t(locale, "home.active_factions")}
+            {locale === "ro" ? "Personaje" : "Characters"}
           </span>
           <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
-            10
+            {formatNumber(stats.totalCharacters, locale)}
           </span>
         </div>
 
-        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+        <div>
           <span className="text-xs text-[#6f6f74] block font-medium">
             {t(locale, "home.controlled_turfs")}
           </span>
           <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
-            {stats.controlledTurfs} <span className="text-xs text-[#6f6f74] font-normal">/ 18</span>
+            {stats.controlledTurfs}
           </span>
         </div>
       </div>
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left Column: Poll (if active) + Recent Sanctions */}
-        <div className={featuredPoll ? "lg:col-span-2 space-y-5" : "lg:col-span-2 space-y-5"}>
+        <div className="lg:col-span-2">
           {featuredPoll && (
             <Card>
               <CardHeader>
@@ -234,60 +199,6 @@ export default async function HomePage() {
             </Card>
           )}
 
-          {/* Recent Sanctions Table */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
-                {t(locale, "home.recent_sanctions")}
-              </h2>
-            </div>
-
-            {recentSanctions.length > 0 ? (
-              <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
-                    <tr>
-                      <th className="py-2 px-3">Player</th>
-                      <th className="py-2 px-3">Action</th>
-                      <th className="py-2 px-3">Reason</th>
-                      <th className="py-2 px-3">Staff</th>
-                      <th className="py-2 px-3 text-right">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
-                    {recentSanctions.map((s) => (
-                      <tr key={s.id} className="hover:bg-surface-200/40">
-                        <td className="py-2 px-3">
-                          {s.target_name ? (
-                            <PlayerName name={s.target_name} factionId={s.target_job} />
-                          ) : (
-                            <span className="text-[#6f6f74]">Account</span>
-                          )}
-                        </td>
-                        <td className="py-2 px-3">
-                          <span className="capitalize font-medium text-[#f1f1f1]">{s.action}</span>
-                          {s.duration_min ? ` (${s.duration_min}m)` : ""}
-                        </td>
-                        <td className="py-2 px-3 max-w-[200px] truncate text-[#6f6f74]">
-                          {s.reason}
-                        </td>
-                        <td className="py-2 px-3 text-[#6f6f74]">
-                          {s.admin_name}
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
-                          {formatDate(s.created_at, locale)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
-                No recent sanctions.
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Right Column: Server Economy */}
