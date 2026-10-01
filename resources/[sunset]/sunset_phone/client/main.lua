@@ -272,6 +272,11 @@ local function refreshPhoneSoon()
     end)
 end
 
+RegisterNetEvent('sunset:client:phoneNewMessage', function(msg)
+    if not phoneOpen or not msg then return end
+    exports.sunset_ui:Send('phoneNewMessage', msg)
+end)
+
 RegisterNetEvent('sunset:client:phoneMessage', function()
     if not phoneOpen then return end
     refreshPhoneSoon()

@@ -62,7 +62,7 @@ const Phone = {
             if (is112) {
                 this.trigger112Emergency();
             } else if (this.chatTarget?.phone) {
-                notify(`Calling ${this.chatTarget.name || this.chatTarget.phone}...`, 'info');
+                notify(I18n.t('phone.calling', { contact: this.chatTarget.name || this.chatTarget.phone }), 'info');
             }
         });
 
@@ -269,6 +269,26 @@ const Phone = {
                 }
             }
             this.renderChat(this.chatTarget);
+        }
+    },
+
+    addMessage(msg) {
+        if (!this.data || !msg) return;
+        this.data.messages = this.data.messages || [];
+        const exists = this.data.messages.some((m) => m.id === msg.id);
+        if (!exists) {
+            this.data.messages.unshift(msg);
+        }
+        if (msg.sender_avatar && msg.sender_character_id) {
+            this.data.avatarsByChar = this.data.avatarsByChar || {};
+            this.data.avatarsByChar[msg.sender_character_id] = msg.sender_avatar;
+        }
+        this.renderThreads();
+        if (this.chatTarget) {
+            const isRelevant = Number(this.chatTarget.charId) === Number(msg.sender_character_id) || Number(this.chatTarget.charId) === Number(msg.receiver_character_id);
+            if (isRelevant) {
+                this.renderChat(this.chatTarget);
+            }
         }
     },
 
@@ -676,7 +696,7 @@ const Phone = {
         const name = ($('#phone-new-name')?.value || '').trim();
         const phone = ($('#phone-new-phone')?.value || '').trim();
         if (!phone) {
-            notify('Please enter a phone number', 'error');
+            notify(I18n.t('phone.enter_number'), 'error');
             return;
         }
         this._pendingContactAdd = true;
@@ -807,7 +827,7 @@ const Phone = {
         const is112 = this.chatTarget?.isEmergency || this.chatTarget?.charId === -112 || String(this.chatTarget?.charId) === '-112' || this.chatTarget?.phone === '112';
 
         if (!is112 && !this.chatTarget?.charId && !this.chatTarget?.phone) {
-            notify('Invalid contact', 'error');
+            notify(I18n.t('phone.invalid_contact'), 'error');
             return;
         }
 

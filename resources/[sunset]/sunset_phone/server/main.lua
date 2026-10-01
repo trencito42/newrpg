@@ -61,18 +61,65 @@ local function findCharacterByPhone(phoneQuery)
     return nil
 end
 
-local function findSourceByCharacterId(characterId)
-    characterId = tonumber(characterId)
-    if not characterId then return nil end
+local AvatarCache = {}
+local AVATAR_CACHE_TTL = 300
 
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        local c = exports.sunset_core:GetCharacter(src)
-        if c and tonumber(c.id) == characterId then
-            return src
+local function getAvatarsForCharacterIds(cids)
+    local result = {}
+    local missing = {}
+    local now = os.time()
+
+    for _, id in ipairs(cids) do
+        id = tonumber(id)
+        if id and id > 0 then
+            local cached = AvatarCache[id]
+            if cached and (now - cached.cachedAt) < AVATAR_CACHE_TTL then
+                if cached.avatar then
+                    result[id] = cached.avatar
+                end
+            else
+                missing[#missing + 1] = id
+            end
         end
     end
-    return nil
+
+    if #missing > 0 then
+        local uniqueMissing = {}
+        local seen = {}
+        for _, id in ipairs(missing) do
+            if not seen[id] then
+                seen[id] = true
+                uniqueMissing[#uniqueMissing + 1] = id
+            end
+        end
+
+        local placeholders = {}
+        for i = 1, #uniqueMissing do placeholders[i] = '?' end
+        local sql = ('SELECT id, avatar FROM characters WHERE id IN (%s) AND avatar IS NOT NULL AND avatar != \'\'')
+            :format(table.concat(placeholders, ','))
+
+        local rows = MySQL.query.await(sql, uniqueMissing) or {}
+        local foundIds = {}
+        for _, r in ipairs(rows) do
+            local cid = tonumber(r.id)
+            if cid then
+                AvatarCache[cid] = { avatar = r.avatar, cachedAt = now }
+                result[cid] = r.avatar
+                foundIds[cid] = true
+            end
+        end
+        for _, id in ipairs(uniqueMissing) do
+            if not foundIds[id] then
+                AvatarCache[id] = { avatar = nil, cachedAt = now }
+            end
+        end
+    end
+
+    return result
+end
+
+local function findSourceByCharacterId(characterId)
+    return exports.sunset_core:GetSourceByCharacterId(characterId)
 end
 
 exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
@@ -98,37 +145,30 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         messages = rows
     end
 
-    local onlineByChar = {}
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        if src then
-            local c = exports.sunset_core:GetCharacter(src)
-            local cid = c and tonumber(c.id)
-            if cid then
-                onlineByChar[cid] = src
-            end
-        end
-    end
+    local onlineByChar = exports.sunset_core:GetOnlineCharacters()
 
-    -- Load personal saved contacts (with avatars)
+    -- Load personal saved contacts
     local contacts = {}
     local contactRows = MySQL.query.await([[
-        SELECT pc.id, pc.contact_name, pc.phone_number, pc.contact_character_id, pc.created_at,
-               c.avatar AS contact_avatar
+        SELECT pc.id, pc.contact_name, pc.phone_number, pc.contact_character_id, pc.created_at
         FROM phone_contacts pc
-        LEFT JOIN characters c ON c.id = pc.contact_character_id
         WHERE pc.character_id = ?
         ORDER BY pc.contact_name ASC
     ]], { myCharId }) or {}
+
+    local neededAvatarIds = { myCharId }
 
     for _, cRow in ipairs(contactRows) do
         local targetCid = tonumber(cRow.contact_character_id)
         local isOnline = false
         local targetServerId = nil
 
-        if targetCid and onlineByChar[targetCid] then
-            isOnline = true
-            targetServerId = onlineByChar[targetCid]
+        if targetCid then
+            neededAvatarIds[#neededAvatarIds + 1] = targetCid
+            if onlineByChar[targetCid] then
+                isOnline = true
+                targetServerId = onlineByChar[targetCid]
+            end
         end
 
         contacts[#contacts + 1] = {
@@ -138,20 +178,22 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
             characterId = targetCid,
             online = isOnline,
             serverId = targetServerId,
-            avatar = cRow.contact_avatar or nil,
         }
     end
 
-    -- Load avatars for message threads (by character id)
-    local avatarsByChar = {}
-    pcall(function()
-        local avatarRows = MySQL.query.await([[
-            SELECT id, avatar FROM characters WHERE avatar IS NOT NULL AND avatar != ''
-        ]]) or {}
-        for _, row in ipairs(avatarRows) do
-            avatarsByChar[tonumber(row.id)] = row.avatar
+    for _, msg in ipairs(messages) do
+        if msg.sender_character_id then neededAvatarIds[#neededAvatarIds + 1] = tonumber(msg.sender_character_id) end
+        if msg.receiver_character_id then neededAvatarIds[#neededAvatarIds + 1] = tonumber(msg.receiver_character_id) end
+    end
+
+    -- Demand-driven avatar fetching (only for contacts & active message participants)
+    local avatarsByChar = getAvatarsForCharacterIds(neededAvatarIds)
+
+    for _, contact in ipairs(contacts) do
+        if contact.characterId and avatarsByChar[contact.characterId] then
+            contact.avatar = avatarsByChar[contact.characterId]
         end
-    end)
+    end
 
     return {
         myId = source,
@@ -320,10 +362,21 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     local exists = MySQL.scalar.await('SELECT id FROM characters WHERE id = ?', { targetCharacterId })
     if not exists then return nil, { localeKey = 'phone.message.player_character_not_found' } end
 
-    MySQL.insert.await(
+    local msgId = MySQL.insert.await(
         'INSERT INTO phone_messages (sender_character_id, receiver_character_id, message) VALUES (?, ?, ?)',
         { tonumber(char.id), targetCharacterId, message }
     )
+
+    local senderAvatar = AvatarCache[tonumber(char.id)] and AvatarCache[tonumber(char.id)].avatar or nil
+    local msgPayload = {
+        id = msgId,
+        sender_character_id = tonumber(char.id),
+        receiver_character_id = targetCharacterId,
+        message = message,
+        created_at = os.date('!%Y-%m-%dT%H:%M:%SZ'),
+        sender_name = char.firstname or 'Unknown',
+        sender_avatar = senderAvatar,
+    }
 
     local targetSource = findSourceByCharacterId(targetCharacterId)
     if targetSource then
@@ -335,8 +388,9 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
             type = 'sms',
             smsNotify = true,
         })
-        TriggerClientEvent('sunset:client:phoneMessage', targetSource)
+        TriggerClientEvent('sunset:client:phoneNewMessage', targetSource, msgPayload)
     end
+    TriggerClientEvent('sunset:client:phoneNewMessage', source, msgPayload)
 
     return true
 end)
@@ -346,6 +400,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:phoneHasAvatar', function(source, characterId)
     characterId = tonumber(characterId)
     if not characterId then return false end
+    if AvatarCache[characterId] and AvatarCache[characterId].avatar then return true end
     local row = MySQL.scalar.await('SELECT avatar FROM characters WHERE id = ? LIMIT 1', { characterId })
     return row ~= nil and tostring(row) ~= ''
 end)
@@ -363,5 +418,6 @@ exports.sunset_core:RegisterCallback('sunset:phoneSaveAvatar', function(source, 
     end
 
     MySQL.update.await('UPDATE characters SET avatar = ? WHERE id = ?', { base64, characterId })
+    AvatarCache[characterId] = { avatar = base64, cachedAt = os.time() }
     return true
 end)

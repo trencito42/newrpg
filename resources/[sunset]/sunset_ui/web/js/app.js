@@ -776,6 +776,7 @@
 
             if (action === 'phoneShow') { window.Phone?.show?.(payload); return; }
             if (action === 'phoneUpdate') { window.Phone?.update?.(payload); return; }
+            if (action === 'phoneNewMessage') { window.Phone?.addMessage?.(payload); return; }
             if (action === 'phoneHide') { window.Phone?.hide?.(); return; }
 
             if (action === 'inventoryShow') { window.Panels?.showInventory?.(payload); return; }
