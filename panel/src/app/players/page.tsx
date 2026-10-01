@@ -115,6 +115,7 @@ export default async function PlayersDirectoryPage({
                 {players.length > 0 ? (
                   players.map((p) => {
                     const fullName = `${p.firstname} ${p.lastname || ""}`.trim();
+                    const slug = p.lastname && p.lastname.trim().length > 0 ? `${p.firstname}_${p.lastname.trim()}` : p.firstname;
                     return (
                       <tr
                         key={p.id}
@@ -122,7 +123,7 @@ export default async function PlayersDirectoryPage({
                       >
                         <td className="py-3">
                           <Link
-                            href={`/players/${p.id}`}
+                            href={`/players/${encodeURIComponent(slug)}`}
                             className="flex items-center space-x-2.5 font-bold text-white group-hover:text-brand transition-colors"
                           >
                             <div className="w-7 h-7 rounded-full bg-surface-50 border border-surface-border flex items-center justify-center text-brand">

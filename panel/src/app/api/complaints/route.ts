@@ -4,7 +4,7 @@ import { queryOne, execute } from "@/lib/db";
 import { z } from "zod";
 
 const complaintSchema = z.object({
-  accusedName: z.string().trim().min(3).max(64),
+  accusedName: z.string().trim().min(2).max(64),
   category: z.enum([
     "deathmatch",
     "powergaming",
@@ -14,8 +14,8 @@ const complaintSchema = z.object({
     "faction_abuse",
     "other",
   ]),
-  title: z.string().trim().min(5).max(191),
-  evidenceText: z.string().trim().min(10).max(5000),
+  title: z.string().trim().min(3).max(191),
+  evidenceText: z.string().trim().min(3).max(5000),
 });
 
 export async function POST(req: NextRequest) {
@@ -28,26 +28,33 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const result = complaintSchema.safeParse(body);
     if (!result.success) {
+      const errMessages = result.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
       return NextResponse.json(
-        { error: "Invalid complaint data", details: result.error.flatten() },
+        { error: `Invalid complaint data: ${errMessages}`, details: result.error.flatten() },
         { status: 400 }
       );
     }
 
     const { accusedName, category, title, evidenceText } = result.data;
 
-    // Verify accused character exists
-    const accusedChar = await queryOne<{ id: number; name: string }>(
-      "SELECT id, name FROM characters WHERE LOWER(name) = LOWER(?) LIMIT 1",
-      [accusedName]
+    // Verify accused character exists in characters table using firstname and lastname
+    const accusedChar = await queryOne<{ id: number; firstname: string; lastname: string }>(
+      `SELECT id, firstname, lastname FROM characters
+       WHERE LOWER(firstname) = LOWER(?)
+          OR LOWER(CONCAT(firstname, '_', COALESCE(lastname, ''))) = LOWER(?)
+          OR LOWER(CONCAT(firstname, ' ', COALESCE(lastname, ''))) = LOWER(?)
+       LIMIT 1`,
+      [accusedName, accusedName, accusedName]
     );
 
     if (!accusedChar) {
       return NextResponse.json(
-        { error: `Player character '${accusedName}' was not found.` },
+        { error: `Player character '${accusedName}' was not found on the server.` },
         { status: 404 }
       );
     }
+
+    const accusedFullName = `${accusedChar.firstname} ${accusedChar.lastname || ""}`.trim();
 
     // Rate limiting: check recent complaints created by this account in the last 10 minutes
     const recent = await queryOne<{ count: number }>(
@@ -71,7 +78,7 @@ export async function POST(req: NextRequest) {
         user.accountId,
         user.selectedCharacterId || null,
         accusedChar.id,
-        accusedChar.name,
+        accusedFullName,
         category,
         title,
         evidenceText,

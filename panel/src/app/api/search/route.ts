@@ -29,12 +29,19 @@ export async function GET(req: NextRequest) {
     [pattern, pattern, pattern]
   );
 
-  const results = rows.map((r) => ({
-    id: r.id,
-    name: `${r.firstname} ${r.lastname || ""}`.trim(),
-    level: Number(r.level) || 1,
-    job: r.job || "Unemployed",
-  }));
+  const results = rows.map((r) => {
+    const slug =
+      r.lastname && r.lastname.trim().length > 0
+        ? `${r.firstname}_${r.lastname.trim()}`
+        : r.firstname;
+    return {
+      id: r.id,
+      slug,
+      name: `${r.firstname} ${r.lastname || ""}`.trim(),
+      level: Number(r.level) || 1,
+      job: r.job || "Unemployed",
+    };
+  });
 
   return NextResponse.json({ results });
 }

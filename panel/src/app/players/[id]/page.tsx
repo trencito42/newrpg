@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentSession, getViewerLocale, isStaff } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
@@ -90,17 +90,16 @@ export default async function PlayerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const characterId = Number(id);
-  if (!characterId || isNaN(characterId)) {
-    notFound();
-  }
+  const decoded = decodeURIComponent(id).trim();
+  const isNumeric = /^\d+$/.test(decoded);
+  const numericId = isNumeric ? Number(decoded) : 0;
 
   const [session, locale] = await Promise.all([
     getCurrentSession(),
     getViewerLocale(),
   ]);
 
-  // Query character record
+  // Query character record by numeric ID or by Character Name / Slug
   const char = await dbQuerySingle<CharacterProfileRow>(
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
@@ -112,14 +111,39 @@ export default async function PlayerProfilePage({
      FROM characters c
      JOIN players p ON p.id = c.player_id
      JOIN accounts a ON a.id = p.account_id
-     WHERE c.id = ?
+     WHERE (? > 0 AND c.id = ?)
+        OR LOWER(c.firstname) = LOWER(?)
+        OR LOWER(CONCAT(c.firstname, '_', COALESCE(c.lastname, ''))) = LOWER(?)
+        OR LOWER(CONCAT(c.firstname, ' ', COALESCE(c.lastname, ''))) = LOWER(?)
+        OR (LOWER(c.firstname) = LOWER(?) AND LOWER(COALESCE(c.lastname, '')) = LOWER(?))
      LIMIT 1`,
-    [characterId]
+    [
+      numericId,
+      numericId,
+      decoded,
+      decoded,
+      decoded,
+      decoded.split("_")[0] || decoded,
+      decoded.split("_").slice(1).join(" ") || "",
+    ]
   );
 
   if (!char) {
     notFound();
   }
+
+  // Canonical slug for character URL (e.g. "Hardy" or "Andrei_Popescu")
+  const canonicalSlug =
+    char.lastname && char.lastname.trim().length > 0
+      ? `${char.firstname}_${char.lastname.trim()}`
+      : char.firstname;
+
+  // If visited by raw ID (/players/2), redirect automatically to canonical name URL (/players/Hardy)
+  if (isNumeric) {
+    redirect(`/players/${encodeURIComponent(canonicalSlug)}`);
+  }
+
+  const characterId = char.id;
 
   // PRIVACY BOUNDARY ENFORCEMENT AT DATA ACCESS LAYER:
   // Only account owner or staff can see sensitive financial balances
@@ -160,7 +184,7 @@ export default async function PlayerProfilePage({
       [characterId]
     ),
     dbQuery<LicenseRow>(
-      "SELECT type, issued_at, issued_at_payday, expires_at_payday FROM character_licenses WHERE character_id = ?",
+      "SELECT license_type AS type, issued_at, issued_at_payday, expires_at_payday FROM character_licenses WHERE character_id = ?",
       [characterId]
     ),
     dbQuery<ReputationRow>(

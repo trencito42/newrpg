@@ -5,7 +5,17 @@ import { Card } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import {
+  ShieldAlert,
+  Radio,
+  LifeBuoy,
+  FileText,
+  UserX,
+  History,
+  AlertTriangle,
+  CheckCircle2,
+  Lock,
+} from "lucide-react";
 
 interface OpenTicketRecord {
   id: number;
@@ -60,21 +70,21 @@ export default async function StaffDashboardPage() {
   // Server-side strict authorization check: Admin > 0 or Helper > 0
   if (!user || (user.adminLevel === 0 && user.helperLevel === 0)) {
     return (
-      <div className="p-8 text-center max-w-lg mx-auto mt-12 space-y-4">
-        <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400 text-xl font-bold">
-          !
+      <div className="p-8 text-center max-w-md mx-auto mt-16 space-y-4 bg-surface-200 border border-red-500/30 rounded-2xl shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto text-red-400">
+          <Lock className="w-7 h-7" />
         </div>
-        <h1 className="text-xl font-bold text-foreground">
+        <h1 className="text-xl font-black text-white">
           {lang === "ro" ? "Acces Restricționat Staff" : "Staff Access Restricted"}
         </h1>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-400 leading-relaxed">
           {lang === "ro"
-            ? "Această zonă este rezervată exclusiv administratorilor și helperilor oficiali ai serverului. Acțiunea a fost înregistrată."
-            : "This administrative area is restricted to official server administrators and helpers. Access attempts are audited."}
+            ? "Această zonă este rezervată exclusiv administratorilor și helperilor oficiali ai serverului. Tentativa de acces neautorizat a fost înregistrată în jurnalul de audit."
+            : "This administrative area is restricted to official server administrators and helpers. Unauthorized access attempts are audited."}
         </p>
         <Link
           href="/"
-          className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-md bg-accent text-accent-foreground"
+          className="inline-flex items-center justify-center px-4 py-2 text-xs font-bold rounded-lg bg-brand text-gray-950 hover:bg-brand-600 transition-colors"
         >
           {lang === "ro" ? "Înapoi la Panou" : "Return to Panel"}
         </Link>
@@ -84,7 +94,7 @@ export default async function StaffDashboardPage() {
 
   // 1. Fetch moderation queues
   const openTickets = await query<OpenTicketRecord>(
-    `SELECT t.id, t.title, t.category, COALESCE(c.name, 'Account') as creator_name, t.created_at
+    `SELECT t.id, t.subject AS title, t.department AS category, COALESCE(NULLIF(CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')), ' '), 'Account') as creator_name, t.created_at
      FROM panel_support_tickets t
      LEFT JOIN characters c ON t.character_id = c.id
      WHERE t.status = 'open'
@@ -125,70 +135,92 @@ export default async function StaffDashboardPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {lang === "ro" ? "Centru de Moderare Staff" : "Staff Moderation Center"}
-            </h1>
-            <Badge variant="accent">
-              {user.adminLevel > 0 ? `Admin Lvl ${user.adminLevel}` : `Helper Lvl ${user.helperLevel}`}
-            </Badge>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-surface-200 to-surface-200 border border-amber-500/30 p-6 sm:p-8 shadow-xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-brand text-xs font-bold uppercase tracking-widest mb-1.5">
+              <Radio className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span>{lang === "ro" ? "Dispecerat Administrativ" : "Administrative Operations"}</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                {lang === "ro" ? "Centru de Moderare Staff" : "Staff Moderation Center"}
+              </h1>
+              <Badge variant="brand" className="font-mono text-xs font-bold">
+                {user.adminLevel > 0 ? `Admin Lvl ${user.adminLevel}` : `Helper Lvl ${user.helperLevel}`}
+              </Badge>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-300 mt-2 max-w-2xl leading-relaxed">
+              {lang === "ro"
+                ? "Gestionarea rapoartelor cetățenilor, deciziilor pe reclamații, apelurilor de debanare și auditul activității administrative."
+                : "Active moderation of support tickets, player complaints, unban requests, and real-time sanction logs."}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {lang === "ro"
-              ? "Gestionarea rapoartelor, apelurilor de debanare, reclamațiilor și jurnalele administrative de audit."
-              : "Management of helpdesk tickets, unban appeals, player complaints, and administrative audit logs."}
-          </p>
+          <div className="flex items-center space-x-2 bg-surface-100/80 border border-surface-border px-3 py-1.5 rounded-xl text-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-gray-200">Staff Active</span>
+          </div>
         </div>
       </div>
 
       {/* KPI Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          label={lang === "ro" ? "Tichete Suport Deschise" : "Open Helpdesk Tickets"}
+          title={lang === "ro" ? "Tichete Suport Deschise" : "Open Helpdesk Tickets"}
           value={openTickets.length}
+          icon={LifeBuoy}
+          variant="amber"
         />
         <StatCard
-          label={lang === "ro" ? "Reclamații În Așteptare" : "Pending Complaints"}
+          title={lang === "ro" ? "Reclamații În Așteptare" : "Pending Complaints"}
           value={pendingComplaints.length}
+          icon={FileText}
+          variant="rose"
         />
         <StatCard
-          label={lang === "ro" ? "Cereri Debanare Active" : "Pending Unban Appeals"}
+          title={lang === "ro" ? "Cereri Debanare Active" : "Pending Unban Appeals"}
           value={pendingUnbans.length}
+          icon={UserX}
+          variant="sky"
         />
       </div>
 
       {/* Moderation Queues Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Support Tickets Queue */}
-        <Card className="p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-            <h2 className="font-semibold text-sm text-foreground">
-              {lang === "ro" ? "Tichete Necesită Răspuns" : "Tickets Awaiting Staff"}
-            </h2>
-            <Badge variant="neutral">{openTickets.length}</Badge>
+        <Card className="p-5 bg-surface-200 border-surface-border shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-surface-border/60">
+            <div className="flex items-center space-x-2">
+              <LifeBuoy className="w-4 h-4 text-brand" />
+              <h2 className="font-bold text-xs uppercase tracking-wider text-white">
+                {lang === "ro" ? "Tichete Suport" : "Tickets Awaiting Staff"}
+              </h2>
+            </div>
+            <Badge variant="brand" className="font-mono text-[10px]">{openTickets.length}</Badge>
           </div>
 
           {openTickets.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
-              {lang === "ro" ? "Toate tichetele au primit răspuns." : "No open tickets pending."}
-            </p>
+            <div className="text-center py-8 text-gray-400">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1 opacity-70" />
+              <p className="text-xs">
+                {lang === "ro" ? "Toate tichetele au primit răspuns." : "No open tickets pending."}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {openTickets.map((t) => (
                 <Link
                   key={t.id}
                   href={`/support/tickets/${t.id}`}
-                  className="block p-2.5 rounded bg-muted/20 hover:bg-muted/40 border border-border/30 transition-colors"
+                  className="block p-3 rounded-xl bg-surface-100/70 hover:bg-surface-100 border border-surface-border hover:border-brand/40 transition-colors"
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-bold text-accent font-mono">#{t.id}</span>
-                    <span className="text-[10px] text-muted-foreground">{t.creator_name}</span>
+                    <span className="font-bold text-brand font-mono">#{t.id}</span>
+                    <span className="text-[10px] text-gray-400">{t.creator_name}</span>
                   </div>
-                  <p className="text-xs font-semibold text-foreground truncate">{t.title}</p>
+                  <p className="text-xs font-semibold text-white truncate">{t.title}</p>
                 </Link>
               ))}
             </div>
@@ -196,63 +228,76 @@ export default async function StaffDashboardPage() {
         </Card>
 
         {/* Complaints Queue */}
-        <Card className="p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-            <h2 className="font-semibold text-sm text-foreground">
-              {lang === "ro" ? "Reclamații de Analizat" : "Complaints to Review"}
-            </h2>
-            <Badge variant="warning">{pendingComplaints.length}</Badge>
+        <Card className="p-5 bg-surface-200 border-surface-border shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-surface-border/60">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-rose-400" />
+              <h2 className="font-bold text-xs uppercase tracking-wider text-white">
+                {lang === "ro" ? "Reclamații Jucători" : "Complaints to Review"}
+              </h2>
+            </div>
+            <Badge variant="warning" className="font-mono text-[10px]">{pendingComplaints.length}</Badge>
           </div>
 
           {pendingComplaints.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
-              {lang === "ro" ? "Nicio reclamație în așteptare." : "No pending player complaints."}
-            </p>
+            <div className="text-center py-8 text-gray-400">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1 opacity-70" />
+              <p className="text-xs">
+                {lang === "ro" ? "Nicio reclamație în așteptare." : "No pending player complaints."}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {pendingComplaints.map((c) => (
-                <div
+                <Link
                   key={c.id}
-                  className="p-2.5 rounded bg-muted/20 border border-border/30 space-y-1"
+                  href="/support/complaints"
+                  className="block p-3 rounded-xl bg-surface-100/70 hover:bg-surface-100 border border-surface-border hover:border-rose-500/40 transition-colors space-y-1"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-foreground">vs {c.accused_name}</span>
-                    <Badge variant="neutral">{c.category}</Badge>
+                    <span className="font-bold text-white">vs {c.accused_name}</span>
+                    <Badge variant="outline" className="text-[10px] capitalize">{c.category}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{c.title}</p>
-                </div>
+                  <p className="text-xs text-gray-300 truncate">{c.title}</p>
+                </Link>
               ))}
             </div>
           )}
         </Card>
 
         {/* Unban Queue */}
-        <Card className="p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-            <h2 className="font-semibold text-sm text-foreground">
-              {lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}
-            </h2>
-            <Badge variant="danger">{pendingUnbans.length}</Badge>
+        <Card className="p-5 bg-surface-200 border-surface-border shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-surface-border/60">
+            <div className="flex items-center space-x-2">
+              <UserX className="w-4 h-4 text-sky-400" />
+              <h2 className="font-bold text-xs uppercase tracking-wider text-white">
+                {lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}
+              </h2>
+            </div>
+            <Badge variant="danger" className="font-mono text-[10px]">{pendingUnbans.length}</Badge>
           </div>
 
           {pendingUnbans.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
-              {lang === "ro" ? "Nu există cereri active de debanare." : "No pending unban appeals."}
-            </p>
+            <div className="text-center py-8 text-gray-400">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1 opacity-70" />
+              <p className="text-xs">
+                {lang === "ro" ? "Nu există cereri de debanare." : "No pending unban appeals."}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {pendingUnbans.map((u) => (
                 <div
                   key={u.id}
-                  className="p-2.5 rounded bg-muted/20 border border-border/30 space-y-1 text-xs"
+                  className="p-3 rounded-xl bg-surface-100/70 border border-surface-border space-y-1 text-xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-accent font-bold">Account #{u.account_id}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="font-mono text-brand font-bold">Account #{u.account_id}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">
                       {new Date(u.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{u.reason}</p>
+                  <p className="text-xs text-gray-300 line-clamp-2 leading-relaxed">{u.reason}</p>
                 </div>
               ))}
             </div>
@@ -263,34 +308,37 @@ export default async function StaffDashboardPage() {
       {/* Recent Game Sanctions & Web Audit Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Game Sanctions Log */}
-        <Card className="p-5">
-          <h2 className="text-base font-semibold text-foreground mb-3">
-            {lang === "ro" ? "Ultimele Sancțiuni In-Game" : "Recent In-Game Sanctions"}
-          </h2>
+        <Card className="p-5 bg-surface-200 border-surface-border shadow-lg">
+          <div className="flex items-center space-x-2 pb-3 mb-4 border-b border-surface-border/60">
+            <History className="w-4 h-4 text-brand" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              {lang === "ro" ? "Ultimele Sancțiuni In-Game" : "Recent In-Game Sanctions"}
+            </h2>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border/40 text-[10px] uppercase font-semibold text-muted-foreground text-left">
-                  <th className="pb-2">{lang === "ro" ? "Acțiune" : "Action"}</th>
-                  <th className="pb-2">{lang === "ro" ? "Jucător" : "Target"}</th>
-                  <th className="pb-2">{lang === "ro" ? "Admin" : "Admin"}</th>
-                  <th className="pb-2">{lang === "ro" ? "Motiv" : "Reason"}</th>
-                  <th className="pb-2 text-right">{lang === "ro" ? "Dată" : "Date"}</th>
+                <tr className="border-b border-surface-border/60 text-[10px] uppercase font-bold text-gray-400 text-left">
+                  <th className="pb-2.5">{lang === "ro" ? "Acțiune" : "Action"}</th>
+                  <th className="pb-2.5">{lang === "ro" ? "Jucător" : "Target"}</th>
+                  <th className="pb-2.5">{lang === "ro" ? "Admin" : "Admin"}</th>
+                  <th className="pb-2.5">{lang === "ro" ? "Motiv" : "Reason"}</th>
+                  <th className="pb-2.5 text-right">{lang === "ro" ? "Dată" : "Date"}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/20">
+              <tbody className="divide-y divide-surface-border/40">
                 {recentSanctions.map((s) => (
-                  <tr key={s.id} className="hover:bg-muted/10">
-                    <td className="py-2">
-                      <span className="font-mono font-bold uppercase text-[10px] px-1.5 py-0.5 rounded bg-muted">
+                  <tr key={s.id} className="hover:bg-surface-100/50 transition-colors">
+                    <td className="py-2.5">
+                      <span className="font-mono font-bold uppercase text-[10px] px-2 py-0.5 rounded bg-surface-100 border border-surface-border text-brand">
                         {s.action}
                       </span>
                     </td>
-                    <td className="py-2 font-semibold text-foreground">{s.target_name}</td>
-                    <td className="py-2 text-muted-foreground">{s.admin_name}</td>
-                    <td className="py-2 text-muted-foreground max-w-[140px] truncate">{s.reason}</td>
-                    <td className="py-2 text-right text-[10px] text-muted-foreground font-mono">
+                    <td className="py-2.5 font-bold text-white">{s.target_name}</td>
+                    <td className="py-2.5 text-gray-300 font-mono">{s.admin_name}</td>
+                    <td className="py-2.5 text-gray-400 max-w-[130px] truncate">{s.reason}</td>
+                    <td className="py-2.5 text-right text-[10px] text-gray-500 font-mono">
                       {new Date(s.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </td>
                   </tr>
@@ -301,30 +349,33 @@ export default async function StaffDashboardPage() {
         </Card>
 
         {/* Panel Web Audit Log */}
-        <Card className="p-5">
-          <h2 className="text-base font-semibold text-foreground mb-3">
-            {lang === "ro" ? "Jurnal Audit Web (Panel)" : "Panel Web Audit Log"}
-          </h2>
+        <Card className="p-5 bg-surface-200 border-surface-border shadow-lg">
+          <div className="flex items-center space-x-2 pb-3 mb-4 border-b border-surface-border/60">
+            <ShieldAlert className="w-4 h-4 text-purple-400" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              {lang === "ro" ? "Jurnal Audit Web (Panel)" : "Panel Web Audit Log"}
+            </h2>
+          </div>
 
           {auditLogs.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-6 text-center">
+            <p className="text-xs text-gray-400 py-8 text-center">
               {lang === "ro" ? "Nu există acțiuni web înregistrate în audit." : "No web audit actions logged yet."}
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {auditLogs.map((a) => (
-                <div key={a.id} className="p-2.5 rounded bg-muted/20 border border-border/30 text-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono font-bold text-accent uppercase text-[11px]">{a.action}</span>
-                    <span className="text-[10px] text-muted-foreground font-mono">
+                <div key={a.id} className="p-3 rounded-xl bg-surface-100/60 border border-surface-border text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-brand uppercase text-[11px]">{a.action}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">
                       {new Date(a.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-muted-foreground text-[11px]">
-                    Actor: <span className="font-mono font-semibold text-foreground">Acc #{a.actor_account_id}</span> | Target:{" "}
-                    <span className="font-semibold text-foreground">{a.target_entity} #{a.target_id || "-"}</span>
+                  <div className="text-gray-300 text-[11px]">
+                    Actor: <span className="font-mono font-bold text-white">Acc #{a.actor_account_id}</span> | Target:{" "}
+                    <span className="font-bold text-white">{a.target_entity} #{a.target_id || "-"}</span>
                   </div>
-                  {a.reason && <p className="text-[11px] text-muted-foreground mt-0.5 italic">"{a.reason}"</p>}
+                  {a.reason && <p className="text-[11px] text-gray-400 italic">"{a.reason}"</p>}
                 </div>
               ))}
             </div>

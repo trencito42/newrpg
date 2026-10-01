@@ -36,11 +36,11 @@ export default async function MyLicensesPage() {
   const currentPaydays = char?.paydays_received || 0;
 
   const licenses = await dbQuery<LicenseRow>(
-    `SELECT cl.*, CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS instructor_name
+    `SELECT cl.id, cl.character_id, cl.license_type AS type, cl.issued_at, cl.issued_at_payday, cl.expires_at_payday, cl.issued_by_character_id, CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS instructor_name
      FROM character_licenses cl
      LEFT JOIN characters c ON c.id = cl.issued_by_character_id
      WHERE cl.character_id = ?
-     ORDER BY cl.type ASC`,
+     ORDER BY cl.license_type ASC`,
     [session.selectedCharacterId]
   );
 

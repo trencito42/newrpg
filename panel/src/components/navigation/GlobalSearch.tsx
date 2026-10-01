@@ -6,6 +6,7 @@ import { Search, Loader2, User } from "lucide-react";
 
 interface SearchResult {
   id: number;
+  slug: string;
   name: string;
   level: number;
   job: string;
@@ -56,10 +57,10 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (playerId: number) => {
+  const handleSelect = (res: SearchResult) => {
     setOpen(false);
     setQuery("");
-    router.push(`/players/${playerId}`);
+    router.push(`/players/${encodeURIComponent(res.slug || res.id)}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -93,7 +94,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
             results.map((res) => (
               <button
                 key={res.id}
-                onClick={() => handleSelect(res.id)}
+                onClick={() => handleSelect(res)}
                 className="w-full text-left px-3.5 py-2 hover:bg-surface-50 flex items-center justify-between text-sm transition-colors border-b border-surface-border/50 last:border-b-0"
               >
                 <div className="flex items-center space-x-2.5">

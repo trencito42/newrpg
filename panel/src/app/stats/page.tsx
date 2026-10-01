@@ -66,14 +66,14 @@ export default async function ServerStatsPage() {
   const richest = await query<RichPlayerRecord>(`
     SELECT 
       c.id, 
-      c.name, 
+      CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) as name, 
       c.level, 
       c.cash, 
       c.bank, 
       (c.cash + c.bank) as total_wealth,
-      f.name as faction_name
+      fm.faction_id as faction_name
     FROM characters c
-    LEFT JOIN factions f ON c.faction_id = f.id
+    LEFT JOIN faction_membership fm ON c.id = fm.character_id
     ORDER BY total_wealth DESC
     LIMIT 10
   `);
@@ -193,7 +193,10 @@ export default async function ServerStatsPage() {
                       {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`}
                     </td>
                     <td className="py-2.5 font-semibold">
-                      <Link href={`/players/${p.id}`} className="text-foreground hover:text-accent">
+                      <Link
+                        href={`/players/${encodeURIComponent(p.name.replace(/\s+/g, "_"))}`}
+                        className="text-foreground hover:text-accent"
+                      >
                         {p.name}
                       </Link>
                     </td>

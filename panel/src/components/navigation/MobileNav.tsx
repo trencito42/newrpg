@@ -75,7 +75,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
 
   const characterLinks = session
     ? [
-        { href: `/players/${session.selectedCharacterId || session.accountId}`, label: t(locale, "nav.characters"), icon: User },
+        { href: `/players/${encodeURIComponent(session.selectedCharacterName || String(session.selectedCharacterId || session.accountId))}`, label: t(locale, "nav.characters"), icon: User },
         { href: "/my-character/vehicles", label: t(locale, "nav.vehicles"), icon: Car },
         { href: "/my-character/properties", label: t(locale, "nav.properties"), icon: HomeIcon },
         { href: "/my-character/banking", label: t(locale, "nav.banking"), icon: CreditCard },
