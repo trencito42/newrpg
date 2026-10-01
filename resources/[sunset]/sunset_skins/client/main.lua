@@ -20,11 +20,9 @@ local function applyModel(model)
 
     local hash
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
-    local char = exports.sunset_core:GetCharacter()
-    local gender = (char and tonumber(char.gender)) or (Sunset and Sunset.Character and tonumber(Sunset.Character.gender)) or 0
     if isReset then
-        local isFemale = (gender == 1 or gender == '1' or gender == 'female')
-        hash = (isFemale and `mp_f_freemode_01` or `mp_m_freemode_01`)
+        local defPed = (Sunset.Config and Sunset.Config.DefaultPlayerPed) or 'ig_bankman'
+        hash = type(defPed) == 'number' and defPed or GetHashKey(defPed)
     else
         hash = type(model) == 'number' and model or GetHashKey(model)
     end
@@ -62,12 +60,6 @@ local function applyModel(model)
     SetPedDefaultComponentVariation(newPed)
     SetModelAsNoLongerNeeded(hash)
     TriggerServerEvent('sunset:server:updatePlayerPed')
-
-    if isReset or hash == `mp_m_freemode_01` or hash == `mp_f_freemode_01` then
-        if char and char.appearance and GetResourceState('sunset_appearance') == 'started' then
-            exports.sunset_appearance:ApplyAppearance(newPed, char.appearance, gender)
-        end
-    end
 
     -- SetPlayerModel resets NUI focus; re-apply it if the shop is currently open
     if shopOpen then

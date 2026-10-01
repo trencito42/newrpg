@@ -278,14 +278,14 @@ function ClearFactionLoadout()
     removeDutyWeapons(ped)
     SetPedArmour(ped, 0)
 
-    local gender = (char and char.gender) or 0
     local meta = (char and char.metadata) or {}
     if type(meta) == 'string' then
         local ok, dec = pcall(json.decode, meta)
         meta = ok and dec or {}
     end
     local savedSkin = meta.skin
-    local targetModel = preDutyModel or (savedSkin and savedSkin ~= '' and savedSkin ~= 'default' and savedSkin) or freemodeModelFor(gender)
+    local defPed = (Sunset.Config and Sunset.Config.DefaultPlayerPed) or 'ig_bankman'
+    local targetModel = (savedSkin and savedSkin ~= '' and savedSkin ~= 'default' and savedSkin ~= 'reset' and savedSkin) or defPed
     preDutyModel = nil
 
     if GetEntityModel(ped) ~= (type(targetModel) == 'number' and targetModel or joaat(targetModel)) then
@@ -293,18 +293,8 @@ function ClearFactionLoadout()
         ped = PlayerPedId()
     end
 
-    local currentModel = GetEntityModel(ped)
-    if currentModel == FREEMODE_MALE or currentModel == FREEMODE_FEMALE then
-        local snap = civilianSnapshot
-        civilianSnapshot = nil
-        applySavedAppearance(ped, char, gender)
-        if snap and GetResourceState('sunset_appearance') == 'started' then
-            pcall(function() exports.sunset_appearance:ApplyClothingSnapshot(ped, snap) end)
-        end
-    else
-        civilianSnapshot = nil
-        SetPedDefaultComponentVariation(ped)
-    end
+    civilianSnapshot = nil
+    SetPedDefaultComponentVariation(ped)
     restoreScreenIfFaded()
 end
 
@@ -319,23 +309,19 @@ RegisterNetEvent('sunset:client:dutyState', function(state, factionId)
     end
 end)
 
--- [CLOTHING FIX B5] After a hospital respawn / revive the engine resurrect can
--- drop components. Re-apply the persisted appearance; if the player is ON DUTY
+-- [CLOTHING FIX B5] After a hospital respawn / revive: if the player is ON DUTY
 -- re-apply the faction uniform on top (duty state survives death by design).
 AddEventHandler('sunset:client:playerSpawned', function()
     CreateThread(function()
         Wait(500)
         local char = getChar()
         if not char then return end
-        local ped = PlayerPedId()
-        local gender = char.gender or 0
-        applySavedAppearance(ped, char, gender)
         local okDuty, onDuty = pcall(function() return exports.sunset_factions:IsOnDuty() end)
         if okDuty and onDuty then
             local fid = getFactionId(char)
             local grade = (char.metadata and tonumber(char.metadata.faction_grade)) or 0
             if fid then
-                civilianSnapshot = nil -- post-respawn state IS the civilian base
+                civilianSnapshot = nil
                 ApplyFactionLoadout(fid, grade)
             end
         end

@@ -61,23 +61,8 @@ local function rotatePed(delta)
 end
 
 local function loadFreemodePed(char)
-    local model = (char.gender == 1) and `mp_f_freemode_01` or `mp_m_freemode_01`
-    RequestModel(model)
-    local timeout = GetGameTimer() + 8000
-    while not HasModelLoaded(model) do
-        if GetGameTimer() > timeout then return false end
-        Wait(10)
-    end
-    SetPlayerModel(PlayerId(), model)
-    SetModelAsNoLongerNeeded(model)
-
-    local ped = PlayerPedId()
-    SetPedDefaultComponentVariation(ped)
-    TriggerServerEvent('sunset:server:updatePlayerPed')
-
-    currentAppearance = SunsetAppearance.normalize(char.appearance, char.gender or 0)
-    SunsetAppearance.apply(ped, currentAppearance, char.gender or 0)
-    return true
+    -- Deprecated: sunset_spawn owns player model.
+    return false
 end
 
 local function waitForWorldAt(x, y, z, ped)
@@ -329,24 +314,9 @@ exports('RegisterTopCompatibility', function(gender, topDrawable, rule)
     return SunsetClothingRules.RegisterTopCompatibility(gender, topDrawable, rule)
 end)
 
-AddEventHandler('sunset:client:playerSpawned', function(char)
-    local ped = PlayerPedId()
-    local model = GetEntityModel(ped)
-    if (model == `mp_m_freemode_01` or model == `mp_f_freemode_01`) and char and char.appearance then
-        SunsetAppearance.apply(ped, char.appearance, char.gender or 0)
-    end
-end)
-
 RegisterCommand('relook', function()
-    if editing then return end
-    local char = exports.sunset_core:GetCharacter()
-    if not char then
-        exports.sunset_ui:Notify(exports.sunset_core:Translate('appearance.message.no_character_loaded'), 'error')
-        return
-    end
-    openEditor(char)
+    exports.sunset_ui:Notify('Appearance editor has been replaced with the /skins system.', 'info')
 end, false)
-TriggerEvent('chat:addSuggestion', '/relook', 'Re-open character appearance editor')
 
 -- [CLIENT_PERF_ENTITY_AUDIT] Restore camera/focus/ped state if stopped mid-editor.
 AddEventHandler('onResourceStop', function(res)

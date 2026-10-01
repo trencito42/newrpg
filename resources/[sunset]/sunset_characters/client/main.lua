@@ -17,24 +17,6 @@ local function spawnCharacter(char, preResolvedSpawn)
     local elapsed = flowStartTimer and (GetGameTimer() - flowStartTimer) or 0
     print(('^2[LOGIN-PERF] SPAWN_CHARACTER_INIT +%dms | charId=%s^7'):format(elapsed, tostring(charId)))
 
-    if not char.appearance or not next(char.appearance) then
-        local def = nil
-        if GetResourceState('sunset_appearance') == 'started' then
-            def = exports.sunset_appearance:GetDefaultAppearance(char.gender or 0)
-        end
-        if not def and SunsetAppearance and SunsetAppearance.default then
-            def = SunsetAppearance.default(char.gender or 0)
-        end
-        if def then
-            char.appearance = def
-            CreateThread(function()
-                pcall(function()
-                    Sunset.AwaitCallbackTimeout('sunset:saveAppearance', 3000, def, char.gender or 0, char.id)
-                end)
-            end)
-        end
-    end
-
     if preResolvedSpawn and preResolvedSpawn.x then
         local totalElapsed = flowStartTimer and (GetGameTimer() - flowStartTimer) or 0
         print(('^2[LOGIN-PERF] SPAWN_RESOLVED +%dms | source=%s coords=(%.2f,%.2f,%.2f)^7'):format(
@@ -237,11 +219,12 @@ AddEventHandler('sunset:client:loadingTimedOut', function()
 end)
 
 AddEventHandler('sunset:nui:characterCreate', function()
-    exports.sunset_ui:Show('create', { firstLogin = false })
+    -- Character creator removed: automatic provisioning via enterGame
+    CreateThread(autoEnterGame)
 end)
 
 AddEventHandler('sunset:nui:characterBack', function()
-    CreateThread(showCharacterList)
+    CreateThread(autoEnterGame)
 end)
 
 AddEventHandler('sunset:nui:select', function(data)
@@ -274,7 +257,7 @@ AddEventHandler('sunset:nui:delete', function(data)
             return
         end
         exports.sunset_ui:Notify(exports.sunset_core:Translate('characters.message.character_deleted'), 'success')
-        showCharacterList()
+        CreateThread(autoEnterGame)
     end)
 end)
 

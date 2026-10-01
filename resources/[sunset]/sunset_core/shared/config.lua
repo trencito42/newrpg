@@ -12,6 +12,7 @@ Sunset.Config = {
     ServerName = Sunset.Brand.ServerName,
     DefaultLanguage = 'en',
     MaxCharacters = 1,
+    DefaultPlayerPed = 'ig_bankman',
     DefaultSpawn = vector4(-1037.58, -2737.58, 20.17, 328.0),
     StartingCash = 250,
     StartingBank = 1000,
@@ -62,3 +63,23 @@ Sunset.Jobs = {
 Sunset.Nationalities = {
     'Romanian', 'American', 'British', 'French', 'German', 'Italian', 'Spanish', 'Russian', 'Turkish', 'Other'
 }
+
+function Sunset.GetEffectivePlayerModel(char, dutyState)
+    if dutyState and dutyState.active and dutyState.skin and dutyState.skin ~= '' then
+        return dutyState.skin, 'faction'
+    end
+    if char then
+        local meta = char.metadata
+        if type(meta) == 'string' then
+            local ok, dec = pcall(json.decode, meta)
+            meta = ok and dec or {}
+        end
+        if type(meta) == 'table' then
+            local skin = meta.skin
+            if skin and skin ~= '' and skin ~= 'default' and skin ~= 'reset' then
+                return skin, 'owned_skin'
+            end
+        end
+    end
+    return (Sunset.Config and Sunset.Config.DefaultPlayerPed) or 'ig_bankman', 'default'
+end

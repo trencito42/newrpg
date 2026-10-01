@@ -3,25 +3,6 @@ local spawning = false
 local spawnFlowTimer = nil
 local lastSpawningCharId = nil
 
-local CIVILIAN_MALE = `mp_m_freemode_01`
-local CIVILIAN_FEMALE = `mp_f_freemode_01`
-
-local function logBoot(stage, details)
-    if SunsetBoot and SunsetBoot.Log then
-        SunsetBoot.Log('spawn', stage, details)
-    else
-        pcall(function() exports.sunset_core:BootLog('spawn', stage, details) end)
-    end
-end
-
-local function recordMilestone(phase, durationMs, details)
-    if SunsetBoot and SunsetBoot.RecordMilestone then
-        SunsetBoot.RecordMilestone(phase, durationMs, details)
-    else
-        pcall(function() exports.sunset_core:RecordMilestone(phase, durationMs, details) end)
-    end
-end
-
 local function decodeMetadata(raw)
     if type(raw) == 'table' then return raw end
     if type(raw) == 'string' then
@@ -33,20 +14,15 @@ end
 
 -- Resolve the model that should be applied for login.
 local function resolveModel(char)
-    local meta = decodeMetadata(char.metadata)
-    local gender = tonumber(char.gender) or 0
-    local defModel = (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
-
+    if Sunset.GetEffectivePlayerModel then
+        return Sunset.GetEffectivePlayerModel(char)
+    end
+    local meta = decodeMetadata(char and char.metadata)
     local skin = meta.skin
     if skin and skin ~= '' and skin ~= 'default' and skin ~= 'reset' then
         return skin, 'meta.skin'
     end
-    if char.model and char.model ~= '' then return char.model, 'char.model' end
-    if meta.model and meta.model ~= '' then return meta.model, 'meta.model' end
-    if char.appearance and type(char.appearance) == 'table' and char.appearance.model and char.appearance.model ~= '' then
-        return char.appearance.model, 'char.appearance.model'
-    end
-    return defModel, 'gender_default'
+    return (Sunset.Config and Sunset.Config.DefaultPlayerPed) or 'ig_bankman', 'default'
 end
 
 local function isValidPlayerPed(ped)
@@ -189,62 +165,65 @@ local function spawnPlayer(char, spawnPosition)
 
     local pos = resolvePosition(char, spawnPosition)
 
-    -- Model Loading (fast 1500ms deadline)
+    -- Model Loading
     local rawModel, modelSource = resolveModel(char)
-    local model = type(rawModel) == 'string' and GetHashKey(rawModel) or rawModel
+    local model = type(rawModel) == 'string' and joaat(rawModel) or rawModel
+    local defPedName = (Sunset.Config and Sunset.Config.DefaultPlayerPed) or 'ig_bankman'
+    local defPedHash = joaat(defPedName)
+
     if not IsModelInCdimage(model) or not IsModelValid(model) then
-        local gender = tonumber(char.gender) or 0
-        model = (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
-        rawModel = tostring(model)
+        print(('^3[SPAWN] Model %s is invalid/missing from CD image, falling back to default %s^7'):format(tostring(rawModel), defPedName))
+        model = defPedHash
+        rawModel = defPedName
         modelSource = 'fallback_invalid'
     end
 
     local tModelStart = GetGameTimer()
     RequestModel(model)
-    local modelDeadline = GetGameTimer() + 1500
+    local modelDeadline = GetGameTimer() + 2000
     while not HasModelLoaded(model) and GetGameTimer() < modelDeadline do Wait(10) end
 
     if not HasModelLoaded(model) then
-        local gender = tonumber(char.gender) or 0
-        model = (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
+        print(('^1[SPAWN] Model %s failed to load within deadline, falling back to %s^7'):format(tostring(rawModel), defPedName))
+        model = defPedHash
+        rawModel = defPedName
+        modelSource = 'fallback_timeout'
         RequestModel(model)
-        local fbDeadline = GetGameTimer() + 1000
+        local fbDeadline = GetGameTimer() + 2000
         while not HasModelLoaded(model) and GetGameTimer() < fbDeadline do Wait(10) end
     end
 
     local modelLoadDur = GetGameTimer() - tModelStart
     local elapsedModel = spawnFlowTimer and (GetGameTimer() - spawnFlowTimer) or modelLoadDur
-    print(('^2[LOGIN-PERF] MODEL_READY +%dms (dur=%dms) | model=%s source=%s^7'):format(
-        elapsedModel, modelLoadDur, tostring(rawModel), tostring(modelSource)))
+    print(('^2[LOGIN-PERF] MODEL_LOADED +%dms (dur=%dms) | model=%s source=%s hash=%s^7'):format(
+        elapsedModel, modelLoadDur, tostring(rawModel), tostring(modelSource), tostring(model)))
 
     SetPlayerModel(PlayerId(), model)
     SetModelAsNoLongerNeeded(model)
 
-    local pedDeadline = GetGameTimer() + 1000
+    local pedDeadline = GetGameTimer() + 1500
     while (GetEntityModel(PlayerPedId()) ~= model or not DoesEntityExist(PlayerPedId())) and GetGameTimer() < pedDeadline do
         Wait(0)
     end
     local ped = PlayerPedId()
+    local actualModel = GetEntityModel(ped)
+
+    if actualModel ~= model then
+        print(('^1[SPAWN CRITICAL] SetPlayerModel mismatch: expected=%s actual=%s -> retrying default ped %s^7'):format(tostring(model), tostring(actualModel), defPedName))
+        RequestModel(defPedHash)
+        while not HasModelLoaded(defPedHash) do Wait(10) end
+        SetPlayerModel(PlayerId(), defPedHash)
+        SetModelAsNoLongerNeeded(defPedHash)
+        ped = PlayerPedId()
+        actualModel = GetEntityModel(ped)
+    end
+
+    print(('^2[LOGIN-PERF] MODEL_APPLIED +%dms | model=%s actualHash=%s^7'):format(
+        GetGameTimer() - (spawnFlowTimer or tSpawnStart), tostring(rawModel), tostring(actualModel)))
 
     SetPedDefaultComponentVariation(ped)
     SetEntityCollision(ped, true, true)
     TriggerServerEvent('sunset:server:updatePlayerPed')
-
-    if model == `mp_m_freemode_01` or model == `mp_f_freemode_01` then
-        local app = char.appearance
-        if type(app) == 'string' then
-            local ok, dec = pcall(json.decode, app)
-            app = ok and dec or {}
-        end
-        if not app or type(app) ~= 'table' or not next(app) then
-            if GetResourceState('sunset_appearance') == 'started' then
-                app = exports.sunset_appearance:GetDefaultAppearance(char.gender or 0)
-            end
-        end
-        if app and GetResourceState('sunset_appearance') == 'started' then
-            exports.sunset_appearance:ApplyAppearance(ped, app, char.gender or 0)
-        end
-    end
 
     FreezeEntityPosition(ped, true)
 
