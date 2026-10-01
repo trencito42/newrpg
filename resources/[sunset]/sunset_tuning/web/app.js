@@ -105,96 +105,96 @@ const WINDOW_TINTS = [
 ];
 
 const XENON_COLORS = [
-    { id: 0, label: 'White', color: '#ffffff' },
-    { id: 1, label: 'Blue', color: '#0055ff' },
-    { id: 2, label: 'Electric Blue', color: '#00d0ff' },
-    { id: 3, label: 'Mint Green', color: '#00ffaa' },
-    { id: 4, label: 'Lime Green', color: '#55ff00' },
-    { id: 5, label: 'Yellow', color: '#ffea00' },
-    { id: 6, label: 'Golden Shower', color: '#ffaa00' },
-    { id: 7, label: 'Orange', color: '#ff5500' },
-    { id: 8, label: 'Red', color: '#ff0000' },
-    { id: 9, label: 'Pony Pink', color: '#ff77aa' },
-    { id: 10, label: 'Hot Pink', color: '#ff007f' },
-    { id: 11, label: 'Purple', color: '#8800ff' },
-    { id: 12, label: 'Blacklight', color: '#3300ff' },
+    { id: 0, labelKey: 'tuning.color.white', color: '#ffffff' },
+    { id: 1, labelKey: 'tuning.color.blue', color: '#0055ff' },
+    { id: 2, labelKey: 'tuning.color.electric_blue', color: '#00d0ff' },
+    { id: 3, labelKey: 'tuning.color.mint_green', color: '#00ffaa' },
+    { id: 4, labelKey: 'tuning.color.lime_green', color: '#55ff00' },
+    { id: 5, labelKey: 'tuning.color.yellow', color: '#ffea00' },
+    { id: 6, labelKey: 'tuning.color.golden_yellow', color: '#ffaa00' },
+    { id: 7, labelKey: 'tuning.color.orange', color: '#ff5500' },
+    { id: 8, labelKey: 'tuning.color.red', color: '#ff0000' },
+    { id: 9, labelKey: 'tuning.color.pony_pink', color: '#ff77aa' },
+    { id: 10, labelKey: 'tuning.color.hot_pink', color: '#ff007f' },
+    { id: 11, labelKey: 'tuning.color.purple', color: '#8800ff' },
+    { id: 12, labelKey: 'tuning.color.blacklight', color: '#3300ff' },
 ];
 
 const NEON_PRESETS = [
-    { label: 'Electric Blue', r: 0, g: 150, b: 255 },
-    { label: 'Mint Green', r: 0, g: 255, b: 170 },
-    { label: 'Lime Green', r: 50, g: 255, b: 0 },
-    { label: 'Yellow', r: 255, g: 220, b: 0 },
-    { label: 'Orange', r: 255, g: 100, b: 0 },
-    { label: 'Crimson Red', r: 255, g: 0, b: 0 },
-    { label: 'Hot Pink', r: 255, g: 20, b: 147 },
-    { label: 'Purple', r: 138, g: 43, b: 226 },
-    { label: 'Blacklight', r: 50, g: 0, b: 255 },
-    { label: 'Ice White', r: 255, g: 255, b: 255 },
-    { label: 'Gold', r: 255, g: 180, b: 0 },
+    { labelKey: 'tuning.color.electric_blue', r: 0, g: 150, b: 255 },
+    { labelKey: 'tuning.color.mint_green', r: 0, g: 255, b: 170 },
+    { labelKey: 'tuning.color.lime_green', r: 50, g: 255, b: 0 },
+    { labelKey: 'tuning.color.yellow', r: 255, g: 220, b: 0 },
+    { labelKey: 'tuning.color.orange', r: 255, g: 100, b: 0 },
+    { labelKey: 'tuning.color.crimson_red', r: 255, g: 0, b: 0 },
+    { labelKey: 'tuning.color.hot_pink', r: 255, g: 20, b: 147 },
+    { labelKey: 'tuning.color.purple', r: 138, g: 43, b: 226 },
+    { labelKey: 'tuning.color.blacklight', r: 50, g: 0, b: 255 },
+    { labelKey: 'tuning.color.ice_white', r: 255, g: 255, b: 255 },
+    { labelKey: 'tuning.color.gold', r: 255, g: 180, b: 0 },
 ];
 
 const PAINT_PRESETS = [
-    { label: 'Midnight Black', r: 10, g: 10, b: 10 },
-    { label: 'Pure White', r: 255, g: 255, b: 255 },
-    { label: 'Gunmetal Grey', r: 70, g: 70, b: 70 },
-    { label: 'Crimson Red', r: 180, g: 10, b: 10 },
-    { label: 'Sunset Orange', r: 235, g: 90, b: 15 },
-    { label: 'Racing Yellow', r: 240, g: 210, b: 20 },
-    { label: 'Kawasaki Green', r: 20, g: 190, b: 40 },
-    { label: 'Miami Blue', r: 0, g: 150, b: 230 },
-    { label: 'Midnight Blue', r: 15, g: 30, b: 90 },
-    { label: 'Royal Purple', r: 100, g: 20, b: 160 },
-    { label: 'Hot Pink', r: 230, g: 30, b: 130 },
-    { label: 'Rose Gold', r: 200, g: 140, b: 130 },
+    { labelKey: 'tuning.color.midnight_black', r: 10, g: 10, b: 10 },
+    { labelKey: 'tuning.color.pure_white', r: 255, g: 255, b: 255 },
+    { labelKey: 'tuning.color.gunmetal_grey', r: 70, g: 70, b: 70 },
+    { labelKey: 'tuning.color.crimson_red', r: 180, g: 10, b: 10 },
+    { labelKey: 'tuning.color.sunset_orange', r: 235, g: 90, b: 15 },
+    { labelKey: 'tuning.color.racing_yellow', r: 240, g: 210, b: 20 },
+    { labelKey: 'tuning.color.kawasaki_green', r: 20, g: 190, b: 40 },
+    { labelKey: 'tuning.color.miami_blue', r: 0, g: 150, b: 230 },
+    { labelKey: 'tuning.color.midnight_blue', r: 15, g: 30, b: 90 },
+    { labelKey: 'tuning.color.royal_purple', r: 100, g: 20, b: 160 },
+    { labelKey: 'tuning.color.hot_pink', r: 230, g: 30, b: 130 },
+    { labelKey: 'tuning.color.rose_gold', r: 200, g: 140, b: 130 },
 ];
 
 const PAINT_TYPES = [
-    { id: 0, label: 'Gloss / Standard' },
-    { id: 1, label: 'Metallic' },
-    { id: 3, label: 'Matte' },
-    { id: 4, label: 'Metal' },
-    { id: 5, label: 'Chrome' },
+    { id: 0, labelKey: 'tuning.finish.gloss' },
+    { id: 1, labelKey: 'tuning.finish.metallic' },
+    { id: 3, labelKey: 'tuning.finish.matte' },
+    { id: 4, labelKey: 'tuning.finish.metal' },
+    { id: 5, labelKey: 'tuning.finish.chrome' },
 ];
 
 const PEARL_SHADES = [
-    { id: 111, label: 'Ice White', color: '#f0f0f0' },
-    { id: 70, label: 'Diamond Blue', color: '#cbe7f8' },
-    { id: 64, label: 'Ultra Blue', color: '#0055ff' },
-    { id: 145, label: 'Bright Purple', color: '#9933ff' },
-    { id: 135, label: 'Hot Pink', color: '#ff1493' },
-    { id: 27, label: 'Formula Red', color: '#ee1111' },
-    { id: 38, label: 'Sunset Orange', color: '#ff6600' },
-    { id: 88, label: 'Race Yellow', color: '#ffdd00' },
-    { id: 55, label: 'Lime Green', color: '#66ff00' },
-    { id: 92, label: 'Bright Green', color: '#00cc44' },
-    { id: 99, label: 'Midnight Blue', color: '#001a4d' },
-    { id: 158, label: 'Pure Gold', color: '#ffd700' },
-    { id: 107, label: 'Cream Pearl', color: '#fffdd0' },
-    { id: 0, label: 'None (Clear)', color: '#111111' },
+    { id: 111, labelKey: 'tuning.color.ice_white', color: '#f0f0f0' },
+    { id: 70, labelKey: 'tuning.color.diamond_blue', color: '#cbe7f8' },
+    { id: 64, labelKey: 'tuning.color.ultra_blue', color: '#0055ff' },
+    { id: 145, labelKey: 'tuning.color.bright_purple', color: '#9933ff' },
+    { id: 135, labelKey: 'tuning.color.hot_pink', color: '#ff1493' },
+    { id: 27, labelKey: 'tuning.color.formula_red', color: '#ee1111' },
+    { id: 38, labelKey: 'tuning.color.sunset_orange', color: '#ff6600' },
+    { id: 88, labelKey: 'tuning.color.race_yellow', color: '#ffdd00' },
+    { id: 55, labelKey: 'tuning.color.lime_green', color: '#66ff00' },
+    { id: 92, labelKey: 'tuning.color.bright_green', color: '#00cc44' },
+    { id: 99, labelKey: 'tuning.color.midnight_blue', color: '#001a4d' },
+    { id: 158, labelKey: 'tuning.color.pure_gold', color: '#ffd700' },
+    { id: 107, labelKey: 'tuning.color.cream_pearl', color: '#fffdd0' },
+    { id: 0, labelKey: 'tuning.color.none', color: '#111111' },
 ];
 
 const PEARL_COMBOS = [
-    { label: 'Midnight Blue Ice', primary: { r: 10, g: 15, b: 30 }, pearl: 70, type: 1 },
-    { label: 'Obsidian Ultra Blue', primary: { r: 5, g: 5, b: 8 }, pearl: 64, type: 1 },
-    { label: 'Dark Amethyst', primary: { r: 15, g: 8, b: 25 }, pearl: 145, type: 1 },
-    { label: 'Crimson Sunset', primary: { r: 90, g: 5, b: 10 }, pearl: 38, type: 1 },
-    { label: 'Toxic Lime Ghost', primary: { r: 10, g: 20, b: 10 }, pearl: 55, type: 1 },
-    { label: 'Golden Noir', primary: { r: 12, g: 12, b: 12 }, pearl: 158, type: 1 },
-    { label: 'Frost White Blue', primary: { r: 245, g: 245, b: 255 }, pearl: 64, type: 1 },
-    { label: 'Vampire Red Wine', primary: { r: 50, g: 0, b: 5 }, pearl: 27, type: 1 },
-    { label: 'Miami Sunset', primary: { r: 180, g: 20, b: 80 }, pearl: 88, type: 1 },
-    { label: 'Stealth Matte Carbon', primary: { r: 25, g: 25, b: 25 }, pearl: 0, type: 3 },
+    { labelKey: 'tuning.combo.midnight_ice', primary: { r: 10, g: 15, b: 30 }, pearl: 70, type: 1 },
+    { labelKey: 'tuning.combo.obsidian_blue', primary: { r: 5, g: 5, b: 8 }, pearl: 64, type: 1 },
+    { labelKey: 'tuning.combo.dark_amethyst', primary: { r: 15, g: 8, b: 25 }, pearl: 145, type: 1 },
+    { labelKey: 'tuning.combo.crimson_sunset', primary: { r: 90, g: 5, b: 10 }, pearl: 38, type: 1 },
+    { labelKey: 'tuning.combo.toxic_lime', primary: { r: 10, g: 20, b: 10 }, pearl: 55, type: 1 },
+    { labelKey: 'tuning.combo.golden_noir', primary: { r: 12, g: 12, b: 12 }, pearl: 158, type: 1 },
+    { labelKey: 'tuning.combo.frost_blue', primary: { r: 245, g: 245, b: 255 }, pearl: 64, type: 1 },
+    { labelKey: 'tuning.combo.vampire_red', primary: { r: 50, g: 0, b: 5 }, pearl: 27, type: 1 },
+    { labelKey: 'tuning.combo.miami_sunset', primary: { r: 180, g: 20, b: 80 }, pearl: 88, type: 1 },
+    { labelKey: 'tuning.combo.stealth_carbon', primary: { r: 25, g: 25, b: 25 }, pearl: 0, type: 3 },
 ];
 
 const TYRE_SMOKE_PRESETS = [
-    { label: 'White Smoke', r: 255, g: 255, b: 255 },
-    { label: 'Red Smoke', r: 255, g: 20, b: 20 },
-    { label: 'Blue Smoke', r: 20, g: 80, b: 255 },
-    { label: 'Yellow Smoke', r: 255, g: 220, b: 0 },
-    { label: 'Green Smoke', r: 20, g: 255, b: 50 },
-    { label: 'Purple Smoke', r: 180, g: 20, b: 255 },
-    { label: 'Black Smoke', r: 1, g: 1, b: 1 },
+    { labelKey: 'tuning.smoke.white', r: 255, g: 255, b: 255 },
+    { labelKey: 'tuning.smoke.red', r: 255, g: 20, b: 20 },
+    { labelKey: 'tuning.smoke.blue', r: 20, g: 80, b: 255 },
+    { labelKey: 'tuning.smoke.yellow', r: 255, g: 220, b: 0 },
+    { labelKey: 'tuning.smoke.green', r: 20, g: 255, b: 50 },
+    { labelKey: 'tuning.smoke.purple', r: 180, g: 20, b: 255 },
+    { labelKey: 'tuning.smoke.black', r: 1, g: 1, b: 1 },
 ];
 
 function cap(key) {
@@ -748,8 +748,8 @@ function hardwareParts(slotKey, maxLevel) {
 
     parts.push({
         id: `${slotKey}_0`,
-        label: 'Stock Factory',
-        price: installed === 0 ? 'Installed' : '$0',
+        label: I18n.t('tuning.ui.stock_factory'),
+        price: installed === 0 ? I18n.t('tuning.ui.installed') : '$0',
         isInstalled: installed === 0,
         isPreview: current === 0 && installed !== 0,
         apply: () => {
@@ -765,8 +765,8 @@ function hardwareParts(slotKey, maxLevel) {
         const isPrev = (current === i && !isInst);
         parts.push({
             id: `${slotKey}_${i}`,
-            label: `Level ${i} Upgrade`,
-            price: isInst ? 'Installed' : `$${cost.toLocaleString('en-US')}`,
+            label: I18n.t('tuning.ui.level_upgrade', { level: i }),
+            price: isInst ? I18n.t('tuning.ui.installed') : `$${cost.toLocaleString('en-US')}`,
             isInstalled: isInst,
             isPreview: isPrev,
             apply: () => {
@@ -786,8 +786,8 @@ function renderOverviewParts() {
         const isPrev = tune?.stage === stage && !isInst;
         parts.push({
             id: `stage_${stage}`,
-            label: `Stage ${stage.toUpperCase()} Tune`,
-            price: isInst ? 'Installed' : (stage === 'civil' ? 'Stock' : `$${(stage === 'sport' ? featureCosts.sportMap : featureCosts.raceMap || 0).toLocaleString('en-US')}`),
+            label: I18n.t('tuning.ui.stage_tune', { stage: stage.toUpperCase() }),
+            price: isInst ? I18n.t('tuning.ui.installed') : (stage === 'civil' ? I18n.t('tuning.ui.stock') : `$${(stage === 'sport' ? featureCosts.sportMap : featureCosts.raceMap || 0).toLocaleString('en-US')}`),
             isInstalled: isInst,
             isPreview: isPrev,
             apply: () => {
@@ -825,8 +825,8 @@ function renderPartList() {
             || Number(tune.throttleResponse || 0) !== Number(installedTune?.throttleResponse || 0));
         parts.push({
             id: 'engine_mapping',
-            label: 'ECU Mapping & Output',
-            price: hasMappingPending ? 'Pending' : (hasMappingInstalled ? `${installedTune?.power || 0} HP / ${installedTune?.torque || 0} NM` : 'Stock'),
+            label: I18n.t('tuning.ui.label.ecu_mapping'),
+            price: hasMappingPending ? I18n.t('tuning.ui.pending') : (hasMappingInstalled ? `${installedTune?.power || 0} HP / ${installedTune?.torque || 0} NM` : I18n.t('tuning.ui.stock')),
             isInstalled: hasMappingInstalled && !hasMappingPending,
             isPreview: hasMappingPending,
             apply: () => {
@@ -841,8 +841,8 @@ function renderPartList() {
         const hasTransPending = Number(tune.shiftSpeed || 0) !== Number(installedTune?.shiftSpeed || 0);
         parts.push({
             id: 'trans_shift_speed',
-            label: 'Gear Shift Calibration',
-            price: hasTransPending ? 'Pending' : (hasTransInstalled ? `${Number(installedTune?.shiftSpeed || 0) > 0 ? '+' : ''}${installedTune?.shiftSpeed}%` : 'Stock'),
+            label: I18n.t('tuning.ui.label.gear_shift'),
+            price: hasTransPending ? I18n.t('tuning.ui.pending') : (hasTransInstalled ? `${Number(installedTune?.shiftSpeed || 0) > 0 ? '+' : ''}${installedTune?.shiftSpeed}%` : I18n.t('tuning.ui.stock')),
             isInstalled: hasTransInstalled && !hasTransPending,
             isPreview: hasTransPending,
             apply: () => {
@@ -857,8 +857,8 @@ function renderPartList() {
         const hasBrakePending = Number(tune.regenBraking || 0) !== Number(installedTune?.regenBraking || 0);
         parts.push({
             id: 'brake_bias',
-            label: 'Regen & Engine Braking',
-            price: hasBrakePending ? 'Pending' : (hasBrakeInstalled ? `${installedTune?.regenBraking}%` : 'Stock (0%)'),
+            label: I18n.t('tuning.ui.label.regen_braking'),
+            price: hasBrakePending ? I18n.t('tuning.ui.pending') : (hasBrakeInstalled ? `${installedTune?.regenBraking}%` : I18n.t('tuning.ui.stock_brakes')),
             isInstalled: hasBrakeInstalled && !hasBrakePending,
             isPreview: hasBrakePending,
             apply: () => {
@@ -875,8 +875,8 @@ function renderPartList() {
             const cur = !!tune?.hardware?.turbo;
             parts.push({
                 id: 'turbo_toggle',
-                label: 'Turbocharger System',
-                price: isInst ? (cur ? 'Installed' : 'Disable') : (cur ? 'Selected ($' + (featureCosts.turbo || 2500) + ')' : 'Stock (Off)'),
+                label: I18n.t('tuning.ui.label.turbo'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected_cost', { cost: featureCosts.turbo || 2500 }) : I18n.t('tuning.ui.stock_off')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst,
                 apply: () => {
@@ -891,8 +891,8 @@ function renderPartList() {
             const cur = !!tune?.hardware?.launchControl;
             parts.push({
                 id: 'launch_toggle',
-                label: 'Launch Control Mode',
-                price: isInst ? (cur ? 'Installed' : 'Disable') : (cur ? 'Selected ($' + (featureCosts.launchControl || 1200) + ')' : 'Stock (Off)'),
+                label: I18n.t('tuning.ui.label.launch_control'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected_cost', { cost: featureCosts.launchControl || 1200 }) : I18n.t('tuning.ui.stock_off')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst,
                 apply: () => {
@@ -906,11 +906,11 @@ function renderPartList() {
             const isInst = !!installedTune?.nitrous?.installed;
             const cur = !!tune?.nitrous?.installed;
             const curTier = tune?.nitrous?.level || 1;
-            const tierNames = ['Street (S1)', 'Sport (S2)', 'Race (S3)'];
+            const tierNames = [I18n.t('tuning.ui.tier_s1'), I18n.t('tuning.ui.tier_s2'), I18n.t('tuning.ui.tier_s3')];
             parts.push({
                 id: 'nitrous_sys',
-                label: 'Nitrous Oxide System (NOS)',
-                price: isInst ? (cur ? `Installed · ${tierNames[curTier - 1]}` : 'Disable') : (cur ? `Selected ($${featureCosts.nitrous || 3500})` : 'Not Installed'),
+                label: I18n.t('tuning.ui.label.nitrous'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed_tier', { tier: tierNames[curTier - 1] }) : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected_cost', { cost: featureCosts.nitrous || 3500 }) : I18n.t('tuning.ui.not_installed')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst || (cur && curTier !== (installedTune?.nitrous?.level || 1)),
                 apply: () => {
@@ -922,8 +922,8 @@ function renderPartList() {
         }
         parts.push({
             id: 'top_speed_cal',
-            label: 'Top Speed Limiter Tuning',
-            price: 'Adjust below',
+            label: I18n.t('tuning.ui.label.top_speed'),
+            price: I18n.t('tuning.ui.adjust_below'),
             isInstalled: false,
             isPreview: tune.topSpeed !== (installedTune?.topSpeed || 0),
             apply: () => {
@@ -934,17 +934,17 @@ function renderPartList() {
         });
     } else if (activeTab === 'exhaust' && (cap('exhaustModes') || cap('popsAllowed') || cap('flamesAllowed'))) {
         [
-            ['pop_bang', 'Pop & Bang Profile'],
-            ['flames', 'Flame Spitting Profile'],
-            ['diesel', 'Diesel Performance Profile'],
-            ['extra', 'Extra Loud Aggressive'],
+            ['pop_bang', I18n.t('tuning.ui.label.pop_bang')],
+            ['flames', I18n.t('tuning.ui.label.flames')],
+            ['diesel', I18n.t('tuning.ui.label.diesel')],
+            ['extra', I18n.t('tuning.ui.label.extra_loud')],
         ].forEach(([mode, label]) => {
             const isInst = installedTune?.exhaust === mode;
             const isCur = tune?.exhaust === mode;
             parts.push({
                 id: `exhaust_${mode}`,
                 label,
-                price: isInst ? 'Installed' : 'Select',
+                price: isInst ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.select'),
                 isInstalled: isInst && isCur,
                 isPreview: isCur && !isInst,
                 apply: () => {
@@ -961,8 +961,8 @@ function renderPartList() {
         if (availableSlots.length === 0) {
             parts.push({
                 id: 'no_aero',
-                label: 'No Aero Parts Available',
-                price: 'N/A',
+                label: I18n.t('tuning.ui.label.no_aero'),
+                price: I18n.t('tuning.ui.na'),
                 isInstalled: false,
                 apply: () => {},
                 isActive: () => false,
@@ -973,11 +973,11 @@ function renderPartList() {
                 const cur = cosmetics?.mods?.[slot.key] ?? -1;
                 const inst = installedCosmetics?.mods?.[slot.key] ?? -1;
                 const isInst = (cur === inst);
-                const curLabel = cur === -1 ? 'Stock' : `Mod #${cur + 1}`;
+                const curLabel = cur === -1 ? I18n.t('tuning.ui.stock') : I18n.t('tuning.ui.mod_number', { number: cur + 1 });
                 parts.push({
                     id: `body_${slot.key}`,
                     label: I18n.t(slot.labelKey),
-                    price: `${curLabel} (${avail} opts)`,
+                    price: I18n.t('tuning.ui.mod_options', { label: curLabel, count: avail }),
                     isInstalled: isInst,
                     isPreview: !isInst,
                     apply: () => {
@@ -997,8 +997,8 @@ function renderPartList() {
         const neonInst = installedCosmetics?.neon?.enabled === true;
         parts.push({
             id: 'neon_underglow',
-            label: 'Underglow Neons',
-            price: neonActive ? (neonInst ? 'Installed' : '$500') : 'Disabled',
+            label: I18n.t('tuning.ui.label.underglow'),
+            price: neonActive ? (neonInst ? I18n.t('tuning.ui.installed') : '$500') : I18n.t('tuning.ui.disabled'),
             isInstalled: neonInst && neonActive,
             isPreview: neonActive !== neonInst,
             apply: () => {
@@ -1012,8 +1012,8 @@ function renderPartList() {
         const xenonInst = installedCosmetics?.xenon === true;
         parts.push({
             id: 'xenon_lights',
-            label: 'Xenon Headlights',
-            price: xenonActive ? (xenonInst ? 'Installed' : '$350') : 'Halogen (Stock)',
+            label: I18n.t('tuning.ui.label.xenon'),
+            price: xenonActive ? (xenonInst ? I18n.t('tuning.ui.installed') : '$350') : I18n.t('tuning.ui.halogen_stock'),
             isInstalled: xenonInst && xenonActive,
             isPreview: xenonActive !== xenonInst,
             apply: () => {
@@ -1028,7 +1028,7 @@ function renderPartList() {
         const wtInst = (installedCosmetics?.wheelType ?? 0) === (cosmetics?.wheelType ?? 0);
         parts.push({
             id: 'wheel_type',
-            label: 'Wheel Category',
+            label: I18n.t('tuning.ui.label.wheel_category'),
             price: wt,
             isInstalled: wtInst,
             isPreview: !wtInst,
@@ -1043,8 +1043,8 @@ function renderPartList() {
         const instRim = installedCosmetics?.mods?.wheels ?? -1;
         parts.push({
             id: 'wheel_rim',
-            label: 'Rim Model',
-            price: rimMod === -1 ? 'Stock Rims' : `Rim #${rimMod + 1}`,
+            label: I18n.t('tuning.ui.label.rim_model'),
+            price: rimMod === -1 ? I18n.t('tuning.ui.stock_rims') : I18n.t('tuning.ui.rim_number', { number: rimMod + 1 }),
             isInstalled: rimMod === instRim,
             isPreview: rimMod !== instRim,
             apply: () => {
@@ -1056,8 +1056,8 @@ function renderPartList() {
         });
         parts.push({
             id: 'wheel_color',
-            label: 'Wheel Paint Color',
-            price: `Index #${cosmetics.wheel || 0}`,
+            label: I18n.t('tuning.ui.label.wheel_color'),
+            price: I18n.t('tuning.ui.index_number', { number: cosmetics.wheel || 0 }),
             isInstalled: (cosmetics.wheel || 0) === (installedCosmetics?.wheel || 0),
             isPreview: (cosmetics.wheel || 0) !== (installedCosmetics?.wheel || 0),
             apply: () => {
@@ -1071,8 +1071,8 @@ function renderPartList() {
         const smokeInst = installedCosmetics?.tyreSmoke === true;
         parts.push({
             id: 'tyre_smoke',
-            label: 'Burnout Tyre Smoke',
-            price: smokeActive ? (smokeInst ? 'Installed' : '$400') : 'Stock (Off)',
+            label: I18n.t('tuning.ui.label.tyre_smoke'),
+            price: smokeActive ? (smokeInst ? I18n.t('tuning.ui.installed') : '$400') : I18n.t('tuning.ui.stock_off'),
             isInstalled: smokeInst && smokeActive,
             isPreview: smokeActive !== smokeInst,
             apply: () => {
@@ -1085,8 +1085,8 @@ function renderPartList() {
     } else if (activeTab === 'visual') {
         parts.push({
             id: 'paint_finish',
-            label: 'Paint Finish / Surface Style',
-            price: PAINT_TYPES.find((f) => f.id === (cosmetics?.paintType ?? 0))?.label || 'Gloss',
+            label: I18n.t('tuning.ui.label.paint_finish'),
+            price: I18n.t(PAINT_TYPES.find((f) => f.id === (cosmetics?.paintType ?? 0))?.labelKey || 'tuning.finish.gloss'),
             isInstalled: (installedCosmetics?.paintType ?? 0) === (cosmetics?.paintType ?? 0),
             isPreview: (installedCosmetics?.paintType ?? 0) !== (cosmetics?.paintType ?? 0),
             apply: () => { activePartId = 'finish'; post('tuningFocusPart', { part: 'overview' }); renderDetailPanel(); },
@@ -1094,8 +1094,8 @@ function renderPartList() {
         });
         parts.push({
             id: 'paint_primary',
-            label: 'Primary Body Paint',
-            price: 'Adjust below',
+            label: I18n.t('tuning.ui.label.paint_primary'),
+            price: I18n.t('tuning.ui.adjust_below'),
             isInstalled: sameColor(cosmetics.primary, installedCosmetics?.primary),
             isPreview: !sameColor(cosmetics.primary, installedCosmetics?.primary),
             apply: () => { activePartId = 'primary'; post('tuningFocusPart', { part: 'overview' }); renderDetailPanel(); },
@@ -1103,8 +1103,8 @@ function renderPartList() {
         });
         parts.push({
             id: 'paint_secondary',
-            label: 'Secondary Trim Paint',
-            price: 'Adjust below',
+            label: I18n.t('tuning.ui.label.paint_secondary'),
+            price: I18n.t('tuning.ui.adjust_below'),
             isInstalled: sameColor(cosmetics.secondary, installedCosmetics?.secondary),
             isPreview: !sameColor(cosmetics.secondary, installedCosmetics?.secondary),
             apply: () => { activePartId = 'secondary'; post('tuningFocusPart', { part: 'overview' }); renderDetailPanel(); },
@@ -1112,8 +1112,8 @@ function renderPartList() {
         });
         parts.push({
             id: 'paint_pearl',
-            label: 'Pearlescent Clearcoat',
-            price: `Index #${cosmetics.pearl || 0}`,
+            label: I18n.t('tuning.ui.label.pearl'),
+            price: I18n.t('tuning.ui.index_number', { number: cosmetics.pearl || 0 }),
             isInstalled: Number(cosmetics.pearl || 0) === Number(installedCosmetics?.pearl || 0),
             isPreview: Number(cosmetics.pearl || 0) !== Number(installedCosmetics?.pearl || 0),
             apply: () => { activePartId = 'pearl'; post('tuningFocusPart', { part: 'overview' }); renderDetailPanel(); },
@@ -1122,7 +1122,7 @@ function renderPartList() {
         const tint = I18n.t(WINDOW_TINTS.find((t) => t.id === (cosmetics?.windowTint ?? 0))?.labelKey || 'tuning.tint.none');
         parts.push({
             id: 'window_tint',
-            label: 'Window Tint',
+            label: I18n.t('tuning.ui.label.window_tint'),
             price: tint,
             isInstalled: Number(cosmetics.windowTint || 0) === Number(installedCosmetics?.windowTint || 0),
             isPreview: Number(cosmetics.windowTint || 0) !== Number(installedCosmetics?.windowTint || 0),
@@ -1131,8 +1131,8 @@ function renderPartList() {
         });
         parts.push({
             id: 'plate_text',
-            label: 'Vanity License Plate',
-            price: cosmetics?.plateText || 'Stock',
+            label: I18n.t('tuning.ui.label.plate'),
+            price: cosmetics?.plateText || I18n.t('tuning.ui.stock'),
             isInstalled: (cosmetics?.plateText || '') === (installedCosmetics?.plateText || ''),
             isPreview: (cosmetics?.plateText || '') !== (installedCosmetics?.plateText || ''),
             apply: () => { activePartId = 'plate'; post('tuningFocusPart', { part: 'rearBumper' }); renderDetailPanel(); },
@@ -1141,14 +1141,14 @@ function renderPartList() {
     } else if (activeTab === 'dyno') {
         parts.push({
             id: 'dyno_run',
-            label: 'Start Dyno Run',
+            label: I18n.t('tuning.ui.label.dyno_start'),
             price: costs.dyno ? `$${costs.dyno}` : '$250',
             apply: () => post('tuningDyno'),
             isActive: () => false,
         });
         parts.push({
             id: 'dyno_view',
-            label: 'Last Run Results',
+            label: I18n.t('tuning.ui.label.dyno_last'),
             price: `${tune?.dyno?.lastHp || 0} HP / ${tune?.dyno?.lastTorque || 0} NM`,
             apply: () => {},
             isActive: () => true,
@@ -1159,8 +1159,8 @@ function renderPartList() {
             const cur = !!tune?.antiLag?.enabled;
             parts.push({
                 id: 'special_antilag',
-                label: 'Anti-Lag Turbo System',
-                price: isInst ? (cur ? 'Installed' : 'Disable') : (cur ? 'Selected' : 'Stock (Off)'),
+                label: I18n.t('tuning.ui.label.antilag'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected') : I18n.t('tuning.ui.stock_off')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst,
                 apply: () => {
@@ -1175,8 +1175,8 @@ function renderPartList() {
             const cur = !!tune?.drift?.enabled;
             parts.push({
                 id: 'special_drift',
-                label: 'Drift Assist Controller',
-                price: isInst ? (cur ? 'Installed' : 'Disable') : (cur ? 'Selected' : 'Stock (Off)'),
+                label: I18n.t('tuning.ui.label.drift'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected') : I18n.t('tuning.ui.stock_off')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst,
                 apply: () => {
@@ -1191,8 +1191,8 @@ function renderPartList() {
             const cur = !!tune?.hud?.enabled;
             parts.push({
                 id: 'special_hud',
-                label: 'Live ECU Telemetry HUD',
-                price: isInst ? (cur ? 'Installed' : 'Disable') : (cur ? 'Selected' : 'Stock (Off)'),
+                label: I18n.t('tuning.ui.label.telemetry'),
+                price: isInst ? (cur ? I18n.t('tuning.ui.installed') : I18n.t('tuning.ui.disable')) : (cur ? I18n.t('tuning.ui.selected') : I18n.t('tuning.ui.stock_off')),
                 isInstalled: isInst && cur,
                 isPreview: cur !== isInst,
                 apply: () => {
@@ -1205,8 +1205,8 @@ function renderPartList() {
     } else if (activeTab === 'handling') {
         parts.push({
             id: 'handling_custom',
-            label: 'Fine-Tune Handling Dynamics',
-            price: 'Adjust below',
+            label: I18n.t('tuning.ui.label.handling'),
+            price: I18n.t('tuning.ui.adjust_below'),
             apply: () => {},
             isActive: () => true,
         });
@@ -1338,7 +1338,7 @@ function cosmeticsColorField(label, key) {
         const swatch = document.createElement('div');
         swatch.className = 'palette-swatch';
         swatch.style.background = `rgb(${preset.r},${preset.g},${preset.b})`;
-        swatch.title = preset.label;
+        swatch.title = I18n.t(preset.labelKey);
         swatch.addEventListener('click', () => {
             cosmetics = ensureCosmetics(cosmetics);
             let ref = cosmetics;
@@ -1432,9 +1432,9 @@ function renderDetailPanel() {
                 const tierGrid = document.createElement('div');
                 tierGrid.className = 'options-grid';
                 const tiers = [
-                    { id: 1, label: 'Tier 1: Street (+22% boost)' },
-                    { id: 2, label: 'Tier 2: Sport (+38% boost)' },
-                    { id: 3, label: 'Tier 3: Race (+55% boost)' },
+                    { id: 1, label: I18n.t('tuning.ui.nitrous_tier_1') },
+                    { id: 2, label: I18n.t('tuning.ui.nitrous_tier_2') },
+                    { id: 3, label: I18n.t('tuning.ui.nitrous_tier_3') },
                 ];
                 tiers.forEach((t) => {
                     const btn = document.createElement('button');
@@ -1456,11 +1456,11 @@ function renderDetailPanel() {
                 tuneDetail.appendChild(flameTitle);
 
                 const nosPresets = [
-                    { label: 'Cobalt Blue', r: 0, g: 80, b: 255 },
-                    { label: 'Cyan Ice', r: 0, g: 230, b: 255 },
-                    { label: 'Deep Purple', r: 160, g: 30, b: 255 },
-                    { label: 'Emerald Glow', r: 30, g: 255, b: 120 },
-                    { label: 'Ghost White', r: 240, g: 250, b: 255 },
+                    { label: I18n.t('tuning.ui.flame_cobalt_blue'), r: 0, g: 80, b: 255 },
+                    { label: I18n.t('tuning.ui.flame_cyan_ice'), r: 0, g: 230, b: 255 },
+                    { label: I18n.t('tuning.ui.flame_deep_purple'), r: 160, g: 30, b: 255 },
+                    { label: I18n.t('tuning.ui.flame_emerald_glow'), r: 30, g: 255, b: 120 },
+                    { label: I18n.t('tuning.ui.flame_ghost_white'), r: 240, g: 250, b: 255 },
                 ];
                 const presetGrid = document.createElement('div');
                 presetGrid.className = 'palette-grid';
@@ -1578,7 +1578,7 @@ function renderDetailPanel() {
                 const swatch = document.createElement('div');
                 swatch.className = 'palette-swatch';
                 swatch.style.background = `rgb(${preset.r},${preset.g},${preset.b})`;
-                swatch.title = preset.label;
+                swatch.title = I18n.t(preset.labelKey);
                 swatch.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.neon.enabled = true;
@@ -1627,7 +1627,7 @@ function renderDetailPanel() {
             XENON_COLORS.forEach((xc) => {
                 const btn = document.createElement('button');
                 btn.className = `option-btn ${cosmetics.xenonColor === xc.id ? 'active' : ''}`;
-                btn.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${xc.color};margin-right:6px"></span>${xc.label}`;
+                btn.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${xc.color};margin-right:6px"></span>${I18n.t(xc.labelKey)}`;
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.xenon = true;
@@ -1747,7 +1747,7 @@ function renderDetailPanel() {
                 const swatch = document.createElement('div');
                 swatch.className = 'palette-swatch';
                 swatch.style.background = `rgb(${preset.r},${preset.g},${preset.b})`;
-                swatch.title = preset.label;
+                swatch.title = I18n.t(preset.labelKey);
                 swatch.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.tyreSmoke = true;
@@ -1799,7 +1799,7 @@ function renderDetailPanel() {
             PAINT_TYPES.forEach((pt) => {
                 const btn = document.createElement('button');
                 btn.className = `option-btn ${(cosmetics.paintType ?? 0) === pt.id ? 'active' : ''}`;
-                btn.textContent = pt.label;
+                btn.textContent = I18n.t(pt.labelKey);
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
                     cosmetics.paintType = pt.id;
@@ -1834,7 +1834,7 @@ function renderDetailPanel() {
                 const pearlColor = shade ? shade.color : '#ffffff';
                 btn.innerHTML = `
                     <span class="pearl-preview-swatch" style="background: rgb(${combo.primary.r}, ${combo.primary.g}, ${combo.primary.b}); border-color: ${pearlColor}; box-shadow: 0 0 6px ${pearlColor}66;"></span>
-                    <span>${combo.label}</span>
+                    <span>${I18n.t(combo.labelKey)}</span>
                 `;
                 btn.addEventListener('click', () => {
                     cosmetics = ensureCosmetics(cosmetics);
@@ -1860,7 +1860,7 @@ function renderDetailPanel() {
                 const swatch = document.createElement('div');
                 swatch.className = 'palette-swatch';
                 swatch.style.background = shade.color;
-                swatch.title = `${shade.label} (#${shade.id})`;
+                swatch.title = `${I18n.t(shade.labelKey)} (#${shade.id})`;
                 if (Number(cosmetics.pearl || 0) === shade.id) {
                     swatch.style.outline = '2px solid #ffcc00';
                 }
