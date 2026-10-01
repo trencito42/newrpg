@@ -329,7 +329,7 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
             normalizedList[#normalizedList + 1] = norm
         end
     else
-        return false, { localeKey = 'jobs.message.unsupported_job_name' } .. tostring(jobName)
+        return false, 'Unsupported job name: ' .. tostring(jobName)
     end
 
     -- Update Cache

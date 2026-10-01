@@ -18,7 +18,8 @@ local function fadeTeleport(coords4, allowVehicle)
     if driving and allowVehicle then
         -- Vehicle path: fade, pre-stream, move vehicle + re-seat ped
         DoScreenFadeOut(400)
-        while not IsScreenFadedOut() do Wait(0) end
+        local fadeDeadline = GetGameTimer() + 3000
+        while not IsScreenFadedOut() and GetGameTimer() < fadeDeadline do Wait(0) end
 
         FreezeEntityPosition(ped, true)
         FreezeEntityPosition(veh, true)

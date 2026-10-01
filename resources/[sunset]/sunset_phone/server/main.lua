@@ -62,6 +62,16 @@ local function findCharacterByPhone(phoneQuery)
 end
 
 local AvatarCache = {}
+-- [PERF] Prune stale avatar cache entries (base64 blobs) so it cannot grow forever.
+CreateThread(function()
+    while true do
+        Wait(600000)
+        local cutoff = os.time() - 1800
+        for cid, entry in pairs(AvatarCache) do
+            if (entry.cachedAt or 0) < cutoff then AvatarCache[cid] = nil end
+        end
+    end
+end)
 local AVATAR_CACHE_TTL = 300
 
 local function getAvatarsForCharacterIds(cids)
@@ -134,10 +144,14 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         return MySQL.query.await([[
             SELECT m.id, m.message, m.created_at, m.sender_character_id, m.receiver_character_id,
                    sc.firstname AS sender_name, rc.firstname AS receiver_name
-            FROM phone_messages m
+            FROM (
+                (SELECT id FROM phone_messages WHERE sender_character_id = ? ORDER BY id DESC LIMIT 60)
+                UNION
+                (SELECT id FROM phone_messages WHERE receiver_character_id = ? ORDER BY id DESC LIMIT 60)
+            ) ids
+            JOIN phone_messages m ON m.id = ids.id
             LEFT JOIN characters sc ON sc.id = m.sender_character_id
             LEFT JOIN characters rc ON rc.id = m.receiver_character_id
-            WHERE m.sender_character_id = ? OR m.receiver_character_id = ?
             ORDER BY m.id DESC LIMIT 60
         ]], { myCharId, myCharId })
     end)
@@ -318,6 +332,11 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
 
     message = tostring(message or ''):sub(1, 256)
     if not targetCharacterId or message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
+    -- [SEC2] SMS/112 spam throttle (112 creates a dispatch call for police/EMS)
+    local isEmergencyTarget = targetCharacterId == -112 or tostring(targetPhoneNumber) == '112'
+    if not exports.sunset_core:RateLimit(source, isEmergencyTarget and 'phone112' or 'phoneSend', isEmergencyTarget and 15000 or 700) then
+        return nil, { localeKey = 'phone.message.invalid_recipient_or_message' }
+    end
 
     -- Handle 112 Emergency dispatch messaging
     if targetCharacterId == -112 or tostring(targetPhoneNumber) == '112' then
@@ -410,6 +429,23 @@ exports.sunset_core:RegisterCallback('sunset:phoneSaveAvatar', function(source, 
     if not characterId then return nil, { localeKey = 'phone.message.invalid_character' } end
     base64 = tostring(base64 or '')
     if #base64 < 100 or #base64 > 500000 then return nil, { localeKey = 'phone.message.invalid_avatar_data' } end
+    -- [SEC2] Avatar is later interpolated into other players' NUI (<img src>). Only
+    -- accept a base64 payload, optionally prefixed by a data:image/<png|jpeg|webp|gif>;base64, header.
+    do
+        local body = base64:match('^data:image/[a-z]+;base64,(.+)$')
+        if body then
+            local mime = base64:match('^data:image/([a-z]+);base64,')
+            if mime ~= 'png' and mime ~= 'jpeg' and mime ~= 'jpg' and mime ~= 'webp' and mime ~= 'gif' then
+                return nil, { localeKey = 'phone.message.invalid_avatar_data' }
+            end
+        else
+            body = base64
+        end
+        if body:find('[^A-Za-z0-9+/=]') then
+            return nil, { localeKey = 'phone.message.invalid_avatar_data' }
+        end
+    end
+    if not exports.sunset_core:RateLimit(source, 'phoneAvatar', 5000) then return nil, { localeKey = 'phone.message.invalid_avatar_data' } end
 
     -- Only allow saving your own avatar
     local char = exports.sunset_core:GetCharacter(source)

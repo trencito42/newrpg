@@ -21,6 +21,25 @@ local function interpolate(template, params)
     end))
 end
 
+local warnedMissing = {}
+
+-- A missing key must never show a raw key to a player. Fall back to a readable
+-- phrase built from the last key segment ('jobs.message.could_not_end_shift'
+-- -> 'Could not end shift') and log once. Debug builds keep the visible marker
+-- so developers still notice the gap.
+local function missingKey(key)
+    if not warnedMissing[key] then
+        warnedMissing[key] = true
+        print(('[locale] missing translation key: %s'):format(key))
+    end
+    if Sunset.Config and Sunset.Config.Debug then
+        return ('[?%s]'):format(key)
+    end
+    local last = key:match('([^%.]+)$') or key
+    last = last:gsub('_', ' ')
+    return (last:gsub('^%l', string.upper))
+end
+
 function Sunset.IsValidLocale(locale)
     return validLocale(locale) ~= nil
 end
@@ -32,7 +51,7 @@ function Sunset.Translate(locale, key, params, ...)
     local fallback = Sunset.Locales.en or {}
     local value = rawget(primary, key) or rawget(fallback, key)
     if type(value) ~= 'string' or value == '' then
-        return ('[?%s]'):format(key)
+        return missingKey(key)
     end
 
     if type(params) == 'table' then

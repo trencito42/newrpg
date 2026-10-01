@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { AlertCircle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 interface ComplaintFormProps {
   lang: "ro" | "en";
@@ -12,7 +11,7 @@ interface ComplaintFormProps {
 export default function ComplaintForm({ lang }: ComplaintFormProps) {
   const router = useRouter();
   const [accusedName, setAccusedName] = useState("");
-  const [category, setCategory] = useState("deathmatch");
+  const [category, setCategory] = useState("cheating");
   const [title, setTitle] = useState("");
   const [evidenceText, setEvidenceText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,7 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || (lang === "ro" ? "A apărut o eroare la trimitere." : "Submission failed."));
+        throw new Error(data.error || (lang === "ro" ? "Eroare la trimitere." : "Submission failed."));
       }
 
       setSuccess(true);
@@ -55,115 +54,95 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
 
   if (success) {
     return (
-      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs space-y-2">
-        <div className="flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <p className="font-bold">
-            {lang === "ro" ? "Reclamație trimisă cu succes!" : "Complaint submitted successfully!"}
-          </p>
-        </div>
-        <p className="text-gray-300 leading-relaxed">
-          {lang === "ro"
-            ? "Un membru al echipei staff va examina dovezile și va lua măsurile corespunzătoare."
-            : "A staff member will review your evidence and apply appropriate actions."}
+      <div className="p-3 bg-emerald-950/30 border border-emerald-900/40 text-emerald-400 text-xs space-y-2 rounded">
+        <p className="font-semibold">
+          {lang === "ro" ? "Reclamație trimisă cu succes." : "Complaint submitted."}
         </p>
-        <Button size="sm" variant="outline" onClick={() => setSuccess(false)} className="mt-2 text-xs">
-          {lang === "ro" ? "Trimite o altă reclamație" : "Submit another complaint"}
+        <Button size="sm" variant="secondary" onClick={() => setSuccess(false)}>
+          {lang === "ro" ? "Trimite alta" : "Submit another"}
         </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3 text-xs">
       {error && (
-        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start space-x-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
+        <div className="p-2 bg-red-950/30 border border-red-900/40 text-red-400 rounded">
+          {error}
         </div>
       )}
 
       <div>
-        <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-          {lang === "ro" ? "Nume Jucător Reclamat" : "Accused Character Name"}
+        <label className="block text-[#6f6f74] mb-1">
+          {lang === "ro" ? "Nume Jucător Reclamat" : "Accused Player Name"}
         </label>
         <input
           type="text"
           required
-          placeholder="ex: Hardy sau Andrei_Popescu"
+          placeholder="e.g. Andrei_Popescu"
           value={accusedName}
           onChange={(e) => setAccusedName(e.target.value)}
-          className="w-full bg-surface-100 border border-surface-border focus:border-brand rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors shadow-inner"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none"
         />
-        <span className="text-[10px] text-gray-500 mt-1 block">
-          {lang === "ro" ? "Numele exact al personajului din joc." : "Exact in-game character name."}
-        </span>
       </div>
 
       <div>
-        <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-          {lang === "ro" ? "Categorie Încălcare" : "Violation Category"}
+        <label className="block text-[#6f6f74] mb-1">
+          {lang === "ro" ? "Categorie" : "Category"}
         </label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full bg-surface-100 border border-surface-border focus:border-brand rounded-lg px-3 py-2 text-xs text-white focus:outline-none transition-colors"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] focus:outline-none"
         >
-          <option value="deathmatch">Deathmatch (DM)</option>
-          <option value="powergaming">Powergaming (PG)</option>
-          <option value="metagaming">Metagaming (MG)</option>
+          <option value="cheating">{lang === "ro" ? "Cheaturi / Hack-uri" : "Cheats / Hacks"}</option>
           <option value="insults">{lang === "ro" ? "Limbaj vulgar / Jigniri" : "Insults / Verbal Abuse"}</option>
-          <option value="cheating">{lang === "ro" ? "Coduri / Moduri ilegale" : "Cheats / Hacks"}</option>
-          <option value="faction_abuse">{lang === "ro" ? "Abuz Funcție Facțiune" : "Faction Abuse"}</option>
+          <option value="bug_abuse">{lang === "ro" ? "Abuz de bug-uri" : "Bug Abuse"}</option>
+          <option value="scamming">{lang === "ro" ? "Înșelăciune" : "Scamming"}</option>
+          <option value="faction_abuse">{lang === "ro" ? "Abuz funcție facțiune" : "Faction Abuse"}</option>
           <option value="other">{lang === "ro" ? "Altă încălcare" : "Other"}</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-          {lang === "ro" ? "Titlu Reclamație" : "Complaint Title"}
+        <label className="block text-[#6f6f74] mb-1">
+          {lang === "ro" ? "Titlu" : "Title"}
         </label>
         <input
           type="text"
           required
-          placeholder={lang === "ro" ? "ex: DM fără motiv la job" : "e.g. Unprovoked DM at work"}
+          placeholder={lang === "ro" ? "Subiect pe scurt..." : "Brief summary..."}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-surface-100 border border-surface-border focus:border-brand rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors shadow-inner"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-          {lang === "ro" ? "Descriere & Link-uri Dovezi" : "Description & Evidence Links"}
+        <label className="block text-[#6f6f74] mb-1">
+          {lang === "ro" ? "Descriere & Dovezi (Link)" : "Description & Evidence Links"}
         </label>
         <textarea
           required
-          rows={4}
-          placeholder={
-            lang === "ro"
-              ? "Detaliază incidentul și include linkuri către dovezi video sau capturi foto (YouTube, Imgur)."
-              : "Detail the incident and include links to video or screenshot proof (YouTube, Imgur)."
-          }
+          rows={3}
+          placeholder={lang === "ro" ? "Detalii și link-uri către dovezi video/foto..." : "Details and video/screenshot proof links..."}
           value={evidenceText}
           onChange={(e) => setEvidenceText(e.target.value)}
-          className="w-full bg-surface-100 border border-surface-border focus:border-brand rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors resize-none shadow-inner"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none resize-none"
         />
       </div>
 
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 px-4 rounded-lg bg-brand hover:bg-brand-600 text-gray-950 font-bold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 shadow-md shadow-brand/10 hover:shadow-brand/20 active:scale-[0.99]"
+        size="sm"
+        className="w-full"
       >
         {loading
-          ? lang === "ro"
-            ? "Se trimite..."
-            : "Submitting..."
-          : lang === "ro"
-          ? "Trimite Reclamația"
-          : "Submit Complaint"}
-      </button>
+          ? (lang === "ro" ? "Se trimite..." : "Submitting...")
+          : (lang === "ro" ? "Trimite Reclamația" : "Submit Complaint")}
+      </Button>
     </form>
   );
 }

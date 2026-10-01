@@ -81,7 +81,7 @@ CreateThread(function()
     SetBlipScale(casinoBlip, 0.9)
     SetBlipAsShortRange(casinoBlip, true)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName('The Diamond Casino')
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('blip.casino'))
     EndTextCommandSetBlipName(casinoBlip)
 end)
 
@@ -130,7 +130,7 @@ CreateThread(function()
                 true, true, 2, false, nil, nil, false)
 
             if #(coords - Cfg.entrance) < 2.5 then
-                DrawText3D(vector3(Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z + 0.5), '~g~[E]~s~ Enter The Diamond Casino')
+                DrawText3D(vector3(Cfg.entrance.x, Cfg.entrance.y, Cfg.entrance.z + 0.5), exports.sunset_core:Translate('hint.casino.enter'))
                 if IsControlJustReleased(0, 38) then -- E
                     insideCasino = true
                     DoScreenFadeOut(500)
@@ -168,7 +168,7 @@ CreateThread(function()
                         true, true, 2, false, nil, nil, false)
 
                     if #(coords - zone) < 2.5 then
-                        DrawText3D(vector3(zone.x, zone.y, zone.z + 0.5), '~r~[E]~s~ Exit Casino')
+                        DrawText3D(vector3(zone.x, zone.y, zone.z + 0.5), exports.sunset_core:Translate('hint.casino.exit'))
                         if IsControlJustReleased(0, 38) then -- E
                             CreateThread(function() leaveCasino() end)
                         end
@@ -212,7 +212,7 @@ CreateThread(function()
                     0, 255, 0, 180,
                     false, true, 2, false, nil, nil, false)
                 if dist < 2.5 then
-                    DrawText3D(vector3(Cfg.cashier.x, Cfg.cashier.y, Cfg.cashier.z + 0.4), '~g~[E]~s~ Cashier (Exchange Chips)')
+                    DrawText3D(vector3(Cfg.cashier.x, Cfg.cashier.y, Cfg.cashier.z + 0.4), exports.sunset_core:Translate('hint.casino.cashier'))
                     if IsControlJustReleased(0, 38) and not casinoOpen then
                         openGame('cashier')
                     end
@@ -236,7 +236,7 @@ CreateThread(function()
                     255, 150, 0, 180,
                     true, true, 2, false, nil, nil, false)
                 if dist < 2.5 then
-                    DrawText3D(vector3(Cfg.bar.x, Cfg.bar.y, Cfg.bar.z + 0.4), '~o~[E]~s~ Casino Bar (Drinks)')
+                    DrawText3D(vector3(Cfg.bar.x, Cfg.bar.y, Cfg.bar.z + 0.4), exports.sunset_core:Translate('hint.casino.bar'))
                     if IsControlJustReleased(0, 38) and not casinoOpen then
                         openGame('bar')
                     end
@@ -371,3 +371,11 @@ CreateThread(function()
 end)
 
 exports('IsCasinoOpen', function() return casinoOpen end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Casino had no stop handler: release blip + UI focus.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if casinoBlip and DoesBlipExist(casinoBlip) then RemoveBlip(casinoBlip) end
+    casinoBlip = nil
+    pcall(closeCasinoUI)
+end)

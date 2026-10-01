@@ -184,8 +184,17 @@ local function autoEnterGame()
         Wait(100)
     end
 
+    -- [LOGIN PIPELINE] The server callback is idempotent now, so a transient
+    -- failure (DB hiccup, callback rate limit) is retried instead of bouncing an
+    -- already-authenticated player back to a login form that can no longer work.
     local tEnterStart = GetGameTimer()
-    local result, err = Sunset.AwaitCallback('sunset:enterGame')
+    local result, err
+    for attempt = 1, 3 do
+        result, err = Sunset.AwaitCallback('sunset:enterGame')
+        if result and result.character then break end
+        trace('character_request_retry', ('attempt=%d err=%s'):format(attempt, tostring(err or 'empty_response')))
+        if attempt < 3 then Wait(1500) end
+    end
     local enterDur = GetGameTimer() - tEnterStart
     if result and result.character then
         if SunsetBoot and SunsetBoot.RecordMilestone then

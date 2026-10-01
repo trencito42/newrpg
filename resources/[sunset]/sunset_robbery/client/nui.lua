@@ -1,3 +1,17 @@
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- Falls back to the raw natives only if sunset_ui is not running.
+function ROB_SetNuiFocus(hasFocus, hasCursor, keepInput)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'robbery')
+        end)
+        if ok then return res end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+    SetNuiFocusKeepInput(keepInput == true)
+    return true
+end
+
 RobberyNui = {}
 
 function RobberyNui.send(action, data)
@@ -5,7 +19,7 @@ function RobberyNui.send(action, data)
 end
 
 function RobberyNui.focus(hasFocus, hasCursor)
-    SetNuiFocus(hasFocus == true, hasCursor == true)
+    ROB_SetNuiFocus(hasFocus == true, hasCursor == true)
 end
 
 RegisterNUICallback('hackClick', function(data, cb)
@@ -48,4 +62,17 @@ RegisterNUICallback('playSound', function(data, cb)
         PlaySoundFrontend(-1, snd.name, snd.set, true)
     end
     cb('ok')
+end)
+
+-- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+    if ok and owner == 'robbery' then
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
+    end
+end)
+
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    ROB_SetNuiFocus(false, false)
 end)

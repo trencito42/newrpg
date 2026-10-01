@@ -9,7 +9,7 @@ local isEnabled = false
 local isPermitted = false
 
 local function killSwitchOn()
-    return GetConvar(Cfg.enabledConvar, 'false') == 'true'
+    return (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true')
 end
 
 local function notify(msg, typ)

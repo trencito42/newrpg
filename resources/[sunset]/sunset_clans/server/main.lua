@@ -473,8 +473,21 @@ exports.sunset_core:RegisterCallback('sunset:clanProfile', function(source, clan
     return clanProfilePayload(clanId)
 end)
 
+local ClanCreateBusy = {}
+local ClanCreateImpl
 exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, payload)
     if type(payload) ~= 'table' then return nil, { localeKey = 'clans.message.invalid_create_request' } end
+    -- [SEC2] Serialise per source: two parallel creates raced on the premium-points
+    -- balance snapshot (refund path set the balance back to the stale pre-spend value).
+    if ClanCreateBusy[source] then return nil, { localeKey = 'clans.message.invalid_create_request' } end
+    ClanCreateBusy[source] = true
+    local okC, resC, errC = pcall(function() return ClanCreateImpl(source, payload) end)
+    ClanCreateBusy[source] = nil
+    if not okC then error(resC) end
+    return resC, errC
+end)
+
+ClanCreateImpl = function(source, payload)
     local cid = charId(source)
     if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if ClanDisplay.getMembership(cid) then return nil, { localeKey = 'clans.message.you_are_already_in_a_clan' } end
@@ -556,7 +569,7 @@ exports.sunset_core:RegisterCallback('sunset:clanCreate', function(source, paylo
     end
     safeBroadcast(clanId, source, ('founded the clan %s [%s].'):format(name, tag))
     return payload
-end)
+end
 
 exports.sunset_core:RegisterCallback('sunset:clanGetMotd', function(source)
     local row, cid = membershipFor(source)
@@ -947,5 +960,24 @@ AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
     if GetResourceState('sunset_chat') == 'started' then
         pcall(function() exports.sunset_chat:RefreshCommandList() end)
+    end
+end)
+
+
+-- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
+CreateThread(function()
+    Wait(120000)
+    local purges = { { 'clan_audit_log', 180 } }
+    while true do
+        for _, p in ipairs(purges) do
+            for _ = 1, 20 do
+                local ok, n = pcall(function()
+                    return MySQL.update.await(('DELETE FROM `%s` WHERE created_at < (NOW() - INTERVAL ? DAY) LIMIT 2000'):format(p[1]), { p[2] })
+                end)
+                if not ok or (tonumber(n) or 0) < 2000 then break end
+                Wait(1000)
+            end
+        end
+        Wait(6 * 3600 * 1000)
     end
 end)

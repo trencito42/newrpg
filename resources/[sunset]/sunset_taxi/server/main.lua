@@ -3,6 +3,7 @@ local rideSeq = 0
 local DriverAvailable = {}
 local DriverSessionStats = {}
 local MeterThreads = {}
+local RequestCooldown = {}
 
 -- ═══════════════════════════════════════════════════════════════
 --  [SESSIONS MIGRATION] Mirror active rides into sunset_sessions so the
@@ -23,7 +24,9 @@ local function sessionsCall(method, ...)
 end
 
 CreateThread(function()
-    Wait(1200)
+    -- [PERF] explicit readiness instead of a fixed Wait hoping sunset_sessions loaded
+    local waited = 0
+    while GetResourceState('sunset_sessions') ~= 'started' and waited < 60000 do Wait(500); waited = waited + 500 end
     if GetResourceState('sunset_sessions') ~= 'started' then
         print('^3[sunset_taxi]^7 sunset_sessions not started; rides run without framework mirroring.')
         return
@@ -87,11 +90,20 @@ local function isTaxiDriver(source)
     return exports.sunset_factions:IsOnDuty(source)
 end
 
+-- [JOBS AUDIT] Client-supplied destination coordinates fed straight into fare math: strings / NaN / huge
+-- values raised errors inside callbacks or produced absurd fares. Coerce to finite, map-bounded numbers.
+local function finiteNum(v, fallback)
+    v = tonumber(v)
+    if not v or v ~= v or v == math.huge or v == -math.huge then return fallback end
+    return math.max(-10000.0, math.min(10000.0, v + 0.0))
+end
+
 local function encodeCoords(coords)
+    if type(coords) ~= 'table' and type(coords) ~= 'vector3' then coords = {} end
     return {
-        x = coords.x or coords[1] or 0.0,
-        y = coords.y or coords[2] or 0.0,
-        z = coords.z or coords[3] or 0.0,
+        x = finiteNum(coords.x or coords[1], 0.0),
+        y = finiteNum(coords.y or coords[2], 0.0),
+        z = finiteNum(coords.z or coords[3], 0.0),
     }
 end
 
@@ -432,11 +444,18 @@ local function startRide(source, pickup, destination, destLabel)
     if not char then return nil, { localeKey = 'taxi.message.no_character' } end
     if isTaxiDriver(source) then return nil, { localeKey = 'taxi.message.go_off_duty_to_request_a_ride' } end
     if rideForPassenger(char.id) then return nil, { localeKey = 'taxi.message.you_already_have_an_active_ride' } end
+    -- [JOBS AUDIT] request -> cancel -> request spam re-broadcast an offer + dispatch call each time.
+    local nowMs = GetGameTimer()
+    if RequestCooldown[source] and nowMs - RequestCooldown[source] < 8000 then
+        return nil, { localeKey = 'taxi.message.you_already_have_an_active_ride' }
+    end
+    RequestCooldown[source] = nowMs
 
     pickup = encodeCoords(pickup)
     destination = encodeCoords(destination)
     local fare, km = Sunset.TaxiEstimateFare(pickup, destination)
-    local label = destLabel or 'Custom destination'
+    if not fare or fare ~= fare or fare > 100000 then return nil, { localeKey = 'taxi.message.invalid_destination' } end
+    local label = tostring(destLabel or 'Custom destination'):sub(1, 64)
 
     rideSeq = rideSeq + 1
     local ride = {
@@ -471,6 +490,9 @@ local function startRide(source, pickup, destination, destLabel)
                 pushTaxiUpdate(pSrc)
             end
             broadcastDrivers('sunset:client:taxiRideTaken', { id = ride.id })
+            if current.dispatchCallId then
+                pcall(function() exports.sunset_dispatch:CancelCall(source, 'taxi', current.dispatchCallId, 'Ride request expired') end)
+            end
         end
     end)
 
@@ -557,9 +579,13 @@ exports.sunset_core:RegisterCallback('sunset:taxiCancelRide', function(source)
 
     local ride = rideForPassenger(char.id) or rideForDriver(char.id)
     if not ride then return nil, { localeKey = 'taxi.message.no_active_ride' } end
-    if ride.status == 'in_progress' then return nil, { localeKey = 'taxi.message.cannot_cancel_during_trip' } end
+    if ride.status == 'in_progress' or ride.status == 'settling' then return nil, { localeKey = 'taxi.message.cannot_cancel_during_trip' } end
 
     ride.status = 'cancelled'
+    if ride.frameworkId then
+        sessionsCall('EndSession', ride.frameworkId, 'CANCELLED', 'cancelled')
+        ride.frameworkId = nil
+    end
 
     local otherSrc
     if ride.passengerCharId == char.id then
@@ -670,19 +696,34 @@ exports.sunset_core:RegisterCallback('sunset:taxiCompleteRide', function(source)
     local companyCut = math.floor(amount * cutRate)
     local driverPay = amount - companyCut
 
-    if not exports.sunset_core:RemoveMoney(passengerSrc, 'cash', amount, 'taxi_ride') then
-        if not exports.sunset_core:RemoveMoney(passengerSrc, 'bank', amount, 'taxi_ride') then
-            ride.status = 'in_progress'
-            return nil, { localeKey = 'taxi.message.passenger_cannot_pay' }
+    -- [JOBS AUDIT] An error thrown by the money exports used to leave the ride stuck in 'settling' forever
+    -- (neither side could complete or cancel). Restore in_progress if nothing was charged yet.
+    local chargedFrom
+    local okPay, payErr = pcall(function()
+        if exports.sunset_core:RemoveMoney(passengerSrc, 'cash', amount, 'taxi_ride') then
+            chargedFrom = 'cash'
+        elseif exports.sunset_core:RemoveMoney(passengerSrc, 'bank', amount, 'taxi_ride') then
+            chargedFrom = 'bank'
         end
+    end)
+    if not okPay or not chargedFrom then
+        ride.status = 'in_progress'
+        MeterThreads[ride.id] = nil
+        startMeter(ride)
+        if not okPay then print(('[taxi] charge error ride %s: %s'):format(tostring(ride.id), tostring(payErr))) end
+        return nil, { localeKey = 'taxi.message.passenger_cannot_pay' }
     end
 
     -- [AUDIT P5-18] The passenger was already debited; if the driver credit fails
-    -- the money would silently vanish. Retry once, then log loudly.
+    -- retry once, then REFUND the passenger (previously the money just vanished with a log line).
     if not exports.sunset_core:AddMoney(source, 'cash', driverPay, 'taxi_ride') then
         if not exports.sunset_core:AddMoney(source, 'cash', driverPay, 'taxi_ride_retry') then
-            print(('[taxi] CRITICAL: driver payout FAILED for char %d, amount %d — manual compensation required')
+            print(('[taxi] CRITICAL: driver payout FAILED for char %d, amount %d - refunding passenger')
                 :format(char.id or 0, driverPay))
+            exports.sunset_core:AddMoney(passengerSrc, chargedFrom, amount, 'taxi_ride_refund')
+            ride.status = 'in_progress'
+            startMeter(ride)
+            return nil, { localeKey = 'taxi.message.passenger_cannot_pay' }
         end
     end
     addSociety(companyCut)
@@ -738,18 +779,33 @@ exports.sunset_core:RegisterCallback('sunset:taxiTip', function(source, amount)
     if not ride or ride.status ~= 'in_progress' then return nil, { localeKey = 'taxi.message.no_trip_in_progress' } end
     if not ride.driverCharId then return nil, { localeKey = 'taxi.message.no_driver_assigned' } end
 
-    amount = math.floor(tonumber(amount) or 0)
-    if amount < 1 then return nil, { localeKey = 'taxi.message.invalid_tip' } end
+    amount = tonumber(amount) or 0
+    if amount ~= amount then amount = 0 end
+    amount = math.floor(amount)
+    -- [JOBS AUDIT] Tips were uncapped; cap to 5x the largest preset (default 500) so a typo / forged
+    -- amount cannot drain a wallet. Also one tip per ride (idempotent against double-submit).
+    local tipCap = 0
+    for _, v in ipairs(Sunset.Taxi.tipOptions or { 25, 50, 100 }) do tipCap = math.max(tipCap, tonumber(v) or 0) end
+    tipCap = math.max(100, tipCap * 5)
+    if amount < 1 or amount > tipCap then return nil, { localeKey = 'taxi.message.invalid_tip' } end
+    if ride.tipped then return nil, { localeKey = 'taxi.message.invalid_tip' } end
+    ride.tipped = true
 
     if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'taxi_tip') then
         if not exports.sunset_core:RemoveMoney(source, 'bank', amount, 'taxi_tip') then
+            ride.tipped = nil
             return nil, { localeKey = 'taxi.message.not_enough_money' }
         end
     end
 
     local driverSrc = ride.driverSource or findSourceByCharacterId(ride.driverCharId)
+    if not driverSrc or not exports.sunset_core:AddMoney(driverSrc, 'cash', amount, 'taxi_tip') then
+        -- driver not reachable / credit failed: give the tip back instead of destroying it
+        exports.sunset_core:AddMoney(source, 'cash', amount, 'taxi_tip_refund')
+        ride.tipped = nil
+        return nil, { localeKey = 'taxi.message.no_driver_assigned' }
+    end
     if driverSrc then
-        exports.sunset_core:AddMoney(driverSrc, 'cash', amount, 'taxi_tip')
         TriggerClientEvent('sunset:client:notify', driverSrc, exports.sunset_core:TFor(driverSrc, 'taxi.message.tip_received_value', amount), 'success')
     end
     return true
@@ -772,6 +828,7 @@ end)
 AddEventHandler('playerDropped', function()
     local source = source
     DriverAvailable[source] = nil
+    RequestCooldown[source] = nil
     local char = getChar(source)
     if not char then return end
 

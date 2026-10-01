@@ -209,6 +209,17 @@ end
 -- end, false)
 
 
+-- [CLIENT_PERF_ENTITY_AUDIT] Bounded replacement for `repeat Wait(0) until HasXLoaded()`:
+-- a stream request that never resolves must not spin this thread forever.
+function BJWaitUntil(check, timeoutMs)
+	local deadline = GetGameTimer() + (timeoutMs or 8000)
+	while not check() do
+		if GetGameTimer() > deadline then return false end
+		Wait(0)
+	end
+	return true
+end
+
 spawnedPeds = {}
 spawnedObjects = {}
 AddEventHandler("onResourceStop", function(r)
@@ -231,9 +242,16 @@ Citizen.CreateThread(function()
 
     scaleform = RequestScaleformMovie_2("INSTRUCTIONAL_BUTTONS")
 
-    repeat Wait(0) until HasScaleformMovieLoaded(scaleform)
+    BJWaitUntil(function() return HasScaleformMovieLoaded(scaleform) end)
 
-	while true do Wait(0)
+	while true do
+		-- [CLIENT_PERF_ENTITY_AUDIT] Per-frame only while something is drawn / seated.
+		if renderScaleform ~= true and renderTime ~= true and renderBet ~= true
+			and renderHand ~= true and atTable ~= true and _DEBUG ~= true then
+			Wait(250)
+		else
+			Wait(0)
+		end
 		if renderScaleform == true then
 			DrawScaleformMovieFullscreen(scaleform, 255, 255, 255, 255, 0)
 		end
@@ -398,17 +416,17 @@ handObjs = {}
 function CreatePeds()
 	if not HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@dealer") then
 		RequestAnimDict("anim_casino_b@amb@casino@games@blackjack@dealer")
-		repeat Wait(0) until HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@dealer")
+		BJWaitUntil(function() return HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@dealer") end)
 	end
 
 	if not HasAnimDictLoaded("anim_casino_b@amb@casino@games@shared@dealer@") then
 		RequestAnimDict("anim_casino_b@amb@casino@games@shared@dealer@")
-		repeat Wait(0) until HasAnimDictLoaded("anim_casino_b@amb@casino@games@shared@dealer@")
+		BJWaitUntil(function() return HasAnimDictLoaded("anim_casino_b@amb@casino@games@shared@dealer@") end)
 	end
 
 	if not HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@player") then
 		RequestAnimDict("anim_casino_b@amb@casino@games@blackjack@player")
-		repeat Wait(0) until HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@player")
+		BJWaitUntil(function() return HasAnimDictLoaded("anim_casino_b@amb@casino@games@blackjack@player") end)
 	end
 	
 	for i,v in pairs(customTables) do
@@ -419,10 +437,11 @@ function CreatePeds()
 		
 		if not HasModelLoaded(model) then
 			RequestModel(model)
-			repeat Wait(0) until HasModelLoaded(model)
+			BJWaitUntil(function() return HasModelLoaded(model) end)
 		end
 	
 		local tableObj = CreateObjectNoOffset(model, v.coords.x, v.coords.y, v.coords.z, false, false, false)
+		SetModelAsNoLongerNeeded(model)
 		SetEntityRotation(tableObj, 0.0, 0.0, v.coords.w, 2, 1)
 		SetObjectTextureVariant(tableObj, v.color or 3)
 		table.insert(spawnedObjects, tableObj)
@@ -462,10 +481,11 @@ function CreatePeds()
 		
 		if not HasModelLoaded(model) then
 			RequestModel(model)
-			repeat Wait(0) until HasModelLoaded(model)
+			BJWaitUntil(function() return HasModelLoaded(model) end)
 		end
 		
 		local dealer = CreatePed(4, model, v.coords.x, v.coords.y, v.coords.z, v.coords.w, false, true)
+		SetModelAsNoLongerNeeded(model)
 		-- local dealer = ClonePed(PlayerPedId(), 0.0, false, false)
 		SetEntityCanBeDamaged(dealer, false)
 		SetBlockingOfNonTemporaryEvents(dealer, true)
@@ -525,7 +545,7 @@ AddEventHandler("BLACKJACK:PlayDealerAnim", function(i, animDict, anim)
 		
 		if not HasAnimDictLoaded(animDict) then
 			RequestAnimDict(animDict)
-			repeat Wait(0) until HasAnimDictLoaded(animDict)
+			BJWaitUntil(function() return HasAnimDictLoaded(animDict) end)
 		end
 	
 		-- if GetEntityModel(spawnedPeds[i]) == `s_f_y_casino_01` then
@@ -641,11 +661,12 @@ AddEventHandler("BLACKJACK:PlaceBetChip", function(index, seat, bet, double, spl
 			DebugPrint(tostring(pileOffsets[seat]))
 		
 			RequestModel(model)
-			repeat Wait(0) until HasModelLoaded(model)
+			BJWaitUntil(function() return HasModelLoaded(model) end)
 			local location = 1
 			if double == true then location = 2 end
 			
 			local chip = CreateObjectNoOffset(model, tables[index].coords.x, tables[index].coords.y, tables[index].coords.z, false, false, false)
+			SetModelAsNoLongerNeeded(model)
 
 			table.insert(spawnedObjects, chip)
 			table.insert(chips[index][seat], chip)
@@ -693,12 +714,13 @@ AddEventHandler("BLACKJACK:PlaceBetChip", function(index, seat, bet, double, spl
 					DebugPrint(tostring(chipOffsets[seat]))
 				
 					RequestModel(model)
-					repeat Wait(0) until HasModelLoaded(model)
+					BJWaitUntil(function() return HasModelLoaded(model) end)
 				
 					local location = i
 					-- if double == true then location = 2 end
 					
 					local chip = CreateObjectNoOffset(model, tables[index].coords.x, tables[index].coords.y, tables[index].coords.z, false, false, false)
+					SetModelAsNoLongerNeeded(model)
 					
 					table.insert(spawnedObjects, chip)
 					table.insert(chips[index][seat], chip)
@@ -1259,9 +1281,10 @@ AddEventHandler("BLACKJACK:GiveCard", function(i, seat, handSize, card, flipped,
 	local model = GetHashKey("vw_prop_cas_card_"..card)
 	
 	RequestModel(model)
-	repeat Wait(0) until HasModelLoaded(model)
+	BJWaitUntil(function() return HasModelLoaded(model) end)
 	
 	local card = CreateObjectNoOffset(model, tables[i].coords.x, tables[i].coords.y, tables[i].coords.z, false, false, false)
+	SetModelAsNoLongerNeeded(model)
 	
 	table.insert(spawnedObjects, card)
 	

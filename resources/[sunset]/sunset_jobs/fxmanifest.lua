@@ -57,6 +57,7 @@ server_scripts {
 
 server_exports {
     'GetMechanicProviders',
+    'CancelSession',
     'PayReward',
     'AddJobXP',
     'GetJobLevel',

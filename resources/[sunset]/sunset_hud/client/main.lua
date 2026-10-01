@@ -319,12 +319,16 @@ end)
 
 CreateThread(function()
     local minimap = RequestScaleformMovie('minimap')
-    while not HasScaleformMovieLoaded(minimap) do
+    local minimapDeadline = GetGameTimer() + 10000
+    while not HasScaleformMovieLoaded(minimap) and GetGameTimer() < minimapDeadline do
         Wait(0)
     end
-    BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
-    ScaleformMovieMethodAddParamInt(2) -- 0=hidden, 1=health only, 2=health+armour bars
-    EndScaleformMovieMethod()
+    -- On timeout skip the cosmetic setup but keep the HUD-hide loop below alive.
+    if HasScaleformMovieLoaded(minimap) then
+        BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
+        ScaleformMovieMethodAddParamInt(2) -- 0=hidden, 1=health only, 2=health+armour bars
+        EndScaleformMovieMethod()
+    end
 
     while true do
         if hudActive then
@@ -635,7 +639,11 @@ CreateThread(function()
                     local pedCoords = GetEntityCoords(ped)
                     local dist = #(myCoords - pedCoords)
 
-                    if dist <= NAMETAG_DISTANCE and HasEntityClearLosToEntity(myPed, ped, 17) then
+                    -- LOS raycast cached per metadata refresh (info is rebuilt every 200ms).
+                    if dist <= NAMETAG_DISTANCE and info.los == nil then
+                        info.los = HasEntityClearLosToEntity(myPed, ped, 17)
+                    end
+                    if dist <= NAMETAG_DISTANCE and info.los then
                         local inVeh = IsPedInAnyVehicle(ped, false)
                         local headBone = GetPedBoneCoords(ped, 31086, 0.0, 0.0, 0.0)
                         local tagZ = (headBone and headBone.z > 0.0) and headBone.z or pedCoords.z

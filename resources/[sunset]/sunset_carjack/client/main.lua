@@ -83,7 +83,14 @@ end
 CreateThread(function()
     local model = GetHashKey('g_m_y_famca_01')
     RequestModel(model)
-    while not HasModelLoaded(model) do Wait(100) end
+    local mDeadline = GetGameTimer() + 8000
+    while not HasModelLoaded(model) do
+        if GetGameTimer() > mDeadline then
+            print('[sunset_carjack] chop NPC model load timed out')
+            return
+        end
+        Wait(100)
+    end
     for i, npc in ipairs(CHOP_NPCS) do
         local ped = CreatePed(4, model,
             npc.coords.x, npc.coords.y, npc.coords.z - 1.0, npc.coords.w,
@@ -113,7 +120,7 @@ CreateThread(function()
             if spawnedNpcs[i] and DoesEntityExist(spawnedNpcs[i]) then
                 if #(pos - vector3(npc.coords.x, npc.coords.y, npc.coords.z)) < NPC_INTERACT_DIST then
                     nearNpcIdx = i
-                    sleep = 0
+                    sleep = 100
                     break
                 end
             end
@@ -130,7 +137,9 @@ CreateThread(function()
                     end
                 end
             end
-            if nearVehicle then sleep = 0 end
+            -- The G-key thread polls the control per frame; this scan only needs
+            -- to refresh the candidate (GetGamePool is expensive), not run per frame.
+            if nearVehicle then sleep = 250 end
         end
 
         -- Inchide meniu daca ne-am mutat

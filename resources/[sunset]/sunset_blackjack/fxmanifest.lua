@@ -13,3 +13,6 @@ client_scripts {
 }
 server_script 'server.lua'
 
+
+-- [STARTUP] declared so the exports used at runtime are guaranteed started first
+dependencies { 'sunset_inventory' }

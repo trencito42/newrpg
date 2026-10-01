@@ -590,12 +590,12 @@ const Helpdesk = {
         }
 
         if (action === 'rejectAd') {
-            Helpdesk.prompt('rejectAd', 0, `Reject Ad #${adId}`, { adId, placeholder: 'Rejection reason (e.g. Inappropriate content)' });
+            Helpdesk.prompt('rejectAd', 0, I18n.t('ui.helpdesk.reject_ad_title', { id: adId }), { adId, placeholder: I18n.t('ui.helpdesk.reject_ad_placeholder') });
             return;
         }
 
         if (action === 'adMute') {
-            Helpdesk.prompt('adMute', targetId, `AD-Mute Player #${targetId}`, { placeholder: 'Motiv AD-Mute (15 minute)', minutes: 15 });
+            Helpdesk.prompt('adMute', targetId, I18n.t('ui.helpdesk.ad_mute_title', { id: targetId }), { placeholder: I18n.t('ui.helpdesk.ad_mute_placeholder'), minutes: 15 });
             return;
         }
 

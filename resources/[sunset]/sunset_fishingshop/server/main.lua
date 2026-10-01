@@ -81,6 +81,27 @@ local function nearBillyRay(source, maxDist)
     return #(GetEntityCoords(ped) - BILLY_RAY_COORDS) <= (maxDist or BILLY_RAY_HIRE_DIST)
 end
 
+-- [JOBS AUDIT] Per-player lock for money/inventory callbacks. buyCart/sellCart/upgradeRod yield
+-- (inventory + money exports), so concurrent requests interleaved: rod upgrades were charged and granted
+-- twice, carts double-processed. Self-expires after 15s.
+local ShopLocks = {}
+local function withShopLock(source, fn)
+    local t = ShopLocks[source]
+    if t and GetGameTimer() - t < 15000 then
+        return nil, { localeKey = 'fishingshop.message.nothing_sold' }
+    end
+    ShopLocks[source] = GetGameTimer()
+    local res = table.pack(pcall(fn))
+    ShopLocks[source] = nil
+    if not res[1] then error(res[2], 0) end
+    return table.unpack(res, 2, res.n)
+end
+AddEventHandler('playerDropped', function() ShopLocks[source] = nil end)
+
+local function validCartEntry(entry)
+    return type(entry) == 'table' and type(entry.item) == 'string'
+end
+
 exports.sunset_core:RegisterCallback('sunset:fishingshop:getBillyRayMenu', function(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'fishingshop.message.character_not_found' } end
@@ -171,34 +192,59 @@ end)
 
 -- ── Cumpara momeala din cos (fishing shop UI) ─────────────────
 exports.sunset_core:RegisterCallback('sunset:fishingshop:buyCart', function(source, cart)
-    if not cart or type(cart) ~= 'table' or #cart == 0 then
-        return nil, { localeKey = 'fishingshop.message.cart_is_empty' }
-    end
-    local priceMap = {}
-    for _, b in ipairs(BAIT_SHOP_ITEMS) do priceMap[b.item] = b.price end
+    return withShopLock(source, function()
+        if not cart or type(cart) ~= 'table' or #cart == 0 or #cart > 10 then
+            return nil, { localeKey = 'fishingshop.message.cart_is_empty' }
+        end
+        -- [JOBS AUDIT] bait is sold by Billy Ray / the bait shop only; there was no proximity check at all.
+        if not nearBillyRay(source, 25.0) then
+            return nil, { localeKey = 'fishingshop.message.you_need_to_be_near_billy_ray' }
+        end
+        local priceMap = {}
+        for _, b in ipairs(BAIT_SHOP_ITEMS) do priceMap[b.item] = b.price end
 
-    local total = 0
-    for _, entry in ipairs(cart) do
-        local price = priceMap[entry.item]
-        if not price then return nil, { localeKey = 'fishingshop.message.item_invalid' } .. tostring(entry.item) end
-        local amount = math.max(1, math.min(math.floor(tonumber(entry.amount) or 1), 500))
-        total = total + price * amount
-    end
+        local total = 0
+        local lines = {}
+        for _, entry in ipairs(cart) do
+            if not validCartEntry(entry) then return nil, { localeKey = 'fishingshop.message.cart_is_empty' } end
+            local price = priceMap[entry.item]
+            -- [JOBS AUDIT] was `{ localeKey = ... } .. tostring(...)` (table concat -> runtime error)
+            if not price then return nil, 'Item invalid: ' .. tostring(entry.item) end
+            local amount = tonumber(entry.amount) or 1
+            if amount ~= amount then amount = 1 end
+            amount = math.max(1, math.min(math.floor(amount), 500))
+            total = total + price * amount
+            lines[#lines + 1] = { item = entry.item, amount = amount, price = price }
+        end
 
-    local ok = exports.sunset_core:RemoveMoney(source, 'cash', total, 'bait_shop')
-    if not ok then
-        return nil, { localeKey = 'fishingshop.message.not_enough_cash_required_value', formatArgs = { total } }
-    end
+        local ok = exports.sunset_core:RemoveMoney(source, 'cash', total, 'bait_shop')
+        if not ok then
+            return nil, { localeKey = 'fishingshop.message.not_enough_cash_required_value', formatArgs = { total } }
+        end
 
-    for _, entry in ipairs(cart) do
-        local amount = math.max(1, math.min(math.floor(tonumber(entry.amount) or 1), 500))
-        exports.sunset_inventory:AddItem(source, entry.item, amount)
-    end
-    return { total = total }
+        -- [JOBS AUDIT] AddItem failures (full bag) were ignored: the player paid for bait never delivered.
+        -- Refund exactly the undelivered portion.
+        local refund, delivered = 0, 0
+        for _, line in ipairs(lines) do
+            if exports.sunset_inventory:AddItem(source, line.item, line.amount) then
+                delivered = delivered + line.amount * line.price
+            else
+                refund = refund + line.amount * line.price
+            end
+        end
+        if refund > 0 then
+            exports.sunset_core:AddMoney(source, 'cash', refund, 'bait_shop_refund')
+        end
+        if delivered == 0 then
+            return nil, { localeKey = 'fishingshop.message.cart_is_empty' }
+        end
+        return { total = delivered, refunded = refund }
+    end)
 end)
 
 -- ── Vinde peste selectat din cos (fishing shop UI) ────────────
 exports.sunset_core:RegisterCallback('sunset:fishingshop:sellCart', function(source, cart)
+    return withShopLock(source, function()
     if not nearFishBuyer(source) then
         return nil, { localeKey = 'fishingshop.message.you_need_to_be_at_a_24_7_store' }
     end
@@ -207,11 +253,15 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellCart', function(sou
     end
     local total = 0
     local sold  = {}
+    if #cart > 10 then return nil, { localeKey = 'fishingshop.message.sell_cart_is_empty' } end
     for _, entry in ipairs(cart) do
+        if not validCartEntry(entry) then return nil, { localeKey = 'fishingshop.message.sell_cart_is_empty' } end
         local fishItem = entry.item
-        if not FISH_PRICES[fishItem] then return nil, { localeKey = 'fishingshop.message.item_invalid' } .. tostring(fishItem) end
+        if not FISH_PRICES[fishItem] then return nil, 'Item invalid: ' .. tostring(fishItem) end
         local inInv = exports.sunset_inventory:CountItem(source, fishItem) or 0
-        local amount = math.max(1, math.min(math.floor(tonumber(entry.amount) or 1), inInv))
+        local reqAmount = tonumber(entry.amount) or 1
+        if reqAmount ~= reqAmount then reqAmount = 1 end
+        local amount = math.max(1, math.min(math.floor(reqAmount), inInv))
         if amount <= 0 then return nil, { localeKey = 'fishingshop.message.not_enough_value_in_inventory', formatArgs = { FISH_LABELS[fishItem] or fishItem } } end
 
         local actuallyRemoved = 0
@@ -240,7 +290,13 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellCart', function(sou
         sold[#sold + 1] = ('%dx %s = $%d'):format(actuallyRemoved, FISH_LABELS[fishItem] or fishItem, earned)
     end
     if total == 0 then return nil, { localeKey = 'fishingshop.message.nothing_sold' } end
-    exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_247')
+    -- [JOBS AUDIT] fish were already removed; a failed credit silently ate the whole haul. Retry once, then log loudly.
+    if not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_247')
+        and not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_247_retry') then
+        print(('[sunset_fishingshop] CRITICAL: removed fish but could not credit $%d to src %s (%s)'):format(
+            total, tostring(source), table.concat(sold, ', ')))
+        return nil, { localeKey = 'fishingshop.message.nothing_sold' }
+    end
     if GetResourceState('sunset_businesses') == 'started' then
         local ped = GetPlayerPed(source)
         if ped and ped ~= 0 then
@@ -248,10 +304,12 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellCart', function(sou
         end
     end
     return ('Sold! +$%d (%s)'):format(total, table.concat(sold, ', '))
+    end)
 end)
 
 -- ── Vinde tot pestele la 24/7 (legacy — pastrat pentru compatibilitate) ──
 exports.sunset_core:RegisterCallback('sunset:fishingshop:sellFish247', function(source)
+    return withShopLock(source, function()
     if not nearFishBuyer(source) then
         return nil, { localeKey = 'fishingshop.message.you_need_to_be_at_a_24_7_store' }
     end
@@ -279,7 +337,11 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellFish247', function(
         return nil, { localeKey = 'fishingshop.message.you_have_no_fish_in_your_inventory' }
     end
 
-    exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_legacy')
+    if not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_legacy')
+        and not exports.sunset_core:AddMoney(source, 'cash', total, 'fish_sell_legacy_retry') then
+        print(('[sunset_fishingshop] CRITICAL: removed fish but could not credit $%d to src %s'):format(total, tostring(source)))
+        return nil, { localeKey = 'fishingshop.message.nothing_sold' }
+    end
     if GetResourceState('sunset_businesses') == 'started' then
         local ped = GetPlayerPed(source)
         if ped and ped ~= 0 then
@@ -287,10 +349,16 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:sellFish247', function(
         end
     end
     return ('Fish sold! +$%d cash (%s)'):format(total, table.concat(sold, ', '))
+    end)
 end)
 
 -- ── Upgrade undita la Billy Ray ───────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:fishingshop:upgradeRod', function(source)
+    return withShopLock(source, function()
+    -- [JOBS AUDIT] rods could be bought from anywhere on the map.
+    if not nearBillyRay(source, 15.0) then
+        return nil, { localeKey = 'fishingshop.message.you_need_to_be_near_billy_ray' }
+    end
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'fishingshop.message.character_not_found' } end
 
@@ -330,11 +398,19 @@ exports.sunset_core:RegisterCallback('sunset:fishingshop:upgradeRod', function(s
         return nil, { localeKey = 'fishingshop.message.not_enough_cash_upgrade_cost_value', formatArgs = { upgrade.cost } }
     end
 
-    if upgrade.requires then
-        exports.sunset_inventory:RemoveItem(source, upgrade.requires, 1)
+    -- [JOBS AUDIT] The old rod was removed and the new one added with no result check: a full bag cost the
+    -- player the money AND the old rod. Grant first, then take the old rod; refund on any failure.
+    if not exports.sunset_inventory:AddItem(source, upgrade.gives, 1) then
+        exports.sunset_core:AddMoney(source, 'cash', upgrade.cost, 'rod_upgrade_refund')
+        return nil, { localeKey = 'jobs.message.inventory_full_or_no_slot_free_space_and_try' }
     end
-    exports.sunset_inventory:AddItem(source, upgrade.gives, 1)
+    if upgrade.requires and not exports.sunset_inventory:RemoveItem(source, upgrade.requires, 1) then
+        exports.sunset_inventory:RemoveItem(source, upgrade.gives, 1)
+        exports.sunset_core:AddMoney(source, 'cash', upgrade.cost, 'rod_upgrade_refund')
+        return nil, { localeKey = 'fishingshop.message.you_already_have_the_maximum_rod_mk5' }
+    end
 
     local mk = upgrade.gives:gsub('fishing_rod_', 'Mk')
     return ('Rod upgraded to %s! (-$%d)'):format(mk, upgrade.cost)
+    end)
 end)

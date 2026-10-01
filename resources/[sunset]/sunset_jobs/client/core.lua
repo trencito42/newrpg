@@ -48,16 +48,51 @@ function JobClient.workFeedback(msg, typ, duration)
     JobClient.chatSystem(msg, typ)
 end
 
-function JobClient.showObjective(title, subtitle, progress)
-    TriggerEvent('sunset:ui:jobObjective', {
-        title = title or 'Job',
-        subtitle = subtitle or '',
-        progress = progress,
+-- Shared job HUD (sunset_ui web/js/job-hud.js). Every job funnels through these
+-- so the card can be cleared from one place (cleanup / sessionEnded / resource stop).
+-- data: title, objective, progress{current,total}|pct, distance, timer, vehicle, keyHints{{key,label}}
+function JobClient.hud(data)
+    if type(data) ~= 'table' then return end
+    if data.earnings == nil and (JobClient.earned or 0) > 0 then data.earnings = JobClient.earned end
+    pcall(function() exports.sunset_ui:JobHud(data) end)
+end
+
+function JobClient.hudResult(data)
+    pcall(function() exports.sunset_ui:JobHudResult(data) end)
+end
+
+function JobClient.hudClear(force)
+    pcall(function() exports.sunset_ui:JobHudClear(force == true) end)
+end
+
+local lastHudDistanceAt = 0
+-- Throttled distance refresh (patches the current card; safe to call every frame).
+function JobClient.hudDistance(coords)
+    if not coords then return end
+    local now = GetGameTimer()
+    if now - lastHudDistanceAt < 750 then return end
+    lastHudDistanceAt = now
+    local p = GetEntityCoords(PlayerPedId())
+    local d = #(p - vector3(coords.x, coords.y, coords.z))
+    pcall(function() exports.sunset_ui:JobHud({ patch = true, distance = math.floor(d / 5 + 0.5) * 5 }) end)
+end
+
+function JobClient.addEarned(amount)
+    JobClient.earned = (JobClient.earned or 0) + (tonumber(amount) or 0)
+end
+
+-- Back-compat wrapper: callers keep (title, subtitle, progressPct).
+function JobClient.showObjective(title, subtitle, progress, keyHints)
+    JobClient.hud({
+        title = title,
+        objective = subtitle,
+        progress = progress ~= nil and { pct = progress } or nil,
+        keyHints = keyHints,
     })
 end
 
 function JobClient.hideObjective()
-    TriggerEvent('sunset:ui:jobObjective', { hide = true })
+    JobClient.hudClear()
 end
 
 function JobClient.setWaypoint(coords)
@@ -331,22 +366,28 @@ function JobClient.registerVehiclesWithServer()
         end
         if truckNet and truckNet ~= 0 and (not (trailer and DoesEntityExist(trailer)) or (tNet and tNet ~= 0)) then
             local ok, err = Sunset.AwaitCallback('sunset:jobs:registerVehicle', truckNet, tNet)
-            if ok then
+            -- [JOBS AUDIT] server now answers { retryable = true } for "not propagated yet";
+            -- the old English-string match never fired for localized/localeKey errors.
+            if type(ok) == 'table' and ok.retryable then
+                lastErr = 'retryable'
+                dlog(('attempt %d: not propagated yet, retrying'):format(attempt))
+            elseif ok then
                 dlog(('registered on attempt %d'):format(attempt))
                 return true
-            end
-            lastErr = err
-            dlog(('attempt %d rejected: %s'):format(attempt, tostring(err)))
-            -- FATAL errors: do not retry.
-            if not err or not RETRYABLE_ERRORS[err] then
-                return false, err or 'Registration failed unexpectedly. Check F8/server logs.'
+            else
+                lastErr = err
+                dlog(('attempt %d rejected: %s'):format(attempt, tostring(err)))
+                -- FATAL errors: do not retry (legacy string match kept for old servers).
+                if not err or not RETRYABLE_ERRORS[err] then
+                    return false, err or 'Registration failed unexpectedly. Check F8/server logs.'
+                end
             end
         end
         Wait(delay)
         -- Small backoff: 200ms for the first attempts, then 500ms.
         if attempt >= 4 then delay = 500 end
     end
-    return false, (lastErr and RETRYABLE_ERRORS[lastErr])
+    return false, (lastErr and (lastErr == 'retryable' or RETRYABLE_ERRORS[lastErr]))
         and 'Work vehicle has not propagated to the server yet. Check OneSync/entity networking.'
         or (lastErr or 'Could not network the work vehicle')
 end
@@ -402,11 +443,11 @@ function JobClient.respawnTrailer(truck, trailerModel)
         local tNet = NetworkGetNetworkIdFromEntity(trailer)
         if tNet and tNet ~= 0 then
             local ok, err = Sunset.AwaitCallback('sunset:jobs:registerTrailer', tNet)
-            if ok then
+            if ok and not (type(ok) == 'table' and ok.retryable) then
                 JobClient.trailerLostSent = false
                 return trailer
             end
-            if err ~= 'Trailer is not networked' then
+            if not (type(ok) == 'table' and ok.retryable) and err ~= 'Trailer is not networked' then
                 return nil, err
             end
         end
@@ -421,7 +462,8 @@ function JobClient.monitorVehicles()
         while JobClient.state ~= 'IDLE' and #JobClient.vehicles > 0 do
             local truck = JobClient.vehicles[1]
             local trailer = JobClient.vehicles[2]
-            local truckAlive = truck and DoesEntityExist(truck)
+            -- [JOBS AUDIT] a blown-up work vehicle lingers as a wreck: treat it as lost too.
+            local truckAlive = truck and DoesEntityExist(truck) and not IsEntityDead(truck)
             local trailerAlive = trailer and DoesEntityExist(trailer)
 
             if truck and trailer and truckAlive and trailerAlive then
@@ -485,6 +527,7 @@ function JobClient.cleanup(options)
     JobClient.jobId = nil
     JobClient.sessionData = nil
     JobClient.threadActive = false
+    JobClient.earned = 0
     JobClient.clearWorkHud()
 end
 
@@ -555,7 +598,8 @@ RegisterNetEvent('sunset:jobs:sessionStarted', function(jobId, session)
     elseif jobId == 'hunter' then
         JobClient.hideObjective()
     else
-        JobClient.showObjective(label, 'Shift started — follow GPS markers')
+        JobClient.earned = 0
+        JobClient.showObjective(label, exports.sunset_core:Translate('jobs.hud.shift_started'))
     end
 end)
 
@@ -565,14 +609,17 @@ RegisterNetEvent('sunset:jobs:stateChanged', function(state, data)
 end)
 
 RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId, state, reason, options)
+    local earned = JobClient.earned or 0
     JobClient.hideObjective()
     JobClient.cleanup(options or {})
+    local label = Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or nil
     if state == 'COMPLETED' then
-        JobClient.notify(exports.sunset_core:Translate('jobs.message.shift_complete'), 'success')
+        JobClient.hudResult({ kind = 'success', title = exports.sunset_core:Translate('jobs.hud.result.complete'), message = label, earnings = earned })
     elseif state == 'FAILED' then
+        JobClient.hudResult({ kind = 'fail', title = exports.sunset_core:Translate('jobs.hud.result.failed'), message = reason, ttl = 7000 })
         JobClient.notify(reason or 'Shift failed', 'error')
     elseif state == 'CANCELLED' then
-        JobClient.notify(reason or 'Shift cancelled', 'info')
+        JobClient.hudResult({ kind = 'cancel', title = exports.sunset_core:Translate('jobs.hud.result.cancelled'), message = reason })
     end
 end)
 
@@ -609,11 +656,13 @@ end)
 
 RegisterNetEvent('sunset:jobs:forceClearHud', function()
     JobClient.clearWorkHud()
+    JobClient.hudClear(true)
 end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource == GetCurrentResourceName() then
         JobClient.cleanup()
+        JobClient.hudClear(true)
     end
 end)
 

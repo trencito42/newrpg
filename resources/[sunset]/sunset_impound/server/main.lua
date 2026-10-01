@@ -46,6 +46,24 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
     local ownerCharId = tonumber(veh.character_id)
     if not ownerCharId then return nil, { localeKey = 'impound.message.this_vehicle_has_no_registered_owner' } end
 
+    -- [SEC2] The officer must actually be next to the vehicle (previously any
+    -- vehicle id could be impounded remotely by any officer with the perm).
+    do
+        local wantPlate = tostring(veh.plate or ''):gsub('%s+', ''):upper()
+        local officerPed = GetPlayerPed(source)
+        local near = false
+        if officerPed and officerPed ~= 0 and wantPlate ~= '' then
+            local oc = GetEntityCoords(officerPed)
+            for _, ent in ipairs(GetAllVehicles()) do
+                if DoesEntityExist(ent) then
+                    local p = tostring(GetVehicleNumberPlateText(ent) or ''):gsub('%s+', ''):upper()
+                    if p == wantPlate and #(GetEntityCoords(ent) - oc) <= 40.0 then near = true break end
+                end
+            end
+        end
+        if not near then return nil, { localeKey = 'impound.message.vehicle_not_found' } end
+    end
+
     -- Check if already impounded
     local existing = MySQL.scalar.await(
         'SELECT id FROM impounded_vehicles WHERE vehicle_id = ? AND status = "impounded" LIMIT 1', { vehicleId })
@@ -165,13 +183,20 @@ exports.sunset_core:RegisterCallback('sunset:impound:recover', function(source, 
         return nil, { localeKey = 'impound.message.you_must_be_at_the_impound_lot_to_recover' }
     end
 
+    -- [SEC2] Atomically claim the record BEFORE charging so two parallel recover
+    -- calls cannot both pass the status check (double spawn / double release).
+    local claimed = MySQL.update.await(
+        'UPDATE impounded_vehicles SET status = "released", released_at = NOW() WHERE id = ? AND character_id = ? AND status = "impounded"',
+        { impoundId, charId })
+    if claimed ~= 1 then return nil, { localeKey = 'impound.message.impound_record_not_found' } end
+
     -- Charge the fee
     if not exports.sunset_core:RemoveMoney(source, 'cash', totalFee, 'impound_fee') then
+        MySQL.update.await(
+            'UPDATE impounded_vehicles SET status = "impounded", released_at = NULL WHERE id = ? AND character_id = ? AND status = "released"',
+            { impoundId, charId })
         return nil, { localeKey = 'impound.message.not_enough_cash_recovery_fee_value', formatArgs = { totalFee } }
     end
-
-    -- Mark as released
-    MySQL.update.await('UPDATE impounded_vehicles SET status = "released", released_at = NOW() WHERE id = ?', { impoundId })
 
     -- Respawn the vehicle at the impound lot
     pcall(function()

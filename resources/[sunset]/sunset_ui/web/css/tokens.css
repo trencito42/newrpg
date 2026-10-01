@@ -1,0 +1,53 @@
+/* ============================================================
+   tokens.css — shared design tokens for in-game HUD layers.
+   Loaded right after variables.css (which owns the palette,
+   spacing, radius and easing scale). Everything here is a plain
+   CSS custom property: no selectors, no rules, zero render cost.
+   Consumers: css/job-hud.css (all values), css/courier.css (z-index
+   and font only). Add new HUD tokens HERE, not inline.
+   ============================================================ */
+:root {
+    /* z-index ladder (HUD < panels < modal < toast < transition) */
+    --z-hud: 45;
+    --z-hud-job: 44;
+    --z-hud-overlay: 47;
+    --z-panel: 100;
+    --z-modal: 200;
+    --z-toast: 9999;
+    --z-transition: 2147483000;
+
+    /* Safe area: keeps job HUD clear of minimap (bottom-left), chat (left),
+       speedometer (bottom-right) and the wanted banner (top-center). */
+    --safe-x: clamp(16px, 2vw, 56px);
+    --safe-top: clamp(76px, 10vh, 150px);
+    --safe-bottom: clamp(56px, 9vh, 130px);
+
+    /* Type scale (viewport driven, capped by height so 21:9 does not balloon) */
+    --fs-xs: clamp(11px, min(0.62vw, 1.15vh), 16px);
+    --fs-sm: clamp(12px, min(0.75vw, 1.35vh), 19px);
+    --fs-md: clamp(14px, min(0.92vw, 1.65vh), 23px);
+    --fs-lg: clamp(16px, min(1.15vw, 2.05vh), 29px);
+    --fs-key: clamp(12px, min(0.8vw, 1.45vh), 20px);
+    --tracking-caps: 0.08em;
+
+    /* Job HUD surface */
+    --jobhud-width: clamp(300px, min(30vw, 62vh), 560px);
+    --jobhud-bg: rgba(10, 9, 8, 0.82);
+    --jobhud-border: rgba(255, 255, 255, 0.10);
+    --jobhud-accent: var(--color-primary);
+    --jobhud-warn: #fbbf24;
+    --jobhud-danger: var(--color-error);
+    --jobhud-success: var(--color-success);
+    --jobhud-track: rgba(255, 255, 255, 0.12);
+    --jobhud-pad: clamp(8px, min(0.7vw, 1.3vh), 16px);
+    --jobhud-gap: clamp(5px, min(0.4vw, 0.75vh), 10px);
+
+    /* Elevation: small and flat on purpose (CEF repaint cost) */
+    --shadow-hud: 0 2px 8px rgba(0, 0, 0, 0.55);
+    --shadow-key: 0 2px 0 rgba(0, 0, 0, 0.45);
+    --text-shadow-hud: 0 1px 3px rgba(0, 0, 0, 0.9);
+
+    /* Motion (transform / opacity only) */
+    --hud-enter: 200ms;
+    --hud-bar: 300ms;
+}

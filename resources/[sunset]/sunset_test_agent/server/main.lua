@@ -7,7 +7,7 @@ local Cfg = SunsetTestAgent.Config
 
 CreateThread(function()
     Wait(1000)
-    local enabled = GetConvar(Cfg.enabledConvar, 'false') == 'true'
+    local enabled = (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true')
     if not enabled then
         print('^3[sunset_test_agent]^7 disabled (kill switch off). Set "setr sunset_test_agent_enabled true" on a DEV server to enable.')
         return
@@ -70,7 +70,7 @@ AddEventHandler('onResourceStop', function(res)
         deleteTrackedEntities(src)
     end
     -- Leave screenshot_basic running only while the agent is enabled.
-    if GetConvar(Cfg.enabledConvar, 'false') ~= 'true' then
+    if not (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true') then
         if GetResourceState('screenshot_basic') == 'started' then
             StopResource('screenshot_basic')
         end
@@ -81,7 +81,7 @@ end)
 
 -- Exports for other dev tooling (never for production gameplay resources).
 exports('IsEnabled', function()
-    return GetConvar(Cfg.enabledConvar, 'false') == 'true'
+    return (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true')
 end)
 exports('GetTestPlayer', function()
     return TestAgentAuth.testPlayer()

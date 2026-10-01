@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2, User } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
+import { PlayerName } from "@/components/ui/PlayerName";
 
 interface SearchResult {
   id: number;
@@ -41,12 +42,11 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
       } finally {
         setLoading(false);
       }
-    }, 280);
+    }, 250);
 
     return () => clearTimeout(timeout);
   }, [query]);
 
-  // Click outside listener
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -73,7 +73,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
   return (
     <div className="relative w-full max-w-xs md:max-w-sm" ref={dropdownRef}>
       <div className="relative flex items-center">
-        <Search className="absolute left-3 w-4 h-4 text-gray-400 pointer-events-none" />
+        <Search className="absolute left-2.5 w-3.5 h-3.5 text-[#6f6f74] pointer-events-none" />
         <input
           type="text"
           value={query}
@@ -81,39 +81,34 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-1.5 text-sm bg-surface-100 border border-surface-border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          className="w-full pl-8 pr-7 py-1 text-xs bg-surface-100 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none focus:border-surface-borderLight transition-colors"
         />
         {loading && (
-          <Loader2 className="absolute right-3 w-4 h-4 text-brand animate-spin" />
+          <Loader2 className="absolute right-2.5 w-3.5 h-3.5 text-[#6f6f74] animate-spin" />
         )}
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface-100 border border-surface-border rounded-lg shadow-2xl py-1 z-50 max-h-72 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-surface-100 border border-surface-border rounded shadow-lg py-1 z-50 max-h-64 overflow-y-auto">
           {results.length > 0 ? (
             results.map((res) => (
               <button
                 key={res.id}
                 onClick={() => handleSelect(res)}
-                className="w-full text-left px-3.5 py-2 hover:bg-surface-50 flex items-center justify-between text-sm transition-colors border-b border-surface-border/50 last:border-b-0"
+                className="w-full text-left px-3 py-1.5 hover:bg-surface-200 flex items-center justify-between text-xs transition-colors border-b border-surface-border/40 last:border-b-0"
               >
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-7 h-7 rounded-full bg-surface-50 border border-surface-border flex items-center justify-center text-brand">
-                    <User className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-100">{res.name}</span>
-                    <span className="text-xs text-gray-400 block">{res.job}</span>
-                  </div>
+                <div className="min-w-0 pr-2">
+                  <PlayerName name={res.name} factionId={res.job} clickable={false} className="text-xs font-semibold block truncate" />
+                  <span className="text-[11px] text-[#6f6f74] block">{res.job}</span>
                 </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-border text-amber-400">
-                  Lvl {res.level}
+                <span className="text-[11px] text-[#6f6f74] font-mono">
+                  L{res.level}
                 </span>
               </button>
             ))
           ) : (
-            <div className="px-3.5 py-3 text-xs text-gray-400 text-center">
-              No matching players found
+            <div className="px-3 py-2 text-xs text-[#6f6f74] text-center">
+              No players found
             </div>
           )}
         </div>

@@ -46,13 +46,13 @@ local function buildActions(opts)
         local price = opts.repairPrice or 250
         actions[#actions + 1] = {
             id = 'lsc_repair',
-            label = ('Repair Vehicle (%s)'):format(formatMoney(price)),
+            label = exports.sunset_core:Translate('tuning.menu.repair_vehicle', { price = formatMoney(price) }),
             group = 'CUSTOMS',
         }
     end
     actions[#actions + 1] = {
         id = 'lsc_tune',
-        label = 'ECU Tuning',
+        label = exports.sunset_core:Translate('tuning.menu.ecu_tuning'),
         group = 'CUSTOMS',
     }
     return actions

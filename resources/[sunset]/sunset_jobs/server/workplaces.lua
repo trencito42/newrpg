@@ -70,6 +70,16 @@ local function checkRequirements(source, char, reqs)
     return true
 end
 
+-- [JOBS AUDIT] Shared with hireCivilianJob (main.lua) and the trucker auto-hire: those paths used to
+-- grant licence-gated jobs (driver / hunting+weapon) without ever calling checkRequirements.
+function SunsetJobs_CheckRequirements(source, jobId)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return false, { localeKey = 'jobs.message.character_not_loaded' } end
+    local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[tostring(jobId or ''):lower()]
+    if not wp then return true end
+    return checkRequirements(source, char, wp.requirements)
+end
+
 local function isPlayerNearCoords(source, targetCoords, maxDist)
     if not targetCoords then return true end
     local ped = GetPlayerPed(source)

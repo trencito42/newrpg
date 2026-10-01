@@ -704,7 +704,7 @@
                     licContainer.innerHTML = '<span class="mdc-lic-badge mdc-lic-badge--none">NO LICENSES ON RECORD</span>';
                 } else {
                     licContainer.innerHTML = licenses.map((lic) => `
-                        <span class="mdc-lic-badge">[LIC] ${lic.type || 'License'}</span>
+                        <span class="mdc-lic-badge">[LIC] ${esc(lic.type || 'License')}</span>
                     `).join('');
                 }
             }
@@ -717,10 +717,10 @@
                     vehContainer.innerHTML = '<div style="color: #64748b; font-size: 12px;">No vehicles registered to this citizen.</div>';
                 } else {
                     vehContainer.innerHTML = vehicles.map((v) => `
-                        <div class="mdc-veh-row btn-view-veh-plate" data-plate="${v.plate}" style="cursor: pointer;">
+                        <div class="mdc-veh-row btn-view-veh-plate" data-plate="${esc(v.plate)}" style="cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="mdc-plate-badge">${v.plate}</span>
-                                <span class="mdc-veh-model">${v.model}</span>
+                                <span class="mdc-plate-badge">${esc(v.plate)}</span>
+                                <span class="mdc-veh-model">${esc(v.model)}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="mdc-veh-status">${v.stored ? 'IN GARAGE' : 'OUT IN CITY'}</span>
@@ -752,10 +752,10 @@
                 } else {
                     cazierTable.innerHTML = cazier.map((s) => `
                         <tr>
-                            <td>${s.date || '—'}</td>
-                            <td><strong style="color: #f87171;">${s.reason || 'Charge'}</strong></td>
-                            <td>${s.duration || 0} min</td>
-                            <td><span class="mdc-pill ${s.status === 'served' ? 'mdc-pill--clean' : 'mdc-pill--jailed'}">${s.status || 'served'}</span></td>
+                            <td>${esc(s.date || '—')}</td>
+                            <td><strong style="color: #f87171;">${esc(s.reason || 'Charge')}</strong></td>
+                            <td>${esc(s.duration || 0)} min</td>
+                            <td><span class="mdc-pill ${s.status === 'served' ? 'mdc-pill--clean' : 'mdc-pill--jailed'}">${esc(s.status || 'served')}</span></td>
                         </tr>
                     `).join('');
                 }
@@ -773,8 +773,8 @@
                 } else {
                     ticketsTable.innerHTML = tickets.map((t) => `
                         <tr>
-                            <td>${t.date || '—'}</td>
-                            <td>${t.reason || 'Violation'}</td>
+                            <td>${esc(t.date || '—')}</td>
+                            <td>${esc(t.reason || 'Violation')}</td>
                             <td><strong>$${(t.amount || 0).toLocaleString()}</strong></td>
                             <td><span class="mdc-pill ${t.paid ? 'mdc-pill--clean' : 'mdc-pill--wanted'}">${t.paid ? 'PAID' : 'UNPAID'}</span></td>
                         </tr>
@@ -813,18 +813,18 @@
                 const tune = v.tuningInfo;
                 let tuningHtml = '';
                 if (tune && tune.tuned) {
-                    const chips = (tune.chips || []).slice(0, 6).map((c) => `<span class="mdc-chip-tune">${c}</span>`).join('');
-                    const lines = (tune.lines || []).slice(0, 8).map((l) => `<div class="mdc-tune-line"><span>${l.label}:</span><strong>${l.value}</strong></div>`).join('');
-                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${m}</strong></div>`).join('');
+                    const chips = (tune.chips || []).slice(0, 6).map((c) => `<span class="mdc-chip-tune">${esc(c)}</span>`).join('');
+                    const lines = (tune.lines || []).slice(0, 8).map((l) => `<div class="mdc-tune-line"><span>${esc(l.label)}:</span><strong>${esc(l.value)}</strong></div>`).join('');
+                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${esc(m)}</strong></div>`).join('');
                     tuningHtml = `
                         <div class="mdc-dmv-tuning-box is-tuned">
                             <div class="mdc-tuning-header">
                                 <span class="mdc-tuning-badge is-tuned">[MODIFIED] STAGE TUNE</span>
-                                <button type="button" class="mdc-tuning-toggle-btn" data-plate="${v.plate}">Tuning Record ▼</button>
+                                <button type="button" class="mdc-tuning-toggle-btn" data-plate="${esc(v.plate)}">Tuning Record ▼</button>
                             </div>
                             <div class="mdc-tuning-chips">${chips}</div>
-                            <div class="mdc-tuning-details hidden" id="tune-details-${v.plate}">
-                                <div class="mdc-tuning-summary">${tune.summary || 'ECU / Engine Modifications'}</div>
+                            <div class="mdc-tuning-details hidden" id="tune-details-${esc(v.plate)}">
+                                <div class="mdc-tuning-summary">${esc(tune.summary || 'ECU / Engine Modifications')}</div>
                                 <div class="mdc-tuning-grid">
                                     ${lines}
                                     ${mods}
@@ -833,7 +833,7 @@
                         </div>
                     `;
                 } else if (tune) {
-                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${m}</strong></div>`).join('');
+                    const mods = (tune.hardwareMods || []).map((m) => `<div class="mdc-tune-line mdc-tune-mod"><span>MOD:</span><strong>${esc(m)}</strong></div>`).join('');
                     tuningHtml = `
                         <div class="mdc-dmv-tuning-box is-stock">
                             <div class="mdc-tuning-header">
@@ -856,20 +856,20 @@
                     <div class="mdc-dmv-card ${v.bolo ? 'is-bolo' : ''}">
                         ${v.bolo ? '<div class="mdc-bolo-banner">SUSPECT VEHICLE · ACTIVE BOLO BROADCAST</div>' : ''}
                         <div class="mdc-dmv-card__head">
-                            <span class="mdc-plate-badge">${v.plate}</span>
-                            <span class="mdc-veh-model">${v.model}</span>
+                            <span class="mdc-plate-badge">${esc(v.plate)}</span>
+                            <span class="mdc-veh-model">${esc(v.model)}</span>
                         </div>
                         <div class="mdc-dmv-card__owner">
-                            <div>Registered Owner: <strong class="btn-goto-owner" data-owner="${v.ownerName}">${v.ownerName}</strong></div>
-                            <div style="font-size: 11px; margin-top: 2px;">Phone: ${v.ownerPhone} · Garage: ${v.garage}</div>
+                            <div>Registered Owner: <strong class="btn-goto-owner" data-owner="${esc(v.ownerName)}">${esc(v.ownerName)}</strong></div>
+                            <div style="font-size: 11px; margin-top: 2px;">Phone: ${esc(v.ownerPhone)} · Garage: ${esc(v.garage)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8;">
                             <span>Status: ${v.stored ? 'Stored in Garage' : 'Impounded / On Street'}</span>
-                            <span>Fuel: ${v.fuel}%</span>
+                            <span>Fuel: ${esc(v.fuel)}%</span>
                         </div>
                         ${tuningHtml}
                         <div style="display: flex; gap: 8px; margin-top: 6px;">
-                            <button type="button" class="mdc-btn ${v.bolo ? 'mdc-btn--danger' : 'mdc-btn--warning'} mdc-btn--sm btn-toggle-veh-bolo" data-plate="${v.plate}" data-has-bolo="${v.bolo ? '1' : '0'}">
+                            <button type="button" class="mdc-btn ${v.bolo ? 'mdc-btn--danger' : 'mdc-btn--warning'} mdc-btn--sm btn-toggle-veh-bolo" data-plate="${esc(v.plate)}" data-has-bolo="${v.bolo ? '1' : '0'}">
                                 ${v.bolo ? `
                                     <svg class="mdc-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                     CLEAR BOLO
@@ -878,7 +878,7 @@
                                     FLAG BOLO
                                 `}
                             </button>
-                            <button type="button" class="mdc-btn mdc-btn--outline mdc-btn--sm btn-dossier-owner" data-owner="${v.ownerName}">
+                            <button type="button" class="mdc-btn mdc-btn--outline mdc-btn--sm btn-dossier-owner" data-owner="${esc(v.ownerName)}">
                                 <svg class="mdc-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 VIEW OWNER
                             </button>
@@ -962,7 +962,7 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button type="button" class="mdc-btn mdc-btn--outline mdc-btn--sm btn-locate-wanted" data-target-id="${row.id}">
+                            <button type="button" class="mdc-btn mdc-btn--outline mdc-btn--sm btn-locate-wanted" data-target-id="${esc(row.id)}">
                                 <svg class="mdc-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 12 8"/></svg>
                                 LOCATE GPS
                             </button>
@@ -970,7 +970,7 @@
                                 <svg class="mdc-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                 DOSSIER
                             </button>
-                            <button type="button" class="mdc-btn mdc-btn--danger mdc-btn--sm btn-clear-wanted" data-target-id="${row.id || ''}" data-character-id="${row.characterId || ''}">
+                            <button type="button" class="mdc-btn mdc-btn--danger mdc-btn--sm btn-clear-wanted" data-target-id="${esc(row.id || '')}" data-character-id="${esc(row.characterId || '')}">
                                 ✕ CLEAR
                             </button>
                         </div>
@@ -1100,21 +1100,21 @@
             if (confirmBtn) confirmBtn.disabled = true;
 
             const charges = this.reasons.length > 0 ? this.reasons : [
-                { code: 'speeding', label: 'Speeding', stars: 1, jailMinutes: 4 },
-                { code: 'reckless', label: 'Reckless Driving', stars: 2, jailMinutes: 8 },
-                { code: 'assault', label: 'Assault', stars: 2, jailMinutes: 8 },
-                { code: 'robbery', label: 'Armed Robbery', stars: 5, jailMinutes: 25 },
-                { code: 'evading', label: 'Runner / Evading Police', stars: 5, jailMinutes: 25 },
-                { code: 'murder', label: 'Homicide / Murder', stars: 5, jailMinutes: 50 },
+                { code: 'speeding', label: I18n.t('ui.mdc.charge_speeding'), stars: 1, jailMinutes: 4 },
+                { code: 'reckless', label: I18n.t('ui.mdc.charge_reckless'), stars: 2, jailMinutes: 8 },
+                { code: 'assault', label: I18n.t('ui.mdc.charge_assault'), stars: 2, jailMinutes: 8 },
+                { code: 'robbery', label: I18n.t('ui.mdc.charge_robbery'), stars: 5, jailMinutes: 25 },
+                { code: 'evading', label: I18n.t('ui.mdc.charge_evading'), stars: 5, jailMinutes: 25 },
+                { code: 'murder', label: I18n.t('ui.mdc.charge_murder'), stars: 5, jailMinutes: 50 },
             ];
 
             if (listContainer) {
                 listContainer.innerHTML = charges.map((ch) => {
                     const stars = '★'.repeat(Math.min(5, ch.stars || 1));
                     return `
-                        <div class="mdc-select-item" data-code="${ch.code}">
+                        <div class="mdc-select-item" data-code="${esc(ch.code)}">
                             <div>
-                                <div style="font-weight: 700; color: #f8fafc;">${ch.label}</div>
+                                <div style="font-weight: 700; color: #f8fafc;">${esc(ch.label)}</div>
                                 <div style="font-size: 11px; color: #94a3b8;">Sentence: ~${ch.jailMinutes || 5} min jail · ${ch.surrenderable !== false ? 'Surrender Allowed' : 'No Surrender'}</div>
                             </div>
                             <span style="font-size: 14px; font-weight: 800; color: #f59e0b;">${stars}</span>
@@ -1150,21 +1150,21 @@
             if (confirmBtn) confirmBtn.disabled = true;
 
             const violations = this.violations.length > 0 ? this.violations : [
-                { code: 'speeding', label: 'Exceeding Speed Limit', amount: 180 },
-                { code: 'redlight', label: 'Running Red Traffic Light', amount: 240 },
-                { code: 'reckless', label: 'Reckless Driving', amount: 420 },
-                { code: 'parking', label: 'Illegal Vehicle Parking', amount: 90 },
-                { code: 'noinsurance', label: 'Operating Without Insurance', amount: 600 },
-                { code: 'disturbance', label: 'Public Peace Disturbance', amount: 300 },
+                { code: 'speeding', label: I18n.t('ui.mdc.fine_speeding'), amount: 180 },
+                { code: 'redlight', label: I18n.t('ui.mdc.fine_redlight'), amount: 240 },
+                { code: 'reckless', label: I18n.t('ui.mdc.charge_reckless'), amount: 420 },
+                { code: 'parking', label: I18n.t('ui.mdc.fine_parking'), amount: 90 },
+                { code: 'noinsurance', label: I18n.t('ui.mdc.fine_noinsurance'), amount: 600 },
+                { code: 'disturbance', label: I18n.t('ui.mdc.fine_disturbance'), amount: 300 },
             ];
 
             if (listContainer) {
                 listContainer.innerHTML = violations.map((v) => {
                     return `
-                        <div class="mdc-select-item" data-code="${v.code}">
+                        <div class="mdc-select-item" data-code="${esc(v.code)}">
                             <div>
-                                <div style="font-weight: 700; color: #f8fafc;">${v.label}</div>
-                                <div style="font-size: 11px; color: #94a3b8;">Violation Code: ${v.code}</div>
+                                <div style="font-weight: 700; color: #f8fafc;">${esc(v.label)}</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Violation Code: ${esc(v.code)}</div>
                             </div>
                             <span style="font-size: 14px; font-weight: 800; color: #10b981;">$${(v.amount || 100).toLocaleString()}</span>
                         </div>

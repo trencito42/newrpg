@@ -1,3 +1,8 @@
+-- [JOBS AUDIT] trucker diagnostics are config-gated (convar sv_sunset_jobs_debug 1); they used to print on every request.
+local function tdbg(...)
+    if GetConvar('sv_sunset_jobs_debug', '0') == '1' then print(...) end
+end
+
 local function checkCoordNear(pos, target, radius, zTol)
     if not target then return false end
     local t = type(target) == 'vector3' and target or vector3(target.x, target.y, target.z)
@@ -147,14 +152,14 @@ local function safeVec3(v)
 end
 
 local function handleTruckerStart(source, selectedRouteParam)
-    print(('[TRUCKER SERVER] start callback called by src=%s routeParam=%s'):format(tostring(source), tostring(selectedRouteParam)))
+    tdbg(('[TRUCKER SERVER] start callback called by src=%s routeParam=%s'):format(tostring(source), tostring(selectedRouteParam)))
     local cfg = Sunset.GetJobConfig('trucker')
     local routesList = SunsetJobRoutes.GetRoutes('trucker')
     if not routesList or #routesList == 0 then
         routesList = cfg and cfg.routes or {}
     end
     if not routesList or #routesList == 0 then
-        print('[TRUCKER SERVER] FAIL: no routes')
+        tdbg('[TRUCKER SERVER] FAIL: no routes')
         return nil, { localeKey = 'jobs.message.no_routes_configured' }
     end
 
@@ -162,7 +167,7 @@ local function handleTruckerStart(source, selectedRouteParam)
     if not SunsetJobs_ValidateCoords(source, cfg.depot.coords, 120.0) then
         local ped = GetPlayerPed(source)
         local pos = ped and ped ~= 0 and GetEntityCoords(ped) or vector3(0, 0, 0)
-        print(('[TRUCKER SERVER] FAIL coords: player=(%.1f,%.1f,%.1f) depot=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, cfg.depot.coords.x, cfg.depot.coords.y, cfg.depot.coords.z))
+        tdbg(('[TRUCKER SERVER] FAIL coords: player=(%.1f,%.1f,%.1f) depot=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, cfg.depot.coords.x, cfg.depot.coords.y, cfg.depot.coords.z))
         return nil, { localeKey = 'jobs.message.go_to_the_trucker_depot_to_start_work' }
     end
 
@@ -171,15 +176,20 @@ local function handleTruckerStart(source, selectedRouteParam)
     if char then
         local curJob = select(1, Sunset.GetCharacterJob(char))
         if curJob ~= 'trucker' then
-            print(('[TRUCKER SERVER] auto-hiring src=%s (curJob=%s) as trucker'):format(tostring(source), tostring(curJob)))
-            exports.sunset_core:SetJob(source, 'trucker', 0)
+            -- [JOBS AUDIT] auto-hire used to bypass the driver-licence requirement entirely.
+            local reqOk, reqErr = SunsetJobs_CheckRequirements(source, 'trucker')
+            if not reqOk then return nil, reqErr end
+            tdbg(('[TRUCKER SERVER] auto-hiring src=%s (curJob=%s) as trucker'):format(tostring(source), tostring(curJob)))
+            if not exports.sunset_core:SetJob(source, 'trucker', 0) then
+                return nil, { localeKey = 'jobs.message.could_not_assign_the_job_try_reconnecting_or_contact' }
+            end
         end
     end
 
     -- Automatically clear any leftover or stuck session so route selection always works
     local currentSession = SunsetJobs_GetSession(source)
     if currentSession then
-        print(('[TRUCKER SERVER] clearing existing session for src=%s'):format(tostring(source)))
+        tdbg(('[TRUCKER SERVER] clearing existing session for src=%s'):format(tostring(source)))
         SunsetJobs_ClearSession(source, 'CANCELLED', 'Restarted shift from laptop')
     end
 
@@ -245,7 +255,7 @@ local function handleTruckerStart(source, selectedRouteParam)
         trailerSpawn  = { x = pickupCoords.x, y = pickupCoords.y, z = pickupCoords.z, heading = pickupHeading, w = pickupHeading },
     })
     if not session then
-        print(('[TRUCKER SERVER] SunsetJobs_StartSession FAIL: %s'):format(tostring(err)))
+        tdbg(('[TRUCKER SERVER] SunsetJobs_StartSession FAIL: %s'):format(tostring(err)))
         return nil, err or 'Could not create trucker session'
     end
     return session.data
@@ -256,15 +266,15 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:startShift', handleTru
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
-    if not session then print('[TRUCKER] atPickup FAIL session: ' .. tostring(err)) return nil, err end
-    if session.data.stage ~= 'to_pickup' then print('[TRUCKER] atPickup FAIL stage: ' .. tostring(session.data.stage)) return nil, { localeKey = 'jobs.message.not_heading_to_pickup' } end
+    if not session then tdbg('[TRUCKER] atPickup FAIL session: ' .. tostring(err)) return nil, err end
+    if session.data.stage ~= 'to_pickup' then tdbg('[TRUCKER] atPickup FAIL stage: ' .. tostring(session.data.stage)) return nil, { localeKey = 'jobs.message.not_heading_to_pickup' } end
 
     local cfg = Sunset.GetJobConfig('trucker')
     local vehOk, vehErr = SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0)
-    if not vehOk then print('[TRUCKER] atPickup FAIL vehicle: ' .. tostring(vehErr)) return nil, { localeKey = 'jobs.message.use_your_assigned_work_truck' } end
+    if not vehOk then tdbg('[TRUCKER] atPickup FAIL vehicle: ' .. tostring(vehErr)) return nil, { localeKey = 'jobs.message.use_your_assigned_work_truck' } end
     if session.data.hasTrailer then
         local trailerOk, trailerErr = SunsetJobs_ValidateTrailer(source, true, 18.0)
-        if not trailerOk then print('[TRUCKER] atPickup FAIL trailer: ' .. tostring(trailerErr)) return nil, trailerErr end
+        if not trailerOk then tdbg('[TRUCKER] atPickup FAIL trailer: ' .. tostring(trailerErr)) return nil, trailerErr end
     end
 
     -- Validate against the immutable session snapshot
@@ -272,13 +282,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
     if not pickupTarget or not validateTruckerCoords(source, pickupTarget, cfg) then
         local ped = GetPlayerPed(source)
         local pos = GetEntityCoords(ped)
-        print(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, pickupTarget and pickupTarget.x or 0, pickupTarget and pickupTarget.y or 0, pickupTarget and pickupTarget.z or 0))
+        tdbg(('[TRUCKER] atPickup FAIL coords: player=(%.1f,%.1f,%.1f) pickup=(%.1f,%.1f,%.1f)'):format(pos.x, pos.y, pos.z, pickupTarget and pickupTarget.x or 0, pickupTarget and pickupTarget.y or 0, pickupTarget and pickupTarget.z or 0))
         return nil, { localeKey = 'jobs.message.not_at_pickup_location_drive_into_the_loading_dock' }
     end
 
     session.data.stage = 'to_delivery'
+    session.pickedUpAt = os.time()
     SunsetJobs_SetState(source, 'ACTIVE')
-    print('[TRUCKER] atPickup OK src=' .. tostring(source))
+    tdbg('[TRUCKER] atPickup OK src=' .. tostring(source))
     return session.data
 end)
 
@@ -305,11 +316,52 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
         return nil, { localeKey = 'jobs.message.not_at_delivery_location_drive_into_the_loading_dock' }
     end
 
+    if session.data.deliveredAt then return nil, { localeKey = 'jobs.message.cargo_already_delivered_on_this_route' } end
+
+    -- [JOBS AUDIT] Plausibility: the rig must have had time to cover the pickup -> delivery distance
+    -- (45 m/s ~ 160 km/h is far above any truck). Without this, /tptruck-style teleports or a spoofed
+    -- position paid a full route instantly. Admin-assisted teleports (session.adminTeleport) are exempt.
+    if not session.adminTeleport and session.data.pickup and session.data.delivery then
+        local pk, dv = session.data.pickup, session.data.delivery
+        local routeDist = #(vector3(pk.x, pk.y, pk.z) - vector3(dv.x, dv.y, dv.z))
+        local since = os.time() - (session.pickedUpAt or session.startedAt)
+        if since < math.floor(routeDist / 45.0) then
+            return nil, { localeKey = 'jobs.message.not_at_delivery_location_drive_into_the_loading_dock' }
+        end
+    end
+
+    -- [JOBS AUDIT] isManual used to be trusted from the client (2x pay + 2x xp). Verify the rig is
+    -- actually docked in the parking bay (trailer if present, else truck) with a matching heading.
+    local manual = false
+    if isManual == true and session.data.parkingBay then
+        local bay = session.data.parkingBay
+        local ent = 0
+        if session.trailerNetId then ent = NetworkGetEntityFromNetworkId(session.trailerNetId) or 0 end
+        if ent == 0 or not DoesEntityExist(ent) then
+            ent = session.vehicleNetId and NetworkGetEntityFromNetworkId(session.vehicleNetId) or 0
+        end
+        if ent ~= 0 and DoesEntityExist(ent) then
+            local p = GetEntityCoords(ent)
+            local dist = #(vector3(p.x, p.y, p.z) - vector3(bay.x, bay.y, bay.z))
+            local function angDiff(a, b2)
+                local d = math.abs((a - b2) % 360.0)
+                if d > 180.0 then d = 360.0 - d end
+                return d
+            end
+            local bayHeading = tonumber(bay.heading or bay.w) or 0.0
+            local h = GetEntityHeading(ent)
+            local ang = math.min(angDiff(h, bayHeading), angDiff((h + 180.0) % 360.0, bayHeading))
+            local radius = ((cfg and cfg.manualParkingRadius) or 4.5) * 1.5
+            local tol = ((cfg and cfg.manualParkingAngleTolerance) or 35.0) + 10.0
+            manual = dist <= radius and ang <= tol
+        end
+    end
+    isManual = manual
+
     -- Flip stage synchronously before any yielding payout
+    local prevTrailerNetId = session.trailerNetId
     session.data.stage = 'return_depot'
     session.trailerNetId = nil
-    local delivered = session.data.deliveredAt
-    if delivered then return nil, { localeKey = 'jobs.message.cargo_already_delivered_on_this_route' } end
     session.data.deliveredAt = os.time()
 
     -- Apply rank bonus to pay (rank 1 = +0%, rank 5 = +5%)
@@ -331,6 +383,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
     if not paid then
         session.data.stage = 'to_delivery'
         session.data.deliveredAt = nil
+        session.trailerNetId = prevTrailerNetId
         return nil, { localeKey = 'jobs.message.payment_could_not_be_processed_try_delivering_once_more' }
     end
     truckerAddXP(source, xp)
@@ -358,6 +411,11 @@ end)
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function(source)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'RETURNING', 'ACTIVE' })
     if not session then return nil, err end
+    -- [JOBS AUDIT] returnDepot was callable in any stage: standing at the depot right after start
+    -- completed the shift (COMPLETED -> quest/battlepass "shift completed" credit) with no delivery.
+    if session.data.stage ~= 'return_depot' or not session.data.deliveredAt then
+        return nil, { localeKey = 'jobs.message.cargo_not_loaded' }
+    end
 
     local cfg = Sunset.GetJobConfig('trucker')
     if not SunsetJobs_ValidateVehicle(source, session.data.truckModel or cfg.truckModel, true, 20.0) then
@@ -513,3 +571,19 @@ RegisterCommand('adelroute', function(source, args)
     TriggerClientEvent('sunset:client:notify', source,
         ('Ruta #%d "%s" stearsa. Au ramas %d rute.'):format(idx, removed.label or '?', #cfg.routes), 'success', 5000)
 end, false)
+
+-- ═══ ADMIN TRUCK TELEPORT (moved server-side from an ungated client command; staff level 1) ═══
+-- The client handler 'sunset:jobs:trucker:teleportRig' performs the move. The session is flagged so the
+-- delivery travel-time plausibility check does not reject the admin's debugging run.
+local function adminTruckTeleport(source, args)
+    if source == 0 then print('[trucker] tptruck is player-only') return end
+    if not exports.sunset_admin:IsAdmin(source, 1) then -- matches sunset_admin CommandLevels tptruck/trucktp = 1
+        exports.sunset_core:CommandDenyAdmin(source, 'tptruck')
+        return
+    end
+    local session = SunsetJobs_GetSession(source)
+    if session and session.jobId == 'trucker' then session.adminTeleport = true end
+    TriggerClientEvent('sunset:jobs:trucker:teleportRig', source, args and args[1])
+end
+RegisterCommand('tptruck', adminTruckTeleport, false)
+RegisterCommand('trucktp', adminTruckTeleport, false)

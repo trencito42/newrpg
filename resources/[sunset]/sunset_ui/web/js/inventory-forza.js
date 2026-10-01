@@ -37,18 +37,18 @@ const InventoryForza = {
 
     itemLabel(row) {
         const def = row?.item || 'unknown';
-        let label = row?.label || def;
+        let label = I18n.item(def, row?.label);
         if (def === 'gas_can' && row?.metadata) {
             const maxL = 20;
             let liters = Number(row.metadata.liters);
             if (Number.isNaN(liters) && row.metadata.fuel != null) {
                 liters = (Number(row.metadata.fuel) / 100) * maxL;
             }
-            if (!Number.isNaN(liters)) label = `Gas Can (${Math.round(liters)}/${maxL} L)`;
+            if (!Number.isNaN(liters)) label = I18n.t('ui.inventory.gas_can_liters', { liters: Math.round(liters), max: maxL });
         }
         if (def === 'fresh_fish' && row?.metadata) {
             const value = Math.max(0, Number(row.metadata.value) || 0);
-            label = `${row.label || 'Fresh Fish'} ($${Math.round(value)})`;
+            label = I18n.t('ui.inventory.fresh_fish_value', { label: I18n.item(def, row.label), value: Math.round(value) });
         }
         return label;
     },
@@ -134,7 +134,7 @@ const InventoryForza = {
             card.dataset.playerId = String(player.id);
             card.innerHTML = `
                 <div class="prox-id">Player ID: ${player.id}</div>
-                <div class="prox-name">${player.name || `Player #${player.id}`}</div>
+                <div class="prox-name">${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(player.name || `Player #${player.id}`)}</div>
                 <div class="prox-actions">
                     <div class="prox-hint"><i class="ph-bold ph-handshake"></i> Click pt. Trade</div>
                 </div>

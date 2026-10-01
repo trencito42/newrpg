@@ -38,13 +38,14 @@ end
 local function resolveWorkVan(session, cfg, vehicleNetId)
     if not session or not cfg then return nil end
 
-    local netId = tonumber(vehicleNetId) or session.vehicleNetId
+    -- [JOBS AUDIT] The van is the one registered at shift start. The client-supplied netId used to
+    -- be adopted as the session vehicle (any entity, any model, e.g. another player's car).
+    local netId = session.vehicleNetId
     if not netId then return nil end
+    if vehicleNetId ~= nil and tonumber(vehicleNetId) ~= netId then return nil end
 
     local entity = NetworkGetEntityFromNetworkId(netId)
     if not entity or entity == 0 or not DoesEntityExist(entity) then return nil end
-
-    session.vehicleNetId = netId
     return entity
 end
 
@@ -140,6 +141,10 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:loadPackageIntoVan', f
     if session.data.loaded >= session.data.total then
         session.data.stage = 'delivering'
         session.data.hasPackage = true
+        -- [JOBS AUDIT] anchor for the delivery travel-plausibility check
+        local p = GetEntityCoords(GetPlayerPed(source))
+        session.lastStepPos = vector3(p.x, p.y, p.z)
+        session.lastStepAt = os.time()
     end
 
     return session.data
@@ -147,36 +152,69 @@ end)
 
 -- Step 3: Deliver package at customer address
 exports.sunset_core:RegisterCallback('sunset:jobs:courier:deliver', function(source)
-    local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
-    if not session then return nil, err end
-    if not session.data.hasPackage then return nil, { localeKey = 'jobs.message.no_package_loaded' } end
-    if not playerOnFoot(source) then return nil, { localeKey = 'jobs.message.deliver_the_package_on_foot' } end
+    return SunsetJobs_WithLock(source, 'courier_deliver', function()
+        local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
+        if not session then return nil, err end
+        if not session.data.hasPackage then return nil, { localeKey = 'jobs.message.no_package_loaded' } end
+        if not playerOnFoot(source) then return nil, { localeKey = 'jobs.message.deliver_the_package_on_foot' } end
 
-    local cfg = Sunset.GetJobConfig('courier')
-    local idx = session.data.deliveryIndex or 1
-    local target = session.data.deliveries[idx]
-    if not target then return nil, { localeKey = 'jobs.message.no_delivery_assigned' } end
+        local cfg = Sunset.GetJobConfig('courier')
+        local idx = session.data.deliveryIndex or 1
+        local target = session.data.deliveries[idx]
+        if not target then return nil, { localeKey = 'jobs.message.no_delivery_assigned' } end
 
-    if not SunsetJobs_ValidateCoords(source, target.coords, cfg.deliveryRadius or 3.0) then
-        return nil, { localeKey = 'jobs.message.not_at_delivery_address' }
-    end
+        if not SunsetJobs_ValidateCoords(source, target.coords, cfg.deliveryRadius or 3.0) then
+            return nil, { localeKey = 'jobs.message.not_at_delivery_address' }
+        end
 
-    local pay = cfg.payPerPackage or 90
-    SunsetJobs_PayReward(source, 'courier', pay, 'courier_delivery', false)
-    SunsetJobs_AddJobXP(source, 'courier', cfg.xpPerPackage or 18)
-    if GetResourceState('sunset_pass') == 'started' then
-        exports.sunset_pass:AddMissionProgress(source, 'courier_deliveries', 1)
-    end
+        -- [JOBS AUDIT] Travel plausibility: the van must actually have driven between stops
+        -- (<= ~70 m/s) and the hand-over takes >= 1.5s. Blocks teleport/macro chain-delivering.
+        local now = os.time()
+        local pos = GetEntityCoords(GetPlayerPed(source))
+        local last = session.lastStepPos
+        local lastAt = session.lastStepAt or session.startedAt
+        local minElapsed = 1.5
+        if last then
+            local d = #(vector3(pos.x, pos.y, pos.z) - last)
+            minElapsed = math.max(minElapsed, d / 70.0)
+        end
+        if now - lastAt < math.floor(minElapsed) then
+            return nil, { localeKey = 'jobs.message.too_many_requests' }
+        end
 
-    session.data.delivered    = (session.data.delivered or 0) + 1
-    session.data.deliveryIndex = idx + 1
+        -- [JOBS AUDIT] Advance state BEFORE the yielding payout so a duplicate request cannot pay twice,
+        -- and roll it back if the money write fails (no partial progress for unpaid work).
+        local prevIdx = idx
+        local pay = cfg.payPerPackage or 90
+        session.data.hasPackage = false
+        session.data.deliveryIndex = idx + 1
+        session.data.delivered = (session.data.delivered or 0) + 1
+        session.lastStepAt = now
+        session.lastStepPos = vector3(pos.x, pos.y, pos.z)
 
-    if session.data.delivered >= session.data.total then
-        SunsetJobs_ClearSession(source, 'COMPLETED', 'All packages delivered')
-        return { pay = pay, completed = true }
-    end
+        if not SunsetJobs_PayReward(source, 'courier', pay, 'courier_delivery', false) then
+            session.data.hasPackage = true
+            session.data.deliveryIndex = prevIdx
+            session.data.delivered = session.data.delivered - 1
+            return nil, { localeKey = 'jobs.message.payment_could_not_be_processed_try_delivering_once_more' }
+        end
+        SunsetJobs_AddJobXP(source, 'courier', cfg.xpPerPackage or 18)
+        if GetResourceState('sunset_pass') == 'started' then
+            pcall(function() exports.sunset_pass:AddMissionProgress(source, 'courier_deliveries', 1) end)
+        end
 
-    -- Next package comes from the van
-    session.data.hasPackage = true
-    return { pay = pay, completed = false, data = session.data }
+        if SunsetJobs_GetSession(source) ~= session then
+            -- session ended during the payout (death/drop): the pay stands, nothing else to advance
+            return { pay = pay, completed = false }
+        end
+
+        if session.data.delivered >= session.data.total then
+            SunsetJobs_ClearSession(source, 'COMPLETED', 'All packages delivered')
+            return { pay = pay, completed = true }
+        end
+
+        -- Next package comes from the van
+        session.data.hasPackage = true
+        return { pay = pay, completed = false, data = session.data }
+    end)
 end)

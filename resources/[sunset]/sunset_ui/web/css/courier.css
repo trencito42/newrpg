@@ -5,7 +5,7 @@
     left: 50%;
     bottom: 80px;
     width: min(720px, 94vw);
-    z-index: 45;
+    z-index: var(--z-hud, 45);
     color: #fff;
     pointer-events: none;
     opacity: 0;

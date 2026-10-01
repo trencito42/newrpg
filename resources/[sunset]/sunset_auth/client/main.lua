@@ -4,6 +4,11 @@ local pendingAuth = nil
 local authenticatedUsername = nil
 local loadedCharacter = nil
 local profileSaveRevision = 0
+-- [LOGIN PIPELINE] Single-flight guards: a double-clicked login/register or a
+-- quick-login racing a manual pick must never run completeAuthentication twice
+-- (double transition + double 'authenticationComplete' = double character flow/spawn).
+local authRequestBusy = false
+local authCompleting = false
 
 local function setBootState(state, reason)
     if GetResourceState('sunset_core') == 'started' then
@@ -109,6 +114,11 @@ local function persistLogin(username, token, rememberQuickLogin)
 end
 
 local function completeAuthentication(username, quickToken, rememberQuickLogin)
+    if authCompleting then
+        print('^3[AUTH]^7 completeAuthentication ignored: already completing/complete (duplicate login result)')
+        return
+    end
+    authCompleting = true
     local saved = true
     if quickToken and username then
         saved = persistLogin(username, quickToken, rememberQuickLogin)
@@ -211,9 +221,11 @@ RegisterNetEvent('sunset:client:sessionReady', function(data)
         end
         openQuickAuth(saved.username)
         setBootState('AUTHENTICATING', 'quick login request')
+        authRequestBusy = true
         CreateThread(function()
             local tQuickStart = GetGameTimer()
             local result, err = Sunset.AwaitCallback('sunset:authQuickLogin', saved.username, saved.token)
+            authRequestBusy = false
             local quickDur = GetGameTimer() - tQuickStart
             if SunsetBoot and SunsetBoot.RecordMilestone then
                 SunsetBoot.RecordMilestone('auth_quick_login', quickDur, ('username=%s ok=%s'):format(tostring(saved.username), tostring(result and not result.needsEmail)))
@@ -286,14 +298,25 @@ RegisterNetEvent('sunset:client:playerReady', function()
 end)
 
 AddEventHandler('sunset:nui:authLogin', function(data)
+    if authCompleting then
+        -- already signed in and loading: tell the form instead of silently ignoring the click
+        authUiSend('authError', { message = tr('auth.already_logged_in') })
+        return
+    end
+    if authRequestBusy then return end
+    authRequestBusy = true
     local remember = isEnabled(data and data.rememberQuickLogin)
     CreateThread(function()
         setBootState('AUTHENTICATING', 'password login request')
-        performLogin(data.username, data.password, remember)
+        local ok, err = pcall(performLogin, data.username, data.password, remember)
+        authRequestBusy = false
+        if not ok then print(('^1[AUTH]^7 login handler error: %s'):format(tostring(err))) end
     end)
 end)
 
 AddEventHandler('sunset:nui:authRegister', function(data)
+    if authRequestBusy or authCompleting then return end
+    authRequestBusy = true
     local remember = isEnabled(data and data.rememberQuickLogin)
     setBootState('AUTHENTICATING', 'registration request')
     local result, err = Sunset.AwaitCallback(
@@ -305,10 +328,12 @@ AddEventHandler('sunset:nui:authRegister', function(data)
     )
     if not result then
         setBootState('AUTH_FORM', 'registration failed')
+        authRequestBusy = false
         authUiSend('authError', { message = err })
         uiNotify(err or tr('auth.registration_failed'), 'error')
         return
     end
+    authRequestBusy = false
     uiNotify(tr('auth.account_created'), 'success')
     handleAuthResult(result, data.username, data.password, remember)
 end)
@@ -349,10 +374,13 @@ AddEventHandler('sunset:nui:authPickAccount', function(data)
     end
 
     if type(row.token) == 'string' and row.token ~= '' then
+        if authRequestBusy or authCompleting then return end
+        authRequestBusy = true
         CreateThread(function()
             setBootState('AUTHENTICATING', 'saved account login request')
             authUiSend('authLoading', { loading = true, text = tr('auth.signing_in') })
             local result, err = Sunset.AwaitCallback('sunset:authQuickLogin', row.username, row.token)
+            authRequestBusy = false
             if result and result.needsEmail then
                 promptEmailSync(row.username, nil, true)
             elseif result then

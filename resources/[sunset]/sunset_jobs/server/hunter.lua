@@ -72,6 +72,7 @@ local ZoneActivity = {}
 -- Active hunter sessions with their contract state (mirrors SunsetJobs_GetSession)
 -- HunterContracts[source] = { contractId, zoneId, species, required, harvested=0 }
 local HunterContracts = {}
+local SellBusy = {}
 
 -- Harvest ownership: HarvestOwner[animalNetId] = { charId, claimedAt }
 local HarvestOwner = {}
@@ -261,72 +262,95 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:sellHarvest', function(
     local char = getChar(source)
     if not char then return nil, { localeKey = 'jobs.message.character_not_loaded' } end
 
-    -- [SECTION 23] Atomic sell: snapshot → validate → remove → verify → pay.
-    -- If payment fails, restore the exact item + metadata snapshot so the player
-    -- does not lose items without receiving money. GetInventory is the only server
-    -- API that exposes per-slot metadata needed to restore items faithfully.
-    local harvestItems = { 'venison', 'boar_meat', 'animal_hide', 'coyote_pelt', 'antlers' }
-    local totalValue = 0
-    local sold = {}       -- items to remove
-    local snapshots = {}  -- full slot snapshot for restore-on-failure
+    -- [JOBS AUDIT] There was no proximity check at all: harvest could be sold from anywhere.
+    local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces.hunter
+    local npc = wp and wp.npc and wp.npc.coords
+    if npc and not SunsetJobs_ValidateCoords(source, vector3(npc.x, npc.y, npc.z), 15.0) then
+        return nil, { localeKey = 'jobs.message.you_must_speak_with_the_workplace_supervisor_in_person' }
+    end
+    if SellBusy[source] then return nil, { localeKey = 'jobs.message.sale_already_being_processed' } end
+    SellBusy[source] = true
 
-    local inv = exports.sunset_inventory:GetInventory(source)
-    if not inv then return nil, { localeKey = 'jobs.message.could_not_load_inventory' } end
+    local okRun, res, resErr = pcall(function()
+        -- [SECTION 23] Atomic sell: snapshot -> validate -> remove (verified) -> pay -> restore on failure.
+        local harvestItems = { 'venison', 'boar_meat', 'animal_hide', 'coyote_pelt', 'antlers' }
+        local totalValue = 0
+        local sold = {}       -- items to remove
+        local snapshots = {}  -- full slot snapshot for restore-on-failure
 
-    local harvestSet = {}
-    for _, hi in ipairs(harvestItems) do harvestSet[hi] = true end
+        local inv = exports.sunset_inventory:GetInventory(source)
+        if not inv then return nil, { localeKey = 'jobs.message.could_not_load_inventory' } end
 
-    for _, slot in ipairs(inv) do
-        if harvestSet[slot.item] then
-            -- Server determines value from metadata — never trust client
-            local meta = type(slot.metadata) == 'table' and slot.metadata or {}
-            local quality = tonumber(meta.quality) or 50
-            local weight  = tonumber(meta.weight) or 1.0
-            local grade   = qualityToGrade(quality)
-            local cfg     = Sunset.JobsConfig.hunter
-            local gradeM  = (cfg.gradeMultiplier or {})[grade] or 0.5
-            local speciesKey = tostring(meta.species or '')
-            local speciesCfg = cfg.species[speciesKey]
-            local baseVal = speciesCfg and speciesCfg.baseValue or 8
-            local itemVal = math.floor(baseVal * weight * gradeM)
-            totalValue = totalValue + itemVal
-            sold[#sold + 1] = { item = slot.item, slot = slot.slot, value = itemVal }
-            -- Full snapshot for potential restore (preserves all metadata)
-            snapshots[#snapshots + 1] = {
-                item     = slot.item,
-                count    = slot.count or 1,
-                metadata = meta,
-            }
+        local harvestSet = {}
+        for _, hi in ipairs(harvestItems) do harvestSet[hi] = true end
+
+        for _, slot in ipairs(inv) do
+            if harvestSet[slot.item] then
+                -- Server determines value from metadata - never trust client
+                local meta = type(slot.metadata) == 'table' and slot.metadata or {}
+                local quality = tonumber(meta.quality) or 50
+                local weight  = tonumber(meta.weight) or 1.0
+                local grade   = qualityToGrade(quality)
+                local cfg     = Sunset.JobsConfig.hunter
+                local gradeM  = (cfg.gradeMultiplier or {})[grade] or 0.5
+                local speciesKey = tostring(meta.species or '')
+                local speciesCfg = cfg.species[speciesKey]
+                local baseVal = speciesCfg and speciesCfg.baseValue or 8
+                local itemVal = math.floor(baseVal * weight * gradeM)
+                totalValue = totalValue + itemVal
+                sold[#sold + 1] = { item = slot.item, slot = slot.slot, value = itemVal }
+                snapshots[#snapshots + 1] = {
+                    item     = slot.item,
+                    count    = 1, -- exactly one unit is removed per slot below; restoring slot.count would duplicate
+                    metadata = meta,
+                }
+            end
         end
-    end
 
-    if #sold == 0 then
-        return nil, { localeKey = 'jobs.message.no_harvest_items_to_sell_go_hunt_first' }
-    end
-
-    -- Remove items FIRST (before payment). Items are locked; payment failure
-    -- triggers an item restore so the player loses nothing.
-    for _, s in ipairs(sold) do
-        exports.sunset_inventory:RemoveItem(source, s.item, 1)
-    end
-
-    -- Pay after items are removed.
-    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')
-    if not paid then
-        -- Payment failed — restore exact items with all metadata.
-        for _, snap in ipairs(snapshots) do
-            exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
+        if #sold == 0 then
+            return nil, { localeKey = 'jobs.message.no_harvest_items_to_sell_go_hunt_first' }
         end
+
+        -- Remove items FIRST. Every removal is verified: a failed removal (concurrent inventory change)
+        -- aborts, restores what was already taken and pays nothing (was: paid anyway = duplication).
+        local removedIdx = 0
+        local removeFailed = false
+        for i, s2 in ipairs(sold) do
+            if exports.sunset_inventory:RemoveItem(source, s2.item, 1) then
+                removedIdx = i
+            else
+                removeFailed = true
+                break
+            end
+        end
+        if removeFailed then
+            for i = 1, removedIdx do
+                local snap = snapshots[i]
+                exports.sunset_inventory:AddItem(source, snap.item, 1, nil, snap.metadata)
+            end
+            exports.sunset_inventory:ReloadInventory(source)
+            return nil, { localeKey = 'jobs.message.could_not_load_inventory' }
+        end
+
+        local paid = totalValue <= 0 or exports.sunset_core:AddMoney(source, 'cash', totalValue, 'hunter_sell')
+        if not paid then
+            for _, snap in ipairs(snapshots) do
+                exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
+            end
+            exports.sunset_inventory:ReloadInventory(source)
+            return nil, { localeKey = 'jobs.message.payment_failed_your_items_have_been_returned_please_try' }
+        end
+
+        pcall(SunsetJobs_AddJobProgress, source, 'hunter', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
         exports.sunset_inventory:ReloadInventory(source)
-        return nil, { localeKey = 'jobs.message.payment_failed_your_items_have_been_returned_please_try' }
-    end
+        exports.sunset_core:RefreshMoney(source)
 
-    SunsetJobs_AddJobProgress(source, 'hunter', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
-    exports.sunset_inventory:ReloadInventory(source)
-    exports.sunset_core:RefreshMoney(source)
-
-    dlog('char %d sold %d harvest items for $%d', char.id, #sold, totalValue)
-    return { total = totalValue, count = #sold }
+        dlog('char %d sold %d harvest items for $%d', char.id, #sold, totalValue)
+        return { total = totalValue, count = #sold }
+    end)
+    SellBusy[source] = nil
+    if not okRun then error(res, 0) end
+    return res, resErr
 end)
 
 -- ── Start Shift ───────────────────────────────────────────────
@@ -530,7 +554,16 @@ RegisterNetEvent('sunset:hunting:reportAnimalDead', function(netId)
     -- Validate: animal is in reporter's contracted zone
     if session.data.zoneId and animal.zoneId ~= tostring(session.data.zoneId) then return end
 
-    -- Server-side entity death confirmation (optional if entity still accessible)
+    -- [JOBS AUDIT] "Client says it died" was accepted blindly: a cheater could report any registered
+    -- animal dead without firing a shot and harvest it. Require server-observed damage OR a
+    -- server-visible dead entity, and reject while the entity is demonstrably still alive.
+    do
+        local ent = NetworkGetEntityFromNetworkId(netId)
+        local entExists = ent and ent ~= 0 and DoesEntityExist(ent)
+        if entExists and GetEntityHealth(ent) > 0 then return end
+        if not entExists and (animal.shots or 0) <= 0 then return end
+        if (animal.shots or 0) <= 0 and not entExists then return end
+    end
     local method = animal.lastMethod or 'firearm'
 
     -- Mark dead before any async work (idempotency guard)
@@ -743,6 +776,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     -- (i.e. quality >= trophyMinQuality). If the quality was too low the player harvested
     -- the carcass but did NOT make progress — notify them and let them keep trying.
     local contract = HunterContracts[source]
+    -- [JOBS AUDIT] only the contract that belongs to THIS session counts (stale tables from an earlier shift are ignored).
+    if contract and contract.contractId ~= session.data.contractId then
+        HunterContracts[source] = nil
+        contract = nil
+    end
     local countsForProgress = true
     if contract and session.data.trophyRequired then
         local speciesCfg = cfg.species[animal.species or '']
@@ -764,21 +802,35 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
         if contract.harvested >= contract.required then
             local bonus = contract.contractPay or 0
             local xpBonus = contract.contractXp or 0
-            local paid = exports.sunset_core:AddMoney(source, 'cash', bonus, 'hunter_contract_complete')
-            if paid then
-                SunsetJobs_AddJobProgress(source, 'hunter', xpBonus, 1, bonus)
-                exports.sunset_core:RefreshMoney(source)
-            end
-            -- Clear contract
+            -- [JOBS AUDIT] Close the contract BEFORE the yielding payout (a second concurrent harvest used
+            -- to see harvested >= required again and pay twice) and roll back if the money write fails
+            -- (previously the contract was cleared and the client told "Contract Complete" while unpaid).
+            local prevTrophy = session.data.trophyRequired
             session.data.contractId = nil
             session.data.harvested  = 0
             session.data.stage      = 'idle'
             HunterContracts[source] = nil
-            TriggerClientEvent('sunset:hunting:contractComplete', source, {
-                contractId = contract.contractId,
-                bonus = bonus,
-                xp = xpBonus,
-            })
+            local paid = bonus <= 0 or exports.sunset_core:AddMoney(source, 'cash', bonus, 'hunter_contract_complete')
+            if paid then
+                if bonus > 0 then
+                    SunsetJobs_AddJobProgress(source, 'hunter', xpBonus, 1, bonus)
+                    exports.sunset_core:RefreshMoney(source)
+                end
+                TriggerClientEvent('sunset:hunting:contractComplete', source, {
+                    contractId = contract.contractId,
+                    bonus = bonus,
+                    xp = xpBonus,
+                })
+            else
+                contract.harvested = math.max(0, (contract.required or 1) - 1)
+                session.data.contractId = contract.contractId
+                session.data.harvested  = contract.harvested
+                session.data.stage      = 'hunting'
+                session.data.trophyRequired = prevTrophy
+                HunterContracts[source] = contract
+                TriggerClientEvent('sunset:client:notify', source,
+                    'Contract payout failed - harvest another animal to retry.', 'error', 6000)
+            end
         end
     end
 
@@ -804,7 +856,8 @@ end)
 -- ── End Shift ─────────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:jobs:hunter:endShift', function(source)
     HunterContracts[source] = nil
-    SunsetJobs_ClearSession(source, 'COMPLETED', 'Shift ended by player')
+    -- [JOBS AUDIT] COMPLETED is illegal from STARTING (no contract taken yet) -> shift stayed stuck.
+    SunsetJobs_EndShift(source, 'Shift ended by player')
     return true
 end)
 
@@ -879,6 +932,24 @@ RegisterNetEvent('sunset:hunting:registerAnimal', function(netId, species, zoneI
     local entity = NetworkGetEntityFromNetworkId(netId)
     if not entity or entity == 0 or not DoesEntityExist(entity) then return end
     if GetEntityType(entity) ~= 1 then return end
+
+    -- [JOBS AUDIT] Re-registering an existing netId reset alive/harvested (re-harvest the same carcass),
+    -- and any ped (even another player's) could be registered as an "animal". Enforce: unknown netId,
+    -- the entity model must be the species model, never a player ped, inside the contract zone, capped.
+    if Animals[netId] then return end
+    if IsPedAPlayer(entity) then return end
+    if speciesCfg.model and GetEntityModel(entity) ~= joaat(speciesCfg.model) then return end
+    local zoneDef = getZone(tostring(zoneId))
+    if not zoneDef then return end
+    local ePos = GetEntityCoords(entity)
+    if zoneDef.polygon and #zoneDef.polygon >= 3 and not pointInPolygon(ePos.x, ePos.y, zoneDef.polygon) then return end
+    do
+        local alive = 0
+        for _, a in pairs(Animals) do
+            if a.zoneId == tostring(zoneId) and a.alive then alive = alive + 1 end
+        end
+        if alive >= ((zoneDef.maxAlive or Sunset.JobsConfig.hunter.animalPopCap or 6) + 2) then return end
+    end
 
     local pos = GetEntityCoords(entity)
     -- [SECTION 43] Server generates weight from config range — never trust client value.
@@ -995,10 +1066,14 @@ AddEventHandler('sunset:hunting:ensureZonePopulation', function(zoneId)
 end)
 
 -- ── Cleanup: session end ──────────────────────────────────────
-AddEventHandler('sunset:jobs:sessionEnded', function(src, jobId, state, reason)
-    src = tonumber(src) or source
-    if jobId ~= 'hunter' then return end
+-- [JOBS AUDIT] 'sunset:jobs:sessionEnded' is a CLIENT event (TriggerClientEvent) - this server handler
+-- never fired, so a stale HunterContracts[src] survived death/timeout/cancel and a later shift could
+-- still harvest-complete the old contract for pay. Core now raises 'sunset:jobs:serverSessionEnded'.
+AddEventHandler('sunset:jobs:serverSessionEnded', function(src, jobId)
+    src = tonumber(src)
+    if not src or jobId ~= 'hunter' then return end
     HunterContracts[src] = nil
+    SellBusy[src] = nil
 end)
 
 -- ── Cleanup: player drop ──────────────────────────────────────

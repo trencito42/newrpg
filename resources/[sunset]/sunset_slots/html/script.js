@@ -1,5 +1,4 @@
 // Template replacement with language
-// console.log(languages[config.language]);
 for (let i = 1; i <= 12; i++) {
   $('#target' + i).text(languages[config.language]['target' + i]);
 }

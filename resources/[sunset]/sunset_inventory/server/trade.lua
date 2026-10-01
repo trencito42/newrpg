@@ -614,6 +614,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeOfferCash', function
     local char = character(source)
     if not char then return nil, { localeKey = 'inventory.message.character_not_loaded' } end
     local amount = math.floor(tonumber(type(data) == 'table' and data.amount) or 0)
+    if amount ~= amount or amount == math.huge then amount = -1 end -- [SEC2] NaN/inf
     if amount < 0 then return nil, { localeKey = 'inventory.message.invalid_cash_amount' } end
     if amount > (tonumber(char.cash) or 0) then return nil, { localeKey = 'inventory.message.you_do_not_have_that_much_cash' } end
     trade.cash[source] = amount

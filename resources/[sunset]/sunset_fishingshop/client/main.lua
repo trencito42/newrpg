@@ -45,7 +45,7 @@ local function openFishSellMenu()
     CreateThread(function()
         local invData, err = Sunset.AwaitCallback('sunset:fishingshop:getFishInventory')
         if not invData then
-            exports.sunset_ui:Notify(err or 'Could not read your fish inventory.', 'error')
+            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.inventory_read_failed'), 'error')
             return
         end
         if not invData.items or #invData.items == 0 then
@@ -56,13 +56,13 @@ local function openFishSellMenu()
         local buyer, distance = nearestFishBuyer()
         if not buyer or distance > 6.0 then
             SetNewWaypoint(buyer.coords.x, buyer.coords.y)
-            exports.sunset_ui:Notify(('GPS set to %s. Talk to the cashier and choose Sell Fish.'):format(buyer.label), 'info', 8000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.gps_set_sell', { label = buyer.label }), 'info', 8000)
             return
         end
 
         exports.sunset_ui:Send('fishingShopShow', {
             mode = 'sell',
-            title = 'SELL FISH',
+            title = exports.sunset_core:Translate('fishingshop.ui.sell_fish_title'),
             cash = invData.cash,
             items = invData.items,
         })
@@ -72,6 +72,7 @@ local function openFishSellMenu()
 end
 
 local hillbillyPed   = nil
+local fishShopBlips  = {}
 local nearNpc        = false
 local nearBaitShop   = false
 local storeContext   = nil
@@ -129,15 +130,15 @@ end
 
 local function buildStoreActions(ctx)
     local actions = {}
-    local shopLabel = (ctx and ctx.shopLabel) or '24/7 Store'
+    local shopLabel = (ctx and ctx.shopLabel) or exports.sunset_core:Translate('fishingshop.menu.default_shop')
     actions[#actions + 1] = {
         id = 'open_shop_247',
-        label = ('Open %s'):format(shopLabel),
+        label = exports.sunset_core:Translate('fishingshop.menu.open_shop', { shop = shopLabel }),
         group = 'STORE',
     }
     actions[#actions + 1] = {
         id = 'sell_fish_247',
-        label = 'Sell Fish',
+        label = exports.sunset_core:Translate('fishingshop.menu.sell_fish'),
         group = 'STORE',
     }
 
@@ -145,13 +146,13 @@ local function buildStoreActions(ctx)
     if biz and not biz.owned and biz.forSale then
         actions[#actions + 1] = {
             id = 'buy_business',
-            label = ('Buy Business (%s)'):format(formatMoney(biz.price)),
+            label = exports.sunset_core:Translate('fishingshop.menu.buy_business', { price = formatMoney(biz.price) }),
             group = 'BUSINESS',
         }
     elseif biz and biz.mine then
         actions[#actions + 1] = {
             id = 'manage_business',
-            label = 'Manage Business',
+            label = exports.sunset_core:Translate('fishingshop.menu.manage_business'),
             group = 'BUSINESS',
         }
     end
@@ -257,7 +258,7 @@ local function sendBillyRayPrompt()
         bodyClass = 'fishing',
         icon = 'ph-fish',
         title = 'Billy Ray',
-        desc = 'Interaction / Fishing Job',
+        desc = exports.sunset_core:Translate('fishingshop.npc.interaction_desc'),
         key = 'E',
     })
     if shown then
@@ -277,7 +278,7 @@ end
 local function drawBillyNativeHelp()
     if billyPromptVisible then return end
     BeginTextCommandDisplayHelp('STRING')
-    AddTextComponentSubstringPlayerName('~INPUT_CONTEXT~ — Billy Ray (Hold E)')
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('hint.native.billy_ray'))
     EndTextCommandDisplayHelp(0, false, true, 100)
 end
 
@@ -343,27 +344,27 @@ local function buildBillyRayActions(job, tournamentActive, tournamentJoined)
     job = job or getCharacterJob()
 
     if job ~= 'fisherman' then
-        actions[#actions + 1] = { id = 'get_fisherman_job', label = 'Become a Fisherman', group = 'CIVILIAN' }
+        actions[#actions + 1] = { id = 'get_fisherman_job', label = exports.sunset_core:Translate('fishingshop.menu.become_fisherman'), group = 'CIVILIAN' }
     end
 
     if job == 'fisherman' then
         if isOnFishermanShift() then
-            actions[#actions + 1] = { id = 'end_fishing_shift', label = 'End Shift', group = 'FISHING' }
+            actions[#actions + 1] = { id = 'end_fishing_shift', label = exports.sunset_core:Translate('fishingshop.menu.end_shift'), group = 'FISHING' }
         else
-            actions[#actions + 1] = { id = 'start_fishing_shift', label = 'Start Shift', group = 'FISHING' }
+            actions[#actions + 1] = { id = 'start_fishing_shift', label = exports.sunset_core:Translate('fishingshop.menu.start_shift'), group = 'FISHING' }
         end
-        actions[#actions + 1] = { id = 'upgrade_fishing_rod', label = 'Upgrade Fishing Rod', group = 'FISHING' }
-        actions[#actions + 1] = { id = 'fishing_guide', label = 'Fisherman Guide', group = 'INFO' }
-        actions[#actions + 1] = { id = 'quit_fisherman_job', label = 'Resign as Fisherman', group = 'CIVILIAN' }
+        actions[#actions + 1] = { id = 'upgrade_fishing_rod', label = exports.sunset_core:Translate('fishingshop.menu.upgrade_rod'), group = 'FISHING' }
+        actions[#actions + 1] = { id = 'fishing_guide', label = exports.sunset_core:Translate('fishingshop.menu.guide'), group = 'INFO' }
+        actions[#actions + 1] = { id = 'quit_fisherman_job', label = exports.sunset_core:Translate('fishingshop.menu.resign'), group = 'CIVILIAN' }
     else
-        actions[#actions + 1] = { id = 'fishing_guide', label = 'Fisherman Guide', group = 'INFO' }
+        actions[#actions + 1] = { id = 'fishing_guide', label = exports.sunset_core:Translate('fishingshop.menu.guide'), group = 'INFO' }
     end
 
     if tournamentActive then
-        local tLabel = tournamentJoined and 'Fishing Tournament (Joined)' or 'Join Fishing Tournament'
+        local tLabel = tournamentJoined and exports.sunset_core:Translate('fishingshop.menu.tournament_joined') or exports.sunset_core:Translate('fishingshop.menu.tournament_join')
         actions[#actions + 1] = { id = 'join_tournament', label = tLabel, group = 'TOURNAMENT' }
         if tournamentJoined then
-            actions[#actions + 1] = { id = 'view_tournament_standings', label = 'View Standings', group = 'TOURNAMENT' }
+            actions[#actions + 1] = { id = 'view_tournament_standings', label = exports.sunset_core:Translate('fishingshop.menu.standings'), group = 'TOURNAMENT' }
         end
     end
 
@@ -430,11 +431,6 @@ AddEventHandler('sunset:client:characterFlowComplete', function()
     armBillyInteractGrace(3500)
 end)
 
-AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName ~= GetCurrentResourceName() then return end
-    print('[sunset_fishingshop] client billy-hold-v5')
-end)
-
 -- ── Spawn NPC ────────────────────────────────────────────────
 CreateThread(function()
     local hash = GetHashKey('a_m_m_hillbilly_01')
@@ -469,8 +465,9 @@ CreateThread(function()
     SetBlipScale(blip, 0.85)
     SetBlipAsShortRange(blip, true)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString('Billy Ray — Fishing')
+    AddTextComponentString(exports.sunset_core:Translate('fishingshop.blip.billy_ray'))
     EndTextCommandSetBlipName(blip)
+    fishShopBlips[#fishShopBlips + 1] = blip
 
     -- Blip Fishing Supply shop
     local shopBlip = AddBlipForCoord(BAIT_SHOP_COORDS.x, BAIT_SHOP_COORDS.y, BAIT_SHOP_COORDS.z)
@@ -479,8 +476,25 @@ CreateThread(function()
     SetBlipScale(shopBlip, 0.75)
     SetBlipAsShortRange(shopBlip, true)
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString('Fishing Supply')
+    AddTextComponentString(exports.sunset_core:Translate('fishingshop.blip.supply'))
     EndTextCommandSetBlipName(shopBlip)
+    fishShopBlips[#fishShopBlips + 1] = shopBlip
+end)
+
+-- [JOBS AUDIT] NPC ped, blips and shop focus survived a resource restart (duplicate Billy Ray / blips).
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if hillbillyPed and DoesEntityExist(hillbillyPed) then
+        SetEntityAsMissionEntity(hillbillyPed, false, true)
+        DeleteEntity(hillbillyPed)
+    end
+    for _, b in ipairs(fishShopBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+    end
+    fishShopBlips = {}
+    if menuOpen or shopOpen then
+        pcall(function() exports.sunset_ui:SetFocus(false, false) end)
+    end
 end)
 
 -- ── World tooltip deasupra capului (Hold E To Interact) ───────
@@ -574,14 +588,14 @@ CreateThread(function()
                         if shopData then
                             exports.sunset_ui:Send('fishingShopShow', {
                                 mode  = 'buy',
-                                title = 'FISHING SUPPLY',
+                                title = exports.sunset_core:Translate('fishingshop.ui.supply_title'),
                                 cash  = shopData.cash,
                                 items = shopData.items,
                             })
                             exports.sunset_ui:SetFocus(true, true)
                             shopOpen = true
                         else
-                            exports.sunset_ui:Notify(err or 'Could not open the shop.', 'error')
+                            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.shop_open_failed'), 'error')
                         end
                         SetTimeout(1500, function() inCooldown = false end)
                     end)
@@ -632,9 +646,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, err = Sunset.AwaitCallback('sunset:buyBusiness', biz.id)
             if ok then
-                exports.sunset_ui:Notify(err or 'Business purchased.', 'success')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchased'), 'success')
             else
-                exports.sunset_ui:Notify(err or 'Could not buy business.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.business_purchase_failed'), 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)
@@ -673,7 +687,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             if ok then
                 exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fishing_shift_ended'), 'success', 5000)
             else
-                exports.sunset_ui:Notify(err or 'You have no active shift.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.no_active_shift'), 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)
@@ -683,9 +697,9 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         CreateThread(function()
             local ok, msg = Sunset.AwaitCallback('sunset:fishingshop:upgradeRod')
             if ok then
-                exports.sunset_ui:Notify(msg or 'Rod upgraded!', 'success', 6000)
+                exports.sunset_ui:Notify(msg or exports.sunset_core:Translate('fishingshop.message.rod_upgraded'), 'success', 6000)
             else
-                exports.sunset_ui:Notify(msg or 'Could not upgrade rod.', 'error')
+                exports.sunset_ui:Notify(msg or exports.sunset_core:Translate('fishingshop.message.rod_upgrade_failed'), 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)
@@ -693,7 +707,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     elseif action == 'fishing_guide' then
         local guide = Sunset.JobWorkplaces and Sunset.JobWorkplaces.fisherman and Sunset.JobWorkplaces.fisherman.guide
         if guide and guide.steps then
-            exports.sunset_ui:Notify(('=== %s ===\n%s'):format(guide.title or 'Fisherman Guide', table.concat(guide.steps, '\n')), 'info', 12000)
+            exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.guide_header', { title = guide.title or exports.sunset_core:Translate('fishingshop.menu.guide'), steps = table.concat(guide.steps, '\n') }), 'info', 12000)
         else
             exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.fisherman_guide_buy_bait_from_billy_ray_stand_at'), 'info', 8000)
         end
@@ -706,7 +720,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 syncLocalJob('unemployed', 0)
                 exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_have_resigned_as_a_fisherman'), 'info', 6000)
             else
-                exports.sunset_ui:Notify(err or 'Could not resign.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.resign_failed'), 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)
@@ -727,7 +741,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     end
                     exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.you_joined_the_fishing_tournament_fish_as_much_as'), 'success', 7000)
                 else
-                    exports.sunset_ui:Notify((res and res.error) or 'Could not join tournament.', 'error', 5000)
+                    exports.sunset_ui:Notify((res and res.error) or exports.sunset_core:Translate('fishingshop.message.tournament_join_failed'), 'error', 5000)
                 end
             end)
         end)
@@ -781,7 +795,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                 else
                     exports.sunset_ui:Send('fishingShopShow', {
                         mode  = 'sell',
-                        title = '24/7 — SELL FISH',
+                        title = exports.sunset_core:Translate('fishingshop.ui.sell_fish_247_title'),
                         cash  = invData.cash,
                         items = invData.items,
                     })
@@ -789,7 +803,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
                     shopOpen = true
                 end
             else
-                exports.sunset_ui:Notify(err or 'Failed to load inventory.', 'error')
+                exports.sunset_ui:Notify(err or exports.sunset_core:Translate('fishingshop.message.inventory_load_failed'), 'error')
             end
             SetTimeout(2000, function() inCooldown = false end)
         end)
@@ -808,9 +822,9 @@ AddEventHandler('sunset:nui:fishingShopBuy', function(data)
     if not cart or #cart == 0 then return end
     local ok, err = Sunset.AwaitCallback('sunset:fishingshop:buyCart', cart)
     if ok then
-        exports.sunset_ui:Notify(('Purchase successful! -$%d'):format(ok.total or 0), 'success', 5000)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('fishingshop.message.purchase_successful', { total = string.format('%d', ok.total or 0) }), 'success', 5000)
     else
-        exports.sunset_ui:Notify(tostring(err or 'Purchase failed.'), 'error')
+        exports.sunset_ui:Notify(tostring(err or exports.sunset_core:Translate('fishingshop.message.purchase_failed')), 'error')
     end
     -- Re-arm the buy button. Without this the JS side stays locked in
     -- "Processing..." until its 6s safety-net timer fires.
@@ -824,7 +838,7 @@ AddEventHandler('sunset:nui:fishingShopSell', function(data)
     if ok then
         exports.sunset_ui:Notify(tostring(ok), 'success', 5000)
     else
-        exports.sunset_ui:Notify(tostring(err or 'Sale failed.'), 'error')
+        exports.sunset_ui:Notify(tostring(err or exports.sunset_core:Translate('fishingshop.message.sale_failed')), 'error')
     end
     -- Re-arm the sell button immediately after the server responds.
     exports.sunset_ui:Send('shopBuyResult', {})

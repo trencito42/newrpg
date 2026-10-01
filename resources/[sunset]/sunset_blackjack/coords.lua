@@ -7,11 +7,8 @@ function DebugPrint(str)
 	end
 end
 
-CreateThread(function()
-	while true do Wait(0)
-		_DEBUG = GlobalState.debug
-	end
-end)
+-- Debug is convar-gated (was a Wait(0) thread polling GlobalState.debug every frame).
+_DEBUG = GetConvar('sv_sunset_blackjack_debug', '0') == '1'
 
 tables = {
 	{

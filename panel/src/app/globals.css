@@ -3,15 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --background: #080b11;
-  --foreground: #f1f5f9;
-  --card: #0f141f;
-  --card-border: #1a2334;
-  --border: #1e283d;
-  --muted: #141a26;
-  --muted-foreground: #94a3b8;
-  --accent: #f59e0b;
-  --accent-foreground: #080b11;
+  --background: #0b0b0c;
+  --foreground: #f1f1f1;
+  --surface-1: #101011;
+  --surface-2: #151516;
+  --surface-3: #1a1a1c;
+  --card: #151516;
+  --card-border: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --muted: #151516;
+  --muted-foreground: #8a8a90;
+  --accent: #e5e5e7;
+  --accent-foreground: #0b0b0c;
 }
 
 * {
@@ -32,23 +36,23 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* Custom sleek dark scrollbar */
+/* Neutral flat scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080b11;
+  background: #0b0b0c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e283d;
+  background: #262629;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2d3b55;
+  background: #38383d;
 }
 
 /* Mobile responsive table card container */
@@ -58,12 +62,12 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Focus styling */
+/* Restrained focus styling */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #f59e0b;
+  outline: 2px solid rgba(255, 255, 255, 0.3);
   outline-offset: 2px;
 }

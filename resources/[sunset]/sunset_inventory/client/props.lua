@@ -138,3 +138,10 @@ CreateThread(function()
         end
     end
 end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Delete the held prop if the resource stops.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    destroyPropEntity()
+    equippedPropItem = nil
+end)

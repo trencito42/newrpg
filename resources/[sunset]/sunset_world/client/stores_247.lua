@@ -129,6 +129,7 @@ local function nearestCashier(maxDist)
     return best, bestDist
 end
 
+local storeBlips = {}
 CreateThread(function()
     Wait(1500)
     local shopPreset = (Sunset.WorldBlips and Sunset.WorldBlips.shop) or { sprite = 52, color = 2, scale = 0.70 }
@@ -136,6 +137,7 @@ CreateThread(function()
         spawnCashier(store, index)
         if store.coords then
             local blip = AddBlipForCoord(store.coords.x, store.coords.y, store.coords.z)
+            storeBlips[#storeBlips + 1] = blip
             SetBlipSprite(blip, shopPreset.sprite or 52)
             SetBlipColour(blip, shopPreset.color or 2)
             SetBlipScale(blip, shopPreset.scale or 0.70)
@@ -271,4 +273,8 @@ AddEventHandler('onResourceStop', function(res)
         end
     end
     SunsetWorld.Tooltips.clear()
+    for i, b in ipairs(storeBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+        storeBlips[i] = nil
+    end
 end)

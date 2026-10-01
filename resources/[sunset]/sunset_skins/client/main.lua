@@ -164,7 +164,14 @@ CreateThread(function()
     local model  = joaat(cfg.model)
 
     RequestModel(model)
-    while not HasModelLoaded(model) do Wait(200) end
+    local modelDeadline = GetGameTimer() + 10000
+    while not HasModelLoaded(model) do
+        if GetGameTimer() > modelDeadline then
+            print('[sunset_skins] shop NPC model load timed out')
+            return
+        end
+        Wait(200)
+    end
 
     local cx, cy, cz, cw = cfg.coords.x, cfg.coords.y, cfg.coords.z, cfg.coords.w
     shopNPC = CreatePed(4, model, cx, cy, cz - 1.0, cw, false, true)

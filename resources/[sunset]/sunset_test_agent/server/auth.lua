@@ -17,7 +17,7 @@ local testPlayerCharId = nil
 local allowlist = {}   -- [license] = true  (set via /testagent allow <license>)
 
 local function killSwitchOn()
-    return GetConvar(Cfg.enabledConvar, 'false') == 'true'
+    return (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true')
 end
 
 function TestAgentAuth.enabled()

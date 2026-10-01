@@ -1,3 +1,17 @@
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- Falls back to the raw natives only if sunset_ui is not running.
+function TURFS_SetNuiFocus(hasFocus, hasCursor, keepInput)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'turfs')
+        end)
+        if ok then return res end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+    SetNuiFocusKeepInput(keepInput == true)
+    return true
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  SUNSETMP — Turf Wars Client
 --  SAMP-style map zones, war HUD, clan-colored enemy blips
@@ -454,6 +468,7 @@ CreateThread(function()
 end)
 
 RegisterCommand('turfdebug', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     turfDebugActive = not turfDebugActive
     exports.sunset_ui:Notify(('Turf polygon wireframe visualizer: %s'):format(turfDebugActive and 'ACTIVAT' or 'DEZACTIVAT'), turfDebugActive and 'success' or 'info', 4000)
 end, false)
@@ -748,6 +763,8 @@ end)
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     closeArmory()
+    clearTurfBlips()
+    clearWarPlayerBlips()
     exports.sunset_ui:Send('warHudHide', {})
     exports.sunset_ui:Send('warRespawnHide', {})
     exports.sunset_ui:Send('warScoreboardHide', {})
@@ -855,7 +872,7 @@ local function openTurfMap()
     exports.sunset_core:TriggerCallback('sunset:turfs:getAllTurfsData', function(data)
         if not data then return end
         isTurfMapOpen = true
-        SetNuiFocus(true, true)
+        TURFS_SetNuiFocus(true, true)
         local ped = PlayerPedId()
         local pCoords = GetEntityCoords(ped)
         exports.sunset_ui:Send('turfMapOpen', {
@@ -871,7 +888,7 @@ end
 local function closeTurfMap()
     if not isTurfMapOpen then return end
     isTurfMapOpen = false
-    SetNuiFocus(false, false)
+    TURFS_SetNuiFocus(false, false)
     exports.sunset_ui:Send('turfMapClose', {})
 end
 
@@ -885,7 +902,7 @@ end)
 
 RegisterNUICallback('turfMapClose', function(data, cb)
     isTurfMapOpen = false
-    SetNuiFocus(false, false)
+    TURFS_SetNuiFocus(false, false)
     if cb then cb({ ok = true }) end
 end)
 
@@ -895,3 +912,16 @@ end)
 
 exports('OpenTurfMap', openTurfMap)
 exports('CloseTurfMap', closeTurfMap)
+
+-- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+    if ok and owner == 'turfs' then
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
+    end
+end)
+
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    if isTurfMapOpen then closeTurfMap() end
+end)

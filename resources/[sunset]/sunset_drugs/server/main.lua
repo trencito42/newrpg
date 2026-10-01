@@ -257,6 +257,8 @@ exports.sunset_core:RegisterCallback('sunset:drugs:sell', function(source, drugT
     if not nearAny(coords, Cfg.sell.dealers, Cfg.sell.sellRadius or 5.0) then
         return nil, { localeKey = 'drugs.message.you_must_be_near_a_dealer_to_sell' }
     end
+    -- [SEC2] claim the cooldown BEFORE the yielding inventory/money calls
+    SellCooldowns[source] = now
 
     -- [RETURN-VALUE FIX] Removal MUST be confirmed before any payout.
     local ok, removed = pcall(function()

@@ -27,6 +27,15 @@ export async function POST(req: NextRequest) {
     }
 
     const { reason, banId } = result.data;
+    if (banId) {
+      const ownedBan = await queryOne<{ id: number }>(
+        `SELECT b.id FROM bans b JOIN players p ON p.license = b.license
+         WHERE b.id = ? AND p.account_id = ? AND (b.expires_at IS NULL OR b.expires_at > NOW())
+         LIMIT 1`,
+        [banId, user.accountId]
+      );
+      if (!ownedBan) return NextResponse.json({ error: "invalid_ban" }, { status: 403 });
+    }
 
     // Check if there is already a pending unban appeal for this account
     const existing = await queryOne<{ id: number }>(

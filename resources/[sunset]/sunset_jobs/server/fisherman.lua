@@ -198,7 +198,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:catch', function(sou
     return nil, { localeKey = 'jobs.message.cast_first_with_fish' }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(source, spotIndex)
+local function fishermanCast(source, spotIndex)
     local session, err = SunsetJobs_RequireSession(source, 'fisherman', { 'ACTIVE', 'STARTING' })
     if not session then
         local char = exports.sunset_core:GetCharacter(source)
@@ -268,6 +268,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(sour
     if baitItem           then castInfo.baitUsed = baitItem end
     if rod.item           then castInfo.rodTier  = rod.item end
     return castInfo
+end
+
+-- [JOBS AUDIT] fishLevel() yields (MySQL) before the "line already cast" check, so concurrent casts
+-- each consumed bait and overwrote the challenge. Serialise per player.
+exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:cast', function(source, spotIndex)
+    return SunsetJobs_WithLock(source, 'fish_cast', function()
+        return fishermanCast(source, spotIndex)
+    end)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:reel', function(source, spotIndex, token)
@@ -414,7 +422,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:sell', function(sour
     end
     exports.sunset_inventory:ReloadInventory(source)
     exports.sunset_core:RefreshMoney(source)
-    SunsetJobs_AddJobProgress(source, 'fisherman', math.max(5, math.floor(bonus / 10)), 1, bonus)
+    -- [JOBS AUDIT] money is already committed: a progress-write error must not leave SellLocks stuck
+    -- (the player could never sell again until relog).
+    local okProgress, progressErr = pcall(SunsetJobs_AddJobProgress, source, 'fisherman', math.max(5, math.floor(bonus / 10)), 1, bonus)
+    if not okProgress then
+        print(('[sunset_jobs] fisherman job_progress write failed after sale: %s'):format(tostring(progressErr)))
+    end
 
     local session = SunsetJobs_GetSession(source)
     if session and session.jobId == 'fisherman' then

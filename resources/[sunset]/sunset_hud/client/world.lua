@@ -104,9 +104,10 @@ CreateThread(function()
     SetVehiclePopulationBudget(0)
     SetRandomEventFlag(false)
 
+    local playerId = PlayerId()
+    local nextPersistent = 0
     while true do
-        local playerId = PlayerId()
-
+        -- *ThisFrame natives must be re-applied every frame.
         SetPedDensityMultiplierThisFrame(0.0)
         SetScenarioPedDensityMultiplierThisFrame(0.0, 0.0)
         SetVehicleDensityMultiplierThisFrame(0.0)
@@ -116,16 +117,21 @@ CreateThread(function()
         SetAmbientVehicleRangeMultiplierThisFrame(0.0)
         SetSomeVehicleDensityMultiplierThisFrame(0.0)
 
-        SetGarbageTrucks(false)
-        SetRandomBoats(false)
-        SetCreateRandomCops(false)
-        SetCreateRandomCopsNotOnScenarios(false)
-        SetCreateRandomCopsOnScenarios(false)
-        DistantCopCarSirens(false)
-        DisablePlayerVehicleRewards(playerId)
+        -- Persistent (non-frame) flags only need periodic re-assertion.
+        local now = GetGameTimer()
+        if now >= nextPersistent then
+            nextPersistent = now + 1000
+            SetGarbageTrucks(false)
+            SetRandomBoats(false)
+            SetCreateRandomCops(false)
+            SetCreateRandomCopsNotOnScenarios(false)
+            SetCreateRandomCopsOnScenarios(false)
+            DistantCopCarSirens(false)
+            DisablePlayerVehicleRewards(playerId)
 
-        if GetPlayerWantedLevel(playerId) > 0 then
-            ClearPlayerWantedLevel(playerId)
+            if GetPlayerWantedLevel(playerId) > 0 then
+                ClearPlayerWantedLevel(playerId)
+            end
         end
 
         Wait(0)

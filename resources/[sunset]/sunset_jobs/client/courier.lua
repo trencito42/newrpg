@@ -91,7 +91,9 @@ local function attachPackage(cfg)
     carryAnimActive = true
     CreateThread(function()
         RequestAnimDict('anim@heists@box_carry@')
-        while not HasAnimDictLoaded('anim@heists@box_carry@') do Wait(10) end
+        local animDeadline = GetGameTimer() + 5000
+        while not HasAnimDictLoaded('anim@heists@box_carry@') and GetGameTimer() < animDeadline do Wait(10) end
+        if not HasAnimDictLoaded('anim@heists@box_carry@') then return end
         while carryAnimActive and JC.jobId == 'courier' do
             local p = PlayerPedId()
             if JC.sessionData and JC.sessionData.hasPackage then
@@ -129,14 +131,14 @@ local function updateObjective(cfg, data)
             showCourierUi('working', {
                 counter = ('Loading %d/%d'):format(loaded + 1, total),
                 message = 'Carry package to your van',
-                detail = 'Go to the rear doors and press [E]',
+                detail = exports.sunset_core:Translate('jobs.courier.detail.go_rear_doors'),
                 progress = math.floor((loaded / total) * 100),
             })
         else
             showCourierUi('route', {
                 counter = ('Loaded %d/%d'):format(loaded, total),
                 message = 'Pick up parcel from loading dock',
-                detail = 'Go to the package stack and press [E]',
+                detail = exports.sunset_core:Translate('jobs.courier.detail.go_package_stack'),
                 progress = math.floor((loaded / total) * 100),
             })
         end
@@ -206,7 +208,7 @@ local function startCourier()
                     JC.drawMarker(pickupV3, 255, 180, 0)
                     local nearPickup = JC.isNear(pickupV3, cfg.loadingRadius or 3.5)
                     if nearPickup and onFoot then
-                        draw3DText(pickupV3, ('[E] Pick Up Package (%d/%d loaded)'):format(session.loaded or 0, session.total or 6))
+                        draw3DText(pickupV3, exports.sunset_core:Translate('hint.jobs.courier.pickup_package', { loaded = session.loaded or 0, total = session.total or 6 }))
                         if not busy and IsControlJustPressed(0, 38) then
                             busy = true
                             JC.playAnim('anim@heists@box_carry@', 'idle', 1200)
@@ -240,7 +242,7 @@ local function startCourier()
                         JC.drawMarker(rearPos, 46, 204, 113)
                         local nearRear = JC.isNear(rearPos, cfg.dumpRadius or 3.8)
                         if nearRear and onFoot then
-                            draw3DText(rearPos, '[E] Load Package into Van')
+                            draw3DText(rearPos, exports.sunset_core:Translate('hint.jobs.courier.load_package'))
                             if not busy and IsControlJustPressed(0, 38) then
                                 busy = true
                                 JC.playAnim('anim@heists@narcotics@trash', 'drop_front', 1500)
@@ -301,11 +303,11 @@ local function startCourier()
                             showCourierUi('working', {
                                 counter = ('Package %d/%d'):format(idx, total),
                                 message = 'Get the parcel from your van',
-                                detail = nearRear and 'Press [E] to open the rear doors' or 'Walk to the rear of your van',
+                                detail = nearRear and exports.sunset_core:Translate('jobs.courier.detail.open_rear_doors') or exports.sunset_core:Translate('jobs.courier.detail.walk_to_rear'),
                                 progress = pct,
                             })
                             if nearRear then
-                                draw3DText(rearPos, '[E] Get Package from Van')
+                                draw3DText(rearPos, exports.sunset_core:Translate('hint.jobs.courier.get_package'))
                                 if not busy and IsControlJustPressed(0, 38) then
                                     busy = true
                                     JC.playAnim('anim@heists@box_carry@', 'idle', 1200)
@@ -324,7 +326,7 @@ local function startCourier()
                         -- Carrying parcel — walk to delivery door
                         JC.drawMarker(pos, 46, 204, 113)
                         if nearDelivery then
-                            draw3DText(pos, '[E] Deliver Package')
+                            draw3DText(pos, exports.sunset_core:Translate('hint.jobs.courier.deliver_package'))
                             if not busy and IsControlJustPressed(0, 38) then
                                 busy = true
                                 showCourierUi('working', {
@@ -370,7 +372,7 @@ local function startCourier()
                                 end
                             end
                         elseif nearDelivery and not onFoot then
-                            draw3DText(pos, '[E] Deliver Package')
+                            draw3DText(pos, exports.sunset_core:Translate('hint.jobs.courier.deliver_package'))
                             JC.showHelp('Exit the vehicle to deliver the package')
                         else
                             updateObjective(cfg, session)
@@ -393,6 +395,14 @@ RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     clearCourierCheckpoint()
     detachPackage()
     retrievedFromVan = false
+    hideCourierUi()
+end)
+
+-- [JOBS AUDIT] carried parcel prop, checkpoint and courier HUD survived a resource restart.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    clearCourierCheckpoint()
+    detachPackage()
     hideCourierUi()
 end)
 

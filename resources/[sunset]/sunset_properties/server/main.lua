@@ -309,27 +309,37 @@ exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
     end
 
     local metadata = type(char.metadata) == 'table' and char.metadata or {}
+    -- [LOGIN PIPELINE] Every skipped tier is recorded so the final 'default'
+    -- (LSIA) fallback is never silent.
+    local why = {}
 
     -- 1. explicit saved preference
     if metadata.spawn_choice and metadata.spawn_choice ~= 'last' then
-        local ok, resolved = pcall(resolveSpawnChoiceForChar, source, char, metadata.spawn_choice, metadata.spawn_property_id)
+        local ok, resolved, rerr = pcall(resolveSpawnChoiceForChar, source, char, metadata.spawn_choice, metadata.spawn_property_id)
         if ok and resolved and resolved.x then resolved.source = 'saved_' .. metadata.spawn_choice; return resolved end
+        why[#why + 1] = ('saved_%s:%s'):format(tostring(metadata.spawn_choice), ok and tostring(rerr or 'unresolved') or ('error ' .. tostring(resolved)))
     end
 
     -- 2. home property (owned or rented)
     if char.home_property_id then
-        local ok, resolved = pcall(resolveSpawnChoiceForChar, source, char, 'house', char.home_property_id)
+        local ok, resolved, rerr = pcall(resolveSpawnChoiceForChar, source, char, 'house', char.home_property_id)
         if ok and resolved and resolved.x then
             resolved.source = 'house'
             return resolved
         end
+        why[#why + 1] = ('house#%s:%s'):format(tostring(char.home_property_id), ok and tostring(rerr or 'unresolved') or ('error ' .. tostring(resolved)))
     end
 
     -- 3. faction HQ
-    local okHq, hq = pcall(resolveSpawnChoiceForChar, source, char, 'hq')
+    local okHq, hq, hqErr = pcall(resolveSpawnChoiceForChar, source, char, 'hq')
     if okHq and hq and hq.x then hq.source = 'hq'; return hq end
+    if metadata.faction then
+        why[#why + 1] = ('hq:%s'):format(okHq and tostring(hqErr or 'unresolved') or ('error ' .. tostring(hq)))
+    end
 
     -- 4. default spawn
+    print(('^3[SPAWN]^7 src=%s char=%s resolved to DEFAULT spawn (LSIA). reasons: %s'):format(
+        tostring(source), tostring(char.id), #why > 0 and table.concat(why, ' | ') or 'no saved choice, no home, no faction HQ (new/unaffiliated character)'))
     local d = Sunset.Config.DefaultSpawn
     return { x = d.x, y = d.y, z = d.z, w = d.w or 0.0, source = 'default' }
 end)

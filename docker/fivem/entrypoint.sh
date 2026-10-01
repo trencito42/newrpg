@@ -21,6 +21,19 @@ echo "[sunsetmp] database migrations complete"
 if [ -f /config-mount/server.cfg.template ]; then
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
+      "#@dev "*)
+        # DEV-ONLY lines are activated only when SUNSET_DEV=1; otherwise dropped.
+        if [ "${SUNSET_DEV:-0}" = "1" ]; then
+          line="${line#\#@dev }"
+        else
+          continue
+        fi
+        ;;
+    esac
+    case "$line" in
+      *__SUNSET_DEV__*)
+        line="${line//__SUNSET_DEV__/${SUNSET_DEV:-0}}"
+        ;;
       *__MYSQL_CONNECTION_STRING__*)
         line="set mysql_connection_string \"${MYSQL_CONN}\""
         ;;

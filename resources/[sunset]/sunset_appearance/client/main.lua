@@ -347,3 +347,18 @@ RegisterCommand('relook', function()
     openEditor(char)
 end, false)
 TriggerEvent('chat:addSuggestion', '/relook', 'Re-open character appearance editor')
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Restore camera/focus/ped state if stopped mid-editor.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if studioCam or editing then
+        destroyStudio()
+        local ped = PlayerPedId()
+        SetEntityCollision(ped, true, true)
+        FreezeEntityPosition(ped, false)
+        DisplayRadar(true)
+        NewLoadSceneStop()
+        if editing then pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end) end
+        editing = false
+    end
+end)

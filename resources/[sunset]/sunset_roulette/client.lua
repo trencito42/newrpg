@@ -186,6 +186,9 @@ local function checkCamera()
             Wait(0)
         end
         turnOffCams()
+        -- Release the two scripted cams created above (they previously leaked per sit).
+        DestroyCam(bettingCamera, false)
+        DestroyCam(rouletteCam, false)
     end)
 end
 
@@ -199,7 +202,12 @@ local function getClosestBettingPoint(mouseX, mouseY)
     return BetPositions[closestOption].options
 end
 
-AddEventHandler('onResourceStop', deleteHighlights)
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    deleteHighlights()
+    -- Never leave the scripted betting/wheel camera rendering after a restart.
+    RenderScriptCams(false, false, 0, true, false)
+end)
 
 local function showHighlights()
     for i = 1, 38 do
@@ -430,6 +438,7 @@ end)
 
 lib.callback.register('dc-casino:roulette:callback:checkObject', function()
     Wait(GetAnimDuration('anim_casino_b@amb@casino@games@roulette@dealer_female', 'no_more_bets') * 1100)
-    while DoesEntityExist(ball) do Wait(0) end
+    local ballDeadline = GetGameTimer() + 15000
+    while DoesEntityExist(ball) and GetGameTimer() < ballDeadline do Wait(0) end
     return true
 end)

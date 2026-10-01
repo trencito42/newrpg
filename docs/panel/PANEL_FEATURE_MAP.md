@@ -7,6 +7,6 @@
 | Server status | `panel_runtime_snapshot` written by `sunset_panel_bridge` | Online count only when snapshot is fresh |
 | Polls | `panel_polls`, options and votes | Server-side eligibility, one vote per account, matching option/poll relationship |
 | Helpdesk and appeals | Panel-owned support/complaint/unban tables | Submission and existing read views; gameplay sanctions are not changed by these records |
-| Staff dashboard | Game sanction logs and panel-owned moderation records | Read-only; no verified ban, mute, warn, unban or faction workflow from the web yet |
+| Staff actions | `panel_action_queue`, `sunset_admin`, `sunset_factions`, `sunset_core` | Queues ban, unban, mute, warn and faction changes from authorized player profiles; FiveM reports execution status. Ban/mute/warn require the target online; admin actor must be online for all actions. Runtime validation is still pending. |
 
-FiveM remains authoritative for player state and admin/faction actions. Do not add web SQL updates to game-owned tables as a shortcut for missing bridge operations. The complete code-level audit and E2E tests requested for the panel are still pending.
+FiveM remains authoritative for player state and admin/faction actions. Do not add web SQL updates to game-owned tables as a shortcut. Browser tests cover queue submission and authorization, but actual FiveM action execution and the complete code-level audit remain open.

@@ -35,7 +35,8 @@ local function safeTeleport(targetCoords, heading, inVehicle)
     local h = heading or targetCoords.h or targetCoords.w or targetCoords.heading or GetEntityHeading(entity)
 
     DoScreenFadeOut(250)
-    while not IsScreenFadedOut() do Wait(0) end
+    local fadeDeadline = GetGameTimer() + 3000
+    while not IsScreenFadedOut() and GetGameTimer() < fadeDeadline do Wait(0) end
 
     RequestCollisionAtCoord(x, y, z)
     SetEntityCoordsNoOffset(entity, x, y, z, false, false, false)

@@ -388,7 +388,7 @@ RegisterNetEvent('sunset:server:prepareSpawn', function(requestId)
     TriggerClientEvent('sunset:client:prepareSpawnAck', source, requestId, newBucket, oldBucket)
 end)
 
-local function completeAuthentication(source, accountId, username)
+local function completeAuthenticationInner(source, accountId, username)
     local session = Sessions[source]
     if not session or session.authenticated then return false end
 
@@ -507,6 +507,26 @@ local function completeAuthentication(source, accountId, username)
     Sunset.Debug('Player authenticated:', source, username)
     return true
 end
+
+-- [LOGIN PIPELINE] The body awaits several SQL queries before it sets
+-- session.authenticated, so a double-submitted login (double click / retry) could
+-- run two interleaved authentications for one source. Serialize per source.
+local AuthInFlight = {}
+local function completeAuthentication(source, accountId, username)
+    if AuthInFlight[source] then
+        Sunset.Warn(('CompleteAuthentication ignored for src %s: another authentication is already in flight'):format(tostring(source)))
+        return false
+    end
+    AuthInFlight[source] = true
+    local ok, result = pcall(completeAuthenticationInner, source, accountId, username)
+    AuthInFlight[source] = nil
+    if not ok then
+        Sunset.Warn(('CompleteAuthentication error for src %s: %s'):format(tostring(source), tostring(result)))
+        return false
+    end
+    return result
+end
+AddEventHandler('playerDropped', function() AuthInFlight[source] = nil end)
 
 exports('CompleteAuthentication', completeAuthentication)
 
@@ -777,6 +797,23 @@ RegisterCallback('sunset:createCharacter', function(source, data)
         return nil, Sunset.LocalizedError('character.invalid_nationality')
     end
 
+    -- [SEC2] Creation appearance is client-supplied and was stored verbatim: validate through
+    -- sunset_appearance when available, otherwise bound size/type so oversized or hostile
+    -- JSON can never be persisted. Falls back to the default appearance.
+    if type(data.appearance) == 'table' and next(data.appearance) then
+        local validated = nil
+        if GetResourceState('sunset_appearance') == 'started' then
+            local okV, res = pcall(function() return exports.sunset_appearance:ValidateAppearance(data.appearance, nil) end)
+            if okV and type(res) == 'table' then validated = res end
+        end
+        local encodedApp = validated and json.encode(validated) or json.encode(data.appearance)
+        if not encodedApp or #encodedApp > 8192 then validated = nil; data.appearance = nil
+        elseif validated then data.appearance = validated end
+        if not validated and GetResourceState('sunset_appearance') == 'started' then data.appearance = nil end
+    else
+        data.appearance = nil
+    end
+
     local slot = count + 1
     local spawn = Sunset.Config.DefaultSpawn
 
@@ -811,6 +848,13 @@ RegisterCallback('sunset:enterGame', function(source)
     local player = GetPlayer(source)
     if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
 
+    -- [LOGIN PIPELINE] Idempotent: a retried enterGame (lost response / duplicate
+    -- trigger) must hand back the already-loaded character instead of failing.
+    if player.character and player.character.id then
+        Sunset.Warn(('enterGame re-requested by src %s; returning already loaded character %s'):format(tostring(source), tostring(player.character.id)))
+        return { character = player.character }
+    end
+
     local row = MySQL.single.await(
         'SELECT id FROM characters WHERE player_id = ? ORDER BY slot LIMIT 1',
         { player.id }
@@ -819,6 +863,12 @@ RegisterCallback('sunset:enterGame', function(source)
     if row then
         local char = loadCharacterForPlayer(source, player, row.id)
         if char then return { character = char } end
+        -- [LOGIN PIPELINE] A character row exists but could not be loaded (already
+        -- loaded for this source, active on another source, or DB miss). NEVER fall
+        -- through to creating a new character; that produced phantom characters /
+        -- confusing 'character limit' errors on retries.
+        Sunset.Warn(('enterGame: character %s could not be loaded for src %s (already loaded / duplicate / missing)'):format(tostring(row.id), tostring(source)))
+        return nil, Sunset.LocalizedError('auth.session_not_ready')
     end
 
     local char, err = createDefaultAccountCharacter(player)

@@ -220,7 +220,7 @@ const StoreUI = {
             el.innerHTML = `
                 <div class="st-si-price">${this.formatMoney(row.price)}</div>
                 <div class="st-si-icon">${this.itemIconHtml(row)}</div>
-                <div class="st-si-name">${row.label || row.item}</div>
+                <div class="st-si-name">${I18n.item(row.item, row.label)}</div>
             `;
             el.addEventListener('click', () => this.selectItem(row));
             grid.appendChild(el);
@@ -293,7 +293,7 @@ const StoreUI = {
         const icon = document.getElementById('store-preview-icon');
         if (icon) icon.innerHTML = this.previewIconHtml(row);
         const name = document.getElementById('store-preview-name');
-        if (name) name.textContent = row.label || row.item;
+        if (name) name.textContent = I18n.item(row.item, row.label);
         const price = document.getElementById('store-preview-price');
         const unitLabel = I18n.t(this.state.uiMode === 'fishing-sell' ? 'store.each_sell' : 'store.each');
         if (price) {

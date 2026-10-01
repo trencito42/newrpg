@@ -371,15 +371,15 @@ const Casino = {
     // ── ROULETTE ──
     renderRoulette(body) {
         const bets = [
-            { type: 'red', label: '🔴 Red', cls: 'roulette-bet-btn--red' },
-            { type: 'black', label: '⚫ Black', cls: 'roulette-bet-btn--black' },
-            { type: 'odd', label: 'Odd' },
-            { type: 'even', label: 'Even' },
+            { type: 'red', label: I18n.t('ui.casino.bet_red'), cls: 'roulette-bet-btn--red' },
+            { type: 'black', label: I18n.t('ui.casino.bet_black'), cls: 'roulette-bet-btn--black' },
+            { type: 'odd', label: I18n.t('ui.casino.bet_odd') },
+            { type: 'even', label: I18n.t('ui.casino.bet_even') },
             { type: 'low', label: '1-18' },
             { type: 'high', label: '19-36' },
-            { type: 'dozen', value: 1, label: '1st 12' },
-            { type: 'dozen', value: 2, label: '2nd 12' },
-            { type: 'dozen', value: 3, label: '3rd 12' },
+            { type: 'dozen', value: 1, label: I18n.t('ui.casino.bet_dozen_1') },
+            { type: 'dozen', value: 2, label: I18n.t('ui.casino.bet_dozen_2') },
+            { type: 'dozen', value: 3, label: I18n.t('ui.casino.bet_dozen_3') },
         ];
         body.innerHTML = `
             <div class="roulette-layout">
@@ -389,7 +389,7 @@ const Casino = {
                 </div>
                 <div class="slots-result" id="roulette-result"></div>
                 ${this.betControls()}
-                <button type="button" class="casino-btn" id="roulette-spin" disabled>Spin</button>
+                <button type="button" class="casino-btn" id="roulette-spin" disabled>${I18n.t('ui.casino.spin')}</button>
             </div>
         `;
         this.bindBetChips();

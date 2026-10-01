@@ -2,8 +2,8 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Globe } from "lucide-react";
 import { LOCALE_COOKIE_NAME } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }) {
   const router = useRouter();
@@ -12,7 +12,6 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
   const handleToggle = (newLocale: "en" | "ro") => {
     if (newLocale === currentLocale) return;
 
-    // Set cookie client-side
     document.cookie = `${LOCALE_COOKIE_NAME}=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
 
     startTransition(() => {
@@ -21,27 +20,28 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
   };
 
   return (
-    <div className="flex items-center space-x-1 bg-surface-100 border border-surface-border rounded-lg p-1 text-xs font-medium">
-      <Globe className="w-3.5 h-3.5 text-gray-400 ml-1 mr-0.5" />
+    <div className="flex items-center bg-surface-200 border border-surface-border rounded p-0.5 text-xs">
       <button
         onClick={() => handleToggle("en")}
         disabled={isPending}
-        className={`px-2 py-1 rounded transition-colors ${
+        className={cn(
+          "px-2 py-0.5 rounded text-[11px] font-semibold transition-colors",
           currentLocale === "en"
-            ? "bg-brand text-gray-950 font-bold"
-            : "text-gray-300 hover:text-white"
-        }`}
+            ? "bg-[#2a2a2e] text-[#f1f1f1]"
+            : "text-[#6f6f74] hover:text-[#f1f1f1]"
+        )}
       >
         EN
       </button>
       <button
         onClick={() => handleToggle("ro")}
         disabled={isPending}
-        className={`px-2 py-1 rounded transition-colors ${
+        className={cn(
+          "px-2 py-0.5 rounded text-[11px] font-semibold transition-colors",
           currentLocale === "ro"
-            ? "bg-brand text-gray-950 font-bold"
-            : "text-gray-300 hover:text-white"
-        }`}
+            ? "bg-[#2a2a2e] text-[#f1f1f1]"
+            : "text-[#6f6f74] hover:text-[#f1f1f1]"
+        )}
       >
         RO
       </button>

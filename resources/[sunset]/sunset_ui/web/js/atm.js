@@ -191,10 +191,18 @@
             this._initialized = true;
 
             this.bindEvents();
-            this.startClock();
+        },
+
+        // [NUI PERF] Clock only ticks while the ATM modal is open.
+        stopClock() {
+            if (this.clockTimer) {
+                clearInterval(this.clockTimer);
+                this.clockTimer = null;
+            }
         },
 
         startClock() {
+            this.stopClock();
             const updateClock = () => {
                 const now = new Date();
                 const hh = String(now.getHours()).padStart(2, '0');
@@ -306,6 +314,7 @@
         open(payload = {}) {
             this.init();
             this.isOpen = true;
+            this.startClock();
 
             // Merge incoming character/balance data
             this.data.name = payload.name || this.data.name || 'Citizen';
@@ -332,6 +341,7 @@
         close() {
             if (!this.isOpen) return;
             this.isOpen = false;
+            this.stopClock();
 
             this.sound.playCardEject();
 

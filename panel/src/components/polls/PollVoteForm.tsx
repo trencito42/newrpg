@@ -66,14 +66,14 @@ export function PollVoteForm({
 
   if (!isLoggedIn) {
     return (
-      <div className="p-4 rounded-xl bg-surface-100 border border-surface-border text-center text-xs text-gray-300">
-        <p className="mb-2">You must be logged in to participate in this poll.</p>
+      <div className="p-3 rounded-lg bg-surface-100 border border-surface-border text-center text-xs text-text-secondary">
+        <p className="mb-2">Login to vote in this poll.</p>
         <a
           href="/login"
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand hover:bg-brand-600 text-gray-950 font-bold rounded-lg transition-colors"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand text-gray-950 font-bold rounded-md text-xs transition-colors hover:bg-brand-600"
         >
           <Vote className="w-3.5 h-3.5" />
-          <span>Login to Vote</span>
+          <span>Login</span>
         </a>
       </div>
     );
@@ -81,30 +81,30 @@ export function PollVoteForm({
 
   if (success) {
     return (
-      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-2">
+      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-2">
         <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-        <span>Your vote has been securely recorded. Thank you for participating!</span>
+        <span>Vote recorded.</span>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleVote} className="space-y-4">
+    <form onSubmit={handleVote} className="space-y-3">
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start space-x-2">
+        <div className="p-2.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start space-x-2">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {options.map((opt) => (
           <label
             key={opt.id}
-            className={`flex items-center space-x-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+            className={`flex items-center space-x-3 p-2.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${
               selectedOption === opt.id
-                ? "bg-brand/10 border-brand text-white shadow-sm"
-                : "bg-surface-100 border-surface-border text-gray-300 hover:bg-surface-50"
+                ? "bg-brand/10 border-brand text-white"
+                : "bg-surface-100 border-surface-border text-text-secondary hover:bg-surface-200"
             }`}
           >
             <input
@@ -120,9 +120,9 @@ export function PollVoteForm({
         ))}
       </div>
 
-      <div className="flex items-center justify-between pt-2">
-        <span className="text-[11px] text-gray-500 font-mono">
-          Eligibility: Level {minLevel}+ • {minHours}h+
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-[11px] text-text-muted">
+          Min: Level {minLevel} • {minHours}h
         </span>
         <Button
           type="submit"
@@ -131,7 +131,7 @@ export function PollVoteForm({
           size="sm"
         >
           <Vote className="w-3.5 h-3.5 mr-1.5" />
-          <span>Submit Ballot</span>
+          <span>Vote</span>
         </Button>
       </div>
     </form>

@@ -49,6 +49,9 @@ end
 
 RegisterServerEvent('sunset:luckywheel:requestSpin', function()
     local src = source
+    -- [SEC2] proximity to the physical wheel (event was previously callable from anywhere)
+    local ped0 = GetPlayerPed(src)
+    if not ped0 or ped0 == 0 or #(GetEntityCoords(ped0) - Config.WheelPos) > 8.0 then return end
     if isSpinning then
         notify(src, 'The wheel is currently spinning. Please wait.', 'error')
         return
@@ -107,6 +110,9 @@ RegisterServerEvent('sunset:luckywheel:requestSpin', function()
     SetTimeout(8500, function()
         isSpinning = false
         local prize = Config.Prizes[prizeIndex] or Config.Prizes[1]
+        -- [SEC2] src may have been recycled by a different player during the spin
+        local cur = exports.sunset_core:GetPlayer(src)
+        if not cur or (cur.id or src) ~= charId then return end
         givePrize(src, prize)
     end)
 end)

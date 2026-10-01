@@ -1,14 +1,15 @@
 local function resolveWorkTruck(session, cfg, vehicleNetId)
     if not session or not cfg then return nil end
 
-    local netId = tonumber(vehicleNetId) or session.vehicleNetId
+    -- [JOBS AUDIT] Only the truck registered for this shift counts; the client netId used to be
+    -- adopted as session.vehicleNetId (any nearby trash truck, incl. another player's).
+    local netId = session.vehicleNetId
     if not netId then return nil end
+    if vehicleNetId ~= nil and tonumber(vehicleNetId) ~= netId then return nil end
 
     local entity = NetworkGetEntityFromNetworkId(netId)
     if not entity or entity == 0 or not DoesEntityExist(entity) then return nil end
     if GetEntityModel(entity) ~= joaat(cfg.truckModel) then return nil end
-
-    session.vehicleNetId = netId
     return entity
 end
 
@@ -118,52 +119,79 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:pickupBin', function(s
     end
 
     session.data.carrying = true
+    session.pickedAt = os.time()
     return session.data
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(source, vehicleNetId)
-    local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
-    if not session then return nil, err or 'No active garbage shift' end
-    if session.data.stage ~= 'collecting' then return nil, { localeKey = 'jobs.message.unload_at_depot_first' } end
-    if not session.data.carrying then return nil, { localeKey = 'jobs.message.pick_up_trash_from_the_bin_first' } end
+    return SunsetJobs_WithLock(source, 'garbage_dump', function()
+        local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'ACTIVE' })
+        if not session then return nil, err or 'No active garbage shift' end
+        if session.data.stage ~= 'collecting' then return nil, { localeKey = 'jobs.message.unload_at_depot_first' } end
+        if not session.data.carrying then return nil, { localeKey = 'jobs.message.pick_up_trash_from_the_bin_first' } end
 
-    local cfg = Sunset.GetJobConfig('garbage')
-    if not cfg then return nil, { localeKey = 'jobs.message.garbage_job_is_not_configured' } end
+        local cfg = Sunset.GetJobConfig('garbage')
+        if not cfg then return nil, { localeKey = 'jobs.message.garbage_job_is_not_configured' } end
 
-    local ok, truckErr = validateTruckRear(source, cfg, vehicleNetId)
-    if not ok then return nil, truckErr or 'Go to the back of your trash truck' end
+        -- [JOBS AUDIT] pickup -> dump takes the client >= 4.5s of animations; refuse instant chaining.
+        if session.pickedAt and os.time() - session.pickedAt < 2 then
+            return nil, { localeKey = 'jobs.message.too_many_requests' }
+        end
 
-    session.data.carrying = false
-    session.data.collected = (session.data.collected or 0) + 1
-    session.data.binIndex = (session.data.binIndex or 1) + 1
-    SunsetJobs_PayReward(source, 'garbage', cfg.payPerBin or 48, 'garbage_bin', false)
-    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerBin or 12)
+        local ok, truckErr = validateTruckRear(source, cfg, vehicleNetId)
+        if not ok then return nil, truckErr or 'Go to the back of your trash truck' end
 
-    if session.data.collected >= session.data.capacity then
-        session.data.stage = 'return_unload'
-        SunsetJobs_SetState(source, 'RETURNING')
-    end
+        -- State is advanced BEFORE the yielding payout (no double pay) and rolled back if unpaid.
+        local prevIndex = session.data.binIndex or 1
+        session.data.carrying = false
+        session.data.collected = (session.data.collected or 0) + 1
+        session.data.binIndex = prevIndex + 1
+        session.pickedAt = nil
 
-    return session.data
+        if not SunsetJobs_PayReward(source, 'garbage', cfg.payPerBin or 48, 'garbage_bin', false) then
+            session.data.carrying = true
+            session.data.collected = session.data.collected - 1
+            session.data.binIndex = prevIndex
+            session.pickedAt = os.time()
+            return nil, { localeKey = 'jobs.message.payment_could_not_be_processed_try_delivering_once_more' }
+        end
+        SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerBin or 12)
+
+        if SunsetJobs_GetSession(source) ~= session then return session.data end
+        if session.data.collected >= session.data.capacity then
+            session.data.stage = 'return_unload'
+            SunsetJobs_SetState(source, 'RETURNING')
+        end
+
+        return session.data
+    end)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:garbage:unload', function(source)
-    local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'RETURNING', 'ACTIVE' })
-    if not session then return nil, err end
-    if session.data.stage ~= 'return_unload' then return nil, { localeKey = 'jobs.message.truck_not_full_yet' } end
-    if session.data.carrying then return nil, { localeKey = 'jobs.message.dump_the_bag_in_your_truck_first' } end
+    return SunsetJobs_WithLock(source, 'garbage_unload', function()
+        local session, err = SunsetJobs_RequireSession(source, 'garbage', { 'RETURNING', 'ACTIVE' })
+        if not session then return nil, err end
+        if session.data.stage ~= 'return_unload' then return nil, { localeKey = 'jobs.message.truck_not_full_yet' } end
+        if session.data.carrying then return nil, { localeKey = 'jobs.message.dump_the_bag_in_your_truck_first' } end
 
-    local cfg = Sunset.GetJobConfig('garbage')
-    if not SunsetJobs_ValidateVehicle(source, cfg.truckModel, true, 20.0) then return nil, { localeKey = 'jobs.message.use_your_assigned_trash_truck' } end
-    local unload = cfg.depot.unload or cfg.depot.coords
-    if not SunsetJobs_ValidateCoords(source, unload, 8.0) then
-        return nil, { localeKey = 'jobs.message.drive_to_the_depot_unload_point' }
-    end
+        local cfg = Sunset.GetJobConfig('garbage')
+        if not SunsetJobs_ValidateVehicle(source, cfg.truckModel, true, 20.0) then return nil, { localeKey = 'jobs.message.use_your_assigned_trash_truck' } end
+        local unload = cfg.depot.unload or cfg.depot.coords
+        if not SunsetJobs_ValidateCoords(source, unload, 8.0) then
+            return nil, { localeKey = 'jobs.message.drive_to_the_depot_unload_point' }
+        end
 
-    local bonus = cfg.payPerUnload or 120
-    SunsetJobs_PayReward(source, 'garbage', bonus, 'garbage_unload', true)
-    SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerUnload or 30)
+        -- [JOBS AUDIT] Flip the stage first: ClearSession used to run AFTER the yielding payout, so
+        -- two concurrent unloads both passed the stage check and both paid the bonus.
+        local bonus = cfg.payPerUnload or 120
+        session.data.stage = 'unloading'
+        if not SunsetJobs_PayReward(source, 'garbage', bonus, 'garbage_unload', true) then
+            session.data.stage = 'return_unload'
+            return nil, { localeKey = 'jobs.message.payment_could_not_be_processed_try_delivering_once_more' }
+        end
+        SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerUnload or 30)
 
-    SunsetJobs_ClearSession(source, 'COMPLETED', 'Route complete')
-    return { bonus = bonus }
+        SunsetJobs_ClearSession(source, 'COMPLETED', 'Route complete')
+        return { bonus = bonus }
+    end)
 end)

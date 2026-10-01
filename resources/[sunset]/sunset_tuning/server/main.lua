@@ -374,6 +374,18 @@ end)
 
 RegisterNetEvent('sunset:tuning:syncNosState', function(netId, active, color, level)
     local src = source
+    -- [SEC2] rate limit + sanitise relayed payload (was broadcast verbatim to nearby clients)
+    if not exports.sunset_core:RateLimit(src, 'nosState', 150) then return end
+    level = math.max(0, math.min(10, tonumber(level) or 0))
+    if type(color) == 'table' then
+        color = {
+            r = math.max(0, math.min(255, math.floor(tonumber(color.r) or 255))),
+            g = math.max(0, math.min(255, math.floor(tonumber(color.g) or 255))),
+            b = math.max(0, math.min(255, math.floor(tonumber(color.b) or 255))),
+        }
+    else
+        color = nil
+    end
     local srcPed = GetPlayerPed(src)
     if not srcPed or srcPed == 0 then return end
     netId = tonumber(netId)

@@ -15,20 +15,19 @@ function post(action, data = {}) {
     } catch (_) { /* noop */ }
 }
 
-// [FREEZE WATCHDOG] rAF frame-gap detector for Auth NUI
+// [FREEZE WATCHDOG] main-thread stall detector for Auth NUI.
+// [NUI PERF] Was a permanent 60Hz rAF loop; now a 500ms timer-drift check.
 (function authFrameWatchdog() {
     let last = performance.now();
-    function frame() {
+    setInterval(() => {
         const now = performance.now();
-        const gap = now - last;
+        const gap = now - last - 500;
         last = now;
         if (gap > 200) {
             const screenVis = $('#auth-screen')?.classList.contains('is-visible') ? 'auth' : 'hidden';
-            console.log(`[HITCH] AUTH NUI FRAME GAP ${Math.round(gap)}ms screen=${screenVis} visibility=${document.visibilityState} mode=${AuthUI.mode || 'none'}`);
+            console.warn(`[HITCH] AUTH NUI STALL ${Math.round(gap)}ms screen=${screenVis} visibility=${document.visibilityState} mode=${AuthUI.mode || 'none'}`);
         }
-        requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+    }, 500);
 })();
 
 const AuthUI = {

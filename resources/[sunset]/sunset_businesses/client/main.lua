@@ -13,8 +13,17 @@ CreateThread(function()
     refreshBusinesses()
 end)
 
+-- [PERF] businessesChanged is broadcast to every client; debounce + jitter so a
+-- single change does not make N players hit sunset:getBusinesses in the same tick.
+local businessRefreshPending = false
 RegisterNetEvent('sunset:client:businessesChanged', function()
-    refreshBusinesses()
+    if businessRefreshPending then return end
+    businessRefreshPending = true
+    CreateThread(function()
+        Wait(250 + math.random(0, 3000))
+        businessRefreshPending = false
+        refreshBusinesses()
+    end)
 end)
 
 RegisterNetEvent('sunset:client:businessTeleport', function(coords)

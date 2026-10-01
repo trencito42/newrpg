@@ -3,25 +3,10 @@ import Link from "next/link";
 import { getCurrentSession, getViewerLocale, isStaff } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import {
-  User,
-  Shield,
-  Briefcase,
-  Heart,
-  Car,
-  Home as HomeIcon,
-  Phone,
-  Calendar,
-  Award,
-  Clock,
-  Target,
-  FileCheck,
-  AlertTriangle,
-  Lock,
-} from "lucide-react";
 import { RowDataPacket } from "mysql2";
+import { PlayerActions } from "@/components/staff/PlayerActions";
+import { PlayerName } from "@/components/ui/PlayerName";
+import { getFactionLabel, isFaction } from "@/lib/factions";
 
 interface CharacterProfileRow extends RowDataPacket {
   id: number;
@@ -66,15 +51,9 @@ interface LicenseRow extends RowDataPacket {
   expires_at_payday: number | null;
 }
 
-interface ReputationRow extends RowDataPacket {
-  contact: string;
-  reputation: number;
-  missions_completed: number;
-}
-
 interface BalanceRow extends RowDataPacket { cash: number; bank: number }
-interface VehicleRow extends RowDataPacket { model: string; plate: string; stored: number; insurance_level: number; destroyed: number }
-interface PropertyRow extends RowDataPacket { label: string; interior: string; description: string | null }
+interface VehicleRow extends RowDataPacket { id: number; model: string; plate: string; stored: number; insurance_level: number; destroyed: number }
+interface PropertyRow extends RowDataPacket { id: number; label: string; interior: string; description: string | null }
 
 export default async function PlayerProfilePage({
   params,
@@ -91,7 +70,6 @@ export default async function PlayerProfilePage({
     getViewerLocale(),
   ]);
 
-  // Query character record by numeric ID or by Character Name / Slug
   const char = await dbQuerySingle<CharacterProfileRow>(
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
@@ -124,53 +102,39 @@ export default async function PlayerProfilePage({
     notFound();
   }
 
-  // Canonical slug for character URL (e.g. "Hardy" or "Andrei_Popescu")
   const canonicalSlug =
     char.lastname && char.lastname.trim().length > 0
       ? `${char.firstname}_${char.lastname.trim()}`
       : char.firstname;
 
-  // If visited by raw ID (/players/2), redirect automatically to canonical name URL (/players/Hardy)
   if (isNumeric) {
     redirect(`/players/${encodeURIComponent(canonicalSlug)}`);
   }
 
   const characterId = char.id;
-
-  // PRIVACY BOUNDARY ENFORCEMENT AT DATA ACCESS LAYER:
-  // Only account owner or staff can see sensitive financial balances
   const isOwner = session?.accountId === char.account_id;
   const staffMember = isStaff(session);
   const canViewFinancials = isOwner || staffMember;
-  const balance = canViewFinancials
-    ? await dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
-    : null;
 
-  // Parallel fetch auxiliary records
   const [
+    balance,
     vehicles,
     properties,
-    vehicleCountRow,
-    propertyCountRow,
     marriage,
     skills,
     licenses,
-    reputation,
     sanctionCountRow,
   ] = await Promise.all([
+    canViewFinancials
+      ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
+      : null,
     dbQuery<VehicleRow>(
-      "SELECT model, plate, stored, insurance_level, destroyed FROM vehicles WHERE character_id = ? ORDER BY id DESC LIMIT 100",
+      "SELECT id, model, plate, stored, insurance_level, destroyed FROM vehicles WHERE character_id = ? ORDER BY id DESC LIMIT 50",
       [characterId]
     ),
     dbQuery<PropertyRow>(
-      "SELECT label, interior, description FROM properties WHERE owner_character_id = ? ORDER BY id DESC LIMIT 100",
+      "SELECT id, label, interior, description FROM properties WHERE owner_character_id = ? ORDER BY id DESC LIMIT 50",
       [characterId]
-    ),
-    dbQuerySingle<{ count: number } & RowDataPacket>(
-      "SELECT COUNT(*) AS count FROM vehicles WHERE character_id = ?", [characterId]
-    ),
-    dbQuerySingle<{ count: number } & RowDataPacket>(
-      "SELECT COUNT(*) AS count FROM properties WHERE owner_character_id = ?", [characterId]
     ),
     dbQuerySingle<MarriageRow>(
       `SELECT m.married_at,
@@ -190,10 +154,6 @@ export default async function PlayerProfilePage({
       "SELECT license_type AS type, issued_at, issued_at_payday, expires_at_payday FROM character_licenses WHERE character_id = ?",
       [characterId]
     ),
-    dbQuery<ReputationRow>(
-      "SELECT contact, reputation, missions_completed FROM sunset_mission_reputation WHERE character_id = ?",
-      [characterId]
-    ),
     dbQuerySingle<{ count: number } & RowDataPacket>(
       `SELECT COUNT(*) AS count FROM admin_sanctions
        WHERE action = 'warn' AND (target_character_id = ? OR target_account_id = ?)`,
@@ -202,313 +162,245 @@ export default async function PlayerProfilePage({
   ]);
 
   const fullName = `${char.firstname} ${char.lastname || ""}`.trim();
-  const vehiclesCount = vehicleCountRow?.count || 0;
-  const propertiesCount = propertyCountRow?.count || 0;
+  const hasFaction = isFaction(char.job);
+  const factionLabel = hasFaction ? getFactionLabel(char.job) : null;
+  const warningsCount = sanctionCountRow?.count || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Profile Header Card */}
-      <div className="rounded-2xl bg-surface-200 border border-surface-border p-6 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-2xl bg-brand/10 border-2 border-brand/30 flex items-center justify-center text-brand font-black text-2xl shadow-inner flex-shrink-0">
-              {char.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={char.avatar}
-                  alt={fullName}
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-              ) : (
-                char.firstname.charAt(0)
-              )}
-            </div>
-            <div>
-              <div className="flex items-center space-x-2.5">
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  {fullName}
-                </h1>
-                <Badge variant="brand" className="font-mono">
-                  Level {char.level}
-                </Badge>
-              </div>
-              <p className="text-xs text-gray-400 mt-1 flex items-center space-x-2">
-                <span>Account: <strong className="text-gray-300 font-mono">{char.account_username}</strong></span>
-                <span>•</span>
-                <span className="capitalize">{char.nationality}</span>
-                <span>•</span>
-                <span>{char.gender === 1 ? "Female" : "Male"}</span>
-              </p>
-            </div>
+    <div className="space-y-5">
+      {/* Staff Actions if Admin */}
+      {session && session.adminLevel >= 1 && session.accountId !== char.account_id && (
+        <PlayerActions accountId={char.account_id} characterId={char.id} adminLevel={session.adminLevel} locale={locale} />
+      )}
+
+      {/* Header: Player Name, Level, Metadata */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+        <div>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-xl font-bold tracking-tight">
+              <PlayerName name={fullName} factionId={char.job} clickable={false} className="text-xl" />
+            </h1>
+            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-200 text-[#f1f1f1] border border-surface-border">
+              Level {char.level}
+            </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="outline" className="px-3 py-1 font-mono">
-              {formatNumber(char.respect_points, locale)} RP
-            </Badge>
-            <Badge variant="success" className="px-3 py-1 capitalize">
-              {char.job}
-            </Badge>
+          <div className="flex items-center space-x-2 text-xs text-[#6f6f74] mt-1">
+            {factionLabel && (
+              <>
+                <span className="text-[#a5a5a8] font-medium">{factionLabel}</span>
+                <span>•</span>
+              </>
+            )}
+            {!hasFaction && char.job && (
+              <>
+                <span className="capitalize text-[#a5a5a8]">{char.job.replace(/_/g, " ")}</span>
+                <span>•</span>
+              </>
+            )}
+            <span>Account: <strong className="text-[#a5a5a8] font-normal">{char.account_username}</strong></span>
+            <span>•</span>
+            <span>Last seen: {char.last_played ? formatDate(char.last_played, locale) : "Never"}</span>
           </div>
+        </div>
+
+        {marriage && (
+          <div className="text-xs text-[#8a8a90]">
+            Married to <PlayerName name={`${marriage.firstname} ${marriage.lastname || ""}`.trim()} />
+          </div>
+        )}
+      </div>
+
+      {/* Overview Stats Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Level</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{char.level}</span>
+        </div>
+
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Respect</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)}</span>
+        </div>
+
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Hours</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)}h</span>
+        </div>
+
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Warnings</span>
+          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{warningsCount} / 3</span>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Key RPG Stats & Progression */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Progression Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Progression & Career</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                <div className="p-3 bg-surface-100 rounded-lg border border-surface-border">
-                  <span className="text-gray-400 block mb-1">Character Level</span>
-                  <span className="text-lg font-black text-amber-400 font-mono">
-                    {char.level}
-                  </span>
-                </div>
-                <div className="p-3 bg-surface-100 rounded-lg border border-surface-border">
-                  <span className="text-gray-400 block mb-1">Respect Points</span>
-                  <span className="text-lg font-black text-brand font-mono">
-                    {formatNumber(char.respect_points, locale)}
-                  </span>
-                </div>
-                <div className="p-3 bg-surface-100 rounded-lg border border-surface-border">
-                  <span className="text-gray-400 block mb-1">Paydays Received</span>
-                  <span className="text-lg font-black text-white font-mono">
-                    {formatNumber(char.paydays_received, locale)}
-                  </span>
-                </div>
-                <div className="p-3 bg-surface-100 rounded-lg border border-surface-border">
-                  <span className="text-gray-400 block mb-1">Playing Hours</span>
-                  <span className="text-lg font-black text-gray-200 font-mono">
-                    {Math.floor(char.paydays_received)}h
-                  </span>
-                </div>
-              </div>
+      {/* Money (Only shown if character owner or staff) */}
+      {balance && (
+        <div>
+          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider mb-2">
+            Money
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
+              <span className="text-xs text-[#8a8a90]">Cash</span>
+              <span className="font-mono text-sm font-semibold text-[#f1f1f1]">{formatCurrency(balance.cash)}</span>
+            </div>
+            <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
+              <span className="text-xs text-[#8a8a90]">Bank</span>
+              <span className="font-mono text-sm font-semibold text-[#f1f1f1]">{formatCurrency(balance.bank)}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Private Financial Balances (Only for Owner or Staff) */}
-              {canViewFinancials ? (
-                <div className="mt-4 pt-4 border-t border-surface-border grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/20">
-                    <span className="text-emerald-400 font-semibold block mb-1">
-                      Cash on Hand (Private)
-                    </span>
-                    <span className="text-lg font-bold text-white font-mono">
-                      {formatCurrency(balance?.cash || 0)}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-sky-500/5 rounded-lg border border-sky-500/20">
-                    <span className="text-sky-400 font-semibold block mb-1">
-                      Bank Balance (Private)
-                    </span>
-                    <span className="text-lg font-bold text-white font-mono">
-                      {formatCurrency(balance?.bank || 0)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 pt-3 border-t border-surface-border flex items-center space-x-2 text-xs text-gray-500">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Financial balance is private to the character owner.</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Main Sections: Vehicles, Properties, Jobs, Licenses */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Vehicles */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+              Vehicles ({vehicles.length})
+            </h2>
+          </div>
 
-          {/* Job Skills Tiers */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Job Skills & Experience</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {skills.length > 0 ? (
-                <div className="space-y-3">
-                  {skills.map((skill) => (
-                    <div
-                      key={skill.job_id}
-                      className="p-3 rounded-lg bg-surface-100 border border-surface-border flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <span className="font-bold text-white capitalize block">
-                          {skill.job_id}
-                        </span>
-                        <span className="text-[11px] text-gray-400">
-                          {formatNumber(skill.completed_tasks, locale)} tasks completed
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="brand" className="font-mono">
-                          Tier {skill.level}
-                        </Badge>
-                        <span className="text-[10px] text-gray-500 block font-mono mt-0.5">
-                          {formatNumber(skill.xp, locale)} XP
-                        </span>
-                      </div>
-                    </div>
+          {vehicles.length > 0 ? (
+            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                  <tr>
+                    <th className="py-2 px-3">Model</th>
+                    <th className="py-2 px-3">Plate</th>
+                    <th className="py-2 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                  {vehicles.map((v) => (
+                    <tr key={v.id}>
+                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{v.model}</td>
+                      <td className="py-2 px-3 font-mono text-[#6f6f74]">{v.plate}</td>
+                      <td className="py-2 px-3 text-right">
+                        {v.destroyed ? (
+                          <span className="text-red-400">Destroyed</span>
+                        ) : v.stored ? (
+                          <span className="text-[#6f6f74]">Garage</span>
+                        ) : (
+                          <span className="text-emerald-400">Active</span>
+                        )}
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500 py-2">
-                  No civilian job skill progress recorded yet.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Public sanctions expose a count only. Reasons and staff identities are private. */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Disciplinary Record</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-gray-300 py-2">Warnings: {sanctionCountRow?.count || 0}</p>
-            </CardContent>
-          </Card>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+              No vehicles.
+            </p>
+          )}
         </div>
 
-        {/* Right Column (1 Col): Citizen Details & Assets */}
-        <div className="space-y-6">
-          {/* Identity & Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Civilian Registry</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
-                <span className="text-gray-400 flex items-center space-x-1.5">
-                  <Phone className="w-3.5 h-3.5 text-gray-500" />
-                  <span>Phone Number</span>
-                </span>
-                <span className="font-mono font-semibold text-gray-200">
-                  {char.phone_number || "Unregistered"}
-                </span>
-              </div>
+        {/* Properties */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+              Properties ({properties.length})
+            </h2>
+          </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
-                <span className="text-gray-400 flex items-center space-x-1.5">
-                  <Heart className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Marital Status</span>
-                </span>
-                <span className="text-gray-200">
-                  {marriage ? (
-                    <Link
-                      href={`/players/${marriage.partner_id}`}
-                      className="text-brand hover:underline font-medium"
-                    >
-                      {marriage.firstname} {marriage.lastname || ""}
-                    </Link>
-                  ) : (
-                    "Single"
-                  )}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
-                <span className="text-gray-400 flex items-center space-x-1.5">
-                  <Car className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Vehicles Owned</span>
-                </span>
-                <span className="font-mono font-semibold text-white">
-                  {vehiclesCount}
-                </span>
-              </div>
-              {vehicles.map((vehicle) => (
-                <div key={vehicle.plate} className="pl-5 text-gray-300">
-                  {vehicle.model} · {vehicle.plate} · {vehicle.destroyed ? "Destroyed" : vehicle.stored ? "Stored" : "Out"} · Insurance {vehicle.insurance_level}
-                </div>
-              ))}
-
-              <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
-                <span className="text-gray-400 flex items-center space-x-1.5">
-                  <HomeIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Properties Owned</span>
-                </span>
-                <span className="font-mono font-semibold text-white">
-                  {propertiesCount}
-                </span>
-              </div>
-              {properties.map((property, index) => (
-                <div key={`${property.label}-${index}`} className="pl-5 text-gray-300">
-                  {property.label} · {property.interior}{property.description ? ` · ${property.description}` : ""}
-                </div>
-              ))}
-
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-gray-400 flex items-center space-x-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                  <span>Citizen Since</span>
-                </span>
-                <span className="font-mono text-gray-400">
-                  {formatDate(char.registered_at, locale, false)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Licenses Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Official Licenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {licenses.length > 0 ? (
-                <div className="space-y-2">
-                  {licenses.map((lic) => {
-                    const isExpired =
-                      lic.expires_at_payday !== null &&
-                      lic.expires_at_payday <= char.paydays_received;
-                    return (
-                      <div
-                        key={lic.type}
-                        className="flex items-center justify-between p-2 rounded-lg bg-surface-100 border border-surface-border text-xs"
-                      >
-                        <span className="font-medium text-gray-200 capitalize">
-                          {lic.type} License
-                        </span>
-                        <Badge variant={isExpired ? "danger" : "success"}>
-                          {isExpired ? "Expired" : "Valid"}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500 py-1">No licenses issued yet.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Mission Contacts & Reputation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Contract Reputation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {reputation.length > 0 ? (
-                <div className="space-y-2">
-                  {reputation.map((rep) => (
-                    <div
-                      key={rep.contact}
-                      className="flex items-center justify-between p-2 rounded-lg bg-surface-100 border border-surface-border text-xs"
-                    >
-                      <span className="font-medium text-gray-200 capitalize">
-                        {rep.contact}
-                      </span>
-                      <span className="font-mono text-amber-400 font-bold">
-                        {rep.reputation} Rep ({rep.missions_completed} completed)
-                      </span>
-                    </div>
+          {properties.length > 0 ? (
+            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                  <tr>
+                    <th className="py-2 px-3">Property</th>
+                    <th className="py-2 px-3 text-right">Type</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                  {properties.map((p) => (
+                    <tr key={p.id}>
+                      <td className="py-2 px-3 font-medium text-[#f1f1f1]">{p.label}</td>
+                      <td className="py-2 px-3 text-right text-[#6f6f74] capitalize">{p.interior}</td>
+                    </tr>
                   ))}
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500 py-1">No mission history yet.</p>
-              )}
-            </CardContent>
-          </Card>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+              No properties.
+            </p>
+          )}
+        </div>
+
+        {/* Job Progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+              Job Progress
+            </h2>
+          </div>
+
+          {skills.length > 0 ? (
+            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                  <tr>
+                    <th className="py-2 px-3">Job</th>
+                    <th className="py-2 px-3">Level</th>
+                    <th className="py-2 px-3 text-right">Tasks</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                  {skills.map((s) => (
+                    <tr key={s.job_id}>
+                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{s.job_id.replace(/_/g, " ")}</td>
+                      <td className="py-2 px-3 font-mono text-[#f1f1f1]">Level {s.level}</td>
+                      <td className="py-2 px-3 text-right font-mono text-[#6f6f74]">{s.completed_tasks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+              No job progress yet.
+            </p>
+          )}
+        </div>
+
+        {/* Licenses */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+              Licenses
+            </h2>
+          </div>
+
+          {licenses.length > 0 ? (
+            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                  <tr>
+                    <th className="py-2 px-3">License</th>
+                    <th className="py-2 px-3 text-right">Issued</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                  {licenses.map((l) => (
+                    <tr key={l.type}>
+                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{l.type} License</td>
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">{formatDate(l.issued_at, locale)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+              No licenses held.
+            </p>
+          )}
         </div>
       </div>
     </div>

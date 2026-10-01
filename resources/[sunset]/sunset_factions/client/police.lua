@@ -1236,9 +1236,11 @@ end)
 
 AddEventHandler('sunset:chat:rebuildSuggestions', registerPoliceChatSuggestions)
 
+local bookingBlips = {}
 CreateThread(function()
     for _, point in ipairs((Sunset.Police and Sunset.Police.bookingPoints) or {}) do
         local blip = AddBlipForCoord(point.coords.x, point.coords.y, point.coords.z)
+        bookingBlips[#bookingBlips + 1] = blip
         SetBlipSprite(blip, 60)
         SetBlipColour(blip, 29)
         SetBlipScale(blip, 0.65)
@@ -1375,6 +1377,7 @@ RegisterNetEvent('sunset:police:radarAlert', function(data)
 end)
 
 RegisterCommand('testradaralert', function(_, args)
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     local speed = tonumber(args[1]) or 142
     local limit = tonumber(args[2]) or 90
     local over = math.max(0, speed - limit)
@@ -1392,3 +1395,17 @@ RegisterCommand('testradaralert', function(_, args)
     })
 end, false)
 
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Remove static booking/radar blips on stop so a
+-- restart never stacks duplicates.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    for i, b in pairs(bookingBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+        bookingBlips[i] = nil
+    end
+    for i, b in pairs(fixedRadarBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+        fixedRadarBlips[i] = nil
+    end
+end)

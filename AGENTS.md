@@ -13,7 +13,8 @@ If you skip the push, the VPS silently keeps running old code and "verification"
 
 - VPS workspace: `/home/blipmade-rpg/htdocs/rpg.blipmade.com`, Docker Compose service `fivem`, game port 30120.
 - MySQL runs on the VPS host and credentials live in `.env`; there is no Compose MariaDB service.
-- After deploy, check health: `docker logs blazed-fivem-1 --since 3m | grep -i testdriver` → expect `all: 56 checks, 0 failed`.
+- After deploy, check health (**DEV/STAGING only**, needs `SUNSET_DEV=1` in `.env`; production runs with `SUNSET_DEV=0` and the testdriver is NOT started): `docker logs blazed-fivem-1 --since 3m | grep -i testdriver` → expect `all: 56 checks, 0 failed`. On production use the `Error parsing script` grep below instead.
+- **Dev/prod split**: lines prefixed `#@dev ` in `config/server.cfg.template` (sunset_testdriver, sunset_test_agent, sunset_devtools, sunset_admintools) are activated by `docker/fivem/entrypoint.sh` only when `SUNSET_DEV=1`. Dev resources and dev-only commands (`/testvault`, `/robdoor`, `/casinoprobe|scan|anim|props`, `/testradaralert`, `/exhaustdebug`, `/turfdebug`, `/fishdebug`) also require the replicated convar `sunset_dev 1`. Never set `SUNSET_DEV=1` on the live server.
 
 ## Static checks (run before every commit)
 
@@ -22,6 +23,7 @@ node scripts\check-lua-syntax.js         # 0 Lua syntax errors (luaparse; MANDAT
 node scripts\check-lua-forward-refs.js   # 0 forward-reference issues
 node scripts\check-db-writes.js          # 0 NEW cross-domain write violations
 node scripts\check-nui-bridge.js         # all posted NUI callbacks registered
+node scripts\check-manifests.js          # every fxmanifest/ui_page/files{}/ensure reference exists (Linux-friendly)
 powershell -File scripts\audit-static.ps1 # manifest refs, duplicate commands
 node --check <file>.js                    # for any edited web JS
 ```

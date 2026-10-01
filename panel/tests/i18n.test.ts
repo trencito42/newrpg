@@ -30,8 +30,8 @@ describe("Internationalization (RO + EN)", () => {
   });
 
   it("correctly resolves nested translation paths", () => {
-    expect(t("ro", "nav.home")).toBe("Prezentare");
-    expect(t("en", "nav.home")).toBe("Overview");
+    expect(t("ro", "nav.home")).toBe("Acasă");
+    expect(t("en", "nav.home")).toBe("Home");
     expect(t("ro", "nav.players")).toBe("Jucători");
     expect(t("en", "nav.players")).toBe("Players");
   });

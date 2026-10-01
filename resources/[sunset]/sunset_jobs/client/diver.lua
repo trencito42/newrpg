@@ -38,29 +38,26 @@ end
 
 local function updateShiftHud()
     if not ShiftActive then return end
+    local title = exports.sunset_core:Translate('jobs.hud.diver.title')
     if ContractData and ContractData.siteId then
         local rec = ContractData.recovered or 0
-        local req = ContractData.required  or 1
-        exports.sunset_ui:Send('jobShiftShow', {
-            title    = 'Marine Salvage',
-            counter  = ('Salvage %d / %d'):format(rec, req),
-            -- [SECTION 42] Surfacing does NOT refill O2 — O2 is tied to the tank and only
-            -- resets when a new tank is rented from Terry. The old "Surface to refill O2!"
-            -- message was factually wrong. Players must return to Terry for a replacement.
-            message  = O2Remaining > 0
-                and ('O2: %ds  — Press {key} on salvage points'):format(O2Remaining)
-                or 'O2 depleted — return to Terry for a new tank!',
-            key      = 'E',
-            progress = math.floor((rec / req) * 100),
-            detail   = ContractData.siteId or '',
+        local req = math.max(ContractData.required or 1, 1)
+        -- [SECTION 42] Surfacing does NOT refill O2 — O2 is tied to the tank and only
+        -- resets when a new tank is rented from Terry.
+        local depleted = O2Remaining <= 0
+        exports.sunset_ui:JobHud({
+            title      = title,
+            objective  = exports.sunset_core:Translate(depleted and 'jobs.hud.diver.o2_out' or 'jobs.hud.diver.salvage'),
+            tone       = depleted and 'danger' or (O2Remaining <= 30 and 'warn' or 'info'),
+            progress   = { current = rec, total = req },
+            timer      = { seconds = math.max(O2Remaining, 0) },
+            timerLabel = exports.sunset_core:Translate('jobs.hud.diver.o2'),
+            keyHints   = (not depleted) and { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.salvage') } } or nil,
         })
     else
-        exports.sunset_ui:Send('jobShiftShow', {
-            title    = 'Marine Salvage',
-            counter  = 'No active contract',
-            message  = 'Visit Terry and select a salvage contract.',
-            detail   = '',
-            progress = 0,
+        exports.sunset_ui:JobHud({
+            title     = title,
+            objective = exports.sunset_core:Translate('jobs.hud.diver.no_contract'),
         })
     end
 end
@@ -75,7 +72,9 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     if data.siteId then
         ContractData = data
         -- Reset O2 when new contract starts (o2Duration comes from server session)
-        if data.o2Duration and data.o2Duration > 0 then
+        -- [JOBS AUDIT] this ran on EVERY stateChanged that carries o2Duration (each salvage + handoff),
+        -- refilling the tank for free. Only seed O2 when no tank is tracked yet.
+        if data.o2Duration and data.o2Duration > 0 and O2Max <= 0 then
             resetO2(data.o2Duration)
         end
         if data.stage == 'return_to_terry' then
@@ -173,7 +172,7 @@ CreateThread(function()
 end)
 
 -- ── O2 HUD Thread ─────────────────────────────────────────────
--- Updates jobShiftShow every second while diving (O2 countdown in message)
+-- Refreshes the JobHud card every second while diving (O2 countdown in message)
 CreateThread(function()
     while true do
         Wait(1000)
@@ -341,7 +340,7 @@ CreateThread(function()
             DrawMarker(2, nearest.coords.x, nearest.coords.y, nearest.coords.z + 0.3,
                 0, 0, 0, 0, 0, 0, 0.4, 0.4, 0.4,
                 30, 180, 255, 200, false, true, 2, false, nil, nil, false)
-            DisplayHelpTextThisFrame('Hold ~INPUT_CONTEXT~ to recover salvage')
+            DisplayHelpTextThisFrame(exports.sunset_core:Translate('hint.native.recover_salvage'))
 
             if IsControlJustPressed(0, 38) then -- E
                 -- [SECTION 33-34] Phase 1: request hold token from server
@@ -466,8 +465,9 @@ AddEventHandler('sunset:diving:contractStarted', function(result)
     if not result then return end
     ContractData = result
     buildSalvageMarkers(result.lootPoints)
-    -- Reset O2 when a new contract starts (server-authoritative duration)
-    if result.o2Duration and result.o2Duration > 0 then
+    -- [JOBS AUDIT] a new contract no longer refills the tank (O2 only resets at gear rental, see
+    -- SECTION 42); only seed it when nothing is tracked.
+    if result.o2Duration and result.o2Duration > 0 and O2Max <= 0 then
         resetO2(result.o2Duration)
     end
     -- [SECTION 36] Show dive site blip + GPS waypoint
@@ -493,7 +493,7 @@ CreateThread(function()
         local d = #(vector3(pos.x, pos.y, pos.z) - vector3(TERRY_COORDS.x, TERRY_COORDS.y, TERRY_COORDS.z))
 
         if d <= 10.0 then
-            DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to hand off salvage to Terry')
+            DisplayHelpTextThisFrame(exports.sunset_core:Translate('hint.native.hand_off_salvage'))
             if IsControlJustPressed(0, 38) then -- E
                 TerryHandoffReady = false
                 CreateThread(function()
@@ -561,10 +561,19 @@ AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     O2Remaining      = 0
     clearSiteBlip()
     deactivateScuba('surfaced')
-    exports.sunset_ui:Send('jobShiftHide', {})
+    exports.sunset_ui:JobHudClear()
     -- Return boat if still rented
     if BoatNetId then
         TriggerServerEvent('sunset:diving:returnBoat')
+        -- [JOBS AUDIT] also delete our own spawn locally: if the server never registered it (pending
+        -- rental cancelled by death/timeout) nothing else would ever remove the boat.
+        if NetworkDoesNetworkIdExist(BoatNetId) then
+            local boat = NetToVeh(BoatNetId)
+            if boat and boat ~= 0 and DoesEntityExist(boat) then
+                SetEntityAsMissionEntity(boat, true, true)
+                DeleteEntity(boat)
+            end
+        end
         BoatNetId = nil
     end
 end)
@@ -572,4 +581,13 @@ end)
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     SetPedDiesInWater(PlayerPedId(), true)
+    clearSiteBlip()
+    exports.sunset_ui:JobHudClear(true)
+    if BoatNetId and NetworkDoesNetworkIdExist(BoatNetId) then
+        local boat = NetToVeh(BoatNetId)
+        if boat and boat ~= 0 and DoesEntityExist(boat) then
+            SetEntityAsMissionEntity(boat, true, true)
+            DeleteEntity(boat)
+        end
+    end
 end)

@@ -58,12 +58,12 @@ local function sanitizeAppearance(raw, fallback)
     out.headBlend = {}
     for _, key in ipairs({ 'shapeFirst', 'shapeSecond', 'shapeThird', 'skinFirst', 'skinSecond', 'skinThird' }) do
         local v = num(hbRaw[key], 0, 45, num(hbFallback[key], 0, 45, 0))
-        if v == nil then return nil, { localeKey = 'appearance.message.headblend' } .. key .. ' out of range' end
+        if v == nil then return nil, { localeKey = 'appearance.message.value_out_of_range', params = { key = tostring(key) } } end
         out.headBlend[key] = math.floor(v)
     end
     for _, key in ipairs({ 'shapeMix', 'skinMix', 'thirdMix' }) do
         local v = num(hbRaw[key], 0.0, 1.0, num(hbFallback[key], 0.0, 1.0, 0.0))
-        if v == nil then return nil, { localeKey = 'appearance.message.headblend' } .. key .. ' out of range' end
+        if v == nil then return nil, { localeKey = 'appearance.message.value_out_of_range', params = { key = tostring(key) } } end
         out.headBlend[key] = v
     end
 

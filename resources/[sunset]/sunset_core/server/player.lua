@@ -1,3 +1,13 @@
+-- [SEC2] Strict money amount: finite, positive, bounded (rejects NaN/inf/huge/non-number).
+local MAX_MONEY_OP = 2000000000
+local function sanitizeMoneyAmount(v)
+    v = tonumber(v)
+    if not v or v ~= v or v == math.huge or v == -math.huge then return 0 end
+    if v > MAX_MONEY_OP then return 0 end
+    return math.floor(v)
+end
+Sunset.SanitizeMoneyAmount = sanitizeMoneyAmount
+
 local function decodeChar(char)
     if not char then return nil end
     if type(char.position) == 'string' then char.position = json.decode(char.position) end
@@ -156,7 +166,7 @@ function Sunset.RefreshBlazePoints(source)
 end
 
 function Sunset.SpendBlazePoints(source, amount)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if amount <= 0 then return true end
     local player = Sunset.GetPlayer(source)
     if not player or not player.account_id then return false, { localeKey = 'core.message.account_data_is_unavailable' } end
@@ -175,7 +185,7 @@ function Sunset.SpendBlazePoints(source, amount)
 end
 
 function Sunset.AddBlazePoints(source, amount)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if amount <= 0 then return true end
     local player = Sunset.GetPlayer(source)
     if not player or not player.account_id then return false, { localeKey = 'core.message.account_data_is_unavailable' } end
@@ -203,7 +213,7 @@ end
 
 function Sunset.AddMoney(source, account, amount, reason)
     local char = Sunset.GetCharacter(source)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if not char or amount <= 0 then return false end
 
     local field
@@ -242,7 +252,7 @@ end
 
 function Sunset.RemoveMoney(source, account, amount, reason)
     local char = Sunset.GetCharacter(source)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if not char or amount <= 0 then return false end
 
     local field
@@ -292,7 +302,7 @@ end
 
 function Sunset.MoveMoney(source, fromAccount, toAccount, amount, reason)
     local char = Sunset.GetCharacter(source)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if not char or amount <= 0 or fromAccount == toAccount then return false end
     if (fromAccount ~= 'cash' and fromAccount ~= 'bank') or (toAccount ~= 'cash' and toAccount ~= 'bank') then
         return false
@@ -316,7 +326,7 @@ end
 
 function Sunset.TransferMoney(source, targetSource, account, amount, reason)
     local fromChar, toChar = Sunset.GetCharacter(source), Sunset.GetCharacter(targetSource)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if not fromChar or not toChar or source == targetSource or amount <= 0 then return false end
     if account ~= 'cash' and account ~= 'bank' then return false end
 
@@ -462,7 +472,7 @@ function Sunset.AddXP(source, amount)
     local char = Sunset.GetCharacter(source)
     if not char or not amount or amount <= 0 then return false end
 
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if amount <= 0 then return false end
     local changed = MySQL.update.await('UPDATE characters SET xp = xp + ? WHERE id = ?', { amount, char.id })
     if not changed or changed < 1 then return false end
@@ -473,7 +483,7 @@ end
 
 function Sunset.AddRespectPoints(source, amount)
     local char = Sunset.GetCharacter(source)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if not char or amount <= 0 then return false end
     local changed = MySQL.update.await(
         'UPDATE characters SET respect_points = respect_points + ?, paydays_received = paydays_received + 1 WHERE id = ?',
@@ -650,6 +660,20 @@ exports('GetMoney', Sunset.GetMoney)
 exports('MoveMoney', Sunset.MoveMoney)
 exports('TransferMoney', Sunset.TransferMoney)
 exports('SetPersistentStat', Sunset.SetPersistentStat)
+
+-- [SEC2] Owner-side writer for characters.metadata.skin (used by sunset_skins so it no
+-- longer writes the characters table directly). Atomic JSON_SET/JSON_REMOVE, no read-modify-write race.
+exports('SetCharacterSkin', function(characterId, skin)
+    characterId = tonumber(characterId)
+    if not characterId then return false end
+    local changed
+    if type(skin) == 'string' and skin ~= '' and #skin <= 64 then
+        changed = MySQL.update.await("UPDATE characters SET metadata = JSON_SET(COALESCE(metadata, JSON_OBJECT()), '$.skin', ?) WHERE id = ?", { skin, characterId })
+    else
+        changed = MySQL.update.await("UPDATE characters SET metadata = JSON_REMOVE(COALESCE(metadata, JSON_OBJECT()), '$.skin') WHERE id = ?", { characterId })
+    end
+    return changed ~= nil
+end)
 exports('RefreshBlazePoints', Sunset.RefreshBlazePoints)
 exports('SpendBlazePoints', Sunset.SpendBlazePoints)
 exports('AddBlazePoints', Sunset.AddBlazePoints)
@@ -699,7 +723,7 @@ function Sunset.SetRobPoints(source, value)
 end
 
 function Sunset.AddRobPoints(source, amount)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = sanitizeMoneyAmount(amount)
     if amount == 0 then return true end
     local nextValue = Sunset.GetRobPoints(source) + amount
     if nextValue < 0 then return false end

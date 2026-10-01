@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run tests",
+    "test:watch": "vitest tests",
     "test:e2e": "playwright test",
     "benchmark": "node scripts/benchmark.mjs"
   },

@@ -269,6 +269,7 @@ end)
 -- Scans ALL streamed CObjects within radius, prints full entity details,
 -- highlights likely door candidates, then verifies configured robbery doors.
 RegisterCommand('robdoor', function(source, args)
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     local ped = PlayerPedId()
     local pos = GetEntityCoords(ped)
     local radius = math.min(30.0, math.max(1.0, tonumber(args[1]) or 5.0))
@@ -358,6 +359,7 @@ RegisterCommand('robdoor', function(source, args)
 end, false)
 
 RegisterCommand('testvault', function(source, args)
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     local action = string.lower(tostring(args[1] or 'open'))
     local open = action ~= 'close'
     local loc = SunsetRobbery.Locations['fleeca_legion']

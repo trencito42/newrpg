@@ -120,14 +120,14 @@
                     el.addEventListener('click', () => post('inventoryTradeRemoveCash', {}));
                 }
             } else if (row.assetType) {
-                name.textContent = row.label || 'Asset';
+                name.textContent = I18n.item(row.item, row.label) || I18n.t('ui.trade.asset_fallback');
                 sub.textContent = row.detail || row.assetType.toUpperCase();
                 if (removable) {
                     el.classList.add('is-removable');
                     el.addEventListener('click', () => post('inventoryTradeRemoveAsset', { assetType: row.assetType }));
                 }
             } else {
-                name.textContent = row.label || row.item || 'Item';
+                name.textContent = I18n.item(row.item, row.label) || I18n.t('ui.trade.item_fallback');
                 sub.textContent = I18n.t('dynamic.trade_forza.qty_x_value0', { value0: Number(row.count) || 0 });
                 if (removable) {
                     el.classList.add('is-removable');
@@ -301,7 +301,7 @@
             icon.className = 'ph-fill ph-package ai-icon';
             const name = document.createElement('div');
             name.className = 'ai-name';
-            name.textContent = row.label || row.item;
+            name.textContent = I18n.item(row.item, row.label);
             el.append(qty, icon, name);
             el.addEventListener('click', () => {
                 grid.querySelectorAll('.asset-item').forEach((n) => n.classList.remove('selected'));
@@ -337,7 +337,7 @@
             info.className = 'ac-info';
             const title = document.createElement('div');
             title.className = 'ac-title';
-            title.textContent = asset.label || 'Asset';
+            title.textContent = I18n.item(asset.item, asset.label) || I18n.t('ui.trade.asset_fallback');
             const sub = document.createElement('div');
             sub.className = 'ac-sub';
             sub.textContent = asset.detail || '';

@@ -187,6 +187,14 @@ local function syncLocaleToNui(locale)
     end
 end
 
+-- [LOGIN PIPELINE] The account language arrives with playerReady (after the
+-- first handler above applied it Lua-side). Push it to every NUI document before
+-- the character/spawn UI opens so the UI never shows a different language than
+-- Lua notifications for the first screens after login.
+RegisterNetEvent('sunset:client:playerReady', function()
+    syncLocaleToNui(Sunset.GetLocale())
+end)
+
 RegisterNetEvent('sunset:client:localeChanged', function(locale)
     if not Sunset.SetLocalLocale(locale) then return end
     if Sunset.Player then Sunset.Player.language = locale end
@@ -198,8 +206,8 @@ function GetLocale()
     return Sunset.GetLocale()
 end
 
-function Translate(key, params)
-    return Sunset.T(key, params)
+function Translate(key, params, ...)
+    return Sunset.T(key, params, ...)
 end
 
 function IsValidLocale(locale)

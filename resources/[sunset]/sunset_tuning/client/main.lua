@@ -1,3 +1,17 @@
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- Falls back to the raw natives only if sunset_ui is not running.
+function TUNING_SetNuiFocus(hasFocus, hasCursor, keepInput)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'tuning')
+        end)
+        if ok then return res end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+    SetNuiFocusKeepInput(keepInput == true)
+    return true
+end
+
 local STC = SunsetTuningClient
 local panelOpen = false
 local currentShop = nil
@@ -153,7 +167,7 @@ local function closePanel(restoreStock)
     if not panelOpen then return end
     panelOpen = false
     destroyTuningCam()
-    SetNuiFocus(false, false)
+    TUNING_SetNuiFocus(false, false)
     exports.sunset_ui:Send('tuningUiClose', {})
     sendUi('close')
     if restoreStock and currentVeh ~= 0 and DoesEntityExist(currentVeh) then
@@ -220,7 +234,7 @@ local function openPanel(shop)
     savedCosmetics = draftCosmetics
 
     panelOpen = true
-    SetNuiFocus(true, true)
+    TUNING_SetNuiFocus(true, true)
     exports.sunset_ui:Send('tuningUiOpen', {})
 
     sendUi('open', {
@@ -356,12 +370,11 @@ RegisterNUICallback('tuningDyno', function(_, cb)
         return
     end
 
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
-    sendUi('dynoRunning', {})
+    TUNING_SetNuiFocus(false, false)
+        sendUi('dynoRunning', {})
 
     SunsetTuningClient.RunDynoTest(currentShop, function(result)
-        SetNuiFocus(true, true)
+        TUNING_SetNuiFocus(true, true)
         if not result then
             Sunset.AwaitCallback('sunset:tuning:cancelDyno', dynoSession.token)
             sendUi('dynoDone', { ok = false })
@@ -392,39 +405,41 @@ RegisterNUICallback('tuningLeaderboard', function(_, cb)
 end)
 
 -- Harmony: secondary tuning shop (LS Customs uses faction HQ menu)
+local tuningShopBlips = {}
 CreateThread(function()
     for _, shop in ipairs(SunsetTuning.Shops or {}) do
         if shop.id ~= 'lsc_main' and shop.blip then
             local blip = AddBlipForCoord(shop.coords.x, shop.coords.y, shop.coords.z)
+            tuningShopBlips[#tuningShopBlips + 1] = blip
             SetBlipSprite(blip, shop.blip.sprite or 72)
             SetBlipColour(blip, shop.blip.color or 47)
             SetBlipScale(blip, shop.blip.scale or 0.8)
             SetBlipAsShortRange(blip, true)
             BeginTextCommandSetBlipName('STRING')
-            AddTextComponentSubstringPlayerName(shop.label or 'ECU Tuning')
+            AddTextComponentSubstringPlayerName(shop.label or exports.sunset_core:Translate('tuning.menu.ecu_tuning'))
             EndTextCommandSetBlipName(blip)
         end
     end
 end)
 
 CreateThread(function()
+    local shop = nil
+    for _, s in ipairs(SunsetTuning.Shops or {}) do
+        if s.id == 'lsc_harmony' then shop = s break end
+    end
     while true do
-        Wait(0)
-        local shop = nil
-        for _, s in ipairs(SunsetTuning.Shops or {}) do
-            if s.id == 'lsc_harmony' then shop = s break end
-        end
         if shop and not panelOpen and not blocked() then
             local dist = #(GetEntityCoords(PlayerPedId()) - shop.coords)
             if dist <= SunsetTuning.InteractRadius and getDriverVehicle() ~= 0 then
                 BeginTextCommandDisplayHelp('STRING')
-                AddTextComponentSubstringPlayerName('~o~[E]~s~ Harmony — ECU Tuning')
+                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('hint.tuning.harmony'))
                 EndTextCommandDisplayHelp(0, false, true, -1)
                 if IsControlJustReleased(0, 38) then
                     TriggerEvent('sunset:tuning:openHarmonyMenu')
                 end
+                Wait(0)
             else
-                Wait(400)
+                Wait(dist > 30.0 and 1000 or 400)
             end
         else
             Wait(500)
@@ -462,4 +477,21 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     closePanel(false)
+    for i, b in ipairs(tuningShopBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+        tuningShopBlips[i] = nil
+    end
+end)
+
+-- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+    if ok and owner == 'tuning' then
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
+    end
+end)
+
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    if panelOpen then closePanel(true) end
 end)

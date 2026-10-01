@@ -35,6 +35,9 @@ end
 function MSN_PayReward(source, session, conditionPct, escaped)
     -- atomic guard: prevents double-pay on duplicate callbacks
     if session.rewardClaimed then return 0, { total = 0, xp = 0 } end
+    -- [JOBS AUDIT] minimum plausible duration: delivery cannot complete seconds after accepting.
+    local minSec = (SunsetMissions.GetMission(session.mission) or {}).minDurationSec or 45
+    if os.time() - (session.startedAt or 0) < minSec then return 0, { total = 0, xp = 0 } end
     session.rewardClaimed = true
 
     local total, details = MSN_CalculateReward(session, conditionPct, escaped)
@@ -42,7 +45,11 @@ function MSN_PayReward(source, session, conditionPct, escaped)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return 0, details end
 
-    exports.sunset_core:AddMoney(source, 'cash', total, 'mission_' .. session.mission)
+    -- [JOBS AUDIT] a failed credit used to end the mission as "complete" with nothing paid; release the guard instead.
+    if not exports.sunset_core:AddMoney(source, 'cash', total, 'mission_' .. session.mission) then
+        session.rewardClaimed = false
+        return 0, { total = 0, xp = 0 }
+    end
 
     -- XP reward (server-authoritative)
     local xpAmount = def.xp or 0

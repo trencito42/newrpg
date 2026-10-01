@@ -629,6 +629,7 @@ exports.sunset_core:RegisterCallback('sunset:taxiAcceptFare', function(source)
     end
 
     local amount = fare.amount
+    PendingTaxiFares[source] = nil -- [SEC2] consume the offer before yielding money calls (double-accept)
     if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'taxi') then
         if not exports.sunset_core:RemoveMoney(source, 'bank', amount, 'taxi') then
             return nil, { localeKey = 'factions.message.you_do_not_have_enough_cash_or_bank_balance' }
@@ -666,6 +667,15 @@ local function sellIllegalAtHQ(source, factionId)
     local prices = Sunset.IllegalSellPrices and Sunset.IllegalSellPrices[factionId]
     if not prices then return nil, { localeKey = 'factions.message.nothing_to_sell_here' } end
 
+    -- [SEC2] /sellpouch and /fence were callable from anywhere: require the faction stash
+    -- (where the sell marker lives) and serialise per source.
+    if not nearFactionPoint(source, Sunset.Factions[factionId], 'stash', 6.0) then
+        return nil, { localeKey = 'factions.message.nothing_to_sell_here' }
+    end
+    if not exports.sunset_core:RateLimit(source, 'illegalSell', 1500) then
+        return nil, { localeKey = 'factions.message.nothing_to_sell_here' }
+    end
+
     local sold = 0
     local total = 0
 
@@ -674,7 +684,10 @@ local function sellIllegalAtHQ(source, factionId)
         if not exports.sunset_inventory:HasItem(source, prices.item, 1) then
             return nil, { localeKey = 'factions.message.you_need_value_to_sell', formatArgs = { prices.label or prices.item } }
         end
-        exports.sunset_inventory:RemoveItem(source, prices.item, 1)
+        -- [SEC2] pay ONLY if the item was really removed (parallel calls used to be paid twice)
+        if exports.sunset_inventory:RemoveItem(source, prices.item, 1) ~= true then
+            return nil, { localeKey = 'factions.message.you_need_value_to_sell', formatArgs = { prices.label or prices.item } }
+        end
         exports.sunset_core:AddMoney(source, 'cash', prices.price, 'illegal_sale')
         sold = 1
         total = prices.price
@@ -682,11 +695,12 @@ local function sellIllegalAtHQ(source, factionId)
         if not hasPerm(source, 'fence') then return nil, { localeKey = 'factions.message.rank_too_low' } end
         for _, row in ipairs(prices) do
             if exports.sunset_inventory:HasItem(source, row.item, 1) then
-                exports.sunset_inventory:RemoveItem(source, row.item, 1)
-                exports.sunset_core:AddMoney(source, 'cash', row.price, 'fence_sale')
-                sold = sold + 1
-                total = total + row.price
-                break
+                if exports.sunset_inventory:RemoveItem(source, row.item, 1) == true then
+                    exports.sunset_core:AddMoney(source, 'cash', row.price, 'fence_sale')
+                    sold = sold + 1
+                    total = total + row.price
+                    break
+                end
             end
         end
         if sold < 1 then return nil, { localeKey = 'factions.message.no_fenceable_items_in_inventory' } end

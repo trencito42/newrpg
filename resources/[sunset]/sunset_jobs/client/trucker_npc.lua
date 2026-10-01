@@ -25,9 +25,12 @@ end
 
 -- ── Open laptop UI ────────────────────────────────────────────
 
+local laptopOpenedAt = 0
+
 local function openLaptopUi()
     if laptopOpen then return end
     laptopOpen = true
+    laptopOpenedAt = GetGameTimer()
     CreateThread(function()
         local rankData  = Sunset.AwaitCallback('sunset:jobs:trucker:getRank')
         local routeData = Sunset.AwaitCallback('sunset:jobs:trucker:getRoutes')
@@ -37,7 +40,7 @@ local function openLaptopUi()
             xpNext = (rankData and rankData.xpNext) or 300,
             routes = routeData or {},
         })
-        exports.sunset_ui:SetFocus(true, true)
+        exports.sunset_ui:SetFocus(true, true, false, 'trucker_laptop')
     end)
 end
 
@@ -66,6 +69,11 @@ CreateThread(function()
         local dLap = #(pos - laptopCenter())
         nearLaptop = dLap < LAPTOP_DIST
 
+        -- [JOBS AUDIT] If something else force-closed the NUI (death handler, other modal, crash) our
+        -- laptopOpen flag stayed true and the laptop could never be opened again this session.
+        if laptopOpen and GetGameTimer() - laptopOpenedAt > 4000 and not IsNuiFocused() then
+            laptopOpen = false
+        end
         if nearLaptop and not laptopOpen and truckerInteractionsReady() then
             -- Draw ground marker under laptop desk
             DrawMarker(1,
@@ -77,7 +85,7 @@ CreateThread(function()
                 false, false, 2, false, nil, nil, false)
 
             BeginTextCommandDisplayHelp('STRING')
-            AddTextComponentSubstringPlayerName('~INPUT_CONTEXT~ — Open Route Laptop')
+            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('hint.native.open_route_laptop'))
             EndTextCommandDisplayHelp(0, false, true, 100)
 
             if IsControlJustPressed(0, INTERACT_KEY) or IsDisabledControlJustPressed(0, INTERACT_KEY) then
@@ -95,9 +103,7 @@ end)
 AddEventHandler('sunset:nui:truckerLaptopClose', function()
     if not laptopOpen then return end
     laptopOpen = false
-    exports.sunset_ui:SetFocus(false, false)
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
+    exports.sunset_ui:SetFocus(false, false, false, 'trucker_laptop')
     ClearPedTasksImmediately(PlayerPedId())
     armGrace(1500)
 end)
@@ -106,16 +112,14 @@ AddEventHandler('sunset:nui:modalSuperseded', function(panel)
     if panel ~= 'truckerLaptop' then return end
     if not laptopOpen then return end
     laptopOpen = false
-    exports.sunset_ui:SetFocus(false, false)
+    exports.sunset_ui:SetFocus(false, false, false, 'trucker_laptop')
     armGrace(1000)
 end)
 
 AddEventHandler('sunset:nui:truckerPickRoute', function(data)
     if not data or not data.routeIndex then return end
     laptopOpen = false
-    exports.sunset_ui:SetFocus(false, false)
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
+    exports.sunset_ui:SetFocus(false, false, false, 'trucker_laptop')
     ClearPedTasksImmediately(PlayerPedId())
     armGrace(2000)
     local routeIdx = data.routeIndex
@@ -127,4 +131,12 @@ AddEventHandler('sunset:nui:truckerPickRoute', function(data)
             TriggerEvent('sunset:jobs:trucker:startShift', routeIdx)
         end
     end)
+end)
+
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if laptopOpen then
+        laptopOpen = false
+        exports.sunset_ui:SetFocus(false, false, false, 'trucker_laptop')
+    end
 end)

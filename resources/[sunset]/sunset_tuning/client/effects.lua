@@ -269,6 +269,7 @@ end)
 
 -- Developer telemetry overlay command
 RegisterCommand('exhaustdebug', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     exhaustDebug = not exhaustDebug
     TriggerEvent('chat:addMessage', {
         args = { '^3[EXHAUST DEBUG]', exhaustDebug and '^2ENABLED' or '^1DISABLED' }

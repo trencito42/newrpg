@@ -118,10 +118,12 @@ end
 
 local function defaultTakeChips(src, amount)
 	if GetResourceState('sunset_inventory') == 'started' then
-		pcall(function()
-			exports.sunset_inventory:RemoveItem(src, 'casino_chips', math.floor(amount))
+		local ok, res = pcall(function()
+			return exports.sunset_inventory:RemoveItem(src, 'casino_chips', math.floor(amount))
 		end)
+		return ok and res == true
 	end
+	return false
 end
 
 local function defaultGiveChips(src, amount)
@@ -160,16 +162,22 @@ function SetGiveChipsCallback(cb)
 end
 
 function GiveMoney(player, money)
+	money = math.floor(tonumber(money) or 0)
+	if money <= 0 then return end
 	if giveChipsCallback ~= nil then
-		giveChipsCallback(player, math.tointeger(money))
+		giveChipsCallback(player, money)
 	end
 	-- DebugPrint("MONEY: GIVE "..GetPlayerName(player):upper().." "..money)
 end
 
 function TakeMoney(player, money)
+	-- [SEC2] returns true only when the chips were actually removed
+	money = math.floor(tonumber(money) or 0)
+	if money <= 0 then return false end
 	if takeChipsCallback ~= nil then
-		takeChipsCallback(player, math.tointeger(money))
+		return takeChipsCallback(player, money) == true
 	end
+	return false
 	-- DebugPrint("MONEY: TAKE "..GetPlayerName(player):upper().." "..money)
 end
 
@@ -199,23 +207,38 @@ function PlayDealerSpeech(dealer, speech)
 	TriggerClientEvent("BLACKJACK:PlayDealerSpeech", -1, dealer, speech)
 end
 
+local MAX_BJ_BET = 100000000
 function SetPlayerBet(i, seat, bet, betId, double, split)
-	split = split or false
-	double = double or false
+	local src = source
+	split = split == true
+	double = double == true
+	bet = tonumber(bet)
+	seat = tonumber(seat)
+	-- [SEC2] validate table, seat, bet (integer, positive, bounded) - client-controlled
+	if type(i) ~= 'number' or players[i] == nil or tableTracker[tostring(src)] ~= i then return end
+	if not seat or seat < 0 or seat > 8 then return end
+	if not bet or bet ~= bet or bet ~= math.floor(bet) or bet < 1 or bet > MAX_BJ_BET then return end
 
-
-	local num = FindPlayerIdx(players[i], source)
+	local num = FindPlayerIdx(players[i], src)
 
 	if num ~= nil then
 		if double == false and split == false then
-			TakeMoney(source, bet)
-
-			players[i][num].bet = tonumber(bet)
+			-- one bet per round, chips must really be taken before the bet counts
+			if (players[i][num].bet or 0) > 0 then return end
+			if not TakeMoney(src, bet) then
+				TriggerClientEvent("BLACKJACK:BetReceived", src, false)
+				return
+			end
+			players[i][num].bet = bet
+		else
+			-- double/split chip stacks are taken server-side in the move handler;
+			-- only allow the visual when a bet already exists
+			if (players[i][num].bet or 0) < 1 then return end
 		end
 
 		TriggerClientEvent("BLACKJACK:PlaceBetChip", -1, i, 5-seat, bet, double, split)
 	else
-		DebugPrint("TABLE "..i..": PLAYER "..source.." ATTEMPTED BET BUT NO LONGER TRACKED?")
+		DebugPrint("TABLE "..i..": PLAYER "..src.." ATTEMPTED BET BUT NO LONGER TRACKED?")
 	end
 end
 
@@ -223,7 +246,11 @@ RegisterServerEvent("BLACKJACK:SetPlayerBet")
 AddEventHandler('BLACKJACK:SetPlayerBet', SetPlayerBet)
 
 function CheckPlayerBet(i, bet)
-	DebugPrint("TABLE "..i..": CHECKING "..GetPlayerName(source):upper().."'s CHIPS")
+	bet = tonumber(bet)
+	if not bet or bet ~= bet or bet < 1 or bet > 100000000 then
+		TriggerClientEvent("BLACKJACK:BetReceived", source, false)
+		return
+	end
 
 	local playerChips = 0 -- Get money
 
@@ -263,6 +290,17 @@ end
 
 RegisterServerEvent("BLACKJACK:ReceivedMove")
 
+-- [SEC2] Only known moves; double/split need chips actually available for the extra stake.
+local VALID_MOVES = { hit = true, stand = true, double = true, split = true }
+function ValidateBlackjackMove(v, m)
+	if type(m) ~= 'string' or not VALID_MOVES[m] then return nil end
+	if m == 'double' or m == 'split' then
+		local chips = getChipsCallback and getChipsCallback(v.player) or 0
+		if (tonumber(chips) or 0) < (v.bet or 0) then return nil end
+	end
+	return m
+end
+
 function StartTableThread(i)
 	Citizen.CreateThread(function()
 		local index = i
@@ -270,17 +308,6 @@ function StartTableThread(i)
 		while true do Wait(0)
 			if players[index] and #players[index] ~= 0 then
 				DebugPrint("WAITING FOR ALL PLAYERS AT TABLE "..index.." TO PLACE THEIR BETS.")
-
-				-- TODO: DONT FORGET TO REMOVE THIS JESUS CHRIST
-
-				-- local bet = 15000
-
-				-- TakeMoney(players[index][1].player, bet)
-				-- players[index][1].bet = bet
-
-				-- for num,_ in pairs(players[index]) do
-					-- TriggerClientEvent("BLACKJACK:RequestBets", players[index][num].player)
-				-- end
 
 				PlayDealerAnim(index, "anim_casino_b@amb@casino@games@blackjack@dealer", "female_place_bet_request")
 				PlayDealerSpeech(index, "MINIGAME_DEALER_PLACE_CHIPS")
@@ -409,6 +436,8 @@ function StartTableThread(i)
 											local move = "stand"
 											local eventHandler = AddEventHandler("BLACKJACK:ReceivedMove", function(m)
 												if source ~= v.player then return end
+												m = ValidateBlackjackMove(v, m)
+												if not m then return end
 												move = m
 												receivedMove = true
 											end)
@@ -457,7 +486,7 @@ function StartTableThread(i)
 														PlayDealerSpeech(index, "MINIGAME_BJACK_DEALER_"..handValue(v.hand))
 													end
 												elseif move == "double" then
-													TakeMoney(v.player, v.bet)
+													if not TakeMoney(v.player, v.bet) then break end
 													v.bet = v.bet*2
 
 													-- TriggerClientEvent("BLACKJACK:PlaceBetChip", -1, i, 5-v.seat, betId)
@@ -492,7 +521,7 @@ function StartTableThread(i)
 
 													break
 												elseif move == "split" then
-													TakeMoney(v.player, v.bet)
+													if not TakeMoney(v.player, v.bet) then break end
 													v.bet = v.bet*2
 
 													-- TriggerClientEvent("BLACKJACK:PlaceBetChip", -1, i, 5-v.seat, betId)
@@ -582,6 +611,8 @@ function StartTableThread(i)
 														local move = "stand"
 														local eventHandler = AddEventHandler("BLACKJACK:ReceivedMove", function(m)
 															if source ~= v.player then return end
+															m = ValidateBlackjackMove(v, m)
+															if not m then return end
 															move = m
 															receivedMove = true
 														end)
@@ -601,7 +632,6 @@ function StartTableThread(i)
 															DebugPrint("TABLE "..index..": "..v.player.." WAS PUT OUT DUE TO LEAVING")
 															v.player_in = false
 															TriggerClientEvent("BLACKJACK:RetrieveCards", -1, index, v.seat)
-															print("breaking on 1st hand")
 															break
 														else
 															if move == "hit" then
@@ -651,13 +681,14 @@ function StartTableThread(i)
 														repeat Wait(0)
 															timeTracker[index] = 0
 															PlayDealerAnim(index, "anim_casino_b@amb@casino@games@blackjack@dealer", "female_dealer_focus_player_0".. 5-v.seat .."_idle_split")
-															print(""..v.player)
 															DebugPrint("TABLE "..index..": AWAITING MOVE FROM "..GetPlayerName(v.player):upper())
 															TriggerClientEvent("BLACKJACK:RequestMove", v.player, moveTime - timeTracker[index])
 															local receivedMove = false
 															local move = "stand"
 															local eventHandler = AddEventHandler("BLACKJACK:ReceivedMove", function(m)
 																if source ~= v.player then return end
+																m = ValidateBlackjackMove(v, m)
+																if not m then return end
 																move = m
 																receivedMove = true
 															end)
@@ -891,6 +922,13 @@ Citizen.CreateThread(function() -- INIT
 end)
 
 function PlayerSatDown(i, seat)
+	if type(i) ~= 'number' or players[i] == nil then return end
+	if tableTracker[tostring(source)] ~= nil then return end
+	seat = tonumber(seat)
+	if not seat or seat ~= math.floor(seat) or seat < 0 or seat > 8 then return end
+	for _, p in ipairs(players[i]) do
+		if p.seat == seat then return end
+	end
 	DebugPrint(GetPlayerName(source):upper() .. " SAT DOWN AT TABLE " .. i)
 
 	-- player = source
@@ -931,6 +969,7 @@ AddEventHandler('BLACKJACK:PlayerSatDown', PlayerSatDown)
 
 
 function PlayerSatUp(i)
+	if type(i) ~= 'number' or players[i] == nil then return end
 	DebugPrint(GetPlayerName(source):upper() .. " LEFT TABLE "..i)
 
 	local num = FindPlayerIdx(players[i], source)
@@ -968,6 +1007,7 @@ end
 AddEventHandler("playerDropped", PlayerLeft)
 
 function PlayerRemove(i)
+	if type(i) ~= 'number' or players[i] == nil then return end
 	DebugPrint(GetPlayerName(source):upper() .. " LEFT TABLE "..i)
 
 	local num = FindPlayerIdx(players[i], source)

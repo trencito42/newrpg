@@ -30,7 +30,12 @@ local function sessionsCall(method, ...)
 end
 
 CreateThread(function()
-    Wait(1000)
+    -- [JOBS AUDIT] explicit readiness polling instead of a fixed Wait(1000) hoping sunset_sessions started
+    local waited = 0
+    while GetResourceState('sunset_sessions') ~= 'started' and waited < 60000 do
+        Wait(500)
+        waited = waited + 500
+    end
     if GetResourceState('sunset_sessions') ~= 'started' then
         print('^3[sunset_jobs]^7 sunset_sessions not started; running standalone job sessions.')
         return
@@ -111,6 +116,10 @@ function SunsetJobs_ClearSession(source, finalState, reason, options)
         session.frameworkId = nil
     end
     TriggerClientEvent('sunset:jobs:sessionEnded', source, session.jobId, session.state, reason, options or {})
+    -- [JOBS AUDIT] Server-side hook. hunter/diver registered AddEventHandler('sunset:jobs:sessionEnded')
+    -- on the server, but that is a CLIENT event -> their cleanup (rented boat/gear, contract
+    -- snapshots, harvest contract) never ran on cancel/death/timeout.
+    TriggerEvent('sunset:jobs:serverSessionEnded', source, session.jobId, session.state, reason, session)
     -- [QUESTS] first_job chain: a COMPLETED shift counts as progress.
     if finalState == 'COMPLETED' then
         local char = getChar(source)
@@ -119,6 +128,34 @@ function SunsetJobs_ClearSession(source, finalState, reason, options)
         end
     end
     return true
+end
+
+-- [JOBS AUDIT] Shift end that is always a legal transition. COMPLETED is only
+-- reachable from ACTIVE/RETURNING; hunter/diver sit in STARTING until a contract
+-- is taken, so their endShift used to be silently rejected (shift stuck).
+function SunsetJobs_EndShift(source, reason)
+    local session = Sessions[source]
+    if not session then return false end
+    local final = (session.state == 'ACTIVE' or session.state == 'RETURNING') and 'COMPLETED' or 'CANCELLED'
+    return SunsetJobs_ClearSession(source, final, reason) == true
+end
+
+-- [JOBS AUDIT] Per-player re-entrancy lock. Reward callbacks yield (MySQL.await /
+-- exports), so two concurrent requests could both pass the state checks.
+-- Self-expires after 15s so a thrown error can never wedge a player.
+local JobLocks = {}
+function SunsetJobs_WithLock(source, key, fn)
+    local held = JobLocks[source]
+    if not held then held = {} JobLocks[source] = held end
+    local now = GetGameTimer()
+    if held[key] and now - held[key] < 15000 then
+        return nil, { localeKey = 'jobs.message.too_many_requests' }
+    end
+    held[key] = now
+    local results = table.pack(pcall(fn))
+    held[key] = nil
+    if not results[1] then error(results[2], 0) end
+    return table.unpack(results, 2, results.n)
 end
 
 function SunsetJobs_RequireSession(source, jobId, allowedStates)
@@ -276,13 +313,23 @@ end
 local function failTruckerTrailerLoss(source, session, reason)
     local cfg = Sunset.GetJobConfig('trucker')
     local stage = session.data and session.data.stage
-    local route = cfg and cfg.routes and session.data and cfg.routes[session.data.routeIndex]
+    -- [JOBS AUDIT] session snapshot pay (cfg.routes[routeIndex] indexed a different list than the route store).
+    local route = session.data and session.data.pay and { pay = session.data.pay } or nil
     local partialPay = 0
 
     -- Delivery already pays the full route. Never add partial compensation
     -- after the cargo has been delivered and the player is returning the rig.
     if route and stage == 'to_delivery' then
         local fraction = cfg.trailerLossPartialPayFraction or 0.5
+        -- [JOBS AUDIT] Partial pay only when the rig really made progress: the trailer is client-owned,
+        -- so deleting it at the yard (3 recoveries later) paid 50% of a route for zero driving.
+        local travelled = 0.0
+        local pk = session.data and session.data.pickup
+        local truck = session.vehicleNetId and NetworkGetEntityFromNetworkId(session.vehicleNetId) or 0
+        if pk and truck ~= 0 and DoesEntityExist(truck) then
+            travelled = #(GetEntityCoords(truck) - vector3(pk.x, pk.y, pk.z))
+        end
+        if travelled < 500.0 then fraction = 0.0 end
         partialPay = math.floor((route.pay or 500) * fraction)
         if partialPay > 0 then
             SunsetJobs_PayReward(source, 'trucker', partialPay, 'trucker_trailer_loss', false)
@@ -300,13 +347,13 @@ local function xpForLevel(level)
     return math.max(100, (level or 1) * 100)
 end
 
-function SunsetJobs_AddJobProgress(source, jobId, xpDelta, taskDelta, earnedDelta)
+local function addJobProgressUnlocked(source, jobId, xpDelta, taskDelta, earnedDelta)
     local char = getChar(source)
     if not char then return end
 
-    xpDelta = tonumber(xpDelta) or 0
-    taskDelta = tonumber(taskDelta) or 0
-    earnedDelta = tonumber(earnedDelta) or 0
+    xpDelta = math.max(0, math.floor(tonumber(xpDelta) or 0))
+    taskDelta = math.max(0, math.floor(tonumber(taskDelta) or 0))
+    earnedDelta = math.max(0, math.floor(tonumber(earnedDelta) or 0))
 
     local row = MySQL.single.await(
         'SELECT xp, level, completed_tasks, total_earned FROM job_progress WHERE character_id = ? AND job_id = ?',
@@ -342,6 +389,24 @@ function SunsetJobs_AddJobProgress(source, jobId, xpDelta, taskDelta, earnedDelt
     end
 end
 
+-- [JOBS AUDIT] read-modify-write on job_progress yields between SELECT and UPDATE; two
+-- concurrent awards for one character lost XP/earnings (or double-INSERTed). Serialise per character.
+local ProgressBusy = {}
+function SunsetJobs_AddJobProgress(source, jobId, ...)
+    local char = getChar(source)
+    if not char then return end
+    local key = tostring(char.id) .. ':' .. tostring(jobId)
+    local waited = 0
+    while ProgressBusy[key] and waited < 5000 do
+        Wait(10)
+        waited = waited + 10
+    end
+    ProgressBusy[key] = true
+    local ok, err = pcall(addJobProgressUnlocked, source, jobId, ...)
+    ProgressBusy[key] = nil
+    if not ok then error(err, 0) end
+end
+
 function SunsetJobs_AddJobXP(source, jobId, amount)
     if not amount or amount <= 0 then return end
     SunsetJobs_AddJobProgress(source, jobId, amount, 0, 0)
@@ -349,7 +414,11 @@ end
 
 function SunsetJobs_PayReward(source, jobId, amount, reason, countTask)
     local char = getChar(source)
-    if not char or not amount or amount <= 0 then return false end
+    -- [JOBS AUDIT] reject NaN/inf/negative/absurd/float amounts; only whole dollars are paid.
+    amount = tonumber(amount)
+    if not char or not amount or amount ~= amount or amount <= 0 or amount > 1000000 then return false end
+    amount = math.floor(amount)
+    if amount <= 0 then return false end
 
     -- [AUDIT P2-SESSIONS] Scenario 16: check the money write. If AddMoney
     -- fails (DB hiccup), do NOT record task progress for unpaid work and
@@ -383,6 +452,13 @@ function SunsetJobs_GetJobLevel(source, jobId)
     return row and row.level or 1
 end
 
+-- [JOBS AUDIT] sunset_racing calls exports.sunset_jobs:CancelSession(src, reason) inside a pcall, but no such
+-- export existed, so starting a race never cancelled the job shift.
+exports('CancelSession', function(source, reason)
+    source = tonumber(source)
+    if not source or not Sessions[source] then return false end
+    return SunsetJobs_ClearSession(source, 'CANCELLED', tostring(reason or 'Cancelled')) == true
+end)
 exports('PayReward', SunsetJobs_PayReward)
 exports('AddJobXP', SunsetJobs_AddJobXP)
 exports('GetJobLevel', SunsetJobs_GetJobLevel)
@@ -409,7 +485,8 @@ function SunsetJobs_StartSession(source, jobId, data)
     end
     local currentJob = charJob(source)
     if currentJob ~= jobId then
-        return nil, { localeKey = 'jobs.message.you_are_not_employed_as' } .. (Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId)
+        -- [JOBS AUDIT] was `{ localeKey = ... } .. label` (table concat -> runtime error).
+        return nil, 'You are not employed as ' .. tostring(Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId)
     end
 
     local cfg = Sunset.GetJobConfig(jobId)
@@ -555,15 +632,19 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
             print(('[JOBS REG] src=%d %s'):format(source, msg))
         end
     end
+    -- [JOBS AUDIT] The client used to retry only when the (localized) error STRING matched an
+    -- English literal, so non-English players and every localeKey table error never retried.
+    -- Retryable "not propagated yet" outcomes are now a truthy { retryable = true } result.
+    local cfg = Sunset.GetJobConfig(session.jobId) -- was declared AFTER its first use (nil global)
     vehicleNetId = tonumber(vehicleNetId)
     local entity = vehicleNetId and NetworkGetEntityFromNetworkId(vehicleNetId) or 0
     if not entity or entity == 0 then
         dlog('netId did not resolve to an entity (not propagated yet / invalid)')
-        return nil, { localeKey = 'jobs.message.work_vehicle_not_networked' }
+        return { retryable = true }
     end
     if not DoesEntityExist(entity) then
         dlog('entity resolved but does not exist server-side')
-        return nil, { localeKey = 'jobs.message.work_vehicle_not_networked' }
+        return { retryable = true }
     end
     if GetEntityType(entity) ~= 2 then
         dlog(('resolved entity is not a vehicle (type=%d)'):format(GetEntityType(entity)))
@@ -573,12 +654,19 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
     if not ped or ped == 0 then return nil, { localeKey = 'jobs.message.no_ped_found' } end
     local inDriverSeat = GetPedInVehicleSeat(entity, -1) == ped
     local nearVehicle = #(GetEntityCoords(ped) - GetEntityCoords(entity)) <= 45.0
-    local atDepot = cfg and cfg.depot and cfg.depot.coords and #(GetEntityCoords(ped) - cfg.depot.coords) <= 80.0
-    if not inDriverSeat and not nearVehicle and not atDepot then
-        dlog('player is not in the driver seat or near the vehicle / depot')
-        return nil, { localeKey = 'jobs.message.you_must_drive_the_work_vehicle' }
+    local atDepot = false
+    do
+        local depotCoords = cfg and ((cfg.depot and cfg.depot.coords) or (cfg.warehouse and cfg.warehouse.coords))
+        if depotCoords then atDepot = #(GetEntityCoords(ped) - vector3(depotCoords.x, depotCoords.y, depotCoords.z)) <= 80.0 end
     end
-    local cfg = Sunset.GetJobConfig(session.jobId)
+    if not inDriverSeat and not (nearVehicle and atDepot) then
+        dlog('player is not in the driver seat (or near the vehicle at the depot)')
+        return { retryable = true }
+    end
+    -- [JOBS AUDIT] never adopt a vehicle another system/session already protects (stolen/forged netId).
+    if Entity(entity).state.sunsetProtectedVehicle == true and session.vehicleNetId ~= vehicleNetId then
+        return nil, { localeKey = 'jobs.message.invalid_work_vehicle' }
+    end
     -- [MODEL FIX] The authoritative expected model is the one stored in the
     -- SESSION DATA when the shift started (category-based pool for trucker:
     -- mule/benson/pounder2/phantom/tanker). Falling back to cfg.truckModel
@@ -607,13 +695,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
     if expectsTrailer then
         if not session.trailerNetId then
             dlog('session expects a trailer but none was submitted')
-            return nil, { localeKey = 'jobs.message.work_trailer_was_not_registered' }
+            return { retryable = true }
         end
         local trailer = NetworkGetEntityFromNetworkId(session.trailerNetId)
         if not trailer or trailer == 0 or not DoesEntityExist(trailer) then
             session.trailerNetId = nil
             dlog('trailer netId did not resolve (not propagated yet)')
-            return nil, { localeKey = 'jobs.message.work_trailer_is_not_networked' }
+            return { retryable = true }
         end
         local expectedTrailer = (session.data and session.data.trailerModel) or (cfg and cfg.trailerModel)
         if expectedTrailer and GetEntityModel(trailer) ~= joaat(expectedTrailer) then
@@ -625,7 +713,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerVehicle', function(sou
         if #(GetEntityCoords(entity) - GetEntityCoords(trailer)) > maxTrailerDist then
             session.trailerNetId = nil
             dlog('trailer too far from truck')
-            return nil, { localeKey = 'jobs.message.work_trailer_is_too_far_from_the_truck' }
+            return { retryable = true }
         end
         Entity(trailer).state:set('sunsetProtectedVehicle', true, true)
         if session.frameworkId then
@@ -716,7 +804,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:registerTrailer', function(sou
     trailerNetId = tonumber(trailerNetId)
     local trailer = trailerNetId and NetworkGetEntityFromNetworkId(trailerNetId) or 0
     if not trailer or trailer == 0 or not DoesEntityExist(trailer) then
-        return nil, { localeKey = 'jobs.message.trailer_is_not_networked' }
+        return { retryable = true }
     end
     -- [MODEL FIX] Session data holds the real trailer model ('tanker' for fuel
     -- routes); cfg.trailerModel is only the 'trailers2' fallback. Validating
@@ -791,9 +879,17 @@ end
 AddEventHandler('playerDropped', function()
     local src = source
     local session = Sessions[src]
+    JobLocks[src] = nil
     if session then
         deleteSessionEntities(session)
         Sessions[src] = nil
+        -- [JOBS AUDIT] let per-job modules (hunter/diver/mechanic) drop their per-player state and
+        -- end the mirrored framework session (it was only cleaned if sunset_sessions saw the drop).
+        TriggerEvent('sunset:jobs:serverSessionEnded', src, session.jobId, 'CANCELLED', 'player dropped', session)
+        if session.frameworkId then
+            sessionsCall('EndSession', session.frameworkId, 'CANCELLED', 'player dropped')
+            session.frameworkId = nil
+        end
     end
 end)
 
@@ -822,6 +918,11 @@ AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
     for src, session in pairs(Sessions) do
         deleteSessionEntities(session)
+        -- [JOBS AUDIT] end the mirrored sunset_sessions entry too (else it lingers until its deadline).
+        if session.frameworkId then
+            sessionsCall('EndSession', session.frameworkId, 'CANCELLED', 'resource restart')
+            session.frameworkId = nil
+        end
         if GetPlayerName(src) then
             TriggerClientEvent('sunset:jobs:sessionEnded', src, session.jobId, 'CANCELLED', 'resource restart', {})
         end

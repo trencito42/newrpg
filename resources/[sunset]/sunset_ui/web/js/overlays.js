@@ -120,7 +120,7 @@ const Overlays = {
 
         Hud.showTask({
             icon: 'job',
-            title: `JOB ACTIV: ${tag}`,
+            title: I18n.t('ui.overlay.job_active', { tag }),
             desc: desc || title,
             progress: progress,
             progressText,

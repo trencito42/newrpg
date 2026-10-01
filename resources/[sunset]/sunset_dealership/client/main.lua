@@ -227,8 +227,8 @@ AddEventHandler('sunset:nui:dealershipTestDrive', function(data)
         for remaining = seconds, 1, -1 do
             if not testDriveActive or testVehicle == 0 or not DoesEntityExist(testVehicle) then break end
             TriggerEvent('sunset:ui:jobObjective', {
-                title = 'Test drive — ' .. (drive.label or drive.model),
-                subtitle = ('%d seconds remaining · the vehicle cannot be stored'):format(remaining),
+                title = exports.sunset_core:Translate('dealership.testdrive.title', { vehicle = drive.label or drive.model }),
+                subtitle = exports.sunset_core:Translate('dealership.testdrive.subtitle', { seconds = remaining }),
                 progress = math.floor(((seconds - remaining) / seconds) * 100),
             })
             Wait(1000)
@@ -266,9 +266,11 @@ AddEventHandler('sunset:nui:dealershipAdminDelete', function(data)
     end)
 end)
 
+local dealerBlip = nil
 CreateThread(function()
     local cfg = Sunset.Dealership
     local blip = AddBlipForCoord(cfg.coords.x, cfg.coords.y, cfg.coords.z)
+    dealerBlip = blip
     SetBlipSprite(blip, cfg.blip.sprite)
     SetBlipColour(blip, cfg.blip.color)
     SetBlipScale(blip, cfg.blip.scale)
@@ -285,7 +287,7 @@ CreateThread(function()
                 2.4, 2.4, 0.8, 255, 140, 0, 180, false, false, 2, false, nil, nil, false)
             if distance <= cfg.interactionRadius and not dealerOpen and not testDriveActive then
                 BeginTextCommandDisplayHelp('STRING')
-                AddTextComponentSubstringPlayerName('Press ~INPUT_CONTEXT~ to browse vehicles')
+                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('hint.native.browse_vehicles'))
                 EndTextCommandDisplayHelp(0, false, true, -1)
                 if IsControlJustPressed(0, 38) then CreateThread(function() openDealer(false) end) end
             end
@@ -304,6 +306,8 @@ end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() then return end
+    if dealerBlip and DoesBlipExist(dealerBlip) then RemoveBlip(dealerBlip) end
+    dealerBlip = nil
     deletePreview()
     if testVehicle ~= 0 and DoesEntityExist(testVehicle) then
         TriggerServerEvent('sunset:dealership:endTestDrive', NetworkGetNetworkIdFromEntity(testVehicle))

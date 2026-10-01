@@ -229,7 +229,9 @@ exports.sunset_core:RegisterCallback('sunset:spawnVehicle', function(source, veh
 
     if stored == 1 then
         outPlates = {}
-        MySQL.update.await('UPDATE vehicles SET stored = 0 WHERE id = ?', { veh.id })
+        -- [SEC2] atomic claim: two parallel spawn requests must not both spawn the car
+        local claimed = MySQL.update.await('UPDATE vehicles SET stored = 0 WHERE id = ? AND character_id = ? AND stored = 1', { veh.id, char.id })
+        if claimed ~= 1 then return nil, { localeKey = 'vehicles.message.vehicle_not_available' } end
     elseif stored == 0 then
         outPlates = { { plate = veh.plate } }
     else
@@ -366,7 +368,7 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
         UPDATE vehicles SET stored = 1, garage = ?, props = ?, fuel = ?, engine = ?, body = ?
         WHERE id = ? AND character_id = ?
     ]], {
-        garageId or 'legion',
+        tostring(garageId or 'legion'):sub(1, 32),
         encodedProps,
         fuelLevel,
         engine,

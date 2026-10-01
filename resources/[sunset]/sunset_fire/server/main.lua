@@ -195,7 +195,9 @@ exports.sunset_core:RegisterCallback('sunset:fireExtinguish', function(source, i
         return nil, { localeKey = 'fire.message.you_need_a_fire_extinguisher_or_fire_truck_to' }
     end
 
-    amount = math.min(tonumber(amount) or 0, Sunset.Fire.extinguishRate or 12)
+    amount = tonumber(amount) or 0
+    if amount ~= amount then amount = 0 end -- [SEC2] NaN would zero fireHealth instantly
+    amount = math.min(amount, Sunset.Fire.extinguishRate or 12)
     if amount < 1 then return nil, { localeKey = 'fire.message.invalid_extinguish_amount' } end
 
     inc.fireHealth = math.max(0, (inc.fireHealth or 0) - amount)

@@ -58,6 +58,16 @@ local function notify(source, msg, kind, duration)
     end
 end
 
+-- [JOBS AUDIT] `exports.sunset_core.FormatMoney and ...` was always truthy (export proxies resolve any key)
+-- and sunset_core exports no FormatMoney, so the call threw "No such export" in the middle of reward
+-- payout/settlement (winners 2-3 unpaid, results never broadcast, state stuck in SETTLING).
+local function formatMoney(n)
+    n = math.floor(tonumber(n) or 0)
+    local str = tostring(n)
+    local formatted = str:reverse():gsub('(%d%d%d)', '%1,'):reverse():gsub('^,', '')
+    return '$' .. formatted
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  Deterministic Ranking & Tie Breaking
 -- ═══════════════════════════════════════════════════════════════
@@ -146,38 +156,57 @@ end
 --  Pending Offline Rewards Settlement & Claim Flow
 -- ═══════════════════════════════════════════════════════════════
 
+local ClaimBusy = {}
+
 local function claimPendingRewards(source, charId)
     if not charId or charId <= 0 then return end
+    if ClaimBusy[charId] then return end
+    ClaimBusy[charId] = true
 
-    MySQL.query([[
-        SELECT id, tournament_id, `rank`, cash, xp
-        FROM fishing_tournament_rewards
-        WHERE character_id = ? AND claimed_at IS NULL
-    ]], { charId }, function(rows)
-        if not rows or #rows == 0 then return end
+    CreateThread(function()
+        local okRun, runErr = pcall(function()
+            local rows = MySQL.query.await([[
+                SELECT id, tournament_id, `rank`, cash, xp
+                FROM fishing_tournament_rewards
+                WHERE character_id = ? AND claimed_at IS NULL
+            ]], { charId })
+            if not rows or #rows == 0 then return end
 
-        for _, row in ipairs(rows) do
-            local rewardId = row.id
-            local rank = row.rank
-            local cash = tonumber(row.cash) or 0
-            local xp = tonumber(row.xp) or 0
-            local tId = row.tournament_id or 'tournament'
+            for _, row in ipairs(rows) do
+                local rewardId = row.id
+                local rank = row.rank
+                local cash = tonumber(row.cash) or 0
+                local xp = tonumber(row.xp) or 0
+                local tId = row.tournament_id or 'tournament'
 
-            if cash > 0 then
-                exports.sunset_core:AddMoney(source, 'cash', cash, 'fishing_tournament_reward')
+                -- [JOBS AUDIT] Claim atomically BEFORE paying (conditional UPDATE): the old read-pay-then-mark
+                -- flow double-paid when characterSelected fired twice, and marked rewards claimed even when
+                -- AddMoney failed. Release the claim again if the payout fails.
+                local claimed = MySQL.update.await(
+                    'UPDATE fishing_tournament_rewards SET claimed_at = NOW() WHERE id = ? AND claimed_at IS NULL',
+                    { rewardId })
+                if claimed == 1 and GetPlayerName(source) and getCharId(source) == charId then
+                    local paid = cash <= 0 or exports.sunset_core:AddMoney(source, 'cash', cash, 'fishing_tournament_reward')
+                    if not paid then
+                        MySQL.update.await('UPDATE fishing_tournament_rewards SET claimed_at = NULL WHERE id = ?', { rewardId })
+                        logInfo('pending reward payout failed, left unclaimed id=%d char=%d', rewardId, charId)
+                    else
+                        if xp > 0 then
+                            pcall(function() exports.sunset_core:AddXP(source, xp) end)
+                        end
+                        logInfo('claimed pending reward char=%d rank=%d cash=%d xp=%d tournament=%s',
+                            charId, rank, cash, xp, tId)
+                        notify(source, ('Fishing Tournament Claimed - Rank #%d! Reward: %s + %d XP.'):format(
+                            rank, formatMoney(cash), xp), 'success', 10000)
+                    end
+                elseif claimed == 1 then
+                    -- player left / switched character between the select and the claim: put it back
+                    MySQL.update.await('UPDATE fishing_tournament_rewards SET claimed_at = NULL WHERE id = ?', { rewardId })
+                end
             end
-            if xp > 0 then
-                pcall(function() exports.sunset_core:AddXP(source, xp) end)
-            end
-
-            MySQL.update('UPDATE fishing_tournament_rewards SET claimed_at = NOW() WHERE id = ?', { rewardId })
-
-            logInfo('claimed pending reward char=%d rank=%d cash=%d xp=%d tournament=%s',
-                charId, rank, cash, xp, tId)
-
-            notify(source, ('🎣 Fishing Tournament Claimed — Rank #%d! Reward: $%s + %d XP.'):format(
-                rank, exports.sunset_core.FormatMoney and exports.sunset_core:FormatMoney(cash) or tostring(cash), xp), 'success', 10000)
-        end
+        end)
+        ClaimBusy[charId] = nil
+        if not okRun then logInfo('claimPendingRewards error: %s', tostring(runErr)) end
     end)
 end
 
@@ -236,7 +265,7 @@ local function startTournament(instanceId, duration, isDevTest)
     })
 end
 
-local function settleTournament()
+local function settleTournamentInner()
     if TournamentData.state ~= 'ACTIVE' then return end
 
     TournamentData.state = 'SETTLING'
@@ -259,15 +288,23 @@ local function settleTournament()
     end
 
     -- 1. Record History in Database
+    -- [JOBS AUDIT] The INSERT used columns that do not exist in sql/58 (total_weight, biggest_fish_weight) and
+    -- omitted the NOT NULL display_name, so every history write failed. Matched to the real schema.
+    local endedAt = os.time()
     for rank, p in ipairs(ranked) do
-        local totalKg = p.totalWeight10 / 10
-        local biggestKg = p.biggestFishWeight10 / 10
+        local rewardCfg = (rank <= 3 and p.fishCount >= minFish) and Cfg.rewards[rank] or nil
         MySQL.insert([[
             INSERT INTO fishing_tournament_history
-                (tournament_id, started_at, ended_at, character_id, `rank`, fish_count, total_weight, biggest_fish_weight, biggest_fish_item)
-            VALUES (?, FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?)
+                (tournament_id, character_id, display_name, `rank`, fish_count, total_weight_10,
+                 biggest_fish_weight_10, biggest_fish_item, qualified, reward_cash, reward_xp, started_at, ended_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE `rank` = VALUES(`rank`), fish_count = VALUES(fish_count),
+                total_weight_10 = VALUES(total_weight_10), biggest_fish_weight_10 = VALUES(biggest_fish_weight_10)
         ]], {
-            instanceId, TournamentData.startedAt, p.charId, rank, p.fishCount, totalKg, biggestKg, p.biggestFishItem or 'fish'
+            instanceId, p.charId, tostring(p.name or 'Unknown'):sub(1, 64), rank, p.fishCount, p.totalWeight10,
+            p.biggestFishWeight10, p.biggestFishItem or 'fish', (p.fishCount >= minFish) and 1 or 0,
+            (not isDevTest and rewardCfg) and rewardCfg.cash or 0, (not isDevTest and rewardCfg) and rewardCfg.xp or 0,
+            TournamentData.startedAt, endedAt
         })
     end
 
@@ -298,9 +335,16 @@ local function settleTournament()
                     end
                 end
 
+                -- [JOBS AUDIT] Only mark a reward claimed if the money actually landed; otherwise queue it as
+                -- pending so it is paid on next login (it was marked claimed even when AddMoney failed).
+                local paidNow = false
                 if activeSource then
+                    paidNow = (tonumber(reward.cash) or 0) <= 0
+                        or exports.sunset_core:AddMoney(activeSource, 'cash', reward.cash, 'fishing_tournament')
+                end
+
+                if activeSource and paidNow then
                     -- Direct payout
-                    exports.sunset_core:AddMoney(activeSource, 'cash', reward.cash, 'fishing_tournament')
                     pcall(function() exports.sunset_core:AddXP(activeSource, reward.xp) end)
 
                     MySQL.insert([[
@@ -312,10 +356,9 @@ local function settleTournament()
                     logInfo('rewarded online winner char=%d source=%d rank=%d cash=%d xp=%d',
                         entry.charId, activeSource, rank, reward.cash, reward.xp)
 
-                    notify(activeSource, ('🎣 Fishing Tournament — %s! %d fish (Total: %.1f KG). Reward: $%s + %d XP.'):format(
+                    notify(activeSource, ('Fishing Tournament - %s! %d fish (Total: %.1f KG). Reward: %s + %d XP.'):format(
                         reward.label, entry.fishCount, entry.totalWeight10 / 10,
-                        exports.sunset_core.FormatMoney and exports.sunset_core:FormatMoney(reward.cash) or tostring(reward.cash),
-                        reward.xp), 'success', 15000)
+                        formatMoney(reward.cash), reward.xp), 'success', 15000)
                 else
                     -- Pending offline reward
                     MySQL.insert([[
@@ -377,6 +420,18 @@ local function settleTournament()
             TournamentData.participants = {}
         end
     end)
+end
+
+-- [JOBS AUDIT] An error mid-settlement used to leave the tournament in SETTLING forever. Guard it.
+local function settleTournament()
+    local ok, err = pcall(settleTournamentInner)
+    if not ok then
+        logInfo('settlement error: %s', tostring(err))
+        if TournamentData.state == 'SETTLING' then
+            TournamentData.state = 'INACTIVE'
+            TournamentData.participants = {}
+        end
+    end
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -623,7 +678,7 @@ end)
 -- Dev / Admin diagnostic command
 RegisterCommand('fishtournamentdebug', function(source, args, raw)
     local isConsole = (source == 0)
-    local isAdmin = isConsole or (exports.sunset_core.IsPlayerAdmin and exports.sunset_core:IsPlayerAdmin(source))
+    local isAdmin = isConsole or exports.sunset_admin:IsAdmin(source, 3) -- sunset_core exports no IsPlayerAdmin
     if not isAdmin then
         if source > 0 then notify(source, 'No permission.', 'error') end
         return

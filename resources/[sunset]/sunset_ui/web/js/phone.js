@@ -11,6 +11,13 @@ const Phone = {
         }[char]));
     },
 
+    // [SEC2] Avatars are player-supplied: only ever allow a strict base64 image data URL
+    // in <img src> (prevents attribute breakout / script injection into other players' NUI).
+    safeAvatarSrc(value) {
+        const v = String(value ?? '');
+        return /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v) ? v : '';
+    },
+
     init() {
         if (this._ready) return;
         this._ready = true;
@@ -104,7 +111,7 @@ const Phone = {
             this.renderContacts();
         });
         $('#phone-my-card')?.addEventListener('click', () => {
-            notify(`Your number: ${this.data?.myPhoneNumber || '555-0000'}`, 'info');
+            notify(I18n.t('ui.phone.your_number', { number: this.data?.myPhoneNumber || '555-0000' }), 'info');
         });
     },
 
@@ -245,6 +252,11 @@ const Phone = {
         device?.classList.remove('is-open');
         setTimeout(() => device?.classList.add('hidden'), 400);
         this.chatTarget = null;
+        // [NUI PERF] stop the clock tick while the phone is hidden
+        if (this._clockTimer) {
+            clearInterval(this._clockTimer);
+            this._clockTimer = null;
+        }
     },
 
     update(payload) {
@@ -375,7 +387,7 @@ const Phone = {
             return `<div class="phone-thread__avatar phone-thread__avatar--emergency" style="background: linear-gradient(135deg, #ff3b30 0%, #d70015 100%);">🚨</div>`;
         }
         if (avatar) {
-            return `<div class="phone-thread__avatar"><img src="${avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>`;
+            return `<div class="phone-thread__avatar"><img src="${this.safeAvatarSrc(avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>`;
         }
         return `<div class="phone-thread__avatar" style="background: ${this.getIosAvatarGradient(name)};">${this.escapeHtml(initial)}</div>`;
     },
@@ -516,7 +528,7 @@ const Phone = {
         if (myCardAvatar) {
             const myAvatar = this.data?.myAvatar || null;
             if (myAvatar) {
-                myCardAvatar.innerHTML = `<img src="${myAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                myCardAvatar.innerHTML = `<img src="${this.safeAvatarSrc(myAvatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                 myCardAvatar.style.background = 'transparent';
             } else {
                 myCardAvatar.textContent = (this.data?.myName || '?').charAt(0).toUpperCase();
@@ -626,7 +638,7 @@ const Phone = {
             // [AVATAR] Use real headshot if available, gradient fallback otherwise
             const avatarImg = c.avatar || (this.data?.avatarsByChar || {})[c.characterId] || null;
             const avatarContent = avatarImg
-                ? `<img src="${avatarImg}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                ? `<img src="${this.safeAvatarSrc(avatarImg)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
                 : this.escapeHtml(label.charAt(0).toUpperCase());
             const avatarStyle = avatarImg ? '' : ` style="background: ${this.getIosAvatarGradient(label)};"`;
 
@@ -670,7 +682,7 @@ const Phone = {
 
             row.querySelector('.phone-contact-act-btn--call').addEventListener('click', (e) => {
                 e.stopPropagation();
-                notify(`Calling ${label} (${phoneText || 'unknown'})...`, 'info');
+                notify(I18n.t('ui.phone.calling', { name: label, number: phoneText || I18n.t('ui.phone.unknown_number') }), 'info');
             });
 
             row.querySelector('.phone-contact-act-btn--chat').addEventListener('click', (e) => {
@@ -746,7 +758,7 @@ const Phone = {
             } else {
                 const avatarImg = (this.data?.avatarsByChar || {})[target.charId] || target.avatar || null;
                 if (avatarImg) {
-                    navAvatar.innerHTML = `<img src="${avatarImg}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    navAvatar.innerHTML = `<img src="${this.safeAvatarSrc(avatarImg)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                     navAvatar.style.background = 'transparent';
                 } else {
                     navAvatar.textContent = (target.name || '?').charAt(0).toUpperCase();
@@ -959,7 +971,7 @@ const Phone = {
         if (avatar) {
             const myAvatar = d.myAvatar || null;
             if (myAvatar) {
-                avatar.innerHTML = `<img src="${myAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                avatar.innerHTML = `<img src="${this.safeAvatarSrc(myAvatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                 avatar.style.background = 'transparent';
             } else {
                 avatar.textContent = name.charAt(0).toUpperCase();
@@ -1113,8 +1125,8 @@ const Phone = {
                     <div class="phone-taxi-places" id="phone-taxi-places">
                         ${filtered.slice(0, 40).map((p) => `
                             <button type="button" class="phone-taxi-place" data-place-id="${p.id}">
-                                <span class="phone-taxi-place__name">${p.label}</span>
-                                <span class="phone-taxi-place__cat">${p.category || ''}</span>
+                                <span class="phone-taxi-place__name">${this.escapeHtml(p.label)}</span>
+                                <span class="phone-taxi-place__cat">${this.escapeHtml(p.category || '')}</span>
                             </button>`).join('')}
                         ${filtered.length > 40 ? `<p class="phone-taxi-hint">${filtered.length - 40} more — refine search</p>` : ''}
                         ${!filtered.length ? '<p class="phone-taxi-hint">No places found</p>' : ''}
@@ -1123,7 +1135,7 @@ const Phone = {
 
                 <div class="phone-taxi-dest-summary">
                     <span>Destination</span>
-                    <strong id="phone-taxi-dest-label">${this.taxiDest?.label || 'Not selected'}</strong>
+                    <strong id="phone-taxi-dest-label">${this.escapeHtml(this.taxiDest?.label || 'Not selected')}</strong>
                 </div>
                 <div class="phone-taxi-estimate">
                     <div><span>Distance</span><strong id="phone-taxi-distance">—</strong></div>
@@ -1280,7 +1292,7 @@ const Phone = {
         if (!isDriver && (ride.status === 'accepted' || ride.status === 'in_progress')) {
             distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
                 <span>Driver</span>
-                <strong id="phone-taxi-driver-status">${d.driverStatusText || 'Driver en route'}</strong>
+                <strong id="phone-taxi-driver-status">${this.escapeHtml(d.driverStatusText || 'Driver en route')}</strong>
             </div>
             <div class="phone-taxi-row phone-taxi-row--live">
                 <span>Distance</span>
@@ -1290,7 +1302,7 @@ const Phone = {
         if (isDriver && ride.status === 'accepted') {
             distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
                 <span>Passenger</span>
-                <strong id="phone-taxi-passenger-status">${d.passengerStatusText || 'En route to passenger'}</strong>
+                <strong id="phone-taxi-passenger-status">${this.escapeHtml(d.passengerStatusText || 'En route to passenger')}</strong>
             </div>
             <div class="phone-taxi-row phone-taxi-row--live">
                 <span>Distance</span>
@@ -1302,8 +1314,8 @@ const Phone = {
         }
 
         return `<div class="phone-taxi-card phone-taxi-card--active">
-            <div class="phone-taxi-status phone-taxi-status--${ride.status}">${statusLabels[ride.status] || ride.status}</div>
-            <div class="phone-taxi-row"><span>Destination</span><strong>${ride.destination?.label || '—'}</strong></div>
+            <div class="phone-taxi-status phone-taxi-status--${this.escapeHtml(ride.status)}">${this.escapeHtml(statusLabels[ride.status] || ride.status)}</div>
+            <div class="phone-taxi-row"><span>Destination</span><strong>${this.escapeHtml(ride.destination?.label || '—')}</strong></div>
             <div class="phone-taxi-row"><span>Fare</span><strong>${this.formatMoney(ride.fare)}</strong></div>
             ${ride.driverName ? `<div class="phone-taxi-row"><span>Driver</span><strong>${ride.driverName}</strong></div>` : ''}
             ${ride.passengerName && isDriver ? `<div class="phone-taxi-row"><span>Passenger</span><strong>${ride.passengerName}</strong></div>` : ''}

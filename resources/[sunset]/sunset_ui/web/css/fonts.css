@@ -1,14 +1,6 @@
 @import url('../assets/fonts/montserrat.css?v=2');
 
 @font-face {
-    font-family: 'Pricedown';
-    src: url('../assets/fonts/pricedown.otf') format('opentype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Chakra Petch';
     src: url('../assets/fonts/chakra-petch-400.woff2') format('woff2');
     font-weight: 400;

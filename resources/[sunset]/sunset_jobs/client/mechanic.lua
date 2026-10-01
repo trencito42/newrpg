@@ -7,6 +7,12 @@ RegisterNetEvent('sunset:jobs:mechanic:newCall', function(callData)
     activeCall = callData
     JC.notify(('Mechanic call #%s: %s — press E to accept'):format(
         callData and callData.id or '?', callData and callData.label or 'Service request'), 'info')
+    JC.hud({
+        title = exports.sunset_core:Translate('jobs.hud.mechanic.title'),
+        objective = exports.sunset_core:Translate('jobs.hud.mechanic.incoming', { id = callData and callData.id or '?', label = callData and callData.label or '' }),
+        tone = 'warn',
+        keyHints = { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.accept_call') } },
+    })
     if callData and callData.coords then
         JC.setWaypoint(callData.coords)
     end
@@ -74,21 +80,30 @@ local function startMechanic()
     JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Mechanic Depot')
     JC.sessionData = data
     JC.setWaypoint(cfg.depot.coords)
-    JC.showObjective('Roadside Mechanic', 'Wait for a service call, then press E to accept it', 0)
+    JC.hud({ title = exports.sunset_core:Translate('jobs.hud.mechanic.title'), objective = exports.sunset_core:Translate('jobs.hud.mechanic.wait') })
     JC.notify(exports.sunset_core:Translate('jobs.message.on_duty_accept_service_mechanic_calls_stand_near_a'), 'success')
 
     CreateThread(function()
         while JC.jobId == 'mechanic' and JC.state ~= 'IDLE' do
-            if activeCall and activeCall.id and JC.sessionData.stage == 'on_duty' then
+            local acceptedThisFrame = false
+            if activeCall and activeCall.id and JC.sessionData and JC.sessionData.stage == 'on_duty' and not repairing then
                 if IsControlJustPressed(0, 38) then
-                    Sunset.AwaitCallback('sunset:jobs:mechanic:acceptCall', activeCall.id)
-                    JC.sessionData.stage = 'en_route'
-                    JC.showObjective('Roadside Mechanic', 'Drive to the customer shown on GPS', 40)
-                    JC.notify(exports.sunset_core:Translate('jobs.message.call_accepted_go_to_customer'), 'success')
+                    acceptedThisFrame = true
+                    -- [JOBS AUDIT] the client used to flip to 'en_route' even when the server refused the call.
+                    local accepted, acceptErr = Sunset.AwaitCallback('sunset:jobs:mechanic:acceptCall', activeCall.id)
+                    if accepted then
+                        if JC.sessionData then JC.sessionData.stage = 'en_route' end
+                        JC.hud({ title = exports.sunset_core:Translate('jobs.hud.mechanic.title'), objective = exports.sunset_core:Translate('jobs.hud.mechanic.en_route'), keyHints = { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.repair') } } })
+                        JC.notify(exports.sunset_core:Translate('jobs.message.call_accepted_go_to_customer'), 'success')
+                    else
+                        activeCall = nil
+                        JC.notify(acceptErr or 'Could not accept call', 'error')
+                    end
                 end
             end
 
-            local target = getNearbyPlayerInVehicle()
+            -- Repairs only make sense once a call is accepted (server rejects them otherwise).
+            local target = (not acceptedThisFrame and JC.sessionData and JC.sessionData.stage == 'en_route') and getNearbyPlayerInVehicle() or nil
             if target and not repairing then
                 JC.drawMarker(GetEntityCoords(GetPlayerPed(GetPlayerFromServerId(target))), 255, 140, 0)
                 if IsControlJustPressed(0, 38) then
@@ -100,8 +115,9 @@ local function startMechanic()
                     ClearPedTasks(PlayerPedId())
                     if result then
                         activeCall = nil
-                        JC.sessionData.stage = 'on_duty'
-                        JC.showObjective('Roadside Mechanic', 'Repair complete — waiting for another call', 100)
+                        if JC.sessionData then JC.sessionData.stage = 'on_duty' end
+                        JC.addEarned(result.pay or 0)
+                        JC.hud({ title = exports.sunset_core:Translate('jobs.hud.mechanic.title'), objective = exports.sunset_core:Translate('jobs.hud.mechanic.done'), tone = 'success' })
                         JC.notify(('Repair complete +$%s'):format(result.pay or 0), 'success')
                     elseif err2 then
                         JC.notify(err2, 'error')

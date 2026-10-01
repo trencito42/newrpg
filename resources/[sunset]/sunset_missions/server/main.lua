@@ -78,8 +78,11 @@ end)
 
 -- ── stage transitions ─────────────────────────────────────────────────────────
 exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source, data)
+    if type(data) ~= 'table' then return nil, { localeKey = 'missions.message.no_session' } end
     local s, err = MSN_RequireSession(source, data.mission)
     if not s then return nil, err end
+    -- [JOBS AUDIT] stage changes are client-driven; stop instant chaining through every stage (min 3s dwell).
+    if s.stageAt and os.time() - s.stageAt < 3 then return nil, { localeKey = 'missions.message.no_session' } end
 
     local def  = SunsetMissions.GetMission(s.mission)
     local allowed = false
@@ -89,7 +92,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source
             break
         end
     end
-    if not allowed then return nil, { localeKey = 'missions.message.invalid_stage_transition' } .. s.state .. ' -> ' .. tostring(data.stage) end
+    if not allowed then return nil, 'Invalid stage transition: ' .. tostring(s.state) .. ' -> ' .. tostring(data.stage) end
 
     MSN_SetState(source, data.stage)
     return true
@@ -113,8 +116,12 @@ exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(sour
         return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
-    local cond = math.max(0, math.min(100, data.condition or 0))
-    local total, details = MSN_PayReward(source, s, cond, data.escaped)
+    data = type(data) == 'table' and data or {}
+    local cond = math.max(0, math.min(100, tonumber(data.condition) or 0))
+    -- [JOBS AUDIT] escape bonus was whatever the client claimed; honour it only if the server saw the PURSUIT stage.
+    local escaped = data.escaped == true and s.visited and s.visited.PURSUIT == true
+    local total, details = MSN_PayReward(source, s, cond, escaped)
+    if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end
     TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'vehicle_recovery', xp = details.xp })
     return true
 end)
@@ -155,6 +162,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(sou
     local cond    = 100
     local escaped = (s.data.alertLevel or 0) < 3
     local total, details = MSN_PayReward(source, s, cond, escaped)
+    if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end
     TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'container_47', xp = details.xp })
     return true
 end)

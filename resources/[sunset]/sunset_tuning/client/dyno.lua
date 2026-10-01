@@ -123,7 +123,7 @@ local function drawDynoHud()
     SetTextCentre(true)
     SetTextOutline()
     SetTextEntry('STRING')
-    AddTextComponentSubstringPlayerName('Hold W — the car stays in place on the stand')
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('tuning.dyno.hold_w'))
     DrawText(0.5, 0.905)
 end
 

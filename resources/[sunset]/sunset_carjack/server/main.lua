@@ -56,7 +56,9 @@ exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(sour
     if not hasItem then return false, { localeKey = 'carjack.message.you_need_a_lockpick' } end
 
     -- Consume lockpick regardless of outcome (single use)
-    exports.sunset_inventory:RemoveItem(source, 'lockpick', 1)
+    if exports.sunset_inventory:RemoveItem(source, 'lockpick', 1) ~= true then
+        return false, { localeKey = 'carjack.message.you_need_a_lockpick' }
+    end
 
     -- Success chance: 35% base + 5% per level, max 95%
     local level   = getLockpickLevel(source)
@@ -116,7 +118,8 @@ end
 -- with zero validation, allowing unlimited money minting at 12 calls/sec. It now
 -- resolves the entity server-side and enforces: driver seat, chop-shop proximity,
 -- cooldown, vehicle is not player-owned, not a protected/faction vehicle, then deletes it.
-exports.sunset_core:RegisterCallback('sunset:carjack:sell', function(source, data)
+local SellBusy = {}
+local function doChopSell(source, data)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
 
@@ -185,8 +188,20 @@ exports.sunset_core:RegisterCallback('sunset:carjack:sell', function(source, dat
     print(('[carjack] %s sold a vehicle (hash %d) for $%d'):format(GetPlayerName(source) or '?', modelHash, payout))
 
     return true, payout
+end
+
+-- [SEC2] in-flight lock: parallel sells of the same vehicle used to both pass the
+-- cooldown check (the cooldown was only stamped after yielding DB calls).
+exports.sunset_core:RegisterCallback('sunset:carjack:sell', function(source, data)
+    if SellBusy[source] then return false, { localeKey = 'carjack.message.the_buyer_is_still_counting_the_last_cash_come' } end
+    SellBusy[source] = true
+    local ok, a, b = pcall(doChopSell, source, data)
+    SellBusy[source] = nil
+    if not ok then error(a) end
+    return a, b
 end)
 
 AddEventHandler('playerDropped', function()
+    SellBusy[source] = nil
     SellCooldown[source] = nil
 end)

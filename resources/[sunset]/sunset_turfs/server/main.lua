@@ -397,6 +397,7 @@ local function startWar(turf, attackerClan, defenderClan)
 
     -- War ticker thread
     CreateThread(function()
+        local tickCounter = 0
         while ActiveWars[turfId] do
             Wait(1000)
             local current = ActiveWars[turfId]
@@ -469,7 +470,16 @@ local function startWar(turf, attackerClan, defenderClan)
             current.defenderCount = defCount
             current.remainingSec = math.max(0, current.expiresAt - os.time())
 
-            TriggerClientEvent('sunset:turfs:warTick', -1, current)
+            -- [PERF] Participants get 1 Hz ticks; everyone else (turf-map viewers,
+            -- late joiners) gets a 5 s broadcast. Client also polls state every 10 s.
+            tickCounter = tickCounter + 1
+            if tickCounter % 5 == 0 then
+                TriggerClientEvent('sunset:turfs:warTick', -1, current)
+            else
+                for psrc in pairs(current.participants or {}) do
+                    if GetPlayerName(psrc) then TriggerClientEvent('sunset:turfs:warTick', psrc, current) end
+                end
+            end
         end
     end)
 end
@@ -967,6 +977,25 @@ exports.sunset_core:RegisterCallback('sunset:turfs:warRespawn', function(source)
 
     local participant = war.participants[source]
     if not participant then return nil, { localeKey = 'turfs.message.you_are_no_longer_part_of_this_war' } end
+
+    -- [SEC2] The callback used to trust the client: anyone in a war could call it
+    -- while alive to score kills for the enemy, heal and teleport inside the zone.
+    -- Require server-visible death (ped health) and a throttle.
+    if not exports.sunset_core:RateLimit(source, 'turfWarRespawn', 4000) then
+        return nil, { localeKey = 'turfs.message.you_are_no_longer_part_of_this_war' }
+    end
+    do
+        local wped = GetPlayerPed(source)
+        local hp = (wped and wped ~= 0) and GetEntityHealth(wped) or 0
+        local downed = false
+        if GetResourceState('sunset_death') == 'started' then
+            local okD, d = pcall(function() return exports.sunset_death:IsPlayerDowned(source) end)
+            downed = okD and d == true
+        end
+        if hp > 105 and not downed then
+            return nil, { localeKey = 'turfs.message.you_are_no_longer_part_of_this_war' }
+        end
+    end
 
     -- [WAR KILL FIX] The victim actually died and used the war respawn: this is
     -- the authoritative kill moment. Score it now (not on every hit).

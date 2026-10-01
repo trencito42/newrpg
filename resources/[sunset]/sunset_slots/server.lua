@@ -94,12 +94,26 @@ end)
 RegisterServerEvent('sunset_slots:PayOutRewards')
 AddEventHandler('sunset_slots:PayOutRewards', function(amount)
     local src = source
-    amount = math.max(0, math.floor(tonumber(amount) or 0))
+    amount = tonumber(amount) or 0
+    if amount ~= amount or amount == math.huge then amount = 0 end
+    amount = math.max(0, math.floor(amount))
     local sess = ActiveSessions[src]
-    if sess then
-        SeatsTaken[sess.slotId] = nil
-        ActiveSessions[src] = nil
+    -- [SEC2] Spin outcome is computed in the NUI (client). Without an active
+    -- server-opened session there is nothing to cash out, and the payout is
+    -- capped relative to the stake the server actually took from inventory.
+    if not sess then
+        if amount > 0 then
+            print(('[sunset_slots] SECURITY: payout %d without session from %d rejected'):format(amount, src))
+        end
+        return
     end
+    local cap = math.min((sess.chips or 0) * 4, 200000)
+    if amount > cap then
+        print(('[sunset_slots] SECURITY: payout %d exceeds cap %d (src %d), clamped'):format(amount, cap, src))
+        amount = cap
+    end
+    SeatsTaken[sess.slotId] = nil
+    ActiveSessions[src] = nil
 
     if amount > 0 then
         giveChips(src, amount)
@@ -112,8 +126,11 @@ end)
 RegisterServerEvent('sunset_slots:takePlace')
 AddEventHandler('sunset_slots:takePlace', function(object)
     local src = source
-    if object then
-        SeatsTaken[tostring(object)] = src
+    if object and (type(object) == 'string' or type(object) == 'number') and #tostring(object) <= 64 then
+        local key = tostring(object)
+        if SeatsTaken[key] == nil then
+            SeatsTaken[key] = src
+        end
     end
 end)
 

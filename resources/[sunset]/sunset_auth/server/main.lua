@@ -256,5 +256,6 @@ exports.sunset_core:RegisterCallback('sunset:authSetEmail', function(source, ema
     if not exports.sunset_core:CompleteAuthentication(source, account.id, account.username) then
         return nil, localeError('auth.session_failed')
     end
+    AuthenticatedPlayers[source] = true
     return { username = account.username, needsEmail = false, quickToken = issueQuickToken(source, account.id) }
 end)

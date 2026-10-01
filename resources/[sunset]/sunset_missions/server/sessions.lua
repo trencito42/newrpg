@@ -33,13 +33,18 @@ function MSN_RequireSession(source, missionId, allowedStates)
         for _, st in ipairs(allowedStates) do
             if s.state == st then ok = true break end
         end
-        if not ok then return nil, { localeKey = 'missions.message.wrong_state' } .. s.state end
+        if not ok then return nil, 'wrong_state:' .. tostring(s.state) end
     end
     return s
 end
 
 function MSN_SetState(source, state)
-    if sessions[source] then sessions[source].state = state end
+    if sessions[source] then
+        sessions[source].state = state
+        sessions[source].stageAt = os.time()
+        sessions[source].visited = sessions[source].visited or {}
+        sessions[source].visited[state] = true
+    end
 end
 
 function MSN_EndSession(source, result, reward, meta)

@@ -9,6 +9,12 @@
 --    smoke       — callback registry + rate-limit smoke checks
 -- ============================================================
 
+-- DEV GATE: refuse to run unless the master dev convar is on (set via SUNSET_DEV=1 -> `set sunset_dev 1`).
+if GetConvarInt('sunset_dev', 0) ~= 1 then
+    print('^3[sunset_testdriver]^7 sunset_dev=0 - disabled (production safety)')
+    return
+end
+
 local PASS, FAIL = '^2PASS^7', '^1FAIL^7'
 local results = {}
 

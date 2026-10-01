@@ -320,9 +320,14 @@ end)
 -- Client relay: MarkLegitLocal from any resource's client script.
 RegisterNetEvent('sunset:anticheat:markLegitLocal', function(checkType, seconds)
     local src = source
-    checkType = tostring(checkType or 'all')
-    -- Only trust calls that name a real check type; cap the window at 30 s.
-    seconds = math.min(30, math.max(1, tonumber(seconds) or 10))
+    checkType = tostring(checkType or '')
+    -- [SEC2] This event is client-triggerable, so a cheater could whitelist themselves
+    -- ('all'/'health'/'weapon'...). Only the two legit client-side spawn/teleport
+    -- relays used by sunset resources are accepted, with short windows + throttle.
+    local ALLOWED = { vehicle_spawn = 15, trucker_tp = 20 }
+    if not ALLOWED[checkType] then return end
+    if not exports.sunset_core:RateLimit(src, 'acMarkLegit', 1000) then return end
+    seconds = math.min(ALLOWED[checkType], math.max(1, tonumber(seconds) or 10))
     Context.MarkLegit(src, checkType, seconds)
 end)
 

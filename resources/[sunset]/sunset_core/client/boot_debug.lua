@@ -147,12 +147,15 @@ CreateThread(function()
         local delta = now - lastTimer
         lastTimer = now
 
-        local state = exports.sunset_core:GetBootState()
-        if state == 'GAMEPLAY' and not gameplayTimestamp then
-            gameplayTimestamp = now
+        -- Export call only until GAMEPLAY is seen (then only on a hitch, below).
+        local state
+        if not gameplayTimestamp then
+            state = exports.sunset_core:GetBootState()
+            if state == 'GAMEPLAY' then gameplayTimestamp = now end
         end
 
-        if SunsetBoot.IsDebug() and delta > 100 then
+        if delta > 100 and SunsetBoot.IsDebug() then
+            state = state or exports.sunset_core:GetBootState()
             local ped = PlayerPedId()
             local coords = GetEntityCoords(ped)
             local fadeState = 'fadedIn'

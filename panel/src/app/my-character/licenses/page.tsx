@@ -2,9 +2,6 @@ import { redirect } from "next/navigation";
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { FileCheck, ShieldCheck, AlertCircle } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 
 interface LicenseRow extends RowDataPacket {
@@ -45,17 +42,14 @@ export default async function MyLicensesPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
-          Official Permits & Licenses
+    <div className="space-y-4 max-w-3xl">
+      <div className="pb-3 border-b border-surface-border">
+        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          {t(locale, "nav.licenses")}
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
-          Government certifications issued by LSSI instructors for {session.selectedCharacterName}.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {licenses.length > 0 ? (
           licenses.map((lic) => {
             const isExpired =
@@ -66,53 +60,40 @@ export default async function MyLicensesPage() {
               : null;
 
             return (
-              <Card key={lic.type}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <Badge variant={isExpired ? "danger" : "success"}>
-                      {isExpired ? "EXPIRED" : "VALID & ACTIVE"}
-                    </Badge>
-                    <span className="font-mono text-xs text-gray-400 capitalize">
-                      {lic.type} Certification
+              <div
+                key={lic.type}
+                className="p-3.5 bg-surface-100 border border-surface-border rounded flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#f1f1f1] capitalize">
+                      {lic.type} License
                     </span>
-                  </div>
-                  <CardTitle className="text-base mt-2 capitalize">
-                    {lic.type} License
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-                    <span className="text-gray-400">Validity Remaining</span>
-                    <span className="font-mono font-bold text-amber-400">
-                      {remainingPaydays !== null
-                        ? `${remainingPaydays} Paydays (${remainingPaydays}h)`
-                        : "Permanent"}
+                    <span className={`font-medium ${isExpired ? "text-red-400" : "text-emerald-400"}`}>
+                      {isExpired ? "Expired" : "Valid"}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-                    <span className="text-gray-400">Issued On</span>
-                    <span className="font-mono text-gray-300">
-                      {formatDate(lic.issued_at, locale, false)}
-                    </span>
-                  </div>
-
-                  {lic.instructor_name && (
-                    <div className="flex items-center justify-between py-1 text-gray-400">
-                      <span>Certified By Instructor</span>
-                      <span className="font-medium text-white">{lic.instructor_name}</span>
+                  <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#6f6f74]">
+                    <div className="flex items-center justify-between">
+                      <span>Remaining:</span>
+                      <span className="font-mono text-[#a5a5a8]">
+                        {remainingPaydays !== null ? `${remainingPaydays} paydays` : "Permanent"}
+                      </span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <div className="flex items-center justify-between">
+                      <span>Issued:</span>
+                      <span className="font-mono text-[#a5a5a8]">{formatDate(lic.issued_at, locale, false)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             );
           })
         ) : (
-          <Card className="col-span-full p-8 text-center text-gray-500 text-xs">
-            <FileCheck className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-            <p>You do not currently hold any state licenses. Visit LSSI headquarters in-game.</p>
-          </Card>
+          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
+            No licenses held.
+          </p>
         )}
       </div>
     </div>

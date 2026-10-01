@@ -40,7 +40,7 @@ local function showWorkplaceTooltip(workplace, ped)
 
     if not shown then
         BeginTextCommandDisplayHelp('STRING')
-        AddTextComponentSubstringPlayerName(('~INPUT_CONTEXT~ — %s (%s)'):format(npcDef.name or workplace.jobLabel, workplace.jobLabel))
+        AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('hint.native.workplace_npc', { name = npcDef.name or workplace.jobLabel, job = workplace.jobLabel }))
         EndTextCommandDisplayHelp(0, false, true, 100)
     end
 end

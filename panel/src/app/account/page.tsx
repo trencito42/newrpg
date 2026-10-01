@@ -1,13 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession, getCurrentSessionTokenHash, getViewerLocale } from "@/lib/auth";
-import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
-import { t, formatDate, formatNumber } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { dbQuery, dbExecute } from "@/lib/db";
+import { t, formatDate } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
-import { User, Shield, KeyRound, Monitor, Smartphone, Globe, LogOut, CheckCircle2 } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { revalidatePath } from "next/cache";
+import { PlayerName } from "@/components/ui/PlayerName";
 
 interface CharRow extends RowDataPacket {
   id: number;
@@ -60,7 +58,6 @@ export default async function AccountPage() {
     [currentTokenHash, session.accountId]
   );
 
-  // Server Action to update language
   async function updateLanguage(formData: FormData) {
     "use server";
     const newLang = formData.get("language") as string;
@@ -77,7 +74,6 @@ export default async function AccountPage() {
     revalidatePath("/account");
   }
 
-  // Server Action to revoke other sessions
   async function revokeOtherSessions() {
     "use server";
     const curSession = await getCurrentSession();
@@ -96,192 +92,128 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
+    <div className="space-y-4 max-w-3xl">
+      <div className="pb-3 border-b border-surface-border">
+        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
           {t(locale, "account.title")}
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
-          {t(locale, "account.subtitle")}
-        </p>
       </div>
 
-      {/* Account Overview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column: Account Details */}
-        <div className="md:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center space-x-2">
-                <User className="w-4 h-4 text-brand" />
-                <span>{t(locale, "account.details")}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="text-gray-400 block mb-1">
-                    {t(locale, "account.username")}
-                  </span>
-                  <span className="font-bold text-white text-sm font-mono">
-                    {session.username}
-                  </span>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Account Details */}
+        <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 text-xs">
+          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            {t(locale, "account.details")}
+          </h2>
 
-                <div>
-                  <span className="text-gray-400 block mb-1">
-                    {t(locale, "account.email")}
-                  </span>
-                  <span className="font-mono text-gray-200">
-                    {session.email || "No email linked"}
-                  </span>
-                </div>
+          <div className="space-y-2 text-[#a5a5a8]">
+            <div className="flex items-center justify-between">
+              <span className="text-[#6f6f74]">{t(locale, "account.username")}</span>
+              <span className="font-semibold text-[#f1f1f1]">{session.username}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6f6f74]">{t(locale, "account.email")}</span>
+              <span className="text-[#f1f1f1]">{session.email || "-"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6f6f74]">{t(locale, "account.admin_level")}</span>
+              <span className="font-mono text-[#f1f1f1]">{session.adminLevel > 0 ? `Level ${session.adminLevel}` : "None"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[#6f6f74]">{t(locale, "account.helper_level")}</span>
+              <span className="font-mono text-[#f1f1f1]">{session.helperLevel > 0 ? `Level ${session.helperLevel}` : "None"}</span>
+            </div>
+          </div>
 
-                <div>
-                  <span className="text-gray-400 block mb-1">
-                    {t(locale, "account.admin_level")}
-                  </span>
-                  <Badge variant={session.adminLevel > 0 ? "warning" : "default"}>
-                    {session.adminLevel > 0 ? `Level ${session.adminLevel}` : "None"}
-                  </Badge>
-                </div>
-
-                <div>
-                  <span className="text-gray-400 block mb-1">
-                    {t(locale, "account.helper_level")}
-                  </span>
-                  <Badge variant={session.helperLevel > 0 ? "info" : "default"}>
-                    {session.helperLevel > 0 ? `Level ${session.helperLevel}` : "None"}
-                  </Badge>
-                </div>
+          <div className="pt-2 border-t border-surface-border/60">
+            <form action={updateLanguage} className="flex items-center justify-between">
+              <span className="text-[#6f6f74]">{t(locale, "account.language")}</span>
+              <div className="flex items-center space-x-1.5">
+                <select
+                  name="language"
+                  defaultValue={session.language}
+                  className="text-xs bg-surface-200 border border-surface-border rounded px-2 py-1 text-[#f1f1f1] focus:outline-none"
+                >
+                  <option value="en">English</option>
+                  <option value="ro">Română</option>
+                </select>
+                <Button type="submit" size="sm" variant="secondary">
+                  {t(locale, "common.save")}
+                </Button>
               </div>
-
-              {/* Language Preference Form */}
-              <div className="pt-4 border-t border-surface-border">
-                <form action={updateLanguage} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-xs">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-300 font-medium">
-                      {t(locale, "account.language")}:
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <select
-                      name="language"
-                      defaultValue={session.language}
-                      className="text-xs bg-surface-100 border border-surface-border rounded-lg px-2.5 py-1.5 text-gray-200 focus:outline-none focus:border-brand"
-                    >
-                      <option value="en">English (EN)</option>
-                      <option value="ro">Română (RO)</option>
-                    </select>
-                    <Button type="submit" size="sm" variant="secondary">
-                      {t(locale, "common.save")}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Associated Characters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span>{t(locale, "account.characters")}</span>
-                <span className="text-xs text-gray-400 font-normal">
-                  {characters.length} Registered
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {characters.map((char) => (
-                  <div
-                    key={char.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-xs transition-colors ${
-                      char.id === session.selectedCharacterId
-                        ? "bg-brand/5 border-brand/40 text-white"
-                        : "bg-surface-100 border-surface-border text-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-surface-50 border border-surface-border flex items-center justify-center font-bold text-brand">
-                        {char.firstname.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-white text-sm">
-                          {char.firstname} {char.lastname || ""}
-                        </div>
-                        <div className="text-[11px] text-gray-400">
-                          {char.job} • Level {char.level}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {char.id === session.selectedCharacterId ? (
-                        <Badge variant="brand">Active Character</Badge>
-                      ) : (
-                        <form action="/api/auth/switch-character" method="POST">
-                          <input type="hidden" name="characterId" value={char.id} />
-                          <Button size="sm" variant="outline" type="submit">
-                            Select
-                          </Button>
-                        </form>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            </form>
+          </div>
         </div>
 
-        {/* Right Column: Active Sessions & Security */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">
-                  {t(locale, "account.active_sessions")}
-                </CardTitle>
-                <form action={revokeOtherSessions}>
-                  <Button size="sm" variant="destructive" type="submit">
-                    Revoke Others
-                  </Button>
-                </form>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {sessions.map((sess) => (
-                  <div
-                    key={sess.id}
-                    className="p-2.5 rounded-lg bg-surface-100 border border-surface-border text-xs space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-gray-300">
-                        {sess.ip_address || "127.0.0.1"}
-                      </span>
-                      {sess.is_current ? (
-                        <Badge variant="success">Current</Badge>
-                      ) : (
-                        <span className="text-[10px] text-gray-500 font-mono">
-                          Active
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-gray-400 truncate">
-                      {sess.user_agent || "Browser Session"}
-                    </div>
-                    <div className="text-[10px] text-gray-500 font-mono">
-                      Last seen: {formatDate(sess.last_active_at, locale)}
-                    </div>
+        {/* Characters */}
+        <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
+            <span>{t(locale, "account.characters")}</span>
+            <span className="font-mono text-[#6f6f74]">{characters.length}</span>
+          </div>
+
+          <div className="divide-y divide-surface-border/50 text-xs">
+            {characters.map((char) => {
+              const name = `${char.firstname} ${char.lastname || ""}`.trim();
+              const isSelected = char.id === session.selectedCharacterId;
+              return (
+                <div
+                  key={char.id}
+                  className={`p-2.5 px-3 flex items-center justify-between ${
+                    isSelected ? "bg-surface-200/50" : ""
+                  }`}
+                >
+                  <div>
+                    <PlayerName name={name} factionId={char.job} />
+                    <span className="text-[11px] text-[#6f6f74] block">
+                      Level {char.level} • {char.job}
+                    </span>
                   </div>
-                ))}
+
+                  {isSelected ? (
+                    <span className="text-[11px] text-emerald-400 font-medium">Active</span>
+                  ) : (
+                    <form action="/api/auth/switch-character" method="POST">
+                      <input type="hidden" name="characterId" value={char.id} />
+                      <Button size="sm" variant="secondary" type="submit">
+                        Select
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Active Sessions */}
+        <div className="md:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
+          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
+            <span>{t(locale, "account.active_sessions")}</span>
+            <form action={revokeOtherSessions}>
+              <Button size="sm" variant="destructive" type="submit">
+                Logout Others
+              </Button>
+            </form>
+          </div>
+
+          <div className="divide-y divide-surface-border/50 text-xs">
+            {sessions.map((sess) => (
+              <div key={sess.id} className="p-2.5 px-3 flex items-center justify-between text-[#a5a5a8]">
+                <div>
+                  <span className="font-mono text-[#f1f1f1]">{sess.ip_address || "127.0.0.1"}</span>
+                  <span className="text-[11px] text-[#6f6f74] ml-2 truncate max-w-xs inline-block align-bottom">{sess.user_agent}</span>
+                </div>
+                <div className="text-right">
+                  {sess.is_current ? (
+                    <span className="text-emerald-400 font-medium text-[11px]">Current</span>
+                  ) : (
+                    <span className="text-[#6f6f74] font-mono text-[11px]">{formatDate(sess.last_active_at, locale)}</span>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
       </div>
     </div>

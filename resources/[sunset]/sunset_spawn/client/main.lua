@@ -81,6 +81,8 @@ local function resolvePosition(char, spawnPosition)
         end
     end
     if not validCoordinate(pos.x) or not validCoordinate(pos.y) or not validCoordinate(pos.z) then
+        print(('^1[SPAWN]^7 invalid spawn coordinates (source=%s x=%s y=%s z=%s) -> falling back to DEFAULT spawn'):format(
+            tostring(source), tostring(pos.x), tostring(pos.y), tostring(pos.z)))
         pos = Sunset.Config.DefaultSpawn
         source = 'default_fallback'
     end
@@ -286,7 +288,11 @@ local function spawnPlayer(char, spawnPosition)
     local tModelStart = GetGameTimer()
     logBoot('model:request', ('model=%s hash=%s source=%s'):format(tostring(rawModel), tostring(model), tostring(modelSource)))
     RequestModel(model)
-    while not HasModelLoaded(model) do Wait(10) end
+    local modelDeadline = GetGameTimer() + 10000
+    while not HasModelLoaded(model) and GetGameTimer() < modelDeadline do Wait(10) end
+    if not HasModelLoaded(model) then
+        logBoot('model:timeout', ('model=%s'):format(tostring(rawModel)))
+    end
     local modelLoadDur = GetGameTimer() - tModelStart
     recordMilestone('model_load', modelLoadDur, ('model=%s'):format(tostring(rawModel)))
     logBoot('model:loaded', ('elapsed=%dms'):format(modelLoadDur))
@@ -350,6 +356,9 @@ local function spawnPlayer(char, spawnPosition)
     logBoot('character_spawned:notify_server', ('charId=%s'):format(tostring(char.id)))
     TriggerServerEvent('sunset:server:characterSpawned', char.id)
 
+    -- Re-fetch: the cached handle can be stale if the ped was replaced mid-spawn,
+    -- and unfreezing a stale handle leaves the live ped frozen.
+    ped = PlayerPedId()
     FreezeEntityPosition(ped, false)
     SetEntityVisible(ped, true, false)
     DoScreenFadeIn(650)
@@ -420,8 +429,30 @@ AddEventHandler('sunset:client:gameplayVisible', function()
 end)
 
 AddEventHandler('sunset:client:spawnCharacter', function(char, spawnPosition)
+    -- [LOGIN PIPELINE] Single-flight: two triggers (auto spawn + picker, retry,
+    -- duplicate event) must never run two spawn sequences on one ped.
+    if spawning then
+        logBoot('spawn:duplicate_ignored', ('spawnCharacter ignored: spawn already in progress (charId=%s)'):format(tostring(char and char.id)))
+        return
+    end
+    spawning = true
     CreateThread(function()
-        spawnPlayer(char, spawnPosition)
+        local ok, err = pcall(spawnPlayer, char, spawnPosition)
+        if not ok then
+            -- A Lua error mid-spawn used to leave `spawning=true`, the ped frozen
+            -- and the screen faded out forever. Recover deterministically.
+            print(('^1[SPAWN CRITICAL]^7 spawnPlayer error: %s -> releasing player'):format(tostring(err)))
+            logBoot('spawn:error_recovered', tostring(err))
+            local livePed = PlayerPedId()
+            FreezeEntityPosition(livePed, false)
+            SetEntityVisible(livePed, true, false)
+            DoScreenFadeIn(500)
+            spawning = false
+            spawned = true
+            pcall(function() exports.sunset_ui:Send('enterGameplay', { duration = 450 }) end)
+            pcall(function() exports.sunset_ui:MarkGameplayEntered() end)
+            TriggerEvent('sunset:client:characterFlowComplete')
+        end
     end)
 end)
 

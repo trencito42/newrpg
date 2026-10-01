@@ -25,6 +25,8 @@ local TERMINAL = {
 }
 
 local function log(sessionId, msg, ...)
+    -- Verbose per-transition trace: only with `set sv_sunset_sessions_debug 1` (errors still print unconditionally).
+    if GetConvar('sv_sunset_sessions_debug', '0') ~= '1' then return end
     print(('[sessions] %s | %s'):format(tostring(sessionId), msg:format(...)))
 end
 
@@ -349,6 +351,9 @@ end)
 -- (server-only native -> nil on client). It now asks us to reset the bucket.
 RegisterNetEvent('sunset:sessions:resetRoutingBucket', function()
     local src = source
+    -- [SEC2] a client may not drop out of a server-owned instance bucket while its session is live
+    if not exports.sunset_core:RateLimit(src, 'resetBucket', 2000) then return end
+    if GetSessionBySource(src) then return end
     if GetResourceState('sunset_properties') == 'started' then
         pcall(function() exports.sunset_properties:LeaveProperty(src) end)
     end

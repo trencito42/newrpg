@@ -33,7 +33,7 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || (lang === "ro" ? "A apărut o eroare la trimitere." : "Submission failed."));
+        throw new Error(data.error || (lang === "ro" ? "Eroare la trimitere." : "Submission failed."));
       }
 
       setSuccess(true);
@@ -48,57 +48,45 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
 
   if (success) {
     return (
-      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs shadow-md">
-        <p className="font-bold mb-1">
-          {lang === "ro" ? "Cerere înregistrată cu succes!" : "Appeal registered successfully!"}
-        </p>
-        <p className="text-gray-300">
-          {lang === "ro"
-            ? "Echipa administrativă va analiza dosarul tău și va emite un răspuns în panou."
-            : "The administrative staff will review your case and issue a formal verdict."}
+      <div className="p-3 bg-emerald-950/30 border border-emerald-900/40 text-emerald-400 text-xs rounded">
+        <p className="font-semibold">
+          {lang === "ro" ? "Cerere înregistrată cu succes." : "Appeal submitted successfully."}
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3 text-xs">
       {error && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+        <div className="p-2 bg-red-950/30 border border-red-900/40 text-red-400 rounded">
           {error}
         </div>
       )}
 
       <div>
-        <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider mb-2">
-          {lang === "ro" ? "Argumentare / De ce meriți debanarea?" : "Appeal Justification"}
+        <label className="block text-[#6f6f74] mb-1">
+          {lang === "ro" ? "Explicație / Motiv" : "Explanation & Reason"}
         </label>
         <textarea
           required
-          rows={6}
-          placeholder={
-            lang === "ro"
-              ? "Explică detaliat circumstanțele banului, de ce consideri sancțiunea eronată sau ce garanții oferi că nu vei mai repeta greșeala."
-              : "Explain in detail the context of your sanction, why you believe it was in error, or how you intend to behave responsibly moving forward."
-          }
+          rows={4}
+          placeholder={lang === "ro" ? "Explică motivele pentru care soliciți debanarea..." : "Explain why your ban should be reviewed..."}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full bg-surface-100 border border-surface-border focus:border-brand rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand resize-none shadow-inner"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none resize-none"
         />
       </div>
 
       <Button
         type="submit"
         disabled={loading}
-        className="w-full text-xs font-bold py-2.5 bg-brand hover:bg-brand-600 text-gray-950 transition-colors shadow-lg"
+        size="sm"
+        className="w-full"
       >
         {loading
-          ? lang === "ro"
-            ? "Se trimite..."
-            : "Submitting..."
-          : lang === "ro"
-          ? "Trimite Cererea de Debanare"
-          : "Submit Unban Appeal"}
+          ? (lang === "ro" ? "Se trimite..." : "Submitting...")
+          : (lang === "ro" ? "Trimite Cererea" : "Submit Appeal")}
       </Button>
     </form>
   );

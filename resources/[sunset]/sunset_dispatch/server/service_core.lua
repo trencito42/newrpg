@@ -352,7 +352,7 @@ function ServiceCore.acceptCall(source, callType, callId)
         return nil, { localeKey = 'dispatch.message.this_call_type_cannot_be_accepted' }
     end
     if not ServiceCore.isProviderForType(source, callType) then
-        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_a' } .. ((cfg and cfg.label) or callType) .. ' provider'
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_provider', params = { label = (cfg and cfg.label) or callType } }
     end
     if not checkRateLimit(source, 'acceptMs') then return nil, { localeKey = 'dispatch.message.please_wait_before_accepting_another_call' } end
 

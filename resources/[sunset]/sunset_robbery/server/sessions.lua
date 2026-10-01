@@ -26,7 +26,9 @@ local function sessionsCall(method, ...)
 end
 
 CreateThread(function()
-    Wait(1500)
+    -- [PERF] explicit readiness instead of a fixed Wait hoping sunset_sessions loaded
+    local waited = 0
+    while GetResourceState('sunset_sessions') ~= 'started' and waited < 60000 do Wait(500); waited = waited + 500 end
     if GetResourceState('sunset_sessions') ~= 'started' then
         print('^3[sunset_robbery]^7 sunset_sessions not started; running standalone sessions.')
         return

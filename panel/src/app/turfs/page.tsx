@@ -1,9 +1,6 @@
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t, formatCurrency } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Map, Shield, DollarSign, Award } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 
 interface TurfRow extends RowDataPacket {
@@ -35,93 +32,62 @@ export default async function TurfsPage() {
   );
 
   const controlledCount = turfs.filter((t) => t.owner_clan_id !== null).length;
-  const totalHourlyPayout = turfs.reduce((sum, t) => sum + (Number(t.payout) || 0), 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-surface-200 to-surface-200 border border-amber-500/30 p-6 sm:p-8 shadow-xl">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-amber-500/5 blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <div className="flex items-center space-x-2 text-brand text-xs font-bold uppercase tracking-widest mb-1.5">
-              <Map className="w-4 h-4 text-brand" />
-              <span>{locale === "ro" ? "Războaie de Teritorii" : "Territory Conquest"}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {t(locale, "turfs.title")}
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
-              {t(locale, "turfs.subtitle")}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="px-3.5 py-2 rounded-xl bg-surface-100 border border-surface-border text-center shadow-md">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
-                {locale === "ro" ? "Teritorii Ocupate" : "Controlled Zones"}
-              </span>
-              <span className="text-base font-black font-mono text-brand">
-                {controlledCount} / {turfs.length}
-              </span>
-            </div>
-          </div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+        <div>
+          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+            {t(locale, "turfs.title")}
+          </h1>
+          <p className="text-xs text-[#8a8a90] mt-0.5">
+            18 contested territories across San Andreas.
+          </p>
         </div>
+
+        <span className="font-mono text-xs text-[#a5a5a8] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
+          {controlledCount} / {turfs.length} Controlled
+        </span>
       </div>
 
       {/* Grid of Turf Territories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {turfs.map((turf) => {
           const isControlled = turf.owner_clan_id !== null;
           return (
-            <Card
+            <div
               key={turf.id}
-              className="flex flex-col justify-between hover:border-surface-borderLight transition-all"
+              className="p-3 bg-surface-100 border border-surface-border rounded flex flex-col justify-between"
             >
               <div>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <Badge variant={isControlled ? "brand" : "outline"}>
-                      Zone #{turf.id}
-                    </Badge>
-                    <span className="font-mono text-xs text-emerald-400 font-bold">
-                      {formatCurrency(turf.payout)} / hr
-                    </span>
-                  </div>
-                  <CardTitle className="text-base mt-2">{turf.name}</CardTitle>
-                </CardHeader>
-
-                <CardContent className="space-y-3 pt-2 text-xs">
-                  <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
-                    <span className="text-gray-400">Controlling Clan</span>
-                    {isControlled ? (
-                      <span
-                        className="font-bold flex items-center space-x-1"
-                        style={{ color: turf.clan_color || "#f59e0b" }}
-                      >
-                        <span>[{turf.clan_tag}]</span>
-                        <span className="text-gray-200">{turf.clan_name}</span>
-                      </span>
-                    ) : (
-                      <span className="text-gray-500 font-mono">Unclaimed</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-                    <span className="text-gray-400">Respect Bonus</span>
-                    <span className="font-mono text-amber-400 font-semibold">
-                      +{turf.respect_payout} RP / Payday
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between py-1 text-gray-500 font-mono text-[11px]">
-                    <span>Coordinates</span>
-                    <span>
-                      {Math.round(turf.x)}, {Math.round(turf.y)}
-                    </span>
-                  </div>
-                </CardContent>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-[#6f6f74]">
+                    Turf #{turf.id}
+                  </span>
+                  <span className="font-mono text-xs text-[#f1f1f1]">
+                    {formatCurrency(turf.payout)} / hr
+                  </span>
+                </div>
+                <h3 className="text-sm font-semibold text-[#f1f1f1] mt-1">
+                  {turf.name}
+                </h3>
               </div>
-            </Card>
+
+              <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#6f6f74]">
+                <span>Clan:</span>
+                {isControlled ? (
+                  <span
+                    className="font-semibold"
+                    style={{ color: turf.clan_color || "#f1f1f1" }}
+                  >
+                    [{turf.clan_tag || turf.clan_name}]
+                  </span>
+                ) : (
+                  <span className="text-[#6f6f74] italic">Unclaimed</span>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>

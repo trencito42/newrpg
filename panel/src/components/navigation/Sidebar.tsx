@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   Users,
@@ -25,6 +28,7 @@ import {
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
 import { panelBrand } from "@/lib/brand";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   locale: Locale;
@@ -34,9 +38,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarProps) {
+  const pathname = usePathname();
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
 
-  const publicLinks = [
+  const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
     { href: "/players", label: t(locale, "nav.players"), icon: Users },
     { href: "/factions", label: t(locale, "nav.factions"), icon: Shield },
@@ -47,9 +52,15 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
     { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
   ];
 
-  const characterLinks = session
+  const profileHref = session?.selectedCharacterName
+    ? `/players/${encodeURIComponent(session.selectedCharacterName.trim().replace(/\s+/g, "_"))}`
+    : session?.selectedCharacterId
+    ? `/players/${session.selectedCharacterId}`
+    : "/account";
+
+  const accountLinks = session
     ? [
-        { href: `/players/${encodeURIComponent(session.selectedCharacterName || String(session.selectedCharacterId || session.accountId))}`, label: t(locale, "nav.characters"), icon: User },
+        { href: profileHref, label: t(locale, "nav.characters"), icon: User },
         { href: "/my-character/vehicles", label: t(locale, "nav.vehicles"), icon: Car },
         { href: "/my-character/properties", label: t(locale, "nav.properties"), icon: HomeIcon },
         { href: "/my-character/banking", label: t(locale, "nav.banking"), icon: CreditCard },
@@ -66,115 +77,139 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
     { href: "/support/unban", label: t(locale, "nav.unban"), icon: Shield },
   ];
 
+  const getStaffTitle = () => {
+    if (!session) return "";
+    if (session.adminLevel > 0) return `Admin ${session.adminLevel}`;
+    if (session.helperLevel > 0) return `Helper ${session.helperLevel}`;
+    return "Player";
+  };
+
   return (
-    <aside className="w-64 bg-surface-200 border-r border-surface-border flex flex-col flex-shrink-0 min-h-screen text-gray-300">
+    <aside className="w-56 bg-[#101011] border-r border-surface-border flex flex-col flex-shrink-0 min-h-screen text-[#a5a5a8]">
       {/* Brand Header */}
-      <div className="p-4 border-b border-surface-border flex flex-col space-y-2">
-        <Link href="/" className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-black text-lg">
-            {panelBrand.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <span className="font-extrabold tracking-wider text-white text-base block leading-none">
-              {panelBrand.name}
-            </span>
-            <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">
-              Official Panel
-            </span>
-          </div>
+      <div className="p-3.5 border-b border-surface-border flex items-center justify-between">
+        <Link href="/" className="flex items-center space-x-2">
+          <span className="font-bold text-sm tracking-tight text-[#f1f1f1]">
+            {panelBrand.name}
+          </span>
         </Link>
 
-        {/* Server Status Pill */}
-        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-surface-100 border border-surface-border text-xs">
-          <div className="flex items-center space-x-2">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                serverOnline ? "bg-emerald-500 animate-pulse" : "bg-red-500"
-              }`}
-            />
-            <span className="text-gray-300 font-medium">
-              {serverOnline ? t(locale, "common.online") : t(locale, "common.offline")}
-            </span>
-          </div>
-          <span className="font-mono text-gray-400 font-semibold">
-            {playerCount} {t(locale, "common.players")}
-          </span>
+        <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#6f6f74]">
+          <span
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              serverOnline ? "bg-emerald-500" : "bg-red-500"
+            )}
+          />
+          <span>{playerCount}</span>
         </div>
       </div>
 
       {/* Navigation Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-6">
-        {/* Community Navigation */}
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+        {/* SERVER */}
         <div>
-          <div className="px-2 mb-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Community
+          <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+            Server
           </div>
           <nav className="space-y-0.5">
-            {publicLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium hover:bg-surface-100 hover:text-white transition-colors"
-              >
-                <item.icon className="w-4 h-4 text-gray-400" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* Authenticated Character Area */}
-        {session && (
-          <div>
-            <div className="px-2 mb-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              {session.selectedCharacterName || "Character"}
-            </div>
-            <nav className="space-y-0.5">
-              {characterLinks.map((item) => (
+            {serverLinks.map((item) => {
+              const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+              const Icon = item.icon;
+              return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium hover:bg-surface-100 hover:text-white transition-colors"
+                  className={cn(
+                    "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                    active
+                      ? "bg-[#1a1a1c] text-[#f1f1f1]"
+                      : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                  )}
                 >
-                  <item.icon className="w-4 h-4 text-brand" />
+                  <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
                   <span>{item.label}</span>
                 </Link>
-              ))}
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* ACCOUNT */}
+        {session && (
+          <div>
+            <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+              Account
+            </div>
+            <nav className="space-y-0.5">
+              {accountLinks.map((item) => {
+                const active = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                      active
+                        ? "bg-[#1a1a1c] text-[#f1f1f1]"
+                        : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
         )}
 
-        {/* Support Helpdesk */}
+        {/* SUPPORT */}
         <div>
-          <div className="px-2 mb-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+          <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
             Support
           </div>
           <nav className="space-y-0.5">
-            {supportLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium hover:bg-surface-100 hover:text-white transition-colors"
-              >
-                <item.icon className="w-4 h-4 text-gray-400" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {supportLinks.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                    active
+                      ? "bg-[#1a1a1c] text-[#f1f1f1]"
+                      : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Staff Administration */}
+        {/* STAFF (Only if staff) */}
         {isStaffMember && (
           <div>
-            <div className="px-2 mb-1.5 text-[11px] font-bold text-amber-500 uppercase tracking-wider">
-              Staff Center
+            <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+              Staff
             </div>
             <nav className="space-y-0.5">
               <Link
                 href="/staff/dashboard"
-                className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                className={cn(
+                  "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                  pathname.startsWith("/staff/dashboard")
+                    ? "bg-[#1a1a1c] text-[#f1f1f1]"
+                    : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                )}
               >
-                <Radio className="w-4 h-4 text-amber-400" />
+                <Radio className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
                 <span>{t(locale, "nav.staff_dashboard")}</span>
               </Link>
             </nav>
@@ -188,40 +223,31 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
           <div className="flex items-center justify-between">
             <Link
               href="/account"
-              className="flex items-center space-x-2 min-w-0 hover:opacity-80 transition-opacity"
+              className="min-w-0 flex-1 pr-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-7 h-7 rounded-full bg-surface-50 border border-surface-border flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">
-                {session.username.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <span className="text-xs font-semibold text-white block truncate">
-                  {session.username}
-                </span>
-                <span className="text-[10px] text-gray-400 block font-mono">
-                  {session.adminLevel > 0
-                    ? `Admin Lvl ${session.adminLevel}`
-                    : session.helperLevel > 0
-                    ? `Helper Lvl ${session.helperLevel}`
-                    : "Citizen"}
-                </span>
-              </div>
+              <span className="text-xs font-semibold text-[#f1f1f1] block truncate">
+                {session.selectedCharacterName || session.username}
+              </span>
+              <span className="text-[10px] text-[#6f6f74] block font-mono">
+                {getStaffTitle()}
+              </span>
             </Link>
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
                 title={t(locale, "nav.logout")}
-                className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-surface-100 rounded-md transition-colors"
+                className="p-1 text-[#6f6f74] hover:text-red-400 hover:bg-[#151516] rounded transition-colors"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>
         ) : (
           <Link
             href="/login"
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-brand hover:bg-brand-600 text-gray-950 font-bold rounded-lg text-xs transition-colors"
+            className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold rounded text-xs transition-colors"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-3.5 h-3.5" />
             <span>{t(locale, "nav.login")}</span>
           </Link>
         )}

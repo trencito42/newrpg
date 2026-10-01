@@ -219,8 +219,20 @@
         }
     }
 
+    // [NUI PERF] Only loop while the gauge is active; an idle on-foot player
+    // must not pay for a 60Hz JS callback.
+    let looping = false;
     function frame() {
         render();
+        if (active) {
+            window.requestAnimationFrame(frame);
+        } else {
+            looping = false;
+        }
+    }
+    function startLoop() {
+        if (looping || !active) return;
+        looping = true;
         window.requestAnimationFrame(frame);
     }
 
@@ -238,7 +250,7 @@
         canvas.style.height = `${SIZE}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         running = true;
-        window.requestAnimationFrame(frame);
+        startLoop();
         return true;
     }
 
@@ -246,6 +258,7 @@
         setActive(value) {
             if (!running) init();
             active = value === true;
+            if (active) startLoop();
             if (!active) {
                 state.targetSpeed = 0;
                 state.currentSpeed = 0;

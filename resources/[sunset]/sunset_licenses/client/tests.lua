@@ -115,7 +115,7 @@ local function setActiveCheckpointBlip(point, opts)
         SetBlipRouteColour(blip, opts.color or 47)
     end
     BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString(opts.label or 'Next checkpoint')
+    AddTextComponentString(opts.label or exports.sunset_core:Translate('licenses.test.next_checkpoint'))
     EndTextCommandSetBlipName(blip)
     testBlips[1] = blip
 end
@@ -134,7 +134,7 @@ local function refreshCheckpointNavigation(cfg, cpIndex, color)
         setActiveCheckpointBlip(cfg.finish, {
             color = color or 47,
             route = true,
-            label = 'Finish',
+            label = exports.sunset_core:Translate('licenses.test.finish'),
         })
         return
     end
@@ -185,8 +185,8 @@ local function completeTest(licenseType, extra)
         ShowLicenseTestHud({
             licenseType = licenseType,
             state = 'success',
-            title = 'Test Passed',
-            message = 'Congratulations — your license has been issued.',
+            title = exports.sunset_core:Translate('licenses.test.passed_title'),
+            message = exports.sunset_core:Translate('licenses.test.passed_message'),
             progress = 100,
         })
         Wait(2500)
@@ -364,7 +364,7 @@ local function trackVehicleDamage(veh, cfg, penalties)
         UpdateLicenseTestHud({
             licenseType = 'driver',
             state = 'warning',
-            title = 'Driving School',
+            title = exports.sunset_core:Translate('licenses.test.title.driving_school'),
             penalties = count,
             maxPenalties = penalties.max,
             message = msg,
@@ -414,13 +414,13 @@ local function trackDriverSpeed(veh, cfg, cpIndex, finishing, penalties)
             penalties.countdownEnd = now + (countdownSec * 1000)
         end
         local remaining = math.max(1, math.ceil((penalties.countdownEnd - now) / 1000))
-        message = ('REDUCE SPEED IN %d'):format(remaining)
+        message = exports.sunset_core:Translate('licenses.test.reduce_speed', { seconds = remaining })
 
         if now >= penalties.countdownEnd then
             if isOverSpeedLimit(speed, limit, hard, cfg) then
                 local count, failed = addPenalty(penalties, ('Too many penalties (%d/%d) — test failed.'):format(
                     penalties.count, penalties.max))
-                message = ('PENALTY %d/%d — YOU DID NOT SLOW DOWN.'):format(count, penalties.max)
+                message = exports.sunset_core:Translate('licenses.test.penalty', { count = count, max = penalties.max })
                 holdDriverHudMessage(penalties, cfg, message, 'warning')
                 state = 'warning'
                 if failed then
@@ -525,7 +525,7 @@ local function runDriverRoute(cfg, vehicle)
     UpdateLicenseTestHud({
         licenseType = 'driver',
         state = 'driver',
-        title = 'Driving School',
+        title = exports.sunset_core:Translate('licenses.test.title.driving_school'),
         checkpoint = 0,
         checkpoints = #checkpoints,
         penalties = 0,
@@ -561,7 +561,7 @@ local function runDriverRoute(cfg, vehicle)
             UpdateLicenseTestHud({
                 licenseType = 'driver',
                 state = hudState,
-                title = 'Driving School',
+                title = exports.sunset_core:Translate('licenses.test.title.driving_school'),
                 checkpoint = math.min(cpIndex - 1, #checkpoints),
                 checkpoints = #checkpoints,
                 penalties = penalties.count,
@@ -613,12 +613,12 @@ local function runDriverRoute(cfg, vehicle)
                             UpdateLicenseTestHud({
                                 licenseType = 'driver',
                                 state = hudState,
-                                title = 'Driving School',
+                                title = exports.sunset_core:Translate('licenses.test.title.driving_school'),
                                 checkpoint = cpIndex - 1,
                                 checkpoints = #checkpoints,
                                 penalties = penalties.count,
                                 maxPenalties = penalties.max,
-                                message = ('Checkpoint %d/%d — %s'):format(cpIndex - 1, #checkpoints, hudMessage),
+                                message = exports.sunset_core:Translate('licenses.test.checkpoint', { index = cpIndex - 1, total = #checkpoints, message = hudMessage }),
                                 progress = math.floor(((cpIndex - 1) / math.max(#checkpoints, 1)) * 100),
                             })
                     elseif err then
@@ -633,15 +633,15 @@ local function runDriverRoute(cfg, vehicle)
                     if #(pos - fp) <= fr then
                         local engineOn = veh ~= 0 and GetIsVehicleEngineRunning(veh)
                         local finishMsg = engineOn
-                            and 'Turn off the engine, then press E to finish.'
-                            or 'Press E to finish the driving test.'
+                            and exports.sunset_core:Translate('licenses.test.finish_engine_on')
+                            or exports.sunset_core:Translate('licenses.test.finish_engine_off')
                         local finishKey = engineOn and 'engine_on' or 'engine_off'
                         if finishKey ~= finishHudKey then
                             finishHudKey = finishKey
                             UpdateLicenseTestHud({
                                 licenseType = 'driver',
                                 state = 'driver',
-                                title = 'Driving School',
+                                title = exports.sunset_core:Translate('licenses.test.title.driving_school'),
                                 checkpoint = #checkpoints,
                                 checkpoints = #checkpoints,
                                 penalties = penalties.count,
@@ -685,7 +685,7 @@ local function runDriverTest(cfg)
         checkpoints = #(cfg.checkpoints or {}),
         penalties = 0,
         maxPenalties = maxDriverPenalties(cfg),
-        message = (steps[1] and steps[1].message) or 'Follow the orange GPS route to each checkpoint.',
+        message = (steps[1] and steps[1].message) or exports.sunset_core:Translate('licenses.test.follow_route'),
         progress = 0,
     })
 
@@ -725,10 +725,10 @@ local function runWeaponTest(cfg)
         ShowLicenseTestHud({
             licenseType = 'weapon',
             state = 'weapon',
-            title = 'LSSI Firearms Range',
+            title = exports.sunset_core:Translate('licenses.test.title.firearms_range'),
             targetsHit = 0,
             targetsRequired = cfg.targetsRequired or 5,
-            message = 'Hit every target, then return to the booth and press E.',
+            message = exports.sunset_core:Translate('licenses.test.range_hit_all'),
             progress = 0,
         })
 
@@ -753,17 +753,17 @@ local function runWeaponTest(cfg)
                 DrawMarker(1, booth.x, booth.y, booth.z - 1.0, 0, 0, 0, 0, 0, 0,
                     1.8, 1.8, 1.0, 255, 145, 25, 120, false, false, 2, false, nil, nil, false)
                 BeginTextCommandDisplayHelp('STRING')
-                AddTextComponentString('Press ~INPUT_CONTEXT~ to finish the verified range test')
+                AddTextComponentString(exports.sunset_core:Translate('hint.native.finish_range_test'))
                 EndTextCommandDisplayHelp(0, false, true, -1)
                 if IsControlJustReleased(0, 38) then return completeTest('weapon') end
             else
                 UpdateLicenseTestHud({
                     licenseType = 'weapon',
                     state = 'weapon',
-                    title = 'LSSI Firearms Range',
+                    title = exports.sunset_core:Translate('licenses.test.title.firearms_range'),
                     targetsHit = weaponServerHits,
                     targetsRequired = cfg.targetsRequired or 5,
-                    message = 'Keep firing at the marked targets downrange.',
+                    message = exports.sunset_core:Translate('licenses.test.range_keep_firing'),
                     progress = math.floor((weaponServerHits / (cfg.targetsRequired or 5)) * 100),
                 })
             end
@@ -777,10 +777,10 @@ RegisterNetEvent('sunset:licenses:weaponProgress', function(hits, required)
     UpdateLicenseTestHud({
         licenseType = 'weapon',
         state = 'weapon',
-        title = 'LSSI Firearms Range',
+        title = exports.sunset_core:Translate('licenses.test.title.firearms_range'),
         targetsHit = weaponServerHits,
         targetsRequired = tonumber(required) or 5,
-        message = ('Target %d/%d verified.'):format(weaponServerHits, tonumber(required) or 5),
+        message = exports.sunset_core:Translate('licenses.test.range_target_verified', { hit = weaponServerHits, total = tonumber(required) or 5 }),
         progress = math.floor((weaponServerHits / math.max(tonumber(required) or 5, 1)) * 100),
     })
 end)
@@ -801,10 +801,10 @@ local function runHuntingTest(cfg)
     ShowLicenseTestHud({
         licenseType      = 'hunting',
         state            = 'hunting',
-        title            = 'LSSI Hunting Range',
+        title = exports.sunset_core:Translate('licenses.test.title.hunting_range'),
         targetsHit       = 0,
         targetsRequired  = targetsRequired,
-        message          = ('Shoot %d deer. Do NOT shoot protected animals.'):format(targetsRequired),
+        message          = exports.sunset_core:Translate('licenses.test.hunt_brief', { count = targetsRequired }),
         progress         = 0,
     })
 end
@@ -826,10 +826,10 @@ RegisterNetEvent('sunset:licenses:huntingProgress', function(hits, required)
     UpdateLicenseTestHud({
         licenseType     = 'hunting',
         state           = 'hunting',
-        title           = 'LSSI Hunting Range',
+        title = exports.sunset_core:Translate('licenses.test.title.hunting_range'),
         targetsHit      = huntingServerHits,
         targetsRequired = tonumber(required) or 3,
-        message         = ('Legal targets hit: %d/%d'):format(huntingServerHits, tonumber(required) or 3),
+        message         = exports.sunset_core:Translate('licenses.test.hunt_progress', { hit = huntingServerHits, total = tonumber(required) or 3 }),
         progress        = math.floor((huntingServerHits / math.max(tonumber(required) or 3, 1)) * 100),
     })
 end)
@@ -840,10 +840,10 @@ RegisterNetEvent('sunset:licenses:huntingMistake', function(mistakes, maxAllowed
     UpdateLicenseTestHud({
         licenseType     = 'hunting',
         state           = 'hunting',
-        title           = 'LSSI Hunting Range',
+        title = exports.sunset_core:Translate('licenses.test.title.hunting_range'),
         targetsHit      = huntingServerHits,
         targetsRequired = 3,
-        message         = ('MISTAKE %d/%d — do NOT shoot protected animals!'):format(huntingServerMistakes, tonumber(maxAllowed) or 1),
+        message         = exports.sunset_core:Translate('licenses.test.hunt_mistake', { count = huntingServerMistakes, max = tonumber(maxAllowed) or 1 }),
         progress        = math.floor((huntingServerHits / 3) * 100),
     })
 end)
@@ -917,7 +917,7 @@ local function runCheckpointTest(licenseType, cfg, facility)
                             return completeTest(licenseType, { engineOn = engineOn })
                         end
                         BeginTextCommandDisplayHelp('STRING')
-                        AddTextComponentString('Press ~INPUT_CONTEXT~ to finish (engine off if required)')
+                        AddTextComponentString(exports.sunset_core:Translate('hint.native.finish_test_engine_off'))
                         EndTextCommandDisplayHelp(0, false, true, -1)
                     end
                 end

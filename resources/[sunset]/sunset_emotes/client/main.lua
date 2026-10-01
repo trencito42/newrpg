@@ -41,7 +41,11 @@ local function playEmote(name)
     if playing then ClearPedTasks(ped) playing = false end
 
     RequestAnimDict(emote.dict)
-    while not HasAnimDictLoaded(emote.dict) do Wait(10) end
+    local dictDeadline = GetGameTimer() + 3000
+    while not HasAnimDictLoaded(emote.dict) do
+        if GetGameTimer() > dictDeadline then return end
+        Wait(10)
+    end
     TaskPlayAnim(ped, emote.dict, emote.anim, 8.0, -8.0, -1, emote.flag, 0, false, false, false)
     playing = true
 end

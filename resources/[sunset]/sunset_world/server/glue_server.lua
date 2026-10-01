@@ -20,6 +20,13 @@ RegisterNetEvent('sunset:server:glue', function(vehicleNetId, ox, oy, oz)
     if type(vehicleNetId) ~= 'number' or vehicleNetId <= 0 then return end
     if type(ox) ~= 'number' or type(oy) ~= 'number' or type(oz) ~= 'number' then return end
     if math.abs(ox) > 50 or math.abs(oy) > 50 or math.abs(oz) > 50 then return end
+    -- [SEC2] NaN, rate limit, and the vehicle must exist and be near the player
+    if ox ~= ox or oy ~= oy or oz ~= oz or vehicleNetId ~= math.floor(vehicleNetId) then return end
+    if not exports.sunset_core:RateLimit(src, 'glue', 500) then return end
+    local veh = NetworkGetEntityFromNetworkId(vehicleNetId)
+    local ped = GetPlayerPed(src)
+    if not veh or veh == 0 or not DoesEntityExist(veh) or not ped or ped == 0 then return end
+    if #(GetEntityCoords(ped) - GetEntityCoords(veh)) > 40.0 then return end
 
     -- If already glued, detach first.
     if glueStates[src] then

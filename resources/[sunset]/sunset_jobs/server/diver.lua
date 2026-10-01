@@ -38,6 +38,11 @@ local BOAT_TOKEN_EXPIRY_SEC = 30
 
 -- [SECTION 33] Salvage hold tokens: SalvageTokens[source] = {token, pointIndex, issuedAt, minDuration=4}
 local SalvageTokens = {}
+local SellBusy = {}
+
+-- Terry (Vespucci waterfront) - handoff + sell location (matches Sunset.JobWorkplaces.diver.npc.coords)
+local TERRY_COORDS = { x = -812.0, y = -1282.0, z = 5.0 }
+local TERRY_HANDOFF_RADIUS = 15.0
 local SALVAGE_MIN_HOLD_SEC = 4
 
 -- Token generator (replay-attack prevention)
@@ -272,8 +277,17 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentBoat', function(sour
         return nil, { localeKey = 'jobs.message.requires_a_valid_boat_license_bwc_visit_lssi_maritime' }
     end
 
+    -- [JOBS AUDIT] a boat that was destroyed/despawned used to block renting forever (RentedBoats kept
+    -- the dead netId until shift end), and a second rent while a spawn was pending lost the first fee.
     if RentedBoats[source] then
-        return nil, { localeKey = 'jobs.message.you_already_have_a_boat_rented_return_it_first' }
+        local old = NetworkGetEntityFromNetworkId(RentedBoats[source])
+        if old and old ~= 0 and DoesEntityExist(old) then
+            return nil, { localeKey = 'jobs.message.you_already_have_a_boat_rented_return_it_first' }
+        end
+        RentedBoats[source] = nil
+    end
+    if PendingBoatRentals[source] and os.time() - PendingBoatRentals[source].createdAt <= BOAT_TOKEN_EXPIRY_SEC + 5 then
+        return nil, { localeKey = 'jobs.message.too_many_requests' }
     end
 
     local cfgDiver = Sunset.JobsConfig.diver
@@ -302,6 +316,18 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentBoat', function(sour
         cost              = cost,
         createdAt         = os.time(),
     }
+    -- [JOBS AUDIT] If the client never confirms the spawn (crash, model load failure, dropped event) the fee
+    -- was kept with no boat. Refund automatically when the pending rental expires unclaimed.
+    local pendingRef = PendingBoatRentals[source]
+    SetTimeout((BOAT_TOKEN_EXPIRY_SEC + 5) * 1000, function()
+        if PendingBoatRentals[source] == pendingRef and GetPlayerName(source) then
+            PendingBoatRentals[source] = nil
+            exports.sunset_core:AddMoney(source, 'cash', pendingRef.cost, 'boat_rental_refund')
+            exports.sunset_core:RefreshMoney(source)
+            TriggerClientEvent('sunset:client:notify', source,
+                ('Boat rental was not completed. Your $%d has been refunded.'):format(pendingRef.cost), 'warning', 6000)
+        end
+    end)
     -- Send token alongside model+spawn so the client can echo it back in boatSpawned
     TriggerClientEvent('sunset:diving:spawnBoat', source, model, spawnCoords, cost, token)
     return { spawning = true, model = model, spawnCoords = spawnCoords }
@@ -537,6 +563,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
     local session = SunsetJobs_RequireSession(source, 'diver', nil)
     if not session then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
 
+    -- [JOBS AUDIT] No proximity check existed: salvage could be sold from anywhere. Sell at Terry.
+    if not SunsetJobs_ValidateCoords(source, vector3(TERRY_COORDS.x, TERRY_COORDS.y, TERRY_COORDS.z), 20.0) then
+        return nil, { localeKey = 'jobs.message.return_to_terry_at_the_vespucci_waterfront_to_hand' }
+    end
+    if SellBusy[source] then return nil, { localeKey = 'jobs.message.sale_already_being_processed' } end
+    SellBusy[source] = true
+    local okRun, resA, resB = pcall(function()
     local salvageItems = { 'salvage_parts', 'marine_electronics', 'sealed_cargo', 'marine_artifact' }
     local totalValue = 0
     local sold = {}
@@ -566,25 +599,42 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:sell', function(source)
 
     if #sold == 0 then return nil, { localeKey = 'jobs.message.no_salvage_items_to_sell_go_dive_first' } end
 
-    -- Remove items first; restore with full metadata if payment fails.
-    for _, s in ipairs(sold) do
-        exports.sunset_inventory:RemoveItem(source, s.item, 1)
+    -- Remove items first (every removal verified); restore with full metadata if anything fails.
+    local removedUpTo = 0
+    for i, s2 in ipairs(sold) do
+        if exports.sunset_inventory:RemoveItem(source, s2.item, 1) then
+            removedUpTo = i
+        else
+            break
+        end
+    end
+    if removedUpTo < #sold then
+        for i = 1, removedUpTo do
+            local snap = snapshots[i]
+            exports.sunset_inventory:AddItem(source, snap.item, 1, nil, snap.metadata)
+        end
+        exports.sunset_inventory:ReloadInventory(source)
+        return nil, { localeKey = 'jobs.message.could_not_load_inventory' }
     end
 
-    local paid = exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
+    local paid = totalValue <= 0 or exports.sunset_core:AddMoney(source, 'cash', totalValue, 'diver_sell')
     if not paid then
         for _, snap in ipairs(snapshots) do
-            exports.sunset_inventory:AddItem(source, snap.item, snap.count, nil, snap.metadata)
+            exports.sunset_inventory:AddItem(source, snap.item, 1, nil, snap.metadata)
         end
         exports.sunset_inventory:ReloadInventory(source)
         return nil, { localeKey = 'jobs.message.payment_failed_your_salvage_items_have_been_returned_try' }
     end
 
-    SunsetJobs_AddJobProgress(source, 'diver', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
+    pcall(SunsetJobs_AddJobProgress, source, 'diver', math.max(5, math.floor(totalValue / 10)), 0, totalValue)
     exports.sunset_inventory:ReloadInventory(source)
     exports.sunset_core:RefreshMoney(source)
     dlog('char %d sold %d salvage items for $%d', charId(source), #sold, totalValue)
     return { total = totalValue, count = #sold }
+    end)
+    SellBusy[source] = nil
+    if not okRun then error(resA, 0) end
+    return resA, resB
 end)
 
 -- ── O2 State Persistence ─────────────────────────────────────
@@ -636,22 +686,18 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:endShift', function(sour
         RentedBoats[source] = nil
     end
 
-    -- Remove rented gear item on shift end
+    -- Gear/boat/snapshots are cleaned by the serverSessionEnded hook raised from ClearSession.
+    -- [JOBS AUDIT] COMPLETED from STARTING is an illegal transition -> shift stuck; use the legal-ending helper.
     local session = SunsetJobs_GetSession(source)
-    if session and session.data and session.data.rentedGearItem then
-        exports.sunset_inventory:RemoveItem(source, session.data.rentedGearItem, 1)
-    end
-
+    if not session or session.jobId ~= 'diver' then return nil, { localeKey = 'jobs.message.no_active_diver_shift' } end
     Snapshots[source]     = nil
     ClaimedPoints[source] = nil
-    SunsetJobs_ClearSession(source, 'COMPLETED', 'Shift ended by player')
+    SunsetJobs_EndShift(source, 'Shift ended by player')
     return true
 end)
 
 -- ── Terry Handoff (contract completion) ──────────────────────
 -- Called when player returns to Terry with recovered salvage.
-local TERRY_COORDS = { x = -812.0, y = -1282.0, z = 5.0 }
-local TERRY_HANDOFF_RADIUS = 15.0
 
 exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(source)
     if not checkRate(source, 'handoff') then return nil, { localeKey = 'jobs.message.too_many_requests' } end
@@ -686,6 +732,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(sourc
     local siteId = snap.siteId
 
     -- Atomically disarm the handoff BEFORE payment
+    local claimed = ClaimedPoints[source]
     session.data.stage      = 'idle'
     session.data.contractId = nil
     session.data.recovered  = 0
@@ -693,8 +740,18 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:handoff', function(sourc
     ClaimedPoints[source] = nil
 
     -- Pay out the contract bonus
-    local paid = exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')
-    if paid then
+    local paid = bonus <= 0 or exports.sunset_core:AddMoney(source, 'cash', bonus, 'diver_contract_complete')
+    if not paid then
+        -- [JOBS AUDIT] The contract used to be disarmed and the client told "Contract complete" even though
+        -- the payout failed. Restore the armed handoff so the player can simply retry.
+        session.data.stage      = 'return_to_terry'
+        session.data.contractId = siteId
+        session.data.recovered  = snap.recovered
+        Snapshots[source]       = snap
+        ClaimedPoints[source]   = claimed
+        return nil, { localeKey = 'jobs.message.payment_failed_your_salvage_items_have_been_returned_try' }
+    end
+    if bonus > 0 then
         SunsetJobs_AddJobProgress(source, 'diver', xpBonus, 1, bonus)
         exports.sunset_core:RefreshMoney(source)
     end
@@ -739,9 +796,12 @@ RegisterNetEvent('sunset:diving:abandonContract', function()
 end)
 
 -- ── Cleanup ───────────────────────────────────────────────────
-AddEventHandler('sunset:jobs:sessionEnded', function(src, jobId)
-    src = tonumber(src) or source
-    if jobId ~= 'diver' then return end
+-- [JOBS AUDIT] was AddEventHandler('sunset:jobs:sessionEnded') - a CLIENT-only event, so this cleanup
+-- (rented boat, rented gear, snapshots) never ran on cancel/death/timeout. Core now raises
+-- 'sunset:jobs:serverSessionEnded' with the ended session table (the live session is already gone).
+AddEventHandler('sunset:jobs:serverSessionEnded', function(src, jobId, state, reason, endedSession)
+    src = tonumber(src)
+    if not src or jobId ~= 'diver' then return end
     -- Delete rented boat
     local boatNetId = RentedBoats[src]
     if boatNetId then
@@ -749,14 +809,20 @@ AddEventHandler('sunset:jobs:sessionEnded', function(src, jobId)
         if ent and ent ~= 0 and DoesEntityExist(ent) then DeleteEntity(ent) end
         RentedBoats[src] = nil
     end
-    -- [SECTION 29] Recover rented gear on ANY session end path (endShift, cancelWork,
-    -- playerDropped, or resource stop). The endShift callback handles the normal path,
-    -- but cancelWork and crashes go through sessionEnded directly — without this block
-    -- the gear item would persist in the player's inventory without consuming a rental.
-    local sess = SunsetJobs_GetSession(src)
-    if sess and sess.data and sess.data.rentedGearItem then
-        exports.sunset_inventory:RemoveItem(src, sess.data.rentedGearItem, 1)
-        sess.data.rentedGearItem = nil
+    -- [SECTION 29] Recover rented gear on ANY session end path (endShift, cancelWork, death, timeout).
+    local data = endedSession and endedSession.data
+    if data and data.rentedGearItem and GetPlayerName(src) then
+        pcall(function()
+            exports.sunset_inventory:RemoveItem(src, data.rentedGearItem, 1)
+            exports.sunset_inventory:ReloadInventory(src)
+        end)
+        data.rentedGearItem = nil
+    end
+    -- Fee paid for a boat whose spawn was never confirmed: refund (the client deletes its own spawn on session end).
+    local pendingRental = PendingBoatRentals[src]
+    if pendingRental and GetPlayerName(src) then
+        exports.sunset_core:AddMoney(src, 'cash', pendingRental.cost, 'boat_rental_refund')
+        exports.sunset_core:RefreshMoney(src)
     end
     Snapshots[src]          = nil
     ClaimedPoints[src]      = nil

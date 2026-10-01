@@ -243,7 +243,7 @@ end
 
 local function applyShiftBlips()
     JC.clearBlips()
-    JC.showObjective('Go to the Paleto Bay fishing area', 'Cast your line at the pontoon')
+    JC.hud({ title = exports.sunset_core:Translate('jobs.hud.fisherman.title'), objective = exports.sunset_core:Translate('jobs.hud.fisherman.go') })
     ensureFishermanShiftLoop()
 end
 
@@ -412,6 +412,7 @@ end, false)
 --    the SAME values the server checks, so client/server agreement is visible.
 local fishDebugEnabled = false
 RegisterCommand('fishdebug', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     fishDebugEnabled = not fishDebugEnabled
     JC.notify(fishDebugEnabled and 'Fish debug ON — polygon + values drawn.' or 'Fish debug OFF.', 'info')
 end, false)
@@ -476,11 +477,14 @@ end, false)
 
 CreateThread(function()
     local lastObjective = nil
-    local function setObjectiveOnce(title, sub)
-        local key = tostring(title) .. '|' .. tostring(sub)
-        if lastObjective == key then return end
-        lastObjective = key
-        JC.showObjective(title, sub)
+    local function setObjectiveOnce(stateKey, objective, hintLabel)
+        if lastObjective == stateKey then return end
+        lastObjective = stateKey
+        JC.hud({
+            title = exports.sunset_core:Translate('jobs.hud.fisherman.title'),
+            objective = objective,
+            keyHints = hintLabel and { { key = 'E', label = hintLabel } } or nil,
+        })
     end
     while true do
         if isFishermanShift() then
@@ -491,18 +495,17 @@ CreateThread(function()
                     -- [E FIX] Press E ONCE to cast (IsControlJustPressed OR the
                     -- disabled variant, since fishingshop disables control 38
                     -- near Billy Ray). canCastLine() gates focus/menus/NPC.
-                    setObjectiveOnce('Cast your line', '[E] Cast Fishing Rod')
+                    setObjectiveOnce('cast', exports.sunset_core:Translate('jobs.hud.cast_line'), exports.sunset_core:Translate('jobs.hud.act.cast'))
                     if canCastLine() and contextJustPressed() then
                         CreateThread(attemptFish)
                     end
                     Wait(0)
                 else
-                    setObjectiveOnce('Go to the Paleto Bay fishing area',
-                        'Follow the GPS — cast your line at the pontoon')
+                    setObjectiveOnce('go', exports.sunset_core:Translate('jobs.hud.fisherman.go'))
                     Wait(200)
                 end
             else
-                setObjectiveOnce('Reel it in', 'Watch for the bite — press E in time')
+                setObjectiveOnce('reel', exports.sunset_core:Translate('jobs.hud.fisherman.reel'), exports.sunset_core:Translate('jobs.hud.act.reel'))
                 Wait(0)
             end
         else
@@ -525,6 +528,15 @@ RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     hideFishingUi()
     fishing = false
     removeRod()
+end)
+
+-- [JOBS AUDIT] rod prop, fishing UI and cast animation survived a resource restart.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    removeRod()
+    hideFishingUi()
+    if fishing then ClearPedTasks(PlayerPedId()) end
+    fishing = false
 end)
 
 Sunset.Jobs.StartFisherman = startFisherman

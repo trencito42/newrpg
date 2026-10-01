@@ -25,7 +25,6 @@ server_scripts {
 files {
     'html/ui.html',
     'html/*.js',
-    'html/*.json',
     'html/design.css',
     'html/img/*.png',
     'html/audio/*.mp3'

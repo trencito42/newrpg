@@ -112,3 +112,21 @@ ALTER TABLE property_rentals ADD INDEX idx_prop_active (property_id, active);
 -- If getPropertiesPage search is used heavily
 ALTER TABLE properties ADD FULLTEXT INDEX ft_label_desc (label, description);
 ```
+
+
+---
+
+## 2026-10-01 Whole-repo DB + server perf pass (follow-up to c02b116)
+
+Full detail with file:line in `docs/release/SERVER_PERF_AUDIT.md`. Summary:
+
+- Audited 582 `MySQL.*` call sites under `resources/[sunset]`. Remaining `SELECT *` without a keyed WHERE: 0 hot-path (marriage/cnn/police-name-search are keyed or boot-only).
+- Money writes already atomic (`cash = cash + ? ... AND cash + ? >= 0`, transactions in trade/economy) - VERIFIED, nothing changed.
+- FIXED: `phone getPhoneData` OR-query on `phone_messages` rewritten as two index-friendly `ORDER BY id DESC LIMIT 60` branches (uses idx_phone_messages_sender/receiver from migration 63).
+- FIXED: AvatarCache (base64 blobs) never pruned -> 10 min prune thread.
+- FIXED: `sunset:turfs:warTick` was sent to all players every second; now 1 Hz to participants, 0.2 Hz to everyone.
+- FIXED: `businessesChanged` broadcast made every client refetch at once; client now debounces with 0.25-3.25 s jitter.
+- NEW migration `sql/64-retention-indexes.sql`: created_at indexes for 6 log tables, `characters(home_property_id)`, `impounded_vehicles(status, impounded_at)`.
+- NEW retention (batched `DELETE ... LIMIT 2000`, every 6 h, in the owning resource): money_transactions 365d, anticheat_strikes 30d, anticheat_flags 90d, admin_action_log 180d, clan_audit_log 180d, robbery_audit 90d, faction_audit_log 180d, dealership_admin_log 365d.
+- FIXED: taxi/robbery/licenses used `Wait(1200-1500)` hoping `sunset_sessions` was started; now poll `GetResourceState` up to 60 s.
+- Not changed (documented): `phone_messages` has no retention (player data, policy decision); `/dvall` loads all vehicle plates (rare admin command); redundant indexes `idx_vehicles_char_plate`/`idx_phone_messages_sender_id` left in place (dropping applied schema is out of scope).

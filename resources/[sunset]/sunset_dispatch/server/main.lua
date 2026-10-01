@@ -153,6 +153,10 @@ end)
 local function create112Call(source, category, description, street, area)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'dispatch.message.no_character_loaded' } end
+    -- [SEC2] 112 spam would flood police/EMS call lists (also reachable via phone SMS to 112)
+    if not exports.sunset_core:RateLimit(source, 'call112', 8000) then
+        return nil, { localeKey = 'dispatch.message.no_character_loaded' }
+    end
 
     category = tostring(category or 'emergency'):lower()
     local allowedCategories = {

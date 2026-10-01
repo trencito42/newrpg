@@ -38,7 +38,7 @@ const Characters = {
 
         el.innerHTML = `
             <button class="slot__delete" title="Delete">✕</button>
-            <div class="slot__name">${char.firstname} ${char.lastname}</div>
+            <div class="slot__name">${String(char.firstname ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))} ${String(char.lastname ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
             <div class="slot__meta">$${char.cash} · ${lastPlayed}</div>
         `;
 

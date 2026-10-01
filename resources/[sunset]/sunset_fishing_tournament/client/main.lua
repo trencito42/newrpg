@@ -90,7 +90,7 @@ CreateThread(function()
 
                 if dist < (Cfg.interactDistance or 3.5) then
                     drawText3D(loc.x, loc.y, loc.z + 0.3,
-                        '~y~[E]~s~ Join Fishing Tournament (Weight Leaderboard · Min 3 Fish)')
+                        exports.sunset_core:Translate('hint.fishing_tournament.join'))
 
                     if IsControlJustPressed(0, 38) and not isJoining then -- 38 = E
                         isJoining = true

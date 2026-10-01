@@ -36,7 +36,15 @@ RegisterNetEvent('dc-casino:roulette:server:syncChairs', function(actionType, ch
     local src = source
     local playerCoords = GetEntityCoords(GetPlayerPed(src))
 
-    if actionType == 'enter' and #(playerCoords - chairCoords) >= 5 then return end
+    if actionType ~= 'enter' and actionType ~= 'leave' then return end
+    if actionType == 'enter' then
+        if type(chairCoords) ~= 'vector3' or #(playerCoords - chairCoords) >= 5 then return end
+    elseif takenChair[src] then
+        -- a client may only release the chair it actually holds
+        chairCoords = takenChair[src]
+    else
+        return
+    end
 
     if actionType == 'enter' then
         if takenChair[src] then
@@ -75,46 +83,64 @@ local function startTableHandler(tableIndex)
 
             if not checkActivePlayers(tableIndex) then break end
 
+            -- [SEC2] Collect, sanitise and charge bets BEFORE the result exists/is sent
+            -- to any client (previously the result was broadcast first, letting a
+            -- modified client place a guaranteed winning bet).
+            local playerBets = {}
+            for i = 1, #activeTables[tableIndex] do
+                local pSrc = activeTables[tableIndex][i]
+                local okIn, clientInput = pcall(lib.callback.await, 'dc-casino:roulette:callback:getClientInput', pSrc)
+                local clean, total = {}, 0
+                if okIn and type(clientInput) == 'table' and #clientInput <= 40 then
+                    for j = 1, #clientInput do
+                        local c = clientInput[j]
+                        local amount = type(c) == 'table' and tonumber(c.amount) or nil
+                        local nums, seen, valid = {}, {}, type(c) == 'table' and type(c.bets) == 'table'
+                        if valid then
+                            for k = 1, #c.bets do
+                                local n = tonumber(c.bets[k])
+                                if not n or n ~= math.floor(n) or n < 1 or n > 38 or seen[n] then valid = false break end
+                                seen[n] = true
+                                nums[#nums + 1] = n
+                            end
+                            if not RouletteRewards[#nums] then valid = false end
+                        end
+                        if valid and amount and amount == amount and amount >= 1 and amount <= 1000000 and amount == math.floor(amount) then
+                            clean[#clean + 1] = { amount = amount, bets = nums }
+                            total = total + amount
+                        end
+                    end
+                end
+                if total > 0 then
+                    if countChips(pSrc) >= total and takeChips(pSrc, total) then
+                        playerBets[#playerBets + 1] = { source = pSrc, chosen = clean, total = total }
+                    else
+                        notify(pSrc, 'You do not have enough chips for these bets.', 'error')
+                    end
+                end
+            end
+
             local randomResult = math.random(1, 38)
             TriggerClientEvent('dc-casino:roulette:client:startRoulette', -1, randomResult, tableIndex)
             lib.callback.await('dc-casino:roulette:callback:checkObject', activeTables[tableIndex][1])
 
-            local playerBets = {}
-
-            for i = 1, #activeTables[tableIndex] do
-                local pSrc = activeTables[tableIndex][i]
-                local clientInput = lib.callback.await('dc-casino:roulette:callback:getClientInput', pSrc)
-                playerBets[#playerBets + 1] = {
-                    source = pSrc,
-                    chosen = clientInput or {}
-                }
-            end
-
             for i = 1, #playerBets do
                 local pSrc = playerBets[i].source
-                local bettingAmount, potentialReward = 0, 0
+                local potentialReward = 0
                 for j = 1, #playerBets[i].chosen do
-                    bettingAmount = bettingAmount + (playerBets[i].chosen[j].amount or 0)
-                    for k = 1, #(playerBets[i].chosen[j].bets or {}) do
-                        if playerBets[i].chosen[j].bets[k] == randomResult then
-                            local mult = RouletteRewards[#playerBets[i].chosen[j].bets] or 1
-                            potentialReward = potentialReward + (playerBets[i].chosen[j].amount * mult + playerBets[i].chosen[j].amount)
+                    local c = playerBets[i].chosen[j]
+                    for k = 1, #c.bets do
+                        if c.bets[k] == randomResult then
+                            local mult = RouletteRewards[#c.bets] or 1
+                            potentialReward = potentialReward + (c.amount * mult + c.amount)
                         end
                     end
                 end
-
-                if bettingAmount > 0 then
-                    local chips = countChips(pSrc)
-                    if chips >= bettingAmount and takeChips(pSrc, bettingAmount) then
-                        if potentialReward > 0 then
-                            giveChips(pSrc, potentialReward)
-                            notify(pSrc, ('You won %d chips on Roulette!'):format(potentialReward), 'success')
-                        else
-                            notify(pSrc, 'No win this round.', 'info')
-                        end
-                    else
-                        notify(pSrc, 'You do not have enough chips for these bets.', 'error')
-                    end
+                if potentialReward > 0 then
+                    giveChips(pSrc, potentialReward)
+                    notify(pSrc, ('You won %d chips on Roulette!'):format(potentialReward), 'success')
+                else
+                    notify(pSrc, 'No win this round.', 'info')
                 end
             end
 
@@ -128,6 +154,12 @@ RegisterNetEvent('dc-casino:roulette:server:enterTable', function(rouletteIndex)
     local playerCoords = GetEntityCoords(GetPlayerPed(src))
 
     if not takenChair[src] then return end
+    if type(rouletteIndex) ~= 'number' then return end
+    if activeTables[rouletteIndex] then
+        for _, existing in ipairs(activeTables[rouletteIndex]) do
+            if existing == src then return end
+        end
+    end
     if not RouletteLocations[rouletteIndex] or #(playerCoords - RouletteLocations[rouletteIndex].coords.xyz) >= 8 then return end
 
     if activeTables[rouletteIndex] and activeTables[rouletteIndex][1] then

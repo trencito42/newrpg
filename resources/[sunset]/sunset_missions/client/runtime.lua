@@ -30,6 +30,16 @@ local function clearBlips()
     if activeZoneBlip then RemoveBlip(activeZoneBlip) activeZoneBlip = nil end
 end
 
+-- [JOBS AUDIT] mission blips / vehicle survived a resource restart.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    clearBlips()
+    if missionVehicle and DoesEntityExist(missionVehicle) then
+        SetEntityAsMissionEntity(missionVehicle, true, true)
+        DeleteEntity(missionVehicle)
+    end
+end)
+
 local function notify(msg, kind) exports.sunset_ui:Notify(msg, kind or 'info') end
 
 local function setStage(stage)
@@ -111,7 +121,7 @@ local function runVehicleRecovery(session)
             local vPos  = GetEntityCoords(missionVehicle)
             local dist  = #(pPos - vPos)
             if dist < 4.0 then
-                showHelp('Press ~INPUT_CONTEXT~ to pick the lock')
+                showHelp(exports.sunset_core:Translate('hint.native.pick_lock'))
                 if IsControlJustReleased(0, 38) then
                     -- pause world updates and show minigame
                     MSN_NUI_ShowLockpick(function(success)
@@ -209,7 +219,7 @@ local function runVehicleRecovery(session)
         local pos    = GetEntityCoords(ped)
         local dst    = #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z))
         if curVeh ~= 0 and curVeh == missionVehicle and dst < SunsetMissions.Config.deliveryRadius + 10 then
-            showHelp('Press ~INPUT_CONTEXT~ to deliver the vehicle')
+            showHelp(exports.sunset_core:Translate('hint.native.deliver_vehicle'))
             if IsControlJustReleased(0, 38) then
                 -- escaped = pursuit was spawned AND all pursuers are gone
                 local wasEscaped = MSN_PursuitEscaped()
@@ -294,7 +304,7 @@ local function runContainer47(session)
             if dst < 2.5 then
                 -- Reveal actual ID from slot mapping on approach
                 local revealed = (variant.slotMapping and variant.slotMapping[cp.slotIndex]) or '???'
-                showHelp(('Press ~INPUT_CONTEXT~ to inspect %s'):format(revealed))
+                showHelp(exports.sunset_core:Translate('hint.native.inspect_item', { item = revealed }))
                 if IsControlJustReleased(0, 38) then
                     local now = GetGameTimer()
                     if not c47Cooldowns[cp.slotIndex] or (now - c47Cooldowns[cp.slotIndex]) > 3000 then
@@ -323,7 +333,7 @@ local function runContainer47(session)
     while activeSession and waitingSeal do
         Wait(0)
         if #(GetEntityCoords(PlayerPedId()) - tgtCoords) < 3.5 then
-            showHelp('Press ~INPUT_CONTEXT~ to cut the seal')
+            showHelp(exports.sunset_core:Translate('hint.native.cut_seal'))
             if IsControlJustReleased(0, 38) then
                 setStage('BREAK_SEAL')
                 waitingSeal = false
@@ -355,7 +365,7 @@ local function runContainer47(session)
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         if #(pos - tgtCoords) < 3.5 then
-            showHelp('Press ~INPUT_CONTEXT~ to take the cargo')
+            showHelp(exports.sunset_core:Translate('hint.native.take_cargo'))
             if IsControlJustReleased(0, 38) then
                 cargoObject = MSN_SpawnProp(def.cargoModel, vector3(pos.x, pos.y, pos.z + 1.0))
                 if cargoObject then MSN_AttachCargo(cargoObject, ped) end
@@ -396,7 +406,7 @@ local function runContainer47(session)
         local ped = PlayerPedId()
         local pos = GetEntityCoords(ped)
         if #(pos - vector3(def.deliveryCoords.x, def.deliveryCoords.y, def.deliveryCoords.z)) < SunsetMissions.Config.deliveryRadius + 10 then
-            showHelp('Press ~INPUT_CONTEXT~ to deliver the cargo')
+            showHelp(exports.sunset_core:Translate('hint.native.deliver_cargo'))
             if IsControlJustReleased(0, 38) then
                 local ok, err = Sunset.AwaitCallback('sunset:missions:c47:deliver', {})
                 if not ok then

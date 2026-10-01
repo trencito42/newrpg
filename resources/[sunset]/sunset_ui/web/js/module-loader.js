@@ -179,6 +179,10 @@
             css: ['css/courier.css'],
             js: ['js/courier.js']
         },
+        job_hud: {
+            css: ['css/job-hud.css'],
+            js: ['js/job-hud.js']
+        },
         studio: {
             html: 'modules/studio/index.html',
             css: ['css/studio.css'],

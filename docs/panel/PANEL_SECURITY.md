@@ -9,7 +9,7 @@ Current controls:
 - Failed login attempts are limited by username, a process-wide budget, and trusted IP when `PANEL_TRUST_PROXY=1`. This is a single-process limit; the HTTPS reverse proxy must also rate-limit login. Do not expose Next.js directly on a public interface when trusting proxy headers.
 - Session cookies are HttpOnly, Secure in production and SameSite=Lax. Raw session credentials never enter client DTOs. Session activity writes are throttled.
 - State-changing JSON routes check same-origin browser headers; GET logout was removed. Next server actions use the framework's origin checks. CSP uses a per-request nonce; HSTS is emitted in production. Proxy TLS configuration must be checked separately.
-- Public profiles do not query cash/bank for anonymous viewers, and do not fetch sanction details. SQL is parameterized.
+- Public profiles do not query cash/bank for anonymous viewers, and do not fetch sanction details. The public homepage does not display sanction reasons or staff identities. SQL is parameterized.
 - Poll options must match their poll in both endpoint validation and a database composite foreign key.
 
-Known limitations: Full browser E2E coverage and a disposable MariaDB migration/integration test are not yet present. Staff gameplay actions are not wired to an authoritative FiveM action queue. No production-readiness claim should be made until those paths are implemented and exercised. Review the actual reverse-proxy configuration before setting `PANEL_TRUST_PROXY=1`.
+Known limitations: Seeded Playwright flows and disposable-MariaDB schema/invariant tests cover the web and database layers, but the staff action queue has not been validated on the live FXServer. Online-only target restrictions remain. No production-readiness claim should be made until that runtime path is exercised. Review the actual reverse-proxy configuration before setting `PANEL_TRUST_PROXY=1`.

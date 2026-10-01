@@ -205,7 +205,12 @@ function ClaimReward(source, questKey)
     st.status = 'claimed'
 
     if reward.money and reward.money > 0 then
-        exports.sunset_core:AddMoney(source, 'bank', reward.money, reward.reason or ('quest_' .. questKey))
+        -- [JOBS AUDIT] the quest was marked claimed before the payout; a failed credit destroyed the reward. Roll back.
+        if not exports.sunset_core:AddMoney(source, 'bank', reward.money, reward.reason or ('quest_' .. questKey)) then
+            MySQL.update.await("UPDATE character_quests SET status = 'complete', claimed_at = NULL WHERE character_id = ? AND quest_key = ? AND status = 'claimed'", { char.id, questKey })
+            st.status = 'complete'
+            return false, { localeKey = 'quests.message.claim_failed' }
+        end
     end
     if reward.xp and reward.xp > 0 then
         pcall(function() exports.sunset_core:AddXP(source, reward.xp) end)

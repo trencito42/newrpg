@@ -362,3 +362,13 @@ RegisterNetEvent('sunset:admin:spawnTrailerGizmo', function(model)
     SetVehicleOnGroundProperly(veh)
     StartVehGizmo(veh)
 end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Restore the vehicle if the resource stops mid-gizmo.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if isGizmoActive and currentVeh ~= 0 and DoesEntityExist(currentVeh) then
+        SetEntityCollision(currentVeh, true, true)
+        FreezeEntityPosition(currentVeh, false)
+    end
+    isGizmoActive = false
+end)

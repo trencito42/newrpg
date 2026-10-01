@@ -9,32 +9,32 @@ const rpmContainer = document.getElementById('rpm-bar');
 // Use the browser language here; the account locale takes over as soon as sunset_core starts.
 const LOADSCREEN_LOCALES = {
     en: {
-        title: 'SunsetMP — Loading', brand_subtitle: 'Est. 2026 · Los Santos', tips_header: 'Server Tips',
+        title: 'SunsetMP — Loading', brand_subtitle: 'Est. 2026 · Los Santos', tips_header: 'Server Tips', // i18n-ignore: dictionary
         initializing_session: 'Initializing session...', entering_session: 'Entering session...',
         loading_assets: 'Loading game assets...', downloading_files: 'Downloading {count} files...',
         initializing_resources: 'Initializing resources...', preparing_world: 'Preparing world...',
         connecting_server: 'Connecting to server...',
-        tip_0: 'Stay in character at all times. Press G to open the quick interaction menu.',
+        tip_0: 'Stay in character at all times. Press [G] to open the quick interaction menu.',
         tip_1: 'Your voice range is shown on the HUD. Adjust voice settings in the pause menu.',
         tip_2: 'Vehicles left in traffic lanes may be impounded after server restarts.',
-        tip_3: 'Press G near other players to open contextual interaction options.',
+        tip_3: 'Press [G] near other players to open contextual interaction options.',
         tip_4: 'Need help? Use /report and describe the issue clearly.',
     },
     ro: {
-        title: 'SunsetMP — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server',
+        title: 'SunsetMP — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server', // i18n-ignore: dictionary
         initializing_session: 'Se inițializează sesiunea...', entering_session: 'Se intră în sesiune...',
         loading_assets: 'Se încarcă fișierele jocului...', downloading_files: 'Se descarcă {count} fișiere...',
         initializing_resources: 'Se inițializează resursele...', preparing_world: 'Se pregătește lumea...',
         connecting_server: 'Se conectează la server...',
-        tip_0: 'Rămâi în caracter în permanență. Apasă G pentru meniul rapid de interacțiune.',
+        tip_0: 'Rămâi în caracter în permanență. Apasă [G] pentru meniul rapid de interacțiune.',
         tip_1: 'Raza vocii este afișată pe HUD. Poți ajusta vocea din meniul de pauză.',
         tip_2: 'Vehiculele lăsate pe carosabil pot fi ridicate după restartul serverului.',
-        tip_3: 'Apasă G lângă alți jucători pentru opțiunile de interacțiune.',
+        tip_3: 'Apasă [G] lângă alți jucători pentru opțiunile de interacțiune.',
         tip_4: 'Ai nevoie de ajutor? Folosește /report și descrie clar problema.',
     },
 };
 const loadscreenLocale = String(navigator.language || 'en').toLowerCase().startsWith('ro') ? 'ro' : 'en';
-const lsT = (key, params = {}) => String(LOADSCREEN_LOCALES[loadscreenLocale][key] || LOADSCREEN_LOCALES.en[key] || key)
+const lsT = (key, params = {}) => String(LOADSCREEN_LOCALES[loadscreenLocale][key] || LOADSCREEN_LOCALES.en[key] || '')
     .replace(/\{(\w+)\}/g, (all, name) => Object.prototype.hasOwnProperty.call(params, name) ? params[name] : all);
 document.documentElement.lang = loadscreenLocale;
 document.querySelectorAll('[data-ls-i18n]').forEach((el) => { el.textContent = lsT(el.dataset.lsI18n); });
@@ -43,7 +43,16 @@ document.querySelectorAll('[data-ls-i18n]').forEach((el) => { el.textContent = l
 const BOOT_T0 = Date.now();
 let bootAttemptId = 'BOOT';
 
+// [NUI PERF] Per-file / per-init trace lines fire thousands of times during load
+// and each console.log is an IPC hop to the game. Keep them off unless
+// localStorage.sunset_boot_verbose === '1'. Stalls and the load summary still print.
+const BTRACE_NOISY = new Set(['data_file', 'init_start', 'init_end', 'init_group_start', 'init_group_end',
+    'init_order_start', 'map_load_step', 'load_progress', 'log_line', 'data_batch_start', 'data_batch_end']);
+let BOOT_VERBOSE = false;
+try { BOOT_VERBOSE = window.localStorage.getItem('sunset_boot_verbose') === '1'; } catch (_) { /* noop */ }
+
 function btrace(stage, extra) {
+    if (!BOOT_VERBOSE && BTRACE_NOISY.has(stage)) return;
     try {
         const now = Date.now();
         console.log(`[BOOTV boot=${bootAttemptId} ${now} +${now - BOOT_T0}ms] [loadscreen] ${stage}${extra ? ' ' + extra : ''}`);

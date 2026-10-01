@@ -26,6 +26,8 @@ SETUP.local.md
 
 # Node / IDE
 node_modules/
+/panel/test-results/
+/panel/playwright-report/
 .DS_Store
 .vscode/
 .idea/

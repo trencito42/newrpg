@@ -222,12 +222,12 @@ function AddMissionProgress(source, missionId, amount)
         TriggerClientEvent('sunset:pass:refresh', source)
 
         if justCompleted then
-            passAnnounce(source, 'MISSION COMPLETE',
-                ('%s — +%d XP'):format(mission.title or mission.id, mission.xp or 0), 'success')
+            passAnnounce(source, exports.sunset_core:TFor(source, 'pass.announce.mission_complete'),
+                exports.sunset_core:TFor(source, 'pass.announce.mission_complete_body', { title = mission.titleKey and exports.sunset_core:TFor(source, mission.titleKey) or mission.title or mission.id, xp = mission.xp or 0 }), 'success')
             local newTier = tierFromXp(xp)
             if newTier > oldTier then
-                passAnnounce(source, 'PASS LEVEL UP',
-                    ('You reached pass level %d — open /pass to claim rewards.'):format(newTier), 'success')
+                passAnnounce(source, exports.sunset_core:TFor(source, 'pass.announce.level_up'),
+                    exports.sunset_core:TFor(source, 'pass.announce.level_up_body', { level = newTier }), 'success')
             end
         end
 
@@ -296,8 +296,8 @@ local function buildPayload(source, row)
         local progress = tonumber(entry.progress) or 0
         missions[#missions + 1] = {
             id = mission.id,
-            title = mission.title,
-            description = mission.description,
+            title = mission.titleKey and exports.sunset_core:TFor(source, mission.titleKey) or mission.title,
+            description = mission.descriptionKey and exports.sunset_core:TFor(source, mission.descriptionKey) or mission.description,
             goal = mission.goal,
             xp = mission.xp,
             icon = mission.icon,
@@ -370,7 +370,7 @@ exports.sunset_core:RegisterCallback('sunset:pass:claim', function(source, data)
             return nil, err or 'Could not grant reward.'
         end
 
-        passAnnounce(source, 'REWARD CLAIMED', ('Tier %d — %s'):format(level, reward.label or 'reward'), 'success')
+        passAnnounce(source, exports.sunset_core:TFor(source, 'pass.announce.reward_claimed'), exports.sunset_core:TFor(source, 'pass.announce.reward_claimed_body', { level = level, reward = reward.label or exports.sunset_core:TFor(source, 'pass.announce.reward_default') }), 'success')
         return buildPayload(source, loadRow(char.id))
     end)
 end)
@@ -398,7 +398,7 @@ exports.sunset_core:RegisterCallback('sunset:pass:buyPremium', function(source)
             return nil, { localeKey = 'pass.message.premium_pass_unlocked_but_the_menu_could_not_refresh' }
         end
 
-        passAnnounce(source, 'PREMIUM UNLOCKED', 'Blaze Pass premium track is now active for this season.', 'success')
+        passAnnounce(source, exports.sunset_core:TFor(source, 'pass.announce.premium_unlocked'), exports.sunset_core:TFor(source, 'pass.announce.premium_unlocked_body'), 'success')
         return payload
     end)
 end)

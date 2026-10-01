@@ -43,6 +43,7 @@ server_scripts {
     'server/chat.lua',
     'server/leaders.lua',
     'server/faction_roster.lua',
+    'server/panel.lua',
     'server/police.lua',
     'server/ems.lua',
     'server/friendlyfire.lua',

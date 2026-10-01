@@ -9,7 +9,7 @@ local Cfg = SunsetTestAgent.Config
 
 CreateThread(function()
     Wait(1500)
-    if GetConvar(Cfg.enabledConvar, 'false') ~= 'true' then
+    if not (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true') then
         ClientLog.debug('test agent client disabled (kill switch off)')
         return
     end
@@ -24,5 +24,5 @@ AddEventHandler('onResourceStop', function(res)
 end)
 
 exports('IsTestAgentClient', function()
-    return GetConvar(Cfg.enabledConvar, 'false') == 'true'
+    return (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true')
 end)

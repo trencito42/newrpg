@@ -60,7 +60,7 @@
             'menu.stats.combined_levels': 'Combined career levels', 'menu.stats.assets': 'Assets',
             'menu.stats.asset_count': '{vehicles} vehicles · {properties} properties', 'menu.stats.home': 'Home: {home}',
             'menu.property.title': 'Real estate',
-            'menu.property.description': 'Your properties, rentals, and owner controls. At a property marker, press E for the same panel.',
+            'menu.property.description': 'Your properties, rentals, and owner controls. At a property marker, press [E] for the same panel.',
             'menu.property.owned': 'Owned', 'menu.property.home_spawn': 'Home spawn',
             'menu.property.browse': 'Browse all properties',
             'menu.settings.title': 'System settings',
@@ -70,7 +70,7 @@
             'menu.settings.english': 'English', 'menu.settings.romanian': 'Română',
             'menu.settings.chat': 'Chat', 'menu.settings.font_size': 'Font size',
             'menu.settings.chat_height': 'Chat height', 'menu.settings.reset_chat': 'Reset chat defaults',
-            'menu.settings.chat_hint': 'Press T to chat; use the settings button for font and row options.',
+            'menu.settings.chat_hint': 'Press [T] to chat; use the settings button for font and row options.',
             'menu.settings.hud_help': 'HUD and help', 'menu.settings.hudedit': '/hudedit — move HUD modules',
             'menu.settings.help': '/help — command reference',
             'menu.settings.chatsettings': '/chatsettings — open this tab',
@@ -205,7 +205,7 @@
             'store.total_due': 'Total Due', 'store.key_enter': 'ENTER',
             'store.pay': 'Pay', 'store.sell': 'Sell', 'store.processing': 'Processing…',
             'store.select_product': 'Select a product\nfrom the shelf',
-            'store.close_hint': 'Press ESC to close', 'store.empty_category': 'No items in this category',
+            'store.close_hint': 'Press [ESC] to close', 'store.empty_category': 'No items in this category',
             'store.level_requirement': 'Level {level}', 'store.firearm_license': 'Firearm License',
             'store.weight': 'Weight: {weight} kg',
             'store.category.all': 'All Items', 'store.category.food': 'Food',
@@ -219,7 +219,7 @@
             'clans.select_member': 'Select a member from the list.',
             'clans.leaving': 'Leaving clan…', 'clans.disbanding': 'Disbanding clan…',
             'factions.select_member': 'Select a member first.',
-            'factions.valid_server_id': 'Enter a valid Server ID (hold Z for the list).',
+            'factions.valid_server_id': 'Enter a valid Server ID (hold [Z] for the list).',
             'atm.insufficient_bank': 'Insufficient bank balance.',
             'atm.insufficient_cash': 'You do not have enough cash.',
             'atm.no_cash_to_deposit': 'You have no cash available to deposit.',
@@ -237,7 +237,7 @@
             'pass.no_daily_missions': 'No active daily missions.',
             'pass.no_weekly_missions': 'No active weekly missions.',
             'quest.log_title': 'Quest Log',
-            'quest.close_hint': 'Your progress · press ESC to close',
+            'quest.close_hint': 'Your progress · press [ESC] to close',
             'quest.claimed': 'Claimed', 'quest.ready_to_claim': 'Ready to claim',
             'quest.in_progress': 'In progress', 'quest.claim': 'Claim',
             'quest.active_one': '{count} ACTIVE', 'quest.active_many': '{count} ACTIVE',
@@ -335,6 +335,9 @@
             'tuning.smoke.green': 'Green Smoke', 'tuning.smoke.purple': 'Purple Smoke',
             'tuning.smoke.black': 'Black Smoke',
             'locale.changed': 'Language changed to English.', 'locale.failed': 'Could not save your language.',
+            'ui.jobhud.title_default': 'Job', 'ui.jobhud.distance': 'Distance', 'ui.jobhud.earnings': 'Earned',
+            'ui.jobhud.timer': 'Time', 'ui.jobhud.vehicle': 'Vehicle', 'ui.jobhud.total_earned': 'Total earned',
+            'ui.jobhud.result_success': 'Job complete', 'ui.jobhud.result_fail': 'Job failed', 'ui.jobhud.result_cancel': 'Job cancelled',
         },
         ro: {
             'common.close': 'Închide', 'common.back': 'Înapoi', 'common.cancel': 'Anulează',
@@ -393,7 +396,7 @@
             'menu.stats.combined_levels': 'Niveluri cumulate în carieră', 'menu.stats.assets': 'Bunuri',
             'menu.stats.asset_count': '{vehicles} vehicule · {properties} proprietăți', 'menu.stats.home': 'Acasă: {home}',
             'menu.property.title': 'Proprietăți',
-            'menu.property.description': 'Proprietățile, chiriile și opțiunile tale de proprietar. La marcajul unei proprietăți, apasă E pentru același panou.',
+            'menu.property.description': 'Proprietățile, chiriile și opțiunile tale de proprietar. La marcajul unei proprietăți, apasă [E] pentru același panou.',
             'menu.property.owned': 'Deținute', 'menu.property.home_spawn': 'Locuință principală',
             'menu.property.browse': 'Vezi toate proprietățile',
             'menu.settings.title': 'Setări sistem',
@@ -403,7 +406,7 @@
             'menu.settings.english': 'English', 'menu.settings.romanian': 'Română',
             'menu.settings.chat': 'Chat', 'menu.settings.font_size': 'Mărimea textului',
             'menu.settings.chat_height': 'Înălțimea chatului', 'menu.settings.reset_chat': 'Resetează setările chatului',
-            'menu.settings.chat_hint': 'Apasă T pentru chat; folosește butonul de setări pentru font și numărul de rânduri.',
+            'menu.settings.chat_hint': 'Apasă [T] pentru chat; folosește butonul de setări pentru font și numărul de rânduri.',
             'menu.settings.hud_help': 'HUD și ajutor', 'menu.settings.hudedit': '/hudedit — mută elementele HUD',
             'menu.settings.help': '/help — lista comenzilor',
             'menu.settings.chatsettings': '/chatsettings — deschide această filă',
@@ -538,7 +541,7 @@
             'store.total_due': 'Total de plată', 'store.key_enter': 'ENTER',
             'store.pay': 'Plătește', 'store.sell': 'Vinde', 'store.processing': 'Se procesează…',
             'store.select_product': 'Alege un produs\nde pe raft',
-            'store.close_hint': 'Apasă ESC pentru a închide', 'store.empty_category': 'Nu există produse în această categorie',
+            'store.close_hint': 'Apasă [ESC] pentru a închide', 'store.empty_category': 'Nu există produse în această categorie',
             'store.level_requirement': 'Nivel {level}', 'store.firearm_license': 'Permis de port-armă',
             'store.weight': 'Greutate: {weight} kg',
             'store.category.all': 'Toate produsele', 'store.category.food': 'Mâncare',
@@ -570,7 +573,7 @@
             'pass.no_daily_missions': 'Nu există misiuni zilnice active.',
             'pass.no_weekly_missions': 'Nu există misiuni săptămânale active.',
             'quest.log_title': 'Jurnal de misiuni',
-            'quest.close_hint': 'Progresul tău · apasă ESC pentru a închide',
+            'quest.close_hint': 'Progresul tău · apasă [ESC] pentru a închide',
             'quest.claimed': 'Revendicată', 'quest.ready_to_claim': 'Gata de revendicat',
             'quest.in_progress': 'În desfășurare', 'quest.claim': 'Revendică',
             'quest.active_one': '{count} ACTIVĂ', 'quest.active_many': '{count} ACTIVE',
@@ -668,6 +671,9 @@
             'tuning.smoke.green': 'Fum verde', 'tuning.smoke.purple': 'Fum mov',
             'tuning.smoke.black': 'Fum negru',
             'locale.changed': 'Limba a fost schimbată în română.', 'locale.failed': 'Limba nu a putut fi salvată.',
+            'ui.jobhud.title_default': 'Muncă', 'ui.jobhud.distance': 'Distanță', 'ui.jobhud.earnings': 'Câștigat',
+            'ui.jobhud.timer': 'Timp', 'ui.jobhud.vehicle': 'Vehicul', 'ui.jobhud.total_earned': 'Total câștigat',
+            'ui.jobhud.result_success': 'Muncă finalizată', 'ui.jobhud.result_fail': 'Muncă eșuată', 'ui.jobhud.result_cancel': 'Muncă anulată',
         },
     };
 
@@ -685,7 +691,11 @@
         const value = dictionaries[locale][key] ?? dictionaries.en[key];
         if (value === undefined) {
             if (!warned.has(key)) { warned.add(key); console.warn(`[I18n] Missing key: ${key}`); }
-            return `[?${key}]`;
+            // Players never see a raw key: debug builds keep the [?key] marker,
+            // production shows a readable phrase from the last key segment.
+            if (window.SUNSET_I18N_DEBUG) return `[?${key}]`;
+            const last = String(key).split('.').pop().replace(/_/g, ' ');
+            return last.charAt(0).toUpperCase() + last.slice(1);
         }
         return interpolate(value, params);
     }
@@ -719,6 +729,8 @@
         distance: (metres) => Number(metres) >= 1000
             ? `${new Intl.NumberFormat(numberLocale(), { maximumFractionDigits: 1 }).format(Number(metres) / 1000)} km`
             : `${new Intl.NumberFormat(numberLocale(), { maximumFractionDigits: 0 }).format(Number(metres) || 0)} m`,
+        // Item display names: Romanian uses the item.<id> catalogue; English keeps the server label (staff-editable).
+        item: (id, fallback) => (locale === 'en' ? (fallback || dictionaries.en[`item.${id}`] || id) : (dictionaries[locale][`item.${id}`] || fallback || id)),
         plural: (baseKey, count, params) => t(`${baseKey}.${Number(count) === 1 ? 'one' : 'other'}`, { ...(params || {}), count }),
         dictionaries,
     });

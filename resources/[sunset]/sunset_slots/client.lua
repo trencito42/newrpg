@@ -1,3 +1,17 @@
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- Falls back to the raw natives only if sunset_ui is not running.
+function SLOTS_SetNuiFocus(hasFocus, hasCursor, keepInput)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'slots')
+        end)
+        if ok then return res end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+    SetNuiFocusKeepInput(keepInput == true)
+    return true
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  SUNSETMP — Slot Machines (client.lua)
 -- ═══════════════════════════════════════════════════════════════
@@ -75,7 +89,9 @@ local spawnedChairs = {}
 local function spawnSlotChairs()
     local chairModel = GetHashKey('vw_prop_casino_chair_02a')
     RequestModel(chairModel)
-    while not HasModelLoaded(chairModel) do Wait(10) end
+    local chairDeadline = GetGameTimer() + 5000
+    while not HasModelLoaded(chairModel) and GetGameTimer() < chairDeadline do Wait(10) end
+    if not HasModelLoaded(chairModel) then return end
 
     for _, slot in ipairs(Config.Slots or {}) do
         local id = slot.id
@@ -108,9 +124,13 @@ local function cleanupSlotChairs()
     spawnedChairs = {}
 end
 
+-- [CLIENT_PERF_ENTITY_AUDIT] `unsit` is defined below; without this forward
+-- declaration the stop handler hit a nil global and skipped all cleanup.
+local unsitHook
+
 AddEventHandler('onResourceStop', function(res)
     if res == GetCurrentResourceName() then
-        unsit()
+        if unsitHook then pcall(unsitHook) end
         cleanupSlotChairs()
         destroySlotCam()
         if currentScene then
@@ -137,6 +157,7 @@ local function unsit()
         LocalPlayer.state:set('isCasinoSitting', false, false)
     end
 end
+unsitHook = unsit
 
 local function sit(slotData)
     local ped = PlayerPedId()
@@ -192,7 +213,11 @@ local function sit(slotData)
     -- Play casino synchronized sitting scene (1:1 identical posture to blackjack)
     local animDict = 'anim_casino_b@amb@casino@games@shared@player@'
     RequestAnimDict(animDict)
-    while not HasAnimDictLoaded(animDict) do Wait(10) end
+    local animDeadline = GetGameTimer() + 3000
+    while not HasAnimDictLoaded(animDict) do
+        if GetGameTimer() > animDeadline then break end
+        Wait(10)
+    end
 
     local scene = NetworkCreateSynchronisedScene(chairPos.x, chairPos.y, chairPos.z, 0.0, 0.0, chairHeading, 2, true, true, 1065353216, 0, 1065353216)
     NetworkAddPedToSynchronisedScene(ped, scene, animDict, 'idle_cardgames', 2.0, -2.0, 13, 16, 1148846080, 0)
@@ -204,7 +229,7 @@ local function sit(slotData)
     Wait(500)
 
     -- Open NUI directly with loaded chips (SAMP style, no annoying input prompts!)
-    SetNuiFocus(true, true)
+    SLOTS_SetNuiFocus(true, true)
     open = true
     SendNUIMessage({
         showPacanele = 'open',
@@ -213,7 +238,7 @@ local function sit(slotData)
 end
 
 RegisterNetEvent('sunset_slots:UpdateSlots', function(chips)
-    SetNuiFocus(true, true)
+    SLOTS_SetNuiFocus(true, true)
     open = true
     SendNUIMessage({
         showPacanele = 'open',
@@ -227,7 +252,7 @@ end)
 
 RegisterNUICallback('exitWith', function(data, cb)
     cb('ok')
-    SetNuiFocus(false, false)
+    SLOTS_SetNuiFocus(false, false)
     open = false
     local coins = tonumber(data and data.coinAmount) or 0
     TriggerServerEvent('sunset_slots:PayOutRewards', coins)
@@ -266,7 +291,7 @@ CreateThread(function()
                     255, 200, 0, 180,
                     true, true, 2, false, nil, nil, false)
                 if dist < 1.8 and not open and not isSitting then
-                    DrawText3D(vector3(slot.coords.x, slot.coords.y, slot.coords.z + 0.3), '~y~[E]~s~ Play Slot Machine')
+                    DrawText3D(vector3(slot.coords.x, slot.coords.y, slot.coords.z + 0.3), exports.sunset_core:Translate('hint.slots.play'))
                     if IsControlJustReleased(0, 38) then -- E
                         sit(slot)
                     end
@@ -285,3 +310,12 @@ CreateThread(function()
 end)
 
 
+
+-- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+    if ok and owner == 'slots' then
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
+    end
+end)

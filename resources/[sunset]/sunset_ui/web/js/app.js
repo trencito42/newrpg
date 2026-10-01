@@ -347,7 +347,7 @@
         taxiMeterShow: 'hud_core', taxiMeterUpdate: 'hud_core', taxiMeterHide: 'hud_core',
         jobObjectiveShow: 'hud_core', jobObjectiveUpdate: 'hud_core', jobObjectiveHide: 'hud_core',
         fuelPumpShow: 'hud_core', fuelPumpUpdate: 'hud_core', fuelPumpHide: 'hud_core', worldTooltipsSync: 'hud_core',
-        licenseTestUpdate: 'licenses', jobShiftShow: 'jobcenter', jobShiftHide: 'jobcenter', jobSkillShow: 'jobcenter', jobSkillHide: 'jobcenter',
+        licenseTestUpdate: 'licenses', jobShiftShow: 'job_hud', jobShiftHide: 'job_hud', jobHud: 'job_hud', jobHudResult: 'job_hud', jobHudClear: 'job_hud', jobSkillShow: 'jobcenter', jobSkillHide: 'jobcenter',
         courierUpdate: 'courier',
         casinoBlackjackUpdate: 'casino', casinoSlotsResult: 'casino', casinoRouletteResult: 'casino', casinoWheelResult: 'casino', casinoCashierUpdate: 'casino', casinoBarUpdate: 'casino',
         impoundUpdate: 'impound', racingHud: 'racing', racingHudHide: 'racing', racingCountdown: 'racing', racingGo: 'racing', racingFinished: 'racing',
@@ -912,8 +912,11 @@
                 case 'licenseQuizHide': window.LicenseQuiz?.hide?.(); return;
                 case 'jobCenterShow': window.Panels?.showJobCenter?.(payload); return;
                 case 'jobCenterHide': window.Panels?.hideJobCenter?.(); return;
-                case 'jobShiftShow': window.JobShift?.show?.(payload); return;
-                case 'jobShiftHide': window.JobShift?.hide?.(); return;
+                case 'jobShiftShow': window.JobHud?.showLegacy?.(payload); return;
+                case 'jobShiftHide': window.JobHud?.hide?.(); return;
+                case 'jobHud': window.JobHud?.show?.(payload); return;
+                case 'jobHudResult': window.JobHud?.result?.(payload); return;
+                case 'jobHudClear': window.JobHud?.hide?.(); return;
                 case 'jobSkillShow': window.JobShift?.showSkill?.(payload); return;
                 case 'jobSkillHide': window.JobShift?.hideSkill?.(); return;
                 case 'hunterCompassUpdate': {
@@ -1047,7 +1050,15 @@
         const action = data.action;
         if (!action) return;
 
+        // [NUI HEALTH] optional ping/pong (Lua only sends it when sv_sunset_nuidebug=1)
+        if (action === 'nuiPing') {
+            post('nuiPong', { id: data.data && data.data.id });
+            return;
+        }
+
         const targetModule = ACTION_MODULE_MAP[action];
+        // Clearing a HUD that was never mounted must not load its module.
+        if ((action === 'jobHudClear' || action === 'jobShiftHide') && window.ModuleLoader && !ModuleLoader.isLoaded('job_hud')) return;
 
         if (targetModule && window.ModuleLoader) {
             if (ModuleLoader.isLoaded(targetModule)) {
@@ -1071,20 +1082,20 @@
         });
     });
 
-    // [FREEZE WATCHDOG] rAF frame-gap detector for Main sunset_ui NUI
+    // [FREEZE WATCHDOG] main-thread stall detector for Main sunset_ui NUI.
+    // [NUI PERF] Was a permanent 60Hz rAF loop; now a 500ms timer-drift check
+    // (same signal: the renderer thread was blocked) at ~0.1% of the cost.
     (function mainNuiFrameWatchdog() {
         let last = performance.now();
-        function frame() {
+        setInterval(() => {
             const now = performance.now();
-            const gap = now - last;
+            const gap = now - last - 500;
             last = now;
             if (gap > 200) {
                 const currentScreen = window.App?.currentScreen || 'none';
-                console.log(`[HITCH] MAIN NUI FRAME GAP ${Math.round(gap)}ms screen=${currentScreen} visibility=${document.visibilityState}`);
+                console.warn(`[HITCH] MAIN NUI STALL ${Math.round(gap)}ms screen=${currentScreen} visibility=${document.visibilityState}`);
             }
-            requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);
+        }, 500);
     })();
 
     document.addEventListener('DOMContentLoaded', () => {

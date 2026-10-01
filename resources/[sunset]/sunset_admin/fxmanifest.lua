@@ -25,6 +25,7 @@ server_scripts {
     'server/checkpoints.lua',
     'server/actions.lua',
     'server/commands.lua',
+    'server/panel.lua',
     'server/helpdesk.lua',
 }
 

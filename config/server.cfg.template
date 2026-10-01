@@ -45,15 +45,23 @@ setr sv_sunset_nofx 0
 # [JOBS DEBUG] 0 = normal production mode (1 = verbose logging for job vehicle registration).
 set sv_sunset_jobs_debug 0
 
-# ═══ DEV-ONLY TEST AGENT (MCP runtime bridge) ═══
-# Injected from .env at deploy time (TEST_AGENT_ENABLED / TEST_AGENT_TOKEN).
-# Defaults: disabled + empty token = bridge fully locked (fail-safe).
-# Do NOT enable on production without understanding docs/testing/FIVEM_MCP.md.
-# ensure sunset_test_agent
-setr sunset_test_agent_enabled "__TEST_AGENT_ENABLED__"
-set sunset_test_agent_token "__TEST_AGENT_TOKEN__"
-# Full NUI instrumentation (message/callback/error ring buffers for inspection)
-setr sv_sunset_nuidebug "__TEST_AGENT_NUIDEBUG__"
+# ═══ DEV / PRODUCTION SPLIT ═══
+# Convention: every line prefixed with "#@dev " is DEV-ONLY. docker/fivem/entrypoint.sh
+# strips the prefix ONLY when SUNSET_DEV=1 is set in .env (never on production).
+# sunset_dev is the master convar; dev resources also refuse to run when it is 0.
+# Dev resources: sunset_testdriver, sunset_test_agent (MCP bridge), sunset_devtools,
+# sunset_admintools. See docs/release/CLEANUP_REPORT.md and docs/testing/FIVEM_MCP.md.
+setr sunset_dev "__SUNSET_DEV__"
+set testdriver_autorun 0
+#@dev ensure sunset_testdriver
+#@dev set testdriver_autorun 1
+#@dev ensure sunset_test_agent
+#@dev setr sunset_test_agent_enabled "__TEST_AGENT_ENABLED__"
+#@dev set sunset_test_agent_token "__TEST_AGENT_TOKEN__"
+#@dev setr sv_sunset_nuidebug "__TEST_AGENT_NUIDEBUG__"
+#@dev ensure sunset_devtools
+#@dev setr sunset_devtools_enabled true
+#@dev ensure sunset_admintools
 
 # ox_inventory optional — enable after bridge migration
 # ensure ox_inventory
@@ -67,28 +75,28 @@ ensure sunset_core
 ensure sunset_sessions
 ensure sunset_ui
 ensure sunset_auth_ui
-ensure sunset_chat
+ensure sunset_death
 ensure sunset_world
+ensure sunset_inventory
+ensure sunset_appearance
 ensure sunset_factions
+ensure sunset_admin
 ensure sunset_clans
+ensure sunset_chat
 ensure sunset_turfs
 ensure sunset_cnn
 ensure sunset_dispatch
 ensure sunset_crafting
 ensure sunset_auth
 ensure sunset_characters
-ensure sunset_appearance
 ensure sunset_spawn
 ensure sunset_player
-ensure sunset_inventory
 ensure sunset_economy
 ensure sunset_needs
-ensure sunset_death
 ensure sunset_vehicles
 ensure sunset_addon_vehicles
 ensure sunset_police_handling
 ensure sunset_tuning
-ensure sunset_admin
 ensure sunset_properties
 ensure sunset_skins
 ensure sunset_businesses
@@ -108,10 +116,7 @@ ensure sunset_scoreboard
 ensure sunset_menu
 ensure sunset_help
 ensure sunset_quests
-# ensure sunset_testdriver
-# ensure sunset_admintools
 ensure sunset_anticheat
-setr testdriver_autorun 0
 ensure sunset_jobs
 ensure sunset_carjack
 ensure sunset_fishingshop
@@ -127,8 +132,7 @@ ensure sunset_events
 ensure sunset_marriage
 ensure sunset_fishing_tournament
 ensure sunset_missions
-# ensure sunset_devtools
-setr sunset_devtools_enabled false
+ensure sunset_panel_bridge
 
 ensure villa_island
 

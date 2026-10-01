@@ -131,6 +131,12 @@ local function hireCivilianJob(source, jobId)
         return nil, { localeKey = 'jobs.message.you_already_work_as_value', formatArgs = { label } }
     end
 
+    -- [JOBS AUDIT] licence/level requirements were only enforced by the workplace NPC apply path.
+    if SunsetJobs_CheckRequirements then
+        local reqOk, reqErr = SunsetJobs_CheckRequirements(source, jobId)
+        if not reqOk then return nil, reqErr or 'You do not meet the job requirements.' end
+    end
+
     if currentJob ~= 'unemployed' then
         if SunsetJobs_ClearSession then
             SunsetJobs_ClearSession(source, 'CANCELLED', 'Changed civilian job')

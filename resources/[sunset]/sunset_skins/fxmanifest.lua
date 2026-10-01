@@ -20,3 +20,6 @@ client_scripts {
     '@sunset_core/client/callbacks.lua',
     'client/main.lua',
 }
+
+-- [STARTUP] declared so the exports used at runtime are guaranteed started first
+dependencies { 'sunset_core' }

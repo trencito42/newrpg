@@ -173,14 +173,138 @@ exports('GetNuiDebugErrors', function(limit)
     return bufferTail(nuiErrBuffer, nuiErrHead, nuiErrTotal, limit)
 end)
 
+-- ═══════════════════════════════════════════════════════════════
+--  [NUI PERF] Payload size instrumentation. Gated by sv_sunset_nuidebug=1
+--  (the convar is cached for 5s so production Send() pays one GetGameTimer).
+--  warn >100KB, severe >500KB, critical >1MB. /nuistats (admin ACE) prints
+--  the 20 largest actions by max payload size.
+-- ═══════════════════════════════════════════════════════════════
+local NUI_PAYLOAD_WARN, NUI_PAYLOAD_SEVERE, NUI_PAYLOAD_CRIT = 100 * 1024, 500 * 1024, 1024 * 1024
+local nuiPayloadStats = {}
+local nuiDebugCache, nuiDebugCacheAt = false, -10000
+
+local function nuiPayloadDebugOn()
+    local now = GetGameTimer()
+    if now - nuiDebugCacheAt > 5000 then
+        nuiDebugCacheAt = now
+        nuiDebugCache = nuiDebugEnabled()
+    end
+    return nuiDebugCache
+end
+
+local function nuiRecordPayload(action, data)
+    if not nuiPayloadDebugOn() then return end
+    local ok, enc = pcall(json.encode, data or {})
+    if not ok or not enc then return end
+    local size = #enc
+    local key = tostring(action)
+    local st = nuiPayloadStats[key]
+    if not st then
+        st = { count = 0, total = 0, max = 0 }
+        nuiPayloadStats[key] = st
+    end
+    st.count = st.count + 1
+    st.total = st.total + size
+    st.last = size
+    if size > st.max then st.max = size end
+    if size > NUI_PAYLOAD_WARN then
+        local level, color = 'WARN', '^3'
+        if size > NUI_PAYLOAD_CRIT then level, color = 'CRITICAL', '^1'
+        elseif size > NUI_PAYLOAD_SEVERE then level, color = 'SEVERE', '^1' end
+        print(('%s[NUI-PAYLOAD %s]^7 action=%s size=%.1fKB'):format(color, level, key, size / 1024))
+    end
+end
+
+RegisterNetEvent('sunset_ui:client:nuiStats', function()
+    if not nuiDebugEnabled() then
+        print('^3[NUI-STATS]^7 disabled: set `setr sv_sunset_nuidebug 1` to collect payload stats.')
+        return
+    end
+    local rows = {}
+    for action, st in pairs(nuiPayloadStats) do
+        rows[#rows + 1] = { action = action, max = st.max, avg = st.total / math.max(st.count, 1), count = st.count, total = st.total }
+    end
+    table.sort(rows, function(a, b) return a.max > b.max end)
+    print('^5[NUI-STATS]^7 top 20 actions by max payload (KB): max | avg | count | total')
+    for i = 1, math.min(20, #rows) do
+        local r = rows[i]
+        print(('  %2d. %-32s %8.1f | %8.1f | %6d | %9.1f'):format(i, r.action, r.max / 1024, r.avg / 1024, r.count, r.total / 1024))
+    end
+    if #rows == 0 then print('  (no payloads recorded yet)') end
+end)
+
+-- Optional health check: ping the page every 30s while debug is on and only log
+-- when the pong is late (>2s) or missing. Never changes behavior.
+local nuiPingId, nuiPingSentAt, nuiPongAt = 0, 0, 0
+RegisterNUICallback('nuiPong', function(data, cb)
+    nuiPongAt = GetGameTimer()
+    cb('ok')
+end)
+CreateThread(function()
+    while true do
+        Wait(30000)
+        if nuiPayloadDebugOn() then
+            if nuiPingSentAt > 0 and nuiPongAt < nuiPingSentAt then
+                print(('^1[NUI-PING]^7 no pong for ping #%d after %dms (NUI page frozen or not loaded)'):format(nuiPingId, GetGameTimer() - nuiPingSentAt))
+            elseif nuiPingSentAt > 0 and (nuiPongAt - nuiPingSentAt) > 2000 then
+                print(('^3[NUI-PING]^7 slow pong %dms'):format(nuiPongAt - nuiPingSentAt))
+            end
+            nuiPingId = nuiPingId + 1
+            nuiPingSentAt = GetGameTimer()
+            SendNUIMessage({ action = 'nuiPing', data = { id = nuiPingId } })
+        end
+    end
+end)
+
 function Send(action, data)
     NuiDebugRecordMessage(action)
+    nuiRecordPayload(action, data)
     SendNUIMessage({
         action = action,
         data = data or {},
     })
 end
 exports('Send', Send)
+
+-- ── Shared job HUD (web/js/job-hud.js) ────────────────────────────────
+-- JobHud(data): title, objective, tone, key, progress{current,total}|pct, distance(m),
+-- earnings, timer{seconds,dir}, timerLabel, vehicle, keyHints[{key,label}], patch.
+-- Identical consecutive payloads are dropped so loops may call it freely.
+local jobHudKey = nil
+local jobHudShown = false
+local jobHudResultUntil = 0
+
+function JobHud(data)
+    if type(data) ~= 'table' then return end
+    local ok, key = pcall(json.encode, data)
+    if ok and key == jobHudKey then return end
+    jobHudKey = ok and key or nil
+    jobHudShown = true
+    jobHudResultUntil = 0
+    Send('jobHud', data)
+end
+exports('JobHud', JobHud)
+
+-- kind: 'success' | 'fail' | 'cancel'; also clears the live card.
+function JobHudResult(data)
+    data = type(data) == 'table' and data or {}
+    jobHudKey = nil
+    jobHudShown = true
+    jobHudResultUntil = GetGameTimer() + math.min(math.max(tonumber(data.ttl) or 5000, 1500), 15000)
+    Send('jobHudResult', data)
+end
+exports('JobHudResult', JobHudResult)
+
+-- A result card is not wiped by routine cleanup clears; pass force=true to override.
+function JobHudClear(force)
+    if not force and GetGameTimer() < jobHudResultUntil then return end
+    jobHudResultUntil = 0
+    jobHudKey = nil
+    if not jobHudShown then return end
+    jobHudShown = false
+    Send('jobHudClear', {})
+end
+exports('JobHudClear', JobHudClear)
 
 function ShowTransition(text)
     transitionVisible = false
@@ -342,6 +466,13 @@ RegisterNUICallback('loadingTimeout', function(_, cb)
     cb('ok')
 end)
 
+-- [NUI FOCUS] Central safety net: any 'force close' (death, admin, jail) releases
+-- focus regardless of owner, except while the login screen legitimately owns it.
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    if isOpen and currentScreen == 'auth' then return end
+    SetFocus(false, false, false, 'force')
+end)
+
 RegisterCommand('fixnui', function()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
@@ -387,4 +518,13 @@ CreateThread(function()
         end
         Wait(paused and 50 or 150)
     end
+end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Never leave the cursor/keyboard captured if the UI
+-- resource restarts.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
+    focusOwner = nil
 end)

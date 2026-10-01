@@ -129,8 +129,36 @@ local function isOnDutyPolice(src)
         and Sunset.FactionTypeMatches(factionId, 'law_enforcement') == true
 end
 
+-- [SEC2] Server-side corroboration for client-reported death. Previously every
+-- death/respawn event teleported the caller to hospital/home on demand (free
+-- teleport, custody/pursuit escape). The server now verifies the ped's health
+-- (replicated by OneSync) or a state it already recorded itself.
+local function serverSaysDead(src)
+    if Downed[src] then return true end
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then return false end
+    local hp = GetEntityHealth(ped)
+    return hp ~= nil and hp <= 105
+end
+
+local function waitServerDead(src, maxMs)
+    local waited = 0
+    while waited <= maxMs do
+        if serverSaysDead(src) then return true end
+        Wait(250)
+        waited = waited + 250
+    end
+    return false
+end
+
 RegisterNetEvent('sunset:server:playerDied', function()
     local source = source
+    if not exports.sunset_core:RateLimit(source, 'playerDied', 3000) then return end
+    if Downed[source] then return end
+    if not waitServerDead(source, 3000) then
+        print(('^3[sunset_death]^7 playerDied from %d rejected: server health says alive'):format(source))
+        return
+    end
     if GetResourceState('sunset_turfs') == 'started' then
         local ok, inWar = pcall(function() return exports.sunset_turfs:IsInWar(source) end)
         if ok and inWar then return end
@@ -172,16 +200,22 @@ end)
 
 RegisterNetEvent('sunset:death:enteredDowned', function()
     local source = source
+    if not exports.sunset_core:RateLimit(source, 'deathRespawn', 2000) then return end
+    if not serverSaysDead(source) then return end
     respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
 
 RegisterNetEvent('sunset:server:bleedoutExpired', function()
     local source = source
+    if not exports.sunset_core:RateLimit(source, 'deathRespawn', 2000) then return end
+    if not serverSaysDead(source) then return end
     respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
 
 RegisterNetEvent('sunset:server:requestRespawn', function()
     local source = source
+    if not exports.sunset_core:RateLimit(source, 'deathRespawn', 2000) then return end
+    if not serverSaysDead(source) then return end
     respawnPlayer(source, Sunset.Config.HospitalBill or 250)
 end)
 

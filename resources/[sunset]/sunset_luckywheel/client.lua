@@ -39,7 +39,11 @@ local function spawnWheel()
             createdBase = false
         else
             RequestModel(baseModel)
-            while not HasModelLoaded(baseModel) do Wait(10) end
+            local baseDeadline = GetGameTimer() + 5000
+            while not HasModelLoaded(baseModel) do
+                if GetGameTimer() > baseDeadline then return end
+                Wait(10)
+            end
             basewheel = CreateObject(baseModel, basePos.x, basePos.y, basePos.z, false, false, true)
             SetEntityHeading(basewheel, 0.0)
             FreezeEntityPosition(basewheel, true)
@@ -49,7 +53,11 @@ local function spawnWheel()
     end
 
     RequestModel(wheelModel)
-    while not HasModelLoaded(wheelModel) do Wait(10) end
+    local wheelDeadline = GetGameTimer() + 5000
+    while not HasModelLoaded(wheelModel) do
+        if GetGameTimer() > wheelDeadline then return end
+        Wait(10)
+    end
 
     if not DoesEntityExist(luckywheel) then
         luckywheel = CreateObject(wheelModel, wheelPos.x, wheelPos.y, wheelPos.z, false, false, true)
@@ -82,7 +90,7 @@ CreateThread(function()
             if not DoesEntityExist(luckywheel) then spawnWheel() end
             if dist < 2.5 and not isRolling then
                 sleep = 0
-                DrawText3D(spinPos + vector3(0, 0, 0.3), '~p~[E]~s~ Spin The Lucky Wheel (100 Chips / Cooldown: 1h)')
+                DrawText3D(spinPos + vector3(0, 0, 0.3), exports.sunset_core:Translate('hint.luckywheel.spin'))
                 if IsControlJustReleased(0, 38) then
                     TriggerServerEvent('sunset:luckywheel:requestSpin')
                 end
@@ -106,7 +114,11 @@ RegisterNetEvent('sunset:luckywheel:doRoll', function(priceIndex, spinnerPedNetI
             local isMale = IsPedMale(spinnerPed)
             local dict = isMale and 'anim_casino_a@amb@casino@games@lucky7wheel@male' or 'anim_casino_a@amb@casino@games@lucky7wheel@female'
             RequestAnimDict(dict)
-            while not HasAnimDictLoaded(dict) do Wait(10) end
+            local dictDeadline = GetGameTimer() + 3000
+            while not HasAnimDictLoaded(dict) do
+                if GetGameTimer() > dictDeadline then return end
+                Wait(10)
+            end
 
             TaskPlayAnim(spinnerPed, dict, 'enter_right_to_baseidle', 8.0, -8.0, -1, 0, 0, false, false, false)
             Wait(1200)

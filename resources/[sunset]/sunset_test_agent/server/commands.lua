@@ -7,7 +7,7 @@
 local Cfg = SunsetTestAgent.Config
 
 local function requireAdmin(source)
-    if GetConvar(Cfg.enabledConvar, 'false') ~= 'true' then
+    if not (GetConvarInt('sunset_dev', 0) == 1 and GetConvar(Cfg.enabledConvar, 'false') == 'true') then
         return false, { localeKey = 'test_agent.message.the_test_agent_is_disabled_kill_switch_off' }
     end
     local level = TestAgentAuth.adminLevel(source)

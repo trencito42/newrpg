@@ -494,14 +494,24 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
 
     businessId = tonumber(businessId)
     if businessId and GetResourceState('sunset_businesses') == 'started' then
-        exports.sunset_businesses:RecordSale(businessId, total)
+        -- [SEC2] businessId is client-supplied: only credit a business that is
+        -- physically near the buyer (prevents routing sale profit to any business).
+        local okRow, brow = pcall(function() return exports.sunset_businesses:GetBusinessRow(businessId) end)
+        local bc = okRow and brow and brow.coords
+        if bc and #(playerCoords - vector3(bc.x, bc.y, bc.z)) <= 40.0 then
+            exports.sunset_businesses:RecordSale(businessId, total)
+        end
     end
 
     return true
 end)
 
 exports.sunset_core:RegisterCallback('sunset:atmTransfer', function(source, action, amount)
-    amount = math.floor(amount or 0)
+    -- [SEC2] non-number / NaN / inf / huge amounts rejected; per-source throttle
+    amount = tonumber(amount)
+    if not amount or amount ~= amount or amount > 2000000000 then return nil, { localeKey = 'economy.message.invalid_amount' } end
+    amount = math.floor(amount)
+    if not exports.sunset_core:RateLimit(source, 'atmTransfer', 500) then return nil, { localeKey = 'economy.message.processing_your_last_purchase' } end
     if amount < 1 then return nil, { localeKey = 'economy.message.invalid_amount' } end
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'economy.message.no_character' } end
@@ -533,7 +543,11 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneBankTransfer', function(source, targetId, amount)
     targetId = tonumber(targetId)
-    amount = math.floor(tonumber(amount) or 0)
+    amount = tonumber(amount)
+    if not amount or amount ~= amount or amount > 2000000000 then return nil, { localeKey = 'economy.message.invalid_amount' } end
+    amount = math.floor(amount)
+    if not exports.sunset_core:RateLimit(source, 'phoneBankTransfer', 1500) then return nil, { localeKey = 'economy.message.processing_your_last_purchase' } end
+    if exports.sunset_core:IsIncapacitated(source) then return nil, { localeKey = 'economy.message.you_cannot_shop_right_now' } end
     if not targetId or targetId < 1 then return nil, { localeKey = 'economy.message.invalid_player_id' } end
     if amount < 1 then return nil, { localeKey = 'economy.message.invalid_amount' } end
     if targetId == source then return nil, { localeKey = 'economy.message.you_cannot_transfer_to_yourself' } end

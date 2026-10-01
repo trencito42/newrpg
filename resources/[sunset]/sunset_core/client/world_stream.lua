@@ -6,6 +6,7 @@
 Sunset = Sunset or {}
 Sunset.World = Sunset.World or {}
 
+local teleportInProgress = false -- true while SafeTeleport holds the ped frozen / focus moved
 local PRESTREAM_DELAY   = 300   -- ms to stream before moving entity
 local COLLISION_TIMEOUT = 8000  -- ms to wait for collision after move
 
@@ -62,9 +63,12 @@ function Sunset.World.SafeTeleport(coords4, opts)
 
     if doFade then
         DoScreenFadeOut(opts.fadeOutMs or 400)
-        while not IsScreenFadedOut() do Wait(0) end
+        -- Bounded: a fade that never completes must not hang the teleport.
+        local fadeDeadline = GetGameTimer() + (opts.fadeOutMs or 400) + 2000
+        while not IsScreenFadedOut() and GetGameTimer() < fadeDeadline do Wait(0) end
     end
 
+    teleportInProgress = true
     FreezeEntityPosition(ped, true)
 
     -- Force the engine to begin streaming the destination before we arrive
@@ -96,6 +100,7 @@ function Sunset.World.SafeTeleport(coords4, opts)
 
     Wait(200)
     FreezeEntityPosition(PlayerPedId(), false)
+    teleportInProgress = false
 
     if doFade then
         DoScreenFadeIn(opts.fadeInMs or 500)
@@ -103,3 +108,15 @@ function Sunset.World.SafeTeleport(coords4, opts)
 
     return ok
 end
+
+-- [CLIENT_PERF_ENTITY_AUDIT] If core restarts mid-teleport, do not leave the ped
+-- frozen or the streaming focus pinned to the destination.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if teleportInProgress then
+        NewLoadSceneStop()
+        ClearFocus()
+        FreezeEntityPosition(PlayerPedId(), false)
+        teleportInProgress = false
+    end
+end)

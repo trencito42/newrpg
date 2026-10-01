@@ -266,3 +266,22 @@ AddEventHandler('playerDropped', function()
     TestDrives[source] = nil
     if vehicle and DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
 end)
+
+
+-- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
+CreateThread(function()
+    Wait(120000)
+    local purges = { { 'dealership_admin_log', 365 } }
+    while true do
+        for _, p in ipairs(purges) do
+            for _ = 1, 20 do
+                local ok, n = pcall(function()
+                    return MySQL.update.await(('DELETE FROM `%s` WHERE created_at < (NOW() - INTERVAL ? DAY) LIMIT 2000'):format(p[1]), { p[2] })
+                end)
+                if not ok or (tonumber(n) or 0) < 2000 then break end
+                Wait(1000)
+            end
+        end
+        Wait(6 * 3600 * 1000)
+    end
+end)

@@ -24,7 +24,8 @@ local function closeAllModalUi()
             exports.sunset_ui:Send('mdcHide', {})
             exports.sunset_ui:Send('factionPanelsHide', {})
             exports.sunset_ui:Send('clanPanelsHide', {})
-            exports.sunset_ui:SetFocus(false, false)
+            -- 'force': death must release focus even if another resource owns it
+            exports.sunset_ui:SetFocus(false, false, false, 'force')
         end)
     end
 end

@@ -101,8 +101,10 @@ local function drawMarkerAt(coords, r, g, b, size)
     )
 end
 
+local staticBlips = {}
 local function addBlip(coords, preset, label, shortRange)
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+    staticBlips[#staticBlips + 1] = blip
     SetBlipSprite(blip, preset.sprite or 1)
     SetBlipColour(blip, preset.color or 0)
     SetBlipScale(blip, preset.scale or 0.7)
@@ -373,6 +375,10 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     hideHint()
+    for i, b in ipairs(staticBlips) do
+        if DoesBlipExist(b) then RemoveBlip(b) end
+        staticBlips[i] = nil
+    end
 end)
 
 AddEventHandler('sunset:world:uiModalOpen', function()

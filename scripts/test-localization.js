@@ -49,7 +49,10 @@ assert(window.I18n.t('ui.mdc.search') !== '[?ui.mdc.search]', 'generated catalog
 assert(document.documentElement.lang === 'ro', 'document language did not update');
 assert(window.lastEvent?.type === 'sunset:localeChanged', 'locale event not dispatched');
 assert(window.I18n.setLocale('xx') === false && window.I18n.getLocale() === 'ro', 'invalid locale changed state');
-assert(window.I18n.t('does.not.exist') === '[?does.not.exist]', 'missing-key marker failed');
+assert(window.I18n.t('does.not.exist') === 'Exist', 'readable missing-key fallback failed');
+window.SUNSET_I18N_DEBUG = true;
+assert(window.I18n.t('does.not.exist') === '[?does.not.exist]', 'debug missing-key marker failed');
+window.SUNSET_I18N_DEBUG = false;
 listeners.get('window:message')?.({ data: { action: 'localeSet', data: { locale: 'en' } } });
 assert(window.I18n.getLocale() === 'en', 'standalone NUI locale message failed');
 console.log('NUI localization tests OK: locale validation, interpolation, live rerender, attributes, event, and fallback marker.');

@@ -2288,6 +2288,9 @@ registerServerCommand('nd', function(source, args)
     notify(source, ('Ai sters intrebarea lui %s.'):format(q.name), 'success')
 end)
 
+-- [SEC2] a name change via the FNC modal is only valid when an admin forced it
+local FncPending = {} -- [src] = expiry os.time()
+
 local function handleFnc(source, args)
     local targetInput = args[1]
     local extraArg = args[2] and table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1') or ''
@@ -2321,6 +2324,7 @@ local function handleFnc(source, args)
     if not isDirectRename then
         local reason = extraArg ~= '' and extraArg or 'Name violates server rules'
 
+        FncPending[target] = os.time() + 1800
         TriggerClientEvent('sunset:admin:openFncModal', target, {
             forced = true,
             reason = reason,
@@ -2403,6 +2407,9 @@ registerServerCommand('forcenamechange', handleFnc)
 exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(source, newName)
     local char = exports.sunset_core:GetCharacter(source)
     if not char or not char.id then return false, { localeKey = 'admin.message.invalid_character' } end
+    if not FncPending[source] or FncPending[source] < os.time() then
+        return false, { localeKey = 'admin.message.invalid_character' }
+    end
 
     local cleanName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
     if #cleanName < 3 or #cleanName > 24 then
@@ -2434,6 +2441,7 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
         last = ''
     end
 
+    FncPending[source] = nil
     -- Update database
     MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
         first, last, char.id
@@ -2468,6 +2476,7 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
 end)
 
 AddEventHandler('playerDropped', function()
+    FncPending[source] = nil
     LastNewbAsk[source] = nil
     ActivePlayerReports[source] = nil
     ActiveNewbieQuestions[source] = nil
@@ -2507,3 +2516,22 @@ if SunsetAdmin.Actions and SunsetAdmin.Actions.init then
     })
 end
 
+
+
+-- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
+CreateThread(function()
+    Wait(120000)
+    local purges = { { 'admin_action_log', 180 } }
+    while true do
+        for _, p in ipairs(purges) do
+            for _ = 1, 20 do
+                local ok, n = pcall(function()
+                    return MySQL.update.await(('DELETE FROM `%s` WHERE created_at < (NOW() - INTERVAL ? DAY) LIMIT 2000'):format(p[1]), { p[2] })
+                end)
+                if not ok or (tonumber(n) or 0) < 2000 then break end
+                Wait(1000)
+            end
+        end
+        Wait(6 * 3600 * 1000)
+    end
+end)

@@ -60,6 +60,8 @@ exports.sunset_core:RegisterCallback('skins:buy', function(source, model, curren
     local player = getPlayer(source)
     local char   = getCharacter(source)
     if not player or not char then return nil, { localeKey = 'skins.message.not_authenticated' } end
+    -- [SEC2] serialise purchases per source (double-charge/duplicate-row race)
+    if not exports.sunset_core:RateLimit(source, 'skinBuy', 1500) then return nil, { localeKey = 'skins.message.unknown_skin' } end
 
     local cfg = skinByModel(model)
     if not cfg then return nil, { localeKey = 'skins.message.unknown_skin' } end
@@ -113,7 +115,7 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     end
     meta.skin = (not isReset) and model or nil
     char.metadata = meta
-    MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), char.id })
+    exports.sunset_core:SetCharacterSkin(char.id, meta.skin)
 
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
     TriggerClientEvent('sunset:skins:applyModel', source, meta.skin or 'default')
@@ -185,7 +187,7 @@ RegisterCommand('setskin', function(source, args)
     local meta = targetChar.metadata or {}
     meta.skin = (model ~= '' and model ~= 'default' and model ~= 'reset') and model or nil
     targetChar.metadata = meta
-    MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), targetChar.id })
+    exports.sunset_core:SetCharacterSkin(targetChar.id, meta.skin)
 
     local targetPlayer = getPlayer(targetSource)
     if targetPlayer and meta.skin then
@@ -214,9 +216,10 @@ end, false)
 -- sunset:skins:applyModel directly — that path is unaffected.
 
 -- Battlepass: called from sunset_pass to grant a skin on tier unlock
-RegisterNetEvent('sunset:skins:grantBattlepassSkin')
-AddEventHandler('sunset:skins:grantBattlepassSkin', function(model)
-    local src    = source
+-- [SEC2] SERVER-ONLY: was RegisterNetEvent, which let any client grant itself any skin.
+-- Now only reachable via server-side TriggerEvent('sunset:skins:grantBattlepassSkin', src, model).
+AddEventHandler('sunset:skins:grantBattlepassSkin', function(src, model)
+    if type(src) ~= 'number' or type(model) ~= 'string' or model == '' or #model > 64 then return end
     local player = getPlayer(src)
     if not player then return end
     local already = MySQL.query.await(

@@ -981,3 +981,22 @@ AddEventHandler('sunset:nui:fncSubmit', function(payload)
         end
     end, name)
 end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Resource-restart safety: never leave the local ped
+-- invincible / frozen / invisible / collision-less when this resource stops.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ped = PlayerPedId()
+    if ped and ped ~= 0 then
+        if godmode then SetEntityInvincible(ped, false) end
+        if noclip or isFrozen or specTarget then
+            FreezeEntityPosition(ped, false)
+            SetEntityCollision(ped, true, true)
+        end
+        if specTarget then
+            NetworkSetInSpectatorMode(false, ped)
+            SetEntityVisible(ped, true, false)
+        end
+    end
+    godmode, noclip, isFrozen, specTarget = false, false, false, nil
+end)

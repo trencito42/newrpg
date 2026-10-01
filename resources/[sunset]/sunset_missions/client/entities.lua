@@ -85,6 +85,13 @@ function MSN_CleanupAllEntities()
     spawnedEntities = {}
 end
 
+-- [JOBS AUDIT] mission props/vehicles/guards were never deleted when the resource stopped mid-mission.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if MSN_CleanupGuards then pcall(MSN_CleanupGuards) end
+    MSN_CleanupAllEntities()
+end)
+
 function MSN_AttachCargo(prop, ped)
     AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 57005), 0.12, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
 end

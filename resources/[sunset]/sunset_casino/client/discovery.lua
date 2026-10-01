@@ -217,6 +217,7 @@ local function probeInteriorDetails(coords)
 end
 
 RegisterCommand('casinoprobe', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     CreateThread(function()
         log('=== FULL PROBE START ===')
 
@@ -248,6 +249,7 @@ RegisterCommand('casinoprobe', function()
 end, false)
 
 RegisterCommand('casinoscan', function(_, args)
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     CreateThread(function()
         scanEntities(args[1])
         logFlush()
@@ -255,6 +257,7 @@ RegisterCommand('casinoscan', function(_, args)
 end, false)
 
 RegisterCommand('casinoanim', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     CreateThread(function()
         log('=== ANIM DICT AVAILABILITY ===')
         for _, dict in ipairs(ANIM_DICTS) do
@@ -276,6 +279,7 @@ RegisterCommand('casinoanim', function()
 end, false)
 
 RegisterCommand('casinoprops', function()
+    if GetConvarInt('sunset_dev', 0) ~= 1 then return end -- dev-only (setr sunset_dev 1)
     CreateThread(function()
         log('=== PROP MODEL AVAILABILITY ===')
         for _, name in ipairs(CANDIDATE_MODELS) do

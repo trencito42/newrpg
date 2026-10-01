@@ -612,6 +612,8 @@ end
 exports('GetPendingAds', GetPendingAds)
 
 exports.sunset_core:RegisterCallback('sunset:cnn:getQueue', function(source)
+    -- [SEC2] queue exposes phone numbers / server ids / pending (unmoderated) text: staff only
+    if not exports.sunset_admin:IsStaff(source) then return nil, { localeKey = 'cnn.message.staff_only' } end
     return GetAdQueue()
 end)
 

@@ -123,13 +123,15 @@
             track.appendChild(tierEl);
         });
 
-        track.querySelectorAll('[data-claim-lvl]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const lvl = Number(btn.dataset.claimLvl);
-                const type = btn.dataset.claimType;
-                claimBP(lvl, type);
+        // [NUI PERF] one delegated handler instead of one per claim button
+        if (!track.dataset.claimBound) {
+            track.dataset.claimBound = '1';
+            track.addEventListener('click', (ev) => {
+                const btn = ev.target.closest && ev.target.closest('[data-claim-lvl]');
+                if (!btn || !track.contains(btn)) return;
+                claimBP(Number(btn.dataset.claimLvl), btn.dataset.claimType);
             });
-        });
+        }
 
         setTimeout(() => {
             const currentEl = track.querySelector('.bp-tier.current');

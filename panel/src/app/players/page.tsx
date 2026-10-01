@@ -2,10 +2,10 @@ import Link from "next/link";
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatNumber, formatDate } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Search, User, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
+import { PlayerName } from "@/components/ui/PlayerName";
+import { getFactionLabel, isFaction } from "@/lib/factions";
 
 interface PlayerListRow extends RowDataPacket {
   id: number;
@@ -13,6 +13,7 @@ interface PlayerListRow extends RowDataPacket {
   lastname: string;
   level: number;
   respect_points: number;
+  paydays_received: number;
   job: string;
   last_played: string | null;
 }
@@ -31,7 +32,7 @@ export default async function PlayersDirectoryPage({
 
   const q = params.q?.trim() || "";
   const page = Math.max(1, Number(params.page) || 1);
-  const limit = 15;
+  const limit = 20;
   const offset = (page - 1) * limit;
 
   let whereClause = "";
@@ -53,7 +54,7 @@ export default async function PlayersDirectoryPage({
 
   // Fetch paginated players
   const players = await dbQuery<PlayerListRow>(
-    `SELECT c.id, c.firstname, c.lastname, c.level, c.respect_points, c.job, c.last_played
+    `SELECT c.id, c.firstname, c.lastname, c.level, c.respect_points, c.paydays_received, c.job, c.last_played
      FROM characters c
      ${whereClause}
      ORDER BY c.level DESC, c.respect_points DESC, c.id ASC
@@ -62,138 +63,131 @@ export default async function PlayersDirectoryPage({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Top Search & Filter Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
+          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
             {t(locale, "players.directory_title")}
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            {t(locale, "players.directory_subtitle")}
-          </p>
         </div>
 
-        {/* Search input form */}
-        <form method="GET" className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
+        <form method="GET" className="relative w-full sm:w-64">
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[#6f6f74] pointer-events-none" />
           <input
             type="text"
             name="q"
             defaultValue={q}
             placeholder={t(locale, "players.search_hint")}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-surface-100 border border-surface-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-surface-100 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none focus:border-surface-borderLight transition-colors"
           />
         </form>
       </div>
 
-      {/* Players Table Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-gray-300">
-              {t(locale, "players.found_count", { count: totalCount })}
-            </span>
-            <span className="text-gray-500 font-mono">
-              {t(locale, "common.page")} {page} {t(locale, "common.of")} {totalPages || 1}
-            </span>
-          </div>
-        </CardHeader>
+      {/* Players Table */}
+      <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+        <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs text-[#8a8a90]">
+          <span>{t(locale, "players.found_count", { count: totalCount })}</span>
+          <span className="font-mono text-[#6f6f74]">
+            {t(locale, "common.page")} {page} {t(locale, "common.of")} {totalPages || 1}
+          </span>
+        </div>
 
-        <CardContent>
-          <div className="responsive-table-wrapper">
-            <table className="w-full text-left text-xs">
-              <thead className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-surface-border">
+        <div className="responsive-table-wrapper">
+          <table className="w-full text-left text-xs">
+            <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+              <tr>
+                <th className="py-2.5 px-3">Player</th>
+                <th className="py-2.5 px-3">Level</th>
+                <th className="py-2.5 px-3">Faction</th>
+                <th className="py-2.5 px-3">Job</th>
+                <th className="py-2.5 px-3">Hours</th>
+                <th className="py-2.5 px-3 text-right">Last Seen</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+              {players.length > 0 ? (
+                players.map((p) => {
+                  const fullName = `${p.firstname} ${p.lastname || ""}`.trim();
+                  const slug = p.lastname && p.lastname.trim().length > 0 ? `${p.firstname}_${p.lastname.trim()}` : p.firstname;
+                  const hasFaction = isFaction(p.job);
+                  const factionLabel = hasFaction ? getFactionLabel(p.job) : "-";
+                  const civilianJob = hasFaction ? "-" : p.job;
+
+                  return (
+                    <tr
+                      key={p.id}
+                      className="hover:bg-surface-200/50 transition-colors"
+                    >
+                      <td className="py-2 px-3">
+                        <PlayerName
+                          name={fullName}
+                          factionId={p.job}
+                          href={`/players/${encodeURIComponent(slug)}`}
+                        />
+                      </td>
+                      <td className="py-2 px-3 font-mono text-[#f1f1f1]">
+                        {p.level}
+                      </td>
+                      <td className="py-2 px-3">
+                        <span className={hasFaction ? "text-[#f1f1f1] font-medium" : "text-[#6f6f74]"}>
+                          {factionLabel}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 capitalize">
+                        <span className={!hasFaction && civilianJob !== "-" ? "text-[#a5a5a8]" : "text-[#6f6f74]"}>
+                          {civilianJob.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 font-mono text-[#6f6f74]">
+                        {Math.floor(p.paydays_received || 0)}h
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
+                        {p.last_played ? formatDate(p.last_played, locale) : "Never"}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <th className="pb-3">Player / Citizen</th>
-                  <th className="pb-3">Level</th>
-                  <th className="pb-3">Respect Points</th>
-                  <th className="pb-3">Career / Job</th>
-                  <th className="pb-3 text-right">Last Seen</th>
+                  <td colSpan={6} className="py-8 text-center text-[#6f6f74]">
+                    {t(locale, "players.no_results")}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/50 text-gray-300">
-                {players.length > 0 ? (
-                  players.map((p) => {
-                    const fullName = `${p.firstname} ${p.lastname || ""}`.trim();
-                    const slug = p.lastname && p.lastname.trim().length > 0 ? `${p.firstname}_${p.lastname.trim()}` : p.firstname;
-                    return (
-                      <tr
-                        key={p.id}
-                        className="hover:bg-surface-100/50 transition-colors group cursor-pointer"
-                      >
-                        <td className="py-3">
-                          <Link
-                            href={`/players/${encodeURIComponent(slug)}`}
-                            className="flex items-center space-x-2.5 font-bold text-white group-hover:text-brand transition-colors"
-                          >
-                            <div className="w-7 h-7 rounded-full bg-surface-50 border border-surface-border flex items-center justify-center text-brand">
-                              <User className="w-3.5 h-3.5" />
-                            </div>
-                            <span>{fullName}</span>
-                          </Link>
-                        </td>
-                        <td className="py-3 font-mono font-bold text-amber-400">
-                          {p.level}
-                        </td>
-                        <td className="py-3 font-mono text-gray-400">
-                          {formatNumber(p.respect_points, locale)} RP
-                        </td>
-                        <td className="py-3">
-                          <Badge variant="outline" className="capitalize">
-                            {p.job}
-                          </Badge>
-                        </td>
-                        <td className="py-3 text-right font-mono text-gray-500">
-                          {p.last_played ? formatDate(p.last_played, locale, false) : "Never"}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-500">
-                      {t(locale, "players.no_results")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination controls */}
+        {totalPages > 1 && (
+          <div className="p-2.5 px-3 border-t border-surface-border flex items-center justify-between text-xs">
+            <Link
+              href={`/players?page=${Math.max(1, page - 1)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-200 text-[#f1f1f1] hover:bg-surface-300 transition-colors ${
+                page <= 1 ? "pointer-events-none opacity-40" : ""
+              }`}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>{t(locale, "common.prev")}</span>
+            </Link>
+
+            <span className="text-[#6f6f74] font-mono text-[11px]">
+              {page} / {totalPages}
+            </span>
+
+            <Link
+              href={`/players?page=${Math.min(totalPages, page + 1)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-200 text-[#f1f1f1] hover:bg-surface-300 transition-colors ${
+                page >= totalPages ? "pointer-events-none opacity-40" : ""
+              }`}
+            >
+              <span>{t(locale, "common.next")}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 mt-2 border-t border-surface-border text-xs">
-              <Link
-                href={`/players?page=${page - 1}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-surface-border ${
-                  page <= 1
-                    ? "opacity-40 pointer-events-none text-gray-600"
-                    : "hover:bg-surface-100 text-gray-300"
-                }`}
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>{t(locale, "common.prev")}</span>
-              </Link>
-
-              <span className="text-gray-400 font-mono">
-                {page} / {totalPages}
-              </span>
-
-              <Link
-                href={`/players?page=${page + 1}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-surface-border ${
-                  page >= totalPages
-                    ? "opacity-40 pointer-events-none text-gray-600"
-                    : "hover:bg-surface-100 text-gray-300"
-                }`}
-              >
-                <span>{t(locale, "common.next")}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

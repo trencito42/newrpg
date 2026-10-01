@@ -13,6 +13,7 @@ local CarcassMarkers = {}        -- [netId] = { coords, label }
 local HarvestPromptNetId = nil   -- carcass near player
 local TrackingCooldownMs = 0
 local TRACK_INTERVAL_MS  = 8000
+local inspectMenuOpen = false      -- carcass inspection menu holds NUI focus
 local HudStage = 'idle'          -- idle | go_to_zone | hunting | animal_near | animal_down | harvesting
 
 -- ── Helpers ──────────────────────────────────────────────────
@@ -44,39 +45,32 @@ end
 
 local function updateShiftHud()
     if not ShiftActive then return end
+    local title = exports.sunset_core:Translate('jobs.hud.hunter.title')
     if ContractData and ContractData.contractId then
         local harvested = ContractData.harvested or 0
-        local required  = ContractData.requiredHarvests or 1
-        local progress  = math.floor((harvested / required) * 100)
-        local msg, counter
+        local required  = math.max(ContractData.requiredHarvests or 1, 1)
+        local msg, hints
         if HudStage == 'animal_down' then
-            counter = ('Harvest %d / %d'):format(harvested, required)
-            msg = 'Animal down! Press ~INPUT_CONTEXT~ to harvest the carcass.'
+            msg = exports.sunset_core:Translate('jobs.hud.hunter.down')
+            hints = { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.harvest') } }
         elseif HudStage == 'animal_near' then
-            counter = ('Harvest %d / %d'):format(harvested, required)
-            msg = 'Animal spotted! Take the shot.'
+            msg = exports.sunset_core:Translate('jobs.hud.hunter.near')
         elseif HudStage == 'go_to_zone' then
-            counter = ('Harvest %d / %d'):format(harvested, required)
-            msg = 'Follow GPS to the hunting zone.'
+            msg = exports.sunset_core:Translate('jobs.hud.hunter.zone')
         else
-            counter = ('Harvest %d / %d'):format(harvested, required)
-            msg = 'Track animals in the zone. Press B for a clue.'
+            msg = exports.sunset_core:Translate('jobs.hud.hunter.track')
+            hints = { { key = 'B', label = exports.sunset_core:Translate('jobs.hud.act.track') } }
         end
-        exports.sunset_ui:Send('jobShiftShow', {
-            title    = 'Hunter',
-            counter  = counter,
-            message  = msg,
-            key      = 'E',
-            progress = progress,
-            detail   = ContractData.contractId or '',
+        exports.sunset_ui:JobHud({
+            title     = title,
+            objective = msg,
+            progress  = { current = harvested, total = required },
+            keyHints  = hints,
         })
     else
-        exports.sunset_ui:Send('jobShiftShow', {
-            title   = 'Hunter',
-            counter = 'No active contract',
-            message = 'Visit Mason and select a contract.',
-            detail  = '',
-            progress = 0,
+        exports.sunset_ui:JobHud({
+            title     = title,
+            objective = exports.sunset_core:Translate('jobs.hud.hunter.no_contract'),
         })
     end
 end
@@ -254,7 +248,7 @@ CreateThread(function()
                     DrawMarker(2, marker.coords.x, marker.coords.y, marker.coords.z + 0.5,
                         0, 0, 0, 0, 0, 0, 0.4, 0.4, 0.4,
                         255, 180, 0, 180, false, true, 2, false, nil, nil, false)
-                    DisplayHelpTextThisFrame('Press ~INPUT_CONTEXT~ to inspect carcass')
+                    DisplayHelpTextThisFrame(exports.sunset_core:Translate('hint.native.inspect_carcass'))
                     break
                 end
             end
@@ -318,6 +312,7 @@ CreateThread(function()
                         },
                     })
                     exports.sunset_ui:SetFocus(true, true)
+                    inspectMenuOpen = true
                 end
             end)
         end
@@ -353,6 +348,7 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
     if action:find('^hunter_harvest_') then
         local netId = tonumber((action:gsub('^hunter_harvest_', '')))
         if not netId then return end
+        inspectMenuOpen = false
         exports.sunset_ui:Send('playerInteractionHide', {})
         exports.sunset_ui:SetFocus(false, false)
         CreateThread(function()
@@ -383,9 +379,18 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         end)
 
     elseif action == 'hunter_cancel_inspect' then
+        inspectMenuOpen = false
         exports.sunset_ui:Send('playerInteractionHide', {})
         exports.sunset_ui:SetFocus(false, false)
     end
+end)
+
+-- [JOBS AUDIT] ESC / click-outside on the carcass menu fires playerInteractionClose; only the workplace
+-- menu handled it, so NUI focus stayed trapped on the player after dismissing the inspection.
+AddEventHandler('sunset:nui:playerInteractionClose', function()
+    if not inspectMenuOpen then return end
+    inspectMenuOpen = false
+    exports.sunset_ui:SetFocus(false, false)
 end)
 
 -- Special actions handled in workplaces.lua
@@ -418,9 +423,14 @@ AddEventHandler('sunset:jobs:sessionEnded', function(jobId, state, reason)
     ShiftActive = false
     ContractData = nil
     CurrentZone  = nil
+    if inspectMenuOpen then
+        inspectMenuOpen = false
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+    end
     -- [SECTION 19] Clear zone blip on shift end/cancel
     clearZoneBlip()
-    exports.sunset_ui:Send('jobShiftHide', {})
+    exports.sunset_ui:JobHudClear()
     exports.sunset_ui:Send('hunterCompassHide', {})
     -- Clean up all spawned animals
     for netId, animal in pairs(ManagedAnimals) do
@@ -445,8 +455,12 @@ CreateThread(function()
                 if animal.alive then
                     -- Check if the entity is actually dead
                     if GetEntityHealth(animal.ped) <= 0 then
-                        -- Report to server — server validates and processes exactly once
-                        TriggerServerEvent('sunset:hunting:reportAnimalDead', netId)
+                        -- Report to server — server validates and processes exactly once.
+                        -- [JOBS AUDIT] throttled: a rejected report used to be re-sent every 3s forever.
+                        if GetGameTimer() >= (animal.nextDeadReport or 0) then
+                            animal.nextDeadReport = GetGameTimer() + 12000
+                            TriggerServerEvent('sunset:hunting:reportAnimalDead', netId)
+                        end
                     else
                         local pos = GetEntityCoords(animal.ped)
                         TriggerServerEvent('sunset:hunting:updateAnimalPos', netId, pos.x, pos.y, pos.z)
@@ -519,5 +533,13 @@ AddEventHandler('onResourceStop', function(resource)
         if animal.ped and DoesEntityExist(animal.ped) then
             DeleteEntity(animal.ped)
         end
+    end
+    -- [JOBS AUDIT] zone blip / HUD / focus used to survive a resource restart.
+    clearZoneBlip()
+    exports.sunset_ui:JobHudClear(true)
+    exports.sunset_ui:Send('hunterCompassHide', {})
+    if inspectMenuOpen then
+        exports.sunset_ui:Send('playerInteractionHide', {})
+        exports.sunset_ui:SetFocus(false, false)
     end
 end)

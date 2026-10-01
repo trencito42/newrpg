@@ -2,10 +2,6 @@ import { redirect } from "next/navigation";
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatCurrency, formatDate } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { StatCard } from "@/components/ui/StatCard";
-import { Badge } from "@/components/ui/Badge";
-import { CreditCard, Wallet, Landmark, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 
 interface BalancesRow extends RowDataPacket {
@@ -30,7 +26,6 @@ export default async function BankingPage() {
 
   const locale = await getViewerLocale();
 
-  // Load balances
   const balances = await dbQuerySingle<BalancesRow>(
     "SELECT cash, bank FROM characters WHERE id = ?",
     [session.selectedCharacterId]
@@ -40,7 +35,6 @@ export default async function BankingPage() {
   const bank = balances?.bank || 0;
   const netWorth = cash + bank;
 
-  // Load recent transactions ledger
   const transactions = await dbQuery<TxRow>(
     `SELECT id, account, amount, balance_after, reason, created_at
      FROM money_transactions
@@ -51,109 +45,83 @@ export default async function BankingPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
-          Financial Statement & Banking
+    <div className="space-y-4">
+      <div className="pb-3 border-b border-surface-border">
+        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          {t(locale, "nav.banking")}
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
-          Confidential financial balance and transaction history for {session.selectedCharacterName}.
-        </p>
       </div>
 
-      {/* Financial KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          title="Cash on Hand"
-          value={formatCurrency(cash)}
-          icon={Wallet}
-          variant="emerald"
-        />
-        <StatCard
-          title="Bank Deposit Balance"
-          value={formatCurrency(bank)}
-          icon={Landmark}
-          variant="sky"
-        />
-        <StatCard
-          title="Total Net Worth"
-          value={formatCurrency(netWorth)}
-          icon={CreditCard}
-          variant="brand"
-        />
+      {/* Balances */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Cash</span>
+          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(cash)}</span>
+        </div>
+
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Bank</span>
+          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(bank)}</span>
+        </div>
+
+        <div className="p-3 bg-surface-100 border border-surface-border rounded">
+          <span className="text-xs text-[#6f6f74] block font-medium">Total</span>
+          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(netWorth)}</span>
+        </div>
       </div>
 
-      {/* Transaction History Ledger */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm">Transaction Ledger Statement</CardTitle>
-            <span className="text-xs text-gray-500 font-mono">
-              Last {transactions.length} Ledger Events
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="responsive-table-wrapper">
-            <table className="w-full text-left text-xs">
-              <thead className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-surface-border">
+      {/* Transactions */}
+      <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+        <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#f1f1f1]">
+          Transactions
+        </div>
+
+        <div className="responsive-table-wrapper">
+          <table className="w-full text-left text-xs">
+            <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+              <tr>
+                <th className="py-2 px-3">Type</th>
+                <th className="py-2 px-3">Amount</th>
+                <th className="py-2 px-3">Balance After</th>
+                <th className="py-2 px-3">Reason</th>
+                <th className="py-2 px-3 text-right">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+              {transactions.length > 0 ? (
+                transactions.map((tx) => {
+                  const isPositive = Number(tx.amount) > 0;
+                  return (
+                    <tr key={tx.id} className="hover:bg-surface-200/40">
+                      <td className="py-2 px-3 font-mono text-[#f1f1f1] uppercase text-[11px]">
+                        {tx.account}
+                      </td>
+                      <td className={`py-2 px-3 font-mono font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+                        {isPositive ? `+${formatCurrency(tx.amount)}` : formatCurrency(tx.amount)}
+                      </td>
+                      <td className="py-2 px-3 font-mono text-[#6f6f74]">
+                        {formatCurrency(tx.balance_after)}
+                      </td>
+                      <td className="py-2 px-3 text-[#6f6f74] max-w-[200px] truncate">
+                        {tx.reason || "-"}
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
+                        {formatDate(tx.created_at, locale)}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <th className="pb-2.5">Type / Account</th>
-                  <th className="pb-2.5">Amount</th>
-                  <th className="pb-2.5">Balance After</th>
-                  <th className="pb-2.5">Description / Reason</th>
-                  <th className="pb-2.5 text-right">Timestamp</th>
+                  <td colSpan={5} className="py-6 text-center text-[#6f6f74]">
+                    No transactions recorded.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/50 text-gray-300">
-                {transactions.length > 0 ? (
-                  transactions.map((tx) => {
-                    const isPositive = tx.amount > 0;
-                    return (
-                      <tr key={tx.id} className="hover:bg-surface-100/50">
-                        <td className="py-2.5">
-                          <Badge variant="outline" className="capitalize">
-                            {tx.account}
-                          </Badge>
-                        </td>
-                        <td className="py-2.5 font-mono font-bold">
-                          <span
-                            className={`flex items-center space-x-1 ${
-                              isPositive ? "text-emerald-400" : "text-rose-400"
-                            }`}
-                          >
-                            {isPositive ? (
-                              <ArrowDownLeft className="w-3.5 h-3.5" />
-                            ) : (
-                              <ArrowUpRight className="w-3.5 h-3.5" />
-                            )}
-                            <span>{formatCurrency(Math.abs(tx.amount))}</span>
-                          </span>
-                        </td>
-                        <td className="py-2.5 font-mono text-gray-300">
-                          {formatCurrency(tx.balance_after)}
-                        </td>
-                        <td className="py-2.5 font-medium text-gray-200 capitalize">
-                          {tx.reason.replace(/_/g, " ")}
-                        </td>
-                        <td className="py-2.5 text-right font-mono text-gray-500">
-                          {formatDate(tx.created_at, locale)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-gray-500">
-                      No transaction history recorded for this character.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

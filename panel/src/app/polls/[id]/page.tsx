@@ -3,9 +3,7 @@ import Link from "next/link";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { ArrowLeft, Vote, Clock, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { PollVoteForm } from "@/components/polls/PollVoteForm";
 import { RowDataPacket } from "mysql2";
@@ -73,7 +71,6 @@ export default async function PollDetailPage({
     [pollId]
   );
 
-  // Check if current user already voted
   let userVote: VoteCheckRow | null = null;
   if (session) {
     userVote = await dbQuerySingle<VoteCheckRow>(
@@ -86,132 +83,105 @@ export default async function PollDetailPage({
   const desc = locale === "ro" ? poll.description_ro : poll.description_en;
   const isActive = poll.status === "active";
   const hasVoted = userVote !== null;
-
   const total = poll.total_votes > 0 ? poll.total_votes : 1;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-4 max-w-2xl">
       <Link
         href="/polls"
-        className="inline-flex items-center space-x-1.5 text-xs text-gray-400 hover:text-brand transition-colors mb-2"
+        className="inline-flex items-center space-x-1 text-xs text-[#6f6f74] hover:text-[#f1f1f1] transition-colors mb-1"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Back to All Polls</span>
+        <span>Polls</span>
       </Link>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <Badge variant={isActive ? "brand" : "default"}>
-              {poll.status.toUpperCase()}
-            </Badge>
+      <div className="border border-surface-border rounded bg-surface-100 p-4 space-y-4">
+        <div className="pb-3 border-b border-surface-border">
+          <div className="flex items-center justify-between text-xs">
+            <span className={`font-semibold ${isActive ? "text-emerald-400" : "text-[#6f6f74]"}`}>
+              {isActive ? "Active Poll" : "Closed Poll"}
+            </span>
             {isActive ? (
               <PollCountdown targetDate={poll.ends_at} locale={locale} />
             ) : (
-              <span className="text-xs text-gray-500 font-mono">
-                Concluded: {formatDate(poll.ends_at, locale)}
+              <span className="text-[11px] text-[#6f6f74] font-mono">
+                Ended {formatDate(poll.ends_at, locale)}
               </span>
             )}
           </div>
-          <CardTitle className="text-xl mt-2">{title}</CardTitle>
+          <h1 className="text-base font-bold text-[#f1f1f1] mt-1">{title}</h1>
           {desc && (
-            <p className="text-xs text-gray-400 mt-1 leading-relaxed">{desc}</p>
+            <p className="text-xs text-[#8a8a90] mt-1">{desc}</p>
           )}
-        </CardHeader>
+        </div>
 
-        <CardContent className="space-y-6">
-          {/* Voting form (if active and not yet voted) */}
-          {isActive && !hasVoted ? (
-            <div className="p-4 rounded-xl bg-surface-100 border border-surface-border">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center space-x-1.5">
-                <Vote className="w-3.5 h-3.5 text-brand" />
-                <span>Cast Your Official Vote</span>
-              </h4>
-              <PollVoteForm
-                pollId={poll.id}
-                options={options.map((o) => ({
-                  id: o.id,
-                  label: locale === "ro" ? o.label_ro : o.label_en,
-                }))}
-                userVotedOptionId={null}
-                isLoggedIn={session !== null}
-                minLevel={poll.minimum_level}
-                minHours={poll.minimum_hours}
-              />
+        {/* Voting Form */}
+        {isActive && !hasVoted ? (
+          <div className="p-3 rounded bg-surface-200 border border-surface-border">
+            <PollVoteForm
+              pollId={poll.id}
+              options={options.map((o) => ({
+                id: o.id,
+                label: locale === "ro" ? o.label_ro : o.label_en,
+              }))}
+              userVotedOptionId={null}
+              isLoggedIn={session !== null}
+              minLevel={poll.minimum_level}
+              minHours={poll.minimum_hours}
+            />
+          </div>
+        ) : (
+          hasVoted && (
+            <div className="p-2.5 rounded bg-emerald-950/30 border border-emerald-900/40 text-emerald-400 text-xs flex items-center space-x-2">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>You have voted in this poll.</span>
             </div>
-          ) : (
-            hasVoted && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>You have already cast your vote in this poll.</span>
-              </div>
-            )
-          )}
+          )
+        )}
 
-          {/* Results Overview */}
-          <div>
-            <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center justify-between">
-              <span>Current Results</span>
-              <span className="text-gray-500 font-mono">
-                {t(locale, "polls.total_votes", { count: poll.total_votes })}
-              </span>
-            </h4>
+        {/* Results */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between text-xs text-[#6f6f74]">
+            <span className="font-semibold text-[#f1f1f1]">Results</span>
+            <span className="font-mono">{t(locale, "polls.total_votes", { count: poll.total_votes })}</span>
+          </div>
 
-            <div className="space-y-3">
-              {options.map((opt) => {
-                const label = locale === "ro" ? opt.label_ro : opt.label_en;
-                const pct = Math.round((opt.votes_count / total) * 100);
-                const isSelected = userVote?.option_id === opt.id;
+          <div className="space-y-2">
+            {options.map((opt) => {
+              const label = locale === "ro" ? opt.label_ro : opt.label_en;
+              const pct = Math.round((opt.votes_count / total) * 100);
+              const isSelected = userVote?.option_id === opt.id;
 
-                return (
-                  <div
-                    key={opt.id}
-                    className={`p-3 rounded-xl border space-y-1.5 ${
-                      isSelected
-                        ? "bg-brand/5 border-brand/50 text-white"
-                        : "bg-surface-100 border-surface-border text-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs font-medium">
-                      <span className="flex items-center space-x-1.5">
-                        <span>{label}</span>
-                        {isSelected && (
-                          <Badge variant="brand" className="text-[10px] px-1 py-0">
-                            Your Vote
-                          </Badge>
-                        )}
-                      </span>
-                      <span className="font-mono text-gray-400">
-                        {opt.votes_count} ({pct}%)
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-surface-200 rounded-full h-2 border border-surface-border overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isSelected ? "bg-brand" : "bg-gray-500"
-                        }`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+              return (
+                <div
+                  key={opt.id}
+                  className={`p-2.5 rounded border text-xs space-y-1 ${
+                    isSelected
+                      ? "bg-surface-200 border-surface-borderLight text-[#f1f1f1]"
+                      : "bg-surface-100 border-surface-border text-[#a5a5a8]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-medium">
+                    <span>
+                      {label} {isSelected && <span className="text-[11px] text-emerald-400 ml-1.5">(Your Vote)</span>}
+                    </span>
+                    <span className="font-mono text-[#6f6f74]">
+                      {opt.votes_count} ({pct}%)
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Verification & Eligibility notice */}
-          <div className="p-3 bg-surface-50 rounded-lg border border-surface-border text-xs text-gray-500 flex items-start space-x-2 font-mono">
-            <ShieldCheck className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <span>Voting integrity: One-account-one-vote enforced by database unique key.</span>
-              <span className="block mt-0.5 text-gray-600">
-                Minimum level: {poll.minimum_level} • Minimum hours: {poll.minimum_hours}h
-              </span>
-            </div>
+                  <div className="w-full bg-surface-300 rounded h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-[#6f6f74] rounded transition-[width] duration-150"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

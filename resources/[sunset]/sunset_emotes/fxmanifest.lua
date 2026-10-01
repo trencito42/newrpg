@@ -6,7 +6,7 @@ name 'sunset_emotes'
 description 'Player animations and emotes'
 version '1.0.0'
 
-dependencies {  }
+dependencies { 'sunset_core' }
 
 client_scripts { 'client/main.lua' }
 

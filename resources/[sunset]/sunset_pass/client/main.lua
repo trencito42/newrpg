@@ -1,3 +1,17 @@
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- Falls back to the raw natives only if sunset_ui is not running.
+function PASS_SetNuiFocus(hasFocus, hasCursor, keepInput)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'pass')
+        end)
+        if ok then return res end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+    SetNuiFocusKeepInput(keepInput == true)
+    return true
+end
+
 local openTab = 'rewards'
 local isOpen = false
 
@@ -18,9 +32,8 @@ local function send(action, data)
 end
 
 local function setFocus(state)
-    SetNuiFocus(state, state)
-    SetNuiFocusKeepInput(false)
-end
+    PASS_SetNuiFocus(state, state)
+    end
 
 local function closePass()
     if not isOpen then return end
@@ -111,3 +124,16 @@ exports('OpenPass', function(tab)
 end)
 
 exports('ClosePass', closePass)
+
+-- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+    if ok and owner == 'pass' then
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
+    end
+end)
+
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    if isOpen then closePass() end
+end)

@@ -11,6 +11,24 @@ local authDomReady = false
 local authVisibleRendered = false
 local authBootEpoch = 0
 
+-- [NUI FOCUS] Register the auth screen as focus owner 'auth' in the central
+-- manager so no other resource can silently steal/release the login cursor,
+-- and so the auth release cannot clobber a newer owner (spawn/character UI).
+local function authFocus(hasFocus, hasCursor)
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, res = pcall(function()
+            return exports.sunset_ui:SetFocus(hasFocus, hasCursor, false, 'auth')
+        end)
+        if ok then
+            if res == false and not hasFocus then
+                print('^3[AUTH UI]^7 focus release blocked by a newer owner (expected during spawn handoff)')
+            end
+            return
+        end
+    end
+    SetNuiFocus(hasFocus, hasCursor)
+end
+
 local function send(action, data)
     SendNUIMessage({ action = action, data = data or {} })
 end
@@ -20,18 +38,18 @@ exports('Send', send)
 exports('Show', function(screen, data)
     authOpen = true
     authVisibleRendered = false
-    SetNuiFocus(true, true)
+    authFocus(true, true)
     send('authShow', data)
 end)
 
 exports('Hide', function()
     authOpen = false
-    SetNuiFocus(false, false)
+    authFocus(false, false)
     send('authHide', {})
 end)
 
 exports('SetFocus', function(hasFocus, hasCursor)
-    SetNuiFocus(hasFocus == true, hasCursor == true)
+    authFocus(hasFocus == true, hasCursor == true)
     if not hasFocus then authOpen = false end
 end)
 
@@ -72,4 +90,13 @@ RegisterNUICallback('authVisibleRendered', function(data, cb)
     authVisibleRendered = authOpen
     TriggerEvent('sunset:auth:visibleRendered', data)
     cb('ok')
+end)
+
+-- [CLIENT_PERF_ENTITY_AUDIT] Release NUI focus on resource stop/restart.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    if authOpen then
+        SetNuiFocus(false, false)
+        authOpen = false
+    end
 end)

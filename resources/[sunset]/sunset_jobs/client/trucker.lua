@@ -1,4 +1,6 @@
 local JC = Sunset.JobClient
+-- [JOBS AUDIT] was an undeclared global (leaked across shifts / other resources' scripts).
+local isManualDockingMode = false
 
 local function requestControl(entity)
     if NetworkHasControlOfEntity(entity) then return true end
@@ -211,9 +213,7 @@ local function recoverTrailer()
 end
 
 local function startTrucker(selectedRouteIdx)
-    print(('[TRUCKER CLIENT] startTrucker called routeIdx=%s'):format(tostring(selectedRouteIdx)))
     local data, err = Sunset.AwaitCallback('sunset:jobs:trucker:start', selectedRouteIdx)
-    print(('[TRUCKER CLIENT] callback returned data=%s err=%s'):format(tostring(data and json.encode(data) or 'nil'), tostring(err)))
     if not data then
         JC.notify(err or 'Could not start trucker shift', 'error')
         return
@@ -308,7 +308,7 @@ local function startTrucker(selectedRouteIdx)
     SetBlipRouteColour(pickupBlip, 5)
     JC.setWaypoint(pickup)
     setTruckerCheckpoint(pickup, 255, 165, 0)
-    JC.showObjective('Pick up your trailer', 'Drive to the trailer yard and back up to attach the tanker', 30)
+    JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.pickup'), progress = { pct = 30 } })
     JC.notify(exports.sunset_core:Translate('jobs.message.drive_to_the_trailer_yard_and_hook_up_your'), 'info', 8000)
 
     -- Job loop: pickup → delivery → return depot
@@ -329,19 +329,18 @@ local function startTrucker(selectedRouteIdx)
                         if distToPickup <= 45.0 then
                             local attached = IsVehicleAttachedToTrailer(truck)
                             if attached then
-                                draw3DText(p, '[E] Confirm — Trailer Attached')
+                                draw3DText(p, exports.sunset_core:Translate('hint.jobs.trucker.confirm_trailer'))
                             else
                                 draw3DText(p, 'Back up to attach the trailer')
                             end
                         end
                     end
                     if isNearTruckerPoint(p, cfg) and inWorkTruck() and IsVehicleAttachedToTrailer(truck) and not busy then
-                        JC.showHelp('Press ~INPUT_CONTEXT~ to confirm trailer attached')
+                        JC.showHelp(exports.sunset_core:Translate('hint.native.confirm_trailer'))
                         if IsControlJustPressed(0, 38) then
                             busy = true
                             local result, pickErr = Sunset.AwaitCallback('sunset:jobs:trucker:atPickup')
                             busy = false
-                            print('[TRUCKER] atPickup result=' .. tostring(result) .. ' err=' .. tostring(pickErr))
                             if result then
                                 JC.sessionData.stage = result.stage or 'to_delivery'
                                 local delivery = vector3(result.delivery.x, result.delivery.y, result.delivery.z)
@@ -352,7 +351,7 @@ local function startTrucker(selectedRouteIdx)
                                 SetBlipRouteColour(delivBlip, 2)
                                 JC.setWaypoint(result.delivery)
                                 setTruckerCheckpoint(delivery, 46, 204, 113)
-                                JC.showObjective('Deliver cargo', 'Follow the GPS to: ' .. (result.label or 'destination'), 30)
+                                JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.deliver', { label = result.label or '?' }), progress = { pct = 30 } })
                                 JC.notify(exports.sunset_core:Translate('jobs.message.trailer_attached_deliver_to') .. (result.label or 'destination') .. '. Follow the map.', 'success', 8000)
                             else
                                 JC.notify(pickErr or 'Could not confirm pickup', 'error')
@@ -403,7 +402,7 @@ local function startTrucker(selectedRouteIdx)
 
                             if distToBay <= 45.0 then
                                 if isDocked then
-                                    draw3DText(bay, '~g~[G] / [E] Confirm Manual Park (2X BONUS)~s~')
+                                    draw3DText(bay, exports.sunset_core:Translate('hint.jobs.trucker.manual_park'))
                                 else
                                     draw3DText(bay, 'Align Trailer in Bay for ~g~2X BONUS~s~')
                                 end
@@ -412,7 +411,7 @@ local function startTrucker(selectedRouteIdx)
 
                         if inWorkTruck() and not busy then
                             if isDocked then
-                                JC.showHelp('Press ~INPUT_DETONATE~ or ~INPUT_CONTEXT~ to confirm ~g~Manual Park (2X BONUS)~s~')
+                                JC.showHelp(exports.sunset_core:Translate('hint.native.manual_park'))
                                 if IsControlJustPressed(0, 47) or IsControlJustPressed(0, 38) then
                                     busy = true
                                     local result, err2 = Sunset.AwaitCallback('sunset:jobs:trucker:deliver', true)
@@ -429,9 +428,11 @@ local function startTrucker(selectedRouteIdx)
                                         SetBlipRouteColour(depBlip, 3)
                                         JC.setWaypoint(retPoint)
                                         setTruckerCheckpoint(retPoint, 52, 152, 219)
-                                        JC.showObjective('Return the truck', 'Drive back to the depot', 90)
+                                        JC.addEarned(result.pay or 0)
+                                        JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.return'), progress = { pct = 90 } })
 
-                                        local bonusStr = ' (2X MANUAL DOCK BONUS)'
+                                        -- [JOBS AUDIT] the server verifies the docking; show the bonus only if granted.
+                                        local bonusStr = result.isManual and ' (2X MANUAL DOCK BONUS)' or ' (dock not verified - standard pay)'
                                         if result.bonusPct and result.bonusPct > 0 then
                                             bonusStr = bonusStr .. (' (+%d%% rank bonus)'):format(result.bonusPct)
                                         end
@@ -450,12 +451,12 @@ local function startTrucker(selectedRouteIdx)
                         if distToEntrance <= 350.0 then
                             drawTruckerMarker(d, 255, 165, 0)
                             if distToEntrance <= 45.0 then
-                                draw3DText(d, '[E] Quick Deliver | [G] Align in Bay (2X BONUS)')
+                                draw3DText(d, exports.sunset_core:Translate('hint.jobs.trucker.quick_or_bay'))
                             end
                         end
 
                         if (distToEntrance <= 30.0 or isNearTruckerPoint(d, cfg)) and inWorkTruck() and not busy then
-                            JC.showHelp('Press ~INPUT_CONTEXT~ for Quick Deliver or ~INPUT_DETONATE~ to Park in Bay (~g~2X BONUS~s~)')
+                            JC.showHelp(exports.sunset_core:Translate('hint.native.quick_or_bay'))
 
                             if IsControlJustPressed(0, 38) then -- E -> Quick deliver
                                 busy = true
@@ -473,7 +474,8 @@ local function startTrucker(selectedRouteIdx)
                                     SetBlipRouteColour(depBlip, 3)
                                     JC.setWaypoint(retPoint)
                                     setTruckerCheckpoint(retPoint, 52, 152, 219)
-                                    JC.showObjective('Return the truck', 'Drive back to the depot', 90)
+                                    JC.addEarned(result.pay or 0)
+                                    JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.return'), progress = { pct = 90 } })
 
                                     local bonusStr = ''
                                     if result.bonusPct and result.bonusPct > 0 then
@@ -492,7 +494,7 @@ local function startTrucker(selectedRouteIdx)
                                 SetBlipRouteColour(bayBlip, 2)
                                 JC.setWaypoint(bay)
                                 setTruckerCheckpoint(bay, 255, 165, 0)
-                                JC.showObjective('Park in Bay', 'Reverse trailer into the glowing box behind the station for 2X BONUS', 75)
+                                JC.hud({ title = exports.sunset_core:Translate('jobs.hud.trucker.title'), objective = exports.sunset_core:Translate('jobs.hud.trucker.park'), progress = { pct = 75 }, tone = 'warn' })
                                 JC.notify(exports.sunset_core:Translate('jobs.message.manual_parking_mode_activated_reverse_and_align_your_trailer'), 'info', 7000)
                             end
                         end
@@ -505,11 +507,11 @@ local function startTrucker(selectedRouteIdx)
                 if distToDepot <= 350.0 then
                     drawTruckerMarker(retPoint, 52, 152, 219)
                     if distToDepot <= 45.0 then
-                        draw3DText(retPoint, '[E] Return Truck')
+                        draw3DText(retPoint, exports.sunset_core:Translate('hint.jobs.trucker.return_truck'))
                     end
                 end
                 if (JC.isNear(retPoint, cfg.returnRadius or 25.0) or JC.isNear(cfg.depot.coords, cfg.returnRadius or 25.0)) and inWorkTruck() and not busy then
-                    JC.showHelp('Press ~INPUT_CONTEXT~ to return the truck')
+                    JC.showHelp(exports.sunset_core:Translate('hint.native.return_truck'))
                     if IsControlJustPressed(0, 38) then
                         busy = true
                         local ok, err3 = Sunset.AwaitCallback('sunset:jobs:trucker:returnDepot')
@@ -731,22 +733,14 @@ RegisterNetEvent('sunset:jobs:trucker:teleportRig', function(targetArg)
     teleportRig(targetArg)
 end)
 
-RegisterCommand('tptruck', function(_, args)
-    teleportRig(args and args[1])
-end, false)
-
-RegisterCommand('trucktp', function(_, args)
-    teleportRig(args and args[1])
-end, false)
-
-TriggerEvent('chat:addSuggestion', '/tptruck', 'Teleport truck & trailer to active trucker contract, route, or waypoint', {
-    { name = 'target', help = '[optional] wp | route 1-5 | pickup | delivery | depot' }
-})
-TriggerEvent('chat:addSuggestion', '/trucktp', 'Teleport truck & trailer to active trucker contract, route, or waypoint')
+-- [JOBS AUDIT] /tptruck and /trucktp were registered CLIENT-side with no permission check, so any
+-- player could teleport a loaded rig straight to the delivery for instant pay. They are now
+-- server commands (admin level 3, see server/trucker.lua) that trigger the net event above.
 
 RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     if jobId == 'trucker' or not jobId then
         clearTruckerCheckpoint()
+        isManualDockingMode = false
     end
 end)
 

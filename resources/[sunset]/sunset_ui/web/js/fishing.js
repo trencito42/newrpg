@@ -166,8 +166,8 @@ const Fishing = {
         } else {
             this._applyState(
                 'state-idle',
-                data.title || 'Fishing',
-                (data.message && data.message.length) ? data.message : `Press ${this._keyHtml()} to cast`
+                data.title || I18n.t('ui.fishing.default_title'),
+                (data.message && data.message.length) ? data.message : I18n.t('ui.fishing.press_to_cast', { key: this._keyHtml() })
             );
             if (this._progress) {
                 this._progress.style.transition = 'none';

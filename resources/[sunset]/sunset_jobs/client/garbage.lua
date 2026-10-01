@@ -97,7 +97,9 @@ local function attachBag()
     carryAnimActive = true
     CreateThread(function()
         RequestAnimDict('anim@move_m@trash')
-        while not HasAnimDictLoaded('anim@move_m@trash') do Wait(10) end
+        local animDeadline = GetGameTimer() + 5000
+        while not HasAnimDictLoaded('anim@move_m@trash') and GetGameTimer() < animDeadline do Wait(10) end
+        if not HasAnimDictLoaded('anim@move_m@trash') then return end
         while carryAnimActive and JC.jobId == 'garbage' do
             local p = PlayerPedId()
             if not IsEntityPlayingAnim(p, 'anim@move_m@trash', 'walk', 3) then
@@ -121,18 +123,28 @@ end
 
 local function updateObjective(cfg, data)
     if not data then return end
+    local title = exports.sunset_core:Translate('jobs.hud.garbage.title')
+    local capacity = data.capacity or cfg.capacity or 8
+    local collected = data.collected or 0
+    local progress = { current = collected, total = capacity }
     if data.stage == 'return_unload' then
-        JC.showObjective('Garbage Collector', 'Truck full — drive to depot unload', 100)
+        JC.hud({ title = title, objective = exports.sunset_core:Translate('jobs.hud.garbage.unload'), progress = progress })
         return
     end
-    local collected = data.collected or 0
-    local capacity = data.capacity or cfg.capacity or 8
-    local pct = math.floor((collected / math.max(capacity, 1)) * 100)
     if data.carrying then
-        JC.showObjective('Garbage Collector', 'Dump the bag at the back of your truck', pct)
+        JC.hud({
+            title = title,
+            objective = exports.sunset_core:Translate('jobs.hud.garbage.dump'),
+            progress = progress,
+            keyHints = { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.dump_trash') } },
+        })
     else
-        local idx = data.binIndex or 1
-        JC.showObjective('Garbage Collector', ('Bin %d — pick up trash (E)'):format(idx), pct)
+        JC.hud({
+            title = title,
+            objective = exports.sunset_core:Translate('jobs.hud.garbage.bin', { index = data.binIndex or 1 }),
+            progress = progress,
+            keyHints = { { key = 'E', label = exports.sunset_core:Translate('jobs.hud.act.pickup_trash') } },
+        })
     end
 end
 
@@ -182,13 +194,14 @@ local function startGarbage()
                 if bin then
                     local pos = vector3(bin.x, bin.y, bin.z)
                     JC.drawMarker(pos, 46, 204, 113)
+                    JC.hudDistance(pos)
                     if not worldBag or not DoesEntityExist(worldBag) then
                         spawnWorldBag(pos)
                     end
                     local nearBin = JC.isNear(pos, cfg.collectRadius or 3.0)
                     local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
                     if nearBin and onFoot then
-                        draw3DText(pos, '[E] Pick Up Trash')
+                        draw3DText(pos, exports.sunset_core:Translate('hint.jobs.garbage.pickup'))
                     end
                     if nearBin and onFoot and not busy and IsControlJustPressed(0, 38) then
                         busy = true
@@ -215,10 +228,11 @@ local function startGarbage()
                 if truck then
                     local dumpPos = getTruckDumpPos(truck, cfg)
                     JC.drawMarker(dumpPos, 255, 180, 0)
+                    JC.hudDistance(dumpPos)
                     local nearDump = JC.isNear(dumpPos, cfg.dumpRadius or 3.5)
                     local onFoot = not IsPedInAnyVehicle(PlayerPedId(), false)
                     if nearDump and onFoot then
-                        draw3DText(dumpPos, '[E] Dump Trash')
+                        draw3DText(dumpPos, exports.sunset_core:Translate('hint.jobs.garbage.dump'))
                     end
                     if nearDump and onFoot and not busy and IsControlJustPressed(0, 38) then
                         busy = true
@@ -229,6 +243,7 @@ local function startGarbage()
                         if newData then
                             detachBag()
                             JC.sessionData = newData
+                            JC.addEarned(cfg.payPerBin or 65)
                             JC.notify(('Collected (%d/%d) +$%s'):format(
                                 newData.collected, newData.capacity, cfg.payPerBin or 65), 'success')
                             updateObjective(cfg, newData)
@@ -253,6 +268,7 @@ local function startGarbage()
             elseif stage == 'return_unload' then
                 local unload = cfg.depot.unload or cfg.depot.coords
                 JC.drawMarker(unload, 52, 152, 219)
+                JC.hudDistance(unload)
                 if JC.isNear(unload, 8.0) and IsPedInAnyVehicle(PlayerPedId(), false) then
                     draw3DText(unload, 'Drive In to Unload')
                 end
@@ -264,10 +280,13 @@ local function startGarbage()
                         clearGarbageCheckpoint()
                         detachBag()
                         JC.deleteVehicles()
+                        JC.addEarned(result.bonus or 0)
                         JC.notify(('Shift complete! Unload bonus +$%s'):format(result.bonus or 0), 'success')
                         break
                     elseif err2 then
                         JC.notify(err2, 'error')
+                        -- [JOBS AUDIT] failed unload retried every frame (server callback + notify spam)
+                        Wait(2500)
                     end
                 end
             end
@@ -278,10 +297,26 @@ local function startGarbage()
     end)
 end
 
+local function clearWorldBag()
+    if worldBag and DoesEntityExist(worldBag) then
+        DeleteObject(worldBag)
+    end
+    worldBag = nil
+end
+
 RegisterNetEvent('sunset:jobs:sessionEnded', function(jobId)
     if jobId ~= 'garbage' then return end
     clearGarbageCheckpoint()
     detachBag()
+    clearWorldBag() -- [JOBS AUDIT] the world bag prop at the next bin leaked on cancel/death/fail
+end)
+
+-- [JOBS AUDIT] carried bag, world bag and route checkpoint survived a resource restart.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    clearGarbageCheckpoint()
+    detachBag()
+    clearWorldBag()
 end)
 
 Sunset.Jobs.StartGarbage = startGarbage

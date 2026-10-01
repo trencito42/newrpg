@@ -602,7 +602,7 @@ const ClanPanels = {
             payload.targetCharacterId = Number(warnSelect?.value);
             payload.reason = form.querySelector('[name="reason"]')?.value || '';
             if (!payload.targetCharacterId) {
-                notify('Select a member to warn.', 'error');
+                notify(I18n.t('ui.clans.select_member_to_warn'), 'error');
                 return;
             }
         } else {

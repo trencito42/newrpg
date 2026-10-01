@@ -280,3 +280,22 @@ exports('GetAllHeats', Strikes.GetAllHeats)
 exports('DismissStrikes', function(src, staffSrc)
     return Strikes.DismissAll(src, staffSrc)
 end)
+
+
+-- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
+CreateThread(function()
+    Wait(120000)
+    local purges = { { 'anticheat_strikes', 30 }, { 'anticheat_flags', 90 } }
+    while true do
+        for _, p in ipairs(purges) do
+            for _ = 1, 20 do
+                local ok, n = pcall(function()
+                    return MySQL.update.await(('DELETE FROM `%s` WHERE created_at < (NOW() - INTERVAL ? DAY) LIMIT 2000'):format(p[1]), { p[2] })
+                end)
+                if not ok or (tonumber(n) or 0) < 2000 then break end
+                Wait(1000)
+            end
+        end
+        Wait(6 * 3600 * 1000)
+    end
+end)

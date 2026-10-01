@@ -964,8 +964,8 @@ const Panels = {
                 const mins = Math.ceil((row.remainingSec || 0) / 60);
                 li.innerHTML = `
                     <div>
-                        <strong>#${row.id} ${row.name || 'Unknown'}</strong>
-                        <div class="mdc-time">${row.reason || '—'} · ${row.surrenderable === false ? 'NO SURRENDER' : 'SURRENDER ALLOWED'} · ${mins}m to next star</div>
+                        <strong>#${escHtml(row.id)} ${escHtml(row.name || 'Unknown')}</strong>
+                        <div class="mdc-time">${escHtml(row.reason || '—')} · ${row.surrenderable === false ? 'NO SURRENDER' : 'SURRENDER ALLOWED'} · ${mins}m to next star</div>
                     </div>
                     <span class="mdc-stars">★${row.level || 1}</span>`;
                 list.appendChild(li);
@@ -1013,7 +1013,7 @@ const Panels = {
         } else {
             rows.forEach((row) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>${row.reason || row.label || '—'}</span><span>${row.date || formatMoney(row.amount || 0)}</span>`;
+                li.innerHTML = `<span>${escHtml(row.reason || row.label || '—')}</span><span>${escHtml(row.date || formatMoney(row.amount || 0))}</span>`;
                 charges.appendChild(li);
             });
         }
@@ -1081,7 +1081,7 @@ const Panels = {
                         <div class="sc-title">${escHtml(call.title || call.message || 'Service request')}</div>
                         <div class="sc-meta">${escHtml(call.location || call.zone || '')}${call.caller ? ` · ${escHtml(call.caller)}` : ''}</div>
                     </div>
-                    <span class="sc-status ${statusClass}">${call.status || 'open'}</span>
+                    <span class="sc-status ${escHtml(statusClass)}">${escHtml(call.status || 'open')}</span>
                     ${canAccept ? `<button type="button" data-call-id="${call.id}">ACCEPT</button>` : ''}`;
                 li.querySelector('button')?.addEventListener('click', () => {
                     post('serviceCallsAccept', { callId: call.id });
@@ -1115,7 +1115,7 @@ const Panels = {
             const xpText = job.xp !== undefined ? `Lv ${job.level || 1} · ${job.xp || 0} XP` : '';
             card.innerHTML = `
                 <div class="job-card__top">
-                    <span class="job-card__name">${job.label || job.id}</span>
+                    <span class="job-card__name">${escHtml(job.label || job.id)}</span>
                     <span class="job-card__pay">$${job.salary || 0}/hr</span>
                 </div>
                 <p class="job-card__desc">${job.description || 'No description'}</p>
@@ -1155,7 +1155,7 @@ const Panels = {
                 const pct = xpTotal > 0 ? Math.min(100, Math.round((xp / xpTotal) * 100)) : 0;
                 li.innerHTML = `
                     <div class="skill-row__head">
-                        <span class="skill-row__name">${skill.label || skill.id}</span>
+                        <span class="skill-row__name">${escHtml(skill.label || skill.id)}</span>
                         <span class="skill-row__level">LEVEL ${skill.level || 1}</span>
                     </div>
                     <div class="skill-row__bar"><div class="skill-row__fill" style="width:${pct}%"></div></div>
@@ -1189,12 +1189,12 @@ const Panels = {
             categories.forEach((cat) => {
                 const section = document.createElement('section');
                 section.className = 'help-section';
-                section.innerHTML = `<h3 class="help-section__title">${cat.title || 'Commands'}</h3>`;
+                section.innerHTML = `<h3 class="help-section__title">${escHtml(cat.title || 'Commands')}</h3>`;
                 const list = document.createElement('ul');
                 list.className = 'help-list';
                 (cat.entries || []).forEach((row) => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="help-cmd">${row.cmd || '—'}</span><span class="help-desc">${row.desc || ''}</span>`;
+                    li.innerHTML = `<span class="help-cmd">${escHtml(row.cmd || '—')}</span><span class="help-desc">${escHtml(row.desc || '')}</span>`;
                     list.appendChild(li);
                 });
                 if (!(cat.entries || []).length) {
@@ -1252,17 +1252,17 @@ const Panels = {
             li.className = 'menu-vcard';
             li.innerHTML = `
                 <div class="menu-vcard__img-wrap">
-                    <img class="menu-vcard__img" src="${vehicleImage(v.model)}" alt="${model}" loading="lazy"
+                    <img class="menu-vcard__img" src="${vehicleImage(v.model)}" alt="${escHtml(model)}" loading="lazy"
                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <div class="menu-vcard__img-fallback" style="display:none">${model.charAt(0)}</div>
                 </div>
                 <div class="menu-vcard__body">
                     <div class="menu-vcard__top">
-                        <strong>${model}</strong>
-                        <span class="menu-vcard__status menu-vcard__status--${statusClass}">${status}</span>
+                        <strong>${escHtml(model)}</strong>
+                        <span class="menu-vcard__status menu-vcard__status--${escHtml(statusClass)}">${escHtml(status)}</span>
                     </div>
-                    <div class="menu-vcard__plate">${v.plate}</div>
-                    <div class="menu-vcard__meta">${v.garage || 'legion'}</div>
+                    <div class="menu-vcard__plate">${escHtml(v.plate)}</div>
+                    <div class="menu-vcard__meta">${escHtml(v.garage || 'legion')}</div>
                     <div class="menu-vcard__insurance">
                         <span class="insurance-badge">🛡️ Insurance: <strong>${points} pts</strong></span>
                         <span class="insurance-level ${level > 1 ? 'is-elevated' : ''}">Level ${level}/11</span>
@@ -1328,13 +1328,13 @@ const Panels = {
             li.className = 'fleet-unit-row';
             li.innerHTML = `
                 <div class="fleet-unit-row__thumb">
-                    <img src="${vehicleImage(v.model)}" alt="${modelCode}" loading="lazy"
+                    <img src="${vehicleImage(v.model)}" alt="${escHtml(modelCode)}" loading="lazy"
                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                     <span class="fleet-unit-row__fallback">${modelCode.charAt(0)}</span>
                 </div>
                 <div class="fleet-unit-row__info">
-                    <strong>${v.label || modelCode}</strong>
-                    <span>${modelCode} · ${rankLabel}+</span>
+                    <strong>${escHtml(v.label || modelCode)}</strong>
+                    <span>${escHtml(modelCode)} · ${escHtml(rankLabel)}+</span>
                 </div>
                 <button type="button" class="fleet-unit-row__btn">Take out</button>`;
 
@@ -1387,7 +1387,7 @@ const Panels = {
         list.innerHTML = '';
         ['wave', 'sit', 'dance', 'smoke', 'drink', 'phone', 'lean', 'pushup', 'wank', 'surrender'].forEach((name) => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${name}</span><button>PLAY</button>`;
+            li.innerHTML = `<span>${escHtml(name)}</span><button>PLAY</button>`;
             li.querySelector('button')?.addEventListener('click', () => post('emotePlay', { emote: name }));
             list.appendChild(li);
         });
@@ -1506,11 +1506,11 @@ const Panels = {
         title.textContent = data.kind === 'licenses' ? 'Licenses' : 'ID Card';
         let html = '';
         if (data.id && data.kind !== 'licenses') {
-            html += `<p><strong>Name:</strong> ${data.id.name}</p>`;
-            html += `<p><strong>DOB:</strong> ${data.id.dob}</p>`;
-            html += `<p><strong>Nationality:</strong> ${data.id.nationality}</p>`;
-            html += `<p><strong>Account:</strong> ${data.id.account}</p>`;
-            html += `<p><strong>CID:</strong> ${data.id.cid}</p>`;
+            html += `<p><strong>Name:</strong> ${escHtml(data.id.name)}</p>`;
+            html += `<p><strong>DOB:</strong> ${escHtml(data.id.dob)}</p>`;
+            html += `<p><strong>Nationality:</strong> ${escHtml(data.id.nationality)}</p>`;
+            html += `<p><strong>Account:</strong> ${escHtml(data.id.account)}</p>`;
+            html += `<p><strong>CID:</strong> ${escHtml(data.id.cid)}</p>`;
         }
         if (data.licenses && data.licenses.length) {
             html += '<h3 style="margin-top:12px">Licenses</h3><ul>';
@@ -1518,7 +1518,7 @@ const Panels = {
                 const label = l.label || l.license_type;
                 const status = l.valid === false ? 'Expired' : 'Valid';
                 const expiry = l.expires_at_payday ? ` — expires payday #${l.expires_at_payday}` : '';
-                html += `<li>${label} — ${status}${expiry}</li>`;
+                html += `<li>${escHtml(label)} — ${escHtml(status)}${escHtml(expiry)}</li>`;
             });
             html += '</ul>';
         } else if (data.kind === 'licenses') {
@@ -1552,12 +1552,12 @@ const Panels = {
             const salaryText = job.salary ? `$${job.salary} / week` : 'Standard Pay';
             const locationText = job.locationLabel ? `📍 ${job.locationLabel}` : '📍 San Andreas';
             const supervisorText = job.supervisorName ? `👤 Supervisor: ${job.supervisorName}` : '';
-            const addressText = job.address ? `<p class="jobcenter-details__address">${job.address}</p>` : '';
+            const addressText = job.address ? `<p class="jobcenter-details__address">${escHtml(job.address)}</p>` : '';
 
             detailEl.innerHTML = `
-                <div class="jobcenter-details__workplace-badge">${locationText}</div>
-                <p class="jobcenter-details__salary">${salaryText}</p>
-                ${supervisorText ? `<p class="jobcenter-details__supervisor">${supervisorText}</p>` : ''}
+                <div class="jobcenter-details__workplace-badge">${escHtml(locationText)}</div>
+                <p class="jobcenter-details__salary">${escHtml(salaryText)}</p>
+                ${supervisorText ? `<p class="jobcenter-details__supervisor">${escHtml(supervisorText)}</p>` : ''}
                 ${addressText}
                 ${job.isCurrent ? '<p class="jobcenter-details__current">✓ You are currently employed in this career.</p>' : ''}
                 ${job.description ? `<p class="jobcenter-details__desc">${job.description}</p>` : ''}
@@ -1587,7 +1587,7 @@ const Panels = {
         jobs.forEach(job => {
             const el = document.createElement('div');
             el.className = `jobcenter-job-item${job.isCurrent ? ' is-current' : ''}`;
-            el.innerHTML = `<span class="jobcenter-job-item__label">${job.label}${job.isCurrent ? ' <span class="jobcenter-current-badge">CURRENT</span>' : ''}</span>` +
+            el.innerHTML = `<span class="jobcenter-job-item__label">${escHtml(job.label)}${job.isCurrent ? ' <span class="jobcenter-current-badge">CURRENT</span>' : ''}</span>` +
                 (job.salary ? `<span class="jobcenter-job-item__salary">$${job.salary}/wk</span>` : '');
             el.addEventListener('click', () => selectJob(job, el));
             list.appendChild(el);
@@ -1787,7 +1787,7 @@ const Panels = {
             const val = field.value ?? 0;
             row.innerHTML = `
                 <div class="studio-row__head">
-                    <span>${field.label}</span>
+                    <span>${escHtml(field.label)}</span>
                     <span class="studio-row__val">${val} / ${field.max}</span>
                 </div>
                 <input type="range" min="${field.min}" max="${field.max}" value="${val}">`;

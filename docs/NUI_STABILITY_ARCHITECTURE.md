@@ -102,3 +102,40 @@ When `sv_sunset_nuidebug=1` (production default: off):
 - `exports.sunset_ui:GetNuiDebugHistory(limit)` — ring buffer of all outbound messages and NUI callbacks.
 
 Use from `sunset_devtools` or `sunset_test_agent` to diagnose NUI regressions without a live console.
+
+---
+
+## Addendum 2026-10-01 — Runtime cost, focus routing, startup order, login pipeline
+
+Full detail with file references: `docs/release/NUI_STARTUP_LOGIN_REPORT.md`.
+
+**Runtime cost rules now enforced**
+- No permanent rAF loops. `forza_speedometer.js` loops only while active; the main/auth "frame watchdog" rAF loops
+  became 500 ms timer-drift checks (same stall signal, ~0.1% cost). The loadscreen watchdog is left (page is destroyed at handoff).
+- Clocks (`atm.js`, `phone.js`) tick only while their panel is open. `mdc_tablet.js`, `helpdesk.js`, `fishing_tournament.js`,
+  `license_quiz.js`, `auth_loading.js` already clear on hide.
+- `backdrop-filter` is globally neutralised by `_cef_overrides.css` (`!important`, last stylesheet) and by the inline override in `sunset_tuning`.
+  Do NOT add new `backdrop-filter`; use a solid translucent background.
+- Per-row handlers: `battlepass.js` claim buttons use one delegated listener.
+- Loadscreen per-file/per-init `console.log` trace is off unless `localStorage.sunset_boot_verbose = '1'`.
+
+**Focus**
+- Every resource with its own NUI page (`sunset_missions`, `sunset_pass`, `sunset_turfs`, `sunset_tuning`, `sunset_slots`,
+  `sunset_robbery`, `sunset_auth_ui`) now routes focus through `exports.sunset_ui:SetFocus(has, cursor, keepInput, owner)` with a
+  distinct owner, falls back to raw natives only if `sunset_ui` is not started, and releases on `onResourceStop` and `sunset:ui:forceCloseAll`.
+- `sunset:ui:forceCloseAll` is now handled centrally in `sunset_ui` (releases with owner `force`), and `sunset_death` releases with `force`
+  (otherwise the owner guard would block the release of another resource's focus).
+- Still raw (other agents' areas, documented): `sunset_jobs/client/trucker_npc.lua` (releases only, after a SetFocus call), `sunset_devtools` (disabled in cfg).
+
+**Diagnostics (debug only: `setr sv_sunset_nuidebug 1`)**
+- `exports.sunset_ui:Send` measures the JSON payload per action: WARN > 100 KB, SEVERE > 500 KB, CRITICAL > 1 MB (F8 log).
+- `/nuistats` (ACE `command.nuistats`, covered by `group.admin command allow`) prints the top 20 actions by max payload in F8.
+- Ping/pong every 30 s (`nuiPing` -> `nuiPong`); only logs when the page is slow (>2 s) or silent.
+- `sunset:server:nuiError` is now rate limited (5 / 10 s / player) and no longer shadows `source`.
+
+**Startup order**: `config/server.cfg.template` ensure order is now the dependency-respecting order (FiveM already auto-started declared
+dependencies first, so runtime order is unchanged but the template is honest). `sunset_skins`, `sunset_emotes`, `sunset_blackjack` declare their dependency.
+The stale explicit `files` entries in `sunset_ui/fxmanifest.lua` for deleted CSS were removed (globs still cover everything present).
+
+**Login pipeline**: see report (single-flight `CompleteAuthentication`, idempotent `enterGame`, no phantom character on load failure,
+spawn single-flight + error recovery, logged default-spawn fallbacks, locale pushed to NUI on `playerReady`).

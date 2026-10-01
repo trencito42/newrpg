@@ -98,13 +98,14 @@ CreateThread(function()
                             end
                         end
                         local fee = cached and cached.fee or 0
-                        local feeText = fee > 0 and (' — fee $%d'):format(fee) or ''
+                        local feeText = fee > 0 and exports.sunset_core:Translate('licenses.hint.exam_fee', { fee = fee }) or ''
                         local def = SunsetLicenses.Types and SunsetLicenses.Types[licenseType]
                         local instructorText = def and def.instructorFaction
-                            and ' — requires LSSI authorization' or ''
+                            and exports.sunset_core:Translate('licenses.hint.exam_needs_instructor') or ''
                         BeginTextCommandDisplayHelp('STRING')
-                        AddTextComponentString(('Press ~INPUT_CONTEXT~ — %s exam%s%s'):format(
-                            facility.label or 'License', feeText, instructorText))
+                        AddTextComponentString(exports.sunset_core:Translate('hint.native.license_exam', {
+                            facility = facility.label or exports.sunset_core:Translate('licenses.hint.default_facility'),
+                            fee = feeText, instructor = instructorText }))
                         EndTextCommandDisplayHelp(0, false, true, -1)
                         if IsControlJustReleased(0, 38) then
                             startAtFacility(facility)

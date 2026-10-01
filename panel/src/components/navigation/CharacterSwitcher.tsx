@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, ChevronDown, Check, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CharacterOption {
   id: number;
@@ -20,6 +21,17 @@ export function CharacterSwitcher({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!characters || characters.length === 0) return null;
 
@@ -43,48 +55,46 @@ export function CharacterSwitcher({
           router.refresh();
         }
       } catch {
-        // error handling
+        // ignore
       }
     });
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
         disabled={isPending}
-        className="flex items-center space-x-2 px-3 py-1.5 bg-surface-100 border border-surface-border hover:border-brand/50 rounded-lg text-xs font-medium text-gray-200 transition-all"
+        className="flex items-center space-x-1.5 px-2.5 py-1 bg-surface-200 border border-surface-border hover:border-surface-borderLight rounded text-xs text-[#f1f1f1] transition-colors"
       >
-        <User className="w-3.5 h-3.5 text-brand" />
-        <span className="max-w-[110px] truncate">{current?.name || "Select Char"}</span>
-        <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded border border-brand/20 font-bold">
-          Lvl {current?.level || 1}
+        <span className="max-w-[120px] truncate font-medium">{current?.name || "Character"}</span>
+        <span className="text-[10px] text-[#6f6f74] font-mono">
+          L{current?.level || 1}
         </span>
         {isPending ? (
-          <Loader2 className="w-3 h-3 text-brand animate-spin" />
+          <Loader2 className="w-3 h-3 text-[#a5a5a8] animate-spin" />
         ) : (
-          <ChevronDown className="w-3 h-3 text-gray-400" />
+          <ChevronDown className="w-3 h-3 text-[#6f6f74]" />
         )}
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-1 w-48 bg-surface-100 border border-surface-border rounded-lg shadow-2xl py-1 z-50">
-          <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-surface-border">
-            Switch Character
-          </div>
+        <div className="absolute top-full right-0 mt-1 w-44 bg-surface-100 border border-surface-border rounded shadow-lg py-1 z-50">
           {characters.map((char) => (
             <button
               key={char.id}
               onClick={() => handleSelect(char.id)}
-              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-surface-50 text-gray-200 transition-colors"
+              className={cn(
+                "w-full text-left px-3 py-1.5 text-xs flex items-center justify-between transition-colors",
+                char.id === selectedId
+                  ? "bg-surface-200 text-[#f1f1f1]"
+                  : "text-[#a5a5a8] hover:bg-surface-200 hover:text-[#f1f1f1]"
+              )}
             >
-              <div className="flex items-center space-x-2">
-                <span>{char.name}</span>
-                <span className="text-[10px] text-gray-400 font-mono">
-                  (Lvl {char.level})
-                </span>
-              </div>
-              {char.id === selectedId && <Check className="w-3.5 h-3.5 text-brand" />}
+              <span className="truncate">{char.name}</span>
+              <span className="text-[10px] text-[#6f6f74] font-mono ml-2">
+                L{char.level}
+              </span>
             </button>
           ))}
         </div>

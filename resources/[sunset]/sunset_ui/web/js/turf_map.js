@@ -568,11 +568,11 @@
                     const svgPt = worldToSvg(c.x, c.y);
                     const vertexCount = turf.polygon ? turf.polygon.length : 0;
                     debugContent.innerHTML = `
-                        <strong>Turf #${turf.id}: ${turf.name}</strong><br>
+                        <strong>Turf #${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(turf.id)}: ${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(turf.name)}</strong><br>
                         Vertices: ${vertexCount} points<br>
                         World Center: X=${c.x.toFixed(1)}, Y=${c.y.toFixed(1)}, Z=${c.z.toFixed(1)}<br>
                         SVG Center: X=${svgPt.x.toFixed(1)}, Y=${svgPt.y.toFixed(1)}<br>
-                        Owner Clan: ID=${turf.ownerClanId || 'None'} (${turf.ownerName})<br>
+                        Owner Clan: ID=${turf.ownerClanId || 'None'} (${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(turf.ownerName)})<br>
                         Bounds: minZ=${turf.minZ || -50}, maxZ=${turf.maxZ || 500}<br>
                         Radius: ${turf.radius ? turf.radius.toFixed(1) : 'N/A'}m
                     `;

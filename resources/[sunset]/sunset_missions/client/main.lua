@@ -133,7 +133,7 @@ CreateThread(function()
                 if dist < SunsetMissions.Config.interactionRadius then
                     nearContact = id
                     if data then
-                        showHelp(('Press ~INPUT_CONTEXT~ to talk to %s'):format(data.name))
+                        showHelp(exports.sunset_core:Translate('hint.native.talk_to', { name = data.name }))
                     end
                 end
             end

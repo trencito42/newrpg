@@ -1,15 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
-import { dbQuery, dbExecute } from "@/lib/db";
+import { dbQuery, dbTransaction } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { LifeBuoy, Plus, MessageSquare, Clock, ArrowRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { revalidatePath } from "next/cache";
-import { panelBrand } from "@/lib/brand";
 
 interface TicketRow extends RowDataPacket {
   id: number;
@@ -39,7 +35,6 @@ export default async function SupportTicketsPage() {
     [session.accountId]
   );
 
-  // Server action to create a new support ticket
   async function createTicket(formData: FormData) {
     "use server";
     const curSession = await getCurrentSession();
@@ -49,168 +44,120 @@ export default async function SupportTicketsPage() {
     const subject = (formData.get("subject") as string)?.trim();
     const message = (formData.get("message") as string)?.trim();
 
-    if (!subject || !message || subject.length < 4 || message.length < 10) return;
+    if (!subject || !message || subject.length < 4 || subject.length > 191 || message.length < 10 || message.length > 5000) return;
+    if (!["general", "account", "bug", "billing", "faction", "staff"].includes(department)) return;
 
-    const res = await dbExecute(
-      `INSERT INTO panel_support_tickets (account_id, character_id, department, subject, status, priority)
-       VALUES (?, ?, ?, ?, 'open', 'medium')`,
-      [curSession.accountId, curSession.selectedCharacterId, department, subject]
-    );
-
-    const ticketId = res.insertId;
-
-    await dbExecute(
-      `INSERT INTO panel_ticket_messages (ticket_id, sender_account_id, sender_character_id, is_staff, message)
-       VALUES (?, ?, ?, 0, ?)`,
-      [ticketId, curSession.accountId, curSession.selectedCharacterId, message]
-    );
+    await dbTransaction(async (connection) => {
+      const [res] = await connection.execute<import("mysql2").ResultSetHeader>(
+        `INSERT INTO panel_support_tickets (account_id, character_id, department, subject, status, priority)
+         VALUES (?, ?, ?, ?, 'open', 'medium')`,
+        [curSession.accountId, curSession.selectedCharacterId, department, subject]
+      );
+      await connection.execute(
+        `INSERT INTO panel_ticket_messages (ticket_id, sender_account_id, sender_character_id, is_staff, message)
+         VALUES (?, ?, ?, 0, ?)`,
+        [res.insertId, curSession.accountId, curSession.selectedCharacterId, message]
+      );
+    });
 
     revalidatePath("/support/tickets");
   }
 
-  const statusVariant = (st: string) => {
-    switch (st) {
-      case "open":
-        return "brand";
-      case "in_progress":
-        return "info";
-      case "resolved":
-        return "success";
-      case "closed":
-        return "default";
-      default:
-        return "warning";
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
-            {t(locale, "support.title")}
-          </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            {t(locale, "support.subtitle", { serverName: panelBrand.name })}
-          </p>
-        </div>
+    <div className="space-y-4">
+      <div className="pb-3 border-b border-surface-border">
+        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          {t(locale, "nav.tickets")}
+        </h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Create Ticket Form (1 col) */}
-        <Card className="lg:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center space-x-2">
-              <Plus className="w-4 h-4 text-brand" />
-              <span>{t(locale, "support.create_ticket")}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createTicket} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-gray-300 font-medium mb-1">
-                  Department
-                </label>
-                <select
-                  name="department"
-                  className="w-full px-3 py-2 bg-surface-100 border border-surface-border rounded-lg text-white focus:outline-none focus:border-brand"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Create Ticket */}
+        <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 h-fit text-xs">
+          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            {t(locale, "support.create_ticket")}
+          </h2>
+
+          <form action={createTicket} className="space-y-2.5">
+            <div>
+              <label className="block text-[#6f6f74] mb-1">Department</label>
+              <select
+                name="department"
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] text-xs focus:outline-none"
+              >
+                <option value="general">General Support</option>
+                <option value="account">Account & Security</option>
+                <option value="bug">Bug Report</option>
+                <option value="faction">Faction Inquiry</option>
+                <option value="staff">Staff Inquiry</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[#6f6f74] mb-1">Subject</label>
+              <input
+                type="text"
+                name="subject"
+                required
+                placeholder="Brief subject..."
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] text-xs focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#6f6f74] mb-1">Message</label>
+              <textarea
+                name="message"
+                required
+                rows={3}
+                placeholder="Detailed message..."
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] text-xs focus:outline-none resize-none"
+              />
+            </div>
+
+            <Button type="submit" size="sm" className="w-full mt-1">
+              Submit Ticket
+            </Button>
+          </form>
+        </div>
+
+        {/* Tickets List */}
+        <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
+          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
+            <span>Tickets</span>
+            <span className="font-mono text-[#6f6f74]">{tickets.length}</span>
+          </div>
+
+          <div className="divide-y divide-surface-border/50 text-xs">
+            {tickets.map((tk) => {
+              const isOpen = tk.status === "open" || tk.status === "in_progress";
+              return (
+                <Link
+                  key={tk.id}
+                  href={`/support/tickets/${tk.id}`}
+                  className="p-3 block hover:bg-surface-200/50 transition-colors"
                 >
-                  <option value="general">General Support</option>
-                  <option value="account">Account & Security</option>
-                  <option value="bug">Bug & Technical Report</option>
-                  <option value="faction">Faction Inquiry</option>
-                  <option value="staff">Staff Inquiry</option>
-                </select>
-              </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-mono text-[#6f6f74]">#{tk.id}</span>
+                      <span className="font-semibold text-[#f1f1f1]">{tk.subject}</span>
+                    </div>
+                    <span className={`text-[11px] font-medium ${isOpen ? "text-emerald-400" : "text-[#6f6f74]"}`}>
+                      {tk.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
 
-              <div>
-                <label className="block text-gray-300 font-medium mb-1">
-                  Subject / Topic
-                </label>
-                <input
-                  type="text"
-                  name="subject"
-                  required
-                  placeholder="Brief summary of your question"
-                  className="w-full px-3 py-2 bg-surface-100 border border-surface-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-300 font-medium mb-1">
-                  Detailed Explanation
-                </label>
-                <textarea
-                  name="message"
-                  required
-                  rows={4}
-                  placeholder="Provide all relevant details for staff to assist you"
-                  className="w-full px-3 py-2 bg-surface-100 border border-surface-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand resize-none"
-                />
-              </div>
-
-              <Button type="submit" size="sm" className="w-full mt-2">
-                Submit Support Ticket
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Existing Tickets (2 cols) */}
-        <div className="lg:col-span-2 space-y-3">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">{t(locale, "nav.tickets")}</CardTitle>
-                <span className="text-xs text-gray-500 font-mono">
-                  {tickets.length} Active & Past Tickets
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {tickets.length > 0 ? (
-                <div className="space-y-2.5">
-                  {tickets.map((tk) => (
-                    <Link
-                      key={tk.id}
-                      href={`/support/tickets/${tk.id}`}
-                      className="block p-3.5 rounded-xl bg-surface-100 border border-surface-border hover:border-brand/40 transition-all text-xs group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-brand">
-                            #{tk.id}
-                          </span>
-                          <span className="font-medium text-white group-hover:text-brand transition-colors text-sm">
-                            {tk.subject}
-                          </span>
-                        </div>
-                        <Badge variant={statusVariant(tk.status) as any}>
-                          {tk.status.replace(/_/g, " ").toUpperCase()}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-surface-border/50 text-gray-500 font-mono text-[11px]">
-                        <span className="capitalize">Dept: {tk.department}</span>
-                        <div className="flex items-center space-x-3">
-                          <span className="flex items-center space-x-1">
-                            <MessageSquare className="w-3 h-3" />
-                            <span>{tk.messages_count} messages</span>
-                          </span>
-                          <span>{formatDate(tk.created_at, locale)}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-gray-500 text-xs">
-                  <LifeBuoy className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                  <p>{t(locale, "support.no_tickets")}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  <div className="flex items-center justify-between mt-1.5 text-[#6f6f74] text-[11px]">
+                    <span className="capitalize">{tk.department}</span>
+                    <span>{formatDate(tk.created_at, locale)}</span>
+                  </div>
+                </Link>
+              );
+            })}
+            {tickets.length === 0 && (
+              <div className="p-4 text-center text-[#6f6f74]">No open tickets.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -49,6 +49,17 @@ local function getCharId(source)
     return char and tonumber(char.id) or nil
 end
 
+-- [SEC2] Proximity: money/chip callbacks only work inside/at the casino.
+local function nearCasino(source)
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 then return false end
+    local c = GetEntityCoords(ped)
+    local ex, en = Cfg.exit, Cfg.entrance
+    if ex and #(c - ex) <= 180.0 then return true end
+    if en and #(c - en) <= 60.0 then return true end
+    return false
+end
+
 local function countChips(source)
     if GetResourceState('sunset_inventory') ~= 'started' then return 0 end
     local ok, count = pcall(function()
@@ -134,6 +145,10 @@ end
 local function settleBlackjack(source, game)
     local charId = getCharId(source)
     if not charId then return nil end
+    -- [SEC2] mark settled BEFORE any yielding inventory call so parallel
+    -- hit/stand callbacks cannot settle (and pay) the same hand twice.
+    if game.done then return nil end
+    game.done = true
 
     local playerVal = handValue(game.playerHand)
     local dealerVal = handValue(game.dealerHand)
@@ -181,6 +196,7 @@ local function settleBlackjack(source, game)
 end
 
 exports.sunset_core:RegisterCallback('sunset:casino:blackjackStart', function(source, bet)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
@@ -268,6 +284,7 @@ end)
 local SLOT_SYMBOLS = { '🍒', '🍋', '🍊', '🍇', '💎', '7️⃣', '🔔', '⭐' }
 
 exports.sunset_core:RegisterCallback('sunset:casino:slotsSpin', function(source, bet)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
@@ -336,6 +353,7 @@ local function isRed(n)
 end
 
 exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(source, bet, betType, betValue)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     bet = math.floor(tonumber(bet) or 0)
     if bet < (Cfg.minBet or 100) or bet > (Cfg.maxBet or 50000) then
         return nil, { localeKey = 'casino.message.bet_must_be_between_value_and_value_chips', formatArgs = { Cfg.minBet or 100, Cfg.maxBet or 50000 } }
@@ -366,6 +384,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(sour
 
     betType = tostring(betType or '')
     betValue = tonumber(betValue)
+    if betValue ~= nil and (betValue ~= betValue or betValue ~= math.floor(betValue)) then betValue = nil end
 
     if betType == 'straight' and betValue == result then
         won = true
@@ -395,7 +414,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:rouletteSpin', function(sour
             multiplier = payouts.dozen or 2
         end
     elseif betType == 'column' then
-        if result > 0 and (result % 3) == (betValue % 3) then
+        if betValue and result > 0 and (result % 3) == (betValue % 3) then
             won = true
             multiplier = payouts.column or 2
         end
@@ -426,6 +445,7 @@ end)
 local WheelCooldowns = {}  -- [charId] = lastSpinTime
 
 exports.sunset_core:RegisterCallback('sunset:casino:wheelSpin', function(source)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     local charId = getCharId(source)
     if not charId then return nil end
 
@@ -475,6 +495,7 @@ end)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:casino:buyChips', function(source, amount)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     amount = math.floor(tonumber(amount) or 0)
     if amount < (Cfg.minChipExchange or 100) then
         return nil, { localeKey = 'casino.message.minimum_chip_exchange_is_value', formatArgs = { Cfg.minChipExchange or 100 } }
@@ -500,6 +521,7 @@ exports.sunset_core:RegisterCallback('sunset:casino:buyChips', function(source, 
 end)
 
 exports.sunset_core:RegisterCallback('sunset:casino:sellChips', function(source, amount)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     amount = math.floor(tonumber(amount) or 0)
     if amount < 1 then return nil, { localeKey = 'casino.message.enter_an_amount_to_sell' } end
 
@@ -532,6 +554,7 @@ end)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:casino:buyDrink', function(source, drinkId)
+    if not nearCasino(source) then return nil, 'You must be at the casino.' end
     drinkId = tostring(drinkId or '')
     local drink = nil
     for _, d in ipairs(Cfg.barDrinks or {}) do
@@ -593,8 +616,21 @@ end)
 -- [OVERFLOW FIX] Client now sends lines in batches (max 5 per event) instead
 -- of one TriggerServerEvent per line — a 60m scan can enumerate hundreds of
 -- entities and the old per-line approach hit "Reliable network event overflow".
-local function writeProbeLine(text)
+local ProbeBudget = {}
+local function writeProbeLine(text, src)
+    -- [SEC2] clients can reach this (disk/log spam): 60 lines/min per source, no file write unless admin
+    local now = GetGameTimer()
+    local b = ProbeBudget[src or 0]
+    if not b or now - b.t > 60000 then b = { t = now, n = 0 }; ProbeBudget[src or 0] = b end
+    b.n = b.n + 1
+    if b.n > 60 then return end
     print('^3' .. text .. '^7')
+    local isAdm = false
+    if src and GetResourceState('sunset_admin') == 'started' then
+        local ok, r = pcall(function() return exports.sunset_admin:IsAdmin(src, 3) end)
+        isAdm = ok and r == true
+    end
+    if not isAdm then return end
     local fh = io.open('/config/casino_probe.log', 'a')
     if fh then
         fh:write(os.date('%Y-%m-%d %H:%M:%S ') .. text .. '\n')
@@ -603,13 +639,15 @@ local function writeProbeLine(text)
 end
 
 RegisterNetEvent('sunset:casino:probeLog', function(line)
-    writeProbeLine(('[CASINOPROBE #%d] %s'):format(source, tostring(line):sub(1, 400)))
+    writeProbeLine(('[CASINOPROBE #%d] %s'):format(source, tostring(line):sub(1, 400)), source)
 end)
 
 RegisterNetEvent('sunset:casino:probeLogBatch', function(lines)
     if type(lines) ~= 'table' then return end
-    for _, line in ipairs(lines) do
-        writeProbeLine(('[CASINOPROBE #%d] %s'):format(source, tostring(line):sub(1, 400)))
+    local src = source
+    for i, line in ipairs(lines) do
+        if i > 5 then break end
+        writeProbeLine(('[CASINOPROBE #%d] %s'):format(src, tostring(line):sub(1, 400)), src)
     end
 end)
 

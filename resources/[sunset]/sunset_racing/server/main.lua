@@ -35,6 +35,8 @@ local RaceNightActive = false
 local SoloCooldowns = {}    -- [charId] = GetGameTimer() of last solo finish
 
 local raceIdCounter = 0
+local JoinBusy = {}        -- [src] = true while a join/solo request is charging (re-entrancy guard)
+local SoloLastStart = {}   -- [charId] = GetGameTimer() of last solo START (the global race slot was blockable by start/quit spam)
 
 -- ═══ HELPERS ═══
 
@@ -115,14 +117,28 @@ exports.sunset_core:RegisterCallback('sunset:racing:startSolo', function(source,
     if #(pos - Cfg.raceHub) > 100.0 then
         return nil, { localeKey = 'racing.message.you_must_be_near_the_race_hub_at_ls' }
     end
+    -- [JOBS AUDIT] only one race can run server-wide; start -> quit loops held the slot hostage.
+    if charId and SoloLastStart[charId] and nowMs() - SoloLastStart[charId] < 20000 then
+        return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' }
+    end
+    if JoinBusy[source] then return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' } end
+    JoinBusy[source] = true
 
     -- Solo entry fee (default 0 = free)
     local soloFee = Cfg.soloEntryFee or 0
     if soloFee > 0 then
-        if not exports.sunset_core:RemoveMoney(source, 'cash', soloFee, 'race_solo_entry') then
+        local paidFee = exports.sunset_core:RemoveMoney(source, 'cash', soloFee, 'race_solo_entry')
+        if not paidFee then
+            JoinBusy[source] = nil
             return nil, { localeKey = 'racing.message.not_enough_cash_solo_entry_fee_value', formatArgs = { soloFee } }
         end
     end
+    JoinBusy[source] = nil
+    if ActiveRace then -- another race started while the fee was being charged
+        if soloFee > 0 then exports.sunset_core:AddMoney(source, 'cash', soloFee, 'race_refund') end
+        return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' }
+    end
+    if charId then SoloLastStart[charId] = nowMs() end
 
     dlog(('solo starting src=%d route=%s'):format(source, routeId))
     startRace(routeId, { source }, true)
@@ -154,9 +170,18 @@ exports.sunset_core:RegisterCallback('sunset:racing:join', function(source, rout
         return nil, { localeKey = 'racing.message.you_must_be_near_the_race_hub_at_ls' }
     end
 
-    -- Charge entry fee (once — guarded by PlayerLobby check)
-    if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.entryFee or 1000, 'race_entry') then
+    -- Charge entry fee (once). [JOBS AUDIT] RemoveMoney yields: two concurrent joins both passed the
+    -- PlayerLobby check and charged twice (one fee lost). Guarded by JoinBusy + re-check after the charge.
+    if JoinBusy[source] then return nil, { localeKey = 'racing.message.you_are_already_in_a_lobby_leave_first' } end
+    JoinBusy[source] = true
+    local paidEntry = exports.sunset_core:RemoveMoney(source, 'cash', Cfg.entryFee or 1000, 'race_entry')
+    JoinBusy[source] = nil
+    if not paidEntry then
         return nil, { localeKey = 'racing.message.not_enough_cash_entry_fee_value', formatArgs = { Cfg.entryFee or 1000 } }
+    end
+    if ActiveRace or PlayerLobby[source] or not GetPlayerName(source) then
+        exports.sunset_core:AddMoney(source, 'cash', Cfg.entryFee or 1000, 'race_refund')
+        return nil, { localeKey = 'racing.message.a_race_is_already_in_progress_wait_for_it' }
     end
 
     -- Add to route-specific lobby
@@ -414,14 +439,31 @@ RegisterNetEvent('sunset:racing:checkpoint', function(checkpointIndex, raceId)
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 then return end
     local veh = GetVehiclePedIsIn(ped, false)
+    -- [JOBS AUDIT] vehicle + driver seat were only checked client-side; a runner on foot / passenger counted.
+    if veh == 0 or GetPedInVehicleSeat(veh, -1) ~= ped then return end
 
-    local target = veh ~= 0 and veh or ped
+    local target = veh
     local coords = GetEntityCoords(target)
     local dx, dy = coords.x - cp.x, coords.y - cp.y
     local hDist = math.sqrt(dx * dx + dy * dy)
     if hDist > 80.0 then
         dlog(('checkpoint rejected src=%d cp=%d dist=%.1f reason=too_far'):format(src, checkpointIndex, hDist))
         return
+    end
+
+    -- [JOBS AUDIT] Travel plausibility: consecutive checkpoints cannot be reached faster than ~110 m/s
+    -- (the old check let a client teleport between checkpoints at 1.5s intervals).
+    do
+        local prev = ActiveRace.route.checkpoints[checkpointIndex - 1]
+        local fromT = progress.lastCheckpointAt > 0 and progress.lastCheckpointAt or progress.startTimeMs
+        if prev and fromT then
+            local d = math.sqrt((cp.x - prev.x) ^ 2 + (cp.y - prev.y) ^ 2)
+            local minMs = math.max(0, (d - 160.0) / 110.0 * 1000.0)
+            if (now - fromT) < minMs then
+                dlog(('checkpoint rejected src=%d cp=%d reason=too_fast'):format(src, checkpointIndex))
+                return
+            end
+        end
     end
 
     -- ACCEPTED
@@ -480,7 +522,9 @@ function endRace(reason)
             local charId = getCharId(winner)
             local now = nowMs()
             if charId and (not SoloCooldowns[charId] or (now - SoloCooldowns[charId]) > (Cfg.soloCooldownMs or 300000)) then
-                exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward')
+                if not exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward') then
+                    exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward_retry')
+                end
                 notify(winner, ('⏱ Time trial complete! Reward: $%s.'):format(Cfg.soloReward or 500), 'success', 10000)
             else
                 notify(winner, '⏱ Time trial complete! (Reward on cooldown)', 'info', 8000)
@@ -490,7 +534,10 @@ function endRace(reason)
             local totalPot = #ActiveRace.players * (Cfg.entryFee or 1000)
             local prize = math.floor(totalPot * (Cfg.prizeMultiplier or 0.8))
             local winner = ActiveRace.finished[1]
-            exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize')
+            if not exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize')
+                and not exports.sunset_core:AddMoney(winner, 'cash', prize, 'race_prize_retry') then
+                print(('[RACING] CRITICAL: prize $%d payout failed for src %s - manual compensation required'):format(prize, tostring(winner)))
+            end
             notify(winner, ('🏆 You won the race! Prize: $%s.'):format(prize), 'success', 10000)
             for i = 2, #ActiveRace.finished do
                 notify(ActiveRace.finished[i], ('Race finished — position #%d.'):format(i), 'info', 8000)
@@ -558,6 +605,15 @@ exports.sunset_core:RegisterCallback('sunset:racing:quit', function(source)
     return false, { localeKey = 'racing.message.you_are_not_actively_racing' }
 end)
 
+-- [JOBS AUDIT] A downed/jailed racer stayed in the single global race until the 600s timeout,
+-- blocking every other racer. End their participation like /quitrace.
+AddEventHandler('sunset:death:playerDowned', function(src)
+    cancelPlayerRace(src, 'You were downed - race over.')
+end)
+AddEventHandler('sunset:faction:playerJailed', function(src)
+    cancelPlayerRace(src, 'You were jailed - race over.')
+end)
+
 -- ═══ DISCONNECT ═══
 
 AddEventHandler('playerDropped', function()
@@ -593,6 +649,15 @@ end)
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
+    -- [JOBS AUDIT] Refund paid entry fees: lobby members and multiplayer racers lost them on a restart.
+    for src in pairs(PlayerLobby) do
+        if GetPlayerName(src) then exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_restart') end
+    end
+    if ActiveRace and not ActiveRace.settled and not ActiveRace.isSolo and #ActiveRace.finished == 0 then
+        for _, src in ipairs(ActiveRace.players) do
+            if GetPlayerName(src) then exports.sunset_core:AddMoney(src, 'cash', Cfg.entryFee or 1000, 'race_refund_restart') end
+        end
+    end
     -- Cleanup any active race
     if ActiveRace and not ActiveRace.settled then
         for _, src in ipairs(ActiveRace.players) do
