@@ -149,12 +149,13 @@ const Racing = {
         `;
     },
 
-    showCountdown(n) {
+    showCountdown(payload) {
         let hud = $('#racing-hud');
         if (!hud) return;
+        const n = typeof payload === 'object' && payload !== null ? (payload.n ?? payload.count ?? '') : payload;
         const existing = hud.querySelector('.racing-hud__countdown');
         if (existing) existing.remove();
-        hud.innerHTML += `<div class="racing-hud__countdown">${n}</div>`;
+        hud.innerHTML += `<div class="racing-hud__countdown">${this.esc(String(n))}</div>`;
     },
 
     showGo() {

@@ -3,7 +3,15 @@
    Double rAF ensures zero white/black flash during loadscreen handoff. */
 
 const $ = (sel) => document.querySelector(sel);
-const tr = (key, params) => window.I18n ? window.I18n.t(key, params) : `[?${key}]`;
+function tr(key, params, fallback) {
+    try {
+        if (window.I18n?.t) {
+            const res = window.I18n.t(key, params);
+            if (res && res !== key) return res;
+        }
+    } catch (_) {}
+    return (typeof fallback === 'string' ? fallback : null) || key;
+}
 
 function post(action, data = {}) {
     try {

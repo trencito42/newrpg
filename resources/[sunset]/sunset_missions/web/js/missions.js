@@ -1,5 +1,40 @@
 'use strict';
 
+// Safe translation helper
+function tr(key, params, fallback) {
+    try {
+        if (window.I18n?.t) {
+            const res = window.I18n.t(key, params);
+            if (res && res !== key) return res;
+        }
+    } catch (_) {}
+    return (typeof fallback === 'string' ? fallback : null) || key;
+}
+
+if (!window.I18n) {
+    window.I18n = {
+        t: (k, p) => tr(k, p, k),
+        getLocale: () => 'en',
+        translateTree: () => {},
+    };
+}
+
+(function setupNuiDiagnostics() {
+    let lastError = '';
+    function report(type, msg, source, line, col, stack) {
+        const sig = `${msg}:${source}:${line}:${col}`;
+        if (sig === lastError) return;
+        lastError = sig;
+        console.error('[NUI ERROR sunset_missions]', msg, source, `${line}:${col}`, stack);
+    }
+    window.onerror = function(msg, source, line, col, error) {
+        report('onerror', msg, source, line, col, error?.stack);
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+        report('unhandledrejection', event.reason?.message || String(event.reason), '', 0, 0, event.reason?.stack);
+    });
+})();
+
 const Missions = (() => {
     const RES = () => window.GetParentResourceName ? GetParentResourceName() : 'sunset_missions';
     const $ = sel => document.querySelector(sel);

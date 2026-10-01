@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="ui.tuning.sunset_ecu_tuning"></title>
+    <title data-i18n="ui.tuning.sunset_ecu_tuning">Sunset ECU & Tuning</title>
     <script>
         window.prompt = function() { return null; };
         window.alert = function() {};
@@ -24,58 +24,58 @@
             <div class="tuning-wrapper">
                 <div class="tune-categories" id="tuneCategories"></div>
                 <div class="tune-parts-col">
-                    <div class="section-title section-title--muted" id="tunePartsTitle"><span data-i18n="ui.tuning.engine_upgrades"></span></div>
+                    <div class="section-title section-title--muted" id="tunePartsTitle"><span data-i18n="ui.tuning.engine_upgrades">Engine Upgrades</span></div>
                     <div class="item-list" id="tunePartsList"></div>
                     <div class="tune-detail" id="tuneDetail"></div>
                 </div>
             </div>
 
             <div class="stats-panel">
-                <div class="section-title section-title--compact"><span data-i18n="ui.tuning.performance_impact"></span></div>
+                <div class="section-title section-title--compact"><span data-i18n="ui.tuning.performance_impact">PERFORMANCE IMPACT</span></div>
 
                 <div class="stat-row">
                     <div class="stat-header">
-                        <span><span data-i18n="ui.tuning.acceleration"></span></span>
+                        <span><span data-i18n="ui.tuning.acceleration">ACCELERATION</span></span>
                         <span class="stat-val" id="tune-accel-val">—</span>
                     </div>
                     <div class="stat-track" id="stat-accel-tune"></div>
                 </div>
                 <div class="stat-row">
                     <div class="stat-header">
-                        <span><span data-i18n="ui.tuning.top_speed"></span></span>
+                        <span><span data-i18n="ui.tuning.top_speed">TOP SPEED</span></span>
                         <span class="stat-val" id="tune-speed-val">—</span>
                     </div>
                     <div class="stat-track" id="stat-speed-tune"></div>
                 </div>
                 <div class="stat-row">
                     <div class="stat-header">
-                        <span><span data-i18n="ui.tuning.handling"></span></span>
+                        <span><span data-i18n="ui.tuning.handling">HANDLING</span></span>
                         <span class="stat-val" id="tune-hand-val">—</span>
                     </div>
                     <div class="stat-track" id="stat-hand-tune"></div>
                 </div>
 
                 <div class="price-display">
-                    <span class="price-label" id="tune-price-label"><span data-i18n="ui.tuning.install_cost"></span></span>
+                    <span class="price-label" id="tune-price-label"><span data-i18n="ui.tuning.install_cost">Install Cost</span></span>
                     <span class="price-value" id="tune-install-cost">0</span>
                 </div>
 
                 <button type="button" class="btn-install" id="btnSave">
-                    <span class="btn-install__text"><span class="key-hint"><span data-i18n="ui.tuning.enter"></span></span> <span data-i18n="ui.tuning.apply_changes"></span></span>
+                    <span class="btn-install__text"><span class="key-hint"><span data-i18n="ui.tuning.enter">ENTER</span></span> <span data-i18n="ui.tuning.apply_changes">APPLY CHANGES</span></span>
                 </button>
             </div>
         </div>
 
         <p class="tune-footer-hint">
-            <span data-i18n="ui.tuning.esc_close_hold_drag_a_d_rotate_camera"></span> <span id="shopLabel"><span data-i18n="ui.tuning.ecu_bay"></span></span> · <span id="plateLabel">—</span>
+            <span data-i18n="ui.tuning.esc_close_hold_drag_a_d_rotate_camera">ESC Close · Hold & Drag / A D Rotate Camera</span> <span id="shopLabel"><span data-i18n="ui.tuning.ecu_bay">ECU Bay</span></span> · <span id="plateLabel">—</span>
         </p>
 
-        <span id="ecuStatus" class="sr-only" aria-hidden="true"><span data-i18n="ui.tuning.factory_map"></span></span>
-        <span id="drivetrainLabel" class="sr-only" aria-hidden="true"><span data-i18n="ui.tuning.petrol"></span></span>
+        <span id="ecuStatus" class="sr-only" aria-hidden="true"><span data-i18n="ui.tuning.factory_map">FACTORY MAP</span></span>
+        <span id="drivetrainLabel" class="sr-only" aria-hidden="true"><span data-i18n="ui.tuning.petrol">Petrol</span></span>
         <button type="button" id="btnCancel" class="sr-only" aria-hidden="true" tabindex="-1"></button>
     </div>
-    <script src="https://cfx-nui-sunset_ui/js/i18n.generated.js?v=2"></script>
-    <script src="https://cfx-nui-sunset_ui/js/i18n.js?v=2"></script>
-    <script src="app.js?v=3"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.generated.js?v=3"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.js?v=3"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>

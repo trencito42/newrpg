@@ -988,7 +988,7 @@
                 case 'racingHide': window.Racing?.hide?.(); return;
                 case 'racingHud': window.Racing?.showHud?.(payload); return;
                 case 'racingHudHide': window.Racing?.hideHud?.(); return;
-                case 'racingCountdown': window.Racing?.showCountdown?.(payload.count ?? payload); return;
+                case 'racingCountdown': window.Racing?.showCountdown?.(payload?.n ?? payload?.count ?? payload); return;
                 case 'racingGo': window.Racing?.showGo?.(); return;
                 case 'racingFinished': window.Racing?.showFinished?.(payload); return;
                 case 'drugsShow': window.Drugs?.show?.(payload); return;

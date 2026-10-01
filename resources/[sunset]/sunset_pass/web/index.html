@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="ui.pass.blaze_pass"></title>
+    <title data-i18n="ui.pass.blaze_pass">Blaze Pass</title>
     <script>
         window.prompt = function() { return null; };
         window.alert = function() {};
@@ -20,47 +20,47 @@
     <!-- Notificare Sistem -->
     <div id="notify">
         <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <span id="notify-msg"><span data-i18n="ui.pass.recompensa_colectata"></span></span>
+        <span id="notify-msg"><span data-i18n="ui.pass.recompensa_colectata">Recompensă colectată</span></span>
     </div>
 
     <div id="bp-wrapper" class="hidden">
         <!-- Sidebar Navigation -->
         <div class="sidebar">
             <div class="season-brand">
-                <div class="season-title" id="season-title"><span data-i18n="ui.pass.season_1"></span></div>
-                <div class="season-subtitle" id="season-subtitle"><span data-i18n="ui.pass.blaze_pass_6cfcc5"></span></div>
+                <div class="season-title" id="season-title"><span data-i18n="ui.pass.season_1">SEASON 1</span></div>
+                <div class="season-subtitle" id="season-subtitle"><span data-i18n="ui.pass.blaze_pass_6cfcc5">BLAZE PASS</span></div>
             </div>
 
             <div class="profile-section">
                 <div class="level-header">
-                    <span class="level-label"><span data-i18n="ui.pass.nivel_curent"></span></span>
+                    <span class="level-label"><span data-i18n="ui.pass.nivel_curent">NIVEL CURENT</span></span>
                     <span class="level-val" id="ui-lvl">1</span>
                 </div>
                 <div class="xp-bar-bg">
                     <div class="xp-bar-fill" id="ui-xp-bar" style="width: 0%;"></div>
                 </div>
-                <div class="xp-text" id="ui-xp-text"><span data-i18n="ui.pass.0_500_xp"></span></div>
+                <div class="xp-text" id="ui-xp-text"><span data-i18n="ui.pass.0_500_xp">0 / 500 XP</span></div>
             </div>
 
             <div class="nav-menu">
                 <div class="nav-item active" data-tab="battlepass">
                     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                    <span data-i18n="ui.pass.battlepass"></span>
+                    <span data-i18n="ui.pass.battlepass">Battlepass</span>
                 </div>
                 <div class="nav-item" data-tab="daily">
                     <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <span data-i18n="ui.pass.misiuni_zilnice"></span>
+                    <span data-i18n="ui.pass.misiuni_zilnice">Misiuni Zilnice</span>
                 </div>
                 <div class="nav-item" data-tab="weekly">
                     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <span data-i18n="ui.pass.saptamanale"></span>
+                    <span data-i18n="ui.pass.saptamanale">Săptămânale</span>
                 </div>
             </div>
 
             <div class="premium-btn-container" id="premium-box">
                 <button class="btn-upgrade" id="btn-upgrade">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>
-                    <span id="btn-upgrade-text"><span data-i18n="ui.pass.cumpara_premium"></span></span>
+                    <span id="btn-upgrade-text"><span data-i18n="ui.pass.cumpara_premium">CUMPĂRĂ PREMIUM</span></span>
                 </button>
             </div>
         </div>
@@ -71,8 +71,8 @@
             <!-- TAB 1: BATTLEPASS -->
             <div id="tab-battlepass" class="tab-section active">
                 <div class="section-header">
-                    <h2><span data-i18n="ui.pass.progres_battlepass"></span></h2>
-                    <p><span data-i18n="ui.pass.fa_misiuni_pentru_a_castiga_xp_si_deblocheaza_recompense"></span></p>
+                    <h2><span data-i18n="ui.pass.progres_battlepass">Progres Battlepass</span></h2>
+                    <p><span data-i18n="ui.pass.fa_misiuni_pentru_a_castiga_xp_si_deblocheaza_recompense">Fă misiuni pentru a câștiga XP și deblochează recompense</span></p>
                 </div>
 
                 <div class="bp-container" id="bp-container">
@@ -85,8 +85,8 @@
             <!-- TAB 2: DAILY MISSIONS -->
             <div id="tab-daily" class="tab-section">
                 <div class="section-header">
-                    <h2><span data-i18n="ui.pass.misiuni_zilnice"></span></h2>
-                    <p><span data-i18n="ui.pass.se_reseteaza_in_fiecare_zi_la_ora_00_00"></span></p>
+                    <h2><span data-i18n="ui.pass.misiuni_zilnice">Misiuni Zilnice</span></h2>
+                    <p><span data-i18n="ui.pass.se_reseteaza_in_fiecare_zi_la_ora_00_00">Se resetează în fiecare zi la ora 00:00</span></p>
                 </div>
                 <div class="missions-list" id="daily-list">
                     <!-- Generat din JS -->
@@ -96,8 +96,8 @@
             <!-- TAB 3: WEEKLY MISSIONS -->
             <div id="tab-weekly" class="tab-section">
                 <div class="section-header">
-                    <h2><span data-i18n="ui.pass.misiuni_saptamanale"></span></h2>
-                    <p><span data-i18n="ui.pass.recompense_majore_de_xp_se_reseteaza_duminica_noaptea"></span></p>
+                    <h2><span data-i18n="ui.pass.misiuni_saptamanale">Misiuni Săptămânale</span></h2>
+                    <p><span data-i18n="ui.pass.recompense_majore_de_xp_se_reseteaza_duminica_noaptea">Recompense majore de XP — se resetează duminică noaptea</span></p>
                 </div>
                 <div class="missions-list" id="weekly-list">
                     <!-- Generat din JS -->
@@ -106,11 +106,11 @@
 
         </div>
 
-        <div class="close-hint"><span data-i18n="ui.pass.apasa_esc_pentru_a_inchide"></span></div>
+        <div class="close-hint"><span data-i18n="ui.pass.apasa_esc_pentru_a_inchide">Apasă ESC pentru a închide</span></div>
     </div>
 
-    <script src="https://cfx-nui-sunset_ui/js/i18n.generated.js?v=2"></script>
-    <script src="https://cfx-nui-sunset_ui/js/i18n.js?v=2"></script>
-    <script src="app.js"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.generated.js?v=3"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.js?v=3"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

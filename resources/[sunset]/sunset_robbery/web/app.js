@@ -1,11 +1,46 @@
 const $ = (id) => document.getElementById(id);
 
+// Safe translation helper
+function tr(key, params, fallback) {
+    try {
+        if (window.I18n?.t) {
+            const res = window.I18n.t(key, params);
+            if (res && res !== key) return res;
+        }
+    } catch (_) {}
+    return (typeof fallback === 'string' ? fallback : null) || key;
+}
+
+if (!window.I18n) {
+    window.I18n = {
+        t: (k, p) => tr(k, p, k),
+        getLocale: () => 'en',
+        translateTree: () => {},
+    };
+}
+
+(function setupNuiDiagnostics() {
+    let lastError = '';
+    function report(type, msg, source, line, col, stack) {
+        const sig = `${msg}:${source}:${line}:${col}`;
+        if (sig === lastError) return;
+        lastError = sig;
+        console.error('[NUI ERROR sunset_robbery]', msg, source, `${line}:${col}`, stack);
+    }
+    window.onerror = function(msg, source, line, col, error) {
+        report('onerror', msg, source, line, col, error?.stack);
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+        report('unhandledrejection', event.reason?.message || String(event.reason), '', 0, 0, event.reason?.stack);
+    });
+})();
+
 function post(name, data = {}) {
     fetch(`https://${GetParentResourceName()}/${name}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-    });
+    }).catch(() => {});
 }
 
 function money(n) {
@@ -48,7 +83,7 @@ const Hack = {
         $('hack-trace').textContent = '0%';
         $('hack-trace-fill').style.width = '0%';
         $('hack-status').className = 'hack__status';
-        $('hack-status').textContent = I18n.t('dynamic.app.match_the_requested_channel_and_follow_a_connected_line');
+        $('hack-status').textContent = tr('dynamic.app.match_the_requested_channel_and_follow_a_connected_line', null, 'MATCH THE REQUESTED CHANNEL AND FOLLOW A CONNECTED LINE');
         this.deadline = performance.now() + ((Number(data.timeLimit) || 34) * 1000);
         this.burstDeadline = 0;
         this.currentNode = data.currentNode || data.sourceId;
@@ -59,8 +94,12 @@ const Hack = {
         this.tick();
         clearInterval(this.timer);
         this.timer = setInterval(() => this.tick(), 80);
-        this.draw(data.nodes || []);
-        this.refreshRoute();
+        try {
+            this.draw(data.nodes || []);
+            this.refreshRoute();
+        } catch (e) {
+            console.error('[Hack.show draw error]', e);
+        }
         post('playSound', { key: 'terminal' });
     },
     tick() {

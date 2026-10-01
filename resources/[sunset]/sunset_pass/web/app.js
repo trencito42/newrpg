@@ -1,3 +1,38 @@
+// Safe translation helper
+function tr(key, params, fallback) {
+    try {
+        if (window.I18n?.t) {
+            const res = window.I18n.t(key, params);
+            if (res && res !== key) return res;
+        }
+    } catch (_) {}
+    return (typeof fallback === 'string' ? fallback : null) || key;
+}
+
+if (!window.I18n) {
+    window.I18n = {
+        t: (k, p) => tr(k, p, k),
+        getLocale: () => 'ro',
+        translateTree: () => {},
+    };
+}
+
+(function setupNuiDiagnostics() {
+    let lastError = '';
+    function report(type, msg, source, line, col, stack) {
+        const sig = `${msg}:${source}:${line}:${col}`;
+        if (sig === lastError) return;
+        lastError = sig;
+        console.error('[NUI ERROR sunset_pass]', msg, source, `${line}:${col}`, stack);
+    }
+    window.onerror = function(msg, source, line, col, error) {
+        report('onerror', msg, source, line, col, error?.stack);
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+        report('unhandledrejection', event.reason?.message || String(event.reason), '', 0, 0, event.reason?.stack);
+    });
+})();
+
 const ITEM_ICON_ROOT = 'nui://sunset_ui/web/assets/items/';
 const ITEM_ICON_FALLBACK = `${ITEM_ICON_ROOT}backpack.webp`;
 
@@ -92,14 +127,14 @@ function updatePlayerStats(data) {
         if (data.premium) {
             premiumBox.innerHTML = `
                 <div style="text-align:center; color:var(--premium); font-weight:800; font-size:12px; letter-spacing:1px; padding:15px; background:rgba(184, 41, 255, 0.1); border:1px solid rgba(184, 41, 255, 0.3); border-radius:var(--radius-md);">
-                    ✔️ ${I18n.t('pass.premium_active')}
+                    ✔️ ${tr('pass.premium_active', null, 'PREMIUM ACTIV')}
                 </div>`;
         } else {
             const costLabel = data.premiumCostLabel || `${data.premiumCost || 250} BP`;
             premiumBox.innerHTML = `
                 <button class="btn-upgrade" id="btn-upgrade" onclick="buyPremium()">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>
-                    <span>${I18n.t('pass.buy_premium', { cost: costLabel })}</span>
+                    <span>${tr('pass.buy_premium', { cost: costLabel }, `CUMPĂRĂ PREMIUM (${costLabel})`)}</span>
                 </button>`;
         }
     }
@@ -108,7 +143,7 @@ function updatePlayerStats(data) {
 async function buyPremium() {
     const res = await post('passBuyPremium');
     if (res?.state) {
-        showNotify(I18n.t('pass.premium_activated'));
+        showNotify(tr('pass.premium_activated', null, 'Premium activat cu succes!'));
         renderAll(res.state);
         return;
     }
@@ -120,7 +155,7 @@ async function buyPremium() {
 async function claimBP(level, track) {
     const res = await post('passClaim', { level: Number(level), track });
     if (res?.state) {
-        showNotify(I18n.t('pass.reward_claimed', { level }));
+        showNotify(tr('pass.reward_claimed', { level }, `Recompensă revendicată (Nivel ${level})!`));
         renderAll(res.state);
     }
 }
@@ -157,9 +192,9 @@ function renderBattlepass(data) {
         let freeBtnHtml = '';
         if (tier.free) {
             if (tier.free.claimed) {
-                freeBtnHtml = `<button class="btn-claim claimed">${I18n.t('pass.claimed')}</button>`;
+                freeBtnHtml = `<button class="btn-claim claimed">${tr('pass.claimed', null, 'REVENDICAT')}</button>`;
             } else if (currentTier >= tier.level) {
-                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">${I18n.t('pass.claim')}</button>`;
+                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">${tr('pass.claim', null, 'REVENDICĂ')}</button>`;
             }
         }
 
@@ -172,13 +207,13 @@ function renderBattlepass(data) {
                 premLockHtml = `
                     <div class="reward-locked-overlay">
                         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <span class="lock-text">${I18n.t('pass.locked')}</span>
+                        <span class="lock-text">${tr('pass.locked', null, 'BLOCAT')}</span>
                     </div>`;
             } else {
                 if (tier.premium.claimed) {
-                    premBtnHtml = `<button class="btn-claim claimed">${I18n.t('pass.claimed')}</button>`;
+                    premBtnHtml = `<button class="btn-claim claimed">${tr('pass.claimed', null, 'REVENDICAT')}</button>`;
                 } else if (currentTier >= tier.level) {
-                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">${I18n.t('pass.claim')}</button>`;
+                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">${tr('pass.claim', null, 'REVENDICĂ')}</button>`;
                 }
             }
         }
@@ -189,7 +224,7 @@ function renderBattlepass(data) {
         tierEl.innerHTML = `
             <!-- FREE REWARD (TOP) -->
             <div class="reward-card">
-                <span class="reward-type-label">${I18n.t('pass.free')}</span>
+                <span class="reward-type-label">${tr('pass.free', null, 'FREE')}</span>
                 <div class="reward-icon">${rewardArt(tier.free)}</div>
                 <div class="reward-name">${tier.free ? tier.free.label : '—'}</div>
                 ${freeBtnHtml}
@@ -200,7 +235,7 @@ function renderBattlepass(data) {
 
             <!-- PREMIUM REWARD (BOTTOM) -->
             <div class="reward-card reward-premium">
-                <span class="reward-type-label label-premium">${I18n.t('pass.premium')}</span>
+                <span class="reward-type-label label-premium">${tr('pass.premium', null, 'PREMIUM')}</span>
                 ${premLockHtml}
                 <div class="reward-icon">${rewardArt(tier.premium)}</div>
                 <div class="reward-name">${tier.premium ? tier.premium.label : '—'}</div>
@@ -258,7 +293,7 @@ function renderMissions(data) {
                     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                     +${m.xp} XP
                 </span>
-                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${I18n.t(isDone ? 'pass.claimed' : 'pass.in_progress')}</button>
+                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${tr(isDone ? 'pass.claimed' : 'pass.in_progress', null, isDone ? 'FINALIZAT' : 'ÎN DESFĂȘURARE')}</button>
             </div>
         `;
 
@@ -274,11 +309,11 @@ function renderMissions(data) {
     });
 
     if (!dailyList.hasChildNodes()) {
-        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${I18n.t('pass.no_daily_missions')}</div>`;
+        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_daily_missions', null, 'Nu există misiuni zilnice disponibile.')}</div>`;
     }
 
     if (!weeklyList.hasChildNodes()) {
-        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${I18n.t('pass.no_weekly_missions')}</div>`;
+        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_weekly_missions', null, 'Nu există misiuni săptămânale disponibile.')}</div>`;
     }
 }
 

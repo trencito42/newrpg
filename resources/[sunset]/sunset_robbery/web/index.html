@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="ui.robbery.sunset_robbery"></title>
+    <title data-i18n="ui.robbery.sunset_robbery">Sunset Robbery</title>
     <script>
         window.prompt = function() { return null; };
         window.alert = function() {};
@@ -17,10 +17,10 @@
 </head>
 <body>
     <div id="rob-hud" class="rob-hud hidden">
-        <div class="rob-hud__tag" id="rob-hud-stage"><span data-i18n="ui.robbery.duffel"></span></div>
-        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.bag"></span></span><strong id="rob-hud-bag">0 / 12</strong></div>
-        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.est_value"></span></span><strong id="rob-hud-value">$0</strong></div>
-        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.response"></span></span><strong id="rob-hud-response">--:--</strong></div>
+        <div class="rob-hud__tag" id="rob-hud-stage"><span data-i18n="ui.robbery.duffel">DUFFEL</span></div>
+        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.bag">BAG</span></span><strong id="rob-hud-bag">0 / 12</strong></div>
+        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.est_value">EST. VALUE</span></span><strong id="rob-hud-value">$0</strong></div>
+        <div class="rob-hud__row"><span><span data-i18n="ui.robbery.response">RESPONSE</span></span><strong id="rob-hud-response">--:--</strong></div>
         <div class="rob-hud__bar"><i id="rob-hud-fill"></i></div>
     </div>
 
@@ -29,49 +29,49 @@
         <div class="hack__scan"></div>
         <header class="hack__head">
             <div>
-                <span class="hack__kicker"><span data-i18n="ui.robbery.sunset_security_encrypted"></span></span>
-                <strong><span data-i18n="ui.robbery.circuit_bypass"></span></strong>
-                <p><span data-i18n="ui.robbery.follow_the_live_channel_through_connected_nodes"></span></p>
+                <span class="hack__kicker"><span data-i18n="ui.robbery.sunset_security_encrypted">SUNSET SECURITY // ENCRYPTED</span></span>
+                <strong><span data-i18n="ui.robbery.circuit_bypass">CIRCUIT BYPASS</span></strong>
+                <p><span data-i18n="ui.robbery.follow_the_live_channel_through_connected_nodes">Follow the live channel through connected nodes</span></p>
             </div>
             <div class="hack__meters">
-                <span class="hack__signal"><span data-i18n="ui.robbery.next_channel"></span> <b id="hack-signal"><span data-i18n="ui.robbery.ch"></span></b></span>
-                <span><span data-i18n="ui.robbery.trace"></span> <b id="hack-trace">0%</b><i><em id="hack-trace-fill"></em></i></span>
-                <span><span data-i18n="ui.robbery.time"></span> <b id="hack-time">34.0</b></span>
+                <span class="hack__signal"><span data-i18n="ui.robbery.next_channel">NEXT CHANNEL</span> <b id="hack-signal"><span data-i18n="ui.robbery.ch">CH --</span></b></span>
+                <span><span data-i18n="ui.robbery.trace">TRACE</span> <b id="hack-trace">0%</b><i><em id="hack-trace-fill"></em></i></span>
+                <span><span data-i18n="ui.robbery.time">TIME</span> <b id="hack-time">34.0</b></span>
             </div>
         </header>
-        <div id="hack-status" class="hack__status"><span data-i18n="ui.robbery.reading_circuit_topology"></span></div>
+        <div id="hack-status" class="hack__status"><span data-i18n="ui.robbery.reading_circuit_topology">READING CIRCUIT TOPOLOGY...</span></div>
         <div id="hack-board" class="hack__board">
             <svg id="hack-lines" class="hack__lines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
             <div id="hack-nodes"></div>
         </div>
         <footer class="hack__foot">
-            <span><i class="legend legend--normal"></i> <span data-i18n="ui.robbery.relay"></span></span>
-            <span><i class="legend legend--locked"></i> <span data-i18n="ui.robbery.double_tap_gate"></span></span>
-            <span><i class="legend legend--timed"></i> <span data-i18n="ui.robbery.3_second_burst"></span></span>
-            <span><i class="legend legend--bad"></i> <span data-i18n="ui.robbery.corrupted"></span></span>
+            <span><i class="legend legend--normal"></i> <span data-i18n="ui.robbery.relay">RELAY</span></span>
+            <span><i class="legend legend--locked"></i> <span data-i18n="ui.robbery.double_tap_gate">DOUBLE-TAP GATE</span></span>
+            <span><i class="legend legend--timed"></i> <span data-i18n="ui.robbery.3_second_burst">3-SECOND BURST</span></span>
+            <span><i class="legend legend--bad"></i> <span data-i18n="ui.robbery.corrupted">CORRUPTED</span></span>
         </footer>
     </div>
 
     <div id="loot" class="loot hidden">
         <div class="loot__head">
-            <span id="loot-title"><span data-i18n="ui.robbery.display"></span></span>
+            <span id="loot-title"><span data-i18n="ui.robbery.display">DISPLAY</span></span>
             <strong id="loot-bag">0 / 12</strong>
         </div>
         <div id="loot-grid" class="loot__grid"></div>
-        <button type="button" class="loot__leave" id="loot-leave"><span data-i18n="ui.robbery.leave_case"></span></button>
+        <button type="button" class="loot__leave" id="loot-leave"><span data-i18n="ui.robbery.leave_case">LEAVE CASE</span></button>
     </div>
 
     <div id="fence" class="fence hidden">
         <div class="fence__head">
-            <span><span data-i18n="ui.robbery.fence"></span></span>
-            <p><span data-i18n="ui.robbery.got_anything_worth_my_time"></span></p>
+            <span><span data-i18n="ui.robbery.fence">FENCE</span></span>
+            <p><span data-i18n="ui.robbery.got_anything_worth_my_time">Got anything worth my time?</span></p>
         </div>
         <div id="fence-list" class="fence__list"></div>
-        <button type="button" class="fence__leave" id="fence-leave"><span data-i18n="ui.robbery.leave"></span></button>
+        <button type="button" class="fence__leave" id="fence-leave"><span data-i18n="ui.robbery.leave">LEAVE</span></button>
     </div>
 
-    <script src="https://cfx-nui-sunset_ui/js/i18n.generated.js?v=2"></script>
-    <script src="https://cfx-nui-sunset_ui/js/i18n.js?v=2"></script>
-    <script src="app.js"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.generated.js?v=3"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.js?v=3"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

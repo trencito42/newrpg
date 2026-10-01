@@ -14,7 +14,8 @@
 -- ═══════════════════════════════════════════════════════════════
 
 local function T(src, key, ...)
-    local ok, s = pcall(function() return exports.sunset_core:TFor(src, key, ...) end)
+    local args = { ... }
+    local ok, s = pcall(function() return exports.sunset_core:TFor(src, key, table.unpack(args)) end)
     return ok and s or key
 end
 

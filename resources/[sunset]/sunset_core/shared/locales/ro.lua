@@ -199,6 +199,7 @@ Sunset.Locales['ro'] = {
     ['chat.cleared']               = 'Chatul a fost șters de {name}.',
     ['chat.command.no_access']     = 'Nu ai acces la /{command}. Necesită {role} (nivel admin {required}). Nivelul tău: {current}.',
     ['chat.command.usage']         = 'Utilizare: /{command}',
+    ['chat.command.failed']        = '/{command} a eșuat pe server.',
     ['chat.usage.whisper']         = 'Utilizare: /whisper [id_jucator] [mesaj]',
     ['chat.usage.carwhisper']      = 'Utilizare: /carwhisper [mesaj]',
     ['chat.whisper.not_in_vehicle'] = 'Trebuie să fii într-un vehicul pentru a folosi /carwhisper.',
