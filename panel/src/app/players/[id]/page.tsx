@@ -32,8 +32,7 @@ interface CharacterProfileRow extends RowDataPacket {
 
 interface MarriageRow extends RowDataPacket {
   partner_id: number;
-  firstname: string;
-  lastname: string;
+  partner_username: string;
   married_at: string;
 }
 
@@ -78,23 +77,18 @@ export default async function PlayerProfilePage({
        c.home_property_id, c.avatar, c.gender, c.nationality,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username
-     FROM characters c
-     JOIN players p ON p.id = c.player_id
-     JOIN accounts a ON a.id = p.account_id
-     WHERE (? > 0 AND c.id = ?)
+     FROM accounts a
+     JOIN players p ON p.account_id = a.id
+     JOIN characters c ON c.player_id = p.id
+     WHERE LOWER(a.username) = LOWER(?)
+        OR (? > 0 AND c.id = ?)
         OR LOWER(c.firstname) = LOWER(?)
-        OR LOWER(CONCAT(c.firstname, '_', COALESCE(c.lastname, ''))) = LOWER(?)
-        OR LOWER(CONCAT(c.firstname, ' ', COALESCE(c.lastname, ''))) = LOWER(?)
-        OR (LOWER(c.firstname) = LOWER(?) AND LOWER(COALESCE(c.lastname, '')) = LOWER(?))
      LIMIT 1`,
     [
+      decoded,
       numericId,
       numericId,
       decoded,
-      decoded,
-      decoded,
-      decoded.split("_")[0] || decoded,
-      decoded.split("_").slice(1).join(" ") || "",
     ]
   );
 
@@ -102,13 +96,9 @@ export default async function PlayerProfilePage({
     notFound();
   }
 
-  const canonicalSlug =
-    char.lastname && char.lastname.trim().length > 0
-      ? `${char.firstname}_${char.lastname.trim()}`
-      : char.firstname;
-
-  if (isNumeric) {
-    redirect(`/players/${encodeURIComponent(canonicalSlug)}`);
+  // Canonical route uses accounts.username: /players/{username}
+  if (isNumeric || decoded.toLowerCase() !== char.account_username.toLowerCase()) {
+    redirect(`/players/${encodeURIComponent(char.account_username)}`);
   }
 
   const characterId = char.id;
@@ -139,9 +129,11 @@ export default async function PlayerProfilePage({
     dbQuerySingle<MarriageRow>(
       `SELECT m.married_at,
               CASE WHEN m.partner1_id = ? THEN m.partner2_id ELSE m.partner1_id END AS partner_id,
-              c.firstname, c.lastname
+              pa_acc.username AS partner_username
        FROM marriages m
        JOIN characters c ON c.id = (CASE WHEN m.partner1_id = ? THEN m.partner2_id ELSE m.partner1_id END)
+       JOIN players pa_p ON pa_p.id = c.player_id
+       JOIN accounts pa_acc ON pa_acc.id = pa_p.account_id
        WHERE (m.partner1_id = ? OR m.partner2_id = ?) AND m.status = 'active'
        LIMIT 1`,
       [characterId, characterId, characterId, characterId]
@@ -161,7 +153,6 @@ export default async function PlayerProfilePage({
     ),
   ]);
 
-  const fullName = `${char.firstname} ${char.lastname || ""}`.trim();
   const hasFaction = isFaction(char.job);
   const factionLabel = hasFaction ? getFactionLabel(char.job) : null;
   const warningsCount = sanctionCountRow?.count || 0;
@@ -178,7 +169,7 @@ export default async function PlayerProfilePage({
         <div>
           <div className="flex items-center space-x-3">
             <h1 className="text-xl font-bold tracking-tight">
-              <PlayerName name={fullName} factionId={char.job} clickable={false} className="text-xl" />
+              <PlayerName name={char.account_username} factionId={char.job} clickable={false} className="text-xl" />
             </h1>
             <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-200 text-[#f1f1f1] border border-surface-border">
               Level {char.level}
@@ -198,15 +189,13 @@ export default async function PlayerProfilePage({
                 <span>•</span>
               </>
             )}
-            <span>Account: <strong className="text-[#a5a5a8] font-normal">{char.account_username}</strong></span>
-            <span>•</span>
             <span>Last seen: {char.last_played ? formatDate(char.last_played, locale) : "Never"}</span>
           </div>
         </div>
 
         {marriage && (
           <div className="text-xs text-[#8a8a90]">
-            Married to <PlayerName name={`${marriage.firstname} ${marriage.lastname || ""}`.trim()} />
+            Married to <PlayerName name={marriage.partner_username} />
           </div>
         )}
       </div>

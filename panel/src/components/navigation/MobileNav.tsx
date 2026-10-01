@@ -73,15 +73,11 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
     { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
   ];
 
-  const profileHref = session?.selectedCharacterName
-    ? `/players/${encodeURIComponent(session.selectedCharacterName.trim().replace(/\s+/g, "_"))}`
-    : session?.selectedCharacterId
-    ? `/players/${session.selectedCharacterId}`
-    : "/account";
+  const profileHref = session ? `/players/${encodeURIComponent(session.username)}` : "/login";
 
   const accountLinks = session
     ? [
-        { href: profileHref, label: t(locale, "nav.characters"), icon: User },
+        { href: profileHref, label: t(locale, "nav.profile"), icon: User },
         { href: "/my-character/vehicles", label: t(locale, "nav.vehicles"), icon: Car },
         { href: "/my-character/properties", label: t(locale, "nav.properties"), icon: HomeIcon },
         { href: "/my-character/banking", label: t(locale, "nav.banking"), icon: CreditCard },

@@ -5,7 +5,7 @@
     "offline": "Offline",
     "players": "Players",
     "search": "Search",
-    "search_placeholder": "Search player or character...",
+    "search_placeholder": "Search player...",
     "level": "Level",
     "rank": "Rank",
     "actions": "Actions",
@@ -124,7 +124,7 @@
   "players": {
     "directory_title": "Players",
     "directory_subtitle": "",
-    "search_hint": "Search by character name...",
+    "search_hint": "Search by player name...",
     "found_count": "{count} players found",
     "no_results": "No matching players found.",
     "profile_title": "Profile",

@@ -10,8 +10,7 @@ import { PlayerName } from "@/components/ui/PlayerName";
 
 interface MemberRow extends RowDataPacket {
   id: number;
-  firstname: string;
-  lastname: string;
+  username: string;
   job_grade: number;
   level: number;
   joined_at: string | null;
@@ -40,18 +39,22 @@ export default async function FactionDetailPage({
 
   const [members, leader] = await Promise.all([
     dbQuery<MemberRow>(
-      `SELECT c.id, c.firstname, c.lastname, c.job_grade, c.level, c.last_played,
+      `SELECT c.id, a.username, c.job_grade, c.level, c.last_played,
               fm.joined_at
-       FROM characters c
+       FROM accounts a
+       JOIN players p ON p.account_id = a.id
+       JOIN characters c ON c.player_id = p.id
        LEFT JOIN faction_membership fm ON fm.character_id = c.id
        WHERE c.job = ?
-       ORDER BY c.job_grade DESC, c.level DESC, c.id ASC`,
+       ORDER BY c.job_grade DESC, c.level DESC, a.id ASC`,
       [slug]
     ),
     dbQuerySingle<LeaderRow>(
-      `SELECT fl.character_id, fl.assigned_at, CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS leader_name
+      `SELECT fl.character_id, fl.assigned_at, a.username AS leader_name
        FROM faction_leaders fl
        JOIN characters c ON c.id = fl.character_id
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
        WHERE fl.faction_id = ?
        LIMIT 1`,
       [slug]
@@ -141,13 +144,11 @@ export default async function FactionDetailPage({
               </thead>
               <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
                 {members.length > 0 ? (
-                  members.map((m) => {
-                    const name = `${m.firstname} ${m.lastname || ""}`.trim();
-                    return (
-                      <tr key={m.id} className="hover:bg-surface-200/40 transition-colors">
-                        <td className="py-2 px-3">
-                          <PlayerName name={name} factionId={slug} />
-                        </td>
+                  members.map((m) => (
+                    <tr key={m.id} className="hover:bg-surface-200/40 transition-colors">
+                      <td className="py-2 px-3">
+                        <PlayerName name={m.username} factionId={slug} href={`/players/${encodeURIComponent(m.username)}`} />
+                      </td>
                         <td className="py-2 px-3 font-mono text-[#f1f1f1]">
                           Grade {m.job_grade}
                         </td>
@@ -158,9 +159,8 @@ export default async function FactionDetailPage({
                           {m.joined_at ? formatDate(m.joined_at, locale, false) : "-"}
                         </td>
                       </tr>
-                    );
-                  })
-                ) : (
+                    ))
+                  ) : (
                   <tr>
                     <td colSpan={4} className="py-6 text-center text-[#6f6f74]">
                       No members enrolled in this faction.

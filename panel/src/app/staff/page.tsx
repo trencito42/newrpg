@@ -38,10 +38,11 @@ export default async function StaffPage() {
        ORDER BY helper_level DESC, id ASC`
     ),
     dbQuery<LeaderRow>(
-      `SELECT fl.faction_id, fl.character_id, fl.assigned_at,
-              CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS leader_name
+      `SELECT fl.faction_id, fl.character_id, fl.assigned_at, a.username AS leader_name
        FROM faction_leaders fl
        JOIN characters c ON c.id = fl.character_id
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
        ORDER BY fl.faction_id ASC`
     ),
   ]);

@@ -9,8 +9,7 @@ import { getFactionLabel, isFaction } from "@/lib/factions";
 
 interface PlayerListRow extends RowDataPacket {
   id: number;
-  firstname: string;
-  lastname: string;
+  username: string;
   level: number;
   respect_points: number;
   paydays_received: number;
@@ -39,14 +38,18 @@ export default async function PlayersDirectoryPage({
   const queryParams: any[] = [];
 
   if (q.length > 0) {
-    whereClause = "WHERE c.firstname LIKE ? OR c.lastname LIKE ? OR CONCAT(c.firstname, ' ', c.lastname) LIKE ?";
+    whereClause = "WHERE a.username LIKE ?";
     const pattern = `%${q}%`;
-    queryParams.push(pattern, pattern, pattern);
+    queryParams.push(pattern);
   }
 
   // Count total matching
   const countRow = await dbQuerySingle<CountRow>(
-    `SELECT COUNT(*) AS total FROM characters c ${whereClause}`,
+    `SELECT COUNT(*) AS total 
+     FROM accounts a
+     JOIN players p ON p.account_id = a.id
+     JOIN characters c ON c.player_id = p.id
+     ${whereClause}`,
     queryParams
   );
   const totalCount = countRow?.total || 0;
@@ -54,10 +57,12 @@ export default async function PlayersDirectoryPage({
 
   // Fetch paginated players
   const players = await dbQuery<PlayerListRow>(
-    `SELECT c.id, c.firstname, c.lastname, c.level, c.respect_points, c.paydays_received, c.job, c.last_played
-     FROM characters c
+    `SELECT a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job, c.last_played
+     FROM accounts a
+     JOIN players p ON p.account_id = a.id
+     JOIN characters c ON c.player_id = p.id
      ${whereClause}
-     ORDER BY c.level DESC, c.respect_points DESC, c.id ASC
+     ORDER BY c.level DESC, c.respect_points DESC, a.id ASC
      LIMIT ? OFFSET ?`,
     [...queryParams, limit, offset]
   );
@@ -108,8 +113,6 @@ export default async function PlayersDirectoryPage({
             <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
               {players.length > 0 ? (
                 players.map((p) => {
-                  const fullName = `${p.firstname} ${p.lastname || ""}`.trim();
-                  const slug = p.lastname && p.lastname.trim().length > 0 ? `${p.firstname}_${p.lastname.trim()}` : p.firstname;
                   const hasFaction = isFaction(p.job);
                   const factionLabel = hasFaction ? getFactionLabel(p.job) : "-";
                   const civilianJob = hasFaction ? "-" : p.job;
@@ -121,9 +124,9 @@ export default async function PlayersDirectoryPage({
                     >
                       <td className="py-2 px-3">
                         <PlayerName
-                          name={fullName}
+                          name={p.username}
                           factionId={p.job}
-                          href={`/players/${encodeURIComponent(slug)}`}
+                          href={`/players/${encodeURIComponent(p.username)}`}
                         />
                       </td>
                       <td className="py-2 px-3 font-mono text-[#f1f1f1]">

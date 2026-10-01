@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentSession, getCurrentSessionTokenHash, getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbExecute } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
@@ -145,44 +146,39 @@ export default async function AccountPage() {
           </div>
         </div>
 
-        {/* Characters */}
-        <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
-            <span>{t(locale, "account.characters")}</span>
-            <span className="font-mono text-[#6f6f74]">{characters.length}</span>
+        {/* Player Profile Summary */}
+        <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 text-xs flex flex-col justify-between">
+          <div className="space-y-2">
+            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+              {t(locale, "nav.profile")}
+            </h2>
+            {characters.length > 0 ? (
+              <div className="space-y-2 text-[#a5a5a8]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6f6f74]">Player</span>
+                  <PlayerName name={session.username} factionId={characters[0].job} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6f6f74]">Level</span>
+                  <span className="font-mono text-[#f1f1f1]">{characters[0].level}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#6f6f74]">Job</span>
+                  <span className="capitalize text-[#f1f1f1]">{characters[0].job?.replace(/_/g, " ") || "-"}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[#6f6f74]">No character profile linked.</p>
+            )}
           </div>
 
-          <div className="divide-y divide-surface-border/50 text-xs">
-            {characters.map((char) => {
-              const name = `${char.firstname} ${char.lastname || ""}`.trim();
-              const isSelected = char.id === session.selectedCharacterId;
-              return (
-                <div
-                  key={char.id}
-                  className={`p-2.5 px-3 flex items-center justify-between ${
-                    isSelected ? "bg-surface-200/50" : ""
-                  }`}
-                >
-                  <div>
-                    <PlayerName name={name} factionId={char.job} />
-                    <span className="text-[11px] text-[#6f6f74] block">
-                      Level {char.level} • {char.job}
-                    </span>
-                  </div>
-
-                  {isSelected ? (
-                    <span className="text-[11px] text-emerald-400 font-medium">Active</span>
-                  ) : (
-                    <form action="/api/auth/switch-character" method="POST">
-                      <input type="hidden" name="characterId" value={char.id} />
-                      <Button size="sm" variant="secondary" type="submit">
-                        Select
-                      </Button>
-                    </form>
-                  )}
-                </div>
-              );
-            })}
+          <div className="pt-2 border-t border-surface-border/60">
+            <Link
+              href={`/players/${encodeURIComponent(session.username)}`}
+              className="inline-flex items-center justify-center w-full px-3 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] font-semibold rounded text-xs transition-colors"
+            >
+              View Public Profile
+            </Link>
           </div>
         </div>
 

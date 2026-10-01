@@ -63,13 +63,15 @@ export default async function ServerStatsPage() {
     query<RichPlayerRecord>(`
       SELECT 
         c.id, 
-        CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) as name, 
+        a.username as name, 
         c.level, 
         c.cash, 
         c.bank, 
         (c.cash + c.bank) as total_wealth,
         c.job
       FROM characters c
+      JOIN players p ON p.id = c.player_id
+      JOIN accounts a ON a.id = p.account_id
       ORDER BY total_wealth DESC
       LIMIT 10
     `),
@@ -173,7 +175,7 @@ export default async function ServerStatsPage() {
                   <tr key={p.id} className="hover:bg-surface-200/40">
                     <td className="py-2 px-3 font-mono text-[#6f6f74]">{idx + 1}</td>
                     <td className="py-2 px-3">
-                      <PlayerName name={p.name} factionId={p.job} />
+                      <PlayerName name={p.name} factionId={p.job} href={`/players/${encodeURIComponent(p.name)}`} />
                     </td>
                     <td className="py-2 px-3 font-mono text-[#f1f1f1]">{p.level}</td>
                     <td className="py-2 px-3 text-right font-mono text-[#f1f1f1]">

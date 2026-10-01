@@ -79,9 +79,9 @@ export default async function StaffDashboardPage() {
 
   // 1. Fetch moderation queues
   const openTickets = await query<OpenTicketRecord>(
-    `SELECT t.id, t.subject AS title, t.department AS category, COALESCE(NULLIF(CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')), ' '), 'Account') as creator_name, t.created_at
+    `SELECT t.id, t.subject AS title, t.department AS category, COALESCE(a.username, 'Player') as creator_name, t.created_at
      FROM panel_support_tickets t
-     LEFT JOIN characters c ON t.character_id = c.id
+     LEFT JOIN accounts a ON t.account_id = a.id
      WHERE t.status = 'open'
      ORDER BY t.id ASC
      LIMIT 10`

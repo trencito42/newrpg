@@ -52,15 +52,11 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
     { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
   ];
 
-  const profileHref = session?.selectedCharacterName
-    ? `/players/${encodeURIComponent(session.selectedCharacterName.trim().replace(/\s+/g, "_"))}`
-    : session?.selectedCharacterId
-    ? `/players/${session.selectedCharacterId}`
-    : "/account";
+  const profileHref = session ? `/players/${encodeURIComponent(session.username)}` : "/login";
 
   const accountLinks = session
     ? [
-        { href: profileHref, label: t(locale, "nav.characters"), icon: User },
+        { href: profileHref, label: t(locale, "nav.profile"), icon: User },
         { href: "/my-character/vehicles", label: t(locale, "nav.vehicles"), icon: Car },
         { href: "/my-character/properties", label: t(locale, "nav.properties"), icon: HomeIcon },
         { href: "/my-character/banking", label: t(locale, "nav.banking"), icon: CreditCard },
@@ -226,7 +222,7 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
               className="min-w-0 flex-1 pr-2 hover:opacity-80 transition-opacity"
             >
               <span className="text-xs font-semibold text-[#f1f1f1] block truncate">
-                {session.selectedCharacterName || session.username}
+                {session.username}
               </span>
               <span className="text-[10px] text-[#6f6f74] block font-mono">
                 {getStaffTitle()}
