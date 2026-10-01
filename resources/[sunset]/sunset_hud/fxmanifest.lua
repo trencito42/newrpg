@@ -19,6 +19,7 @@ shared_scripts {
 client_scripts {
     'client/world.lua',
     'client/main.lua',
+    'client/minimap.lua',
     'client/voice.lua',
 }
 
