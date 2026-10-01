@@ -1206,6 +1206,7 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
                     category = 'personal_other',
                     plate    = cleanPlate,
                     model    = displayModel,
+                    ownerName = ((row.firstname or '') .. ' ' .. (row.lastname or '')):match('^%s*(.-)%s*$'),
                 }
             end
         end

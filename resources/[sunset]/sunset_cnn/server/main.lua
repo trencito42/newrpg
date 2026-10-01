@@ -621,17 +621,28 @@ end)
 --  COMMANDS
 -- ═══════════════════════════════════════════════════════════════
 
+local function localizedError(source, err, fallbackKey)
+    if type(err) == 'table' and type(err.localeKey) == 'string' then
+        if type(err.formatArgs) == 'table' then
+            return exports.sunset_core:TFor(source, err.localeKey, table.unpack(err.formatArgs))
+        end
+        return exports.sunset_core:TFor(source, err.localeKey, err.params)
+    end
+    if type(err) == 'string' and err ~= '' then return err end
+    return exports.sunset_core:TFor(source, fallbackKey or 'cnn.message.could_not_submit_ad')
+end
+
 -- /ad [text] — Player submit ad at CNN
 RegisterCommand('ad', function(source, args)
     if source == 0 then return end
     local text = table.concat(args, ' ')
     if text == '' then
-        TriggerClientEvent('sunset:chat:system', source, 'Usage: /ad [textul anuntului]', 'warning')
+        TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
         return
     end
     local ok, err = SubmitAd(source, text)
     if not ok then
-        TriggerClientEvent('sunset:chat:system', source, err or 'Eroare la trimiterea anuntului.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error')
     end
 end, false)
 
@@ -773,12 +784,12 @@ function RunChatCommand(source, name, args)
     if name == 'ad' then
         local text = table.concat(args, ' ')
         if text == '' then
-            TriggerClientEvent('sunset:chat:system', source, 'Usage: /ad [textul anuntului]', 'warning')
+            TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
             return true
         end
         local ok, err = SubmitAd(source, text)
         if not ok then
-            TriggerClientEvent('sunset:chat:system', source, err or 'Eroare la trimiterea anuntului.', 'error')
+            TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error')
         end
         return true
     end

@@ -58,7 +58,14 @@ local function sortedList()
         -- [ADMIN FILTER] hide admin-gated commands from players below the level.
         local need = adminLevelFor(row.name)
         if not need or myAdminLevel >= need then
-            list[#list + 1] = row
+            local command = tostring(row.name or ''):gsub('^/', '')
+            local localeKey = 'chat.suggestion.' .. command
+            local translated = exports.sunset_core:Translate(localeKey)
+            list[#list + 1] = {
+                name = row.name,
+                help = translated ~= ('[?' .. localeKey .. ']') and translated or row.help,
+                params = row.params,
+            }
         end
     end
     table.sort(list, function(a, b)
@@ -146,6 +153,10 @@ end)
 
 AddEventHandler('sunset:chat:rebuildSuggestions', function()
     bootstrapCommandUsage()
+    pushToUi()
+end)
+
+AddEventHandler('sunset:client:onLocaleChanged', function()
     pushToUi()
 end)
 

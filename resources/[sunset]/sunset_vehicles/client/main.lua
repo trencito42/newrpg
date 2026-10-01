@@ -1333,22 +1333,28 @@ CreateThread(function()
                         local msg
                         if info.category == 'personal_own' then
                             local insLine = info.destroyed
-                                and '^1[TOTALED]^7'
-                                or ('^3Lv.%d^7 (%d pts) | Claim: ^3$%d^7'):format(
-                                    info.ins_level, info.ins_points, info.claim_cost)
-                            msg = ('^5[Vehicle]^7 ^2%s^7 ^8(%s)^7 | ^3%.1f km^7 | Ins: %s'):format(
-                                info.model, info.plate, info.odometer, insLine)
+                                and exports.sunset_core:Translate('vehicles.entry.totaled')
+                                or exports.sunset_core:Translate('vehicles.entry.insurance', {
+                                    level = info.ins_level, points = info.ins_points, cost = info.claim_cost,
+                                })
+                            msg = exports.sunset_core:Translate('vehicles.entry.own', {
+                                model = info.model, plate = info.plate, odometer = ('%.1f'):format(info.odometer), insurance = insLine,
+                            })
                         elseif info.category == 'personal_other' then
-                            msg = ('^5[Vehicle]^7 ^2%s^7 ^8(%s)^7 | Owner: Private'):format(
-                                info.model, info.plate)
+                            msg = exports.sunset_core:Translate('vehicles.entry.other', {
+                                model = info.model, plate = info.plate, owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
+                            })
                         elseif info.category == 'faction' then
-                            msg = ('^5[Vehicle]^7 ^3%s^7 | Faction: ^4%s^7'):format(
-                                info.plate ~= '' and info.plate or 'Fleet', info.faction)
+                            msg = exports.sunset_core:Translate('vehicles.entry.faction', {
+                                plate = info.plate ~= '' and info.plate or exports.sunset_core:Translate('vehicles.entry.fleet'), faction = info.faction,
+                            })
                         else
-                            local p = info.plate ~= '' and (' ^8(%s)^7'):format(info.plate) or ''
-                            msg = ('^5[Vehicle]^7 NPC vehicle%s'):format(p)
+                            msg = exports.sunset_core:Translate('vehicles.entry.npc', { plate = info.plate or '' })
                         end
-                        TriggerEvent('chat:addMessage', { args = { msg }, color = { 255, 255, 255 } })
+                        TriggerEvent('chat:addMessage', {
+                            args = { exports.sunset_core:Translate('vehicles.entry.title'), msg },
+                            color = { 255, 255, 255 },
+                        })
                     end
                 end
             end
