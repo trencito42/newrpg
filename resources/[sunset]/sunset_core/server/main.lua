@@ -371,20 +371,22 @@ end)
 RegisterNetEvent('sunset:server:prepareSpawn', function(requestId)
     local source = source
     local session = Sessions[source]
+    local player = Players[source]
     local oldBucket = GetPlayerRoutingBucket(source)
+    local isAuth = (session and session.authenticated) or (player and player.account_id ~= nil) or (player and player.character ~= nil)
+
     if SunsetBoot.IsDebug() then
         print(('^5[BOOTV src=%d] prepareSpawn:received oldBucket=%s requestId=%s auth=%s^7'):format(
-            source, tostring(oldBucket), tostring(requestId), tostring(session and session.authenticated)))
+            source, tostring(oldBucket), tostring(requestId), tostring(isAuth)))
     end
 
-    if session and session.authenticated then
+    if isAuth or oldBucket ~= 0 then
         SetPlayerRoutingBucket(source, 0)
     end
     local newBucket = GetPlayerRoutingBucket(source)
-    if SunsetBoot.IsDebug() then
-        print(('^5[BOOTV src=%d] prepareSpawn:ack oldBucket=%s newBucket=%s^7'):format(
-            source, tostring(oldBucket), tostring(newBucket)))
-    end
+    print(('^2[LOGIN-FLOW] 20-SRV PREPARESPAWN: src=%s oldBucket=%s newBucket=%s isAuth=%s requestId=%s^7'):format(
+        tostring(source), tostring(oldBucket), tostring(newBucket), tostring(isAuth), tostring(requestId)))
+
     TriggerClientEvent('sunset:client:prepareSpawnAck', source, requestId, newBucket, oldBucket)
 end)
 
@@ -669,16 +671,25 @@ local function loadCharacterForPlayer(source, player, charId)
     if not player or not Players[source] then return nil end
     if Players[source].character and Players[source].character.id then
         Sunset.Warn(('Player %s tried to load character %s while already playing character %s'):format(source, charId, Players[source].character.id))
-        return nil
+        return Players[source].character
     end
 
     charId = tonumber(charId)
     if not charId or charId ~= math.floor(charId) then return nil end
-    if CharLoadInFlight[source] then return nil end -- [SEC3] concurrent select/enterGame double-load
+    if CharLoadInFlight[source] then
+        Sunset.Warn(('loadCharacterForPlayer: load already in flight for src %s'):format(tostring(source)))
+        return nil
+    end
     CharLoadInFlight[source] = true
+    local t0 = GetGameTimer()
     local okL, resL = pcall(loadCharacterForPlayerInner, source, player, charId)
     CharLoadInFlight[source] = nil
-    if not okL then error(resL) end
+    if not okL then
+        Sunset.Warn(('loadCharacterForPlayer error src=%s charId=%s: %s'):format(tostring(source), tostring(charId), tostring(resL)))
+        return nil
+    end
+    print(('^2[LOGIN-FLOW] 08-SRV LOADCHAR: loaded charId=%s for src=%s accId=%s in %dms^7'):format(
+        tostring(charId), tostring(source), tostring(player.account_id), GetGameTimer() - t0))
     return resL
 end
 
@@ -880,13 +891,22 @@ RegisterCallback('sunset:selectCharacter', function(source, charId)
 end)
 
 RegisterCallback('sunset:enterGame', function(source)
+    local tEnterGame = GetGameTimer()
     local player = GetPlayer(source)
-    if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
+    local accId = player and player.account_id or 'none'
+    local pId = player and player.id or 'none'
+    print(('^2[LOGIN-FLOW] 06-SRV ENTERGAME: callback received | src=%s accId=%s pId=%s hasChar=%s^7'):format(
+        tostring(source), tostring(accId), tostring(pId), tostring(player and player.character ~= nil)))
+
+    if not player then
+        return nil, Sunset.LocalizedError('auth.not_logged_in')
+    end
 
     -- [LOGIN PIPELINE] Idempotent: a retried enterGame (lost response / duplicate
     -- trigger) must hand back the already-loaded character instead of failing.
     if player.character and player.character.id then
-        Sunset.Warn(('enterGame re-requested by src %s; returning already loaded character %s'):format(tostring(source), tostring(player.character.id)))
+        print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: returning already loaded charId=%s | src=%s elapsed=%dms^7'):format(
+            tostring(player.character.id), tostring(source), GetGameTimer() - tEnterGame))
         return { character = player.character }
     end
 
@@ -897,7 +917,11 @@ RegisterCallback('sunset:enterGame', function(source)
 
     if row then
         local char = loadCharacterForPlayer(source, player, row.id)
-        if char then return { character = char } end
+        if char then
+            print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: successfully loaded charId=%s | src=%s elapsed=%dms^7'):format(
+                tostring(char.id), tostring(source), GetGameTimer() - tEnterGame))
+            return { character = char }
+        end
         -- [LOGIN PIPELINE] A character row exists but could not be loaded (already
         -- loaded for this source, active on another source, or DB miss). NEVER fall
         -- through to creating a new character; that produced phantom characters /
@@ -910,6 +934,8 @@ RegisterCallback('sunset:enterGame', function(source)
     if not char then return nil, err or Sunset.LocalizedError('character.create_failed') end
 
     char = loadCharacterForPlayer(source, player, char.id)
+    print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: created & loaded charId=%s | src=%s elapsed=%dms^7'):format(
+        tostring(char and char.id), tostring(source), GetGameTimer() - tEnterGame))
     return { character = char }
 end)
 

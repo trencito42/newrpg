@@ -127,6 +127,10 @@ local function completeAuthentication(username, quickToken, rememberQuickLogin)
     authenticated = true
     authenticatedUsername = username
     setBootState('CHARACTER_LOADING', 'authentication complete')
+    LocalPlayer.state:set('sunsetAuthenticated', true, true)
+    print(('^2[LOGIN-FLOW] 01 AUTH: authentication complete | user=%s quickToken=%s^7'):format(
+        tostring(username), tostring(quickToken ~= nil)))
+
     -- Even a very fast saved-token response must present at least one stable
     -- auth frame before transition ownership changes.
     if GetResourceState('sunset_auth_ui') == 'started' then
@@ -159,8 +163,11 @@ local function completeAuthentication(username, quickToken, rememberQuickLogin)
     if isEnabled(rememberQuickLogin) and not saved then
         uiNotify(tr('auth.quick_save_failed'), 'warning', 7000)
     end
+    print('^2[LOGIN-FLOW] 02 AUTH: authenticationComplete event emitted^7')
     TriggerEvent('sunset:client:authenticationComplete')
 end
+
+exports('IsAuthenticated', function() return authenticated end)
 
 local function promptEmailSync(username, password, rememberQuickLogin)
     setBootState('AUTH_FORM', 'email confirmation required')
