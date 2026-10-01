@@ -437,9 +437,11 @@ local function isPlayerAtCnn(source)
     if not ped or ped == 0 then return false end
     local pCoords = GetEntityCoords(ped)
     for _, loc in ipairs(Config.CNN.locations) do
-        local dist = #(pCoords - loc.coords)
-        if dist <= (loc.radius or 6.0) then
-        return true, loc.nameKey
+        local dist2d = #(vector2(pCoords.x, pCoords.y) - vector2(loc.coords.x, loc.coords.y))
+        local dz = math.abs(pCoords.z - loc.coords.z)
+        local allowedRadius = loc.radius or 25.0
+        if dist2d <= allowedRadius and dz <= 15.0 then
+            return true, loc.nameKey
         end
     end
     return false

@@ -1,10 +1,16 @@
 Config = Config or {}
 
 Config.CNN = {
-    -- Locations where players can post CNN advertisements
+    -- Locations where players can post CNN advertisements (4 canonical RPG stations)
     locations = {
-        -- Public pavement at the actual Weazel News building entrance.
-        { coords = vector3(-598.27, -929.87, 23.86), radius = 4.0, nameKey = 'cnn.location.weazel_hq' },
+        -- 1. Weazel News HQ (Little Seoul / Rockford)
+        { coords = vector3(-599.44, -929.74, 23.86), radius = 25.0, nameKey = 'cnn.location.weazel_hq' },
+        -- 2. CNN Los Santos Downtown (Legion Square / Pillbox)
+        { coords = vector3(-248.54, -912.44, 32.31), radius = 25.0, nameKey = 'cnn.location.ls_downtown' },
+        -- 3. CNN Sandy Shores (Algonquin Blvd)
+        { coords = vector3(1697.88, 3780.24, 34.70), radius = 25.0, nameKey = 'cnn.location.sandy_shores' },
+        -- 4. CNN Paleto Bay (Duluoz Ave)
+        { coords = vector3(-142.12, 6301.88, 31.55), radius = 25.0, nameKey = 'cnn.location.paleto_bay' },
     },
 
     -- Economic and timing parameters (SA:MP RPG standard)
