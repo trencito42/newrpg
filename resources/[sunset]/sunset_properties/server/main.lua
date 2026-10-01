@@ -99,17 +99,40 @@ local function fetchRentedIds(charId)
     return set
 end
 
-exports.sunset_core:RegisterCallback('sunset:getProperties', function(source)
-    local char = exports.sunset_core:GetCharacter(source)
-    if not char then return {} end
+-- ═══ SERVER-SIDE PROPERTY CACHE & VERSIONING ═══
+local ServerPropertyCache = nil
+local PropertyGeneration = 1
+local PropertyCacheDirty = true
+
+local function loadServerPropertyCache()
+    if not PropertyCacheDirty and ServerPropertyCache then
+        return ServerPropertyCache
+    end
     local rows = MySQL.query.await([[SELECT p.*,
       TRIM(CONCAT(COALESCE(c.firstname, ''), ' ', COALESCE(c.lastname, ''))) owner_name,
       (SELECT COUNT(*) FROM property_rentals r WHERE r.property_id=p.id AND r.active=1) renter_count
       FROM properties p LEFT JOIN characters c ON c.id=p.owner_character_id
       WHERE p.enabled=1 ORDER BY p.price,p.id]]) or {}
-    -- [AUDIT SQL-1] Pre-fetch all active rental IDs for this char in one query (was N+1).
+    ServerPropertyCache = rows
+    PropertyCacheDirty = false
+    return ServerPropertyCache
+end
+
+local function notifyPropertiesChanged()
+    PropertyCacheDirty = true
+    PropertyGeneration = PropertyGeneration + 1
+    TriggerClientEvent('sunset:client:propertiesChanged', -1, PropertyGeneration)
+end
+
+exports.sunset_core:RegisterCallback('sunset:getProperties', function(source)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return {} end
+    local raw = loadServerPropertyCache()
     local rentedIds = fetchRentedIds(char.id)
-    for i,row in ipairs(rows) do rows[i]=publicRow(row,char,rentedIds) end
+    local rows = {}
+    for i, row in ipairs(raw) do
+        rows[i] = publicRow(row, char, rentedIds)
+    end
     return rows
 end)
 
@@ -392,7 +415,7 @@ exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
     end
     exports.sunset_core:RefreshMoney(source)
     exports.sunset_core:SetHomeProperty(source, prop.id)
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.buy.success', { property = prop.label, price = price, rent = defaultRent })
 end)
 
@@ -444,7 +467,7 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
         local online = exports.sunset_core:GetCharacter(ownerSource)
         if online and tonumber(online.id) == ownerId then exports.sunset_core:RefreshMoney(ownerSource) break end
     end
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     -- [QUESTS] housing chain: first rental.
     TriggerEvent('sunset:quest:progress', char.id, 'property_rented', 1, { propertyId = prop.id })
     return true,t(source, 'property.rent.success', { property = prop.label, price = price })
@@ -457,7 +480,7 @@ exports.sunset_core:RegisterCallback('sunset:leaveRental', function(source)
     if not rent then return nil,t(source, 'property.rent.none') end
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id})
     if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.rent.ended')
 end)
 
@@ -522,7 +545,7 @@ local function toggleLock(source,id)
     if not prop then return nil,err end
     local locked=dbBool(prop.locked) and 0 or 1
     MySQL.update.await('UPDATE properties SET locked=? WHERE id=?',{locked,prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,locked==1 and t(source, 'property.locked.success') or t(source, 'property.unlocked.success')
 end
 
@@ -531,7 +554,7 @@ local function setRent(source,id,price)
     if not prop then return nil,err end
     if price == false or price == nil then
         MySQL.update.await('UPDATE properties SET rent_enabled=0 WHERE id=?',{prop.id})
-        TriggerClientEvent('sunset:client:propertiesChanged',-1)
+        notifyPropertiesChanged()
         return true,t(source, 'property.rent.disabled_success')
     end
     price=tonumber(price)
@@ -539,7 +562,7 @@ local function setRent(source,id,price)
         return nil,t(source, 'property.rent.range', { min = SunsetProperties.RentMin, max = SunsetProperties.RentMax })
     end
     MySQL.update.await('UPDATE properties SET rent_enabled=1,rent_price=? WHERE id=?',{math.floor(price),prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.rent.enabled', { price = price })
 end
 
@@ -557,7 +580,7 @@ local function setMaxRenters(source,id,count)
         return nil, t(source, 'property.rent.capacity_active', { count = activeRenters })
     end
     MySQL.update.await('UPDATE properties SET max_renters=? WHERE id=?',{math.floor(count),prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.rent.capacity_saved', { count = count })
 end
 
@@ -566,14 +589,14 @@ local function setDescription(source,id,text)
     if not prop then return nil,err end
     if text == false or text == nil or text == '' then
         MySQL.update.await('UPDATE properties SET description=NULL WHERE id=?',{prop.id})
-        TriggerClientEvent('sunset:client:propertiesChanged',-1)
+        notifyPropertiesChanged()
         return true,t(source, 'property.description.removed')
     end
     text=tostring(text):match('^%s*(.-)%s*$')
     if text == '' then return nil,t(source, 'property.description.empty') end
     if #text>160 then return nil,t(source, 'property.description.long') end
     MySQL.update.await('UPDATE properties SET description=? WHERE id=?',{text,prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.description.saved', { description = text })
 end
 
@@ -588,7 +611,7 @@ local function changeInterior(source,id,key)
         end
     end
     MySQL.update.await('UPDATE properties SET interior=?,interior_pos=? WHERE id=?',{key,encodePos(preset.coords,preset.coords.w),prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.interior.changed', { interior = preset.label })
 end
 
@@ -600,7 +623,7 @@ local function kickRenter(source,id,characterId)
     local changed=MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=? AND character_id=? AND active=1',{prop.id,characterId})
     if changed<1 then return nil,t(source, 'property.renter.not_active') end
     clearHome(characterId,prop.id,('The owner removed you from %s. Your job and faction were not changed.'):format(prop.label))
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.renter.removed', { id = characterId })
 end
 
@@ -641,7 +664,7 @@ local function transferPropertyOwnership(propertyId, fromCharId, toCharId, recip
             end
         end
     end
-    TriggerClientEvent('sunset:client:propertiesChanged', -1)
+    notifyPropertiesChanged()
     return true
 end
 exports('TransferPropertyOwnership', transferPropertyOwnership)
@@ -660,7 +683,7 @@ local function sellHouse(source,id,confirm)
     MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
     exports.sunset_core:SetHomeProperty(source,nil)
     exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     return true,t(source, 'property.sell.success', { refund = refund })
 end
 
@@ -716,7 +739,7 @@ exports.sunset_core:RegisterCallback('sunset:propertyAction', function(source,ac
         if not rent then return nil,t(source, 'property.rent.none') end
         MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id})
         if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
-        TriggerClientEvent('sunset:client:propertiesChanged',-1)
+        notifyPropertiesChanged()
         return true,t(source, 'property.rent.ended')
     end
     return nil,t(source, 'property.action.unknown')
@@ -770,7 +793,7 @@ registerPropertyCommand('acreatehouse',function(source,args)
     local pos, heading = GetEntityCoords(ped), GetEntityHeading(ped)
     local id = MySQL.insert.await([[INSERT INTO properties(label,price,interior,entry,interior_pos,exit_pos,minimum_level,for_sale,enabled)
       VALUES(?,?,?,?,?,?,?,1,1)]], {label, math.floor(price), interior, encodePos(pos, heading), encodePos(preset.coords, preset.coords.w), encodePos(pos, heading), math.floor(level)})
-    TriggerClientEvent('sunset:client:propertiesChanged', -1)
+    notifyPropertiesChanged()
     message(source, ('Casa #%d "%s" a fost creata: $%d, interior %s, level %d.'):format(id, label, price, interior, level), 'success')
 end)
 
@@ -810,7 +833,7 @@ registerPropertyCommand('hdescription',function(source,args)
     if text=='' then return message(source,'Usage: /hdescription [text], or /hdescription off to remove it. Maximum 160 characters.','error') end
     if text:lower()=='off' then text=nil elseif #text>160 then return message(source,'House description is too long. Maximum: 160 characters.','error') end
     MySQL.update.await('UPDATE properties SET description=? WHERE id=?',{text,prop.id})
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     message(source,text and ('House description updated: '..text) or 'House description removed.','success')
 end)
 
@@ -829,7 +852,7 @@ registerPropertyCommand('housekickrenter',function(source,args)
     local changed=MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=? AND character_id=? AND active=1',{prop.id,characterId})
     if changed<1 then return message(source,'That character is not an active renter in this house.','error') end
     clearHome(characterId,prop.id,('The owner removed you from %s. Your job and faction were not changed.'):format(prop.label))
-    TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,('Renter #%d was removed.'):format(characterId),'success')
+    notifyPropertiesChanged(); message(source,('Renter #%d was removed.'):format(characterId),'success')
 end)
 
 registerPropertyCommand('sellhouse',function(source,args)
@@ -842,7 +865,7 @@ registerPropertyCommand('sellhouse',function(source,args)
     MySQL.update.await('UPDATE characters SET home_property_id=NULL WHERE home_property_id=?',{prop.id})
     MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
     exports.sunset_core:SetHomeProperty(source,nil); exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
-    TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,('House sold. $%d was deposited in your bank.'):format(refund),'success')
+    notifyPropertiesChanged(); message(source,('House sold. $%d was deposited in your bank.'):format(refund),'success')
 end)
 
 registerPropertyCommand('ahouseedit',function(source,args)
@@ -854,7 +877,7 @@ registerPropertyCommand('ahouseedit',function(source,args)
     if value==nil or ((field~='name' and field~='description') and value<0) or (field=='name' and #value<3) or (field=='description' and #value>160) then return message(source,'Enter a valid value. Descriptions may contain up to 160 characters.','error') end
     local changed=MySQL.update.await(('UPDATE properties SET %s=? WHERE id=?'):format(fields[field]),{value,id})
     if changed<1 then return message(source,'House not found or value unchanged.','error') end
-    TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,('House #%d updated: %s = %s.'):format(id,field,tostring(value)),'success')
+    notifyPropertiesChanged(); message(source,('House #%d updated: %s = %s.'):format(id,field,tostring(value)),'success')
 end)
 
 registerPropertyCommand('aenablerent', function(source, args)
@@ -864,7 +887,7 @@ registerPropertyCommand('aenablerent', function(source, args)
         'UPDATE properties SET rent_enabled=1, rent_price=? WHERE owner_character_id IS NOT NULL AND rent_enabled=0',
         { price }
     )
-    TriggerClientEvent('sunset:client:propertiesChanged',-1)
+    notifyPropertiesChanged()
     message(source, ('Rent enabled on %d owned houses at $%d per payday.'):format(tonumber(changed) or 0, price), 'success')
 end, false)
 
@@ -873,7 +896,7 @@ registerPropertyCommand('unrent',function(source)
     local char=exports.sunset_core:GetCharacter(source); if not char then return end; local rent=activeRental(char.id)
     if not rent then return message(source,'You do not currently rent a house.','error') end
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE id=?',{rent.id}); if tonumber(char.home_property_id)==tonumber(rent.property_id) then exports.sunset_core:SetHomeProperty(source,nil) end
-    TriggerClientEvent('sunset:client:propertiesChanged',-1); message(source,'Rental ended. Your civilian job and faction are unchanged.','success')
+    notifyPropertiesChanged(); message(source,'Rental ended. Your civilian job and faction are unchanged.','success')
 end)
 
 function ProcessRentPayday(source)

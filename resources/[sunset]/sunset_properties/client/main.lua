@@ -31,7 +31,11 @@ local function refreshSoon()
     if refreshPending then return end
     refreshPending = true
     CreateThread(function()
-        Wait(400)
+        if propertiesPanelOpen then
+            Wait(250)
+        else
+            Wait(2000 + math.random(500, 3000))
+        end
         refreshProperties()
         refreshPending = false
     end)
