@@ -42,7 +42,7 @@ html, body {
     transition: opacity 300ms ease;
 }
 .loadscreen.is-handoff .bg-container {
-    animation: none; /* stop slowPan immediately */
+    animation: none;
 }
 
 .bg-container {

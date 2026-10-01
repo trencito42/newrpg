@@ -44,8 +44,8 @@ const BOOT_T0 = Date.now();
 let bootAttemptId = 'BOOT';
 
 // [NUI PERF] Per-file / per-init trace lines fire thousands of times during load
-// and each console.log is an IPC hop to the game. Keep them off unless
-// localStorage.sunset_boot_verbose === '1'. Stalls and the load summary still print.
+// and each console.log is an IPC hop to the game. Keep all boot diagnostics off
+// unless localStorage.sunset_boot_verbose === '1'.
 const BTRACE_NOISY = new Set(['data_file', 'init_start', 'init_end', 'init_group_start', 'init_group_end',
     'init_order_start', 'map_load_step', 'load_progress', 'log_line', 'data_batch_start', 'data_batch_end']);
 let BOOT_VERBOSE = false;
