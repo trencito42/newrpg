@@ -128,42 +128,26 @@ local function completeAuthentication(username, quickToken, rememberQuickLogin)
     authenticatedUsername = username
     setBootState('CHARACTER_LOADING', 'authentication complete')
     LocalPlayer.state:set('sunsetAuthenticated', true, true)
-    print(('^2[LOGIN-FLOW] 01 AUTH: authentication complete | user=%s quickToken=%s^7'):format(
+    local tAuth01 = GetGameTimer()
+    print(('^2[LOGIN-PERF] AUTH_SUCCESS | user=%s quickToken=%s^7'):format(
         tostring(username), tostring(quickToken ~= nil)))
 
-    -- Even a very fast saved-token response must present at least one stable
-    -- auth frame before transition ownership changes.
-    if GetResourceState('sunset_auth_ui') == 'started' then
-        local visibleDeadline = GetGameTimer() + 1500
-        while GetGameTimer() < visibleDeadline do
-            local ok, visible = pcall(function() return exports.sunset_auth_ui:IsVisibleRendered() end)
-            if ok and visible then break end
-            Wait(0)
-        end
-    end
+    -- Asynchronous UI transitions (non-blocking)
     authUiSend('authSuccess', { text = tr('auth.loading_character') })
-    -- Paint the permanent shell transition before the auth surface is removed.
     if GetResourceState('sunset_ui') == 'started' then
         pcall(function() exports.sunset_ui:ShowTransition(tr('auth.loading_character')) end)
-        local deadline = GetGameTimer() + 2500
-        while GetGameTimer() < deadline do
-            local ok, visible = pcall(function() return exports.sunset_ui:IsTransitionVisible() end)
-            if ok and visible then break end
-            Wait(0)
-        end
+        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
     end
-    -- Transition ownership is established; auth can now disappear safely.
     if GetResourceState('sunset_auth_ui') == 'started' then
         pcall(function() exports.sunset_auth_ui:Hide() end)
         pcall(function() exports.sunset_auth_ui:SetFocus(false, false) end)
     end
-    if GetResourceState('sunset_ui') == 'started' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
-    end
+
     if isEnabled(rememberQuickLogin) and not saved then
         uiNotify(tr('auth.quick_save_failed'), 'warning', 7000)
     end
-    print('^2[LOGIN-FLOW] 02 AUTH: authenticationComplete event emitted^7')
+
+    print(('^2[LOGIN-PERF] AUTH_EVENT_EMITTED +%dms^7'):format(GetGameTimer() - tAuth01))
     TriggerEvent('sunset:client:authenticationComplete')
 end
 

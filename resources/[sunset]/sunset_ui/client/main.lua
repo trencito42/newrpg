@@ -353,13 +353,20 @@ RegisterNUICallback('transitionRendered', function(_, cb)
 end)
 
 RegisterNUICallback('uiStageReady', function(data, cb)
-    NuiDebugRecordCallback('uiStageReady:' .. tostring(data and data.stage or 'unknown'))
+    local stage = tostring(data and data.stage or 'unknown')
+    NuiDebugRecordCallback('uiStageReady:' .. stage)
+    if stage == 'hud' then
+        print('^2[LOGIN-PERF] HUD_READY (initialized asynchronously after world reveal)^7')
+    elseif stage == 'chat' then
+        print('^2[LOGIN-PERF] CHAT_READY (initialized asynchronously after world reveal)^7')
+    end
     cb('ok')
 end)
 
 RegisterNUICallback('gameplayVisible', function(_, cb)
     transitionVisible = false
     NuiDebugRecordCallback('gameplayVisible')
+    print('^2[LOGIN-PERF] GAMEPLAY_VISIBLE (NUI transition hidden, world fully visible)^7')
     TriggerEvent('sunset:client:gameplayVisible')
     cb('ok')
 end)

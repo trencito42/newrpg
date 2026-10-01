@@ -10,16 +10,22 @@ local function nextRequestId()
     return ResourceRequestBase + RequestId
 end
 
-function TriggerCallback(name, cb, ...)
+function TriggerCallbackTimeout(name, timeoutMs, cb, ...)
     local id = nextRequestId()
     PendingCallbacks[id] = cb
     TriggerServerEvent('sunset:server:triggerCallback', name, id, ...)
-    SetTimeout(15000, function()
+    local timeout = tonumber(timeoutMs) or 15000
+    SetTimeout(timeout, function()
         local pending = PendingCallbacks[id]
         if not pending then return end
         PendingCallbacks[id] = nil
-        pending(nil, ('%s timed out after 15 seconds. Reopen the screen and try again.'):format(name))
+        pending(nil, ('%s timed out after %d ms'):format(name, timeout))
     end)
+end
+exports('TriggerCallbackTimeout', TriggerCallbackTimeout)
+
+function TriggerCallback(name, cb, ...)
+    TriggerCallbackTimeout(name, 15000, cb, ...)
 end
 exports('TriggerCallback', TriggerCallback)
 
@@ -35,12 +41,16 @@ RegisterNetEvent('sunset:client:callbackResponse', function(requestId, result, e
     end
 end)
 
--- Promise-style for internal use — always returns result, err (never throws)
-function Sunset.AwaitCallback(name, ...)
+-- Promise-style for internal use with custom timeout — always returns result, err (never throws)
+function Sunset.AwaitCallbackTimeout(name, timeoutMs, ...)
     local p = promise.new()
-    TriggerCallback(name, function(result, err)
+    TriggerCallbackTimeout(name, timeoutMs, function(result, err)
         p:resolve({ result = result, err = err })
     end, ...)
     local packed = Citizen.Await(p)
     return packed.result, packed.err
+end
+
+function Sunset.AwaitCallback(name, ...)
+    return Sunset.AwaitCallbackTimeout(name, 15000, ...)
 end

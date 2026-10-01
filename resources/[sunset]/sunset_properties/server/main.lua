@@ -295,15 +295,13 @@ end)
 --   2. home property (owned/rented)
 --   3. faction HQ
 --   4. default spawn
--- Never resolves to the last position (removed from the game).
-exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
+function ResolveAutoSpawn(source)
     local tStart = GetGameTimer()
     local char = exports.sunset_core:GetCharacter(source)
     local defaultPos = Sunset.Config.DefaultSpawn or { x = -1037.6, y = -2737.8, z = 13.8, w = 330.0 }
     local defaultResult = { x = defaultPos.x, y = defaultPos.y, z = defaultPos.z, w = defaultPos.w or 0.0, source = 'default' }
 
     if not char then
-        print(('^3[LOGIN-FLOW] 11-SRV RESOLVEAUTOSPAWN: no character for src=%s -> returning default^7'):format(tostring(source)))
         return defaultResult
     end
 
@@ -317,45 +315,42 @@ exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
         end
 
         local metadata = type(char.metadata) == 'table' and char.metadata or {}
-        local why = {}
 
         -- 1. explicit saved preference
         if metadata.spawn_choice and metadata.spawn_choice ~= 'last' then
-            local okChoice, resolved, rerr = pcall(resolveSpawnChoiceForChar, source, char, metadata.spawn_choice, metadata.spawn_property_id)
+            local okChoice, resolved = pcall(resolveSpawnChoiceForChar, source, char, metadata.spawn_choice, metadata.spawn_property_id)
             if okChoice and resolved and resolved.x then
                 resolved.source = 'saved_' .. metadata.spawn_choice
                 return resolved
             end
-            why[#why + 1] = ('saved_%s:%s'):format(tostring(metadata.spawn_choice), okChoice and tostring(rerr or 'unresolved') or ('error ' .. tostring(resolved)))
         end
 
         -- 2. home property (owned or rented)
         if char.home_property_id then
-            local okHome, resolved, rerr = pcall(resolveSpawnChoiceForChar, source, char, 'house', char.home_property_id)
+            local okHome, resolved = pcall(resolveSpawnChoiceForChar, source, char, 'house', char.home_property_id)
             if okHome and resolved and resolved.x then
                 resolved.source = 'house'
                 return resolved
             end
-            why[#why + 1] = ('house#%s:%s'):format(tostring(char.home_property_id), okHome and tostring(rerr or 'unresolved') or ('error ' .. tostring(resolved)))
         end
 
         -- 3. faction HQ
-        local okHq, hq, hqErr = pcall(resolveSpawnChoiceForChar, source, char, 'hq')
+        local okHq, hq = pcall(resolveSpawnChoiceForChar, source, char, 'hq')
         if okHq and hq and hq.x then
             hq.source = 'hq'
             return hq
-        end
-        if metadata.faction then
-            why[#why + 1] = ('hq:%s'):format(okHq and tostring(hqErr or 'unresolved') or ('error ' .. tostring(hq)))
         end
 
         return defaultResult
     end)
 
     local finalSpawn = (ok and res and res.x) and res or defaultResult
-    print(('^2[LOGIN-FLOW] 11-SRV RESOLVEAUTOSPAWN: result src=%s charId=%s source=%s coords=(%.2f,%.2f,%.2f) elapsed=%dms^7'):format(
-        tostring(source), tostring(char.id), tostring(finalSpawn.source), finalSpawn.x, finalSpawn.y, finalSpawn.z, GetGameTimer() - tStart))
     return finalSpawn
+end
+exports('ResolveAutoSpawn', ResolveAutoSpawn)
+
+exports.sunset_core:RegisterCallback('sunset:resolveAutoSpawn', function(source)
+    return ResolveAutoSpawn(source)
 end)
 
 local function charge(source, amount, reason)

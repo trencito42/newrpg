@@ -902,12 +902,26 @@ RegisterCallback('sunset:enterGame', function(source)
         return nil, Sunset.LocalizedError('auth.not_logged_in')
     end
 
+    local function getResolvedSpawn()
+        local spawn = nil
+        if GetResourceState('sunset_properties') == 'started' then
+            local okS, resS = pcall(function() return exports.sunset_properties:ResolveAutoSpawn(source) end)
+            if okS and resS and resS.x then spawn = resS end
+        end
+        if not spawn then
+            local def = Sunset.Config.DefaultSpawn or { x = -1037.6, y = -2737.8, z = 13.8, w = 330.0 }
+            spawn = { x = def.x, y = def.y, z = def.z, w = def.w or 0.0, source = 'default' }
+        end
+        return spawn
+    end
+
     -- [LOGIN PIPELINE] Idempotent: a retried enterGame (lost response / duplicate
     -- trigger) must hand back the already-loaded character instead of failing.
     if player.character and player.character.id then
-        print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: returning already loaded charId=%s | src=%s elapsed=%dms^7'):format(
-            tostring(player.character.id), tostring(source), GetGameTimer() - tEnterGame))
-        return { character = player.character }
+        local spawn = getResolvedSpawn()
+        print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: returning already loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
+            tostring(player.character.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
+        return { character = player.character, spawn = spawn }
     end
 
     local row = MySQL.single.await(
@@ -918,14 +932,11 @@ RegisterCallback('sunset:enterGame', function(source)
     if row then
         local char = loadCharacterForPlayer(source, player, row.id)
         if char then
-            print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: successfully loaded charId=%s | src=%s elapsed=%dms^7'):format(
-                tostring(char.id), tostring(source), GetGameTimer() - tEnterGame))
-            return { character = char }
+            local spawn = getResolvedSpawn()
+            print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: successfully loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
+                tostring(char.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
+            return { character = char, spawn = spawn }
         end
-        -- [LOGIN PIPELINE] A character row exists but could not be loaded (already
-        -- loaded for this source, active on another source, or DB miss). NEVER fall
-        -- through to creating a new character; that produced phantom characters /
-        -- confusing 'character limit' errors on retries.
         Sunset.Warn(('enterGame: character %s could not be loaded for src %s (already loaded / duplicate / missing)'):format(tostring(row.id), tostring(source)))
         return nil, Sunset.LocalizedError('auth.session_not_ready')
     end
@@ -934,9 +945,10 @@ RegisterCallback('sunset:enterGame', function(source)
     if not char then return nil, err or Sunset.LocalizedError('character.create_failed') end
 
     char = loadCharacterForPlayer(source, player, char.id)
-    print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: created & loaded charId=%s | src=%s elapsed=%dms^7'):format(
-        tostring(char and char.id), tostring(source), GetGameTimer() - tEnterGame))
-    return { character = char }
+    local spawn = getResolvedSpawn()
+    print(('^2[LOGIN-FLOW] 07-SRV ENTERGAME: created & loaded charId=%s spawn=%s | src=%s elapsed=%dms^7'):format(
+        tostring(char and char.id), tostring(spawn.source), tostring(source), GetGameTimer() - tEnterGame))
+    return { character = char, spawn = spawn }
 end)
 
 RegisterCallback('sunset:deleteCharacter', function(source, charId)

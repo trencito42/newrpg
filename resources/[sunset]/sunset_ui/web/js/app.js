@@ -342,11 +342,11 @@
         clothingHide: 'wardrobe', weaponAmmoUpdate: 'inventory', emoteWheelShow: 'inventory', emoteWheelHide: 'inventory', emoteWheelRelease: 'inventory', emoteWheelSelect: 'inventory',
         phoneCaptureAvatar: 'phone', taxiUpdate: 'phone', taxiEstimate: 'phone', taxiPickResult: 'phone',
         dealershipUpdate: 'dealership', appearanceUpdate: 'studio', appearanceSaving: 'studio', appearanceSaveFailed: 'studio',
-        fishingShow: 'hud_core', fishingUpdate: 'hud_core', fishingHide: 'hud_core',
+        fishingShow: 'fishing', fishingUpdate: 'fishing', fishingHide: 'fishing',
         policeOrderShow: 'hud_core', policeOrderHide: 'hud_core', announcementShow: 'hud_core', announcementHide: 'hud_core',
         taxiMeterShow: 'hud_core', taxiMeterUpdate: 'hud_core', taxiMeterHide: 'hud_core',
         jobObjectiveShow: 'hud_core', jobObjectiveUpdate: 'hud_core', jobObjectiveHide: 'hud_core',
-        fuelPumpShow: 'hud_core', fuelPumpUpdate: 'hud_core', fuelPumpHide: 'hud_core', worldTooltipsSync: 'hud_core',
+        fuelPumpShow: 'fuel', fuelPumpUpdate: 'fuel', fuelPumpHide: 'fuel', worldTooltipsSync: 'world_tooltip',
         licenseTestUpdate: 'licenses', jobShiftShow: 'job_hud', jobShiftHide: 'job_hud', jobHud: 'job_hud', jobHudResult: 'job_hud', jobHudClear: 'job_hud', jobSkillShow: 'jobcenter', jobSkillHide: 'jobcenter',
         courierUpdate: 'courier',
         casinoBlackjackUpdate: 'casino', casinoSlotsResult: 'casino', casinoRouletteResult: 'casino', casinoWheelResult: 'casino', casinoCashierUpdate: 'casino', casinoBarUpdate: 'casino',
@@ -562,9 +562,9 @@
             }
         },
 
-        async onEnterGameplay() {
+        onEnterGameplay() {
             this.isGameplayReady = true;
-            // Cleanly hide any remaining entry/loading/character screens
+            // 1. Cleanly hide any remaining entry/loading/character screens immediately
             const appEl = document.getElementById('app');
             if (appEl) {
                 appEl.classList.remove('visible');
@@ -573,25 +573,42 @@
             }
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
 
-            // Stage the essential modules; never parse HUD and chat in one frame.
-            if (window.ModuleLoader) {
+            // 2. Hide transition overlay IMMEDIATELY so the world is visible without delay!
+            this.setTransition(false);
+
+            // 3. Post gameplayVisible to Lua immediately
+            post('gameplayVisible', { now: Date.now() });
+
+            // 4. Load gameplay UI asynchronously in the background (fail open!)
+            this.loadEssentialGameplayUi();
+        },
+
+        async loadEssentialGameplayUi() {
+            if (!window.ModuleLoader) return;
+            try {
                 await ModuleLoader.ensure('hud_core');
                 document.getElementById('hud')?.classList.remove('hidden');
                 window.Hud?.init?.();
                 post('uiStageReady', { stage: 'hud', now: Date.now() });
-                await this.nextFrame();
+            } catch (err) {
+                console.warn('[UI] HUD load error (fail open):', err);
+            }
+
+            try {
                 await this.idle();
                 await ModuleLoader.ensure('chat');
                 post('uiStageReady', { stage: 'chat', now: Date.now() });
-                await this.nextFrame();
+            } catch (err) {
+                console.warn('[UI] Chat load error (fail open):', err);
             }
-            this.setTransition(false);
-            post('gameplayVisible', { now: Date.now() });
-            if (window.ModuleLoader) {
+
+            try {
                 await this.idle();
                 ModuleLoader.ensure('radar');
                 await this.nextFrame();
                 ModuleLoader.ensure('damage_indicators');
+            } catch (err) {
+                console.warn('[UI] Secondary modules load error (fail open):', err);
             }
         },
 
@@ -1065,8 +1082,12 @@
                 App.dispatchDirect(data);
             } else {
                 ModuleLoader.queue(targetModule, data);
-                const loaded = await ModuleLoader.ensure(targetModule);
-                if (!loaded) post('uiModuleFailed', { module: targetModule, action });
+                // Gated: do NOT mount non-login modules before gameplay is ready
+                if (App.isGameplayReady || targetModule === 'characters') {
+                    ModuleLoader.ensure(targetModule).then((loaded) => {
+                        if (!loaded) post('uiModuleFailed', { module: targetModule, action });
+                    });
+                }
             }
         } else {
             App.dispatchDirect(data);

@@ -7,7 +7,7 @@
 (function () {
     'use strict';
 
-    const MODULE_VERSION = '8';
+    const MODULE_VERSION = '9';
     const versioned = (url) => `${url}${url.includes('?') ? '&' : '?'}v=${MODULE_VERSION}`;
 
     const MODULE_REGISTRY = {
@@ -18,8 +18,19 @@
         },
         hud_core: {
             html: 'modules/hud/index.html',
-            css: ['css/hud.css', 'css/premium-hud.css', 'css/premium-wanted.css', 'css/gameplay_glass.css', 'css/world-tooltip.css', 'css/fuel_pump.css', 'css/fuel-pump-forza.css', 'css/fishing.css', 'css/fishing-tournament.css'],
-            js: ['js/forza_speedometer.js', 'js/hud.js', 'js/hud_editor.js', 'js/overlays.js', 'js/player_identity.js', 'js/world-tooltip.js', 'js/fuel_pump.js', 'js/job_icons.js', 'js/fishing.js', 'js/fishing_tournament.js']
+            css: ['css/hud.css', 'css/premium-hud.css', 'css/premium-wanted.css', 'css/gameplay_glass.css'],
+            js: ['js/forza_speedometer.js', 'js/hud.js', 'js/overlays.js', 'js/player_identity.js', 'js/job_icons.js']
+        },
+        hud_editor: {
+            js: ['js/hud_editor.js']
+        },
+        world_tooltip: {
+            css: ['css/world-tooltip.css'],
+            js: ['js/world-tooltip.js']
+        },
+        fuel: {
+            css: ['css/fuel_pump.css', 'css/fuel-pump-forza.css'],
+            js: ['js/fuel_pump.js']
         },
         radar: {
             css: ['css/radar.css'],
@@ -107,8 +118,8 @@
         },
         fishing: {
             html: 'modules/fishing/index.html',
-            css: ['css/fishing.css'],
-            js: ['js/fishing.js']
+            css: ['css/fishing.css', 'css/fishing-tournament.css'],
+            js: ['js/fishing.js', 'js/fishing_tournament.js']
         },
         jobcenter: {
             html: 'modules/jobcenter/index.html',
@@ -196,7 +207,7 @@
         panels: {
             html: 'modules/panels/index.html',
             css: ['css/panels.css', 'css/org-panels.css', 'css/gameplay_glass.css'],
-            js: ['js/panels.js', 'js/overlays.js', 'js/player_identity.js', 'js/world-tooltip.js', 'js/fuel_pump.js']
+            js: ['js/panels.js', 'js/overlays.js', 'js/player_identity.js']
         },
         turf_map: {
             html: 'modules/turf_map/index.html',
@@ -211,35 +222,51 @@
     const activeLoadingPromises = new Map();
     const pendingModuleQueues = new Map();
 
-    function loadStylesheet(href) {
+    function loadStylesheet(href, timeoutMs = 2000) {
         if (loadedStylesheets.has(href)) {
             return Promise.resolve();
         }
 
-        // Check if already in DOM
         const existing = document.querySelector(`link[href*="${href}"]`);
         if (existing) {
             loadedStylesheets.add(href);
             return Promise.resolve();
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = versioned(href);
+
+            let timer = null;
+            const cleanup = () => {
+                if (timer) clearTimeout(timer);
+                link.onload = null;
+                link.onerror = null;
+            };
+
+            timer = setTimeout(() => {
+                cleanup();
+                console.warn(`[ModuleLoader] Stylesheet load timed out (${timeoutMs}ms): ${href}`);
+                resolve(); // Fail open for CSS: never block gameplay
+            }, timeoutMs);
+
             link.onload = () => {
+                cleanup();
                 loadedStylesheets.add(href);
                 resolve();
             };
             link.onerror = () => {
+                cleanup();
+                console.warn(`[ModuleLoader] Stylesheet failed to load: ${href}`);
                 link.remove();
-                reject(new Error(`Failed to load stylesheet ${href}`));
+                resolve(); // Fail open
             };
             document.head.appendChild(link);
         });
     }
 
-    function loadScript(src) {
+    function loadScript(src, timeoutMs = 2000) {
         if (loadedScripts.has(src)) {
             return Promise.resolve();
         }
@@ -254,11 +281,29 @@
             const script = document.createElement('script');
             script.src = versioned(src);
             script.async = false;
+
+            let timer = null;
+            const cleanup = () => {
+                if (timer) clearTimeout(timer);
+                script.onload = null;
+                script.onerror = null;
+            };
+
+            timer = setTimeout(() => {
+                cleanup();
+                script.remove();
+                console.warn(`[ModuleLoader] Script load timed out (${timeoutMs}ms): ${src}`);
+                reject(new Error(`Timeout loading script ${src}`));
+            }, timeoutMs);
+
             script.onload = () => {
+                cleanup();
                 loadedScripts.add(src);
                 resolve();
             };
             script.onerror = (err) => {
+                cleanup();
+                script.remove();
                 console.error(`[ModuleLoader] Failed to load script: ${src}`, err);
                 reject(new Error(`Failed to load script ${src}`));
             };
@@ -268,7 +313,21 @@
 
     async function loadScriptsSequential(scripts) {
         for (const src of scripts) {
-            await loadScript(src);
+            await loadScript(src, 2000);
+        }
+    }
+
+    async function fetchHtmlWithTimeout(url, timeoutMs = 2000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(versioned(url), { signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
+            return await res.text();
+        } catch (err) {
+            clearTimeout(timer);
+            throw err;
         }
     }
 
@@ -286,17 +345,15 @@
         const t0 = performance.now();
         const promise = (async () => {
             try {
-                // 1. Load all CSS first (Guarantees NO FOUC!)
+                // 1. Load CSS bounded (2000ms max per stylesheet)
                 if (Array.isArray(def.css) && def.css.length > 0) {
-                    await Promise.all(def.css.map(loadStylesheet));
+                    await Promise.all(def.css.map((c) => loadStylesheet(c, 2000)));
                 }
 
-                // 2. Fetch and insert HTML fragment
+                // 2. Fetch and insert HTML fragment bounded
                 let mountedWrapper = null;
                 if (def.html) {
-                    const res = await fetch(versioned(def.html));
-                    if (!res.ok) throw new Error(`Failed to fetch ${def.html} (${res.status})`);
-                    const htmlText = await res.text();
+                    const htmlText = await fetchHtmlWithTimeout(def.html, 2000);
                     const root = document.getElementById('ui-root');
                     if (!root) throw new Error('UI mount root is missing');
                     if (!htmlText.trim()) throw new Error(`Empty HTML fragment ${def.html}`);
@@ -308,13 +365,12 @@
                     window.I18n?.translateTree?.(mountedWrapper);
                 }
 
-                // 3. Load JS scripts sequentially
+                // 3. Load JS scripts sequentially bounded
                 if (Array.isArray(def.js) && def.js.length > 0) {
                     await loadScriptsSequential(def.js);
                 }
 
-                // Dynamic scripts are loaded after DOMContentLoaded. Explicit
-                // lifecycle hooks replace listeners that can no longer fire.
+                // Explicit lifecycle hooks
                 if (name === 'chat') window.ChatSettings?.init?.();
                 if (name === 'hud_core') window.Hud?.init?.();
                 if (name === 'mdc') window.MdcTablet?.init?.();
@@ -344,9 +400,6 @@
                 console.error(`[ModuleLoader] Error mounting module [${name}]:`, err);
                 document.getElementById(`module-${name}`)?.remove();
                 pendingModuleQueues.delete(name);
-                if (window.App && typeof window.App.notify === 'function') {
-                    window.App.notify(window.I18n?.t('common.interface_failed') || 'Interface unavailable.', 'error');
-                }
                 return false;
             } finally {
                 activeLoadingPromises.delete(name);
@@ -361,7 +414,19 @@
         if (!pendingModuleQueues.has(moduleName)) {
             pendingModuleQueues.set(moduleName, []);
         }
-        pendingModuleQueues.get(moduleName).push(data);
+        const q = pendingModuleQueues.get(moduleName);
+        // Retain only latest snapshot for state updates to prevent unbounded memory growth
+        const action = data && data.action;
+        if (action === 'updateHud' || action === 'updateVehicleGauges' || action === 'radarUpdate' || action === 'chatSuggestions') {
+            const idx = q.findIndex(m => m.action === action);
+            if (idx !== -1) {
+                q[idx] = data;
+                return;
+            }
+        }
+        if (q.length < 20) {
+            q.push(data);
+        }
     }
 
     function isModuleLoaded(name) {
