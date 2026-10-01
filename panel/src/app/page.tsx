@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/Badge";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { PollCountdown } from "@/components/polls/PollCountdown";
+import { panelBrand } from "@/lib/brand";
 
 interface PollRow extends RowDataPacket {
   id: number;
@@ -111,26 +112,26 @@ export default async function HomePage() {
             {t(locale, "home.badge")}
           </Badge>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-            {t(locale, "home.title")}
+            {t(locale, "home.title", { serverName: panelBrand.name })}
           </h1>
           <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
             {t(locale, "home.subtitle")}
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
-            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-50 border border-surface-border text-xs font-mono text-gray-300">
+            {panelBrand.connectAddress && <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-50 border border-surface-border text-xs font-mono text-gray-300">
               <Radio className="w-3.5 h-3.5 text-brand animate-pulse" />
-              <span>{process.env.NEXT_PUBLIC_SERVER_IP || "play.blipmade.com:30120"}</span>
-            </div>
-            <a
-              href={process.env.NEXT_PUBLIC_DISCORD_URL || "https://discord.gg/sunset"}
+              <span>{panelBrand.connectAddress}</span>
+            </div>}
+            {panelBrand.discordUrl && <a
+              href={panelBrand.discordUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-border hover:bg-surface-borderLight text-xs font-medium text-gray-200 transition-colors"
             >
               <span>{t(locale, "home.join_discord")}</span>
               <ExternalLink className="w-3 h-3 text-gray-400" />
-            </a>
+            </a>}
           </div>
         </div>
       </div>

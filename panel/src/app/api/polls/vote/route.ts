@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle, dbTransaction } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import { isSameOriginWrite } from "@/lib/request-security";
 
 const voteSchema = z.object({
   pollId: z.number().int().positive(),
@@ -24,6 +25,7 @@ interface CharCheckRow extends RowDataPacket {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   const session = await getCurrentSession();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -85,7 +87,15 @@ export async function POST(req: NextRequest) {
 
     // Transactional vote submission enforcing DB-level UNIQUE(poll_id, account_id)
     await dbTransaction(async (conn) => {
-      // 1. Insert vote record
+      // A client-supplied option must belong to this poll, even under concurrent votes.
+      const [optionRows] = await conn.query<RowDataPacket[]>(
+        "SELECT id FROM panel_poll_options WHERE id = ? AND poll_id = ? LIMIT 1",
+        [optionId, pollId]
+      );
+      if (optionRows.length !== 1) {
+        throw new InvalidPollOptionError();
+      }
+
       await conn.execute(
         `INSERT INTO panel_poll_votes (poll_id, option_id, account_id, character_id)
          VALUES (?, ?, ?, ?)`,
@@ -94,13 +104,16 @@ export async function POST(req: NextRequest) {
 
       // 2. Increment votes_count atomically
       await conn.execute(
-        `UPDATE panel_poll_options SET votes_count = votes_count + 1 WHERE id = ?`,
-        [optionId]
+        `UPDATE panel_poll_options SET votes_count = votes_count + 1 WHERE id = ? AND poll_id = ?`,
+        [optionId, pollId]
       );
     });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
+    if (err instanceof InvalidPollOptionError) {
+      return NextResponse.json({ error: "invalid_option" }, { status: 400 });
+    }
     if (err.code === "ER_DUP_ENTRY") {
       return NextResponse.json(
         { error: "already_voted", message: "You have already cast a vote in this poll." },
@@ -110,3 +123,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }
+
+class InvalidPollOptionError extends Error {}

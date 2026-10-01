@@ -1,6 +1,6 @@
 {
   "common": {
-    "server_name": "Sunset RPG",
+    "server_name": "{serverName}",
     "online": "Online",
     "offline": "Offline",
     "players": "Jucători",
@@ -70,7 +70,7 @@
   },
   "home": {
     "badge": "Panel Oficial Web",
-    "title": "Bun venit pe Sunset RPG",
+    "title": "Bun venit pe {serverName}",
     "subtitle": "Ecosistem RPG autentic pe FiveM inspirat din clasicele SA:MP, cu economie stabilă, războaie de teritorii și cariere diverse.",
     "players_online": "Jucători Conectați",
     "registered_accounts": "Conturi Înregistrate",
@@ -95,16 +95,6 @@
     "logging_in": "Se verifică datele...",
     "invalid_credentials": "Numele de utilizator sau parola introduse sunt incorecte.",
     "too_many_attempts": "Prea multe încercări eșuate. Te rugăm să aștepți {seconds} secunde.",
-    "quick_login_tab": "Autentificare cu Parolă",
-    "link_code_tab": "Conectare cu PIN din Joc",
-    "pin_title": "Cod PIN Unic din Joc",
-    "pin_desc": "Scrie comanda /webpin în chat-ul serverului FiveM pentru a primi un cod din 6 cifre.",
-    "pin_code": "Cod din 6 Cifre",
-    "pin_placeholder": "ex: 849201",
-    "redeem_pin": "Validează & Intră",
-    "redeeming_pin": "Se verifică codul...",
-    "pin_invalid": "Codul PIN este invalid sau a expirat.",
-    "legacy_notice": "Conturile vechi trebuie să se conecteze o dată în joc sau să genereze un /webpin pentru a-și actualiza securitatea parolei.",
     "not_registered": "Nu ai încă un cont?",
     "register_guide": "Conectează-te direct pe serverul FiveM pentru a-ți înregistra contul.",
     "logged_out": "Ai fost deconectat cu succes."
@@ -198,7 +188,7 @@
   },
   "support": {
     "title": "Centru de Asistență (Helpdesk)",
-    "subtitle": "Comunicare directă cu echipa administrativă Sunset RPG.",
+    "subtitle": "Comunicare directă cu echipa administrativă {serverName}.",
     "create_ticket": "Deschide Tichet Nou",
     "department": "Departament",
     "subject": "Subiect",

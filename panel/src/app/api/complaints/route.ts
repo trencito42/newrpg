@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { queryOne, execute } from "@/lib/db";
 import { z } from "zod";
+import { isSameOriginWrite } from "@/lib/request-security";
 
 const complaintSchema = z.object({
   accusedName: z.string().trim().min(2).max(64),
@@ -19,6 +20,7 @@ const complaintSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   try {
     const user = await getCurrentUser();
     if (!user) {

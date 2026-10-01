@@ -2,8 +2,8 @@ fx_version 'cerulean'
 game 'gta5'
 
 name 'sunset_panel_bridge'
-author 'Sunset RPG Team'
-description 'Companion FiveM bridge for official Sunset RPG web panel: authentication PINs, linking tokens, and live status'
+author 'RPG Server Team'
+description 'Database-backed runtime snapshot for the companion panel'
 version '1.0.0'
 
 server_scripts {

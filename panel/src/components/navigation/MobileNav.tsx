@@ -31,6 +31,7 @@ import {
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
 import { LanguageToggle } from "./LanguageToggle";
+import { panelBrand } from "@/lib/brand";
 
 interface MobileNavProps {
   locale: Locale;
@@ -105,10 +106,10 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           </button>
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-7 h-7 rounded-md bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-black text-sm">
-              S
+              {panelBrand.name.charAt(0).toUpperCase()}
             </div>
             <span className="font-extrabold text-white text-sm tracking-wider">
-              SUNSET RPG
+              {panelBrand.name}
             </span>
           </Link>
         </div>
@@ -148,7 +149,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                 <div className="w-6 h-6 rounded bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-black text-xs">
                   S
                 </div>
-                <span className="font-bold text-white text-sm">SUNSET RPG</span>
+                <span className="font-bold text-white text-sm">{panelBrand.name}</span>
               </div>
               <button
                 onClick={() => setOpen(false)}

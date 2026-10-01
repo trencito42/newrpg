@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { switchSelectedCharacter } from "@/lib/auth";
+import { isSameOriginWrite } from "@/lib/request-security";
 
 const switchSchema = z.object({
   characterId: z.number().int().positive(),
 });
 
 export async function POST(req: NextRequest) {
+  if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   try {
     const body = await req.json();
     const parsed = switchSchema.safeParse(body);

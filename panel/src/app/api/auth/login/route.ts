@@ -1,101 +1,99 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isIP } from "node:net";
 import { z } from "zod";
 import { dbQuerySingle } from "@/lib/db";
 import { verifyScryptPassword, isModernScrypt } from "@/lib/crypto";
 import { createSession } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
-
-// In-memory rate limiting map for login brute-force protection
-const failedLogins = new Map<string, { count: number; lockedUntil: number }>();
+import { isSameOriginWrite } from "@/lib/request-security";
 
 const loginSchema = z.object({
-  username: z.string().min(3).max(32),
+  // Matches sunset_auth/server/main.lua: 3–20 ASCII letters, digits or underscore.
+  username: z.string().regex(/^[A-Za-z0-9_]{3,20}$/),
   password: z.string().min(1).max(128),
 });
 
+const DUMMY_HASH = "$scrypt$32768$8$1$cGFuZWwtZHVtbXktc2FsdA==$cxsPVM9j9cWRkBJ7VNH0yNOm/yxSx0euUYdBlCUJuFY=";
+const WINDOW_MS = 5 * 60 * 1000;
+const MAX_FAILURES = 5;
+const attempts = new Map<string, { count: number; startedAt: number; lockedUntil: number }>();
+
 interface AccountAuthRow extends RowDataPacket {
   id: number;
-  username: string;
   password_hash: string;
-  password_salt: string;
+}
+
+function trustedClientIp(req: NextRequest): string | null {
+  // Only use a header overwritten by the configured same-VPS reverse proxy.
+  // Never accept arbitrary X-Forwarded-For values supplied by browsers.
+  if (process.env.PANEL_TRUST_PROXY !== "1") return null;
+  const ip = req.headers.get("x-real-ip")?.trim();
+  return ip && isIP(ip) ? ip : null;
+}
+
+function isRateLimited(keys: string[], now: number): boolean {
+  return keys.some((key) => {
+    const value = attempts.get(key);
+    return !!value && value.lockedUntil > now;
+  });
+}
+
+function recordFailure(keys: string[], now: number): void {
+  if (attempts.size > 1000) {
+    for (const [key, value] of attempts) {
+      if (value.lockedUntil <= now && now - value.startedAt > WINDOW_MS) attempts.delete(key);
+    }
+    while (attempts.size > 1000) attempts.delete(attempts.keys().next().value!);
+  }
+  for (const key of keys) {
+    const previous = attempts.get(key);
+    const fresh = !previous || now - previous.startedAt > WINDOW_MS;
+    const count = fresh ? 1 : previous.count + 1;
+    attempts.set(key, {
+      count,
+      startedAt: fresh ? now : previous.startedAt,
+      lockedUntil: count >= (key === "global" ? 100 : key.startsWith("ip:") ? 20 : MAX_FAILURES) ? now + WINDOW_MS : 0,
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "127.0.0.1";
+  if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
+  let body: unknown;
+  try { body = await req.json(); } catch { body = null; }
+  const parsed = loginSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
+  }
 
-  // Check rate limit
+  const username = parsed.data.username;
+  const keys = ["global", `user:${username.toLowerCase()}`];
+  const ip = trustedClientIp(req);
+  if (ip) keys.push(`ip:${ip}`);
   const now = Date.now();
-  const attempt = failedLogins.get(ip);
-  if (attempt && attempt.lockedUntil > now) {
-    const remainingSec = Math.ceil((attempt.lockedUntil - now) / 1000);
-    return NextResponse.json(
-      {
-        error: "too_many_attempts",
-        remainingSec,
-      },
-      { status: 429 }
-    );
+  if (isRateLimited(keys, now)) {
+    return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
   }
 
   try {
-    const body = await req.json();
-    const parsed = loginSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-    }
-
-    const { username, password } = parsed.data;
-
     const account = await dbQuerySingle<AccountAuthRow>(
-      "SELECT id, username, password_hash, password_salt FROM accounts WHERE LOWER(username) = LOWER(?) LIMIT 1",
+      "SELECT id, password_hash FROM accounts WHERE username = ? LIMIT 1",
       [username]
     );
-
-    if (!account) {
-      // Record failed attempt
-      recordFailedLogin(ip);
+    // The dummy hash keeps the expensive verification path identical for unknown users.
+    const encoded = account && isModernScrypt(account.password_hash)
+      ? account.password_hash : DUMMY_HASH;
+    const valid = await verifyScryptPassword(parsed.data.password, encoded);
+    if (!account || !isModernScrypt(account.password_hash) || !valid) {
+      recordFailure(keys, now);
       return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
     }
 
-    // Modern scrypt security check:
-    // DO NOT accept insecure legacy plaintext/equality fallback from the public web.
-    if (!isModernScrypt(account.password_hash)) {
-      return NextResponse.json(
-        {
-          error: "legacy_unsupported",
-          message:
-            "This account uses a legacy password format. Please log in to the FiveM server once or generate an in-game /webpin code to safely access the web panel.",
-        },
-        { status: 403 }
-      );
-    }
-
-    // Verify scrypt hash timing-safely
-    const isValid = verifyScryptPassword(password, account.password_hash);
-    if (!isValid) {
-      recordFailedLogin(ip);
-      return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
-    }
-
-    // Success: clear failed counter and issue authenticated session
-    failedLogins.delete(ip);
+    // A success clears this user/IP, not the global abuse budget.
+    for (const key of keys) if (key !== "global") attempts.delete(key);
     await createSession(account.id);
-
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
-}
-
-function recordFailedLogin(ip: string) {
-  const current = failedLogins.get(ip) || { count: 0, lockedUntil: 0 };
-  current.count += 1;
-  if (current.count >= 5) {
-    // 5 failures -> 5 minute lockout
-    current.lockedUntil = Date.now() + 5 * 60 * 1000;
-  }
-  failedLogins.set(ip, current);
 }

@@ -36,8 +36,6 @@ interface CharacterProfileRow extends RowDataPacket {
   job: string;
   job_grade: number;
   phone_number: string | null;
-  cash: number;
-  bank: number;
   home_property_id: number | null;
   avatar: string | null;
   gender: number;
@@ -59,7 +57,6 @@ interface SkillRow extends RowDataPacket {
   level: number;
   xp: number;
   completed_tasks: number;
-  total_earned: number;
 }
 
 interface LicenseRow extends RowDataPacket {
@@ -75,14 +72,9 @@ interface ReputationRow extends RowDataPacket {
   missions_completed: number;
 }
 
-interface SanctionRow extends RowDataPacket {
-  id: number;
-  action: string;
-  admin_name: string;
-  reason: string;
-  duration_min: number | null;
-  created_at: string;
-}
+interface BalanceRow extends RowDataPacket { cash: number; bank: number }
+interface VehicleRow extends RowDataPacket { model: string; plate: string; stored: number; insurance_level: number; destroyed: number }
+interface PropertyRow extends RowDataPacket { label: string; interior: string; description: string | null }
 
 export default async function PlayerProfilePage({
   params,
@@ -104,7 +96,7 @@ export default async function PlayerProfilePage({
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
-       c.job, c.job_grade, c.phone_number, c.cash, c.bank,
+       c.job, c.job_grade, c.phone_number,
        c.home_property_id, c.avatar, c.gender, c.nationality,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username
@@ -150,24 +142,35 @@ export default async function PlayerProfilePage({
   const isOwner = session?.accountId === char.account_id;
   const staffMember = isStaff(session);
   const canViewFinancials = isOwner || staffMember;
+  const balance = canViewFinancials
+    ? await dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
+    : null;
 
   // Parallel fetch auxiliary records
   const [
+    vehicles,
+    properties,
     vehicleCountRow,
     propertyCountRow,
     marriage,
     skills,
     licenses,
     reputation,
-    sanctions,
+    sanctionCountRow,
   ] = await Promise.all([
-    dbQuerySingle<{ count: number } & RowDataPacket>(
-      "SELECT COUNT(*) AS count FROM vehicles WHERE character_id = ?",
+    dbQuery<VehicleRow>(
+      "SELECT model, plate, stored, insurance_level, destroyed FROM vehicles WHERE character_id = ? ORDER BY id DESC LIMIT 100",
+      [characterId]
+    ),
+    dbQuery<PropertyRow>(
+      "SELECT label, interior, description FROM properties WHERE owner_character_id = ? ORDER BY id DESC LIMIT 100",
       [characterId]
     ),
     dbQuerySingle<{ count: number } & RowDataPacket>(
-      "SELECT COUNT(*) AS count FROM properties WHERE owner_character_id = ?",
-      [characterId]
+      "SELECT COUNT(*) AS count FROM vehicles WHERE character_id = ?", [characterId]
+    ),
+    dbQuerySingle<{ count: number } & RowDataPacket>(
+      "SELECT COUNT(*) AS count FROM properties WHERE owner_character_id = ?", [characterId]
     ),
     dbQuerySingle<MarriageRow>(
       `SELECT m.married_at,
@@ -180,7 +183,7 @@ export default async function PlayerProfilePage({
       [characterId, characterId, characterId, characterId]
     ),
     dbQuery<SkillRow>(
-      "SELECT job_id, level, xp, completed_tasks, total_earned FROM job_progress WHERE character_id = ?",
+      "SELECT job_id, level, xp, completed_tasks FROM job_progress WHERE character_id = ?",
       [characterId]
     ),
     dbQuery<LicenseRow>(
@@ -191,11 +194,9 @@ export default async function PlayerProfilePage({
       "SELECT contact, reputation, missions_completed FROM sunset_mission_reputation WHERE character_id = ?",
       [characterId]
     ),
-    dbQuery<SanctionRow>(
-      `SELECT id, action, admin_name, reason, duration_min, created_at 
-       FROM admin_sanctions 
-       WHERE target_character_id = ? OR target_account_id = ?
-       ORDER BY id DESC LIMIT 5`,
+    dbQuerySingle<{ count: number } & RowDataPacket>(
+      `SELECT COUNT(*) AS count FROM admin_sanctions
+       WHERE action = 'warn' AND (target_character_id = ? OR target_account_id = ?)`,
       [characterId, char.account_id]
     ),
   ]);
@@ -297,7 +298,7 @@ export default async function PlayerProfilePage({
                       Cash on Hand (Private)
                     </span>
                     <span className="text-lg font-bold text-white font-mono">
-                      {formatCurrency(char.cash)}
+                      {formatCurrency(balance?.cash || 0)}
                     </span>
                   </div>
                   <div className="p-3 bg-sky-500/5 rounded-lg border border-sky-500/20">
@@ -305,7 +306,7 @@ export default async function PlayerProfilePage({
                       Bank Balance (Private)
                     </span>
                     <span className="text-lg font-bold text-white font-mono">
-                      {formatCurrency(char.bank)}
+                      {formatCurrency(balance?.bank || 0)}
                     </span>
                   </div>
                 </div>
@@ -336,7 +337,7 @@ export default async function PlayerProfilePage({
                           {skill.job_id}
                         </span>
                         <span className="text-[11px] text-gray-400">
-                          {formatNumber(skill.completed_tasks, locale)} tasks completed • Earned {formatCurrency(skill.total_earned)}
+                          {formatNumber(skill.completed_tasks, locale)} tasks completed
                         </span>
                       </div>
                       <div className="text-right">
@@ -358,51 +359,13 @@ export default async function PlayerProfilePage({
             </CardContent>
           </Card>
 
-          {/* Public Sanctions History */}
+          {/* Public sanctions expose a count only. Reasons and staff identities are private. */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Public Disciplinary Record</CardTitle>
+              <CardTitle className="text-sm">Disciplinary Record</CardTitle>
             </CardHeader>
             <CardContent>
-              {sanctions.length > 0 ? (
-                <div className="responsive-table-wrapper">
-                  <table className="w-full text-left text-xs">
-                    <thead className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-surface-border">
-                      <tr>
-                        <th className="pb-2">Action</th>
-                        <th className="pb-2">Reason</th>
-                        <th className="pb-2">Staff</th>
-                        <th className="pb-2 text-right">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-surface-border/50 text-gray-300">
-                      {sanctions.map((s) => (
-                        <tr key={s.id}>
-                          <td className="py-2.5">
-                            <Badge variant={s.action === "ban" ? "danger" : "warning"}>
-                              {s.action.toUpperCase()}
-                              {s.duration_min ? ` (${s.duration_min}m)` : ""}
-                            </Badge>
-                          </td>
-                          <td className="py-2.5 max-w-xs truncate text-gray-400">
-                            {s.reason}
-                          </td>
-                          <td className="py-2.5 font-mono text-gray-300">
-                            {s.admin_name}
-                          </td>
-                          <td className="py-2.5 text-right font-mono text-gray-500">
-                            {formatDate(s.created_at, locale)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500 py-2">
-                  Clean disciplinary record. No active or past sanctions found.
-                </p>
-              )}
+              <p className="text-xs text-gray-300 py-2">Warnings: {sanctionCountRow?.count || 0}</p>
             </CardContent>
           </Card>
         </div>
@@ -453,6 +416,11 @@ export default async function PlayerProfilePage({
                   {vehiclesCount}
                 </span>
               </div>
+              {vehicles.map((vehicle) => (
+                <div key={vehicle.plate} className="pl-5 text-gray-300">
+                  {vehicle.model} · {vehicle.plate} · {vehicle.destroyed ? "Destroyed" : vehicle.stored ? "Stored" : "Out"} · Insurance {vehicle.insurance_level}
+                </div>
+              ))}
 
               <div className="flex items-center justify-between py-1.5 border-b border-surface-border/50">
                 <span className="text-gray-400 flex items-center space-x-1.5">
@@ -463,6 +431,11 @@ export default async function PlayerProfilePage({
                   {propertiesCount}
                 </span>
               </div>
+              {properties.map((property, index) => (
+                <div key={`${property.label}-${index}`} className="pl-5 text-gray-300">
+                  {property.label} · {property.interior}{property.description ? ` · ${property.description}` : ""}
+                </div>
+              ))}
 
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-gray-400 flex items-center space-x-1.5">

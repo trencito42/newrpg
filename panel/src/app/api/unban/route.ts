@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isSameOriginWrite } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { queryOne, execute } from "@/lib/db";
 import { z } from "zod";
@@ -9,6 +10,7 @@ const unbanSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   try {
     const user = await getCurrentUser();
     if (!user) {

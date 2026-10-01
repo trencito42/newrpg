@@ -66,6 +66,8 @@ for migration in sql/[0-9][0-9]-*.sql; do
     continue
   fi
   echo "[migrations] applying $base"
-  db_import < "$migration"
+  # Historical migrations contain USE statements for old deployment names.
+  # Keep their checksums intact but always import into the selected database.
+  sed '/^[[:space:]]*USE[[:space:]]*`[^`]*`[[:space:]]*;[[:space:]]*$/d' "$migration" | db_import
   db_exec -e "INSERT INTO schema_migrations (name, checksum) VALUES ('${base}', '${checksum}')"
 done

@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { cache } from "react";
 import { dbQuery, dbQuerySingle, dbExecute } from "./db";
 import { generateRandomToken, hashTokenSha256 } from "./crypto";
 import { UserSession } from "./types";
@@ -19,6 +20,7 @@ interface SessionDbRow extends RowDataPacket {
   firstname: string | null;
   lastname: string | null;
   expires_at: string;
+  last_active_at: Date | string;
   revoked_at: string | null;
 }
 
@@ -26,7 +28,7 @@ interface SessionDbRow extends RowDataPacket {
  * Retrieves the current authenticated user session from the secure cookie.
  * Validates against panel_web_sessions and joins accounts + active character.
  */
-export async function getCurrentSession(): Promise<UserSession | null> {
+export const getCurrentSession = cache(async (): Promise<UserSession | null> => {
   const tokenHash = await getCurrentSessionTokenHash();
   if (!tokenHash) return null;
 
@@ -43,6 +45,7 @@ export async function getCurrentSession(): Promise<UserSession | null> {
        c.firstname,
        c.lastname,
        s.expires_at,
+       s.last_active_at,
        s.revoked_at
      FROM panel_web_sessions s
      JOIN accounts a ON a.id = s.account_id
@@ -91,10 +94,10 @@ export async function getCurrentSession(): Promise<UserSession | null> {
     }
   }
 
-  // Update last_active_at periodically (best effort async)
-  dbExecute("UPDATE panel_web_sessions SET last_active_at = NOW() WHERE id = ?", [
-    row.session_id,
-  ]).catch(() => {});
+  // Read once per server request and persist activity at most once per ten minutes.
+  if (Date.now() - new Date(row.last_active_at).getTime() >= 10 * 60 * 1000) {
+    await dbExecute("UPDATE panel_web_sessions SET last_active_at = NOW() WHERE id = ? AND last_active_at < NOW() - INTERVAL 10 MINUTE", [row.session_id]);
+  }
 
   const lang = row.language === "ro" ? "ro" : "en";
 
@@ -108,7 +111,7 @@ export async function getCurrentSession(): Promise<UserSession | null> {
     selectedCharacterId: selectedCharId ? Number(selectedCharId) : null,
     selectedCharacterName: selectedCharName,
   };
-}
+});
 
 /** Hashes the HttpOnly cookie server-side; never return its raw value in a session DTO. */
 export async function getCurrentSessionTokenHash(): Promise<string | null> {
@@ -125,10 +128,11 @@ export async function createSession(accountId: number): Promise<void> {
 
   const headerList = await headers();
   const userAgent = headerList.get("user-agent")?.substring(0, 255) || "Unknown";
-  const ipAddress =
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headerList.get("x-real-ip") ||
-    "127.0.0.1";
+  // Only use a proxy-provided address when the deployment explicitly trusts
+  // its loopback reverse proxy to overwrite X-Real-IP.
+  const ipAddress = process.env.PANEL_TRUST_PROXY === "1"
+    ? (headerList.get("x-real-ip")?.substring(0, 45) || null)
+    : null;
 
   // Check user's main character for default selection
   interface MainCharRow extends RowDataPacket {

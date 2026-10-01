@@ -1,6 +1,6 @@
 {
   "common": {
-    "server_name": "Sunset RPG",
+    "server_name": "{serverName}",
     "online": "Online",
     "offline": "Offline",
     "players": "Players",
@@ -70,7 +70,7 @@
   },
   "home": {
     "badge": "Official Web Companion",
-    "title": "Welcome to Sunset RPG",
+    "title": "Welcome to {serverName}",
     "subtitle": "Persistent SA:MP-inspired RPG ecosystem running on FiveM with deep economy, territory turf wars, and authentic careers.",
     "players_online": "Players Online",
     "registered_accounts": "Registered Accounts",
@@ -95,16 +95,6 @@
     "logging_in": "Authenticating...",
     "invalid_credentials": "The username or password provided is incorrect.",
     "too_many_attempts": "Too many failed login attempts. Please wait {seconds} seconds.",
-    "quick_login_tab": "Password Login",
-    "link_code_tab": "In-Game PIN Login",
-    "pin_title": "Single-Use In-Game PIN",
-    "pin_desc": "Type /webpin in the FiveM server chat to receive a 6-digit one-time code.",
-    "pin_code": "6-Digit Code",
-    "pin_placeholder": "e.g. 849201",
-    "redeem_pin": "Redeem & Login",
-    "redeeming_pin": "Verifying code...",
-    "pin_invalid": "Code is invalid or has expired.",
-    "legacy_notice": "Accounts with legacy passwords must log in to the FiveM game server once or use a /webpin code to safely upgrade authentication.",
     "not_registered": "Don't have an account yet?",
     "register_guide": "Connect directly to the FiveM server to register your account.",
     "logged_out": "You have been logged out successfully."
@@ -198,7 +188,7 @@
   },
   "support": {
     "title": "Support Helpdesk",
-    "subtitle": "Direct communication with the Sunset RPG staff team.",
+    "subtitle": "Direct communication with the {serverName} staff team.",
     "create_ticket": "Open New Ticket",
     "department": "Department",
     "subject": "Subject",

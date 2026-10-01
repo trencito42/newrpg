@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
+import { panelBrand } from "@/lib/brand";
 
 interface SidebarProps {
   locale: Locale;
@@ -71,11 +72,11 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
       <div className="p-4 border-b border-surface-border flex flex-col space-y-2">
         <Link href="/" className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-black text-lg">
-            S
+            {panelBrand.name.charAt(0).toUpperCase()}
           </div>
           <div>
             <span className="font-extrabold tracking-wider text-white text-base block leading-none">
-              SUNSET RPG
+              {panelBrand.name}
             </span>
             <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">
               Official Panel

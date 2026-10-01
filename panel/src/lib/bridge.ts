@@ -22,50 +22,40 @@ export interface AggregatedStats {
 }
 
 /**
- * Retrieves the live server status via the internal FiveM bridge endpoint,
- * or gracefully falls back to database metrics with honest offline indicators.
+ * Reads the last authoritative FiveM heartbeat. A stale heartbeat is offline.
  */
 export async function getServerStatus(): Promise<ServerStatus> {
-  const bridgeUrl = process.env.FIVEM_BRIDGE_URL || "http://127.0.0.1:30121";
-  const bridgeToken = process.env.FIVEM_BRIDGE_TOKEN;
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2s tight timeout
-
-    const res = await fetch(`${bridgeUrl}/api/status`, {
-      headers: {
-        Authorization: `Bearer ${bridgeToken}`,
-      },
-      signal: controller.signal,
-      cache: "no-store",
-    });
-
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const data = await res.json();
-      return {
-        online: true,
-        playerCount: data.playerCount || 0,
-        maxPlayers: data.maxPlayers || 64,
-        serverName: data.serverName || process.env.NEXT_PUBLIC_SERVER_NAME || "Sunset RPG",
-        uptimeSeconds: data.uptime || 0,
-        version: data.version || "1.0.0",
-      };
-    }
-  } catch {
-    // FiveM bridge is offline or local port not running yet
+  interface SnapshotRow extends RowDataPacket {
+    player_count: number;
+    max_players: number;
+    resource_version: string;
+    fresh: number;
   }
-
-  // Fallback: server is not reachable via HTTP
+  const name = process.env.NEXT_PUBLIC_SERVER_NAME || "RPG Server";
+  let snapshot: SnapshotRow | null = null;
+  try {
+    snapshot = await dbQuerySingle<SnapshotRow>(
+      "SELECT player_count, max_players, resource_version, (updated_at > NOW() - INTERVAL 45 SECOND) AS fresh FROM panel_runtime_snapshot WHERE id = 1"
+    );
+  } catch (error) {
+    // During the migration window, show offline; do not invent a player count.
+    if ((error as { code?: string }).code !== "ER_NO_SUCH_TABLE") throw error;
+  }
+  if (snapshot?.fresh) return {
+    online: true,
+    playerCount: snapshot.player_count,
+    maxPlayers: snapshot.max_players,
+    serverName: name,
+    uptimeSeconds: 0,
+    version: snapshot.resource_version,
+  };
   return {
     online: false,
     playerCount: 0,
-    maxPlayers: 64,
-    serverName: process.env.NEXT_PUBLIC_SERVER_NAME || "Sunset RPG",
+    maxPlayers: snapshot?.max_players || 0,
+    serverName: name,
     uptimeSeconds: 0,
-    version: "1.0.0",
+    version: snapshot?.resource_version || "unknown",
   };
 }
 

@@ -4,7 +4,6 @@ import {
   hashScryptPassword,
   isModernScrypt,
   generateRandomToken,
-  generateSixDigitPin,
 } from "../src/lib/crypto";
 
 describe("Sunset Password & Crypto Security", () => {
@@ -22,7 +21,7 @@ describe("Sunset Password & Crypto Security", () => {
     const hash = hashScryptPassword(password);
     expect(hash).not.toBeNull();
 
-    const isValid = verifyScryptPassword(password, hash!);
+    const isValid = await verifyScryptPassword(password, hash!);
     expect(isValid).toBe(true);
   });
 
@@ -32,7 +31,7 @@ describe("Sunset Password & Crypto Security", () => {
     const hash = hashScryptPassword(password);
     expect(hash).not.toBeNull();
 
-    const isValid = verifyScryptPassword(wrongPassword, hash!);
+    const isValid = await verifyScryptPassword(wrongPassword, hash!);
     expect(isValid).toBe(false);
   });
 
@@ -44,18 +43,11 @@ describe("Sunset Password & Crypto Security", () => {
     expect(isModernScrypt(md5Legacy)).toBe(false);
 
     // verifyScryptPassword should reject non-scrypt hashes safely
-    const plainValid = verifyScryptPassword("testpass", plainLegacy);
+    const plainValid = await verifyScryptPassword("testpass", plainLegacy);
     expect(plainValid).toBe(false);
 
-    const md5Valid = verifyScryptPassword("testpass", md5Legacy);
+    const md5Valid = await verifyScryptPassword("testpass", md5Legacy);
     expect(md5Valid).toBe(false);
-  });
-
-  it("generates 6-digit random PIN codes", () => {
-    for (let i = 0; i < 20; i++) {
-      const pin = generateSixDigitPin();
-      expect(pin).toMatch(/^\d{6}$/);
-    }
   });
 
   it("generates random base64url tokens", () => {

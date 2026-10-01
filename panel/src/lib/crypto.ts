@@ -14,7 +14,7 @@ const SCRYPT_OPTIONS = {
  *
  * Format: $scrypt$32768$8$1$<salt_base64>$<derived_base64>
  */
-export function verifyScryptPassword(password: string, encoded: string): boolean {
+export async function verifyScryptPassword(password: string, encoded: string): Promise<boolean> {
   if (typeof password !== "string" || typeof encoded !== "string") {
     return false;
   }
@@ -40,11 +40,10 @@ export function verifyScryptPassword(password: string, encoded: string): boolean
       return false;
     }
 
-    const actual = crypto.scryptSync(password, salt, expected.length, {
-      N,
-      r,
-      p,
-      maxmem: SCRYPT_OPTIONS.maxmem,
+    const actual = await new Promise<Buffer>((resolve, reject) => {
+      crypto.scrypt(password, salt, expected.length, {
+        N, r, p, maxmem: SCRYPT_OPTIONS.maxmem,
+      }, (error, derived) => error ? reject(error) : resolve(derived));
     });
 
     return crypto.timingSafeEqual(actual, expected);
@@ -82,11 +81,4 @@ export function generateRandomToken(bytes = 32): string {
  */
 export function hashTokenSha256(token: string): string {
   return crypto.createHash("sha256").update(String(token || ""), "utf8").digest("hex");
-}
-
-/**
- * Generates a 6-digit numeric PIN code for in-game linking.
- */
-export function generateSixDigitPin(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { LifeBuoy, Plus, MessageSquare, Clock, ArrowRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { revalidatePath } from "next/cache";
+import { panelBrand } from "@/lib/brand";
 
 interface TicketRow extends RowDataPacket {
   id: number;
@@ -90,7 +91,7 @@ export default async function SupportTicketsPage() {
             {t(locale, "support.title")}
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            {t(locale, "support.subtitle")}
+            {t(locale, "support.subtitle", { serverName: panelBrand.name })}
           </p>
         </div>
       </div>
