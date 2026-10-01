@@ -11,12 +11,9 @@ function Show(screen, data)
     isOpen = true
     currentScreen = screen
     if screen ~= 'loading' and screen ~= 'handoff' then
-        focusOwner = 'entry'
-        SetNuiFocus(true, true)
+        SetFocus(true, true, false, 'entry')
     else
-        focusOwner = nil
-        SetNuiFocus(false, false)
-        SetNuiFocusKeepInput(false)
+        SetFocus(false, false, false, 'entry')
     end
     SendNUIMessage({
         action = 'show',
@@ -29,9 +26,7 @@ exports('Show', Show)
 function Hide()
     isOpen = false
     currentScreen = nil
-    focusOwner = nil
-    SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
+    SetFocus(false, false, false, 'entry')
     SendNUIMessage({ action = 'hide' })
 end
 exports('Hide', Hide)
@@ -44,13 +39,16 @@ function SetFocus(hasFocus, hasCursor, keepInput, owner)
     -- the cursor ("cannot click for several seconds after login").
     if not hasFocus and isOpen and currentScreen == 'auth'
         and owner ~= 'auth' and owner ~= 'force' and focusOwner == 'auth' then
-        local tb = debug.traceback('', 2):gsub('\n', ' | '):sub(1, 300)
-        print(('^1[FOCUS]^7 BLOCKED release during auth screen: caller-owner=%s | %s'):format(owner, tb))
+        if nuiDebugEnabled() then
+            local tb = debug.traceback('', 2):gsub('\n', ' | '):sub(1, 300)
+            print(('^1[FOCUS]^7 BLOCKED release during auth screen: caller-owner=%s | %s'):format(owner, tb))
+        end
         return false
     end
     if not hasFocus and focusOwner and focusOwner ~= owner and owner ~= 'force' then
-        -- [BOOT TRACE v2] blocked release attempt — this is the focus-owner trap
-        print(('^3[FOCUS]^7 blocked release: owner=%s current=%s'):format(owner, tostring(focusOwner)))
+        if nuiDebugEnabled() then
+            print(('^3[FOCUS]^7 blocked release: owner=%s current=%s'):format(owner, tostring(focusOwner)))
+        end
         return false
     end
     focusOwner = hasFocus and owner or nil

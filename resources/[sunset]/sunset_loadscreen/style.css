@@ -51,12 +51,6 @@ html, body {
     z-index: 0;
     background: #050508 url('assets/sunset.webp?v=2') no-repeat center center;
     background-size: cover;
-    animation: slowPan 40s linear infinite alternate;
-}
-
-@keyframes slowPan {
-    0% { transform: scale(1) translate(0, 0); }
-    100% { transform: scale(1.1) translate(-2%, 2%); }
 }
 
 /* [A/B NOFX MODE] sv_sunset_nofx 1: flat background, zero animations, zero
@@ -138,7 +132,6 @@ body.nofx * { animation: none !important; }
 
 .tips-container {
     max-width: 450px;
-    filter: drop-shadow(var(--shadow-text));
 }
 
 .tips-header {
@@ -160,13 +153,6 @@ body.nofx * { animation: none !important; }
     height: 12px;
     background: var(--accent);
     border-radius: 50%;
-    animation: pulseGlow 2s infinite;
-}
-
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(0, 255, 204, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); }
 }
 
 .tips-text {
@@ -183,7 +169,6 @@ body.nofx * { animation: none !important; }
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    filter: drop-shadow(var(--shadow-heavy));
 }
 
 .massive-pct {

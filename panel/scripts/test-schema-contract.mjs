@@ -10,6 +10,49 @@ if (!socketPath?.startsWith("/tmp/newrpg-panel-db.") || !database?.startsWith("p
 }
 
 const queryNames = new Set(["dbQuery", "dbQuerySingle", "dbExecute", "query", "queryOne", "execute"]);
+const fragments = {
+  "src/app/api/staff/players/route.ts": { whereClause: ["", "WHERE a.username LIKE ?"] },
+  "src/app/clans/[id]/applications/page.tsx": { statusFilter: ["a.status IN ('submitted', 'under_review')", "a.status = 'accepted'", "a.status = 'rejected'", "a.status = 'withdrawn'", "1=1"] },
+  "src/app/factions/[slug]/applications/page.tsx": { statusFilter: ["a.status IN ('submitted', 'under_review')", "a.status = 'accepted'", "a.status = 'rejected'", "a.status = 'withdrawn'", "1=1"] },
+  "src/app/players/page.tsx": { whereClause: ["", "WHERE a.username LIKE ?"] },
+  "src/app/staff/audit/page.tsx": { whereClause: ["", "WHERE pal.action LIKE ? OR actor_acc.username LIKE ? OR target_acc.username LIKE ? OR pal.reason LIKE ?"] },
+  "src/app/staff/players/page.tsx": { whereClause: ["", "WHERE a.username LIKE ?"] },
+  "src/app/staff/sanctions/page.tsx": { whereSql: ["", "WHERE s.action = ?", "WHERE (s.target_name LIKE ? OR s.admin_name LIKE ? OR s.reason LIKE ?)", "WHERE s.action = ? AND (s.target_name LIKE ? OR s.admin_name LIKE ? OR s.reason LIKE ?)"] },
+  "src/app/support/complaints/page.tsx": { whereSql: ["", "WHERE (c.accuser_account_id = ? OR p_accused.account_id = ?)", "WHERE c.status = 'pending'", "WHERE (c.accuser_account_id = ? OR p_accused.account_id = ?) AND c.status = 'under_review'"] },
+  "src/lib/player-identity.ts": { placeholders: ["?", "?,?"] },
+};
+function expandTemplate(node, file) {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [node.text];
+  if (!ts.isTemplateExpression(node)) return null;
+  let values = [node.head.text];
+  for (const span of node.templateSpans) {
+    const key = ts.isIdentifier(span.expression) ? span.expression.text : "";
+    const alternatives = fragments[file]?.[key];
+    if (!alternatives) return null;
+    values = values.flatMap((value) => alternatives.map((fragment) => value + fragment + span.literal.text));
+  }
+  return values;
+}
+function expandVariable(ast, file, name) {
+  let initializer = null;
+  const appends = [];
+  function scan(node) {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name) initializer = node.initializer;
+    if (ts.isBinaryExpression(node) && ts.isIdentifier(node.left) && node.left.text === name && node.operatorToken.kind === ts.SyntaxKind.PlusEqualsToken) {
+      appends.push({ position: node.getStart(ast), optional: Boolean(node.parent?.parent && ts.isIfStatement(node.parent.parent)), values: expandTemplate(node.right, file) });
+    }
+    ts.forEachChild(node, scan);
+  }
+  scan(ast);
+  if (!initializer) return null;
+  let values = expandTemplate(initializer, file);
+  if (!values || appends.some((entry) => !entry.values)) return null;
+  for (const append of appends.sort((a, b) => a.position - b.position)) {
+    const variants = append.optional ? ["", ...append.values] : append.values;
+    values = values.flatMap((value) => variants.map((fragment) => value + fragment));
+  }
+  return values;
+}
 const files = [];
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -31,16 +74,17 @@ for (const file of files) {
       const name = ts.isIdentifier(expression) ? expression.text : ts.isPropertyAccessExpression(expression) ? expression.name.text : "";
       if (queryNames.has(name) && node.arguments.length > 0) {
         const sql = node.arguments[0];
-        if (ts.isStringLiteral(sql) || ts.isNoSubstitutionTemplateLiteral(sql)) {
-          if (/^\s*(SELECT|INSERT|UPDATE|DELETE|REPLACE|EXPLAIN)\b/i.test(sql.text)) {
-            const line = ast.getLineAndCharacterOfPosition(node.getStart(ast)).line + 1;
-            statements.push({ file, line, sql: sql.text });
+        const expanded = ts.isIdentifier(sql) ? expandVariable(ast, file, sql.text) : expandTemplate(sql, file);
+        if (expanded) {
+          const line = ast.getLineAndCharacterOfPosition(node.getStart(ast)).line + 1;
+          for (const statement of expanded) {
+            if (/^\s*(SELECT|INSERT|UPDATE|DELETE|REPLACE|EXPLAIN)\b/i.test(statement)) {
+              statements.push({ file, line, sql: statement });
+            }
           }
         } else if (ts.isTemplateExpression(sql) || ts.isIdentifier(sql)) {
           const line = ast.getLineAndCharacterOfPosition(node.getStart(ast)).line + 1;
-          const reviewed = file === "src/lib/db.ts" ||
-            (file === "src/app/factions/page.tsx" && line === 104) ||
-            (file === "src/app/players/page.tsx" && (line === 47 || line === 55));
+          const reviewed = file === "src/lib/db.ts" || file === "src/app/factions/page.tsx";
           if (!reviewed) {
             dynamic++;
             console.warn(`Dynamic query requires review: ${file}:${line}`);
@@ -53,15 +97,9 @@ for (const file of files) {
   visit(ast);
 }
 
-// The only non-wrapper dynamic SQL in panel/src: finite, server-authored
-// fragments for faction IN-list size and player directory search variants.
-const search = "WHERE c.firstname LIKE ? OR c.lastname LIKE ? OR CONCAT(c.firstname, ' ', c.lastname) LIKE ?";
+// Faction membership uses a finite server-authored IN-list placeholder count.
 statements.push(
   { file: "src/app/factions/page.tsx", line: 104, sql: "SELECT job, COUNT(*) AS member_count FROM characters WHERE job IN (?) GROUP BY job" },
-  { file: "src/app/players/page.tsx", line: 47, sql: "SELECT COUNT(*) AS total FROM characters c" },
-  { file: "src/app/players/page.tsx", line: 47, sql: `SELECT COUNT(*) AS total FROM characters c ${search}` },
-  { file: "src/app/players/page.tsx", line: 55, sql: "SELECT c.id, c.firstname, c.lastname, c.level, c.respect_points, c.job, c.last_played FROM characters c ORDER BY c.level DESC, c.respect_points DESC, c.id ASC LIMIT ? OFFSET ?" },
-  { file: "src/app/players/page.tsx", line: 55, sql: `SELECT c.id, c.firstname, c.lastname, c.level, c.respect_points, c.job, c.last_played FROM characters c ${search} ORDER BY c.level DESC, c.respect_points DESC, c.id ASC LIMIT ? OFFSET ?` },
 );
 
 const connection = await mysql.createConnection({ socketPath, user: "root", database });

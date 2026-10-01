@@ -102,6 +102,40 @@ const nuiRo = mergeResults(
 );
 validatePair('NUI', nuiEn, nuiRo);
 
+// Chat suggestions are assembled at runtime from the shared command usage
+// registry and chat:addSuggestion events. Literal usages must be translated in
+// both languages even though the regular literal-key scanner cannot see the
+// concatenated `chat.suggestion.` lookup in suggestions.lua.
+const sunsetDir = path.join(root, 'resources/[sunset]');
+function luaFiles(dir) {
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const file = path.join(dir, entry.name);
+        return entry.isDirectory() ? luaFiles(file) : file.endsWith('.lua') ? [file] : [];
+    });
+}
+const helpRegistry = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_core/shared/help_registry.lua'), 'utf8');
+const usageSection = helpRegistry.slice(helpRegistry.indexOf('Sunset.CommandUsage ='));
+const suggested = new Set();
+for (const match of usageSection.matchAll(/^\s*(?:\[['"]([^'"]+)['"]\]|([a-zA-Z0-9_]+))\s*=\s*\{\s*usage\s*=/gm)) {
+    suggested.add(match[1] || match[2]);
+}
+const registered = new Set();
+for (const file of luaFiles(sunsetDir)) {
+    const source = fs.readFileSync(file, 'utf8');
+    for (const match of source.matchAll(/(?:chat:addSuggestion|chat:addSuggestions)[^\n]*?['"]\/([a-z0-9_]+)['"]/gi)) {
+        suggested.add(match[1].toLowerCase());
+    }
+    for (const match of source.matchAll(/RegisterCommand\(\s*['"]([a-z0-9_]+)['"]/gi)) {
+        registered.add(match[1].toLowerCase());
+    }
+}
+for (const command of [...suggested].sort()) {
+    const key = `chat.suggestion.${command}`;
+    if (!luaEn.map.get(key)) { console.error(`Command suggestion missing EN: ${key}`); failures++; }
+    if (!luaRo.map.get(key)) { console.error(`Command suggestion missing RO: ${key}`); failures++; }
+}
+console.log(`Commands: ${registered.size} literal RegisterCommand names, ${suggested.size} translated suggestions (EN/RO).`);
+
 for (const locale of ['en', 'ro']) {
     if (!fs.existsSync(path.join(luaDir, `${locale}.lua`))) {
         console.error(`Invalid locale registry: ${locale} has no Lua locale file`);

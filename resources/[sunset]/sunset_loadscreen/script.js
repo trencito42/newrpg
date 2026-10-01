@@ -50,8 +50,12 @@ const BTRACE_NOISY = new Set(['data_file', 'init_start', 'init_end', 'init_group
     'init_order_start', 'map_load_step', 'load_progress', 'log_line', 'data_batch_start', 'data_batch_end']);
 let BOOT_VERBOSE = false;
 try { BOOT_VERBOSE = window.localStorage.getItem('sunset_boot_verbose') === '1'; } catch (_) { /* noop */ }
+// One client-side switch for boot diagnostics. Keep expensive watchdogs and
+// per-event console IPC completely out of the normal loading path.
+const BOOT_DEBUG = BOOT_VERBOSE;
 
 function btrace(stage, extra) {
+    if (!BOOT_DEBUG) return;
     if (!BOOT_VERBOSE && BTRACE_NOISY.has(stage)) return;
     try {
         const now = Date.now();
@@ -65,7 +69,7 @@ window.addEventListener('error', (e) => {
 });
 
 // [FREEZE WATCHDOG] rAF frame-gap detector for the loadscreen CEF.
-(function frameWatchdog() {
+if (BOOT_DEBUG) (function frameWatchdog() {
     let last = performance.now();
     function frame() {
         const now = performance.now();
@@ -107,10 +111,10 @@ function updateRpmBar(pct) {
     const segmentsToLight = Math.floor((pct / 100) * TOTAL_SEGMENTS);
     segments.forEach((seg, idx) => {
         if (idx < segmentsToLight) {
-            seg.classList.add('active');
-            if (seg.classList.contains('is-redline')) seg.classList.add('redline');
+            if (!seg.classList.contains('active')) seg.classList.add('active');
+            if (seg.classList.contains('is-redline') && !seg.classList.contains('redline')) seg.classList.add('redline');
         } else {
-            seg.classList.remove('active', 'redline');
+            if (seg.classList.contains('active')) seg.classList.remove('active', 'redline');
         }
     });
 }
@@ -119,11 +123,14 @@ function updateRpmBar(pct) {
 function setProgress(pct, task) {
     const clamped = Math.min(100, Math.max(0, pct));
     if (clamped < displayedPct) return; // monotonic guard
+    const oldWholePct = Math.floor(displayedPct);
     displayedPct = clamped;
-    pctEl.innerHTML = `${Math.floor(displayedPct)}<span>%</span>`;
-    if (task) taskEl.innerText = task;
-    filesEl.innerText = '';
-    updateRpmBar(displayedPct);
+    if (Math.floor(displayedPct) !== oldWholePct) {
+        pctEl.innerHTML = `${Math.floor(displayedPct)}<span>%</span>`;
+        updateRpmBar(displayedPct);
+    }
+    if (task && taskEl.textContent !== task) taskEl.textContent = task;
+    if (filesEl.textContent) filesEl.textContent = '';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -185,7 +192,7 @@ function touchLoadEvent(eventName, phase) {
 }
 
 // Watchdog checking for stalls (>1s, >3s, >5s)
-setInterval(() => {
+if (BOOT_DEBUG) setInterval(() => {
     if (handoffReceived) return;
     const now = Date.now();
     const gap = now - loadMetrics.lastEventTime;
@@ -208,6 +215,7 @@ setInterval(() => {
 }, 250);
 
 function printLoadSummary() {
+    if (!BOOT_DEBUG) return;
     const now = Date.now();
     const loadProgressDuration = (loadMetrics.tLoadProgressEnd > loadMetrics.tLoadProgressStart)
         ? (loadMetrics.tLoadProgressEnd - loadMetrics.tLoadProgressStart) : 0;
@@ -249,6 +257,7 @@ function printLoadSummary() {
 }
 
 function finishHandoff() {
+    if (handoffReceived) return;
     btrace('handoff received -> animations off');
     handoffReceived = true;
     loadMetrics.handoffTimestamp = Date.now() - BOOT_T0;
@@ -256,11 +265,6 @@ function finishHandoff() {
 
     loadscreen.classList.add('is-handoff');
     setProgress(100, lsT('entering_session'));
-    segments.forEach((seg) => {
-        seg.classList.add('active');
-        if (seg.classList.contains('is-redline')) seg.classList.add('redline');
-    });
-
     printLoadSummary();
 
     setTimeout(() => {
@@ -319,7 +323,8 @@ const handlers = {
         const count = data && data.count !== undefined ? data.count : loadMetrics.currentBatchCount;
 
         btrace('data_file', `name=${name} type=${type} isNew=${isNew} idx=${idx}/${count}`);
-        if (name) taskEl.innerText = `${name}...`;
+        // Thousands of data-file events are diagnostic, not player-facing
+        // progress steps. Repainting the name for every entry stalls CEF.
     },
     endDataFileEntries() {
         touchLoadEvent('endDataFileEntries', 'data_files');
@@ -346,7 +351,7 @@ const handlers = {
         loadMetrics.activeInitFunctions[name] = Date.now();
 
         btrace('init_start', `name=${name} type=${type} idx=${idx}`);
-        if (name) taskEl.innerText = `${name}...`;
+        // Keep the stable phase label; per-init names remain in debug metrics.
     },
     initFunctionInvoked(data) {
         touchLoadEvent('initFunctionInvoked', 'resource_init');
