@@ -250,6 +250,11 @@
             'skinshop.no_category': 'No skins in this category.',
             'skinshop.original_outfit': 'Original Outfit',
             'skinshop.battlepass': 'Battle Pass', 'skinshop.owned': 'Owned',
+            'hud.engine_on': 'ENGINE ON', 'hud.engine_off': 'ENGINE OFF',
+            'hud.locked': 'LOCKED', 'hud.unlocked': 'UNLOCKED',
+            'hud.seatbelt_on': 'SEATBELT ON', 'hud.seatbelt_off': 'SEATBELT OFF',
+            'hud.lights_off': 'LIGHTS OFF', 'hud.lights_low': 'LOW BEAMS', 'hud.lights_high': 'HIGH BEAMS',
+            'hud.wanted_level': 'Wanted level {level}', 'hud.not_wanted': 'Not wanted',
             'locale.changed': 'Language changed to English.', 'locale.failed': 'Could not save your language.',
         },
         ro: {
@@ -499,6 +504,11 @@
             'skinshop.no_category': 'Nu există skinuri în această categorie.',
             'skinshop.original_outfit': 'Ținuta originală',
             'skinshop.battlepass': 'Battle Pass', 'skinshop.owned': 'Deținut',
+            'hud.engine_on': 'MOTOR PORNIT', 'hud.engine_off': 'MOTOR OPRIT',
+            'hud.locked': 'ÎNCUIAT', 'hud.unlocked': 'DESCUIAT',
+            'hud.seatbelt_on': 'CENTURĂ PUSĂ', 'hud.seatbelt_off': 'FĂRĂ CENTURĂ',
+            'hud.lights_off': 'FARURI OPRITE', 'hud.lights_low': 'FAZĂ SCURTĂ', 'hud.lights_high': 'FAZĂ LUNGĂ',
+            'hud.wanted_level': 'Nivel de urmărire {level}', 'hud.not_wanted': 'Neurmărit',
             'locale.changed': 'Limba a fost schimbată în română.', 'locale.failed': 'Limba nu a putut fi salvată.',
         },
     };

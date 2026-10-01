@@ -8,10 +8,10 @@ const Hud = {
     locationShowMs: 4500,
     hintTimers: {},
     hintState: {
-        engine: { label: 'ENGINE OFF', key: '2', ok: false },
-        lock: { label: 'UNLOCKED', key: 'U', ok: true },
-        seatbelt: { label: 'SEATBELT OFF', key: 'K', ok: false },
-        lights: { label: 'LIGHTS OFF', key: 'H', ok: false },
+        engine: { labelKey: 'hud.engine_off', key: '2', ok: false },
+        lock: { labelKey: 'hud.unlocked', key: 'U', ok: true },
+        seatbelt: { labelKey: 'hud.seatbelt_off', key: 'K', ok: false },
+        lights: { labelKey: 'hud.lights_off', key: 'H', ok: false },
     },
     taskIcons: {
         default: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
@@ -37,7 +37,7 @@ const Hud = {
         if (!el) return;
         const source = dateValue ? new Date(dateValue) : new Date();
         if (Number.isNaN(source.getTime())) return;
-        const parts = source.toLocaleDateString('en-GB', {
+        const parts = source.toLocaleDateString(I18n.getLocale() === 'ro' ? 'ro-RO' : 'en-GB', {
             day: '2-digit',
             month: 'short',
             year: 'numeric',
@@ -78,7 +78,7 @@ const Hud = {
         if (!panel) return;
 
         panel.classList.toggle('active', wanted > 0);
-        panel.setAttribute('aria-label', wanted > 0 ? `Wanted level ${wanted}` : 'Not wanted');
+        panel.setAttribute('aria-label', I18n.t(wanted > 0 ? 'hud.wanted_level' : 'hud.not_wanted', { level: wanted }));
 
         stars.forEach((star, index) => {
             star.classList.toggle('active', index < Math.min(wanted, 5));
@@ -323,34 +323,34 @@ const Hud = {
     },
 
     syncHintState(data = {}) {
-        const lights = ['LIGHTS OFF', 'LIGHTS LOW', 'LIGHTS HIGH'];
+        const lights = ['hud.lights_off', 'hud.lights_low', 'hud.lights_high'];
         const mode = Math.max(0, Math.min(2, Number(data.lightMode) || 0));
         const supportsSeatbelt = data.supportsSeatbelt !== false;
         const supportsDoorLock = data.supportsDoorLock !== false;
         const noEngine = Number(data.vehicleClass) === 13;
         this.hintState.engine = {
-            label: data.engineOn ? 'ENGINE ON' : 'ENGINE OFF',
+            labelKey: data.engineOn ? 'hud.engine_on' : 'hud.engine_off',
             key: '2',
             ok: !!data.engineOn,
             tone: data.engineOn ? 'on' : 'off',
             hidden: noEngine,
         };
         this.hintState.lock = {
-            label: data.locked ? 'LOCKED' : 'UNLOCKED',
+            labelKey: data.locked ? 'hud.locked' : 'hud.unlocked',
             key: 'U',
             ok: !data.locked,
             tone: data.locked ? 'off' : 'on',
             hidden: !supportsDoorLock,
         };
         this.hintState.seatbelt = {
-            label: data.seatbelt ? 'SEATBELT ON' : 'SEATBELT OFF',
+            labelKey: data.seatbelt ? 'hud.seatbelt_on' : 'hud.seatbelt_off',
             key: 'K',
             ok: !!data.seatbelt,
             tone: data.seatbelt ? 'on' : 'off',
             hidden: !supportsSeatbelt,
         };
         this.hintState.lights = {
-            label: lights[mode],
+            labelKey: lights[mode],
             key: 'H',
             ok: mode > 0,
             tone: mode === 2 ? 'high' : (mode === 1 ? 'low' : 'off'),
@@ -367,7 +367,7 @@ const Hud = {
             if (row.hidden) return;
             const label = el.querySelector('.veh-hints__label');
             const key = el.querySelector('.veh-hints__key');
-            if (label) label.textContent = row.label;
+            if (label) label.textContent = row.labelKey ? I18n.t(row.labelKey) : (row.label || '');
             if (key) key.textContent = row.key;
             const tone = row.tone || (row.ok ? 'on' : 'off');
             el.classList.toggle('is-on', tone === 'on' || tone === 'low');
@@ -412,6 +412,7 @@ const Hud = {
         if (payload.rows) {
             Object.entries(payload.rows).forEach(([id, row]) => {
                 this.hintState[id] = {
+                    labelKey: row.labelKey,
                     label: row.label,
                     key: row.key,
                     ok: row.ok === true,
@@ -441,3 +442,7 @@ const Hud = {
 };
 
 window.Hud = Hud;
+window.addEventListener('sunset:localeChanged', () => {
+    Hud.updateDateDisplay();
+    Hud.renderHintRows();
+});

@@ -197,14 +197,14 @@ local function showVehicleHint(id)
             engineOn = GetIsVehicleEngineRunning(veh)
         end
     end
-    local lights = { 'LIGHTS OFF', 'LIGHTS LOW', 'LIGHTS HIGH' }
+    local lights = { 'hud.lights_off', 'hud.lights_low', 'hud.lights_high' }
     local lightTones = { 'off', 'low', 'high' }
     local mode = lightMode or 0
     local rows = {
-        engine = { label = engineOn and 'ENGINE ON' or 'ENGINE OFF', key = '2', ok = engineOn, tone = engineOn and 'on' or 'off' },
-        lock = { label = locked and 'LOCKED' or 'UNLOCKED', key = 'U', ok = not locked, tone = locked and 'off' or 'on' },
-        seatbelt = { label = seatbelt and 'SEATBELT ON' or 'SEATBELT OFF', key = 'K', ok = seatbelt, tone = seatbelt and 'on' or 'off' },
-        lights = { label = lights[mode + 1] or 'LIGHTS OFF', key = 'H', ok = mode > 0, tone = lightTones[mode + 1] or 'off' },
+        engine = { labelKey = engineOn and 'hud.engine_on' or 'hud.engine_off', key = '2', ok = engineOn, tone = engineOn and 'on' or 'off' },
+        lock = { labelKey = locked and 'hud.locked' or 'hud.unlocked', key = 'U', ok = not locked, tone = locked and 'off' or 'on' },
+        seatbelt = { labelKey = seatbelt and 'hud.seatbelt_on' or 'hud.seatbelt_off', key = 'K', ok = seatbelt, tone = seatbelt and 'on' or 'off' },
+        lights = { labelKey = lights[mode + 1] or 'hud.lights_off', key = 'H', ok = mode > 0, tone = lightTones[mode + 1] or 'off' },
     }
     exports.sunset_ui:Send('vehicleHint', { id = id, rows = rows })
 end
