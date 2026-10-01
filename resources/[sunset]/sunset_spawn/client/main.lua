@@ -304,6 +304,7 @@ local function spawnPlayer(char, spawnPosition)
     local tVarStart = GetGameTimer()
     SetPedDefaultComponentVariation(ped)
     SetEntityCollision(ped, true, true)
+    TriggerServerEvent('sunset:server:updatePlayerPed')
     logBootVerbose('ped_variation:applied', ('elapsed=%dms'):format(GetGameTimer() - tVarStart))
 
     if model == `mp_m_freemode_01` or model == `mp_f_freemode_01` then

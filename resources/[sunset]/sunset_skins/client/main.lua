@@ -43,6 +43,7 @@ local function applyModel(model)
     SetPlayerModel(PlayerId(), hash)
     SetPedDefaultComponentVariation(PlayerPedId())
     SetModelAsNoLongerNeeded(hash)
+    TriggerServerEvent('sunset:server:updatePlayerPed')
 
     if isReset or hash == `mp_m_freemode_01` or hash == `mp_f_freemode_01` then
         if char and char.appearance and GetResourceState('sunset_appearance') == 'started' then

@@ -359,15 +359,9 @@ local function broadcastClanManagement(clanId, actorSource, message)
         clanRankLabel = rankLabel,
     }
 
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        local memberCid = charId(src)
-        if not memberCid then goto continue end
-        local member = ClanDisplay.getMembership(memberCid)
-        if member and tonumber(member.clan_id) == clanId then
-            TriggerClientEvent('sunset:chat:message', src, payload)
-        end
-        ::continue::
+    local members = ClanDisplay.getOnlineClanMembers(clanId)
+    for _, src in ipairs(members) do
+        TriggerClientEvent('sunset:chat:message', src, payload)
     end
 end
 

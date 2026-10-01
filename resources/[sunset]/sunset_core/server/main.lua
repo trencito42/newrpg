@@ -20,6 +20,7 @@ local EXPENSIVE_CALLBACK_LIMITS = {
 
 -- ═══ HIGH-PERFORMANCE ONLINE STATE INDEXES ═══
 local SourceByCharacterId = {}
+local OnlineCharacters = {}
 local SourceByPlayerId = {}
 local SourceByAccountId = {}
 local PedToPlayerSource = {}
@@ -29,7 +30,9 @@ local function indexRegisterPlayer(source, player)
     if player.id then SourceByPlayerId[player.id] = source end
     if player.account_id then SourceByAccountId[player.account_id] = source end
     if player.character and player.character.id then
-        SourceByCharacterId[tonumber(player.character.id)] = source
+        local cid = tonumber(player.character.id)
+        SourceByCharacterId[cid] = source
+        OnlineCharacters[cid] = source
     end
     local ped = GetPlayerPed(source)
     if ped and ped ~= 0 then PedToPlayerSource[ped] = source end
@@ -41,7 +44,9 @@ local function indexUnregisterPlayer(source, player)
         if player.id and SourceByPlayerId[player.id] == source then SourceByPlayerId[player.id] = nil end
         if player.account_id and SourceByAccountId[player.account_id] == source then SourceByAccountId[player.account_id] = nil end
         if player.character and player.character.id then
-            SourceByCharacterId[tonumber(player.character.id)] = nil
+            local cid = tonumber(player.character.id)
+            SourceByCharacterId[cid] = nil
+            OnlineCharacters[cid] = nil
         end
     end
     for ped, src in pairs(PedToPlayerSource) do
@@ -52,9 +57,25 @@ end
 local function updatePedMapping(source)
     local ped = GetPlayerPed(source)
     if ped and ped ~= 0 then
+        -- Clear old ped reference for this source
+        for oldPed, src in pairs(PedToPlayerSource) do
+            if src == source and oldPed ~= ped then
+                PedToPlayerSource[oldPed] = nil
+            end
+        end
         PedToPlayerSource[ped] = source
     end
 end
+
+RegisterNetEvent('sunset:server:updatePlayerPed', function()
+    local src = source
+    updatePedMapping(src)
+end)
+
+function UpdatePlayerPed(source)
+    updatePedMapping(source)
+end
+exports('UpdatePlayerPed', UpdatePlayerPed)
 
 RegisterNetEvent('sunset:server:flowTrace', function(stage, detail)
     local source = source
@@ -78,7 +99,15 @@ function GetSourceByPed(pedEntity)
     if src and DoesEntityExist(pedEntity) and GetPlayerPed(src) == pedEntity then
         return src
     end
-    -- Fallback and refresh cache if ped recycled
+
+    -- Fast OneSync entity owner check: under OneSync, NetworkGetEntityOwner returns the player source owning the ped!
+    local owner = NetworkGetEntityOwner(pedEntity)
+    if owner and owner > 0 and DoesEntityExist(pedEntity) and GetPlayerPed(owner) == pedEntity then
+        PedToPlayerSource[pedEntity] = owner
+        return owner
+    end
+
+    -- Fallback scan and cache refresh
     for s, p in pairs(Players) do
         local ped = GetPlayerPed(s)
         if ped and ped ~= 0 then
@@ -103,10 +132,12 @@ function GetSourceByCharacterId(characterId)
     for s, p in pairs(Players) do
         if p.character and tonumber(p.character.id) == characterId then
             SourceByCharacterId[characterId] = s
+            OnlineCharacters[characterId] = s
             return s
         end
     end
     SourceByCharacterId[characterId] = nil
+    OnlineCharacters[characterId] = nil
     return nil
 end
 exports('GetSourceByCharacterId', GetSourceByCharacterId)
@@ -134,13 +165,7 @@ end
 exports('GetSourceByAccountId', GetSourceByAccountId)
 
 function GetOnlineCharacters()
-    local result = {}
-    for s, p in pairs(Players) do
-        if p.character and p.character.id then
-            result[tonumber(p.character.id)] = s
-        end
-    end
-    return result
+    return OnlineCharacters
 end
 exports('GetOnlineCharacters', GetOnlineCharacters)
 
@@ -667,7 +692,7 @@ CreateThread(function()
             if player.sessionStart then
                 local mins = math.max(0, math.floor((os.time() - player.sessionStart) / 60))
                 if mins > 0 then
-                    MySQL.update.await('UPDATE players SET playtime = playtime + ? WHERE id = ?', { mins, player.id })
+                    MySQL.update('UPDATE players SET playtime = playtime + ? WHERE id = ?', { mins, player.id })
                     player.playtime = (tonumber(player.playtime) or 0) + mins
                     player.sessionStart = os.time()
                     if player.character then

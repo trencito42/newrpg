@@ -73,6 +73,7 @@ local function loadFreemodePed(char)
 
     local ped = PlayerPedId()
     SetPedDefaultComponentVariation(ped)
+    TriggerServerEvent('sunset:server:updatePlayerPed')
 
     currentAppearance = SunsetAppearance.normalize(char.appearance, char.gender or 0)
     SunsetAppearance.apply(ped, currentAppearance, char.gender or 0)

@@ -20,8 +20,12 @@ local function loadMeta()
     return cachedMeta
 end
 
+local clientPropertyGeneration = 0
+local latestServerGeneration = 0
+
 local function refreshProperties()
     cachedProperties = Sunset.AwaitCallback('sunset:getProperties') or {}
+    clientPropertyGeneration = latestServerGeneration
     TriggerEvent('sunset:client:registerPropertyZones', cachedProperties)
     TriggerEvent('sunset:properties:updated', cachedProperties, loadMeta())
     return cachedProperties
@@ -31,11 +35,7 @@ local function refreshSoon()
     if refreshPending then return end
     refreshPending = true
     CreateThread(function()
-        if propertiesPanelOpen then
-            Wait(250)
-        else
-            Wait(2000 + math.random(500, 3000))
-        end
+        Wait(250)
         refreshProperties()
         refreshPending = false
     end)
@@ -55,7 +55,54 @@ RegisterNetEvent('sunset:death:forceHospital', function()
     insideProperty = nil
     transState = TRANS_NONE
 end)
-RegisterNetEvent('sunset:client:propertiesChanged', refreshSoon)
+
+-- Delta update: modifies single property in memory without querying the server
+RegisterNetEvent('sunset:client:propertyDelta', function(gen, propId, delta)
+    latestServerGeneration = gen
+    clientPropertyGeneration = gen
+    propId = tonumber(propId)
+    if not propId or type(delta) ~= 'table' then return end
+
+    local myChar = exports.sunset_core:GetCharacter()
+    local myCid = myChar and tonumber(myChar.id)
+
+    for i, p in ipairs(cachedProperties) do
+        if tonumber(p.id) == propId then
+            for k, v in pairs(delta) do
+                p[k] = v
+            end
+            if myCid and delta.owner_character_id ~= nil then
+                p.owned = (tonumber(delta.owner_character_id) == myCid)
+                p.access = p.owned or (p.rented == true)
+            end
+            break
+        end
+    end
+
+    TriggerEvent('sunset:properties:updated', cachedProperties, loadMeta())
+    if propertiesPanelOpen then
+        exports.sunset_ui:Send('propertiesShow', {
+            properties = cachedProperties,
+            meta = loadMeta(),
+        })
+    end
+end)
+
+-- Version notification: idle clients do NOT query; they only refresh when opening the panel
+RegisterNetEvent('sunset:client:propertiesVersion', function(gen)
+    latestServerGeneration = gen
+    if propertiesPanelOpen and clientPropertyGeneration ~= gen then
+        refreshSoon()
+    end
+end)
+
+RegisterNetEvent('sunset:client:propertiesChanged', function(gen)
+    latestServerGeneration = gen or (latestServerGeneration + 1)
+    if propertiesPanelOpen then
+        refreshSoon()
+    end
+end)
+
 RegisterNetEvent('sunset:client:propertyMessage', function(text, kind) exports.sunset_ui:Notify(text or exports.sunset_core:Translate('property.update'), kind or 'info', 6500) end)
 
 local function openProperties(properties, selectedId, opts)
@@ -66,6 +113,9 @@ local function openProperties(properties, selectedId, opts)
         managePropertyId = opts.managePropertyId
     elseif not opts.keepManage then
         managePropertyId = nil
+    end
+    if not properties and (clientPropertyGeneration ~= latestServerGeneration or #cachedProperties == 0) then
+        refreshProperties()
     end
     exports.sunset_ui:Send('propertiesShow', {
         properties = properties or cachedProperties,

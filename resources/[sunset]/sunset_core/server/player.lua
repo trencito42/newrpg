@@ -55,9 +55,19 @@ function Sunset.SaveCharacter(source)
 
         -- [AUDIT P5-05] cash/bank/level/xp/respect_points/paydays_received are NO
         -- LONGER written here. They are owned by atomic server operations (guarded
-        -- UPDATEs, payday/buyLevel transactions). The previous SELECT-then-UPDATE
-        -- pattern could silently roll back any concurrent money/progress op.
+        -- UPDATEs, payday/buyLevel transactions).
+        -- [AUDIT P5-10 / SCAL-FIX] metadata: merge DB-authoritative keys (rob_points, quickslots, spawn_choice)
+        -- so autosave never overwrites or erases keys written separately by JSON_SET.
+        local dbRow = MySQL.single.await('SELECT metadata FROM characters WHERE id = ?', { char.id })
         char.metadata = type(char.metadata) == 'table' and char.metadata or {}
+        if dbRow and type(dbRow.metadata) == 'string' and dbRow.metadata ~= '' then
+            local ok, dbMeta = pcall(json.decode, dbRow.metadata)
+            if ok and type(dbMeta) == 'table' then
+                if dbMeta.rob_points ~= nil then char.metadata.rob_points = dbMeta.rob_points end
+                if dbMeta.quickslots ~= nil then char.metadata.quickslots = dbMeta.quickslots end
+                if dbMeta.spawn_choice ~= nil then char.metadata.spawn_choice = dbMeta.spawn_choice end
+            end
+        end
 
         MySQL.update.await([[
             UPDATE characters SET

@@ -1,7 +1,12 @@
 CreateThread(function()
     while true do
-        Wait(60000)
-        for _, playerId in ipairs(GetPlayers()) do
+        local players = GetPlayers()
+        local count = #players
+        local sleepPerPlayer = count > 0 and math.floor(60000 / count) or 1000
+        sleepPerPlayer = math.max(50, math.min(1000, sleepPerPlayer))
+
+        local cycleStart = GetGameTimer()
+        for _, playerId in ipairs(players) do
             local src = tonumber(playerId)
             if src then
                 local char = exports.sunset_core:GetCharacter(src)
@@ -13,6 +18,13 @@ CreateThread(function()
                     TriggerClientEvent('sunset:client:updateCharacter', src, char)
                 end
             end
+            Wait(sleepPerPlayer)
+        end
+
+        local elapsed = GetGameTimer() - cycleStart
+        local remaining = 60000 - elapsed
+        if remaining > 0 then
+            Wait(remaining)
         end
     end
 end)

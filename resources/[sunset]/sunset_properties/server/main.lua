@@ -118,10 +118,14 @@ local function loadServerPropertyCache()
     return ServerPropertyCache
 end
 
-local function notifyPropertiesChanged()
+local function notifyPropertiesChanged(propId, delta)
     PropertyCacheDirty = true
     PropertyGeneration = PropertyGeneration + 1
-    TriggerClientEvent('sunset:client:propertiesChanged', -1, PropertyGeneration)
+    if propId and type(delta) == 'table' then
+        TriggerClientEvent('sunset:client:propertyDelta', -1, PropertyGeneration, propId, delta)
+    else
+        TriggerClientEvent('sunset:client:propertiesVersion', -1, PropertyGeneration)
+    end
 end
 
 exports.sunset_core:RegisterCallback('sunset:getProperties', function(source)

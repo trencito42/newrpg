@@ -98,20 +98,17 @@ CreateThread(function()
                         local inVeh = IsPedInAnyVehicle(ped, false)
                         local maxAllowedSpeed = inVeh and 140.0 or 35.0 -- m/s (140 m/s = 500 km/h)
 
-                        -- [AUDIT P2-06] Guarded: if sunset_admin is stopped/restarting this
-                        -- call errors and would kill the whole scanner thread.
-                        local isAdmin = false
-                        if GetResourceState('sunset_admin') == 'started' then
-                            local ok, res = pcall(function() return exports.sunset_admin:IsAdmin(src, 1) end)
-                            isAdmin = ok and res == true
-                        end
-
-                        -- [AUDIT P2-06] The computed speed was previously unused; flag
-                        -- sustained impossible velocity as well as raw distance jumps.
                         local speedAnomaly = speed > maxAllowedSpeed * 2.5 and dt >= 2.0
-                        if (dist > 350.0 or speedAnomaly) and not isAdmin then
-                            local char = exports.sunset_core:GetCharacter(src)
-                            local pName = GetPlayerName(src) or 'Necunoscut'
+                        if (dist > 350.0 or speedAnomaly) then
+                            local isAdmin = false
+                            if GetResourceState('sunset_admin') == 'started' then
+                                local ok, res = pcall(function() return exports.sunset_admin:IsAdmin(src, 1) end)
+                                isAdmin = ok and res == true
+                            end
+
+                            if not isAdmin then
+                                local char = exports.sunset_core:GetCharacter(src)
+                                local pName = GetPlayerName(src) or 'Necunoscut'
 
                             print(('[SECURITY] Teleport anomaly flagged for %s: %.1fm in %.1fs'):format(pName, dist, dt))
 
@@ -128,6 +125,7 @@ CreateThread(function()
                                 )
                             end
                         end
+                    end
                     end
 
                     LastCoords[src] = coords

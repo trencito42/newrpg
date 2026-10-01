@@ -36,12 +36,29 @@ function ClanDisplay.baseName(source)
     return ('Player_%d'):format(source or 0)
 end
 
+local OnlineClanMembers = {}
+local PlayerClan = {}
+
 function ClanDisplay.sync(source)
     local cid = charId(source)
     if not cid then return end
 
     local row = ClanDisplay.getMembership(cid)
     membershipCache[source] = row
+
+    local oldClan = PlayerClan[source]
+    if oldClan and OnlineClanMembers[oldClan] then
+        OnlineClanMembers[oldClan][source] = nil
+    end
+
+    if row and row.clan_id then
+        local cId = tonumber(row.clan_id)
+        PlayerClan[source] = cId
+        OnlineClanMembers[cId] = OnlineClanMembers[cId] or {}
+        OnlineClanMembers[cId][source] = true
+    else
+        PlayerClan[source] = nil
+    end
 
     local base = ClanDisplay.baseName(source)
     local tag, color, style = '', '#FFFFFF', 'brackets'
@@ -83,7 +100,23 @@ function ClanDisplay.getChatMeta(source)
 end
 
 function ClanDisplay.clear(source)
+    local oldClan = PlayerClan[source]
+    if oldClan and OnlineClanMembers[oldClan] then
+        OnlineClanMembers[oldClan][source] = nil
+    end
+    PlayerClan[source] = nil
     membershipCache[source] = nil
+end
+
+function ClanDisplay.getOnlineClanMembers(clanId)
+    local list = {}
+    clanId = tonumber(clanId)
+    if clanId and OnlineClanMembers[clanId] then
+        for src in pairs(OnlineClanMembers[clanId]) do
+            list[#list + 1] = src
+        end
+    end
+    return list
 end
 
 function FormatDisplayName(source, baseName)

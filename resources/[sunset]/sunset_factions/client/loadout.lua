@@ -171,6 +171,7 @@ local function switchPedModel(modelInput)
     SetPedDefaultComponentVariation(newPed)
     SetEntityHealth(newPed, math.max(100, health))
     SetPedArmour(newPed, armour)
+    TriggerServerEvent('sunset:server:updatePlayerPed')
 
     if vehicle ~= 0 and DoesEntityExist(vehicle) then
         SetPedIntoVehicle(newPed, vehicle, seat)

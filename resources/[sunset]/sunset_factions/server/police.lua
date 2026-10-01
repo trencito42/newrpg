@@ -1206,7 +1206,7 @@ CreateThread(function()
                 local cid = w.characterId or charId(src)
                 if cid and (not w.lastPersistAt or now - w.lastPersistAt >= 60) then
                     w.lastPersistAt = now
-                    MySQL.update.await(
+                    MySQL.update(
                         'UPDATE wanted_records SET decay_remaining_seconds = ?, expires_at = FROM_UNIXTIME(?) WHERE character_id = ? AND active = 1',
                         { w.decayRemaining, w.decayAt, cid }
                     )

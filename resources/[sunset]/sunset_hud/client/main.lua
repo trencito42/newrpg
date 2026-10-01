@@ -322,11 +322,12 @@ CreateThread(function()
     while not HasScaleformMovieLoaded(minimap) do
         Wait(0)
     end
+    BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
+    ScaleformMovieMethodAddParamInt(2) -- 0=hidden, 1=health only, 2=health+armour bars
+    EndScaleformMovieMethod()
+
     while true do
         if hudActive then
-            BeginScaleformMovieMethod(minimap, 'SETUP_HEALTH_ARMOUR')
-            ScaleformMovieMethodAddParamInt(2) -- 0=hidden, 1=health only, 2=health+armour bars
-            EndScaleformMovieMethod()
             HideHudComponentThisFrame(1)
             HideHudComponentThisFrame(2)
             HideHudComponentThisFrame(3)
@@ -342,8 +343,10 @@ CreateThread(function()
             HideHudComponentThisFrame(21) -- wanted stars
             DisplayAmmoThisFrame(false)
             SetMpGamerTagsVisibleDistance(0.0)
+            Wait(0)
+        else
+            Wait(250)
         end
-        Wait(0)
     end
 end)
 
