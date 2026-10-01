@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { formatClanTag } from "./PlayerIdentity";
+import { GTAImage } from "./GTAImage";
 import { Shield, Award, User, Circle, ArrowRight } from "lucide-react";
 
 interface PlayerPreviewData {
@@ -208,15 +209,12 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
               {/* Top Row: Avatar + Name + Badges */}
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center">
-                  {previewData.avatarUrl ? (
-                    <img
-                      src={previewData.avatarUrl}
-                      alt={previewData.username}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-6 h-6 text-[#52525b]" />
-                  )}
+                  <GTAImage
+                    src={previewData.avatarUrl || "https://docs-backend.fivem.net/peds/mp_m_freemode_01.webp"}
+                    alt={previewData.username}
+                    fallbackIcon={<User className="w-6 h-6 text-[#52525b]" />}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 <div className="flex-1 min-w-0">

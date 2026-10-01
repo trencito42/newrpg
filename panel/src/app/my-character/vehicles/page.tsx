@@ -3,6 +3,8 @@ import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getVehiclePreviewUrl } from "@/lib/gta-assets";
 
 interface VehicleRow extends RowDataPacket {
   id: number;
@@ -18,6 +20,7 @@ interface VehicleRow extends RowDataPacket {
   destroyed: boolean;
   insurance_cost: number;
   created_at: string;
+  preview_url: string | null;
   impound_id: number | null;
   impound_reason: string | null;
   impound_fee: number | null;
@@ -34,9 +37,11 @@ export default async function MyVehiclesPage() {
 
   const vehicles = await dbQuery<VehicleRow>(
     `SELECT v.*,
+            vm.preview_url,
             iv.id AS impound_id, iv.reason AS impound_reason,
             iv.fee AS impound_fee, iv.status AS impound_status
      FROM vehicles v
+     LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
      LEFT JOIN impounded_vehicles iv ON iv.vehicle_id = v.id AND iv.status = 'impounded'
      WHERE v.character_id = ?
      ORDER BY v.id DESC`,
@@ -64,7 +69,7 @@ export default async function MyVehiclesPage() {
             return (
               <div
                 key={veh.id}
-                className="p-3.5 bg-surface-100 border border-surface-border rounded flex flex-col justify-between"
+                className="p-3.5 bg-surface-100 border border-surface-border rounded flex flex-col justify-between gap-3"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs">
@@ -82,12 +87,24 @@ export default async function MyVehiclesPage() {
                     )}
                   </div>
 
-                  <h3 className="text-sm font-semibold text-[#f1f1f1] mt-1.5 capitalize">
-                    {veh.model}
-                  </h3>
-                  <p className="text-xs text-[#8a8a90] mt-0.5">
-                    Garage: <span className="text-[#a5a5a8] capitalize">{veh.garage || "default"}</span>
-                  </p>
+                  <div className="flex items-center gap-3 mt-2.5">
+                    <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
+                      <GTAImage
+                        src={getVehiclePreviewUrl(veh.model, veh.preview_url)}
+                        alt={veh.model}
+                        fallbackText="GTA V"
+                        className="w-full h-full object-contain p-0.5"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-[#f1f1f1] truncate capitalize">
+                        {veh.model}
+                      </h3>
+                      <p className="text-xs text-[#8a8a90] mt-0.5 truncate">
+                        Garage: <span className="text-[#a5a5a8] capitalize">{veh.garage || "default"}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-3 pt-2.5 border-t border-surface-border/60 grid grid-cols-3 gap-2 text-center text-xs text-[#6f6f74]">

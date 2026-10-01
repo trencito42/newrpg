@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuerySingle } from "@/lib/db";
 import { CANONICAL_FACTIONS, getFactionColor, getFactionLabel } from "@/lib/factions";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
 
 const CLAN_RANKS: Record<number, string> = {
@@ -33,6 +34,8 @@ export async function GET(
         a.helper_level,
         c.id as character_id,
         c.level,
+        c.gender,
+        c.avatar,
         c.paydays_received as hours,
         c.job as faction_id,
         c.job_grade as faction_rank,
@@ -134,7 +137,7 @@ export async function GET(
 
     const preview = {
       username: player.username,
-      avatarUrl: player.avatar_url || null,
+      avatarUrl: getPedAvatarUrl(player.gender, player.avatar_url || player.avatar),
       online: Boolean(player.is_online),
       lastSeen: player.last_played,
       level: player.level || 1,

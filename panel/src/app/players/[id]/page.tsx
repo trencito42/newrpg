@@ -8,6 +8,8 @@ import { PlayerActions } from "@/components/staff/PlayerActions";
 import { PlayerName } from "@/components/ui/PlayerName";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { getFactionLabel, isFaction } from "@/lib/factions";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
 
 interface CharacterProfileRow extends RowDataPacket {
   id: number;
@@ -265,18 +267,12 @@ export default async function PlayerProfilePage({
           {/* Left: Avatar + Identity + Metadata */}
           <div className="flex items-start gap-4">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
-              {char.avatar_url ? (
-                <img
-                  src={char.avatar_url}
-                  alt={char.account_username}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[#52525b]">
-                  <span className="text-xl font-bold font-mono">GTA</span>
-                  <span className="text-[9px] uppercase tracking-wider">Skin</span>
-                </div>
-              )}
+              <GTAImage
+                src={getPedAvatarUrl(char.gender, char.avatar_url || char.avatar)}
+                alt={char.account_username}
+                fallbackText="GTA Skin"
+                className="w-full h-full object-cover"
+              />
             </div>
 
             <div className="space-y-1.5 flex-1 min-w-0">
@@ -369,15 +365,16 @@ export default async function PlayerProfilePage({
           {featuredVehicle && (
             <div className="flex items-center gap-3 p-2.5 bg-[#141416] border border-surface-border rounded lg:max-w-xs w-full">
               <div className="w-20 h-14 bg-[#1b1b1e] rounded overflow-hidden shrink-0 flex items-center justify-center border border-surface-border">
-                {featuredVehicle.preview_url ? (
-                  <img src={featuredVehicle.preview_url} alt={featuredVehicle.model} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[10px] font-mono text-[#6f6f74] uppercase">GTA V</span>
-                )}
+                <GTAImage
+                  src={getVehiclePreviewUrl(featuredVehicle.model, featuredVehicle.preview_url)}
+                  alt={featuredVehicle.model}
+                  fallbackText="GTA V"
+                  className="w-full h-full object-contain p-1"
+                />
               </div>
               <div className="min-w-0 text-xs">
                 <span className="text-[10px] text-[#6f6f74] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
-                <span className="font-bold text-[#f1f1f1] truncate block">{featuredVehicle.model}</span>
+                <span className="font-bold text-[#f1f1f1] truncate block capitalize">{featuredVehicle.model}</span>
                 <span className="font-mono text-[11px] text-[#8a8a90] block">{featuredVehicle.plate}</span>
               </div>
             </div>
@@ -442,15 +439,16 @@ export default async function PlayerProfilePage({
               {vehicles.map((v) => (
                 <div key={v.id} className="p-2.5 bg-[#101011] border border-surface-border rounded flex gap-3 items-center">
                   <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
-                    {v.preview_url ? (
-                      <img src={v.preview_url} alt={v.model} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[10px] font-mono text-[#52525b]">GTA V</span>
-                    )}
+                    <GTAImage
+                      src={getVehiclePreviewUrl(v.model, v.preview_url)}
+                      alt={v.model}
+                      fallbackText="GTA V"
+                      className="w-full h-full object-contain p-0.5"
+                    />
                   </div>
                   <div className="min-w-0 flex-1 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#f1f1f1] truncate">{v.model}</span>
+                      <span className="font-semibold text-[#f1f1f1] truncate capitalize">{v.model}</span>
                       {v.destroyed ? (
                         <span className="text-[10px] text-red-400 font-mono">Destroyed</span>
                       ) : v.stored ? (
