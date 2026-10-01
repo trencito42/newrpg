@@ -1153,12 +1153,16 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil end
 
+    vehicleNetId = tonumber(vehicleNetId)
+    if not vehicleNetId or vehicleNetId <= 0 then return nil end
     local vehicle = NetworkGetEntityFromNetworkId(vehicleNetId)
-    if not vehicle or not DoesEntityExist(vehicle) then return nil end
+    if not vehicle or vehicle == 0 or not DoesEntityExist(vehicle) then return nil end
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 or GetVehiclePedIsIn(ped, false) ~= vehicle then return nil end
 
     local rawPlate = GetVehicleNumberPlateText(vehicle) or ''
     local plate = normalizePlate(rawPlate)
-    local modelName = GetEntityModel(vehicle)
+    local modelHash = GetEntityModel(vehicle)
 
     -- Faction fleet vehicle?
     local factionId = Entity(vehicle).state.sunsetFactionVehicle
@@ -1174,20 +1178,29 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
         local row = MySQL.single.await([[
             SELECT v.id, v.model, v.props, v.insurance_points, v.insurance_level,
                    v.insurance_cost, v.destroyed, c.firstname, c.lastname,
-                   v.character_id
+                   v.character_id,
+                   GREATEST(0, COALESCE(TIMESTAMPDIFF(DAY, v.created_at, NOW()), 0)) AS ownership_days
             FROM vehicles v
             JOIN characters c ON c.id = v.character_id
             WHERE REPLACE(UPPER(v.plate),' ','') = ?
             LIMIT 1
         ]], { plate })
 
-        if row then
+        -- A matching plate alone is insufficient: world vehicles can reuse a plate.
+        if row and type(row.model) == 'string' and joaat(row.model) == modelHash then
             local displayModel = (row.model or ''):lower()
             local cleanPlate   = rawPlate:match('^%s*(.-)%s*$')
-            local isOwner      = row.character_id == char.id
+            local isOwner      = tonumber(row.character_id) == tonumber(char.id)
 
-            local props = (type(row.props) == 'string' and json.decode(row.props)) or {}
-            local odometer = props.odometer or 0
+            local props = type(row.props) == 'table' and row.props or {}
+            if type(row.props) == 'string' then
+                local ok, decoded = pcall(json.decode, row.props)
+                if ok and type(decoded) == 'table' then props = decoded
+                else print(('[sunset_vehicles] invalid props vehicle=%s'):format(row.id)) end
+            end
+            local odometer = math.max(0, tonumber(props.odometer) or 0)
+            local ownerName = ((row.firstname or '') .. ' ' .. (row.lastname or '')):match('^%s*(.-)%s*$')
+            local ownershipDays = math.max(0, math.floor(tonumber(row.ownership_days) or 0))
 
             if isOwner then
                 local baseCost = calculateVehicleInsuranceCost(row.model, row.insurance_cost)
@@ -1196,17 +1209,21 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
                     plate         = cleanPlate,
                     model         = displayModel,
                     odometer      = math.floor(odometer * 10) / 10,
+                    ownerName     = ownerName,
+                    ownershipDays = ownershipDays,
                     ins_level     = math.max(1, math.min(11, tonumber(row.insurance_level) or 1)),
                     ins_points    = math.max(0, tonumber(row.insurance_points) or 5),
                     claim_cost    = math.floor(baseCost * (tonumber(row.insurance_level) or 1)),
-                    destroyed     = row.destroyed == 1,
+                    destroyed     = row.destroyed == true or tonumber(row.destroyed) == 1,
                 }
             else
                 return {
                     category = 'personal_other',
                     plate    = cleanPlate,
                     model    = displayModel,
-                    ownerName = ((row.firstname or '') .. ' ' .. (row.lastname or '')):match('^%s*(.-)%s*$'),
+                    ownerName = ownerName,
+                    odometer = math.floor(odometer * 10) / 10,
+                    ownershipDays = ownershipDays,
                 }
             end
         end

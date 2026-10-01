@@ -53,26 +53,25 @@ local function runClanChat(source, args)
     local name = exports.sunset_core:GetPlayerBaseName(source)
     local clanId = tonumber(row.clan_id)
 
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        local targetCid = charId(src)
-        if not targetCid then goto continue end
+    local onlineChars = exports.sunset_core:GetOnlineCharacters()
+    local payload = {
+        id = source,
+        name = name,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = 'c',
+        clanRank = rank,
+        clanRankLabel = rankLabel,
+        clanTag = row.tag,
+        clanTagColor = row.tag_color,
+        clanTagStyle = row.tag_style,
+    }
+
+    for targetCid, src in pairs(onlineChars) do
         local member = ClanDisplay.getMembership(targetCid)
         if member and tonumber(member.clan_id) == clanId then
-            TriggerClientEvent('sunset:chat:message', src, {
-                id = source,
-                name = name,
-                message = msg,
-                time = os.date('%H:%M:%S'),
-                type = 'c',
-                clanRank = rank,
-                clanRankLabel = rankLabel,
-                clanTag = row.tag,
-                clanTagColor = row.tag_color,
-                clanTagStyle = row.tag_style,
-            })
+            TriggerClientEvent('sunset:chat:message', src, payload)
         end
-        ::continue::
     end
 end
 

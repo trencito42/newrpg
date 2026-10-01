@@ -205,10 +205,20 @@ local function activateHud(character)
     if data then nui('updateHud', data) end
 end
 
+local lastHudHash = ''
 local function updateHud()
     if not hudActive then return end
     local data = buildHudData()
-    if data then nui('updateHud', data) end
+    if not data then return end
+    local hash = string.format('%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s',
+        tostring(data.health), tostring(data.armor), tostring(data.hunger), tostring(data.thirst),
+        tostring(data.cash), tostring(data.bank), tostring(data.level), tostring(data.street),
+        tostring(data.zone), tostring(data.wanted), tostring(data.gameTime), tostring(data.fuel),
+        tostring(data.inVehicle))
+    if hash ~= lastHudHash then
+        lastHudHash = hash
+        nui('updateHud', data)
+    end
 end
 
 AddEventHandler('sunset:client:playerSpawned', function(character)
@@ -246,10 +256,8 @@ exports('GetPaydaySeconds', GetPaydaySeconds)
 CreateThread(function()
     while true do
         if hudActive and not pauseHidden then
-            local veh = nil
-            pcall(function() veh = exports.sunset_vehicles:GetVehicleState() end)
             updateHud()
-            Wait(veh and 125 or 500)
+            Wait(500)
         else
             Wait(1000)
         end

@@ -398,7 +398,7 @@ const ClanPanels = {
         const select = $('#clan-manage-select');
         const targetCharacterId = Number(select?.value);
         if (!targetCharacterId) {
-            notify('Select a member from the list.', 'error');
+            notify(I18n.t('clans.select_member'), 'error');
             return;
         }
 
@@ -406,12 +406,12 @@ const ClanPanels = {
     },
 
     requestLeave() {
-        notify('Processing clan leave...', 'info', 2500);
+        notify(I18n.t('clans.leaving'), 'info', 2500);
         post('clanManage', { action: 'leave' });
     },
 
     requestDissolve() {
-        notify('Disbanding clan...', 'warning', 2500);
+        notify(I18n.t('clans.disbanding'), 'warning', 2500);
         post('clanManage', { action: 'dissolve' });
     },
 

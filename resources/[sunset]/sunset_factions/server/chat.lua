@@ -78,12 +78,37 @@ local function sendFactionChat(source, channel, args, filterFn)
     local rank = FactionLabels.get(factionId, grade)
 
     local recipients = {}
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
+    local members = FactionCore.getOnlineFactionMembers(factionId)
+    local payload = attachSpeakerIdentity({
+        id = source,
+        message = msg,
+        time = os.date('%H:%M:%S'),
+        type = channel,
+        factionId = factionId,
+        factionLabel = label,
+        rank = rank,
+    }, source, { setName = true })
+
+    for _, src in ipairs(members) do
         local c = FactionCore.getChar(src)
         if c and filterFn(src, c, factionId) then
             recipients[src] = true
-            local payload = attachSpeakerIdentity({
+            TriggerClientEvent('sunset:chat:message', src, payload)
+        end
+    end
+
+    -- Deliver spy payload to on-duty authorized staff
+    local staffList = {}
+    if GetResourceState('sunset_admin') == 'started' then
+        pcall(function()
+            if exports.sunset_admin.GetOnlineStaff then
+                staffList = exports.sunset_admin:GetOnlineStaff() or {}
+            end
+        end)
+    end
+    for _, src in ipairs(staffList) do
+        if src ~= source and not recipients[src] and canSpyFactionChat(src) then
+            local spyPayload = attachSpeakerIdentity({
                 id = source,
                 message = msg,
                 time = os.date('%H:%M:%S'),
@@ -91,27 +116,11 @@ local function sendFactionChat(source, channel, args, filterFn)
                 factionId = factionId,
                 factionLabel = label,
                 rank = rank,
+                spy = true,
+                spyChannel = spyChannelLabel(channel),
             }, source, { setName = true })
-            TriggerClientEvent('sunset:chat:message', src, payload)
+            TriggerClientEvent('sunset:chat:message', src, spyPayload)
         end
-    end
-
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        if src == source or recipients[src] or not canSpyFactionChat(src) then goto continue_spy end
-        local spyPayload = attachSpeakerIdentity({
-            id = source,
-            message = msg,
-            time = os.date('%H:%M:%S'),
-            type = channel,
-            factionId = factionId,
-            factionLabel = label,
-            rank = rank,
-            spy = true,
-            spyChannel = spyChannelLabel(channel),
-        }, source, { setName = true })
-        TriggerClientEvent('sunset:chat:message', src, spyPayload)
-        ::continue_spy::
     end
 end
 

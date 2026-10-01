@@ -5,7 +5,7 @@ SunsetSkins = {}
 SunsetSkins.ShopNPC = {
     model  = 'mp_m_shopkeep_01',
     coords = vector4(-706.15, -152.15, 37.42, 329.42),
-    blip   = { sprite = 366, color = 8, scale = 0.85, label = 'Skin Shop' },
+    blip   = { sprite = 366, color = 8, scale = 0.85, labelKey = 'skins.blip.shop' },
 }
 
 -- GTA ped model skin list.

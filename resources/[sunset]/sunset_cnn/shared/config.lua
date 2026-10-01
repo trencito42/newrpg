@@ -3,10 +3,8 @@ Config = Config or {}
 Config.CNN = {
     -- Locations where players can post CNN advertisements
     locations = {
-        { coords = vector3(-1082.0, -247.5, 37.8), radius = 6.0, name = 'Weazel News Headquarters (Little Seoul)' },
-        { coords = vector3(-596.5, -929.8, 23.9), radius = 6.0, name = 'Los Santos CNN Office (Pillbox Hill)' },
-        { coords = vector3(-118.0, 6467.5, 31.6), radius = 6.0, name = 'Paleto Bay News Station' },
-        { coords = vector3(1853.5, 3687.5, 34.2), radius = 6.0, name = 'Sandy Shores Local Station' },
+        -- Public pavement at the actual Weazel News building entrance.
+        { coords = vector3(-598.27, -929.87, 23.86), radius = 4.0, nameKey = 'cnn.location.weazel_hq' },
     },
 
     -- Economic and timing parameters (SA:MP RPG standard)
@@ -24,6 +22,6 @@ Config.CNN = {
         sprite = 459,          -- News / Microphone icon
         color = 2,             -- Green
         scale = 0.8,
-        label = 'CNN - Announcements',
+        labelKey = 'cnn.blip.announcements',
     },
 }

@@ -214,7 +214,7 @@ const FactionPanels = {
         const select = $('#faction-manage-select');
         const characterId = Number(select?.value);
         if (!characterId) {
-            return notify('Select a member first.', 'error');
+            return notify(I18n.t('factions.select_member'), 'error');
         }
         if (action === 'rankDelta') {
             this.postAction('rankDelta', { characterId, delta: payload });
@@ -685,7 +685,7 @@ const FactionPanels = {
         if (action === 'invite') {
             const targetId = Math.floor(Number(data.get('targetId')));
             if (!targetId || targetId < 1) {
-                return notify('Enter a valid Server ID (hold Z for the list).', 'error');
+                return notify(I18n.t('factions.valid_server_id'), 'error');
             }
             payload.targetId = targetId;
         }
@@ -694,7 +694,7 @@ const FactionPanels = {
         if (action === 'warn') {
             const targetId = Math.floor(Number(data.get('targetId')));
             if (!targetId || targetId < 1) {
-                return notify('Enter a valid Server ID (hold Z for the list).', 'error');
+                return notify(I18n.t('factions.valid_server_id'), 'error');
             }
             payload.targetId = targetId;
             payload.reason = String(data.get('reason') || 'No reason given').trim();

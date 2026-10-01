@@ -3,6 +3,51 @@ FactionCore = {}
 
 local OnDuty = OnDuty or {}
 local RateLimits = {}
+local OnlineFactionMembers = {}
+local MemberFaction = {}
+
+function FactionCore.registerOnlineMember(source, factionId)
+    source = tonumber(source)
+    if not source or not factionId then return end
+    FactionCore.unregisterOnlineMember(source)
+    OnlineFactionMembers[factionId] = OnlineFactionMembers[factionId] or {}
+    OnlineFactionMembers[factionId][source] = true
+    MemberFaction[source] = factionId
+end
+
+function FactionCore.unregisterOnlineMember(source)
+    source = tonumber(source)
+    if not source then return end
+    local oldFaction = MemberFaction[source]
+    if oldFaction and OnlineFactionMembers[oldFaction] then
+        OnlineFactionMembers[oldFaction][source] = nil
+    end
+    MemberFaction[source] = nil
+    OnDuty[source] = nil
+end
+
+function FactionCore.getOnlineFactionMembers(factionId)
+    local list = {}
+    if factionId and OnlineFactionMembers[factionId] then
+        for src in pairs(OnlineFactionMembers[factionId]) do
+            list[#list + 1] = src
+        end
+    else
+        -- Fallback scan if not yet indexed
+        for _, id in ipairs(GetPlayers()) do
+            local src = tonumber(id)
+            if src then
+                local c = FactionCore.getChar(src)
+                local fid = c and FactionCore.getFactionOf(c)
+                if fid == factionId then
+                    list[#list + 1] = src
+                    FactionCore.registerOnlineMember(src, fid)
+                end
+            end
+        end
+    end
+    return list
+end
 
 function FactionCore.getChar(source)
     return exports.sunset_core:GetCharacter(source)

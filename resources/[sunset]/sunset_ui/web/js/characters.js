@@ -124,7 +124,7 @@ const Characters = {
         };
 
         if (!data.firstname || !data.lastname || !data.dateofbirth) {
-            notify('Please fill in all fields', 'error');
+            notify(I18n.t('characters.fill_all_fields'), 'error');
             return;
         }
 

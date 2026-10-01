@@ -503,7 +503,7 @@
         executeQuickCash(amount) {
             if (this.data.bank < amount) {
                 this.sound.playBeep(400);
-                showNotify('Insufficient bank balance.', 'error');
+                showNotify(I18n.t('atm.insufficient_bank'), 'error');
                 return;
             }
             this.startTransaction('withdraw', amount);
@@ -512,7 +512,7 @@
         executeDeposit(amount) {
             if (this.data.cash < amount) {
                 this.sound.playBeep(400);
-                showNotify('You do not have enough cash.', 'error');
+                showNotify(I18n.t('atm.insufficient_cash'), 'error');
                 return;
             }
             this.startTransaction('deposit', amount);
@@ -522,7 +522,7 @@
             const amount = this.data.cash;
             if (amount < 1) {
                 this.sound.playBeep(400);
-                showNotify('You have no cash available to deposit.', 'warning');
+                showNotify(I18n.t('atm.no_cash_to_deposit'), 'warning');
                 return;
             }
             this.startTransaction('deposit', amount);
@@ -539,19 +539,19 @@
             const amount = Number(this.customAmount || 0);
             if (amount < 1) {
                 this.sound.playBeep(400);
-                showNotify('Enter a valid amount greater than $0.', 'warning');
+                showNotify(I18n.t('atm.valid_amount'), 'warning');
                 return;
             }
 
             if (this.customAction === 'withdraw' && this.data.bank < amount) {
                 this.sound.playBeep(400);
-                showNotify('Insufficient bank balance.', 'error');
+                showNotify(I18n.t('atm.insufficient_bank'), 'error');
                 return;
             }
 
             if (this.customAction === 'deposit' && this.data.cash < amount) {
                 this.sound.playBeep(400);
-                showNotify('You do not have enough cash in your wallet.', 'error');
+                showNotify(I18n.t('atm.insufficient_cash'), 'error');
                 return;
             }
 

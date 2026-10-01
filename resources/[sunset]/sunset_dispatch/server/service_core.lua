@@ -17,12 +17,7 @@ local function getChar(source)
 end
 
 local function findSourceByCharacterId(characterId)
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        local c = getChar(src)
-        if c and c.id == characterId then return src end
-    end
-    return nil
+    return exports.sunset_core:GetSourceByCharacterId(characterId)
 end
 
 local function playerCoords(source)

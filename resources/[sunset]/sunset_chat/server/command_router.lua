@@ -91,10 +91,7 @@ local RESOURCE_COMMAND_EXPORTS = {
     'sunset_properties',
     'sunset_licenses',
     'sunset_jobs',
-    'sunset_pass',
-    'sunset_economy',
     'sunset_businesses',
-    'sunset_clans',
     'sunset_turfs',
     'sunset_cnn',
 }
@@ -106,6 +103,15 @@ local function tryRunResourceCommand(src, cmd, args)
                 return exports[resource]:ExecutePlayerCommand(src, cmd, args)
             end)
             if ok and result then return true end
+            if not ok then
+                print(('[sunset_chat] command export failure resource=%s command=%s player=%s error=%s')
+                    :format(resource, cmd, src, tostring(result)))
+                if resource == 'sunset_cnn' and ({ ad=true, myad=true, ads=true, adlist=true,
+                    acceptad=true, aad=true, deletead=true, dad=true, rejectad=true, admute=true })[cmd] then
+                    chatSystem(src, t(src, 'chat.command.failed', { command = cmd }), 'error')
+                    return true -- never retry a potentially side-effecting submission through native routing
+                end
+            end
         end
     end
     return false

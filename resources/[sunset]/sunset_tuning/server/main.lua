@@ -182,7 +182,12 @@ exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, 
         return nil, failure or 'The tune was not saved and you were not charged. Try again.'
     end
 
-    TriggerClientEvent('sunset:tuning:client:applyByPlate', -1, newPlate or plate, sanitized, modelName)
+    local veh = activeVehicle(source, plate, true)
+    if veh and DoesEntityExist(veh) then
+        Entity(veh).state:set('sunsetTune', sanitized, true)
+        Entity(veh).state:set('sunsetCosmetics', sanitizedCosmetics, true)
+    end
+    TriggerClientEvent('sunset:tuning:client:applyByPlate', source, newPlate or plate, sanitized, modelName)
     return { tune = sanitized, cost = cost, plate = newPlate or plate, cosmetics = sanitizedCosmetics, model = modelName }
 end)
 
@@ -315,8 +320,11 @@ RegisterNetEvent('sunset:tuning:flashApplied', function(plate, tune)
     local row = getOwnedVehicleRow(char.id, plate)
     if not row then return end
     local props = decodeProps(row.props)
-    if not props.ecu then return end
-    TriggerClientEvent('sunset:tuning:client:applyByPlate', -1, plate, SunsetTuning.SanitizeTune(props.ecu))
+    local sanitizedTune = SunsetTuning.SanitizeTune(props.ecu)
+    if DoesEntityExist(veh) then
+        Entity(veh).state:set('sunsetTune', sanitizedTune, true)
+    end
+    TriggerClientEvent('sunset:tuning:client:applyByPlate', src, plate, sanitizedTune)
 end)
 
 RegisterNetEvent('sunset:tuning:syncExhaustFx', function(netId, fxType, intensity, color, withFlames)

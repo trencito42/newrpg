@@ -1,5 +1,15 @@
 local shopOpen = false
 local shopNPC  = nil
+local shopBlip = nil
+
+local function updateShopBlipName()
+    if not shopBlip or not DoesBlipExist(shopBlip) then return end
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(exports.sunset_core:Translate(SunsetSkins.ShopNPC.blip.labelKey))
+    EndTextCommandSetBlipName(shopBlip)
+end
+
+AddEventHandler('sunset:client:onLocaleChanged', updateShopBlipName)
 
 -- Apply a GTA ped model to the local player (RUNTIME changes only — NOT during spawn)
 local function applyModel(model)
@@ -46,7 +56,7 @@ local function openShop(defaultCat)
     if shopOpen then return end
     local skins, err = Sunset.AwaitCallback('skins:getAll')
     if not skins then
-        exports.sunset_ui:Notify(err or 'Could not load skins', 'error', 5000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('skins.message.load_failed'), 'error', 5000)
         return
     end
     shopOpen = true
@@ -70,7 +80,7 @@ AddEventHandler('sunset:nui:skinShopBuy', function(data)
         local skins = Sunset.AwaitCallback('skins:getAll')
         exports.sunset_ui:Send('skinShopUpdate', { skins = skins or {} })
     else
-        exports.sunset_ui:Notify(err or 'Purchase failed', 'error', 5000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('skins.message.purchase_failed'), 'error', 5000)
     end
 end)
 
@@ -85,7 +95,7 @@ AddEventHandler('sunset:nui:skinShopEquip', function(data)
             exports.sunset_ui:Notify(exports.sunset_core:Translate('skins.message.skin_equipped'), 'success', 3000)
         end
     else
-        exports.sunset_ui:Notify(err or 'Equip failed', 'error', 5000)
+        exports.sunset_ui:Notify(err or exports.sunset_core:Translate('skins.message.equip_failed'), 'error', 5000)
     end
 end)
 
@@ -162,20 +172,18 @@ CreateThread(function()
     FreezeEntityPosition(shopNPC, true)
     SetModelAsNoLongerNeeded(model)
 
-    local blip = AddBlipForCoord(cx, cy, cz)
-    SetBlipSprite(blip, cfg.blip.sprite)
-    SetBlipColour(blip, cfg.blip.color)
-    SetBlipScale(blip, cfg.blip.scale)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentSubstringPlayerName(cfg.blip.label)
-    EndTextCommandSetBlipName(blip)
+    shopBlip = AddBlipForCoord(cx, cy, cz)
+    SetBlipSprite(shopBlip, cfg.blip.sprite)
+    SetBlipColour(shopBlip, cfg.blip.color)
+    SetBlipScale(shopBlip, cfg.blip.scale)
+    SetBlipAsShortRange(shopBlip, true)
+    updateShopBlipName()
 
     -- Proximity loop: show [E] prompt and handle interaction
     while true do
-        Wait(0)
         local pos  = GetEntityCoords(PlayerPedId())
         local dist = #(pos - vector3(cx, cy, cz))
+        Wait(dist < 5.0 and 0 or 1000)
 
         if dist < 3.0 then
             local onScreen, sx, sy = World3dToScreen2d(cx, cy, cz + 1.0)
@@ -186,7 +194,7 @@ CreateThread(function()
                 SetTextColour(255, 255, 255, 220)
                 SetTextEntry('STRING')
                 SetTextCentre(1)
-                AddTextComponentString('[E] Skin Shop')
+                AddTextComponentString(exports.sunset_core:Translate('skins.prompt.open_shop'))
                 DrawText(sx, sy)
             end
             if IsControlJustPressed(0, 38) and not shopOpen then
@@ -194,4 +202,10 @@ CreateThread(function()
             end
         end
     end
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    if shopBlip and DoesBlipExist(shopBlip) then RemoveBlip(shopBlip) end
+    if shopNPC and DoesEntityExist(shopNPC) then DeleteEntity(shopNPC) end
 end)

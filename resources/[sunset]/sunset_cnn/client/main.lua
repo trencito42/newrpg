@@ -5,6 +5,10 @@
 
 local Blips = {}
 
+local function tr(key, params)
+    return exports.sunset_core:Translate(key, params)
+end
+
 local function setupBlips()
     for _, b in ipairs(Blips) do
         if DoesBlipExist(b) then RemoveBlip(b) end
@@ -21,7 +25,7 @@ local function setupBlips()
         SetBlipColour(blip, blipCfg.color or 2)
         SetBlipAsShortRange(blip, true)
         BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(blipCfg.label or 'CNN - Announcements')
+        AddTextComponentSubstringPlayerName(tr(blipCfg.labelKey or 'cnn.blip.announcements'))
         EndTextCommandSetBlipName(blip)
         Blips[#Blips + 1] = blip
     end
@@ -47,7 +51,9 @@ CreateThread(function()
                     )
                     if dist <= (loc.radius or 6.0) then
                         BeginTextCommandDisplayHelp('STRING')
-                        AddTextComponentSubstringPlayerName('Type ~g~/ad [text]~s~ to publish a CNN announcement ($' .. (Config.CNN.price or 500) .. ').')
+                        AddTextComponentSubstringPlayerName(tr('cnn.prompt.submit_ad', {
+                            price = Config.CNN.price or 500,
+                        }))
                         EndTextCommandDisplayHelp(0, false, true, -1)
                     end
                 end
@@ -55,6 +61,10 @@ CreateThread(function()
         end
         Wait(wait)
     end
+end)
+
+AddEventHandler('sunset:client:localeChanged', function()
+    setupBlips()
 end)
 
 AddEventHandler('onResourceStop', function(res)

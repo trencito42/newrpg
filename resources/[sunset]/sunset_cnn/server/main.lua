@@ -7,9 +7,14 @@ local AdQueue = {} -- In-memory ordered queue of pending/approved ads
 local PlayerCooldowns = {} -- [charId] = timestamp
 local AdMutes = {} -- [license] = { expiresAt = ..., reason = ..., by = ... }
 local AdMutex = {} -- [adId] = true during atomic operations
+local SubmissionBusy = false -- serialize queue capacity/ETA across yielding DB transactions
 
 local function log(msg)
     print(('[sunset_cnn] %s'):format(msg))
+end
+
+local function t(source, key, params)
+    return exports.sunset_core:TFor(source, key, params)
 end
 
 local function getDisplayName(src)
@@ -26,7 +31,7 @@ local function cleanText(value, maxLength)
     local text = value:gsub('[%z\1-\8\11\12\14-\31\127]', '')
     text = text:match('^%s*(.-)%s*$') or ''
     if text == '' then return nil end
-    return text:sub(1, maxLength or Config.CNN.maxLength or 140)
+    return text
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -70,7 +75,8 @@ local function initDatabase()
 
     -- Load active ad mutes from database
     local mutes = MySQL.query.await([[
-        SELECT * FROM cnn_ad_mutes WHERE expires_at > NOW()
+        SELECT *, TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS expires_diff
+        FROM cnn_ad_mutes WHERE expires_at > NOW()
     ]]) or {}
     for _, m in ipairs(mutes) do
         local expUnix = os.time() + math.max(0, math.floor(tonumber(m.expires_diff or 0)))
@@ -134,7 +140,7 @@ exports('IsAdMuted', IsAdMuted)
 function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
     targetSrc = tonumber(targetSrc)
     minutes = math.max(1, tonumber(minutes) or 15)
-    reason = cleanText(reason, 200) or 'Abuz anunturi CNN'
+    reason = cleanText(reason, 200) or 'Advertisement abuse'
     local adminName = getDisplayName(adminSrc)
     local license = Sunset.GetIdentifier(targetSrc, 'license')
     if not license then return false, { localeKey = 'cnn.message.player_not_found_or_invalid_identifier' } end
@@ -156,16 +162,16 @@ function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
 
     local targetName = getDisplayName(targetSrc)
     TriggerClientEvent('sunset:chat:system', targetSrc,
-        ('You have been ad-muted for %d minute(s) by %s. Reason: %s'):format(minutes, adminName, reason), 'error')
+        t(targetSrc, 'cnn.message.ad_muted', { minutes = minutes, admin = adminName, reason = reason }), 'error')
 
     -- Staff broadcast
-    local staffMsg = ('[CNN MUTE] %s l-a sanctionat pe %s cu AD-MUTE (%d min). Motiv: %s'):format(
-        adminName, targetName, minutes, reason
-    )
     for _, id in ipairs(GetPlayers()) do
         local pid = tonumber(id)
         if pid and exports.sunset_admin:IsStaff(pid) then
-            TriggerClientEvent('sunset:chat:system', pid, staffMsg, 'warning')
+            TriggerClientEvent('sunset:chat:system', pid,
+                t(pid, 'cnn.message.staff_ad_muted', {
+                    admin = adminName, player = targetName, minutes = minutes, reason = reason,
+                }), 'warning')
         end
     end
 
@@ -218,17 +224,16 @@ local function sendStaffPreview(ad)
     local etaRemSec = etaSec % 60
     local etaStr = ('%02d:%02d'):format(etaMin, etaRemSec)
 
-    local previewMsg = ('[CNN Preview #%d] %s (%s): "%s" | Publishing in: %s'):format(
-        ad.id, ad.playerName, tostring(ad.src or '?'), ad.text, etaStr
-    )
-
     for _, id in ipairs(GetPlayers()) do
         local pid = tonumber(id)
         if pid and exports.sunset_admin:IsStaff(pid) then
             TriggerClientEvent('sunset:chat:message', pid, {
                 id = 0,
                 name = 'CNN',
-                message = previewMsg,
+                message = t(pid, 'cnn.message.staff_preview', {
+                    id = ad.id, player = ad.playerName, serverId = tostring(ad.src or '?'),
+                    text = ad.text, eta = etaStr,
+                }),
                 time = os.date('%H:%M:%S'),
                 type = 'staff_chat',
                 staffRole = 'CNN PREVIEW',
@@ -266,7 +271,7 @@ local function publishAd(ad)
     -- If author is online, notify them
     if ad.src and GetPlayerPing(ad.src) > 0 then
         TriggerClientEvent('sunset:chat:system', ad.src,
-            ('Your announcement (#%d) has been published on the server.'):format(ad.id), 'success')
+            t(ad.src, 'cnn.message.published', { id = ad.id }), 'success')
     end
 
     log(('Published CNN ad #%d by %s: "%s"'):format(ad.id, ad.playerName, ad.text))
@@ -318,7 +323,7 @@ function ApproveAd(adId, staffSrc)
 
     if staffSrc and staffSrc ~= 0 then
         TriggerClientEvent('sunset:chat:system', staffSrc,
-            ('You approved CNN announcement #%d (%s).'):format(adId, found.playerName), 'success')
+            t(staffSrc, 'cnn.message.approved', { id = adId, player = found.playerName }), 'success')
     end
 
     log(('Staff %s approved CNN ad #%d'):format(staffName, adId))
@@ -333,7 +338,7 @@ function RejectAd(adId, staffSrc, reason)
     AdMutex[adId] = true
 
     local staffName = getDisplayName(staffSrc)
-    reason = cleanText(reason, 200) or 'Continut neadecvat / Nerespectare regulament'
+    reason = cleanText(reason, 200) or 'Inappropriate content'
 
     local foundIndex = nil
     local found = nil
@@ -371,12 +376,14 @@ function RejectAd(adId, staffSrc, reason)
     -- Notify author if online
     if found.src and GetPlayerPing(found.src) > 0 then
         TriggerClientEvent('sunset:chat:system', found.src,
-            ('Anunțul tău CNN (#%d) a fost RESPINS de %s. Motiv: %s'):format(adId, staffName, reason), 'error')
+            t(found.src, 'cnn.message.rejected', { id = adId, staff = staffName, reason = reason }), 'error')
     end
 
     if staffSrc and staffSrc ~= 0 then
         TriggerClientEvent('sunset:chat:system', staffSrc,
-            ('You rejected CNN announcement #%d (%s). Reason: %s'):format(adId, found.playerName, reason), 'success')
+            t(staffSrc, 'cnn.message.rejected_staff', {
+                id = adId, player = found.playerName, reason = reason,
+            }), 'success')
     end
 
     recalculateQueue()
@@ -417,13 +424,13 @@ local function isPlayerAtCnn(source)
     for _, loc in ipairs(Config.CNN.locations) do
         local dist = #(pCoords - loc.coords)
         if dist <= (loc.radius or 6.0) then
-            return true, loc.name
+        return true, loc.nameKey
         end
     end
     return false
 end
 
-function SubmitAd(source, text)
+local function submitAdLocked(source, text)
     local src = source
     if src == 0 then return false, { localeKey = 'cnn.message.must_be_used_in_game' } end
 
@@ -438,8 +445,12 @@ function SubmitAd(source, text)
 
     -- Mute checks
     local okAdmin, isMuted, mMin, mReason = pcall(function() return exports.sunset_admin:IsMuted(src) end)
+    if not okAdmin then
+        log(('admin mute check failed player=%s error=%s'):format(src, tostring(isMuted)))
+        return false, { localeKey = 'cnn.message.could_not_submit_ad' }
+    end
     if okAdmin and isMuted then
-        return false, { localeKey = 'cnn.message.you_are_currently_muted_value_min_reason_value', formatArgs = { mMin or 1, mReason or 'Sanctiune' } }
+        return false, { localeKey = 'cnn.message.you_are_currently_muted_value_min_reason_value', formatArgs = { mMin or 1, mReason or 'Sanction' } }
     end
 
     local isAdMuted, admMin, admReason = IsAdMuted(src)
@@ -463,7 +474,8 @@ function SubmitAd(source, text)
 
     -- Clean & length check
     local clean = cleanText(text, Config.CNN.maxLength or 140)
-    if not clean or #clean < (Config.CNN.minLength or 5) then
+    local length = clean and utf8.len(clean)
+    if not length or length < (Config.CNN.minLength or 5) or length > (Config.CNN.maxLength or 140) then
         return false, { localeKey = 'cnn.message.ad_text_must_be_between_value_and_value_characters', formatArgs = {
             Config.CNN.minLength or 5, Config.CNN.maxLength or 140
          } }
@@ -477,13 +489,7 @@ function SubmitAd(source, text)
         return false, { localeKey = 'cnn.message.you_do_not_have_enough_money_to_pay_for', formatArgs = { price } }
     end
 
-    if cash >= price then
-        exports.sunset_core:RemoveMoney(src, 'cash', price, 'CNN Ad Submission')
-    else
-        exports.sunset_core:RemoveMoney(src, 'bank', price, 'CNN Ad Submission')
-    end
-
-    PlayerCooldowns[char.id] = now
+    local account = cash >= price and 'cash' or 'bank'
 
     local pName = getDisplayName(src)
     local phone = char.phone_number or char.phone or nil
@@ -501,10 +507,21 @@ function SubmitAd(source, text)
     scheduledAt = math.min(scheduledAt, now + maxCap)
 
     -- Insert into DB
-    local insertId = MySQL.insert.await([[
-        INSERT INTO cnn_ads (character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at)
-        VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?))
-    ]], { char.id, pName, phone, clean, price, scheduledAt })
+    local insertId
+    local committed = MySQL.startTransaction(function(query)
+        local charged = exports.sunset_core:DebitMoneyInTransaction(char.id, account, price, query.await)
+        if not charged then return false end
+        insertId = query.await([[
+            INSERT INTO cnn_ads (character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at)
+            VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?))
+        ]], { char.id, pName, phone, clean, price, scheduledAt })
+        return tonumber(insertId) ~= nil and tonumber(insertId) > 0
+    end)
+    if not committed then
+        log(('submission transaction rolled back player=%s character=%s'):format(src, char.id))
+        return false, { localeKey = 'cnn.message.could_not_submit_ad' }
+    end
+    PlayerCooldowns[char.id] = now
 
     local adObj = {
         id = tonumber(insertId),
@@ -521,13 +538,24 @@ function SubmitAd(source, text)
     }
 
     AdQueue[#AdQueue + 1] = adObj
+    local refreshOk, refreshed = pcall(function() return exports.sunset_core:RefreshMoney(src) end)
+    if not refreshOk or refreshed ~= true then
+        log(('money refresh failed player=%s error=%s'):format(src, tostring(refreshed)))
+    else
+        local updatedChar = exports.sunset_core:GetCharacter(src)
+        local balance = updatedChar and tonumber(updatedChar[account]) or 0
+        local logOk, logResult = pcall(function()
+            return exports.sunset_core:LogMoneyTransaction(char.id, account, 'out', price, 'CNN Ad Submission', balance)
+        end)
+        if not logOk or logResult == false then
+            log(('money audit log failed player=%s character=%s error=%s'):format(src, char.id, tostring(logResult)))
+        end
+    end
     recalculateQueue()
 
     local waitSec = math.max(1, adObj.scheduledAt - now)
     TriggerClientEvent('sunset:chat:system', src,
-        ('[Info]: You paid $%d. Your announcement (#%d) has been submitted and will be published in approximately %d seconds.'):format(
-            price, adObj.id, waitSec
-        ), 'info')
+        t(src, 'cnn.message.submitted', { price = price, id = adObj.id, seconds = waitSec }), 'info')
 
     -- Send private staff preview
     sendStaffPreview(adObj)
@@ -537,6 +565,18 @@ function SubmitAd(source, text)
     ))
 
     return true, adObj
+end
+
+function SubmitAd(source, text)
+    if SubmissionBusy then return false, { localeKey = 'cnn.message.submission_busy' } end
+    SubmissionBusy = true
+    local ok, result, detail = xpcall(function() return submitAdLocked(source, text) end, debug.traceback)
+    SubmissionBusy = false
+    if not ok then
+        log(('submission failure player=%s error=%s'):format(source, tostring(result)))
+        return false, { localeKey = 'cnn.message.could_not_submit_ad' }
+    end
+    return result, detail
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -605,7 +645,7 @@ exports.sunset_core:RegisterCallback('sunset:cnn:action', function(source, actio
     if action == 'approve' then
         return ApproveAd(adId, source)
     elseif action == 'reject' then
-        local reason = extra and extra.reason or 'Continut neadecvat'
+        local reason = extra and extra.reason or 'Inappropriate content'
         return RejectAd(adId, source, reason)
     elseif action == 'admute' then
         local targetSrc = extra and extra.targetSrc or nil
@@ -634,20 +674,11 @@ end
 
 -- /ad [text] — Player submit ad at CNN
 RegisterCommand('ad', function(source, args)
-    if source == 0 then return end
-    local text = table.concat(args, ' ')
-    if text == '' then
-        TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
-        return
-    end
-    local ok, err = SubmitAd(source, text)
-    if not ok then
-        TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error')
-    end
+    RunChatCommand(source, 'ad', args)
 end, false)
 
 -- /myad — Player check their active queued ad
-RegisterCommand('myad', function(source, args)
+local function myAdCommand(source)
     if source == 0 then return end
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return end
@@ -662,7 +693,7 @@ RegisterCommand('myad', function(source, args)
     end
 
     if not found then
-        TriggerClientEvent('sunset:chat:system', source, 'You have no active announcement in the CNN queue.', 'info')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.no_active_ad'), 'info')
         return
     end
 
@@ -670,20 +701,24 @@ RegisterCommand('myad', function(source, args)
     local min = math.floor(remSec / 60)
     local sec = remSec % 60
     TriggerClientEvent('sunset:chat:system', source,
-        ('[CNN] Anunțul tău (#%d): Status: %s | Poziție în coadă: %d | Timp estimat: %02d:%02d'):format(
-            found.ad.id, string.upper(found.ad.status), found.pos, min, sec
-        ), 'info')
-end, false)
+        t(source, 'cnn.message.my_ad', {
+            id = found.ad.id,
+            status = t(source, 'cnn.status.' .. found.ad.status),
+            position = found.pos,
+            eta = ('%02d:%02d'):format(min, sec),
+        }), 'info')
+end
+RegisterCommand('myad', function(source) myAdCommand(source) end, false)
 
 -- /ads /adlist — Staff view pending ads
 local function listAdsCommand(source)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.staff_only'), 'error')
         return
     end
 
     if #AdQueue == 0 then
-        if source == 0 then print('[CNN] No pending ads.') else TriggerClientEvent('sunset:chat:system', source, '[CNN] No announcements waiting.', 'info') end
+        if source == 0 then print('[CNN] No pending ads.') else TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.no_pending_ads'), 'info') end
         return
     end
 
@@ -695,15 +730,18 @@ local function listAdsCommand(source)
             print(('  #%d | ID %d | %s: "%s" | [%s] in %ds'):format(idx, ad.id, ad.playerName, ad.text, ad.status, rem))
         end
     else
-        TriggerClientEvent('sunset:chat:system', source, ('[CNN Queue] %d pending announcement(s):'):format(#AdQueue), 'info')
+        TriggerClientEvent('sunset:chat:system', source,
+            t(source, 'cnn.message.queue_header', { count = #AdQueue }), 'info')
         for idx, ad in ipairs(AdQueue) do
             local rem = math.max(0, ad.scheduledAt - now)
             local min = math.floor(rem / 60)
             local sec = rem % 60
             TriggerClientEvent('sunset:chat:system', source,
-                ('  [#%d] ID: %d | %s (#%s) [%s]: "%s" (Publishing in %02d:%02d)'):format(
-                    idx, ad.id, ad.playerName, tostring(ad.src or '?'), string.upper(ad.status), ad.text, min, sec
-                ), 'info')
+                t(source, 'cnn.message.queue_item', {
+                    position = idx, id = ad.id, player = ad.playerName,
+                    serverId = tostring(ad.src or '?'), status = t(source, 'cnn.status.' .. ad.status),
+                    text = ad.text, eta = ('%02d:%02d'):format(min, sec),
+                }), 'info')
         end
     end
 end
@@ -714,17 +752,17 @@ RegisterCommand('adlist', function(source, args) listAdsCommand(source) end, fal
 -- /acceptad [id] / /aad [id]
 local function acceptAdCommand(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.staff_only'), 'error')
         return
     end
     local adId = tonumber(args[1])
     if not adId then
-        if source == 0 then print('Usage: /acceptad [adId]') else TriggerClientEvent('sunset:chat:system', source, 'Usage: /acceptad [adId] (sau /aad [adId])', 'warning') end
+        if source == 0 then print('Usage: /acceptad [adId]') else TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.usage_acceptad'), 'warning') end
         return
     end
     local ok, err = ApproveAd(adId, source)
     if not ok then
-        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, err, 'error') end
+        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error') end
     end
 end
 
@@ -734,19 +772,19 @@ RegisterCommand('aad', function(source, args) acceptAdCommand(source, args) end,
 -- /deletead [id] / /dad [id] / /rejectad [id] [reason]
 local function deleteAdCommand(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.staff_only'), 'error')
         return
     end
     local adId = tonumber(args[1])
     if not adId then
-        if source == 0 then print('Usage: /deletead [adId] [reason]') else TriggerClientEvent('sunset:chat:system', source, 'Usage: /deletead [adId] [motiv] (sau /dad, /rejectad)', 'warning') end
+        if source == 0 then print('Usage: /deletead [adId] [reason]') else TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.usage_deletead'), 'warning') end
         return
     end
     local reason = table.concat(args, ' ', 2)
-    if reason == '' then reason = 'Continut neadecvat' end
+    if reason == '' then reason = 'Inappropriate content' end
     local ok, err = RejectAd(adId, source, reason)
     if not ok then
-        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, err, 'error') end
+        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error') end
     end
 end
 
@@ -757,7 +795,7 @@ RegisterCommand('rejectad', function(source, args) deleteAdCommand(source, args)
 -- /admute [id] [minutes] [reason]
 RegisterCommand('admute', function(source, args)
     if source ~= 0 and not exports.sunset_admin:IsStaff(source) then
-        TriggerClientEvent('sunset:chat:system', source, 'This command is available only for staff.', 'error')
+        TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.staff_only'), 'error')
         return
     end
     local targetId = tonumber(args[1])
@@ -767,13 +805,13 @@ RegisterCommand('admute', function(source, args)
         if source == 0 then
             print('Usage: /admute [playerId] [minutes] [reason]')
         else
-            TriggerClientEvent('sunset:chat:system', source, 'Usage: /admute [player ID] [minute] [motiv]', 'warning')
+            TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.usage_admute'), 'warning')
         end
         return
     end
     local ok, err = AdMutePlayer(targetId, minutes, reason, source)
     if not ok then
-        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, err, 'error') end
+        if source == 0 then print(err) else TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error') end
     end
 end, false)
 
@@ -794,7 +832,7 @@ function RunChatCommand(source, name, args)
         return true
     end
     if name == 'myad' then
-        ExecuteCommand('myad')
+        myAdCommand(source)
         return true
     end
     if name == 'ads' or name == 'adlist' then
@@ -814,15 +852,21 @@ function RunChatCommand(source, name, args)
         local minutes = tonumber(args[2]) or 15
         local reason = table.concat(args, ' ', 3)
         if not targetId or reason == '' then
-            TriggerClientEvent('sunset:chat:system', source, 'Usage: /admute [player ID] [minute] [motiv]', 'warning')
+            TriggerClientEvent('sunset:chat:system', source, t(source, 'cnn.message.usage_admute'), 'warning')
             return true
         end
         local ok, err = AdMutePlayer(targetId, minutes, reason, source)
         if not ok then
-            TriggerClientEvent('sunset:chat:system', source, err, 'error')
+            TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error')
         end
         return true
     end
     return false
 end
 exports('RunChatCommand', RunChatCommand)
+
+-- Both native commands and the custom chat router preserve the player's source.
+function ExecutePlayerCommand(source, name, args)
+    return RunChatCommand(source, name, args)
+end
+exports('ExecutePlayerCommand', ExecutePlayerCommand)

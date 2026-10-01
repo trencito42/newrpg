@@ -26,6 +26,10 @@ end
 
 local MARKER_DRAW_DIST = 75.0
 
+local function tr(key, params)
+    return exports.sunset_core:Translate(key, params)
+end
+
 local function drawPropertyLine(text, y, scale, r, g, b)
     SetTextScale(scale, scale)
     SetTextFont(4)
@@ -55,17 +59,22 @@ end
 local function drawPropertyLabel(prop, distance)
     local priceLine
     if prop.ownerName then
-        priceLine = ('Owned by %s'):format(prop.ownerName)
+        priceLine = tr('world.property.owned_by', { owner = prop.ownerName })
     elseif prop.forSale then
-        priceLine = ('For sale: $%s  |  Level %d'):format(prop.price or 0, prop.minimumLevel or 1)
+        priceLine = tr('world.property.for_sale', { price = prop.price or 0, level = prop.minimumLevel or 1 })
     else
-        priceLine = 'Not for sale'
+        priceLine = tr('world.property.not_for_sale')
     end
-    local accessLine = ('%s  |  Renters %d/%d'):format(prop.locked and 'Locked' or 'Unlocked', prop.renterCount or 0, prop.maxRenters or 1)
+    local accessLine = tr('world.property.access', {
+        state = tr(prop.locked and 'world.property.locked' or 'world.property.unlocked'),
+        count = prop.renterCount or 0, max = prop.maxRenters or 1,
+    })
     SetDrawOrigin(prop.coords.x, prop.coords.y, prop.coords.z + 0.38, 0)
     local scale = math.max(0.24, math.min(0.34, 0.4 - distance * 0.012))
     local y = -0.045
-    drawPropertyLine(('House #%d  |  %s'):format(prop.id or 0, prop.label or 'Residence'), y, scale + 0.025, 0, 255, 204)
+    drawPropertyLine(tr('world.property.heading', {
+        id = prop.id or 0, label = prop.label or tr('world.property.residence'),
+    }), y, scale + 0.025, 0, 255, 204)
     y = y + 0.021
     drawPropertyLine(priceLine, y, scale)
     y = y + 0.019
@@ -75,7 +84,7 @@ local function drawPropertyLabel(prop, distance)
         drawPropertyLine(line, y, scale - 0.015, 255, 190, 125)
     end
     y = y + 0.021
-    drawPropertyLine('~o~[E]~s~ View house', y, scale)
+    drawPropertyLine(tr('world.property.view'), y, scale)
     ClearDrawOrigin()
 end
 
@@ -133,9 +142,9 @@ CreateThread(function()
     end
 
     for i, atm in ipairs(Sunset.ATMs or {}) do
-        addBlip(atm, presets.atm or {}, 'ATM', true)
+        addBlip(atm, presets.atm or {}, tr('world.blip.atm'), true)
         zones[#zones + 1] = registerZone('atm:' .. i, atm, 2.0,
-            '[E] ATM', { 52, 152, 219 }, function()
+            tr('world.prompt.atm'), { 52, 152, 219 }, function()
                 TriggerEvent('sunset:world:openAtm')
             end)
     end
@@ -143,23 +152,23 @@ CreateThread(function()
     for id, garage in pairs(Sunset.Garages or {}) do
         addBlip(garage.store, presets.garage or {}, garage.label, true)
         zones[#zones + 1] = registerZone('garage:' .. id, garage.store, 3.0,
-            '[E] Store vehicle | /v', { 241, 196, 15 }, function()
+            tr('world.prompt.store_vehicle'), { 241, 196, 15 }, function()
                 TriggerEvent('sunset:world:garageStore', id)
             end)
     end
 
     for i, shop in ipairs(Sunset.ClothingShops or {}) do
-        addBlip(shop, presets.clothing or {}, 'Clothing', true)
+        addBlip(shop, presets.clothing or {}, tr('world.blip.clothing'), true)
         zones[#zones + 1] = registerZone('clothing:' .. i, shop, 2.5,
-            '[E] Clothing Store', { 199, 21, 133 }, function()
+            tr('world.prompt.clothing'), { 199, 21, 133 }, function()
                 TriggerEvent('sunset:world:openClothing')
             end)
     end
 
     for i, shop in ipairs(Sunset.BarberShops or {}) do
-        addBlip(shop, presets.barber or {}, 'Barber', true)
+        addBlip(shop, presets.barber or {}, tr('world.blip.barber'), true)
         zones[#zones + 1] = registerZone('barber:' .. i, shop, 2.5,
-            '[E] Barber', { 199, 21, 133 }, function()
+            tr('world.prompt.barber'), { 199, 21, 133 }, function()
                 TriggerEvent('sunset:world:openBarber')
             end)
     end
@@ -175,7 +184,7 @@ CreateThread(function()
 
     for i, station in ipairs(Sunset.GasStations or {}) do
         if station.coords then
-            addBlip(station.coords, presets.gas or { sprite = 361, color = 1, scale = 0.75 }, station.label or 'Gas Station', true)
+            addBlip(station.coords, presets.gas or { sprite = 361, color = 1, scale = 0.75 }, station.label or tr('world.blip.gas_station'), true)
         end
     end
 end)
@@ -196,10 +205,10 @@ end)
 AddEventHandler('sunset:world:registerFactionDepot', function(factionId, depot, faction)
     if not depot or not depot.coords then return end
     local color = faction and faction.marker or { 255, 200, 0 }
-    addBlip(depot.coords, { sprite = 326, color = 5, scale = 0.7 }, depot.label or 'Fleet Garage', true)
-    local depotHint = '[E] ' .. (depot.label or 'Spawn fleet vehicle')
+    addBlip(depot.coords, { sprite = 326, color = 5, scale = 0.7 }, depot.label or tr('world.blip.fleet_garage'), true)
+    local depotHint = depot.label and ('[E] ' .. depot.label) or tr('world.prompt.spawn_fleet_vehicle')
     if depot.vehicles and #depot.vehicles > 0 then
-        depotHint = '[E] ' .. (depot.label or 'Fleet garage') .. ' — choose vehicle'
+        depotHint = tr('world.prompt.choose_fleet_vehicle', { label = depot.label or tr('world.blip.fleet_garage') })
     end
     zones[#zones + 1] = registerZone('depot:' .. factionId, depot.coords, 3.0, depotHint, color, function()
         TriggerEvent('sunset:world:factionDepot', factionId, depot)
@@ -232,7 +241,7 @@ AddEventHandler('sunset:world:registerCraftingStation', function(stationId, stat
         addBlip(station.coords, station.blip, station.label or stationId, true)
     end
     zones[#zones + 1] = registerZone('craft:' .. stationId, station.coords, 2.0,
-        '[E] ' .. (station.label or 'Craft'), color, function()
+        station.label and ('[E] ' .. station.label) or tr('world.prompt.craft'), color, function()
             TriggerEvent('sunset:world:openCrafting', stationId, station)
         end)
 end)
@@ -323,10 +332,10 @@ CreateThread(function()
             local dist = #(coords - prop.coords)
             if dist < 2.5 and dist < closestDist then
                 closestDist = dist
-                local state = prop.access and (prop.rented and 'your rental' or 'your house')
-                    or (prop.owned and (prop.locked and 'locked' or 'open'))
-                    or ('for sale $' .. prop.price)
-                local hint = ('[E] %s (%s)'):format(prop.label, state)
+                local state = prop.access and tr(prop.rented and 'world.property.your_rental' or 'world.property.your_house')
+                    or (prop.owned and tr(prop.locked and 'world.property.locked' or 'world.property.open'))
+                    or tr('world.property.for_sale_short', { price = prop.price })
+                local hint = tr('world.property.interact', { label = prop.label, state = state })
                 closest = {
                     id = 'property:' .. prop.id,
                     coords = prop.coords,

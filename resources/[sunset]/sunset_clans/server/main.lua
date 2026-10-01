@@ -30,13 +30,7 @@ local function notify(source, message, kind)
 end
 
 local function sourceForChar(characterId)
-    characterId = tonumber(characterId)
-    if not characterId then return nil end
-    for _, id in ipairs(GetPlayers()) do
-        local src = tonumber(id)
-        local char = getChar(src)
-        if char and tonumber(char.id) == characterId then return src end
-    end
+    return exports.sunset_core:GetSourceByCharacterId(characterId)
 end
 
 local function playerName(characterId)

@@ -1318,17 +1318,72 @@ end
 -- ── Vehicle entry info display ────────────────────────────────────────────
 -- Shows a compact chat message once per vehicle enter (not on seat change).
 
+local function localizedNumber(value, decimals)
+    local locale = exports.sunset_core:GetLocale()
+    local raw = (('%.' .. tostring(decimals or 0) .. 'f'):format(tonumber(value) or 0))
+    local whole, fraction = raw:match('^(%-?%d+)%.?(%d*)$')
+    local sign = whole:sub(1, 1) == '-' and '-' or ''
+    whole = whole:gsub('^-', '')
+    local separator = locale == 'ro' and '.' or ','
+    local groups = {}
+    while #whole > 3 do
+        table.insert(groups, 1, whole:sub(-3))
+        whole = whole:sub(1, -4)
+    end
+    table.insert(groups, 1, whole)
+    local grouped = table.concat(groups, separator)
+    if fraction ~= '' then
+        return sign .. grouped .. (locale == 'ro' and ',' or '.') .. fraction
+    end
+    return sign .. grouped
+end
+
+local function ownershipAge(days)
+    days = math.max(0, math.floor(tonumber(days) or 0))
+    return exports.sunset_core:Translate(days == 1 and 'vehicles.entry.age.one' or 'vehicles.entry.age.other', {
+        count = localizedNumber(days, 0),
+    })
+end
+
 CreateThread(function()
     local lastVeh = 0
+    local entryGeneration = 0
     while true do
         local ped = PlayerPedId()
         local veh = GetVehiclePedIsIn(ped, false)
 
         if veh ~= lastVeh then
+            entryGeneration = entryGeneration + 1
+            local generation = entryGeneration
+            lastVeh = veh
             if veh ~= 0 and DoesEntityExist(veh) then
-                local netId = VehToNet(veh)
-                if netId ~= 0 then
-                    local info = Sunset.AwaitCallback('sunset:getVehicleEntryInfo', netId)
+                CreateThread(function()
+                    local info
+                    local function stillInside()
+                        return generation == entryGeneration and DoesEntityExist(veh)
+                            and GetVehiclePedIsIn(PlayerPedId(), false) == veh
+                    end
+                    for attempt = 1, 6 do
+                        if not stillInside() then return end
+                        local netId = NetworkGetEntityIsNetworked(veh) and VehToNet(veh) or 0
+                        if netId ~= 0 then
+                            local completed = false
+                            local requestActive = true
+                            TriggerCallback('sunset:getVehicleEntryInfo', function(result)
+                                if requestActive and stillInside() then info = result end
+                                completed = true
+                            end, netId)
+                            local deadline = GetGameTimer() + 1000
+                            while not completed and stillInside() and GetGameTimer() < deadline do Wait(50) end
+                            requestActive = false
+                            if not completed then
+                                Wait(250)
+                            end
+                        end
+                        if info then break end
+                        Wait(250)
+                    end
+                    if not stillInside() then return end
                     if info then
                         local msg
                         if info.category == 'personal_own' then
@@ -1338,11 +1393,15 @@ CreateThread(function()
                                     level = info.ins_level, points = info.ins_points, cost = info.claim_cost,
                                 })
                             msg = exports.sunset_core:Translate('vehicles.entry.own', {
-                                model = info.model, plate = info.plate, odometer = ('%.1f'):format(info.odometer), insurance = insLine,
+                                model = info.model, plate = info.plate,
+                                owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
+                                odometer = localizedNumber(info.odometer, 1),
+                                age = ownershipAge(info.ownershipDays), insurance = insLine,
                             })
                         elseif info.category == 'personal_other' then
                             msg = exports.sunset_core:Translate('vehicles.entry.other', {
                                 model = info.model, plate = info.plate, owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
+                                odometer = localizedNumber(info.odometer, 1), age = ownershipAge(info.ownershipDays),
                             })
                         elseif info.category == 'faction' then
                             msg = exports.sunset_core:Translate('vehicles.entry.faction', {
@@ -1356,9 +1415,8 @@ CreateThread(function()
                             color = { 255, 255, 255 },
                         })
                     end
-                end
+                end)
             end
-            lastVeh = veh
         end
 
         Wait(500)
