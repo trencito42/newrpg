@@ -1,0 +1,90 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
+import { queryOne, execute } from "@/lib/db";
+import { z } from "zod";
+
+const complaintSchema = z.object({
+  accusedName: z.string().trim().min(3).max(64),
+  category: z.enum([
+    "deathmatch",
+    "powergaming",
+    "metagaming",
+    "insults",
+    "cheating",
+    "faction_abuse",
+    "other",
+  ]),
+  title: z.string().trim().min(5).max(191),
+  evidenceText: z.string().trim().min(10).max(5000),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const result = complaintSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Invalid complaint data", details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { accusedName, category, title, evidenceText } = result.data;
+
+    // Verify accused character exists
+    const accusedChar = await queryOne<{ id: number; name: string }>(
+      "SELECT id, name FROM characters WHERE LOWER(name) = LOWER(?) LIMIT 1",
+      [accusedName]
+    );
+
+    if (!accusedChar) {
+      return NextResponse.json(
+        { error: `Player character '${accusedName}' was not found.` },
+        { status: 404 }
+      );
+    }
+
+    // Rate limiting: check recent complaints created by this account in the last 10 minutes
+    const recent = await queryOne<{ count: number }>(
+      "SELECT COUNT(*) as count FROM panel_complaints WHERE accuser_account_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)",
+      [user.accountId]
+    );
+
+    if (recent && recent.count >= 3) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. You can only file 3 complaints every 10 minutes." },
+        { status: 429 }
+      );
+    }
+
+    // Insert complaint
+    const insertRes = await execute(
+      `INSERT INTO panel_complaints 
+       (accuser_account_id, accuser_character_id, accused_character_id, accused_name, category, title, evidence_text, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        user.accountId,
+        user.selectedCharacterId || null,
+        accusedChar.id,
+        accusedChar.name,
+        category,
+        title,
+        evidenceText,
+      ]
+    );
+
+    return NextResponse.json({
+      success: true,
+      complaintId: insertRes.insertId,
+      message: "Complaint registered successfully and queued for staff review.",
+    });
+  } catch (error: any) {
+    console.error("Error creating complaint:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
