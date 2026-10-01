@@ -22,6 +22,7 @@ components.json
 server.cfg
 server.local.cfg
 SETUP.local.md
+/scripts/set-account-password.js
 
 # Node / IDE
 node_modules/
