@@ -31,36 +31,87 @@ function Hide()
 end
 exports('Hide', Hide)
 
-function SetFocus(hasFocus, hasCursor, keepInput, owner)
+function ClaimFocus(owner)
     owner = type(owner) == 'string' and owner ~= '' and owner or 'legacy'
     -- [LOGIN FOCUS GUARD] While the auth (login) screen is up, ONLY the auth
-    -- flow ('auth' owner) or 'force' may release focus. Some resource was
-    -- calling SetFocus(false,...,'legacy') ~13s into the login screen, killing
-    -- the cursor ("cannot click for several seconds after login").
-    if not hasFocus and isOpen and currentScreen == 'auth'
-        and owner ~= 'auth' and owner ~= 'force' and focusOwner == 'auth' then
+    -- flow ('auth' owner) or 'force' may claim/own focus.
+    if isOpen and currentScreen == 'auth' and owner ~= 'auth' and owner ~= 'force' then
+        if nuiDebugEnabled() then
+            print(('^1[FOCUS]^7 claim blocked during auth: owner=%s'):format(owner))
+        end
+        return false
+    end
+    if focusOwner and focusOwner ~= owner and owner ~= 'force' then
+        if nuiDebugEnabled() then
+            print(('^3[FOCUS]^7 claim owner=%s previous=%s result=blocked'):format(owner, tostring(focusOwner)))
+        end
+        return false
+    end
+    local prev = focusOwner
+    focusOwner = owner
+    if nuiDebugEnabled() or (SunsetBoot and SunsetBoot.IsVerbose and SunsetBoot.IsVerbose()) then
+        local bootId = (SunsetBoot and SunsetBoot.GetBootId) and SunsetBoot.GetBootId() or 'boot'
+        print(('^2[FOCUS boot=%s %d]^7 claim owner=%s previous=%s result=ok'):format(
+            bootId, GetGameTimer(), tostring(owner), tostring(prev)))
+    end
+    return true
+end
+exports('ClaimFocus', ClaimFocus)
+
+function ReleaseFocus(owner)
+    owner = type(owner) == 'string' and owner ~= '' and owner or 'legacy'
+    if isOpen and currentScreen == 'auth' and owner ~= 'auth' and owner ~= 'force' and focusOwner == 'auth' then
         if nuiDebugEnabled() then
             local tb = debug.traceback('', 2):gsub('\n', ' | '):sub(1, 300)
             print(('^1[FOCUS]^7 BLOCKED release during auth screen: caller-owner=%s | %s'):format(owner, tb))
         end
         return false
     end
-    if not hasFocus and focusOwner and focusOwner ~= owner and owner ~= 'force' then
+    if focusOwner and focusOwner ~= owner and owner ~= 'force' then
         if nuiDebugEnabled() then
-            print(('^3[FOCUS]^7 blocked release: owner=%s current=%s'):format(owner, tostring(focusOwner)))
+            print(('^3[FOCUS]^7 release owner=%s current=%s result=blocked'):format(owner, tostring(focusOwner)))
         end
         return false
     end
-    focusOwner = hasFocus and owner or nil
-    SetNuiFocus(hasFocus, hasCursor == true)
-    SetNuiFocusKeepInput(keepInput == true)
+    local prev = focusOwner
+    focusOwner = nil
     if nuiDebugEnabled() or (SunsetBoot and SunsetBoot.IsVerbose and SunsetBoot.IsVerbose()) then
-        local tb = debug.traceback('', 2):gsub('\n', ' | '):sub(1, 220)
         local bootId = (SunsetBoot and SunsetBoot.GetBootId) and SunsetBoot.GetBootId() or 'boot'
-        print(('^5[BOOTV boot=%s %d] [focus] SetFocus(has=%s cursor=%s keepInput=%s owner=%s screen=%s) | %s^7'):format(
-            bootId, GetGameTimer(), tostring(hasFocus), tostring(hasCursor == true), tostring(keepInput == true), tostring(owner), tostring(currentScreen), tb))
+        print(('^2[FOCUS boot=%s %d]^7 release owner=%s previous=%s result=ok'):format(
+            bootId, GetGameTimer(), tostring(owner), tostring(prev)))
     end
     return true
+end
+exports('ReleaseFocus', ReleaseFocus)
+
+function ForceReleaseFocus(reason)
+    if isOpen and currentScreen == 'auth' then return false end
+    local prev = focusOwner
+    focusOwner = nil
+    SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
+    if nuiDebugEnabled() then
+        print(('^3[FOCUS]^7 force release previous=%s reason=%s result=ok'):format(tostring(prev), tostring(reason or 'unknown')))
+    end
+    return true
+end
+exports('ForceReleaseFocus', ForceReleaseFocus)
+
+function SetFocus(hasFocus, hasCursor, keepInput, owner)
+    owner = type(owner) == 'string' and owner ~= '' and owner or 'legacy'
+    if hasFocus then
+        local ok = ClaimFocus(owner)
+        if not ok then return false end
+        SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(keepInput == true)
+        return true
+    else
+        local ok = ReleaseFocus(owner)
+        if not ok then return false end
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        return true
+    end
 end
 exports('SetFocus', SetFocus)
 
@@ -507,12 +558,67 @@ RegisterNUICallback('loadingTimeout', function(_, cb)
     cb('ok')
 end)
 
+-- ═══════════════════════════════════════════════════════════════
+--  GLOBAL EMERGENCY UI KILLSWITCH
+-- ═══════════════════════════════════════════════════════════════
+local lastEmergencyResetAt = 0
+
+function TriggerEmergencyUiReset(reason)
+    -- Guard: Never bypass authentication or login screen with emergency reset
+    if isOpen and currentScreen == 'auth' then return false end
+    if SunsetBoot and SunsetBoot.GetState and SunsetBoot.GetState() ~= 'GAMEPLAY' then
+        return false
+    end
+
+    local now = GetGameTimer()
+    local isThrottled = (now - lastEmergencyResetAt) < 2500
+
+    -- 1. Notify all resources so each UI cleans its own state, cameras, and preview models
+    TriggerEvent('sunset:ui:emergencyClose', reason or 'emergency_escape')
+    TriggerEvent('sunset:ui:forceCloseAll', reason or 'emergency_escape')
+
+    -- 2. Clean central sunset_ui state
+    isOpen = false
+    currentScreen = nil
+    SendNUIMessage({ action = 'hide' })
+    SendNUIMessage({ action = 'emergencyHideHint' })
+
+    -- 3. Force-release native focus and clear central arbitration
+    ForceReleaseFocus(reason or 'emergency_escape')
+
+    -- 4. User feedback
+    if not isThrottled then
+        lastEmergencyResetAt = now
+        Notify(exports.sunset_core:Translate('ui.message.ui_reset'), 'info', 3000)
+    end
+
+    return true
+end
+exports('TriggerEmergencyUiReset', TriggerEmergencyUiReset)
+
+RegisterNUICallback('emergencyEscape', function(data, cb)
+    local reason = (type(data) == 'table' and data.reason) or 'nui_hold_esc'
+    TriggerEmergencyUiReset(reason)
+    cb('ok')
+end)
+
 -- [NUI FOCUS] Central safety net: any 'force close' (death, admin, jail) releases
 -- focus regardless of owner, except while the login screen legitimately owns it.
-AddEventHandler('sunset:ui:forceCloseAll', function()
+AddEventHandler('sunset:ui:forceCloseAll', function(reason)
     if isOpen and currentScreen == 'auth' then return end
-    SetFocus(false, false, false, 'force')
+    ForceReleaseFocus(reason or 'forceCloseAll')
 end)
+
+AddEventHandler('sunset:ui:emergencyClose', function(reason)
+    if isOpen and currentScreen == 'auth' then return end
+    ForceReleaseFocus(reason or 'emergencyClose')
+end)
+
+-- Universal player-safe /fixui command
+RegisterCommand('fixui', function()
+    TriggerEmergencyUiReset('command_fixui')
+end, false)
+RegisterKeyMapping('fixui', 'Emergency UI Reset', 'keyboard', 'F11')
 
 RegisterCommand('fixnui', function()
     SetNuiFocus(false, false)
@@ -533,6 +639,81 @@ RegisterCommand('cursor', function()
     focusOwner = nil
     Notify(exports.sunset_core:Translate('ui.message.cursorul_a_fost_resetat'), 'info')
 end, false)
+
+RegisterCommand('nuifocus', function()
+    print('^5=== [NUI FOCUS DIAGNOSTICS] ===^7')
+    print(('FOCUS OWNER: %s'):format(tostring(focusOwner or 'nil')))
+    print(('NUI FOCUSED: %s'):format(tostring(IsNuiFocused())))
+    print(('KEEP INPUT:  %s'):format(tostring(IsNuiFocusKeepingInput())))
+    print(('UI OPEN:     %s (screen: %s)'):format(tostring(isOpen), tostring(currentScreen or 'none')))
+
+    local openModals = {}
+    if isOpen and currentScreen then openModals[#openModals + 1] = 'sunset_ui:' .. currentScreen end
+    if GetResourceState('sunset_tuning') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_tuning:IsTuningOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_tuning' end
+    end
+    if GetResourceState('sunset_pass') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_pass:IsPassOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_pass' end
+    end
+    if GetResourceState('sunset_slots') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_slots:IsSlotsOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_slots' end
+    end
+    if GetResourceState('sunset_menu') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_menu:IsMenuOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_menu' end
+    end
+    if GetResourceState('sunset_properties') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_properties:IsPanelOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_properties' end
+    end
+    if GetResourceState('sunset_factions') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_factions:IsFactionPanelOpen() end)
+        if ok and open then openModals[#openModals + 1] = 'sunset_factions' end
+    end
+
+    if #openModals > 0 then
+        print('OPEN:')
+        for _, m in ipairs(openModals) do
+            print(' - ' .. m)
+        end
+    else
+        print('OPEN: none')
+    end
+    print('^5==============================^7')
+end, false)
+
+-- LAYER B: Client Lua Emergency ESC Hold detector
+CreateThread(function()
+    local escHoldStart = 0
+    local escHoldFired = false
+    while true do
+        local isGameplay = not (SunsetBoot and SunsetBoot.GetState and SunsetBoot.GetState() ~= 'GAMEPLAY')
+        local active = isGameplay and (IsNuiFocused() or focusOwner ~= nil or isOpen)
+        if active and not (isOpen and currentScreen == 'auth') then
+            -- 200 = INPUT_FRONTEND_PAUSE_ALTERNATE (ESC), 199 = INPUT_FRONTEND_PAUSE (ESC/Pause)
+            if IsDisabledControlPressed(0, 200) or IsControlPressed(0, 200) or IsDisabledControlPressed(0, 199) or IsControlPressed(0, 199) then
+                if escHoldStart == 0 then
+                    escHoldStart = GetGameTimer()
+                    escHoldFired = false
+                elseif not escHoldFired and (GetGameTimer() - escHoldStart) >= 1500 then
+                    escHoldFired = true
+                    TriggerEmergencyUiReset('lua_hold_esc')
+                end
+            else
+                escHoldStart = 0
+                escHoldFired = false
+            end
+            Wait(50)
+        else
+            escHoldStart = 0
+            escHoldFired = false
+            Wait(300)
+        end
+    end
+end)
 
 -- [AUDIT NUI-ERR] Forward JS errors to server logs so staff can diagnose
 -- NUI crashes without requiring the player to share F8 output.

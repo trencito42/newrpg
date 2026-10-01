@@ -64,4 +64,6 @@ exports {
     'GetVehicleTuningInfo',
     'GetVehicleCapabilities',
     'GetNitrousHudState',
+    'IsTuningOpen',
+    'IsPanelOpen',
 }

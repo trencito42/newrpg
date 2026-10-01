@@ -366,10 +366,31 @@
             // Send boot epoch calibration to Lua
             post('bootEpoch', { now: Date.now() });
 
-            // Global Escape key handler
+            // ── Global Escape key handler (single press = normal close) ──────
+            // Hold ESC for 1.5s → emergency reset. Keyup/blur cancels hold timer.
+            let shellEscHoldTimer = null;
+            function clearShellEscHold() {
+                if (shellEscHoldTimer) {
+                    clearTimeout(shellEscHoldTimer);
+                    shellEscHoldTimer = null;
+                }
+            }
+            window.addEventListener('keyup', (e) => { if (e.key === 'Escape') clearShellEscHold(); });
+            window.addEventListener('blur', clearShellEscHold);
             window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
+                if (e.key !== 'Escape') return;
+                if (!e.repeat) {
+                    // Normal close fires immediately on press.
                     this.handleEscape();
+                    // Arm hold timer for emergency fallback.
+                    clearShellEscHold();
+                    shellEscHoldTimer = setTimeout(() => {
+                        shellEscHoldTimer = null;
+                        post('emergencyEscape', { reason: 'shell_hold_esc' });
+                    }, 1500);
+                } else {
+                    // Held key: suppress browser auto-repeat to prevent spam.
+                    e.preventDefault();
                 }
             });
 
@@ -466,6 +487,12 @@
             if (window.ClanPanels && typeof ClanPanels.close === 'function') ClanPanels.close();
             if (window.WardrobeShop && typeof WardrobeShop.close === 'function') WardrobeShop.close();
             if (window.SkinShopUI && !document.getElementById('skinshop')?.classList.contains('hidden')) { window.SkinShopUI.hide(); post('skinShopClose', {}); }
+        },
+
+        handleEmergencyHideHint() {
+            // Called when emergency reset fires: hide any lingering hold-to-exit hints.
+            const hint = document.getElementById('emergency-hold-hint');
+            if (hint) hint.remove();
         },
 
         notify(message, kind = 'info', duration = 4000) {
@@ -671,6 +698,10 @@
             if (action === 'tuningUiClose') {
                 document.body.classList.remove('tuning-ui-open');
                 if (!document.body.classList.contains('inventory-open') && !document.body.classList.contains('emote-wheel-open')) document.body.classList.remove('hud-chrome-hidden');
+                return;
+            }
+            if (action === 'emergencyHideHint') {
+                this.handleEmergencyHideHint?.();
                 return;
             }
             if (action === 'show') {

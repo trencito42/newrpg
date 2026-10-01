@@ -2086,15 +2086,43 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
+let escHoldTimer = null;
+let escHoldFired = false;
+
+function clearEscHold() {
+    if (escHoldTimer) {
+        clearTimeout(escHoldTimer);
+        escHoldTimer = null;
+    }
+    escHoldFired = false;
+}
+
 document.addEventListener('mouseup', () => {
     isDraggingCam = false;
 });
+
+
+
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Escape') {
+        clearEscHold();
+    }
+});
+
+window.addEventListener('blur', clearEscHold);
 
 document.addEventListener('keydown', (e) => {
     if (!app || app.classList.contains('hidden')) return;
     if (e.key === 'Escape') {
         e.preventDefault();
-        post('tuningClose');
+        if (!e.repeat) {
+            post('tuningClose');
+            clearEscHold();
+            escHoldTimer = setTimeout(() => {
+                escHoldFired = true;
+                post('emergencyEscape', { reason: 'tuning_nui_hold_esc' });
+            }, 1500);
+        }
         return;
     }
 
@@ -2153,6 +2181,15 @@ window.addEventListener('message', (event) => {
     if (action === 'close' && app) {
         window.clearTimeout(previewTimer);
         window.clearTimeout(quoteTimer);
+        clearEscHold();
+        app.classList.add('hidden');
+        previewDirty = false;
+        serverQuotedCost = null;
+    }
+    if (action === 'emergencyHideHint' && app) {
+        window.clearTimeout(previewTimer);
+        window.clearTimeout(quoteTimer);
+        clearEscHold();
         app.classList.add('hidden');
         previewDirty = false;
         serverQuotedCost = null;

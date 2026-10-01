@@ -1,10 +1,29 @@
--- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release)
+-- while executing native SetNuiFocus locally inside sunset_pass so this resource's
+-- CEF iframe receives the mouse and keyboard input.
 function PASS_SetNuiFocus(hasFocus, hasCursor, keepInput)
-    if GetResourceState('sunset_ui') ~= 'started' then return false end
-    local ok, res = pcall(function()
-        return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'pass')
-    end)
-    return ok and res ~= false
+    if hasFocus then
+        local ok = false
+        if GetResourceState('sunset_ui') == 'started' then
+            local pOk, claimRes = pcall(function()
+                return exports.sunset_ui:ClaimFocus('pass')
+            end)
+            ok = pOk and claimRes == true
+        else
+            ok = true
+        end
+        if not ok then return false end
+        SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(keepInput == true)
+        return true
+    else
+        if GetResourceState('sunset_ui') == 'started' then
+            pcall(function() exports.sunset_ui:ReleaseFocus('pass') end)
+        end
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        return true
+    end
 end
 
 local openTab = 'rewards'
@@ -28,7 +47,7 @@ end
 
 local function setFocus(state)
     PASS_SetNuiFocus(state, state)
-    end
+end
 
 local function closePass()
     if not isOpen then return end
@@ -103,6 +122,12 @@ RegisterNUICallback('passBuyPremium', function(_, cb)
     cb({ ok = true, state = result })
 end)
 
+RegisterNUICallback('emergencyEscape', function(_, cb)
+    closePass()
+    TriggerEvent('sunset:ui:emergencyClose', 'pass_nui_hold_esc')
+    cb({ ok = true })
+end)
+
 RegisterNetEvent('sunset:pass:refresh', function()
     if not isOpen then return end
     local data = Sunset.AwaitCallback('sunset:pass:getData')
@@ -119,16 +144,12 @@ exports('OpenPass', function(tab)
 end)
 
 exports('ClosePass', closePass)
-
--- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
-AddEventHandler('onResourceStop', function(res)
-    if res ~= GetCurrentResourceName() then return end
-    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
-    if ok and owner == 'pass' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
-    end
-end)
+exports('IsPassOpen', function() return isOpen end)
 
 AddEventHandler('sunset:ui:forceCloseAll', function()
+    if isOpen then closePass() end
+end)
+
+AddEventHandler('sunset:ui:emergencyClose', function()
     if isOpen then closePass() end
 end)

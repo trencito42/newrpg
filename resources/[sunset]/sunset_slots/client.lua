@@ -1,10 +1,29 @@
--- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release)
+-- while executing native SetNuiFocus locally inside sunset_slots so this resource's
+-- CEF iframe receives the mouse and keyboard input.
 function SLOTS_SetNuiFocus(hasFocus, hasCursor, keepInput)
-    if GetResourceState('sunset_ui') ~= 'started' then return false end
-    local ok, res = pcall(function()
-        return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'slots')
-    end)
-    return ok and res ~= false
+    if hasFocus then
+        local ok = false
+        if GetResourceState('sunset_ui') == 'started' then
+            local pOk, claimRes = pcall(function()
+                return exports.sunset_ui:ClaimFocus('slots')
+            end)
+            ok = pOk and claimRes == true
+        else
+            ok = true
+        end
+        if not ok then return false end
+        SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(keepInput == true)
+        return true
+    else
+        if GetResourceState('sunset_ui') == 'started' then
+            pcall(function() exports.sunset_ui:ReleaseFocus('slots') end)
+        end
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        return true
+    end
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -329,12 +348,26 @@ CreateThread(function()
 end)
 
 
-
 -- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
-    if ok and owner == 'slots' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
-    end
+    -- closePanel-style cleanup
+    open = false
+    sessionToken = nil
+    busy = false
+    destroySlotCam()
+    SLOTS_SetNuiFocus(false, false)
+    SendNUIMessage({ showPacanele = 'close' })
+end)
+
+exports('IsSlotsOpen', function() return open end)
+
+AddEventHandler('sunset:ui:emergencyClose', function()
+    if not open then return end
+    open = false
+    sessionToken = nil
+    busy = false
+    destroySlotCam()
+    SLOTS_SetNuiFocus(false, false)
+    SendNUIMessage({ showPacanele = 'close' })
 end)

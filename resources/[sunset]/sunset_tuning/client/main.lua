@@ -1,10 +1,31 @@
--- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release)
+-- while executing native SetNuiFocus locally inside sunset_tuning so this resource's
+-- CEF iframe receives the mouse and keyboard input.
 function TUNING_SetNuiFocus(hasFocus, hasCursor, keepInput)
-    if GetResourceState('sunset_ui') ~= 'started' then return false end
-    local ok, res = pcall(function()
-        return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'tuning')
-    end)
-    return ok and res ~= false
+    if hasFocus then
+        local ok = false
+        if GetResourceState('sunset_ui') == 'started' then
+            local pOk, claimRes = pcall(function()
+                return exports.sunset_ui:ClaimFocus('tuning')
+            end)
+            ok = pOk and claimRes == true
+        else
+            ok = true
+        end
+        if not ok then return false end
+        SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(keepInput == true)
+        return true
+    else
+        if GetResourceState('sunset_ui') == 'started' then
+            pcall(function()
+                exports.sunset_ui:ReleaseFocus('tuning')
+            end)
+        end
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        return true
+    end
 end
 
 local STC = SunsetTuningClient
@@ -176,6 +197,11 @@ local function closePanel(restoreStock)
             ApplyTune(currentVeh, SunsetTuning.StockTune(), false, modelName)
         end
     end
+    currentVeh = 0
+    currentShop = nil
+    draftTune = nil
+    draftCosmetics = nil
+    savedCosmetics = nil
 end
 
 local function openPanel(shop)
@@ -185,11 +211,8 @@ local function openPanel(shop)
         return
     end
 
-    currentVeh = veh
-    createTuningCam(veh)
-    currentPlate = STC.plateOf(veh)
-    currentShop = shop or nearestShop()
-    if not currentShop then
+    local shopObj = shop or nearestShop()
+    if not shopObj then
         notify(exports.sunset_core:Translate('tuning.message.you_are_not_at_a_tuning_shop'), 'error')
         return
     end
@@ -206,30 +229,46 @@ local function openPanel(shop)
         return
     end
 
+    local plate = STC.plateOf(veh)
     CaptureModelBaseline(veh)
 
-    local payload, err = Sunset.AwaitCallback('sunset:tuning:getTune', currentPlate, modelName)
+    local payload, err = Sunset.AwaitCallback('sunset:tuning:getTune', plate, modelName)
     if not payload then
         notify(err or exports.sunset_core:Translate('tuning.msg.could_not_load_the_ecu_for'), 'error')
         return
     end
 
+    local loadedTune, loadedCosmetics, isSaved = nil, nil, false
     if type(payload) == 'table' and payload.tune then
-        draftTune = SunsetTuning.SanitizeTune(payload.tune, caps)
-        hasSavedTune = payload.saved == true or not SunsetTuning.IsStockTune(draftTune)
-        draftCosmetics = SunsetTuning.SanitizeCosmetics(payload.cosmetics or ReadCosmeticsFromVehicle(veh))
+        loadedTune = SunsetTuning.SanitizeTune(payload.tune, caps)
+        isSaved = payload.saved == true or not SunsetTuning.IsStockTune(loadedTune)
+        loadedCosmetics = SunsetTuning.SanitizeCosmetics(payload.cosmetics or ReadCosmeticsFromVehicle(veh))
     else
-        draftTune = SunsetTuning.SanitizeTune(payload, caps)
-        hasSavedTune = not SunsetTuning.IsStockTune(draftTune)
-        draftCosmetics = ReadCosmeticsFromVehicle(veh)
+        loadedTune = SunsetTuning.SanitizeTune(payload, caps)
+        isSaved = not SunsetTuning.IsStockTune(loadedTune)
+        loadedCosmetics = ReadCosmeticsFromVehicle(veh)
     end
-    if draftCosmetics.plateText == '' then
-        draftCosmetics.plateText = currentPlate
+    if loadedCosmetics.plateText == '' then
+        loadedCosmetics.plateText = plate
     end
-    savedCosmetics = draftCosmetics
 
+    -- Focus acquisition MUST be verified BEFORE creating camera and showing modal
+    local focusOk = TUNING_SetNuiFocus(true, true)
+    if not focusOk then
+        notify(exports.sunset_core:Translate('tuning.message.interface_in_use'), 'error')
+        return
+    end
+
+    currentVeh = veh
+    currentPlate = plate
+    currentShop = shopObj
+    draftTune = loadedTune
+    hasSavedTune = isSaved
+    draftCosmetics = loadedCosmetics
+    savedCosmetics = loadedCosmetics
     panelOpen = true
-    TUNING_SetNuiFocus(true, true)
+
+    createTuningCam(veh)
     exports.sunset_ui:Send('tuningUiOpen', {})
 
     sendUi('open', {
@@ -265,9 +304,17 @@ function OpenTuningPanel(shop)
 end
 
 exports('OpenTuningPanel', OpenTuningPanel)
+exports('IsTuningOpen', function() return panelOpen end)
+exports('IsPanelOpen', function() return panelOpen end)
 
 RegisterNUICallback('tuningClose', function(_, cb)
     closePanel(true)
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('emergencyEscape', function(data, cb)
+    closePanel(true)
+    TriggerEvent('sunset:ui:emergencyClose', 'tuning_nui_hold_esc')
     cb({ ok = true })
 end)
 
@@ -486,22 +533,17 @@ end)
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    closePanel(false)
+    closePanel(true)
     for i, b in ipairs(tuningShopBlips) do
         if DoesBlipExist(b) then RemoveBlip(b) end
         tuningShopBlips[i] = nil
     end
 end)
 
--- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
-AddEventHandler('onResourceStop', function(res)
-    if res ~= GetCurrentResourceName() then return end
-    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
-    if ok and owner == 'tuning' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
-    end
+AddEventHandler('sunset:ui:forceCloseAll', function()
+    if panelOpen then closePanel(true) end
 end)
 
-AddEventHandler('sunset:ui:forceCloseAll', function()
+AddEventHandler('sunset:ui:emergencyClose', function()
     if panelOpen then closePanel(true) end
 end)

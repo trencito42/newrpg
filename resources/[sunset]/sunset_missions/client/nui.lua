@@ -1,10 +1,29 @@
--- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release).
+-- [NUI FOCUS] Route focus through the central manager (owner tracked, guarded release)
+-- while executing native SetNuiFocus locally inside sunset_missions so this resource's
+-- CEF iframe receives the mouse and keyboard input.
 function MSN_SetNuiFocus(hasFocus, hasCursor, keepInput)
-    if GetResourceState('sunset_ui') ~= 'started' then return false end
-    local ok, res = pcall(function()
-        return exports.sunset_ui:SetFocus(hasFocus, hasCursor, keepInput == true, 'missions')
-    end)
-    return ok and res ~= false
+    if hasFocus then
+        local ok = false
+        if GetResourceState('sunset_ui') == 'started' then
+            local pOk, claimRes = pcall(function()
+                return exports.sunset_ui:ClaimFocus('missions')
+            end)
+            ok = pOk and claimRes == true
+        else
+            ok = true
+        end
+        if not ok then return false end
+        SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(keepInput == true)
+        return true
+    else
+        if GetResourceState('sunset_ui') == 'started' then
+            pcall(function() exports.sunset_ui:ReleaseFocus('missions') end)
+        end
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+        return true
+    end
 end
 
 local nuiOpen  = false
@@ -137,12 +156,13 @@ end)
 -- [NUI FOCUS] Guaranteed close path: release on resource stop / forced UI close.
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    local ok, owner = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
-    if ok and owner == 'missions' then
-        pcall(function() exports.sunset_ui:SetFocus(false, false, false, 'force') end)
-    end
+    MSN_NUI_HideAll()
 end)
 
 AddEventHandler('sunset:ui:forceCloseAll', function()
+    if nuiOpen then MSN_NUI_HideAll() end
+end)
+
+AddEventHandler('sunset:ui:emergencyClose', function()
     if nuiOpen then MSN_NUI_HideAll() end
 end)
