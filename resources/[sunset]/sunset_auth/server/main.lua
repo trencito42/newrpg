@@ -10,22 +10,29 @@ end
 local LoginFails = {}
 local LOCKOUT_STEP_MS = 5000 -- 5s, 10s, 20s, ... capped at 5 minutes
 
+-- [SEC3] Key by license, not by server id: dropping/reconnecting (new source id) reset the
+-- counter, so the lockout was bypassable. Falls back to the source id when no license.
+local function failKey(source)
+    return GetPlayerIdentifierByType(source, 'license') or ('src:' .. tostring(source))
+end
+
 local function loginLocked(source)
-    local rec = LoginFails[source]
+    local rec = LoginFails[failKey(source)]
     if not rec or rec.count < 5 then return false end
     local backoff = math.min(300000, LOCKOUT_STEP_MS * (2 ^ (rec.count - 5)))
     return (GetGameTimer() - rec.lastAt) < backoff, backoff
 end
 
 local function recordLoginFail(source)
-    local rec = LoginFails[source]
-    if not rec then rec = { count = 0, lastAt = 0 } LoginFails[source] = rec end
+    local key = failKey(source)
+    local rec = LoginFails[key]
+    if not rec then rec = { count = 0, lastAt = 0 } LoginFails[key] = rec end
     rec.count = rec.count + 1
     rec.lastAt = GetGameTimer()
 end
 
 local function clearLoginFails(source)
-    LoginFails[source] = nil
+    LoginFails[failKey(source)] = nil
 end
 
 -- [AUTH UI SPLIT] Lazy sunset_ui start: only players who completed login may
@@ -42,7 +49,7 @@ RegisterNetEvent('sunset:auth:requestUiStart', function()
 end)
 
 AddEventHandler('playerDropped', function()
-    LoginFails[source] = nil
+    -- [SEC3] LoginFails intentionally NOT cleared on drop (keyed by license, survives reconnect)
     AuthenticatedPlayers[source] = nil
 end)
 
@@ -99,6 +106,7 @@ local function emailMissing(value)
 end
 
 local function validateUsername(username)
+    if type(username) ~= 'string' then return false, localeError('auth.username_length') end -- [SEC3]
     if not username or #username < 3 or #username > 20 then
         return false, localeError('auth.username_length')
     end
@@ -109,7 +117,8 @@ local function validateUsername(username)
 end
 
 local function validatePassword(password)
-    if not password or #password < 6 then
+    -- [SEC3] type + upper bound: a multi-KB password forces a 32MB scrypt over a huge input (CPU DoS)
+    if type(password) ~= 'string' or #password < 6 or #password > 128 then
         return false, localeError('auth.password_length')
     end
     return true
@@ -125,7 +134,16 @@ local function emailTaken(email, ignoreAccountId)
     return MySQL.scalar.await(query, params)
 end
 
+local RegisterAt = {}
+AddEventHandler('playerDropped', function() RegisterAt[source] = nil end)
 exports.sunset_core:RegisterCallback('sunset:authRegister', function(source, username, password, passwordConfirm, email)
+    -- [SEC3] already-authenticated sources must not mint more accounts; throttle account creation
+    if AuthenticatedPlayers[source] then return nil, localeError('auth.session_failed') end
+    local nowR = GetGameTimer()
+    if RegisterAt[source] and (nowR - RegisterAt[source]) < 15000 then
+        return nil, localeError('auth.too_many_attempts', { seconds = 15 })
+    end
+    RegisterAt[source] = nowR
     local ok, err = validateUsername(username)
     if not ok then return nil, err end
     ok, err = validatePassword(password)
@@ -158,7 +176,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:authLogin', function(source, username, password)
     local ok, err = validateUsername(username)
     if not ok then return nil, err end
-    if not password or password == '' then return nil, localeError('auth.password_required') end
+    if type(password) ~= 'string' or password == '' then return nil, localeError('auth.password_required') end
+    if #password > 128 then return nil, localeError('auth.invalid_credentials') end -- [SEC3]
+    if AuthenticatedPlayers[source] then return nil, localeError('auth.session_failed') end -- [SEC3]
 
     local locked, backoff = loginLocked(source)
     if locked then
@@ -208,6 +228,9 @@ exports.sunset_core:RegisterCallback('sunset:authQuickLogin', function(source, u
     if type(username) ~= 'string' or type(token) ~= 'string' or #token < 32 or #token > 128 then
         return nil, localeError('auth.saved_expired')
     end
+    if AuthenticatedPlayers[source] then return nil, localeError('auth.session_failed') end -- [SEC3]
+    local lockedQ, backoffQ = loginLocked(source) -- [SEC3] quick-login failures count toward the same lockout
+    if lockedQ then return nil, localeError('auth.too_many_attempts', { seconds = math.ceil(backoffQ / 1000) }) end
     local tokenHash = exports.sunset_auth:HashToken(token)
     local row = MySQL.single.await([[
         SELECT a.id, a.username, a.email
@@ -217,7 +240,7 @@ exports.sunset_core:RegisterCallback('sunset:authQuickLogin', function(source, u
           AND q.revoked_at IS NULL AND q.expires_at > NOW()
         LIMIT 1
     ]], { username, tokenHash, deviceHash(source) })
-    if not row then return nil, localeError('auth.saved_expired') end
+    if not row then recordLoginFail(source) return nil, localeError('auth.saved_expired') end
     MySQL.update.await('UPDATE auth_quick_tokens SET last_used_at = NOW() WHERE token_hash = ?', { tokenHash })
     if emailMissing(row.email) then
         PendingEmail[source] = row.id

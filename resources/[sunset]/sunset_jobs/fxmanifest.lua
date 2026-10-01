@@ -19,6 +19,7 @@ shared_scripts {
     '@sunset_core/shared/profile.lua',
     '@sunset_core/shared/factions.lua',
     '@sunset_core/shared/items.lua',
+    '@sunset_core/shared/fish_prices.lua',
 }
 
 dependencies { 'sunset_core', 'sunset_world', 'sunset_inventory' }

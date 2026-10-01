@@ -4,7 +4,7 @@ import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatNumber, formatDate } from "@/lib/i18n";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
-import { PlayerName } from "@/components/ui/PlayerName";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 
 interface PlayerListRow extends RowDataPacket {
@@ -15,6 +15,8 @@ interface PlayerListRow extends RowDataPacket {
   paydays_received: number;
   job: string;
   last_played: string | null;
+  clan_tag: string | null;
+  clan_tag_color: string | null;
 }
 
 interface CountRow extends RowDataPacket {
@@ -55,12 +57,16 @@ export default async function PlayersDirectoryPage({
   const totalCount = countRow?.total || 0;
   const totalPages = Math.ceil(totalCount / limit);
 
-  // Fetch paginated players
+  // Fetch paginated players with clan information
   const players = await dbQuery<PlayerListRow>(
-    `SELECT a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job, c.last_played
+    `SELECT 
+       a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job, c.last_played,
+       cl.tag as clan_tag, cl.tag_color as clan_tag_color
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
+     LEFT JOIN clan_members cm ON cm.character_id = c.id
+     LEFT JOIN clans cl ON cl.id = cm.clan_id
      ${whereClause}
      ORDER BY c.level DESC, c.respect_points DESC, a.id ASC
      LIMIT ? OFFSET ?`,
@@ -120,32 +126,35 @@ export default async function PlayersDirectoryPage({
                   return (
                     <tr
                       key={p.id}
-                      className="hover:bg-surface-200/50 transition-colors"
+                      className="hover:bg-surface-200/40 transition-colors"
                     >
-                      <td className="py-2 px-3">
-                        <PlayerName
-                          name={p.username}
-                          factionId={p.job}
-                          href={`/players/${encodeURIComponent(p.username)}`}
+                      <td className="py-2.5 px-3">
+                        <PlayerIdentity
+                          username={p.username}
+                          factionId={hasFaction ? p.job : null}
+                          clanTag={p.clan_tag}
+                          clanColor={p.clan_tag_color}
                         />
                       </td>
-                      <td className="py-2 px-3 font-mono text-[#f1f1f1]">
+                      <td className="py-2.5 px-3 font-mono font-medium text-[#f1f1f1]">
                         {p.level}
                       </td>
-                      <td className="py-2 px-3">
-                        <span className={hasFaction ? "text-[#f1f1f1] font-medium" : "text-[#6f6f74]"}>
-                          {factionLabel}
-                        </span>
+                      <td className="py-2.5 px-3">
+                        {hasFaction ? (
+                          <span className="font-medium text-[#f1f1f1]">
+                            {factionLabel}
+                          </span>
+                        ) : (
+                          <span className="text-[#6f6f74]">-</span>
+                        )}
                       </td>
-                      <td className="py-2 px-3 capitalize">
-                        <span className={!hasFaction && civilianJob !== "-" ? "text-[#a5a5a8]" : "text-[#6f6f74]"}>
-                          {civilianJob.replace(/_/g, " ")}
-                        </span>
+                      <td className="py-2.5 px-3">
+                        <span className="capitalize">{civilianJob}</span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-[#6f6f74]">
-                        {Math.floor(p.paydays_received || 0)}h
+                      <td className="py-2.5 px-3 font-mono">
+                        {p.paydays_received}h
                       </td>
-                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
+                      <td className="py-2.5 px-3 text-right font-mono text-[#6f6f74]">
                         {p.last_played ? formatDate(p.last_played, locale) : "Never"}
                       </td>
                     </tr>
@@ -153,8 +162,11 @@ export default async function PlayersDirectoryPage({
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-[#6f6f74]">
-                    {t(locale, "players.no_results")}
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-xs text-[#6f6f74]"
+                  >
+                    {t(locale, "players.no_players_found")}
                   </td>
                 </tr>
               )}
@@ -165,29 +177,37 @@ export default async function PlayersDirectoryPage({
         {/* Pagination controls */}
         {totalPages > 1 && (
           <div className="p-2.5 px-3 border-t border-surface-border flex items-center justify-between text-xs">
-            <Link
-              href={`/players?page=${Math.max(1, page - 1)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-200 text-[#f1f1f1] hover:bg-surface-300 transition-colors ${
-                page <= 1 ? "pointer-events-none opacity-40" : ""
-              }`}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>{t(locale, "common.prev")}</span>
-            </Link>
+            <div className="flex items-center space-x-1">
+              {page > 1 ? (
+                <Link
+                  href={`/players?q=${encodeURIComponent(q)}&page=${page - 1}`}
+                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] flex items-center space-x-1 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>{t(locale, "common.previous")}</span>
+                </Link>
+              ) : (
+                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#6f6f74] flex items-center space-x-1 cursor-not-allowed">
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>{t(locale, "common.previous")}</span>
+                </span>
+              )}
 
-            <span className="text-[#6f6f74] font-mono text-[11px]">
-              {page} / {totalPages}
-            </span>
-
-            <Link
-              href={`/players?page=${Math.min(totalPages, page + 1)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-200 text-[#f1f1f1] hover:bg-surface-300 transition-colors ${
-                page >= totalPages ? "pointer-events-none opacity-40" : ""
-              }`}
-            >
-              <span>{t(locale, "common.next")}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
+              {page < totalPages ? (
+                <Link
+                  href={`/players?q=${encodeURIComponent(q)}&page=${page + 1}`}
+                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] flex items-center space-x-1 transition-colors"
+                >
+                  <span>{t(locale, "common.next")}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#6f6f74] flex items-center space-x-1 cursor-not-allowed">
+                  <span>{t(locale, "common.next")}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

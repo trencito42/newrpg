@@ -15,6 +15,8 @@ SunsetMissions.RegisterMission('vehicle_recovery', {
         max = 6000,
     },
 
+    minDurationSec = 90,
+
     xp = 80,
 
     stages = {

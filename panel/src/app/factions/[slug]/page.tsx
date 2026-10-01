@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getViewerLocale } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings, CheckCircle, XCircle } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
-import { PlayerName } from "@/components/ui/PlayerName";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 
 interface MemberRow extends RowDataPacket {
   id: number;
@@ -15,12 +15,16 @@ interface MemberRow extends RowDataPacket {
   level: number;
   joined_at: string | null;
   last_played: string | null;
+  clan_tag: string | null;
+  clan_tag_color: string | null;
 }
 
 interface LeaderRow extends RowDataPacket {
   leader_name: string;
   character_id: number;
   assigned_at: string;
+  clan_tag: string | null;
+  clan_tag_color: string | null;
 }
 
 export default async function FactionDetailPage({
@@ -35,31 +39,59 @@ export default async function FactionDetailPage({
   }
 
   const locale = await getViewerLocale();
+  const session = await getCurrentSession();
   const factionColor = getFactionColor(slug) || "#f1f1f1";
 
-  const [members, leader] = await Promise.all([
+  const [members, leader, appSettings] = await Promise.all([
     dbQuery<MemberRow>(
       `SELECT c.id, a.username, c.job_grade, c.level, c.last_played,
-              fm.joined_at
+              fm.joined_at,
+              cl.tag as clan_tag,
+              cl.tag_color as clan_tag_color
        FROM accounts a
        JOIN players p ON p.account_id = a.id
        JOIN characters c ON c.player_id = p.id
        LEFT JOIN faction_membership fm ON fm.character_id = c.id
+       LEFT JOIN clan_members cm ON cm.character_id = c.id
+       LEFT JOIN clans cl ON cl.id = cm.clan_id
        WHERE c.job = ?
        ORDER BY c.job_grade DESC, c.level DESC, a.id ASC`,
       [slug]
     ),
     dbQuerySingle<LeaderRow>(
-      `SELECT fl.character_id, fl.assigned_at, a.username AS leader_name
+      `SELECT fl.character_id, fl.assigned_at, a.username AS leader_name,
+              cl.tag as clan_tag,
+              cl.tag_color as clan_tag_color
        FROM faction_leaders fl
        JOIN characters c ON c.id = fl.character_id
        JOIN players p ON p.id = c.player_id
        JOIN accounts a ON a.id = p.account_id
+       LEFT JOIN clan_members cm ON cm.character_id = c.id
+       LEFT JOIN clans cl ON cl.id = cm.clan_id
        WHERE fl.faction_id = ?
        LIMIT 1`,
       [slug]
     ),
+    dbQuerySingle<RowDataPacket>(
+      `SELECT applications_open FROM panel_org_application_settings WHERE org_type = 'faction' AND org_id = ? LIMIT 1`,
+      [slug]
+    ),
   ]);
+
+  const appsOpen = Boolean(appSettings?.applications_open);
+
+  // Check if session user has Leader / Sub-Leader rank
+  let canManage = false;
+  if (session) {
+    if (session.adminLevel >= 3) {
+      canManage = true;
+    } else {
+      const myMember = members.find((m) => m.username.toLowerCase() === session.username.toLowerCase());
+      if (myMember && (Number(myMember.job_grade) >= 6 || (leader && leader.leader_name.toLowerCase() === session.username.toLowerCase()))) {
+        canManage = true;
+      }
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -94,82 +126,131 @@ export default async function FactionDetailPage({
             </p>
           </div>
 
-          <span className="font-mono text-xs text-[#a5a5a8] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
-            {members.length} members
+          <div className="flex items-center gap-2">
+            {canManage && (
+              <Link
+                href={`/factions/${slug}/manage`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border text-[#f1f1f1] font-medium rounded text-xs transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#a5a5a8]" />
+                <span>{locale === "ro" ? "Panou Lider" : "Faction Panel"}</span>
+              </Link>
+            )}
+
+            {appsOpen && (
+              <Link
+                href={`/factions/${slug}/apply`}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded text-xs transition-colors"
+              >
+                {locale === "ro" ? "Aplică în facțiune" : "Apply to Faction"}
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats summary banner */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[11px] text-[#6f6f74] block">Leader</span>
+          <div className="mt-1">
+            {leader ? (
+              <PlayerIdentity
+                username={leader.leader_name}
+                factionId={slug}
+                clanTag={leader.clan_tag}
+                clanColor={leader.clan_tag_color}
+                size="sm"
+              />
+            ) : (
+              <span className="text-[#6f6f74] italic">Vacant</span>
+            )}
+          </div>
+        </div>
+
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[11px] text-[#6f6f74] block">Type</span>
+          <span className="font-semibold text-[#f1f1f1] mt-1 block capitalize">
+            {faction.type}
+          </span>
+        </div>
+
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[11px] text-[#6f6f74] block">Active Members</span>
+          <span className="font-mono font-bold text-[#f1f1f1] mt-1 block">
+            {members.length}
+          </span>
+        </div>
+
+        <div className="p-3 bg-[#101011] border border-surface-border rounded">
+          <span className="text-[11px] text-[#6f6f74] block">Applications</span>
+          <span className="font-bold text-xs mt-1 block">
+            {appsOpen ? (
+              <span className="text-emerald-400 flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5" /> OPEN
+              </span>
+            ) : (
+              <span className="text-[#6f6f74] flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> CLOSED
+              </span>
+            )}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Leadership column */}
-        <div className="md:col-span-1 border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 text-xs">
-          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
-            Leadership
+      {/* Roster Table */}
+      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="p-3 border-b border-surface-border">
+          <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            {locale === "ro" ? "Membri Activi" : "Faction Roster"} ({members.length})
           </h2>
-          {leader ? (
-            <div>
-              <span className="text-[#6f6f74] block mb-1">Leader</span>
-              <PlayerName
-                name={leader.leader_name}
-                factionId={slug}
-                className="text-sm font-bold block"
-              />
-              <span className="text-[11px] text-[#6f6f74] font-mono block mt-0.5">
-                Assigned: {formatDate(leader.assigned_at, locale, false)}
-              </span>
-            </div>
-          ) : (
-            <p className="text-[#6f6f74] text-xs">
-              Leadership is vacant.
-            </p>
-          )}
         </div>
 
-        {/* Member Roster */}
-        <div className="md:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs text-[#8a8a90]">
-            <span className="font-semibold text-[#f1f1f1]">Roster</span>
-            <span className="font-mono text-[#6f6f74]">{members.length} members</span>
-          </div>
-
-          <div className="responsive-table-wrapper">
-            <table className="w-full text-left text-xs">
-              <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <th className="px-3 py-2">#</th>
+                <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
+                <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
+                <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
+                <th className="px-3 py-2 text-right">{locale === "ro" ? "Ultima Activitate" : "Last Active"}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border">
+              {members.length === 0 ? (
                 <tr>
-                  <th className="py-2 px-3">Member</th>
-                  <th className="py-2 px-3">Rank</th>
-                  <th className="py-2 px-3">Level</th>
-                  <th className="py-2 px-3 text-right">Joined</th>
+                  <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                    No members in this faction
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
-                {members.length > 0 ? (
-                  members.map((m) => (
-                    <tr key={m.id} className="hover:bg-surface-200/40 transition-colors">
-                      <td className="py-2 px-3">
-                        <PlayerName name={m.username} factionId={slug} href={`/players/${encodeURIComponent(m.username)}`} />
-                      </td>
-                        <td className="py-2 px-3 font-mono text-[#f1f1f1]">
-                          Grade {m.job_grade}
-                        </td>
-                        <td className="py-2 px-3 font-mono text-[#6f6f74]">
-                          Lvl {m.level}
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
-                          {m.joined_at ? formatDate(m.joined_at, locale, false) : "-"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                  <tr>
-                    <td colSpan={4} className="py-6 text-center text-[#6f6f74]">
-                      No members enrolled in this faction.
+              ) : (
+                members.map((m, idx) => (
+                  <tr key={m.id} className="hover:bg-[#151517] transition-colors">
+                    <td className="px-3 py-2 font-mono text-[#6f6f74] text-[11px]">{idx + 1}</td>
+                    <td className="px-3 py-2">
+                      <PlayerIdentity
+                        username={m.username}
+                        factionId={slug}
+                        clanTag={m.clan_tag}
+                        clanColor={m.clan_tag_color}
+                        size="sm"
+                      />
+                    </td>
+                    <td className="px-3 py-2 font-mono font-medium text-[#f1f1f1]">
+                      Rank {m.job_grade}
+                      {m.job_grade >= 7 && <span className="ml-1.5 text-[10px] text-amber-400 font-bold">[LEADER]</span>}
+                      {m.job_grade === 6 && <span className="ml-1.5 text-[10px] text-blue-400 font-bold">[CO-LEADER]</span>}
+                    </td>
+                    <td className="px-3 py-2 text-center font-mono">{m.level}</td>
+                    <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
+                      {m.last_played ? formatDate(m.last_played, locale) : "Never"}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

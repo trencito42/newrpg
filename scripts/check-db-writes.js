@@ -88,14 +88,9 @@ const KNOWN_VIOLATIONS = new Set([
     'sunset_phone:characters',          // phone_number derivation: move to core API
     'sunset_properties:characters',     // rent income + purchase debits: route via core money API / ledger helper
     'sunset_carjack:job_progress',      // DOMAIN_OWNERSHIP #1: use sunset_jobs:AddJobProgress
-    'sunset_vehicles:money_transactions', // gas-station ledger rows inside fuel txns (acceptable interim)
     'sunset_factions:characters',       // if any appear: route via core
     // in-transaction guarded debits (audit-verified atomic; consolidate via
     // core Ledger helper in Phase 3, functionally safe today)
-    'sunset_vehicles:characters',       // gas-can/refuel payment inside fuel txn
-    'sunset_vehicles:character_inventory', // gas-can liter updates inside fuel txn
-    'sunset_robbery:character_inventory',  // fence sale item consumption in txn
-    'sunset_robbery:characters',        // fence payout credit in txn
     'sunset_admin:accounts',            // setadmin level write (level-5 gated)
     'sunset_clothing:characters',       // outfit equip writes validated appearance (C8; same sanitizer as saveAppearance)
 ]);

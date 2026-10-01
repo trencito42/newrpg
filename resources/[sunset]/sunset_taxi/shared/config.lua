@@ -20,7 +20,10 @@ Sunset.Taxi = {
         idleTimeoutSec = 45,
         maxFareMultiplier = 1.5,
     },
-    allowedVehicles = { 'taxi', 'taxiold', 'dynasty', 'rumpo', 'stretch', 'bus' },
+    -- [JOBS AUTHORITY] SINGLE SOURCE OF TRUTH for taxi-capable vehicles is the Cab Depot fleet in
+    -- sunset_core/shared/factions.lua (taxi/dynasty/rumpo/stretch/bus are deliberate grade-gated fleet
+    -- vehicles). IsValidTaxiVehicle() merges that fleet with this base list, so only extras go here.
+    allowedVehicles = { 'taxi' },
     tipOptions = { 25, 50, 100 },
     destinations = {
         { id = 'legion', label = 'Legion Square', category = 'Popular', coords = vector3(215.76, -810.12, 30.73) },

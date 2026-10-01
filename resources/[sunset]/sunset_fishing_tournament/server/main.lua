@@ -236,64 +236,144 @@ end)
 --  Tournament Lifecycle
 -- ═══════════════════════════════════════════════════════════════
 
-local function startTournament(instanceId, duration, isDevTest)
-    if TournamentData.state == 'ACTIVE' then
-        logInfo('startTournament called but tournament is already active (id=%s)', tostring(TournamentData.instanceId))
-        return
+-- ── Persistence helpers (migration sql/70-fishing-tournament-persistence.sql) ──────────
+-- The catches table is the single source of truth for scores. Memory is only a cache that is
+-- rebuilt from the DB on resume/settle, so a restart can never lose or double-count a score.
+
+local MAX_FISH_KG = Cfg.maxFishKg or 150.0
+
+-- Rebuild participants (membership + aggregates) from the DB for one tournament.
+-- Only catches made at or before endsAt count (deterministic cut-off).
+local function loadParticipantsFromDb(tournamentId, endsAt, previous)
+    local participants = {}
+    local members = MySQL.query.await(
+        'SELECT character_id, display_name, joined_at FROM fishing_tournament_participants WHERE tournament_id = ?',
+        { tournamentId }) or {}
+    for _, m in ipairs(members) do
+        local cid = tonumber(m.character_id)
+        local prev = previous and previous[cid]
+        participants[cid] = {
+            charId = cid,
+            source = prev and prev.source or nil,
+            name = (prev and prev.name) or m.display_name,
+            joinedAt = tonumber(m.joined_at) or 0,
+            fishCount = 0,
+            totalWeight10 = 0,
+            biggestFishWeight10 = 0,
+            biggestFishItem = nil,
+            lastCatchAt = nil,
+            keys = {},
+        }
     end
+    local catches = MySQL.query.await(
+        'SELECT character_id, catch_key, item, weight_10, caught_at FROM fishing_tournament_catches WHERE tournament_id = ? AND caught_at <= ? ORDER BY id ASC',
+        { tournamentId, endsAt }) or {}
+    for _, c in ipairs(catches) do
+        local p = participants[tonumber(c.character_id)]
+        if p then
+            local w10 = tonumber(c.weight_10) or 0
+            p.fishCount = p.fishCount + 1
+            p.totalWeight10 = p.totalWeight10 + w10
+            p.keys[c.catch_key] = true
+            if w10 > p.biggestFishWeight10 then
+                p.biggestFishWeight10 = w10
+                p.biggestFishItem = c.item
+            end
+            local at = tonumber(c.caught_at) or 0
+            if not p.lastCatchAt or at > p.lastCatchAt then p.lastCatchAt = at end
+        end
+    end
+    return participants
+end
 
-    local now = os.time()
-    instanceId = instanceId or ('fishing_tournament:%s:%02d'):format(os.date('%Y-%m-%d', now), os.date('*t', now).hour)
-    duration = tonumber(duration) or Cfg.duration or 3600
-
-    TournamentData.state = 'ACTIVE'
-    TournamentData.instanceId = instanceId
-    TournamentData.startedAt = now
-    TournamentData.endsAt = now + duration
-    TournamentData.isDevTest = (isDevTest == true)
-    TournamentData.participants = {}
-    isDirty = false
-
-    logInfo('started id=%s duration=%ds devTest=%s', instanceId, duration, tostring(TournamentData.isDevTest))
-
-    -- Tell all connected clients tournament has started
+local function broadcastStarted()
     TriggerClientEvent('sunset:fishingTournament:eventStarted', -1, {
-        instanceId = instanceId,
+        instanceId = TournamentData.instanceId,
         location = Cfg.joinLocation,
         radius = Cfg.joinRadius,
         endsAt = TournamentData.endsAt,
     })
 end
 
-local function settleTournamentInner()
+local settleTournamentInner -- forward
+local resumeFromDb -- forward
+
+-- Start a new tournament or resume the persisted one with the same id. Refuses ids that were
+-- already settled/cancelled so one tournament can never be run (and rewarded) twice.
+local Starting = false
+local function startTournament(instanceId, duration, isDevTest)
+    if TournamentData.state ~= 'INACTIVE' or Starting then
+        logInfo('startTournament ignored: state=%s starting=%s (id=%s)', TournamentData.state, tostring(Starting), tostring(TournamentData.instanceId))
+        return
+    end
+    Starting = true
+    local ok, err = pcall(function()
+        local now = os.time()
+        instanceId = instanceId or ('fishing_tournament:%s:%02d'):format(os.date('%Y-%m-%d', now), os.date('*t', now).hour)
+        instanceId = tostring(instanceId):sub(1, 64)
+        duration = tonumber(duration) or Cfg.duration or 3600
+
+        local row = MySQL.single.await(
+            'SELECT status, started_at, ends_at, is_dev_test FROM fishing_tournaments WHERE tournament_id = ?', { instanceId })
+        local startedAt, endsAt, dev = now, now + duration, (isDevTest == true)
+        if row then
+            if row.status == 'settled' or row.status == 'cancelled' then
+                logInfo('start refused: tournament %s already %s', instanceId, row.status)
+                return
+            end
+            if row.status == 'settling' then
+                logInfo('start deferred: tournament %s is mid-settlement (resume path settles it)', instanceId)
+                SetTimeout(1000, function() if resumeFromDb then resumeFromDb() end end)
+                return
+            end
+            startedAt, endsAt, dev = tonumber(row.started_at), tonumber(row.ends_at), tonumber(row.is_dev_test) == 1
+        else
+            MySQL.insert.await(
+                'INSERT IGNORE INTO fishing_tournaments (tournament_id, status, is_dev_test, started_at, ends_at) VALUES (?, \'active\', ?, ?, ?)',
+                { instanceId, dev and 1 or 0, startedAt, endsAt })
+        end
+
+        TournamentData.instanceId = instanceId
+        TournamentData.startedAt = startedAt
+        TournamentData.endsAt = endsAt
+        TournamentData.isDevTest = dev
+        TournamentData.participants = loadParticipantsFromDb(instanceId, endsAt, nil)
+        TournamentData.state = 'ACTIVE'
+        isDirty = true
+        logInfo('%s id=%s endsIn=%ds devTest=%s', row and 'resumed' or 'started', instanceId, endsAt - now, tostring(dev))
+        if endsAt > now then broadcastStarted() end
+    end)
+    Starting = false
+    if not ok then logInfo('startTournament error: %s', tostring(err)) end
+end
+
+settleTournamentInner = function()
     if TournamentData.state ~= 'ACTIVE' then return end
 
+    -- state flips synchronously (no yield before this line) so concurrent end triggers cannot double-settle
     TournamentData.state = 'SETTLING'
     local instanceId = TournamentData.instanceId
     local isDevTest = TournamentData.isDevTest
     local minFish = Cfg.minFish or 3
 
-    logInfo('settling id=%s participants=%d', instanceId, (function()
-        local c = 0
-        for _ in pairs(TournamentData.participants) do c = c + 1 end
-        return c
-    end)())
+    MySQL.update.await("UPDATE fishing_tournaments SET status = 'settling' WHERE tournament_id = ? AND status = 'active'", { instanceId })
+
+    -- Authoritative scores come from the persisted catches (cut-off = min(endsAt, now)).
+    TournamentData.endsAt = math.min(TournamentData.endsAt, os.time())
+    TournamentData.participants = loadParticipantsFromDb(instanceId, TournamentData.endsAt, TournamentData.participants)
 
     local ranked = getRankedParticipants()
     local qualified = {}
     for _, p in ipairs(ranked) do
-        if p.fishCount >= minFish then
-            qualified[#qualified + 1] = p
-        end
+        if p.fishCount >= minFish then qualified[#qualified + 1] = p end
     end
+    logInfo('settling id=%s participants=%d qualified=%d', instanceId, #ranked, #qualified)
 
-    -- 1. Record History in Database
-    -- [JOBS AUDIT] The INSERT used columns that do not exist in sql/58 (total_weight, biggest_fish_weight) and
-    -- omitted the NOT NULL display_name, so every history write failed. Matched to the real schema.
+    -- 1. History (idempotent via uq_ft_hist)
     local endedAt = os.time()
     for rank, p in ipairs(ranked) do
         local rewardCfg = (rank <= 3 and p.fishCount >= minFish) and Cfg.rewards[rank] or nil
-        MySQL.insert([[
+        MySQL.insert.await([[
             INSERT INTO fishing_tournament_history
                 (tournament_id, character_id, display_name, `rank`, fish_count, total_weight_10,
                  biggest_fish_weight_10, biggest_fish_item, qualified, reward_cash, reward_xp, started_at, ended_at)
@@ -308,128 +388,108 @@ local function settleTournamentInner()
         })
     end
 
-    -- 2. Distribute Rewards for Top 3 Qualified
+    -- 2. Reward rows for the top 3 qualified. INSERT IGNORE on uq_ft_reward: the first insert wins, so a
+    --    re-run of settlement (crash/restart) can never create a second reward. Payment itself is the
+    --    single atomic claim path (claimPendingRewards: UPDATE ... WHERE claimed_at IS NULL before paying).
     local topWinners = {}
     for rank = 1, math.min(3, #qualified) do
         local entry = qualified[rank]
         local reward = Cfg.rewards[rank]
         if reward then
             topWinners[#topWinners + 1] = {
-                rank = rank,
-                name = entry.name,
-                charId = entry.charId,
-                fishCount = entry.fishCount,
+                rank = rank, name = entry.name, charId = entry.charId, fishCount = entry.fishCount,
                 totalWeight = string.format('%.1f', entry.totalWeight10 / 10),
                 biggestWeight = string.format('%.1f', entry.biggestFishWeight10 / 10),
-                cash = reward.cash,
-                xp = reward.xp,
+                cash = reward.cash, xp = reward.xp,
             }
-
             if not isDevTest then
-                -- Check if participant source is online
-                local activeSource = nil
-                if entry.source and entry.source > 0 then
-                    local currentCid = getCharId(entry.source)
-                    if currentCid == entry.charId then
-                        activeSource = entry.source
-                    end
-                end
-
-                -- [JOBS AUDIT] Only mark a reward claimed if the money actually landed; otherwise queue it as
-                -- pending so it is paid on next login (it was marked claimed even when AddMoney failed).
-                local paidNow = false
-                if activeSource then
-                    paidNow = (tonumber(reward.cash) or 0) <= 0
-                        or exports.sunset_core:AddMoney(activeSource, 'cash', reward.cash, 'fishing_tournament')
-                end
-
-                if activeSource and paidNow then
-                    -- Direct payout
-                    pcall(function() exports.sunset_core:AddXP(activeSource, reward.xp) end)
-
-                    MySQL.insert([[
-                        INSERT INTO fishing_tournament_rewards (tournament_id, character_id, `rank`, cash, xp, claimed_at)
-                        VALUES (?, ?, ?, ?, ?, NOW())
-                        ON DUPLICATE KEY UPDATE `rank` = VALUES(`rank`), claimed_at = NOW()
-                    ]], { instanceId, entry.charId, rank, reward.cash, reward.xp })
-
-                    logInfo('rewarded online winner char=%d source=%d rank=%d cash=%d xp=%d',
-                        entry.charId, activeSource, rank, reward.cash, reward.xp)
-
-                    notify(activeSource, ('Fishing Tournament - %s! %d fish (Total: %.1f KG). Reward: %s + %d XP.'):format(
-                        reward.label, entry.fishCount, entry.totalWeight10 / 10,
-                        formatMoney(reward.cash), reward.xp), 'success', 15000)
-                else
-                    -- Pending offline reward
-                    MySQL.insert([[
-                        INSERT INTO fishing_tournament_rewards (tournament_id, character_id, `rank`, cash, xp, claimed_at)
-                        VALUES (?, ?, ?, ?, ?, NULL)
-                        ON DUPLICATE KEY UPDATE `rank` = VALUES(`rank`)
-                    ]], { instanceId, entry.charId, rank, reward.cash, reward.xp })
-
-                    logInfo('queued offline reward char=%d rank=%d cash=%d xp=%d',
-                        entry.charId, rank, reward.cash, reward.xp)
-                end
+                MySQL.insert.await([[
+                    INSERT IGNORE INTO fishing_tournament_rewards (tournament_id, character_id, `rank`, cash, xp, claimed_at)
+                    VALUES (?, ?, ?, ?, ?, NULL)
+                ]], { instanceId, entry.charId, rank, reward.cash, reward.xp })
             else
-                logInfo('dev test event — rewards skipped for rank=%d char=%d', rank, entry.charId)
+                logInfo('dev test event - rewards skipped for rank=%d char=%d', rank, entry.charId)
             end
         end
     end
 
-    -- 3. Broadcast Results to All Clients
+    -- 3. Mark settled only after history + reward rows exist.
+    MySQL.update.await("UPDATE fishing_tournaments SET status = 'settled', settled_at = ? WHERE tournament_id = ?", { os.time(), instanceId })
+
+    -- 4. Pay online winners through the one claim path.
+    if not isDevTest then
+        for _, w in ipairs(topWinners) do
+            local entry = TournamentData.participants[w.charId]
+            if entry and entry.source and entry.source > 0 and getCharId(entry.source) == w.charId then
+                claimPendingRewards(entry.source, w.charId)
+            end
+        end
+    end
+
+    -- 5. Broadcast results.
     local summaryTop = {}
     for i = 1, math.min(5, #ranked) do
         local entry = ranked[i]
         summaryTop[#summaryTop + 1] = {
-            rank = i,
-            name = entry.name,
+            rank = i, name = entry.name,
             totalWeight = string.format('%.1f', entry.totalWeight10 / 10),
-            fishCount = entry.fishCount,
-            qualified = (entry.fishCount >= minFish),
+            fishCount = entry.fishCount, qualified = (entry.fishCount >= minFish),
         }
     end
-
-    local resultsBroadcast = {
-        tournamentId = instanceId,
-        winners = topWinners,
-        topParticipants = summaryTop,
-        totalParticipants = #ranked,
-        totalQualified = #qualified,
-        isDevTest = isDevTest,
-    }
-
-    TriggerClientEvent('sunset:fishingTournament:showResults', -1, resultsBroadcast)
-
-    -- Announce podium in chat / notice
+    TriggerClientEvent('sunset:fishingTournament:showResults', -1, {
+        tournamentId = instanceId, winners = topWinners, topParticipants = summaryTop,
+        totalParticipants = #ranked, totalQualified = #qualified, isDevTest = isDevTest,
+    })
     if #topWinners > 0 then
         local parts = {}
         for _, w in ipairs(topWinners) do
             parts[#parts + 1] = ('#%d %s (%s KG)'):format(w.rank, w.name, w.totalWeight)
         end
         TriggerClientEvent('sunset:client:notify', -1,
-            ('🎣 Fishing Tournament Results: %s'):format(table.concat(parts, ' · ')), 'info', 12000)
+            ('Fishing Tournament Results: %s'):format(table.concat(parts, ' | ')), 'info', 12000)
     else
         TriggerClientEvent('sunset:client:notify', -1,
-            '🎣 Fishing Tournament ended. No player caught enough fish to qualify.', 'info', 8000)
+            'Fishing Tournament ended. No player caught enough fish to qualify.', 'info', 8000)
     end
 
-    TournamentData.state = 'FINISHED'
-    SetTimeout(5000, function()
-        if TournamentData.state == 'FINISHED' then
-            TournamentData.state = 'INACTIVE'
-            TournamentData.participants = {}
-        end
-    end)
+    TournamentData.state = 'INACTIVE'
+    TournamentData.participants = {}
+    TournamentData.instanceId = nil
 end
 
--- [JOBS AUDIT] An error mid-settlement used to leave the tournament in SETTLING forever. Guard it.
+-- An error mid-settlement leaves the DB row in 'settling' (resumable); memory goes INACTIVE and a retry
+-- is scheduled. All writes inside are idempotent, so the retry cannot double-pay.
 local function settleTournament()
+    if TournamentData.state ~= 'ACTIVE' then return end
     local ok, err = pcall(settleTournamentInner)
     if not ok then
         logInfo('settlement error: %s', tostring(err))
-        if TournamentData.state == 'SETTLING' then
-            TournamentData.state = 'INACTIVE'
+        TournamentData.state = 'INACTIVE'
+        TournamentData.participants = {}
+        TournamentData.instanceId = nil
+        SetTimeout(60000, function() if resumeFromDb then resumeFromDb() end end)
+    end
+end
+
+-- Resume after a resource/server restart: unfinished rows are either resumed (still running) or settled now.
+resumeFromDb = function()
+    if TournamentData.state ~= 'INACTIVE' or Starting then return end
+    local rows = MySQL.query.await(
+        "SELECT tournament_id, status, is_dev_test, started_at, ends_at FROM fishing_tournaments WHERE status IN ('active','settling') ORDER BY started_at ASC") or {}
+    local now = os.time()
+    for _, r in ipairs(rows) do
+        if TournamentData.state ~= 'INACTIVE' then break end
+        local endsAt = tonumber(r.ends_at) or 0
+        if r.status == 'active' and endsAt > now then
+            startTournament(r.tournament_id, endsAt - now, tonumber(r.is_dev_test) == 1)
+        else
+            TournamentData.instanceId = r.tournament_id
+            TournamentData.startedAt = tonumber(r.started_at)
+            TournamentData.endsAt = endsAt
+            TournamentData.isDevTest = tonumber(r.is_dev_test) == 1
             TournamentData.participants = {}
+            TournamentData.state = 'ACTIVE'
+            settleTournament()
         end
     end
 end
@@ -440,7 +500,9 @@ end
 
 AddEventHandler('sunset:events:serverStart', function(data)
     if data and data.type == 'fishing_tournament' then
-        startTournament(data.instanceId, data.duration, data.isDevTest)
+        -- the scheduler event carries endTime, not duration (it used to fall back to the full default length)
+        local dur = data.duration or (data.endTime and (data.endTime - os.time())) or nil
+        startTournament(data.instanceId, dur, data.isDevTest)
     end
 end)
 
@@ -454,119 +516,146 @@ end)
 --  Join Callback & Interaction
 -- ═══════════════════════════════════════════════════════════════
 
+-- Shared, idempotent join. Membership is persisted (uq_ftp_member) and tied to the character id.
+local Joining = {}
+local function registerParticipant(source, charId)
+    local existing = TournamentData.participants[charId]
+    if existing then
+        existing.source = source
+        existing.name = getCharName(source)
+        return existing, true
+    end
+    if Joining[charId] then return nil end
+    Joining[charId] = true
+    local tid = TournamentData.instanceId
+    local name = getCharName(source)
+    local okIns = pcall(function()
+        MySQL.insert.await(
+            'INSERT IGNORE INTO fishing_tournament_participants (tournament_id, character_id, display_name, joined_at) VALUES (?, ?, ?, ?)',
+            { tid, charId, tostring(name):sub(1, 64), os.time() })
+    end)
+    Joining[charId] = nil
+    if not okIns or TournamentData.state ~= 'ACTIVE' or TournamentData.instanceId ~= tid then return nil end
+    local p = TournamentData.participants[charId]
+    if p then p.source = source return p, true end
+    p = {
+        charId = charId, source = source, name = name, joinedAt = os.time(),
+        fishCount = 0, totalWeight10 = 0, biggestFishWeight10 = 0, biggestFishItem = nil, lastCatchAt = nil, keys = {},
+    }
+    TournamentData.participants[charId] = p
+    isDirty = true
+    logInfo('player joined char=%d name=%s source=%d', charId, name, source)
+    return p, false
+end
+
 exports.sunset_core:RegisterCallback('sunset:fishingTournament:join', function(source)
     source = tonumber(source)
     if not source or source <= 0 then
         return { ok = false, error = 'Invalid player session.' }
     end
-
     if TournamentData.state ~= 'ACTIVE' then
         return { ok = false, error = 'No fishing tournament is currently active.' }
     end
-
     local charId = getCharId(source)
     if not charId then
         return { ok = false, error = 'Character not loaded.' }
     end
-
-    -- Server-side proximity check
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then
         return { ok = false, error = 'Player entity not available.' }
     end
-
-    local pCoords = GetEntityCoords(ped)
-    local loc = Cfg.joinLocation
-    local dist = #(pCoords - loc)
+    local dist = #(GetEntityCoords(ped) - Cfg.joinLocation)
     if dist > (Cfg.joinRadius or 45.0) then
         return { ok = false, error = 'You are too far from the tournament location.' }
     end
 
-    -- Idempotent check
-    if TournamentData.participants[charId] then
-        local p = TournamentData.participants[charId]
-        p.source = source
-        p.name = getCharName(source)
-        local status = getParticipantStatus(charId)
-        return { ok = true, alreadyJoined = true, status = status }
+    local p, already = registerParticipant(source, charId)
+    if not p then return { ok = false, error = 'Could not join right now.' } end
+    if not already then
+        notify(source, 'Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
     end
-
-    -- Register participant
-    local name = getCharName(source)
-    TournamentData.participants[charId] = {
-        charId = charId,
-        source = source,
-        name = name,
-        joinedAt = os.time(),
-        fishCount = 0,
-        totalWeight10 = 0,
-        biggestFishWeight10 = 0,
-        biggestFishItem = nil,
-        lastCatchAt = nil,
-    }
-
-    isDirty = true
-    logInfo('player joined char=%d name=%s source=%d', charId, name, source)
-
-    notify(source, '🎣 Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
-
     local status = getParticipantStatus(charId)
-    TriggerClientEvent('sunset:fishingTournament:syncHud', source, status)
-
-    return { ok = true, alreadyJoined = false, status = status }
+    if not already then TriggerClientEvent('sunset:fishingTournament:syncHud', source, status) end
+    return { ok = true, alreadyJoined = already, status = status }
 end)
 
 -- ═══════════════════════════════════════════════════════════════
 --  Server Authoritative Catch Hook (from sunset_jobs/fisherman)
+--  Only a server-side event (not a net event): the weight/item come from the server fishing
+--  session. No client-provided score exists anywhere in this resource.
 -- ═══════════════════════════════════════════════════════════════
 
 AddEventHandler('sunset:fishing:caught', function(source, fishData)
     if TournamentData.state ~= 'ACTIVE' then return end
-
     source = tonumber(source)
     if not source or source <= 0 then return end
-
     local charId = getCharId(source)
     if not charId then return end
 
     local p = TournamentData.participants[charId]
     if not p then
-        -- Catches made before joining do NOT count toward tournament
         logDebug('catch ignored for unregistered participant char=%d', charId)
         return
     end
-
-    -- Maintain source link
     p.source = source
 
     fishData = type(fishData) == 'table' and fishData or {}
-    local rawKg = tonumber(fishData.weight) or 1.0
-    -- Avoid floating point inaccuracies by storing integer hectograms (round(kg * 10))
+    local now = os.time()
+    if now >= TournamentData.endsAt then return end
+    local rawKg = tonumber(fishData.weight)
+    if not rawKg or rawKg ~= rawKg or rawKg <= 0 or rawKg > MAX_FISH_KG then
+        logInfo('rejected implausible catch char=%d weight=%s', charId, tostring(fishData.weight))
+        return
+    end
+    local item = tostring(fishData.item or 'fish'):sub(1, 64)
+    local caughtAt = math.floor(tonumber(fishData.caughtAt) or now)
+    if math.abs(now - caughtAt) > 30 then return end -- stale/replayed event
     local w10 = math.max(1, math.floor(rawKg * 10 + 0.5))
+
+    -- Idempotency key per catch: identical re-delivery of the same catch is a no-op.
+    local key = tostring(fishData.catchId or ('%d:%s:%d'):format(caughtAt, item, w10)):sub(1, 96)
+    p.keys = p.keys or {}
+    if p.keys[key] then return end
+    p.keys[key] = true -- reserved synchronously, before any yield
+
+    local tid = TournamentData.instanceId
+    local okIns, affected = pcall(function()
+        return MySQL.update.await(
+            'INSERT IGNORE INTO fishing_tournament_catches (tournament_id, character_id, catch_key, item, weight_10, caught_at) VALUES (?, ?, ?, ?, ?, ?)',
+            { tid, charId, key, item, w10, caughtAt })
+    end)
+    if not okIns then p.keys[key] = nil return end
+    if affected ~= 1 then return end -- duplicate caught by the unique index
+    if TournamentData.state ~= 'ACTIVE' or TournamentData.instanceId ~= tid then return end
 
     p.fishCount = p.fishCount + 1
     p.totalWeight10 = p.totalWeight10 + w10
-    p.lastCatchAt = os.time()
-
+    p.lastCatchAt = caughtAt
     if w10 > p.biggestFishWeight10 then
         p.biggestFishWeight10 = w10
-        p.biggestFishItem = fishData.item or 'fish'
+        p.biggestFishItem = item
     end
-
     isDirty = true
 
     logDebug('catch char=%d item=%s weight=%.1fkg newTotal=%.1fkg count=%d',
-        charId, tostring(fishData.item), w10 / 10, p.totalWeight10 / 10, p.fishCount)
+        charId, item, w10 / 10, p.totalWeight10 / 10, p.fishCount)
 
-    -- Instant visual feedback to the participant
     TriggerClientEvent('sunset:fishingTournament:catchFeedback', source, {
-        item = fishData.item or 'fish',
+        item = item,
         weight = string.format('%.1f', w10 / 10),
         totalWeight = string.format('%.1f', p.totalWeight10 / 10),
         fishCount = p.fishCount,
         minFish = Cfg.minFish or 3,
         qualified = (p.fishCount >= (Cfg.minFish or 3)),
     })
+end)
+
+-- A leaving player keeps the score (tied to character id); only the live source link is dropped.
+AddEventHandler('playerDropped', function()
+    local src = source
+    for _, p in pairs(TournamentData.participants) do
+        if p.source == src then p.source = nil end
+    end
 end)
 
 -- ═══════════════════════════════════════════════════════════════
@@ -730,18 +819,20 @@ end, false)
 
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
-
-    -- Check if sunset_events has an active tournament running
-    if GetResourceState('sunset_events') == 'started' then
-        pcall(function()
-            local activeEv = exports.sunset_events:GetActiveEvent()
-            if activeEv and activeEv.type == 'fishing_tournament' then
-                logInfo('recovered active tournament on resource start (id=%s remaining=%ds)',
-                    tostring(activeEv.instanceId), activeEv.remaining or 0)
-                startTournament(activeEv.instanceId, activeEv.remaining, activeEv.isDevTest)
-            end
-        end)
-    end
+    CreateThread(function()
+        -- 1) DB is the truth: resume a running tournament or settle expired/half-settled ones.
+        local ok, err = pcall(resumeFromDb)
+        if not ok then logInfo('resume error: %s', tostring(err)) end
+        -- 2) the scheduler may know an event the DB does not (first start of the hour)
+        if TournamentData.state == 'INACTIVE' and GetResourceState('sunset_events') == 'started' then
+            pcall(function()
+                local activeEv = exports.sunset_events:GetActiveEvent()
+                if activeEv and activeEv.type == 'fishing_tournament' then
+                    startTournament(activeEv.instanceId, math.max(1, (activeEv.endTime or 0) - os.time()), activeEv.isDevTest)
+                end
+            end)
+        end
+    end)
 end)
 
 -- ═══════════════════════════════════════════════════════════════
@@ -763,32 +854,17 @@ exports('JoinTournament', function(source)
     if TournamentData.state ~= 'ACTIVE' then return nil, { localeKey = 'fishing_tournament.message.no_fishing_tournament_is_active' } end
     local charId = getCharId(source)
     if not charId then return nil, { localeKey = 'fishing_tournament.message.character_not_loaded' } end
-
-    if TournamentData.participants[charId] then
-        local p = TournamentData.participants[charId]
-        p.source = source
-        p.name = getCharName(source)
-        return { ok = true, alreadyJoined = true }
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 or #(GetEntityCoords(ped) - Cfg.joinLocation) > (Cfg.joinRadius or 45.0) then
+        return nil, { localeKey = 'fishing_tournament.message.invalid_player_session' }
     end
-
-    local name = getCharName(source)
-    TournamentData.participants[charId] = {
-        charId = charId,
-        source = source,
-        name = name,
-        joinedAt = os.time(),
-        fishCount = 0,
-        totalWeight10 = 0,
-        biggestFishWeight10 = 0,
-        biggestFishItem = nil,
-        lastCatchAt = nil,
-    }
-    isDirty = true
-    logInfo('player joined via export char=%d name=%s source=%d', charId, name, source)
-    notify(source, '🎣 Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
-    local status = getParticipantStatus(charId)
-    TriggerClientEvent('sunset:fishingTournament:syncHud', source, status)
-    return { ok = true, alreadyJoined = false }
+    local p, already = registerParticipant(source, charId)
+    if not p then return nil, { localeKey = 'fishing_tournament.message.no_fishing_tournament_is_active' } end
+    if not already then
+        notify(source, 'Fishing Tournament joined! Catch at least 3 fish. Highest total weight wins.', 'success', 8000)
+        TriggerClientEvent('sunset:fishingTournament:syncHud', source, getParticipantStatus(charId))
+    end
+    return { ok = true, alreadyJoined = already }
 end)
 
 exports('GetTournamentData', function()

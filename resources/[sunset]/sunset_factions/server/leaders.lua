@@ -195,6 +195,15 @@ exports.sunset_core:RegisterCallback('sunset:factionUninvite', function(source, 
     if not target or targetFaction ~= factionId then
         return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' }
     end
+    -- [SEC3] rank ordering: leaders can only be removed by an admin (/removeleader), and
+    -- non-leaders cannot remove members at their own rank or above.
+    if FactionCore.isFactionLeader(target.id, factionId) and tonumber(target.id) ~= tonumber(char.id) then
+        return nil, { localeKey = 'factions.message.you_cannot_warn_a_faction_leader' }
+    end
+    if tonumber(target.id) ~= tonumber(char.id) and not FactionCore.isFactionLeader(char.id, factionId)
+        and (tonumber(targetGrade) or 0) >= (tonumber(select(2, FactionCore.getFactionOf(char))) or 0) then
+        return nil, { localeKey = 'factions.message.you_cannot_warn_members_at_your_rank_or_higher' }
+    end
 
     FactionCore.broadcastManagement(factionId, source,
         ('removed %s from the faction.'):format(exports.sunset_core:GetPlayerDisplayName(targetId)))
@@ -223,9 +232,17 @@ exports.sunset_core:RegisterCallback('sunset:factionGiveRank', function(source, 
     end
 
     local faction = Sunset.Factions[factionId]
-    if not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
-    if newGrade >= (myGrade or 0) and source ~= targetId and not FactionCore.isFactionLeader(char.id, factionId) then
-        return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
+    if newGrade % 1 ~= 0 or not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
+    -- [SEC3] self-targeting used to skip the ceiling (self-promotion to any rank); also protect peers/superiors/leaders.
+    local amLeader = FactionCore.isFactionLeader(char.id, factionId)
+    if not amLeader then
+        if newGrade >= (myGrade or 0) then
+            return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
+        end
+        if source ~= targetId and ((tonumber(targetGrade) or 0) >= (myGrade or 0)
+            or FactionCore.isFactionLeader(target.id, factionId)) then
+            return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
+        end
     end
 
     if newGrade > (tonumber(targetGrade) or 0) then
@@ -248,7 +265,8 @@ exports.sunset_core:RegisterCallback('sunset:factionWarn', function(source, targ
     if not char then return nil, factionId end
 
     targetId = tonumber(targetId)
-    reason = reason or 'No reason given'
+    reason = tostring(reason or ''):gsub('[%c]', ' '):gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 200) -- [SEC3] bound client text
+    if reason == '' then reason = 'No reason given' end
     if not targetId or not GetPlayerName(targetId) then
         return nil, { localeKey = 'factions.message.player_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
     end

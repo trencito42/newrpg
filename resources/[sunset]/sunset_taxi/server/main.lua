@@ -916,3 +916,13 @@ AddEventHandler('sunset:dispatch:callAccepted', function(callId, callType, provi
             exports.sunset_core:TFor(callerSrc, 'taxi.message.driver_value_accepted_your_taxi_call', ride.driverName), 'success')
     end
 end)
+
+-- [JOBS AUTHORITY] Resource restart: cancel every live ride (no fare is charged for a cancelled
+-- ride; the fare is only ever collected by the server meter at completion), stop meters and end
+-- the mirrored framework sessions so nothing can be completed/paid after the restart.
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    for _, ride in pairs(Rides) do
+        pcall(cancelRideForParty, ride, 'Taxi service restarted - ride cancelled')
+    end
+end)

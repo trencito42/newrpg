@@ -219,6 +219,38 @@
     "action_by": "Staff",
     "target": "Target",
     "reason": "Reason",
-    "duration": "Duration"
+    "duration": "Duration",
+    "team_management": "Staff Team Management",
+    "player_management": "Player Management",
+    "factions_management": "Factions Management",
+    "clans_management": "Clans Management"
+  },
+  "clans": {
+    "title": "Clans",
+    "leader": "Leader",
+    "members": "Members",
+    "turfs": "Controlled Turfs",
+    "apply": "Apply to Clan",
+    "panel": "Clan Panel",
+    "applications_open": "Applications Open",
+    "applications_closed": "Applications Closed"
+  },
+  "applications": {
+    "title": "Applications",
+    "apply_button": "Apply Now",
+    "submitted": "Submitted",
+    "under_review": "Under Review",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "open": "Open Applications",
+    "close": "Close Applications",
+    "accept": "Accept",
+    "reject": "Reject",
+    "accept_and_add": "Accept & Add Member",
+    "criteria": "Requirements",
+    "min_level": "Minimum Level",
+    "min_hours": "Minimum Hours",
+    "max_warns": "Maximum Warnings"
   }
 }

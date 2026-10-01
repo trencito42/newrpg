@@ -244,6 +244,16 @@ local function canRevive(source)
     return ok and allowed == true
 end
 
+-- [SEC3] Faction medics (non-admin /heal /revive) must be physically near the target: the
+-- faction path used to heal/revive any online player map-wide. Admins are exempt.
+local function medicInRange(source, target)
+    if source == 0 or target == source or hasPerm(source, 'heal') or hasPerm(source, 'revive') then return true end
+    local p1, p2 = GetPlayerPed(source), GetPlayerPed(target)
+    if not p1 or p1 == 0 or not p2 or p2 == 0 then return false end
+    if GetPlayerRoutingBucket(source) ~= GetPlayerRoutingBucket(target) then return false end
+    return #(GetEntityCoords(p1) - GetEntityCoords(p2)) <= 25.0
+end
+
 local StatDefinitions = {
     cash = { scope = 'character', field = 'cash', min = 0, max = 2000000000, label = 'cash' },
     bank = { scope = 'character', field = 'bank', min = 0, max = 2000000000, label = 'bank balance' },
@@ -462,6 +472,9 @@ registerServerCommand('kick', function(source, args)
     if source ~= 0 and not requirePerm(source, 'kick') then return end
     local target = getTarget(source, args[1], 'Usage: /kick [player id] [reason]')
     if not target or not guardSelfTarget(source, target, args[1], 'kick') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
     local reason = table.concat(args, ' ', 2)
     if reason == '' then reason = 'No reason given' end
     -- [SANCTIONS] kick now records a sanction row + public/staff broadcast.
@@ -475,6 +488,9 @@ registerServerCommand('ban', function(source, args)
     if source ~= 0 and not requirePerm(source, 'ban') then return end
     local target = getTarget(source, args[1], 'Usage: /ban [player id] [durata (ex: 30m, 1d, 7d, perm)] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'ban') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
     local durationMin, reason = SunsetAdmin.Sanctions.parseBanArgs(args)
     local ok, err = SunsetAdmin.Sanctions.ban(source, target, durationMin, reason)
     if not ok then
@@ -489,6 +505,9 @@ registerServerCommand('banip', function(source, args)
     if source ~= 0 and not requirePerm(source, 'banip') then return end
     local target = getTarget(source, args[1], 'Usage: /banip [player id] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'banip') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
     local reason = table.concat(args, ' ', 2):gsub('^%s*(.-)%s*$', '%1')
     if reason == '' then reason = 'Permanent IP Ban' end
     local ok, err = SunsetAdmin.Sanctions.banIP(source, target, reason)
@@ -503,6 +522,9 @@ registerServerCommand('tempban', function(source, args)
     if source ~= 0 and not requirePerm(source, 'tempban') then return end
     local target = getTarget(source, args[1], 'Usage: /tempban [player id] [30m|1h|6h|12h|1d|3d|7d|14d|30d] [reason]')
     if not target or not guardSelfTarget(source, target, args[1], 'tempban') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
     local durationMin, reason = SunsetAdmin.Sanctions.parseBanArgs(args)
     if not durationMin then
         notify(source, 'Duration required: /tempban [id] [30m|1h|6h|12h|1d|3d|7d|14d|30d] [reason]', 'error')
@@ -517,12 +539,19 @@ registerServerCommand('mute', function(source, args)
     if source ~= 0 and not requirePerm(source, 'mute') then return end
     local target = getTarget(source, args[1], 'Usage: /mute [player id] [durata in minute] [motiv]')
     if not target or not guardSelfTarget(source, target, args[1], 'mute') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
 
     local duration = tonumber(args[2])
     local reason = table.concat(args, ' ', 3):gsub('^%s*(.-)%s*$', '%1')
     if not duration or duration <= 0 or reason == '' then
         return notify(source, 'Usage: /mute [player id] [durata in minute] [motiv]', 'error')
     end
+    -- [SEC3] finite whole-minute duration, max 30 days (inf/NaN/huge broke the %d format after the mute was already stored)
+    if duration ~= duration or duration > 43200 then duration = 43200 end
+    duration = math.max(1, math.floor(duration))
+    reason = reason:sub(1, 200)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license then return notify(source, 'Could not resolve player license.', 'error') end
@@ -577,6 +606,9 @@ registerServerCommand('nmute', function(source, args)
     end
     local target = getTarget(source, args[1], 'Usage: /nmute [player id] [reason] [duration in minutes]')
     if not target or not guardSelfTarget(source, target, args[1], 'nmute') then return end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot sanction a staff member of your level or higher.', 'error') -- [SEC3]
+    end
 
     local duration, reason
     if tonumber(args[2]) then
@@ -592,6 +624,9 @@ registerServerCommand('nmute', function(source, args)
     if not duration or duration <= 0 or not reason or reason == '' then
         return notify(source, 'Usage: /nmute [player id] [motiv] [durata in minute]', 'error')
     end
+    if duration ~= duration or duration > 43200 then duration = 43200 end -- [SEC3]
+    duration = math.max(1, math.floor(duration))
+    reason = reason:sub(1, 200)
 
     local license = Sunset.GetIdentifier(target, 'license')
     if not license then return notify(source, 'Could not resolve player license.', 'error') end
@@ -813,6 +848,8 @@ registerServerCommand('giveitem', function(source, args)
     if not target then return end
     local item = args[2]
     local count = tonumber(args[3]) or 1
+    if count ~= count or count < 1 or count > 100000 then count = 1 end -- [SEC3]
+    count = math.floor(count)
     if not item then
         notify(source, 'Usage: /giveitem [server id] [item] [count]', 'error')
         return
@@ -853,6 +890,8 @@ registerServerCommand('givegun', function(source, args)
     weapon = string.upper(weapon)
     if not weapon:find('^WEAPON_') then weapon = 'WEAPON_' .. weapon end
     local ammo = tonumber(args[3]) or 120
+    if ammo ~= ammo or ammo < 0 or ammo > 9999 then ammo = 120 end -- [SEC3]
+    ammo = math.floor(ammo)
     TriggerClientEvent('sunset:admin:giveWeapon', target, weapon, ammo, source)
     markAnticheatTarget(target, 'givegun')
     notify(source, ('Gave %s to ID %s'):format(weapon, target), 'success')
@@ -895,6 +934,10 @@ registerServerCommand('heal', function(source, args)
     end
     local target = resolveTarget(source, args[1])
     if not target then return end
+    if not medicInRange(source, target) then
+        notify(source, 'You must be next to the patient.', 'error')
+        return
+    end
     TriggerClientEvent('sunset:admin:heal', target)
     -- [ANTICHEAT] legit heal source: suppress health-injection detector.
     if GetResourceState('sunset_anticheat') == 'started' then
@@ -916,6 +959,10 @@ registerServerCommand('revive', function(source, args)
     local target = resolveTarget(source, args[1])
     if not target then
         notify(source, 'Usage: /revive [player id]', 'error')
+        return
+    end
+    if not medicInRange(source, target) then
+        notify(source, 'You must be next to the patient.', 'error')
         return
     end
     local ok, err = exports.sunset_death:RevivePlayer(target)
@@ -1187,6 +1234,13 @@ registerServerCommand('setvw', function(source, args)
     if not target then return end
 
     local vw = tonumber(args[2]) or 0
+    -- [SEC3] integer bucket, never the pre-auth isolation bucket (9999); staff cannot move higher staff
+    if vw ~= vw or vw < 0 or vw > 65535 or vw ~= math.floor(vw) or vw == 9999 then
+        return notify(source, 'Routing bucket must be a whole number 0-65535 (not 9999).', 'error')
+    end
+    if not SunsetAdmin.Sanctions.canActOn(source, target) then
+        return notify(source, 'You cannot move a staff member of your level or higher.', 'error')
+    end
     SetPlayerRoutingBucket(target, vw)
     notify(source, ("You set %s's routing bucket to %d."):format(getDisplayName(target), vw), 'success')
     TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'admin.message.your_routing_bucket_was_set_to_value_by_an_admin', vw), 'info')
@@ -1210,7 +1264,11 @@ registerServerCommand('sethparea', function(source, args)
     if not requirePerm(source, 'sethparea') then return end
     local radius = tonumber(args[1]) or 20.0
     local hp = tonumber(args[2]) or 200
-    if radius > 200.0 then radius = 200.0 end
+    if hp ~= hp or hp > 200 then hp = 200 end
+    if hp < 0 then hp = 0 end -- [SEC3]
+    if radius ~= radius or radius > 200.0 then radius = 200.0 end
+    if radius < 0 then radius = 0.0 end
+
     local ped = GetPlayerPed(source)
     local coords = GetEntityCoords(ped)
 
@@ -1244,7 +1302,14 @@ registerServerCommand('givemoney', function(source, args)
     local char = exports.sunset_core:GetCharacter(target)
     if not char then return exports.sunset_core:CommandNoCharacter(source, target) end
 
-    exports.sunset_core:AddCash(target, amount)
+    -- [SEC3] AddCash is not a sunset_core export (every /givemoney threw); validate and use AddMoney.
+    amount = math.floor(amount)
+    if amount ~= amount or amount < 1 or amount > 2000000000 then
+        return notify(source, 'Amount must be a whole number between 1 and 2,000,000,000.', 'error')
+    end
+    if not exports.sunset_core:AddMoney(target, 'cash', amount, 'admin_givemoney') then
+        return notify(source, 'Could not add the money.', 'error')
+    end
     local adminName = source == 0 and 'CONSOLE' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
     local targetName = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target)
 
@@ -1258,6 +1323,10 @@ registerServerCommand('giverpall', function(source, args)
     local amount = tonumber(args[1])
     if not amount or amount <= 0 then
         return notify(source, 'Usage: /giverpall [suma RP]', 'error')
+    end
+    amount = math.floor(amount) -- [SEC3] whole, bounded
+    if amount < 1 or amount > 1000000 then
+        return notify(source, 'RP amount must be between 1 and 1,000,000.', 'error')
     end
 
     local adminName = source == 0 and 'Server' or (exports.sunset_core:GetPlayerDisplayName(source) or GetPlayerName(source))
@@ -1514,10 +1583,17 @@ registerServerCommand('setadmin', function(source, args)
         notify(source ~= 0 and source or 0, 'Usage: /setadmin [id|username] [level]', 'error')
         return
     end
+    -- [SEC3] level must be a whole number 0-6 (was unbounded), and a non-console caller cannot
+    -- touch an account at or above their own level or grant above it.
+    if level ~= level or level < 0 or level > 6 or level ~= math.floor(level) then
+        notify(source ~= 0 and source or 0, 'Admin level must be a whole number from 0 to 6.', 'error')
+        return
+    end
 
     local target = tonumber(arg1)
     if target and GetPlayerName(target) then
         local license = Sunset.GetIdentifier(target, 'license')
+        if not license then return notify(source, 'Could not resolve player license.', 'error') end -- [SEC3]
         SetAdmin(license, level, getDisplayName(target), getDisplayName(source))
         local title = (SunsetAdmin.Levels and SunsetAdmin.Levels[level]) or 'level ' .. level
         if level > 0 then
@@ -1539,6 +1615,12 @@ registerServerCommand('setadmin', function(source, args)
     end
 
     MySQL.update.await('UPDATE accounts SET admin_level = ? WHERE id = ?', { level, account.id })
+    -- [SEC3] loadAdmin takes max(admins.level, accounts.admin_level); a demotion by username left the
+    -- admins row (keyed by license) in place so the target stayed staff. Sync that table too.
+    do
+        local lic = MySQL.scalar.await('SELECT license FROM players WHERE account_id = ? LIMIT 1', { account.id })
+        if lic and lic ~= '' and level == 0 then SetAdmin(lic, 0, account.username, getDisplayName(source)) end
+    end
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         local player = exports.sunset_core:GetPlayer(src)
@@ -1567,6 +1649,10 @@ registerServerCommand('sethelper', function(source, args)
         notify(source ~= 0 and source or 0, 'Usage: /sethelper [id|username] [level (0-3)]', 'error')
         return
     end
+    if level ~= level or level < 0 or level > 3 or level ~= math.floor(level) then -- [SEC3]
+        notify(source ~= 0 and source or 0, 'Helper level must be a whole number from 0 to 3.', 'error')
+        return
+    end
 
     local target = tonumber(arg1)
     if target and GetPlayerName(target) then
@@ -1589,6 +1675,10 @@ registerServerCommand('sethelper', function(source, args)
     end
 
     MySQL.update.await('UPDATE accounts SET helper_level = ? WHERE id = ?', { level, account.id })
+    do -- [SEC3] keep the helpers table (keyed by license) in sync on offline demotion
+        local lic = MySQL.scalar.await('SELECT license FROM players WHERE account_id = ? LIMIT 1', { account.id })
+        if lic and lic ~= '' and level == 0 then SetHelper(lic, 0, account.username, getDisplayName(source)) end
+    end
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         local player = exports.sunset_core:GetPlayer(src)
@@ -1650,6 +1740,11 @@ RegisterNetEvent('sunset:admin:setcp', function(name, x, y, z, heading)
     x, y, z, heading = tonumber(x), tonumber(y), tonumber(z), tonumber(heading)
     if not x or not y or not z then
         return notify(source, 'Could not read your position — wait until you have fully spawned in.', 'error')
+    end
+    -- [SEC3] client-supplied coords: finite and inside world bounds (NaN/inf broke the DB write and poisoned /gotocp)
+    local function sane(v) return v == v and v > -20000 and v < 20000 end
+    if not (sane(x) and sane(y) and sane(z)) or (heading and not (heading == heading and heading > -1000 and heading < 1000)) then
+        return notify(source, 'Invalid position.', 'error')
     end
 
     local createdBy = getDisplayName(source)
@@ -1883,6 +1978,7 @@ registerServerCommand('report', function(source, args)
     if text == '' or #text < 3 then
         return notify(source, 'Usage: /report [text]', 'error')
     end
+    text = text:sub(1, 300) -- [SEC3] bound ticket text broadcast to staff
 
     local now = os.time()
     if now - (LastReportTime[source] or 0) < 15 then
@@ -2109,6 +2205,7 @@ local function handleNewbieQuestion(source, args, cmdName)
     if text == '' or #text < 3 then
         return notify(source, ('Usage: /%s [intrebare]'):format(cmdName), 'error')
     end
+    text = text:sub(1, 300) -- [SEC3]
 
     local now = os.time()
     if now - (LastNewbAsk[source] or 0) < 15 then
@@ -2490,8 +2587,17 @@ function ExecutePlayerCommand(source, name, args)
     return true
 end
 
+local WeaponFailAt = {}
+AddEventHandler('playerDropped', function() WeaponFailAt[source] = nil end)
 RegisterNetEvent('sunset:admin:weaponGiveFailed', function(adminSource, weapon)
+    local source = source
     adminSource = tonumber(adminSource)
+    -- [SEC3] the TARGET client reports to the giving admin, so adminSource ~= source is legitimate; instead
+    -- rate-limit per sender and bound/clean the weapon string (it is echoed to the admin).
+    local nowW = GetGameTimer()
+    if WeaponFailAt[source] and nowW - WeaponFailAt[source] < 3000 then return end
+    WeaponFailAt[source] = nowW
+    if type(weapon) ~= 'string' or #weapon > 40 or not weapon:match('^[%w_%-]+$') then weapon = '?' end
     -- [AUDIT P2-11] Any client could message arbitrary players via this event.
     -- Only notify if the recipient is actually an admin (staff giving themselves
     -- a weapon is the sole legitimate flow).

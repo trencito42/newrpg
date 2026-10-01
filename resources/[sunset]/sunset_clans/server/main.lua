@@ -465,12 +465,22 @@ exports.sunset_core:RegisterCallback('sunset:clanDirectory', function(source)
         if (a.total or 0) ~= (b.total or 0) then return (a.total or 0) > (b.total or 0) end
         return (a.name or '') < (b.name or '')
     end)
+    -- [NUI PAYLOAD] bound the directory (top clans by turfs/members); unbounded lists
+    -- would grow the NUI message without limit on large servers.
+    local MAX_DIRECTORY = 150
+    for i = #clans, MAX_DIRECTORY + 1, -1 do clans[i] = nil end
     return clans
 end)
 
 exports.sunset_core:RegisterCallback('sunset:clanProfile', function(source, clanId)
     if not charId(source) then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
-    return clanProfilePayload(clanId)
+    local profile, perr = clanProfilePayload(clanId)
+    -- [SEC3] non-members get the public roster only (no server ids / warning counts)
+    local mine = membershipFor(source)
+    if profile and not (mine and tonumber(mine.clan_id) == tonumber(profile.id)) then
+        for _, m in ipairs(profile.members or {}) do m.serverId = nil; m.warns = nil end
+    end
+    return profile, perr
 end)
 
 local ClanCreateBusy = {}

@@ -256,7 +256,30 @@ CreateThread(function()
     end
 end)
 
+-- [PERF] Central duplicate guard for the high-frequency, idempotent HUD streams.
+-- A payload byte-identical to the previous one for the same action is dropped
+-- (re-sent after DEDUPE_REFRESH_MS as a keepalive in case the page reloaded).
+-- Producers should still change-detect themselves; this is the safety net so a
+-- future per-frame caller cannot flood the NUI queue. Cache dies with this resource.
+local DEDUPE_ACTIONS = { updateHud = true, updateVoice = true, updateVehicleGauges = true, menuUpdate = true }
+local DEDUPE_REFRESH_MS = 5000
+local dedupeLast = {} -- [action] = { key, at }
+
+-- Messages that (re)build or hide the page state invalidate the duplicate cache so the
+-- next update is always delivered after them.
+local DEDUPE_RESET_ACTIONS = { showHud = true, hudChromeHide = true, transitionShow = true, transitionHide = true, pauseState = true, hide = true, show = true }
+
 function Send(action, data)
+    if DEDUPE_RESET_ACTIONS[action] then dedupeLast = {} end
+    if DEDUPE_ACTIONS[action] then
+        local ok, key = pcall(json.encode, data or {})
+        if ok and key then
+            local now = GetGameTimer()
+            local prev = dedupeLast[action]
+            if prev and prev.key == key and (now - prev.at) < DEDUPE_REFRESH_MS then return end
+            dedupeLast[action] = { key = key, at = now }
+        end
+    end
     NuiDebugRecordMessage(action)
     nuiRecordPayload(action, data)
     SendNUIMessage({

@@ -74,8 +74,10 @@ local function chatIdentity(source)
         end
     end
     -- [ADUTY] On-duty staff get a visible [HELPER]/[STAFF] prefix in chat.
+    -- [SEC3] was Player(source).state.adminDuty: with sv_stateBagStrictMode=false any client can set its own
+    -- state bag and would get the staff prefix. Use the server-side duty table + a real staff check.
     local okDuty, onDuty = pcall(function()
-        return Player(source).state.adminDuty == true
+        return exports.sunset_admin:IsOnAdminDuty(source) == true and exports.sunset_admin:IsAdmin(source, 1) == true
     end)
     if okDuty and onDuty then
         local level = 0
@@ -116,6 +118,13 @@ local function sendStaffOnly(payload)
     end
 end
 
+-- [SEC3] Unauthenticated / character-less clients (login screen, char select) could broadcast OOC chat
+-- and spam proximity chat; every player-facing chat entry point now requires a loaded character.
+local function hasCharacter(source)
+    local ok, char = pcall(function() return exports.sunset_core:GetCharacter(source) end)
+    return ok and type(char) == 'table' and char.id ~= nil
+end
+
 local function checkMute(source)
     if GetResourceState('sunset_admin') == 'started' then
         local ok, isMuted, remainingMin, reason = pcall(function()
@@ -134,6 +143,7 @@ end
 
 RegisterNetEvent('sunset:chat:send', function(message, channel)
     local src = source
+    if not hasCharacter(src) then return end -- [SEC3]
     if checkMute(src) then return end
     channel = tostring(channel or 'all'):lower()
 
@@ -198,6 +208,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
 end)
 
 local function runMeCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end
@@ -336,6 +347,7 @@ RegisterCommand('lc', function(source, args)
 end, false)
 
 local function runDoCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end
@@ -354,6 +366,7 @@ local function runDoCommand(source, args)
 end
 
 local function runShoutCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end
@@ -372,6 +385,7 @@ local function runShoutCommand(source, args)
 end
 
 local function runWhisperCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end
@@ -390,6 +404,7 @@ local function runWhisperCommand(source, args)
 end
 
 local function runLowCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end
@@ -408,6 +423,7 @@ local function runLowCommand(source, args)
 end
 
 local function runBCommand(source, args)
+    if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
     local msg = cleanChatText(table.concat(args, ' '), 256)
     if not msg then return end

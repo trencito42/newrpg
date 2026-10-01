@@ -46,3 +46,25 @@ body.nofx .notification {
 body.nofx .notification.is-leaving {
     opacity: 0 !important;
 }
+
+/* [PERF] Hidden UI must not keep running infinite animations (opacity/visibility
+   hidden panels still tick the compositor). Pausing is state-neutral: the
+   animation resumes from the same frame when the element is shown again. */
+.hidden, .hidden *, .hidden *::before, .hidden *::after,
+[hidden], [hidden] *, [hidden] *::before, [hidden] *::after,
+.is-hidden, .is-hidden *, .is-hidden *::before, .is-hidden *::after {
+    animation-play-state: paused !important;
+}
+
+/* [RESPONSIVE] Toasts: long (esp. Romanian) strings must wrap, never clip. */
+.notification, .notification * {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.notifications, .notifications-container {
+    max-height: calc(100vh - 270px);
+    overflow: hidden;
+}
+@media (max-height: 800px) {
+    .notifications, .notifications-container { top: 160px; max-height: calc(100vh - 180px); }
+}

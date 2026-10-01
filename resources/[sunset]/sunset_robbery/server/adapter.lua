@@ -104,13 +104,9 @@ function RobberyAdapter.removeRobberyLoot(source, characterId, robberyId)
         if ok then return tonumber(removed) or 0, true end
     end
 
+    -- Offline fallback goes through the inventory-owned export (no direct SQL here).
     local ok, removed = pcall(function()
-        return MySQL.update.await([[
-            DELETE FROM character_inventory
-            WHERE character_id = ?
-              AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.robbery')) = ?
-              AND JSON_EXTRACT(metadata, '$.stolen') = true
-        ]], { characterId, robberyId })
+        return exports.sunset_inventory:RemoveStolenByRobbery(characterId, robberyId)
     end)
     if not ok then return 0, false end
     return tonumber(removed) or 0, true
@@ -127,25 +123,27 @@ function RobberyAdapter.settleFenceSale(source, rowId, item, amount)
     item = tostring(item or '')
     if not char or not rowId or amount < 1 or item == '' then return false end
 
-    -- The item decrement and cash credit happen in one multi-table statement, so a
-    -- crash can never leave the player paid without consuming the exact item row.
-    local ok, changed = pcall(function()
-        local affected = MySQL.update.await([[
-            UPDATE characters c
-            INNER JOIN character_inventory ci ON ci.character_id = c.id
-            SET c.cash = c.cash + ?, ci.count = ci.count - 1
-            WHERE c.id = ? AND ci.id = ? AND ci.item = ? AND ci.count >= 1
-        ]], { amount, char.id, rowId, item })
-        if not affected or affected < 1 then return 0 end
-        MySQL.update.await(
-            'DELETE FROM character_inventory WHERE id = ? AND character_id = ? AND count <= 0',
-            { rowId, char.id }
-        )
-        return affected
+    -- Domain-correct settlement (inventory + core own their tables):
+    --   1) consume exactly one unit of the exact row via the transactional
+    --      inventory API (fails safe if the row changed / was already sold);
+    --   2) credit cash through core AddMoney (ledger + cache);
+    --   3) if the credit fails, restore the item from the API's `inverse`.
+    -- A repeated/raced sale of the same row fails at step 1, so it cannot pay twice.
+    local ok, applied = pcall(function()
+        return exports.sunset_inventory:ApplyOperation(source, {
+            { type = 'remove', item = item, count = 1, rowId = rowId },
+        }, {})
     end)
-    if not ok or not changed or changed < 1 then return false end
-    pcall(function() exports.sunset_inventory:ReloadInventory(source) end)
-    pcall(function() exports.sunset_core:RefreshMoney(source) end)
+    if not ok or not applied or not applied.ok then return false end
+    local paid = false
+    pcall(function() paid = exports.sunset_core:AddMoney(source, 'cash', amount, 'fence') == true end)
+    if not paid then
+        local undo = exports.sunset_inventory:ApplyOperation(source, applied.inverse, {})
+        if not (undo and undo.ok) then
+            print(('[sunset_robbery] FENCE ROLLBACK FAILED src=%s item=%s row=%s'):format(tostring(source), item, tostring(rowId)))
+        end
+        return false
+    end
     return true
 end
 

@@ -1948,7 +1948,7 @@ window.SunsetGeneratedLocales = Object.freeze({
     "ui.devtools.select_or_create_a_route": "Selectează sau creează un traseu",
     "ui.devtools.sunset_devtools_v2_0": "SUNSET DEVTOOLS v2.0",
     "ui.devtools.sunset_route_creator": "Sunset Route Creator",
-    "ui.devtools.teleport_your_ped_or_work_vehicle_to_any_route": "Teleportează-ți PED-ul sau vehiculul de lucru la orice punct de control al traseului pentru validarea coliziunii și a configurației. Fără recompense economice.",
+    "ui.devtools.teleport_your_ped_or_work_vehicle_to_any_route": "Teleportează-te la orice punct al traseului pentru validare. Fără recompense.",
     "ui.devtools.test_mode": "Mod test",
     "ui.devtools.trucker": "Camionagiu",
     "ui.devtools.unique_route_id": "unique_route_id",

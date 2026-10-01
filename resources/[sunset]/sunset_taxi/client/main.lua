@@ -400,3 +400,9 @@ CreateThread(function()
         Wait(waitMs)
     end
 end)
+
+-- [JOBS AUTHORITY] Do not leave a taxi meter on screen when the resource stops.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    pcall(function() exports.sunset_ui:Send('taxiMeterHide', {}) end)
+end)

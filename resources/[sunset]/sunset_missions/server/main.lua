@@ -2,8 +2,34 @@ AddEventHandler('playerDropped', function()
     MSN_CleanupPlayer(source)
 end)
 
+-- Death ends the server session too (the client abort alone is not authoritative).
+AddEventHandler('sunset:death:playerDowned', function(src)
+    src = tonumber(src)
+    if src and MSN_GetSession(src) and not MSN_GetSession(src).rewardClaimed then
+        MSN_EndSession(src, 'failed', 0)
+    end
+end)
+
+-- Resource restart mid-mission: close every open session as 'interrupted' (no reward, no cooldown bypass
+-- since nothing is paid); clients clean their entities in their own onResourceStop handlers.
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    MSN_InterruptAll()
+end)
+
 -- ── acceptMission ─────────────────────────────────────────────────────────────
+local acceptLock = {}
 exports.sunset_core:RegisterCallback('sunset:missions:accept', function(source, missionId)
+    if type(missionId) ~= 'string' then return nil, { localeKey = 'missions.message.mission_not_found' } end
+    -- per-player lock: concurrent accepts cannot both pass the cooldown await
+    if acceptLock[source] then return nil, { localeKey = 'missions.message.already_in_a_mission' } end
+    acceptLock[source] = true
+    local r1, r2 = MSN_AcceptInner(source, missionId)
+    acceptLock[source] = nil
+    return r1, r2
+end)
+
+function MSN_AcceptInner(source, missionId)
     local def = SunsetMissions.GetMission(missionId)
     if not def then return nil, { localeKey = 'missions.message.mission_not_found' } end
 
@@ -74,27 +100,17 @@ exports.sunset_core:RegisterCallback('sunset:missions:accept', function(source, 
 
     print(('[sunset_missions] src=%d started mission=%s id=%s'):format(source, missionId, session.id))
     return { sessionId = session.id, variant = variant }
-end)
+end
 
 -- ── stage transitions ─────────────────────────────────────────────────────────
+-- [MISSIONS AUTHORITY] only predecessor->successor transitions with server-side sanity checks
+-- (see server/stages.lua). The client cannot jump to DELIVER/COMPLETE or skip stages.
 exports.sunset_core:RegisterCallback('sunset:missions:setStage', function(source, data)
-    if type(data) ~= 'table' then return nil, { localeKey = 'missions.message.no_session' } end
+    if type(data) ~= 'table' or type(data.stage) ~= 'string' then return nil, { localeKey = 'missions.message.no_session' } end
     local s, err = MSN_RequireSession(source, data.mission)
     if not s then return nil, err end
-    -- [JOBS AUDIT] stage changes are client-driven; stop instant chaining through every stage (min 3s dwell).
-    if s.stageAt and os.time() - s.stageAt < 3 then return nil, { localeKey = 'missions.message.no_session' } end
-
-    local def  = SunsetMissions.GetMission(s.mission)
-    local allowed = false
-    for i, st in ipairs(def.stages) do
-        if st == s.state then
-            if def.stages[i+1] == data.stage then allowed = true end
-            break
-        end
-    end
-    if not allowed then return nil, 'Invalid stage transition: ' .. tostring(s.state) .. ' -> ' .. tostring(data.stage) end
-
-    MSN_SetState(source, data.stage)
+    local ok, why = MSN_RequestTransition(source, s, data.stage)
+    if not ok then return nil, 'Invalid stage transition: ' .. tostring(s.state) .. ' -> ' .. tostring(data.stage) .. ' (' .. tostring(why) .. ')' end
     return true
 end)
 
@@ -102,6 +118,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:missions:vr:vehicleEntered', function(source)
     local s, err = MSN_RequireSession(source, 'vehicle_recovery', { 'STEAL_VEHICLE' })
     if not s then return nil, err end
+    if s.stageAt and os.time() - s.stageAt < 1 then return nil, 'too_fast' end
+    -- server verifies the player is really seated in the variant vehicle (model + plate)
+    if not MSN_PlayerInMissionVehicle(source, s) then return nil, { localeKey = 'missions.message.no_session' } end
     MSN_SetState(source, 'PURSUIT')
     return true
 end)
@@ -110,17 +129,27 @@ end)
 exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(source, data)
     local s, err = MSN_RequireSession(source, 'vehicle_recovery', { 'DELIVER' })
     if not s then return nil, err end
+    if s.busy or s.rewardClaimed then return nil, { localeKey = 'missions.message.no_session' } end
+    s.busy = true
 
     local def  = SunsetMissions.GetMission('vehicle_recovery')
     if not MSN_ValidateCoords(source, def.deliveryCoords, SunsetMissions.Config.deliveryRadius + 10) then
+        s.busy = false
+        return nil, { localeKey = 'missions.message.not_at_delivery_location' }
+    end
+    local inVeh, veh = MSN_PlayerInMissionVehicle(source, s)
+    if not inVeh then
+        s.busy = false
         return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
     data = type(data) == 'table' and data or {}
-    local cond = math.max(0, math.min(100, tonumber(data.condition) or 0))
-    -- [JOBS AUDIT] escape bonus was whatever the client claimed; honour it only if the server saw the PURSUIT stage.
+    -- condition is read from the networked vehicle; the client value is ignored
+    local cond = MSN_ReadVehicleCondition(veh)
+    -- escape bonus only if the server saw the PURSUIT stage (pursuers are client-side: residual, 10% bonus)
     local escaped = data.escaped == true and s.visited and s.visited.PURSUIT == true
     local total, details = MSN_PayReward(source, s, cond, escaped)
+    if s.rewardClaimed ~= true then s.busy = false end
     if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end
     TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'vehicle_recovery', xp = details.xp })
     return true
@@ -130,8 +159,16 @@ end)
 exports.sunset_core:RegisterCallback('sunset:missions:c47:identify', function(source, data)
     local s, err = MSN_RequireSession(source, 'container_47', { 'SEARCH' })
     if not s then return nil, err end
-    local slotIndex = tonumber(data and data.slotIndex)
-    if not slotIndex then return nil, { localeKey = 'missions.message.invalid_slot' } end
+    local slotIndex = math.floor(tonumber(data and data.slotIndex) or 0)
+    local def0 = SunsetMissions.GetMission('container_47')
+    local slotDef = def0.containerSlots[slotIndex]
+    if not slotDef then return nil, { localeKey = 'missions.message.invalid_slot' } end
+    -- must physically stand at the slot being inspected
+    if not MSN_NearCoords(source, slotDef.coords, 8.0) then return nil, { localeKey = 'missions.message.invalid_slot' } end
+    s.inspectAt = s.inspectAt or {}
+    local nowT = GetGameTimer()
+    if s.inspectAt[slotIndex] and nowT - s.inspectAt[slotIndex] < 2000 then return nil, 'too_fast' end
+    s.inspectAt[slotIndex] = nowT
     if slotIndex == s.data.targetSlot then
         MSN_SetState(source, 'IDENTIFY')
         return true
@@ -146,22 +183,28 @@ end)
 exports.sunset_core:RegisterCallback('sunset:missions:c47:updateAlert', function(source, level)
     local s, err = MSN_RequireSession(source, 'container_47')
     if not s then return nil, err end
-    s.data.alertLevel = math.max(s.data.alertLevel or 0, tonumber(level) or 0)
+    -- bounded; alert only ever rises (guards are client-side, so this is advisory for the 10% escape bonus)
+    level = math.floor(tonumber(level) or 0)
+    s.data.alertLevel = math.min(4, math.max(s.data.alertLevel or 0, math.max(0, level)))
     return s.data.alertLevel
 end)
 
 exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(source, data)
-    local s, err = MSN_RequireSession(source, 'container_47', { 'ESCAPE', 'DELIVER' })
+    local s, err = MSN_RequireSession(source, 'container_47', { 'DELIVER' })
     if not s then return nil, err end
+    if s.busy or s.rewardClaimed then return nil, { localeKey = 'missions.message.no_session' } end
+    s.busy = true
 
     local def = SunsetMissions.GetMission('container_47')
     if not MSN_ValidateCoords(source, def.deliveryCoords, SunsetMissions.Config.deliveryRadius + 15) then
+        s.busy = false
         return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
     local cond    = 100
     local escaped = (s.data.alertLevel or 0) < 3
     local total, details = MSN_PayReward(source, s, cond, escaped)
+    if s.rewardClaimed ~= true then s.busy = false end
     if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end
     TriggerClientEvent('sunset:missions:complete', source, { reward = details, mission = 'container_47', xp = details.xp })
     return true

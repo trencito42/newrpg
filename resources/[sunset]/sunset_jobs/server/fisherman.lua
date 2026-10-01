@@ -75,14 +75,9 @@ local ALL_FISH = {
 local ALL_FISH_ITEMS = { 'fresh_fish', 'fish_common', 'fish_uncommon', 'fish_rare', 'fish_epic', 'fish_legendary' }
 
 -- Valori fixe pentru vanzare la Fish Buyer (media range-ului per tip)
-local FISH_BASE_VALUES = {
-    fresh_fish    = 45,
-    fish_common   = 60,
-    fish_uncommon = 120,
-    fish_rare     = 225,
-    fish_epic     = 435,
-    fish_legendary = 925,
-}
+-- [JOBS AUTHORITY] derived from the shared table (sunset_core/shared/fish_prices.lua)
+local FISH_BASE_VALUES = {}
+for item in pairs(Sunset.FishPrices) do FISH_BASE_VALUES[item] = Sunset.FishPriceMid(item) end
 
 local function getEquippedRod(source)
     for _, rod in ipairs(ROD_TIERS) do
@@ -149,6 +144,7 @@ local function fishInventorySummary(source, cfg)
             count = count + rowCount
             -- usa valoarea stocata in metadata daca exista, altfel baza
             local rowVal = tonumber(row.metadata and row.metadata.value) or baseVal
+            if Sunset.FishPrices[row.item] and rowVal > Sunset.FishPrices[row.item].max then rowVal = Sunset.FishPrices[row.item].max end
             value = value + rowVal * rowCount
         end
     end
@@ -399,6 +395,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:fisherman:sell', function(sour
                 end
                 local rowCount = tonumber(row.count) or 0
                 local rowValue = tonumber(metadata and metadata.value) or FISH_BASE_VALUES[row.item] or 0
+                -- [JOBS AUTHORITY] same per-unit cap as sunset_fishingshop (metadata travels through trades)
+                local priceCap = Sunset.FishPrices[row.item] and Sunset.FishPrices[row.item].max
+                if priceCap and rowValue > priceCap then rowValue = priceCap end
                 lockedCount = lockedCount + rowCount
                 lockedValue = lockedValue + rowValue * rowCount
                 ids[#ids + 1] = tonumber(row.id)

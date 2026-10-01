@@ -256,11 +256,12 @@ function Sunset.RemoveMoney(source, account, amount, reason)
     if not char or amount <= 0 then return false end
 
     local field
+    -- [STALE CACHE] no in-memory balance pre-check: the guarded UPDATE below
+    -- (`AND field >= ?`) is the single source of truth, so a stale cache can
+    -- neither wrongly reject nor wrongly allow a debit.
     if account == 'cash' then
-        if (char.cash or 0) < amount then return false end
         field = 'cash'
     elseif account == 'bank' then
-        if (char.bank or 0) < amount then return false end
         field = 'bank'
     else
         return false
@@ -284,15 +285,62 @@ end
 
 -- Domain-owned debit on a caller's existing oxmysql transaction connection.
 -- The caller must commit its persisted purchase in that same transaction.
-exports('DebitMoneyInTransaction', function(characterId, account, amount, query)
+-- Optional 5th arg `reason`: also writes the money_transactions ledger row on the
+-- SAME transaction connection (atomic with the debit and the caller's purchase),
+-- so callers never need to INSERT into the core-owned ledger themselves.
+exports('DebitMoneyInTransaction', function(characterId, account, amount, query, reason)
     if account ~= 'cash' and account ~= 'bank' then return false end
     characterId, amount = tonumber(characterId), tonumber(amount)
-    if not characterId or not amount or amount < 0 or amount ~= math.floor(amount) then return false end
+    if not characterId or not amount or amount ~= amount or amount < 0 or amount ~= math.floor(amount)
+        or amount > MAX_MONEY_OP then return false end
     if amount == 0 then return true end
     local changed = query(('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?')
         :format(account, account, account), { amount, characterId, amount })
-    return tonumber(changed) == 1
+    if tonumber(changed) ~= 1 then return false end
+    if reason ~= nil then
+        query(([[INSERT INTO money_transactions (character_id, account, direction, amount, reason, balance_after)
+            SELECT id, '%s', 'out', ?, ?, %s FROM characters WHERE id = ?]]):format(account, account),
+            { amount, tostring(reason):sub(1, 64), characterId })
+    end
+    return true
 end)
+
+-- Credit twin of DebitMoneyInTransaction: single atomic `col = col + ?` on the
+-- caller's transaction connection (+ optional in-txn ledger row). Never a
+-- read-modify-write, never trusts the in-memory cache.
+exports('CreditMoneyInTransaction', function(characterId, account, amount, query, reason)
+    if account ~= 'cash' and account ~= 'bank' then return false end
+    characterId, amount = tonumber(characterId), tonumber(amount)
+    if not characterId or not amount or amount ~= amount or amount < 0 or amount ~= math.floor(amount)
+        or amount > MAX_MONEY_OP then return false end
+    if amount == 0 then return true end
+    local changed = query(('UPDATE characters SET %s=%s+? WHERE id=?'):format(account, account), { amount, characterId })
+    if tonumber(changed) ~= 1 then return false end
+    if reason ~= nil then
+        query(([[INSERT INTO money_transactions (character_id, account, direction, amount, reason, balance_after)
+            SELECT id, '%s', 'in', ?, ?, %s FROM characters WHERE id = ?]]):format(account, account),
+            { amount, tostring(reason):sub(1, 64), characterId })
+    end
+    return true
+end)
+
+-- Credit a character that may be OFFLINE (rent income, offline payouts). Online
+-- characters go through AddMoney (cache + client refresh); offline ones get the
+-- same atomic UPDATE plus a ledger row. Returns true/false.
+function Sunset.AddMoneyToCharacter(characterId, account, amount, reason)
+    characterId = tonumber(characterId)
+    amount = sanitizeMoneyAmount(amount)
+    if not characterId or amount <= 0 or (account ~= 'cash' and account ~= 'bank') then return false end
+    local src = GetSourceByCharacterId and GetSourceByCharacterId(characterId)
+    if src and Sunset.GetCharacter(src) then return Sunset.AddMoney(src, account, amount, reason) end
+    local changed = MySQL.update.await(('UPDATE characters SET %s = %s + ? WHERE id = ?'):format(account, account),
+        { amount, characterId })
+    if tonumber(changed) ~= 1 then return false end
+    local balance = MySQL.scalar.await(('SELECT %s FROM characters WHERE id = ? LIMIT 1'):format(account), { characterId })
+    Sunset.LogMoneyTransaction(characterId, account, 'in', amount, reason, tonumber(balance) or 0)
+    return true
+end
+exports('AddMoneyToCharacter', Sunset.AddMoneyToCharacter)
 
 function Sunset.GetMoney(source, account)
     local char = Sunset.GetCharacter(source)
@@ -500,7 +548,8 @@ end
 
 local BuyLevelLocks = {}
 
-local function buyLevel(source)
+local buyLevel
+buyLevel = function(source)
     local char = Sunset.GetCharacter(source)
     if not char then return false, { localeKey = 'core.message.character_not_loaded' } end
     if BuyLevelLocks[source] then
@@ -545,6 +594,18 @@ local function buyLevel(source)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
     BuyLevelLocks[source] = nil
     return true, ('Level purchased! You are now level %d. Paid %d RP and $%d; %d RP remain.'):format(char.level, rpCost, moneyCost, char.respect_points)
+end
+
+-- [SEC3] a SQL error inside buyLevel left BuyLevelLocks[source] set forever; always release.
+local buyLevelLocked = buyLevel
+buyLevel = function(source)
+    local ok, a, b = pcall(buyLevelLocked, source)
+    if not ok then
+        BuyLevelLocks[source] = nil
+        print(('^1[blaze.mp]^7 buyLevel error: %s'):format(tostring(a)))
+        return false, { localeKey = 'error.server_action_failed' }
+    end
+    return a, b
 end
 
 RegisterCallback('sunset:buyLevel', function(source)

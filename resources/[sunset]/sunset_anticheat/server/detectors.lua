@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════
 --  SUNSETMP — Blaze Shield (server/detectors.lua)
---  Phase 1 detector engine: ONE 1 Hz loop over GetPlayers()
---  (spec §10 perf: never per-player timers). Detectors:
+--  Phase 1 detector engine: ONE staggered round-robin scheduler
+--  (100 ms ticker, per-player nextAt, budgeted; spec §10 perf). Detectors:
 --    speed_check    §4.1  server coords delta vs vehicle-class ceiling
 --    teleport_check §4.2  on-foot instant coord jump > 150 m in 1 s
 --    fly_check      §4.3  sustained Z ascent corroborated by client sampler
@@ -33,6 +33,7 @@ local Nonces = {}        -- [src] = { expected = n, missed = n, ackAt }
 local LastTick = {}      -- [src] = os.time() of last clientTick (silence detection)
 local Telemetry = {}     -- [src] = last client sampler payload (advisory)
 local ClientVehClass = {} -- [src] = advisory vehicle class from clientTick (speed_check)
+local Sched = {}     -- [src] = scheduler record (see 'Staggered scheduler' below)
 
 local function now() return os.time() end
 
@@ -111,6 +112,7 @@ local function clearPlayer(src)
     LastTick[src] = nil
     Telemetry[src] = nil
     ClientVehClass[src] = nil
+    Sched[src] = nil
 end
 
 AddEventHandler('playerDropped', function()
@@ -144,13 +146,16 @@ end
 -- tick (advisory); the speed itself is still computed from SERVER coords, so
 -- lying about the class only buys the cheater the highest ceiling (62 m/s),
 -- never a clean pass.
-local function speedCheck(src, dt)
+-- [PERF] `snap` = { x, y, z, veh } read ONCE per visit by the scheduler
+-- (one GetPlayerPed/GetEntityCoords/GetVehiclePedIsIn per player per cycle,
+-- shared by speed/teleport/fly instead of 3-4 re-reads each). `dt` is the REAL
+-- elapsed seconds since the previous sample (scheduler jitter / idle back-off
+-- no longer distorts the m/s figure; speed threshold itself is unchanged).
+local function speedCheck(src, dt, snap)
     if not detectorEnabled('speed') then return end
-    local x, y, z = coordsOf(src)
-    if not x then LastSample[src] = nil return end
+    local x, y, z = snap.x, snap.y, snap.z
 
-    local veh = playerVehicle(src)
-    local inVeh = veh ~= 0
+    local inVeh = snap.veh ~= 0
     local vehClass = inVeh and ClientVehClass[src] or nil
     local prev = LastSample[src]
     LastSample[src] = { x = x, y = y, z = z, veh = inVeh, class = vehClass, at = now() }
@@ -185,11 +190,11 @@ local function speedCheck(src, dt)
 end
 
 -- ══════════════ §4.2 teleport_check (on foot > 150 m in 1 s) ══════════════
-local function teleportCheck(src, prev)
+local function teleportCheck(src, prev, snap)
     if not detectorEnabled('teleport') then return end
     if not prev then return end
     if prev.veh then return end -- vehicles get speed_check instead
-    if playerVehicle(src) ~= 0 then return end
+    if snap.veh ~= 0 then return end
     local cur = LastSample[src]
     if not cur then return end
     local dist = math.sqrt((cur.x - prev.x) ^ 2 + (cur.y - prev.y) ^ 2 + (cur.z - prev.z) ^ 2)
@@ -203,9 +208,9 @@ end
 -- Client reports IsPedFalling/ragdoll/parachute/swimming + Z velocity (advisory);
 -- server corroborates with its OWN tracked Z ascent. Never solo-convicts on
 -- the client claim alone — the server Z delta is the evidence.
-local function flyCheck(src, prev)
+local function flyCheck(src, prev, snap)
     if not detectorEnabled('fly') then return end
-    if playerVehicle(src) ~= 0 then FlyAscent[src] = nil return end
+    if snap.veh ~= 0 then FlyAscent[src] = nil return end
     local cur = LastSample[src]
     if not cur or not prev then FlyAscent[src] = nil return end
 
@@ -232,10 +237,8 @@ local function flyCheck(src, prev)
 end
 
 -- ══════════════ §4.5 health_check (0.2 Hz → sampled every 5th tick) ══════════════
-local function healthCheck(src)
+local function healthCheck(src, ped)
     if not detectorEnabled('health') then return end
-    local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then return end
     local hp = GetEntityHealth(ped) or 0
     local armour = GetPedArmour(ped) or 0
     local snap = HealthSnap[src]
@@ -367,7 +370,7 @@ end)
 -- Nonce mismatch above catches forged/replayed ticks; total silence catches a
 -- stopped sampler. Only fires for players with a loaded character (not while
 -- loading/respawning) and never kicks — staff flag only (spec §4.14).
-local function heartbeatSilenceCheck(src)
+local function heartbeatSilenceCheck(src, hasChar)
     if not detectorEnabled('heartbeat') then return end
     local last = LastTick[src]
     if not last then
@@ -376,37 +379,153 @@ local function heartbeatSilenceCheck(src)
         return
     end
     if now() - last < 30 then return end  -- 3 missed 10 s heartbeats
-    local hasChar = false
-    if GetResourceState('sunset_core') == 'started' then
-        pcall(function() hasChar = exports.sunset_core:GetCharacter(src) ~= nil end)
-    end
     if not hasChar then LastTick[src] = now() return end
     fire(src, 'heartbeat_check', 2, ('client module silent: no telemetry for %ds while connected with loaded character'):format(now() - last))
     LastTick[src] = now() -- reset window; cooldown prevents repeats
 end
 
--- ══════════════ The ONE 1 Hz loop (spec §10 perf budget) ══════════════
-local healthCounter = 0
+-- ══════════════ Staggered round-robin scheduler (spec §10 perf budget) ══════════════
+-- BEFORE: one burst per second walked every player (200 players ~ 800+ native/
+-- export calls in a single frame: GetPlayerPed x4, GetEntityCoords, vehicle
+-- lookup x3, plus a sunset_core:GetCharacter export per player per second).
+-- NOW: a 100 ms ticker visits only the players whose per-player `nextAt` is
+-- due, capped by a per-tick player count AND a wall-time budget, so the same
+-- 1 Hz-per-player cadence is spread flat over the second (~10% of the roster
+-- per tick). Detection thresholds / sustain counts / cooldowns are UNCHANGED.
+--   * entity reads cached once per visit (snap) and shared by all detectors
+--   * loading / no-character / no-ped players are skipped (re-polled at 3 s)
+--     and their baseline is dropped so the first sample after spawn never
+--     reads as a teleport
+--   * stationary on-foot/parked players back off to IDLE_INTERVAL_MS after
+--     IDLE_AFTER still samples; ANY movement returns them to 1 Hz at once.
+--     Teleport/speed use the real elapsed time against the previous sample, so
+--     a jump is still caught on the very next visit (<= 2 s later).
+--   * health_check keeps its 0.2 Hz cadence via a per-player timer
+--   * heartbeat-silence runs every 5 s per player (its threshold is 30 s)
+--   * character presence cached (CHAR_REFRESH_MS) instead of an export/second
+local TICK_MS = 100
+local BASE_INTERVAL_MS = 1000
+local IDLE_INTERVAL_MS = 2000
+local IDLE_AFTER = 5
+local NOCHAR_INTERVAL_MS = 3000
+local HEALTH_INTERVAL_MS = 5000
+local SILENCE_INTERVAL_MS = 5000
+local CHAR_REFRESH_MS = 15000
+local SLICE_BUDGET_MS = 3.0   -- soft wall-time budget per tick (os.clock)
+local ROSTER_REFRESH_MS = 2000
+
+local Roster = {}        -- array of src
+local RosterAt = 0
+local Cursor = 1
+
+local function hasCharacter(src, rec, nowMs)
+    if rec.hasChar and nowMs < (rec.charAt or 0) then return true end
+    local ok = false
+    if GetResourceState('sunset_core') == 'started' then
+        pcall(function() ok = exports.sunset_core:GetCharacter(src) ~= nil end)
+    end
+    rec.hasChar = ok
+    rec.charAt = nowMs + (ok and CHAR_REFRESH_MS or 0)
+    return ok
+end
+
+local function visitPlayer(src, rec, nowMs)
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then
+        LastSample[src] = nil
+        rec.nextAt = nowMs + NOCHAR_INTERVAL_MS
+        return
+    end
+    if not hasCharacter(src, rec, nowMs) then
+        -- Loading / selecting a character: nothing to judge; drop baseline.
+        LastSample[src] = nil
+        SpeedSustain[src] = nil
+        FlyAscent[src] = nil
+        rec.nextAt = nowMs + NOCHAR_INTERVAL_MS
+        return
+    end
+
+    -- ONE entity read per visit, shared by every detector below.
+    local c = GetEntityCoords(ped)
+    local veh = GetVehiclePedIsIn(ped, false) or 0
+    local snap = { x = c.x, y = c.y, z = c.z, veh = veh }
+
+    local prev = LastSample[src]
+    local prevCopy = prev and { x = prev.x, y = prev.y, z = prev.z, veh = prev.veh, class = prev.class, at = prev.at } or nil
+    local dt = rec.lastVisit and ((nowMs - rec.lastVisit) / 1000.0) or 1.0
+    rec.lastVisit = nowMs
+
+    speedCheck(src, dt, snap)
+    teleportCheck(src, prevCopy, snap)
+    flyCheck(src, prevCopy, snap)
+
+    if nowMs >= (rec.nextHealth or 0) then
+        rec.nextHealth = nowMs + HEALTH_INTERVAL_MS
+        healthCheck(src, ped)
+    end
+    if nowMs >= (rec.nextSilence or 0) then
+        rec.nextSilence = nowMs + SILENCE_INTERVAL_MS
+        heartbeatSilenceCheck(src, true)
+    end
+
+    -- Idle back-off (movement of >0.25 m or any vehicle motion resets it).
+    local moved = true
+    if prevCopy then
+        local dx, dy, dz = snap.x - prevCopy.x, snap.y - prevCopy.y, snap.z - prevCopy.z
+        moved = (dx * dx + dy * dy + dz * dz) > 0.0625
+    end
+    if moved then rec.still = 0 else rec.still = (rec.still or 0) + 1 end
+    rec.nextAt = nowMs + ((rec.still >= IDLE_AFTER) and IDLE_INTERVAL_MS or BASE_INTERVAL_MS)
+end
+
+local function refreshRoster(nowMs)
+    RosterAt = nowMs
+    local list = {}
+    local n = 0
+    for _, id in ipairs(GetPlayers()) do
+        local src = tonumber(id)
+        if src then
+            n = n + 1
+            list[n] = src
+            if not Sched[src] then
+                -- New player: settle period + deterministic spread so a mass
+                -- join never lands on the same tick.
+                Sched[src] = { nextAt = nowMs + 8000 + ((src * 37) % BASE_INTERVAL_MS), nextHealth = nowMs + 8000 + HEALTH_INTERVAL_MS,
+                    nextSilence = nowMs + 8000 + SILENCE_INTERVAL_MS, still = 0 }
+            end
+        end
+    end
+    Roster = list
+    if Cursor > #Roster then Cursor = 1 end
+end
+
 CreateThread(function()
     Wait(8000) -- let spawn/character load settle before first sample
     while Cfg.Enabled do
-        Wait(1000)
+        Wait(TICK_MS)
         local ok, err = pcall(function()
-            healthCounter = healthCounter + 1
-            local runHealth = (healthCounter % 5) == 0  -- 0.2 Hz per spec §4.5
-            for _, id in ipairs(GetPlayers()) do
-                local src = tonumber(id)
-                if src then
-                    local ped = GetPlayerPed(src)
-                    if ped and ped ~= 0 then
-                        local prev = LastSample[src]
-                        local prevCopy = prev and { x = prev.x, y = prev.y, z = prev.z, veh = prev.veh, class = prev.class, at = prev.at } or nil
-                        speedCheck(src, 1.0)
-                        teleportCheck(src, prevCopy)
-                        flyCheck(src, prevCopy)
-                        if runHealth then healthCheck(src) end
+            local nowMs = GetGameTimer()
+            if nowMs - RosterAt >= ROSTER_REFRESH_MS or #Roster == 0 then refreshRoster(nowMs) end
+            local n = #Roster
+            if n == 0 then return end
+            -- ~10% of the roster per tick (+1) keeps every player at 1 Hz.
+            local cap = math.ceil(n * TICK_MS / BASE_INTERVAL_MS) + 1
+            local t0 = os.clock()
+            local done, scanned = 0, 0
+            while scanned < n and done < cap do
+                if Cursor > n then Cursor = 1 end
+                local src = Roster[Cursor]
+                Cursor = Cursor + 1
+                scanned = scanned + 1
+                local rec = Sched[src]
+                if rec and nowMs >= rec.nextAt then
+                    done = done + 1
+                    local okV, errV = pcall(visitPlayer, src, rec, nowMs)
+                    if not okV then
+                        rec.nextAt = nowMs + BASE_INTERVAL_MS
+                        print(('^1[sunset_anticheat]^7 detector error (src %s): %s'):format(tostring(src), tostring(errV)))
                     end
-                    heartbeatSilenceCheck(src)
+                    if (os.clock() - t0) * 1000.0 > SLICE_BUDGET_MS then break end
                 end
             end
         end)

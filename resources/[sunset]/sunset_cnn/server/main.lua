@@ -34,6 +34,17 @@ local function cleanText(value, maxLength)
     return text
 end
 
+-- [SEC3] cleanText never truncated, so a long /admute or /rejectad reason overflowed VARCHAR(255)
+-- AFTER the in-memory queue had been mutated (ad lost from queue + AdMutex stuck). Cut on a UTF-8 boundary.
+local function clampReason(value, maxChars)
+    local text = cleanText(value, maxChars)
+    if not text then return nil end
+    if utf8.len(text) == nil then text = text:gsub('[\128-\255]', '?') end
+    local len = utf8.len(text) or #text
+    if len > maxChars then text = text:sub(1, (utf8.offset(text, maxChars + 1) or (maxChars + 1)) - 1) end
+    return text
+end
+
 -- ═══════════════════════════════════════════════════════════════
 --  DATABASE INITIALIZATION & STARTUP RESTORE
 -- ═══════════════════════════════════════════════════════════════
@@ -139,8 +150,12 @@ exports('IsAdMuted', IsAdMuted)
 
 function AdMutePlayer(targetSrc, minutes, reason, adminSrc)
     targetSrc = tonumber(targetSrc)
-    minutes = math.max(1, tonumber(minutes) or 15)
-    reason = cleanText(reason, 200) or 'Advertisement abuse'
+    -- [SEC3] target must be a live player; duration finite whole minutes, max 30 days (huge values overflowed DATE_ADD after the in-memory mute was set)
+    if not targetSrc or not GetPlayerName(targetSrc) then return false, { localeKey = 'cnn.message.player_not_found_or_invalid_identifier' } end
+    minutes = tonumber(minutes) or 15
+    if minutes ~= minutes or minutes > 43200 then minutes = 43200 end
+    minutes = math.max(1, math.floor(minutes))
+    reason = clampReason(reason, 200) or 'Advertisement abuse'
     local adminName = getDisplayName(adminSrc)
     local license = Sunset.GetIdentifier(targetSrc, 'license')
     if not license then return false, { localeKey = 'cnn.message.player_not_found_or_invalid_identifier' } end
@@ -338,7 +353,7 @@ function RejectAd(adId, staffSrc, reason)
     AdMutex[adId] = true
 
     local staffName = getDisplayName(staffSrc)
-    reason = cleanText(reason, 200) or 'Inappropriate content'
+    reason = clampReason(reason, 200) or 'Inappropriate content'
 
     local foundIndex = nil
     local found = nil

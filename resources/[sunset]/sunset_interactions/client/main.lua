@@ -572,7 +572,8 @@ CreateThread(function()
         if promptTarget and not menuOpen and not contextRequestActive and not inputIsBusy()
             and not (sharingVehicle() and not holdActive) then
             sendPlayerPrompt(lockedTarget or promptTarget)
-            Wait(16)
+            -- [PERF] 30 Hz cap (was ~60 Hz); sendPlayerPrompt also drops moves < 0.15% of screen.
+            Wait(33)
         else
             Wait(200)
         end

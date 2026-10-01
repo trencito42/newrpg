@@ -521,7 +521,27 @@ function endRace(reason)
             local winner = ActiveRace.finished[1]
             local charId = getCharId(winner)
             local now = nowMs()
-            if charId and (not SoloCooldowns[charId] or (now - SoloCooldowns[charId]) > (Cfg.soloCooldownMs or 300000)) then
+            -- [JOBS AUTHORITY] server-measured minimum time for the whole route
+            local plausible = true
+            do
+                local prog = PlayerProgress[winner]
+                local route = ActiveRace.route
+                if prog and prog.startTimeMs and prog.finishedAtMs and route and route.checkpoints then
+                    local len, prev = 0.0, route.start
+                    for _, cp in ipairs(route.checkpoints) do
+                        if prev then len = len + math.sqrt((cp.x - prev.x) ^ 2 + (cp.y - prev.y) ^ 2) end
+                        prev = cp
+                    end
+                    local minMs = len / (Cfg.soloMaxAvgSpeedMps or 75.0) * 1000.0
+                    plausible = (prog.finishedAtMs - prog.startTimeMs) >= minMs
+                else
+                    plausible = false
+                end
+            end
+            if not plausible then
+                print(('[RACING] solo payout withheld src=%s reason=implausible_time'):format(tostring(winner)))
+                notify(winner, ('⏱ Time trial complete! (Time not verified, no reward)'), 'info', 8000)
+            elseif charId and (not SoloCooldowns[charId] or (now - SoloCooldowns[charId]) > (Cfg.soloCooldownMs or 300000)) then
                 if not exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward') then
                     exports.sunset_core:AddMoney(winner, 'cash', Cfg.soloReward or 500, 'race_solo_reward_retry')
                 end

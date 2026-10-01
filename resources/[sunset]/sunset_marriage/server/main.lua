@@ -4,7 +4,8 @@
 -- ═══════════════════════════════════════════════════════════════
 
 local Cfg = SunsetMarriage.Config
-local PendingProposals = {} -- [targetSrc] = { from = src, expiresAt }
+local PendingProposals = {} -- [targetSrc] = { from = src, fromCharId = cid, expiresAt }
+local MarriageBusy = {} -- [SEC3] per-character in-flight guard (double marriage / double divorce)
 
 local function notify(source, msg, kind, duration)
     TriggerClientEvent('sunset:client:notify', source, msg, kind or 'info', duration or 5000)
@@ -76,7 +77,7 @@ exports.sunset_core:RegisterCallback('sunset:marriage:propose', function(source,
         return nil, { localeKey = 'marriage.message.not_enough_cash_proposal_fee_value', formatArgs = { Cfg.proposalFee or 25000 } }
     end
 
-    PendingProposals[targetId] = { from = source, expiresAt = os.time() + 120 }
+    PendingProposals[targetId] = { from = source, fromCharId = myCharId, expiresAt = os.time() + 120 }
 
     local myName = exports.sunset_core:GetPlayerDisplayName(source) or 'Someone'
     notify(targetId, ('💍 %s proposed to you! Accept or decline within 2 minutes.'):format(myName), 'success', 15000)
@@ -100,7 +101,8 @@ exports.sunset_core:RegisterCallback('sunset:marriage:respond', function(source,
     PendingProposals[source] = nil
 
     local fromSrc = proposal.from
-    if not GetPlayerName(fromSrc) then
+    -- [SEC3] the proposer's server id may have been recycled by another player since the proposal
+    if not GetPlayerName(fromSrc) or getCharId(fromSrc) ~= proposal.fromCharId then
         return nil, { localeKey = 'marriage.message.the_proposer_is_no_longer_online' }
     end
 
@@ -118,15 +120,28 @@ exports.sunset_core:RegisterCallback('sunset:marriage:respond', function(source,
     if not myCharId or not fromCharId then
         return nil, { localeKey = 'marriage.message.character_not_loaded' }
     end
-    if getMarriage(myCharId) or getMarriage(fromCharId) then
+    if MarriageBusy[fromCharId] or MarriageBusy[myCharId] then
+        return nil, { localeKey = 'marriage.message.one_of_you_is_already_married_fee_refunded' }
+    end
+    MarriageBusy[fromCharId], MarriageBusy[myCharId] = true, true
+    local okM, alreadyMarried = pcall(function() return getMarriage(myCharId) or getMarriage(fromCharId) end)
+    if not okM or alreadyMarried then
+        MarriageBusy[fromCharId], MarriageBusy[myCharId] = nil, nil
         exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')
         return nil, { localeKey = 'marriage.message.one_of_you_is_already_married_fee_refunded' }
     end
 
     -- Create marriage
-    MySQL.insert.await([[
-        INSERT INTO marriages (partner1_id, partner2_id) VALUES (?, ?)
-    ]], { fromCharId, myCharId })
+    local okI = pcall(function()
+        MySQL.insert.await([[
+            INSERT INTO marriages (partner1_id, partner2_id) VALUES (?, ?)
+        ]], { fromCharId, myCharId })
+    end)
+    MarriageBusy[fromCharId], MarriageBusy[myCharId] = nil, nil
+    if not okI then
+        exports.sunset_core:AddMoney(fromSrc, 'cash', Cfg.proposalFee or 25000, 'marriage_refund')
+        return nil, { localeKey = 'marriage.message.character_not_loaded' }
+    end
 
     local myName = exports.sunset_core:GetPlayerDisplayName(source) or 'Someone'
     local fromName = exports.sunset_core:GetPlayerDisplayName(fromSrc) or 'Someone'
@@ -149,12 +164,13 @@ exports.sunset_core:RegisterCallback('sunset:marriage:divorce', function(source)
     local marriage = getMarriage(myCharId)
     if not marriage then return nil, { localeKey = 'marriage.message.you_are_not_married' } end
 
-    -- Charge divorce fee
+    -- [SEC3] claim the divorce atomically first (parallel divorces charged the fee repeatedly), then charge
+    local claimed = MySQL.update.await('UPDATE marriages SET status = "divorced" WHERE id = ? AND status = "active"', { marriage.id })
+    if tonumber(claimed) ~= 1 then return nil, { localeKey = 'marriage.message.you_are_not_married' } end
     if not exports.sunset_core:RemoveMoney(source, 'cash', Cfg.divorceFee or 10000, 'marriage_divorce') then
+        MySQL.update.await('UPDATE marriages SET status = "active" WHERE id = ? AND status = "divorced"', { marriage.id })
         return nil, { localeKey = 'marriage.message.not_enough_cash_divorce_fee_value', formatArgs = { Cfg.divorceFee or 10000 } }
     end
-
-    MySQL.update.await('UPDATE marriages SET status = "divorced" WHERE id = ?', { marriage.id })
 
     local partnerId = getPartnerId(marriage, myCharId)
     -- Notify partner if online

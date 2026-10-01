@@ -1,30 +1,12 @@
-local cachedBusinesses = {}
+-- [PERF] cachedBusinesses was write-only (never read anywhere) yet every
+-- businessesChanged made every client re-run the sunset:getBusinesses callback
+-- (a DB query per client per change). The event is kept as a no-op listener for
+-- compatibility; panels fetch fresh data through their own callbacks on open.
+RegisterNetEvent('sunset:client:businessesChanged', function() end)
 
 local function notify(msg, kind)
     exports.sunset_ui:Notify(msg, kind or 'info')
 end
-
-local function refreshBusinesses()
-    cachedBusinesses = Sunset.AwaitCallback('sunset:getBusinesses') or {}
-end
-
-CreateThread(function()
-    Wait(1500)
-    refreshBusinesses()
-end)
-
--- [PERF] businessesChanged is broadcast to every client; debounce + jitter so a
--- single change does not make N players hit sunset:getBusinesses in the same tick.
-local businessRefreshPending = false
-RegisterNetEvent('sunset:client:businessesChanged', function()
-    if businessRefreshPending then return end
-    businessRefreshPending = true
-    CreateThread(function()
-        Wait(250 + math.random(0, 3000))
-        businessRefreshPending = false
-        refreshBusinesses()
-    end)
-end)
 
 RegisterNetEvent('sunset:client:businessTeleport', function(coords)
     if type(coords) ~= 'table' then return end

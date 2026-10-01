@@ -102,6 +102,8 @@ CreateThread(function()
             armour = GetPedArmour(ped),
             weapon = GetSelectedPedWeapon(ped),
             fps = fps,
+            -- advisory vehicle class for the server speed_check (GetVehicleClass is client-only)
+            vehClass = (veh ~= 0) and GetVehicleClass(veh) or nil,
         }
         -- [LEDGER] weapon+ammo list every 5th tick (5 s, spec §4.6).
         if tickCount % 5 == 0 then

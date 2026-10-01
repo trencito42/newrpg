@@ -50,6 +50,10 @@ end
 exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(source)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
+    -- [SEC3] throttle: each call hit the DB (inventory + job_progress) and could be spammed
+    if not exports.sunset_core:RateLimit(source, 'carjackLockpick', 2000) then
+        return false, { localeKey = 'carjack.message.the_buyer_is_still_counting_the_last_cash_come' }
+    end
 
     -- Need lockpick in inventory
     local hasItem = exports.sunset_inventory:HasItem(source, 'lockpick', 1)

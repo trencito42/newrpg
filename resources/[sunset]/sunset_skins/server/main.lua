@@ -63,6 +63,7 @@ exports.sunset_core:RegisterCallback('skins:buy', function(source, model, curren
     -- [SEC2] serialise purchases per source (double-charge/duplicate-row race)
     if not exports.sunset_core:RateLimit(source, 'skinBuy', 1500) then return nil, { localeKey = 'skins.message.unknown_skin' } end
 
+    if type(model) ~= 'string' or #model > 64 then return nil, { localeKey = 'skins.message.unknown_skin' } end -- [SEC3]
     local cfg = skinByModel(model)
     if not cfg then return nil, { localeKey = 'skins.message.unknown_skin' } end
     if cfg.battlepass then return nil, { localeKey = 'skins.message.this_skin_is_a_battlepass_exclusive' } end
@@ -98,6 +99,11 @@ exports.sunset_core:RegisterCallback('skins:equip', function(source, model)
     local char   = getCharacter(source)
     if not player or not char then return nil, { localeKey = 'skins.message.not_authenticated' } end
 
+    -- [SEC3] type/length validation + throttle (model was fed straight into SQL params / client SetPlayerModel)
+    if model ~= nil and (type(model) ~= 'string' or #model > 64 or not model:match('^[%w_]*$')) then
+        return nil, { localeKey = 'skins.message.unknown_skin' }
+    end
+    if not exports.sunset_core:RateLimit(source, 'skinEquip', 1000) then return nil, { localeKey = 'skins.message.unknown_skin' } end
     local isReset = not model or model == '' or model == 'default' or model == 'reset'
 
     if not isReset then
@@ -131,6 +137,7 @@ RegisterCommand('giveskin', function(source, args)
     end
     local targetId = tonumber(args[1])
     local model    = args[2]
+    if model and (#model > 64 or not model:match('^[%w_]+$')) then model = nil end -- [SEC3]
     if not targetId or not model then
         exports.sunset_core:CommandUsage(source, '/giveskin [id] [model]')
         return
@@ -173,6 +180,7 @@ RegisterCommand('setskin', function(source, args)
         model        = args[1]
     end
 
+    if model and (#model > 64 or not model:match('^[%w_]*$')) then model = nil end -- [SEC3]
     if not targetSource or not model then
         exports.sunset_core:CommandUsage(source, '/setskin [model] or /setskin [id] [model]')
         return

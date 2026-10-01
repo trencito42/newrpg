@@ -12,6 +12,10 @@ RegisterNetEvent('sunset:server:nuiError', function(errType, message, jsSource, 
     rec.n = rec.n + 1
     if rec.n > 5 then return end
     local player = GetPlayerName(src) or 'unknown'
+    -- [SEC3] client-controlled text goes to the server console: strip control chars / newlines (log forging) and bound every field
+    errType = tostring(errType):sub(1, 40):gsub('[%c]', ' ')
+    lineno = tostring(lineno):sub(1, 12):gsub('[%c]', ' ')
+    message = tostring(message):gsub('[%c]', ' ')
     print(('^1[NUI-ERROR src=%s (%s) type=%s line=%s]^7 %s'):format(
         tostring(src), player, tostring(errType), tostring(lineno), tostring(message):sub(1, 300)))
 end)

@@ -93,12 +93,19 @@ exports.sunset_core:RegisterCallback('sunset:dispatchList', function(source, cal
         return nil, { localeKey = 'dispatch.message.you_must_be_on_duty' }
     end
     callType = callType and Sunset.Dispatch.NormalizeServiceType(callType) or nil
-    return ServiceCore.getActiveCalls(callType)
+    -- [SEC3] any on-duty member (e.g. gang/taxi) used to receive every call incl. caller phone/coords of 112 calls
+    local out = {}
+    for _, call in ipairs(ServiceCore.getActiveCalls(callType)) do
+        if ServiceCore.isProviderForType(source, call.callType) then out[#out + 1] = call end
+    end
+    return out
 end)
 
 exports.sunset_core:RegisterCallback('sunset:dispatchGet', function(source, callId)
     local call = ServiceCore.getCallById(callId)
     if not call then return nil, { localeKey = 'dispatch.message.call_not_found' } end
+    -- [SEC3] enumerating call ids leaked caller names, positions and metadata to anyone
+    if not ServiceCore.canViewCall(source, call) then return nil, { localeKey = 'dispatch.message.call_not_found' } end
     return ServiceCore.serializeCall(call, source)
 end)
 

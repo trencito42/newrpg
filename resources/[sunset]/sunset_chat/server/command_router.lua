@@ -219,6 +219,7 @@ RegisterNetEvent('sunset:chat:runCommand', function(line)
         return
     end
     if type(line) ~= 'string' then return end
+    if #line > 512 then return end -- [SEC3] bound client-supplied command line before tokenizing
 
     line = line:match('^%s*(.-)%s*$') or ''
     if line == '' then return end

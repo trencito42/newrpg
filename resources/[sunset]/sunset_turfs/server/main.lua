@@ -1108,7 +1108,16 @@ AddEventHandler('sunset:payday:processed', function(source)
     end
 
     if count > 0 and totalPayout > 0 then
-        exports.sunset_core:AddMoney(source, 'bank', totalPayout, 'turf_payout')
+        -- [MISSIONS AUTHORITY] once per clan per payday window (several rank-5 members / repeated events
+        -- must not each collect the territory income); reserved before the money call.
+        local nowT = os.time()
+        TurfPayoutAt = TurfPayoutAt or {}
+        if TurfPayoutAt[pClan.clan_id] and nowT - TurfPayoutAt[pClan.clan_id] < 3000 then return end
+        TurfPayoutAt[pClan.clan_id] = nowT
+        if not exports.sunset_core:AddMoney(source, 'bank', totalPayout, 'turf_payout') then
+            TurfPayoutAt[pClan.clan_id] = nil
+            return
+        end
         TriggerClientEvent('sunset:client:notify', source,
             ('Your clan collected $%s from %d controlled territories (deposited to your bank).'):format(
                 tostring(math.floor(totalPayout)), count

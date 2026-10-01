@@ -6,6 +6,7 @@ import {
   Home,
   Users,
   Shield,
+  Flag,
   Map,
   Award,
   BarChart3,
@@ -24,6 +25,10 @@ import {
   LogOut,
   Radio,
   FileText,
+  UserCheck,
+  Building,
+  History,
+  AlertOctagon,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -40,11 +45,13 @@ interface SidebarProps {
 export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarProps) {
   const pathname = usePathname();
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
+  const isAdmin = session && session.adminLevel >= 1;
 
   const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
     { href: "/players", label: t(locale, "nav.players"), icon: Users },
     { href: "/factions", label: t(locale, "nav.factions"), icon: Shield },
+    { href: "/clans", label: locale === "ro" ? "Clanuri" : "Clans", icon: Flag },
     { href: "/turfs", label: t(locale, "nav.turfs"), icon: Map },
     { href: "/staff", label: t(locale, "nav.staff"), icon: Award },
     { href: "/stats", label: t(locale, "nav.stats"), icon: BarChart3 },
@@ -72,6 +79,22 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
     { href: "/support/complaints", label: t(locale, "nav.complaints"), icon: FileText },
     { href: "/support/unban", label: t(locale, "nav.unban"), icon: Shield },
   ];
+
+  const staffLinks = isStaffMember
+    ? [
+        { href: "/staff/dashboard", label: locale === "ro" ? "Panou Staff" : "Staff Panel", icon: Radio },
+        { href: "/staff/players", label: locale === "ro" ? "Jucători" : "Players", icon: Users },
+        ...(isAdmin
+          ? [
+              { href: "/staff/team", label: locale === "ro" ? "Echipă Staff" : "Staff Team", icon: UserCheck },
+              { href: "/staff/factions", label: locale === "ro" ? "Facțiuni" : "Factions", icon: Shield },
+              { href: "/staff/clans", label: locale === "ro" ? "Clanuri" : "Clans", icon: Flag },
+              { href: "/staff/sanctions", label: locale === "ro" ? "Sancțiuni" : "Sanctions", icon: AlertOctagon },
+              { href: "/staff/audit", label: locale === "ro" ? "Audit Log" : "Audit Log", icon: History },
+            ]
+          : []),
+      ]
+    : [];
 
   const getStaffTitle = () => {
     if (!session) return "";
@@ -196,18 +219,25 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
               Staff
             </div>
             <nav className="space-y-0.5">
-              <Link
-                href="/staff/dashboard"
-                className={cn(
-                  "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
-                  pathname.startsWith("/staff/dashboard")
-                    ? "bg-[#1a1a1c] text-[#f1f1f1]"
-                    : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
-                )}
-              >
-                <Radio className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
-                <span>{t(locale, "nav.staff_dashboard")}</span>
-              </Link>
+              {staffLinks.map((item) => {
+                const active = pathname === item.href || (item.href !== "/staff/dashboard" && pathname.startsWith(item.href));
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                      active
+                        ? "bg-[#1a1a1c] text-[#f1f1f1]"
+                        : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
         )}

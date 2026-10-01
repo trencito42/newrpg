@@ -84,6 +84,8 @@ server_exports {
     'AddMoney',
     'RefreshMoney',
     'DebitMoneyInTransaction',
+    'CreditMoneyInTransaction',
+    'AddMoneyToCharacter',
     'RemoveMoney',
     'MoveMoney',
     'TransferMoney',

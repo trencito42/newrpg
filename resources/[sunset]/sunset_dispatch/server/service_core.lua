@@ -260,6 +260,11 @@ function ServiceCore.createServiceCall(source, callType, coords, metadata, descr
 
     local char = not isSystem and getChar(source) or nil
     if not isSystem and not char then return nil, { localeKey = 'dispatch.message.no_character' } end
+    -- [SEC3] /service police_backup let any civilian raise officer-backup alerts to every responder
+    -- (the 'backup' faction perm is only enforced on the police callback). Require an on-duty responder.
+    if not isSystem and callType == 'police_backup' and not isEmergencyResponder(source) then
+        return nil, { localeKey = 'dispatch.message.you_must_be_on_duty_as_provider', params = { label = 'Officer Backup' } }
+    end
     if not isSystem then
         local providers = 0
         for _, id in ipairs(GetPlayers()) do
@@ -441,6 +446,10 @@ function ServiceCore.cancelCall(source, callType, callId, reason)
     if not isCaller and not isResponder and not ServiceCore.isProviderForType(source, callType) then
         return nil, { localeKey = 'dispatch.message.you_cannot_cancel_this_call' }
     end
+    -- [SEC3] an unrelated provider may only cancel a call nobody has taken (was: cancel any active call)
+    if not isCaller and not isResponder and call.status ~= Sunset.Dispatch.States.OPEN then
+        return nil, { localeKey = 'dispatch.message.you_cannot_cancel_this_call' }
+    end
     if isResponder and not isCaller and call.status == Sunset.Dispatch.States.IN_PROGRESS then
         return nil, { localeKey = 'dispatch.message.cannot_cancel_while_service_is_in_progress' }
     end
@@ -568,4 +577,13 @@ end
 
 function ServiceCore.serializeCall(call, viewerSource)
     return serializeCall(call, viewerSource)
+end
+
+-- [SEC3] may this player read the call? caller, responder, or a provider for the call type.
+function ServiceCore.canViewCall(source, call)
+    if not call then return false end
+    local char = getChar(source)
+    if not char then return false end
+    if call.callerCharacterId == char.id or call.responderCharacterId == char.id then return true end
+    return ServiceCore.isProviderForType(source, call.callType)
 end

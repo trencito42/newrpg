@@ -328,8 +328,15 @@ exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, t
     if not target or targetFaction ~= myFaction then return nil, { localeKey = 'factions.message.target_is_not_in_your_faction' } end
 
     local faction = Sunset.Factions[myFaction]
-    if not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
-    if newGrade >= (myGrade or 0) and source ~= targetId then
+    if newGrade % 1 ~= 0 or not faction or not faction.grades[newGrade] then return nil, { localeKey = 'factions.message.invalid_grade' } end
+    -- [SEC3] rank ordering: use the leader-aware effective grade, forbid self-promotion
+    -- (previously source==target skipped the ceiling check) and forbid touching peers/superiors.
+    local effGrade = FactionCore.getEffectiveGrade(char, myFaction)
+    if newGrade >= effGrade then
+        return nil, { localeKey = 'factions.message.you_cannot_promote_to_your_rank_or_higher' }
+    end
+    if source ~= targetId and (tonumber(targetGrade) or 0) >= effGrade
+        and not FactionCore.isFactionLeader(char.id, myFaction) then
         return nil, { localeKey = 'factions.message.you_cannot_promote_to_your_rank_or_higher' }
     end
 
@@ -362,6 +369,13 @@ exports.sunset_core:RegisterCallback('sunset:factionHeal', function(source, targ
     targetId = tonumber(targetId) or source
     if not FactionCore.isOnline(targetId) then
         return nil, { localeKey = 'factions.message.patient_id_value_is_not_online_use_f10_to', formatArgs = { tostring(targetId or '?') } }
+    end
+    -- [SEC3] heal needs proximity (was heal-anyone-anywhere) and the same routing bucket
+    if targetId ~= source then
+        if GetPlayerRoutingBucket(source) ~= GetPlayerRoutingBucket(targetId)
+            or FactionCore.distBetween(FactionCore.playerCoords(source), FactionCore.playerCoords(targetId)) > 6.0 then
+            return nil, { localeKey = 'factions.message.you_must_be_near_the_patient' }
+        end
     end
     TriggerClientEvent('sunset:admin:heal', targetId)
     return true
@@ -416,6 +430,7 @@ local function nearFactionDepot(source, depot)
     return false
 end
 
+local fleetVehicleLabel -- [SEC3] forward declaration (was resolved as a nil global inside fleetEntryLabel)
 local function fleetEntryLabel(depot, vehicleModel)
     vehicleModel = string.lower(tostring(vehicleModel or ''))
     if depot and depot.vehicles then
@@ -446,7 +461,7 @@ local function broadcastFleetTake(source, factionId, faction, vehicleModel)
     })
 end
 
-local function fleetVehicleLabel(model, fallback)
+fleetVehicleLabel = function(model, fallback)
     model = tostring(model or '')
     if model == '' then return fallback or 'Vehicle' end
     return model:sub(1, 1):upper() .. model:sub(2):lower()
@@ -518,6 +533,7 @@ end)
 
 RegisterNetEvent('sunset:factionRegisterFleetVehicle', function(networkId, factionId, vehicleModel)
     local src = source
+    if not exports.sunset_core:RateLimit(src, 'fleetRegister', 3000) then return end -- [SEC3] spam/duplicate fleet-take broadcasts
     networkId = tonumber(networkId)
     factionId = tostring(factionId or '')
     vehicleModel = tostring(vehicleModel or '')
@@ -932,7 +948,9 @@ exports.sunset_core:RegisterCallback('sunset:factionDashboard', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
-    if not getChar(source) then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
+    local viewerChar = getChar(source)
+    if not viewerChar then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
+    local viewerFaction = getFactionOf(viewerChar) -- [SEC3]
     local result, byId = {}, {}
     for factionId, faction in pairs(Sunset.Factions or {}) do
         local entry = {
@@ -980,6 +998,8 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
     for _, row in ipairs(leaderRows or {}) do
         if memberFactionByCharId[row.character_id] ~= row.faction_id then goto continue_leader end
         local entry = byId[row.faction_id]
+        -- [SEC3] do not expose illegal-faction leadership to non-members
+        if entry and entry.type == 'illegal' and row.faction_id ~= viewerFaction then goto continue_leader end
         if entry then entry.leaders[#entry.leaders + 1] = (('%s %s'):format(row.firstname or '', row.lastname or '')):gsub('%s+$', '') end
         ::continue_leader::
     end
@@ -991,10 +1011,13 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectory', function(source)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:factionDirectoryDetail', function(source, factionId)
-    if not getChar(source) then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
+    local viewerChar = getChar(source)
+    if not viewerChar then return nil, { localeKey = 'factions.message.your_character_is_not_loaded' } end
     factionId = tostring(factionId or '')
     local faction = Sunset.Factions[factionId]
     if not faction then return nil, { localeKey = 'factions.message.faction_not_found' } end
+    -- [SEC3] illegal factions: roster/leaders/server ids only for their own members
+    local hideRoster = faction.type == 'illegal' and getFactionOf(viewerChar) ~= factionId
 
     local motd = ''
     pcall(function()
@@ -1003,7 +1026,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectoryDetail', function(s
     end)
 
     local leaders = {}
-    for _, row in ipairs(MySQL.query.await([[
+    for _, row in ipairs(hideRoster and {} or MySQL.query.await([[
         SELECT fl.character_id, c.firstname, c.lastname
         FROM faction_leaders fl
         LEFT JOIN characters c ON c.id = fl.character_id
@@ -1018,14 +1041,14 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectoryDetail', function(s
     local onlineCount = 0
     for _, m in ipairs(roster or {}) do
         if m.online then onlineCount = onlineCount + 1 end
-        members[#members + 1] = {
+        if not hideRoster then members[#members + 1] = {
             name = m.name,
             rank = m.gradeLabel,
             online = m.online,
             onDuty = m.onDuty,
             leader = m.leader,
             serverId = m.serverId,
-        }
+        } end
     end
 
     return {
@@ -1041,7 +1064,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDirectoryDetail', function(s
         leaders = leaders,
         members = members,
         online = onlineCount,
-        total = #members,
+        total = #roster,
     }
 end)
 

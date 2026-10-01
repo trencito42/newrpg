@@ -19,6 +19,9 @@ client_scripts {
 }
 
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
+    '@sunset_casino/shared/rng.lua',
+    'server_config.lua',
     'server.lua',
 }
 
@@ -30,4 +33,4 @@ files {
     'html/audio/*.mp3'
 }
 
-dependencies { 'sunset_core', 'sunset_ui' }
+dependencies { 'sunset_core', 'sunset_ui', 'oxmysql' }

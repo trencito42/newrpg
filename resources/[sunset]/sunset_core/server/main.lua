@@ -648,6 +648,8 @@ local function createDefaultAccountCharacter(player)
     return Sunset.DecodeCharacter(char)
 end
 
+local CharLoadInFlight = {}
+local loadCharacterForPlayerInner
 local function loadCharacterForPlayer(source, player, charId)
     if not player or not Players[source] then return nil end
     if Players[source].character and Players[source].character.id then
@@ -656,8 +658,16 @@ local function loadCharacterForPlayer(source, player, charId)
     end
 
     charId = tonumber(charId)
-    if not charId then return nil end
+    if not charId or charId ~= math.floor(charId) then return nil end
+    if CharLoadInFlight[source] then return nil end -- [SEC3] concurrent select/enterGame double-load
+    CharLoadInFlight[source] = true
+    local okL, resL = pcall(loadCharacterForPlayerInner, source, player, charId)
+    CharLoadInFlight[source] = nil
+    if not okL then error(resL) end
+    return resL
+end
 
+loadCharacterForPlayerInner = function(source, player, charId)
     for otherSrc, otherData in pairs(Players) do
         if otherSrc ~= source and otherData.character and tonumber(otherData.character.id) == charId then
             Sunset.Warn(('Duplicate character load blocked: charId %s already active on source %s'):format(charId, otherSrc))
@@ -765,16 +775,26 @@ RegisterCallback('sunset:getCharacters', function(source)
     return chars or {}
 end)
 
+local CharCreateInFlight = {} -- [SEC3] serialize per source: concurrent creates bypassed MaxCharacters / slot uniqueness
 RegisterCallback('sunset:createCharacter', function(source, data)
     local player = GetPlayer(source)
     if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
+    if CharCreateInFlight[source] then return nil, Sunset.LocalizedError('error.action_too_fast') end
+    CharCreateInFlight[source] = true
+    local ok, res, err = pcall(function() return Sunset._createCharacterInner(source, player, data) end)
+    CharCreateInFlight[source] = nil
+    if not ok then error(res) end
+    return res, err
+end)
+
+function Sunset._createCharacterInner(source, player, data)
 
     local count = MySQL.scalar.await('SELECT COUNT(*) FROM characters WHERE player_id = ?', { player.id })
     if count >= Sunset.Config.MaxCharacters then
         return nil, Sunset.LocalizedError('character.limit', { limit = Sunset.Config.MaxCharacters })
     end
 
-    data = data or {}
+    if type(data) ~= 'table' then data = {} end -- [SEC3]
     local function validNamePart(value)
         value = type(value) == 'string' and value:match('^%s*(.-)%s*$') or ''
         if #value < 2 or #value > 24 or not value:match("^[%a][%a'%-]+$") then return nil end
@@ -791,7 +811,7 @@ RegisterCallback('sunset:createCharacter', function(source, data)
         or month < 1 or month > 12 or day < 1 or day > daysInMonth[month] then
         return nil, Sunset.LocalizedError('character.invalid_birthdate')
     end
-    data.gender = math.max(0, math.min(1, tonumber(data.gender) or 0))
+    data.gender = (tonumber(data.gender) == 1) and 1 or 0 -- [SEC3] strict 0/1 integer
     data.nationality = type(data.nationality) == 'string' and data.nationality:sub(1, 32) or 'American'
     if not data.nationality:match("^[%a%s'%-]+$") then
         return nil, Sunset.LocalizedError('character.invalid_nationality')
@@ -836,7 +856,7 @@ RegisterCallback('sunset:createCharacter', function(source, data)
     MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), charId })
     local char = MySQL.single.await('SELECT * FROM characters WHERE id = ?', { charId })
     return Sunset.DecodeCharacter(char)
-end)
+end
 
 RegisterCallback('sunset:selectCharacter', function(source, charId)
     local player = GetPlayer(source)

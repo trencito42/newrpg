@@ -319,7 +319,7 @@ end)
 AddEventHandler('sunset:nui:clothingApply', function(data)
     if shopType ~= 'barber' then return end
     CreateThread(function()
-        if data.pay then
+        if true then -- [SEC3] barber always pays; server enforces token on saveAppearance
             local ok, err = Sunset.AwaitCallback('sunset:payAppearance', 50)
             if not ok then
                 notify(err or 'Not enough money', 'error')

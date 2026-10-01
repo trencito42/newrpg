@@ -50,10 +50,16 @@ exports('RateLimit', Sunset.Security.RateLimit)
 -- Periodic integrity scanner
 CreateThread(function()
     while true do
-        Wait(5000)
-        for _, pid in ipairs(GetPlayers()) do
+        -- [PERF] Staggered: spread one full pass over ~4.5 s (per-player dt stays
+        -- inside the 1-6 s window used below) instead of a 5 s burst of N players.
+        local pids = GetPlayers()
+        local nPids = #pids
+        local stepMs = nPids > 0 and math.max(10, math.min(4500, math.floor(4500 / nPids))) or 5000
+        if nPids == 0 then Wait(stepMs) end
+        for _, pid in ipairs(pids) do
+            Wait(stepMs)
             local src = tonumber(pid)
-            if src then
+            if src and GetPlayerName(src) then
                 local ped = GetPlayerPed(src)
                 if ped and ped ~= 0 then
                     -- 1. Blacklisted weapon check

@@ -293,7 +293,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:atPickup', function(so
     return session.data
 end)
 
-exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(source, isManual)
+local function truckerDeliver(source, isManual)
     local session, err = SunsetJobs_RequireSession(source, 'trucker', { 'ACTIVE' })
     if not session then return nil, err end
     if session.data.stage ~= 'to_delivery' then return nil, { localeKey = 'jobs.message.cargo_not_loaded' } end
@@ -406,6 +406,14 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(sou
         bonusPct = math.floor(bonus * 100),
         stage = 'return_depot'
     }
+end
+
+-- [JOBS AUTHORITY] per-player lock: GetJobLevel yields before the stage flip, so two concurrent
+-- deliver requests could both pass the stage check and both be paid.
+exports.sunset_core:RegisterCallback('sunset:jobs:trucker:deliver', function(source, isManual)
+    return SunsetJobs_WithLock(source, 'trucker_deliver', function()
+        return truckerDeliver(source, isManual)
+    end)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:returnDepot', function(source)

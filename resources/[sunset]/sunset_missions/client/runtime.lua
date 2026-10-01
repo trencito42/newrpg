@@ -46,7 +46,11 @@ local function setStage(stage)
     if not activeSession then return end
     local ok, err = Sunset.AwaitCallback('sunset:missions:setStage', { mission = activeSession.missionId, stage = stage })
     if ok then activeSession.state = stage
-    else print('[sunset_missions] setStage fail: ' .. tostring(err)) end
+    else
+        -- [MISSIONS AUTHORITY] server refused the transition: the server session is the truth, so end the run.
+        print('[sunset_missions] setStage refused: ' .. tostring(err))
+        if MSN_AbortMission then MSN_AbortMission('Mission failed - invalid progress') end
+    end
 end
 
 -- Spawn target vehicle on the closest road node inside the search zone
@@ -100,6 +104,7 @@ local function runVehicleRecovery(session)
 
     -- LOCATE_VEHICLE
     setStage('LOCATE_VEHICLE')
+    if not activeSession then return end
     RemoveBlip(activeZoneBlip) activeZoneBlip = nil
     addBlip(GetEntityCoords(missionVehicle), 225, 1, variant.vehicleLabel, 0.7)
     MSN_NUI_UpdateHUD('Vehicle located — steal it', variant.vehicleLabel,
@@ -108,6 +113,7 @@ local function runVehicleRecovery(session)
 
     -- STEAL_VEHICLE — wait near vehicle, trigger lockpick, then enter
     setStage('STEAL_VEHICLE')
+    if not activeSession then return end
     MSN_NUI_UpdateHUD('Break in and steal the vehicle', variant.vehicleLabel)
 
     -- Lockpick phase: player must approach and use E
@@ -205,6 +211,7 @@ local function runVehicleRecovery(session)
     if not activeSession then return end
 
     setStage('DELIVER')
+    if not activeSession then return end
     MSN_NUI_UpdateHUD('Park inside the marker and deliver', nil, { condition = conditionPct })
 
     while activeSession and activeSession.state == 'DELIVER' do

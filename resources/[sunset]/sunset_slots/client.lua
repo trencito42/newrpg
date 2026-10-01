@@ -19,6 +19,8 @@ end
 local open = false
 local closestSlotMachine = nil
 local currentSitObj = nil
+local sessionToken = nil -- server-issued, rotates after every action (anti-replay)
+local busy = false
 local isSitting = false
 
 local function DrawText3D(coords, text)
@@ -178,13 +180,14 @@ local function sit(slotData)
     local heading = DoesEntityExist(prop) and GetEntityHeading(prop) or (slotData.heading or 0.0)
     local slotId = slotData.id or ('%.2f_%.2f_%.2f'):format(pos.x, pos.y, pos.z)
 
-    local ok, resOrErr = Sunset.AwaitCallback('sunset:slots:tryPlay', slotId)
-    if not ok then
-        exports.sunset_ui:Notify(resOrErr or 'Could not use this slot machine.', 'error')
+    local res, err = Sunset.AwaitCallback('sunset:slots:tryPlay', slotId)
+    if type(res) ~= 'table' or not res.token then
+        if err then exports.sunset_ui:Notify(err, 'error') end
         return
     end
 
-    local sessionChips = tonumber(resOrErr) or 50
+    local sessionChips = tonumber(res.balance) or 0
+    sessionToken = res.token
 
     -- Find casino chair for this slot machine
     local chair = spawnedChairs[slotData.id]
@@ -237,32 +240,53 @@ local function sit(slotData)
     })
 end
 
-RegisterNetEvent('sunset_slots:UpdateSlots', function(chips)
-    SLOTS_SetNuiFocus(true, true)
-    open = true
-    SendNUIMessage({
-        showPacanele = 'open',
-        coinAmount = tonumber(chips)
-    })
-end)
-
 RegisterNetEvent('sunset_slots:unsit', function()
     unsit()
 end)
 
-RegisterNUICallback('exitWith', function(data, cb)
+-- The NUI only requests actions; every result below comes from the server.
+local function translateErr(res)
+    if type(res) == 'table' and res.errKey then
+        res.err = exports.sunset_core:Translate(res.errKey)
+    end
+    return res
+end
+
+local function serverAction(cbName, cb, ...)
+    if busy or not sessionToken then cb({ ok = false }) return end
+    busy = true
+    local res, err = Sunset.AwaitCallback(cbName, sessionToken, ...)
+    busy = false
+    if type(res) ~= 'table' then
+        cb({ ok = false, err = err })
+        return
+    end
+    if res.token then sessionToken = res.token end
+    cb(translateErr(res))
+end
+
+RegisterNUICallback('spin', function(data, cb)
+    serverAction('sunset:slots:spin', cb, tonumber(data and data.bet))
+end)
+
+RegisterNUICallback('collect', function(_, cb)
+    serverAction('sunset:slots:collect', cb)
+end)
+
+RegisterNUICallback('gamble', function(data, cb)
+    serverAction('sunset:slots:gamble', cb, tonumber(data and data.color))
+end)
+
+RegisterNUICallback('exitWith', function(_, cb)
     cb('ok')
     SLOTS_SetNuiFocus(false, false)
     open = false
-    local coins = tonumber(data and data.coinAmount) or 0
-    TriggerServerEvent('sunset_slots:PayOutRewards', coins)
+    sessionToken = nil
+    busy = false
+    Sunset.AwaitCallback('sunset:slots:exit')
     if Config.SittingEnabled then
         unsit()
     end
-end)
-
-RegisterNUICallback('sendHook', function(data, cb)
-    cb('ok')
 end)
 
 -- ── Proximity loop ──

@@ -41,6 +41,7 @@ server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/sessions.lua',
     'server/validator.lua',
+    'server/stages.lua',
     'server/reputation.lua',
     'server/rewards.lua',
     'server/main.lua',

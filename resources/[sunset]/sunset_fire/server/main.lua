@@ -62,6 +62,8 @@ local function spawnIncident()
         fireHealth = Sunset.Fire.fireHealth or 100,
         maxHealth = Sunset.Fire.fireHealth or 100,
         status = 'active',
+        createdAt = os.time(),
+        hits = {},
         vehicleModel = model,
         dispatchCallId = nil,
     }
@@ -106,7 +108,10 @@ local function completeIncident(incidentId, source)
     local playerPay = payout - societyCut
 
     if source and source > 0 then
-        exports.sunset_core:AddMoney(source, 'cash', playerPay, 'fire_incident')
+        -- exactly-once: status was flipped to 'completed' above before any yielding call
+        if not exports.sunset_core:AddMoney(source, 'cash', playerPay, 'fire_incident') then
+            playerPay = 0
+        end
         local char = getChar(source)
         if char then
             pcall(function()
@@ -171,7 +176,7 @@ exports.sunset_core:RegisterCallback('sunset:fireExtinguish', function(source, i
     if not inc or inc.status ~= 'active' then return nil, { localeKey = 'fire.message.incident_not_found' } end
 
     local now = GetGameTimer()
-    if now - (LastExtinguish[source] or 0) < 200 then return nil, { localeKey = 'fire.message.extinguishing_too_quickly' } end
+    if now - (LastExtinguish[source] or 0) < 220 then return nil, { localeKey = 'fire.message.extinguishing_too_quickly' } end
     LastExtinguish[source] = now
 
     local ped = GetPlayerPed(source)
@@ -195,12 +200,18 @@ exports.sunset_core:RegisterCallback('sunset:fireExtinguish', function(source, i
         return nil, { localeKey = 'fire.message.you_need_a_fire_extinguisher_or_fire_truck_to' }
     end
 
-    amount = tonumber(amount) or 0
-    if amount ~= amount then amount = 0 end -- [SEC2] NaN would zero fireHealth instantly
-    amount = math.min(amount, Sunset.Fire.extinguishRate or 12)
-    if amount < 1 then return nil, { localeKey = 'fire.message.invalid_extinguish_amount' } end
+    -- [MISSIONS AUTHORITY] the client amount is IGNORED: damage per accepted tick is a server constant,
+    -- ticks are rate limited, and the fire cannot be put out before a minimum burn time.
+    amount = Sunset.Fire.extinguishRate or 12
+    inc.hits = inc.hits or {}
+    inc.hits[source] = (inc.hits[source] or 0) + 1
 
-    inc.fireHealth = math.max(0, (inc.fireHealth or 0) - amount)
+    local minBurn = Sunset.Fire.minBurnSec or 20
+    local newHealth = math.max(0, (inc.fireHealth or 0) - amount)
+    if newHealth <= 0 and (os.time() - (inc.createdAt or 0)) < minBurn then newHealth = 1 end
+    -- the finisher must have contributed at least a few ticks (no single-hit steals of payout)
+    if newHealth <= 0 and (inc.hits[source] or 0) < (Sunset.Fire.minFinisherHits or 3) then newHealth = 1 end
+    inc.fireHealth = newHealth
     broadcastFirefighters('sunset:fire:incidentUpdate', serializeIncident(inc))
 
     if inc.fireHealth <= 0 then

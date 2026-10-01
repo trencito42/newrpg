@@ -21,10 +21,27 @@ var audioIds = [
 var coins = 0;
 var bet = 50;
 
-var backCoins = coins * 2;
-var backBet = bet * 2;
-
 var rolling = 0;
+var inFlight = false; // one server request at a time (server also enforces this)
+
+function postAction(name, payload, onDone) {
+  if (inFlight) return;
+  inFlight = true;
+  $.ajax({
+    url: 'https://sunset_slots/' + name,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(payload || {}),
+    dataType: 'json',
+    success: function(res) { inFlight = false; onDone(res || { ok: false }); },
+    error: function() { inFlight = false; onDone({ ok: false }); }
+  });
+}
+
+function setCoins(n) {
+  coins = n;
+  $('#ownedCoins').empty().append(coins);
+}
 
 function playAudio(audioName) {
   if($('#sounds').is(':checked')) {
@@ -36,18 +53,14 @@ function playAudio(audioName) {
   }
 }
 
-function insertCoin(amount) {
-  coins += amount;
-  backCoins = coins * 2;
-  $('#ownedCoins').empty().append(coins);
-}
 function setBet(amount) {
+  // Convenience only: the server re-validates the stake against its own list.
   if(amount > 0) {
     if(amount > coins || amount > config.betCap) {
       amount = 50;
     }
+    amount = Math.max(50, Math.floor(amount / 50) * 50);
     bet = amount;
-    backBet = bet * 2;
     $('#ownedBet').empty().append(bet);
     playAudio("changeBet");
   }
@@ -104,7 +117,7 @@ var colorHistory = [-1];
 
 var dubleDate = 0;
 
-function endWithWin(x, sound) {
+function endWithWin(x, sound, canGamble) {
   $('#win').empty().append(x);
   $('.win').show();
 
@@ -118,7 +131,7 @@ function endWithWin(x, sound) {
 
   canDouble = x;
 
-  if (x > config.maxDoubleCap) {
+  if (canGamble === false) {
     $('.betUp').prop("disabled",true).css({
       "background": "#ccc",
     });
@@ -129,10 +142,6 @@ function endWithWin(x, sound) {
 
   if(sound == 1) { // WinAtDouble
     playAudio("winDouble");
-    dubleDate++;
-    if(dubleDate >= 4) {
-      pressROLL();
-    }
   }
 }
 
@@ -146,10 +155,8 @@ function looseDouble() {
   $('.go').empty().append(languages[config.language].roll);
 }
 
-function voteColor(x, color) {
-  var rcolor = Math.floor(Math.random()*(2));
-  colorHistory[colorHistory.length] = rcolor;
-
+function showHistory(drawn) {
+  colorHistory[colorHistory.length] = drawn;
   var pls = 1;
   for(var cont = colorHistory.length; cont >= colorHistory.length-8; cont--) {
     var imgColor = "none";
@@ -161,397 +168,119 @@ function voteColor(x, color) {
       pls++;
     }
   }
-
-  if(rcolor == color) {
-    endWithWin(x*2, 1);
-  } else {
-    looseDouble();
-  }
 }
 
-function spin(timer) {
-	  // var winnings = 0, backWinnings = 0;
-    playAudio("seInvarte");
-	  for(var i = 1; i < 6; i ++) {
-      var z = 2;
-      var oldSeed = -1;
-
-      var oldClass = $('#ring'+i).attr('class');
-      if(oldClass.length > 4) {
-        oldSeed = parseInt(oldClass.slice(10));
-      }
-      var seed = getSeed();
-      while(oldSeed == seed) {
-        seed = getSeed();
-      }
-
-      var pSeed = seed
-      for(var j = 1; j <= 5; j++) {
-        pSeed += 1;
-        if(pSeed == 12) {
-          pSeed = 0;
-        }
-        if(j>=3) {
-          var msg = $('#' + i + 'id' + pSeed).attr('class');
-          switch(i) {
-            case 1:
-              tbl1[z] = reverseStr(msg)[0];
-              crd1[z] = '#' + i + 'id' + pSeed
-              break;
-            case 2:
-              tbl2[z] = reverseStr(msg)[0];
-              crd2[z] = '#' + i + 'id' + pSeed
-              break;
-            case 3:
-              tbl3[z] = reverseStr(msg)[0];
-              crd3[z] = '#' + i + 'id' + pSeed
-              break;
-            case 4:
-              tbl4[z] = reverseStr(msg)[0];
-              crd4[z] = '#' + i + 'id' + pSeed
-              break;
-            case 5:
-              tbl5[z] = reverseStr(msg)[0];
-              crd5[z] = '#' + i + 'id' + pSeed
-              break;
-          }
-          z -= 1;
-        }
-      }
-
-      $('#ring'+i)
-        .css('animation','back-spin 1s, spin-' + seed + ' ' + (timer + i*0.5) + 's')
-        .attr('class','ring spin-' + seed);
-    }
-    var table = [tbl1,tbl2,tbl3,tbl4,tbl5];
-    var cords = [crd1,crd2,crd3,crd4,crd5];
-
-    setWinnerWithRandomTable(table, cords);
-
-    setTimeout(function(){ rolling = 0; }, 4500);
-  }
-
-  function setWinnerWithRandomTable(table, cords) {
-    let triples = [];
-    let cuadruples = [];
-    let quintuples = [];
-    // Caso 1
-    if (table[0][0] == table[1][0] && table[1][0] == table[2][0]) {
-      if (table[3][0] == table[0][0]) { // Cuádruple
-
-        if (table[4][0] == table[0][0]) { // Quíntuple
-          quintuples.push({
-            type: table[0][0], // Store item type (1-7)
-            coords: [0,0,1,0,2,0,3,0,4,0], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        } else { // Triple
-          cuadruples.push({
-            type: table[0][0], // Store item type (1-7)
-            coords: [0,0,1,0,2,0,3,0], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        }
-      } else { // Triple
-        triples.push({
-          type: table[0][0], // Store item type (1-7)
-          coords: [0,0,1,0,2,0], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 2
-    if (table[1][0] == table[2][0] && table[2][0] == table[3][0]) {
-      if (table[4][0] == table[1][0]) { // Cuádruple
-        cuadruples.push({
-          type: table[4][0], // Store item type (1-7)
-          coords: [1,0,2,0,3,0,4,0], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      } else { // Triple
-        triples.push({
-          type: table[1][0], // Store item type (1-7)
-          coords: [1,0,2,0,3,0], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 3
-    if (table[2][0] == table[3][0] && table[3][0] == table[4][0]) {
-      triples.push({
-        type: table[2][0], // Store item type (1-7)
-        coords: [2,0,3,0,4,0], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 4
-    if (table[0][1] == table[1][1] && table[1][1] == table[2][1]) {
-      if (table[3][1] == table[0][1]) { // Cuádruple
-
-        if (table[4][1] == table[0][1]) {
-          quintuples.push({
-            type: table[0][1], // Store item type (1-7)
-            coords: [0,1,1,1,2,1,3,1,4,1], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        } else { // Triple
-          cuadruples.push({
-            type: table[0][1], // Store item type (1-7)
-            coords: [0,1,1,1,2,1,3,1], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        }
-      } else { // Triple
-        triples.push({
-          type: table[0][1], // Store item type (1-7)
-          coords: [0,1,1,1,2,1], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 5
-    if (table[1][1] == table[2][1] && table[2][1] == table[3][1]) {
-      if (table[4][1] == table[1][1]) { // Cuádruple
-        cuadruples.push({
-          type: table[1][1], // Store item type (1-7)
-          coords: [1,1,2,1,3,1,4,1], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      } else { // Triple
-        triples.push({
-          type: table[1][1], // Store item type (1-7)
-          coords: [1,1,2,1,3,1], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 6
-    if (table[2][1] == table[3][1] && table[3][1] == table[4][1]) {
-      if (table[1][1] == table[2][1]) { // Cuádruple
-        cuadruples.push({
-          type: table[1][1], // Store item type (1-7)
-          coords: [1,1,2,1,3,1,4,1], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      } else { // Triple
-        triples.push({
-          type: table[2][1], // Store item type (1-7)
-          coords: [2,1,3,1,4,1], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 7
-    if (table[0][2] == table[1][2] && table[1][2] == table[2][2]) {
-      if (table[3][2] == table[0][2]) { // Cuádruple
-
-        if (table[4][2] == table[0][2]) { // Cuádruple
-          quintuples.push({
-            type: table[3][2], // Store item type (1-7)
-            coords: [0,2,1,2,2,2,3,2,4,2], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        } else { // Triple
-          cuadruples.push({
-            type: table[3][2], // Store item type (1-7)
-            coords: [0,2,1,2,2,2,3,2], // Store items coords, 01 - 23 - 45 positions in table
-          });
-        }
-      } else { // Triple
-        triples.push({
-          type: table[0][2], // Store item type (1-7)
-          coords: [0,2,1,2,2,2], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 8
-    if (table[1][2] == table[2][2] && table[2][2] == table[3][2]) {
-      if (table[4][2] == table[1][2]) { // Cuádruple
-        cuadruples.push({
-          type: table[3][2], // Store item type (1-7)
-          coords: [1,2,2,2,3,2,4,2], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      } else { // Triple
-        triples.push({
-          type: table[1][2], // Store item type (1-7)
-          coords: [1,2,2,2,3,2], // Store items coords, 01 - 23 - 45 positions in table
-        });
-      }
-    }
-
-    // Caso 9
-    if (table[2][2] == table[3][2] && table[3][2] == table[4][2]) {
-      triples.push({
-        type: table[2][2], // Store item type (1-7)
-        coords: [2,2,3,2,4,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 10 - Diagonales
-    if (table[0][2] == table[1][1] && table[1][1] == table[2][0]) {
-      triples.push({
-        type: table[0][2], // Store item type (1-7)
-        coords: [0,2,1,1,2,0], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 11
-    if (table[1][2] == table[2][1] && table[2][1] == table[3][0]) {
-      triples.push({
-        type: table[1][2], // Store item type (1-7)
-        coords: [1,2,2,1,3,0], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 12
-    if (table[2][2] == table[3][1] && table[3][1] == table[4][0]) {
-      triples.push({
-        type: table[2][2], // Store item type (1-7)
-        coords: [2,2,3,1,4,0], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 13
-    if (table[0][0] == table[1][1] && table[1][1] == table[2][2]) {
-      triples.push({
-        type: table[0][0], // Store item type (1-7)
-        coords: [0,0,1,1,2,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 14
-    if (table[1][0] == table[2][1] && table[2][1] == table[3][2]) {
-      triples.push({
-        type: table[1][0], // Store item type (1-7)
-        coords: [1,0,2,1,3,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Caso 15
-    if (table[2][0] == table[3][1] && table[3][1] == table[4][2]) {
-      triples.push({
-        type: table[2][0], // Store item type (1-7)
-        coords: [2,0,3,1,4,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // Casos rectos (5)
-    if (table[0][0] == table[0][1] && table[0][1] == table[0][2]) {
-      triples.push({
-        type: table[0][0], // Store item type (1-7)
-        coords: [0,0,0,1,0,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    if (table[1][0] == table[1][1] && table[1][1] == table[1][2]) {
-      triples.push({
-        type: table[1][0], // Store item type (1-7)
-        coords: [1,0,1,1,1,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    if (table[2][0] == table[2][1] && table[2][1] == table[2][2]) {
-      triples.push({
-        type: table[2][0], // Store item type (1-7)
-        coords: [2,0,2,1,2,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    if (table[3][0] == table[3][1] && table[3][1] == table[3][2]) {
-      triples.push({
-        type: table[3][0], // Store item type (1-7)
-        coords: [3,0,3,1,3,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    if (table[4][0] == table[4][1] && table[4][1] == table[4][2]) {
-      triples.push({
-        type: table[4][0], // Store item type (1-7)
-        coords: [4,0,4,1,4,2], // Store items coords, 01 - 23 - 45 positions in table
-      });
-    }
-
-    // PREMIOS
-    let premioTotal = 0;
-
-    triples.forEach((triple) => {
-      premioTotal += bet * config.tripleMultipliers[triple.type];
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[triple.coords[0]][triple.coords[1]], cuadruples.length + triples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[triple.coords[2]][triple.coords[3]], cuadruples.length + triples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[triple.coords[4]][triple.coords[5]], cuadruples.length + triples.length);
-    });
-
-    // let cuadrupleMultipliers = [1,1.5,2,2.2,2.8,3,3.2,3.4];
-    cuadruples.forEach((cuadruple) => {
-      premioTotal += bet * config.cuadrupleMultipliers[cuadruple.type];
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[cuadruple.coords[0]][cuadruple.coords[1]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[cuadruple.coords[2]][cuadruple.coords[3]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[cuadruple.coords[4]][cuadruple.coords[5]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[cuadruple.coords[6]][cuadruple.coords[7]], cuadruples.length + triples.length + quintuples.length);
-    });
-
-    // let quintupleMultipliers = [1,2,3,4.5,5.5,6.5,7.5,100];
-    quintuples.forEach((quintuple) => {
-      premioTotal += bet * config.quintupleMultipliers[quintuple.type];
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[quintuple.coords[0]][quintuple.coords[1]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[quintuple.coords[2]][quintuple.coords[3]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[quintuple.coords[4]][quintuple.coords[5]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[quintuple.coords[6]][quintuple.coords[7]], cuadruples.length + triples.length + quintuples.length);
-      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[quintuple.coords[8]][quintuple.coords[9]], cuadruples.length + triples.length + quintuples.length);
-    });
-    let lineas = quintuples.length + cuadruples.length + triples.length;
-    let bonus = 0;
-    if (lineas > 2) {
-      bonus = premioTotal * 0.2;
-    } else if(lineas > 1) {
-      bonus = premioTotal * 0.1;
+function voteColor(color) {
+  postAction('gamble', { color: color }, function(res) {
+    if (!res.ok) { return; }
+    showHistory(res.drawn);
+    setCoins(res.balance);
+    if (res.won && res.pending > 0) {
+      endWithWin(res.pending, 1, res.canGamble);
+    } else if (res.won && res.autoCollected > 0) {
+      playAudio("winDouble");
+      playAudio("collect");
+      looseDouble();
     } else {
-      bonus = 0;
+      looseDouble();
     }
-    premioTotal = Math.round(premioTotal + bonus);
-   
-    if (premioTotal > 0) {
-      if (lineas > 1) {
-        setTimeout(playAudio, 3200 + 0.6 * 1000 + 0.3, "alarma");
-      } else {
-        setTimeout(playAudio, 3200 + 0.6 * 1000 + 0.3, "winLine");
-      }
-      setTimeout(endWithWin, 4400, premioTotal, 0);
-      $.post("https://sunset_slots/sendHook", JSON.stringify({
-        premio: premioTotal
-      }));
-    }
+  });
+}
 
+function circDist(a, b) {
+  var d = Math.abs(a - b) % SLOTS_PER_REEL;
+  return Math.min(d, SLOTS_PER_REEL - d);
+}
+
+// Animates the reels so that the three visible cells of every reel show the
+// SERVER-provided grid[reel][row] (symbols 1..7). The client chooses nothing.
+function spin(timer, grid, res) {
+  playAudio("seInvarte");
+  var cords = [[], [], [], [], []];
+  for(var i = 1; i < 6; i ++) {
+    var oldSeed = -1;
+    var oldClass = $('#ring'+i).attr('class');
+    if(oldClass.length > 4) {
+      oldSeed = parseInt(oldClass.slice(10));
+    }
+    var seed = getSeed();
+    while(oldSeed >= 0 && circDist(oldSeed, seed) < 3) {
+      seed = getSeed();
+    }
+    var pSeed = seed;
+    var z = 2;
+    for(var j = 1; j <= 5; j++) {
+      pSeed += 1;
+      if(pSeed == 12) { pSeed = 0; }
+      if(j >= 3) {
+        var sym = grid[i - 1][z];
+        var cell = $('#' + i + 'id' + pSeed);
+        cell.attr('class', 'slot fruit' + sym);
+        cell.empty().append('<p>' + createImage(sym) + '</p>');
+        cords[i - 1][z] = '#' + i + 'id' + pSeed;
+        z -= 1;
+      }
+    }
+    $('#ring'+i)
+      .css('animation','back-spin 1s, spin-' + seed + ' ' + (timer + i*0.5) + 's')
+      .attr('class','ring spin-' + seed);
   }
 
+  var wins = res.wins || [];
+  var lineCount = res.lines || wins.length;
+  wins.forEach(function(line) {
+    line.forEach(function(rc) {
+      setTimeout(setWinner, 3200 + 0.4 * 1000 + 0.3 * 1000, cords[rc[0] - 1][rc[1] - 1], lineCount);
+    });
+  });
+  // Server rows are 1-based top->bottom; cords rows were stored z=0..2 with
+  // z=0 = first row. Row index above is therefore rc[1]-1.
+  if (res.win > 0) {
+    if (lineCount > 1) {
+      setTimeout(playAudio, 3200 + 0.6 * 1000 + 0.3, "alarma");
+    } else {
+      setTimeout(playAudio, 3200 + 0.6 * 1000 + 0.3, "winLine");
+    }
+    setTimeout(endWithWin, 4400, res.win, 0, res.canGamble);
+  }
+  setTimeout(function(){ rolling = 0; }, 4500);
+}
 
 function pressROLL() {
-  if(rolling == 0) {
+  if(rolling == 0 && !inFlight) {
     if(canDouble == 0) {
-      if(backCoins / 2 !== coins) {
-        coins = backCoins / 2;
-      }
-      if(backBet / 2 !== bet) {
-        bet = backBet / 2;
-      }
-
       playAudio("apasaButonul");
       $('.slot').removeClass('winner1 winner2');
       if(coins >= bet && coins !== 0) {
-        insertCoin(-bet);
-
         rolling = 1;
-        var timer = 2;
-        spin(timer);
+        postAction('spin', { bet: bet }, function(res) {
+          if (!res.ok || !res.grid) {
+            rolling = 0;
+            if (typeof res.balance === 'number') { setCoins(res.balance); }
+            return;
+          }
+          setCoins(res.balance);
+          spin(2, res.grid, res);
+        });
       } else if(bet != coins && bet != 50) {
         setBet(coins);
       }
     } else {
-      setTimeout(insertCoin, 200, canDouble);
-      playAudio("collect");
-      looseDouble();
+      postAction('collect', {}, function(res) {
+        if (!res.ok) { return; }
+        playAudio("collect");
+        setTimeout(setCoins, 200, res.balance);
+        looseDouble();
+      });
     }
   }
 }
 
 function pressBLACK() {
   if(canDouble == 0) {
-    setBet(coins);
+    setBet(Math.min(coins, config.betCap));
   } else {
-    voteColor(canDouble, 1);
+    voteColor(1);
   }
 }
 
@@ -559,7 +288,7 @@ function pressRED() {
   if(canDouble == 0) {
     setBet(bet + 50);
   } else {
-    voteColor(canDouble, 0);
+    voteColor(0);
   }
 }
 
@@ -613,8 +342,9 @@ function togglePacanele(start, banuti) {
   if(start == true) {
     allFile.css("display", "block");
     playAudio("pornestePacanele");
-    coins = 0;
-    insertCoin(banuti);
+    setCoins(banuti);
+    canDouble = 0;
+    looseDouble();
 
     resetRings();
 
@@ -622,10 +352,8 @@ function togglePacanele(start, banuti) {
     setTimeout(function(){ rolling = 0; }, 4000);
   } else {
     allFile.css("display", "none");
-    $.post("https://sunset_slots/exitWith", JSON.stringify({
-      coinAmount: backCoins / 2
-    }));
-    insertCoin(-coins); // Scoate toti banii din aparat
+    $.post("https://sunset_slots/exitWith", JSON.stringify({}));
+    setCoins(0);
   }
 }
 

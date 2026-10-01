@@ -203,6 +203,17 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     -- Demand-driven avatar fetching (only for contacts & active message participants)
     local avatarsByChar = getAvatarsForCharacterIds(neededAvatarIds)
 
+    -- [SEC3] only expose the online map (character id -> server id) for the characters this
+    -- phone actually shows (self, contacts, message participants), not for every online player.
+    do
+        local wanted, filtered = {}, {}
+        for _, cid in ipairs(neededAvatarIds) do wanted[tonumber(cid) or -1] = true end
+        for cid, srcId in pairs(onlineByChar or {}) do
+            if wanted[tonumber(cid) or -1] then filtered[cid] = srcId end
+        end
+        onlineByChar = filtered
+    end
+
     for _, contact in ipairs(contacts) do
         if contact.characterId and avatarsByChar[contact.characterId] then
             contact.avatar = avatarsByChar[contact.characterId]
@@ -229,8 +240,11 @@ exports.sunset_core:RegisterCallback('sunset:phoneAddContact', function(source, 
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
 
-    rawPhone = tostring(rawPhone or ''):gsub('^%s*(.-)%s*$', '%1')
-    name = tostring(name or ''):gsub('^%s*(.-)%s*$', '%1')
+    rawPhone = tostring(rawPhone or ''):sub(1, 24):gsub('^%s*(.-)%s*$', '%1') -- [SEC3] bound client strings
+    name = tostring(name or ''):sub(1, 96):gsub('^%s*(.-)%s*$', '%1')
+    if not exports.sunset_core:RateLimit(source, 'phoneAddContact', 800) then
+        return nil, { localeKey = 'phone.message.database_error_while_saving_contact' }
+    end
 
     if rawPhone == '' then
         return nil, { localeKey = 'phone.message.please_enter_a_valid_phone_number' }
@@ -331,6 +345,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     end
 
     message = tostring(message or ''):sub(1, 256)
+    if targetPhoneNumber ~= nil then targetPhoneNumber = tostring(targetPhoneNumber):sub(1, 24) end -- [SEC3]
     if not targetCharacterId or message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
     -- [SEC2] SMS/112 spam throttle (112 creates a dispatch call for police/EMS)
     local isEmergencyTarget = targetCharacterId == -112 or tostring(targetPhoneNumber) == '112'

@@ -156,6 +156,11 @@ exports.sunset_core:RegisterCallback('sunset:jobs:courier:deliver', function(sou
         local session, err = SunsetJobs_RequireSession(source, 'courier', { 'ACTIVE' })
         if not session then return nil, err end
         if not session.data.hasPackage then return nil, { localeKey = 'jobs.message.no_package_loaded' } end
+        -- [JOBS AUTHORITY] a wrecked/missing van forfeits the run: cancel, no payout.
+        if SunsetJobs_WorkVehicleStatus(session) ~= 'ok' then
+            SunsetJobs_ClearSession(source, 'FAILED', 'Work vehicle destroyed - shift cancelled, no reward')
+            return nil, { localeKey = 'jobs.message.your_assigned_delivery_van_must_be_nearby' }
+        end
         if not playerOnFoot(source) then return nil, { localeKey = 'jobs.message.deliver_the_package_on_foot' } end
 
         local cfg = Sunset.GetJobConfig('courier')

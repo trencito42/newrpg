@@ -82,7 +82,7 @@ function FactionRoster.adjustGrade(source, characterId, delta)
 
     characterId = tonumber(characterId)
     delta = tonumber(delta) or 0
-    if not characterId or delta == 0 then return nil, { localeKey = 'factions.message.invalid_roster_action' } end
+    if not characterId or delta == 0 or delta % 1 ~= 0 then return nil, { localeKey = 'factions.message.invalid_roster_action' } end
 
     local member = getMemberRow(characterId)
     if not member or member.factionId ~= factionId then return nil, { localeKey = 'factions.message.that_member_is_not_in_your_faction' } end
@@ -101,8 +101,8 @@ function FactionRoster.adjustGrade(source, characterId, delta)
         end
         return nil, { localeKey = 'factions.message.member_is_already_at_the_lowest_rank' }
     end
+    -- [SEC3] removed the "~= self" exemption: a non-leader could self-promote +1 repeatedly.
     if newGrade >= (select(2, FactionCore.getFactionOf(char)) or 0)
-        and tonumber(characterId) ~= tonumber(char.id)
         and not FactionCore.isFactionLeader(char.id, factionId) then
         return nil, { localeKey = 'factions.message.you_cannot_set_rank_to_your_level_or_higher' }
     end

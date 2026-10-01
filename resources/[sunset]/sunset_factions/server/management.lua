@@ -178,9 +178,11 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     local targetCharId = tonumber(row.character_id)
 
     if action == 'decline' then
-        MySQL.update.await(
-            "UPDATE faction_resignations SET status = 'declined', handled_by_character_id = ?, handled_at = NOW() WHERE id = ?",
+        -- [SEC3] conditional claim: parallel handle requests could double-process one request
+        local claimed = MySQL.update.await(
+            "UPDATE faction_resignations SET status = 'declined', handled_by_character_id = ?, handled_at = NOW() WHERE id = ? AND status = 'pending'",
             { char.id, resignationId })
+        if (tonumber(claimed) or 0) < 1 then return nil, { localeKey = 'factions.message.that_resignation_request_no_longer_exists' } end
         FactionCore.auditLog(factionId, char.id, 'resign_declined', targetCharId, {})
         local targetName = FactionCore.memberDisplayName(targetCharId)
         FactionCore.broadcastManagement(factionId, source, ('declined the resignation of %s.'):format(targetName))
@@ -189,6 +191,17 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
 
     -- accept / accept_fp: remove the member from the faction.
     local withFp = (action == 'accept_fp')
+    -- [SEC3] the resigning character must still be in THIS faction (they may have joined another since),
+    -- and the request is claimed atomically before any side effect (double FP / double removal).
+    local stillIn = MySQL.scalar.await('SELECT faction_id FROM faction_membership WHERE character_id = ? LIMIT 1', { targetCharId })
+    if stillIn ~= factionId then
+        MySQL.update.await("UPDATE faction_resignations SET status = 'declined', handled_by_character_id = ?, handled_at = NOW() WHERE id = ? AND status = 'pending'", { char.id, resignationId })
+        return nil, { localeKey = 'factions.message.that_resignation_request_no_longer_exists' }
+    end
+    local claimed = MySQL.update.await(
+        "UPDATE faction_resignations SET status = ?, handled_by_character_id = ?, handled_at = NOW() WHERE id = ? AND status = 'pending'",
+        { withFp and 'accepted_fp' or 'accepted', char.id, resignationId })
+    if (tonumber(claimed) or 0) < 1 then return nil, { localeKey = 'factions.message.that_resignation_request_no_longer_exists' } end
     local targetSource
     for _, pid in ipairs(GetPlayers()) do
         local src = tonumber(pid)
@@ -202,14 +215,13 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     else
         removed = exports.sunset_core:SetFactionByCharacterId(targetCharId, nil, 0)
     end
-    if not removed then return nil, { localeKey = 'factions.message.could_not_remove_the_member_try_again' } end
+    if not removed then
+        MySQL.update.await("UPDATE faction_resignations SET status = 'pending', handled_by_character_id = NULL, handled_at = NULL WHERE id = ?", { resignationId })
+        return nil, { localeKey = 'factions.message.could_not_remove_the_member_try_again' }
+    end
 
     MySQL.update.await(
         'DELETE FROM faction_leaders WHERE character_id = ?', { targetCharId })
-    MySQL.update.await(
-        "UPDATE faction_resignations SET status = ?, handled_by_character_id = ?, handled_at = NOW() WHERE id = ?",
-        { withFp and 'accepted_fp' or 'accepted', char.id, resignationId })
-
     if withFp then
         FactionManagement.setFP(targetCharId, FP_KICK, 'Resignation accepted with FP', char.id)
     else
@@ -250,6 +262,11 @@ exports.sunset_core:RegisterCallback('sunset:factionFPStatus', function(source, 
     local factionId = select(1, FactionCore.getFactionOf(char))
     if not factionId then return nil, { localeKey = 'factions.message.you_are_not_in_a_faction_6153f1' } end
     targetCharacterId = tonumber(targetCharacterId) or tonumber(char.id)
+    -- [SEC3] other characters' FP is leader/manager-only
+    if targetCharacterId ~= tonumber(char.id)
+        and not FactionCore.isFactionLeader(char.id, factionId) and not FactionCore.hasManagePerm(source, 'uninvite') then
+        return nil, { localeKey = 'factions.message.invalid_member_16ab17' }
+    end
     local fp, reason = FactionManagement.getFP(targetCharacterId)
     return { fp = fp, reason = reason }
 end)

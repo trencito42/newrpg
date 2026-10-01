@@ -219,10 +219,24 @@ function SunsetJobs_ValidateVehicle(source, expectedModel, mustDrive, maxDistanc
     local entity = NetworkGetEntityFromNetworkId(session.vehicleNetId)
     if not entity or entity == 0 or not DoesEntityExist(entity) then return false end
     if expectedModel and GetEntityModel(entity) ~= joaat(expectedModel) then return false end
+    if SunsetJobs_WorkVehicleStatus(session) == 'wrecked' then return false end
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 then return false end
     if mustDrive and GetPedInVehicleSeat(entity, -1) ~= ped then return false end
     return #(GetEntityCoords(ped) - GetEntityCoords(entity)) <= (maxDistance or 15.0)
+end
+
+-- [JOBS AUTHORITY] Server-side wreck test for the session's registered work vehicle.
+-- Returns 'none' (no vehicle registered yet), 'ok', 'missing' or 'wrecked'.
+function SunsetJobs_WorkVehicleStatus(session)
+    if not session or not session.vehicleNetId then return 'none' end
+    local ent = NetworkGetEntityFromNetworkId(session.vehicleNetId)
+    if not ent or ent == 0 or not DoesEntityExist(ent) then return 'missing' end
+    local okH, health = pcall(GetEntityHealth, ent)
+    if okH and type(health) == 'number' and health <= 0 then return 'wrecked' end
+    local okE, eng = pcall(GetVehicleEngineHealth, ent)
+    if okE and type(eng) == 'number' and eng <= -3999.0 then return 'wrecked' end
+    return 'ok'
 end
 
 --- Returns: ok | no_truck | destroyed | detached | too_far | wrong_model
@@ -938,7 +952,21 @@ CreateThread(function()
                 SunsetJobs_ClearSession(src, 'FAILED', 'Shift timed out')
             else
                 local cfg = Sunset.GetJobConfig(session.jobId)
-                if cfg and cfg.requiresWorkVehicle and session.vehicleNetId then
+                -- [JOBS AUTHORITY] Destroyed/deleted work vehicle = shift failed, no reward, entities cleaned.
+                if cfg and cfg.failOnWorkVehicleLoss and session.vehicleNetId then
+                    local vs = SunsetJobs_WorkVehicleStatus(session)
+                    if vs == 'missing' then
+                        session.vehicleMissingTicks = (session.vehicleMissingTicks or 0) + 1
+                    else
+                        session.vehicleMissingTicks = 0
+                    end
+                    if vs == 'wrecked' or (session.vehicleMissingTicks or 0) >= 2 then
+                        deleteSessionEntities(session)
+                        SunsetJobs_ClearSession(src, 'FAILED', 'Work vehicle destroyed - shift cancelled, no reward')
+                        session = nil
+                    end
+                end
+                if session and cfg and cfg.requiresWorkVehicle and session.vehicleNetId then
                     local vehicle = NetworkGetEntityFromNetworkId(session.vehicleNetId)
                     local ped = GetPlayerPed(src)
                     local driving = vehicle and vehicle ~= 0 and DoesEntityExist(vehicle)

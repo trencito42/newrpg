@@ -210,6 +210,9 @@ function Police.clearJailFromDb(characterId)
     )
 end
 
+local findOnlineSourceByCharacterId -- [SEC3] forward declaration: used by clearWanted before its definition (was a nil global)
+local ArrestInFlight = {}
+local LastBounty = {}
 local LIMITED_WANTED_MAX = 2
 
 local function hasFullWantedPerm(source)
@@ -346,7 +349,7 @@ local function beginJail(targetId, seconds, reason, officerSource)
 
     Detention.setCuffed(targetId, false)
     TriggerClientEvent('sunset:faction:uncuff', targetId)
-    TriggerClientEvent('sunset:detention:sync', -1, targetId, {
+    TriggerClientEvent('sunset:detention:sync', targetId, targetId, { -- [SEC3] target only (state bags cover others)
         cuffed = false,
         escorted = false,
         state = Detention.States.JAILED,
@@ -617,6 +620,10 @@ exports.sunset_core:RegisterCallback('sunset:policeClearWanted', function(source
     end
 
     local officerCharId = charId(source)
+    -- [SEC3] an officer may not clear their own record
+    if tonumber(targetCharId) == tonumber(officerCharId) then
+        return nil, { localeKey = 'factions.message.you_cannot_add_a_wanted_charge_to_yourself' }
+    end
     if targetCharId then
         Police.deleteWantedFromDb(targetCharId, officerCharId)
     end
@@ -745,6 +752,12 @@ exports.sunset_core:RegisterCallback('sunset:policeArrest', function(source, tar
         return nil, { localeKey = 'factions.message.you_must_be_within_value_m_of_the_suspect', formatArgs = { math.floor(arrestRange) } }
     end
 
+    -- [SEC3] serialise per target: parallel arrests passed the WantedOnline check before clearWanted
+    -- (DB await) finished, paying the bounty twice.
+    if ArrestInFlight[targetId] or Police.isJailed(targetId) then
+        return nil, { localeKey = 'factions.message.suspect_is_already_in_custody' }
+    end
+    ArrestInFlight[targetId] = true
     local w = WantedOnline[targetId]
     local level = w and w.level or 1
     local surrenderable = not w or w.surrenderable ~= false
@@ -752,10 +765,24 @@ exports.sunset_core:RegisterCallback('sunset:policeArrest', function(source, tar
     local reason = w and w.reason or 'Arrest'
     local bounty = (Sunset.Police and Sunset.Police.bounties[level]) or 100
 
-    clearWanted(targetId, charId(source))
-    beginJail(targetId, sentenceSeconds, reason, source)
+    local okArrest, errArrest = pcall(function()
+        clearWanted(targetId, charId(source))
+        beginJail(targetId, sentenceSeconds, reason, source)
+    end)
+    ArrestInFlight[targetId] = nil
+    if not okArrest then
+        print(('[sunset_factions] arrest failed: %s'):format(tostring(errArrest)))
+        return nil, { localeKey = 'factions.message.could_not_remove_the_member_try_again' }
+    end
 
-    exports.sunset_core:AddMoney(source, 'bank', bounty, 'arrest_bounty')
+    -- [SEC3] bounty farming guard: one bounty per suspect character per 30 minutes
+    local tChar = charId(targetId)
+    if tChar and LastBounty[tChar] and os.time() - LastBounty[tChar] < 1800 then
+        bounty = 0
+    elseif tChar then
+        LastBounty[tChar] = os.time()
+    end
+    if bounty > 0 then exports.sunset_core:AddMoney(source, 'bank', bounty, 'arrest_bounty') end
     notify(source, ('Suspect arrested — %s jail (%s), $%s bounty'):format(
         formatDuration(sentenceSeconds), surrenderable and 'surrender sentence' or 'no-surrender sentence', bounty), 'success')
     notify(targetId, ('You have been arrested — %s (%s).'):format(
@@ -808,6 +835,11 @@ exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source,
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > 3.5 then
         return nil, { localeKey = 'factions.message.you_must_be_within_3m_of_the_suspect' }
+    end
+    -- [SEC3] no stripping free, unrestrained players: target must be restrained, surrendering or in custody
+    if targetId == source or not (Detention.isCuffed(targetId) or Detention.isHandsUp(targetId)
+        or Police.isJailed(targetId)) then
+        return nil, { localeKey = 'factions.message.suspect_must_be_restrained_first' }
     end
 
     local inv = exports.sunset_inventory:GetInventory(targetId) or {}
@@ -913,6 +945,7 @@ exports.sunset_core:RegisterCallback('sunset:policeRadarStart', function(source,
     local vehicle, err = validateRadarVehicle(source, networkId)
     if not vehicle then return nil, err end
     local cfg = Sunset.Police.radar or {}
+    if not exports.sunset_core:RateLimit(source, 'policeRadarStart', 3000) then return nil, { localeKey = 'factions.message.sec3_slow_down' } end -- [SEC3] chat-broadcast spam
     local limit = math.floor(tonumber(requestedLimit) or 0)
     if limit < (cfg.minLimitKmh or 20) or limit > (cfg.maxLimitKmh or 250) then
         return nil, { localeKey = 'factions.message.choose_a_speed_limit_between_value_and_value_km_h_example_startra', formatArgs = {
@@ -1065,6 +1098,9 @@ exports.sunset_core:RegisterCallback('sunset:policeBackup', function(source, pri
         return nil, { localeKey = 'factions.message.cannot_request_backup_dispatch_is_offline_contact_staff_no' }
     end
 
+    if not exports.sunset_core:RateLimit(source, 'policeBackup', 3000) then -- [SEC3] backup spam
+        return nil, { localeKey = 'factions.message.sec3_slow_down' }
+    end
     local char = FactionCore.getChar(source)
     local factionId = char and FactionCore.getFactionOf(char)
     local pos = FactionCore.playerCoords(source)
@@ -1288,13 +1324,18 @@ exports.sunset_core:RegisterCallback('sunset:policeUnjail', function(source, tar
     if not JailedOnline[targetId] then
         return nil, { localeKey = 'factions.message.that_player_is_not_in_jail' }
     end
+    -- [SEC3] non-admin officers cannot release themselves; every release is audited
+    if not isAdmin and targetId == source then
+        return nil, { localeKey = 'factions.message.you_cannot_release_prisoners' }
+    end
+    FactionCore.auditLog('police', charId(source), 'unjail', charId(targetId), { admin = isAdmin })
     endJail(targetId)
     notify(targetId, 'You have been released from jail', 'success')
     notify(source, ('Released #%d from jail'):format(targetId), 'success')
     return true
 end)
 
-local function findOnlineSourceByCharacterId(characterId)
+findOnlineSourceByCharacterId = function(characterId)
     characterId = tonumber(characterId)
     if not characterId then return nil end
     for _, id in ipairs(GetPlayers()) do
@@ -1450,7 +1491,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcLookup', function(source, 
         return { error = FactionCore.accessError(source, 'mdc', 'search the MDT', 'law_enforcement') }
     end
 
-    query = tostring(query or ''):gsub('^%s*(.-)%s*$', '%1')
+    query = tostring(query or ''):sub(1, 64):gsub('^%s*(.-)%s*$', '%1') -- [SEC3] bound client string
     if query == '' then
         return { error = 'Enter a citizen name, server ID, or citizen ID to search.' }
     end
@@ -1669,7 +1710,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcVehicleLookup', function(s
     if not FactionCore.hasPerm(source, 'mdc') then
         return { error = FactionCore.accessError(source, 'mdc', 'search vehicle DMV', 'law_enforcement') }
     end
-    query = tostring(query or ''):gsub('^%s*(.-)%s*$', '%1')
+    query = tostring(query or ''):sub(1, 32):gsub('^%s*(.-)%s*$', '%1') -- [SEC3] bound client string
     if query == '' then return { error = 'Enter a plate or model to search' } end
 
     local pattern = '%' .. query:upper() .. '%'
@@ -1730,7 +1771,10 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
         licenseType = 'driver'
     end
 
-    reason = tostring(reason or ''):gsub('^%s*(.-)%s*$', '%1')
+    reason = tostring(reason or ''):gsub('[%c]', ' '):sub(1, 200):gsub('^%s*(.-)%s*$', '%1') -- [SEC3]
+    if not exports.sunset_core:RateLimit(source, 'policeSuspendLicense', 1500) then
+        return nil, { localeKey = 'factions.message.sec3_slow_down' }
+    end
     if reason == '' then
         reason = 'Excessive speed (+50 km/h) / Dangerous driving against traffic'
     end
@@ -1785,6 +1829,7 @@ function Police.suspendLicense(source, targetId, licenseType, reason)
         ok = true
     end
 
+    FactionCore.auditLog('police', charId(source), 'license_suspend', cid, { license = licenseType, reason = reason }) -- [SEC3]
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
     local licLabelRo = licenseType == 'driver' and 'driving' or 'weapon'
 
@@ -1852,8 +1897,17 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcToggleBolo', function(sour
     if not FactionCore.hasPerm(source, 'mdc') then
         return { error = FactionCore.accessError(source, 'mdc', 'manage BOLOs', 'law_enforcement') }
     end
-    targetKey = tostring(targetKey or ''):upper():gsub('^%s*(.-)%s*$', '%1')
+    targetKey = tostring(targetKey or ''):sub(1, 40):upper():gsub('^%s*(.-)%s*$', '%1')
     if targetKey == '' then return { error = 'Target identifier required' } end
+    -- [SEC3] bound client-supplied BOLO fields (were stored/broadcast verbatim, any type/length) and cap table size
+    targetType = (targetType == 'citizen' or targetType == 'person') and targetType or 'vehicle'
+    reason = type(reason) == 'string' and reason:gsub('[%c]', ' '):sub(1, 200) or nil
+    notes = type(notes) == 'string' and notes:gsub('[%c]', ' '):sub(1, 400) or ''
+    if not Bolos[targetKey] then
+        local n = 0
+        for _ in pairs(Bolos) do n = n + 1 end
+        if n >= 300 then return { error = 'BOLO list is full' } end
+    end
 
     local officerName = exports.sunset_core:GetPlayerDisplayName(source)
     if Bolos[targetKey] then
@@ -1880,7 +1934,7 @@ exports.sunset_core:RegisterCallback('sunset:policeMdcSetUnitStatus', function(s
     if not FactionCore.isLawEnforcementMember(source) or not FactionCore.isOnDuty(source) then
         return { error = 'You must be on duty as law enforcement' }
     end
-    status = tostring(status or '10-8'):upper()
+    status = tostring(status or '10-8'):sub(1, 16):upper() -- [SEC3]
     UnitStatuses[source] = status
     return { ok = true, status = status }
 end)
@@ -1934,6 +1988,9 @@ exports.sunset_core:RegisterCallback('sunset:policeIssueTicket', function(source
 
     amount = math.floor(tonumber(amount) or 0)
     if amount < 1 or amount > 50000 then return nil, { localeKey = 'factions.message.invalid_citation_amount' } end
+    if not exports.sunset_core:RateLimit(source, 'policeIssueTicket', 2000) then -- [SEC3] citation spam
+        return nil, { localeKey = 'factions.message.sec3_slow_down' }
+    end
 
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)

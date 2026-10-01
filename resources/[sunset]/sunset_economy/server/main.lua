@@ -1,3 +1,4 @@
+local timeTicks = 0
 local lastPaydayHour = -1
 local PlayedMinutes = {}
 local WorldTime = { hour = nil, minute = nil, frozen = false }
@@ -251,7 +252,7 @@ local function processPayday(source)
     end
 end
 
-local function broadcastTime()
+local function broadcastTime(skipWeather)
     local srvHour, srvMinute = serverClock()
     local worldHour, worldMinute = worldClock()
     local nextH = (srvHour + 1) % 24
@@ -264,7 +265,7 @@ local function broadcastTime()
         worldMinute = worldMinute,
         nextPayday = ('%02d:00'):format(nextH),
     })
-    broadcastWeather()
+    if not skipWeather then broadcastWeather() end
 end
 
 exports('SetWorldTime', function(hour, minute, frozen)
@@ -367,7 +368,11 @@ CreateThread(function()
             WorldTime.minute = minute
         end
 
-        broadcastTime()
+        -- [PERF] Clock needs the 10 s cadence (world minute advances every tick);
+        -- weather is unchanged state -> heartbeat only once a minute (changes are
+        -- still pushed immediately by SetWorldWeather/ClearWorldWeather).
+        timeTicks = (timeTicks or 0) + 1
+        broadcastTime((timeTicks % 6) ~= 0)
         Wait(10000)
     end
 end)

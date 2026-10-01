@@ -16,6 +16,7 @@ shared_scripts {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua',
+    'server/api.lua',
     'server/quickslots.lua',
     'server/trade.lua',
     'server/containers.lua',
@@ -34,6 +35,7 @@ server_exports {
     'GetInventory', 'AddItem', 'RemoveItem', 'HasItem', 'UseItem',
     'SetItemMetadata', 'GetGasCanLiters', 'CountItem', 'TakeAllItems',
     'TryAddItem', 'RemoveItemById', 'ReloadInventory', 'SetCapacityBonus', 'SetWeaponAmmo',
+    'ApplyOperation', 'RemoveStolenByRobbery', 'PurgeStolenLoot',
 }
 
 client_exports {

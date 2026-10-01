@@ -116,6 +116,12 @@ local function validateOfficerTarget(source, targetId, perm, range)
     if Detention.getState(targetId) == Detention.States.JAILED then
         return nil, { localeKey = 'factions.message.suspect_is_already_in_custody' }
     end
+    -- [SEC3] same routing bucket (no cross-instance detention)
+    if GetPlayerRoutingBucket(source) ~= GetPlayerRoutingBucket(targetId) then
+        return nil, { localeKey = 'factions.message.move_closer_to_player_value_you_must_be_within_value_m', formatArgs = {
+            targetId, math.floor(range or INTERACT_RANGE)
+        } }
+    end
     local officerPos = FactionCore.playerCoords(source)
     local targetPos = FactionCore.playerCoords(targetId)
     if FactionCore.distBetween(officerPos, targetPos) > (range or INTERACT_RANGE) then
@@ -133,7 +139,8 @@ exports.sunset_core:RegisterCallback('sunset:detentionCuff', function(source, ta
     Detention.setCuffed(target, true)
     Detention.setEscort(target, nil)
     TriggerClientEvent('sunset:faction:cuff', target)
-    TriggerClientEvent('sunset:detention:sync', -1, target, { cuffed = true, state = Detention.States.CUFFED })
+    -- [SEC3] was -1 broadcast; consumer ignores other ids, state bags (sunsetCuffed/sunsetDetention) sync late joiners
+    TriggerClientEvent('sunset:detention:sync', target, target, { cuffed = true, state = Detention.States.CUFFED })
     FactionCore.notify(source, 'Suspect restrained', 'success')
     return true
 end)
@@ -145,7 +152,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionUncuff', function(source, 
 
     Detention.setCuffed(target, false)
     TriggerClientEvent('sunset:faction:uncuff', target)
-    TriggerClientEvent('sunset:detention:sync', -1, target, { cuffed = false, escorted = false, state = Detention.States.FREE })
+    TriggerClientEvent('sunset:detention:sync', target, target, { cuffed = false, escorted = false, state = Detention.States.FREE })
     FactionCore.notify(source, 'Restraints removed', 'success')
     return true
 end)
@@ -178,7 +185,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionPutInVehicle', function(so
     TriggerClientEvent('sunset:detention:putInVehicle', target, source)
     Detention.setEscort(target, nil)
     Detention.setInVehicle(target)
-    TriggerClientEvent('sunset:detention:sync', -1, target, { state = Detention.States.IN_VEHICLE })
+    TriggerClientEvent('sunset:detention:sync', target, target, { state = Detention.States.IN_VEHICLE })
     FactionCore.notify(source, 'Placing suspect in vehicle', 'success')
     return true
 end)
@@ -192,7 +199,7 @@ exports.sunset_core:RegisterCallback('sunset:detentionTakeOut', function(source,
     if Cuffed[target] then
         Detention.setState(target, Detention.States.CUFFED)
     end
-    TriggerClientEvent('sunset:detention:sync', -1, target, { state = Detention.States.CUFFED })
+    TriggerClientEvent('sunset:detention:sync', target, target, { state = Detention.States.CUFFED })
     FactionCore.notify(source, 'Suspect removed from vehicle', 'success')
     return true
 end)
@@ -225,8 +232,8 @@ RegisterNetEvent('sunset:server:handsUp', function(state)
     elseif not HandsUp[src] and not Cuffed[src] then
         Detention.setState(src, Detention.States.FREE)
     end
-    TriggerClientEvent('sunset:detention:handsUp', -1, src, HandsUp[src])
-    TriggerClientEvent('sunset:detention:sync', -1, src, { state = Detention.getState(src) })
+    TriggerClientEvent('sunset:detention:handsUp', src, src, HandsUp[src]) -- [SEC3] client consumer only reacts to own id; state bag covers others/late joiners
+    TriggerClientEvent('sunset:detention:sync', src, src, { state = Detention.getState(src) })
 end)
 
 RegisterNetEvent('sunset:server:detentionVehicleState', function(inVehicle)
@@ -301,7 +308,7 @@ RegisterNetEvent('sunset:server:detentionEscortDesync', function(officerSrc)
         or not suspectPed or suspectPed == 0
         or #(GetEntityCoords(officerPed) - GetEntityCoords(suspectPed)) > 50.0 then
         Detention.setEscort(src, nil)
-        TriggerClientEvent('sunset:detention:sync', -1, src, { escorted = false })
+        TriggerClientEvent('sunset:detention:sync', src, src, { escorted = false })
     end
 end)
 

@@ -169,7 +169,9 @@ exports.sunset_core:RegisterCallback('sunset:interactionContext', function(sourc
     local wantedOk, wantedState = pcall(function()
         return exports.sunset_factions:GetWantedState(pair.targetId)
     end)
-    if wantedOk and type(wantedState) == 'table' and (tonumber(wantedState.level) or 0) > 0 then
+    -- [SEC3] wanted level/surrender flag is law-enforcement information, not shown to civilians
+    local canSeeWanted = permitted(source, 'mdc') or permitted(source, 'wanted') or permitted(source, 'wanted_limited') or permitted(source, 'arrest')
+    if canSeeWanted and wantedOk and type(wantedState) == 'table' and (tonumber(wantedState.level) or 0) > 0 then
         wanted = { level = tonumber(wantedState.level) or 0, surrenderable = wantedState.surrenderable ~= false }
     end
 
@@ -178,7 +180,9 @@ exports.sunset_core:RegisterCallback('sunset:interactionContext', function(sourc
             id = pair.targetId,
             name = exports.sunset_core:GetPlayerDisplayName(pair.targetId),
             level = tonumber(pair.targetChar.level) or 1,
-            faction = targetFaction and Sunset.Factions[targetFaction] and Sunset.Factions[targetFaction].label or nil,
+            -- [SEC3] never reveal illegal-faction membership to a random nearby player
+            faction = targetFaction and Sunset.Factions[targetFaction] and Sunset.Factions[targetFaction].type ~= 'illegal'
+                and Sunset.Factions[targetFaction].label or nil,
             detention = state,
             wanted = wanted,
         },

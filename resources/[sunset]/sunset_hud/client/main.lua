@@ -210,11 +210,15 @@ local function updateHud()
     if not hudActive then return end
     local data = buildHudData()
     if not data then return end
-    local hash = string.format('%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s',
+    -- Change-detection key. Previously omitted name/job/payday/heading/waypoint/voice, so
+    -- those only refreshed when an unrelated field happened to change.
+    local hash = string.format('%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s',
         tostring(data.health), tostring(data.armor), tostring(data.hunger), tostring(data.thirst),
         tostring(data.cash), tostring(data.bank), tostring(data.level), tostring(data.street),
         tostring(data.zone), tostring(data.wanted), tostring(data.gameTime), tostring(data.fuel),
-        tostring(data.inVehicle))
+        tostring(data.inVehicle), tostring(data.name), tostring(data.job), tostring(data.payday),
+        tostring(data.heading), tostring(data.waypointDist and math.floor(data.waypointDist / 10)),
+        tostring(data.time), tostring(data.voiceRange))
     if hash ~= lastHudHash then
         lastHudHash = hash
         nui('updateHud', data)
@@ -264,7 +268,8 @@ CreateThread(function()
     end
 end)
 
--- High-frequency (30 Hz) lightweight gauge loop for responsive RPM & speed
+-- High-frequency (30 Hz sampling, change-gated send) gauge loop for responsive RPM & speed
+local lastGauge = nil
 CreateThread(function()
     while true do
         if hudActive and not pauseHidden then
@@ -280,23 +285,42 @@ CreateThread(function()
                             pcall(function() nosData = exports.sunset_tuning:GetNitrousHudState(veh) end)
                         end
                         local nosLevel = nosData and (nosData.bottle or nosData.level or 0) or 0
-                        nui('updateVehicleGauges', {
-                            speed = tele.speedKmh,
-                            rpm = tele.displayRpm,
-                            rawRpm = tele.rawRpm,
-                            gear = tele.gear,
-                            engineOn = tele.engineOn,
-                            hasNos = nosData and nosData.installed == true,
-                            nosPct = nosLevel,
-                            nosLevel = nosLevel,
-                            nosActive = nosData and nosData.active == true,
-                        })
+                        -- [PERF] Change detection: the 30 Hz sampler only crosses into NUI
+                        -- when a visible value moved (speed >= 1 km/h, rpm >= 0.01, gear,
+                        -- engine, NOS state). Steady cruise / idle sends nothing; a 1 s
+                        -- keepalive refreshes the page in case it missed a message.
+                        local gSpeed = math.floor((tonumber(tele.speedKmh) or 0) + 0.5)
+                        local gRpm = math.floor((tonumber(tele.displayRpm) or 0) * 100 + 0.5)
+                        local gNos = math.floor((tonumber(nosLevel) or 0) + 0.5)
+                        local gHasNos = nosData and nosData.installed == true
+                        local gNosActive = nosData and nosData.active == true
+                        local nowG = GetGameTimer()
+                        local g = lastGauge
+                        if not g or g.speed ~= gSpeed or g.rpm ~= gRpm or g.gear ~= tele.gear
+                            or g.engineOn ~= tele.engineOn or g.nos ~= gNos or g.hasNos ~= gHasNos
+                            or g.nosActive ~= gNosActive or (nowG - (g.at or 0)) >= 1000 then
+                            lastGauge = { speed = gSpeed, rpm = gRpm, gear = tele.gear, engineOn = tele.engineOn,
+                                nos = gNos, hasNos = gHasNos, nosActive = gNosActive, at = nowG }
+                            nui('updateVehicleGauges', {
+                                speed = tele.speedKmh,
+                                rpm = tele.displayRpm,
+                                rawRpm = tele.rawRpm,
+                                gear = tele.gear,
+                                engineOn = tele.engineOn,
+                                hasNos = gHasNos,
+                                nosPct = nosLevel,
+                                nosLevel = nosLevel,
+                                nosActive = gNosActive,
+                            })
+                        end
                     end
                     Wait(33)
                 else
+                    lastGauge = nil
                     Wait(250)
                 end
             else
+                lastGauge = nil
                 Wait(400)
             end
         else

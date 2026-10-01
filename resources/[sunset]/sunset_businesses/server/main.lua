@@ -17,6 +17,10 @@ local function nearby(source, coords, radius)
     return #(GetEntityCoords(ped) - coords) <= (radius or SunsetBusinesses.PurchaseRadius or 3.5)
 end
 
+-- [PERF] businessesChanged -1 broadcasts removed: the only client consumer
+-- (client/main.lua cachedBusinesses) was write-only dead state, so every change
+-- made EVERY client re-run sunset:getBusinesses (1 DB query each). The client
+-- listener stays (sunset_inventory still emits it) but is now a no-op.
 local function rowToView(row)
     if not row then return nil end
     return {
@@ -235,7 +239,6 @@ function TransferOwnership(businessId, fromCharId, toCharId)
         { toCharId, businessId, fromCharId }
     )
     if not changed or changed < 1 then return false, { localeKey = 'businesses.message.business_ownership_could_not_be_transferred' } end
-    TriggerClientEvent('sunset:client:businessesChanged', -1)
     return true
 end
 exports('TransferOwnership', TransferOwnership)
@@ -397,7 +400,6 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
         return nil, { localeKey = 'businesses.message.payment_failed_the_purchase_was_rolled_back' }
     end
 
-    TriggerClientEvent('sunset:client:businessesChanged', -1)
     return true, ('You bought %s for $%s.'):format(row.label, price)
 end)
 
@@ -486,7 +488,6 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
             MySQL.update.await('UPDATE player_businesses SET balance = balance + ? WHERE id = ?', { amount, businessId })
             return nil, { localeKey = 'businesses.message.could_not_deposit_to_your_bank' }
         end
-        TriggerClientEvent('sunset:client:businessesChanged', -1)
         return refreshAfterManage(source, 'owner'), ('Withdrew $%s to your bank.'):format(amount)
     end
 
@@ -511,14 +512,12 @@ exports.sunset_core:RegisterCallback('sunset:businessManage', function(source, p
             ]], {
                 label, price, profitPercent, forSale and 1 or 0, enabled and 1 or 0, businessId,
             })
-            TriggerClientEvent('sunset:client:businessesChanged', -1)
             return refreshAfterManage(source, 'admin', businessId), 'Business updated.'
         elseif action == 'clearOwner' then
             MySQL.update.await(
                 'UPDATE player_businesses SET owner_character_id = NULL, for_sale = 1 WHERE id = ?',
                 { businessId }
             )
-            TriggerClientEvent('sunset:client:businessesChanged', -1)
             return refreshAfterManage(source, 'admin', businessId), 'Owner cleared; business is for sale again.'
         elseif action == 'teleport' then
             local row = fetchRow(businessId)

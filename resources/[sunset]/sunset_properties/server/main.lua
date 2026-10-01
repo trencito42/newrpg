@@ -450,12 +450,13 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
     local ownerId = tonumber(prop.owner_character_id)
     local callOk, committed = pcall(function()
         return MySQL.startTransaction(function(query)
-            local locked = query.await([[SELECT owner_character_id, rent_enabled, max_renters,
+            local locked = query.await([[SELECT owner_character_id, rent_enabled, max_renters, rent_price,
                 (SELECT COUNT(*) FROM property_rentals r WHERE r.property_id=properties.id AND r.active=1) AS renter_count
                 FROM properties WHERE id=? AND enabled=1 FOR UPDATE]], { prop.id })
             local current = locked and locked[1]
             if not current or tonumber(current.owner_character_id) ~= ownerId
                 or not dbBool(current.rent_enabled)
+                or (tonumber(current.rent_price) or 0) ~= price -- [SEC3] owner changed the price after the client saw it
                 or tonumber(current.renter_count or 0) >= tonumber(current.max_renters or 0) then return false end
             local charged = query.await(
                 ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(paidFrom, paidFrom, paidFrom),
@@ -572,7 +573,7 @@ local function setRent(source,id,price)
         return true,t(source, 'property.rent.disabled_success')
     end
     price=tonumber(price)
-    if not price or price<SunsetProperties.RentMin or price>SunsetProperties.RentMax then
+    if not price or price ~= price or price<SunsetProperties.RentMin or price>SunsetProperties.RentMax then -- [SEC3] NaN
         return nil,t(source, 'property.rent.range', { min = SunsetProperties.RentMin, max = SunsetProperties.RentMax })
     end
     MySQL.update.await('UPDATE properties SET rent_enabled=1,rent_price=? WHERE id=?',{math.floor(price),prop.id})
@@ -584,7 +585,7 @@ local function setMaxRenters(source,id,count)
     local _,prop,err=ownedProperty(source,id)
     if not prop then return nil,err end
     count=tonumber(count)
-    if not count or count<SunsetProperties.MaxRentersMin or count>SunsetProperties.MaxRentersMax then
+    if not count or count ~= count or count<SunsetProperties.MaxRentersMin or count>SunsetProperties.MaxRentersMax then
         return nil,t(source, 'property.rent.capacity_range', { min = SunsetProperties.MaxRentersMin, max = SunsetProperties.MaxRentersMax })
     end
     local activeRenters = tonumber(prop.renter_count) or tonumber(MySQL.scalar.await(
@@ -693,8 +694,11 @@ local function sellHouse(source,id,confirm)
     if not confirm then
         return false,t(source, 'property.sell.confirm', { property = prop.label, percent = 70, refund = refund })
     end
+    -- [SEC3] claim the sale atomically BEFORE paying: parallel sell calls each paid the refund
+    -- (the conditional UPDATE's affected-row count was never checked).
+    local sold = MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
+    if tonumber(sold) ~= 1 then return nil,t(source, 'property.owner.only') end
     evictPropertyRenters(prop.id, prop.label, 'the house was sold')
-    MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
     exports.sunset_core:SetHomeProperty(source,nil)
     exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
     notifyPropertiesChanged()
@@ -873,11 +877,13 @@ registerPropertyCommand('sellhouse',function(source,args)
     local id=tonumber(args[1]); local owner,prop,err=ownedProperty(source,id); if not prop then return message(source,err,'error') end
     if tostring(args[2] or ''):lower()~='confirm' then return message(source,('This permanently sells %s for 70%% ($%d). Use /sellhouse %d confirm.'):format(prop.label,math.floor(prop.price*0.7),prop.id),'error') end
     local refund=math.floor((tonumber(prop.price) or 0)*0.7)
+    -- [SEC3] atomic claim first (double-refund race), then evict renters
+    local sold=MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
+    if tonumber(sold)~=1 then return message(source,'You do not own this house.','error') end
     local renters=MySQL.query.await('SELECT character_id FROM property_rentals WHERE property_id=? AND active=1',{prop.id}) or {}
     MySQL.update.await('UPDATE property_rentals SET active=0 WHERE property_id=?',{prop.id})
     for _,renter in ipairs(renters) do clearHome(renter.character_id,prop.id,('Your rental at %s ended because the house was sold.'):format(prop.label)) end
     MySQL.update.await('UPDATE characters SET home_property_id=NULL WHERE home_property_id=?',{prop.id})
-    MySQL.update.await('UPDATE properties SET owner_character_id=NULL,locked=1,rent_enabled=0 WHERE id=? AND owner_character_id=?',{prop.id,owner.id})
     exports.sunset_core:SetHomeProperty(source,nil); exports.sunset_core:AddMoney(source,'bank',refund,'house_sale')
     notifyPropertiesChanged(); message(source,('House sold. $%d was deposited in your bank.'):format(refund),'success')
 end)

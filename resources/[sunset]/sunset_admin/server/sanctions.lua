@@ -179,7 +179,17 @@ function Sanctions.clearWarns(source, target)
 end
 
 -- ── Kick/ban extensions ────────────────────────────────────────
+-- [SEC3] Rank guard: a staff member may not kick/ban/mute someone of equal or higher admin level
+-- (previously only /warn enforced this, so a level-2 ban right could ban the Owner). Console (0) bypasses.
+function Sanctions.canActOn(source, target)
+    if source == 0 or source == target then return true end
+    local theirLevel = tonumber(GetAdminLevel(target)) or 0
+    if theirLevel <= 0 then return true end
+    return (tonumber(GetAdminLevel(source)) or 0) > theirLevel
+end
+
 function Sanctions.kick(source, target, reason)
+    reason = tostring(reason or ''):sub(1, 200) -- [SEC3]
     local id = Sanctions.record('kick', target, source, reason)
     local aName = adminName(source)
     DropPlayer(target, ('You were kicked by %s: %s'):format(aName, reason))
@@ -214,6 +224,7 @@ function Sanctions.parseBanArgs(args)
 end
 
 function Sanctions.ban(source, target, durationMin, reason)
+    reason = tostring(reason or ''):sub(1, 200) -- [SEC3]
     local id = Sanctions.record(durationMin and 'tempban' or 'ban', target, source, reason, durationMin)
     local aName = adminName(source)
     local license = id.license
@@ -256,6 +267,7 @@ function Sanctions.ban(source, target, durationMin, reason)
 end
 
 function Sanctions.banIP(source, target, reason)
+    reason = tostring(reason or ''):sub(1, 200) -- [SEC3]
     local id = Sanctions.record('banip', target, source, reason, nil)
     local aName = adminName(source)
     local license = id.license

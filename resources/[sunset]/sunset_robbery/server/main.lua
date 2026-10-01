@@ -18,13 +18,11 @@ CreateThread(function()
             RobberyAdapter.setCooldown('character', run.character_id, now + (SunsetRobbery.PlayerCooldownSec or 1800))
             RobberyAdapter.setCooldown('location', run.location_id, now + (SunsetRobbery.LocationCooldownSec or 2700))
         end
-        MySQL.update.await([[
-            DELETE ci FROM character_inventory ci
-            INNER JOIN robbery_runs rr
-                ON rr.session_id = JSON_UNQUOTE(JSON_EXTRACT(ci.metadata, '$.robbery'))
-            WHERE rr.status = 'active'
-              AND JSON_EXTRACT(ci.metadata, '$.stolen') = true
-        ]])
+        local sessionIds = {}
+        for _, run in ipairs(abandoned) do sessionIds[#sessionIds + 1] = run.session_id end
+        if #sessionIds > 0 and GetResourceState('sunset_inventory') == 'started' then
+            exports.sunset_inventory:PurgeStolenLoot(sessionIds)
+        end
         MySQL.update.await([[
             UPDATE robbery_runs
             SET status = 'cancelled', finished_at = CURRENT_TIMESTAMP
@@ -341,10 +339,13 @@ RegisterNetEvent('sunset:robbery:leaveStore', function()
     local source = source
     local session = RobberySessions.get(source)
     if not session then return end
+    -- [MISSIONS AUTHORITY] ESCAPING is reachable only from LOOTING (no HACKING->ESCAPING skip)
+    if session.stage ~= 'LOOTING' then return end
     if session.bagUsed <= 0 then
         RobberySessions.cancel(source, 'You left without loot')
         return
     end
+    session.escapingAt = os.time()
     RobberySessions.setStage(session, 'ESCAPING')
     TriggerClientEvent('sunset:robbery:escaping', source, {
         radius = SunsetRobbery.EscapeRadius,
@@ -357,10 +358,13 @@ RegisterNetEvent('sunset:robbery:escaped', function()
     local source = source
     local session = RobberySessions.get(source)
     if not session or session.stage ~= 'ESCAPING' then return end
+    -- a real run away from the store takes time; teleport/instant "escaped" is refused
+    if session.escapeBusy or os.time() - (session.escapingAt or 0) < 5 then return end
     local pos = RobberyAdapter.playerCoords(source)
     if not pos or RobberyAdapter.dist(pos, session.location.coords) < (SunsetRobbery.EscapeRadius - 8.0) then
         return
     end
+    session.escapeBusy = true
     RobberySessions.success(source)
 end)
 

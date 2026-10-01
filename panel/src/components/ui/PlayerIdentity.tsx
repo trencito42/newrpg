@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { getFactionColor } from "@/lib/factions";
+import { cn } from "@/lib/utils";
+
+export interface PlayerIdentityProps {
+  username: string;
+  factionId?: string | null;
+  factionColor?: string | null;
+  clanTag?: string | null;
+  clanColor?: string | null;
+  href?: string;
+  size?: "sm" | "md" | "lg";
+  showClanTag?: boolean;
+  clickable?: boolean;
+  className?: string;
+}
+
+export function PlayerIdentity({
+  username,
+  factionId,
+  factionColor: customFactionColor,
+  clanTag,
+  clanColor,
+  href,
+  size = "md",
+  showClanTag = true,
+  clickable = true,
+  className,
+}: PlayerIdentityProps) {
+  const factionColor = customFactionColor || getFactionColor(factionId);
+  const resolvedClanColor = clanColor || "#f59e0b";
+  const linkHref = href || `/players/${encodeURIComponent(username.trim().replace(/\s+/g, "_"))}`;
+
+  const sizeClasses = {
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-base font-semibold",
+  };
+
+  const hasTag = Boolean(clanTag && showClanTag && clanTag.trim() !== "");
+
+  const content = (
+    <span className={cn("inline-flex items-center gap-1.5 font-medium leading-none", sizeClasses[size], className)}>
+      {hasTag && (
+        <span
+          style={{ color: resolvedClanColor }}
+          className="font-mono font-bold tracking-tight select-none"
+        >
+          [{clanTag}]
+        </span>
+      )}
+      <span
+        style={factionColor ? { color: factionColor } : undefined}
+        className={cn(
+          "font-semibold transition-opacity duration-150",
+          !factionColor && "text-[#f1f1f1]"
+        )}
+      >
+        {username}
+      </span>
+    </span>
+  );
+
+  if (clickable) {
+    return (
+      <Link
+        href={linkHref}
+        className="group inline-flex items-center hover:underline decoration-1 underline-offset-2 hover:opacity-90 transition-opacity"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+}

@@ -29,9 +29,10 @@
 .mdc-tablet {
     position: relative;
     width: 1240px;
-    max-width: 95vw;
     height: 780px;
-    max-height: 94vh;
+    flex: 0 0 auto;
+    transform: scale(var(--mdc-scale, 0.9));
+    transform-origin: center center;
     background: linear-gradient(145deg, #1e2227, #13161a);
     border-radius: 24px;
     border: 3px solid #333a42;

@@ -81,27 +81,29 @@ function SetCapacityBonus(source, bonusKg)
 end
 exports('SetCapacityBonus', SetCapacityBonus)
 
+-- [TXN FIX] every statement runs on the transaction connection (`query`);
+-- bare MySQL.* calls inside startTransaction run OUTSIDE it (no lock/rollback).
 local function ensureStarterItems(characterId)
     local granted = false
-    local ok = MySQL.startTransaction(function()
-        local row = MySQL.single.await('SELECT metadata FROM characters WHERE id = ? FOR UPDATE', { characterId })
+    local ok = MySQL.startTransaction(function(query)
+        local row = query.single.await('SELECT metadata FROM characters WHERE id = ? FOR UPDATE', { characterId })
         if not row then error('character_missing') end
         local decodeOk, meta = pcall(json.decode, row.metadata or '{}')
         if not decodeOk or type(meta) ~= 'table' then meta = {} end
-        local count = tonumber(MySQL.scalar.await(
+        local count = tonumber(query.scalar.await(
             'SELECT COUNT(*) FROM character_inventory WHERE character_id = ? FOR UPDATE', { characterId }
         )) or 0
         if count > 0 or meta.starter_items_granted then return end
 
         local starter = { { 'water', 2, 1 }, { 'bread', 2, 2 }, { 'id_card', 1, 3 }, { 'phone', 1, 4 } }
         for _, entry in ipairs(starter) do
-            MySQL.insert.await(
+            query.insert.await(
                 'INSERT INTO character_inventory (character_id, item, count, slot) VALUES (?, ?, ?, ?)',
                 { characterId, entry[1], entry[2], entry[3] }
             )
         end
         meta.starter_items_granted = true
-        MySQL.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), characterId })
+        query.update.await('UPDATE characters SET metadata = ? WHERE id = ?', { json.encode(meta), characterId })
         granted = true
     end)
     return ok == true and granted
@@ -570,6 +572,18 @@ function TryAddItem(source, item, count, slot, metadata)
     return false, { localeKey = 'inventory.message.could_not_add_the_item_database_or_inventory_sync' }
 end
 
+-- [INVENTORY API] Narrow internal hooks for server/api.lua (same resource only;
+-- never exported). Keeps the cache + client-sync helpers private to this domain.
+InventoryInternal = {
+    loadInventory = loadInventory,
+    sendInventoryUpdate = sendInventoryUpdate,
+    maxWeightFor = maxWeightFor,
+    getItemWeight = getItemWeight,
+    LICENSE_EXEMPT_WEAPONS = LICENSE_EXEMPT_WEAPONS,
+    invalidate = function(characterId) Inventories[characterId] = nil end,
+    invalidateAll = function() Inventories = {} end,
+}
+
 exports('GetInventory', GetInventory)
 exports('AddItem', AddItem)
 exports('TryAddItem', TryAddItem)
@@ -672,28 +686,28 @@ exports.sunset_core:RegisterCallback('sunset:inventory:moveSlot', function(sourc
     if toRow then
         -- Stack identical items that have no unique metadata (e.g. bread, water, ammo)
         if fromRow.item == toRow.item and not fromRow.metadata and not toRow.metadata then
-            transactionOk = MySQL.startTransaction(function()
-                local locked = MySQL.query.await(
+            transactionOk = MySQL.startTransaction(function(query)
+                local locked = query.query.await(
                     'SELECT id FROM character_inventory WHERE character_id = ? AND id IN (?, ?) FOR UPDATE',
                     { char.id, fromRow.id, toRow.id }) or {}
                 if #locked ~= 2 then error('inventory_changed') end
-                local changed = MySQL.update.await(
+                local changed = query.update.await(
                     'UPDATE character_inventory SET count = count + ? WHERE id = ? AND character_id = ?',
                     { fromRow.count, toRow.id, char.id })
                 if changed ~= 1 then error('stack_failed') end
-                MySQL.update.await('DELETE FROM character_inventory WHERE id = ? AND character_id = ?', { fromRow.id, char.id })
+                query.update.await('DELETE FROM character_inventory WHERE id = ? AND character_id = ?', { fromRow.id, char.id })
             end)
         else
             -- A temporary out-of-range slot makes the swap compatible with the
             -- unique (character_id, slot) invariant.
-            transactionOk = MySQL.startTransaction(function()
-                local locked = MySQL.query.await(
+            transactionOk = MySQL.startTransaction(function(query)
+                local locked = query.query.await(
                     'SELECT id FROM character_inventory WHERE character_id = ? AND id IN (?, ?) FOR UPDATE',
                     { char.id, fromRow.id, toRow.id }) or {}
                 if #locked ~= 2 then error('inventory_changed') end
-                if MySQL.update.await('UPDATE character_inventory SET slot = 65535 WHERE id = ? AND character_id = ?', { fromRow.id, char.id }) ~= 1 then error('swap_failed') end
-                if MySQL.update.await('UPDATE character_inventory SET slot = ? WHERE id = ? AND character_id = ?', { fromSlot, toRow.id, char.id }) ~= 1 then error('swap_failed') end
-                if MySQL.update.await('UPDATE character_inventory SET slot = ? WHERE id = ? AND character_id = ?', { toSlot, fromRow.id, char.id }) ~= 1 then error('swap_failed') end
+                if query.update.await('UPDATE character_inventory SET slot = 65535 WHERE id = ? AND character_id = ?', { fromRow.id, char.id }) ~= 1 then error('swap_failed') end
+                if query.update.await('UPDATE character_inventory SET slot = ? WHERE id = ? AND character_id = ?', { fromSlot, toRow.id, char.id }) ~= 1 then error('swap_failed') end
+                if query.update.await('UPDATE character_inventory SET slot = ? WHERE id = ? AND character_id = ?', { toSlot, fromRow.id, char.id }) ~= 1 then error('swap_failed') end
             end)
         end
     else

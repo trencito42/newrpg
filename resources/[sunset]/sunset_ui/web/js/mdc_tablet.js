@@ -42,9 +42,19 @@
         selectedChargeCode: null,
         selectedViolationCode: null,
 
+        fitScale() {
+            const tablet = document.querySelector('.mdc-tablet');
+            if (!tablet) return;
+            const s = Math.max(0.4, Math.min(1.15, (window.innerWidth * 0.96) / 1240, (window.innerHeight * 0.94) / 780));
+            tablet.style.setProperty('--mdc-scale', s.toFixed(3));
+        },
+
         init() {
             if (this._initialized) return;
             this._initialized = true;
+
+            // Fixed 1240x780 tablet is scaled to fit any viewport (720p .. ultrawide).
+            window.addEventListener('resize', () => this.fitScale());
 
             // Close button
             $('#mdc-tablet-close')?.addEventListener('click', () => this.close());
@@ -408,6 +418,7 @@
             this.setTab('calls');
 
             $('#mdc')?.classList.remove('hidden');
+            this.fitScale();
         },
 
         refresh(data = {}) {

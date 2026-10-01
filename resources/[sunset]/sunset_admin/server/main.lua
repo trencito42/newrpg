@@ -162,8 +162,18 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
     deferrals.done()
 end)
 
+-- [SEC3] client-triggerable refresh: privileges come from the DB only, but each call costs 3 queries; throttle per source.
+local lastClientRefresh = {}
+local function throttledClientRefresh(src)
+    local now = GetGameTimer()
+    if lastClientRefresh[src] and (now - lastClientRefresh[src]) < 5000 then return end
+    lastClientRefresh[src] = now
+    loadAdmin(src)
+end
+AddEventHandler('playerDropped', function() lastClientRefresh[source] = nil end)
+
 RegisterNetEvent('sunset:server:playerLoaded', function()
-    loadAdmin(source)
+    throttledClientRefresh(source)
 end)
 
 AddEventHandler('sunset:server:playerReady', function(src)
@@ -175,7 +185,7 @@ AddEventHandler('sunset:server:authenticated', function(src)
 end)
 
 RegisterNetEvent('sunset:server:characterSpawned', function()
-    loadAdmin(source)
+    throttledClientRefresh(source)
 end)
 
 function SetAdmin(license, level, name, grantedBy)

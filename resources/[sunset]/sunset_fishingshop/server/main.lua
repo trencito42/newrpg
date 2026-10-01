@@ -3,14 +3,8 @@
 --  Callbacks: vinde peste la 24/7 + upgrade undita la NPC
 -- ============================================================
 
-local FISH_PRICES = {
-    fresh_fish     = { min = 30,  max = 60   },
-    fish_common    = { min = 40,  max = 80   },
-    fish_uncommon  = { min = 90,  max = 150  },
-    fish_rare      = { min = 170, max = 280  },
-    fish_epic      = { min = 320, max = 550  },
-    fish_legendary = { min = 650, max = 1200 },
-}
+-- [JOBS AUTHORITY] shared with sunset_jobs: sunset_core/shared/fish_prices.lua
+local FISH_PRICES = Sunset.FishPrices
 
 local FISH_LABELS = {
     fresh_fish     = 'Fresh Fish',

@@ -133,11 +133,23 @@ exports.sunset_core:RegisterCallback('sunset:saveAppearance', function(source, a
     if not player then return nil, { localeKey = 'appearance.message.not_logged_in' } end
 
     local char = exports.sunset_core:GetCharacter(source)
-    charId = tonumber(charId) or (char and char.id)
+    charId = tonumber(charId)
+    if charId and charId ~= math.floor(charId) then return nil, { localeKey = 'appearance.message.character_mismatch' } end -- [SEC3]
+    -- [SEC3] The payment gate must apply to the TARGET character, not only the loaded one:
+    -- at character select no character is loaded, so a forged charId used to rewrite any
+    -- styled character of this account for free. Resolve the target first, then gate.
     if not char and charId then
         char = loadCharacterForPlayer(source, player.id, charId)
     end
+    charId = charId or (char and char.id)
     if not char then return nil, { localeKey = 'appearance.message.no_character_loaded' } end
+    local needsPayment = type(char.appearance) == 'table' and next(char.appearance) ~= nil
+    if needsPayment then
+        local okP, paid = pcall(function() return exports.sunset_clothing:HasAppearancePayment(source) end)
+        if not (okP and paid == true) then
+            return nil, { localeKey = 'appearance.message.payment_required' }
+        end
+    end
 
     -- [CLOTHING FIX B1] Ownership: the callback may only ever write the
     -- character that belongs to THIS player (charId is re-checked in SQL too).
@@ -163,6 +175,7 @@ exports.sunset_core:RegisterCallback('sunset:saveAppearance', function(source, a
         encoded, char.gender, char.id, player.id
     })
 
+    if needsPayment then pcall(function() exports.sunset_clothing:ConsumeAppearancePayment(source) end) end -- [SEC3]
     char.appearance = sanitized
     TriggerEvent('sunset:server:setActiveCharacter', source, char)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)

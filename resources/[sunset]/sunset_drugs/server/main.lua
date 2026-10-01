@@ -54,6 +54,12 @@ local function nearAny(coords, list, radius)
     return false
 end
 
+-- [SEC3] every drug entry point requires a loaded character
+local function hasChar(source)
+    local ok, c = pcall(function() return exports.sunset_core:GetCharacter(source) end)
+    return ok and c ~= nil
+end
+
 local function getSpot(index)
     index = tonumber(index)
     if not index then return nil end
@@ -92,6 +98,7 @@ end
 -- ═══ STAGE 1: HARVEST (two-phase timed) ═══
 
 exports.sunset_core:RegisterCallback('sunset:drugs:harvestStart', function(source, spotIndex)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
     local spot = getSpot(spotIndex)
     if not spot then return nil, { localeKey = 'drugs.message.invalid_harvest_spot' } end
     local drug = Cfg.drugs[spot.drug]
@@ -119,6 +126,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:harvestStart', function(sourc
 end)
 
 exports.sunset_core:RegisterCallback('sunset:drugs:harvestComplete', function(source)
+    if not hasChar(source) then clearPending(source) return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
     local pending = takePending(source, 'harvest')
     if not pending then return nil, { localeKey = 'drugs.message.no_harvest_in_progress' } end
 
@@ -170,6 +178,7 @@ end)
 -- ═══ STAGE 2: PROCESS (two-phase timed) ═══
 
 exports.sunset_core:RegisterCallback('sunset:drugs:processStart', function(source, drugType)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
     drugType = tostring(drugType or '')
     local drug = Cfg.drugs[drugType]
     if not drug then return nil, { localeKey = 'drugs.message.unknown_drug_type' } end
@@ -204,6 +213,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processStart', function(sourc
 end)
 
 exports.sunset_core:RegisterCallback('sunset:drugs:processComplete', function(source)
+    if not hasChar(source) then clearPending(source) return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
     local pending = takePending(source, 'process')
     if not pending then return nil, { localeKey = 'drugs.message.no_processing_in_progress' } end
 
@@ -242,6 +252,7 @@ end)
 -- ═══ STAGE 3: SELL (instant, economically safe) ═══
 
 exports.sunset_core:RegisterCallback('sunset:drugs:sell', function(source, drugType, amount)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
     drugType = tostring(drugType or '')
     amount = math.floor(tonumber(amount) or 0)
     local drug = Cfg.drugs[drugType]

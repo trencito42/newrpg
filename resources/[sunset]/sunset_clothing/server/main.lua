@@ -37,13 +37,16 @@ exports.sunset_core:RegisterCallback('sunset:payAppearance', function(source, am
         return false, { localeKey = 'clothing.message.you_are_not_near_any_clothing_or_barber_shop' }
     end
 
+    -- [SEC3] already holding an unspent paid token: do not double charge
+    if PendingRefunds[source] and PendingRefunds[source] > os.time() then return true end
+
     local price = APPEARANCE_PRICE
     if exports.sunset_core:RemoveMoney(source, 'cash', price, 'appearance') then
-        PendingRefunds[source] = true
+        PendingRefunds[source] = os.time() + 600
         return true
     end
     if exports.sunset_core:RemoveMoney(source, 'bank', price, 'appearance') then
-        PendingRefunds[source] = true
+        PendingRefunds[source] = os.time() + 600
         return true
     end
 
@@ -53,13 +56,26 @@ end)
 exports.sunset_core:RegisterCallback('sunset:refundAppearance', function(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 or amount > APPEARANCE_PRICE then return false end
-    if not PendingRefunds[source] then return false, { localeKey = 'clothing.message.nothing_to_refund' } end
+    if not PendingRefunds[source] or PendingRefunds[source] <= os.time() then return false, { localeKey = 'clothing.message.nothing_to_refund' } end
     PendingRefunds[source] = nil
     return exports.sunset_core:AddMoney(source, 'cash', amount, 'appearance_refund')
 end)
 
 AddEventHandler('playerDropped', function()
     PendingRefunds[source] = nil
+end)
+
+-- [SEC3] Purchase enforcement: sunset_appearance:saveAppearance for an in-game
+-- character requires an unspent payment token created by payAppearance above.
+exports('HasAppearancePayment', function(src)
+    local t = PendingRefunds[src]
+    return t ~= nil and t > os.time()
+end)
+exports('ConsumeAppearancePayment', function(src)
+    local t = PendingRefunds[src]
+    if t == nil or t <= os.time() then return false end
+    PendingRefunds[src] = nil
+    return true
 end)
 
 -- [CLOTHING C11] Dev/admin compatibility tool gate. Never enabled for players:

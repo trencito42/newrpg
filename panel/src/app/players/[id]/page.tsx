@@ -6,6 +6,7 @@ import { t, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { PlayerActions } from "@/components/staff/PlayerActions";
 import { PlayerName } from "@/components/ui/PlayerName";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 
 interface CharacterProfileRow extends RowDataPacket {
@@ -69,17 +70,21 @@ export default async function PlayerProfilePage({
     getViewerLocale(),
   ]);
 
-  const char = await dbQuerySingle<CharacterProfileRow>(
+  const char = await dbQuerySingle<CharacterProfileRow & { clan_tag: string | null; clan_tag_color: string | null }>(
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
        c.job, c.job_grade, c.phone_number,
        c.home_property_id, c.avatar, c.gender, c.nationality,
        c.created_at AS registered_at, c.last_played,
-       a.username AS account_username
+       a.username AS account_username,
+       cl.tag AS clan_tag,
+       cl.tag_color AS clan_tag_color
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
+     LEFT JOIN clan_members cm ON cm.character_id = c.id
+     LEFT JOIN clans cl ON cl.id = cm.clan_id
      WHERE LOWER(a.username) = LOWER(?)
         OR (? > 0 AND c.id = ?)
         OR LOWER(c.firstname) = LOWER(?)
@@ -169,7 +174,14 @@ export default async function PlayerProfilePage({
         <div>
           <div className="flex items-center space-x-3">
             <h1 className="text-xl font-bold tracking-tight">
-              <PlayerName name={char.account_username} factionId={char.job} clickable={false} className="text-xl" />
+              <PlayerIdentity
+                username={char.account_username}
+                factionId={char.job}
+                clanTag={char.clan_tag}
+                clanColor={char.clan_tag_color}
+                clickable={false}
+                size="lg"
+              />
             </h1>
             <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-200 text-[#f1f1f1] border border-surface-border">
               Level {char.level}

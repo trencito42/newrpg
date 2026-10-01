@@ -64,18 +64,32 @@ exports.sunset_core:RegisterCallback('sunset:impound:confiscate', function(sourc
         if not near then return nil, { localeKey = 'impound.message.vehicle_not_found' } end
     end
 
-    -- Check if already impounded
-    local existing = MySQL.scalar.await(
-        'SELECT id FROM impounded_vehicles WHERE vehicle_id = ? AND status = "impounded" LIMIT 1', { vehicleId })
-    if existing then return nil, { localeKey = 'impound.message.this_vehicle_is_already_impounded' } end
-
     local impoundedByName = exports.sunset_core:GetPlayerDisplayName(source) or 'Officer'
     local impoundedBy = getCharId(source)
 
-    MySQL.insert.await([[
-        INSERT INTO impounded_vehicles (vehicle_id, character_id, impounded_by, impounded_by_name, reason, fee, daily_fee)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ]], { vehicleId, ownerCharId, impoundedBy, impoundedByName, reasonRow.label, reasonRow.fee, Cfg.dailyFee or 100 })
+    -- [RACE] Two officers confiscating the same car at once used to insert two
+    -- 'impounded' rows (check-then-insert; the owner would pay twice / a second
+    -- record could outlive recovery). Serialise on the vehicle row: lock it,
+    -- re-check, take the CURRENT owner from the locked row, insert - one txn.
+    local reasonError
+    local committed = MySQL.startTransaction(function(query)
+        local locked = query.single.await('SELECT id, character_id FROM vehicles WHERE id = ? FOR UPDATE', { vehicleId })
+        if not locked or not tonumber(locked.character_id) then reasonError = 'impound.message.vehicle_not_found' return false end
+        local existing = query.scalar.await(
+            'SELECT id FROM impounded_vehicles WHERE vehicle_id = ? AND status = "impounded" LIMIT 1', { vehicleId })
+        if existing then reasonError = 'impound.message.this_vehicle_is_already_impounded' return false end
+        local inserted = query.insert.await([[
+            INSERT INTO impounded_vehicles (vehicle_id, character_id, impounded_by, impounded_by_name, reason, fee, daily_fee)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ]], { vehicleId, tonumber(locked.character_id), impoundedBy, impoundedByName, reasonRow.label,
+            math.max(0, math.floor(tonumber(reasonRow.fee) or 0)), math.max(0, math.floor(tonumber(Cfg.dailyFee) or 100)) })
+        if not inserted then return false end
+        ownerCharId = tonumber(locked.character_id)
+        return true
+    end)
+    if not committed then
+        return nil, { localeKey = reasonError or 'impound.message.vehicle_not_found' }
+    end
 
     -- Delete the vehicle entity from the world
     pcall(function()
@@ -217,11 +231,16 @@ CreateThread(function()
         local expired = MySQL.query.await(
             'SELECT id, vehicle_id FROM impounded_vehicles WHERE status = "impounded" AND impounded_at < ?', { cutoff }) or {}
         for _, row in ipairs(expired) do
-            MySQL.update.await('UPDATE impounded_vehicles SET status = "sold" WHERE id = ?', { row.id })
-            pcall(function()
-                exports.sunset_vehicles:DeleteVehicleRecord(row.vehicle_id)
-            end)
-            print(('[sunset_impound] Vehicle %d sold (impound expired)'):format(row.vehicle_id))
+            -- [RACE] claim conditionally: a record recovered by its owner in the
+            -- meantime (status != impounded) must NOT have its vehicle deleted.
+            local claimed = MySQL.update.await(
+                'UPDATE impounded_vehicles SET status = "sold" WHERE id = ? AND status = "impounded"', { row.id })
+            if tonumber(claimed) == 1 then
+                pcall(function()
+                    exports.sunset_vehicles:DeleteVehicleRecord(row.vehicle_id)
+                end)
+                print(('[sunset_impound] Vehicle %d sold (impound expired)'):format(row.vehicle_id))
+            end
         end
     end
 end)

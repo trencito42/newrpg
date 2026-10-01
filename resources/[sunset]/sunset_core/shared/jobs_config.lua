@@ -62,6 +62,7 @@ Sunset.JobsConfig = {
         returnRadius = 25.0,
         requiresWorkVehicle = true,
         vehicleExitGraceSec = 60,
+        failOnWorkVehicleLoss = true, -- [JOBS AUTHORITY] wrecked/deleted work vehicle fails the shift, no reward
         requiresAttachedTrailer = true,
         trailerGraceSec = 60,
         trailerRecoveryCooldownSec = 180,
@@ -103,6 +104,7 @@ Sunset.JobsConfig = {
         timeoutSec = 1500,
         requiresWorkVehicle = true,
         vehicleExitGraceSec = 60,
+        failOnWorkVehicleLoss = true, -- [JOBS AUTHORITY] wrecked/deleted work vehicle fails the shift, no reward
     },
 
     courier = {
@@ -128,6 +130,7 @@ Sunset.JobsConfig = {
         },
         packageProp = 'prop_cs_cardbox_01',
         packagesPerRun = 6,
+        failOnWorkVehicleLoss = true, -- destroy the van mid-route => shift cancelled, no further pay
         payPerPackage = 90,
         xpPerPackage = 18,
         deliveryRadius = 3.0,

@@ -75,3 +75,13 @@ function MSN_CleanupPlayer(source)
     end
     sessions[source] = nil
 end
+
+function MSN_InterruptAll()
+    for src, s in pairs(sessions) do
+        if s.charId then
+            MySQL.insert('INSERT INTO sunset_mission_history (character_id, mission, started_at, completed_at, result, reward, variant) VALUES (?,?,?,?,?,?,?)',
+                { s.charId, s.mission, s.startedAt, os.time(), 'interrupted', 0, json.encode(s.data or {}) })
+        end
+        sessions[src] = nil
+    end
+end

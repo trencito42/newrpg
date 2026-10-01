@@ -271,7 +271,8 @@ local function runMegaphone(source, args)
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         local tPos = FactionCore.playerCoords(src)
-        if FactionCore.distBetween(pos, tPos) <= MEGAPHONE_RANGE then
+        if FactionCore.distBetween(pos, tPos) <= MEGAPHONE_RANGE
+            and GetPlayerRoutingBucket(src) == GetPlayerRoutingBucket(source) then -- [SEC3] same instance only
             local payload = attachSpeakerIdentity({
                 id = source,
                 message = msg,

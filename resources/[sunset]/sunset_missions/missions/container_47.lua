@@ -15,6 +15,8 @@ SunsetMissions.RegisterMission('container_47', {
         max = 8000,
     },
 
+    minDurationSec = 150,
+
     xp = 120,
 
     stages = {

@@ -1851,3 +1851,9 @@
     to { transform: translateY(0); }
 }
 
+
+/* [RESPONSIVE] very short viewports (<=700px): keep the whole handset on-screen */
+@media (max-height: 700px) {
+    .phone-device { bottom: 12px; right: 16px; }
+    .phone-frame { zoom: 0.88; }
+}

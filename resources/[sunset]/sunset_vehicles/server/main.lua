@@ -428,15 +428,20 @@ RegisterNetEvent('sunset:server:vehicleDestroyed', function(netId, plate)
     local baseCost = calculateVehicleInsuranceCost(veh.model, veh.insurance_cost)
     local claimCost = math.floor(baseCost * nextLevel)
 
-    MySQL.update.await([[
+    -- [RACE] Atomic, single-shot totaling: only the request that flips
+    -- destroyed 0 -> 1 applies the insurance penalty (duplicate client events
+    -- can no longer burn several points / levels). Values are computed in SQL
+    -- from the locked row, not from the stale pre-read above.
+    local totaled = MySQL.update.await([[
         UPDATE vehicles
         SET destroyed = 1,
             stored = 0,
-            insurance_points = ?,
-            insurance_level = ?,
+            insurance_points = GREATEST(insurance_points - 1, 0),
+            insurance_level = LEAST(insurance_level + 1, 11),
             engine = -4000.0
-        WHERE id = ?
-    ]], { nextPoints, nextLevel, veh.id })
+        WHERE id = ? AND character_id = ? AND (destroyed IS NULL OR destroyed = 0)
+    ]], { veh.id, char.id })
+    if tonumber(totaled) ~= 1 then return end
 
     local vehicle = tonumber(netId) and NetworkGetEntityFromNetworkId(tonumber(netId)) or 0
     if vehicle == 0 or not DoesEntityExist(vehicle) then
@@ -496,19 +501,28 @@ exports.sunset_core:RegisterCallback('sunset:claimVehicleInsurance', function(so
         return nil, { localeKey = 'vehicles.message.insufficient_funds_you_need_value_in_bank_or_cash', formatArgs = { claimCost } }
     end
 
+    -- [RACE / DOUBLE-CHARGE] The restore is conditional on the row STILL being
+    -- destroyed. Two concurrent claims both pass the pre-read, but only one
+    -- UPDATE matches; the loser is refunded instead of paying twice.
+    local restored = MySQL.update.await([[
+        UPDATE vehicles
+        SET stored = 1, destroyed = 0, engine = 1000.0, body = 1000.0, fuel = 100.0,
+            parked_x = NULL, parked_y = NULL, parked_z = NULL, parked_h = NULL
+        WHERE id = ? AND character_id = ? AND destroyed = 1
+    ]], { veh.id, char.id })
+    if tonumber(restored) ~= 1 then
+        if not exports.sunset_core:AddMoney(source, paidAccount, claimCost, 'refund:vehicle_insurance_claim') then
+            print(('^1[sunset_vehicles]^7 INSURANCE REFUND FAILED src=%s amount=%d'):format(tostring(source), claimCost))
+        end
+        return nil, { localeKey = 'vehicles.message.this_vehicle_is_not_totaled_retrieve_it_from_the' }
+    end
+
     local plate = normalizePlate(veh.plate)
     local entity = findVehicleEntityByPlate(plate)
     if entity and entity ~= 0 and DoesEntityExist(entity) then
         DeleteEntity(entity)
     end
     TriggerClientEvent('sunset:client:cleanupOwnedVehicles', -1, { { plate = plate } })
-
-    MySQL.update.await([[
-        UPDATE vehicles
-        SET stored = 1, destroyed = 0, engine = 1000.0, body = 1000.0, fuel = 100.0,
-            parked_x = NULL, parked_y = NULL, parked_z = NULL, parked_h = NULL
-        WHERE id = ? AND character_id = ?
-    ]], { veh.id, char.id })
 
     TriggerClientEvent('sunset:client:notify', source,
         exports.sunset_core:TFor(source, 'vehicles.message.insurance_claim_approved_for_value_value_your_vehicle_has_been_re', claimCost, paidAccount),
@@ -561,11 +575,18 @@ exports.sunset_core:RegisterCallback('sunset:renewVehicleInsurance', function(so
         return nil, { localeKey = 'vehicles.message.insufficient_funds_you_need_value_to_renew_5_insurance', formatArgs = { renewCost } }
     end
 
-    MySQL.update.await([[
+    local renewed = MySQL.update.await([[
         UPDATE vehicles
         SET insurance_points = insurance_points + 5
         WHERE id = ? AND character_id = ?
     ]], { veh.id, char.id })
+    if tonumber(renewed) ~= 1 then
+        -- vehicle left the character between pre-read and update: never keep the money
+        if not exports.sunset_core:AddMoney(source, paidAccount, renewCost, 'refund:vehicle_insurance_renew') then
+            print(('^1[sunset_vehicles]^7 RENEW REFUND FAILED src=%s amount=%d'):format(tostring(source), renewCost))
+        end
+        return nil, { localeKey = 'vehicles.message.vehicle_not_found_871b72' }
+    end
 
     TriggerClientEvent('sunset:client:notify', source,
         exports.sunset_core:TFor(source, 'vehicles.message.purchased_5_insurance_points_for_value_value', renewCost, paidAccount),
@@ -705,7 +726,55 @@ local function isNearGasStation(playerCoords, maxDist)
     return false
 end
 
-exports.sunset_core:RegisterCallback('sunset:refuelVehiclePartial', function(source, fromFuel, toFuel, plate)
+-- [FUEL UNIT OF WORK] Fuel flows touch money (core), inventory (inventory) and
+-- vehicle fuel (vehicles) which live in different domains. Rules:
+--  1. one in-flight fuel request per player (FuelLocks) - no interleaved awaits;
+--  2. GRANT first, CHARGE/CONSUME second: the player never pays for or loses
+--     something before the matching grant is durable;
+--  3. every grant is reversible: inventory ops return `inverse`, vehicle fuel is
+--     reverted with a conditional UPDATE; a failed later step rolls the grant back;
+--  4. a rollback that itself fails is logged loudly for staff (never silent).
+local FuelLocks = {}
+AddEventHandler('playerDropped', function() FuelLocks[source] = nil end)
+
+local function RegisterFuelCallback(name, handler)
+    exports.sunset_core:RegisterCallback(name, function(source, ...)
+        if FuelLocks[source] then return nil, { localeKey = 'vehicles.message.fuel_request_in_progress' } end
+        FuelLocks[source] = true
+        local ok, a, b = pcall(handler, source, ...)
+        FuelLocks[source] = nil
+        if not ok then
+            print(('^1[sunset_vehicles]^7 %s failed: %s'):format(name, tostring(a)))
+            return nil, { localeKey = 'vehicles.message.fuel_transfer_was_cancelled_because_the_vehicle_or_gas' }
+        end
+        return a, b
+    end)
+end
+
+local function chargeCashOrBank(source, char, cost, reason)
+    local order = (tonumber(char.cash) or 0) >= cost and { 'cash', 'bank' } or { 'bank', 'cash' }
+    for _, account in ipairs(order) do
+        if exports.sunset_core:RemoveMoney(source, account, cost, reason) then return account end
+    end
+    return nil
+end
+
+local function undoInventory(source, applied, context)
+    local undo = applied and applied.inverse
+        and exports.sunset_inventory:ApplyOperation(source, applied.inverse, {})
+    if undo and undo.ok then return true end
+    print(('^1[sunset_vehicles]^7 INVENTORY ROLLBACK FAILED (%s) src=%s - manual review needed'):format(context, tostring(source)))
+    return false
+end
+
+local function firstGasCan(source)
+    for _, row in ipairs(exports.sunset_inventory:GetInventory(source) or {}) do
+        if row.item == 'gas_can' and (tonumber(row.count) or 0) > 0 then return row end
+    end
+    return nil
+end
+
+RegisterFuelCallback('sunset:refuelVehiclePartial', function(source, fromFuel, toFuel, plate)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
@@ -742,10 +811,11 @@ exports.sunset_core:RegisterCallback('sunset:refuelVehiclePartial', function(sou
         -- two checkouts raced; re-validate the increase against the locked row.
         local lockedCurrent = math.max(0, math.min(100, tonumber(lockedFuel.fuel) or 0))
         if requestedFuel <= lockedCurrent + 0.05 then return false end
-        local charged = query.update.await(
-            ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(account, account, account),
-            { cost, char.id, cost })
-        if tonumber(charged) ~= 1 then return false end
+        -- Money is debited through the core-owned API ON THIS transaction
+        -- connection (guarded UPDATE + ledger row), atomic with the fuel write:
+        -- either both commit or both roll back (no compensation needed).
+        local charged = exports.sunset_core:DebitMoneyInTransaction(char.id, account, cost, query.await, 'fuel_pump')
+        if not charged then return false end
         local saved = query.update.await([[UPDATE vehicles SET fuel=? WHERE id=? AND character_id=?
             AND fuel <= ?]], { requestedFuel, owned.id, char.id, lockedCurrent + 0.01 })
         return tonumber(saved) == 1
@@ -760,7 +830,7 @@ exports.sunset_core:RegisterCallback('sunset:refuelVehiclePartial', function(sou
     return { newFuel = requestedFuel, cost = cost, liters = added }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:fillGasCan', function(source, targetLiters)
+RegisterFuelCallback('sunset:fillGasCan', function(source, targetLiters)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
 
@@ -782,26 +852,27 @@ exports.sunset_core:RegisterCallback('sunset:fillGasCan', function(source, targe
 
     local pricePer = Sunset.Config.FuelPricePerLiter or 2.92
     local cost = math.ceil(added * pricePer)
-    local account = (tonumber(char.cash) or 0) >= cost and 'cash'
-        or ((tonumber(char.bank) or 0) >= cost and 'bank' or nil)
-    if not account then return nil, { localeKey = 'vehicles.message.you_need_value_in_cash_or_bank_to_fill', formatArgs = { cost } } end
-    local gasRow = MySQL.single.await([[SELECT id,metadata FROM character_inventory
-        WHERE character_id=? AND item='gas_can' AND count>0 ORDER BY id LIMIT 1]], { char.id })
+    if (tonumber(char.cash) or 0) < cost and (tonumber(char.bank) or 0) < cost then
+        return nil, { localeKey = 'vehicles.message.you_need_value_in_cash_or_bank_to_fill', formatArgs = { cost } }
+    end
+    local gasRow = firstGasCan(source)
     if not gasRow then return nil, { localeKey = 'vehicles.message.the_gas_can_is_no_longer_in_your_inventory' } end
-    local committed = MySQL.startTransaction(function(query)
-        local charged = query.await(
-            ('UPDATE characters SET %s=%s-? WHERE id=? AND %s>=?'):format(account, account, account),
-            { cost, char.id, cost })
-        if tonumber(charged) ~= 1 then return false end
-        local saved = query.await([[UPDATE character_inventory SET metadata=?
-            WHERE id=? AND character_id=? AND item='gas_can' AND count>0]],
-            { json.encode({ liters = targetLiters }), gasRow.id, char.id })
-        return tonumber(saved) == 1
-    end)
-    if not committed then return nil, { localeKey = 'vehicles.message.gas_can_checkout_was_cancelled_because_the_item_or' } end
-    exports.sunset_core:RefreshMoney(source)
-    exports.sunset_inventory:ReloadInventory(source)
-
+    -- 1) GRANT: raise the can's liters, guarded by the liters we priced against
+    --    (optimistic precondition; legacy rows without metadata.liters skip it).
+    local expect = type(gasRow.metadata) == 'table' and gasRow.metadata.liters ~= nil
+        and { liters = tonumber(gasRow.metadata.liters) } or nil
+    local applied = exports.sunset_inventory:ApplyOperation(source, {
+        { type = 'set_metadata', item = 'gas_can', rowId = gasRow.id,
+          metadata = { liters = targetLiters }, merge = false, expect = expect },
+    }, {})
+    if not applied or not applied.ok then
+        return nil, { localeKey = 'vehicles.message.gas_can_checkout_was_cancelled_because_the_item_or' }
+    end
+    -- 2) CHARGE (guarded SQL in core + ledger). Failure -> undo the grant.
+    if not chargeCashOrBank(source, char, cost, 'gas_can_fill') then
+        undoInventory(source, applied, 'fillGasCan')
+        return nil, { localeKey = 'vehicles.message.you_need_value_in_cash_or_bank_to_fill', formatArgs = { cost } }
+    end
     if GetResourceState('sunset_businesses') == 'started' then
         exports.sunset_businesses:RecordSaleAtCoords(GetEntityCoords(ped), 'gas', cost)
     end
@@ -809,7 +880,7 @@ exports.sunset_core:RegisterCallback('sunset:fillGasCan', function(source, targe
     return { liters = targetLiters, maxLiters = maxLiters, cost = cost, added = added }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:useGasCanOnVehicle', function(source, plate)
+RegisterFuelCallback('sunset:useGasCanOnVehicle', function(source, plate)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'vehicles.message.no_character' } end
     if not exports.sunset_inventory:HasItem(source, 'gas_can', 1) then
@@ -853,26 +924,34 @@ exports.sunset_core:RegisterCallback('sunset:useGasCanOnVehicle', function(sourc
     local newCanLiters = canLiters - transferLiters
     local vehicleFuelPercent = Sunset.TankLitersToPercent(newTankLiters, vehicleClass)
 
-    local gasRow = MySQL.single.await([[SELECT id,count FROM character_inventory
-        WHERE character_id=? AND item='gas_can' AND count>0 ORDER BY id LIMIT 1]], { char.id })
+    local gasRow = firstGasCan(source)
     if not gasRow then return nil, { localeKey = 'vehicles.message.the_gas_can_is_no_longer_in_your_inventory' } end
-    local committed = MySQL.startTransaction(function(query)
-        local saved = query.await([[UPDATE vehicles SET fuel=? WHERE id=? AND character_id=? AND fuel=?]],
-            { vehicleFuelPercent, owned.id, char.id, owned.fuel })
-        if tonumber(saved) ~= 1 then return false end
-        local changed
-        if newCanLiters <= 0.1 and tonumber(gasRow.count) <= 1 then
-            changed = query.await("DELETE FROM character_inventory WHERE id=? AND character_id=? AND item='gas_can'", { gasRow.id, char.id })
-        elseif newCanLiters <= 0.1 then
-            changed = query.await("UPDATE character_inventory SET count=count-1 WHERE id=? AND character_id=? AND item='gas_can' AND count>1", { gasRow.id, char.id })
-        else
-            changed = query.await("UPDATE character_inventory SET metadata=? WHERE id=? AND character_id=? AND item='gas_can' AND count>0",
-                { json.encode({ liters = newCanLiters }), gasRow.id, char.id })
+    -- 1) GRANT fuel to the vehicle: conditional on the fuel we read (optimistic lock).
+    local saved = MySQL.update.await('UPDATE vehicles SET fuel=? WHERE id=? AND character_id=? AND fuel=?',
+        { vehicleFuelPercent, owned.id, char.id, owned.fuel })
+    if tonumber(saved) ~= 1 then
+        return nil, { localeKey = 'vehicles.message.fuel_transfer_was_cancelled_because_the_vehicle_or_gas' }
+    end
+    -- 2) CONSUME from the can (inventory API, atomic + guarded by liters read).
+    local op
+    if newCanLiters <= 0.1 then
+        op = { type = 'remove', item = 'gas_can', count = 1, rowId = gasRow.id }
+    else
+        local expect = type(gasRow.metadata) == 'table' and gasRow.metadata.liters ~= nil
+            and { liters = tonumber(gasRow.metadata.liters) } or nil
+        op = { type = 'set_metadata', item = 'gas_can', rowId = gasRow.id,
+            metadata = { liters = newCanLiters }, merge = false, expect = expect }
+    end
+    local applied = exports.sunset_inventory:ApplyOperation(source, { op }, {})
+    if not applied or not applied.ok then
+        -- compensate: revert the vehicle fuel only if nobody changed it since
+        local reverted = MySQL.update.await('UPDATE vehicles SET fuel=? WHERE id=? AND character_id=? AND fuel=?',
+            { owned.fuel, owned.id, char.id, vehicleFuelPercent })
+        if tonumber(reverted) ~= 1 then
+            print(('^1[sunset_vehicles]^7 FUEL ROLLBACK FAILED vehicle=%s src=%s'):format(tostring(owned.id), tostring(source)))
         end
-        return tonumber(changed) == 1
-    end)
-    if not committed then return nil, { localeKey = 'vehicles.message.fuel_transfer_was_cancelled_because_the_vehicle_or_gas' } end
-    exports.sunset_inventory:ReloadInventory(source)
+        return nil, { localeKey = 'vehicles.message.fuel_transfer_was_cancelled_because_the_vehicle_or_gas' }
+    end
 
     return {
         vehicleFuel = vehicleFuelPercent,
@@ -1102,7 +1181,11 @@ function TransferVehicleOwnership(vehicleId, fromCharId, toCharId)
     end
 
     local changed = MySQL.update.await(
-        'UPDATE vehicles SET character_id = ?, stored = 1 WHERE id = ? AND character_id = ?',
+        -- [RACE] unique-owner handoff: matches only if the seller STILL owns it
+        -- and it is still garage-stored/undestroyed (same guards as the pre-read).
+        [[UPDATE vehicles SET character_id = ?, stored = 1,
+            parked_x = NULL, parked_y = NULL, parked_z = NULL, parked_h = NULL
+            WHERE id = ? AND character_id = ? AND stored = 1 AND (destroyed IS NULL OR destroyed = 0)]],
         { toCharId, vehicleId, fromCharId }
     )
     if changed ~= 1 then return false, { localeKey = 'vehicles.message.vehicle_transfer_failed' } end

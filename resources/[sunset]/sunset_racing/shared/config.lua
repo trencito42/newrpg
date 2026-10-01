@@ -19,6 +19,10 @@ SunsetRacing.Config = {
     soloEntryFee = 0,            -- solo is free (no entry fee)
     soloReward = 500,            -- fixed reward per completed solo race
     soloCooldownMs = 300000,     -- 5 min between solo races (per character)
+    -- [JOBS AUTHORITY] The $500/5 min solo reward is INTENDED (this table is its single source of truth;
+    -- see docs/release/IMPL_JOBS.md). Anti-exploit: payout also requires the server-measured race time
+    -- to be no faster than route length / soloMaxAvgSpeedMps (blocks teleport/skip chains).
+    soloMaxAvgSpeedMps = 75.0,
 
     -- ── RACE ──
     countdownSeconds = 5,

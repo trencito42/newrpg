@@ -4,6 +4,7 @@ import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
 import { GlobalSearch } from "./GlobalSearch";
 import { LanguageToggle } from "./LanguageToggle";
+import { NotificationBell } from "./NotificationBell";
 
 interface HeaderProps {
   locale: Locale;
@@ -22,6 +23,7 @@ export async function Header({ locale, session }: HeaderProps) {
 
         {session ? (
           <div className="flex items-center space-x-2.5 pl-2 border-l border-surface-border">
+            <NotificationBell locale={locale} />
             <Link
               href={`/players/${encodeURIComponent(session.username)}`}
               className="flex items-center space-x-2 text-xs text-[#f1f1f1] hover:text-white transition-colors"

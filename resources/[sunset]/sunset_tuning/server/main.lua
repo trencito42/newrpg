@@ -116,7 +116,8 @@ exports.sunset_core:RegisterCallback('sunset:tuning:getTune', function(source, p
     }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, plate, tune, flash, cosmetics)
+local SaveBusy = {}
+local function saveTuneImpl(source, plate, tune, flash, cosmetics)
     local char = getCharacter(source)
     if not char then return nil, { localeKey = 'tuning.message.no_character' } end
     plate = normalizePlate(plate)
@@ -141,7 +142,9 @@ exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, 
     local props = decodeProps(row.props)
     local oldTune = props.ecu or SunsetTuning.StockTune()
     local sanitizedCosmetics = SunsetTuning.SanitizeCosmetics(cosmetics)
-    local oldCosmetics = props.cosmetics or sanitizedCosmetics
+    -- [SEC3] never default the "old" cosmetics to the NEW ones: a vehicle with no saved cosmetics got every
+    -- paint/neon/wheel/vanity-plate change for free (cost diff was new-vs-new = 0).
+    local oldCosmetics = props.cosmetics or SunsetTuning.DefaultCosmetics()
     local cost = SunsetTuning.CalculateInstallCost(oldTune, sanitized, oldCosmetics, sanitizedCosmetics, flash == true)
 
     local newPlate = plate
@@ -189,6 +192,16 @@ exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, 
     end
     TriggerClientEvent('sunset:tuning:client:applyByPlate', source, newPlate or plate, sanitized, modelName)
     return { tune = sanitized, cost = cost, plate = newPlate or plate, cosmetics = sanitizedCosmetics, model = modelName }
+end
+
+exports.sunset_core:RegisterCallback('sunset:tuning:saveTune', function(source, plate, tune, flash, cosmetics)
+    -- [SEC3] one save per player at a time (parallel saves double-charged / raced the vehicle row)
+    if SaveBusy[source] then return nil, { localeKey = 'tuning.message.invalid_tune_data' } end
+    SaveBusy[source] = true
+    local ok, a, b = pcall(saveTuneImpl, source, plate, tune, flash, cosmetics)
+    SaveBusy[source] = nil
+    if not ok then error(a) end
+    return a, b
 end)
 
 exports.sunset_core:RegisterCallback('sunset:tuning:getInstallQuote', function(source, plate, newTune, flash, newCosmetics)
@@ -208,7 +221,7 @@ exports.sunset_core:RegisterCallback('sunset:tuning:getInstallQuote', function(s
 
     local props = decodeProps(row.props)
     local oldTune = props.ecu or SunsetTuning.StockTune()
-    local oldCos = props.cosmetics or sanitizedCos
+    local oldCos = props.cosmetics or SunsetTuning.DefaultCosmetics() -- [SEC3] match saveTune pricing
 
     return SunsetTuning.CalculateInstallCost(oldTune, sanitizedTune, oldCos, sanitizedCos, flash == true)
 end)
@@ -312,6 +325,8 @@ end)
 
 RegisterNetEvent('sunset:tuning:flashApplied', function(plate, tune)
     local src = source
+    if not exports.sunset_core:RateLimit(src, 'tuneFlash', 1000) then return end -- [SEC3]
+    if type(plate) ~= 'string' or #plate > 16 then return end
     local char = getCharacter(src)
     if not char then return end
     plate = normalizePlate(plate)
@@ -330,7 +345,7 @@ end)
 RegisterNetEvent('sunset:tuning:syncExhaustFx', function(netId, fxType, intensity, color, withFlames)
     local src = source
     local now = GetGameTimer()
-    if now - (FxRate[src] or 0) < 60 then return end
+    if now - (FxRate[src] or 0) < 120 then return end -- [SEC3] was 60ms with a DB read per call
     FxRate[src] = now
     netId = tonumber(netId)
     if not netId or netId == 0 then return end
@@ -409,6 +424,7 @@ end)
 AddEventHandler('playerDropped', function()
     DynoSessions[source] = nil
     FxRate[source] = nil
+    SaveBusy[source] = nil
 end)
 
 exports('GetVehicleTuningInfo', function(rawProps)

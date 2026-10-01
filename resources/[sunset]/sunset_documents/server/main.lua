@@ -34,7 +34,7 @@ exports.sunset_core:RegisterCallback('sunset:getDocuments', function(source, kin
     end
 
     return {
-        kind = kind or 'all',
+        kind = type(kind) == 'string' and kind:sub(1, 16) or 'all', -- [SEC3] bound echoed client string
         id = {
             name = displayName,
             dob = char.dateofbirth or '—',

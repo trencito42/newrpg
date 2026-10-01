@@ -517,16 +517,26 @@ CreateThread(function()
     end
 end)
 
+local lastMenuPush = nil
 CreateThread(function()
     while true do
         if menuOpen then
             -- Solo /v garage does not need 1 Hz polling (causes visible NUI flicker).
             if menuSoloMode ~= 'vehicle' then
                 local ok, data = pcall(buildMenuData)
-                if ok and data then exports.sunset_ui:Send('menuUpdate', data) end
+                if ok and data then
+                    -- [PERF] Change detection: skip the NUI message (and the page re-render)
+                    -- when nothing in the menu payload changed since the last push.
+                    local okJ, enc = pcall(json.encode, data)
+                    if not okJ or enc ~= lastMenuPush then
+                        lastMenuPush = okJ and enc or nil
+                        exports.sunset_ui:Send('menuUpdate', data)
+                    end
+                end
             end
             Wait(1000)
         else
+            lastMenuPush = nil
             Wait(500)
         end
     end
