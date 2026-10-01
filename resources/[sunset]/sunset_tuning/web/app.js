@@ -31,37 +31,37 @@ let installedCosmetics = null;
 let vehicleCapabilities = null;
 
 const categories = [
-    { id: 'overview', label: 'Quick Setup', icon: 'ph-grid-four' },
-    { id: 'powertrain', label: 'Engine', icon: 'ph-fill ph-engine' },
-    { id: 'transmission', label: 'Transmission', icon: 'ph-bold ph-faders' },
-    { id: 'brakes', label: 'Brakes', icon: 'ph-fill ph-stop-circle' },
-    { id: 'suspension', label: 'Suspension', icon: 'ph-fill ph-car-profile' },
-    { id: 'turbo', label: 'Turbo & ECU', icon: 'ph-fill ph-wind' },
-    { id: 'handling', label: 'Handling', icon: 'ph-bold ph-steering-wheel' },
-    { id: 'exhaust', label: 'Exhaust', icon: 'ph-bold ph-speaker-high' },
-    { id: 'bodykit', label: 'Body & Aero', icon: 'ph-bold ph-shield' },
-    { id: 'lighting', label: 'Neons & Lights', icon: 'ph-bold ph-sparkle' },
-    { id: 'wheels', label: 'Wheels & Rims', icon: 'ph-bold ph-circle' },
-    { id: 'visual', label: 'Paint & Tint', icon: 'ph-bold ph-palette' },
-    { id: 'dyno', label: 'Dyno', icon: 'ph-bold ph-gauge' },
-    { id: 'special', label: 'Special', icon: 'ph-bold ph-fire' },
+    { id: 'overview', labelKey: 'tuning.category.overview', icon: 'ph-grid-four' },
+    { id: 'powertrain', labelKey: 'tuning.category.powertrain', icon: 'ph-fill ph-engine' },
+    { id: 'transmission', labelKey: 'tuning.category.transmission', icon: 'ph-bold ph-faders' },
+    { id: 'brakes', labelKey: 'tuning.category.brakes', icon: 'ph-fill ph-stop-circle' },
+    { id: 'suspension', labelKey: 'tuning.category.suspension', icon: 'ph-fill ph-car-profile' },
+    { id: 'turbo', labelKey: 'tuning.category.turbo', icon: 'ph-fill ph-wind' },
+    { id: 'handling', labelKey: 'tuning.category.handling', icon: 'ph-bold ph-steering-wheel' },
+    { id: 'exhaust', labelKey: 'tuning.category.exhaust', icon: 'ph-bold ph-speaker-high' },
+    { id: 'bodykit', labelKey: 'tuning.category.bodykit', icon: 'ph-bold ph-shield' },
+    { id: 'lighting', labelKey: 'tuning.category.lighting', icon: 'ph-bold ph-sparkle' },
+    { id: 'wheels', labelKey: 'tuning.category.wheels', icon: 'ph-bold ph-circle' },
+    { id: 'visual', labelKey: 'tuning.category.visual', icon: 'ph-bold ph-palette' },
+    { id: 'dyno', labelKey: 'tuning.category.dyno', icon: 'ph-bold ph-gauge' },
+    { id: 'special', labelKey: 'tuning.category.special', icon: 'ph-bold ph-fire' },
 ];
 
 const categoryTitles = {
-    overview: 'Quick Setup',
-    powertrain: 'Engine Upgrades & Mapping',
-    transmission: 'Transmission & Gearing',
-    brakes: 'Brake System & Dynamics',
-    suspension: 'Suspension & Stance',
-    turbo: 'Turbocharger & Top Speed',
-    handling: 'Handling Fine-Tuning',
-    exhaust: 'Exhaust Profile & Pops',
-    bodykit: 'Body & Aerodynamics',
-    lighting: 'Underglow & Headlights',
-    wheels: 'Wheels, Rims & Tyre Smoke',
-    visual: 'Paint, Pearlescent & Tint',
-    dyno: 'Dyno Testing',
-    special: 'Special ECU Features',
+    overview: 'tuning.title.overview',
+    powertrain: 'tuning.title.powertrain',
+    transmission: 'tuning.title.transmission',
+    brakes: 'tuning.title.brakes',
+    suspension: 'tuning.title.suspension',
+    turbo: 'tuning.title.turbo',
+    handling: 'tuning.title.handling',
+    exhaust: 'tuning.title.exhaust',
+    bodykit: 'tuning.title.bodykit',
+    lighting: 'tuning.title.lighting',
+    wheels: 'tuning.title.wheels',
+    visual: 'tuning.title.visual',
+    dyno: 'tuning.title.dyno',
+    special: 'tuning.title.special',
 };
 
 const BODYKIT_SLOTS = [
@@ -1990,12 +1990,12 @@ function renderCategories() {
         const hasMod = categoryHasChanges(cat.id);
         const modDot = hasMod ? '<span class="modified-dot" title="Pending changes in this category"></span>' : '';
 
-        btn.innerHTML = `<i class="${cat.icon}"></i> <span>${cat.label}</span>${modDot}`;
+        btn.innerHTML = `<i class="${cat.icon}"></i> <span>${I18n.t(cat.labelKey)}</span>${modDot}`;
         btn.addEventListener('click', () => {
             activeTab = cat.id;
             activePartId = null;
             post('tuningFocusPart', { part: cat.id });
-            if (tunePartsTitle) tunePartsTitle.textContent = categoryTitles[cat.id] || cat.label;
+            if (tunePartsTitle) tunePartsTitle.textContent = I18n.t(categoryTitles[cat.id] || cat.labelKey);
             renderCategories();
             renderPartList();
             renderDetailPanel();
@@ -2005,7 +2005,7 @@ function renderCategories() {
 }
 
 function renderAll() {
-    if (tunePartsTitle) tunePartsTitle.textContent = categoryTitles[activeTab] || 'Upgrades';
+    if (tunePartsTitle) tunePartsTitle.textContent = I18n.t(categoryTitles[activeTab] || 'tuning.title.overview');
     updateStatusBanner();
     renderCategories();
     renderPartList();
@@ -2013,6 +2013,10 @@ function renderAll() {
     renderStatsPanel();
     updateInstallButton();
 }
+
+window.addEventListener('sunset:localeChanged', () => {
+    if (app && !app.classList.contains('hidden')) renderAll();
+});
 
 if (btnCancel) btnCancel.addEventListener('click', () => post('tuningClose'));
 if (btnSave) {
