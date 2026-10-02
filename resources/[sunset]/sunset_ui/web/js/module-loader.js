@@ -53,7 +53,7 @@
         },
         menu: {
             html: 'modules/menu/index.html',
-            css: ['css/menu.css', 'css/premium-menu.css', 'css/premium-vehicle-menu.css'],
+            css: ['css/menu.css', 'css/premium-vehicle-menu.css'],
             js: ['js/menu.js']
         },
         phone: {

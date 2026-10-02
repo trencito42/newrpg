@@ -2,22 +2,8 @@
         <div class="menu-wrap">
             <div class="menu-level-alert hidden" id="menu-level-alert" role="alert"></div>
 
-            <div class="menu-top-nav">
-                <header class="menu-brand">
-                    <!-- i18n-ignore: product brand --><div><span data-i18n="ui.menu.blaze"></span> <span><span data-i18n="ui.menu.mp"></span></span></div>
-                </header>
-                <nav class="menu-tabs" id="menu-tabs" aria-label="Player menu sections" data-i18n-aria="menu.nav.label">
-                    <button type="button" class="menu-tab is-active" data-tab="player" data-i18n="menu.tab.player">PLAYER</button>
-                    <button type="button" class="menu-tab" data-tab="vehicle" data-i18n="menu.tab.vehicle">VEHICLE</button>
-                    <button type="button" class="menu-tab" data-tab="job" data-i18n="menu.tab.job">JOB</button>
-                    <button type="button" class="menu-tab" data-tab="property" data-i18n="menu.tab.property">PROPERTY</button>
-                    <button type="button" class="menu-tab" data-tab="settings" data-i18n="menu.tab.settings">CONFIG</button>
-                </nav>
-                <button type="button" class="menu-close-btn" id="menu-close-btn" aria-label="Close menu" data-i18n-aria="menu.close"><span class="menu-keycap"><span data-i18n="ui.menu.esc"></span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </div>
-
             <div class="menu-body">
-            <aside class="menu-profile tech-panel" aria-label="Character summary" data-i18n-aria="menu.profile.label">
+            <aside class="menu-profile" aria-label="Character summary" data-i18n-aria="menu.profile.label">
                 <div class="menu-profile-card">
                     <div class="menu-avatar" id="menu-avatar" aria-hidden="true"></div>
                     <div class="menu-profile-info">
@@ -28,6 +14,14 @@
                         <span id="menu-rank" class="hidden" aria-hidden="true"></span>
                     </div>
                 </div>
+                <nav class="menu-tabs" id="menu-tabs" aria-label="Player menu sections" data-i18n-aria="menu.nav.label">
+                    <button type="button" class="menu-tab is-active" data-tab="player"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 3l9 7v11H3zM9 21v-7h6v7"/></svg><span data-i18n="menu.tab.player">PLAYER</span></button>
+                    <button type="button" class="menu-tab" data-tab="vehicle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 3 13l2-6h14l2 6-2 3M5 16h14M5 16v3H3v-6h18v6h-2v-3M7 11h.01M17 11h.01"/></svg><span data-i18n="menu.tab.vehicle">VEHICLE</span></button>
+                    <button type="button" class="menu-tab" data-tab="job"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="1"/><path d="M8 7V4h8v3M3 13h18"/></svg><span data-i18n="menu.tab.job">JOB</span></button>
+                    <button type="button" class="menu-tab" data-tab="statistics"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V7M16 20V3M22 20V10"/></svg><span data-i18n="menu.action.statistics">STATISTICS</span></button>
+                    <button type="button" class="menu-tab" data-tab="property"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V9l9-6 9 6v12zM9 21v-8h6v8"/></svg><span data-i18n="menu.tab.property">PROPERTY</span></button>
+                    <button type="button" class="menu-tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg><span data-i18n="menu.tab.settings">CONFIG</span></button>
+                </nav>
 
                 <div class="menu-xp">
                     <!-- i18n-ignore: values are populated by menu.js --><div class="menu-xp__row"><span id="menu-level"><span data-i18n="ui.menu.level_1"></span></span><span id="menu-xp-text"><span data-i18n="ui.menu.0_4_rp"></span></span></div>
@@ -35,29 +29,19 @@
                 </div>
                 <button type="button" class="menu-profile-level-up" id="menu-profile-buy-level" data-action="buy_level"><span data-i18n="menu.profile.buy_level">BUY NEXT LEVEL</span><small data-i18n="menu.profile.buy_level_hint">RP AND MONEY REQUIRED</small></button>
 
-                <div class="menu-eco-grid">
-                    <div class="menu-eco-card menu-eco-card--cash">
-                        <div class="menu-eco-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg></div>
-                        <div class="menu-eco-details"><span class="menu-eco-label" data-i18n="menu.money.cash">Cash Wallet</span><strong class="menu-eco-val is-good" id="menu-cash">$0</strong></div>
-                    </div>
-                    <div class="menu-eco-card menu-eco-card--bank">
-                        <div class="menu-eco-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
-                        <div class="menu-eco-details"><span class="menu-eco-label" data-i18n="menu.money.bank">Bank Account</span><strong class="menu-eco-val" id="menu-bank">$0</strong></div>
-                    </div>
-                    <div class="menu-eco-card menu-eco-card--coin">
-                        <div class="menu-eco-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-                        <div class="menu-eco-details"><span class="menu-eco-label" data-i18n="menu.money.points">Racket Points</span><strong class="menu-eco-val is-accent" id="menu-premium">0</strong></div>
-                    </div>
-                    <div class="menu-eco-card menu-eco-card--time">
-                        <div class="menu-eco-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-                        <div class="menu-eco-details"><span class="menu-eco-label" data-i18n="menu.playtime">Playtime</span><strong class="menu-eco-val" id="menu-playtime"><span data-i18n="ui.menu.0h_0m"></span></strong></div>
-                    </div>
-                </div>
                 <span id="menu-lastlogin" class="hidden" aria-hidden="true"></span>
+                <button type="button" class="menu-close-btn" id="menu-close-btn" aria-label="Close menu" data-i18n-aria="menu.close"><span class="menu-keycap"><span data-i18n="ui.menu.esc"></span></span><span data-i18n="menu.close">Close menu</span></button>
             </aside>
 
             <main class="menu-panels">
-                <section class="menu-panel-view tech-panel is-active" data-panel="player">
+                <section class="menu-panel-view is-active" data-panel="player">
+                    <h2 class="menu-page-title" data-i18n="menu.tab.player">PLAYER</h2>
+                    <div class="menu-eco-grid">
+                        <div class="menu-eco-card menu-eco-card--cash"><span class="menu-eco-label" data-i18n="menu.money.cash">Cash Wallet</span><strong class="menu-eco-val is-accent" id="menu-cash">$0</strong></div>
+                        <div class="menu-eco-card menu-eco-card--bank"><span class="menu-eco-label" data-i18n="menu.money.bank">Bank Account</span><strong class="menu-eco-val" id="menu-bank">$0</strong></div>
+                        <div class="menu-eco-card menu-eco-card--coin"><span class="menu-eco-label" data-i18n="menu.money.points">Racket Points</span><strong class="menu-eco-val is-accent" id="menu-premium">0</strong></div>
+                        <div class="menu-eco-card menu-eco-card--time"><span class="menu-eco-label" data-i18n="menu.playtime">Playtime</span><strong class="menu-eco-val" id="menu-playtime"><span data-i18n="ui.menu.0h_0m"></span></strong></div>
+                    </div>
                     <h3 class="menu-section-title" data-i18n="menu.player.vitals">Character Vitals</h3>
                     <div class="menu-vitals">
                         <div class="menu-vital menu-vital--health">
@@ -96,18 +80,18 @@
                     </div>
                 </section>
 
-                <section class="menu-panel-view tech-panel" data-panel="vehicle">
+                <section class="menu-panel-view" data-panel="vehicle">
                     <div class="menu-mgmt menu-mgmt--vehicles"><div id="menu-vehicle-grid"></div></div>
                 </section>
-                <section class="menu-panel-view tech-panel" data-panel="job">
+                <section class="menu-panel-view" data-panel="job">
                     <div class="menu-mgmt"><div class="menu-mgmt__head"><h3 data-i18n="menu.job.title">EMPLOYMENT_</h3><p data-i18n="menu.job.description">Faction membership — join at HQ markers on the map.</p></div><div class="menu-job-layout"><div class="menu-job-card" id="menu-job-card"></div><div class="menu-job-side" id="menu-job-side"></div></div></div>
                 </section>
-                <section class="menu-panel-view tech-panel" data-panel="statistics">
+                <section class="menu-panel-view" data-panel="statistics">
                     <div class="menu-mgmt"><div class="menu-mgmt__head"><h3 data-i18n="menu.stats.title">CHARACTER PROGRESSION_</h3><p data-i18n="menu.stats.description">Persistent server-authoritative RPG statistics.</p></div><div class="menu-stats-grid">
                         <article><span data-i18n="menu.stats.level">LEVEL</span><strong id="menu-stats-level">1</strong><small id="menu-stats-xp"><span data-i18n="ui.menu.0_4_rp"></span></small></article><article><span data-i18n="menu.stats.total_playtime">TOTAL PLAYTIME</span><strong id="menu-stats-playtime"><span data-i18n="ui.menu.0h_0m"></span></strong><small data-i18n="menu.stats.all_sessions">Across all sessions</small></article><article><span data-i18n="menu.stats.current_session">CURRENT SESSION</span><strong id="menu-stats-session"><span data-i18n="ui.menu.0h_0m"></span></strong><small data-i18n="menu.stats.active_time">Active time this login</small></article><article><span data-i18n="menu.stats.created">CHARACTER CREATED</span><strong id="menu-stats-created">—</strong><small id="menu-stats-lastlogin" data-i18n="menu.stats.last_login">Last login —</small></article><article><span data-i18n="menu.stats.paydays">PAYDAYS</span><strong id="menu-stats-paydays">0</strong><small data-i18n="menu.stats.paydays_hint">Each payday awards 1 RP</small></article><article><span data-i18n="menu.stats.job_tasks">JOB TASKS</span><strong id="menu-stats-tasks">0</strong><small data-i18n="menu.stats.completed_objectives">Completed objectives</small></article><article><span data-i18n="menu.stats.earnings">CAREER EARNINGS</span><strong id="menu-stats-earned">$0</strong><small data-i18n="menu.stats.job_rewards">Tracked job rewards</small></article><article><span data-i18n="menu.stats.skill_levels">SKILL LEVELS</span><strong id="menu-stats-skills">0</strong><small data-i18n="menu.stats.combined_levels">Combined career levels</small></article><article><span data-i18n="menu.stats.assets">ASSETS</span><strong id="menu-stats-assets"><span data-i18n="ui.menu.0_vehicles_0_properties"></span></strong><small id="menu-stats-home"><span data-i18n="ui.menu.home_none"></span></small></article>
                     </div><button type="button" class="menu-action menu-stats-buylevel" data-action="buy_level" id="menu-buy-level" data-i18n="menu.profile.buy_level">BUY NEXT LEVEL</button></div>
                 </section>
-                <section class="menu-panel-view tech-panel" data-panel="property">
+                <section class="menu-panel-view" data-panel="property">
                     <div class="menu-mgmt">
                         <div class="menu-mgmt__head">
                             <h3 data-i18n="menu.property.title">REAL ESTATE_</h3>
@@ -121,7 +105,7 @@
                         <button type="button" class="menu-job-btn" id="menu-property-browse" data-i18n="menu.property.browse">Browse all properties</button>
                     </div>
                 </section>
-                <section class="menu-panel-view tech-panel" data-panel="settings">
+                <section class="menu-panel-view" data-panel="settings">
                     <div class="menu-config">
                         <h3 class="menu-config__title" data-i18n="menu.settings.title">SYSTEM CONFIG_</h3>
                         <p class="menu-config__lead" data-i18n="menu.settings.lead">Interface preferences — changes apply immediately.</p>

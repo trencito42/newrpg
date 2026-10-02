@@ -69,6 +69,7 @@ const Menu = {
         this.activeTab = tab;
         $$('.menu-tab').forEach((el) => el.classList.toggle('is-active', el.dataset.tab === tab));
         $$('.menu-panel-view').forEach((el) => el.classList.toggle('is-active', el.dataset.panel === tab));
+        $('#menu')?.classList.toggle('menu--vehicle-active', tab === 'vehicle');
         if (tab === 'settings' && window.ChatSettings) {
             ChatSettings.init();
             ChatSettings.syncControls();
@@ -707,21 +708,11 @@ const Menu = {
     show(data) {
         this.init();
         const menu = $('#menu');
-        menu.classList.remove('menu--solo-vehicle', 'menu--solo-inventory');
+        menu.classList.remove('menu--solo-vehicle', 'menu--solo-inventory', 'menu--vehicle-active');
         if (data?.soloMode) {
             menu.classList.add(`menu--solo-${data.soloMode}`);
         }
         this.soloMode = data?.soloMode || null;
-
-        const brandTitle = $('.menu-brand > div');
-        if (brandTitle) {
-            if (!this._brandHtml) this._brandHtml = brandTitle.innerHTML;
-            if (this.soloMode === 'vehicle') {
-                brandTitle.innerHTML = this.t('menu.vehicle.solo_brand');
-            } else {
-                brandTitle.innerHTML = this._brandHtml;
-            }
-        }
 
         const closeBtn = $('#menu-close-btn');
         if (closeBtn) {
@@ -742,12 +733,9 @@ const Menu = {
     hide() {
         const menu = $('#menu');
         menu.classList.add('hidden');
-        menu.classList.remove('menu--solo-vehicle', 'menu--solo-inventory');
+        menu.classList.remove('menu--solo-vehicle', 'menu--solo-inventory', 'menu--vehicle-active');
         this.soloMode = null;
         this._vehicleSnapKey = null;
-
-        const brandTitle = $('.menu-brand > div');
-        if (brandTitle && this._brandHtml) brandTitle.innerHTML = this._brandHtml;
 
         const closeBtn = $('#menu-close-btn');
         if (closeBtn && this._closeHtml) closeBtn.innerHTML = this._closeHtml;

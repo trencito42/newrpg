@@ -14,8 +14,7 @@
     pointer-events: none;
 }
 
-#menu.menu--solo-vehicle .menu-level-alert,
-#menu.menu--solo-vehicle .menu-top-nav {
+#menu.menu--solo-vehicle .menu-level-alert {
     display: none !important;
 }
 
