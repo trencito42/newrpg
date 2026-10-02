@@ -165,6 +165,15 @@ RegisterNUICallback('authVisibleRendered', function(data, cb)
     cb('ok')
 end)
 
+-- sunset_ui NUI page re-initialises after ShutdownLoadingScreen (bootEpoch fires
+-- → sunset:ui:ready). FiveM resets NUI cursor state on page reinit, so re-assert.
+AddEventHandler('sunset:ui:ready', function()
+    if authOpen then
+        authFocus(true, true)
+        SetNuiFocus(true, true)
+    end
+end)
+
 -- [CLIENT_PERF_ENTITY_AUDIT] Release NUI focus on resource stop/restart.
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
