@@ -181,6 +181,20 @@ RegisterNUICallback('authVisibleRendered', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('authMouseProbeResult', function(data, cb)
+    data = type(data) == 'table' and data or {}
+    print(('[AUTH MOUSE] moves=%s downs=%s clicks=%s target=%s visible=%s active=%s cssCursor=%s visibility=%s'):format(
+        tostring(data.moves), tostring(data.downs), tostring(data.clicks), tostring(data.lastTarget),
+        tostring(data.visible), tostring(data.activeElement), tostring(data.cursor), tostring(data.visibility)))
+    cb('ok')
+end)
+
+RegisterCommand('authmouse', function()
+    print(('[AUTH MOUSE] open=%s rendered=%s focused=%s keepInput=%s (move mouse before running this)'):format(
+        tostring(authOpen), tostring(authVisibleRendered), tostring(IsNuiFocused()), tostring(IsNuiFocusKeepingInput())))
+    send('authMouseProbe')
+end, false)
+
 AddEventHandler('sunset:auth_ui:reassertFocus', function()
     reassertAuthFocus()
 end)

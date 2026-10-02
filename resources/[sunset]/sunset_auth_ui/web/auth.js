@@ -3,6 +3,16 @@
    Quick Login / saved accounts removed by design. */
 
 const $ = (sel) => document.querySelector(sel);
+const authMouseProbe = { moves: 0, downs: 0, clicks: 0, lastTarget: 'none' };
+document.addEventListener('pointermove', (event) => {
+    authMouseProbe.moves += 1;
+    authMouseProbe.lastTarget = event.target?.id || event.target?.tagName || 'unknown';
+}, { passive: true });
+document.addEventListener('pointerdown', (event) => {
+    authMouseProbe.downs += 1;
+    authMouseProbe.lastTarget = event.target?.id || event.target?.tagName || 'unknown';
+}, { passive: true });
+document.addEventListener('click', () => { authMouseProbe.clicks += 1; }, { passive: true });
 function tr(key, params, fallback) {
     try {
         if (window.I18n?.t) {
@@ -263,6 +273,15 @@ window.addEventListener('message', (event) => {
     const payload = data.data || {};
 
     switch (action) {
+        case 'authMouseProbe':
+            post('authMouseProbeResult', {
+                ...authMouseProbe,
+                visible: $('#auth-screen')?.classList.contains('is-visible') === true,
+                activeElement: document.activeElement?.id || document.activeElement?.tagName || 'none',
+                cursor: getComputedStyle(document.body).cursor,
+                visibility: document.visibilityState,
+            });
+            break;
         case 'authShow':
             document.body.style.background = '';
             AuthUI.show(payload);
