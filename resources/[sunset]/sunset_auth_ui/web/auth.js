@@ -4,22 +4,13 @@
 
 const $ = (sel) => document.querySelector(sel);
 const authMouseProbe = { moves: 0, downs: 0, clicks: 0, lastTarget: 'none' };
-function positionAuthCursor(event) {
-    if (!document.body.classList.contains('auth-cursor-active')) return;
-    const cursor = $('#auth-visual-cursor');
-    if (!cursor) return;
-    cursor.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
-    cursor.classList.add('has-position');
-}
 document.addEventListener('pointermove', (event) => {
     authMouseProbe.moves += 1;
     authMouseProbe.lastTarget = event.target?.id || event.target?.tagName || 'unknown';
-    positionAuthCursor(event);
 }, { passive: true });
 document.addEventListener('pointerdown', (event) => {
     authMouseProbe.downs += 1;
     authMouseProbe.lastTarget = event.target?.id || event.target?.tagName || 'unknown';
-    positionAuthCursor(event);
 }, { passive: true });
 document.addEventListener('click', () => { authMouseProbe.clicks += 1; }, { passive: true });
 function tr(key, params, fallback) {
@@ -118,7 +109,6 @@ const AuthUI = {
             screen.classList.add('is-visible');
             screen.setAttribute('aria-hidden', 'false');
         }
-        document.body.classList.add('auth-cursor-active');
         const panel = $('#auth-panel');
         if (panel) panel.classList.add('active');
         this.switchMode('login');
@@ -140,8 +130,6 @@ const AuthUI = {
 
     hide() {
         this.visibleGeneration += 1;
-        document.body.classList.remove('auth-cursor-active');
-        $('#auth-visual-cursor')?.classList.remove('has-position');
         const screen = $('#auth-screen');
         if (screen) {
             screen.classList.remove('is-visible');

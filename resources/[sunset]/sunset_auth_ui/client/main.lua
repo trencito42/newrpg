@@ -13,6 +13,7 @@ local authBootEpoch = 0
 local authPresentationId = 0
 local lastShowPayload = nil
 local hudHideThread = nil
+local nativeFocusRefreshId = 0
 
 -- Suppress native GTA HUD (minimap, ammo, etc.) every frame while auth is open.
 local function startHudSuppression()
@@ -84,6 +85,23 @@ local function reassertAuthFocus()
 end
 exports('ReassertFocus', reassertAuthFocus)
 
+-- FiveM only calls GiveFocus when its per-resource focus/cursor votes change.
+-- ShutdownLoadingScreenNui can leave the visible cursor out of sync with those
+-- votes, so repeating SetNuiFocus(true, true) is a no-op. Force an actual
+-- off -> on transition after the loadscreen has closed.
+local function refreshAuthNativeCursor()
+    if not authOpen then return false end
+    nativeFocusRefreshId = nativeFocusRefreshId + 1
+    local refreshId = nativeFocusRefreshId
+    applyAuthNativeFocus(false, false)
+    CreateThread(function()
+        Wait(0)
+        if not authOpen or refreshId ~= nativeFocusRefreshId then return end
+        reassertAuthFocus()
+    end)
+    return true
+end
+
 local function send(action, data)
     SendNUIMessage({ action = action, data = data or {} })
 end
@@ -111,6 +129,7 @@ end)
 
 exports('Hide', function()
     authOpen = false
+    nativeFocusRefreshId = nativeFocusRefreshId + 1
     authVisibleRendered = false
     lastShowPayload = nil
     authFocus(false, false)
@@ -196,7 +215,7 @@ RegisterCommand('authmouse', function()
 end, false)
 
 AddEventHandler('sunset:auth_ui:reassertFocus', function()
-    reassertAuthFocus()
+    refreshAuthNativeCursor()
 end)
 
 RegisterCommand('authfocus', function()
@@ -209,8 +228,8 @@ RegisterCommand('authfocus', function()
         GetCurrentResourceName(), tostring(authOpen), tostring(authVisibleRendered), owner,
         tostring(IsNuiFocused()), tostring(IsNuiFocusKeepingInput())))
     if authOpen then
-        reassertAuthFocus()
-        print(('[AUTH FOCUS] reasserted in %s focused=%s'):format(GetCurrentResourceName(), tostring(IsNuiFocused())))
+        refreshAuthNativeCursor()
+        print(('[AUTH FOCUS] native cursor refresh queued in %s'):format(GetCurrentResourceName()))
     end
 end, false)
 
