@@ -250,20 +250,37 @@ const Menu = {
         return { cls: 'impound', label: this.t('menu.vehicle.impounded') };
     },
 
-    vmenuTuningList(ecuInfo) {
-        const ecu = ecuInfo || {};
-        if (ecu.stock) {
-            return `<div class="tuning-item" style="color:rgba(255,255,255,0.4)">${this.t('menu.vehicle.no_modifications')}</div>`;
+    vmenuTuningBadges(selected) {
+        const badges = [];
+        const ecu = selected.ecuInfo || {};
+        if (ecu.tuned || (ecu.chips && ecu.chips.length && !ecu.stock)) {
+            const summary = ecu.summary || (ecu.chips && ecu.chips[0]) || 'TUNED';
+            badges.push(`<span class="tune-chip chip-tuned"><i class="ph-bold ph-lightning"></i> ${this.escape(summary)}</span>`);
+        } else if (ecu.stock) {
+            badges.push(`<span class="tune-chip chip-stock"><i class="ph-bold ph-check"></i> ECU FACTORY</span>`);
         }
-        const lines = (ecu.lines || []).slice(0, 6);
-        if (!lines.length) {
-            const chips = (ecu.chips || []).slice(0, 6);
-            if (!chips.length) {
-                return `<div class="tuning-item">ECU: <span>${this.escape(ecu.summary || this.t('menu.vehicle.custom_map'))}</span></div>`;
-            }
-            return chips.map((chip) => `<div class="tuning-item">Chip: <span>${this.escape(chip)}</span></div>`).join('');
+
+        const mods = selected.mods || {};
+        if (mods.turbo === 1 || mods.turbo === true) {
+            badges.push(`<span class="tune-chip chip-turbo"><i class="ph-bold ph-wind"></i> TURBO</span>`);
         }
-        return lines.map((line) => `<div class="tuning-item">${this.escape(line.label || 'Mod')}: <span>${this.escape(line.value || '—')}</span></div>`).join('');
+        if (mods.engine != null && Number(mods.engine) >= 0) {
+            badges.push(`<span class="tune-chip"><i class="ph-bold ph-engine"></i> MOTOR STG ${Number(mods.engine) + 1}</span>`);
+        }
+        if (mods.brakes != null && Number(mods.brakes) >= 0) {
+            badges.push(`<span class="tune-chip"><i class="ph-bold ph-circle-dashed"></i> FRÂNE STG ${Number(mods.brakes) + 1}</span>`);
+        }
+        if (mods.transmission != null && Number(mods.transmission) >= 0) {
+            badges.push(`<span class="tune-chip"><i class="ph-bold ph-gear-six"></i> CUTIE STG ${Number(mods.transmission) + 1}</span>`);
+        }
+        if (mods.suspension != null && Number(mods.suspension) >= 0) {
+            badges.push(`<span class="tune-chip"><i class="ph-bold ph-arrows-down-up"></i> SUSP. STG ${Number(mods.suspension) + 1}</span>`);
+        }
+
+        if (!badges.length) {
+            return `<div class="tune-empty">${this.t('menu.vehicle.no_modifications')}</div>`;
+        }
+        return `<div class="tune-chips-container">${badges.join('')}</div>`;
     },
 
     vehicleSnapshotKey(vehicles, selectedId, openEcuId) {
@@ -271,7 +288,9 @@ const Menu = {
             v.id, v.model, v.displayName, v.plate, v.stored, v.inWorld, v.destroyed,
             v.fuel, v.engine, v.body, v.odometer,
             v.insurancePoints, v.insuranceLevel, v.claimCost, v.renewCost,
+            v.ownershipDays,
             v.isCurrentVehicle, v.garage, v.parked_x, v.parked_y,
+            JSON.stringify(v.mods || null),
             JSON.stringify(v.ecuInfo || null),
         ].join('|'));
         return JSON.stringify({ selectedId, openEcuId, list });
@@ -383,6 +402,7 @@ const Menu = {
         const claimCost = selected.claimCost != null ? Number(selected.claimCost) : 250;
         const renewCost = selected.renewCost != null ? Number(selected.renewCost) : 750;
         const insurancePts = selected.insurancePoints != null ? Number(selected.insurancePoints) : 5;
+        const ownershipDays = selected.ownershipDays != null ? Number(selected.ownershipDays) : 0;
 
         let mainAction = '';
         let gpsAction = `<button type="button" class="btn-action secondary" data-v-action="gps" data-v-plate="${plate}" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-crosshair"></i> GPS</button>`;
@@ -409,6 +429,13 @@ const Menu = {
             mainAction = `<button type="button" class="btn-action" data-v-action="spawn" data-v-id="${Number(selected.id) || 0}"><i class="ph-bold ph-key"></i> ${this.t('menu.vehicle.respawn_here')}</button>`;
         }
 
+        const engineCls = engine < 30 ? 'bad' : (engine < 60 ? 'warn' : 'ok');
+        const bodyCls = body < 30 ? 'bad' : (body < 60 ? 'warn' : 'ok');
+        const fuelCls = fuel < 15 ? 'bad' : (fuel < 35 ? 'warn' : 'ok');
+        const insCls = insurancePts === 0 ? 'bad' : (insurancePts <= 2 ? 'warn' : 'ok');
+        const locCls = status.isDestroyed ? 'bad' : (status.stored ? 'ok' : 'warn');
+        const locText = status.isDestroyed ? 'Confiscat / Daună' : (status.stored ? 'În Garaj' : 'Pe Stradă');
+
         grid.innerHTML = `<div class="v-sidebar">
                 <div class="v-header">
                     <h2 class="vh-title"><i class="ph-bold ph-steering-wheel"></i> ${this.t('menu.vehicle.title')}</h2>
@@ -420,7 +447,6 @@ const Menu = {
                 <div class="v-list">${listHtml || `<div class="vmenu-empty" style="transform:skewX(5deg);border:none;background:transparent"><span>${this.t('common.no_results')}</span></div>`}</div>
             </div>
             <div class="v-details">
-                <i class="ph-fill ph-car-profile vd-watermark"></i>
                 <div class="vd-header">
                     <div class="vd-title-box">
                         <div class="vd-class">${this.escape(selected.vehicleClass || this.t('menu.vehicle.personal'))}</div>
@@ -432,28 +458,72 @@ const Menu = {
                     </div>
                 </div>
                 <div class="vd-body">
-                    <div class="stats-grid" style="display: flex; flex-direction: column; gap: 14px;">
-                        <div class="stat-row">
-                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.engine')}</span> <span>${engine}%</span></div>
-                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${engine}%; background-color: ${engine < 30 ? '#ff3366' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
+                    <div class="vd-bars-box">
+                        <div class="vbar-row">
+                            <div class="vbar-header">
+                                <span class="vbar-title"><i class="ph-bold ph-engine"></i> ${this.t('menu.vehicle.engine')}</span>
+                                <span class="vbar-val ${engineCls}">${engine}%</span>
+                            </div>
+                            <div class="vbar-track"><div class="vbar-fill ${engineCls}" style="width: ${engine}%"></div></div>
                         </div>
-                        <div class="stat-row">
-                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.body')}</span> <span>${body}%</span></div>
-                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${body}%; background-color: ${body < 30 ? '#ff3366' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
+                        <div class="vbar-row">
+                            <div class="vbar-header">
+                                <span class="vbar-title"><i class="ph-bold ph-shield"></i> ${this.t('menu.vehicle.body')}</span>
+                                <span class="vbar-val ${bodyCls}">${body}%</span>
+                            </div>
+                            <div class="vbar-track"><div class="vbar-fill ${bodyCls}" style="width: ${body}%"></div></div>
                         </div>
-                        <div class="stat-row">
-                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.fuel')}</span> <span>${fuel}%</span></div>
-                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${fuel}%; background-color: ${fuel < 20 ? '#D7B558' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
+                        <div class="vbar-row">
+                            <div class="vbar-header">
+                                <span class="vbar-title"><i class="ph-bold ph-gas-pump"></i> ${this.t('menu.vehicle.fuel')}</span>
+                                <span class="vbar-val ${fuelCls}">${fuel}%</span>
+                            </div>
+                            <div class="vbar-track"><div class="vbar-fill ${fuelCls}" style="width: ${fuel}%"></div></div>
                         </div>
                     </div>
-                    <div class="vd-extra-grid">
-                        <div class="vd-card">
-                            <div class="vc-title"><i class="ph-fill ph-gauge"></i> ${this.t('menu.vehicle.odometer')}</div>
-                            <div class="odometer-val">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} KM</div>
+
+                    <div class="vd-spec-grid">
+                        <div class="spec-card">
+                            <div class="spec-card-head">
+                                <i class="ph-bold ph-gauge"></i>
+                                <span>${this.t('menu.vehicle.odometer')} & VECHIME</span>
+                            </div>
+                            <div class="spec-card-main">
+                                <div class="spec-odometer">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span></div>
+                                <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0 ? 'Achiziționat azi' : `Deținut de ${ownershipDays} ${ownershipDays === 1 ? 'zi' : 'zile'}`}</div>
+                            </div>
                         </div>
-                        <div class="vd-card">
-                            <div class="vc-title"><i class="ph-fill ph-cpu"></i> ${this.t('menu.vehicle.tuning')}</div>
-                            <div class="tuning-list">${this.vmenuTuningList(selected.ecuInfo)}</div>
+
+                        <div class="spec-card">
+                            <div class="spec-card-head">
+                                <i class="ph-bold ph-shield-check"></i>
+                                <span>ASIGURARE CASCO</span>
+                            </div>
+                            <div class="spec-card-main">
+                                <div class="spec-insurance ${insCls}">${insurancePts}/5 <span class="spec-unit">Puncte</span></div>
+                                <div class="spec-sub"><i class="ph-bold ph-receipt"></i> Nivel ${selected.insuranceLevel || 1} · Daună: ${formatMoney(claimCost)}</div>
+                            </div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-card-head">
+                                <i class="ph-bold ph-map-pin"></i>
+                                <span>LOCAȚIE & STARE</span>
+                            </div>
+                            <div class="spec-card-main">
+                                <div class="spec-loc truncate">${this.escape(status.label)}</div>
+                                <div class="spec-sub"><span class="spec-status-dot ${locCls}"></span> ${locText}</div>
+                            </div>
+                        </div>
+
+                        <div class="spec-card">
+                            <div class="spec-card-head">
+                                <i class="ph-bold ph-cpu"></i>
+                                <span>${this.t('menu.vehicle.tuning')}</span>
+                            </div>
+                            <div class="spec-card-main spec-tuning-main">
+                                ${this.vmenuTuningBadges(selected)}
+                            </div>
                         </div>
                     </div>
                 </div>

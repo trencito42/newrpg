@@ -130,6 +130,19 @@ local function enrichVehicleRow(row)
         row.ecu = row.ecuInfo.tune
     end
 
+    row.color1 = props.color1
+    row.color2 = props.color2
+    row.customPrimaryColor = props.customPrimaryColor
+    row.customSecondaryColor = props.customSecondaryColor
+    row.pearlescentColor = props.pearlescentColor
+    row.mods = {
+        engine = props.modEngine,
+        brakes = props.modBrakes,
+        transmission = props.modTransmission,
+        suspension = props.modSuspension,
+        turbo = props.modTurbo,
+    }
+
     local model = (row.model or ''):lower()
     local insuranceCost = calculateVehicleInsuranceCost(model, row.insurance_cost)
     row.insuranceCost = insuranceCost
@@ -138,6 +151,22 @@ local function enrichVehicleRow(row)
     row.destroyed = (row.destroyed == 1 or row.destroyed == true or row.destroyed == '1')
     row.claimCost = math.floor(insuranceCost * row.insuranceLevel)
     row.renewCost = math.floor(insuranceCost * 3)
+
+    local createdTs = tonumber(row.created_ts) or tonumber(row.created_at)
+    if not createdTs and type(row.created_at) == 'string' then
+        local y, m, d, h, min, s = row.created_at:match("(%d+)-(%d+)-(%d+)%s+(%d+):(%d+):(%d+)")
+        if y and m and d then
+            pcall(function()
+                createdTs = os.time({ year = tonumber(y), month = tonumber(m), day = tonumber(d), hour = tonumber(h or 0), min = tonumber(min or 0), sec = tonumber(s or 0) })
+            end)
+        end
+    end
+
+    if createdTs and createdTs > 0 then
+        row.ownershipDays = math.max(0, math.floor((os.time() - createdTs) / 86400))
+    else
+        row.ownershipDays = 0
+    end
     return row
 end
 
@@ -235,7 +264,7 @@ exports.sunset_core:RegisterCallback('sunset:getVehicles', function(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return {} end
     local rows = MySQL.query.await(
-        'SELECT id, plate, model, fuel, engine, body, stored, garage, parked_x, parked_y, parked_z, parked_h, props, insurance_points, insurance_level, destroyed, insurance_cost FROM vehicles WHERE character_id = ?',
+        'SELECT id, plate, model, fuel, engine, body, stored, garage, parked_x, parked_y, parked_z, parked_h, props, insurance_points, insurance_level, destroyed, insurance_cost, UNIX_TIMESTAMP(created_at) AS created_ts, created_at FROM vehicles WHERE character_id = ?',
         { char.id }
     ) or {}
     return enrichVehicleList(rows)
