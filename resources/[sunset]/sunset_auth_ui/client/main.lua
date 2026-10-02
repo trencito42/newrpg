@@ -11,25 +11,43 @@ local authDomReady = false
 local authVisibleRendered = false
 local authBootEpoch = 0
 local authPresentationId = 0
+local lastShowPayload = nil
 
 -- [NUI FOCUS] Register the auth screen as focus owner 'auth' in the central
--- manager so no other resource can silently steal/release the login cursor,
--- and so the auth release cannot clobber a newer owner (spawn/character UI).
+-- manager so no other resource can silently steal/release the login cursor.
+-- During pre-login auth is authoritative: if a stale owner survived the
+-- loadscreen handoff, clear that stale owner once and reclaim focus as 'auth'.
 local function authFocus(hasFocus, hasCursor)
-    -- sunset_ui is a declared dependency. Never bypass its owner guard by
-    -- calling the native directly if it is unavailable during a restart.
     if GetResourceState('sunset_ui') ~= 'started' then
         print('^1[AUTH UI]^7 sunset_ui focus manager unavailable')
         return false
     end
+
     local ok, res = pcall(function()
         return exports.sunset_ui:SetFocus(hasFocus, hasCursor, false, 'auth')
     end)
-    if not ok then
-        print(('^1[AUTH UI]^7 focus manager failed: %s'):format(tostring(res)))
-        return false
+    if ok and res ~= false then
+        return true
     end
-    return res ~= false
+
+    -- A stale pre-login focus owner (commonly entry/handoff) must never leave
+    -- a visible login form without a mouse cursor. Only preempt on focus gain;
+    -- never force-release on focus loss, where a newer UI may legitimately own it.
+    if hasFocus then
+        pcall(function()
+            exports.sunset_ui:SetFocus(false, false, false, 'force')
+        end)
+        local okRetry, retryRes = pcall(function()
+            return exports.sunset_ui:SetFocus(true, hasCursor == true, false, 'auth')
+        end)
+        if okRetry and retryRes ~= false then
+            print('^3[AUTH UI]^7 reclaimed NUI focus from stale owner')
+            return true
+        end
+    end
+
+    print(('^1[AUTH UI]^7 focus manager failed: %s'):format(tostring(res)))
+    return false
 end
 
 local function send(action, data)
@@ -43,14 +61,23 @@ exports('Show', function(screen, data)
     authVisibleRendered = false
     authPresentationId = authPresentationId + 1
     authFocus(true, true)
+
     local payload = type(data) == 'table' and data or {}
     payload.presentationId = authPresentationId
-    send('authShow', payload)
+    lastShowPayload = payload
+
+    -- Messages sent before the NUI document installs its message listener are
+    -- dropped by CEF. Queue the latest presentation and replay it from
+    -- authDomReady instead of repeatedly reopening the form (which caused flicker).
+    if authDomReady then
+        send('authShow', payload)
+    end
 end)
 
 exports('Hide', function()
     authOpen = false
     authVisibleRendered = false
+    lastShowPayload = nil
     authFocus(false, false)
     send('authHide', {})
 end)
@@ -60,13 +87,17 @@ exports('SetFocus', function(hasFocus, hasCursor)
     if not hasFocus then
         authOpen = false
         authVisibleRendered = false
+        lastShowPayload = nil
     end
 end)
 
-exports('IsAuthOpen', function() return authOpen and authVisibleRendered end)
+-- "Open" means the auth flow owns a presentation, not that the browser has
+-- already painted it. IsVisibleRendered remains the separate paint ACK used by
+-- the loadscreen handoff. Keeping these states separate prevents the auth
+-- watchdog from replaying authShow every second on a slow first frame.
+exports('IsAuthOpen', function() return authOpen end)
 exports('IsDomReady', function() return authDomReady end)
 exports('IsVisibleRendered', function() return authVisibleRendered end)
--- Compatibility export: "rendered" now means an actually painted auth surface.
 exports('IsRendered', function() return authVisibleRendered end)
 exports('GetBootEpoch', function() return authBootEpoch end)
 
@@ -92,6 +123,11 @@ end
 RegisterNUICallback('authDomReady', function(data, cb)
     authDomReady = true
     authBootEpoch = GetGameTimer()
+
+    if authOpen and lastShowPayload then
+        send('authShow', lastShowPayload)
+    end
+
     TriggerEvent('sunset:auth:domReady', data)
     cb('ok')
 end)
@@ -111,5 +147,6 @@ AddEventHandler('onResourceStop', function(res)
         authFocus(false, false)
         authOpen = false
         authVisibleRendered = false
+        lastShowPayload = nil
     end
 end)

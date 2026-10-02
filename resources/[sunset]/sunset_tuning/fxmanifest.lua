@@ -10,6 +10,7 @@ ui_page 'web/index.html'
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
+    '@sunset_core/shared/utils.lua',
     'shared/config.lua',
     'shared/vehicle_profiles.lua',
     'shared/profile_resolver.lua',

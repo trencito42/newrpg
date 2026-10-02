@@ -11,6 +11,7 @@ ui_page 'web/index.html'
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
+    '@sunset_core/shared/utils.lua',
     '@sunset_core/shared/profile.lua',
     '@sunset_core/shared/faction_core.lua',
     '@sunset_core/shared/factions.lua',
