@@ -4,12 +4,15 @@ const taskEl = document.getElementById('loading-task');
 const filesEl = document.getElementById('loading-files');
 const tipTextEl = document.getElementById('tip-text');
 const rpmContainer = document.getElementById('rpm-bar');
+const donutRingEl = document.getElementById('donut-ring');
+const DONUT_CIRCUMFERENCE = 339.29; // 2 * π * 54
 
 // The loadscreen runs before account authentication and before normal resources.
 // Use the browser language here; the account locale takes over as soon as sunset_core starts.
 const LOADSCREEN_LOCALES = {
     en: {
-        title: 'SunsetMP — Loading', brand_subtitle: 'Est. 2026 · Los Santos', tips_header: 'Server Tips', // i18n-ignore: dictionary
+        title: 'Racket RPG — Loading', brand_subtitle: 'Est. 2026 · Los Santos', tips_header: 'Server Tips', // i18n-ignore: dictionary
+        discord_header: 'Community', discord_desc: 'Connect with the community',
         initializing_session: 'Initializing session...', entering_session: 'Entering session...',
         loading_assets: 'Loading game assets...', downloading_files: 'Downloading {count} files...',
         initializing_resources: 'Initializing resources...', preparing_world: 'Preparing world...',
@@ -21,7 +24,8 @@ const LOADSCREEN_LOCALES = {
         tip_4: 'Need help? Use /report and describe the issue clearly.',
     },
     ro: {
-        title: 'SunsetMP — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server', // i18n-ignore: dictionary
+        title: 'Racket RPG — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server', // i18n-ignore: dictionary
+        discord_header: 'Comunitate', discord_desc: 'Alătură-te comunității',
         initializing_session: 'Se inițializează sesiunea...', entering_session: 'Se intră în sesiune...',
         loading_assets: 'Se încarcă fișierele jocului...', downloading_files: 'Se descarcă {count} fișiere...',
         initializing_resources: 'Se inițializează resursele...', preparing_world: 'Se pregătește lumea...',
@@ -170,6 +174,7 @@ function renderProgress(pct, task) {
     if (Math.floor(displayedPct) !== oldWholePct) {
         pctEl.innerHTML = `${Math.floor(displayedPct)}<span>%</span>`;
         updateRpmBar(displayedPct);
+        if (donutRingEl) donutRingEl.style.strokeDashoffset = (DONUT_CIRCUMFERENCE * (1 - displayedPct / 100)).toFixed(2);
     }
     if (task && taskEl.textContent !== task) taskEl.textContent = task;
     if (filesEl.textContent) filesEl.textContent = '';
