@@ -92,8 +92,8 @@ const AuthUI = {
     async show(data = {}) {
         if (data.locale && window.I18n) window.I18n.setLocale(data.locale);
         const generation = ++this.visibleGeneration;
-        await this.waitForBackground();
-        if (generation !== this.visibleGeneration) return;
+        // Show and enable pointer-events immediately so the form is clickable
+        // the moment the NUI message arrives — don't block on background decode.
         const screen = $('#auth-screen');
         if (screen) {
             screen.classList.add('is-visible');
@@ -103,6 +103,9 @@ const AuthUI = {
         if (panel) panel.classList.add('active');
         this.switchMode('login');
         this.showLoading(false);
+        // Preload background in the background after showing the form
+        this.waitForBackground().catch(() => {});
+        if (generation !== this.visibleGeneration) return;
         requestAnimationFrame(() => requestAnimationFrame(() => {
             if (generation !== this.visibleGeneration || !screen?.classList.contains('is-visible')) return;
             post('authVisibleRendered', { now: Date.now(), presentation: data.presentation || 'form', presentationId: data.presentationId });
