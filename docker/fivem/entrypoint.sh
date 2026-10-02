@@ -55,6 +55,7 @@ if [ -f /config-mount/server.cfg.template ]; then
     esac
     printf '%s\n' "$line"
   done < /config-mount/server.cfg.template > /config/server.cfg
+  cp -f /config-mount/*.png /config/ 2>/dev/null || true
   echo "[sunsetmp] server.cfg generated"
 fi
 

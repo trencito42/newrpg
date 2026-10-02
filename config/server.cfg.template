@@ -19,6 +19,7 @@ sets locale "en-US"
 
 sv_maxclients 48
 sv_enforceGameBuild 3751 # mp2025_02 — A Safehouse in the Hills
+load_server_icon "fivem.png"
 
 sv_licenseKey "__LICENSE_KEY__"
 set mysql_connection_string "__MYSQL_CONNECTION_STRING__"
