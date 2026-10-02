@@ -63,6 +63,8 @@ local ECON_REASON_WHITELIST = {
     -- jobs & activities (dynamic 'job_<id>' covered by prefix below)
     carjack_sale = true, fire_incident = true,
     fish_sell_247 = true, fish_sell_legacy = true,
+    street_drug_sale = true, drug_wholesale_delivery = true,
+    busdriver_fare = true, busdriver_route_bonus = true, busdriver_stop = true,
     -- dice / gambling
     dice_win = true, dice_refund = true,
     -- commerce refunds
@@ -88,8 +90,9 @@ local ECON_REASON_WHITELIST = {
 
 -- Prefix whitelist for dynamic reasons ('job_<id>', 'quest_<key>', ...).
 local ECON_REASON_PREFIXES = {
-    'job_', 'quest_',
+    'job_', 'quest_', 'drug_', 'busdriver_',
 }
+
 
 local function reasonWhitelisted(reason)
     reason = tostring(reason or '')

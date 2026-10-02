@@ -390,10 +390,8 @@ local deliveryBlips = {}
 
 -- ── Spawn Delivery Dealer NPCs & Create Blips ────────────────
 CreateThread(function()
-    Sunset.AwaitGameReady()
-
+    -- Initialize map blips immediately
     for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
-        -- 1. Create Blip
         local blip = Sunset.CreateSafeBlip(vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z), {
             sprite = 514,
             color = 27,
@@ -402,25 +400,54 @@ CreateThread(function()
             shortRange = true,
         })
         if blip then table.insert(deliveryBlips, blip) end
+    end
 
-        -- 2. Spawn NPC
-        local ok, model = Sunset.RequestModelSafe(dropoff.pedModel or 'g_m_y_famca_02', 5000)
-        if ok then
-            local ped = CreatePed(4, model,
-                dropoff.coords.x, dropoff.coords.y, dropoff.coords.z - 1.0, dropoff.coords.w,
-                false, true)
-            if ped and ped ~= 0 and DoesEntityExist(ped) then
-                SetEntityAsMissionEntity(ped, true, true)
-                FreezeEntityPosition(ped, true)
-                SetEntityInvincible(ped, true)
-                SetBlockingOfNonTemporaryEvents(ped, true)
-                if dropoff.scenario then
-                    TaskStartScenarioInPlace(ped, dropoff.scenario, 0, true)
+    -- Persistent NPC Streamer Loop
+    while true do
+        local playerPed = PlayerPedId()
+        local pCoords = GetEntityCoords(playerPed)
+
+        for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
+            local dPos = vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z)
+            local dist = #(pCoords - dPos)
+
+            if dist < 85.0 then
+                if not spawnedDeliveryPeds[dropoff.id] or not DoesEntityExist(spawnedDeliveryPeds[dropoff.id]) then
+                    local modelHash = joaat(dropoff.pedModel or 'g_m_y_famca_02')
+                    RequestModel(modelHash)
+                    local timeout = GetGameTimer() + 3000
+                    while not HasModelLoaded(modelHash) and GetGameTimer() < timeout do
+                        Wait(50)
+                    end
+
+                    if HasModelLoaded(modelHash) then
+                        local ped = CreatePed(4, modelHash,
+                            dropoff.coords.x, dropoff.coords.y, dropoff.coords.z - 0.98, dropoff.coords.w,
+                            false, true)
+                        if ped and ped ~= 0 and DoesEntityExist(ped) then
+                            SetPedDefaultComponentVariation(ped)
+                            SetEntityHeading(ped, dropoff.coords.w or 0.0)
+                            SetEntityAsMissionEntity(ped, true, true)
+                            FreezeEntityPosition(ped, true)
+                            SetEntityInvincible(ped, true)
+                            SetBlockingOfNonTemporaryEvents(ped, true)
+                            if dropoff.scenario then
+                                TaskStartScenarioInPlace(ped, dropoff.scenario, 0, true)
+                            end
+                            spawnedDeliveryPeds[dropoff.id] = ped
+                        end
+                        SetModelAsNoLongerNeeded(modelHash)
+                    end
                 end
-                spawnedDeliveryPeds[dropoff.id] = ped
+            elseif dist > 120.0 then
+                if spawnedDeliveryPeds[dropoff.id] and DoesEntityExist(spawnedDeliveryPeds[dropoff.id]) then
+                    DeleteEntity(spawnedDeliveryPeds[dropoff.id])
+                    spawnedDeliveryPeds[dropoff.id] = nil
+                end
             end
-            SetModelAsNoLongerNeeded(model)
         end
+
+        Wait(1500)
     end
 end)
 
@@ -455,7 +482,7 @@ CreateThread(function()
                         SetTextColour(255, 255, 255, 220)
                         SetTextCentre(1)
                         SetTextEntry("STRING")
-                        AddTextComponentString("Apasă ~g~[E]~s~ pentru Livrare En-gros")
+                        AddTextComponentString("Apasă ~g~[E]~s~ pentru Ofertă Livrare En-gros")
                         DrawText(screenX, screenY)
                     end
 
@@ -475,15 +502,26 @@ CreateThread(function()
 end)
 
 function DoWholesaleDelivery(dropoff)
-    -- Play brief handshake/handover animation
-    local playerPed = PlayerPedId()
-    RequestAnimDict("mp_common")
-    while not HasAnimDictLoaded("mp_common") do Wait(10) end
-    TaskPlayAnim(playerPed, "mp_common", "givetake2_a", 2.0, 2.0, 1200, 49, 0, false, false, false)
+    if saleActive then return end
 
-    local res = Sunset.AwaitCallback('sunset:drugs:deliverWholesale', dropoff.id)
-    if not res or not res.success then
-        Notify(res and res.err or 'Livrarea nu a putut fi efectuată.', 'error')
+    local offer, err = Sunset.AwaitCallback('sunset:drugs:requestDeliveryOffer', dropoff.id)
+    if not offer or not offer.token then
+        Notify(err or 'Contactul nu este interesat în acest moment!', 'error')
+        return
     end
+
+    saleActive = true
+    currentSalePed = spawnedDeliveryPeds[dropoff.id]
+
+    -- Open the Street Sale UI Modal (racket_street_sale.html)
+    exports.sunset_ui:Send('openStreetSale', {
+        type = offer.type,
+        qty = offer.qty,
+        price = offer.price,
+        risk = offer.risk,
+        token = offer.token,
+    })
+    exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
+
 

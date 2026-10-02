@@ -391,7 +391,7 @@ end)
 -- 4. WHOLESALE DELIVERY SYSTEM (Locații Livrare Droguri pe Rank)
 -- ═══════════════════════════════════════════════════════════════
 
-exports.sunset_core:RegisterCallback('sunset:drugs:getDeliveryInfo', function(source, dropoffId)
+exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', function(source, dropoffId)
     if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end
     local char = exports.sunset_core:GetCharacter(source)
     local playerRank = tonumber(char and char.level) or 1
@@ -406,135 +406,70 @@ exports.sunset_core:RegisterCallback('sunset:drugs:getDeliveryInfo', function(so
 
     if not dropoff then return nil, { err = 'Punct de livrare invalid!' } end
 
-    -- Gather player's processed drugs
-    local inventoryDrugs = {}
-    local totalUnits = 0
-    local estimatedTotal = 0
-    local bonusPct = dropoff.bonusPct or 0.0
-
-    for drugKey, dInfo in pairs(Cfg.streetSale.drugs) do
-        local count = exports.sunset_inventory:CountItem(source, dInfo.item) or 0
-        if count > 0 then
-            local unitPrice = math.floor(dInfo.basePrice * (1.0 + bonusPct))
-            local subtotal = unitPrice * count
-            table.insert(inventoryDrugs, {
-                item = dInfo.item,
-                label = dInfo.label,
-                count = count,
-                unitPrice = unitPrice,
-                subtotal = subtotal,
-            })
-            totalUnits = totalUnits + count
-            estimatedTotal = estimatedTotal + subtotal
-        end
-    end
-
-    return {
-        playerRank = playerRank,
-        dropoff = dropoff,
-        inventoryDrugs = inventoryDrugs,
-        totalUnits = totalUnits,
-        estimatedTotal = estimatedTotal,
-    }
-end)
-
-exports.sunset_core:RegisterCallback('sunset:drugs:deliverWholesale', function(source, dropoffId)
-    if not hasChar(source) then return { success = false, err = 'No character' } end
-    local char = exports.sunset_core:GetCharacter(source)
-    local playerRank = tonumber(char and char.level) or 1
-
-    local dropoff = nil
-    for _, d in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
-        if d.id == dropoffId then
-            dropoff = d
-            break
-        end
-    end
-
-    if not dropoff then
-        return { success = false, err = 'Punct de livrare invalid!' }
-    end
-
     -- Distance check
     local coords = pedCoords(source)
     local targetCoords = vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z)
-    if not coords or #(coords - targetCoords) > ((Cfg.delivery.interactionRadius or 2.5) + 3.0) then
-        return { success = false, err = 'Ești prea departe de dealerul de livrare!' }
+    if not coords or #(coords - targetCoords) > ((Cfg.delivery.interactionRadius or 2.5) + 5.0) then
+        return nil, { err = 'Ești prea departe de contactul de livrare!' }
     end
 
-    -- Strict Rank validation
-    if playerRank < dropoff.minRank or (dropoff.maxRank and playerRank > dropoff.maxRank) then
-        local rankStr = (dropoff.maxRank and dropoff.maxRank < 900) and (dropoff.minRank .. ' - ' .. dropoff.maxRank) or (dropoff.minRank .. '+')
-        return { 
-            success = false, 
-            err = ('Acces refuzat! Acest contact acceptă doar livrări de la jucători de Rank %s (Rank-ul tău: %d)'):format(rankStr, playerRank) 
+    -- Rank check: Player must have at least minRank (Rank 13 unlocks ALL spots!)
+    if playerRank < (dropoff.minRank or 1) then
+        return nil, { 
+            err = ('Acces refuzat! Acest contact acceptă livrări începând de la Rank %d+ (Rank-ul tău: %d)'):format(dropoff.minRank, playerRank) 
         }
     end
 
-    -- Scan inventory for sellable items
-    local bonusPct = dropoff.bonusPct or 0.0
-    local itemsToSell = {}
-    local totalPayout = 0
-    local totalCount = 0
-
+    -- Find sellable drugs in player inventory
+    local availableDrugs = {}
     for drugKey, dInfo in pairs(Cfg.streetSale.drugs) do
         local count = exports.sunset_inventory:CountItem(source, dInfo.item) or 0
         if count > 0 then
-            local unitPrice = math.floor(dInfo.basePrice * (1.0 + bonusPct))
-            local subtotal = unitPrice * count
-            table.insert(itemsToSell, {
-                item = dInfo.item,
-                label = dInfo.label,
-                count = count,
-                unitPrice = unitPrice,
-                subtotal = subtotal,
-            })
-            totalPayout = totalPayout + subtotal
-            totalCount = totalCount + count
+            table.insert(availableDrugs, { key = drugKey, info = dInfo, count = count })
         end
     end
 
-    if totalCount == 0 then
-        return { success = false, err = 'Nu ai niciun pachet de droguri procesate în inventar pentru livrare!' }
+    if #availableDrugs == 0 then
+        return nil, { err = 'Nu ai niciun pachet de droguri procesate în inventar pentru livrare!' }
     end
 
-    -- Atomic removal of drugs
-    local removedItems = {}
-    for _, drug in ipairs(itemsToSell) do
-        local ok = exports.sunset_inventory:RemoveItem(source, drug.item, drug.count)
-        if ok then
-            table.insert(removedItems, drug)
-        else
-            -- Rollback removed items if partial failure
-            for _, r in ipairs(removedItems) do
-                exports.sunset_inventory:AddItem(source, r.item, r.count)
-            end
-            return { success = false, err = 'Eroare la procesarea inventarului.' }
-        end
-    end
+    -- Pick the primary drug carried with all available units (bulk delivery)
+    local chosen = availableDrugs[1]
+    local qty = chosen.count
+    local bonusPct = dropoff.bonusPct or 0.0
+    local unitPrice = math.floor(chosen.info.basePrice * (1.0 + bonusPct))
+    local totalPrice = unitPrice * qty
 
-    -- Add money (cash)
-    local addMoneyOk = exports.sunset_core:AddMoney(source, 'cash', totalPayout, 'drug_wholesale_delivery')
-    if not addMoneyOk then
-        -- Rollback
-        for _, r in ipairs(removedItems) do
-            exports.sunset_inventory:AddItem(source, r.item, r.count)
-        end
-        return { success = false, err = 'Eroare la plata recompensei.' }
-    end
+    local risk = (dropoff.id == 3 and 'high') or (dropoff.id == 2 and 'med') or 'low'
 
-    dlog(('Wholesale delivery success src=%d dropoff=%d units=%d payout=$%d (bonus=%.1f%%)'):format(
-        source, dropoffId, totalCount, totalPayout, bonusPct * 100))
+    local token = generateToken()
+    SaleSessions[source] = {
+        token = token,
+        pedNetId = nil,
+        dropoffId = dropoff.id,
+        drugKey = chosen.key,
+        item = chosen.info.item,
+        qty = qty,
+        basePrice = totalPrice,
+        risk = risk,
+        startedAt = GetGameTimer(),
+        isWholesale = true,
+    }
 
-    local bonusText = bonusPct > 0 and ((' (inclusiv +%d%% bonus rank)'):format(math.floor(bonusPct * 100))) or ''
-    notify(source, ('Ai finalizat livrarea a %d pachete pentru $%s%s!'):format(totalCount, tostring(totalPayout), bonusText), 'success', 6000)
+    dlog(('Wholesale offer created src=%d dropoff=%d drug=%s qty=%d price=$%d rank=%d'):format(
+        source, dropoff.id, chosen.key, qty, totalPrice, playerRank))
 
     return {
-        success = true,
-        totalEarnings = totalPayout,
-        unitsDelivered = totalCount,
+        token = token,
+        type = chosen.key,
+        qty = qty,
+        price = totalPrice,
+        risk = risk,
+        dealerName = dropoff.dealerLabel,
+        rankBadge = dropoff.rankBadge,
     }
 end)
+
 
 
 -- ═══════════════════════════════════════════════════════════════
