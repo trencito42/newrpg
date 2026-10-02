@@ -149,7 +149,7 @@ CreateThread(function()
     if GetResourceState('sunset_auth_ui') == 'started' then
         pcall(function()
             if exports.sunset_auth_ui:IsAuthOpen() then
-                exports.sunset_auth_ui:ReassertFocus()
+                TriggerEvent('sunset:auth_ui:reassertFocus')
             end
         end)
     end

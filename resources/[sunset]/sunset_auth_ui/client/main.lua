@@ -173,10 +173,32 @@ end)
 RegisterNUICallback('authVisibleRendered', function(data, cb)
     if authOpen and type(data) == 'table' and tonumber(data.presentationId) == authPresentationId then
         authVisibleRendered = true
+        -- This callback runs inside the resource that owns the auth ui_page.
+        -- Focus after the form has painted, not only from cross-resource exports.
+        reassertAuthFocus()
         TriggerEvent('sunset:auth:visibleRendered', data)
     end
     cb('ok')
 end)
+
+AddEventHandler('sunset:auth_ui:reassertFocus', function()
+    reassertAuthFocus()
+end)
+
+RegisterCommand('authfocus', function()
+    local owner = 'unavailable'
+    if GetResourceState('sunset_ui') == 'started' then
+        local ok, value = pcall(function() return exports.sunset_ui:GetFocusOwner() end)
+        if ok then owner = tostring(value) end
+    end
+    print(('[AUTH FOCUS] resource=%s open=%s rendered=%s owner=%s nuiFocused=%s keepInput=%s'):format(
+        GetCurrentResourceName(), tostring(authOpen), tostring(authVisibleRendered), owner,
+        tostring(IsNuiFocused()), tostring(IsNuiFocusKeepingInput())))
+    if authOpen then
+        reassertAuthFocus()
+        print(('[AUTH FOCUS] reasserted in %s focused=%s'):format(GetCurrentResourceName(), tostring(IsNuiFocused())))
+    end
+end, false)
 
 -- sunset_ui NUI page re-initialises after ShutdownLoadingScreen (bootEpoch fires
 -- → sunset:ui:ready). FiveM resets NUI cursor state on page reinit, so re-assert.
