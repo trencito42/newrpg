@@ -143,3 +143,22 @@ CreateThread(function()
         end
     end
 end)
+
+RegisterNetEvent('sunset:hacking:requestDebugHack', function(target, seedArg)
+    local src = source
+    local allowed = false
+    if SunsetHacking.Config.Debug then
+        allowed = true
+    elseif GetResourceState('sunset_admin') == 'started' then
+        local ok, res = pcall(function() return exports.sunset_admin:IsAdmin(src, 1) end)
+        if ok and res == true then
+            allowed = true
+        end
+    end
+
+    if allowed then
+        TriggerClientEvent('sunset:hacking:client:startDebugHack', src, target, seedArg)
+    else
+        TriggerClientEvent('sunset:core:notify', src, 'Permission denied (Admin only).', 'error')
+    end
+end)

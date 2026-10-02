@@ -42,29 +42,18 @@ local function runTestHack(target, seedArg)
     end)
 end
 
-local function hasDebugPermission()
-    if SunsetHacking.Config.Debug then
-        return true
-    end
-    if exports.sunset_core and exports.sunset_core.IsAdmin then
-        local ok, isAdmin = pcall(function() return exports.sunset_core:IsAdmin() end)
-        if ok and isAdmin then
-            return true
-        end
-    end
-    return true
-end
+RegisterNetEvent('sunset:hacking:client:startDebugHack', function(target, seedArg)
+    runTestHack(target, seedArg)
+end)
 
 -- Register commands
 local function registerDebugCommands()
     RegisterCommand('testhack', function(_, args)
-        if not hasDebugPermission() then return end
-        runTestHack(args[1], args[2])
+        TriggerServerEvent('sunset:hacking:requestDebugHack', args[1], args[2])
     end, false)
 
     RegisterCommand('hack', function(_, args)
-        if not hasDebugPermission() then return end
-        runTestHack(args[1], args[2])
+        TriggerServerEvent('sunset:hacking:requestDebugHack', args[1], args[2])
     end, false)
 
     TriggerEvent('chat:addSuggestion', '/testhack', 'Test the Watch Dogs Network Hacking Minigame', {
