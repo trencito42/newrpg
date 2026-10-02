@@ -63,21 +63,21 @@ export function LoginForm({ locale }: { locale: Locale }) {
             </div>
           )}
           <form onSubmit={handleLogin} className="space-y-4">
-            <label className="block text-xs font-medium text-gray-300">
+            <label className="block text-xs font-medium text-[#B4AFA4]">
               {t(locale, "auth.username")}
               <input type="text" required autoComplete="username" value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-white focus:outline-none focus:border-brand" />
+                className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-[#F2EFE8] focus:outline-none focus:border-brand" />
             </label>
-            <label className="block text-xs font-medium text-gray-300">
+            <label className="block text-xs font-medium text-[#B4AFA4]">
               {t(locale, "auth.password")}
               <input type="password" required autoComplete="current-password" value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-white focus:outline-none focus:border-brand" />
+                className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-[#F2EFE8] focus:outline-none focus:border-brand" />
             </label>
             <Button type="submit" loading={loading} className="w-full mt-2">{t(locale, "auth.login_button")}</Button>
           </form>
-          <p className="mt-6 pt-4 border-t border-surface-border/60 text-center text-xs text-gray-400">
+          <p className="mt-6 pt-4 border-t border-surface-border/60 text-center text-xs text-[#8F8B83]">
             {t(locale, "auth.not_registered")} {t(locale, "auth.register_guide")}
           </p>
         </CardContent>

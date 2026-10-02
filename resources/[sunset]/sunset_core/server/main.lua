@@ -283,7 +283,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     end
     rate.count = rate.count + 1
     if rate.count > 30 then
-        print(('^3[racket.gg]^7 Callback flood blocked from %s'):format(source))
+        print(('^3[racket.cat]^7 Callback flood blocked from %s'):format(source))
         TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = Sunset.TFor(source, 'error.too_many_requests') })
         return
     end
@@ -334,7 +334,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     end
 
     if not ok then
-        print(('^1[racket.gg]^7 Callback error (%s): %s'):format(name, tostring(packed)))
+        print(('^1[racket.cat]^7 Callback error (%s): %s'):format(name, tostring(packed)))
         if isSpecialTrace then
             print(('^1[CB-PERF] enterGame RESPONSE_SENT id=%s (error)^7'):format(tostring(requestId)))
         end

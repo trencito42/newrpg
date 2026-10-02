@@ -21,21 +21,21 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const variants = {
-    default: "bg-surface-200 text-[#a5a5a8] border-surface-border",
-    neutral: "bg-surface-200 text-[#a5a5a8] border-surface-border",
-    brand: "bg-[#222225] text-[#f1f1f1] border-surface-border",
-    accent: "bg-[#222225] text-[#f1f1f1] border-surface-border",
+    default: "bg-surface-200 text-[#B4AFA4] border-surface-border",
+    neutral: "bg-surface-200 text-[#B4AFA4] border-surface-border",
+    brand: "bg-brand/10 text-brand border-brand/30",
+    accent: "bg-brand/10 text-brand border-brand/30",
     success: "bg-emerald-950/40 text-emerald-400 border-emerald-900/40",
     warning: "bg-amber-950/40 text-amber-400 border-amber-900/40",
     danger: "bg-red-950/40 text-red-400 border-red-900/40",
     info: "bg-sky-950/40 text-sky-400 border-sky-900/40",
-    outline: "bg-transparent text-[#8a8a90] border-surface-border",
+    outline: "bg-transparent text-[#99958E] border-surface-border",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium border",
+        "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.04em] border",
         variants[variant],
         className
       )}

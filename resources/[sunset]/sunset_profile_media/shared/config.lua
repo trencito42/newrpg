@@ -1,6 +1,6 @@
 Config = Config or {}
 
-Config.UploadEndpoint = 'https://rpg.blipmade.com/api/media/upload'
+Config.UploadEndpoint = 'https://racket.cat/api/media/upload'
 Config.MediaBaseUrl = '/media'
 Config.CaptureStudio = {
     x = -1350.0,

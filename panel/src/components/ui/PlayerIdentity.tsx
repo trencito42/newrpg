@@ -60,7 +60,7 @@ export function PlayerIdentity({
         style={factionColor ? { color: factionColor } : undefined}
         className={cn(
           "font-semibold transition-opacity duration-150",
-          !factionColor && "text-[#f1f1f1]"
+          !factionColor && "text-[#F2EFE8]"
         )}
       >
         {username}

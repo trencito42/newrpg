@@ -18,20 +18,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-medium rounded transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none active:opacity-90";
+    "inline-flex items-center justify-center font-extrabold uppercase tracking-[0.08em] rounded-sm transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none active:opacity-90";
 
   const variants = {
-    primary: "bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold",
-    secondary: "bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] border border-surface-border",
-    destructive: "bg-red-700 hover:bg-red-600 text-white",
-    outline: "border border-surface-border hover:bg-surface-200 text-[#f1f1f1] bg-transparent",
-    ghost: "text-[#8a8a90] hover:text-white hover:bg-surface-200",
+    primary: "bg-brand hover:bg-brand-300 text-[#08080A] border border-brand",
+    secondary: "bg-surface-100 hover:bg-surface-200 text-[#F2EFE8] border border-surface-border",
+    destructive: "bg-red-700 hover:bg-red-600 text-[#F2EFE8]",
+    outline: "border border-surface-border hover:border-brand hover:text-brand text-[#F2EFE8] bg-transparent",
+    ghost: "text-[#B4AFA4] hover:text-[#F2EFE8] hover:bg-surface-200",
   };
 
   const sizes = {
-    sm: "px-2.5 py-1 text-xs",
-    md: "px-3.5 py-1.5 text-xs",
-    lg: "px-5 py-2 text-sm",
+    sm: "px-3 py-1.5 text-[10px]",
+    md: "px-4 py-2 text-[11px]",
+    lg: "px-5 py-2.5 text-xs",
   };
 
   return (

@@ -123,7 +123,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
         );
       case "withdrawn":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-neutral-900 text-[#a5a5a8] border border-surface-border">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <MinusCircle className="w-3 h-3" />
             {locale === "ro" ? "Retrasă" : "Withdrawn"}
           </span>
@@ -145,17 +145,17 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
         <div className="flex items-center gap-3">
           <Link
             href={`/factions/${slug}`}
-            className="p-1.5 bg-[#141416] hover:bg-[#1a1a1d] border border-surface-border rounded text-[#a5a5a8] hover:text-[#f1f1f1] transition-colors"
+            className="p-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight flex items-center gap-2">
+            <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight flex items-center gap-2">
               <span style={{ color: factionColor }}>{factionName}</span>
-              <span className="text-[#6f6f74] font-normal">—</span>
+              <span className="text-[#8F8B83] font-normal">—</span>
               <span>{locale === "ro" ? "Aplicații" : "Applications"}</span>
             </h1>
-            <p className="text-xs text-[#6f6f74]">
+            <p className="text-xs text-[#8F8B83]">
               {locale === "ro"
                 ? "Discuții și proces de recrutare deschis pentru această facțiune."
                 : "Recruitment threads and advisory member voting for this faction."}
@@ -167,13 +167,13 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           {settings?.applications_open ? (
             <Link
               href={`/factions/${slug}#apply`}
-              className="px-3 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               {locale === "ro" ? "Aplică la Facțiune" : "Apply to Faction"}
             </Link>
           ) : (
-            <span className="px-3 py-1.5 bg-neutral-900 border border-surface-border rounded text-xs text-[#6f6f74] font-medium">
+            <span className="px-3 py-1.5 bg-surface-100 border border-surface-border rounded text-xs text-[#8F8B83] font-medium">
               {locale === "ro" ? "Recrutări Închise" : "Applications Closed"}
             </span>
           )}
@@ -187,8 +187,8 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "pending"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "În Așteptare" : "Pending"}
@@ -198,8 +198,8 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "accepted"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Acceptate" : "Accepted"}
@@ -209,8 +209,8 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "rejected"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Respinse" : "Rejected"}
@@ -220,8 +220,8 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "withdrawn"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Retrase" : "Withdrawn"}
@@ -229,11 +229,11 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
       </div>
 
       {/* Table / List */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2.5">ID</th>
                 <th className="px-3 py-2.5">{locale === "ro" ? "Aplicant" : "Applicant"}</th>
                 <th className="px-3 py-2.5 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
@@ -248,7 +248,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
             <tbody className="divide-y divide-surface-border/60">
               {applications.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={9} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     {locale === "ro" ? "Nicio aplicație găsită." : "No applications found."}
                   </td>
                 </tr>
@@ -266,12 +266,12 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
                   return (
                     <tr
                       key={app.id}
-                      className="hover:bg-[#151517] transition-colors group cursor-pointer"
+                      className="hover:bg-[#131315] transition-colors group cursor-pointer"
                     >
-                      <td className="px-3 py-2.5 font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2.5 font-mono text-[#8F8B83]">
                         <Link
                           href={`/factions/${slug}/applications/${app.id}`}
-                          className="font-bold text-[#f1f1f1] hover:underline"
+                          className="font-bold text-[#F2EFE8] hover:underline"
                         >
                           #{app.id}
                         </Link>
@@ -280,13 +280,13 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
                         {identity ? (
                           <PlayerIdentity {...identity} size="sm" />
                         ) : (
-                          <span className="font-semibold text-[#f1f1f1]">{app.applicant_username}</span>
+                          <span className="font-semibold text-[#F2EFE8]">{app.applicant_username}</span>
                         )}
                       </td>
-                      <td className="px-3 py-2.5 text-center font-mono text-[#d1d1d6]">
+                      <td className="px-3 py-2.5 text-center font-mono text-[#E1DCCF]">
                         {snap.level || "—"}
                       </td>
-                      <td className="px-3 py-2.5 text-center font-mono text-[#d1d1d6]">
+                      <td className="px-3 py-2.5 text-center font-mono text-[#E1DCCF]">
                         {snap.hours || "—"}
                       </td>
                       <td className="px-3 py-2.5 text-center font-mono font-bold text-emerald-400">
@@ -295,14 +295,14 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
                       <td className="px-3 py-2.5 text-center font-mono font-bold text-red-400">
                         {app.contra_count}
                       </td>
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-[#a5a5a8]">
+                      <td className="px-3 py-2.5 text-center font-mono font-bold text-[#B4AFA4]">
                         <span className="inline-flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3 text-[#6f6f74]" />
+                          <MessageSquare className="w-3 h-3 text-[#8F8B83]" />
                           {app.comments_count}
                         </span>
                       </td>
                       <td className="px-3 py-2.5">{getStatusBadge(app.status)}</td>
-                      <td className="px-3 py-2.5 text-right font-mono text-[11px] text-[#6f6f74]">
+                      <td className="px-3 py-2.5 text-right font-mono text-[11px] text-[#8F8B83]">
                         {formatDate(app.created_at)}
                       </td>
                     </tr>

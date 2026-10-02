@@ -32,7 +32,7 @@ export default async function MyJobsPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.jobs")}
         </h1>
       </div>
@@ -46,32 +46,32 @@ export default async function MyJobsPage() {
             >
               <div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-[#f1f1f1] font-semibold">
+                  <span className="font-mono text-[#F2EFE8] font-semibold">
                     Level {skill.level}
                   </span>
-                  <span className="font-mono text-[#f1f1f1]">
+                  <span className="font-mono text-[#F2EFE8]">
                     {formatCurrency(skill.total_earned)}
                   </span>
                 </div>
-                <h3 className="text-sm font-semibold text-[#f1f1f1] mt-1 capitalize">
+                <h3 className="text-sm font-semibold text-[#F2EFE8] mt-1 capitalize">
                   {skill.job_id.replace(/_/g, " ")}
                 </h3>
               </div>
 
-              <div className="mt-3 pt-2 border-t border-surface-border/60 text-xs space-y-1 text-[#6f6f74]">
+              <div className="mt-3 pt-2 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                 <div className="flex items-center justify-between">
                   <span>Experience:</span>
-                  <span className="font-mono text-[#a5a5a8]">{formatNumber(skill.xp, locale)} XP</span>
+                  <span className="font-mono text-[#B4AFA4]">{formatNumber(skill.xp, locale)} XP</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tasks:</span>
-                  <span className="font-mono text-[#a5a5a8]">{formatNumber(skill.completed_tasks, locale)}</span>
+                  <span className="font-mono text-[#B4AFA4]">{formatNumber(skill.completed_tasks, locale)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
             No job progress yet.
           </p>
         )}

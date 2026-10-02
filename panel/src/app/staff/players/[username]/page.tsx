@@ -115,7 +115,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         <div className="flex items-center gap-3">
           <Link
             href="/staff/players"
-            className="p-1.5 text-[#6f6f74] hover:text-[#f1f1f1] hover:bg-[#151517] rounded transition-colors"
+            className="p-1.5 text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-[#131315] rounded transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -129,11 +129,11 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                 clanTagStyle={player.clan_tag_style}
                 size="lg"
               />
-              <span className="text-xs font-mono text-[#6f6f74]">
+              <span className="text-xs font-mono text-[#8F8B83]">
                 (Account #{player.account_id})
               </span>
             </div>
-            <p className="text-[11px] text-[#6f6f74] mt-0.5">
+            <p className="text-[11px] text-[#8F8B83] mt-0.5">
               {locale === "ro" ? "Panou Administrare Jucător" : "Staff Player Administration View"}
             </p>
           </div>
@@ -166,44 +166,44 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
       {/* Overview Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Progression</span>
-          <span className="font-bold text-[#f1f1f1] mt-1 block">
-            Level {player.level || 1} <span className="font-mono text-[#6f6f74]">({player.hours || 0} ore)</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Progression</span>
+          <span className="font-bold text-[#F2EFE8] mt-1 block">
+            Level {player.level || 1} <span className="font-mono text-[#8F8B83]">({player.hours || 0} ore)</span>
           </span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Faction</span>
-          <span className="font-semibold text-[#f1f1f1] mt-1 block">
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Faction</span>
+          <span className="font-semibold text-[#F2EFE8] mt-1 block">
             {player.faction_id && player.faction_id !== "unemployed" ? (
               `${player.faction_id} (Rank ${player.faction_rank})`
             ) : (
-              <span className="text-[#6f6f74]">Civilian</span>
+              <span className="text-[#8F8B83]">Civilian</span>
             )}
           </span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Clan</span>
-          <span className="font-semibold text-[#f1f1f1] mt-1 block">
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Clan</span>
+          <span className="font-semibold text-[#F2EFE8] mt-1 block">
             {player.clan_tag ? (
               <span>[{player.clan_tag}] (Rank {player.clan_rank})</span>
             ) : (
-              <span className="text-[#6f6f74]">No Clan</span>
+              <span className="text-[#8F8B83]">No Clan</span>
             )}
           </span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Staff Role</span>
-          <span className="font-semibold text-[#f1f1f1] mt-1 block">
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Staff Role</span>
+          <span className="font-semibold text-[#F2EFE8] mt-1 block">
             {player.admin_level > 0 ? (
               <span className="text-red-400 font-bold">Admin Level {player.admin_level}</span>
             ) : player.helper_level > 0 ? (
               <span className="text-blue-400 font-bold">Helper Level {player.helper_level}</span>
             ) : (
-              <span className="text-[#6f6f74]">Player</span>
+              <span className="text-[#8F8B83]">Player</span>
             )}
           </span>
         </div>
@@ -212,9 +212,9 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
       {/* Sanctions & Audit History Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Sanctions History */}
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Istoric Sancțiuni" : "Sanctions History"} ({sanctions.length})
             </h2>
           </div>
@@ -222,7 +222,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
           <div className="overflow-x-auto max-h-80">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">Acțiune</th>
                   <th className="px-3 py-2">Admin</th>
                   <th className="px-3 py-2">Motiv</th>
@@ -232,13 +232,13 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
               <tbody className="divide-y divide-surface-border">
                 {sanctions.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-xs text-[#6f6f74]">
+                    <td colSpan={4} className="px-4 py-6 text-center text-xs text-[#8F8B83]">
                       Nicio sancțiune înregistrată
                     </td>
                   </tr>
                 ) : (
                   sanctions.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#151517]">
+                    <tr key={s.id} className="hover:bg-[#131315]">
                       <td className="px-3 py-2 font-mono font-bold uppercase text-[11px]">
                         {s.action === "ban" && <span className="text-red-400">BAN</span>}
                         {s.action === "warn" && <span className="text-amber-400">WARN</span>}
@@ -246,11 +246,11 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                         {s.action === "jail" && <span className="text-purple-400">JAIL</span>}
                         {s.action === "unban" && <span className="text-emerald-400">UNBAN</span>}
                       </td>
-                      <td className="px-3 py-2 font-medium text-[#f1f1f1]">
+                      <td className="px-3 py-2 font-medium text-[#F2EFE8]">
                         {s.admin_name ? <PlayerIdentity {...sanctionIdentities.get(s.admin_name.toLowerCase())!} size="sm" /> : "SYSTEM"}
                       </td>
-                      <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate">{s.reason}</td>
-                      <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2 text-[#B4AFA4] max-w-xs truncate">{s.reason}</td>
+                      <td className="px-3 py-2 text-right font-mono text-[#8F8B83]">
                         {formatDate(s.created_at, locale)}
                       </td>
                     </tr>
@@ -262,9 +262,9 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         </div>
 
         {/* Panel Audit Log */}
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Audit Log Cont" : "Account Audit"}
             </h2>
           </div>
@@ -272,7 +272,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
           <div className="overflow-x-auto max-h-80">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">Acțiune</th>
                   <th className="px-3 py-2">Motiv / Detalii</th>
                   <th className="px-3 py-2 text-right">Data</th>
@@ -281,18 +281,18 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
               <tbody className="divide-y divide-surface-border">
                 {auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-xs text-[#6f6f74]">
+                    <td colSpan={3} className="px-4 py-6 text-center text-xs text-[#8F8B83]">
                       Nicio înregistrare de audit
                     </td>
                   </tr>
                 ) : (
                   auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#151517]">
-                      <td className="px-3 py-2 font-mono text-[#f1f1f1]">{log.action}</td>
-                      <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate font-mono text-[11px]">
+                    <tr key={log.id} className="hover:bg-[#131315]">
+                      <td className="px-3 py-2 font-mono text-[#F2EFE8]">{log.action}</td>
+                      <td className="px-3 py-2 text-[#B4AFA4] max-w-xs truncate font-mono text-[11px]">
                         {log.reason || formatAuditDetails(log.details) || "—"}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2 text-right font-mono text-[#8F8B83]">
                         {new Date(log.created_at).toLocaleDateString()}
                       </td>
                     </tr>

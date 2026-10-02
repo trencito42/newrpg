@@ -79,10 +79,10 @@ export function StaffFactionsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Management Facțiuni (Staff)" : "Staff Factions Oversight"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {locale === "ro"
               ? "Supervizare facțiuni, numire lideri și monitorizare aplicații/demisii"
               : "Faction leadership assignment, application oversight, and resignation monitoring"}
@@ -100,11 +100,11 @@ export function StaffFactionsClient({
       )}
 
       {/* Factions Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">Facțiune</th>
                 <th className="px-3 py-2">Lider Actual</th>
                 <th className="px-3 py-2 text-center">Membri</th>
@@ -115,15 +115,15 @@ export function StaffFactionsClient({
             </thead>
             <tbody className="divide-y divide-surface-border">
               {factions.map((f) => (
-                <tr key={f.id} className="hover:bg-[#151517] transition-colors">
+                <tr key={f.id} className="hover:bg-[#131315] transition-colors">
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <span
                         style={{ backgroundColor: f.color }}
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                       />
-                      <span className="font-semibold text-[#f1f1f1]">{f.label}</span>
-                      <span className="text-[10px] text-[#6f6f74] font-mono uppercase">
+                      <span className="font-semibold text-[#F2EFE8]">{f.label}</span>
+                      <span className="text-[10px] text-[#8F8B83] font-mono uppercase">
                         ({f.type})
                       </span>
                     </div>
@@ -144,7 +144,7 @@ export function StaffFactionsClient({
                     )}
                   </td>
 
-                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#f1f1f1]">
+                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#F2EFE8]">
                     {f.memberCount}
                   </td>
 
@@ -154,7 +154,7 @@ export function StaffFactionsClient({
                         OPEN ({f.pendingApplications})
                       </span>
                     ) : (
-                      <span className="text-[#6f6f74] text-[10px] font-mono">CLOSED</span>
+                      <span className="text-[#8F8B83] text-[10px] font-mono">CLOSED</span>
                     )}
                   </td>
 
@@ -162,7 +162,7 @@ export function StaffFactionsClient({
                     {f.pendingResignations > 0 ? (
                       <span className="text-red-400 font-bold">{f.pendingResignations} cereri</span>
                     ) : (
-                      <span className="text-[#6f6f74]">0</span>
+                      <span className="text-[#8F8B83]">0</span>
                     )}
                   </td>
 
@@ -171,14 +171,14 @@ export function StaffFactionsClient({
                       {canAssignLeader && (
                         <button
                           onClick={() => setSelectedFaction(f)}
-                          className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+                          className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                         >
                           {locale === "ro" ? "Numire Lider" : "Set Leader"}
                         </button>
                       )}
                       <Link
                         href={`/factions/${f.id}`}
-                        className="p-1 text-[#6f6f74] hover:text-[#f1f1f1] transition-colors"
+                        className="p-1 text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
                         title="View Public Profile"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -195,16 +195,16 @@ export function StaffFactionsClient({
       {/* Set Leader Modal */}
       {selectedFaction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-md bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   Numire Lider pentru {selectedFaction.label}
                 </span>
               </div>
               <button
                 onClick={() => setSelectedFaction(null)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -212,7 +212,7 @@ export function StaffFactionsClient({
 
             <form onSubmit={handleSetLeader} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   Username Canonic Jucător
                 </label>
                 <input
@@ -221,19 +221,19 @@ export function StaffFactionsClient({
                   value={targetUsername}
                   onChange={(e) => setTargetUsername(e.target.value)}
                   placeholder="Introdu username-ul exact..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">Motiv Numire</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Numire</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Introdu motivul administrativ..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
@@ -241,14 +241,14 @@ export function StaffFactionsClient({
                 <button
                   type="button"
                   onClick={() => setSelectedFaction(null)}
-                  className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1c] border border-surface-border rounded text-xs text-[#a5a5a8]"
+                  className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
                   Anulează
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !targetUsername.trim()}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded text-xs transition-colors"
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
                   {loading ? "Se procesează..." : "Numește Lider"}
                 </button>

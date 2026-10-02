@@ -80,7 +80,7 @@ export default function FactionApplyPage() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-xs text-[#6f6f74]">
+      <div className="p-8 text-center text-xs text-[#8F8B83]">
         Se încarcă cerințele de aplicare...
       </div>
     );
@@ -88,17 +88,17 @@ export default function FactionApplyPage() {
 
   if (success) {
     return (
-      <div className="max-w-xl mx-auto border border-surface-border rounded bg-[#101011] p-6 text-center space-y-4">
+      <div className="max-w-xl mx-auto border border-surface-border rounded bg-[#0E0E10] p-6 text-center space-y-4">
         <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-        <h1 className="text-base font-bold text-[#f1f1f1]">
+        <h1 className="text-base font-bold text-[#F2EFE8]">
           Aplicație trimisă cu succes / Application Submitted
         </h1>
-        <p className="text-xs text-[#a5a5a8]">
+        <p className="text-xs text-[#B4AFA4]">
           Aplicația ta a fost înregistrată. Liderii facțiunii o vor revizui în curând.
         </p>
         <Link
           href={`/factions/${slug}`}
-          className="inline-block px-4 py-2 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+          className="inline-block px-4 py-2 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
         >
           Înapoi la facțiune
         </Link>
@@ -112,11 +112,11 @@ export default function FactionApplyPage() {
         <div className="flex items-center gap-2">
           <Link
             href={`/factions/${slug}`}
-            className="p-1.5 text-[#6f6f74] hover:text-[#f1f1f1] hover:bg-[#151517] rounded transition-colors"
+            className="p-1.5 text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-[#131315] rounded transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <h1 className="text-base font-bold text-[#f1f1f1]">
+          <h1 className="text-base font-bold text-[#F2EFE8]">
             Aplicație Facțiune / Faction Application
           </h1>
         </div>
@@ -129,10 +129,10 @@ export default function FactionApplyPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="border border-surface-border rounded bg-[#101011] p-4 space-y-4">
+      <form onSubmit={handleSubmit} className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-4">
         {questions.length === 0 ? (
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-[#f1f1f1]">
+            <label className="block text-xs font-semibold text-[#F2EFE8]">
               De ce dorești să te alături acestei facțiuni? / Why do you want to join this faction?
             </label>
             <textarea
@@ -141,13 +141,13 @@ export default function FactionApplyPage() {
               value={answers[0] || ""}
               onChange={(e) => setAnswers({ ...answers, 0: e.target.value })}
               placeholder="Descrie motivația, experiența și activitatea ta..."
-              className="w-full px-3 py-2 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+              className="w-full px-3 py-2 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
             />
           </div>
         ) : (
           questions.map((q) => (
             <div key={q.id} className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#f1f1f1]">
+              <label className="block text-xs font-semibold text-[#F2EFE8]">
                 {q.label_ro} / {q.label_en}
                 {q.required === 1 && <span className="text-red-400 ml-1">*</span>}
               </label>
@@ -158,7 +158,7 @@ export default function FactionApplyPage() {
                   rows={3}
                   value={answers[q.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+                  className="w-full px-3 py-2 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
                 />
               ) : (
                 <input
@@ -166,7 +166,7 @@ export default function FactionApplyPage() {
                   required={q.required === 1}
                   value={answers[q.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+                  className="w-full px-3 py-2 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
                 />
               )}
             </div>
@@ -176,14 +176,14 @@ export default function FactionApplyPage() {
         <div className="pt-2 border-t border-surface-border flex items-center justify-end gap-2">
           <Link
             href={`/factions/${slug}`}
-            className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1c] border border-surface-border rounded text-xs text-[#a5a5a8] transition-colors"
+            className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4] transition-colors"
           >
             Anulează
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded text-xs transition-colors"
+            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
           >
             {submitting ? "Se trimite..." : "Trimite Aplicația"}
           </button>

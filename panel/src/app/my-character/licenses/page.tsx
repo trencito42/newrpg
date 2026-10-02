@@ -44,7 +44,7 @@ export default async function MyLicensesPage() {
   return (
     <div className="space-y-4 max-w-3xl">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.licenses")}
         </h1>
       </div>
@@ -66,7 +66,7 @@ export default async function MyLicensesPage() {
               >
                 <div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-[#f1f1f1] capitalize">
+                    <span className="font-semibold text-[#F2EFE8] capitalize">
                       {lic.type} License
                     </span>
                     <span className={`font-medium ${isExpired ? "text-red-400" : "text-emerald-400"}`}>
@@ -74,16 +74,16 @@ export default async function MyLicensesPage() {
                     </span>
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#6f6f74]">
+                  <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                     <div className="flex items-center justify-between">
                       <span>Remaining:</span>
-                      <span className="font-mono text-[#a5a5a8]">
+                      <span className="font-mono text-[#B4AFA4]">
                         {remainingPaydays !== null ? `${remainingPaydays} paydays` : "Permanent"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Issued:</span>
-                      <span className="font-mono text-[#a5a5a8]">{formatDate(lic.issued_at, locale, false)}</span>
+                      <span className="font-mono text-[#B4AFA4]">{formatDate(lic.issued_at, locale, false)}</span>
                     </div>
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export default async function MyLicensesPage() {
             );
           })
         ) : (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
             No licenses held.
           </p>
         )}

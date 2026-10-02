@@ -198,21 +198,21 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
             bottom: coords.placeAbove ? `${window.innerHeight - coords.y}px` : "auto",
             zIndex: 99999,
           }}
-          className="w-[320px] bg-[#101011] border border-surface-border rounded shadow-2xl p-3.5 text-xs text-[#f1f1f1] pointer-events-auto animate-in fade-in-0 duration-150"
+          className="w-[320px] bg-[#0E0E10] border border-surface-border rounded shadow-2xl p-3.5 text-xs text-[#F2EFE8] pointer-events-auto animate-in fade-in-0 duration-150"
         >
           {loading && !previewData ? (
-            <div className="flex items-center justify-center py-6 text-xs text-[#6f6f74]">
+            <div className="flex items-center justify-center py-6 text-xs text-[#8F8B83]">
               <span>Loading player...</span>
             </div>
           ) : previewData ? (
             <div className="space-y-3">
               {/* Top Row: Avatar + Name + Badges */}
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center">
+                <div className="w-12 h-12 rounded bg-[#191719] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center">
                   <GTAImage
                     src={previewData.avatarUrl || "https://docs-backend.fivem.net/peds/mp_m_freemode_01.webp"}
                     alt={previewData.username}
-                    fallbackIcon={<User className="w-6 h-6 text-[#52525b]" />}
+                    fallbackIcon={<User className="w-6 h-6 text-[#77736D]" />}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -228,7 +228,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                       style={
                         previewData.faction?.color
                           ? { color: previewData.faction.color }
-                          : { color: "#f1f1f1" }
+                          : { color: "#F2EFE8" }
                       }
                     >
                       {previewData.username}
@@ -247,10 +247,10 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                         <span
                           key={idx}
                           style={{
-                            borderColor: `${role.color || "#52525b"}40`,
-                            color: role.color || "#f1f1f1",
+                            borderColor: `${role.color || "#77736D"}40`,
+                            color: role.color || "#F2EFE8",
                           }}
-                          className="px-1.5 py-0.2 bg-[#1a1a1c] border rounded text-[9px] font-mono font-bold tracking-tight uppercase"
+                          className="px-1.5 py-0.2 bg-[#1A191B] border rounded text-[9px] font-mono font-bold tracking-tight uppercase"
                         >
                           {role.label}
                         </span>
@@ -258,7 +258,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                     </div>
                   )}
 
-                  <div className="text-[11px] text-[#8a8a90] mt-1 flex items-center gap-2">
+                  <div className="text-[11px] text-[#99958E] mt-1 flex items-center gap-2">
                     <span className="font-mono font-medium">Level {previewData.level}</span>
                     <span>•</span>
                     <span className="font-mono">{previewData.playtimeHours}h played</span>
@@ -270,9 +270,9 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
               <div className="space-y-1.5 pt-2 border-t border-surface-border text-[11px]">
                 {previewData.faction ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6f6f74]">Faction:</span>
+                    <span className="text-[#8F8B83]">Faction:</span>
                     <span
-                      style={{ color: previewData.faction.color || "#f1f1f1" }}
+                      style={{ color: previewData.faction.color || "#F2EFE8" }}
                       className="font-medium truncate max-w-[180px]"
                     >
                       {previewData.faction.name} (R{previewData.faction.rank})
@@ -280,14 +280,14 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6f6f74]">Job:</span>
-                    <span className="text-[#a5a5a8] capitalize">{previewData.job.replace(/_/g, " ")}</span>
+                    <span className="text-[#8F8B83]">Job:</span>
+                    <span className="text-[#B4AFA4] capitalize">{previewData.job.replace(/_/g, " ")}</span>
                   </div>
                 )}
 
                 {previewData.clan && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6f6f74]">Clan:</span>
+                    <span className="text-[#8F8B83]">Clan:</span>
                     <span style={{ color: previewData.clan.color }} className="font-medium truncate max-w-[180px]">
                       [{previewData.clan.tag}] {previewData.clan.name}
                     </span>
@@ -296,14 +296,14 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
 
                 {/* Online state */}
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[#6f6f74]">Status:</span>
+                  <span className="text-[#8F8B83]">Status:</span>
                   {previewData.online ? (
                     <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                       Online
                     </span>
                   ) : (
-                    <span className="text-[#6f6f74]">
+                    <span className="text-[#8F8B83]">
                       {previewData.lastSeen ? `Last seen ${new Date(previewData.lastSeen).toLocaleDateString()}` : "Offline"}
                     </span>
                   )}
@@ -314,7 +314,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
               <div className="pt-2 border-t border-surface-border flex items-center justify-end">
                 <Link
                   href={`/players/${encodeURIComponent(previewData.username)}`}
-                  className="inline-flex items-center gap-1 text-[11px] text-[#a5a5a8] hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors"
                 >
                   <span>View profile</span>
                   <ArrowRight className="w-3 h-3" />

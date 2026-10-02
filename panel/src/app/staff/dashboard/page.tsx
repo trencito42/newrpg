@@ -61,18 +61,18 @@ export default async function StaffDashboardPage() {
   if (!user || (user.adminLevel === 0 && user.helperLevel === 0)) {
     return (
       <div className="p-6 text-center max-w-sm mx-auto mt-12 space-y-3 bg-surface-100 border border-surface-border rounded">
-        <div className="w-10 h-10 rounded bg-surface-200 border border-surface-border flex items-center justify-center mx-auto text-[#a5a5a8]">
+        <div className="w-10 h-10 rounded bg-surface-200 border border-surface-border flex items-center justify-center mx-auto text-[#B4AFA4]">
           <Lock className="w-5 h-5" />
         </div>
-        <h1 className="text-base font-bold text-[#f1f1f1]">
+        <h1 className="text-base font-bold text-[#F2EFE8]">
           {lang === "ro" ? "Acces Restricționat" : "Access Restricted"}
         </h1>
-        <p className="text-xs text-[#6f6f74]">
+        <p className="text-xs text-[#8F8B83]">
           {lang === "ro" ? "Această pagină este rezervată membrilor staff." : "This page is reserved for staff members."}
         </p>
         <Link
           href="/"
-          className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded bg-[#f1f1f1] text-[#0b0b0c] hover:bg-white transition-colors"
+          className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded bg-[#D7B558] text-[#08080A] hover:bg-[#E3C572] transition-colors"
         >
           {lang === "ro" ? "Înapoi" : "Return"}
         </Link>
@@ -135,10 +135,10 @@ export default async function StaffDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div className="flex items-center space-x-3">
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {lang === "ro" ? "Panel Staff" : "Staff Panel"}
           </h1>
-          <span className="font-mono text-xs text-[#a5a5a8] px-2 py-0.5 rounded bg-surface-200 border border-surface-border">
+          <span className="font-mono text-xs text-[#B4AFA4] px-2 py-0.5 rounded bg-surface-200 border border-surface-border">
             {user.adminLevel > 0 ? `Admin ${user.adminLevel}` : `Helper ${user.helperLevel}`}
           </span>
         </div>
@@ -149,8 +149,8 @@ export default async function StaffDashboardPage() {
         {/* Tickets */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{lang === "ro" ? "Tichete Deschise" : "Open Tickets"}</span>
-            <span className="font-mono text-[#6f6f74]">{openTickets.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Tichete Deschise" : "Open Tickets"}</span>
+            <span className="font-mono text-[#8F8B83]">{openTickets.length}</span>
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
@@ -160,14 +160,14 @@ export default async function StaffDashboardPage() {
                 href={`/support/tickets/${t.id}`}
                 className="p-2.5 px-3 block hover:bg-surface-200/50 transition-colors"
               >
-                <div className="flex items-center justify-between text-[#6f6f74] text-[11px]">
+                <div className="flex items-center justify-between text-[#8F8B83] text-[11px]">
                   <span>#{t.id} • <PlayerIdentity {...identities.get(t.creator_name.toLowerCase())!} size="sm" clickable={false} /></span>
                 </div>
-                <p className="font-medium text-[#f1f1f1] truncate mt-0.5">{t.title}</p>
+                <p className="font-medium text-[#F2EFE8] truncate mt-0.5">{t.title}</p>
               </Link>
             ))}
             {openTickets.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">{lang === "ro" ? "Niciun tichet deschis." : "No open tickets."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Niciun tichet deschis." : "No open tickets."}</div>
             )}
           </div>
         </div>
@@ -175,8 +175,8 @@ export default async function StaffDashboardPage() {
         {/* Complaints */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{lang === "ro" ? "Reclamații" : "Complaints"}</span>
-            <span className="font-mono text-[#6f6f74]">{pendingComplaints.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Reclamații" : "Complaints"}</span>
+            <span className="font-mono text-[#8F8B83]">{pendingComplaints.length}</span>
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
@@ -186,15 +186,15 @@ export default async function StaffDashboardPage() {
                 href="/support/complaints"
                 className="p-2.5 px-3 block hover:bg-surface-200/50 transition-colors"
               >
-                <div className="flex items-center justify-between text-[#6f6f74] text-[11px]">
+                <div className="flex items-center justify-between text-[#8F8B83] text-[11px]">
                   <span>vs <PlayerIdentity {...identities.get(c.accused_name.toLowerCase())!} size="sm" clickable={false} /></span>
                   <span className="capitalize">{c.category}</span>
                 </div>
-                <p className="font-medium text-[#f1f1f1] truncate mt-0.5">{c.title}</p>
+                <p className="font-medium text-[#F2EFE8] truncate mt-0.5">{c.title}</p>
               </Link>
             ))}
             {pendingComplaints.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">{lang === "ro" ? "Nicio reclamație." : "No complaints."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio reclamație." : "No complaints."}</div>
             )}
           </div>
         </div>
@@ -202,19 +202,19 @@ export default async function StaffDashboardPage() {
         {/* Unbans */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}</span>
-            <span className="font-mono text-[#6f6f74]">{pendingUnbans.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}</span>
+            <span className="font-mono text-[#8F8B83]">{pendingUnbans.length}</span>
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
             {pendingUnbans.map((u) => (
               <div key={u.id} className="p-2.5 px-3">
-                <span className="font-mono text-[#f1f1f1] text-[11px]">Account #{u.account_id}</span>
-                <p className="text-[#a5a5a8] text-xs line-clamp-2 mt-0.5">{u.reason}</p>
+                <span className="font-mono text-[#F2EFE8] text-[11px]">Account #{u.account_id}</span>
+                <p className="text-[#B4AFA4] text-xs line-clamp-2 mt-0.5">{u.reason}</p>
               </div>
             ))}
             {pendingUnbans.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">{lang === "ro" ? "Nicio cerere de debanare." : "No unban appeals."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio cerere de debanare." : "No unban appeals."}</div>
             )}
           </div>
         </div>
@@ -224,13 +224,13 @@ export default async function StaffDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Game Sanctions */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#f1f1f1]">
+          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
             {lang === "ro" ? "Sancțiuni Recente" : "Recent Sanctions"}
           </div>
 
           <div className="responsive-table-wrapper">
             <table className="w-full text-left text-xs">
-              <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+              <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                 <tr>
                   <th className="py-2 px-3">Action</th>
                   <th className="py-2 px-3">Target</th>
@@ -238,13 +238,13 @@ export default async function StaffDashboardPage() {
                   <th className="py-2 px-3">Reason</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+              <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
                 {recentSanctions.map((s) => (
                   <tr key={s.id} className="hover:bg-surface-200/40">
-                    <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{s.action}</td>
-                    <td className="py-2 px-3 text-[#f1f1f1]"><PlayerIdentity {...identities.get(s.target_name.toLowerCase())!} size="sm" /></td>
-                    <td className="py-2 px-3 text-[#6f6f74]"><PlayerIdentity {...identities.get(s.admin_name.toLowerCase())!} size="sm" /></td>
-                    <td className="py-2 px-3 text-[#6f6f74] max-w-[160px] truncate">{s.reason}</td>
+                    <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">{s.action}</td>
+                    <td className="py-2 px-3 text-[#F2EFE8]"><PlayerIdentity {...identities.get(s.target_name.toLowerCase())!} size="sm" /></td>
+                    <td className="py-2 px-3 text-[#8F8B83]"><PlayerIdentity {...identities.get(s.admin_name.toLowerCase())!} size="sm" /></td>
+                    <td className="py-2 px-3 text-[#8F8B83] max-w-[160px] truncate">{s.reason}</td>
                   </tr>
                 ))}
               </tbody>
@@ -254,22 +254,22 @@ export default async function StaffDashboardPage() {
 
         {/* Web Audit Log */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#f1f1f1]">
+          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
             {lang === "ro" ? "Jurnal Audit Panel" : "Panel Audit Log"}
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
             {auditLogs.map((a) => (
-              <div key={a.id} className="p-2.5 px-3 flex items-center justify-between text-[#a5a5a8]">
+              <div key={a.id} className="p-2.5 px-3 flex items-center justify-between text-[#B4AFA4]">
                 <div>
-                  <span className="font-semibold text-[#f1f1f1]">{a.action}</span>
-                  <span className="text-[#6f6f74] ml-2">by {a.actor_name ? <PlayerIdentity {...identities.get(a.actor_name.toLowerCase())!} size="sm" clickable={false} /> : `Acc #${a.actor_account_id}`} on {a.target_entity} #{a.target_id || "-"}</span>
-                  {a.reason && <p className="text-[11px] text-[#6f6f74] italic mt-0.5">"{a.reason}"</p>}
+                  <span className="font-semibold text-[#F2EFE8]">{a.action}</span>
+                  <span className="text-[#8F8B83] ml-2">by {a.actor_name ? <PlayerIdentity {...identities.get(a.actor_name.toLowerCase())!} size="sm" clickable={false} /> : `Acc #${a.actor_account_id}`} on {a.target_entity} #{a.target_id || "-"}</span>
+                  {a.reason && <p className="text-[11px] text-[#8F8B83] italic mt-0.5">"{a.reason}"</p>}
                 </div>
               </div>
             ))}
             {auditLogs.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">{lang === "ro" ? "Nicio acțiune în audit." : "No audit entries."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio acțiune în audit." : "No audit entries."}</div>
             )}
           </div>
         </div>

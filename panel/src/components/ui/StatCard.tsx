@@ -25,26 +25,26 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-lg bg-surface-100 border border-surface-border p-3.5 flex items-center justify-between",
+        "rounded-md bg-card border border-card-border p-4 flex items-center justify-between",
         className
       )}
     >
       <div className="min-w-0 pr-2">
-        <p className="text-xs text-[#8a8a90] truncate font-medium">
+        <p className="text-[10px] text-[#B4AFA4] truncate font-bold uppercase tracking-[0.08em]">
           {displayTitle}
         </p>
-        <p className="text-lg sm:text-xl font-bold text-[#f1f1f1] mt-0.5 tracking-tight truncate">
+        <p className="text-lg sm:text-xl font-extrabold text-brand mt-1 tracking-tight truncate">
           {value}
         </p>
         {subtext && (
-          <p className="text-[11px] text-[#6f6f74] mt-0.5 truncate">
+          <p className="text-[11px] text-[#8F8B83] mt-0.5 truncate">
             {subtext}
           </p>
         )}
       </div>
 
       {Icon && (
-        <Icon className="w-4 h-4 text-[#6f6f74] shrink-0" />
+        <Icon className="w-4 h-4 text-[#8F8B83] shrink-0" />
       )}
     </div>
   );

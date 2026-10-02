@@ -66,7 +66,7 @@ export default async function SupportTicketsPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.tickets")}
         </h1>
       </div>
@@ -74,16 +74,16 @@ export default async function SupportTicketsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Create Ticket */}
         <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 h-fit text-xs">
-          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+          <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
             {t(locale, "support.create_ticket")}
           </h2>
 
           <form action={createTicket} className="space-y-2.5">
             <div>
-              <label className="block text-[#6f6f74] mb-1">Department</label>
+              <label className="block text-[#8F8B83] mb-1">Department</label>
               <select
                 name="department"
-                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] text-xs focus:outline-none"
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] text-xs focus:outline-none"
               >
                 <option value="general">General Support</option>
                 <option value="account">Account & Security</option>
@@ -94,24 +94,24 @@ export default async function SupportTicketsPage() {
             </div>
 
             <div>
-              <label className="block text-[#6f6f74] mb-1">Subject</label>
+              <label className="block text-[#8F8B83] mb-1">Subject</label>
               <input
                 type="text"
                 name="subject"
                 required
                 placeholder="Brief subject..."
-                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] text-xs focus:outline-none"
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-[#6f6f74] mb-1">Message</label>
+              <label className="block text-[#8F8B83] mb-1">Message</label>
               <textarea
                 name="message"
                 required
                 rows={3}
                 placeholder="Detailed message..."
-                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] text-xs focus:outline-none resize-none"
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none resize-none"
               />
             </div>
 
@@ -123,9 +123,9 @@ export default async function SupportTicketsPage() {
 
         {/* Tickets List */}
         <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
+          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#F2EFE8]">
             <span>Tickets</span>
-            <span className="font-mono text-[#6f6f74]">{tickets.length}</span>
+            <span className="font-mono text-[#8F8B83]">{tickets.length}</span>
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
@@ -139,15 +139,15 @@ export default async function SupportTicketsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono text-[#6f6f74]">#{tk.id}</span>
-                      <span className="font-semibold text-[#f1f1f1]">{tk.subject}</span>
+                      <span className="font-mono text-[#8F8B83]">#{tk.id}</span>
+                      <span className="font-semibold text-[#F2EFE8]">{tk.subject}</span>
                     </div>
-                    <span className={`text-[11px] font-medium ${isOpen ? "text-emerald-400" : "text-[#6f6f74]"}`}>
+                    <span className={`text-[11px] font-medium ${isOpen ? "text-emerald-400" : "text-[#8F8B83]"}`}>
                       {tk.status.replace(/_/g, " ")}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between mt-1.5 text-[#6f6f74] text-[11px]">
+                  <div className="flex items-center justify-between mt-1.5 text-[#8F8B83] text-[11px]">
                     <span className="capitalize">{tk.department}</span>
                     <span>{formatDate(tk.created_at, locale)}</span>
                   </div>
@@ -155,7 +155,7 @@ export default async function SupportTicketsPage() {
               );
             })}
             {tickets.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">No open tickets.</div>
+              <div className="p-4 text-center text-[#8F8B83]">No open tickets.</div>
             )}
           </div>
         </div>

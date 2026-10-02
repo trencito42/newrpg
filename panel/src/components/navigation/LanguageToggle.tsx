@@ -20,15 +20,15 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
   };
 
   return (
-    <div className="flex items-center bg-surface-200 border border-surface-border rounded p-0.5 text-xs">
+    <div className="flex items-center bg-surface-100 border border-surface-border rounded-sm p-0.5 text-xs">
       <button
         onClick={() => handleToggle("en")}
         disabled={isPending}
         className={cn(
-          "px-2 py-0.5 rounded text-[11px] font-semibold transition-colors",
+          "px-2 py-0.5 rounded-sm text-[10px] font-extrabold tracking-[0.04em] transition-colors",
           currentLocale === "en"
-            ? "bg-[#2a2a2e] text-[#f1f1f1]"
-            : "text-[#6f6f74] hover:text-[#f1f1f1]"
+            ? "bg-brand text-[#08080A]"
+            : "text-[#8F8B83] hover:text-[#F2EFE8]"
         )}
       >
         EN
@@ -37,10 +37,10 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
         onClick={() => handleToggle("ro")}
         disabled={isPending}
         className={cn(
-          "px-2 py-0.5 rounded text-[11px] font-semibold transition-colors",
+          "px-2 py-0.5 rounded-sm text-[10px] font-extrabold tracking-[0.04em] transition-colors",
           currentLocale === "ro"
-            ? "bg-[#2a2a2e] text-[#f1f1f1]"
-            : "text-[#6f6f74] hover:text-[#f1f1f1]"
+            ? "bg-brand text-[#08080A]"
+            : "text-[#8F8B83] hover:text-[#F2EFE8]"
         )}
       >
         RO

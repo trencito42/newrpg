@@ -66,10 +66,10 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Jurnal Sancțiuni Staff" : "Staff Sanctions Log"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {locale === "ro"
               ? "Toate avertismentele, ban-urile, mute-urile și pedepsele aplicate de moderatori"
               : "Complete moderation sanction history across warns, bans, mutes, and jails"}
@@ -81,7 +81,7 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
           <select
             name="action"
             defaultValue={action}
-            className="px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+            className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
             <option value="">Toate tipurile</option>
             <option value="warn">Warn</option>
@@ -95,11 +95,11 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
             name="search"
             defaultValue={search}
             placeholder="Caută țintă / admin..."
-            className="px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+            className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
           />
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#202023] hover:bg-[#28282c] border border-surface-border rounded text-xs text-[#f1f1f1]"
+            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
             Filtrează
           </button>
@@ -107,11 +107,11 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
       </div>
 
       {/* Sanctions Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">Acțiune</th>
                 <th className="px-3 py-2">Jucător Sancționat</th>
@@ -123,14 +123,14 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
             <tbody className="divide-y divide-surface-border">
               {sanctions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     Nicio sancțiune găsită
                   </td>
                 </tr>
               ) : (
                 sanctions.map((s) => (
-                  <tr key={s.id} className="hover:bg-[#151517] transition-colors">
-                    <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{s.id}</td>
+                  <tr key={s.id} className="hover:bg-[#131315] transition-colors">
+                    <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{s.id}</td>
                     <td className="px-3 py-2.5 font-mono font-bold uppercase text-[11px]">
                       {s.action === "ban" && <span className="text-red-400">BAN</span>}
                       {s.action === "warn" && <span className="text-amber-400">WARN</span>}
@@ -164,15 +164,15 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
                     </td>
 
                     <td className="px-3 py-2.5">
-                      <span className="text-[#f1f1f1] block max-w-sm truncate">{s.reason}</span>
+                      <span className="text-[#F2EFE8] block max-w-sm truncate">{s.reason}</span>
                       {s.duration_min && (
-                        <span className="text-[10px] text-[#6f6f74] font-mono">
+                        <span className="text-[10px] text-[#8F8B83] font-mono">
                           Durată: {s.duration_min} min
                         </span>
                       )}
                     </td>
 
-                    <td className="px-3 py-2.5 text-right font-mono text-[#6f6f74]">
+                    <td className="px-3 py-2.5 text-right font-mono text-[#8F8B83]">
                       {formatDate(s.created_at, locale)}
                     </td>
                   </tr>

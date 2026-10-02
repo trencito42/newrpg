@@ -76,7 +76,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
   return (
     <div className="relative w-full max-w-xs md:max-w-sm" ref={dropdownRef}>
       <div className="relative flex items-center">
-        <Search className="absolute left-2.5 w-3.5 h-3.5 text-[#6f6f74] pointer-events-none" />
+        <Search className="absolute left-2.5 w-3.5 h-3.5 text-[#8F8B83] pointer-events-none" />
         <input
           type="text"
           value={query}
@@ -84,10 +84,10 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-8 pr-7 py-1 text-xs bg-surface-100 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none focus:border-surface-borderLight transition-colors"
+          className="w-full pl-8 pr-7 py-1 text-xs bg-surface-100 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none focus:border-surface-borderLight transition-colors"
         />
         {loading && (
-          <Loader2 className="absolute right-2.5 w-3.5 h-3.5 text-[#6f6f74] animate-spin" />
+          <Loader2 className="absolute right-2.5 w-3.5 h-3.5 text-[#8F8B83] animate-spin" />
         )}
       </div>
 
@@ -104,15 +104,15 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                   <PlayerName name={res.name} factionId={res.job}
                     clanTag={res.clanTag} clanColor={res.clanColor} clanTagStyle={res.clanTagStyle}
                     clickable={false} className="text-xs font-semibold block truncate" />
-                  <span className="text-[11px] text-[#6f6f74] block">{res.job}</span>
+                  <span className="text-[11px] text-[#8F8B83] block">{res.job}</span>
                 </div>
-                <span className="text-[11px] text-[#6f6f74] font-mono">
+                <span className="text-[11px] text-[#8F8B83] font-mono">
                   L{res.level}
                 </span>
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-xs text-[#6f6f74] text-center">
+            <div className="px-3 py-2 text-xs text-[#8F8B83] text-center">
               No players found
             </div>
           )}

@@ -70,7 +70,7 @@ export default async function UnbanPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}
         </h1>
       </div>
@@ -81,27 +81,27 @@ export default async function UnbanPage() {
           {activeBan && (
             <div className="p-3 bg-red-950/20 border border-red-900/40 text-xs rounded space-y-1">
               <span className="font-semibold text-red-400 block">Active Ban</span>
-              <p className="text-[#f1f1f1]"><span className="text-[#6f6f74]">Reason:</span> {activeBan.reason}</p>
-              <p className="text-[#6f6f74]">By: {activeBan.banned_by}</p>
-              <p className="text-[#6f6f74]">
+              <p className="text-[#F2EFE8]"><span className="text-[#8F8B83]">Reason:</span> {activeBan.reason}</p>
+              <p className="text-[#8F8B83]">By: {activeBan.banned_by}</p>
+              <p className="text-[#8F8B83]">
                 Expires: {activeBan.expires_at ? new Date(activeBan.expires_at).toLocaleDateString() : "Permanent"}
               </p>
             </div>
           )}
 
           <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 text-xs">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               {lang === "ro" ? "Depune Cerere" : "Submit Appeal"}
             </h2>
 
             {user ? (
               <UnbanForm lang={lang} banId={activeBan?.id} />
             ) : (
-              <div className="text-center py-4 text-[#6f6f74]">
+              <div className="text-center py-4 text-[#8F8B83]">
                 <p className="mb-2">Log in to submit an unban appeal.</p>
                 <Link
                   href="/login"
-                  className="inline-flex px-3 py-1 bg-[#f1f1f1] text-[#0b0b0c] font-semibold rounded text-xs"
+                  className="inline-flex px-3 py-1 bg-[#D7B558] text-[#08080A] font-semibold rounded text-xs"
                 >
                   Log In
                 </Link>
@@ -112,38 +112,38 @@ export default async function UnbanPage() {
 
         {/* Requests List */}
         <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#f1f1f1]">
+          <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#F2EFE8]">
             <span>{lang === "ro" ? "Cererile Tale" : "Your Appeals"}</span>
-            <span className="font-mono text-[#6f6f74]">{userRequests.length}</span>
+            <span className="font-mono text-[#8F8B83]">{userRequests.length}</span>
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
             {userRequests.map((req) => (
               <div key={req.id} className="p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[#6f6f74]">#{req.id}</span>
+                  <span className="font-mono text-[#8F8B83]">#{req.id}</span>
                   <div>{getStatusText(req.status)}</div>
                 </div>
 
-                <div className="p-2.5 bg-surface-200 rounded border border-surface-border text-xs text-[#f1f1f1]">
+                <div className="p-2.5 bg-surface-200 rounded border border-surface-border text-xs text-[#F2EFE8]">
                   <p className="whitespace-pre-wrap">{req.reason}</p>
                 </div>
 
                 {req.staff_response && (
-                  <div className="p-2.5 bg-surface-200 rounded border border-surface-border text-xs text-[#f1f1f1]">
-                    <span className="text-[#6f6f74] font-medium block">Verdict:</span>
+                  <div className="p-2.5 bg-surface-200 rounded border border-surface-border text-xs text-[#F2EFE8]">
+                    <span className="text-[#8F8B83] font-medium block">Verdict:</span>
                     <p>{req.staff_response}</p>
                   </div>
                 )}
 
-                <div className="text-[11px] text-[#6f6f74] font-mono">
+                <div className="text-[11px] text-[#8F8B83] font-mono">
                   {new Date(req.created_at).toLocaleDateString()}
                 </div>
               </div>
             ))}
 
             {userRequests.length === 0 && (
-              <div className="p-6 text-center text-[#6f6f74]">
+              <div className="p-6 text-center text-[#8F8B83]">
                 {lang === "ro" ? "Nicio cerere de debanare." : "No unban appeals."}
               </div>
             )}

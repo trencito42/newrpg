@@ -58,20 +58,20 @@ export default async function HomePage() {
       {/* Top Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div className="flex items-center space-x-3">
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {panelBrand.name}
           </h1>
-          <div className="flex items-center space-x-1.5 text-xs text-[#6f6f74]">
+          <div className="flex items-center space-x-1.5 text-xs text-[#8F8B83]">
             <span
               className={`w-2 h-2 rounded-full ${
                 serverStatus.online ? "bg-emerald-500" : "bg-red-500"
               }`}
             />
-            <span className="text-[#a5a5a8]">
+            <span className="text-[#B4AFA4]">
               {serverStatus.online ? t(locale, "common.online") : t(locale, "common.offline")}
             </span>
             <span>•</span>
-            <span className="font-mono text-[#f1f1f1]">
+            <span className="font-mono text-[#F2EFE8]">
               {serverStatus.playerCount} / {serverStatus.maxPlayers}
             </span>
           </div>
@@ -79,8 +79,8 @@ export default async function HomePage() {
 
         <div className="flex items-center space-x-2 text-xs">
           {panelBrand.connectAddress && (
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-surface-100 border border-surface-border font-mono text-[#a5a5a8]">
-              <Radio className="w-3 h-3 text-[#6f6f74]" />
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-surface-100 border border-surface-border font-mono text-[#B4AFA4]">
+              <Radio className="w-3 h-3 text-[#8F8B83]" />
               <span>{panelBrand.connectAddress}</span>
             </div>
           )}
@@ -89,10 +89,10 @@ export default async function HomePage() {
               href={panelBrand.discordUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-100 hover:bg-surface-200 border border-surface-border text-[#f1f1f1] transition-colors"
+              className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-surface-100 hover:bg-surface-200 border border-surface-border text-[#F2EFE8] transition-colors"
             >
               <span>{t(locale, "home.join_discord")}</span>
-              <ExternalLink className="w-3 h-3 text-[#6f6f74]" />
+              <ExternalLink className="w-3 h-3 text-[#8F8B83]" />
             </a>
           )}
         </div>
@@ -101,37 +101,37 @@ export default async function HomePage() {
       {/* Server counts, without fabricated totals or decorative cards. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
         <div>
-          <span className="text-xs text-[#6f6f74] block font-medium">
+          <span className="text-xs text-[#8F8B83] block font-medium">
             {t(locale, "home.players_online")}
           </span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
-            {serverStatus.playerCount} <span className="text-xs text-[#6f6f74] font-normal">/ {serverStatus.maxPlayers}</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">
+            {serverStatus.playerCount} <span className="text-xs text-[#8F8B83] font-normal">/ {serverStatus.maxPlayers}</span>
           </span>
         </div>
 
         <div>
-          <span className="text-xs text-[#6f6f74] block font-medium">
+          <span className="text-xs text-[#8F8B83] block font-medium">
             {t(locale, "home.registered_accounts")}
           </span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">
             {formatNumber(stats.totalAccounts, locale)}
           </span>
         </div>
 
         <div>
-          <span className="text-xs text-[#6f6f74] block font-medium">
+          <span className="text-xs text-[#8F8B83] block font-medium">
             {locale === "ro" ? "Personaje" : "Characters"}
           </span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">
             {formatNumber(stats.totalCharacters, locale)}
           </span>
         </div>
 
         <div>
-          <span className="text-xs text-[#6f6f74] block font-medium">
+          <span className="text-xs text-[#8F8B83] block font-medium">
             {t(locale, "home.controlled_turfs")}
           </span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">
             {stats.controlledTurfs}
           </span>
         </div>
@@ -144,7 +144,7 @@ export default async function HomePage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#f1f1f1]">
+                  <span className="text-xs font-semibold text-[#F2EFE8]">
                     {locale === "ro" ? "Sondaj" : "Current Poll"}
                   </span>
                   <PollCountdown targetDate={featuredPoll.ends_at} locale={locale} />
@@ -153,7 +153,7 @@ export default async function HomePage() {
                   {locale === "ro" ? featuredPoll.title_ro : featuredPoll.title_en}
                 </CardTitle>
                 {featuredPoll.description_en && (
-                  <p className="text-xs text-[#8a8a90] mt-0.5">
+                  <p className="text-xs text-[#99958E] mt-0.5">
                     {locale === "ro" ? featuredPoll.description_ro : featuredPoll.description_en}
                   </p>
                 )}
@@ -166,16 +166,16 @@ export default async function HomePage() {
                   return (
                     <div key={opt.id} className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-[#a5a5a8]">
+                        <span className="text-[#B4AFA4]">
                           {locale === "ro" ? opt.label_ro : opt.label_en}
                         </span>
-                        <span className="font-mono text-[#6f6f74]">
+                        <span className="font-mono text-[#8F8B83]">
                           {opt.votes_count} ({pct}%)
                         </span>
                       </div>
                       <div className="w-full bg-surface-200 rounded h-1.5 overflow-hidden">
                         <div
-                          className="bg-[#6f6f74] h-full rounded transition-[width] duration-150"
+                          className="bg-[#8F8B83] h-full rounded transition-[width] duration-150"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -184,12 +184,12 @@ export default async function HomePage() {
                 })}
 
                 <div className="pt-3 border-t border-surface-border flex items-center justify-between">
-                  <span className="text-xs text-[#6f6f74] font-mono">
+                  <span className="text-xs text-[#8F8B83] font-mono">
                     {t(locale, "polls.total_votes", { count: featuredPoll.total_votes })}
                   </span>
                   <Link
                     href={`/polls/${featuredPoll.id}`}
-                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold rounded text-xs transition-colors"
+                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-semibold rounded text-xs transition-colors"
                   >
                     <Vote className="w-3 h-3" />
                     <span>{t(locale, "home.vote_now")}</span>
@@ -204,33 +204,33 @@ export default async function HomePage() {
         {/* Right Column: Server Economy */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               Economy
             </h2>
           </div>
 
           <div className="border border-surface-border rounded bg-surface-100 p-3 space-y-2.5 text-xs">
             <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-              <span className="text-[#8a8a90]">Money in circulation</span>
-              <span className="font-mono font-semibold text-[#f1f1f1]">
+              <span className="text-[#99958E]">Money in circulation</span>
+              <span className="font-mono font-semibold text-[#F2EFE8]">
                 {formatCurrency(stats.totalEconomyMoney)}
               </span>
             </div>
             <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-              <span className="text-[#8a8a90]">Vehicles</span>
-              <span className="font-mono text-[#a5a5a8]">
+              <span className="text-[#99958E]">Vehicles</span>
+              <span className="font-mono text-[#B4AFA4]">
                 {formatNumber(stats.totalVehicles, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between py-1 border-b border-surface-border/50">
-              <span className="text-[#8a8a90]">Properties</span>
-              <span className="font-mono text-[#a5a5a8]">
+              <span className="text-[#99958E]">Properties</span>
+              <span className="font-mono text-[#B4AFA4]">
                 {formatNumber(stats.totalProperties, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between py-1">
-              <span className="text-[#8a8a90]">Clans</span>
-              <span className="font-mono text-[#a5a5a8]">
+              <span className="text-[#99958E]">Clans</span>
+              <span className="font-mono text-[#B4AFA4]">
                 {formatNumber(stats.totalClans, locale)}
               </span>
             </div>

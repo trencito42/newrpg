@@ -107,16 +107,17 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
   };
 
   return (
-    <aside className="w-56 bg-[#101011] border-r border-surface-border flex flex-col flex-shrink-0 min-h-screen text-[#a5a5a8]">
+    <aside className="w-64 bg-background border-r border-surface-border flex flex-col flex-shrink-0 min-h-screen text-[#B4AFA4]">
       {/* Brand Header */}
       <div className="p-3.5 border-b border-surface-border flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="font-bold text-sm tracking-tight text-[#f1f1f1]">
+        <Link href="/" className="flex items-center space-x-2.5">
+          <span className="text-brand text-lg leading-none" aria-hidden="true">✦</span>
+          <span className="font-black text-sm tracking-[0.08em] uppercase text-[#F2EFE8]">
             {panelBrand.name}
           </span>
         </Link>
 
-        <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#6f6f74]">
+        <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#8F8B83]">
           <span
             className={cn(
               "w-1.5 h-1.5 rounded-full",
@@ -131,7 +132,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
         {/* SERVER */}
         <div>
-          <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+          <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
             Server
           </div>
           <nav className="space-y-0.5">
@@ -143,13 +144,13 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                    "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                     active
-                      ? "bg-[#1a1a1c] text-[#f1f1f1]"
-                      : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                      ? "bg-brand/10 border-brand text-brand"
+                      : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -160,7 +161,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
         {/* ACCOUNT */}
         {session && (
           <div>
-            <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+            <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
               Account
             </div>
             <nav className="space-y-0.5">
@@ -172,13 +173,13 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                      "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                       active
-                        ? "bg-[#1a1a1c] text-[#f1f1f1]"
-                        : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                        ? "bg-brand/10 border-brand text-brand"
+                        : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                     )}
                   >
-                    <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -189,7 +190,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
 
         {/* SUPPORT */}
         <div>
-          <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+          <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
             Support
           </div>
           <nav className="space-y-0.5">
@@ -201,13 +202,13 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                    "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                     active
-                      ? "bg-[#1a1a1c] text-[#f1f1f1]"
-                      : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                      ? "bg-brand/10 border-brand text-brand"
+                      : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -218,7 +219,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
         {/* STAFF (Only if staff) */}
         {isStaffMember && (
           <div>
-            <div className="px-2 mb-1 text-[10px] font-semibold text-[#6f6f74] uppercase tracking-wider">
+            <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
               Staff
             </div>
             <nav className="space-y-0.5">
@@ -230,13 +231,13 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2 px-2 py-1.5 rounded text-xs font-medium transition-colors",
+                      "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                       active
-                        ? "bg-[#1a1a1c] text-[#f1f1f1]"
-                        : "text-[#a5a5a8] hover:bg-[#151516] hover:text-[#f1f1f1]"
+                        ? "bg-brand/10 border-brand text-brand"
+                        : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                     )}
                   >
-                    <Icon className="w-3.5 h-3.5 text-[#6f6f74] shrink-0" />
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -254,10 +255,10 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
               href="/account"
               className="min-w-0 flex-1 pr-2 hover:opacity-80 transition-opacity"
             >
-              <span className="text-xs font-semibold text-[#f1f1f1] block truncate">
+              <span className="text-xs font-semibold text-[#F2EFE8] block truncate">
                 <PlayerIdentity {...(identity || { username: session.username })} size="sm" clickable={false} />
               </span>
-              <span className="text-[10px] text-[#6f6f74] block font-mono">
+              <span className="text-[10px] text-[#8F8B83] block font-mono">
                 {getStaffTitle()}
               </span>
             </Link>
@@ -265,7 +266,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
               <button
                 type="submit"
                 title={t(locale, "nav.logout")}
-                className="p-1 text-[#6f6f74] hover:text-red-400 hover:bg-[#151516] rounded transition-colors"
+                className="p-1 text-[#8F8B83] hover:text-red-400 hover:bg-[#131315] rounded transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -274,7 +275,7 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
         ) : (
           <Link
             href="/login"
-            className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold rounded text-xs transition-colors"
+            className="w-full flex items-center justify-center space-x-1.5 px-3 py-2 bg-brand hover:bg-brand-300 text-[#08080A] font-extrabold uppercase tracking-[0.06em] rounded-sm text-[11px] transition-colors"
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>{t(locale, "nav.login")}</span>

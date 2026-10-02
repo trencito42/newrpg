@@ -39,7 +39,7 @@ export default async function PollsPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "polls.title")}
         </h1>
       </div>
@@ -58,29 +58,29 @@ export default async function PollsPage() {
             >
               <div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className={`font-medium ${isActive ? "text-emerald-400" : "text-[#6f6f74]"}`}>
+                  <span className={`font-medium ${isActive ? "text-emerald-400" : "text-[#8F8B83]"}`}>
                     {isActive ? "Active" : "Closed"}
                   </span>
                   {isActive ? (
                     <PollCountdown targetDate={p.ends_at} locale={locale} />
                   ) : (
-                    <span className="text-[11px] text-[#6f6f74] font-mono">
+                    <span className="text-[11px] text-[#8F8B83] font-mono">
                       Ended {formatDate(p.ends_at, locale, false)}
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-sm font-semibold text-[#f1f1f1] mt-2">
+                <h3 className="text-sm font-semibold text-[#F2EFE8] mt-2">
                   {title}
                 </h3>
                 {desc && (
-                  <p className="text-xs text-[#8a8a90] mt-1 line-clamp-2">
+                  <p className="text-xs text-[#99958E] mt-1 line-clamp-2">
                     {desc}
                   </p>
                 )}
               </div>
 
-              <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#6f6f74]">
+              <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#8F8B83]">
                 <span className="font-mono">
                   {t(locale, "polls.total_votes", { count: p.total_votes })}
                 </span>
@@ -94,7 +94,7 @@ export default async function PollsPage() {
           );
         })}
         {polls.length === 0 && (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
             No polls.
           </p>
         )}

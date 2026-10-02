@@ -55,12 +55,12 @@ export default async function MyVehiclesPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "nav.vehicles")}
           </h1>
         </div>
 
-        <span className="font-mono text-xs text-[#a5a5a8] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
+        <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
           {vehicles.length} vehicles
         </span>
       </div>
@@ -76,7 +76,7 @@ export default async function MyVehiclesPage() {
               >
                 <div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-semibold text-[#f1f1f1]">
+                    <span className="font-mono font-semibold text-[#F2EFE8]">
                       {veh.plate}
                     </span>
                     {isImpounded ? (
@@ -84,14 +84,14 @@ export default async function MyVehiclesPage() {
                     ) : veh.destroyed ? (
                       <span className="text-red-400 font-medium">Destroyed</span>
                     ) : veh.stored ? (
-                      <span className="text-[#6f6f74]">Garage</span>
+                      <span className="text-[#8F8B83]">Garage</span>
                     ) : (
                       <span className="text-emerald-400 font-medium">Active</span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-2.5">
-                    <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
+                    <div className="w-16 h-12 bg-[#191719] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
                       <GTAImage
                         src={getVehiclePreviewUrl(veh.model, veh.preview_url)}
                         alt={vehicleDisplayName(veh.model, veh.catalog_label)}
@@ -100,35 +100,35 @@ export default async function MyVehiclesPage() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-[#f1f1f1] truncate">
+                      <h3 className="text-sm font-semibold text-[#F2EFE8] truncate">
                         {vehicleDisplayName(veh.model, veh.catalog_label)}
                       </h3>
-                      <p className="text-xs text-[#8a8a90] mt-0.5 truncate">
-                        Garage: <span className="text-[#a5a5a8] capitalize">{veh.garage || "default"}</span>
+                      <p className="text-xs text-[#99958E] mt-0.5 truncate">
+                        Garage: <span className="text-[#B4AFA4] capitalize">{veh.garage || "default"}</span>
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-surface-border/60 grid grid-cols-3 gap-2 text-center text-xs text-[#6f6f74]">
+                <div className="mt-3 pt-2.5 border-t border-surface-border/60 grid grid-cols-3 gap-2 text-center text-xs text-[#8F8B83]">
                   <div>
                     <span className="block text-[10px]">Fuel</span>
-                    <span className="font-mono text-[#f1f1f1]">{veh.fuel}%</span>
+                    <span className="font-mono text-[#F2EFE8]">{veh.fuel}%</span>
                   </div>
                   <div>
                     <span className="block text-[10px]">Engine</span>
-                    <span className="font-mono text-[#f1f1f1]">{Math.round(veh.engine / 10)}%</span>
+                    <span className="font-mono text-[#F2EFE8]">{Math.round(veh.engine / 10)}%</span>
                   </div>
                   <div>
                     <span className="block text-[10px]">Body</span>
-                    <span className="font-mono text-[#f1f1f1]">{Math.round(veh.body / 10)}%</span>
+                    <span className="font-mono text-[#F2EFE8]">{Math.round(veh.body / 10)}%</span>
                   </div>
                 </div>
               </div>
             );
           })
         ) : (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
             No vehicles found.
           </p>
         )}

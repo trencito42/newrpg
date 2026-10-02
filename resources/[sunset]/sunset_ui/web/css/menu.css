@@ -92,7 +92,7 @@
     display: flex; align-items: center; gap: 12px;
 }
 #menu .menu-tab svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-#menu .menu-tab:hover { color: var(--m-ink); background: rgba(242,239,232,.05); }
+#menu .menu-tab:hover { color: var(--m-ink); background: rgba(8,8,10,.94); }
 #menu .menu-tab.is-active { color: var(--m-gold); border-left-color: var(--m-gold); background: rgba(215,181,88,.06); }
 #menu .menu-xp { padding: 15px 18px; }
 #menu .menu-xp__row { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--m-muted); }
@@ -148,7 +148,7 @@
     display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 60px; padding: 12px;
     color: var(--m-ink); text-align: left; transition: background .12s, border-color .12s;
 }
-#menu .menu-action:hover:not(:disabled), #menu .menu-job-btn:hover:not(:disabled) { background: rgba(215,181,88,.12) !important; border-color: rgba(215,181,88,.55); }
+#menu .menu-action:hover:not(:disabled), #menu .menu-job-btn:hover:not(:disabled) { background: rgba(12,11,10,.95) !important; border-color: rgba(215,181,88,.65); }
 #menu .menu-action svg { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: var(--m-gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #menu .menu-action__copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 #menu .menu-action__copy strong { font-size: 10px; font-weight: 800; text-transform: uppercase; }
@@ -183,10 +183,44 @@
 #menu .menu-property-summary { display: grid; gap: 14px; }
 #menu .menu-placeholder__row { display: flex; justify-content: space-between; gap: 14px; }
 #menu .menu-placeholder__row strong { font-size: 12px; text-align: right; }
-#menu .menu-property-list { margin: 12px 0; padding: 10px 20px; list-style: none; }
+#menu .menu-property-list { margin: 12px 0; padding: 0; list-style: none; background: transparent !important; border: 0; }
 #menu .menu-property-list:empty { display: none; }
-#menu .menu-property-list li { padding: 11px 0; border-bottom: 1px solid var(--m-border); color: var(--m-ink); font-size: 11px; }
-#menu .menu-property-list li:last-child { border: 0; }
+#menu .menu-property-list .house-row {
+    display: flex !important; flex-direction: column; align-items: stretch; gap: 14px;
+    margin-bottom: 10px; padding: 16px !important;
+    border: 1px solid var(--m-border) !important; border-radius: 8px;
+    background: rgba(8,8,10,.84) !important; color: var(--m-ink);
+}
+#menu .menu-property-list .house-row:hover { background: rgba(12,11,10,.96) !important; border-color: rgba(215,181,88,.48) !important; }
+#menu .menu-property-list .house-row__details { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+#menu .menu-property-list .house-row__title-wrap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+#menu .menu-property-list .prop-id-badge { color: var(--m-gold); font-size: 11px; font-weight: 800; }
+#menu .menu-property-list .prop-address { color: var(--m-ink); font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+#menu .menu-property-list .house-row__quote { color: var(--m-muted); font-size: 10px; line-height: 1.4; }
+#menu .menu-property-list .house-row__chips { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+#menu .menu-property-list .prop-chip,
+#menu .menu-property-list .house-row__rent-hint { display: inline-flex; align-items: center; gap: 4px; color: var(--m-muted); font-size: 9px; font-weight: 700; line-height: 1.3; }
+#menu .menu-property-list .prop-chip svg,
+#menu .menu-property-list .house-row__rent-hint svg { width: 12px; height: 12px; flex: 0 0 12px; }
+#menu .menu-property-list .prop-chip--open,
+#menu .menu-property-list .prop-chip--rent-price { color: #55d3a5; }
+#menu .menu-property-list .prop-chip--locked { color: #f07d7d; }
+#menu .menu-property-list .house-row__side { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; border-top: 1px solid var(--m-border); padding-top: 12px; }
+#menu .menu-property-list .prop-status-badge { display: inline-flex; align-items: center; gap: 5px; color: var(--m-gold); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+#menu .menu-property-list .prop-status-badge svg { width: 12px; height: 12px; }
+#menu .menu-property-list .house-row__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#menu .menu-property-list .prop-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    min-height: 30px; padding: 6px 9px; border: 1px solid var(--m-border);
+    border-radius: 4px; background: rgba(18,17,15,.95); color: var(--m-ink);
+    font-size: 9px; font-weight: 800; text-transform: uppercase; cursor: pointer;
+}
+#menu .menu-property-list .prop-btn:hover:not(:disabled) { background: rgba(34,29,16,.98); border-color: var(--m-gold); color: var(--m-gold); }
+#menu .menu-property-list .prop-btn.is-primary { color: var(--m-gold); border-color: rgba(215,181,88,.55); }
+#menu .menu-property-list .prop-btn.is-danger-glass { color: #f07d7d; border-color: rgba(240,125,125,.45); }
+#menu .menu-property-list .prop-btn svg { width: 13px; height: 13px; flex: 0 0 13px; }
+#menu .menu-property-list .house-empty { display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 28px 18px; color: var(--m-muted); font-size: 11px; text-align: center; }
+#menu .menu-property-list .house-empty strong { color: var(--m-ink); }
 #menu .menu-config__section { margin-top: 12px; }
 #menu .menu-config__section h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; }
 #menu .menu-config__section p, #menu .menu-config__hint { margin: 5px 0; color: var(--m-muted); font-size: 11px; line-height: 1.5; }

@@ -204,7 +204,7 @@ export function ApplicationThreadClient({
         );
       case "withdrawn":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-neutral-900 text-[#a5a5a8] border border-surface-border">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <MinusCircle className="w-3.5 h-3.5" />
             {locale === "ro" ? "Retrasă" : "Withdrawn"}
           </span>
@@ -228,7 +228,7 @@ export function ApplicationThreadClient({
     if (b === "CO-LEADER") return "bg-orange-950/60 text-orange-400 border-orange-800/40 font-bold";
     if (b === "APPLICANT") return "bg-purple-950/60 text-purple-400 border-purple-800/40";
     if (b === "DECISION") return "bg-emerald-900/60 text-emerald-300 border-emerald-700/50 font-bold";
-    return "bg-neutral-900 text-[#a5a5a8] border-surface-border";
+    return "bg-surface-100 text-[#B4AFA4] border-surface-border";
   };
 
   // Tally counts
@@ -362,18 +362,18 @@ export function ApplicationThreadClient({
         <div className="flex items-center gap-3">
           <Link
             href={`/${orgType === "faction" ? "factions" : "clans"}/${orgId}/applications`}
-            className="p-1.5 bg-[#141416] hover:bg-[#1a1a1d] border border-surface-border rounded text-[#a5a5a8] hover:text-[#f1f1f1] transition-colors"
+            className="p-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-[#f1f1f1] tracking-tight">
+              <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
                 {orgType === "faction" ? "Faction" : "Clan"} Application #{app.id}
               </h1>
               {getStatusBadge(app.status)}
             </div>
-            <p className="text-xs text-[#6f6f74]">
+            <p className="text-xs text-[#8F8B83]">
               {orgName} • {formatDate(app.created_at)}
             </p>
           </div>
@@ -418,15 +418,15 @@ export function ApplicationThreadClient({
 
       {/* Leadership Decision Modal / Bar */}
       {decisionAction && (
-        <div className="p-4 bg-[#141416] border border-surface-border rounded space-y-3">
+        <div className="p-4 bg-[#101012] border border-surface-border rounded space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#f1f1f1] flex items-center gap-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F2EFE8] flex items-center gap-1.5">
               <Gavel className="w-4 h-4 text-emerald-400" />
               Leadership Decision: {decisionAction.replace(/_/g, " ").toUpperCase()}
             </h3>
             <button
               onClick={() => setDecisionAction(null)}
-              className="text-xs text-[#6f6f74] hover:text-[#f1f1f1]"
+              className="text-xs text-[#8F8B83] hover:text-[#F2EFE8]"
             >
               Cancel
             </button>
@@ -439,7 +439,7 @@ export function ApplicationThreadClient({
           )}
 
           <div>
-            <label className="text-xs font-semibold text-[#a5a5a8] block mb-1">
+            <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">
               Decision Reason <span className="text-red-400">*</span>:
             </label>
             <textarea
@@ -447,7 +447,7 @@ export function ApplicationThreadClient({
               onChange={(e) => setDecisionReason(e.target.value)}
               placeholder="Provide a clear explanation for this decision..."
               rows={2}
-              className="w-full px-3 py-2 bg-[#0b0b0c] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#444]"
+              className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444]"
             />
           </div>
 
@@ -455,7 +455,7 @@ export function ApplicationThreadClient({
             <button
               type="button"
               onClick={() => setDecisionAction(null)}
-              className="px-3 py-1 bg-[#1a1a1c] text-[#a5a5a8] rounded text-xs hover:text-[#f1f1f1]"
+              className="px-3 py-1 bg-[#1A191B] text-[#B4AFA4] rounded text-xs hover:text-[#F2EFE8]"
             >
               Cancel
             </button>
@@ -463,7 +463,7 @@ export function ApplicationThreadClient({
               type="button"
               disabled={submittingDecision}
               onClick={handleLeadershipDecision}
-              className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold transition-colors disabled:opacity-50"
+              className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-semibold transition-colors disabled:opacity-50"
             >
               {submittingDecision ? "Submitting..." : "Confirm Decision"}
             </button>
@@ -472,12 +472,12 @@ export function ApplicationThreadClient({
       )}
 
       {/* TOP SECTION: Applicant Details & Metadata */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden text-xs">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden text-xs">
         {/* Metadata Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-surface-border bg-[#141416]/50 p-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-surface-border bg-[#101012]/50 p-3.5">
           {/* Applicant Column */}
           <div className="space-y-1 pb-2 sm:pb-0 sm:pr-3">
-            <span className="text-[11px] font-semibold text-[#6f6f74] uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
               {locale === "ro" ? "Aplicant" : "Applicant"}
             </span>
             <PlayerIdentity {...getIdentity(app.applicant_username)} size="sm" />
@@ -485,30 +485,30 @@ export function ApplicationThreadClient({
 
           {/* Level & Hours */}
           <div className="space-y-1 py-2 sm:py-0 sm:px-3">
-            <span className="text-[11px] font-semibold text-[#6f6f74] uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
               {locale === "ro" ? "Nivel & Ore" : "Level & Hours"}
             </span>
-            <span className="font-mono font-bold text-[#f1f1f1]">
+            <span className="font-mono font-bold text-[#F2EFE8]">
               Lvl {app.applicant_level || 1} • {app.applicant_hours || 0} hrs
             </span>
           </div>
 
           {/* Current Faction / Clan */}
           <div className="space-y-1 py-2 sm:py-0 sm:px-3">
-            <span className="text-[11px] font-semibold text-[#6f6f74] uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
               {locale === "ro" ? "Facțiune Actuală" : "Current Faction"}
             </span>
-            <span className="text-[#d1d1d6] capitalize">
+            <span className="text-[#E1DCCF] capitalize">
               {app.applicant_faction || "Civilian"}
             </span>
           </div>
 
           {/* Status & Applied Date */}
           <div className="space-y-1 pt-2 sm:pt-0 sm:pl-3">
-            <span className="text-[11px] font-semibold text-[#6f6f74] uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
               {locale === "ro" ? "Data Aplicării" : "Applied Date"}
             </span>
-            <span className="font-mono text-[#6f6f74]">
+            <span className="font-mono text-[#8F8B83]">
               {formatDate(app.created_at)}
             </span>
           </div>
@@ -516,24 +516,24 @@ export function ApplicationThreadClient({
 
         {/* QUESTIONS & ANSWERS LIST */}
         <div className="p-4 space-y-4 border-t border-surface-border">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#a5a5a8]">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#B4AFA4]">
             {locale === "ro" ? "Întrebări & Răspunsuri Aplicație" : "Application Questions & Answers"}
           </h2>
 
           <div className="space-y-3">
             {questions.map((q, idx) => (
-              <div key={q.id || idx} className="space-y-1 bg-[#0b0b0c] p-3 rounded border border-surface-border/60">
-                <span className="text-xs font-semibold text-[#a5a5a8] block">
+              <div key={q.id || idx} className="space-y-1 bg-[#08080A] p-3 rounded border border-surface-border/60">
+                <span className="text-xs font-semibold text-[#B4AFA4] block">
                   {idx + 1}. {locale === "ro" ? (q.label_ro || q.label_en) : (q.label_en || q.label_ro)}
                 </span>
-                <p className="text-xs text-[#f1f1f1] whitespace-pre-wrap leading-relaxed pl-2 border-l-2 border-[#333]">
+                <p className="text-xs text-[#F2EFE8] whitespace-pre-wrap leading-relaxed pl-2 border-l-2 border-[#333]">
                   {q.answer_text}
                 </p>
               </div>
             ))}
 
             {questions.length === 0 && (
-              <p className="text-xs text-[#6f6f74] italic">
+              <p className="text-xs text-[#8F8B83] italic">
                 {locale === "ro" ? "Nu există întrebări specifice pentru această aplicație." : "No specific application answers recorded."}
               </p>
             )}
@@ -552,30 +552,30 @@ export function ApplicationThreadClient({
                   ? (locale === "ro" ? "Decizie Conducere: ACCEPTAT" : "Leadership Decision: ACCEPTED")
                   : (locale === "ro" ? "Decizie Conducere: RESPINS" : "Leadership Decision: REJECTED")}
               </span>
-              <p className="text-[#f1f1f1] whitespace-pre-wrap">{app.review_reason}</p>
+              <p className="text-[#F2EFE8] whitespace-pre-wrap">{app.review_reason}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* PRO / CONTRA ADVISORY VOTING MODULE */}
-      <div className="border border-surface-border rounded bg-[#101011] p-4 space-y-3 text-xs">
+      <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-3 text-xs">
         <div className="flex items-center justify-between">
-          <span className="font-bold uppercase tracking-wider text-[#a5a5a8] flex items-center gap-1.5">
+          <span className="font-bold uppercase tracking-wider text-[#B4AFA4] flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-blue-400" />
             {locale === "ro" ? "Vot Consultativ Membri" : "Member Advisory Voting"}
           </span>
           <div className="flex items-center gap-3 font-mono font-bold text-xs">
             <span className="text-emerald-400">PRO {proVotes.length}</span>
             <span className="text-red-400">CONTRA {contraVotes.length}</span>
-            <span className="text-[#6f6f74]">NEUTRAL {neutralVotes.length}</span>
+            <span className="text-[#8F8B83]">NEUTRAL {neutralVotes.length}</span>
           </div>
         </div>
 
         {/* Interactive Voting Actions for Members */}
         {viewer.canVote && !isResolved && (
-          <div className="p-3 bg-[#141416] border border-surface-border rounded space-y-2">
-            <span className="text-xs text-[#a5a5a8] block">
+          <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
+            <span className="text-xs text-[#B4AFA4] block">
               {locale === "ro" ? "Exprimă-ți votul de membru:" : "Cast your member advisory vote:"}
             </span>
 
@@ -593,7 +593,7 @@ export function ApplicationThreadClient({
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-colors",
                   userVote === "pro"
-                    ? "bg-emerald-600 text-white shadow-sm"
+                    ? "bg-emerald-600 text-[#F2EFE8] shadow-sm"
                     : "bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-400 border border-emerald-800/40"
                 )}
               >
@@ -608,7 +608,7 @@ export function ApplicationThreadClient({
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-colors",
                   userVote === "contra"
-                    ? "bg-red-600 text-white shadow-sm"
+                    ? "bg-red-600 text-[#F2EFE8] shadow-sm"
                     : "bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40"
                 )}
               >
@@ -623,8 +623,8 @@ export function ApplicationThreadClient({
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors",
                   userVote === "neutral"
-                    ? "bg-neutral-600 text-white"
-                    : "bg-neutral-900 hover:bg-neutral-800 text-[#a5a5a8] border border-surface-border"
+                    ? "bg-brand/20 text-[#F2EFE8]"
+                    : "bg-surface-100 hover:bg-surface-200 text-[#B4AFA4] border border-surface-border"
                 )}
               >
                 <MinusCircle className="w-3.5 h-3.5" />
@@ -639,7 +639,7 @@ export function ApplicationThreadClient({
                 onChange={(e) => setVoteComment(e.target.value)}
                 placeholder={locale === "ro" ? "Opțional: motivul votului tău (scurt)..." : "Optional: short reason for your vote..."}
                 maxLength={255}
-                className="w-full px-2.5 py-1 bg-[#0b0b0c] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none"
+                className="w-full px-2.5 py-1 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none"
               />
             </div>
           </div>
@@ -648,7 +648,7 @@ export function ApplicationThreadClient({
         {/* Votes Breakdown / List */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
           {/* PRO List */}
-          <div className="p-2.5 bg-[#0b0b0c] border border-emerald-900/30 rounded space-y-1.5">
+          <div className="p-2.5 bg-[#08080A] border border-emerald-900/30 rounded space-y-1.5">
             <span className="font-bold text-emerald-400 uppercase text-[11px] block">
               PRO ({proVotes.length})
             </span>
@@ -656,15 +656,15 @@ export function ApplicationThreadClient({
               {proVotes.map((v) => (
                 <div key={v.id} className="text-[11px]">
                   <PlayerIdentity {...getIdentity(v.voter_username)} size="sm" />
-                  {v.comment && <span className="text-[#a5a5a8] block text-[10px] pl-1">— {v.comment}</span>}
+                  {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {proVotes.length === 0 && <span className="text-[11px] text-[#6f6f74] italic">No votes</span>}
+              {proVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
             </div>
           </div>
 
           {/* CONTRA List */}
-          <div className="p-2.5 bg-[#0b0b0c] border border-red-900/30 rounded space-y-1.5">
+          <div className="p-2.5 bg-[#08080A] border border-red-900/30 rounded space-y-1.5">
             <span className="font-bold text-red-400 uppercase text-[11px] block">
               CONTRA ({contraVotes.length})
             </span>
@@ -672,26 +672,26 @@ export function ApplicationThreadClient({
               {contraVotes.map((v) => (
                 <div key={v.id} className="text-[11px]">
                   <PlayerIdentity {...getIdentity(v.voter_username)} size="sm" />
-                  {v.comment && <span className="text-[#a5a5a8] block text-[10px] pl-1">— {v.comment}</span>}
+                  {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {contraVotes.length === 0 && <span className="text-[11px] text-[#6f6f74] italic">No votes</span>}
+              {contraVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
             </div>
           </div>
 
           {/* NEUTRAL List */}
-          <div className="p-2.5 bg-[#0b0b0c] border border-surface-border/60 rounded space-y-1.5">
-            <span className="font-bold text-[#a5a5a8] uppercase text-[11px] block">
+          <div className="p-2.5 bg-[#08080A] border border-surface-border/60 rounded space-y-1.5">
+            <span className="font-bold text-[#B4AFA4] uppercase text-[11px] block">
               NEUTRAL ({neutralVotes.length})
             </span>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {neutralVotes.map((v) => (
                 <div key={v.id} className="text-[11px]">
                   <PlayerIdentity {...getIdentity(v.voter_username)} size="sm" />
-                  {v.comment && <span className="text-[#a5a5a8] block text-[10px] pl-1">— {v.comment}</span>}
+                  {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {neutralVotes.length === 0 && <span className="text-[11px] text-[#6f6f74] italic">No votes</span>}
+              {neutralVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
             </div>
           </div>
         </div>
@@ -700,11 +700,11 @@ export function ApplicationThreadClient({
       {/* DISCUSSION COMMENTS THREAD */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#a5a5a8]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#B4AFA4]">
             {locale === "ro" ? "Discuție Membri" : "Member Discussion"} ({comments.length})
           </span>
           {isResolved && (
-            <span className="text-[11px] text-[#6f6f74] flex items-center gap-1">
+            <span className="text-[11px] text-[#8F8B83] flex items-center gap-1">
               <Lock className="w-3 h-3" />
               {locale === "ro" ? "Aplicație Finalizată" : "Application Resolved"}
             </span>
@@ -714,7 +714,7 @@ export function ApplicationThreadClient({
         {/* Chronological Comments */}
         <div className="space-y-2">
           {comments.length === 0 ? (
-            <div className="p-6 text-center text-xs text-[#6f6f74] border border-surface-border rounded bg-[#101011]">
+            <div className="p-6 text-center text-xs text-[#8F8B83] border border-surface-border rounded bg-[#0E0E10]">
               {locale === "ro" ? "Niciun comentariu în această aplicație." : "No comments in this application thread yet."}
             </div>
           ) : (
@@ -726,12 +726,12 @@ export function ApplicationThreadClient({
                 <div
                   key={c.id}
                   className={cn(
-                    "border border-surface-border rounded bg-[#101011] overflow-hidden text-xs",
+                    "border border-surface-border rounded bg-[#0E0E10] overflow-hidden text-xs",
                     isDecision && "border-emerald-800/50 bg-[#0c1612]"
                   )}
                 >
                   {/* Header */}
-                  <div className="px-3.5 py-2 bg-[#141416]/80 border-b border-surface-border/60 flex items-center justify-between">
+                  <div className="px-3.5 py-2 bg-[#101012]/80 border-b border-surface-border/60 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
@@ -744,13 +744,13 @@ export function ApplicationThreadClient({
                       <PlayerIdentity {...senderIdentity} size="sm" />
                     </div>
 
-                    <span className="text-[11px] font-mono text-[#6f6f74]">
+                    <span className="text-[11px] font-mono text-[#8F8B83]">
                       {formatDate(c.created_at)}
                     </span>
                   </div>
 
                   {/* Message Body */}
-                  <div className="p-3.5 text-[#d1d1d6] whitespace-pre-wrap leading-relaxed">
+                  <div className="p-3.5 text-[#E1DCCF] whitespace-pre-wrap leading-relaxed">
                     {c.message}
                   </div>
                 </div>
@@ -761,12 +761,12 @@ export function ApplicationThreadClient({
 
         {/* COMMENT COMPOSER */}
         {viewer.canComment && (!isResolved || viewer.isStaff || viewer.isLeader) ? (
-          <form onSubmit={handlePostComment} className="border border-surface-border rounded bg-[#101011] p-3 space-y-2.5">
-            <div className="flex items-center justify-between text-xs text-[#a5a5a8]">
+          <form onSubmit={handlePostComment} className="border border-surface-border rounded bg-[#0E0E10] p-3 space-y-2.5">
+            <div className="flex items-center justify-between text-xs text-[#B4AFA4]">
               <span className="font-semibold">
                 {locale === "ro" ? "Adaugă un comentariu" : "Post a comment"}
               </span>
-              <span className="text-[11px] text-[#6f6f74]">
+              <span className="text-[11px] text-[#8F8B83]">
                 {viewer.isApplicant
                   ? (locale === "ro" ? "Răspuns aplicant către conducere" : "Applicant reply to leadership")
                   : (locale === "ro" ? "Comentariu membru organizație" : "Organization member comment")}
@@ -789,14 +789,14 @@ export function ApplicationThreadClient({
               }
               rows={3}
               required
-              className="w-full px-3 py-2 bg-[#0b0b0c] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#444] resize-y"
+              className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444] resize-y"
             />
 
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={submittingComment || !commentText.trim()}
-                className="px-4 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-bold rounded text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
                 {submittingComment ? (locale === "ro" ? "Se trimite..." : "Posting...") : (locale === "ro" ? "Trimite Comentariu" : "Submit Comment")}
@@ -804,13 +804,13 @@ export function ApplicationThreadClient({
             </div>
           </form>
         ) : (
-          <div className="p-3 bg-[#101011] border border-surface-border/60 rounded text-center text-xs text-[#6f6f74]">
+          <div className="p-3 bg-[#0E0E10] border border-surface-border/60 rounded text-center text-xs text-[#8F8B83]">
             {isResolved ? (
               <span>{locale === "ro" ? "Această aplicație a fost finalizată și este închisă." : "This application thread has been finalized and closed."}</span>
             ) : !viewer.isLoggedIn ? (
               <span>
                 {locale === "ro" ? "Trebuie să fii autentificat pentru a participa." : "You must be logged in to participate."}{" "}
-                <Link href="/login" className="text-[#f1f1f1] underline">
+                <Link href="/login" className="text-[#F2EFE8] underline">
                   Login
                 </Link>
               </span>

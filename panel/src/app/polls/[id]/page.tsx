@@ -89,7 +89,7 @@ export default async function PollDetailPage({
     <div className="space-y-4 max-w-2xl">
       <Link
         href="/polls"
-        className="inline-flex items-center space-x-1 text-xs text-[#6f6f74] hover:text-[#f1f1f1] transition-colors mb-1"
+        className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-1"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Polls</span>
@@ -98,20 +98,20 @@ export default async function PollDetailPage({
       <div className="border border-surface-border rounded bg-surface-100 p-4 space-y-4">
         <div className="pb-3 border-b border-surface-border">
           <div className="flex items-center justify-between text-xs">
-            <span className={`font-semibold ${isActive ? "text-emerald-400" : "text-[#6f6f74]"}`}>
+            <span className={`font-semibold ${isActive ? "text-emerald-400" : "text-[#8F8B83]"}`}>
               {isActive ? "Active Poll" : "Closed Poll"}
             </span>
             {isActive ? (
               <PollCountdown targetDate={poll.ends_at} locale={locale} />
             ) : (
-              <span className="text-[11px] text-[#6f6f74] font-mono">
+              <span className="text-[11px] text-[#8F8B83] font-mono">
                 Ended {formatDate(poll.ends_at, locale)}
               </span>
             )}
           </div>
-          <h1 className="text-base font-bold text-[#f1f1f1] mt-1">{title}</h1>
+          <h1 className="text-base font-bold text-[#F2EFE8] mt-1">{title}</h1>
           {desc && (
-            <p className="text-xs text-[#8a8a90] mt-1">{desc}</p>
+            <p className="text-xs text-[#99958E] mt-1">{desc}</p>
           )}
         </div>
 
@@ -141,8 +141,8 @@ export default async function PollDetailPage({
 
         {/* Results */}
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs text-[#6f6f74]">
-            <span className="font-semibold text-[#f1f1f1]">Results</span>
+          <div className="flex items-center justify-between text-xs text-[#8F8B83]">
+            <span className="font-semibold text-[#F2EFE8]">Results</span>
             <span className="font-mono">{t(locale, "polls.total_votes", { count: poll.total_votes })}</span>
           </div>
 
@@ -157,22 +157,22 @@ export default async function PollDetailPage({
                   key={opt.id}
                   className={`p-2.5 rounded border text-xs space-y-1 ${
                     isSelected
-                      ? "bg-surface-200 border-surface-borderLight text-[#f1f1f1]"
-                      : "bg-surface-100 border-surface-border text-[#a5a5a8]"
+                      ? "bg-surface-200 border-surface-borderLight text-[#F2EFE8]"
+                      : "bg-surface-100 border-surface-border text-[#B4AFA4]"
                   }`}
                 >
                   <div className="flex items-center justify-between font-medium">
                     <span>
                       {label} {isSelected && <span className="text-[11px] text-emerald-400 ml-1.5">(Your Vote)</span>}
                     </span>
-                    <span className="font-mono text-[#6f6f74]">
+                    <span className="font-mono text-[#8F8B83]">
                       {opt.votes_count} ({pct}%)
                     </span>
                   </div>
 
                   <div className="w-full bg-surface-300 rounded h-1.5 overflow-hidden">
                     <div
-                      className="h-full bg-[#6f6f74] rounded transition-[width] duration-150"
+                      className="h-full bg-[#8F8B83] rounded transition-[width] duration-150"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

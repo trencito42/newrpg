@@ -59,14 +59,14 @@ export default async function FactionsPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "factions.title")}
         </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {factionList.map((f) => {
-          const factionColor = getFactionColor(f.id) || "#f1f1f1";
+          const factionColor = getFactionColor(f.id) || "#F2EFE8";
           return (
             <Link
               key={f.id}
@@ -87,26 +87,26 @@ export default async function FactionsPage() {
                       {f.label}
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#6f6f74] font-medium">
+                  <span className="text-[11px] text-[#8F8B83] font-medium">
                     {f.factionType}
                   </span>
                 </div>
 
-                <p className="text-xs text-[#8a8a90] mt-1.5 line-clamp-2">
+                <p className="text-xs text-[#99958E] mt-1.5 line-clamp-2">
                   {f.description}
                 </p>
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#6f6f74]">
+              <div className="mt-3 pt-2.5 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#8F8B83]">
                 <span>
                   Leader:{" "}
                   {f.leader ? (
                     <PlayerIdentity {...identities.get(f.leader.leader_name.toLowerCase())!} factionId={f.id} clickable={false} />
                   ) : (
-                    <span className="text-[#6f6f74] italic">Vacant</span>
+                    <span className="text-[#8F8B83] italic">Vacant</span>
                   )}
                 </span>
-                <span className="font-mono text-[#a5a5a8]">
+                <span className="font-mono text-[#B4AFA4]">
                   {f.memberCount} members
                 </span>
               </div>

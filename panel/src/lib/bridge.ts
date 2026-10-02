@@ -31,7 +31,7 @@ export async function getServerStatus(): Promise<ServerStatus> {
     resource_version: string;
     fresh: number;
   }
-  const name = process.env.NEXT_PUBLIC_SERVER_NAME || "RPG Server";
+  const name = process.env.NEXT_PUBLIC_SERVER_NAME || "Racket RPG";
   let snapshot: SnapshotRow | null = null;
   try {
     snapshot = await dbQuerySingle<SnapshotRow>(

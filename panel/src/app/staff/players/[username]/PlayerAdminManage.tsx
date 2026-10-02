@@ -94,14 +94,14 @@ export function PlayerAdminManage({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold rounded text-xs transition-colors flex items-center gap-1.5"
+        className="px-3 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-semibold rounded text-xs transition-colors flex items-center gap-1.5"
       >
         <Shield className="w-3.5 h-3.5" />
         <span>{locale === "ro" ? "Gestionează Jucător" : "Manage Player"}</span>
       </button>
 
       {message && (
-        <div className="fixed bottom-4 right-4 z-50 p-3 bg-[#121214] border border-surface-border rounded shadow-xl text-xs flex items-center gap-2">
+        <div className="fixed bottom-4 right-4 z-50 p-3 bg-[#101012] border border-surface-border rounded shadow-xl text-xs flex items-center gap-2">
           {message.type === "success" ? (
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           ) : (
@@ -115,10 +115,10 @@ export function PlayerAdminManage({
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-lg bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   {locale === "ro" ? "Panou Administrare:" : "Admin Action Sheet:"}
                 </span>
                 <PlayerIdentity
@@ -132,7 +132,7 @@ export function PlayerAdminManage({
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -141,13 +141,13 @@ export function PlayerAdminManage({
             <form onSubmit={handleExecute} className="space-y-3 text-xs">
               {/* Select Action */}
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   {locale === "ro" ? "Alege Acțiunea" : "Select Action"}
                 </label>
                 <select
                   value={action}
                   onChange={(e) => setAction(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 >
                   {canWarn && <option value="warn">Warn (Avertisment)</option>}
                   {canMute && <option value="mute">Mute (Tăcere)</option>}
@@ -165,7 +165,7 @@ export function PlayerAdminManage({
               {/* Dynamic Action Fields */}
               {(action === "ban" || action === "mute" || action === "jail") && (
                 <div>
-                  <label className="block text-[11px] text-[#6f6f74] mb-1">
+                  <label className="block text-[11px] text-[#8F8B83] mb-1">
                     {locale === "ro" ? "Durată (Minute)" : "Duration (Minutes)"}
                   </label>
                   <input
@@ -174,7 +174,7 @@ export function PlayerAdminManage({
                     max={43200}
                     value={durationMin}
                     onChange={(e) => setDurationMin(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                    className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   />
                 </div>
               )}
@@ -182,11 +182,11 @@ export function PlayerAdminManage({
               {action === "set_faction" && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] text-[#6f6f74] mb-1">Facțiune</label>
+                    <label className="block text-[11px] text-[#8F8B83] mb-1">Facțiune</label>
                     <select
                       value={selectedFaction}
                       onChange={(e) => setSelectedFaction(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                      className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                     >
                       <option value="unemployed">Civil / Nicio facțiune</option>
                       {Object.values(CANONICAL_FACTIONS).map((f) => (
@@ -197,14 +197,14 @@ export function PlayerAdminManage({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-[#6f6f74] mb-1">Rang Facțiune (0-7)</label>
+                    <label className="block text-[11px] text-[#8F8B83] mb-1">Rang Facțiune (0-7)</label>
                     <input
                       type="number"
                       min={0}
                       max={7}
                       value={factionGrade}
                       onChange={(e) => setFactionGrade(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                      className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                     />
                   </div>
                 </div>
@@ -213,24 +213,24 @@ export function PlayerAdminManage({
               {action === "set_clan" && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] text-[#6f6f74] mb-1">Clan ID</label>
+                    <label className="block text-[11px] text-[#8F8B83] mb-1">Clan ID</label>
                     <input
                       type="number"
                       min={1}
                       value={clanId}
                       onChange={(e) => setClanId(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                      className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-[#6f6f74] mb-1">Rang Clan (1-7)</label>
+                    <label className="block text-[11px] text-[#8F8B83] mb-1">Rang Clan (1-7)</label>
                     <input
                       type="number"
                       min={1}
                       max={7}
                       value={clanRank}
                       onChange={(e) => setClanRank(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                      className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                     />
                   </div>
                 </div>
@@ -240,11 +240,11 @@ export function PlayerAdminManage({
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] text-[#6f6f74] mb-1">Tip Rol Staff</label>
+                      <label className="block text-[11px] text-[#8F8B83] mb-1">Tip Rol Staff</label>
                       <select
                         value={staffRoleType}
                         onChange={(e) => setStaffRoleType(e.target.value as any)}
-                        className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                        className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                       >
                         <option value="admin">Administrator</option>
                         <option value="helper">Helper</option>
@@ -254,7 +254,7 @@ export function PlayerAdminManage({
 
                     {staffRoleType !== "remove" && (
                       <div>
-                        <label className="block text-[11px] text-[#6f6f74] mb-1">
+                        <label className="block text-[11px] text-[#8F8B83] mb-1">
                           Nivel ({staffRoleType === "admin" ? "1-6" : "1-3"})
                         </label>
                         <input
@@ -263,7 +263,7 @@ export function PlayerAdminManage({
                           max={staffRoleType === "admin" ? 6 : 3}
                           value={staffLevel}
                           onChange={(e) => setStaffLevel(Number(e.target.value))}
-                          className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                          className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                         />
                       </div>
                     )}
@@ -273,7 +273,7 @@ export function PlayerAdminManage({
 
               {/* Reason */}
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   {locale === "ro" ? "Motiv (Obligatoriu)" : "Reason (Mandatory)"}
                 </label>
                 <textarea
@@ -282,7 +282,7 @@ export function PlayerAdminManage({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder={locale === "ro" ? "Introdu motivul acțiunii administrative..." : "Enter reason for administrative action..."}
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
                 />
               </div>
 
@@ -290,14 +290,14 @@ export function PlayerAdminManage({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1c] border border-surface-border rounded text-xs text-[#a5a5a8]"
+                  className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
                   {locale === "ro" ? "Anulează" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   disabled={loading || reason.trim().length < 3}
-                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-medium rounded text-xs transition-colors"
+                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
                   {loading ? "Se execută..." : "Execută Acțiunea"}
                 </button>

@@ -1,4 +1,4 @@
-# Multi-stage production Dockerfile for Sunset RPG Web Panel
+# Multi-stage production Dockerfile for Racket RPG Web Panel
 
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat

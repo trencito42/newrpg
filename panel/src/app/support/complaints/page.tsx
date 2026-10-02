@@ -117,7 +117,7 @@ export default async function ComplaintsPage({
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-neutral-900 text-[#a5a5a8] border border-surface-border">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <HelpCircle className="w-3 h-3" />
             {lang === "ro" ? "În Așteptare" : "Pending"}
           </span>
@@ -130,11 +130,11 @@ export default async function ComplaintsPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-surface-border gap-3">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#f1f1f1]" />
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#F2EFE8]" />
             {lang === "ro" ? "Reclamații Jucători" : "Player Complaints"}
           </h1>
-          <p className="text-xs text-[#6f6f74]">
+          <p className="text-xs text-[#8F8B83]">
             {lang === "ro"
               ? "Raportează încălcările regulamentului serverului sau urmărește reclamațiile active."
               : "Report rule violations or follow active complaint threads."}
@@ -145,7 +145,7 @@ export default async function ComplaintsPage({
           {session ? (
             <Link
               href={showNew ? "/support/complaints" : "/support/complaints?new=1"}
-              className="px-3 py-1.5 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               {showNew
@@ -155,7 +155,7 @@ export default async function ComplaintsPage({
           ) : (
             <Link
               href="/login"
-              className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1d] text-[#f1f1f1] border border-surface-border font-semibold rounded text-xs"
+              className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] text-[#F2EFE8] border border-surface-border font-semibold rounded text-xs"
             >
               {lang === "ro" ? "Autentifică-te pentru a reclama" : "Log in to file complaint"}
             </Link>
@@ -165,8 +165,8 @@ export default async function ComplaintsPage({
 
       {/* Complaint Filing Form (Collapsible / Active if ?new=1) */}
       {showNew && session && (
-        <div className="border border-surface-border rounded bg-[#101011] p-4 space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#f1f1f1] flex items-center gap-1.5">
+        <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-3">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#F2EFE8] flex items-center gap-1.5">
             <Plus className="w-4 h-4 text-emerald-400" />
             {lang === "ro" ? "Depune o Reclamație Nouă" : "File a New Complaint"}
           </h2>
@@ -181,8 +181,8 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "all"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {lang === "ro" ? "Toate" : "All"}
@@ -192,8 +192,8 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "pending"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {lang === "ro" ? "În Așteptare" : "Pending"}
@@ -203,8 +203,8 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "under_review"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {lang === "ro" ? "În Revizuire" : "Under Review"}
@@ -214,8 +214,8 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "resolved"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {lang === "ro" ? "Rezolvate" : "Resolved"}
@@ -223,11 +223,11 @@ export default async function ComplaintsPage({
       </div>
 
       {/* Dense Complaints Thread Index */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2.5">ID</th>
                 <th className="px-3 py-2.5">{lang === "ro" ? "Reclamat" : "Reported"}</th>
                 <th className="px-3 py-2.5">{lang === "ro" ? "Reclamant" : "Reporter"}</th>
@@ -241,7 +241,7 @@ export default async function ComplaintsPage({
             <tbody className="divide-y divide-surface-border/60">
               {complaints.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={8} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     {lang === "ro" ? "Nicio reclamație găsită." : "No complaints found."}
                   </td>
                 </tr>
@@ -253,12 +253,12 @@ export default async function ComplaintsPage({
                   return (
                     <tr
                       key={c.id}
-                      className="hover:bg-[#151517] transition-colors group cursor-pointer"
+                      className="hover:bg-[#131315] transition-colors group cursor-pointer"
                     >
-                      <td className="px-3 py-2.5 font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2.5 font-mono text-[#8F8B83]">
                         <Link
                           href={`/support/complaints/${c.id}`}
-                          className="font-bold text-[#f1f1f1] hover:underline"
+                          className="font-bold text-[#F2EFE8] hover:underline"
                         >
                           #{c.id}
                         </Link>
@@ -267,14 +267,14 @@ export default async function ComplaintsPage({
                         {reportedIdentity ? (
                           <PlayerIdentity {...reportedIdentity} size="sm" />
                         ) : (
-                          <span className="font-semibold text-[#f1f1f1]">{c.accused_name}</span>
+                          <span className="font-semibold text-[#F2EFE8]">{c.accused_name}</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5">
                         {reporterIdentity ? (
                           <PlayerIdentity {...reporterIdentity} size="sm" />
                         ) : (
-                          <span className="text-[#a5a5a8]">{c.accuser_username}</span>
+                          <span className="text-[#B4AFA4]">{c.accuser_username}</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5">
@@ -282,25 +282,25 @@ export default async function ComplaintsPage({
                           href={`/support/complaints/${c.id}`}
                           className="block hover:underline"
                         >
-                          <span className="font-semibold text-[#f1f1f1] block max-w-xs truncate">
+                          <span className="font-semibold text-[#F2EFE8] block max-w-xs truncate">
                             {c.title}
                           </span>
-                          <span className="text-[11px] text-[#6f6f74] uppercase font-mono">
+                          <span className="text-[11px] text-[#8F8B83] uppercase font-mono">
                             {c.category.replace(/_/g, " ")}
                           </span>
                         </Link>
                       </td>
                       <td className="px-3 py-2.5">{getStatusBadge(c.status)}</td>
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-[#a5a5a8]">
+                      <td className="px-3 py-2.5 text-center font-mono font-bold text-[#B4AFA4]">
                         <span className="inline-flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3 text-[#6f6f74]" />
+                          <MessageSquare className="w-3 h-3 text-[#8F8B83]" />
                           {c.reply_count}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[11px] text-[#6f6f74]">
+                      <td className="px-3 py-2.5 font-mono text-[11px] text-[#8F8B83]">
                         {formatDate(c.created_at)}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[11px] text-[#6f6f74]">
+                      <td className="px-3 py-2.5 font-mono text-[11px] text-[#8F8B83]">
                         {formatDate(c.last_reply_at || c.created_at)}
                       </td>
                     </tr>

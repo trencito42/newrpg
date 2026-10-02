@@ -65,7 +65,7 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
       )}
 
       <div>
-        <label className="block text-[#6f6f74] mb-1">
+        <label className="block text-[#8F8B83] mb-1">
           {lang === "ro" ? "Explicație / Motiv" : "Explanation & Reason"}
         </label>
         <textarea
@@ -74,7 +74,7 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
           placeholder={lang === "ro" ? "Explică motivele pentru care soliciți debanarea..." : "Explain why your ban should be reviewed..."}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none resize-none"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none resize-none"
         />
       </div>
 

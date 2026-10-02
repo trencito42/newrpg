@@ -47,7 +47,7 @@ export default async function BankingPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.banking")}
         </h1>
       </div>
@@ -55,30 +55,30 @@ export default async function BankingPage() {
       {/* Balances */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Cash</span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(cash)}</span>
+          <span className="text-xs text-[#8F8B83] block font-medium">Cash</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">{formatCurrency(cash)}</span>
         </div>
 
         <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Bank</span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(bank)}</span>
+          <span className="text-xs text-[#8F8B83] block font-medium">Bank</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">{formatCurrency(bank)}</span>
         </div>
 
         <div className="p-3 bg-surface-100 border border-surface-border rounded">
-          <span className="text-xs text-[#6f6f74] block font-medium">Total</span>
-          <span className="text-lg font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatCurrency(netWorth)}</span>
+          <span className="text-xs text-[#8F8B83] block font-medium">Total</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-0.5 block">{formatCurrency(netWorth)}</span>
         </div>
       </div>
 
       {/* Transactions */}
       <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-        <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#f1f1f1]">
+        <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
           Transactions
         </div>
 
         <div className="responsive-table-wrapper">
           <table className="w-full text-left text-xs">
-            <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+            <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
               <tr>
                 <th className="py-2 px-3">Type</th>
                 <th className="py-2 px-3">Amount</th>
@@ -87,25 +87,25 @@ export default async function BankingPage() {
                 <th className="py-2 px-3 text-right">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+            <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
               {transactions.length > 0 ? (
                 transactions.map((tx) => {
                   const isPositive = Number(tx.amount) > 0;
                   return (
                     <tr key={tx.id} className="hover:bg-surface-200/40">
-                      <td className="py-2 px-3 font-mono text-[#f1f1f1] uppercase text-[11px]">
+                      <td className="py-2 px-3 font-mono text-[#F2EFE8] uppercase text-[11px]">
                         {tx.account}
                       </td>
                       <td className={`py-2 px-3 font-mono font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
                         {isPositive ? `+${formatCurrency(tx.amount)}` : formatCurrency(tx.amount)}
                       </td>
-                      <td className="py-2 px-3 font-mono text-[#6f6f74]">
+                      <td className="py-2 px-3 font-mono text-[#8F8B83]">
                         {formatCurrency(tx.balance_after)}
                       </td>
-                      <td className="py-2 px-3 text-[#6f6f74] max-w-[200px] truncate">
+                      <td className="py-2 px-3 text-[#8F8B83] max-w-[200px] truncate">
                         {tx.reason || "-"}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#8F8B83]">
                         {formatDate(tx.created_at, locale)}
                       </td>
                     </tr>
@@ -113,7 +113,7 @@ export default async function BankingPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-[#6f6f74]">
+                  <td colSpan={5} className="py-6 text-center text-[#8F8B83]">
                     No transactions recorded.
                   </td>
                 </tr>

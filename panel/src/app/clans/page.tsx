@@ -59,10 +59,10 @@ export default async function ClansPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Clanuri" : "Clans"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {locale === "ro"
               ? "Organizații create de jucători, teritorii controlate și aplicații de recrutare"
               : "Player-created organizations, controlled territories, and recruitment applications"}
@@ -76,11 +76,11 @@ export default async function ClansPage({
             name="search"
             defaultValue={search}
             placeholder={locale === "ro" ? "Caută clan sau tag..." : "Search clan or tag..."}
-            className="px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+            className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
           />
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#202023] hover:bg-[#28282c] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
           >
             {locale === "ro" ? "Caută" : "Search"}
           </button>
@@ -88,11 +88,11 @@ export default async function ClansPage({
       </div>
 
       {/* Clans Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">Tag & {locale === "ro" ? "Nume" : "Name"}</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Lider" : "Leader"}</th>
                 <th className="px-3 py-2 text-center">{locale === "ro" ? "Membri" : "Members"}</th>
@@ -104,13 +104,13 @@ export default async function ClansPage({
             <tbody className="divide-y divide-surface-border">
               {clans.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     {locale === "ro" ? "Nu a fost găsit niciun clan" : "No clans found"}
                   </td>
                 </tr>
               ) : (
                 clans.map((clan) => (
-                  <tr key={clan.id} className="hover:bg-[#151517] transition-colors">
+                  <tr key={clan.id} className="hover:bg-[#131315] transition-colors">
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <span
@@ -121,13 +121,13 @@ export default async function ClansPage({
                         </span>
                         <Link
                           href={`/clans/${clan.id}`}
-                          className="font-semibold text-[#f1f1f1] hover:underline"
+                          className="font-semibold text-[#F2EFE8] hover:underline"
                         >
                           {clan.name}
                         </Link>
                       </div>
                       {clan.description && (
-                        <p className="text-[11px] text-[#6f6f74] truncate max-w-xs mt-0.5">
+                        <p className="text-[11px] text-[#8F8B83] truncate max-w-xs mt-0.5">
                           {clan.description}
                         </p>
                       )}
@@ -152,7 +152,7 @@ export default async function ClansPage({
                       {clan.turfs_count > 0 ? (
                         <span className="text-amber-400 font-semibold">{clan.turfs_count}</span>
                       ) : (
-                        <span className="text-[#6f6f74]">0</span>
+                        <span className="text-[#8F8B83]">0</span>
                       )}
                     </td>
 
@@ -163,7 +163,7 @@ export default async function ClansPage({
                           {locale === "ro" ? "DESCHISE" : "OPEN"}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-neutral-900 text-[#6f6f74] border border-surface-border rounded text-[10px] font-medium">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-100 text-[#8F8B83] border border-surface-border rounded text-[10px] font-medium">
                           <XCircle className="w-3 h-3" />
                           {locale === "ro" ? "ÎNCHISE" : "CLOSED"}
                         </span>
@@ -175,14 +175,14 @@ export default async function ClansPage({
                         {clan.applications_open === 1 && (
                           <Link
                             href={`/clans/${clan.id}/apply`}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded text-xs transition-colors"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                           >
                             {locale === "ro" ? "Aplică" : "Apply"}
                           </Link>
                         )}
                         <Link
                           href={`/clans/${clan.id}`}
-                          className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border text-[#f1f1f1] font-medium rounded text-xs transition-colors"
+                          className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                         >
                           {locale === "ro" ? "Detalii" : "View"}
                         </Link>

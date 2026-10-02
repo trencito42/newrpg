@@ -123,7 +123,7 @@ export default async function RulesPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {lang === "ro" ? "Regulament" : "Rules"}
         </h1>
       </div>
@@ -131,7 +131,7 @@ export default async function RulesPage() {
       <div className="space-y-6">
         {sections.map((sec) => (
           <div key={sec.id} className="space-y-3">
-            <h2 className="text-sm font-bold text-[#f1f1f1] border-b border-surface-border pb-1.5">
+            <h2 className="text-sm font-bold text-[#F2EFE8] border-b border-surface-border pb-1.5">
               {sec.title}
             </h2>
 
@@ -139,12 +139,12 @@ export default async function RulesPage() {
               {sec.rules.map((r) => (
                 <div key={r.num} className="p-3 text-xs space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono text-[11px] text-[#6f6f74]">
+                    <span className="font-mono text-[11px] text-[#8F8B83]">
                       {r.num}
                     </span>
-                    <h3 className="font-semibold text-[#f1f1f1]">{r.name}</h3>
+                    <h3 className="font-semibold text-[#F2EFE8]">{r.name}</h3>
                   </div>
-                  <p className="text-[#8a8a90] pl-5 leading-relaxed">{r.desc}</p>
+                  <p className="text-[#99958E] pl-5 leading-relaxed">{r.desc}</p>
                 </div>
               ))}
             </div>

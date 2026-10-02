@@ -70,7 +70,7 @@ export function PollVoteForm({
         <p className="mb-2">Login to vote in this poll.</p>
         <a
           href="/login"
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand text-gray-950 font-bold rounded-md text-xs transition-colors hover:bg-brand-600"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand text-[#08080A] font-bold rounded-md text-xs transition-colors hover:bg-brand-600"
         >
           <Vote className="w-3.5 h-3.5" />
           <span>Login</span>
@@ -103,7 +103,7 @@ export function PollVoteForm({
             key={opt.id}
             className={`flex items-center space-x-3 p-2.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${
               selectedOption === opt.id
-                ? "bg-brand/10 border-brand text-white"
+                ? "bg-brand/10 border-brand text-[#F2EFE8]"
                 : "bg-surface-100 border-surface-border text-text-secondary hover:bg-surface-200"
             }`}
           >

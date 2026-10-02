@@ -82,35 +82,35 @@ export default async function PlayersDirectoryPage({
       {/* Top Search & Filter Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "players.directory_title")}
           </h1>
         </div>
 
         <form method="GET" className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[#6f6f74] pointer-events-none" />
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[#8F8B83] pointer-events-none" />
           <input
             type="text"
             name="q"
             defaultValue={q}
             placeholder={t(locale, "players.search_hint")}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-surface-100 border border-surface-border rounded text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none focus:border-surface-borderLight transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-surface-100 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none focus:border-surface-borderLight transition-colors"
           />
         </form>
       </div>
 
       {/* Players Table */}
       <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-        <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs text-[#8a8a90]">
+        <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs text-[#99958E]">
           <span>{t(locale, "players.found_count", { count: totalCount })}</span>
-          <span className="font-mono text-[#6f6f74]">
+          <span className="font-mono text-[#8F8B83]">
             {t(locale, "common.page")} {page} {t(locale, "common.of")} {totalPages || 1}
           </span>
         </div>
 
         <div className="responsive-table-wrapper">
           <table className="w-full text-left text-xs">
-            <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+            <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
               <tr>
                 <th className="py-2.5 px-3">Player</th>
                 <th className="py-2.5 px-3">Level</th>
@@ -120,7 +120,7 @@ export default async function PlayersDirectoryPage({
                 <th className="py-2.5 px-3 text-right">Last Seen</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+            <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
               {players.length > 0 ? (
                 players.map((p) => {
                   const hasFaction = isFaction(p.faction_id);
@@ -141,16 +141,16 @@ export default async function PlayersDirectoryPage({
                           clanTagStyle={p.clan_tag_style}
                         />
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-medium text-[#f1f1f1]">
+                      <td className="py-2.5 px-3 font-mono font-medium text-[#F2EFE8]">
                         {p.level}
                       </td>
                       <td className="py-2.5 px-3">
                         {hasFaction ? (
-                          <span className="font-medium text-[#f1f1f1]">
+                          <span className="font-medium text-[#F2EFE8]">
                             {factionLabel}
                           </span>
                         ) : (
-                          <span className="text-[#6f6f74]">-</span>
+                          <span className="text-[#8F8B83]">-</span>
                         )}
                       </td>
                       <td className="py-2.5 px-3">
@@ -159,7 +159,7 @@ export default async function PlayersDirectoryPage({
                       <td className="py-2.5 px-3 font-mono">
                         {p.paydays_received}h
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[#6f6f74]">
+                      <td className="py-2.5 px-3 text-right font-mono text-[#8F8B83]">
                         {p.last_played ? formatDate(p.last_played, locale) : "Never"}
                       </td>
                     </tr>
@@ -169,7 +169,7 @@ export default async function PlayersDirectoryPage({
                 <tr>
                   <td
                     colSpan={6}
-                    className="py-8 text-center text-xs text-[#6f6f74]"
+                    className="py-8 text-center text-xs text-[#8F8B83]"
                   >
                     {t(locale, "players.no_players_found")}
                   </td>
@@ -186,13 +186,13 @@ export default async function PlayersDirectoryPage({
               {page > 1 ? (
                 <Link
                   href={`/players?q=${encodeURIComponent(q)}&page=${page - 1}`}
-                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] flex items-center space-x-1 transition-colors"
+                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] flex items-center space-x-1 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>{t(locale, "common.previous")}</span>
                 </Link>
               ) : (
-                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#6f6f74] flex items-center space-x-1 cursor-not-allowed">
+                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#8F8B83] flex items-center space-x-1 cursor-not-allowed">
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>{t(locale, "common.previous")}</span>
                 </span>
@@ -201,13 +201,13 @@ export default async function PlayersDirectoryPage({
               {page < totalPages ? (
                 <Link
                   href={`/players?q=${encodeURIComponent(q)}&page=${page + 1}`}
-                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#f1f1f1] flex items-center space-x-1 transition-colors"
+                  className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] flex items-center space-x-1 transition-colors"
                 >
                   <span>{t(locale, "common.next")}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               ) : (
-                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#6f6f74] flex items-center space-x-1 cursor-not-allowed">
+                <span className="p-1 px-2 border border-surface-border/40 rounded text-[#8F8B83] flex items-center space-x-1 cursor-not-allowed">
                   <span>{t(locale, "common.next")}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>

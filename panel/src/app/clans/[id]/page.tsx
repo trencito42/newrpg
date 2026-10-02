@@ -103,7 +103,7 @@ export default async function ClanDetailPage({ params }: Context) {
   return (
     <div className="space-y-4">
       {/* Clan Header */}
-      <div className="border border-surface-border rounded bg-[#101011] p-4">
+      <div className="border border-surface-border rounded bg-[#0E0E10] p-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span
@@ -113,10 +113,10 @@ export default async function ClanDetailPage({ params }: Context) {
               [{clan.tag}]
             </span>
             <div>
-              <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+              <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
                 {clan.name}
               </h1>
-              <div className="flex items-center gap-2 text-xs text-[#6f6f74] mt-0.5">
+              <div className="flex items-center gap-2 text-xs text-[#8F8B83] mt-0.5">
                 <span>{locale === "ro" ? "Lider:" : "Leader:"}</span>
                 <PlayerIdentity
                   username={clan.owner_username}
@@ -134,9 +134,9 @@ export default async function ClanDetailPage({ params }: Context) {
             {canManage && (
               <Link
                 href={`/clans/${clan.id}/manage`}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border text-[#f1f1f1] font-medium rounded text-xs transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
-                <Settings className="w-3.5 h-3.5 text-[#a5a5a8]" />
+                <Settings className="w-3.5 h-3.5 text-[#B4AFA4]" />
                 <span>{locale === "ro" ? "Panou Management" : "Clan Panel"}</span>
               </Link>
             )}
@@ -144,7 +144,7 @@ export default async function ClanDetailPage({ params }: Context) {
             {clan.applications_open === 1 && !userRank && (
               <Link
                 href={`/clans/${clan.id}/apply`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded text-xs transition-colors"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
                 {locale === "ro" ? "Aplică în clan" : "Apply to Clan"}
               </Link>
@@ -154,46 +154,46 @@ export default async function ClanDetailPage({ params }: Context) {
 
         {/* MOTD / Description */}
         {(clan.motd || clan.description) && (
-          <div className="mt-3 pt-3 border-t border-surface-border text-xs text-[#a5a5a8]">
+          <div className="mt-3 pt-3 border-t border-surface-border text-xs text-[#B4AFA4]">
             {clan.motd && (
               <p className="font-mono text-amber-300/90 mb-1">
-                <span className="font-bold text-[#6f6f74]">MOTD:</span> {clan.motd}
+                <span className="font-bold text-[#8F8B83]">MOTD:</span> {clan.motd}
               </p>
             )}
-            {clan.description && <p className="text-[#88888c]">{clan.description}</p>}
+            {clan.description && <p className="text-[#99958E]">{clan.description}</p>}
           </div>
         )}
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-surface-border text-xs">
-          <div className="p-2 bg-[#141416] border border-surface-border rounded">
-            <span className="text-[11px] text-[#6f6f74] block">{locale === "ro" ? "Membri" : "Members"}</span>
-            <span className="font-mono font-bold text-[#f1f1f1] text-sm mt-0.5 block">
+          <div className="p-2 bg-[#101012] border border-surface-border rounded">
+            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Membri" : "Members"}</span>
+            <span className="font-mono font-bold text-[#F2EFE8] text-sm mt-0.5 block">
               {clan.member_count} / {clan.max_members}
             </span>
           </div>
 
-          <div className="p-2 bg-[#141416] border border-surface-border rounded">
-            <span className="text-[11px] text-[#6f6f74] block">{locale === "ro" ? "Teritorii" : "Turfs"}</span>
+          <div className="p-2 bg-[#101012] border border-surface-border rounded">
+            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Teritorii" : "Turfs"}</span>
             <span className="font-mono font-bold text-amber-400 text-sm mt-0.5 block">
               {clan.turfs_count}
             </span>
           </div>
 
-          <div className="p-2 bg-[#141416] border border-surface-border rounded">
-            <span className="text-[11px] text-[#6f6f74] block">{locale === "ro" ? "Aplicații" : "Applications"}</span>
+          <div className="p-2 bg-[#101012] border border-surface-border rounded">
+            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Aplicații" : "Applications"}</span>
             <span className="font-bold text-sm mt-0.5 block">
               {clan.applications_open ? (
                 <span className="text-emerald-400">{locale === "ro" ? "DESCHISE" : "OPEN"}</span>
               ) : (
-                <span className="text-[#6f6f74]">{locale === "ro" ? "ÎNCHISE" : "CLOSED"}</span>
+                <span className="text-[#8F8B83]">{locale === "ro" ? "ÎNCHISE" : "CLOSED"}</span>
               )}
             </span>
           </div>
 
-          <div className="p-2 bg-[#141416] border border-surface-border rounded">
-            <span className="text-[11px] text-[#6f6f74] block">{locale === "ro" ? "Creat la" : "Created At"}</span>
-            <span className="font-mono text-[#a5a5a8] text-xs mt-1 block">
+          <div className="p-2 bg-[#101012] border border-surface-border rounded">
+            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Creat la" : "Created At"}</span>
+            <span className="font-mono text-[#B4AFA4] text-xs mt-1 block">
               {new Date(clan.created_at).toLocaleDateString()}
             </span>
           </div>
@@ -203,9 +203,9 @@ export default async function ClanDetailPage({ params }: Context) {
       {/* Roster & Turfs Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Members Roster (2 cols) */}
-        <div className="lg:col-span-2 border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="lg:col-span-2 border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Membri Clan" : "Clan Members"} ({members.length})
             </h2>
           </div>
@@ -213,7 +213,7 @@ export default async function ClanDetailPage({ params }: Context) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">#</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Rang Clan" : "Clan Rank"}</th>
@@ -224,8 +224,8 @@ export default async function ClanDetailPage({ params }: Context) {
               </thead>
               <tbody className="divide-y divide-surface-border">
                 {members.map((m, idx) => (
-                  <tr key={m.character_id} className="hover:bg-[#151517] transition-colors">
-                    <td className="px-3 py-2 font-mono text-[#6f6f74] text-[11px]">{idx + 1}</td>
+                  <tr key={m.character_id} className="hover:bg-[#131315] transition-colors">
+                    <td className="px-3 py-2 font-mono text-[#8F8B83] text-[11px]">{idx + 1}</td>
                     <td className="px-3 py-2">
                       <PlayerIdentity
                         username={m.username}
@@ -237,7 +237,7 @@ export default async function ClanDetailPage({ params }: Context) {
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <span className="font-medium text-[#f1f1f1]">
+                      <span className="font-medium text-[#F2EFE8]">
                         {CLAN_RANKS[m.rank] || `Rank ${m.rank}`}
                       </span>
                       {m.is_owner ? (
@@ -252,7 +252,7 @@ export default async function ClanDetailPage({ params }: Context) {
                       {m.warns > 0 ? (
                         <span className="text-red-400 font-bold">{m.warns}/3</span>
                       ) : (
-                        <span className="text-[#6f6f74]">0/3</span>
+                        <span className="text-[#8F8B83]">0/3</span>
                       )}
                     </td>
                   </tr>
@@ -263,16 +263,16 @@ export default async function ClanDetailPage({ params }: Context) {
         </div>
 
         {/* Controlled Turfs */}
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Teritorii Controlate" : "Controlled Turfs"} ({turfs.length})
             </h2>
           </div>
 
           <div className="p-3">
             {turfs.length === 0 ? (
-              <div className="text-center py-6 text-xs text-[#6f6f74]">
+              <div className="text-center py-6 text-xs text-[#8F8B83]">
                 {locale === "ro"
                   ? "Acest clan nu controlează niciun teritoriu"
                   : "This clan controls no territories"}
@@ -282,11 +282,11 @@ export default async function ClanDetailPage({ params }: Context) {
                 {turfs.map((t) => (
                   <div
                     key={t.id}
-                    className="p-2.5 bg-[#141416] border border-surface-border rounded flex items-center justify-between text-xs"
+                    className="p-2.5 bg-[#101012] border border-surface-border rounded flex items-center justify-between text-xs"
                   >
                     <div>
-                      <span className="font-semibold text-[#f1f1f1] block">{t.name}</span>
-                      <span className="text-[11px] text-[#6f6f74] font-mono">{t.zone}</span>
+                      <span className="font-semibold text-[#F2EFE8] block">{t.name}</span>
+                      <span className="text-[11px] text-[#8F8B83] font-mono">{t.zone}</span>
                     </div>
                     <span className="px-2 py-0.5 bg-amber-950/40 text-amber-400 border border-amber-800/40 rounded text-[10px] font-mono">
                       Turf #{t.id}

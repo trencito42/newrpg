@@ -231,7 +231,7 @@ export function ClanManageClient({
         <div className="flex items-center gap-3">
           <Link
             href={`/clans/${clan.id}`}
-            className="p-1.5 text-[#6f6f74] hover:text-[#f1f1f1] hover:bg-[#151517] rounded transition-colors"
+            className="p-1.5 text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-[#131315] rounded transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -243,11 +243,11 @@ export function ClanManageClient({
               >
                 [{clan.tag}]
               </span>
-              <h1 className="text-base font-bold text-[#f1f1f1] tracking-tight">
+              <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
                 {clan.name} — {locale === "ro" ? "Panou Management" : "Leader Panel"}
               </h1>
             </div>
-            <p className="text-[11px] text-[#6f6f74] mt-0.5">
+            <p className="text-[11px] text-[#8F8B83] mt-0.5">
               {isLeader
                 ? locale === "ro" ? "Acces complet Leader (Rang 7)" : "Full Leader Access (Rank 7)"
                 : locale === "ro" ? "Acces Co-Leader (Rang 6) — Recrutare & Membri" : "Co-Leader Access (Rank 6) — Recruitment & Members"}
@@ -277,8 +277,8 @@ export function ClanManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "overview"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Prezentare Generală" : "Overview"}
@@ -288,8 +288,8 @@ export function ClanManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors relative",
             tab === "applications"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Aplicații" : "Applications"}
@@ -304,8 +304,8 @@ export function ClanManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "members"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Membri" : "Members"} ({initialMembers.length})
@@ -315,8 +315,8 @@ export function ClanManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "history"
-              ? "border-[#f1f1f1] text-[#f1f1f1]"
-              : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
           {locale === "ro" ? "Istoric Audit" : "Audit History"}
@@ -327,8 +327,8 @@ export function ClanManageClient({
             className={cn(
               "px-3 py-2 border-b-2 font-medium transition-colors",
               tab === "settings"
-                ? "border-[#f1f1f1] text-[#f1f1f1]"
-                : "border-transparent text-[#6f6f74] hover:text-[#a5a5a8]"
+                ? "border-[#F2EFE8] text-[#F2EFE8]"
+                : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
             )}
           >
             {locale === "ro" ? "Setări Aplicații" : "Application Settings"}
@@ -340,30 +340,30 @@ export function ClanManageClient({
       {tab === "overview" && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 bg-[#101011] border border-surface-border rounded">
-              <span className="text-xs text-[#6f6f74] block">{locale === "ro" ? "Status Aplicații" : "Application Status"}</span>
+            <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Status Aplicații" : "Application Status"}</span>
               <span className="font-bold text-sm mt-1 block">
                 {appsOpen ? (
                   <span className="text-emerald-400 font-medium flex items-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5" /> {locale === "ro" ? "Deschise" : "Open"}
                   </span>
                 ) : (
-                  <span className="text-[#6f6f74] font-medium flex items-center gap-1">
+                  <span className="text-[#8F8B83] font-medium flex items-center gap-1">
                     <XCircle className="w-3.5 h-3.5" /> {locale === "ro" ? "Închise" : "Closed"}
                   </span>
                 )}
               </span>
             </div>
 
-            <div className="p-3 bg-[#101011] border border-surface-border rounded">
-              <span className="text-xs text-[#6f6f74] block">{locale === "ro" ? "Membri Activi" : "Active Members"}</span>
-              <span className="font-bold text-sm text-[#f1f1f1] mt-1 font-mono block">
+            <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Membri Activi" : "Active Members"}</span>
+              <span className="font-bold text-sm text-[#F2EFE8] mt-1 font-mono block">
                 {initialMembers.length} / {clan.max_members}
               </span>
             </div>
 
-            <div className="p-3 bg-[#101011] border border-surface-border rounded">
-              <span className="text-xs text-[#6f6f74] block">{locale === "ro" ? "Aplicații în Așteptare" : "Pending Applications"}</span>
+            <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Aplicații în Așteptare" : "Pending Applications"}</span>
               <span className="font-bold text-sm text-amber-400 mt-1 font-mono block">
                 {initialApps.filter((a) => a.status === "submitted" || a.status === "under_review").length}
               </span>
@@ -374,11 +374,11 @@ export function ClanManageClient({
 
       {/* TAB: APPLICATIONS */}
       {tab === "applications" && (
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">ID</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Aplicant" : "Applicant"}</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Status" : "Status"}</th>
@@ -390,14 +390,14 @@ export function ClanManageClient({
               <tbody className="divide-y divide-surface-border">
                 {initialApps.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                    <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                       {locale === "ro" ? "Nu există aplicații înregistrate" : "No applications recorded"}
                     </td>
                   </tr>
                 ) : (
                   initialApps.map((app) => (
-                    <tr key={app.id} className="hover:bg-[#151517] transition-colors">
-                      <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{app.id}</td>
+                    <tr key={app.id} className="hover:bg-[#131315] transition-colors">
+                      <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{app.id}</td>
                       <td className="px-3 py-2.5">
                         <PlayerIdentity {...identityFor(app.applicant_username)} size="sm" />
                       </td>
@@ -409,26 +409,26 @@ export function ClanManageClient({
                             app.status === "under_review" && "bg-amber-950/50 text-amber-400 border border-amber-800/40",
                             app.status === "accepted" && "bg-emerald-950/50 text-emerald-400 border border-emerald-800/40",
                             app.status === "rejected" && "bg-red-950/50 text-red-400 border border-red-800/40",
-                            app.status === "withdrawn" && "bg-neutral-900 text-[#6f6f74] border border-surface-border"
+                            app.status === "withdrawn" && "bg-surface-100 text-[#8F8B83] border border-surface-border"
                           )}
                         >
                           {app.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2.5 font-mono text-[#8F8B83]">
                         {new Date(app.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-3 py-2.5 text-[#a5a5a8]">
+                      <td className="px-3 py-2.5 text-[#B4AFA4]">
                         {app.reviewer_username ? (
                           <PlayerIdentity {...identityFor(app.reviewer_username)} size="sm" />
                         ) : (
-                          <span className="text-[#6f6f74]">—</span>
+                          <span className="text-[#8F8B83]">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <Link
                           href={`/clans/${clan.id}/applications/${app.id}`}
-                          className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+                          className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                         >
                           {locale === "ro" ? "Vezi Discuția" : "Open Thread"}
                         </Link>
@@ -444,11 +444,11 @@ export function ClanManageClient({
 
       {/* TAB: MEMBERS */}
       {tab === "members" && (
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">#</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
@@ -459,8 +459,8 @@ export function ClanManageClient({
               </thead>
               <tbody className="divide-y divide-surface-border">
                 {initialMembers.map((m, idx) => (
-                  <tr key={m.character_id} className="hover:bg-[#151517] transition-colors">
-                    <td className="px-3 py-2 font-mono text-[#6f6f74] text-[11px]">{idx + 1}</td>
+                  <tr key={m.character_id} className="hover:bg-[#131315] transition-colors">
+                    <td className="px-3 py-2 font-mono text-[#8F8B83] text-[11px]">{idx + 1}</td>
                     <td className="px-3 py-2">
                       <PlayerIdentity
                         username={m.username}
@@ -472,7 +472,7 @@ export function ClanManageClient({
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <span className="font-medium text-[#f1f1f1]">
+                      <span className="font-medium text-[#F2EFE8]">
                         {CLAN_RANKS[m.rank] || `Rank ${m.rank}`}
                       </span>
                       {m.is_owner && (
@@ -486,7 +486,7 @@ export function ClanManageClient({
                       {m.warns > 0 ? (
                         <span className="text-red-400 font-bold">{m.warns}/3</span>
                       ) : (
-                        <span className="text-[#6f6f74]">0/3</span>
+                        <span className="text-[#8F8B83]">0/3</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-right">
@@ -496,7 +496,7 @@ export function ClanManageClient({
                             setActionMember(m);
                             setMemberRank(m.rank);
                           }}
-                          className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] transition-colors"
+                          className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] transition-colors"
                         >
                           {locale === "ro" ? "Gestionează" : "Manage"}
                         </button>
@@ -512,11 +512,11 @@ export function ClanManageClient({
 
       {/* TAB: HISTORY */}
       {tab === "history" && (
-        <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+        <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+                <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">ID</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Actor" : "Actor"}</th>
                   <th className="px-3 py-2">{locale === "ro" ? "Acțiune" : "Action"}</th>
@@ -527,26 +527,26 @@ export function ClanManageClient({
               <tbody className="divide-y divide-surface-border">
                 {auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                       {locale === "ro" ? "Nu există log-uri de audit" : "No audit logs available"}
                     </td>
                   </tr>
                 ) : (
                   auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#151517] transition-colors">
-                      <td className="px-3 py-2 font-mono text-[#6f6f74]">#{log.id}</td>
+                    <tr key={log.id} className="hover:bg-[#131315] transition-colors">
+                      <td className="px-3 py-2 font-mono text-[#8F8B83]">#{log.id}</td>
                       <td className="px-3 py-2">
                         {log.actor_username ? (
                           <PlayerIdentity {...identityFor(log.actor_username)} size="sm" />
                         ) : (
-                          <span className="text-[#6f6f74]">SYSTEM</span>
+                          <span className="text-[#8F8B83]">SYSTEM</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 font-mono text-[#f1f1f1]">{log.action}</td>
-                      <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate font-mono text-[11px]">
+                      <td className="px-3 py-2 font-mono text-[#F2EFE8]">{log.action}</td>
+                      <td className="px-3 py-2 text-[#B4AFA4] max-w-xs truncate font-mono text-[11px]">
                         {formatAuditDetails(log.details)}
                       </td>
-                      <td className="px-3 py-2 font-mono text-[#6f6f74]">
+                      <td className="px-3 py-2 font-mono text-[#8F8B83]">
                         {new Date(log.created_at).toLocaleString()}
                       </td>
                     </tr>
@@ -562,8 +562,8 @@ export function ClanManageClient({
       {tab === "settings" && isLeader && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* General Criteria */}
-          <div className="border border-surface-border rounded bg-[#101011] p-4 space-y-4">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+          <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-4">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Setări Aplicații" : "Application Criteria"}
             </h2>
 
@@ -573,16 +573,16 @@ export function ClanManageClient({
                   type="checkbox"
                   checked={appsOpen}
                   onChange={(e) => setAppsOpen(e.target.checked)}
-                  className="rounded bg-[#141416] border-surface-border text-emerald-500 focus:ring-0"
+                  className="rounded bg-[#101012] border-surface-border text-emerald-500 focus:ring-0"
                 />
-                <span className="text-xs font-semibold text-[#f1f1f1]">
+                <span className="text-xs font-semibold text-[#F2EFE8]">
                   {locale === "ro" ? "Aplicații Deschise Public" : "Recruitment Applications Open"}
                 </span>
               </label>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <div>
-                  <label className="block text-[11px] text-[#6f6f74] mb-1">
+                  <label className="block text-[11px] text-[#8F8B83] mb-1">
                     {locale === "ro" ? "Nivel Minim" : "Minimum Level"}
                   </label>
                   <input
@@ -591,12 +591,12 @@ export function ClanManageClient({
                     max={100}
                     value={minLevel}
                     onChange={(e) => setMinLevel(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                    className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-[#6f6f74] mb-1">
+                  <label className="block text-[11px] text-[#8F8B83] mb-1">
                     {locale === "ro" ? "Ore Minime" : "Minimum Hours"}
                   </label>
                   <input
@@ -604,13 +604,13 @@ export function ClanManageClient({
                     min={0}
                     value={minHours}
                     onChange={(e) => setMinHours(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                    className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   {locale === "ro" ? "Avertismente Maxime Active" : "Max Active Warnings"}
                 </label>
                 <input
@@ -619,14 +619,14 @@ export function ClanManageClient({
                   max={5}
                   value={maxWarns}
                   onChange={(e) => setMaxWarns(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
               <button
                 onClick={handleSaveSettings}
                 disabled={savingSettings}
-                className="w-full py-2 bg-[#f1f1f1] hover:bg-white text-[#0b0b0c] font-semibold rounded text-xs transition-colors"
+                className="w-full py-2 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-semibold rounded text-xs transition-colors"
               >
                 {savingSettings ? "Se salvează..." : "Salvează Setările"}
               </button>
@@ -634,8 +634,8 @@ export function ClanManageClient({
           </div>
 
           {/* Question Builder */}
-          <div className="border border-surface-border rounded bg-[#101011] p-4 space-y-4">
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+          <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-4">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Întrebări Formular" : "Form Questions"}
             </h2>
 
@@ -643,15 +643,15 @@ export function ClanManageClient({
               {questions.map((q) => (
                 <div
                   key={q.id}
-                  className="p-2.5 bg-[#141416] border border-surface-border rounded flex items-center justify-between text-xs"
+                  className="p-2.5 bg-[#101012] border border-surface-border rounded flex items-center justify-between text-xs"
                 >
                   <div>
-                    <span className="font-semibold text-[#f1f1f1] block">{q.label_ro}</span>
-                    <span className="text-[11px] text-[#6f6f74]">{q.label_en}</span>
+                    <span className="font-semibold text-[#F2EFE8] block">{q.label_ro}</span>
+                    <span className="text-[11px] text-[#8F8B83]">{q.label_en}</span>
                   </div>
                   <button
                     onClick={() => handleDeleteQuestion(q.id)}
-                    className="p-1 text-[#6f6f74] hover:text-red-400 transition-colors"
+                    className="p-1 text-[#8F8B83] hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -666,7 +666,7 @@ export function ClanManageClient({
                 placeholder="Întrebare în Română"
                 value={newLabelRo}
                 onChange={(e) => setNewLabelRo(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
               />
               <input
                 type="text"
@@ -674,12 +674,12 @@ export function ClanManageClient({
                 placeholder="Question in English"
                 value={newLabelEn}
                 onChange={(e) => setNewLabelEn(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
               />
               <button
                 type="submit"
                 disabled={addingQ}
-                className="w-full py-1.5 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border text-[#f1f1f1] font-medium rounded text-xs transition-colors"
+                className="w-full py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
                 + Adaugă Întrebare
               </button>
@@ -691,17 +691,17 @@ export function ClanManageClient({
       {/* APPLICATION REVIEW MODAL */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-lg bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   Revizuire Aplicație #{selectedApp.id}
                 </span>
                 <PlayerIdentity {...identityFor(selectedApp.applicant_username)} size="sm" />
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -709,7 +709,7 @@ export function ClanManageClient({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   Motiv Decizie (Opțional pentru accept, recomandat la respingere)
                 </label>
                 <textarea
@@ -717,7 +717,7 @@ export function ClanManageClient({
                   value={reviewReason}
                   onChange={(e) => setReviewReason(e.target.value)}
                   placeholder="Introdu motivul deciziei..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1] focus:outline-none focus:border-[#a5a5a8]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
                 />
               </div>
             </div>
@@ -733,14 +733,14 @@ export function ClanManageClient({
               <button
                 onClick={() => handleReview("accepted")}
                 disabled={reviewing}
-                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-[#f1f1f1] rounded text-xs font-medium transition-colors"
+                className="px-3 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] rounded text-xs font-medium transition-colors"
               >
                 Doar Acceptă
               </button>
               <button
                 onClick={() => handleReview("accepted_add_member")}
                 disabled={reviewing}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-medium transition-colors"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-medium transition-colors"
               >
                 Acceptă & Adaugă în Clan
               </button>
@@ -752,17 +752,17 @@ export function ClanManageClient({
       {/* MEMBER MANAGE MODAL */}
       {actionMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-md bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   Gestionează Membru:
                 </span>
                 <PlayerIdentity {...identityFor(actionMember.username)} size="sm" />
               </div>
               <button
                 onClick={() => setActionMember(null)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -770,13 +770,13 @@ export function ClanManageClient({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">
+                <label className="block text-[11px] text-[#8F8B83] mb-1">
                   Rang Nou în Clan
                 </label>
                 <select
                   value={memberRank}
                   onChange={(e) => setMemberRank(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 >
                   <option value={1}>Recruit (1)</option>
                   <option value={2}>Member (2)</option>
@@ -788,13 +788,13 @@ export function ClanManageClient({
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">Motiv Acțiune</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Acțiune</label>
                 <input
                   type="text"
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}
                   placeholder="Motiv opțional..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
             </div>
@@ -820,7 +820,7 @@ export function ClanManageClient({
               <button
                 onClick={() => handleMemberAction("clan_set_rank")}
                 disabled={performingAction}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-medium"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-medium"
               >
                 Setează Rang
               </button>

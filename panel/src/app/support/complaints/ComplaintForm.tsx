@@ -78,7 +78,7 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
       )}
 
       <div>
-        <label className="block text-[#6f6f74] mb-1">
+        <label className="block text-[#8F8B83] mb-1">
           {lang === "ro" ? "Nume Jucător Reclamat" : "Accused Player Name"}
         </label>
         <input
@@ -87,18 +87,18 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
           placeholder="e.g. Andrei_Popescu"
           value={accusedName}
           onChange={(e) => setAccusedName(e.target.value)}
-          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-[#6f6f74] mb-1">
+        <label className="block text-[#8F8B83] mb-1">
           {lang === "ro" ? "Categorie" : "Category"}
         </label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] focus:outline-none"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] focus:outline-none"
         >
           <option value="cheating">{lang === "ro" ? "Cheaturi / Hack-uri" : "Cheats / Hacks"}</option>
           <option value="insults">{lang === "ro" ? "Limbaj vulgar / Jigniri" : "Insults / Verbal Abuse"}</option>
@@ -110,7 +110,7 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
       </div>
 
       <div>
-        <label className="block text-[#6f6f74] mb-1">
+        <label className="block text-[#8F8B83] mb-1">
           {lang === "ro" ? "Titlu" : "Title"}
         </label>
         <input
@@ -119,12 +119,12 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
           placeholder={lang === "ro" ? "Subiect pe scurt..." : "Brief summary..."}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-[#6f6f74] mb-1">
+        <label className="block text-[#8F8B83] mb-1">
           {lang === "ro" ? "Descriere & Dovezi (Link)" : "Description & Evidence Links"}
         </label>
         <textarea
@@ -133,7 +133,7 @@ export default function ComplaintForm({ lang }: ComplaintFormProps) {
           placeholder={lang === "ro" ? "Detalii și link-uri către dovezi video/foto..." : "Details and video/screenshot proof links..."}
           value={evidenceText}
           onChange={(e) => setEvidenceText(e.target.value)}
-          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#f1f1f1] placeholder-[#6f6f74] focus:outline-none resize-none"
+          className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none resize-none"
         />
       </div>
 

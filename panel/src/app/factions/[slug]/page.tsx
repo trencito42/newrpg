@@ -41,7 +41,7 @@ export default async function FactionDetailPage({
 
   const locale = await getViewerLocale();
   const session = await getCurrentSession();
-  const factionColor = getFactionColor(slug) || "#f1f1f1";
+  const factionColor = getFactionColor(slug) || "#F2EFE8";
 
   const [members, leader, appSettings] = await Promise.all([
     dbQuery<MemberRow>(
@@ -104,7 +104,7 @@ export default async function FactionDetailPage({
       <div>
         <Link
           href="/factions"
-          className="inline-flex items-center space-x-1 text-xs text-[#6f6f74] hover:text-[#f1f1f1] transition-colors mb-2"
+          className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-2"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Factions</span>
@@ -122,11 +122,11 @@ export default async function FactionDetailPage({
               >
                 {faction.label}
               </h1>
-              <span className="text-xs text-[#6f6f74] font-medium">
+              <span className="text-xs text-[#8F8B83] font-medium">
                 {faction.factionType}
               </span>
             </div>
-            <p className="text-xs text-[#8a8a90] mt-1">
+            <p className="text-xs text-[#99958E] mt-1">
               {faction.description}
             </p>
           </div>
@@ -135,9 +135,9 @@ export default async function FactionDetailPage({
             {canManage && (
               <Link
                 href={`/factions/${slug}/manage`}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border text-[#f1f1f1] font-medium rounded text-xs transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
-                <Settings className="w-3.5 h-3.5 text-[#a5a5a8]" />
+                <Settings className="w-3.5 h-3.5 text-[#B4AFA4]" />
                 <span>{locale === "ro" ? "Panou Lider" : "Faction Panel"}</span>
               </Link>
             )}
@@ -145,7 +145,7 @@ export default async function FactionDetailPage({
             {appsOpen && (
               <Link
                 href={`/factions/${slug}/apply`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded text-xs transition-colors"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
                 {locale === "ro" ? "Aplică în facțiune" : "Apply to Faction"}
               </Link>
@@ -156,8 +156,8 @@ export default async function FactionDetailPage({
 
       {/* Stats summary banner */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Leader</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Leader</span>
           <div className="mt-1">
             {leader ? (
               <PlayerIdentity
@@ -169,34 +169,34 @@ export default async function FactionDetailPage({
                 size="sm"
               />
             ) : (
-              <span className="text-[#6f6f74] italic">Vacant</span>
+              <span className="text-[#8F8B83] italic">Vacant</span>
             )}
           </div>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Type</span>
-          <span className="font-semibold text-[#f1f1f1] mt-1 block capitalize">
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Type</span>
+          <span className="font-semibold text-[#F2EFE8] mt-1 block capitalize">
             {faction.type}
           </span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Active Members</span>
-          <span className="font-mono font-bold text-[#f1f1f1] mt-1 block">
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Active Members</span>
+          <span className="font-mono font-bold text-[#F2EFE8] mt-1 block">
             {members.length}
           </span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[11px] text-[#6f6f74] block">Applications</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[11px] text-[#8F8B83] block">Applications</span>
           <span className="font-bold text-xs mt-1 block">
             {appsOpen ? (
               <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle className="w-3.5 h-3.5" /> OPEN
               </span>
             ) : (
-              <span className="text-[#6f6f74] flex items-center gap-1">
+              <span className="text-[#8F8B83] flex items-center gap-1">
                 <XCircle className="w-3.5 h-3.5" /> CLOSED
               </span>
             )}
@@ -205,9 +205,9 @@ export default async function FactionDetailPage({
       </div>
 
       {/* Roster Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="p-3 border-b border-surface-border">
-          <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+          <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
             {locale === "ro" ? "Membri Activi" : "Faction Roster"} ({members.length})
           </h2>
         </div>
@@ -215,7 +215,7 @@ export default async function FactionDetailPage({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">#</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
@@ -226,14 +226,14 @@ export default async function FactionDetailPage({
             <tbody className="divide-y divide-surface-border">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     No members in this faction
                   </td>
                 </tr>
               ) : (
                 members.map((m, idx) => (
-                  <tr key={m.id} className="hover:bg-[#151517] transition-colors">
-                    <td className="px-3 py-2 font-mono text-[#6f6f74] text-[11px]">{idx + 1}</td>
+                  <tr key={m.id} className="hover:bg-[#131315] transition-colors">
+                    <td className="px-3 py-2 font-mono text-[#8F8B83] text-[11px]">{idx + 1}</td>
                     <td className="px-3 py-2">
                       <PlayerIdentity
                         username={m.username}
@@ -244,13 +244,13 @@ export default async function FactionDetailPage({
                         size="sm"
                       />
                     </td>
-                    <td className="px-3 py-2 font-mono font-medium text-[#f1f1f1]">
+                    <td className="px-3 py-2 font-mono font-medium text-[#F2EFE8]">
                       Rank {m.job_grade}
                       {m.job_grade >= 7 && <span className="ml-1.5 text-[10px] text-amber-400 font-bold">[LEADER]</span>}
                       {m.job_grade === 6 && <span className="ml-1.5 text-[10px] text-blue-400 font-bold">[CO-LEADER]</span>}
                     </td>
                     <td className="px-3 py-2 text-center font-mono">{m.level}</td>
-                    <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
+                    <td className="px-3 py-2 text-right font-mono text-[#8F8B83]">
                       {m.last_played ? formatDate(m.last_played, locale) : "Never"}
                     </td>
                   </tr>

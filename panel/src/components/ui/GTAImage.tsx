@@ -22,7 +22,7 @@ export function GTAImage({
   if (error || !src) {
     return (
       <div
-        className={`flex flex-col items-center justify-center bg-[#18181b] text-[#52525b] ${
+        className={`flex flex-col items-center justify-center bg-[#191719] text-[#77736D] ${
           className || ""
         }`}
       >

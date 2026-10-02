@@ -273,11 +273,11 @@ export default async function PlayerProfilePage({
       )}
 
       {/* Main Profile Header Card */}
-      <div className="p-4 sm:p-5 bg-[#101011] border border-surface-border rounded">
+      <div className="p-4 sm:p-5 bg-[#0E0E10] border border-surface-border rounded">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           {/* Left: Avatar + Identity + Metadata */}
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#191719] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
               <GTAImage
                 src={getPedAvatarUrl(characterSkin)}
                 alt={char.account_username}
@@ -307,7 +307,7 @@ export default async function PlayerProfilePage({
                     Online
                   </span>
                 ) : (
-                  <span className="text-xs text-[#6f6f74] font-mono">
+                  <span className="text-xs text-[#8F8B83] font-mono">
                     {char.last_played ? `Last seen: ${formatDate(char.last_played, locale)}` : "Offline"}
                   </span>
                 )}
@@ -323,7 +323,7 @@ export default async function PlayerProfilePage({
                         href={b.href}
                         title={b.tooltip}
                         style={{ borderColor: `${b.color}40`, color: b.color }}
-                        className="px-2 py-0.5 bg-[#18181b] border rounded text-[10px] font-mono font-bold tracking-tight uppercase hover:opacity-80 transition-opacity"
+                        className="px-2 py-0.5 bg-[#191719] border rounded text-[10px] font-mono font-bold tracking-tight uppercase hover:opacity-80 transition-opacity"
                       >
                         {b.label}
                       </Link>
@@ -332,7 +332,7 @@ export default async function PlayerProfilePage({
                         key={idx}
                         title={b.tooltip}
                         style={{ borderColor: `${b.color}40`, color: b.color }}
-                        className="px-2 py-0.5 bg-[#18181b] border rounded text-[10px] font-mono font-bold tracking-tight uppercase"
+                        className="px-2 py-0.5 bg-[#191719] border rounded text-[10px] font-mono font-bold tracking-tight uppercase"
                       >
                         {b.label}
                       </span>
@@ -342,18 +342,18 @@ export default async function PlayerProfilePage({
               )}
 
               {/* Sub-identity: Faction & Clan details */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8a8a90] pt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#99958E] pt-1">
                 {hasFaction ? (
                   <span>
                     Faction:{" "}
-                    <Link href={`/factions/${char.faction_id}`} className="text-[#f1f1f1] font-medium hover:underline">
+                    <Link href={`/factions/${char.faction_id}`} className="text-[#F2EFE8] font-medium hover:underline">
                       {factionLabel}
                     </Link>{" "}
-                    <span className="text-[#6f6f74]">(Rank {char.job_grade})</span>
+                    <span className="text-[#8F8B83]">(Rank {char.job_grade})</span>
                   </span>
                 ) : (
                   <span>
-                    Job: <span className="text-[#a5a5a8] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span>
+                    Job: <span className="text-[#B4AFA4] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span>
                   </span>
                 )}
 
@@ -374,7 +374,7 @@ export default async function PlayerProfilePage({
 
           {/* Right: Featured Vehicle Preview */}
           {featuredVehicle && (
-            <div className="flex items-center gap-3 p-2.5 bg-[#141416] border border-surface-border rounded lg:max-w-xs w-full">
+            <div className="flex items-center gap-3 p-2.5 bg-[#101012] border border-surface-border rounded lg:max-w-xs w-full">
               <div className="w-20 h-14 bg-[#1b1b1e] rounded overflow-hidden shrink-0 flex items-center justify-center border border-surface-border">
                 <GTAImage
                   src={getVehiclePreviewUrl(featuredVehicle.model, featuredVehicle.preview_url)}
@@ -384,9 +384,9 @@ export default async function PlayerProfilePage({
                 />
               </div>
               <div className="min-w-0 text-xs">
-                <span className="text-[10px] text-[#6f6f74] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
-                <span className="font-bold text-[#f1f1f1] truncate block">{vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}</span>
-                <span className="font-mono text-[11px] text-[#8a8a90] block">{featuredVehicle.plate}</span>
+                <span className="text-[10px] text-[#8F8B83] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
+                <span className="font-bold text-[#F2EFE8] truncate block">{vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}</span>
+                <span className="font-mono text-[11px] text-[#99958E] block">{featuredVehicle.plate}</span>
               </div>
             </div>
           )}
@@ -395,41 +395,41 @@ export default async function PlayerProfilePage({
 
       {/* Horizontal Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[#6f6f74] block font-medium">Level</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{char.level}</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[#8F8B83] block font-medium">Level</span>
+          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{char.level}</span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[#6f6f74] block font-medium">Played Time</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)} hours</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[#8F8B83] block font-medium">Played Time</span>
+          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)} hours</span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[#6f6f74] block font-medium">Respect Points</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)} RP</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[#8F8B83] block font-medium">Respect Points</span>
+          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)} RP</span>
         </div>
 
-        <div className="p-3 bg-[#101011] border border-surface-border rounded">
-          <span className="text-[#6f6f74] block font-medium">Warnings</span>
-          <span className="text-base font-bold text-[#f1f1f1] font-mono mt-0.5 block">{warningsCount} / 3</span>
+        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
+          <span className="text-[#8F8B83] block font-medium">Warnings</span>
+          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{warningsCount} / 3</span>
         </div>
       </div>
 
       {/* Money (Only shown if character owner or staff) */}
       {balance && (
         <div>
-          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider mb-2">
+          <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider mb-2">
             Money
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
-              <span className="text-xs text-[#8a8a90]">Cash</span>
-              <span className="font-mono text-sm font-semibold text-[#f1f1f1]">{formatCurrency(balance.cash)}</span>
+              <span className="text-xs text-[#99958E]">Cash</span>
+              <span className="font-mono text-sm font-semibold text-[#F2EFE8]">{formatCurrency(balance.cash)}</span>
             </div>
             <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
-              <span className="text-xs text-[#8a8a90]">Bank</span>
-              <span className="font-mono text-sm font-semibold text-[#f1f1f1]">{formatCurrency(balance.bank)}</span>
+              <span className="text-xs text-[#99958E]">Bank</span>
+              <span className="font-mono text-sm font-semibold text-[#F2EFE8]">{formatCurrency(balance.bank)}</span>
             </div>
           </div>
         </div>
@@ -440,7 +440,7 @@ export default async function PlayerProfilePage({
         {/* Vehicles */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               Vehicles ({vehicles.length})
             </h2>
           </div>
@@ -448,8 +448,8 @@ export default async function PlayerProfilePage({
           {vehicles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {vehicles.map((v) => (
-                <div key={v.id} className="p-2.5 bg-[#101011] border border-surface-border rounded flex gap-3 items-center">
-                  <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
+                <div key={v.id} className="p-2.5 bg-[#0E0E10] border border-surface-border rounded flex gap-3 items-center">
+                  <div className="w-16 h-12 bg-[#191719] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
                     <GTAImage
                       src={getVehiclePreviewUrl(v.model, v.preview_url)}
                       alt={vehicleDisplayName(v.model, v.catalog_label)}
@@ -459,16 +459,16 @@ export default async function PlayerProfilePage({
                   </div>
                   <div className="min-w-0 flex-1 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#f1f1f1] truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
+                      <span className="font-semibold text-[#F2EFE8] truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
                       {v.destroyed ? (
                         <span className="text-[10px] text-red-400 font-mono">Destroyed</span>
                       ) : v.stored ? (
-                        <span className="text-[10px] text-[#6f6f74] font-mono">Garage</span>
+                        <span className="text-[10px] text-[#8F8B83] font-mono">Garage</span>
                       ) : (
                         <span className="text-[10px] text-emerald-400 font-mono">Active</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-[#8a8a90] mt-0.5 font-mono">
+                    <div className="flex items-center gap-2 text-[11px] text-[#99958E] mt-0.5 font-mono">
                       <span>{v.plate}</span>
                       <span>•</span>
                       <span>Ins. Lvl {v.insurance_level || 1}</span>
@@ -478,7 +478,7 @@ export default async function PlayerProfilePage({
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-[#101011]">
+            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-[#0E0E10]">
               No vehicles registered.
             </p>
           )}
@@ -487,7 +487,7 @@ export default async function PlayerProfilePage({
         {/* Properties */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               Properties ({properties.length})
             </h2>
           </div>
@@ -495,24 +495,24 @@ export default async function PlayerProfilePage({
           {properties.length > 0 ? (
             <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                   <tr>
                     <th className="py-2 px-3">Property</th>
                     <th className="py-2 px-3 text-right">Type</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
                   {properties.map((p) => (
                     <tr key={p.id}>
-                      <td className="py-2 px-3 font-medium text-[#f1f1f1]">{p.label}</td>
-                      <td className="py-2 px-3 text-right text-[#6f6f74] capitalize">{p.interior}</td>
+                      <td className="py-2 px-3 font-medium text-[#F2EFE8]">{p.label}</td>
+                      <td className="py-2 px-3 text-right text-[#8F8B83] capitalize">{p.interior}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
               No properties.
             </p>
           )}
@@ -521,7 +521,7 @@ export default async function PlayerProfilePage({
         {/* Job Progress */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               Job Progress
             </h2>
           </div>
@@ -529,26 +529,26 @@ export default async function PlayerProfilePage({
           {skills.length > 0 ? (
             <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                   <tr>
                     <th className="py-2 px-3">Job</th>
                     <th className="py-2 px-3">Level</th>
                     <th className="py-2 px-3 text-right">Tasks</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
                   {skills.map((s) => (
                     <tr key={s.job_id}>
-                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{s.job_id.replace(/_/g, " ")}</td>
-                      <td className="py-2 px-3 font-mono text-[#f1f1f1]">Level {s.level}</td>
-                      <td className="py-2 px-3 text-right font-mono text-[#6f6f74]">{s.completed_tasks}</td>
+                      <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">{s.job_id.replace(/_/g, " ")}</td>
+                      <td className="py-2 px-3 font-mono text-[#F2EFE8]">Level {s.level}</td>
+                      <td className="py-2 px-3 text-right font-mono text-[#8F8B83]">{s.completed_tasks}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
               No job progress yet.
             </p>
           )}
@@ -557,7 +557,7 @@ export default async function PlayerProfilePage({
         {/* Licenses */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
               Licenses
             </h2>
           </div>
@@ -565,24 +565,24 @@ export default async function PlayerProfilePage({
           {licenses.length > 0 ? (
             <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                   <tr>
                     <th className="py-2 px-3">License</th>
                     <th className="py-2 px-3 text-right">Issued</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
                   {licenses.map((l) => (
                     <tr key={l.type}>
-                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{l.type} License</td>
-                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">{formatDate(l.issued_at, locale)}</td>
+                      <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">{l.type} License</td>
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#8F8B83]">{formatDate(l.issued_at, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#6f6f74] p-3 border border-surface-border rounded bg-surface-100">
+            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
               No licenses held.
             </p>
           )}

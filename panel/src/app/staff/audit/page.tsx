@@ -49,10 +49,10 @@ export default async function StaffAuditPage({ searchParams }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Audit Log Administrativ" : "Administrative Audit Log"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {locale === "ro"
               ? "Jurnal detaliat al tuturor acțiunilor web și comenzilor de securitate executate"
               : "Detailed log of all web panel actions and executed domain commands"}
@@ -66,11 +66,11 @@ export default async function StaffAuditPage({ searchParams }: Props) {
             name="search"
             defaultValue={search}
             placeholder={locale === "ro" ? "Caută în audit log..." : "Search audit logs..."}
-            className="px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+            className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
           />
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#202023] hover:bg-[#28282c] border border-surface-border rounded text-xs text-[#f1f1f1]"
+            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
             {locale === "ro" ? "Caută" : "Search"}
           </button>
@@ -78,11 +78,11 @@ export default async function StaffAuditPage({ searchParams }: Props) {
       </div>
 
       {/* Audit Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Actor Staff" : "Staff Actor"}</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Acțiune" : "Action"}</th>
@@ -94,42 +94,42 @@ export default async function StaffAuditPage({ searchParams }: Props) {
             <tbody className="divide-y divide-surface-border">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     {locale === "ro" ? "Nicio înregistrare în audit log" : "No audit records found"}
                   </td>
                 </tr>
               ) : (
                 logs.map((l) => (
-                  <tr key={l.id} className="hover:bg-[#151517] transition-colors">
-                    <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{l.id}</td>
+                  <tr key={l.id} className="hover:bg-[#131315] transition-colors">
+                    <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{l.id}</td>
                     <td className="px-3 py-2.5">
                       {l.actor_username ? (
                         <PlayerIdentity {...identities.get(l.actor_username.toLowerCase())!} size="sm" />
                       ) : (
-                        <span className="text-[#6f6f74]">SYSTEM</span>
+                        <span className="text-[#8F8B83]">SYSTEM</span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 font-mono font-bold text-[#f1f1f1]">
+                    <td className="px-3 py-2.5 font-mono font-bold text-[#F2EFE8]">
                       {l.action}
                     </td>
                     <td className="px-3 py-2.5">
                       {l.target_username ? (
                         <PlayerIdentity {...identities.get(l.target_username.toLowerCase())!} size="sm" />
                       ) : l.target_id ? (
-                        <span className="font-mono text-[#6f6f74]">ID #{l.target_id}</span>
+                        <span className="font-mono text-[#8F8B83]">ID #{l.target_id}</span>
                       ) : (
-                        <span className="text-[#6f6f74]">—</span>
+                        <span className="text-[#8F8B83]">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="text-[#f1f1f1] block max-w-sm truncate">{l.reason || "—"}</span>
+                      <span className="text-[#F2EFE8] block max-w-sm truncate">{l.reason || "—"}</span>
                       {l.details && (
-                        <span className="text-[10px] text-[#6f6f74] font-mono block max-w-sm truncate">
+                        <span className="text-[10px] text-[#8F8B83] font-mono block max-w-sm truncate">
                           {formatAuditDetails(l.details)}
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-right font-mono text-[#6f6f74]">
+                    <td className="px-3 py-2.5 text-right font-mono text-[#8F8B83]">
                       {formatDate(l.created_at, locale)}
                     </td>
                   </tr>

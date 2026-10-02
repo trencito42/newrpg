@@ -48,7 +48,7 @@ export default async function MyMissionsPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.missions")}
         </h1>
       </div>
@@ -63,21 +63,21 @@ export default async function MyMissionsPage() {
             >
               <div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#f1f1f1] capitalize">
+                  <span className="font-semibold text-[#F2EFE8] capitalize">
                     {rep.contact}
                   </span>
-                  <span className="font-mono text-[#a5a5a8]">
+                  <span className="font-mono text-[#B4AFA4]">
                     {rep.reputation} Rep
                   </span>
                 </div>
-                <p className="text-xs text-[#6f6f74] mt-1">
+                <p className="text-xs text-[#8F8B83] mt-1">
                   {rep.missions_completed} completed
                 </p>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
             No mission contacts yet.
           </p>
         )}
@@ -86,13 +86,13 @@ export default async function MyMissionsPage() {
       {/* History Table */}
       {history.length > 0 && (
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#f1f1f1]">
+          <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
             History
           </div>
 
           <div className="responsive-table-wrapper">
             <table className="w-full text-left text-xs">
-              <thead className="text-[11px] font-semibold text-[#6f6f74] border-b border-surface-border bg-surface-200/50">
+              <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                 <tr>
                   <th className="py-2 px-3">Mission</th>
                   <th className="py-2 px-3">Result</th>
@@ -100,12 +100,12 @@ export default async function MyMissionsPage() {
                   <th className="py-2 px-3 text-right">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
+              <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
                 {history.map((h) => {
                   const isSuccess = h.result === "completed" || h.result === "success";
                   return (
                     <tr key={h.id}>
-                      <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">
+                      <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">
                         {h.mission.replace(/_/g, " ")}
                       </td>
                       <td className="py-2 px-3">
@@ -113,10 +113,10 @@ export default async function MyMissionsPage() {
                           {h.result}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-[#f1f1f1]">
+                      <td className="py-2 px-3 font-mono text-[#F2EFE8]">
                         {formatCurrency(h.reward)}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#6f6f74]">
+                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#8F8B83]">
                         {formatDate(h.started_at * 1000, locale)}
                       </td>
                     </tr>

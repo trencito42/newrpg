@@ -56,12 +56,12 @@ export default async function MyPropertiesPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "nav.properties")}
           </h1>
         </div>
 
-        <span className="font-mono text-xs text-[#a5a5a8] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
+        <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
           {owned.length} owned
         </span>
       </div>
@@ -75,36 +75,36 @@ export default async function MyPropertiesPage() {
             >
               <div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-[#6f6f74]">
+                  <span className="font-mono text-[#8F8B83]">
                     #{prop.id}
                   </span>
-                  <span className={`font-medium ${prop.locked ? "text-[#6f6f74]" : "text-amber-400"}`}>
+                  <span className={`font-medium ${prop.locked ? "text-[#8F8B83]" : "text-amber-400"}`}>
                     {prop.locked ? "Locked" : "Unlocked"}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-semibold text-[#f1f1f1] mt-1">
+                <h3 className="text-sm font-semibold text-[#F2EFE8] mt-1">
                   {prop.label}
                 </h3>
-                <p className="text-xs text-[#8a8a90] capitalize">
+                <p className="text-xs text-[#99958E] capitalize">
                   {prop.interior}
                 </p>
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#6f6f74]">
+              <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                 <div className="flex items-center justify-between">
                   <span>Price:</span>
-                  <span className="font-mono text-[#f1f1f1]">{formatCurrency(prop.price)}</span>
+                  <span className="font-mono text-[#F2EFE8]">{formatCurrency(prop.price)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Renters:</span>
-                  <span className="font-mono text-[#a5a5a8]">{prop.renter_count} / {prop.max_renters}</span>
+                  <span className="font-mono text-[#B4AFA4]">{prop.renter_count} / {prop.max_renters}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-xs text-[#6f6f74] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
+          <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
             No properties found.
           </p>
         )}
@@ -112,15 +112,15 @@ export default async function MyPropertiesPage() {
 
       {rented.length > 0 && (
         <div className="pt-3 border-t border-surface-border">
-          <h2 className="text-xs font-semibold text-[#f1f1f1] uppercase tracking-wider mb-2">
+          <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider mb-2">
             Rented Property
           </h2>
           <div className="p-3 bg-surface-100 border border-surface-border rounded max-w-sm text-xs space-y-1">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#f1f1f1]">{rented[0].label}</span>
-              <span className="font-mono text-[#f1f1f1]">{formatCurrency(rented[0].rent_price)} / payday</span>
+              <span className="font-semibold text-[#F2EFE8]">{rented[0].label}</span>
+              <span className="font-mono text-[#F2EFE8]">{formatCurrency(rented[0].rent_price)} / payday</span>
             </div>
-            <p className="text-[#6f6f74]">Since: {formatDate(rented[0].started_at, locale, false)}</p>
+            <p className="text-[#8F8B83]">Since: {formatDate(rented[0].started_at, locale, false)}</p>
           </div>
         </div>
       )}

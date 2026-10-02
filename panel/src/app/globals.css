@@ -2,26 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n400-latin.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n400-latinext.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n600-latin.woff2") format("woff2"); font-style: normal; font-weight: 600; font-display: swap; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n600-latinext.woff2") format("woff2"); font-style: normal; font-weight: 600; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n700-latin.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n700-latinext.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n900-latin.woff2") format("woff2"); font-style: normal; font-weight: 900; font-display: swap; }
+@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n900-latinext.woff2") format("woff2"); font-style: normal; font-weight: 900; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
+
 :root {
-  --background: #0b0b0c;
-  --foreground: #f1f1f1;
-  --surface-1: #101011;
-  --surface-2: #151516;
-  --surface-3: #1a1a1c;
-  --card: #151516;
-  --card-border: rgba(255, 255, 255, 0.07);
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --muted: #151516;
-  --muted-foreground: #8a8a90;
-  --accent: #e5e5e7;
-  --accent-foreground: #0b0b0c;
+  --background: #08080a;
+  --foreground: #f2efe8;
+  --surface-1: #0e0e10;
+  --surface-2: #131315;
+  --surface-3: #1a191b;
+  --card: #101012;
+  --card-border: rgba(242, 239, 232, 0.15);
+  --border: rgba(242, 239, 232, 0.15);
+  --border-strong: rgba(242, 239, 232, 0.26);
+  --muted: #131315;
+  --muted-foreground: #a9a59c;
+  --accent: #d7b558;
+  --accent-foreground: #08080a;
+  --racket-label: rgba(242, 239, 232, 0.58);
 }
 
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
+::selection { background: rgba(215, 181, 88, .3); color: #f2efe8; }
 
 html,
 body {
@@ -29,30 +40,30 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Racket Montserrat", Montserrat, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   padding-top: env(safe-area-inset-top, 0);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* Neutral flat scrollbar */
+/* Quiet scrollbar from the Racket reference set. */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0b0c;
+  background: #08080a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #262629;
-  border-radius: 3px;
+  background: #3a3529;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #38383d;
+  background: #d7b558;
 }
 
 /* Mobile responsive table card container */
@@ -62,12 +73,48 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Shared typography and controls across public, account, and staff views. */
+h1, h2, h3 { color: var(--foreground); letter-spacing: .045em; }
+h1 { font-weight: 900; text-transform: uppercase; }
+h2, h3 { font-weight: 700; }
+main h1 { font-size: clamp(1.35rem, 1.5vw, 1.75rem) !important; line-height: 1.2; letter-spacing: .07em; }
+main h2 { letter-spacing: .05em; }
+label { color: var(--racket-label); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.font-mono { font-family: "Racket Montserrat", Montserrat, sans-serif !important; font-variant-numeric: tabular-nums; }
+table th { color: var(--racket-label); font-size: 10px; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+table td { border-color: var(--border); }
+.shadow-lg, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+select, textarea {
+  color: var(--foreground) !important;
+  font-family: inherit;
+  text-transform: none;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]) {
+  background-color: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+select, textarea {
+  background-color: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 3px !important;
+}
+input::placeholder, textarea::placeholder { color: rgba(242, 239, 232, .35) !important; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+select:focus, textarea:focus { border-color: var(--accent) !important; outline: none; }
+select option { background: var(--surface-1); color: var(--foreground); }
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
+button, a { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
+button:disabled, input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+
 /* Restrained focus styling */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

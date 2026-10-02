@@ -87,7 +87,7 @@ export default async function StaffPage() {
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "staff.title")}
         </h1>
       </div>
@@ -96,19 +96,19 @@ export default async function StaffPage() {
         {/* Administrators */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{t(locale, "staff.admins")}</span>
-            <span className="font-mono text-[#6f6f74]">{admins.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(locale, "staff.admins")}</span>
+            <span className="font-mono text-[#8F8B83]">{admins.length}</span>
           </div>
 
-          <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
+          <div className="divide-y divide-surface-border/50 text-xs text-[#B4AFA4]">
             {admins.map((a) => (
               <div key={a.id} className="p-2.5 px-3 flex items-center justify-between">
                 <PlayerIdentity {...identities.get(a.username.toLowerCase())!} size="sm" />
-                <span className="font-mono text-[11px] text-[#6f6f74]">{getAdminTitle(a.admin_level)}</span>
+                <span className="font-mono text-[11px] text-[#8F8B83]">{getAdminTitle(a.admin_level)}</span>
               </div>
             ))}
             {admins.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">No administrators.</div>
+              <div className="p-4 text-center text-[#8F8B83]">No administrators.</div>
             )}
           </div>
         </div>
@@ -116,19 +116,19 @@ export default async function StaffPage() {
         {/* Helpers */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{t(locale, "staff.helpers")}</span>
-            <span className="font-mono text-[#6f6f74]">{helpers.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(locale, "staff.helpers")}</span>
+            <span className="font-mono text-[#8F8B83]">{helpers.length}</span>
           </div>
 
-          <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
+          <div className="divide-y divide-surface-border/50 text-xs text-[#B4AFA4]">
             {helpers.map((h) => (
               <div key={h.id} className="p-2.5 px-3 flex items-center justify-between">
                 <PlayerIdentity {...identities.get(h.username.toLowerCase())!} size="sm" />
-                <span className="font-mono text-[11px] text-[#6f6f74]">{getHelperTitle(h.helper_level)}</span>
+                <span className="font-mono text-[11px] text-[#8F8B83]">{getHelperTitle(h.helper_level)}</span>
               </div>
             ))}
             {helpers.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">No helpers.</div>
+              <div className="p-4 text-center text-[#8F8B83]">No helpers.</div>
             )}
           </div>
         </div>
@@ -136,22 +136,22 @@ export default async function StaffPage() {
         {/* Faction Leaders */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#f1f1f1]">{t(locale, "staff.leaders")}</span>
-            <span className="font-mono text-[#6f6f74]">{leaders.length}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(locale, "staff.leaders")}</span>
+            <span className="font-mono text-[#8F8B83]">{leaders.length}</span>
           </div>
 
-          <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
+          <div className="divide-y divide-surface-border/50 text-xs text-[#B4AFA4]">
             {leaders.map((l) => (
               <div key={l.faction_id} className="p-2.5 px-3 flex items-center justify-between">
                 <PlayerName name={l.leader_name} factionId={l.faction_id}
                   clanTag={identities.get(l.leader_name.toLowerCase())?.clanTag}
                   clanColor={identities.get(l.leader_name.toLowerCase())?.clanColor}
                   clanTagStyle={identities.get(l.leader_name.toLowerCase())?.clanTagStyle} />
-                <span className="text-[11px] text-[#6f6f74] font-medium">{getFactionLabel(l.faction_id)}</span>
+                <span className="text-[11px] text-[#8F8B83] font-medium">{getFactionLabel(l.faction_id)}</span>
               </div>
             ))}
             {leaders.length === 0 && (
-              <div className="p-4 text-center text-[#6f6f74]">No faction leaders.</div>
+              <div className="p-4 text-center text-[#8F8B83]">No faction leaders.</div>
             )}
           </div>
         </div>

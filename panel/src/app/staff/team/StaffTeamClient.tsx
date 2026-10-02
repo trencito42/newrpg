@@ -77,10 +77,10 @@ export function StaffTeamClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Echipa Administrativă" : "Staff Team Directory"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {canManageRoles
               ? locale === "ro" ? "Administrare roluri Admins & Helpers (Doar Admin Level 6)" : "Management of Admins & Helpers (Admin Level 6 Only)"
               : locale === "ro" ? "Ierarhia echipei de administrație a serverului" : "Hierarchy of the server staff team"}
@@ -103,11 +103,11 @@ export function StaffTeamClient({
       )}
 
       {/* Admins Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="p-3 border-b border-surface-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-red-400" />
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Administratori" : "Administrators"} ({admins.length})
             </h2>
           </div>
@@ -116,7 +116,7 @@ export function StaffTeamClient({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Membru Staff" : "Staff Member"}</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Grad Admin" : "Admin Level"}</th>
@@ -126,8 +126,8 @@ export function StaffTeamClient({
             </thead>
             <tbody className="divide-y divide-surface-border">
               {admins.map((adm) => (
-                <tr key={adm.account_id} className="hover:bg-[#151517] transition-colors">
-                  <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{adm.account_id}</td>
+                <tr key={adm.account_id} className="hover:bg-[#131315] transition-colors">
+                  <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{adm.account_id}</td>
                   <td className="px-3 py-2.5">
                     <PlayerIdentity
                       username={adm.username}
@@ -152,7 +152,7 @@ export function StaffTeamClient({
                           setRoleType("admin");
                           setRoleLevel(adm.admin_level);
                         }}
-                        className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+                        className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                       >
                         {locale === "ro" ? "Modifică Grad" : "Change Role"}
                       </button>
@@ -166,11 +166,11 @@ export function StaffTeamClient({
       </div>
 
       {/* Helpers Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="p-3 border-b border-surface-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-blue-400" />
-            <h2 className="text-xs font-bold text-[#f1f1f1] uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
               {locale === "ro" ? "Helperi" : "Helpers"} ({helpers.length})
             </h2>
           </div>
@@ -179,7 +179,7 @@ export function StaffTeamClient({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Membru Staff" : "Staff Member"}</th>
                 <th className="px-3 py-2">{locale === "ro" ? "Grad Helper" : "Helper Level"}</th>
@@ -189,8 +189,8 @@ export function StaffTeamClient({
             </thead>
             <tbody className="divide-y divide-surface-border">
               {helpers.map((hlp) => (
-                <tr key={hlp.account_id} className="hover:bg-[#151517] transition-colors">
-                  <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{hlp.account_id}</td>
+                <tr key={hlp.account_id} className="hover:bg-[#131315] transition-colors">
+                  <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{hlp.account_id}</td>
                   <td className="px-3 py-2.5">
                     <PlayerIdentity
                       username={hlp.username}
@@ -215,7 +215,7 @@ export function StaffTeamClient({
                           setRoleType("helper");
                           setRoleLevel(hlp.helper_level);
                         }}
-                        className="px-2.5 py-1 bg-[#1a1a1c] hover:bg-[#222225] border border-surface-border rounded text-xs text-[#f1f1f1] font-medium transition-colors"
+                        className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                       >
                         {locale === "ro" ? "Modifică Grad" : "Change Role"}
                       </button>
@@ -231,17 +231,17 @@ export function StaffTeamClient({
       {/* Role Change Modal */}
       {selectedStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-md bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   Modifică Rol Staff:
                 </span>
                 <PlayerIdentity username={selectedStaff.username} size="sm" />
               </div>
               <button
                 onClick={() => setSelectedStaff(null)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -250,11 +250,11 @@ export function StaffTeamClient({
             <form onSubmit={handleUpdateRole} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] text-[#6f6f74] mb-1">Tip Rol</label>
+                  <label className="block text-[11px] text-[#8F8B83] mb-1">Tip Rol</label>
                   <select
                     value={roleType}
                     onChange={(e) => setRoleType(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                    className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   >
                     <option value="admin">Administrator</option>
                     <option value="helper">Helper</option>
@@ -264,7 +264,7 @@ export function StaffTeamClient({
 
                 {roleType !== "remove" && (
                   <div>
-                    <label className="block text-[11px] text-[#6f6f74] mb-1">
+                    <label className="block text-[11px] text-[#8F8B83] mb-1">
                       Nivel ({roleType === "admin" ? "1-6" : "1-3"})
                     </label>
                     <input
@@ -273,21 +273,21 @@ export function StaffTeamClient({
                       max={roleType === "admin" ? 6 : 3}
                       value={roleLevel}
                       onChange={(e) => setRoleLevel(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                      className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                     />
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">Motiv Modificare</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Modificare</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Introdu motivul promovării / retrogradării..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
@@ -295,14 +295,14 @@ export function StaffTeamClient({
                 <button
                   type="button"
                   onClick={() => setSelectedStaff(null)}
-                  className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1c] border border-surface-border rounded text-xs text-[#a5a5a8]"
+                  className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
                   Anulează
                 </button>
                 <button
                   type="submit"
                   disabled={loading || reason.trim().length < 3}
-                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-medium rounded text-xs transition-colors"
+                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
                   {loading ? "Se salvează..." : "Aplică Schimbarea"}
                 </button>

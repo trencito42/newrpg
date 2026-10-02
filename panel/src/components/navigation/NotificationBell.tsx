@@ -63,7 +63,7 @@ export function NotificationBell({ locale }: { locale: Locale }) {
           setOpen(!open);
           if (!open && unreadCount > 0) markAllAsRead();
         }}
-        className="relative p-1.5 text-[#a5a5a8] hover:text-[#f1f1f1] hover:bg-[#1a1a1c] rounded transition-colors"
+        className="relative p-1.5 text-[#B4AFA4] hover:text-[#F2EFE8] hover:bg-[#1A191B] rounded transition-colors"
         title="Notifications"
       >
         <Bell className="w-4 h-4" />
@@ -75,15 +75,15 @@ export function NotificationBell({ locale }: { locale: Locale }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 bg-[#121214] border border-surface-border rounded-md shadow-xl z-50 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-80 bg-[#101012] border border-surface-border rounded-md shadow-xl z-50 overflow-hidden">
             <div className="p-2.5 border-b border-surface-border flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#f1f1f1]">
+              <span className="text-xs font-semibold text-[#F2EFE8]">
                 {locale === "ro" ? "Notificări" : "Notifications"}
               </span>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-[11px] text-[#6f6f74] hover:text-[#a5a5a8]"
+                  className="text-[11px] text-[#8F8B83] hover:text-[#B4AFA4]"
                 >
                   {locale === "ro" ? "Marchează citite" : "Mark all read"}
                 </button>
@@ -92,7 +92,7 @@ export function NotificationBell({ locale }: { locale: Locale }) {
 
             <div className="max-h-72 overflow-y-auto divide-y divide-surface-border">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-xs text-[#6f6f74]">
+                <div className="p-4 text-center text-xs text-[#8F8B83]">
                   {locale === "ro" ? "Nu ai notificări noi" : "No new notifications"}
                 </div>
               ) : (
@@ -103,8 +103,8 @@ export function NotificationBell({ locale }: { locale: Locale }) {
                     <div
                       key={n.id}
                       className={cn(
-                        "p-2.5 text-xs hover:bg-[#18181b] transition-colors",
-                        !n.is_read && "bg-[#18181b]/50"
+                        "p-2.5 text-xs hover:bg-[#191719] transition-colors",
+                        !n.is_read && "bg-[#191719]/50"
                       )}
                     >
                       {n.link_url ? (
@@ -113,19 +113,19 @@ export function NotificationBell({ locale }: { locale: Locale }) {
                           onClick={() => setOpen(false)}
                           className="block group"
                         >
-                          <div className="font-semibold text-[#f1f1f1] group-hover:underline">
+                          <div className="font-semibold text-[#F2EFE8] group-hover:underline">
                             {title}
                           </div>
-                          <div className="text-[11px] text-[#a5a5a8] mt-0.5">{msg}</div>
-                          <div className="text-[10px] text-[#6f6f74] mt-1 font-mono">
+                          <div className="text-[11px] text-[#B4AFA4] mt-0.5">{msg}</div>
+                          <div className="text-[10px] text-[#8F8B83] mt-1 font-mono">
                             {new Date(n.created_at).toLocaleDateString()}
                           </div>
                         </Link>
                       ) : (
                         <div>
-                          <div className="font-semibold text-[#f1f1f1]">{title}</div>
-                          <div className="text-[11px] text-[#a5a5a8] mt-0.5">{msg}</div>
-                          <div className="text-[10px] text-[#6f6f74] mt-1 font-mono">
+                          <div className="font-semibold text-[#F2EFE8]">{title}</div>
+                          <div className="text-[11px] text-[#B4AFA4] mt-0.5">{msg}</div>
+                          <div className="text-[10px] text-[#8F8B83] mt-1 font-mono">
                             {new Date(n.created_at).toLocaleDateString()}
                           </div>
                         </div>

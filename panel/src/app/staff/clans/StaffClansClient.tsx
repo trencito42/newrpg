@@ -64,10 +64,10 @@ export function StaffClansClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
-          <h1 className="text-lg font-bold text-[#f1f1f1] tracking-tight">
+          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {locale === "ro" ? "Management Clanuri (Staff)" : "Staff Clans Oversight"}
           </h1>
-          <p className="text-xs text-[#6f6f74] mt-0.5">
+          <p className="text-xs text-[#8F8B83] mt-0.5">
             {locale === "ro"
               ? "Supervizare clanuri active, membri, avertismente și dizolvare administrativă"
               : "Active clan oversight, member rosters, warnings, and administrative dissolution"}
@@ -85,11 +85,11 @@ export function StaffClansClient({
       )}
 
       {/* Clans Table */}
-      <div className="border border-surface-border rounded bg-[#101011] overflow-hidden">
+      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#141416] text-[#6f6f74] font-semibold">
+              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID & Tag</th>
                 <th className="px-3 py-2">Nume Clan</th>
                 <th className="px-3 py-2">Lider / Deținător</th>
@@ -102,13 +102,13 @@ export function StaffClansClient({
             <tbody className="divide-y divide-surface-border">
               {clans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-[#6f6f74]">
+                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
                     Niciun clan înregistrat
                   </td>
                 </tr>
               ) : (
                 clans.map((clan) => (
-                  <tr key={clan.id} className="hover:bg-[#151517] transition-colors">
+                  <tr key={clan.id} className="hover:bg-[#131315] transition-colors">
                     <td className="px-3 py-2.5">
                       <span
                         style={{ color: clan.tag_color || "#f59e0b" }}
@@ -116,12 +116,12 @@ export function StaffClansClient({
                       >
                         [{clan.tag}]
                       </span>
-                      <span className="text-[#6f6f74] ml-1.5 font-mono text-[10px]">
+                      <span className="text-[#8F8B83] ml-1.5 font-mono text-[10px]">
                         #{clan.id}
                       </span>
                     </td>
 
-                    <td className="px-3 py-2.5 font-semibold text-[#f1f1f1]">
+                    <td className="px-3 py-2.5 font-semibold text-[#F2EFE8]">
                       {clan.name}
                     </td>
 
@@ -136,7 +136,7 @@ export function StaffClansClient({
                       />
                     </td>
 
-                    <td className="px-3 py-2.5 text-center font-mono font-bold text-[#f1f1f1]">
+                    <td className="px-3 py-2.5 text-center font-mono font-bold text-[#F2EFE8]">
                       {clan.member_count} / {clan.max_members}
                     </td>
 
@@ -150,7 +150,7 @@ export function StaffClansClient({
                           OPEN ({clan.pending_applications})
                         </span>
                       ) : (
-                        <span className="text-[#6f6f74] text-[10px] font-mono">CLOSED</span>
+                        <span className="text-[#8F8B83] text-[10px] font-mono">CLOSED</span>
                       )}
                     </td>
 
@@ -166,7 +166,7 @@ export function StaffClansClient({
                         )}
                         <Link
                           href={`/clans/${clan.id}`}
-                          className="p-1 text-[#6f6f74] hover:text-[#f1f1f1] transition-colors"
+                          className="p-1 text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
                           title="View Public Profile"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -184,17 +184,17 @@ export function StaffClansClient({
       {/* Dissolve Clan Modal */}
       {selectedClan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-[#121214] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
+          <div className="w-full max-w-md bg-[#101012] border border-surface-border rounded-lg shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2 text-red-400">
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-xs font-bold text-[#f1f1f1]">
+                <span className="text-xs font-bold text-[#F2EFE8]">
                   Dizolvare Administrativă: [{selectedClan.tag}] {selectedClan.name}
                 </span>
               </div>
               <button
                 onClick={() => setSelectedClan(null)}
-                className="text-[#6f6f74] hover:text-[#f1f1f1]"
+                className="text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 ✕
               </button>
@@ -206,14 +206,14 @@ export function StaffClansClient({
 
             <form onSubmit={handleDissolve} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-[#6f6f74] mb-1">Motiv Dizolvare (Obligatoriu)</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Dizolvare (Obligatoriu)</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Introdu motivul dizolvării..."
-                  className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#f1f1f1]"
+                  className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
@@ -221,14 +221,14 @@ export function StaffClansClient({
                 <button
                   type="button"
                   onClick={() => setSelectedClan(null)}
-                  className="px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1c] border border-surface-border rounded text-xs text-[#a5a5a8]"
+                  className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
                   Anulează
                 </button>
                 <button
                   type="submit"
                   disabled={loading || reason.trim().length < 3}
-                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-medium rounded text-xs transition-colors"
+                  className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
                   {loading ? "Se dizolvă..." : "Dizolvă Clanul"}
                 </button>
