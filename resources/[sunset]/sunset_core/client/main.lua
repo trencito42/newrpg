@@ -14,6 +14,7 @@ local BOOT_ORDER = {
     GAMEPLAY = 8,
 }
 local bootState = 'LOADSCREEN'
+local playerControlLocked = false
 
 function SetBootState(nextState, reason)
     if not BOOT_ORDER[nextState] then return false end
@@ -27,6 +28,16 @@ function SetBootState(nextState, reason)
     if nextState == bootState then return true end
     local previous = bootState
     bootState = nextState
+    -- The GTA client is already running beneath our custom login NUI. Keep
+    -- the local player unable to act until character spawn has completed;
+    -- unlike DisableAllControlActions, this does not consume NUI pointer input.
+    if nextState == 'SESSION_REQUESTED' and not playerControlLocked then
+        SetPlayerControl(PlayerId(), false, 0)
+        playerControlLocked = true
+    elseif nextState == 'GAMEPLAY' and playerControlLocked then
+        SetPlayerControl(PlayerId(), true, 0)
+        playerControlLocked = false
+    end
     if GetConvar('sv_sunset_nuidebug', '0') == '1' then
         print(('^5[BOOT]^7 state %s -> %s (%s)'):format(previous, nextState, tostring(reason or '')))
     end
@@ -36,29 +47,40 @@ end
 exports('SetBootState', SetBootState)
 exports('GetBootState', function() return bootState end)
 
+local AUTH_BLOCKED_GAME_CONTROLS = { 24, 25, 69, 70, 140, 141, 142, 257, 263, 264 }
+
 CreateThread(function()
     -- During LOADSCREEN the game's own loading screen blocks input; no need
     -- to burn a per-frame native call. Start suppressing controls only once
     -- the loadscreen hands off to the auth UI.
     while bootState == 'LOADSCREEN' do Wait(200) end
     while bootState ~= 'GAMEPLAY' do
-        -- Auth already owns NUI focus, which blocks gameplay input. Disabling
-        -- *all* GTA controls every frame here also suppresses mouse input on
-        -- some clients right when the loadscreen hands off to the login form.
-        -- Keep the blanket guard only for pre-game gaps without an auth form.
+        -- Auth owns NUI focus, but some clients still forward mouse clicks to
+        -- GTA's attack controls. Do not blanket-disable all controls here: it
+        -- prevented NUI clicks on the affected client. Suppress combat only.
         local authOpen = false
         if GetResourceState('sunset_auth_ui') == 'started' then
             local ok, open = pcall(function() return exports.sunset_auth_ui:IsAuthOpen() end)
             authOpen = ok and open == true
         end
         if authOpen then
-            Wait(50)
+            for _, control in ipairs(AUTH_BLOCKED_GAME_CONTROLS) do
+                DisableControlAction(0, control, true)
+            end
+            DisablePlayerFiring(PlayerId(), true)
+            Wait(0)
         else
             DisableAllControlActions(0)
             EnableControlAction(0, 249, true)
             Wait(0)
         end
     end
+end)
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() or not playerControlLocked then return end
+    SetPlayerControl(PlayerId(), true, 0)
+    playerControlLocked = false
 end)
 
 -- Notify player ready on spawn
