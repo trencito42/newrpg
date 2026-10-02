@@ -1,11 +1,23 @@
 <div id="scoreboard" class="scoreboard-forza hidden" aria-hidden="true">
         <div class="sb-header">
-            <div class="sb-title"><span id="sb-title-text"><span data-i18n="ui.scoreboard.los_santos"></span></span> <span id="sb-title-count">0 / 48</span></div>
-            <div class="sb-stats">
-                <div class="sb-stat cops"><i class="ph-fill ph-shield-check"></i> <span id="sb-stat-cops"><span data-i18n="ui.scoreboard.lspd_0"></span></span></div>
-                <div class="sb-stat ems"><i class="ph-fill ph-first-aid"></i> <span id="sb-stat-ems"><span data-i18n="ui.scoreboard.ems_0"></span></span></div>
-                <div class="sb-stat mech"><i class="ph-fill ph-users"></i> <span id="sb-stat-mech"><span data-i18n="ui.scoreboard.mechanics_0"></span></span></div>
+            <div class="sb-title">
+                <span id="sb-title-text"><span data-i18n="ui.scoreboard.los_santos"></span></span>
+                <span id="sb-title-count" style="display:none">0 / 48</span>
             </div>
+            <div class="sb-player-count">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span id="sb-count-display">0/48</span>
+            </div>
+        </div>
+        <div class="sb-stats">
+            <div class="sb-stat cops"><i class="ph-fill ph-shield-check"></i> <span id="sb-stat-cops"><span data-i18n="ui.scoreboard.lspd_0"></span></span></div>
+            <div class="sb-stat ems"><i class="ph-fill ph-first-aid"></i> <span id="sb-stat-ems"><span data-i18n="ui.scoreboard.ems_0"></span></span></div>
+            <div class="sb-stat mech"><i class="ph-fill ph-users"></i> <span id="sb-stat-mech"><span data-i18n="ui.scoreboard.mechanics_0"></span></span></div>
+        </div>
+        <div class="sb-columns">
+            <div class="col-center">ID</div>
+            <div data-i18n="ui.scoreboard.player_name">PLAYER NAME</div>
+            <div class="col-right">PING</div>
         </div>
         <div class="sb-list" id="sb-player-list"></div>
         <div class="sb-hint"><span data-i18n="ui.scoreboard.hold"></span> <strong style="color:var(--sb-accent)"><span data-i18n="ui.scoreboard.z"></span></strong> <span data-i18n="ui.scoreboard.scroll_list"></span></div>

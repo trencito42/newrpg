@@ -26,8 +26,10 @@ const Scoreboard = {
         const max = data.max || 48;
         const title = document.getElementById('sb-title-text');
         const countEl = document.getElementById('sb-title-count');
+        const countDisplay = document.getElementById('sb-count-display');
         if (title) title.textContent = data.serverName || I18n.t('ui.mdc.los_santos');
         if (countEl) countEl.textContent = `${count} / ${max}`;
+        if (countDisplay) countDisplay.textContent = `${count}/${max}`;
 
         const stats = data.stats || {};
         const cops = document.getElementById('sb-stat-cops');

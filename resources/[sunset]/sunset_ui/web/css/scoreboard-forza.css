@@ -1,26 +1,42 @@
+/* ═══ RACKET SCOREBOARD — Forza style redesigned ═══ */
 .scoreboard-forza {
-    --sb-accent: #00ffcc;
-    --sb-text-main: #ffffff;
-    --sb-text-muted: rgba(255, 255, 255, 0.4);
-    --sb-bg-panel: rgba(10, 10, 15, 0.9);
-    --sb-border: rgba(255, 255, 255, 0.1);
-    --sb-success: #10b981;
-    --sb-snappy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --sb-accent: #D7B558;
+    --sb-primary: #F2EFE8;
+    --sb-bg-panel: rgba(8, 8, 10, 0.98);
+    --sb-border: rgba(242, 239, 232, 0.15);
+    --sb-border-lighter: rgba(242, 239, 232, 0.05);
+    --sb-text-muted: rgba(242, 239, 232, 0.5);
+    --sb-hover: rgba(242, 239, 232, 0.03);
+    --ping-good: #10b981;
+    --ping-ok: #f59e0b;
+    --ping-bad: #ef4444;
+    /* Faction colors */
+    --fac-police: #3b82f6;
+    --fac-medic: #ef4444;
+    --fac-mafia: #a855f7;
+    --fac-mechanic: #f97316;
+
     position: fixed;
-    top: 30px;
-    right: -420px;
-    width: 320px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(-20px);
+    width: 500px;
+    max-height: 70vh;
     z-index: 9000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    background: var(--sb-bg-panel);
+    border: 1px solid var(--sb-border);
+    border-top: 3px solid var(--sb-accent);
     font-family: 'Montserrat', sans-serif;
     pointer-events: none;
-    transition: right 0.4s var(--sb-snappy);
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .scoreboard-forza.is-active {
-    right: 30px;
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
     pointer-events: auto;
 }
 
@@ -28,44 +44,63 @@
     display: none;
 }
 
+/* ── Header ── */
 .scoreboard-forza .sb-header {
-    background: var(--sb-bg-panel);
-    border: 1px solid var(--sb-border);
-    border-right: 4px solid var(--sb-accent);
-    padding: 15px 20px;
-    backdrop-filter: blur(10px);
-    transform: none;
-}
-
-.scoreboard-forza .sb-title {
-    font-size: 18px;
-    font-weight: 900;
-    font-style: italic;
-    color: var(--sb-text-main);
-    text-transform: uppercase;
-    transform: none;
+    padding: 20px;
+    border-bottom: 1px solid var(--sb-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
+    flex-shrink: 0;
 }
 
-.scoreboard-forza .sb-title span {
+.scoreboard-forza .sb-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.scoreboard-forza .sb-title > span:first-child {
+    font-size: 16px;
+    font-weight: 900;
     color: var(--sb-accent);
-    font-size: 12px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
+.scoreboard-forza .sb-title > span:last-child {
+    display: none; /* count moved to player-count widget */
+}
+
+.scoreboard-forza .sb-player-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--sb-primary);
+}
+
+.scoreboard-forza .sb-player-count svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.8;
+}
+
+/* Faction stats row */
 .scoreboard-forza .sb-stats {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 10px;
-    transform: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 10px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--sb-border-lighter);
+    flex-shrink: 0;
 }
 
 .scoreboard-forza .sb-stat {
@@ -78,65 +113,73 @@
     gap: 5px;
 }
 
-.scoreboard-forza .sb-stat i { font-size: 14px; }
-.scoreboard-forza .sb-stat.cops i { color: #3b82f6; }
-.scoreboard-forza .sb-stat.ems i { color: #ff3366; }
+.scoreboard-forza .sb-stat i { font-size: 13px; }
+.scoreboard-forza .sb-stat.cops i { color: var(--fac-police); }
+.scoreboard-forza .sb-stat.ems i { color: var(--fac-medic); }
 .scoreboard-forza .sb-stat.mech i { color: var(--sb-accent); }
 
+/* ── Column headers ── */
+.scoreboard-forza .sb-columns {
+    display: grid;
+    grid-template-columns: 60px 1fr 60px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--sb-border-lighter);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--sb-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.scoreboard-forza .sb-columns .col-right { text-align: right; }
+.scoreboard-forza .sb-columns .col-center { text-align: center; }
+
+/* ── Player list ── */
 .scoreboard-forza .sb-list {
-    background: var(--sb-bg-panel);
-    border: 1px solid var(--sb-border);
-    padding: 10px;
-    backdrop-filter: blur(10px);
-    transform: none;
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    max-height: 40vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    padding-bottom: 10px;
+    min-height: 0;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 255, 204, 0.35) transparent;
+    scrollbar-color: rgba(215, 181, 88, 0.35) transparent;
 }
 
-.scoreboard-forza .sb-list::-webkit-scrollbar { width: 4px; }
-.scoreboard-forza .sb-list::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 204, 0.35);
-    border-radius: 4px;
-}
+.scoreboard-forza .sb-list::-webkit-scrollbar { width: 2px; }
+.scoreboard-forza .sb-list::-webkit-scrollbar-track { background: transparent; }
+.scoreboard-forza .sb-list::-webkit-scrollbar-thumb { background: var(--sb-accent); }
 
+/* ── Player rows (rendered by scoreboard.js) ── */
 .scoreboard-forza .sb-player {
-    display: flex;
+    display: grid;
+    grid-template-columns: 60px 1fr 60px;
+    padding: 8px 20px;
     align-items: center;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid transparent;
-    transform: none;
-    transition: 0.2s;
+    border-bottom: 1px solid rgba(242, 239, 232, 0.02);
+    transition: background 0.1s;
 }
 
 .scoreboard-forza .sb-player:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--sb-hover);
 }
 
 .scoreboard-forza .sb-player.is-self {
-    border-color: rgba(0, 255, 204, 0.35);
-    background: rgba(0, 255, 204, 0.08);
+    background: rgba(215, 181, 88, 0.06);
 }
 
 .scoreboard-forza .sb-id {
-    width: 40px;
     font-size: 11px;
-    font-weight: 900;
-    color: var(--sb-accent);
+    font-weight: 800;
+    color: var(--sb-text-muted);
+    text-align: center;
 }
 
 .scoreboard-forza .sb-name {
-    flex: 1;
     font-size: 12px;
     font-weight: 700;
-    color: var(--sb-text-main);
+    color: var(--sb-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -145,21 +188,27 @@
 .scoreboard-forza .sb-ping {
     font-size: 10px;
     font-weight: 800;
-    color: var(--sb-success);
+    color: var(--ping-good);
+    text-align: right;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 4px;
 }
 
-.scoreboard-forza .sb-ping.ping-mid { color: #f59e0b; }
-.scoreboard-forza .sb-ping.ping-bad { color: #ff3366; }
+.scoreboard-forza .sb-ping i { font-size: 12px; }
+.scoreboard-forza .sb-ping.ping-mid { color: var(--ping-ok); }
+.scoreboard-forza .sb-ping.ping-bad { color: var(--ping-bad); }
 
+/* ── Hint footer ── */
 .scoreboard-forza .sb-hint {
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(242, 239, 232, 0.3);
     text-align: center;
-    transform: none;
+    padding: 10px;
+    border-top: 1px solid var(--sb-border-lighter);
+    flex-shrink: 0;
 }
