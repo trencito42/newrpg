@@ -369,37 +369,46 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
     if not nearby(source, coords) then return nil, { localeKey = 'businesses.message.stand_at_the_business_entrance_to_buy_it' } end
 
     local maxOwned = tonumber(SunsetBusinesses.MaxOwnedPerCharacter) or 0
-    if maxOwned > 0 then
-        local count = tonumber(MySQL.scalar.await(
-            'SELECT COUNT(*) FROM player_businesses WHERE owner_character_id = ?',
-            { char.id }
-        )) or 0
-        if count >= maxOwned then
-            return nil, { localeKey = 'businesses.message.you_can_own_at_most_value_businesses', formatArgs = { maxOwned } }
-        end
-    end
 
     local price = tonumber(row.price) or 0
-    if exports.sunset_core:GetMoney(source, 'bank') < price and exports.sunset_core:GetMoney(source, 'cash') < price then
+    local account
+    if exports.sunset_core:GetMoney(source, 'bank') >= price then account = 'bank'
+    elseif exports.sunset_core:GetMoney(source, 'cash') >= price then account = 'cash'
+    else
         return nil, { localeKey = 'businesses.message.you_need_value_in_bank_or_cash_to_buy', formatArgs = { price } }
     end
 
-    local claimed = MySQL.update.await(
-        'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id IS NULL',
-        { char.id, row.id }
-    )
-    if claimed ~= 1 then return nil, { localeKey = 'businesses.message.another_player_bought_this_business_first' } end
-
-    local paid = exports.sunset_core:RemoveMoney(source, 'bank', price, 'business_purchase')
-        or exports.sunset_core:RemoveMoney(source, 'cash', price, 'business_purchase')
-    if not paid then
-        MySQL.update.await(
-            'UPDATE player_businesses SET owner_character_id = NULL, for_sale = 1 WHERE id = ? AND owner_character_id = ?',
-            { row.id, char.id }
-        )
-        return nil, { localeKey = 'businesses.message.payment_failed_the_purchase_was_rolled_back' }
+    -- [SEC-ATOMIC] Wrap claim + debit in a single transaction: a server crash or
+    -- connection drop between claim and debit no longer leaves the business owned
+    -- for free. The ownership count check is repeated inside the transaction to
+    -- guard against two concurrent buyBusiness calls passing the pre-flight check
+    -- before either is committed (TOCTOU race).
+    local callOk, committed = pcall(function()
+        return MySQL.startTransaction(function(query)
+            if maxOwned > 0 then
+                local countRows = query.await(
+                    'SELECT COUNT(*) AS total FROM player_businesses WHERE owner_character_id = ?',
+                    { char.id }
+                ) or {}
+                local ownedNow = tonumber(countRows[1] and countRows[1].total) or 0
+                if ownedNow >= maxOwned then return false end
+            end
+            local claimed = query.await(
+                'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id IS NULL AND enabled = 1',
+                { char.id, row.id }
+            )
+            if tonumber(claimed) ~= 1 then return false end
+            local charged = exports.sunset_core:DebitMoneyInTransaction(
+                char.id, account, price, query.await, 'business_purchase'
+            )
+            if not charged then return false end
+            return true
+        end)
+    end)
+    if not callOk or not committed then
+        return nil, { localeKey = 'businesses.message.another_player_bought_this_business_first' }
     end
-
+    exports.sunset_core:RefreshMoney(source)
     return true, ('You bought %s for $%s.'):format(row.label, price)
 end)
 

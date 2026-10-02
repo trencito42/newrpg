@@ -93,6 +93,14 @@ const KNOWN_VIOLATIONS = new Set([
     // core Ledger helper in Phase 3, functionally safe today)
     'sunset_admin:accounts',            // setadmin level write (level-5 gated)
     'sunset_clothing:characters',       // outfit equip writes validated appearance (C8; same sanitizer as saveAppearance)
+    // panel_bridge cross-domain writes: all gated behind admin auth; tracked
+    // for Phase 4 refactor (use canonical domain service APIs instead of direct SQL).
+    'sunset_panel_bridge:accounts',     // admin_level set — staff action, bridge auth gated
+    'sunset_panel_bridge:bans',         // ban/unban — staff action, bridge auth gated
+    'sunset_panel_bridge:characters',   // job/job_grade faction sync — tracked for faction domain migration
+    'sunset_panel_bridge:clan_members', // clan admin moves — tracked for clan domain service migration
+    'sunset_panel_bridge:clan_audit_log', // clan audit writes — same as above
+    'sunset_panel_bridge:clans',        // clan dissolution — tracked for clan domain service migration
 ]);
 
 function walk(dir, out = []) {
