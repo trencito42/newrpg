@@ -1,0 +1,1680 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CVehicleModelInfoVariation>
+  <variationData>
+    <Item>
+      <modelName>tol22m5</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210000_tol22m5_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tol240sx</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210001_tol240sx_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolc7</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210007_tolc7_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolcharger2</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210009_tolcharger2_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="40"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolcurus</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210011_tolcurus_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>toldemon</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210012_toldemon_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>toldurus</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>2100121_toldurus_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tole36prb</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210013_tole36pandem_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tole36v</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tole6314</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="0"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolevo9</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210014_tolevo9_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tol3j50</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="0"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolexor</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210015_tolexor_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolf360</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolf8spider</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolfxxk</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolgtam21</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>2100151_tolgtam21_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolgtr</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210016_tolgtr_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolgtrlw</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210017_tolgtrlw_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="20"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="0"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolka</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tollam2</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210018_tollam2_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tollwalk458</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tol675ltsp</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210002_tol675ltsp_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolm5cs22</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>2100181_tolm5cs22_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolm5e60</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210019_tolm5e60_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolm6x6</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210020_tolm6x6_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="20"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="20"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="20"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="20"/>
+          </Item>
+          <Item>
+            <Name>yankton plate</Name>
+            <Value value="20"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="0"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolmig</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210021_tolmig_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolmm6x6</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolmus2</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210022_tolmus2_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolmustan</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210023_tolmustan_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolmustang</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210024_tolmustang_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolpeigerzen</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+          <Item>
+            <Name>yankton plate</Name>
+            <Value value="25"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolr33</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210027_tolr33_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tol700</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210003_tol700_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolr8c</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210025_tolr8c_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Item>
+          <Name>Yellow Plate</Name>
+          <Value value="40"/>
+        </Item>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolr8v10</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210026_tolr8v10_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolraid</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210028_tolraid_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolraptorV2</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210029_tolraptorV2_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolrrmansory</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities/>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolrs5</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="40"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolrs6</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolrs7c821</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210030_tolrs7c821_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolrsurus</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210031_tolrsurus_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tols63amg</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tola6</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210004_tola6_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolap2</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210005_tolap2_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="25"/>
+          </Item>
+          <Item>
+            <Name>White Plate 2</Name>
+            <Value value="50"/>
+          </Item>
+          <Item>
+            <Name>Blue Plate</Name>
+            <Value value="10"/>
+          </Item>
+          <Item>
+            <Name>Yellow Plate</Name>
+            <Value value="15"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolaudidy</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>0_default_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolbt62r</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210006_tolbt62r_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="6"/>
+      <sirenSettings value="0"/>
+    </Item>
+    <Item>
+      <modelName>tolc63</modelName>
+      <colors>
+        <Item>
+          <indices content="char_array">
+            0
+            0
+            0
+            0
+            0
+            0
+          </indices>
+          <liveries>
+            <Item value="false"/>
+          </liveries>
+        </Item>
+      </colors>
+      <kits>
+        <Item>210008_tolc63_modkit</Item>
+      </kits>
+      <windowsWithExposedEdges/>
+      <plateProbabilities>
+        <Probabilities>
+          <Item>
+            <Name>Standard White</Name>
+            <Value value="100"/>
+          </Item>
+        </Probabilities>
+      </plateProbabilities>
+      <lightSettings value="1"/>
+      <sirenSettings value="0"/>
+    </Item>
+  </variationData>
+</CVehicleModelInfoVariation>
