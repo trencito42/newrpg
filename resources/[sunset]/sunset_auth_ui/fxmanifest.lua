@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_auth_ui'
-description 'Minimal auth NUI — login/register/saved accounts only'
+description 'Racket auth NUI — login/register (no quick login)'
 version '1.0.0'
 
 ui_page 'web/index.html'

@@ -12,19 +12,16 @@ html, body {
     overflow: hidden;
     font-family: 'Montserrat', sans-serif;
     background-color: #08080a;
-    color: #fff;
+    color: #F2EFE8;
 }
 
 :root {
-    --text-main: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.55);
-    --accent: #00ffcc;
-    --danger: #ff3366;
-    --discord: #5865F2;
-    --panel-bg: rgba(255, 255, 255, 0.04);
-    --panel-border: rgba(255, 255, 255, 0.08);
-    --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.9);
-    --shadow-text: 0 4px 12px rgba(0, 0, 0, 0.9);
+    --brand-primary: #F2EFE8;
+    --brand-accent: #D7B558;
+    --bg-base: #08080a;
+    --text-muted: rgba(242, 239, 232, 0.55);
+    /* donut: 2 * π * 36 ≈ 226.19 */
+    --donut-c: 226.19;
 }
 
 .loadscreen {
@@ -38,8 +35,9 @@ html, body {
     opacity: 0;
 }
 
-/* [CHEAP HANDOFF] No blur/skew competing with world streaming — simple opacity. */
-.loadscreen.is-handoff .hud-wrapper {
+/* [CHEAP HANDOFF] Fade content before world streaming competes */
+.loadscreen.is-handoff .center-wrapper,
+.loadscreen.is-handoff .bottom-bar {
     opacity: 0;
     transition: opacity 300ms ease;
 }
@@ -47,279 +45,221 @@ html, body {
     animation: none;
 }
 
+/* Background: local image, very dark overlay */
 .bg-container {
     position: absolute;
     inset: 0;
     z-index: 0;
     background: #08080a url('assets/sunset.webp?v=20da2c41e7f86ca3') no-repeat center center;
     background-size: cover;
-    opacity: 0.3;
+    opacity: 0.15;
 }
 
-/* [A/B NOFX MODE] sv_sunset_nofx 1: flat background, zero animations */
+/* [A/B NOFX MODE] flat background, zero animations */
 body.nofx .bg-container {
     background: #08080a !important;
     animation: none !important;
 }
 body.nofx .loadscreen,
 body.nofx .loadscreen.fade-out { transition: none !important; }
-body.nofx .loadscreen.is-handoff .hud-wrapper {
-    filter: none !important;
-    transform: none !important;
+body.nofx .loadscreen.is-handoff .center-wrapper,
+body.nofx .loadscreen.is-handoff .bottom-bar {
     transition: opacity 200ms linear !important;
 }
-body.nofx .vignette { display: none !important; }
 body.nofx * { animation: none !important; }
 
-.vignette {
+/* ── Centered logo (top: 45%) ─────────────────────────────── */
+.center-wrapper {
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.9) 100%);
-    pointer-events: none;
-}
-
-.hud-wrapper {
-    position: absolute;
-    inset: 0;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 10;
-    padding: 52px 60px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
 }
 
-/* ── Brand / Logo ─────────────────────────────────────────── */
-.brand-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    filter: drop-shadow(var(--shadow-text));
+.logo {
+    width: 450px;
+    max-width: 80vw;
 }
 
-.brand-title {
-    font-size: 62px;
-    font-weight: 900;
-    font-style: italic;
-    color: var(--text-main);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    line-height: 0.9;
+.logo svg {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
-.brand-title span {
-    color: var(--accent);
-}
-
-.brand-subtitle {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--text-muted);
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    margin-top: 8px;
-    padding-left: 6px;
-    border-left: 3px solid var(--accent);
-}
-
-/* ── Bottom bar (3 columns) ───────────────────────────────── */
-.bottom-area {
+/* ── Bottom bar ───────────────────────────────────────────── */
+.bottom-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    right: 40px;
+    z-index: 10;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    width: 100%;
-    gap: 32px;
+    gap: 20px;
 }
 
-/* ── Discord panel (left) ─────────────────────────────────── */
-.discord-panel {
-    flex: 1;
-    max-width: 320px;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    border-bottom: 2px solid var(--discord);
-    padding: 20px 24px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-}
-
-.discord-header {
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--text-muted);
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-}
-
-.discord-icon-row {
+/* ── Discord (left, flat) ─────────────────────────────────── */
+.discord-link {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 14px;
+    min-width: 240px;
+    text-decoration: none;
+    color: inherit;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+    padding: 10px 0;
 }
 
-.discord-icon {
-    width: 22px;
-    height: 22px;
-    color: var(--discord);
+.discord-link:hover {
+    opacity: 1;
+}
+
+.discord-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(215, 181, 88, 0.1);
+    color: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
-.discord-link {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--discord);
-    text-decoration: none;
-    letter-spacing: 0.3px;
+.discord-icon-box svg {
+    width: 20px;
+    height: 20px;
 }
 
-.discord-desc {
-    font-size: 12px;
-    font-weight: 600;
+.discord-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.discord-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+}
+
+.discord-sub {
+    font-size: 11px;
+    font-weight: 500;
     color: var(--text-muted);
-    letter-spacing: 0.5px;
 }
 
-/* ── Center: Donut progress circle ───────────────────────── */
-.speedometer-loading {
+/* ── Donut progress (center) ──────────────────────────────── */
+.loading-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-shrink: 0;
+    gap: 10px;
 }
 
 .donut-wrapper {
     position: relative;
-    width: 190px;
-    height: 190px;
-    margin-bottom: 18px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .donut-svg {
+    transform: rotate(-90deg);
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
 }
 
 .donut-track {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.06);
-    stroke-width: 8;
+    stroke: rgba(242, 239, 232, 0.05);
+    stroke-width: 6;
 }
 
-.donut-ring {
+.donut-fill {
     fill: none;
-    stroke: var(--accent);
-    stroke-width: 8;
-    stroke-linecap: round;
-    /* circumference = 2 * π * 54 ≈ 339.29 */
-    stroke-dasharray: 339.29;
-    stroke-dashoffset: 339.29;
-    transition: stroke-dashoffset 0.35s ease;
-    filter: drop-shadow(0 0 8px var(--accent));
+    stroke: var(--brand-accent);
+    stroke-width: 6;
+    stroke-linecap: square;
+    stroke-dasharray: 226.19;
+    stroke-dashoffset: 226.19;
+    transition: stroke-dashoffset 0.1s linear;
 }
 
-.donut-content {
+.donut-text {
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.massive-pct {
-    font-size: 56px;
-    font-weight: 900;
-    font-style: italic;
-    color: var(--text-main);
-    letter-spacing: -2px;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    text-align: center;
-}
-
-.massive-pct span {
-    font-size: 26px;
-    color: var(--accent);
-    letter-spacing: 0;
-}
-
-.loading-status-text {
-    font-size: 11px;
+    font-size: 16px;
     font-weight: 800;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-    text-align: center;
-    max-width: 240px;
+    color: var(--brand-primary);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
 }
 
-.loading-status-text .file-count {
-    color: var(--accent);
-    font-weight: 900;
+/* script.js sets innerHTML with a <span>; hide the % span for compactness */
+.donut-text span {
+    font-size: 10px;
+    color: var(--brand-accent);
 }
 
-/* RPM bar kept in DOM for script.js compatibility; hidden visually */
-.rpm-bar-container {
-    display: none;
-}
-
-/* ── Tips panel (right) ───────────────────────────────────── */
-.tips-container {
-    flex: 1;
-    max-width: 320px;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    border-bottom: 2px solid var(--accent);
-    padding: 20px 24px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-}
-
-.tips-header {
+.status-text {
     font-size: 11px;
-    font-weight: 900;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.tips-header::before {
-    content: '';
-    display: block;
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.tips-text {
-    font-size: 14px;
     font-weight: 600;
-    color: var(--text-main);
-    line-height: 1.6;
-    min-height: 44px;
-    transition: opacity 0.4s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.file-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-accent);
+}
+
+/* ── Tips panel (right, flat) ─────────────────────────────── */
+.tips-panel {
+    min-width: 240px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.tips-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tips-content {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgba(242, 239, 232, 0.8);
+    min-height: 54px;
+    transition: opacity 0.3s ease;
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 900px) {
-    .hud-wrapper { padding: 32px 24px; }
-    .brand-title { font-size: 40px; }
-    .bottom-area { flex-direction: column; align-items: stretch; gap: 20px; }
-    .discord-panel, .tips-container { max-width: 100%; }
-    .speedometer-loading { align-self: center; }
-    .donut-wrapper { width: 150px; height: 150px; }
-    .massive-pct { font-size: 44px; }
+    .logo { width: 300px; }
+    .bottom-bar { flex-direction: column; align-items: center; bottom: 24px; left: 24px; right: 24px; gap: 16px; }
+    .discord-link { min-width: unset; }
+    .tips-panel { max-width: 100%; text-align: center; }
 }

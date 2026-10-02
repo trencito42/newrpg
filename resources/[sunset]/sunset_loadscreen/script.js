@@ -5,7 +5,7 @@ const filesEl = document.getElementById('loading-files');
 const tipTextEl = document.getElementById('tip-text');
 const rpmContainer = document.getElementById('rpm-bar');
 const donutRingEl = document.getElementById('donut-ring');
-const DONUT_CIRCUMFERENCE = 339.29; // 2 * π * 54
+const DONUT_CIRCUMFERENCE = 226.19; // 2 * π * 36
 
 // The loadscreen runs before account authentication and before normal resources.
 // Use the browser language here; the account locale takes over as soon as sunset_core starts.

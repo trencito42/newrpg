@@ -1,6 +1,6 @@
-/* ═══ SUNSET AUTH UI — Client Presentation Controller ═══
-   Only handles authentication presentation and posts events to Lua.
-   Double rAF ensures zero white/black flash during loadscreen handoff. */
+/* ═══ RACKET AUTH UI — Client Presentation Controller ═══
+   Handles auth presentation and posts events to Lua.
+   Quick Login / saved accounts removed by design. */
 
 const $ = (sel) => document.querySelector(sel);
 function tr(key, params, fallback) {
@@ -23,8 +23,7 @@ function post(action, data = {}) {
     } catch (_) { /* noop */ }
 }
 
-// [FREEZE WATCHDOG] main-thread stall detector for Auth NUI.
-// [NUI PERF] Was a permanent 60Hz rAF loop; now a 500ms timer-drift check.
+// [NUI PERF] 500ms timer-drift stall check instead of 60Hz rAF loop
 (function authFrameWatchdog() {
     let last = performance.now();
     setInterval(() => {
@@ -42,7 +41,6 @@ const AuthUI = {
     mode: 'login', // 'login' | 'register'
     pendingSubmit: false,
     visibleGeneration: 0,
-    accounts: [],
 
     init() {
         // Form switches
@@ -79,26 +77,6 @@ const AuthUI = {
             if (e.key === 'Enter') this.submitEmail();
         });
 
-        // Saved accounts list delegation
-        $('#auth-accounts-list')?.addEventListener('click', (e) => {
-            const card = e.target.closest('.auth-account-card');
-            if (!card) return;
-
-            const username = card.dataset.username;
-            if (e.target.closest('.auth-account-card__remove')) {
-                e.stopPropagation();
-                post('authRemoveAccount', { username });
-                return;
-            }
-
-            if (this.pendingSubmit) return;
-            this.showLoading(true, tr('auth.quick_connecting'));
-            this.pendingSubmit = true;
-            post('authPickAccount', { username });
-        });
-
-        // DOM readiness is not visual readiness. Lua may safely send state now,
-        // but the loadscreen must remain until show() paints its final frame.
         post('authReady', { locale: window.I18n?.getLocale() || 'en' });
         post('authDomReady', { now: Date.now() });
     },
@@ -124,24 +102,12 @@ const AuthUI = {
         const panel = $('#auth-panel');
         if (panel) panel.classList.add('active');
         this.switchMode('login');
-        if (data.accounts) {
-            this.setAccounts(data.accounts);
-        }
-        if (data.quickLogin !== undefined) {
-            const rem = $('#auth-remember');
-            if (rem) rem.checked = data.quickLogin !== false;
-        }
-        if (data.presentation === 'quick-login') {
-            this.showLoading(true, data.loadingText || tr('auth.signing_in'));
-        } else {
-            this.showLoading(false);
-        }
+        this.showLoading(false);
         requestAnimationFrame(() => requestAnimationFrame(() => {
             if (generation !== this.visibleGeneration || !screen?.classList.contains('is-visible')) return;
             post('authVisibleRendered', { now: Date.now(), presentation: data.presentation || 'form', presentationId: data.presentationId });
         }));
         setTimeout(() => {
-            if (data.presentation === 'quick-login') return;
             const active = document.activeElement;
             if (!active || active.tagName !== 'INPUT') {
                 $('#auth-user')?.focus({ preventScroll: true });
@@ -169,9 +135,7 @@ const AuthUI = {
         const isLogin = mode === 'login';
         $('#auth-form-login')?.classList.toggle('hidden', !isLogin);
         $('#auth-form-register')?.classList.toggle('hidden', isLogin);
-        $('#auth-main-title').textContent = tr(isLogin ? 'auth.login_title' : 'auth.register_title');
         this.hideError();
-
         setTimeout(() => {
             if (isLogin) {
                 $('#auth-user')?.focus({ preventScroll: true });
@@ -221,7 +185,7 @@ const AuthUI = {
         post('authLogin', {
             username: user,
             password: pass,
-            rememberQuickLogin: $('#auth-remember')?.checked !== false,
+            rememberQuickLogin: false,
         });
     },
 
@@ -254,48 +218,8 @@ const AuthUI = {
             email: email,
             password: pass,
             passwordConfirm: pass2,
-            rememberQuickLogin: $('#reg-remember')?.checked !== false,
+            rememberQuickLogin: false,
         });
-    },
-
-    setAccounts(accounts) {
-        const list = $('#auth-accounts-list');
-        const wrap = $('#auth-accounts');
-        if (!list || !wrap) return;
-
-        const rows = Array.isArray(accounts) ? accounts : [];
-        this.accounts = rows;
-        if (!rows.length) {
-            wrap.classList.add('hidden');
-            return;
-        }
-
-        wrap.classList.remove('hidden');
-        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (
-            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-        ));
-
-        list.innerHTML = rows.map((a) => {
-            const username = String(a.username || '').trim();
-            const initial = (username || '?').slice(0, 2).toUpperCase();
-            const level = Number(a.level) >= 1
-                ? tr('auth.level', { level: Math.floor(Number(a.level)) })
-                : tr('auth.new_account');
-            const totalMoney = Number(a.cash || 0) + Number(a.bank || 0);
-            const funds = window.I18n ? window.I18n.money(totalMoney) : `$${Math.floor(totalMoney)}`;
-
-            return `
-            <div class="auth-account-card" data-username="${esc(username)}">
-                <div class="auth-account-card__avatar">${esc(initial)}</div>
-                <div class="auth-account-card__info">
-                    <div class="auth-account-card__name">${esc(username)}</div>
-                    <div class="auth-account-card__meta">${esc(level)} · ${esc(funds)}</div>
-                </div>
-                <button type="button" class="auth-account-card__remove" title="${esc(tr('auth.remove_saved'))}">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </div>`;
-        }).join('');
     },
 
     promptEmail(username) {
@@ -342,9 +266,6 @@ window.addEventListener('message', (event) => {
         case 'authHide':
             AuthUI.hide();
             break;
-        case 'authAccounts':
-            if (payload.accounts) AuthUI.setAccounts(payload.accounts);
-            break;
         case 'authError':
             AuthUI.showError(payload.message || tr('auth.generic_error'));
             break;
@@ -378,12 +299,11 @@ window.addEventListener('message', (event) => {
         case 'localeSet':
             if (window.I18n && window.I18n.setLocale(payload.locale)) {
                 AuthUI.switchMode(AuthUI.mode);
-                AuthUI.setAccounts(AuthUI.accounts || []);
             }
             break;
         case 'authCapturePortrait':
             if (!payload.source || !payload.username) break;
-            fetch(payload.source).then((response) => response.blob()).then((blob) => {
+            fetch(payload.source).then((r) => r.blob()).then((blob) => {
                 const reader = new FileReader();
                 reader.onloadend = () => post('authSavePortrait', {
                     username: payload.username,
