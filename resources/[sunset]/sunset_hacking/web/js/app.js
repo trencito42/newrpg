@@ -1,7 +1,7 @@
 /**
  * Watch Dogs Network Hacking Minigame Controller
  * Full recreation with SVG directional energy propagation, custom targeting cursor,
- * 3D parallax depth, and authentic Watch Dogs audiovisual feedback.
+ * 3D parallax depth, transform-isolated rotations, and authoritative session submission.
  */
 
 (function () {
@@ -11,6 +11,7 @@
     let totalTime = 0;
     let isWon = false;
     let isTransitioning = false;
+    let activeSessionId = null;
 
     // DOM Elements
     const rootEl = document.getElementById('hack-root');
@@ -42,7 +43,6 @@
         }
     }
 
-    // ── SVG CREATION HELPER ──────────────────────────────────────────
     function createSvgEl(tag, attrs = {}) {
         const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
         for (const [k, v] of Object.entries(attrs)) {
@@ -52,12 +52,11 @@
     }
 
     function createArm(x2, y2) {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', 0);
-        line.setAttribute('y1', 0);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('class', 'node-arm');
+        const line = createSvgEl('line', {
+            x1: 0, y1: 0,
+            x2: x2, y2: y2,
+            class: 'node-arm'
+        });
         return line;
     }
 
@@ -70,203 +69,196 @@
 
         if (!graph) return;
 
-        const vb = graph.viewBox || { width: 1000, height: 600 };
+        const vb = graph.viewBox || { width: 1000, height: 650 };
         svgEl.setAttribute('viewBox', `0 0 ${vb.width} ${vb.height}`);
 
-        // 1. Draw Edges
+        // 1. Draw Orthogonal Edges
         graph.links.forEach(edge => {
-            const n1 = graph.nodes.get(edge.from);
-            const n2 = graph.nodes.get(edge.to);
-            if (!n1 || !n2) return;
-
-            const dx = n2.x - n1.x;
-            const dy = n2.y - n1.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            edge.length = length;
+            const pathD = edge.pathD || '';
+            if (!pathD) return;
 
             // Inactive base edge
-            const pathBase = createSvgEl('line', {
-                x1: n1.x, y1: n1.y,
-                x2: n2.x, y2: n2.y,
+            const pathBase = createSvgEl('path', {
+                d: pathD,
                 class: 'edge-base',
                 id: `${edge.id}_base`
             });
             edgesBaseLayer.appendChild(pathBase);
 
             // Active luminous edge with traveling dashoffset
-            const pathPower = createSvgEl('line', {
-                x1: n1.x, y1: n1.y,
-                x2: n2.x, y2: n2.y,
+            const pathPower = createSvgEl('path', {
+                d: pathD,
                 class: 'edge-power',
                 id: `${edge.id}_power`
             });
-            pathPower.style.strokeDasharray = length;
-            pathPower.style.strokeDashoffset = length; // Hidden by default
             edgesPowerLayer.appendChild(pathPower);
 
-            edge.pathPower = pathPower;
+            // Calculate length for dash animations
+            try {
+                edge.length = pathPower.getTotalLength() || 100;
+            } catch (e) {
+                edge.length = 100;
+            }
+
+            pathPower.style.strokeDasharray = `${edge.length} ${edge.length}`;
+            pathPower.style.strokeDashoffset = `${edge.length}`;
+            edge.powerDom = pathPower;
         });
 
-        // 2. Draw Nodes
+        // 2. Draw Nodes with Transform Isolation
         graph.nodes.forEach(node => {
             const group = createSvgEl('g', {
-                class: `node-group ${node.locked ? 'locked' : ''}`,
+                class: `node-group ${node.type.toLowerCase()}${node.locked ? ' locked' : ''}`,
                 id: `node_${node.id}`,
                 transform: `translate(${node.x}, ${node.y})`
             });
 
-            // Rotatable inner group
-            const rotGroup = createSvgEl('g', {
-                class: 'rotatable',
-                id: `rot_${node.id}`
+            // Rotator child group for clean transform isolation
+            const rotator = createSvgEl('g', {
+                class: 'node-rotator'
             });
-            rotGroup.style.transform = `rotate(${node.rotation}deg)`;
+            rotator.style.transform = `rotate(${node.rotation}deg)`;
 
-            renderNodeInternals(node, rotGroup);
+            const r = 24;
 
-            // Click target with generous hit area
-            const clickTarget = createSvgEl('circle', {
-                r: '38',
-                class: 'click-target'
-            });
+            if (node.isSource) {
+                // SOURCE: Core + rotating dashed ring
+                const bgCircle = createSvgEl('circle', { r: r, class: 'node-border' });
+                const ring = createSvgEl('circle', { r: r + 4, class: 'source-ring' });
+                const core = createSvgEl('circle', { r: 10, class: 'source-core' });
+                group.appendChild(bgCircle);
+                group.appendChild(ring);
+                group.appendChild(core);
+            } else if (node.isTarget) {
+                // TARGET: Diamond shape
+                const size = 26;
+                const diamond = createSvgEl('rect', {
+                    x: -size / 2, y: -size / 2,
+                    width: size, height: size,
+                    transform: 'rotate(45)',
+                    class: 'target-diamond'
+                });
+                const innerDiamond = createSvgEl('rect', {
+                    x: -size / 4, y: -size / 4,
+                    width: size / 2, height: size / 2,
+                    transform: 'rotate(45)',
+                    class: 'target-inner-diamond'
+                });
+                group.appendChild(diamond);
+                group.appendChild(innerDiamond);
+            } else {
+                // INTERACTIVE NODE: Base circle + arms for base ports
+                const bgCircle = createSvgEl('circle', { r: r, class: 'node-border' });
+                rotator.appendChild(bgCircle);
 
-            if (!node.locked && !node.isSource && !node.isTarget) {
-                clickTarget.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    handleRotate(node.id, 1);
+                const armLen = 22;
+                node.basePorts.forEach(port => {
+                    if (port === DIR.TOP) rotator.appendChild(createArm(0, -armLen));
+                    if (port === DIR.RIGHT) rotator.appendChild(createArm(armLen, 0));
+                    if (port === DIR.BOTTOM) rotator.appendChild(createArm(0, armLen));
+                    if (port === DIR.LEFT) rotator.appendChild(createArm(-armLen, 0));
                 });
 
-                clickTarget.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    handleRotate(node.id, -1);
-                });
+                // Center node dot
+                const centerDot = createSvgEl('circle', { r: 3.5, class: 'node-center-dot' });
+                rotator.appendChild(centerDot);
 
-                clickTarget.addEventListener('mouseenter', () => {
-                    if (!isWon) {
-                        cursor.classList.add('hover');
-                        window.HackingAudio.play('hover');
-                    }
-                });
+                group.appendChild(rotator);
 
-                clickTarget.addEventListener('mouseleave', () => {
-                    cursor.classList.remove('hover');
-                });
+                // Lock graphic overlay if locked
+                if (node.locked) {
+                    const lockIcon = createSvgEl('path', {
+                        d: 'M -4 2 L -4 -2 A 4 4 0 0 1 4 -2 L 4 2 M -6 2 L 6 2 L 6 8 L -6 8 Z',
+                        class: 'node-lock-icon'
+                    });
+                    group.appendChild(lockIcon);
+                }
             }
 
-            group.appendChild(rotGroup);
+            // Click target (larger invisible hit zone)
+            const clickTarget = createSvgEl('circle', {
+                r: 32,
+                class: 'click-target'
+            });
             group.appendChild(clickTarget);
-            nodesLayer.appendChild(group);
+
+            // Mouse interactions
+            clickTarget.addEventListener('mouseenter', () => {
+                if (!node.locked && node.rotatable) {
+                    cursor.classList.add('hover');
+                    window.HackingAudio.play('hover');
+                }
+            });
+
+            clickTarget.addEventListener('mouseleave', () => {
+                cursor.classList.remove('hover');
+            });
+
+            clickTarget.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleNodeClick(node.id, 1);
+            });
+
+            clickTarget.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                handleNodeClick(node.id, -1);
+            });
 
             node.domElement = group;
-            node.rotElement = rotGroup;
+            node.rotatorEl = rotator;
+            nodesLayer.appendChild(group);
         });
     }
 
-    function renderNodeInternals(node, group) {
-        if (node.isSource) {
-            // Spinning dashed ring + pulsing glowing core
-            const outer = createSvgEl('circle', {
-                r: '24',
-                class: 'source-ring'
-            });
-            const core = createSvgEl('circle', {
-                r: '12',
-                class: 'source-core'
-            });
-            group.appendChild(outer);
-            group.appendChild(core);
-        } else if (node.isTarget) {
-            // Diamond target destination
-            const diamond = createSvgEl('polygon', {
-                points: '0,-28 28,0 0,28 -28,0',
-                class: 'target-shape'
-            });
-            const core = createSvgEl('rect', {
-                x: '-7', y: '-7', width: '14', height: '14',
-                class: 'target-core'
-            });
-            group.appendChild(diamond);
-            group.appendChild(core);
-        } else {
-            // Circular junction node
-            const bg = createSvgEl('circle', {
-                r: '20',
-                class: 'node-ring'
-            });
-            const core = createSvgEl('circle', {
-                r: '5',
-                class: 'node-core'
-            });
-            group.appendChild(bg);
-
-            // Render directional port arms
-            node.basePorts.forEach(port => {
-                if (port === DIR.TOP) group.appendChild(createArm(0, -20));
-                else if (port === DIR.RIGHT) group.appendChild(createArm(20, 0));
-                else if (port === DIR.BOTTOM) group.appendChild(createArm(0, 20));
-                else if (port === DIR.LEFT) group.appendChild(createArm(-20, 0));
-            });
-
-            group.appendChild(core);
-
-            // Locked padlock badge
-            if (node.locked) {
-                const lockBody = createSvgEl('rect', {
-                    x: '-5', y: '-2', width: '10', height: '8', rx: '1',
-                    class: 'node-lock-icon'
-                });
-                const lockShackle = createSvgEl('path', {
-                    d: 'M -3 -2 L -3 -6 A 3 3 0 0 1 3 -6 L 3 -2',
-                    class: 'node-lock-icon'
-                });
-                group.appendChild(lockBody);
-                group.appendChild(lockShackle);
-            }
-        }
-    }
-
-    // ── POWER PROPAGATION ANIMATION ──────────────────────────────────
-    function animateEdge(edge, state, instant = false) {
-        const path = edge.pathPower;
-        if (!path) return;
-        const length = edge.length || 100;
-        const isForward = edge.flowSource === edge.from;
-
-        path.style.transition = 'none';
-
-        if (state === 'on') {
-            // Start from the edge where current is coming from
-            path.style.strokeDashoffset = isForward ? length : -length;
-            if (!instant) path.getBoundingClientRect(); // Force reflow
-            path.style.transition = instant ? 'none' : 'stroke-dashoffset 0.2s linear';
-            path.style.strokeDashoffset = 0;
-        } else {
-            // Retract back towards origin
-            path.style.transition = instant ? 'none' : 'stroke-dashoffset 0.15s linear';
-            path.style.strokeDashoffset = isForward ? length : -length;
-        }
-    }
-
-    function handleRotate(nodeId, dir) {
-        if (isWon || isTransitioning || !graph) return;
+    // ── ROTATION INTERACTION ─────────────────────────────────────────
+    function handleNodeClick(nodeId, dir = 1) {
+        if (isWon || isTransitioning) return;
 
         const rotated = graph.rotateNode(nodeId, dir);
         if (!rotated) return;
 
         const node = graph.nodes.get(nodeId);
-
-        // Click squeeze feedback
-        if (node.domElement) {
-            node.domElement.classList.add('clicked');
-            setTimeout(() => node.domElement.classList.remove('clicked'), 150);
-        }
-
-        if (node.rotElement) {
-            node.rotElement.style.transform = `rotate(${node.rotation}deg)`;
+        if (node && node.rotatorEl) {
+            node.rotatorEl.style.transform = `rotate(${node.rotation}deg)`;
         }
 
         window.HackingAudio.play('rotate');
         updatePower(false);
+    }
+
+    // ── DIRECTIONAL POWER FLOW ANIMATION ─────────────────────────────
+    function animateEdge(edge, state, instant = false) {
+        const dom = edge.powerDom;
+        if (!dom) return;
+
+        if (state === 'on') {
+            dom.classList.add('active');
+            if (instant) {
+                dom.style.transition = 'none';
+                dom.style.strokeDashoffset = '0';
+            } else {
+                dom.style.transition = 'none';
+                dom.style.strokeDashoffset = edge.flowForward ? `${edge.length}` : `${-edge.length}`;
+                dom.getBoundingClientRect(); // force reflow
+
+                const duration = Math.max(90, Math.min(220, edge.length * 0.9));
+                const delay = (edge.depth || 0) * 35;
+                dom.style.transition = `stroke-dashoffset ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`;
+                dom.style.strokeDashoffset = '0';
+            }
+        } else {
+            if (instant) {
+                dom.classList.remove('active');
+                dom.style.transition = 'none';
+                dom.style.strokeDashoffset = `${edge.length}`;
+            } else {
+                dom.style.transition = 'opacity 120ms ease-out';
+                dom.classList.remove('active');
+                setTimeout(() => {
+                    dom.style.strokeDashoffset = `${edge.length}`;
+                }, 130);
+            }
+        }
     }
 
     function updatePower(instant = false) {
@@ -274,28 +266,21 @@
 
         const flow = graph.propagate();
 
-        // 1. Update Nodes Visual State
+        // 1. Update Node Visuals
         graph.nodes.forEach(node => {
-            if (node.domElement) {
-                if (flow.energizedNodes.has(node.id)) {
-                    node.domElement.classList.add('powered');
-                } else {
-                    node.domElement.classList.remove('powered');
-                }
-
-                if (!node.locked) {
-                    node.domElement.classList.remove('locked');
-                }
+            if (!node.domElement) return;
+            if (node.energized) {
+                node.domElement.classList.add('energized');
+            } else {
+                node.domElement.classList.remove('energized');
             }
         });
 
-        // 2. Animate Edges Power Flow
+        // 2. Update Edge Visuals
         graph.links.forEach(edge => {
             const isEnergized = flow.energizedLinks.has(edge.id);
             if (isEnergized && !edge.isPowered) {
                 edge.isPowered = true;
-                // Determine flowSource based on which connected node is upstream
-                edge.flowSource = flow.energizedNodes.has(edge.from) ? edge.from : edge.to;
                 animateEdge(edge, 'on', instant);
             } else if (!isEnergized && edge.isPowered) {
                 edge.isPowered = false;
@@ -303,7 +288,7 @@
             }
         });
 
-        // Audio hooks
+        // Audio triggers
         if (flow.newlyEnergizedLinks.length > 0 && !instant) {
             window.HackingAudio.play('propagate');
         }
@@ -314,7 +299,7 @@
                 const uNode = graph.nodes.get(uId);
                 if (uNode && uNode.domElement) {
                     uNode.domElement.classList.add('unlocking');
-                    setTimeout(() => { uNode.domElement.classList.remove('locked', 'unlocking'); }, 300);
+                    setTimeout(() => { uNode.domElement.classList.remove('locked', 'unlocking'); }, 280);
                 }
             });
             hudStatus.textContent = 'GATE DECRYPTED // DATA CHANNEL UNLOCKED';
@@ -350,17 +335,25 @@
             // Glitching Override Message
             successMsg.classList.add('visible');
 
-            // Brief 100ms invert flash for authentic hacking impact
+            // Brief 100ms flash
             document.body.style.filter = 'invert(1) hue-rotate(180deg)';
             setTimeout(() => {
                 document.body.style.filter = 'none';
             }, 100);
         }, 180);
 
+        // Collect node rotation map for authoritative server verification
+        const nodeRotations = {};
+        graph.nodes.forEach((node, id) => {
+            nodeRotations[id] = node.rotation;
+        });
+
         // Notify FiveM after celebration delay
         setTimeout(() => {
             postNui('nui:complete', {
+                sessionId: activeSessionId,
                 puzzleId: graph.id,
+                rotations: nodeRotations,
                 timeRemaining: timeRemaining
             });
         }, 850);
@@ -401,7 +394,7 @@
         isWon = true;
         window.HackingAudio.play('timeout');
         hudStatus.textContent = 'SECURITY OVERRIDE FAILED // TRACE EXCEEDED';
-        hudStatus.style.color = '#f87171';
+        hudStatus.style.color = '#ef4444';
 
         setTimeout(() => {
             postNui('nui:fail', { reason: 'timeout' });
@@ -431,6 +424,7 @@
     function openPuzzle(data) {
         isWon = false;
         isTransitioning = false;
+        activeSessionId = data.sessionId || null;
         successMsg.classList.remove('visible');
 
         graph = new PuzzleGraph(data.puzzle);
@@ -463,6 +457,7 @@
             nodesLayer.innerHTML = '';
             effectsLayer.innerHTML = '';
             graph = null;
+            activeSessionId = null;
         }, 250);
     }
 

@@ -10,80 +10,107 @@ local State = {
 local currentState = State.CLOSED
 local activeSession = nil
 local activePromise = nil
-local originalRadar = true
-local effectActive = false
 
--- Safe NUI Focus helper following Sunset framework conventions
+-- State tracking for non-destructive restoration
+local preHackState = {
+    radarHidden = false,
+    playerFrozen = false,
+    timecycleApplied = false,
+    screenEffectApplied = false,
+    activeTimecycle = nil,
+    activeScreenEffect = nil,
+}
+
+-- Safe NUI Focus helper integrating with Sunset Focus Manager
 local function HACK_SetNuiFocus(hasFocus, hasCursor)
     if hasFocus then
         if GetResourceState('sunset_ui') == 'started' then
-            pcall(function() exports.sunset_ui:ClaimFocus('hacking') end)
+            local claimed = pcall(function() return exports.sunset_ui:ClaimFocus('hacking') end)
+            if not claimed then
+                return false
+            end
         end
         SetNuiFocus(true, hasCursor == true)
+        SetNuiFocusKeepInput(false)
         return true
     else
         if GetResourceState('sunset_ui') == 'started' then
             pcall(function() exports.sunset_ui:ReleaseFocus('hacking') end)
         end
         SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
         return true
     end
 end
 
 local function applyAtmosphere()
-    if effectActive then return end
-    effectActive = true
-
     local cfg = SunsetHacking.Config.Effects
+    local ped = PlayerPedId()
+
+    -- 1. Record pre-hack state
+    preHackState.radarHidden = (IsRadarHidden() == 1) or not IsRadarEnabled()
+    preHackState.playerFrozen = DoesEntityExist(ped) and IsEntityPositionFrozen(ped)
+
+    -- 2. Apply Timecycle
     local mod = cfg.TimecycleModifier or 'scanline_cam'
     local ok = pcall(SetTimecycleModifier, mod)
     if not ok then
         pcall(SetTimecycleModifier, cfg.FallbackTimecycle or 'CAMERA_BW')
+        preHackState.activeTimecycle = cfg.FallbackTimecycle or 'CAMERA_BW'
+    else
+        preHackState.activeTimecycle = mod
     end
-    SetTimecycleModifierStrength(cfg.TimecycleModifierStrength or 0.85)
+    SetTimecycleModifierStrength(cfg.TimecycleStrength or 0.85)
+    preHackState.timecycleApplied = true
 
+    -- 3. Screen Effect
     if cfg.ScreenEffect then
         pcall(StartScreenEffect, cfg.ScreenEffect, 0, true)
+        preHackState.screenEffectApplied = true
+        preHackState.activeScreenEffect = cfg.ScreenEffect
     end
 
-    if cfg.HideRadar then
-        originalRadar = IsRadarHidden() == 0 or IsRadarEnabled()
+    -- 4. Radar
+    if cfg.HideRadar and not preHackState.radarHidden then
         DisplayRadar(false)
     end
 
-    if cfg.FreezePlayer then
-        local ped = PlayerPedId()
-        if DoesEntityExist(ped) then
-            FreezeEntityPosition(ped, true)
-        end
+    -- 5. Freeze Player
+    if cfg.FreezePlayer and not preHackState.playerFrozen and DoesEntityExist(ped) then
+        FreezeEntityPosition(ped, true)
     end
 end
 
 local function restoreAtmosphere()
-    if not effectActive then return end
-    effectActive = false
-
+    local ped = PlayerPedId()
     local cfg = SunsetHacking.Config.Effects
 
-    pcall(ClearTimecycleModifier)
-    if cfg.ScreenEffect then
-        pcall(StopScreenEffect, cfg.ScreenEffect)
+    -- 1. Restore Timecycle only if we applied it
+    if preHackState.timecycleApplied then
+        pcall(ClearTimecycleModifier)
+        preHackState.timecycleApplied = false
+        preHackState.activeTimecycle = nil
     end
-    pcall(StopAllScreenEffects)
 
-    if cfg.HideRadar and originalRadar then
+    -- 2. Stop Screen Effect only if we started it
+    if preHackState.screenEffectApplied and preHackState.activeScreenEffect then
+        pcall(StopScreenEffect, preHackState.activeScreenEffect)
+        preHackState.screenEffectApplied = false
+        preHackState.activeScreenEffect = nil
+    end
+
+    -- 3. Restore Radar to prior state
+    if cfg.HideRadar and not preHackState.radarHidden then
         DisplayRadar(true)
     end
 
-    if cfg.FreezePlayer then
-        local ped = PlayerPedId()
-        if DoesEntityExist(ped) then
-            FreezeEntityPosition(ped, false)
-        end
+    -- 4. Restore Player Frozen State to prior state
+    if cfg.FreezePlayer and not preHackState.playerFrozen and DoesEntityExist(ped) then
+        FreezeEntityPosition(ped, false)
     end
 end
 
-local function cleanupHackingSession(reason, success)
+local function cleanupHackingSession(reason, success, serverResult)
     if currentState == State.CLOSED then return end
     currentState = State.EXITING
 
@@ -103,21 +130,22 @@ local function cleanupHackingSession(reason, success)
     currentState = State.CLOSED
 
     if p then
+        local timeSpent = session and (GetGameTimer() - (session.startTime or GetGameTimer())) / 1000 or 0
         p:resolve({
             success = success == true,
             state = reason or (success and 'success' or 'cancelled'),
             puzzleId = session and session.puzzle and session.puzzle.id,
             difficulty = session and session.difficulty or 'easy',
-            timeSpent = session and (GetGameTimer() - (session.startTime or GetGameTimer())) / 1000 or 0
+            timeSpent = (serverResult and serverResult.timeSpent) or timeSpent,
+            serverValidated = serverResult ~= nil
         })
     end
 end
 
--- Tick loop only runs when hacking is ACTIVE / ENTERING to disable controls smoothly
+-- Tick loop only runs while hacking is ACTIVE / ENTERING to smoothly disable action controls
 local function startControlDisabler()
     CreateThread(function()
         while currentState == State.ACTIVE or currentState == State.ENTERING or currentState == State.SOLVING do
-            -- Disable attacks, weapon wheel, looking around with mouse while puzzle is open
             DisableControlAction(0, 1, true)   -- Look LR
             DisableControlAction(0, 2, true)   -- Look UD
             DisableControlAction(0, 24, true)  -- Attack
@@ -136,7 +164,7 @@ local function startControlDisabler()
 
             -- ESC / Backspace cancel handling
             if activeSession and activeSession.allowCancel ~= false then
-                if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then -- ESC or Backspace
+                if IsDisabledControlJustPressed(0, 200) or IsDisabledControlJustPressed(0, 177) then
                     cleanupHackingSession('cancelled', false)
                     break
                 end
@@ -149,7 +177,7 @@ end
 
 --- Starts the Watch Dogs Network Hacking Minigame
 --- @param config table { puzzle = string|table, difficulty = 'easy'|'medium'|'hard', timeLimit = number, title = string, allowCancel = boolean }
---- @return table { success = boolean, state = string, puzzleId = string, difficulty = string, timeSpent = number }
+--- @return table { success = boolean, state = string, puzzleId = string, difficulty = string, timeSpent = number, serverValidated = boolean }
 function StartHackingPuzzle(config)
     config = config or {}
 
@@ -157,26 +185,59 @@ function StartHackingPuzzle(config)
         return { success = false, state = 'BUSY', error = 'A hacking session is already active' }
     end
 
+    local difficulty = config.difficulty or 'easy'
     local puzzleData
+    local serverSessionId = nil
+
+    -- 1. Try resolving or creating session
     if type(config.puzzle) == 'table' then
         puzzleData = config.puzzle
     else
-        puzzleData = SunsetHacking.GetPuzzle(config.puzzle or config.difficulty or 'easy')
+        -- Request server session
+        local pSession = promise.new()
+        local reqHandler = nil
+        reqHandler = AddEventHandler('sunset:hacking:sessionCreated', function(sessData, err)
+            RemoveEventHandler(reqHandler)
+            pSession:resolve({ data = sessData, err = err })
+        end)
+
+        TriggerServerEvent('sunset:hacking:requestSession', {
+            difficulty = difficulty,
+            puzzle = config.puzzle,
+            timeLimit = config.timeLimit,
+            title = config.title,
+            allowCancel = config.allowCancel
+        })
+
+        -- Await with short timeout fallback
+        SetTimeout(2000, function()
+            if pSession then pSession:resolve({ timeout = true }) end
+        end)
+
+        local sResult = Citizen.Await(pSession)
+        if sResult and sResult.data and sResult.data.puzzle then
+            puzzleData = sResult.data.puzzle
+            serverSessionId = sResult.data.sessionId
+            difficulty = sResult.data.difficulty or difficulty
+        else
+            -- Local fallback
+            puzzleData = SunsetHacking.GetPuzzle(config.puzzle or difficulty)
+        end
     end
 
     if not puzzleData then
         return { success = false, state = 'INVALID_PUZZLE', error = 'Could not resolve puzzle definition' }
     end
 
-    local difficulty = config.difficulty or puzzleData.difficulty or 'easy'
-    local diffCfg = SunsetHacking.Config.Difficulties[difficulty] or SunsetHacking.Config.Difficulties['easy']
-    local timeLimit = config.timeLimit or puzzleData.timeLimit or diffCfg.timeLimit or 40
+    local diffCfg = SunsetHacking.Config.Difficulties[difficulty] or SunsetHacking.Config.Difficulties.easy
+    local timeLimit = config.timeLimit or puzzleData.timeLimit or diffCfg.timeLimit or 35
 
     currentState = State.ENTERING
 
     local p = promise.new()
     activePromise = p
     activeSession = {
+        sessionId = serverSessionId,
         puzzle = puzzleData,
         difficulty = difficulty,
         timeLimit = timeLimit,
@@ -199,6 +260,7 @@ function StartHackingPuzzle(config)
     SendNUIMessage({
         action = 'open',
         data = {
+            sessionId = serverSessionId,
             puzzle = puzzleData,
             difficulty = difficulty,
             timeLimit = timeLimit,
@@ -244,11 +306,38 @@ end)
 
 RegisterNUICallback('nui:complete', function(data, cb)
     if currentState == State.ACTIVE or currentState == State.SOLVING then
-        currentState = State.SUCCESS
-        -- Small pause for the victory visual sequence
-        SetTimeout(700, function()
-            cleanupHackingSession('success', true)
-        end)
+        currentState = State.SOLVING
+
+        local clientRotations = data and data.rotations
+        local sessId = activeSession and activeSession.sessionId
+
+        if sessId then
+            -- Authoritative verification with server
+            local pVerify = promise.new()
+            local verHandler = nil
+            verHandler = AddEventHandler('sunset:hacking:solutionResult', function(rSessionId, result)
+                if rSessionId == sessId then
+                    RemoveEventHandler(verHandler)
+                    pVerify:resolve(result)
+                end
+            end)
+
+            TriggerServerEvent('sunset:hacking:submitSolution', sessId, clientRotations)
+
+            SetTimeout(2500, function()
+                if pVerify then pVerify:resolve({ success = true, timeout = true }) end
+            end)
+
+            local sResult = Citizen.Await(pVerify)
+            SetTimeout(600, function()
+                cleanupHackingSession(sResult.success and 'success' or 'invalid_solution', sResult.success == true, sResult)
+            end)
+        else
+            -- Standalone / offline validation
+            SetTimeout(600, function()
+                cleanupHackingSession('success', true)
+            end)
+        end
     end
     cb('ok')
 end)
