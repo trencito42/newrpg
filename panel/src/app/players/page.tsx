@@ -80,7 +80,7 @@ export default async function PlayersDirectoryPage({
   return (
     <div className="space-y-4">
       {/* Top Search & Filter Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "players.directory_title")}
@@ -100,8 +100,8 @@ export default async function PlayersDirectoryPage({
       </div>
 
       {/* Players Table */}
-      <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
-        <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs text-[#99958E]">
+      <div className="rounded-xl bg-surface-100 overflow-hidden">
+        <div className="p-2.5 px-3 flex items-center justify-between text-xs text-[#99958E]">
           <span>{t(locale, "players.found_count", { count: totalCount })}</span>
           <span className="font-mono text-[#8F8B83]">
             {t(locale, "common.page")} {page} {t(locale, "common.of")} {totalPages || 1}
@@ -110,7 +110,7 @@ export default async function PlayersDirectoryPage({
 
         <div className="responsive-table-wrapper">
           <table className="w-full text-left text-xs">
-            <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
+            <thead className="text-[11px] font-semibold text-[#8F8B83] bg-surface-200/50">
               <tr>
                 <th className="py-2.5 px-3">Player</th>
                 <th className="py-2.5 px-3">Level</th>
@@ -120,7 +120,7 @@ export default async function PlayersDirectoryPage({
                 <th className="py-2.5 px-3 text-right">Last Seen</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
+            <tbody className="text-[#B4AFA4]">
               {players.length > 0 ? (
                 players.map((p) => {
                   const hasFaction = isFaction(p.faction_id);

@@ -31,8 +31,8 @@ import {
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
 import { LanguageToggle } from "./LanguageToggle";
-import { panelBrand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { NavSection } from "./NavSection";
 
 interface MobileNavProps {
   locale: Locale;
@@ -95,18 +95,18 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
   ];
 
   return (
-    <div className="lg:hidden border-b border-surface-border bg-background sticky top-0 z-40">
+    <div className="lg:hidden bg-surface-100 sticky top-0 z-40">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center space-x-2.5">
           <button
             onClick={() => setOpen(!open)}
             aria-label="Toggle navigation"
-            className="p-1 rounded bg-surface-200 border border-surface-border text-[#B4AFA4] hover:text-[#F2EFE8]"
+            className="p-2 rounded-lg bg-surface-200 text-[#B4AFA4] hover:text-[#F2EFE8]"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
-          <Link href="/" className="font-black uppercase tracking-[0.06em] text-[#F2EFE8] text-xs">
-            <span className="text-brand mr-2" aria-hidden="true">✦</span>{panelBrand.name}
+          <Link href="/" aria-label="Racket — Home" className="block">
+            <img src="/logo-3.svg" alt="Racket" className="block h-auto w-[108px]" />
           </Link>
         </div>
 
@@ -115,7 +115,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           {session ? (
             <Link
               href="/account"
-              className="w-6 h-6 rounded bg-surface-200 border border-surface-border flex items-center justify-center text-[#F2EFE8] font-bold text-xs"
+              className="w-7 h-7 rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs"
             >
               {session.username.charAt(0).toUpperCase()}
             </Link>
@@ -137,11 +137,11 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-4/5 max-w-xs bg-background h-full border-r border-surface-border flex flex-col p-3"
+            className="w-4/5 max-w-xs bg-surface-100 h-full flex flex-col p-3 rounded-r-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2.5 border-b border-surface-border">
-              <span className="font-black uppercase tracking-[0.06em] text-[#F2EFE8] text-xs"><span className="text-brand mr-2" aria-hidden="true">✦</span>{panelBrand.name}</span>
+            <div className="flex items-center justify-between pb-2.5">
+              <Link href="/" aria-label="Racket — Home"><img src="/logo-3.svg" alt="Racket" className="block h-auto w-[138px]" /></Link>
               <button
                 onClick={() => setOpen(false)}
                 className="p-1 text-[#8F8B83] hover:text-[#F2EFE8]"
@@ -151,10 +151,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 py-2 text-xs">
-              <div>
-                <div className="text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider mb-1 px-2">
-                  Server
-                </div>
+              <NavSection id="mobile-server-links" label="Server" initiallyOpen>
                 <div className="space-y-0.5">
                   {serverLinks.map((item) => (
                     <Link
@@ -163,7 +160,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                       className={cn(
                         "flex items-center space-x-2 px-2 py-1.5 rounded transition-colors",
                         pathname === item.href
-                          ? "bg-brand/10 text-brand border-l-2 border-brand"
+                          ? "bg-brand/10 text-brand"
                           : "text-[#B4AFA4] hover:bg-surface-100 hover:text-[#F2EFE8]"
                       )}
                     >
@@ -172,13 +169,10 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                     </Link>
                   ))}
                 </div>
-              </div>
+              </NavSection>
 
               {session && (
-                <div>
-                  <div className="text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider mb-1 px-2">
-                    Account
-                  </div>
+                <NavSection id="mobile-account-links" label={t(locale, "nav.account")} active={accountLinks.some((item) => pathname === item.href)}>
                   <div className="space-y-0.5">
                     {accountLinks.map((item) => (
                       <Link
@@ -187,7 +181,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                         className={cn(
                           "flex items-center space-x-2 px-2 py-1.5 rounded transition-colors",
                           pathname === item.href
-                            ? "bg-brand/10 text-brand border-l-2 border-brand"
+                            ? "bg-brand/10 text-brand"
                             : "text-[#B4AFA4] hover:bg-surface-100 hover:text-[#F2EFE8]"
                         )}
                       >
@@ -196,13 +190,10 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                       </Link>
                     ))}
                   </div>
-                </div>
+                </NavSection>
               )}
 
-              <div>
-                <div className="text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider mb-1 px-2">
-                  Support
-                </div>
+              <NavSection id="mobile-support-links" label={t(locale, "nav.support")} active={pathname.startsWith("/support")}>
                 <div className="space-y-0.5">
                   {supportLinks.map((item) => (
                     <Link
@@ -211,7 +202,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                       className={cn(
                         "flex items-center space-x-2 px-2 py-1.5 rounded transition-colors",
                         pathname === item.href
-                          ? "bg-brand/10 text-brand border-l-2 border-brand"
+                          ? "bg-brand/10 text-brand"
                           : "text-[#B4AFA4] hover:bg-surface-100 hover:text-[#F2EFE8]"
                       )}
                     >
@@ -220,13 +211,10 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                     </Link>
                   ))}
                 </div>
-              </div>
+              </NavSection>
 
               {isStaffMember && (
-                <div>
-                  <div className="text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider mb-1 px-2">
-                    Staff
-                  </div>
+                <NavSection id="mobile-staff-links" label={t(locale, "nav.staff")} active={pathname.startsWith("/staff/")}>
                   <div className="space-y-0.5">
                     <Link
                       href="/staff/dashboard"
@@ -236,12 +224,12 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                       <span>{t(locale, "nav.staff_dashboard")}</span>
                     </Link>
                   </div>
-                </div>
+                </NavSection>
               )}
             </div>
 
             {session && (
-              <div className="pt-2 border-t border-surface-border">
+              <div className="pt-2">
                 <form action="/api/auth/logout" method="POST">
                   <button
                     type="submit"

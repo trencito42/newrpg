@@ -18,11 +18,11 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-extrabold uppercase tracking-[0.08em] rounded-sm transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none active:opacity-90";
+    "inline-flex items-center justify-center font-extrabold uppercase tracking-[0.08em] rounded-lg transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none active:opacity-90";
 
   const variants = {
-    primary: "bg-brand hover:bg-brand-300 text-[#08080A] border border-brand",
-    secondary: "bg-surface-100 hover:bg-surface-200 text-[#F2EFE8] border border-surface-border",
+    primary: "bg-brand hover:bg-brand-300 text-[#08080A]",
+    secondary: "bg-surface-200 hover:bg-surface-300 text-[#F2EFE8]",
     destructive: "bg-red-700 hover:bg-red-600 text-[#F2EFE8]",
     outline: "border border-surface-border hover:border-brand hover:text-brand text-[#F2EFE8] bg-transparent",
     ghost: "text-[#B4AFA4] hover:text-[#F2EFE8] hover:bg-surface-200",

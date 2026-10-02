@@ -32,9 +32,9 @@ import {
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
-import { panelBrand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { NavSection } from "./NavSection";
 import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface SidebarProps {
@@ -45,7 +45,7 @@ interface SidebarProps {
   playerCount: number;
 }
 
-export function Sidebar({ locale, session, identity, serverOnline, playerCount }: SidebarProps) {
+export function Sidebar({ locale, session, identity }: SidebarProps) {
   const pathname = usePathname();
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
   const isAdmin = session && session.adminLevel >= 1;
@@ -107,35 +107,18 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
   };
 
   return (
-    <aside className="w-64 bg-background border-r border-surface-border flex flex-col flex-shrink-0 min-h-screen text-[#B4AFA4]">
+    <aside className="w-64 bg-surface-100 flex flex-col flex-shrink-0 min-h-screen text-[#B4AFA4]">
       {/* Brand Header */}
-      <div className="p-3.5 border-b border-surface-border flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2.5">
-          <span className="text-brand text-lg leading-none" aria-hidden="true">✦</span>
-          <span className="font-black text-sm tracking-[0.08em] uppercase text-[#F2EFE8]">
-            {panelBrand.name}
-          </span>
+      <div className="px-4 py-5">
+        <Link href="/" aria-label="Racket — Home" className="block w-full">
+          <img src="/logo-3.svg" alt="Racket" className="block h-auto w-full max-w-[188px]" />
         </Link>
-
-        <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#8F8B83]">
-          <span
-            className={cn(
-              "w-1.5 h-1.5 rounded-full",
-              serverOnline ? "bg-emerald-500" : "bg-red-500"
-            )}
-          />
-          <span>{playerCount}</span>
-        </div>
       </div>
 
       {/* Navigation Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {/* SERVER */}
-        <div>
-          <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
-            Server
-          </div>
-          <nav className="space-y-0.5">
+        <NavSection id="desktop-server-links" label="Server" initiallyOpen>
             {serverLinks.map((item) => {
               const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
               const Icon = item.icon;
@@ -144,9 +127,9 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
+                    "flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                     active
-                      ? "bg-brand/10 border-brand text-brand"
+                      ? "bg-brand/10 text-brand"
                       : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                   )}
                 >
@@ -155,16 +138,11 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                 </Link>
               );
             })}
-          </nav>
-        </div>
+        </NavSection>
 
         {/* ACCOUNT */}
         {session && (
-          <div>
-            <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
-              Account
-            </div>
-            <nav className="space-y-0.5">
+          <NavSection id="desktop-account-links" label={t(locale, "nav.account")} active={accountLinks.some((item) => pathname === item.href)}>
               {accountLinks.map((item) => {
                 const active = pathname === item.href;
                 const Icon = item.icon;
@@ -173,9 +151,9 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
+                      "flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                       active
-                        ? "bg-brand/10 border-brand text-brand"
+                        ? "bg-brand/10 text-brand"
                         : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                     )}
                   >
@@ -184,16 +162,11 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   </Link>
                 );
               })}
-            </nav>
-          </div>
+          </NavSection>
         )}
 
         {/* SUPPORT */}
-        <div>
-          <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
-            Support
-          </div>
-          <nav className="space-y-0.5">
+        <NavSection id="desktop-support-links" label={t(locale, "nav.support")} active={pathname.startsWith("/support")}>
             {supportLinks.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href);
               const Icon = item.icon;
@@ -202,9 +175,9 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
+                    "flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                     active
-                      ? "bg-brand/10 border-brand text-brand"
+                      ? "bg-brand/10 text-brand"
                       : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                   )}
                 >
@@ -213,16 +186,11 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                 </Link>
               );
             })}
-          </nav>
-        </div>
+        </NavSection>
 
         {/* STAFF (Only if staff) */}
         {isStaffMember && (
-          <div>
-            <div className="px-2 mb-1 text-[10px] font-semibold text-[#8F8B83] uppercase tracking-wider">
-              Staff
-            </div>
-            <nav className="space-y-0.5">
+          <NavSection id="desktop-staff-links" label={t(locale, "nav.staff")} active={pathname.startsWith("/staff/")}>
               {staffLinks.map((item) => {
                 const active = pathname === item.href || (item.href !== "/staff/dashboard" && pathname.startsWith(item.href));
                 const Icon = item.icon;
@@ -231,9 +199,9 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2.5 px-3 py-2.5 border-l-2 border-transparent text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
+                      "flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-[0.05em] transition-colors",
                       active
-                        ? "bg-brand/10 border-brand text-brand"
+                        ? "bg-brand/10 text-brand"
                         : "text-[#B4AFA4] hover:bg-surface-200 hover:text-[#F2EFE8]"
                     )}
                   >
@@ -242,13 +210,12 @@ export function Sidebar({ locale, session, identity, serverOnline, playerCount }
                   </Link>
                 );
               })}
-            </nav>
-          </div>
+          </NavSection>
         )}
       </div>
 
       {/* Auth Footer */}
-      <div className="p-3 border-t border-surface-border">
+      <div className="p-3">
         {session ? (
           <div className="flex items-center justify-between">
             <Link

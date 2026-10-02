@@ -20,7 +20,7 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
   };
 
   return (
-    <div className="flex items-center bg-surface-100 border border-surface-border rounded-sm p-0.5 text-xs">
+    <div className="flex items-center bg-surface-200 rounded-lg p-0.5 text-xs">
       <button
         onClick={() => handleToggle("en")}
         disabled={isPending}

@@ -16,7 +16,7 @@ interface HeaderProps {
 
 export async function Header({ locale, session, identity }: HeaderProps) {
   return (
-    <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-background border-b border-surface-border sticky top-0 z-30">
+    <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-background sticky top-0 z-30">
       <div className="flex items-center space-x-3 flex-1 max-w-sm">
         <GlobalSearch placeholder={t(locale, "common.search_placeholder")} />
       </div>
@@ -25,13 +25,13 @@ export async function Header({ locale, session, identity }: HeaderProps) {
         <LanguageToggle currentLocale={locale} />
 
         {session ? (
-          <div className="flex items-center space-x-2.5 pl-2 border-l border-surface-border">
+          <div className="flex items-center space-x-2.5 pl-2">
             <NotificationBell locale={locale} />
             <Link
               href={`/players/${encodeURIComponent(session.username)}`}
               className="flex items-center space-x-2 text-xs text-[#F2EFE8] hover:text-[#F2EFE8] transition-colors"
             >
-              <div className="w-6 h-6 rounded bg-surface-200 border border-surface-border flex items-center justify-center text-[#F2EFE8] font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs">
                 {session.username.charAt(0).toUpperCase()}
               </div>
               <span className="font-semibold text-xs hidden xl:inline">

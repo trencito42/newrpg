@@ -25,7 +25,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-md bg-card border border-card-border p-4 flex items-center justify-between",
+        "rounded-xl bg-card p-4 flex items-center justify-between",
         className
       )}
     >

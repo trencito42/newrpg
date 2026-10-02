@@ -18,9 +18,9 @@
   --surface-2: #131315;
   --surface-3: #1a191b;
   --card: #101012;
-  --card-border: rgba(242, 239, 232, 0.15);
-  --border: rgba(242, 239, 232, 0.15);
-  --border-strong: rgba(242, 239, 232, 0.26);
+  --card-border: rgba(242, 239, 232, 0.06);
+  --border: rgba(242, 239, 232, 0.08);
+  --border-strong: rgba(242, 239, 232, 0.16);
   --muted: #131315;
   --muted-foreground: #a9a59c;
   --accent: #d7b558;
@@ -83,6 +83,10 @@ label { color: var(--racket-label); font-weight: 700; letter-spacing: .04em; tex
 .font-mono { font-family: "Racket Montserrat", Montserrat, sans-serif !important; font-variant-numeric: tabular-nums; }
 table th { color: var(--racket-label); font-size: 10px; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
 table td { border-color: var(--border); }
+.divide-y > :not([hidden]) ~ :not([hidden]),
+.divide-x > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(242, 239, 232, 0.055) !important;
+}
 .shadow-lg, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
 select, textarea {
@@ -91,19 +95,18 @@ select, textarea {
   text-transform: none;
 }
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]) {
-  background-color: transparent !important;
+  background-color: var(--surface-2) !important;
   border: 0 !important;
-  border-bottom: 1px solid var(--border) !important;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
 }
 select, textarea {
-  background-color: var(--surface-1) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 3px !important;
+  background-color: var(--surface-2) !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
 }
 input::placeholder, textarea::placeholder { color: rgba(242, 239, 232, .35) !important; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
-select:focus, textarea:focus { border-color: var(--accent) !important; outline: none; }
+select:focus, textarea:focus { box-shadow: 0 0 0 1px var(--accent); outline: none; }
 select option { background: var(--surface-1); color: var(--foreground); }
 input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
 button, a { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }

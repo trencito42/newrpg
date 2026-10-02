@@ -92,7 +92,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-surface-100 border border-surface-border rounded shadow-lg py-1 z-50 max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-surface-200 rounded-xl shadow-lg py-1 z-50 max-h-64 overflow-y-auto">
           {results.length > 0 ? (
             results.map((res) => (
               <button

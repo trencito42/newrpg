@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-card border border-card-border rounded-md p-5 relative",
+        "bg-card rounded-xl p-5 relative",
         className
       )}
       {...props}
@@ -26,7 +26,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col space-y-1 pb-3 border-b border-surface-border", className)}
+      className={cn("flex flex-col space-y-1 pb-3", className)}
       {...props}
     >
       {children}
