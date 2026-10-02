@@ -28,6 +28,28 @@ body {
     background: var(--bg-base);
 }
 
+/* FiveM can deliver pointer events while its native NUI cursor is invisible.
+   Render an auth-only cursor in the DOM; it never intercepts input. */
+body.auth-cursor-active,
+body.auth-cursor-active * {
+    cursor: none !important;
+}
+
+.auth-visual-cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 24px;
+    height: 28px;
+    z-index: 2147483647;
+    pointer-events: none;
+    display: none;
+}
+
+body.auth-cursor-active .auth-visual-cursor.has-position {
+    display: block;
+}
+
 .hidden,
 [hidden] {
     display: none !important;
