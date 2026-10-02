@@ -738,7 +738,10 @@ exports('SetCharacterSkin', function(characterId, skin)
     end
 
     -- Update in-memory player character cache
-    for src, p in pairs(Players) do
+    -- (Players is local to main.lua; iterate via FiveM native + Sunset.GetPlayer)
+    for _, srcStr in ipairs(GetPlayers()) do
+        local src = tonumber(srcStr)
+        local p = src and Sunset.GetPlayer(src)
         if p and p.character and tonumber(p.character.id) == characterId then
             p.character.metadata = type(p.character.metadata) == 'table' and p.character.metadata or {}
             p.character.metadata.skin = cleanSkin
