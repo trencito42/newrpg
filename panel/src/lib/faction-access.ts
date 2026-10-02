@@ -16,7 +16,7 @@ export async function getFactionAccess(accountId: number, factionId: string): Pr
      FROM faction_membership fm
      JOIN characters c ON c.id = fm.character_id
      JOIN players p ON p.id = c.player_id
-     LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = fm.faction_id
+     LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id COLLATE utf8mb4_unicode_ci = fm.faction_id COLLATE utf8mb4_unicode_ci
      WHERE p.account_id = ? AND fm.faction_id = ? AND ${factionIdSql()} = fm.faction_id
      LIMIT 1`,
     [accountId, factionId]

@@ -2,7 +2,7 @@
 // characters.job/job_grade are independent civilian-job fields.
 export function factionIdSql(alias = "c"): string {
   if (!/^[a-z_]+$/i.test(alias)) throw new Error("Invalid SQL alias");
-  return `JSON_UNQUOTE(JSON_EXTRACT(${alias}.metadata, '$.faction'))`;
+  return `JSON_UNQUOTE(JSON_EXTRACT(${alias}.metadata, '$.faction')) COLLATE utf8mb4_unicode_ci`;
 }
 
 export function factionGradeSql(alias = "c"): string {

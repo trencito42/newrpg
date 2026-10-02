@@ -36,7 +36,7 @@ export default async function FactionsPage() {
               a.username AS leader_name
        FROM faction_leaders fl
        JOIN characters c ON c.id = fl.character_id
-       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = fl.faction_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id COLLATE utf8mb4_unicode_ci = fl.faction_id COLLATE utf8mb4_unicode_ci
        JOIN players p ON p.id = c.player_id
        JOIN accounts a ON a.id = p.account_id
        WHERE ${factionIdSql()} = fm.faction_id`

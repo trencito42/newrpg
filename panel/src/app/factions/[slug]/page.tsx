@@ -71,7 +71,7 @@ export default async function FactionDetailPage({
        JOIN accounts a ON a.id = p.account_id
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
-       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = fl.faction_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id COLLATE utf8mb4_unicode_ci = fl.faction_id COLLATE utf8mb4_unicode_ci
        WHERE fl.faction_id = ?
          AND ${factionIdSql()} = fm.faction_id
        LIMIT 1`,

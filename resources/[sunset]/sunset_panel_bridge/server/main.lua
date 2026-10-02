@@ -42,7 +42,7 @@ local function isLeaderOrSubleader(accountId, factionId)
         JOIN players p ON p.id = c.player_id
         JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-        WHERE p.account_id = ? AND JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) = fm.faction_id LIMIT 1
+        WHERE p.account_id = ? AND JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) COLLATE utf8mb4_unicode_ci = fm.faction_id LIMIT 1
     ]], { factionId, factionId, tonumber(accountId) })
     if not char then return false, 0, nil end
     local factionGrade = tonumber(char.faction_grade or 0)
