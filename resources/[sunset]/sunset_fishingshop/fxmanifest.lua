@@ -8,6 +8,7 @@ version '1.0.0'
 
 shared_scripts {
     '@sunset_core/shared/config.lua',
+    '@sunset_core/shared/utils.lua',
     '@sunset_core/shared/profile.lua',
     '@sunset_core/shared/items.lua',
     '@sunset_core/shared/fish_prices.lua',

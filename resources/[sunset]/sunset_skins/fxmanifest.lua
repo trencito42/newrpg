@@ -8,6 +8,7 @@ description 'Skin shop — GTA ped models, NPC, /skins from home, admin tools'
 version '1.0.0'
 
 shared_scripts {
+    '@sunset_core/shared/utils.lua',
     'shared/config.lua',
 }
 

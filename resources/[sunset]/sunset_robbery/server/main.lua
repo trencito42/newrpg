@@ -229,6 +229,16 @@ RegisterNetEvent('sunset:robbery:hackClick', function(nodeId)
     })
 end)
 
+RegisterNetEvent('sunset:robbery:hackComplete', function(result)
+    local source = source
+    local session = RobberySessions.get(source)
+    if not session or session.stage ~= 'HACKING' then return end
+    if not nearPoint(source, session.location.hackTerminal.coords, 6.0) then return end
+    local outcome = result == 'perfect' and 'perfect' or (result == 'normal' and 'normal' or 'failed')
+    applyHackResult(session, outcome)
+    TriggerClientEvent('sunset:robbery:hackResult', source, { result = outcome, hud = RobberySessions.hud(session) })
+end)
+
 RegisterNetEvent('sunset:robbery:smash', function(displayId)
     local source = source
     if not RobberySessions.rateOk(source) then return end

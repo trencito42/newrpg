@@ -1,15 +1,17 @@
-/**
- * Helper to get GTA V / FiveM vehicle CDN preview image
- * Source: https://docs-backend.fivem.net/vehicles/${model}.webp
- */
+/** Generated thumbnail when present, with a server-side CDN redirect otherwise. */
 export function getVehiclePreviewUrl(model?: string | null, customUrl?: string | null): string {
   if (customUrl && customUrl.trim().length > 0) {
     return customUrl;
   }
-  if (!model || !model.trim()) {
+  const normalized = model?.trim().toLowerCase();
+  if (!normalized || !/^[a-z0-9_]{1,64}$/.test(normalized)) {
     return "https://docs-backend.fivem.net/vehicles/blista.webp";
   }
 
+  return `/api/vehicle-thumbnails/${encodeURIComponent(normalized)}`;
+}
+
+export function getVehicleCdnUrl(model: string): string {
   const raw = model.toLowerCase().trim();
 
   // Known custom / addon model aliases mapping to GTA V base models for CDN previews

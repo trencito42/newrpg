@@ -366,6 +366,7 @@ for _, name in ipairs({
     'stabilize', 'heal', 'revive', 'rob', 'duty', 'fw', 'v', 'garage',
     'lssireviews', 'lssireview', 'lssireport', 'lssiperformance',
     'lssimark', 'lssiunmark',
+    'testhack', 'hack',
 }) do
     markClientCommand(name)
 end

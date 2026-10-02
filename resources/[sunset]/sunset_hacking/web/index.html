@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Dogs Hacking Protocol</title>
+    <script>
+        window.prompt = function() { return null; };
+        window.alert = function() {};
+        window.confirm = function() { return false; };
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <!-- [CEF FIX] FiveM Chromium backdrop-filter and OS cursor hiding -->
+    <style>
+        *, *::before, *::after, html, body, svg, svg * {
+            cursor: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="hack-root" class="hack-root hidden">
+        <!-- Atmospheric Overlays -->
+        <div class="overlay vignette"></div>
+        <div class="overlay scanlines"></div>
+        <div class="overlay digital-interference"></div>
+
+        <!-- Top Minimalist ctOS Feed Status -->
+        <header class="ctos-header">
+            <div class="ctos-brand">
+                <div class="ctos-indicator">
+                    <span class="live-dot"></span>
+                    <span class="sys-code" id="hud-sys-code">LIVE_SURVEILLANCE // 0x4F8E</span>
+                </div>
+                <h1 class="ctos-title" id="hud-title">CTOS_NETWORK_GRID</h1>
+                <div class="ctos-subtitle" id="hud-subtitle">CIRCUIT_INTRUSION // ROUTE SOURCE TO TARGET</div>
+            </div>
+
+            <div class="ctos-meters">
+                <div class="meter-box time-meter">
+                    <div class="meter-label">
+                        <span>TRACE_TIME</span>
+                        <strong id="hud-time">35.0s</strong>
+                    </div>
+                    <div class="meter-track">
+                        <div class="meter-bar" id="hud-time-bar"></div>
+                    </div>
+                </div>
+
+                <div class="meter-box signal-meter">
+                    <div class="meter-label">
+                        <span>SIGNAL</span>
+                        <strong id="hud-signal">ONLINE</strong>
+                    </div>
+                    <div class="signal-bars">
+                        <span class="sig-bar active"></span>
+                        <span class="sig-bar active"></span>
+                        <span class="sig-bar active"></span>
+                        <span class="sig-bar active"></span>
+                        <span class="sig-bar"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Watch Dogs Puzzle Container (with 3D Parallax & SVG Network) -->
+        <div class="puzzle-container" id="puzzle-container">
+            <svg id="network-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Layer 1: Inactive Base Edges -->
+                <g id="edges-base-layer"></g>
+
+                <!-- Layer 2: Energized Flow Edges with Dashoffset Sweep -->
+                <g id="edges-power-layer"></g>
+
+                <!-- Layer 3: Interactive Circular & Diamond Nodes -->
+                <g id="nodes-layer"></g>
+
+                <!-- Layer 4: Shockwave & Particle Effects -->
+                <g id="effects-layer"></g>
+            </svg>
+
+            <!-- Glitching Win Message -->
+            <div id="success-message">SYSTEM OVERRIDE</div>
+        </div>
+
+        <!-- Minimal ctOS Footer Controls & Objective Status -->
+        <footer class="ctos-footer">
+            <div class="ctos-status-line">
+                <span class="status-bracket">[</span>
+                <span id="hud-status" class="status-text">NETWORK TOPOLOGY MAPPED // ROTATE NODES TO ENERGIZE TARGET</span>
+                <span class="status-bracket">]</span>
+            </div>
+
+            <div class="ctos-hints">
+                <div class="hint-item"><kbd>L-CLICK</kbd> <span>ROTATE 90°</span></div>
+                <div class="hint-item"><kbd>R-CLICK</kbd> <span>ROTATE CCW</span></div>
+                <div class="hint-item" id="hint-cancel"><kbd>ESC</kbd> <span>CANCEL</span></div>
+            </div>
+        </footer>
+
+        <!-- Custom Watch Dogs Targeting Crosshair Cursor -->
+        <div id="cursor">
+            <div class="cursor-center"></div>
+            <div class="cursor-brackets">
+                <div class="bracket tl"></div>
+                <div class="bracket tr"></div>
+                <div class="bracket bl"></div>
+                <div class="bracket br"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/graph.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

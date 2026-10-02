@@ -117,6 +117,7 @@ ensure sunset_taxi
 ensure sunset_fire
 ensure sunset_documents
 ensure sunset_licenses
+ensure sunset_hacking
 ensure sunset_robbery
 ensure sunset_pass
 ensure sunset_hud
@@ -143,6 +144,11 @@ ensure sunset_fishing_tournament
 ensure sunset_missions
 ensure sunset_panel_bridge
 ensure sunset_profile_media
+ensure screenshot-basic
+add_ace group.admin racket.thumbs allow
+add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
+add_unsafe_child_process_permission racket_vehicle_thumbs
+ensure racket_vehicle_thumbs
 
 ensure villa_island
 

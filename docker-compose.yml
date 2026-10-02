@@ -22,6 +22,8 @@ services:
       - ./config:/config-mount:ro
       - ./resources:/config/resources-custom:ro
       - ./sql:/migrations:ro
+      - ${RACKET_THUMBS_OUTPUT_DIR:-./panel/public/vehicles}:/config/resources/racket_vehicle_thumbs/output
+      - ${RACKET_THUMBS_RAW_DIR:-./vehicle_thumbs_raw}:/config/resources/racket_vehicle_thumbs/raw
       - fivem_txdata:/txData
       - fivem_config:/config
     tty: true

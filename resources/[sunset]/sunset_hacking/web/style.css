@@ -1,0 +1,538 @@
+/* ── WATCH DOGS DESIGN SYSTEM ───────────────────────────────────────── */
+:root {
+    --color-bg: transparent;
+    --color-node-base: rgba(255, 255, 255, 0.3);
+    --color-node-hover: rgba(255, 255, 255, 0.95);
+    --color-power: #00e5ff; /* Signature Watch Dogs Cyan */
+    --color-power-glow: rgba(0, 229, 255, 0.75);
+    --line-inactive: rgba(255, 255, 255, 0.15);
+    --cursor-size: 6px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: none !important;
+}
+
+html, body, svg, svg * {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: transparent !important;
+    font-family: 'Consolas', 'Courier New', Courier, monospace, sans-serif;
+    color: #e2e8f0;
+    cursor: none !important; /* Hide native OS cursor so only the Watch Dogs targeting crosshair is shown */
+}
+
+/* ── ROOT WRAPPER ─────────────────────────────────────────────────── */
+.hack-root {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3vh 4vw;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hack-root.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.hack-root.hidden {
+    display: none;
+}
+
+/* ── ATMOSPHERIC SURVEILLANCE OVERLAYS ────────────────────────────── */
+.overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.vignette {
+    z-index: 10;
+    box-shadow: inset 0 0 250px rgba(0, 0, 0, 0.92);
+}
+
+.scanlines {
+    z-index: 11;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.25) 3px,
+        rgba(0, 0, 0, 0.25) 4px
+    );
+}
+
+.digital-interference {
+    z-index: 12;
+    background: linear-gradient(transparent 90%, rgba(0, 229, 255, 0.04) 95%, transparent 100%);
+    background-size: 100% 200%;
+    animation: scanLine 5s infinite linear;
+}
+
+@keyframes scanLine {
+    0% { background-position: 0% -100%; }
+    100% { background-position: 0% 200%; }
+}
+
+/* ── CTOS TOP HEADER ──────────────────────────────────────────────── */
+.ctos-header {
+    position: relative;
+    z-index: 60;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    animation: ctosFadeDown 300ms ease-out forwards;
+}
+
+.ctos-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.ctos-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--color-power);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--color-power);
+    animation: liveBlink 1.4s infinite ease-in-out;
+}
+
+@keyframes liveBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.sys-code {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--color-power);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.ctos-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+}
+
+.ctos-subtitle {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+/* ── METERS ───────────────────────────────────────────────────────── */
+.ctos-meters {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+}
+
+.meter-box {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 130px;
+}
+
+.meter-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+}
+
+.meter-label strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-power);
+}
+
+.meter-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.meter-bar {
+    height: 100%;
+    width: 100%;
+    background: var(--color-power);
+    box-shadow: 0 0 8px var(--color-power);
+    transition: width 100ms linear, background 300ms ease;
+}
+
+.meter-bar.warning {
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+}
+
+.meter-bar.danger {
+    background: #f87171;
+    box-shadow: 0 0 8px #f87171;
+    animation: dangerFlash 400ms infinite alternate;
+}
+
+@keyframes dangerFlash {
+    from { opacity: 1; }
+    to { opacity: 0.3; }
+}
+
+.signal-bars {
+    display: flex;
+    gap: 4px;
+    height: 5px;
+}
+
+.sig-bar {
+    flex: 1;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 1px;
+}
+
+.sig-bar.active {
+    background: var(--color-power);
+    box-shadow: 0 0 6px var(--color-power);
+}
+
+/* ── PUZZLE CONTAINER & SVG VIEWPORT ──────────────────────────────── */
+.puzzle-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 92vw;
+    max-width: 1400px;
+    height: 72vh;
+    z-index: 50;
+    perspective: 1000px;
+    transition: transform 100ms ease-out;
+}
+
+#network-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
+}
+
+/* ── STILURI LINII (EDGES) ────────────────────────────────────────── */
+.edge-base {
+    stroke: var(--line-inactive);
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+}
+
+.edge-power {
+    stroke: var(--color-power);
+    stroke-width: 3.5;
+    fill: none;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px var(--color-power));
+}
+
+/* ── STILURI NODURI ───────────────────────────────────────────────── */
+.node-group {
+    cursor: none;
+}
+
+.rotatable {
+    transform-origin: 0 0;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bounce tehnic Watch Dogs */
+}
+
+.click-target {
+    fill: transparent;
+    cursor: none;
+}
+
+/* Elementele interne ale nodului */
+.node-ring {
+    stroke: var(--color-node-base);
+    stroke-width: 1.5;
+    fill: #05080c;
+    transition: all 0.2s ease;
+}
+
+.node-core {
+    fill: var(--color-node-base);
+    transition: all 0.2s ease;
+}
+
+.node-arm {
+    stroke: var(--color-node-base);
+    stroke-width: 4;
+    stroke-linecap: square;
+    fill: none;
+    transition: all 0.2s ease;
+}
+
+/* Hover pe nod - cercul exterior creste */
+.node-group:hover .node-ring {
+    stroke: var(--color-node-hover);
+    transform: scale(1.15);
+}
+
+/* Click feedback squeeze */
+.node-group.clicked .rotatable {
+    transform: scale(0.85); 
+}
+
+/* Powered state */
+.node-group.powered .node-arm {
+    stroke: var(--color-power);
+    filter: drop-shadow(0 0 5px var(--color-power));
+}
+
+.node-group.powered .node-core {
+    fill: var(--color-power);
+    filter: drop-shadow(0 0 5px var(--color-power));
+}
+
+.node-group.powered .node-ring {
+    stroke: var(--color-power-glow);
+}
+
+/* ── SURSA & TARGET SPECIFICE ─────────────────────────────────────── */
+.source-ring {
+    stroke: var(--color-power);
+    stroke-width: 2;
+    stroke-dasharray: 4 6;
+    fill: none;
+    animation: spinSlow 8s linear infinite;
+}
+
+.source-core {
+    fill: var(--color-power);
+    filter: drop-shadow(0 0 8px var(--color-power));
+    animation: pulse 1.5s infinite alternate;
+}
+
+.target-shape {
+    stroke: var(--color-node-base);
+    stroke-width: 2;
+    fill: #05080c;
+    transition: all 0.3s ease;
+    transform-origin: 0 0;
+}
+
+.target-core {
+    fill: var(--color-node-base);
+    transition: all 0.3s ease;
+    transform-origin: 0 0;
+}
+
+/* Win State Target */
+.target-win .target-shape {
+    stroke: var(--color-power);
+    fill: rgba(0, 229, 255, 0.15);
+    filter: drop-shadow(0 0 10px var(--color-power));
+    transform: scale(1.2);
+}
+
+.target-win .target-core {
+    fill: var(--color-power);
+    animation: flash 0.4s ease-out;
+}
+
+@keyframes spinSlow {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse { 
+    0% { transform: scale(0.8); opacity: 0.7; } 
+    100% { transform: scale(1.3); opacity: 1; } 
+}
+
+@keyframes flash {
+    0% { transform: scale(1); filter: brightness(2); }
+    50% { transform: scale(2.5); filter: brightness(4); }
+    100% { transform: scale(1.2); filter: brightness(1); }
+}
+
+/* Locked Node Padlock Graphic */
+.node-lock-icon {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 1.8;
+    transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.node-group.unlocking .node-lock-icon {
+    opacity: 0;
+    transform: scale(1.4);
+}
+
+/* ── CUSTOM TARGETING CURSOR ──────────────────────────────────────── */
+#cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1000;
+    transition: opacity 150ms ease;
+}
+
+.cursor-center {
+    position: absolute;
+    width: var(--cursor-size);
+    height: var(--cursor-size);
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+.cursor-brackets {
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+}
+
+.bracket {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid transparent;
+    transition: all 0.12s ease-out;
+}
+
+.bracket.tl { top: -12px; left: -12px; border-top-color: white; border-left-color: white; }
+.bracket.tr { top: -12px; right: -12px; border-top-color: white; border-right-color: white; }
+.bracket.bl { bottom: -12px; left: -12px; border-bottom-color: white; border-left-color: white; }
+.bracket.br { bottom: -12px; right: -12px; border-bottom-color: white; border-right-color: white; }
+
+#cursor.hover .bracket {
+    border-color: var(--color-power);
+}
+
+#cursor.hover .bracket.tl { top: -20px; left: -20px; }
+#cursor.hover .bracket.tr { top: -20px; right: -20px; }
+#cursor.hover .bracket.bl { bottom: -20px; left: -20px; }
+#cursor.hover .bracket.br { bottom: -20px; right: -20px; }
+
+/* ── SUCCESS GLITCH MESSAGE ───────────────────────────────────────── */
+#success-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-power);
+    letter-spacing: 12px;
+    text-shadow: 0 0 15px var(--color-power);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 100;
+}
+
+#success-message.visible {
+    opacity: 1;
+    animation: glitchText 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+@keyframes glitchText {
+    0% { transform: translate(-50%, -50%) skew(0deg); }
+    20% { transform: translate(-52%, -50%) skew(-15deg); }
+    40% { transform: translate(-48%, -50%) skew(15deg); }
+    60% { transform: translate(-50%, -48%) skew(0deg); }
+    80% { transform: translate(-50%, -52%) skew(0deg); }
+    100% { transform: translate(-50%, -50%) skew(0deg); }
+}
+
+/* ── CTOS FOOTER ──────────────────────────────────────────────────── */
+.ctos-footer {
+    position: relative;
+    z-index: 60;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: ctosFadeUp 300ms ease-out forwards;
+}
+
+.ctos-status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.status-bracket {
+    color: var(--color-power);
+}
+
+.status-text {
+    color: #e2e8f0;
+}
+
+.ctos-hints {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.hint-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #94a3b8;
+}
+
+.hint-item kbd {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+@keyframes ctosFadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ctosFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

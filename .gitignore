@@ -48,3 +48,5 @@ scratch/
 *.css.bak
 .venx-pentest/
 .env.persist
+panel/public/vehicles/*.png
+vehicle_thumbs_raw/*.png

@@ -11,7 +11,15 @@ local function notify(message, kind, duration)
 end
 
 local function loadVehicleModel(modelName)
-    local ok, hash = Sunset.RequestModelSafe(modelName, 8000)
+    local ok, hash
+    if Sunset and Sunset.RequestModelSafe then
+        ok, hash = Sunset.RequestModelSafe(modelName, 8000)
+    else
+        local okR, rHash = pcall(function() return exports.sunset_core:RequestModelSafe(modelName, 8000) end)
+        if okR and rHash then
+            ok, hash = true, rHash
+        end
+    end
     if not ok or not hash then
         return nil, { localeKey = 'dealership.message.the_vehicle_model_did_not_finish_loading_try_again' }
     end

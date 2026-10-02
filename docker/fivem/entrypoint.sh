@@ -79,7 +79,13 @@ if [ -d /config/resources-custom ]; then
     case "${custom_name}" in
       ''|'.'|'..') continue ;;
     esac
-    rm -rf "/config/resources/${custom_name}"
+    if [ "${custom_name}" = 'racket_vehicle_thumbs' ]; then
+      # Preserve its bind-mounted raw/output directories while replacing code.
+      rm -rf "/config/resources/${custom_name}/code"
+      rm -f "/config/resources/${custom_name}/fxmanifest.lua"
+    else
+      rm -rf "/config/resources/${custom_name}"
+    fi
   done
   cp -rf /config/resources-custom/* /config/resources/ 2>/dev/null || true
 fi
