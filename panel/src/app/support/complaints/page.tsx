@@ -181,7 +181,7 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "all"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -192,7 +192,7 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "pending"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -203,7 +203,7 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "under_review"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -214,7 +214,7 @@ export default async function ComplaintsPage({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             filter === "resolved"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >

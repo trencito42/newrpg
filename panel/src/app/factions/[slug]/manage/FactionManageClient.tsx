@@ -308,7 +308,7 @@ export function FactionManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "overview"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -320,7 +320,7 @@ export function FactionManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors relative",
             tab === "applications"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -337,7 +337,7 @@ export function FactionManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "members"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -349,7 +349,7 @@ export function FactionManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors relative",
             tab === "requests"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -366,7 +366,7 @@ export function FactionManageClient({
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "history"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -379,7 +379,7 @@ export function FactionManageClient({
             className={cn(
               "px-3 py-2 border-b-2 font-medium transition-colors",
               tab === "settings"
-                ? "border-[#F2EFE8] text-[#F2EFE8]"
+                ? "border-brand text-brand"
                 : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
             )}
           >

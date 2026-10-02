@@ -187,7 +187,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "pending"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -198,7 +198,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "accepted"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -209,7 +209,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "rejected"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
@@ -220,7 +220,7 @@ export default async function FactionApplicationsPage({ params, searchParams }: 
           className={cn(
             "px-3 py-2 border-b-2 font-medium transition-colors",
             tab === "withdrawn"
-              ? "border-[#F2EFE8] text-[#F2EFE8]"
+              ? "border-brand text-brand"
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >

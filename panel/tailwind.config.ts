@@ -13,9 +13,9 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         border: {
-          DEFAULT: "var(--border)",
-          light: "var(--border-strong)",
-          strong: "rgba(242, 239, 232, 0.36)",
+          DEFAULT: "rgba(242, 239, 232, 0.08)",
+          light: "rgba(242, 239, 232, 0.14)",
+          strong: "rgba(242, 239, 232, 0.22)",
         },
         muted: {
           DEFAULT: "var(--muted)",
@@ -28,7 +28,7 @@ const config: Config = {
         card: {
           DEFAULT: "var(--card)",
           foreground: "var(--foreground)",
-          border: "var(--card-border)",
+          border: "rgba(242, 239, 232, 0.06)",
         },
         surface: {
           50: "#0b0b0d",
@@ -36,8 +36,8 @@ const config: Config = {
           200: "var(--surface-2)",
           300: "var(--surface-3)",
           DEFAULT: "var(--surface-1)",
-          border: "var(--border)",
-          borderLight: "var(--border-strong)",
+          border: "rgba(242, 239, 232, 0.08)",
+          borderLight: "rgba(242, 239, 232, 0.14)",
         },
         brand: {
           50: "#f8f2e2",
