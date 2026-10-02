@@ -1,41 +1,46 @@
 <div id="inventory" class="inventory-forza hidden" aria-hidden="true">
         <div class="inv-forza-overlay"></div>
-        <div class="inventory-forza-wrapper">
-            <div class="inv-panel">
-                <div class="inv-header">
-                    <div class="inv-title">
-                        <div class="inv-name"><i class="ph-bold ph-user"></i> <span data-i18n="ui.inventory.inventar"></span></div>
-                        <div class="inv-cash-badge" id="inventory-cash-badge" title="" data-i18n-title="ui.inventory.wallet_cash_drag_into_trade_offer">$<strong id="inventory-cash">0</strong></div>
-                        <div class="inv-weight-text"><span id="weight-val-player">0.0</span> / <span id="weight-max-player">30.0</span> <span data-i18n="ui.inventory.kg"></span></div>
+        <div class="inventory-forza-wrapper" id="inventory-wrapper">
+            <!-- STÂNGA: INVENTAR + TRASH -->
+            <div class="inv-left">
+                <div class="header">
+                    <h1><i class="ph-bold ph-backpack"></i> <span data-i18n="ui.inventory.inventar">RUCSAC</span></h1>
+                    <div class="inv-cash-badge" id="inventory-cash-badge" title="" data-i18n-title="ui.inventory.wallet_cash_drag_into_trade_offer">$<strong id="inventory-cash">0</strong></div>
+                    <div class="weight-container">
+                        <div class="weight-text"><span id="weight-val-player">0.0</span> / <span id="weight-max-player">30.0</span> <span data-i18n="ui.inventory.kg">KG</span></div>
+                        <div class="weight-bar-bg" id="weight-bar-player"><div class="weight-bar-fill" id="ui-weight-bar"></div></div>
                     </div>
-                    <div class="weight-bar-container" id="weight-bar-player"></div>
                 </div>
                 <div class="equipment-row" id="equip-player">
-                    <div class="equip-slot" data-slot="mask" data-grid="equip-player"><i class="ph-fill ph-mask-happy equip-ghost"></i></div>
-                    <div class="equip-slot" data-slot="hat" data-grid="equip-player"><i class="ph-fill ph-baseball-cap equip-ghost"></i></div>
-                    <div class="equip-slot" data-slot="glasses" data-grid="equip-player"><i class="ph-fill ph-sunglasses equip-ghost"></i></div>
-                    <div class="equip-slot" data-slot="armor" data-grid="equip-player"><i class="ph-fill ph-shield equip-ghost"></i></div>
-                    <div class="equip-slot" data-slot="bag" data-grid="equip-player"><i class="ph-fill ph-backpack equip-ghost"></i></div>
+                    <div class="equip-slot" data-slot="mask" data-grid="equip-player" title="Mască"><i class="ph-fill ph-mask-happy equip-ghost"></i></div>
+                    <div class="equip-slot" data-slot="hat" data-grid="equip-player" title="Șapcă / Pălărie"><i class="ph-fill ph-baseball-cap equip-ghost"></i></div>
+                    <div class="equip-slot" data-slot="glasses" data-grid="equip-player" title="Ochelari"><i class="ph-fill ph-sunglasses equip-ghost"></i></div>
+                    <div class="equip-slot" data-slot="armor" data-grid="equip-player" title="Vestă"><i class="ph-fill ph-shield equip-ghost"></i></div>
+                    <div class="equip-slot" data-slot="bag" data-grid="equip-player" title="Ghiozdan"><i class="ph-fill ph-backpack equip-ghost"></i></div>
                 </div>
                 <div class="inv-grid-wrapper">
                     <div class="inv-grid" id="grid-player"></div>
                 </div>
-                <div class="inv-actions">
-                    <span id="inventory-selected-label"><span data-i18n="ui.inventory.select_an_item"></span></span>
-                    <button type="button" id="inventory-use-selected" disabled><span data-i18n="ui.inventory.use"></span></button>
-                    <button type="button" class="is-danger" id="inventory-drop-selected" disabled><span data-i18n="ui.inventory.drop"></span></button>
-                </div>
-                <!-- [DROP ZONE] Drag an item here to throw it on the ground -->
-                <div class="inv-trash" id="inventory-trash-zone" title="" data-i18n-title="ui.inventory.drag_an_item_here_to_drop_it">
+                <div class="trash-zone" id="inventory-trash-zone" title="" data-i18n-title="ui.inventory.drag_an_item_here_to_drop_it">
                     <i class="ph-bold ph-trash"></i>
-                    <span><span data-i18n="ui.inventory.trash"></span></span>
+                    <span><span data-i18n="ui.inventory.trash">Trage aici pentru a arunca</span></span>
+                </div>
+                <div class="inv-actions">
+                    <span id="inventory-selected-label"><span data-i18n="ui.inventory.select_an_item">Selectează un obiect</span></span>
+                    <div class="inv-btn-group">
+                        <button type="button" id="inventory-use-selected" disabled><i class="ph-bold ph-play"></i> <span data-i18n="ui.inventory.use">Folosește</span></button>
+                        <button type="button" class="is-danger" id="inventory-drop-selected" disabled><i class="ph-bold ph-trash"></i> <span data-i18n="ui.inventory.drop">Aruncă</span></button>
+                    </div>
                 </div>
             </div>
-            <div class="proximity-panel" id="inventory-nearby-panel">
-                <div class="prox-header">
-                    <div class="prox-radar-icon"></div> <span data-i18n="ui.inventory.players_nearby"></span>
+
+            <!-- DREAPTA: CONTEXT (NEARBY / TRADE) -->
+            <div class="inv-right" id="inventory-nearby-panel">
+                <div class="section-title">
+                    <i class="ph-bold ph-users-three"></i>
+                    <span data-i18n="ui.inventory.players_nearby">Jucători în apropiere</span>
                 </div>
-                <div class="prox-list" id="inventory-nearby-list"></div>
+                <div class="nearby-list" id="inventory-nearby-list"></div>
             </div>
         </div>
         <div class="premium-trade-panel hidden" id="inventory-trade-panel">

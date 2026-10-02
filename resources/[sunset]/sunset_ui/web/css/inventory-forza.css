@@ -1,17 +1,27 @@
+/* Racket Inventory System — 1:1 with prototype racket_inventory_system (2).html */
+:root {
+    --brand-primary: #F2EFE8;
+    --brand-accent: #D7B558;
+    --bg-base: #08080a;
+    --bg-panel: rgba(8, 8, 10, 0.98);
+    --bg-slot: rgba(242, 239, 232, 0.02);
+    --bg-slot-hover: rgba(242, 239, 232, 0.05);
+    --border-faint: rgba(242, 239, 232, 0.15);
+    --border-lighter: rgba(242, 239, 232, 0.05);
+    --color-trash: #ef4444;
+    --color-good: #10b981;
+}
+
 .inventory-forza {
-    --inv-text-main: #ffffff;
-    --inv-text-muted: rgba(255, 255, 255, 0.4);
-    --inv-accent: #00ffcc;
-    --inv-danger: #ff3366;
-    --inv-bg-panel: rgba(9, 11, 16, 0.72);
-    --inv-border-glass: rgba(255, 255, 255, 0.1);
-    --inv-shadow-text: 0 4px 10px rgba(0, 0, 0, 0.9);
-    --inv-shadow-glow: 0 0 20px rgba(0, 255, 204, 0.3);
     position: fixed;
     inset: 0;
     z-index: 11500;
     font-family: 'Montserrat', sans-serif;
     pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
 }
 
 .inventory-forza.hidden { display: none !important; }
@@ -20,203 +30,186 @@
     position: absolute;
     inset: 0;
     z-index: 0;
-    background: linear-gradient(0deg, rgba(3, 5, 9, 0.62) 0%, rgba(3, 5, 9, 0.20) 58%, rgba(3, 5, 9, 0.08) 100%);
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.95) 100%);
     pointer-events: none;
 }
 
 .inventory-forza-wrapper {
-    position: absolute;
-    inset: 0;
+    width: 1100px;
+    height: 650px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-faint);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: row;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+    position: relative;
     z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    padding: clamp(20px, 4vh, 48px);
-    box-sizing: border-box;
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.inventory-forza .inv-panel {
-    width: 480px;
-    max-width: 480px;
-    flex: 0 0 480px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    transform: none;
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
-    max-height: calc(100vh - 80px);
+.inventory-forza:not(.hidden) .inventory-forza-wrapper {
+    opacity: 1;
+    transform: scale(1);
 }
 
-.inventory-forza .inv-header {
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 20px 25px;
-    backdrop-filter: blur(10px);
+/* --- STÂNGA: INVENTAR + TRASH --- */
+.inventory-forza .inv-left {
+    width: 65%;
+    border-right: 1px solid var(--border-faint);
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    border-bottom: 4px solid var(--inv-accent);
+    padding: 24px 30px;
+    position: relative;
+    min-height: 0;
 }
 
-.inventory-forza .inv-title {
+.inventory-forza .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-lighter);
+    flex-shrink: 0;
 }
 
-.inventory-forza .inv-name {
-    font-size: 24px;
+.inventory-forza .header h1 {
+    margin: 0;
+    font-size: 20px;
     font-weight: 900;
-    font-style: italic;
-    color: var(--inv-text-main);
+    color: var(--brand-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
-    text-shadow: var(--inv-shadow-text);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .inventory-forza .inv-cash-badge {
     display: none;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
-    color: var(--inv-accent);
-    white-space: nowrap;
+    color: var(--brand-accent);
+    background: rgba(215, 181, 88, 0.1);
+    border: 1px solid rgba(215, 181, 88, 0.3);
+    border-radius: 2px;
+    padding: 2px 6px;
+    margin-left: 12px;
 }
 
 body.inventory-trade-open .inventory-forza .inv-cash-badge,
 body.trade-forza-active .inventory-forza .inv-cash-badge {
-    display: block;
+    display: inline-block;
 }
 
-.inventory-forza .inv-weight-text {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--inv-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.inventory-forza .inv-weight-text span { color: var(--inv-text-main); }
-
-.inventory-forza .weight-bar-container {
+.inventory-forza .weight-container {
     display: flex;
-    gap: 3px;
-    width: 100%;
-    height: 12px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
 }
 
-.inventory-forza .weight-segment {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.1);
-    transform: none;
-    transition: all 0.3s;
+.inventory-forza .weight-text {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
 }
 
-.inventory-forza .weight-segment.fill {
-    background: var(--inv-accent);
-    box-shadow: 0 0 8px var(--inv-accent);
+.inventory-forza .weight-bar-bg {
+    width: 150px;
+    height: 4px;
+    background: var(--border-faint);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
-.inventory-forza .weight-segment.danger {
-    background: var(--inv-danger);
-    box-shadow: 0 0 8px var(--inv-danger);
+.inventory-forza .weight-bar-fill {
+    height: 100%;
+    background: var(--brand-accent);
+    width: 0%;
+    transition: width 0.3s ease;
 }
 
+/* Equipment Row */
 .inventory-forza .equipment-row {
     display: flex;
-    gap: 10px;
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 15px 25px;
-    backdrop-filter: blur(10px);
+    gap: 8px;
+    margin-bottom: 12px;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .inventory-forza .equip-slot {
-    width: 60px;
-    height: 60px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex: 1;
+    height: 52px;
+    background: var(--bg-slot);
+    border: 1px solid var(--border-lighter);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    transition: 0.2s;
+    transition: 0.15s;
 }
 
-.inventory-forza .equip-slot:hover { border-color: rgba(255, 255, 255, 0.2); }
+.inventory-forza .equip-slot:hover {
+    background: var(--bg-slot-hover);
+    border-color: var(--brand-accent);
+}
+
 .inventory-forza .equip-slot.is-drop-target,
-.inventory-forza .inv-slot.is-drop-target {
-    border-color: var(--inv-accent);
-    background: rgba(0, 255, 204, 0.1);
-    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.2);
+.inventory-forza .equip-slot.drag-over {
+    border-color: var(--brand-accent);
+    background: rgba(215, 181, 88, 0.08);
 }
 
 .inventory-forza .equip-ghost {
-    position: absolute;
-    font-size: 28px;
-    color: rgba(255, 255, 255, 0.1);
-    transform: none;
+    font-size: 20px;
+    color: rgba(242, 239, 232, 0.15);
     pointer-events: none;
 }
 
+/* Grid-ul principal de sloturi */
 .inventory-forza .inv-grid-wrapper {
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
-}
-
-.inventory-forza .quick-picks-container {
-    padding: 10px;
-    background: rgba(0, 255, 204, 0.03);
-    border: 1px solid rgba(0, 255, 204, 0.2);
-    border-radius: 4px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    position: relative;
-}
-
-.inventory-forza .quick-picks-label {
-    position: absolute;
-    top: -8px;
-    right: 10px;
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--inv-accent);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    background: #0a0a0e;
-    padding: 0 5px;
-    transform: none;
+    display: flex;
+    flex-direction: column;
 }
 
 .inventory-forza .inv-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    align-content: start;
-    min-height: 0;
-    max-height: min(42vh, 410px);
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: min-content;
+    gap: 8px;
     overflow-y: auto;
-    padding-right: 4px;
+    flex: 1;
+    padding-right: 5px;
+    min-height: 0;
 }
 
+.inventory-forza .inv-grid::-webkit-scrollbar { width: 3px; }
+.inventory-forza .inv-grid::-webkit-scrollbar-track { background: transparent; }
+.inventory-forza .inv-grid::-webkit-scrollbar-thumb { background: var(--border-faint); border-radius: 2px; }
+
+.inventory-forza .slot,
 .inventory-forza .inv-slot {
-    aspect-ratio: 1;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--bg-slot);
+    border: 1px solid var(--border-lighter);
+    border-radius: 4px;
     position: relative;
-    transition: 0.2s;
+    transition: background 0.1s, border-color 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -224,376 +217,375 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
     min-height: 0;
 }
 
-.inventory-forza .inv-slot:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); }
-.inventory-forza .inv-slot.is-selected { border-color: var(--inv-accent); box-shadow: 0 0 12px rgba(0, 255, 204, 0.25); }
-
-.inventory-forza .hotbar-marker {
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    font-size: 11px;
-    font-weight: 900;
-    color: #000;
-    background: var(--inv-accent);
-    padding: 2px 6px;
-    transform: none;
-    pointer-events: none;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    z-index: 10;
+.inventory-forza .slot:hover,
+.inventory-forza .inv-slot:hover {
+    background: var(--bg-slot-hover);
+    border-color: rgba(242, 239, 232, 0.25);
 }
 
-.inventory-forza .hotbar-marker--disabled {
-    color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.12);
-    text-decoration: line-through;
+.inventory-forza .slot.is-selected,
+.inventory-forza .inv-slot.is-selected {
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 10px rgba(215, 181, 88, 0.25);
+    background: rgba(215, 181, 88, 0.05);
 }
 
-.inventory-forza .inv-slot--disabled-key {
-    opacity: 0.45;
-    filter: grayscale(0.85);
-    pointer-events: none;
+.inventory-forza .slot.drag-over,
+.inventory-forza .slot.is-drop-target,
+.inventory-forza .inv-slot.drag-over,
+.inventory-forza .inv-slot.is-drop-target {
+    border-color: var(--brand-accent);
+    background: rgba(215, 181, 88, 0.08);
 }
 
+/* Item within slot */
+.inventory-forza .item,
 .inventory-forza .inv-item {
-    width: 90%;
-    height: 90%;
-    background: transparent;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: grab;
     position: relative;
-    z-index: 5;
-    transform: none;
+    padding: 4px;
+    box-sizing: border-box;
+    background: transparent;
     border: none;
-    color: inherit;
-    padding: 0;
+    font-family: inherit;
+    transition: opacity 0.1s;
 }
 
+.inventory-forza .item:active,
 .inventory-forza .inv-item:active { cursor: grabbing; }
-.inventory-forza .inv-item.is-dragging { opacity: 0.5; filter: drop-shadow(0 0 15px var(--inv-accent)); }
 
-.inventory-forza .item-icon {
-    font-size: 32px;
-    color: var(--inv-text-main);
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
-    margin-bottom: 2px;
+.inventory-forza .item.dragging,
+.inventory-forza .item.is-dragging,
+.inventory-forza .inv-item.is-dragging { opacity: 0.3; }
+
+.inventory-forza .item-icon-wrap {
     width: 32px;
     height: 32px;
-    object-fit: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
 }
 
-.inventory-forza .item-name {
+.inventory-forza .item-icon {
+    font-size: 26px;
+    color: var(--brand-primary);
+    max-width: 32px;
+    max-height: 32px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.inventory-forza .item-count {
+    position: absolute;
+    top: 4px;
+    right: 6px;
     font-size: 9px;
     font-weight: 800;
+    color: var(--brand-accent);
+    background: rgba(8, 8, 10, 0.85);
+    padding: 2px 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(215, 181, 88, 0.3);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.inventory-forza .item-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: rgba(242, 239, 232, 0.6);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--inv-text-muted);
-    text-align: center;
+    max-width: 90%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 95%;
-}
-
-.inventory-forza .item-info {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 4px;
-    box-sizing: border-box;
-}
-
-.inventory-forza .item-qty { font-size: 10px; font-weight: 900; color: var(--inv-accent); }
-.inventory-forza .item-weight { font-size: 9px; font-weight: 700; color: var(--inv-text-muted); }
-
-.inventory-forza .proximity-panel {
-    width: 260px;
-    max-width: 260px;
-    flex: 0 0 260px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    transform: translateY(20px);
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
-}
-
-.inventory-forza .prox-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-    font-weight: 900;
-    color: var(--inv-accent);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 5px;
-    padding: 0 5px;
-}
-
-.inventory-forza .prox-radar-icon {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--inv-accent);
-    box-shadow: 0 0 10px var(--inv-accent);
-    animation: invRadarPulse 1.5s infinite;
-}
-
-@keyframes invRadarPulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(0, 255, 204, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); }
-}
-
-.inventory-forza .prox-list { display: flex; flex-direction: column; gap: 10px; }
-
-.inventory-forza .prox-player {
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-    text-align: left;
-    color: inherit;
-    font: inherit;
-}
-
-.inventory-forza .prox-player:hover { border-color: var(--inv-text-muted); background: rgba(255, 255, 255, 0.05); }
-.inventory-forza .prox-player.is-drag-over {
-    border-color: var(--inv-accent);
-    background: rgba(0, 255, 204, 0.15);
-    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.3);
-    transform: scale(1.05);
-}
-
-.inventory-forza .prox-id { font-size: 10px; font-weight: 900; color: var(--inv-text-muted); transform: none; }
-.inventory-forza .prox-name { font-size: 14px; font-weight: 800; font-style: italic; color: var(--inv-text-main); text-transform: uppercase; transform: none; }
-.inventory-forza .prox-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 5px;
-    border-top: 1px solid var(--inv-border-glass);
-    padding-top: 8px;
-    transform: none;
-}
-
-.inventory-forza .prox-hint {
-    font-size: 9px;
-    font-weight: 800;
-    color: var(--inv-accent);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.inventory-forza .prox-empty {
-    background: var(--inv-bg-panel);
-    border: 2px dashed var(--inv-border-glass);
-    padding: 20px;
     text-align: center;
-    color: var(--inv-text-muted);
-    font-size: 11px;
+    pointer-events: none;
+}
+
+.inventory-forza .item-weight {
+    font-size: 7.5px;
     font-weight: 700;
-    transform: none;
+    color: rgba(242, 239, 232, 0.35);
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    pointer-events: none;
 }
 
-.inventory-forza .inv-actions {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 14px 18px;
-    backdrop-filter: blur(10px);
-}
-
-.inventory-forza .inv-slot.is-drop-target,
-.inventory-forza .inv-slot.drag-over,
-.inventory-forza .equip-slot.is-drop-target,
-.inventory-forza .equip-slot.drag-over {
-    border-color: var(--inv-accent);
-    background: rgba(0, 255, 204, 0.1);
-    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.2);
-}
-
-.inventory-forza .prox-player.is-drag-over,
-.inventory-forza .prox-player.drag-over {
-    border-color: var(--inv-accent);
-    background: rgba(0, 255, 204, 0.15);
-    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.3);
-    transform: scale(1.05);
-}
-
-.inventory-forza .inv-actions span {
-    flex: 1;
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--inv-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.inventory-forza .inv-actions button {
-    border: 1px solid var(--inv-border-glass);
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--inv-text-main);
-    font-family: inherit;
-    font-size: 11px;
+/* Hotbar marker badge */
+.inventory-forza .hotbar-marker {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    font-size: 9px;
     font-weight: 900;
-    letter-spacing: 1px;
-    padding: 10px 16px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: 0.2s;
+    color: #08080a;
+    background: var(--brand-accent);
+    padding: 1px 5px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 10;
 }
 
-.inventory-forza .inv-actions button:hover:not(:disabled) {
-    border-color: var(--inv-accent);
-    color: var(--inv-accent);
-}
-
-.inventory-forza .inv-actions button:disabled { opacity: 0.35; cursor: not-allowed; }
-.inventory-forza .inv-actions button.is-danger { border-color: rgba(255, 51, 102, 0.4); color: #ff8fab; }
-.inventory-forza .inv-actions button.is-danger:hover:not(:disabled) { border-color: var(--inv-danger); color: var(--inv-danger); }
-
-/* [DROP ZONE] Trash bin under the grid - drag items here to drop them */
+/* Trash Zone */
+.inventory-forza .trash-zone,
 .inventory-forza .inv-trash {
+    margin-top: 10px;
+    height: 48px;
+    border: 1px dashed var(--border-faint);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-    padding: 14px 18px;
-    background: var(--inv-bg-panel);
-    border: 2px dashed var(--inv-border-glass);
-    color: var(--inv-text-muted);
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 2px;
+    gap: 8px;
+    color: rgba(242, 239, 232, 0.4);
+    font-size: 10px;
+    font-weight: 800;
     text-transform: uppercase;
-    backdrop-filter: blur(10px);
-    transition: 0.2s;
+    letter-spacing: 1.5px;
+    transition: all 0.2s;
+    background: rgba(242, 239, 232, 0.01);
+    flex-shrink: 0;
 }
 
-.inventory-forza .inv-trash i { font-size: 18px; }
+.inventory-forza .trash-zone i,
+.inventory-forza .inv-trash i {
+    font-size: 16px;
+    color: currentColor;
+}
 
+.inventory-forza .trash-zone.drag-over,
+.inventory-forza .trash-zone.is-dragover,
 .inventory-forza .inv-trash.is-dragover {
-    border-color: var(--inv-danger);
+    border-color: var(--color-trash);
+    color: var(--color-trash);
+    background: rgba(239, 68, 68, 0.08);
     border-style: solid;
-    color: var(--inv-danger);
-    background: rgba(255, 51, 102, 0.12);
-    box-shadow: inset 0 0 24px rgba(255, 51, 102, 0.25);
-    transform: scale(1.02);
 }
 
-.inventory-forza .inv-duty-row {
-    background: var(--inv-bg-panel);
-    border: 2px solid var(--inv-border-glass);
-    padding: 12px 16px;
-    display: block;
-    max-height: 104px;
-    overflow-y: auto;
+/* Quick Actions */
+.inventory-forza .inv-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-lighter);
+    flex-shrink: 0;
+}
+
+.inventory-forza #inventory-selected-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(242, 239, 232, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.inventory-forza .inv-btn-group {
+    display: flex;
     gap: 8px;
 }
 
-.inventory-forza .inv-duty-row.hidden { display: none !important; }
+.inventory-forza .inv-btn-group button {
+    padding: 6px 14px;
+    background: rgba(242, 239, 232, 0.05);
+    border: 1px solid var(--border-faint);
+    border-radius: 2px;
+    color: var(--brand-primary);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-.inventory-forza .inv-duty-chip {
+.inventory-forza .inv-btn-group button:hover:not(:disabled) {
+    background: var(--brand-accent);
+    color: #08080a;
+    border-color: var(--brand-accent);
+}
+
+.inventory-forza .inv-btn-group button.is-danger:hover:not(:disabled) {
+    background: var(--color-trash);
+    color: #ffffff;
+    border-color: var(--color-trash);
+}
+
+.inventory-forza .inv-btn-group button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* --- DREAPTA: CONTEXT (NEARBY / TRADE) --- */
+.inventory-forza .inv-right,
+.inventory-forza .proximity-panel {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 24px;
+    background: rgba(8, 8, 10, 0.4);
+    min-height: 0;
+}
+
+.inventory-forza .section-title,
+.inventory-forza .prox-header {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--inv-border-glass);
-    background: rgba(0, 0, 0, 0.45);
-    cursor: grab;
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--inv-text-main);
-    width: 100%;
-    min-height: 44px;
-    box-sizing: border-box;
-    overflow: hidden;
+    flex-shrink: 0;
 }
 
-.inventory-forza #inventory-duty-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.inventory-forza .section-title i,
+.inventory-forza .prox-header i {
+    font-size: 14px;
+    color: var(--brand-accent);
+}
+
+.inventory-forza .nearby-list,
+.inventory-forza .prox-list {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
 }
 
-.inventory-forza .inv-duty-chip img,
-.inventory-forza .inv-duty-chip .item-icon {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    object-fit: contain;
+.inventory-forza .nearby-list::-webkit-scrollbar { width: 0; }
+
+.inventory-forza .player-card,
+.inventory-forza .prox-player {
+    background: var(--bg-slot);
+    border: 1px solid var(--border-lighter);
+    padding: 10px 14px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s;
 }
 
-@media (max-height: 820px) {
-    .inventory-forza-wrapper { padding: 18px; }
-    .inventory-forza .inv-panel { gap: 8px; }
-    .inventory-forza .inv-header { padding: 12px 18px; gap: 8px; }
-    .inventory-forza .equipment-row { padding: 8px 18px; }
-    .inventory-forza .equip-slot { width: 46px; height: 46px; }
-    .inventory-forza .inv-grid-wrapper { padding: 14px; gap: 10px; }
-    .inventory-forza .inv-grid { max-height: 36vh; gap: 7px; }
-    .inventory-forza .quick-picks-container { gap: 7px; }
-    .inventory-forza .inv-duty-row { max-height: 72px; padding: 8px 12px; }
+.inventory-forza .player-card:hover,
+.inventory-forza .prox-player:hover {
+    background: var(--bg-slot-hover);
+    border-color: var(--brand-accent);
 }
 
+.inventory-forza .player-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inventory-forza .p-name,
+.inventory-forza .prox-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+}
+
+.inventory-forza .p-id,
+.inventory-forza .prox-id {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.inventory-forza .btn-trade-invite {
+    background: rgba(215, 181, 88, 0.12);
+    border: 1px solid rgba(215, 181, 88, 0.35);
+    border-radius: 2px;
+    color: var(--brand-accent);
+    font-family: inherit;
+    font-size: 8.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.inventory-forza .btn-trade-invite:hover {
+    background: var(--brand-accent);
+    color: #08080a;
+    border-color: var(--brand-accent);
+}
+
+.inventory-forza .prox-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: rgba(242, 239, 232, 0.4);
+    font-size: 10px;
+    font-weight: 600;
+    border: 1px dashed var(--border-faint);
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Close Hint */
 .inventory-forza .inv-close-hint {
     position: absolute;
     bottom: 24px;
     left: 50%;
-    transform: translateX(-50%) ;
-    font-size: 11px;
+    transform: translateX(-50%);
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 2px;
-    color: var(--inv-text-muted);
+    color: rgba(242, 239, 232, 0.35);
     text-transform: uppercase;
     z-index: 20;
     pointer-events: none;
 }
 
-/* Quantity Selection Modal — full styles (redesign.css is not loaded) */
+/* Quantity Selection Modal */
 .premium-qty-modal {
     position: fixed;
     inset: 0;
-    z-index: 9999;
+    z-index: 12000;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.65);
-    animation: qtyFadeIn .18s ease-out;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .premium-qty-modal.hidden { display: none !important; }
 
-@keyframes qtyFadeIn {
-    from { opacity: 0; transform: scale(0.96); }
-    to   { opacity: 1; transform: scale(1); }
-}
-
 .premium-qty-box {
     width: 320px;
     padding: 24px;
-    background: rgba(18, 18, 26, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    background: rgba(12, 12, 16, 0.98);
+    border: 1px solid var(--border-faint);
+    border-radius: 4px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -602,17 +594,18 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 
 .premium-qty-box h3 {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 900;
-    color: var(--premium-accent);
+    color: var(--brand-accent);
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .premium-qty-item {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--brand-primary);
+    margin: 0;
 }
 
 .premium-qty-controls {
@@ -623,13 +616,13 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 }
 
 .premium-qty-btn {
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    color: #ffffff;
-    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    background: rgba(242, 239, 232, 0.05);
+    border: 1px solid var(--border-faint);
+    border-radius: 2px;
+    color: var(--brand-primary);
+    font-size: 16px;
     font-weight: 800;
     cursor: pointer;
     display: flex;
@@ -639,26 +632,26 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 }
 
 .premium-qty-btn:hover {
-    background: var(--premium-accent);
-    color: #000;
-    box-shadow: 0 0 0 1px rgba(0, 255, 204, 0.35);
+    background: var(--brand-accent);
+    color: #08080a;
 }
 
 .premium-qty-input {
     width: 90px;
-    height: 38px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #ffffff;
-    font-size: 16px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-faint);
+    border-radius: 2px;
+    color: var(--brand-primary);
+    font-size: 15px;
     font-weight: 800;
     text-align: center;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 .premium-qty-slider {
     width: 100%;
-    accent-color: var(--premium-accent);
+    accent-color: var(--brand-accent);
     cursor: pointer;
 }
 
@@ -670,20 +663,20 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 
 .premium-qty-quick button {
     flex: 1;
-    padding: 7px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 11px;
+    padding: 6px;
+    background: rgba(242, 239, 232, 0.05);
+    border: 1px solid var(--border-lighter);
+    border-radius: 2px;
+    color: rgba(242, 239, 232, 0.8);
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .premium-qty-quick button:hover {
-    background: rgba(255, 255, 255, 0.14);
-    color: #ffffff;
+    background: rgba(242, 239, 232, 0.12);
+    color: var(--brand-primary);
 }
 
 .premium-qty-actions {
@@ -695,25 +688,26 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 .premium-qty-cancel,
 .premium-qty-confirm {
     flex: 1;
-    padding: 11px;
+    padding: 10px;
     border: 0;
-    border-radius: 8px;
-    font-size: 11px;
+    border-radius: 2px;
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.15s ease;
+    text-transform: uppercase;
 }
 
 .premium-qty-cancel {
     background: transparent;
-    border: 1px solid var(--premium-danger);
-    color: var(--premium-danger);
+    border: 1px solid var(--color-trash);
+    color: var(--color-trash);
 }
 
 .premium-qty-confirm {
-    background: var(--premium-accent);
-    color: #000;
+    background: var(--brand-accent);
+    color: #08080a;
 }
 
 body.inventory-open #hud,

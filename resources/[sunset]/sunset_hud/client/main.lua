@@ -5,6 +5,8 @@ local char = nil
 local hudActive = false
 local pauseHidden = false
 local hudSuppressed = false
+local lastHudHash = ''
+local activateHud
 
 local function nui(action, data)
     exports.sunset_ui:Send(action, data or {})
@@ -18,7 +20,7 @@ function SetHudSuppressed(suppressed)
     else
         pcall(function() exports.sunset_ui:ShowHudChrome() end)
         lastHudHash = ''
-        if hudActive and char then
+        if hudActive and char and activateHud then
             activateHud(char)
         end
     end
@@ -209,7 +211,7 @@ local function refreshHudLayout(layout)
     if data then nui('updateHud', data) end
 end
 
-local function activateHud(character)
+activateHud = function(character)
     char = character
     hudActive = true
     pcall(function()
@@ -223,7 +225,6 @@ local function activateHud(character)
     if data then nui('updateHud', data) end
 end
 
-local lastHudHash = ''
 local function updateHud()
     if not hudActive or hudSuppressed then return end
     local data = buildHudData()

@@ -336,7 +336,7 @@ const Panels = {
             },
         };
 
-        inv.renderMainGrid(items, hooks, 20);
+        inv.renderMainGrid(items, hooks, 30);
         inv.updateWeight(Number(data.weight) || 0, Number(data.maxWeight) || 30);
         inv.renderNearby(Array.isArray(data.nearbyPlayers) ? data.nearbyPlayers : (this._inventoryNearby || []));
 

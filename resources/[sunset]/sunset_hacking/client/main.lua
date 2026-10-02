@@ -7,6 +7,9 @@ local State = {
     EXITING = 'EXITING',
 }
 
+RegisterNetEvent('sunset:hacking:sessionCreated')
+RegisterNetEvent('sunset:hacking:solutionResult')
+
 local currentState = State.CLOSED
 local activeSession = nil
 local activePromise = nil
