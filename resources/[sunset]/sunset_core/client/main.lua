@@ -144,6 +144,16 @@ CreateThread(function()
     SunsetBoot.Log('core', 'loadscreen_shutdown:end', ('returned elapsed=%dms'):format(tShutdownEnd - tShutdownStart))
     SunsetBoot.RecordMilestone('handoff_to_loadscreen_off', tShutdownEnd - (tHandoffStart or tShutdownStart))
 
+    -- ShutdownLoadingScreen resets the engine's NUI cursor state. Re-assert
+    -- auth focus exactly once right after shutdown so the cursor comes back.
+    if GetResourceState('sunset_auth_ui') == 'started' then
+        pcall(function()
+            if exports.sunset_auth_ui:IsAuthOpen() then
+                SetNuiFocus(true, true)
+            end
+        end)
+    end
+
     DoScreenFadeIn(500)
     SunsetBoot.Log('core', 'screen_fade:in_start', 'fade-in started; auth owns visible surface')
 
