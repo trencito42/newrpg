@@ -38,7 +38,7 @@ interface PlayerPreviewData {
 }
 
 const previewCache = new Map<string, { data: PlayerPreviewData; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // reflect MySkins changes on the next preview
 
 export function PlayerPreviewProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);

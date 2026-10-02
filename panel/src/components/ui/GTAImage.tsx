@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface GTAImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallbackText?: string;
@@ -16,6 +16,8 @@ export function GTAImage({
   ...props
 }: GTAImageProps) {
   const [error, setError] = useState(false);
+
+  useEffect(() => setError(false), [src]);
 
   if (error || !src) {
     return (

@@ -34,8 +34,6 @@ export async function GET(
         a.helper_level,
         c.id as character_id,
         c.level,
-        c.gender,
-        c.avatar,
         c.metadata,
         c.paydays_received as hours,
         c.job as faction_id,
@@ -49,7 +47,6 @@ export async function GET(
         cl.tag_style as clan_tag_style,
         cm.rank as clan_rank,
         (cl.owner_character_id = c.id) as is_clan_owner,
-        pm.avatar_url,
         (p.last_seen > NOW() - INTERVAL 3 MINUTE OR c.last_played > NOW() - INTERVAL 3 MINUTE) as is_online
        FROM accounts a
        JOIN players p ON p.account_id = a.id
@@ -57,7 +54,6 @@ export async function GET(
        LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = c.job
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
-       LEFT JOIN panel_player_media pm ON pm.account_id = a.id
        WHERE LOWER(a.username) = LOWER(?) LIMIT 1`,
       [cleanUsername]
     );
@@ -146,7 +142,7 @@ export async function GET(
 
     const preview = {
       username: player.username,
-      avatarUrl: getPedAvatarUrl(player.gender, player.avatar_url || player.avatar, characterSkin),
+      avatarUrl: getPedAvatarUrl(characterSkin),
       online: Boolean(player.is_online),
       lastSeen: player.last_played,
       level: player.level || 1,
@@ -158,7 +154,7 @@ export async function GET(
     };
 
     const response = NextResponse.json(preview);
-    response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=60");
+    response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (err) {
     console.error("Player preview error:", err);

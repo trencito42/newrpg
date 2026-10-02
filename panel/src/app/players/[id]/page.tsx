@@ -26,8 +26,6 @@ interface CharacterProfileRow extends RowDataPacket {
   job_grade: number;
   phone_number: string | null;
   home_property_id: number | null;
-  avatar: string | null;
-  gender: number;
   nationality: string;
   metadata: string | Record<string, any> | null;
   registered_at: string;
@@ -95,7 +93,6 @@ export default async function PlayerProfilePage({
       is_faction_leader: number | null;
       admin_level: number;
       helper_level: number;
-      avatar_url: string | null;
       featured_vehicle_id: number | null;
       is_online: number;
     }
@@ -104,7 +101,7 @@ export default async function PlayerProfilePage({
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
        c.job, c.job_grade, c.phone_number,
-       c.home_property_id, c.avatar, c.gender, c.nationality, c.metadata,
+       c.home_property_id, c.nationality, c.metadata,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username,
        a.admin_level,
@@ -117,7 +114,6 @@ export default async function PlayerProfilePage({
        cm.rank AS clan_rank,
        (cl.owner_character_id = c.id) AS is_clan_owner,
        fl.id AS is_faction_leader,
-       pm.avatar_url,
        pref.featured_vehicle_id,
        (p.last_seen > NOW() - INTERVAL 3 MINUTE OR c.last_played > NOW() - INTERVAL 3 MINUTE) AS is_online
      FROM accounts a
@@ -126,7 +122,6 @@ export default async function PlayerProfilePage({
      LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = c.job
      LEFT JOIN clan_members cm ON cm.character_id = c.id
      LEFT JOIN clans cl ON cl.id = cm.clan_id
-     LEFT JOIN panel_player_media pm ON pm.account_id = a.id
      LEFT JOIN panel_preferences pref ON pref.account_id = a.id
      WHERE LOWER(a.username) = LOWER(?)
         OR (? > 0 AND c.id = ?)
@@ -282,7 +277,7 @@ export default async function PlayerProfilePage({
           <div className="flex items-start gap-4">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#18181b] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
               <GTAImage
-                src={getPedAvatarUrl(char.gender, char.avatar_url || char.avatar, characterSkin)}
+                src={getPedAvatarUrl(characterSkin)}
                 alt={char.account_username}
                 fallbackText="GTA Skin"
                 className="w-full h-full object-cover"
