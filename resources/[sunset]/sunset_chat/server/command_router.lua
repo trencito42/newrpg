@@ -144,6 +144,7 @@ local SERVER_CHAT_COMMANDS = {
     lc = true,
     w = true, whisper = true,
     cw = true, carwhisper = true,
+    version = true,
 }
 
 local function hasFactionMedicPerm(src, cmd)
