@@ -5,11 +5,13 @@ import { t } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getVehiclePreviewUrl } from "@/lib/gta-assets";
+import { vehicleDisplayName } from "@/lib/vehicle-names";
 
 interface VehicleRow extends RowDataPacket {
   id: number;
   plate: string;
   model: string;
+  catalog_label: string | null;
   fuel: number;
   engine: number;
   body: number;
@@ -37,11 +39,12 @@ export default async function MyVehiclesPage() {
 
   const vehicles = await dbQuery<VehicleRow>(
     `SELECT v.*,
-            vm.preview_url,
+            vm.preview_url, dv.label AS catalog_label,
             iv.id AS impound_id, iv.reason AS impound_reason,
             iv.fee AS impound_fee, iv.status AS impound_status
      FROM vehicles v
      LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
+     LEFT JOIN dealership_vehicles dv ON LOWER(dv.model) = LOWER(v.model)
      LEFT JOIN impounded_vehicles iv ON iv.vehicle_id = v.id AND iv.status = 'impounded'
      WHERE v.character_id = ?
      ORDER BY v.id DESC`,
@@ -91,14 +94,14 @@ export default async function MyVehiclesPage() {
                     <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
                       <GTAImage
                         src={getVehiclePreviewUrl(veh.model, veh.preview_url)}
-                        alt={veh.model}
+                        alt={vehicleDisplayName(veh.model, veh.catalog_label)}
                         fallbackText="GTA V"
                         className="w-full h-full object-contain p-0.5"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-[#f1f1f1] truncate capitalize">
-                        {veh.model}
+                      <h3 className="text-sm font-semibold text-[#f1f1f1] truncate">
+                        {vehicleDisplayName(veh.model, veh.catalog_label)}
                       </h3>
                       <p className="text-xs text-[#8a8a90] mt-0.5 truncate">
                         Garage: <span className="text-[#a5a5a8] capitalize">{veh.garage || "default"}</span>

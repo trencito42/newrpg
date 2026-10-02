@@ -137,7 +137,7 @@
             btn.type = 'button';
             btn.className = 'dl-list-item' + (state.selected === v.model ? ' active' : '');
             const name = document.createElement('span');
-            name.textContent = v.label || v.model;
+            name.textContent = v.label || I18n.t('common.vehicle');
             const price = document.createElement('span');
             price.className = 'dl-item-price';
             price.textContent = formatShortPrice(v.price);

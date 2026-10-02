@@ -23,11 +23,7 @@ local hasStolenCar = false
 local function notify(msg, t) exports.sunset_ui:Notify(msg, t or 'info') end
 
 local function openVehicleMenu(veh)
-    local modelHash = GetEntityModel(veh)
-    local modelName = 'Vehicle'
-    for _, name in ipairs(GetAllVehicleModels and GetAllVehicleModels() or {}) do
-        if GetHashKey(name) == modelHash then modelName = name:upper() break end
-    end
+    local modelName = exports.sunset_vehicles:GetVehicleDisplayName(veh)
     exports.sunset_ui:Send('playerInteractionShow', {
         target  = { name = modelName, id = '' },
         actions = {

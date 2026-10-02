@@ -973,12 +973,26 @@
 }
 .hud-bottom-right.hidden { display:none; }
 .speedo-panel.speedo-panel--forza {
+    position: relative;
     width: 450px;
     height: 450px;
     min-width: 0;
     padding: 0;
     gap: 0;
     filter: drop-shadow(0 15px 25px rgba(0,0,0,.7));
+}
+.hud-vehicle-name {
+    position: absolute;
+    right: 28px;
+    bottom: 8px;
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-shadow: 0 1px 4px #000;
 }
 .forza-speedo-canvas {
     display: block;

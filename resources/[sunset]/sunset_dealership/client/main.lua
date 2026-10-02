@@ -168,7 +168,7 @@ AddEventHandler('sunset:nui:dealershipBuy', function(data)
             refreshDealer()
             return
         end
-        notify(exports.sunset_core:Translate('dealership.msg.purchased_plate_is_waiting_at_legion', { label = tostring(result.label or result.model), plate = tostring(result.plate) }), 'success', 8000)
+        notify(exports.sunset_core:Translate('dealership.msg.purchased_plate_is_waiting_at_legion', { label = exports.sunset_vehicles:GetVehicleDisplayName(result.model), plate = tostring(result.plate) }), 'success', 8000)
         refreshDealer()
     end)
 end)
@@ -226,7 +226,7 @@ AddEventHandler('sunset:nui:dealershipTestDrive', function(data)
         for remaining = seconds, 1, -1 do
             if not testDriveActive or testVehicle == 0 or not DoesEntityExist(testVehicle) then break end
             TriggerEvent('sunset:ui:jobObjective', {
-                title = exports.sunset_core:Translate('dealership.testdrive.title', { vehicle = drive.label or drive.model }),
+                title = exports.sunset_core:Translate('dealership.testdrive.title', { vehicle = exports.sunset_vehicles:GetVehicleDisplayName(drive.model) }),
                 subtitle = exports.sunset_core:Translate('dealership.testdrive.subtitle', { seconds = remaining }),
                 progress = math.floor(((seconds - remaining) / seconds) * 100),
             })

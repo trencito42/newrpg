@@ -173,6 +173,7 @@ local function buildHudData()
         data.lightMode = vehState.lightMode or 0
         data.engineOn = vehState.engineOn
         data.vehicleClass = vehState.vehicleClass
+        data.vehicleName = vehState.vehicleName
         data.supportsSeatbelt = vehState.supportsSeatbelt
         data.supportsDoorLock = vehState.supportsDoorLock
         data.isDriver = vehState.isDriver == true
@@ -212,13 +213,13 @@ local function updateHud()
     if not data then return end
     -- Change-detection key. Previously omitted name/job/payday/heading/waypoint/voice, so
     -- those only refreshed when an unrelated field happened to change.
-    local hash = string.format('%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s',
+    local hash = string.format('%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s',
         tostring(data.health), tostring(data.armor), tostring(data.hunger), tostring(data.thirst),
         tostring(data.cash), tostring(data.bank), tostring(data.level), tostring(data.street),
         tostring(data.zone), tostring(data.wanted), tostring(data.gameTime), tostring(data.fuel),
         tostring(data.inVehicle), tostring(data.name), tostring(data.job), tostring(data.payday),
         tostring(data.heading), tostring(data.waypointDist and math.floor(data.waypointDist / 10)),
-        tostring(data.time), tostring(data.voiceRange))
+        tostring(data.time), tostring(data.voiceRange), tostring(data.vehicleName))
     if hash ~= lastHudHash then
         lastHudHash = hash
         nui('updateHud', data)

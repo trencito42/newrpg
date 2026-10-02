@@ -224,7 +224,11 @@ exports.sunset_core:RegisterCallback('sunset:dealership:adminSave', function(sou
     if type(data) ~= 'table' then return nil, { localeKey = 'dealership.message.the_vehicle_form_is_invalid' } end
     local model = cleanModel(data.model)
     if not model then return nil, { localeKey = 'dealership.message.model_must_contain_only_letters_numbers_or_underscore' } end
-    local label = cleanText(data.label, 80, model)
+    local label = cleanText(data.label, 80, '')
+    if label == '' or label:lower() == model or label:upper() == 'NULL'
+        or label:upper() == 'CARNOTFOUND' or label:upper() == 'UNDEFINED' or label:upper() == 'NIL' then
+        return nil, { localeKey = 'dealership.message.the_vehicle_form_is_invalid' }
+    end
     local brand = cleanText(data.brand, 48, 'Other')
     local category = cleanText(data.category, 32, 'other'):lower()
     local price = math.floor(tonumber(data.price) or -1)
@@ -245,6 +249,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:adminSave', function(sou
         booleanValue(data.available) and 1 or 0,
         booleanValue(data.testDriveEnabled) and 1 or 0, displayOrder })
     auditAdmin(source, 'save', model, data)
+    exports.sunset_vehicles:RefreshVehicleCatalog()
     return { vehicles = fetchCatalog(true) }
 end)
 
@@ -255,6 +260,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:adminDelete', function(s
     local changed = MySQL.update.await('DELETE FROM dealership_vehicles WHERE model = ?', { model })
     if not changed or changed < 1 then return nil, { localeKey = 'dealership.message.that_dealership_vehicle_no_longer_exists' } end
     auditAdmin(source, 'delete', model)
+    exports.sunset_vehicles:RefreshVehicleCatalog()
     return { vehicles = fetchCatalog(true) }
 end)
 

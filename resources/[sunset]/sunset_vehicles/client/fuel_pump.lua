@@ -59,12 +59,7 @@ end
 
 local function vehicleDisplayName(veh)
     if not veh or veh == 0 then return 'Vehicle' end
-    local model = GetEntityModel(veh)
-    local label = GetDisplayNameFromVehicleModel(model)
-    if label and label ~= 'CARNOTFOUND' then
-        return GetLabelText(label)
-    end
-    return 'Vehicle'
+    return exports.sunset_vehicles:GetVehicleDisplayName(veh)
 end
 
 local function pumpGlobalId(stationIndex, pumpIndex)

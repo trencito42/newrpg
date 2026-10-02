@@ -737,7 +737,7 @@
                         <div class="mdc-veh-row btn-view-veh-plate" data-plate="${esc(v.plate)}" style="cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span class="mdc-plate-badge">${esc(v.plate)}</span>
-                                <span class="mdc-veh-model">${esc(v.model)}</span>
+                                <span class="mdc-veh-model">${esc(v.displayName || I18n.t('common.vehicle'))}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="mdc-veh-status">${v.stored ? I18n.t('ui.mdc.in_garage') : I18n.t('ui.mdc.out_in_city')}</span>
@@ -874,7 +874,7 @@
                         ${v.bolo ? `<div class="mdc-bolo-banner">${I18n.t('ui.mdc.bolo_banner')}</div>` : ''}
                         <div class="mdc-dmv-card__head">
                             <span class="mdc-plate-badge">${esc(v.plate)}</span>
-                            <span class="mdc-veh-model">${esc(v.model)}</span>
+                            <span class="mdc-veh-model">${esc(v.displayName || I18n.t('common.vehicle'))}</span>
                         </div>
                         <div class="mdc-dmv-card__owner">
                             <div>${I18n.t('ui.mdc.registered_owner')}: <strong class="btn-goto-owner" data-owner="${esc(v.ownerName)}">${esc(v.ownerName)}</strong></div>
@@ -1276,4 +1276,3 @@
         MdcTablet.init();
     }
 })();
-

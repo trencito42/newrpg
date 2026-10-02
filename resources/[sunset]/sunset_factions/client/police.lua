@@ -1350,8 +1350,7 @@ CreateThread(function()
                                 end)
 
                                 local plate = GetVehicleNumberPlateText(veh)
-                                local modelHash = GetEntityModel(veh)
-                                local modelName = GetDisplayNameFromVehicleModel(modelHash) or 'Vehicle'
+                                local modelName = exports.sunset_vehicles:GetVehicleDisplayName(veh)
 
                                 TriggerServerEvent('sunset:police:fixedRadarTrigger', idx, speedKmh, plate, modelName)
                             end

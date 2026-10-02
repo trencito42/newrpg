@@ -47,7 +47,7 @@ const Impound = {
                 <div class="impound-vehicle__info">
                     <div class="impound-vehicle__plate">${this.esc(v.plate)}</div>
                     <div class="impound-vehicle__meta">
-                        <span>${this.esc(v.model)}</span>
+                        <span>${this.esc(v.displayName || I18n.t('common.vehicle'))}</span>
                         <span>${I18n.t('ui.impound.reason')}: ${this.esc(v.reason)}</span>
                         <span>${v.daysHeld > 0 ? I18n.t('ui.impound.days_held', { days: v.daysHeld }) : I18n.t('ui.impound.today')}</span>
                         <span>${I18n.t('ui.impound.by')}: ${this.esc(v.impoundedBy)}</span>

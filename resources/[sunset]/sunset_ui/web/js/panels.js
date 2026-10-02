@@ -1247,7 +1247,7 @@ const Panels = {
                 status = I18n.t('ui.panels.veh_totaled');
                 statusClass = 'destroyed';
             }
-            const model = (v.model || 'vehicle').toUpperCase();
+            const model = v.displayName || v.label || I18n.t('common.vehicle');
             const points = v.insurancePoints != null ? Number(v.insurancePoints) : 5;
             const level = v.insuranceLevel != null ? Number(v.insuranceLevel) : 1;
             const claimCost = v.claimCost != null ? Number(v.claimCost) : 250;
@@ -1326,8 +1326,8 @@ const Panels = {
         };
 
         (data.vehicles || []).forEach((v) => {
-            const model = String(v.model || 'vehicle');
-            const modelCode = model.toUpperCase();
+            const model = String(v.displayName || v.label || I18n.t('common.vehicle'));
+            const modelCode = model;
             const rankLabel = v.minGradeLabel || I18n.t('ui.panels.rank_plus', { rank: Number.isFinite(v.minGrade) ? v.minGrade : 0 });
             const li = document.createElement('li');
             li.className = 'fleet-unit-row';
@@ -1339,7 +1339,7 @@ const Panels = {
                 </div>
                 <div class="fleet-unit-row__info">
                     <strong>${escHtml(v.label || modelCode)}</strong>
-                    <span>${escHtml(modelCode)} · ${escHtml(rankLabel)}+</span>
+                    <span>${escHtml(rankLabel)}+</span>
                 </div>
                 <button type="button" class="fleet-unit-row__btn">${I18n.t('ui.panels.take_out')}</button>`;
 

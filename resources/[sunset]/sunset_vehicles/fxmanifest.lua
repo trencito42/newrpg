@@ -10,10 +10,12 @@ shared_scripts {
     '@sunset_core/shared/config.lua',
     '@sunset_core/shared/items.lua',
     'shared/vehicle_config.lua',
+    'shared/display_names.lua',
 }
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',
+    'client/display_names.lua',
     'client/main.lua',
     'client/fuel_pump.lua',
 }

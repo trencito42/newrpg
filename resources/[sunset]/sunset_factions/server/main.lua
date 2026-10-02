@@ -464,7 +464,7 @@ end
 fleetVehicleLabel = function(model, fallback)
     model = tostring(model or '')
     if model == '' then return fallback or 'Vehicle' end
-    return model:sub(1, 1):upper() .. model:sub(2):lower()
+    return exports.sunset_vehicles:GetVehicleDisplayName(model)
 end
 
 local function fleetVehiclesForGrade(depot, grade, factionId)
@@ -563,6 +563,7 @@ RegisterNetEvent('sunset:factionRegisterFleetVehicle', function(networkId, facti
     if not nearSpawn and not nearExit then return end
 
     Entity(vehicle).state:set('sunsetFactionVehicle', factionId, true)
+    Entity(vehicle).state:set('sunsetVehicleDisplayName', fleetEntryLabel(depot, vehicleModel), true)
     Entity(vehicle).state:set('sunsetProtectedVehicle', true, true)
     broadcastFleetTake(src, factionId, faction, vehicleModel)
 end)

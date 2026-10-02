@@ -12,6 +12,52 @@ local StoreRate = {}
 local StateSyncRate = {}
 local ParkRate = {}
 
+local VehicleCatalog = {}
+local CatalogVersion = 0
+local UncataloguedModels = {}
+
+local function getVehicleMetadata(model)
+    local key = SunsetVehicleNames.Key(model)
+    local row = VehicleCatalog[key] or SunsetVehicleNames.Addons[key]
+    if row and SunsetVehicleNames.Valid(row.label) then return row end
+    if key ~= '' then UncataloguedModels[key] = true end
+    return { label = SunsetVehicleNames.Fallback(model) }
+end
+
+local function getVehicleDisplayName(model)
+    return getVehicleMetadata(model).label
+end
+
+local function refreshVehicleCatalog()
+    local rows = MySQL.query.await('SELECT model, label, brand, category FROM dealership_vehicles') or {}
+    local nextCatalog = {}
+    for _, row in ipairs(rows) do
+        local key = SunsetVehicleNames.Key(row.model)
+        if key ~= '' and SunsetVehicleNames.Valid(row.label) then
+            nextCatalog[key] = { label = row.label, brand = row.brand, category = row.category }
+        end
+    end
+    VehicleCatalog = nextCatalog
+    UncataloguedModels = {}
+    CatalogVersion = math.max(CatalogVersion + 1, GetGameTimer())
+    GlobalState.sunsetVehicleCatalog = { version = CatalogVersion, entries = nextCatalog }
+    return true
+end
+
+exports('GetVehicleDisplayName', getVehicleDisplayName)
+exports('GetVehicleDisplayMetadata', getVehicleMetadata)
+exports('RefreshVehicleCatalog', refreshVehicleCatalog)
+exports('GetUncataloguedVehicleModels', function()
+    local models = {}
+    for model in pairs(UncataloguedModels) do models[#models + 1] = model end
+    table.sort(models)
+    return models
+end)
+MySQL.ready(function()
+    local ok, err = pcall(refreshVehicleCatalog)
+    if not ok then print(('[sunset_vehicles] catalog load failed: %s'):format(tostring(err))) end
+end)
+
 local function normalizePlate(plate)
     return type(plate) == 'string' and plate:gsub('%s+', ''):upper() or ''
 end
@@ -74,6 +120,8 @@ end
 
 local function enrichVehicleRow(row)
     if type(row) ~= 'table' then return row end
+    row.displayName = getVehicleDisplayName(row.model)
+    row.label = row.displayName
     local props = decodeProps(row.props)
     row.props = nil
     row.odometer = tonumber(props.odometer)
@@ -253,6 +301,7 @@ exports.sunset_core:RegisterCallback('sunset:spawnVehicle', function(source, veh
         id = veh.id,
         plate = veh.plate,
         model = veh.model,
+        displayName = getVehicleDisplayName(veh.model),
         stored = 0,
         inWorld = true,
         destroyed = 0,
@@ -1164,15 +1213,15 @@ local function runGiveCar(source, args)
     if not vehicleId then
         local name = exports.sunset_core:GetPlayerDisplayName(target) or GetPlayerName(target) or '?'
         notifyPlayer(source,
-            exports.sunset_core:TFor(source, 'vehicles.msg.could_not_store_in_legion_garage', { model = tostring(model), name = tostring(name), target = math.floor(tonumber(target) or 0) }), 'error')
+            exports.sunset_core:TFor(source, 'vehicles.msg.could_not_store_in_legion_garage', { model = getVehicleDisplayName(model), name = tostring(name), target = math.floor(tonumber(target) or 0) }), 'error')
         return
     end
 
     local targetName = exports.sunset_core:GetPlayerDisplayName(target)
-    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'vehicles.message.you_received_a_vehicle_value', model), 'success')
+    TriggerClientEvent('sunset:client:notify', target, exports.sunset_core:TFor(target, 'vehicles.message.you_received_a_vehicle_value', getVehicleDisplayName(model)), 'success')
     notifyPlayer(
         source,
-        exports.sunset_core:TFor(source, 'vehicles.msg.gave_to_stored_in_legion_garage', { model = tostring(model), target_name = tostring(targetName), target = math.floor(tonumber(target) or 0) }),
+        exports.sunset_core:TFor(source, 'vehicles.msg.gave_to_stored_in_legion_garage', { model = getVehicleDisplayName(model), target_name = tostring(targetName), target = math.floor(tonumber(target) or 0) }),
         'success'
     )
 end
@@ -1307,7 +1356,7 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
 
         -- A matching plate alone is insufficient: world vehicles can reuse a plate.
         if row and type(row.model) == 'string' and joaat(row.model) == modelHash then
-            local displayModel = (row.model or ''):lower()
+            local displayModel = getVehicleDisplayName(row.model)
             local cleanPlate   = rawPlate:match('^%s*(.-)%s*$')
             local isOwner      = tonumber(row.character_id) == tonumber(char.id)
 
@@ -1326,7 +1375,8 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
                 return {
                     category      = 'personal_own',
                     plate         = cleanPlate,
-                    model         = displayModel,
+                    model         = row.model,
+                    displayName   = displayModel,
                     odometer      = math.floor(odometer * 10) / 10,
                     ownerName     = ownerName,
                     ownershipDays = ownershipDays,
@@ -1339,7 +1389,8 @@ exports.sunset_core:RegisterCallback('sunset:getVehicleEntryInfo', function(sour
                 return {
                     category = 'personal_other',
                     plate    = cleanPlate,
-                    model    = displayModel,
+                    model    = row.model,
+                    displayName = displayModel,
                     ownerName = ownerName,
                     odometer = math.floor(odometer * 10) / 10,
                     ownershipDays = ownershipDays,

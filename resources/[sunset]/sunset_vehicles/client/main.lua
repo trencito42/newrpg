@@ -619,6 +619,7 @@ function GetVehicleState()
         odometer = isTrackedOwnedVehicle(veh) and (math.floor(odometerKm * 10) / 10) or nil,
         showOdometer = isTrackedOwnedVehicle(veh),
         vehicleClass = class,
+        vehicleName = exports.sunset_vehicles:GetVehicleDisplayName(veh),
         supportsSeatbelt = supportsSeatbelt(veh),
         supportsDoorLock = supportsDoorLock(veh),
         plate = plate,
@@ -1399,14 +1400,14 @@ CreateThread(function()
                                     level = info.ins_level, points = info.ins_points, cost = info.claim_cost,
                                 })
                             msg = exports.sunset_core:Translate('vehicles.entry.own', {
-                                model = info.model, plate = info.plate,
+                                model = info.displayName or exports.sunset_vehicles:GetVehicleDisplayName(info.model), plate = info.plate,
                                 owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
                                 odometer = localizedNumber(info.odometer, 1),
                                 age = ownershipAge(info.ownershipDays), insurance = insLine,
                             })
                         elseif info.category == 'personal_other' then
                             msg = exports.sunset_core:Translate('vehicles.entry.other', {
-                                model = info.model, plate = info.plate, owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
+                                model = info.displayName or exports.sunset_vehicles:GetVehicleDisplayName(info.model), plate = info.plate, owner = info.ownerName or exports.sunset_core:Translate('vehicles.entry.private'),
                                 odometer = localizedNumber(info.odometer, 1), age = ownershipAge(info.ownershipDays),
                             })
                         elseif info.category == 'faction' then

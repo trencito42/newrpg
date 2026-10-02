@@ -10,6 +10,7 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
+import { vehicleDisplayName } from "@/lib/vehicle-names";
 
 interface CharacterProfileRow extends RowDataPacket {
   id: number;
@@ -58,6 +59,7 @@ interface BalanceRow extends RowDataPacket { cash: number; bank: number }
 interface VehicleRow extends RowDataPacket {
   id: number;
   model: string;
+  catalog_label: string | null;
   plate: string;
   stored: number;
   insurance_level: number;
@@ -165,8 +167,9 @@ export default async function PlayerProfilePage({
       ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
       : null,
     dbQuery<VehicleRow>(
-      `SELECT v.id, v.model, v.plate, v.stored, v.insurance_level, v.destroyed, vm.preview_url
+      `SELECT v.id, v.model, dv.label AS catalog_label, v.plate, v.stored, v.insurance_level, v.destroyed, vm.preview_url
        FROM vehicles v
+       LEFT JOIN dealership_vehicles dv ON LOWER(dv.model) = LOWER(v.model)
        LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
        WHERE v.character_id = ?
        ORDER BY (v.id = ?) DESC, v.id DESC LIMIT 50`,
@@ -378,14 +381,14 @@ export default async function PlayerProfilePage({
               <div className="w-20 h-14 bg-[#1b1b1e] rounded overflow-hidden shrink-0 flex items-center justify-center border border-surface-border">
                 <GTAImage
                   src={getVehiclePreviewUrl(featuredVehicle.model, featuredVehicle.preview_url)}
-                  alt={featuredVehicle.model}
+                  alt={vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}
                   fallbackText="GTA V"
                   className="w-full h-full object-contain p-1"
                 />
               </div>
               <div className="min-w-0 text-xs">
                 <span className="text-[10px] text-[#6f6f74] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
-                <span className="font-bold text-[#f1f1f1] truncate block capitalize">{featuredVehicle.model}</span>
+                <span className="font-bold text-[#f1f1f1] truncate block">{vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}</span>
                 <span className="font-mono text-[11px] text-[#8a8a90] block">{featuredVehicle.plate}</span>
               </div>
             </div>
@@ -452,14 +455,14 @@ export default async function PlayerProfilePage({
                   <div className="w-16 h-12 bg-[#18181b] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
                     <GTAImage
                       src={getVehiclePreviewUrl(v.model, v.preview_url)}
-                      alt={v.model}
+                      alt={vehicleDisplayName(v.model, v.catalog_label)}
                       fallbackText="GTA V"
                       className="w-full h-full object-contain p-0.5"
                     />
                   </div>
                   <div className="min-w-0 flex-1 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#f1f1f1] truncate capitalize">{v.model}</span>
+                      <span className="font-semibold text-[#f1f1f1] truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
                       {v.destroyed ? (
                         <span className="text-[10px] text-red-400 font-mono">Destroyed</span>
                       ) : v.stored ? (

@@ -145,6 +145,7 @@ exports.sunset_core:RegisterCallback('sunset:impound:list', function(source)
             vehicleId = row.vehicle_id,
             plate = row.plate or 'Unknown',
             model = row.model or 'Unknown',
+            displayName = exports.sunset_vehicles:GetVehicleDisplayName(row.model),
             reason = row.reason,
             fee = totalFee,
             baseFee = tonumber(row.fee) or 0,

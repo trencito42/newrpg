@@ -209,7 +209,7 @@ local function buildTradeCatalog(source)
             vehicles[#vehicles + 1] = {
                 assetType = 'vehicle',
                 id = tonumber(row.id),
-                label = ('%s · %s'):format(string.upper(row.model or 'vehicle'), row.plate or '?'),
+                label = ('%s · %s'):format(exports.sunset_vehicles:GetVehicleDisplayName(row.model), row.plate or '?'),
                 detail = exports.sunset_core:TFor(source, 'inventory.ui.garage_stored'),
             }
         end

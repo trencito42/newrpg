@@ -680,15 +680,7 @@ CreateThread(function()
 end)
 
 local function vehicleModelLabel(model)
-    local display = GetDisplayNameFromVehicleModel(model)
-    if not display or display == '' or display == 'NULL' then
-        return ('0x%08X'):format(model & 0xFFFFFFFF)
-    end
-    local label = GetLabelText(display)
-    if label and label ~= '' and label ~= 'NULL' then
-        return label
-    end
-    return display
+    return exports.sunset_vehicles:GetVehicleDisplayName(model)
 end
 
 local function networkOwnerServerId(veh)
@@ -805,12 +797,7 @@ local function drawPropDebugLabel(obj, distance, isVehicle)
 
     local modelName = modelHex
     if isVehicle then
-        pcall(function()
-            local display = GetDisplayNameFromVehicleModel(model)
-            if display and display ~= '' and display ~= 'NULL' and display ~= 'CARNOTFOUND' then
-                modelName = display
-            end
-        end)
+        pcall(function() modelName = exports.sunset_vehicles:GetVehicleDisplayName(obj) end)
     end
 
     local netId   = NetworkGetEntityIsNetworked(obj) and NetworkGetNetworkIdFromEntity(obj) or 0

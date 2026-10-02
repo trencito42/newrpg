@@ -309,6 +309,11 @@ const Hud = {
             return;
         }
 
+        const vehicleName = $('#hud-vehicle-name');
+        if (vehicleName && vehicleName.textContent !== (data.vehicleName || '')) {
+            vehicleName.textContent = data.vehicleName || '';
+        }
+
         this.syncHintState(data);
         if (!this.wasInVehicle) {
             this.showVehicleHints();

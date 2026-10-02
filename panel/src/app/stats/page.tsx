@@ -4,6 +4,7 @@ import { getRequestLanguage } from "@/lib/auth";
 import Link from "next/link";
 import { PlayerName } from "@/components/ui/PlayerName";
 import { getFactionLabel } from "@/lib/factions";
+import { vehicleDisplayName } from "@/lib/vehicle-names";
 
 interface RichPlayerRecord {
   id: number;
@@ -34,6 +35,7 @@ interface FishingPodiumRecord {
 
 interface VehicleModelStat {
   model: string;
+  catalog_label: string | null;
   count: number;
 }
 
@@ -100,9 +102,10 @@ export default async function ServerStatsPage() {
       LIMIT 6
     `),
     query<VehicleModelStat>(`
-      SELECT model, COUNT(*) as count
-      FROM vehicles
-      GROUP BY model
+      SELECT v.model, dv.label AS catalog_label, COUNT(*) as count
+      FROM vehicles v
+      LEFT JOIN dealership_vehicles dv ON LOWER(dv.model) = LOWER(v.model)
+      GROUP BY v.model, dv.label
       ORDER BY count DESC
       LIMIT 6
     `),
@@ -223,7 +226,7 @@ export default async function ServerStatsPage() {
             <div className="p-3 grid grid-cols-3 gap-2">
               {vehicleStats.map((v) => (
                 <div key={v.model} className="p-2 bg-surface-200 border border-surface-border rounded text-center">
-                  <span className="font-mono text-xs font-semibold text-[#f1f1f1] uppercase block truncate">{v.model}</span>
+                  <span className="text-xs font-semibold text-[#f1f1f1] block truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
                   <span className="text-[11px] text-[#6f6f74] block mt-0.5">{v.count} owned</span>
                 </div>
               ))}
