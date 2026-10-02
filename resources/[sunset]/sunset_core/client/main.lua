@@ -42,10 +42,22 @@ CreateThread(function()
     -- the loadscreen hands off to the auth UI.
     while bootState == 'LOADSCREEN' do Wait(200) end
     while bootState ~= 'GAMEPLAY' do
-        DisableAllControlActions(0)
-        -- NUI receives keyboard/mouse independently; keep only push-to-talk alive.
-        EnableControlAction(0, 249, true)
-        Wait(0)
+        -- Auth already owns NUI focus, which blocks gameplay input. Disabling
+        -- *all* GTA controls every frame here also suppresses mouse input on
+        -- some clients right when the loadscreen hands off to the login form.
+        -- Keep the blanket guard only for pre-game gaps without an auth form.
+        local authOpen = false
+        if GetResourceState('sunset_auth_ui') == 'started' then
+            local ok, open = pcall(function() return exports.sunset_auth_ui:IsAuthOpen() end)
+            authOpen = ok and open == true
+        end
+        if authOpen then
+            Wait(50)
+        else
+            DisableAllControlActions(0)
+            EnableControlAction(0, 249, true)
+            Wait(0)
+        end
     end
 end)
 
