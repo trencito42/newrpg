@@ -915,6 +915,7 @@ const Panels = {
             document.body.classList.remove('hud-chrome-hidden');
         }
         this.selectInventoryItem(null, null);
+        window.InventoryForza?.hideTooltip?.();
     },
 
     _shopCategoryLabels: {

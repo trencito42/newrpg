@@ -63,7 +63,7 @@
     border-right: 1px solid var(--border-faint);
     display: flex;
     flex-direction: column;
-    padding: 24px 30px;
+    padding: 26px 30px;
     position: relative;
     min-height: 0;
 }
@@ -138,46 +138,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
     transition: width 0.3s ease;
 }
 
-/* Equipment Row */
-.inventory-forza .equipment-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    justify-content: space-between;
-    flex-shrink: 0;
-}
-
-.inventory-forza .equip-slot {
-    flex: 1;
-    height: 52px;
-    background: var(--bg-slot);
-    border: 1px solid var(--border-lighter);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: 0.15s;
-}
-
-.inventory-forza .equip-slot:hover {
-    background: var(--bg-slot-hover);
-    border-color: var(--brand-accent);
-}
-
-.inventory-forza .equip-slot.is-drop-target,
-.inventory-forza .equip-slot.drag-over {
-    border-color: var(--brand-accent);
-    background: rgba(215, 181, 88, 0.08);
-}
-
-.inventory-forza .equip-ghost {
-    font-size: 20px;
-    color: rgba(242, 239, 232, 0.15);
-    pointer-events: none;
-}
-
-/* Grid-ul principal de sloturi */
+/* Grid-ul principal de sloturi (6 x 5) */
 .inventory-forza .inv-grid-wrapper {
     flex: 1 1 auto;
     min-height: 0;
@@ -249,7 +210,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
     justify-content: center;
     cursor: grab;
     position: relative;
-    padding: 4px;
+    padding: 6px;
     box-sizing: border-box;
     background: transparent;
     border: none;
@@ -265,19 +226,19 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 .inventory-forza .inv-item.is-dragging { opacity: 0.3; }
 
 .inventory-forza .item-icon-wrap {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .inventory-forza .item-icon {
-    font-size: 26px;
+    font-size: 28px;
     color: var(--brand-primary);
-    max-width: 32px;
-    max-height: 32px;
+    max-width: 34px;
+    max-height: 34px;
     object-fit: contain;
     pointer-events: none;
 }
@@ -299,7 +260,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 }
 
 .inventory-forza .item-label {
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: 700;
     color: rgba(242, 239, 232, 0.6);
     text-transform: uppercase;
@@ -339,16 +300,16 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 /* Trash Zone */
 .inventory-forza .trash-zone,
 .inventory-forza .inv-trash {
-    margin-top: 10px;
-    height: 48px;
+    margin-top: 14px;
+    height: 54px;
     border: 1px dashed var(--border-faint);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     color: rgba(242, 239, 232, 0.4);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -359,7 +320,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 
 .inventory-forza .trash-zone i,
 .inventory-forza .inv-trash i {
-    font-size: 16px;
+    font-size: 18px;
     color: currentColor;
 }
 
@@ -372,84 +333,25 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
     border-style: solid;
 }
 
-/* Quick Actions */
-.inventory-forza .inv-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-lighter);
-    flex-shrink: 0;
-}
-
-.inventory-forza #inventory-selected-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: rgba(242, 239, 232, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.inventory-forza .inv-btn-group {
-    display: flex;
-    gap: 8px;
-}
-
-.inventory-forza .inv-btn-group button {
-    padding: 6px 14px;
-    background: rgba(242, 239, 232, 0.05);
-    border: 1px solid var(--border-faint);
-    border-radius: 2px;
-    color: var(--brand-primary);
-    font-family: inherit;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    cursor: pointer;
-    transition: 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.inventory-forza .inv-btn-group button:hover:not(:disabled) {
-    background: var(--brand-accent);
-    color: #08080a;
-    border-color: var(--brand-accent);
-}
-
-.inventory-forza .inv-btn-group button.is-danger:hover:not(:disabled) {
-    background: var(--color-trash);
-    color: #ffffff;
-    border-color: var(--color-trash);
-}
-
-.inventory-forza .inv-btn-group button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
 /* --- DREAPTA: CONTEXT (NEARBY / TRADE) --- */
 .inventory-forza .inv-right,
 .inventory-forza .proximity-panel {
     width: 35%;
     display: flex;
     flex-direction: column;
-    padding: 24px 24px;
+    padding: 26px 26px;
     background: rgba(8, 8, 10, 0.4);
     min-height: 0;
 }
 
 .inventory-forza .section-title,
 .inventory-forza .prox-header {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 800;
     color: var(--brand-accent);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -458,7 +360,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 
 .inventory-forza .section-title i,
 .inventory-forza .prox-header i {
-    font-size: 14px;
+    font-size: 15px;
     color: var(--brand-accent);
 }
 
@@ -478,7 +380,7 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
 .inventory-forza .prox-player {
     background: var(--bg-slot);
     border: 1px solid var(--border-lighter);
-    padding: 10px 14px;
+    padding: 12px 14px;
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
@@ -564,6 +466,109 @@ body.trade-forza-active .inventory-forza .inv-cash-badge {
     text-transform: uppercase;
     z-index: 20;
     pointer-events: none;
+}
+
+/* --- TOOLTIP (HOVER INFO) --- */
+.item-tooltip {
+    position: fixed;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-faint);
+    border-radius: 4px;
+    padding: 12px 14px;
+    width: 220px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 12500;
+    transition: opacity 0.12s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.item-tooltip .tt-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-lighter);
+    padding-bottom: 8px;
+}
+
+.item-tooltip .tt-icon-wrap {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(242, 239, 232, 0.04);
+    border: 1px solid var(--border-lighter);
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.item-tooltip .tt-icon-wrap .item-icon {
+    font-size: 28px;
+    max-width: 32px;
+    max-height: 32px;
+    object-fit: contain;
+    color: var(--brand-primary);
+}
+
+.item-tooltip .tt-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.item-tooltip .tt-name {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-tooltip .tt-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: rgba(242, 239, 232, 0.5);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.item-tooltip .tt-count {
+    color: var(--brand-primary);
+    font-weight: 800;
+}
+
+.item-tooltip .tt-weight {
+    color: rgba(242, 239, 232, 0.5);
+}
+
+.item-tooltip .tt-desc {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: var(--brand-primary);
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.item-tooltip .tt-footer {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-top: 1px solid var(--border-lighter);
+    padding-top: 6px;
 }
 
 /* Quantity Selection Modal */

@@ -58,6 +58,56 @@ const InventoryForza = {
         return `<img class="item-icon" src="${src}" alt="" draggable="false" onerror="this.src='assets/items/backpack.webp'">`;
     },
 
+    showTooltip(e, row) {
+        const tooltip = document.getElementById('item-tooltip');
+        if (!tooltip) return;
+        const label = this.itemLabel(row);
+        const count = Math.max(1, Number(row.count) || 1);
+        const weight = Number(row.weight) || 0;
+        const totalWeight = (weight * count).toFixed(2);
+        const desc = row.desc || row.description || (row.usable ? 'Obiect utilizabil. Dublu-click pentru a folosi/echipa.' : 'Obiect păstrat în rucsac.');
+
+        const iconEl = tooltip.querySelector('#tt-icon');
+        if (iconEl) iconEl.innerHTML = this.itemIconHtml(row);
+        const nameEl = tooltip.querySelector('#tt-name');
+        if (nameEl) nameEl.textContent = label;
+        const countEl = tooltip.querySelector('#tt-count');
+        if (countEl) countEl.textContent = count > 1 ? `x${count}` : '';
+        const weightEl = tooltip.querySelector('#tt-weight');
+        if (weightEl) weightEl.textContent = `${totalWeight} kg`;
+        const descEl = tooltip.querySelector('#tt-desc');
+        if (descEl) descEl.textContent = desc;
+        const footerEl = tooltip.querySelector('#tt-footer');
+        if (footerEl) {
+            footerEl.textContent = row.usable ? 'Dublu-click pentru a folosi' : 'Trage pe Trash pentru a arunca';
+        }
+
+        tooltip.style.opacity = '1';
+        this.moveTooltip(e);
+    },
+
+    hideTooltip() {
+        const tooltip = document.getElementById('item-tooltip');
+        if (tooltip) tooltip.style.opacity = '0';
+    },
+
+    moveTooltip(e) {
+        const tooltip = document.getElementById('item-tooltip');
+        if (!tooltip) return;
+        const pad = 14;
+        let x = e.clientX + pad;
+        let y = e.clientY + pad;
+        const rect = tooltip.getBoundingClientRect();
+        if (x + rect.width > window.innerWidth - 10) {
+            x = e.clientX - rect.width - pad;
+        }
+        if (y + rect.height > window.innerHeight - 10) {
+            y = e.clientY - rect.height - pad;
+        }
+        tooltip.style.left = `${Math.max(8, x)}px`;
+        tooltip.style.top = `${Math.max(8, y)}px`;
+    },
+
     buildItemButton(row, cell, hooks) {
         const label = this.itemLabel(row);
         const count = Math.max(0, Number(row.count) || 0);
@@ -65,16 +115,25 @@ const InventoryForza = {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'inv-item item';
-        item.title = row.usable ? I18n.t('ui.inventory.select_use_hint', { label }) : I18n.t('ui.inventory.select_hint', { label });
+        item.title = '';
         item.innerHTML = `
             ${count > 1 ? `<div class="item-count">${count}</div>` : ''}
             <div class="item-icon-wrap">${this.itemIconHtml(row)}</div>
             <div class="item-label">${label}</div>
             ${weightText ? `<div class="item-weight">${weightText}</div>` : ''}
         `;
+        item.addEventListener('mouseenter', (e) => this.showTooltip(e, row));
+        item.addEventListener('mousemove', (e) => this.moveTooltip(e));
+        item.addEventListener('mouseleave', () => this.hideTooltip());
         item.addEventListener('click', (event) => hooks.onClick?.(row, cell, item, event));
-        item.addEventListener('dblclick', () => hooks.onDblClick?.(row));
-        item.addEventListener('pointerdown', (event) => hooks.onPointerDown?.(row, cell, item, event));
+        item.addEventListener('dblclick', () => {
+            this.hideTooltip();
+            hooks.onDblClick?.(row);
+        });
+        item.addEventListener('pointerdown', (event) => {
+            this.hideTooltip();
+            hooks.onPointerDown?.(row, cell, item, event);
+        });
         cell.appendChild(item);
         return item;
     },
