@@ -52,9 +52,9 @@ Sunset.Items = {
     fish_epic     = { label = 'Epic Fish',        weight = 3.0,  usable = false, category = 'food',    icon = 'fish_epic' },
     fish_legendary = { label = 'Legendary Fish', weight = 5.0,  usable = false, category = 'food',    icon = 'fish_legendary' },
     -- Fishing bait (consumabil la fiecare aruncare)
-    bait_worm    = { label = 'Worm Bait',         weight = 0.05, usable = false, category = 'fishing', icon = 'bread' },
-    bait_lure    = { label = 'Artificial Lure',   weight = 0.05, usable = false, category = 'fishing', icon = 'fishing_license' },
-    bait_premium = { label = 'Premium Bait',      weight = 0.05, usable = false, category = 'fishing', icon = 'fishing_license' },
+    bait_worm    = { label = 'Worm Bait',         weight = 0.05, usable = false, category = 'fishing', icon = 'bait_worm' },
+    bait_lure    = { label = 'Artificial Lure',   weight = 0.05, usable = false, category = 'fishing', icon = 'bait_lure' },
+    bait_premium = { label = 'Premium Bait',      weight = 0.05, usable = false, category = 'fishing', icon = 'bait_premium' },
     -- Undita (upgrade sequential prin NPC, tradeable)
     fishing_rod_1 = { label = 'Fishing Rod Mk1', weight = 1.5,  usable = false, category = 'fishing', icon = 'fishing_rod_1', equipProp = FISHING_ROD_EQUIP },
     fishing_rod_2 = { label = 'Fishing Rod Mk2', weight = 1.5,  usable = false, category = 'fishing', icon = 'fishing_rod_2', equipProp = FISHING_ROD_EQUIP },
@@ -86,8 +86,8 @@ Sunset.Items = {
     marine_electronics = { label = 'Marine Electronics',  weight = 1.2, usable = false, category = 'materials', icon = 'phone',                metaDisplay = {'condition','rarity'} },
     sealed_cargo       = { label = 'Sealed Cargo',        weight = 3.0, usable = false, category = 'misc',      icon = 'filled_evidence_bag',  metaDisplay = {'condition','rarity'} },
     marine_artifact    = { label = 'Marine Artifact',     weight = 0.8, usable = false, category = 'misc',      icon = 'filled_evidence_bag',  metaDisplay = {'condition','rarity'} },
-    scuba_gear         = { label = 'Basic Scuba Set',     weight = 4.0, usable = false, category = 'tools',     icon = 'duffel_bag' },
-    advanced_tank      = { label = 'Advanced Dive Tank',  weight = 5.5, usable = false, category = 'tools',     icon = 'backpack' },
+    scuba_gear         = { label = 'Basic Scuba Set',     weight = 4.0, usable = false, category = 'tools',     icon = 'scuba_gear' },
+    advanced_tank      = { label = 'Advanced Dive Tank',  weight = 5.5, usable = false, category = 'tools',     icon = 'advanced_tank' },
     ammo_9mm = {
         label = '9mm Ammo Box (24)', weight = 0.4, usable = true, category = 'ammo', icon = 'pistol_ammo',
         ammoRounds = 24, ammoWeapons = { 'WEAPON_SNSPISTOL', 'WEAPON_PISTOL', 'WEAPON_VINTAGEPISTOL' },
