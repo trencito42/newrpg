@@ -14,8 +14,10 @@ local EXPENSIVE_CALLBACK_LIMITS = {
     ['sunset:trade:commit'] = 2,
     ['sunset:craftItem'] = 3,
     ['sunset:dealership:purchase'] = 2,
-    ['sunset:propertyBuy'] = 2,
-    ['sunset:propertyRent'] = 2,
+    -- [SEC-PERMIT] Corrected from phantom 'sunset:propertyBuy/Rent' — actual
+    -- registered names are 'sunset:buyProperty' / 'sunset:rentProperty'.
+    ['sunset:buyProperty'] = 2,
+    ['sunset:rentProperty'] = 2,
 }
 
 -- ═══ HIGH-PERFORMANCE ONLINE STATE INDEXES ═══
@@ -79,10 +81,14 @@ exports('UpdatePlayerPed', UpdatePlayerPed)
 
 RegisterNetEvent('sunset:server:flowTrace', function(stage, detail)
     local source = source
+    -- [SEC-PERMIT] Rate cap: 500 ms minimum between traces per source.
+    -- flowTrace was 100 ms => a 32-player server could produce ~320 lines/s.
+    -- In production (sunset_dev 0) traces are suppressed entirely.
     if type(stage) ~= 'string' or #stage > 64 or type(detail) ~= 'string' or #detail > 160 then return end
+    if not SunsetBoot.IsDebug() then return end -- no-op in production
     local now = GetGameTimer()
     local previous = FlowTraceRate[source] or 0
-    if now - previous < 100 then return end
+    if now - previous < 500 then return end
     FlowTraceRate[source] = now
     print(('[SunsetFlow:%d] %s%s'):format(source, stage, detail ~= '' and (' | ' .. detail) or ''))
 end)
@@ -356,6 +362,53 @@ local function getLicense(source)
     return Sunset.GetIdentifier(source, 'license')
 end
 
+-- ═══ SPAWN PERMIT LIFECYCLE ═══
+-- [SEC-PERMIT] Explicit single-use spawn permits replace the old
+-- `if isAuth or oldBucket ~= 0` bypass, which let ANY player in bucket 9999
+-- escape auth isolation by sending prepareSpawn without being authenticated.
+--
+-- Lifecycle:
+--   IssueSpawnPermit(src)  → called by LoadCharacter after character is durable
+--   prepareSpawn           → validates permit; single-use; releases bucket
+--   clearSpawnPermit(src)  → called on disconnect / duplicate login / restart
+--
+-- Invariants:
+--   • A permit may only be issued for an authenticated session with a loaded character.
+--   • requestId is server-generated — client cannot guess or replay it.
+--   • Permits expire after SPAWN_PERMIT_TTL_MS (15 s).
+--   • Consuming a permit removes it immediately (single-use).
+--   • Re-spawns (death/respawn) issue a fresh permit.
+local SpawnPermits = {}
+local SPAWN_PERMIT_TTL_MS = 15000
+
+local function clearSpawnPermit(src)
+    SpawnPermits[src] = nil
+end
+
+local function issueSpawnPermit(src)
+    local session = Sessions[src]
+    local player  = Players[src]
+    if not session or not session.authenticated then
+        Sunset.Warn(('[SEC-PERMIT] IssueSpawnPermit refused: src=%d not authenticated'):format(src))
+        return nil
+    end
+    if not player or not player.character or not player.character.id then
+        Sunset.Warn(('[SEC-PERMIT] IssueSpawnPermit refused: src=%d no loaded character'):format(src))
+        return nil
+    end
+    -- Server-generated nonce — client cannot predict or forge this.
+    local reqId = math.random(1000000, 9999999) .. '_' .. math.random(1000000, 9999999)
+    SpawnPermits[src] = {
+        requestId   = reqId,
+        accountId   = player.account_id,
+        characterId = tonumber(player.character.id),
+        issuedAt    = GetGameTimer(),
+        used        = false,
+    }
+    return reqId
+end
+exports('IssueSpawnPermit', issueSpawnPermit)
+
 RegisterNetEvent('sunset:server:playerLoaded', function()
     local source = source
     -- [AUDIT P2-03] Ignore replays: an authenticated client must never be able to
@@ -374,30 +427,91 @@ RegisterNetEvent('sunset:server:playerLoaded', function()
     -- FiveM will not stream world geometry for bucket 9999, eliminating
     -- the freeze that happens when ShutdownLoadingScreen() is called.
     SetPlayerRoutingBucket(source, 9999)
+    clearSpawnPermit(source) -- ensure no stale permit from a previous session
     TriggerClientEvent('sunset:client:sessionReady', source, { license = license })
     Sunset.Debug('Session ready:', source)
 end)
 
 -- Moves the player back to the main routing bucket right before spawn
 -- streaming begins (called by sunset_spawn before streamSpawnArea).
+-- [SEC-PERMIT] SECURITY: The old implementation released ANY player in bucket
+-- 9999 via `if isAuth or oldBucket ~= 0`.  Since every auth-screen player is
+-- in bucket 9999, an unauthenticated player could send this event and escape
+-- isolation.  The new implementation requires a valid single-use spawn permit
+-- issued by the server only after the character is loaded and the session is
+-- authenticated.  The client must present the requestId it received from
+-- IssueSpawnPermit; a fabricated or replayed requestId is rejected.
 RegisterNetEvent('sunset:server:prepareSpawn', function(requestId)
-    local source = source
+    local source  = source
     local session = Sessions[source]
-    local player = Players[source]
+    local player  = Players[source]
+    local permit  = SpawnPermits[source]
     local oldBucket = GetPlayerRoutingBucket(source)
-    local isAuth = (session and session.authenticated) or (player and player.account_id ~= nil) or (player and player.character ~= nil)
 
     if SunsetBoot.IsDebug() then
-        print(('^5[BOOTV src=%d] prepareSpawn:received oldBucket=%s requestId=%s auth=%s^7'):format(
-            source, tostring(oldBucket), tostring(requestId), tostring(isAuth)))
+        print(('^5[BOOTV src=%d] prepareSpawn:received oldBucket=%s requestId=%s^7'):format(
+            source, tostring(oldBucket), tostring(requestId)))
     end
 
-    if isAuth or oldBucket ~= 0 then
-        SetPlayerRoutingBucket(source, 0)
+    -- ── Auth check (required for ALL paths) ───────────────────────────────
+    if not session or not session.authenticated then
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: session not authenticated'):format(source))
+        return
     end
+
+    -- ── Respawn fast-path (player already in bucket 0) ────────────────────
+    -- [SEC-PERMIT] The exploit was unauthenticated bucket-9999 → bucket-0 escape.
+    -- If the player is ALREADY in bucket 0 and has a loaded character they are
+    -- genuinely in gameplay (death-respawn / /spawnmenu path). No permit is needed
+    -- because no routing-bucket change is required — just ack the handshake.
+    if oldBucket == 0 and player and player.character and player.character.id then
+        local newBucket = GetPlayerRoutingBucket(source)
+        if SunsetBoot.IsDebug() then
+            print(('^5[SEC-PERMIT] prepareSpawn: respawn fast-path src=%d charId=%s^7'):format(
+                source, tostring(player.character.id)))
+        end
+        TriggerClientEvent('sunset:client:prepareSpawnAck', source, requestId, newBucket, oldBucket)
+        return
+    end
+
+    -- ── Permit validation (initial login from bucket 9999) ─────────────────
+    if not permit then
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: no spawn permit issued (oldBucket=%s)'):format(
+            source, tostring(oldBucket)))
+        return
+    end
+    if permit.used then
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: permit already consumed (replay)'):format(source))
+        return
+    end
+    if type(requestId) ~= 'string' or requestId ~= permit.requestId then
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: requestId mismatch (got=%s expected=%s)'):format(
+            source, tostring(requestId), tostring(permit.requestId)))
+        return
+    end
+    if (GetGameTimer() - permit.issuedAt) > SPAWN_PERMIT_TTL_MS then
+        SpawnPermits[source] = nil
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: permit expired'):format(source))
+        return
+    end
+    -- Verify the character that was loaded when the permit was issued is still
+    -- the active character (prevents account-switching mid-permit).
+    local charId = player and player.character and tonumber(player.character.id)
+    if not charId or charId ~= permit.characterId then
+        SpawnPermits[source] = nil
+        Sunset.Warn(('[SEC-PERMIT] prepareSpawn REJECTED src=%d: characterId mismatch (permit=%s current=%s)'):format(
+            source, tostring(permit.characterId), tostring(charId)))
+        return
+    end
+    -- ── Consume permit (single-use) ────────────────────────────────────────
+    permit.used = true
+    SpawnPermits[source] = nil
+
+    -- ── Release from auth bucket ───────────────────────────────────────────
+    SetPlayerRoutingBucket(source, 0)
     local newBucket = GetPlayerRoutingBucket(source)
-    print(('^2[LOGIN-FLOW] 20-SRV PREPARESPAWN: src=%s oldBucket=%s newBucket=%s isAuth=%s requestId=%s^7'):format(
-        tostring(source), tostring(oldBucket), tostring(newBucket), tostring(isAuth), tostring(requestId)))
+    print(('^2[LOGIN-FLOW] 20-SRV PREPARESPAWN: src=%s oldBucket=%s newBucket=%s requestId=%s^7'):format(
+        tostring(source), tostring(oldBucket), tostring(newBucket), tostring(requestId)))
 
     TriggerClientEvent('sunset:client:prepareSpawnAck', source, requestId, newBucket, oldBucket)
 end)
@@ -435,6 +549,9 @@ local function completeAuthenticationInner(source, accountId, username)
                 otherPlayer.sessionStart = nil
             end
             DropPlayer(otherSrc, Sunset.TFor(otherSrc, 'auth.logged_in_elsewhere'))
+            -- [SEC-PERMIT] Clear spawn permit for the displaced session so
+            -- it cannot be replayed after the source drops.
+            clearSpawnPermit(otherSrc)
             Players[otherSrc] = nil
             Sessions[otherSrc] = nil
         end
@@ -749,6 +866,16 @@ loadCharacterForPlayerInner = function(source, player, charId)
         Player(source).state:set('characterServicesReady', true, true)
         TriggerEvent('sunset:server:characterServicesReady', source, charId)
     end)
+
+    -- [SEC-PERMIT] Issue a spawn permit now that the character is durably set.
+    -- The requestId is returned to the client as part of the enterGame response
+    -- and must be forwarded verbatim in the prepareSpawn event.
+    local permitId = issueSpawnPermit(source)
+    if not permitId then
+        Sunset.Warn(('[SEC-PERMIT] loadCharacterForPlayerInner: IssueSpawnPermit returned nil for src=%d'):format(source))
+    end
+    char._spawnPermit = permitId
+
     return char
 end
 
@@ -805,9 +932,12 @@ AddEventHandler('playerDropped', function()
     Players[source] = nil
     ConnectionLocales[source] = nil
     Sessions[source] = nil
+    -- [SEC-PERMIT] Clear spawn permit on disconnect so stale permits cannot
+    -- be replayed if the source ID is reused for a new connection.
+    clearSpawnPermit(source)
     CallbackRate[source] = nil
     CallbackNameRate[source] = nil
-    FlowTraceRate[source] = nil -- [AUDIT P7-06] was leaking per source
+    FlowTraceRate[source] = nil
 end)
 
 -- ═══ CHARACTER CALLBACKS ═══
@@ -836,7 +966,15 @@ RegisterCallback('sunset:createCharacter', function(source, data)
     local ok, res, err = pcall(function() return Sunset._createCharacterInner(source, player, data) end)
     CharCreateInFlight[source] = nil
     if not ok then error(res) end
-    return res, err
+    if not res then return nil, err end
+    -- [SEC-PERMIT] Load the freshly-created character into the server session so
+    -- the permit lifecycle runs.  Without this step the player would enter the world
+    -- with no registered character in Players[source].character and no spawn permit.
+    local char = loadCharacterForPlayer(source, player, res.id)
+    if not char then return nil, Sunset.LocalizedError('auth.session_not_ready') end
+    local permitId = char._spawnPermit
+    char._spawnPermit = nil
+    return { character = char, spawnPermit = permitId }
 end)
 
 function Sunset._createCharacterInner(source, player, data)
@@ -913,7 +1051,14 @@ end
 RegisterCallback('sunset:selectCharacter', function(source, charId)
     local player = GetPlayer(source)
     if not player then return nil, Sunset.LocalizedError('auth.not_logged_in') end
-    return loadCharacterForPlayer(source, player, charId)
+    local char = loadCharacterForPlayer(source, player, charId)
+    if not char then return nil, Sunset.LocalizedError('auth.session_not_ready') end
+    -- [SEC-PERMIT] Extract the server-issued spawn permit and return it to the
+    -- client alongside the character so sunset_characters can register it with
+    -- sunset_spawn before calling prepareSpawnBucket.
+    local permitId = char._spawnPermit
+    char._spawnPermit = nil
+    return { character = char, spawnPermit = permitId }
 end)
 
 RegisterCallback('sunset:enterGame', function(source)
@@ -931,11 +1076,14 @@ RegisterCallback('sunset:enterGame', function(source)
     end
 
     -- [LOGIN PIPELINE] Idempotent: return already-loaded character immediately.
+    -- [SEC-PERMIT] Re-issue a fresh spawn permit so the client always has a valid
+    -- one even when the character was cached (e.g. rapid reconnect).
     if player.character and player.character.id then
+        local permitId = issueSpawnPermit(source)
         local totalDur = GetGameTimer() - tEnterGame
-        print(('^2[LOGIN-FLOW] ENTERGAME_RETURN (cached) dur=%dms | charId=%s src=%s^7'):format(
-            totalDur, tostring(player.character.id), tostring(source)))
-        return { character = player.character }
+        print(('^2[LOGIN-FLOW] ENTERGAME_RETURN (cached) dur=%dms | charId=%s src=%s permit=%s^7'):format(
+            totalDur, tostring(player.character.id), tostring(source), tostring(permitId ~= nil)))
+        return { character = player.character, spawnPermit = permitId }
     end
 
     tSub = GetGameTimer()
@@ -955,9 +1103,12 @@ RegisterCallback('sunset:enterGame', function(source)
             durLoad, tostring(char and char.id or 'nil')))
         if char then
             local totalDur = GetGameTimer() - tEnterGame
-            print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s^7'):format(
-                totalDur, tostring(char.id), tostring(source)))
-            return { character = char }
+            -- [SEC-PERMIT] _spawnPermit was set by loadCharacterForPlayerInner.
+            local permitId = char._spawnPermit
+            char._spawnPermit = nil -- do not persist this field
+            print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s permit=%s^7'):format(
+                totalDur, tostring(char.id), tostring(source), tostring(permitId ~= nil)))
+            return { character = char, spawnPermit = permitId }
         end
         Sunset.Warn(('enterGame: character %s could not be loaded for src %s (already loaded / duplicate / missing)'):format(tostring(row.id), tostring(source)))
         return nil, Sunset.LocalizedError('auth.session_not_ready')
@@ -973,9 +1124,11 @@ RegisterCallback('sunset:enterGame', function(source)
         durCreateLoad, tostring(char and char.id or 'nil')))
 
     local totalDur = GetGameTimer() - tEnterGame
-    print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s^7'):format(
-        totalDur, tostring(char and char.id), tostring(source)))
-    return { character = char }
+    local permitId = char and char._spawnPermit
+    if char then char._spawnPermit = nil end
+    print(('^2[LOGIN-FLOW] ENTERGAME_RETURN dur=%dms | charId=%s src=%s permit=%s^7'):format(
+        totalDur, tostring(char and char.id), tostring(source), tostring(permitId ~= nil)))
+    return { character = char, spawnPermit = permitId }
 end)
 
 RegisterCallback('sunset:deleteCharacter', function(source, charId)

@@ -173,8 +173,8 @@ local function autoEnterGame()
 
     if result and result.character then
         local charId = result.character.id
-        print(('^2[LOGIN-PERF] ENTER_GAME_RESP +%dms (dur=%dms) | charId=%s^7'):format(
-            enterTotalElapsed, enterDur, tostring(charId)))
+        print(('^2[LOGIN-PERF] ENTER_GAME_RESP +%dms (dur=%dms) | charId=%s permit=%s^7'):format(
+            enterTotalElapsed, enterDur, tostring(charId), tostring(result.spawnPermit ~= nil)))
 
         if SunsetBoot and SunsetBoot.RecordMilestone then
             SunsetBoot.RecordMilestone('enterGame_callback', enterDur, ('charId=%s'):format(tostring(charId)))
@@ -182,6 +182,11 @@ local function autoEnterGame()
             pcall(function() exports.sunset_core:RecordMilestone('enterGame_callback', enterDur) end)
         end
         trace('character_request_complete', ('%s | %dms'):format(tostring(charId), enterDur))
+        -- [SEC-PERMIT] Register the server-issued spawn permit before the spawn
+        -- pipeline begins. prepareSpawnBucket will forward this to the server.
+        if result.spawnPermit and GetResourceState('sunset_spawn') == 'started' then
+            exports.sunset_spawn:SetSpawnPermit(result.spawnPermit)
+        end
         spawnCharacter(result.character, result.spawn)
         return
     end
@@ -229,23 +234,31 @@ end)
 
 AddEventHandler('sunset:nui:select', function(data)
     CreateThread(function()
-        local char, err = Sunset.AwaitCallbackTimeout('sunset:selectCharacter', 4000, tonumber(data and data.charId))
-        if not char then
+        local result, err = Sunset.AwaitCallbackTimeout('sunset:selectCharacter', 4000, tonumber(data and data.charId))
+        if not result or not result.character then
             exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_select_that_character'), 'error')
             return
         end
-        spawnCharacter(char)
+        -- [SEC-PERMIT] Register permit before spawning.
+        if result.spawnPermit and GetResourceState('sunset_spawn') == 'started' then
+            exports.sunset_spawn:SetSpawnPermit(result.spawnPermit)
+        end
+        spawnCharacter(result.character)
     end)
 end)
 
 AddEventHandler('sunset:nui:create', function(data)
     CreateThread(function()
-        local char, err = Sunset.AwaitCallbackTimeout('sunset:createCharacter', 5000, data or {})
-        if not char then
+        local result, err = Sunset.AwaitCallbackTimeout('sunset:createCharacter', 5000, data or {})
+        if not result or not result.character then
             exports.sunset_ui:Notify(err or exports.sunset_core:Translate('characters.msg.could_not_create_the_character'), 'error')
             return
         end
-        spawnCharacter(char)
+        -- [SEC-PERMIT] Register permit before spawning.
+        if result.spawnPermit and GetResourceState('sunset_spawn') == 'started' then
+            exports.sunset_spawn:SetSpawnPermit(result.spawnPermit)
+        end
+        spawnCharacter(result.character)
     end)
 end)
 

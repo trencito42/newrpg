@@ -68,7 +68,16 @@ local function defaultPosition()
 end
 
 -- PrepareSpawn Routing Bucket Handshake
+-- [SEC-PERMIT] pendingSpawnPermit is set by sunset_characters after receiving
+-- the server-issued spawn permit from the enterGame callback response.
+-- prepareSpawnBucket forwards this string verbatim; the server validates it
+-- against SpawnPermits[source] and rejects random/forged values.
 local pendingPrepareAck = nil
+local pendingSpawnPermit = nil -- set externally via SetSpawnPermit export
+
+exports('SetSpawnPermit', function(permitId)
+    pendingSpawnPermit = type(permitId) == 'string' and permitId or nil
+end)
 
 RegisterNetEvent('sunset:client:prepareSpawnAck', function(requestId, newBucket, oldBucket)
     if pendingPrepareAck and pendingPrepareAck.id == requestId then
@@ -77,7 +86,13 @@ RegisterNetEvent('sunset:client:prepareSpawnAck', function(requestId, newBucket,
 end)
 
 local function prepareSpawnBucket()
-    local reqId = math.random(100000, 999999)
+    -- [SEC-PERMIT] Use the server-issued permit as the request ID.
+    -- The server will reject anything that does not match the issued permit.
+    local reqId = pendingSpawnPermit
+    pendingSpawnPermit = nil -- single-use on the client side too
+    if not reqId then
+        print('^1[SEC-PERMIT] prepareSpawnBucket: no spawn permit available — server will reject prepareSpawn^7')
+    end
     local p = promise.new()
     pendingPrepareAck = { id = reqId, p = p }
     local t0 = GetGameTimer()
