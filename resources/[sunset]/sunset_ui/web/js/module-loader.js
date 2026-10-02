@@ -128,7 +128,7 @@
         },
         garage: {
             html: 'modules/garage/index.html',
-            css: ['css/panels.css'],
+            css: ['css/panels.css', 'css/racket-vehicle-menu.css'],
             js: ['js/panels.js']
         },
         scoreboard: {

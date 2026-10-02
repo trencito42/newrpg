@@ -299,29 +299,30 @@ html, body {
     transition: transform 180ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
 }
 
-.node-border {
-    fill: rgba(0, 10, 20, 0.85);
+.node-border, .node-ring {
+    fill: #05080c;
     stroke: var(--color-node-base);
-    stroke-width: 1.8;
-    transition: stroke 150ms ease, stroke-width 150ms ease;
+    stroke-width: 1.5;
+    transition: all 0.2s ease;
 }
 
 .node-arm {
     stroke: var(--color-node-base);
-    stroke-width: 3;
-    stroke-linecap: round;
-    transition: stroke 150ms ease;
+    stroke-width: 4;
+    stroke-linecap: square;
+    fill: none;
+    transition: all 0.2s ease;
 }
 
-.node-group.energized .node-border {
-    stroke: var(--color-power);
-    filter: drop-shadow(0 0 8px var(--color-power));
+.node-group.energized .node-border,
+.node-group.energized .node-ring {
+    stroke: var(--color-power-glow);
 }
 
 .node-group.energized .node-arm {
     stroke: var(--color-power);
-    stroke-width: 3.5;
-    filter: drop-shadow(0 0 6px var(--color-power));
+    stroke-width: 4;
+    filter: drop-shadow(0 0 5px var(--color-power));
 }
 
 .node-group.locked .node-border {
@@ -329,86 +330,92 @@ html, body {
     stroke-dasharray: 4 3;
 }
 
-.node-center-dot {
-    fill: #ffffff;
-    transition: fill 150ms ease;
+.node-center-dot, .node-core {
+    fill: var(--color-node-base);
+    transition: all 0.2s ease;
 }
 
-.node-group.energized .node-center-dot {
+.node-group.energized .node-center-dot,
+.node-group.energized .node-core {
     fill: var(--color-power);
     filter: drop-shadow(0 0 5px var(--color-power));
+}
+
+/* Hover pe nod - Se mareste usor cercul exterior */
+.node-group:hover .node-border,
+.node-group:hover .node-ring {
+    stroke: var(--color-node-hover);
+    transform: scale(1.15);
 }
 
 /* Source Emitter Visuals */
 .source-core {
     fill: var(--color-power);
-    filter: drop-shadow(0 0 12px var(--color-power));
-    animation: sourcePulse 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px var(--color-power));
+    animation: pulse 1.5s infinite alternate;
 }
 
 .source-ring {
     fill: none;
     stroke: var(--color-power);
-    stroke-width: 1.8;
-    stroke-dasharray: 6 3;
-    animation: rotateRing 8s linear infinite;
+    stroke-width: 2;
+    stroke-dasharray: 4 6;
+    animation: spinSlow 8s linear infinite;
     transform-origin: 0 0;
 }
 
-@keyframes sourcePulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px var(--color-power)); }
-    50% { transform: scale(1.1); filter: drop-shadow(0 0 18px var(--color-power)); }
+@keyframes spinSlow {
+    100% { transform: rotate(360deg); }
 }
 
-@keyframes rotateRing {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.7; }
+    100% { transform: scale(1.3); opacity: 1; }
 }
 
 /* Target Diamond Visuals */
-.target-diamond {
-    fill: rgba(0, 10, 20, 0.9);
-    stroke: #ffffff;
+.target-shape, .target-diamond {
+    stroke: var(--color-node-base);
     stroke-width: 2;
-    transition: stroke 200ms ease;
+    fill: #05080c;
+    transition: all 0.3s ease;
 }
 
-.target-inner-diamond {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.4);
-    stroke-width: 1.5;
+.target-core, .target-inner-diamond {
+    fill: var(--color-node-base);
+    transition: all 0.3s ease;
 }
 
+.node-group.energized .target-shape,
 .node-group.energized .target-diamond {
     stroke: var(--color-power);
-    filter: drop-shadow(0 0 14px var(--color-power));
+    filter: drop-shadow(0 0 10px var(--color-power));
 }
 
+.node-group.energized .target-core,
 .node-group.energized .target-inner-diamond {
     fill: var(--color-power);
-    stroke: var(--color-power);
 }
 
+.target-win .target-shape,
 .target-win .target-diamond {
-    animation: targetDiamondWon 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    stroke: var(--color-power);
+    fill: rgba(0, 229, 255, 0.15);
+    filter: drop-shadow(0 0 10px var(--color-power));
+    transform: scale(1.2);
     transform-origin: 0px 0px;
 }
 
+.target-win .target-core,
 .target-win .target-inner-diamond {
-    animation: targetInnerDiamondWon 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    transform-origin: 0px 0px;
+    fill: var(--color-power);
+    animation: flash 0.4s ease-out;
 }
 
-@keyframes targetDiamondWon {
-    0% { transform: rotate(45deg) scale(1); }
-    50% { transform: rotate(45deg) scale(1.4); filter: drop-shadow(0 0 25px var(--color-power)); }
-    100% { transform: rotate(45deg) scale(1.2); filter: drop-shadow(0 0 18px var(--color-power)); }
-}
-
-@keyframes targetInnerDiamondWon {
-    0% { transform: rotate(45deg) scale(1); }
-    50% { transform: rotate(45deg) scale(1.4); }
-    100% { transform: rotate(45deg) scale(1.2); }
+@keyframes flash {
+    0% { transform: scale(1); filter: brightness(2); }
+    50% { transform: scale(2.5); filter: brightness(4); }
+    100% { transform: scale(1.2); filter: brightness(1); }
 }
 
 /* Lock Padlock Graphic */

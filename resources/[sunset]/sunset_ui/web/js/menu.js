@@ -432,18 +432,18 @@ const Menu = {
                     </div>
                 </div>
                 <div class="vd-body">
-                    <div class="vd-status-grid">
-                        <div class="status-box ${this.vmenuStatClass(engine)}">
-                            <div class="sb-label"><i class="ph-fill ph-engine"></i> ${this.t('menu.vehicle.engine')}</div>
-                            <div class="sb-val">${engine}%</div>
+                    <div class="stats-grid" style="display: flex; flex-direction: column; gap: 14px;">
+                        <div class="stat-row">
+                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.engine')}</span> <span>${engine}%</span></div>
+                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${engine}%; background-color: ${engine < 30 ? '#ff3366' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
                         </div>
-                        <div class="status-box ${this.vmenuStatClass(body)}">
-                            <div class="sb-label"><i class="ph-fill ph-car"></i> ${this.t('menu.vehicle.body')}</div>
-                            <div class="sb-val">${body}%</div>
+                        <div class="stat-row">
+                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.body')}</span> <span>${body}%</span></div>
+                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${body}%; background-color: ${body < 30 ? '#ff3366' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
                         </div>
-                        <div class="status-box ${this.vmenuStatClass(fuel)}">
-                            <div class="sb-label"><i class="ph-fill ph-gas-pump"></i> ${this.t('menu.vehicle.fuel')}</div>
-                            <div class="sb-val">${fuel}%</div>
+                        <div class="stat-row">
+                            <div class="stat-labels" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: rgba(242, 239, 232, 0.7); text-transform: uppercase;"><span>${this.t('menu.vehicle.fuel')}</span> <span>${fuel}%</span></div>
+                            <div class="bar-bg" style="width: 100%; height: 4px; background-color: rgba(242, 239, 232, 0.08); border-radius: 2px; overflow: hidden;"><div class="bar-fill" style="height: 100%; width: ${fuel}%; background-color: ${fuel < 20 ? '#D7B558' : '#F2EFE8'}; transition: width 0.3s ease;"></div></div>
                         </div>
                     </div>
                     <div class="vd-extra-grid">

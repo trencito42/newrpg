@@ -33,12 +33,12 @@
     const hintCancel = document.getElementById('hint-cancel');
 
     const GEOM = window.NODE_GEOMETRY || {
-        radius: 24,
-        armLength: 24,
-        portDistance: 24,
-        hitRadius: 34,
-        targetSize: 26,
-        centerDotRadius: 3.5
+        radius: 20,
+        armLength: 20,
+        portDistance: 20,
+        hitRadius: 40,
+        targetSize: 28,
+        centerDotRadius: 5
     };
 
     // NUI Bridge Helper
@@ -126,7 +126,7 @@
             edge.powerDom = pathPower;
         });
 
-        // 2. Draw Nodes with Transform Isolation & Unified Geometry
+        // 2. Draw Nodes with Transform Isolation & Unified Geometry (1:1 Watch Dogs Blueprint)
         graph.nodes.forEach(node => {
             const group = createSvgEl('g', {
                 class: `node-group ${node.type.toLowerCase()}${node.locked ? ' locked' : ''}`,
@@ -135,43 +135,35 @@
             });
 
             const rotator = createSvgEl('g', {
-                class: 'node-rotator'
+                class: 'node-rotator rotatable'
             });
             rotator.style.transform = `rotate(${node.rotation}deg)`;
 
-            const r = GEOM.radius;
-
             if (node.isSource) {
-                // SOURCE: Core + rotating dashed ring
-                const bgCircle = createSvgEl('circle', { r: r, class: 'node-border' });
-                const ring = createSvgEl('circle', { r: r + 4, class: 'source-ring' });
-                const core = createSvgEl('circle', { r: 10, class: 'source-core' });
-                group.appendChild(bgCircle);
+                // SOURCE: Core + rotating dashed ring (1:1 with prototype)
+                const ring = createSvgEl('circle', { r: 24, class: 'source-ring' });
+                const core = createSvgEl('circle', { r: 12, class: 'source-core' });
                 group.appendChild(ring);
                 group.appendChild(core);
             } else if (node.isTarget) {
-                // TARGET: Diamond shape
-                const size = GEOM.targetSize;
-                const diamond = createSvgEl('rect', {
-                    x: -size / 2, y: -size / 2,
-                    width: size, height: size,
-                    transform: 'rotate(45)',
-                    class: 'target-diamond'
+                // TARGET: Diamond polygon shape + inner core (1:1 with prototype)
+                const diamond = createSvgEl('polygon', {
+                    points: '0,-28 28,0 0,28 -28,0',
+                    class: 'target-shape target-diamond'
                 });
-                const innerDiamond = createSvgEl('rect', {
-                    x: -size / 4, y: -size / 4,
-                    width: size / 2, height: size / 2,
-                    transform: 'rotate(45)',
-                    class: 'target-inner-diamond'
+                const core = createSvgEl('rect', {
+                    x: -7, y: -7,
+                    width: 14, height: 14,
+                    class: 'target-core target-inner-diamond'
                 });
                 group.appendChild(diamond);
-                group.appendChild(innerDiamond);
+                group.appendChild(core);
             } else {
                 // INTERACTIVE NODE: Base circle + all exposed arms for node type
-                const bgCircle = createSvgEl('circle', { r: r, class: 'node-border' });
+                const bgCircle = createSvgEl('circle', { r: 20, class: 'node-ring node-border' });
                 rotator.appendChild(bgCircle);
 
-                const armLen = GEOM.armLength;
+                const armLen = 20;
                 node.basePorts.forEach(port => {
                     if (port === DIR.TOP) rotator.appendChild(createArm(0, -armLen));
                     if (port === DIR.RIGHT) rotator.appendChild(createArm(armLen, 0));

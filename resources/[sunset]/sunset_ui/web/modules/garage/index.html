@@ -1,11 +1,46 @@
-<div id="garage" class="overlay-panel overlay-panel--peek hidden">
-        <div class="overlay-panel__box overlay-panel__box--wide overlay-panel__box--garage">
-            <h2><span data-i18n="ui.garage.garage"></span></h2>
-            <p class="garage-hint"><span data-i18n="ui.garage.plates_are_auto_assigned_on_ownership_spawn_store_or"></span> <strong><span data-i18n="ui.garage.m_vehicle"></span></strong>.</p>
-            <ul class="panel-list" id="garage-list"></ul>
-            <button type="button" class="panel-close" id="garage-close"><span data-i18n="common.close"></span></button>
+<div id="garage" class="hidden">
+    <div id="vmenu-wrapper">
+        <div class="sidebar">
+            <div class="header">
+                <h1 data-i18n="ui.garage.personal_vehicles">Vehicule Personale</h1>
+                <p id="ui-count">0 Vehicule</p>
+            </div>
+            <div class="list-container" id="ui-list"></div>
         </div>
+
+        <div class="content">
+            <div id="no-selection" data-i18n="ui.garage.select_vehicle">Selectează un vehicul</div>
+            
+            <div id="details-panel" style="display: none;">
+                <div class="detail-top">
+                    <div class="detail-plate" id="det-plate">PLATE</div>
+                    <h2 class="detail-model" id="det-model">MODEL</h2>
+                    <div class="detail-status">
+                        <div class="dot" id="det-status-dot"></div>
+                        <span id="det-status-text">STATUS</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-row">
+                        <div class="stat-labels"><span data-i18n="menu.vehicle.engine">Motor</span> <span id="det-eng-val">100%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="det-eng-bar" style="width: 100%;"></div></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-labels"><span data-i18n="menu.vehicle.fuel">Combustibil</span> <span id="det-fuel-val">100%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="det-fuel-bar" style="width: 100%;"></div></div>
+                    </div>
+                </div>
+
+                <div class="actions" id="det-actions">
+                    <button type="button" class="btn primary" id="btn-spawn" data-i18n="ui.garage.retrieve">Scoate Vehicul</button>
+                    <button type="button" class="btn" id="btn-gps" data-i18n="ui.garage.set_gps">Setează GPS</button>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="vmenu-close-x" id="garage-close" aria-label="Close">×</button>
     </div>
+</div>
 
     <!-- FLEET GARAGE — compact peek panel (robbery fence style) -->
     <div id="fleet-garage" class="fleet-garage hidden">

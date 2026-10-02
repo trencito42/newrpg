@@ -1214,97 +1214,132 @@ const Panels = {
 
     showGarage(data) {
         this.init();
-        const list = $('#garage-list');
-        list.innerHTML = '';
-        list.className = 'menu-vehicle-grid';
+        const listEl = $('#ui-list');
+        const countEl = $('#ui-count');
+        const noSelEl = $('#no-selection');
+        const detPanelEl = $('#details-panel');
+        if (!listEl) return;
 
-        const vehicleImage = (model) => {
-            const m = (model || 'sultan').toLowerCase().replace(/[^a-z0-9_]/g, '');
-            return `https://docs.fivem.net/vehicles/${m}.webp`;
-        };
+        const vehicles = data.vehicles || [];
+        if (countEl) countEl.innerText = `${vehicles.length} Vehicule`;
+        listEl.innerHTML = '';
 
-        const addBtn = (parent, label, className, onClick) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.textContent = label;
-            btn.className = `menu-vcard__btn ${className || ''}`;
-            btn.addEventListener('click', (e) => {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.style.pointerEvents = 'none';
-                onClick(e);
+        let selectedId = null;
+
+        const renderList = () => {
+            listEl.innerHTML = '';
+            vehicles.forEach((v) => {
+                const el = document.createElement('div');
+                el.className = `list-item ${selectedId === v.id ? 'active' : ''}`;
+                el.onclick = () => selectVehicle(v.id);
+                const model = v.displayName || v.label || v.model || 'Vehicul';
+                el.innerHTML = `
+                    <div class="item-model">${escHtml(model)}</div>
+                    <div class="item-plate">${escHtml(v.plate)}</div>
+                `;
+                listEl.appendChild(el);
             });
-            parent.appendChild(btn);
         };
 
-        (data.vehicles || []).forEach((v) => {
+        const selectVehicle = (id) => {
+            selectedId = id;
+            renderList();
+
+            const v = vehicles.find((x) => x.id === id);
+            if (!v) return;
+
+            if (noSelEl) noSelEl.style.display = 'none';
+            if (detPanelEl) detPanelEl.style.display = 'flex';
+
+            const detPlate = $('#det-plate');
+            const detModel = $('#det-model');
+            const statDot = $('#det-status-dot');
+            const statText = $('#det-status-text');
+            const actionsEl = $('#det-actions');
+
+            const model = v.displayName || v.label || v.model || 'Vehicul';
+            if (detPlate) detPlate.innerText = v.plate || '';
+            if (detModel) detModel.innerText = model.toUpperCase();
+
             const stored = v.stored === true || v.stored === 1 || v.stored === '1' || Number(v.stored) === 1;
             const isDestroyed = v.destroyed === true || v.destroyed === 1 || v.destroyed === '1';
             const inWorld = v.inWorld === true && !isDestroyed;
-            let status = stored ? I18n.t('ui.panels.veh_in_garage') : (inWorld ? I18n.t('ui.panels.veh_out') : I18n.t('ui.panels.veh_missing'));
-            let statusClass = stored ? 'stored' : (inWorld ? 'out' : 'missing');
-            if (isDestroyed) {
-                status = I18n.t('ui.panels.veh_totaled');
-                statusClass = 'destroyed';
-            }
-            const model = v.displayName || v.label || I18n.t('common.vehicle');
-            const points = v.insurancePoints != null ? Number(v.insurancePoints) : 5;
-            const level = v.insuranceLevel != null ? Number(v.insuranceLevel) : 1;
-            const claimCost = v.claimCost != null ? Number(v.claimCost) : 250;
-            const renewCost = v.renewCost != null ? Number(v.renewCost) : 750;
 
-            const li = document.createElement('li');
-            li.className = 'menu-vcard';
-            li.innerHTML = `
-                <div class="menu-vcard__img-wrap">
-                    <img class="menu-vcard__img" src="${vehicleImage(v.model)}" alt="${escHtml(model)}" loading="lazy"
-                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="menu-vcard__img-fallback" style="display:none">${model.charAt(0)}</div>
-                </div>
-                <div class="menu-vcard__body">
-                    <div class="menu-vcard__top">
-                        <strong>${escHtml(model)}</strong>
-                        <span class="menu-vcard__status menu-vcard__status--${escHtml(statusClass)}">${escHtml(status)}</span>
-                    </div>
-                    <div class="menu-vcard__plate">${escHtml(v.plate)}</div>
-                    <div class="menu-vcard__meta">${escHtml(v.garage || 'legion')}</div>
-                    <div class="menu-vcard__insurance">
-                        <span class="insurance-badge">🛡️ ${I18n.t('ui.panels.insurance')}: <strong>${I18n.t('ui.panels.points_short', { points })}</strong></span>
-                        <span class="insurance-level ${level > 1 ? 'is-elevated' : ''}">${I18n.t('ui.panels.level_of', { level, max: 11 })}</span>
-                        <span class="insurance-cost">${I18n.t('ui.panels.claim_fee', { fee: formatMoney(claimCost) })}</span>
-                    </div>
-                    ${window.Menu ? window.Menu.formatEcuBlock(v.ecuInfo, v.id) : ''}
-                    <div class="menu-vcard__actions"></div>
-                </div>`;
+            const garageName = v.garage || 'Garaj Central';
 
-            const actions = li.querySelector('.menu-vcard__actions');
+            if (actionsEl) actionsEl.innerHTML = '';
+
+            const addActionBtn = (label, isPrimary, onClick) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `btn ${isPrimary ? 'primary' : ''}`;
+                btn.textContent = label;
+                btn.addEventListener('click', (e) => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.pointerEvents = 'none';
+                    onClick(e);
+                });
+                actionsEl?.appendChild(btn);
+            };
+
             if (isDestroyed) {
+                if (statDot) statDot.style.backgroundColor = 'var(--status-bad)';
+                if (statText) statText.innerText = `Totalizată / Confiscat (${garageName})`;
+                const claimCost = v.claimCost != null ? Number(v.claimCost) : 250;
+                const points = v.insurancePoints != null ? Number(v.insurancePoints) : 5;
                 if (points > 0) {
-                    addBtn(actions, I18n.t('ui.panels.file_claim', { fee: formatMoney(claimCost) }), 'menu-vcard__btn--danger', () => post('garageClaimInsurance', { vehicleId: v.id }));
+                    addActionBtn(`Plătește Cauțiune (${formatMoney(claimCost)})`, true, () => post('garageClaimInsurance', { vehicleId: v.id }));
                 } else {
-                    addBtn(actions, I18n.t('ui.panels.renew_no_points', { fee: formatMoney(renewCost) }), 'menu-vcard__btn--warning', () => post('garageRenewInsurance', { vehicleId: v.id }));
+                    const renewCost = v.renewCost != null ? Number(v.renewCost) : 750;
+                    addActionBtn(`Reînnoiește Asigurare (${formatMoney(renewCost)})`, true, () => post('garageRenewInsurance', { vehicleId: v.id }));
                 }
             } else if (stored) {
-                addBtn(actions, I18n.t('ui.panels.spawn'), 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
-                if (points < 5) {
-                    addBtn(actions, I18n.t('ui.panels.plus5_points', { fee: formatMoney(renewCost) }), '', () => post('garageRenewInsurance', { vehicleId: v.id }));
-                }
-            }
- else if (inWorld) {
-                addBtn(actions, 'GPS', '', () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
-                addBtn(actions, I18n.t('ui.panels.store'), 'menu-vcard__btn--primary', () => post('garageStore', { vehicleId: v.id }));
+                if (statDot) statDot.style.backgroundColor = 'var(--status-ok)';
+                if (statText) statText.innerText = `În ${garageName}`;
+                addActionBtn('Scoate Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
+            } else if (inWorld) {
+                if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
+                if (statText) statText.innerText = 'Parcat afară';
+                addActionBtn('Setează GPS', true, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
             } else {
-                addBtn(actions, 'GPS', '', () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
-                addBtn(actions, I18n.t('ui.panels.respawn'), 'menu-vcard__btn--primary', () => post('garageSpawn', { vehicleId: v.id }));
-                addBtn(actions, I18n.t('ui.panels.store'), '', () => post('garageStore', { vehicleId: v.id }));
+                if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
+                if (statText) statText.innerText = 'În afara garajului';
+                addActionBtn('Setează GPS', false, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
+                addActionBtn('Recuperează Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
             }
 
-            list.appendChild(li);
-        });
+            const engine = Math.max(0, Math.min(100, Math.round(Number(v.engineHealth != null ? (v.engineHealth / 10) : (v.engine || 100)))));
+            const fuel = Math.max(0, Math.min(100, Math.round(Number(v.fuel != null ? v.fuel : (v.fuelLevel || 100)))));
 
-        if (!(data.vehicles || []).length) {
-            list.className = 'panel-list';
-            list.innerHTML = `<li class="garage-empty">${I18n.t('ui.panels.no_vehicles')}</li>`;
+            setTimeout(() => {
+                const engBar = $('#det-eng-bar');
+                const engVal = $('#det-eng-val');
+                if (engBar) {
+                    engBar.style.width = engine + '%';
+                    engBar.style.backgroundColor = engine < 30 ? 'var(--status-bad)' : 'var(--brand-primary)';
+                }
+                if (engVal) engVal.innerText = engine + '%';
+
+                const fuelBar = $('#det-fuel-bar');
+                const fuelVal = $('#det-fuel-val');
+                if (fuelBar) {
+                    fuelBar.style.width = fuel + '%';
+                    fuelBar.style.backgroundColor = fuel < 20 ? 'var(--status-warn)' : 'var(--brand-primary)';
+                }
+                if (fuelVal) fuelVal.innerText = fuel + '%';
+            }, 10);
+        };
+
+        if (vehicles.length > 0) {
+            renderList();
+            selectVehicle(vehicles[0].id);
+        } else {
+            if (noSelEl) {
+                noSelEl.style.display = 'flex';
+                noSelEl.innerText = I18n.t('ui.panels.no_vehicles');
+            }
+            if (detPanelEl) detPanelEl.style.display = 'none';
         }
 
         $('#garage')?.classList.remove('hidden');
