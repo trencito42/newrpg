@@ -102,12 +102,17 @@ function SetFocus(hasFocus, hasCursor, keepInput, owner)
     if hasFocus then
         local ok = ClaimFocus(owner)
         if not ok then return false end
+        -- sunset_auth_ui has its own ui_page. Calling this native from
+        -- sunset_ui would put the wrong fullscreen NUI frame on top of login.
+        -- Keep ownership here, but let sunset_auth_ui focus its own frame.
+        if owner == 'auth' then return true end
         SetNuiFocus(true, hasCursor == true)
         SetNuiFocusKeepInput(keepInput == true)
         return true
     else
         local ok = ReleaseFocus(owner)
         if not ok then return false end
+        if owner == 'auth' then return true end
         SetNuiFocus(false, false)
         SetNuiFocusKeepInput(false)
         return true

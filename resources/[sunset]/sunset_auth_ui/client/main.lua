@@ -71,6 +71,19 @@ local function authFocus(hasFocus, hasCursor)
     return false
 end
 
+local function applyAuthNativeFocus(hasFocus, hasCursor)
+    SetNuiFocus(hasFocus == true, hasCursor == true)
+    SetNuiFocusKeepInput(false)
+end
+
+local function reassertAuthFocus()
+    if not authOpen then return false end
+    local tracked = authFocus(true, true)
+    applyAuthNativeFocus(true, true)
+    return tracked
+end
+exports('ReassertFocus', reassertAuthFocus)
+
 local function send(action, data)
     SendNUIMessage({ action = action, data = data or {} })
 end
@@ -81,8 +94,7 @@ exports('Show', function(screen, data)
     authOpen = true
     authVisibleRendered = false
     authPresentationId = authPresentationId + 1
-    authFocus(true, true)
-    SetNuiFocus(true, true)
+    reassertAuthFocus()
     startHudSuppression()
 
     local payload = type(data) == 'table' and data or {}
@@ -102,13 +114,14 @@ exports('Hide', function()
     authVisibleRendered = false
     lastShowPayload = nil
     authFocus(false, false)
-    SetNuiFocus(false, false)
+    applyAuthNativeFocus(false, false)
     stopHudSuppression()
     send('authHide', {})
 end)
 
 exports('SetFocus', function(hasFocus, hasCursor)
     authFocus(hasFocus == true, hasCursor == true)
+    applyAuthNativeFocus(hasFocus == true, hasCursor == true)
     if not hasFocus then
         authOpen = false
         authVisibleRendered = false
@@ -169,8 +182,7 @@ end)
 -- → sunset:ui:ready). FiveM resets NUI cursor state on page reinit, so re-assert.
 AddEventHandler('sunset:ui:ready', function()
     if authOpen then
-        authFocus(true, true)
-        SetNuiFocus(true, true)
+        reassertAuthFocus()
     end
 end)
 
@@ -179,6 +191,7 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     if authOpen then
         authFocus(false, false)
+        applyAuthNativeFocus(false, false)
         authOpen = false
         authVisibleRendered = false
         lastShowPayload = nil
