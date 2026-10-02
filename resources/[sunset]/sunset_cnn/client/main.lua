@@ -68,6 +68,7 @@ CreateThread(function()
     end
 end)
 
+RegisterNetEvent('sunset:client:localeChanged')
 AddEventHandler('sunset:client:localeChanged', function()
     setupBlips()
 end)
