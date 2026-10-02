@@ -20,15 +20,17 @@ AddEventHandler('gameEventTriggered', function(name, args)
         local playerPed = args[1]
         local veh = args[2]
         if playerPed == PlayerPedId() and veh and DoesEntityExist(veh) then
-            SVD.ApplyVehicleDynamics(veh, false)
+            if not SVD.appliedEntities[veh] then
+                SVD.ApplyVehicleDynamics(veh, false)
+            end
         end
     end
 end)
 
--- Periodic low-frequency check on the player's current vehicle and nearby vehicles
+-- Periodic low-frequency check on the player's current vehicle (ensures initial baseline is set without wiping tuning)
 CreateThread(function()
     while true do
-        Wait(2000)
+        Wait(2500)
         local ped = PlayerPedId()
         if IsPedInAnyVehicle(ped, false) then
             local currentVeh = GetVehiclePedIsIn(ped, false)
@@ -47,8 +49,8 @@ CreateThread(function()
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         local veh = GetVehiclePedIsIn(ped, false)
-        if veh ~= 0 then
-            SVD.ApplyVehicleDynamics(veh, true)
+        if veh ~= 0 and DoesEntityExist(veh) then
+            SVD.ApplyVehicleDynamics(veh, false)
         end
     end
 end)

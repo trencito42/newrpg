@@ -12,10 +12,11 @@ shared_scripts {
     '@sunset_core/shared/utils.lua',
     'shared/config.lua',
     'shared/classes.lua',
+    'shared/registry.lua',
+    'shared/resolver.lua',
     'shared/profiles_vanilla.lua',
     'shared/profiles_addon.lua',
     'shared/profiles_emergency.lua',
-    'shared/resolver.lua',
 }
 
 client_scripts {
@@ -41,5 +42,6 @@ client_exports {
 }
 
 server_exports {
+    'GetVehicleDynamicsProfile',
     'GetModelProfile',
 }

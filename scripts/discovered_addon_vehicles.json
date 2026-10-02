@@ -1,0 +1,3570 @@
+[
+  {
+    "model": "tol22m5",
+    "handlingId": "tol22m5",
+    "gameName": "tol22m5",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tol22m5",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tol240sx",
+    "handlingId": "tol240sx",
+    "gameName": "tol240sx",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tol240sx",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolc7",
+    "handlingId": "tolc7",
+    "gameName": "tolc7",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolc7",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolcharger2",
+    "handlingId": "tolcharger2",
+    "gameName": "tolcharger2",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolcharger2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.285,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolcurus",
+    "handlingId": "tolcurus",
+    "gameName": "tolcurus",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "tolcurus",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "toldemon",
+    "handlingId": "toldemon",
+    "gameName": "toldemon",
+    "vehicleClass": "VC_MUSCLE",
+    "rawHandling": {
+      "handlingName": "toldemon",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "toldurus",
+    "handlingId": "toldurus",
+    "gameName": "toldurus",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "toldurus",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tole36prb",
+    "handlingId": "tole36prb",
+    "gameName": "tole36prb",
+    "vehicleClass": "VC_COUPE",
+    "rawHandling": {
+      "handlingName": "tole36prb",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tole36v",
+    "handlingId": "tole36v",
+    "gameName": "tole36v",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "tole36v",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tole6314",
+    "handlingId": "tole6314",
+    "gameName": "tole6314",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tole6314",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolevo9",
+    "handlingId": "tolevo9",
+    "gameName": "tolevo9",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolevo9",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 199,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tol3j50",
+    "handlingId": "tol3j50",
+    "gameName": "tol3j50",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tol3j50",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolexor",
+    "handlingId": "tolexor",
+    "gameName": "tolexor",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolexor",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolf360",
+    "handlingId": "tolf360",
+    "gameName": "tolf360",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolf360",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolf8spider",
+    "handlingId": "tolf8spider",
+    "gameName": "tolf8spider",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolf8spider",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolfxxk",
+    "handlingId": "tolfxxk",
+    "gameName": "tolfxxk",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolfxxk",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolgtam21",
+    "handlingId": "tolgtam21",
+    "gameName": "tolgtam21",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolgtam21",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolgtr",
+    "handlingId": "tolgtr",
+    "gameName": "tolgtr",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolgtr",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolgtrlw",
+    "handlingId": "tolgtrlw",
+    "gameName": "tolgtrlw",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolgtrlw",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolka",
+    "handlingId": "tolka",
+    "gameName": "tolka",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolka",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tollam2",
+    "handlingId": "tollam2",
+    "gameName": "tollam2",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tollam2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tollwalk458",
+    "handlingId": "tollwalk458",
+    "gameName": "tollwalk458",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tollwalk458",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tol675ltsp",
+    "handlingId": "tol675ltsp",
+    "gameName": "tol675ltsp",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tol675ltsp",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolm5cs22",
+    "handlingId": "tolm5cs22",
+    "gameName": "tolm5cs22",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolm5cs22",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolm5e60",
+    "handlingId": "tolm5e60",
+    "gameName": "tolm5e60",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolm5e60",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.28,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolm6x6",
+    "handlingId": "tolm6x6",
+    "gameName": "tolm6x6",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolm6x6",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.299,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 199,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolmig",
+    "handlingId": "tolmig",
+    "gameName": "tolmig",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolmig",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolmm6x6",
+    "handlingId": "tolmm6x6",
+    "gameName": "tolmm6x6",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolmm6x6",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 199,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolmus2",
+    "handlingId": "tolmus2",
+    "gameName": "tolmus2",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolmus2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolmustan",
+    "handlingId": "tolmustan",
+    "gameName": "tolmustan",
+    "vehicleClass": "VC_MUSCLE",
+    "rawHandling": {
+      "handlingName": "tolmustan",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolmustang",
+    "handlingId": "tolmustang",
+    "gameName": "tolmustang",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolmustang",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolpeigerzen",
+    "handlingId": "tolpeigerzen",
+    "gameName": "tolpeigerzen",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolpeigerzen",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolr33",
+    "handlingId": "tolr33",
+    "gameName": "tolr33",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolr33",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tol700",
+    "handlingId": "tol700",
+    "gameName": "tol700",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tol700",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolr8c",
+    "handlingId": "tolr8c",
+    "gameName": "tolr8c",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolr8c",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 190,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolr8v10",
+    "handlingId": "tolr8v10",
+    "gameName": "tolr8v10",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolr8v10",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolraid",
+    "handlingId": "tolraid",
+    "gameName": "TOLRAID",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "tolraid",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolraptorv2",
+    "handlingId": "tolraptorv2",
+    "gameName": "tolraptorV2",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolraptorv2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolrrmansory",
+    "handlingId": "tolrrmansory",
+    "gameName": "tolrrmansory",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolrrmansory",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolrs5",
+    "handlingId": "tolrs5",
+    "gameName": "tolrs5",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolrs5",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolrs6",
+    "handlingId": "tolrs6",
+    "gameName": "tolrs6",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolrs6",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolrs7c821",
+    "handlingId": "tolrs7c821",
+    "gameName": "tolrs7c821",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tolrs7c821",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolrsurus",
+    "handlingId": "tolrsurus",
+    "gameName": "tolrsurus",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "tolrsurus",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.28,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 190,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tols63amg",
+    "handlingId": "tols63amg",
+    "gameName": "tols63amg",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tols63amg",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tola6",
+    "handlingId": "tola6",
+    "gameName": "tola6",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tola6",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolap2",
+    "handlingId": "tolap2",
+    "gameName": "tolap2",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tolap2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolaudidy",
+    "handlingId": "tolaudidy",
+    "gameName": "tolaudidy",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolaudidy",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolbt62r",
+    "handlingId": "tolbt62r",
+    "gameName": "tolbt62r",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolbt62r",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "tolc63",
+    "handlingId": "tolc63",
+    "gameName": "tolc63",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tolc63",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.29,
+      "fDriveBiasFront": 0.85,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 3,
+      "fTractionCurveMax": 3.9,
+      "fTractionCurveMin": 3.7,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/pitd_tol_car_pack_a/handling.meta"
+    },
+    "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+  },
+  {
+    "model": "abfbuff",
+    "handlingId": "abfbuff",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "abfbuff",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.36,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/abfbuff/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/abfbuff/vehicles.meta"
+  },
+  {
+    "model": "ballvenm",
+    "handlingId": "ballvenm",
+    "gameName": "",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "ballvenm",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 43,
+      "source": "resources/[cars]/showcasecars/data/ballvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/ballvenm/vehicles.meta"
+  },
+  {
+    "model": "ballvmark",
+    "handlingId": "ballvmark",
+    "gameName": "",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "ballvmark",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 43,
+      "source": "resources/[cars]/showcasecars/data/ballvmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/ballvmark/vehicles.meta"
+  },
+  {
+    "model": "briosoav",
+    "handlingId": "briosoav",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACT",
+    "rawHandling": {
+      "handlingName": "briosoav",
+      "fMass": 1250,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 175,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars/data/briosoav/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/briosoav/vehicles.meta"
+  },
+  {
+    "model": "cazador",
+    "handlingId": "cazador",
+    "gameName": "cazador",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "cazador",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 176,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/cazador/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/cazador/vehicles.meta"
+  },
+  {
+    "model": "cazadortcr",
+    "handlingId": "cazadortcr",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "cazadortcr",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 176,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/cazadortcr/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/cazadortcr/vehicles.meta"
+  },
+  {
+    "model": "clubc",
+    "handlingId": "clubc",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACT",
+    "rawHandling": {
+      "handlingName": "clubc",
+      "fMass": 950,
+      "fInitialDriveForce": 0.2375,
+      "fDriveBiasFront": 1,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 4,
+      "fBrakeForce": 0.72,
+      "fTractionCurveMax": 2.05,
+      "fTractionCurveMin": 1.85,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/clubc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/clubc/vehicles.meta"
+  },
+  {
+    "model": "clubp",
+    "handlingId": "clubp",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACT",
+    "rawHandling": {
+      "handlingName": "clubp",
+      "fMass": 950,
+      "fInitialDriveForce": 0.2375,
+      "fDriveBiasFront": 1,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 4,
+      "fBrakeForce": 0.72,
+      "fTractionCurveMax": 2.05,
+      "fTractionCurveMin": 1.85,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/clubp/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/clubp/vehicles.meta"
+  },
+  {
+    "model": "clubr",
+    "handlingId": "clubr",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "clubr",
+      "fMass": 1540,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.88,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.5,
+      "fSteeringLock": 41,
+      "source": "resources/[cars]/showcasecars/data/clubr/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/clubr/vehicles.meta"
+  },
+  {
+    "model": "clubrhyc",
+    "handlingId": "clubrhyc",
+    "gameName": "clubrhyc",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "clubrhyc",
+      "fMass": 1540,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.88,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.5,
+      "fSteeringLock": 41,
+      "source": "resources/[cars]/showcasecars/data/clubrhyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/clubrhyc/vehicles.meta"
+  },
+  {
+    "model": "cometnor",
+    "handlingId": "cometnor",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "cometnor",
+      "fMass": 1550,
+      "fInitialDriveForce": 0.346,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156.4,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 0.88,
+      "fTractionCurveMax": 2.655,
+      "fTractionCurveMin": 2.52,
+      "fSteeringLock": 41.65,
+      "source": "resources/[cars]/showcasecars/data/cometnor/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/cometnor/vehicles.meta"
+  },
+  {
+    "model": "cometven",
+    "handlingId": "cometven",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "cometven",
+      "fMass": 1550,
+      "fInitialDriveForce": 0.346,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156.4,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 0.88,
+      "fTractionCurveMax": 2.655,
+      "fTractionCurveMin": 2.52,
+      "fSteeringLock": 41.65,
+      "source": "resources/[cars]/showcasecars/data/cometven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/cometven/vehicles.meta"
+  },
+  {
+    "model": "coquettepiston",
+    "handlingId": "coquettepiston",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "coquettepiston",
+      "fMass": 1420,
+      "fInitialDriveForce": 0.325,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 167.25,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.7,
+      "fTractionCurveMax": 2.637,
+      "fTractionCurveMin": 2.4985,
+      "fSteeringLock": 42.5,
+      "source": "resources/[cars]/showcasecars/data/coquettepiston/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/coquettepiston/vehicles.meta"
+  },
+  {
+    "model": "coqvenm",
+    "handlingId": "coqvenm",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "coqvenm",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.32,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 0.6,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.35,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/coqvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/coqvenm/vehicles.meta"
+  },
+  {
+    "model": "dawn",
+    "handlingId": "dawn",
+    "gameName": "Dawn",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "dawn",
+      "fMass": 1400,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/dawn/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/dawn/vehicles.meta"
+  },
+  {
+    "model": "drafthyc",
+    "handlingId": "drafthyc",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "drafthyc",
+      "fMass": 1650,
+      "fInitialDriveForce": 0.342,
+      "fDriveBiasFront": 0.4,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.695,
+      "fTractionCurveMin": 2.455,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/drafthyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/drafthyc/vehicles.meta"
+  },
+  {
+    "model": "draftven",
+    "handlingId": "draftven",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "draftven",
+      "fMass": 1650,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/draftven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/draftven/vehicles.meta"
+  },
+  {
+    "model": "draftvmark",
+    "handlingId": "draftvmark",
+    "gameName": "",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "draftvmark",
+      "fMass": 1650,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/draftvmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/draftvmark/vehicles.meta"
+  },
+  {
+    "model": "dubmono",
+    "handlingId": "dubmono",
+    "gameName": "dubmono",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "dubmono",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/dubmono/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/dubmono/vehicles.meta"
+  },
+  {
+    "model": "elegyxa19",
+    "handlingId": "elegyxa19",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "elegyxa19",
+      "fMass": 1710,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 182.25,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 32.5,
+      "source": "resources/[cars]/showcasecars/data/elegyxa19/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/elegyxa19/vehicles.meta"
+  },
+  {
+    "model": "elegyxa19ven",
+    "handlingId": "elegyxa19ven",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "elegyxa19ven",
+      "fMass": 1710,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 182.25,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 32.5,
+      "source": "resources/[cars]/showcasecars/data/elegyxa19ven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/elegyxa19ven/vehicles.meta"
+  },
+  {
+    "model": "flashgrs",
+    "handlingId": "flashgrs",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "flashgrs",
+      "fMass": 1200,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.33,
+      "fInitialDriveMaxFlatVel": 183,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.2,
+      "fTractionCurveMin": 2,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/flashgrs/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/flashgrs/vehicles.meta"
+  },
+  {
+    "model": "flattruckm",
+    "handlingId": "flattruckm",
+    "gameName": "",
+    "vehicleClass": "VC_SERVICE",
+    "rawHandling": {
+      "handlingName": "flattruckm",
+      "fMass": 11000,
+      "fInitialDriveForce": 0.22,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 130,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 1.95,
+      "fTractionCurveMin": 1.75,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/flattruckm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/flattruckm/vehicles.meta"
+  },
+  {
+    "model": "gaterback",
+    "handlingId": "gaterback",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "gaterback",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/gaterback/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/gaterback/vehicles.meta"
+  },
+  {
+    "model": "gazatar",
+    "handlingId": "gazatar",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "gazatar",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 1,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.49,
+      "fTractionCurveMin": 2.25,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/gazatar/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/gazatar/vehicles.meta"
+  },
+  {
+    "model": "hweevil",
+    "handlingId": "hweevil",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACTS",
+    "rawHandling": {
+      "handlingName": "hweevil",
+      "fMass": 820,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/hweevil/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hweevil/vehicles.meta"
+  },
+  {
+    "model": "hycadetail",
+    "handlingId": "hycadetail",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "hycadetail",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycadetail/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycadetail/vehicles.meta"
+  },
+  {
+    "model": "hycbansh",
+    "handlingId": "hycbansh",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "hycbansh",
+      "fMass": 1550,
+      "fInitialDriveForce": 0.3878,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 182.7,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.72,
+      "fTractionCurveMax": 2.6065,
+      "fTractionCurveMin": 2.482,
+      "fSteeringLock": 40.5,
+      "source": "resources/[cars]/showcasecars/data/hycbansh/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycbansh/vehicles.meta"
+  },
+  {
+    "model": "hycbuff",
+    "handlingId": "hycbuff",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "hycbuff",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.36,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycbuff/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycbuff/vehicles.meta"
+  },
+  {
+    "model": "hycdeity",
+    "handlingId": "hycdeity",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "hycdeity",
+      "fMass": 1710,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycdeity/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycdeity/vehicles.meta"
+  },
+  {
+    "model": "hycenty",
+    "handlingId": "hycenty",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "hycenty",
+      "fMass": 1420,
+      "fInitialDriveForce": 0.3545,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 172,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.782,
+      "fTractionCurveMin": 2.59,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/hycenty/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycenty/vehicles.meta"
+  },
+  {
+    "model": "hycgaunt",
+    "handlingId": "hycgaunt",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "hycgaunt",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 175,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycgaunt/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycgaunt/vehicles.meta"
+  },
+  {
+    "model": "hycignus",
+    "handlingId": "hycignus",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "hycignus",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.3835,
+      "fDriveBiasFront": 0.485,
+      "fInitialDriveMaxFlatVel": 160.25,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.7675,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 40.5,
+      "source": "resources/[cars]/showcasecars/data/hycignus/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycignus/vehicles.meta"
+  },
+  {
+    "model": "hycpargn",
+    "handlingId": "hycpargn",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "hycpargn",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.43,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 175,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycpargn/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycpargn/vehicles.meta"
+  },
+  {
+    "model": "hycr300",
+    "handlingId": "hycr300",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "hycr300",
+      "fMass": 1590,
+      "fInitialDriveForce": 0.3288,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 151.65,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.78,
+      "fTractionCurveMax": 2.495,
+      "fTractionCurveMin": 2.295,
+      "fSteeringLock": 42.75,
+      "source": "resources/[cars]/showcasecars/data/hycr300/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycr300/vehicles.meta"
+  },
+  {
+    "model": "hycsedan",
+    "handlingId": "hycsedan",
+    "gameName": "",
+    "vehicleClass": "VC_SEDAN",
+    "rawHandling": {
+      "handlingName": "hycsedan",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170.2,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycsedan/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycsedan/vehicles.meta"
+  },
+  {
+    "model": "hycwagen",
+    "handlingId": "hycwagen",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "hycwagen",
+      "fMass": 1860,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/hycwagen/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hycwagen/vehicles.meta"
+  },
+  {
+    "model": "hyczr350",
+    "handlingId": "hyczr350",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "hyczr350",
+      "fMass": 1234,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 149.8,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.485,
+      "fTractionCurveMin": 2.36,
+      "fSteeringLock": 41.15,
+      "source": "resources/[cars]/showcasecars/data/hyczr350/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/hyczr350/vehicles.meta"
+  },
+  {
+    "model": "issiwider",
+    "handlingId": "issiwider",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "issiwider",
+      "fMass": 1000,
+      "fInitialDriveForce": 0.305,
+      "fDriveBiasFront": 0.65,
+      "fInitialDriveMaxFlatVel": 148,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.55,
+      "fTractionCurveMin": 2.25,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/issiwider/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/issiwider/vehicles.meta"
+  },
+  {
+    "model": "jestvenm",
+    "handlingId": "jestvenm",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "jestvenm",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 190.5,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.59,
+      "fTractionCurveMin": 2.37,
+      "fSteeringLock": 43.275,
+      "source": "resources/[cars]/showcasecars/data/jestvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/jestvenm/vehicles.meta"
+  },
+  {
+    "model": "jubven",
+    "handlingId": "jubven",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "jubven",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 43,
+      "source": "resources/[cars]/showcasecars/data/jubven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/jubven/vehicles.meta"
+  },
+  {
+    "model": "kcjub",
+    "handlingId": "kcjub",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "kcjub",
+      "fMass": 1400,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/kcjub/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/kcjub/vehicles.meta"
+  },
+  {
+    "model": "komtmark",
+    "handlingId": "komtmark",
+    "gameName": "komtmark",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "komtmark",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.4,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 35,
+      "source": "resources/[cars]/showcasecars/data/komtmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/komtmark/vehicles.meta"
+  },
+  {
+    "model": "komtour",
+    "handlingId": "komtour",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "komtour",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.367,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.69,
+      "fTractionCurveMin": 2.45,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/komtour/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/komtour/vehicles.meta"
+  },
+  {
+    "model": "kurxa19",
+    "handlingId": "kurxa19",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "kurxa19",
+      "fMass": 1500,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.33,
+      "fInitialDriveMaxFlatVel": 183,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/kurxa19/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/kurxa19/vehicles.meta"
+  },
+  {
+    "model": "kurxmark",
+    "handlingId": "kurxmark",
+    "gameName": "",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "kurxmark",
+      "fMass": 1500,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.33,
+      "fInitialDriveMaxFlatVel": 183,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/kurxmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/kurxmark/vehicles.meta"
+  },
+  {
+    "model": "neonvenm",
+    "handlingId": "neonvenm",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "neonvenm",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.2505,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 156.5,
+      "nInitialDriveGears": 1,
+      "fBrakeForce": 1.3,
+      "fTractionCurveMax": 2.275,
+      "fTractionCurveMin": 2.2,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/neonvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/neonvenm/vehicles.meta"
+  },
+  {
+    "model": "paragonven",
+    "handlingId": "paragonven",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "paragonven",
+      "fMass": 2415,
+      "fInitialDriveForce": 0.329,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 159.9,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.675,
+      "fTractionCurveMin": 2.515,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/paragonven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/paragonven/vehicles.meta"
+  },
+  {
+    "model": "parawide",
+    "handlingId": "parawide",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "parawide",
+      "fMass": 2315,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 159.5,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.1,
+      "fTractionCurveMax": 2.515,
+      "fTractionCurveMin": 2.3505,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/parawide/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/parawide/vehicles.meta"
+  },
+  {
+    "model": "parawmark",
+    "handlingId": "parawmark",
+    "gameName": "",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "parawmark",
+      "fMass": 2315,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 159.5,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.1,
+      "fTractionCurveMax": 2.515,
+      "fTractionCurveMin": 2.3505,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/parawmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/parawmark/vehicles.meta"
+  },
+  {
+    "model": "remusx",
+    "handlingId": "remusx",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "remusx",
+      "fMass": 1105,
+      "fInitialDriveForce": 0.327,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 146.8,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.9,
+      "fTractionCurveMax": 2.685,
+      "fTractionCurveMin": 2.515,
+      "fSteeringLock": 41.75,
+      "source": "resources/[cars]/showcasecars/data/remusx/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/remusx/vehicles.meta"
+  },
+  {
+    "model": "rhinea19x",
+    "handlingId": "rhinea19x",
+    "gameName": "",
+    "vehicleClass": "VC_SEDAN",
+    "rawHandling": {
+      "handlingName": "rhinea19x",
+      "fMass": 1660,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/rhinea19x/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/rhinea19x/vehicles.meta"
+  },
+  {
+    "model": "rsxven",
+    "handlingId": "rsxven",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "rsxven",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.40125,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 163.15,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.35,
+      "fTractionCurveMax": 2.737,
+      "fTractionCurveMin": 2.555,
+      "fSteeringLock": 41.85,
+      "source": "resources/[cars]/showcasecars/data/rsxven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/rsxven/vehicles.meta"
+  },
+  {
+    "model": "rt3000varis",
+    "handlingId": "rt3000varis",
+    "gameName": "rt3000varis",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "rt3000varis",
+      "fMass": 1275,
+      "fInitialDriveForce": 0.312,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 149,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.58,
+      "fTractionCurveMin": 2.195,
+      "fSteeringLock": 43.25,
+      "source": "resources/[cars]/showcasecars/data/rt3000varis/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/rt3000varis/vehicles.meta"
+  },
+  {
+    "model": "rt3kavan",
+    "handlingId": "rt3kavan",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "rt3kavan",
+      "fMass": 1275,
+      "fInitialDriveForce": 0.312,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 149,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.58,
+      "fTractionCurveMin": 2.195,
+      "fSteeringLock": 43.25,
+      "source": "resources/[cars]/showcasecars/data/rt3kavan/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/rt3kavan/vehicles.meta"
+  },
+  {
+    "model": "rwagvenm",
+    "handlingId": "rwagvenm",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "rwagvenm",
+      "fMass": 1234,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 123,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/rwagvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/rwagvenm/vehicles.meta"
+  },
+  {
+    "model": "schlag",
+    "handlingId": "schlag",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "schlag",
+      "fMass": 1550,
+      "fInitialDriveForce": 0.37,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 159.2,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 0.8,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars/data/schlag/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/schlag/vehicles.meta"
+  },
+  {
+    "model": "sedanwid",
+    "handlingId": "sedanwid",
+    "gameName": "",
+    "vehicleClass": "VC_SEDAN",
+    "rawHandling": {
+      "handlingName": "sedanwid",
+      "fMass": 1650,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/sedanwid/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/sedanwid/vehicles.meta"
+  },
+  {
+    "model": "shenron",
+    "handlingId": "shenron",
+    "gameName": "shenron",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "shenron",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/shenron/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/shenron/vehicles.meta"
+  },
+  {
+    "model": "sitavenm",
+    "handlingId": "sitavenm",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sitavenm",
+      "fMass": 1543,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 162.85,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.3,
+      "fTractionCurveMax": 2.726,
+      "fTractionCurveMin": 2.595,
+      "fSteeringLock": 41.5,
+      "source": "resources/[cars]/showcasecars/data/sitavenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/sitavenm/vehicles.meta"
+  },
+  {
+    "model": "sr8",
+    "handlingId": "sr8",
+    "gameName": "sr8",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "sr8",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/sr8/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/sr8/vehicles.meta"
+  },
+  {
+    "model": "sr8elem",
+    "handlingId": "sr8elem",
+    "gameName": "",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "sr8elem",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/sr8elem/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/sr8elem/vehicles.meta"
+  },
+  {
+    "model": "srspback",
+    "handlingId": "srspback",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "srspback",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/srspback/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/srspback/vehicles.meta"
+  },
+  {
+    "model": "str",
+    "handlingId": "str",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "str",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.367,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.69,
+      "fTractionCurveMin": 2.45,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/str/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/str/vehicles.meta"
+  },
+  {
+    "model": "strcoupe",
+    "handlingId": "strcoupe",
+    "gameName": "strcoupe",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "strcoupe",
+      "fMass": 2315,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 159.5,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.1,
+      "fTractionCurveMax": 2.515,
+      "fTractionCurveMin": 2.3505,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/strcoupe/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/strcoupe/vehicles.meta"
+  },
+  {
+    "model": "strman",
+    "handlingId": "strman",
+    "gameName": "strman",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "strman",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.367,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.69,
+      "fTractionCurveMin": 2.45,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/strman/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/strman/vehicles.meta"
+  },
+  {
+    "model": "strmark",
+    "handlingId": "strmark",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "strmark",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.367,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.69,
+      "fTractionCurveMin": 2.45,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/strmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/strmark/vehicles.meta"
+  },
+  {
+    "model": "strwag",
+    "handlingId": "strwag",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "strwag",
+      "fMass": 1575,
+      "fInitialDriveForce": 0.367,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.69,
+      "fTractionCurveMin": 2.45,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/strwag/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/strwag/vehicles.meta"
+  },
+  {
+    "model": "strwagmark",
+    "handlingId": "strwagmark",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "strwagmark",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.4,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 35,
+      "source": "resources/[cars]/showcasecars/data/strwagmark/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/strwagmark/vehicles.meta"
+  },
+  {
+    "model": "sugoix",
+    "handlingId": "sugoix",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": null,
+    "source": "resources/[cars]/showcasecars/data/sugoix/vehicles.meta"
+  },
+  {
+    "model": "sultlong",
+    "handlingId": "sultlong",
+    "gameName": "sultlong",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "sultlong",
+      "fMass": 1100,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 145,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.5,
+      "fTractionCurveMax": 2.495,
+      "fTractionCurveMin": 2.255,
+      "fSteeringLock": 35,
+      "source": "resources/[cars]/showcasecars/data/sultlong/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/sultlong/vehicles.meta"
+  },
+  {
+    "model": "tailgatersr",
+    "handlingId": "tailgatersr",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tailgatersr",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tailgatersr/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tailgatersr/vehicles.meta"
+  },
+  {
+    "model": "tailsr66",
+    "handlingId": "tailsr66",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tailsr66",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tailsr66/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tailsr66/vehicles.meta"
+  },
+  {
+    "model": "tailstmk",
+    "handlingId": "tailstmk",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tailstmk",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tailstmk/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tailstmk/vehicles.meta"
+  },
+  {
+    "model": "temphyc",
+    "handlingId": "temphyc",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "temphyc",
+      "fMass": 1234,
+      "fInitialDriveForce": 0.36,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 157,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.65,
+      "fTractionCurveMin": 2.55,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/temphyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/temphyc/vehicles.meta"
+  },
+  {
+    "model": "temptwins",
+    "handlingId": "temptwins",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "temptwins",
+      "fMass": 1234,
+      "fInitialDriveForce": 0.36,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 157,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.65,
+      "fTractionCurveMin": 2.55,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/temptwins/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/temptwins/vehicles.meta"
+  },
+  {
+    "model": "tenfhyc",
+    "handlingId": "tenfhyc",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tenfhyc",
+      "fMass": 1300,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tenfhyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tenfhyc/vehicles.meta"
+  },
+  {
+    "model": "tenfvenm",
+    "handlingId": "tenfvenm",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "tenfvenm",
+      "fMass": 1300,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tenfvenm/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tenfvenm/vehicles.meta"
+  },
+  {
+    "model": "thraxven",
+    "handlingId": "thraxven",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "thraxven",
+      "fMass": 1960,
+      "fInitialDriveForce": 0.34,
+      "fDriveBiasFront": 0.45,
+      "fInitialDriveMaxFlatVel": 158.5,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.72,
+      "fTractionCurveMin": 2.65,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/thraxven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/thraxven/vehicles.meta"
+  },
+  {
+    "model": "toroslbwk",
+    "handlingId": "toroslbwk",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "toroslbwk",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/toroslbwk/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/toroslbwk/vehicles.meta"
+  },
+  {
+    "model": "torosven",
+    "handlingId": "torosven",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "torosven",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 43,
+      "source": "resources/[cars]/showcasecars/data/torosven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/torosven/vehicles.meta"
+  },
+  {
+    "model": "tragambo",
+    "handlingId": "tragambo",
+    "gameName": "tragambo",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tragambo",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.25,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 3.2,
+      "fTractionCurveMin": 3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tragambo/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tragambo/vehicles.meta"
+  },
+  {
+    "model": "trager",
+    "handlingId": "trager",
+    "gameName": "trager",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "trager",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.25,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 3.2,
+      "fTractionCurveMin": 3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/trager/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/trager/vehicles.meta"
+  },
+  {
+    "model": "tragmech",
+    "handlingId": "tragmech",
+    "gameName": "tragmech",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tragmech",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.25,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 3.2,
+      "fTractionCurveMin": 3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tragmech/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tragmech/vehicles.meta"
+  },
+  {
+    "model": "tragpd",
+    "handlingId": "tragpd",
+    "gameName": "tragpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "tragpd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.25,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 3.2,
+      "fTractionCurveMin": 3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/tragpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/tragpd/vehicles.meta"
+  },
+  {
+    "model": "turisgt3",
+    "handlingId": "turisgt3",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "turisgt3",
+      "fMass": 1435,
+      "fInitialDriveForce": 0.374,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 153,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.185,
+      "fTractionCurveMax": 2.764,
+      "fTractionCurveMin": 2.6195,
+      "fSteeringLock": 42.75,
+      "source": "resources/[cars]/showcasecars/data/turisgt3/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/turisgt3/vehicles.meta"
+  },
+  {
+    "model": "verusreg",
+    "handlingId": "verusreg",
+    "gameName": "",
+    "vehicleClass": "VC_OFF_ROAD",
+    "rawHandling": {
+      "handlingName": "verusreg",
+      "fMass": 750,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 105,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.4,
+      "fTractionCurveMin": 2.2,
+      "fSteeringLock": 36,
+      "source": "resources/[cars]/showcasecars/data/verusreg/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/verusreg/vehicles.meta"
+  },
+  {
+    "model": "xlsstr",
+    "handlingId": "xlsstr",
+    "gameName": "xlsstr",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "xlsstr",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.5,
+      "fTractionCurveMax": 3,
+      "fTractionCurveMin": 2.9,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/xlsstr/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/xlsstr/vehicles.meta"
+  },
+  {
+    "model": "zentven",
+    "handlingId": "zentven",
+    "gameName": "",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "zentven",
+      "fMass": 1500,
+      "fInitialDriveForce": 0.354,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 159,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.65,
+      "fTractionCurveMin": 2.55,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars/data/zentven/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/zentven/vehicles.meta"
+  },
+  {
+    "model": "zr350piston",
+    "handlingId": "zr350piston",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "zr350piston",
+      "fMass": 1300,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 149.8,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.485,
+      "fTractionCurveMin": 2.36,
+      "fSteeringLock": 41.15,
+      "source": "resources/[cars]/showcasecars/data/zr350piston/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars/data/zr350piston/vehicles.meta"
+  },
+  {
+    "model": "briosoxpd",
+    "handlingId": "briosoxpd",
+    "gameName": "briosoxpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "briosoxpd",
+      "fMass": 1250,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 175,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars2/data/briosoxpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/briosoxpd/vehicles.meta"
+  },
+  {
+    "model": "carrion",
+    "handlingId": "carrion",
+    "gameName": "Carrion",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "carrion",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.49,
+      "fTractionCurveMin": 2.25,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars2/data/carrion/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/carrion/vehicles.meta"
+  },
+  {
+    "model": "carrionmech",
+    "handlingId": "carrionmech",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "carrionmech",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.49,
+      "fTractionCurveMin": 2.25,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars2/data/carrionmech/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/carrionmech/vehicles.meta"
+  },
+  {
+    "model": "carrionpd",
+    "handlingId": "carrionpd",
+    "gameName": "carrionpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "carrionpd",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 156,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.85,
+      "fTractionCurveMax": 2.49,
+      "fTractionCurveMin": 2.25,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars2/data/carrionpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/carrionpd/vehicles.meta"
+  },
+  {
+    "model": "cazadorpd",
+    "handlingId": "cazadorpd",
+    "gameName": "cazadorpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "cazadorpd",
+      "fMass": 1380,
+      "fInitialDriveForce": 0.31,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 176,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/cazadorpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/cazadorpd/vehicles.meta"
+  },
+  {
+    "model": "clubrpd",
+    "handlingId": "clubrpd",
+    "gameName": "clubrpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "clubrpd",
+      "fMass": 1540,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.88,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.5,
+      "fSteeringLock": 41,
+      "source": "resources/[cars]/showcasecars2/data/clubrpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/clubrpd/vehicles.meta"
+  },
+  {
+    "model": "cyphx",
+    "handlingId": "cyphx",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "cyphx",
+      "fMass": 1625,
+      "fInitialDriveForce": 0.326,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 147.85,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.7,
+      "fTractionCurveMax": 2.59,
+      "fTractionCurveMin": 2.46,
+      "fSteeringLock": 41.65,
+      "source": "resources/[cars]/showcasecars2/data/cyphx/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/cyphx/vehicles.meta"
+  },
+  {
+    "model": "dawnpd",
+    "handlingId": "dawnpd",
+    "gameName": "dawnpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "dawnpd",
+      "fMass": 1400,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 185,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/dawnpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/dawnpd/vehicles.meta"
+  },
+  {
+    "model": "flashgrspd",
+    "handlingId": "flashgrspd",
+    "gameName": "flashgrspd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "flashgrspd",
+      "fMass": 1200,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.33,
+      "fInitialDriveMaxFlatVel": 183,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.2,
+      "fTractionCurveMin": 2,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/flashgrspd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/flashgrspd/vehicles.meta"
+  },
+  {
+    "model": "hyctailpd",
+    "handlingId": "hyctailpd",
+    "gameName": "hyctailpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "hyctailpd",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/hyctailpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/hyctailpd/vehicles.meta"
+  },
+  {
+    "model": "jubvenpd",
+    "handlingId": "jubvenpd",
+    "gameName": "jubvenpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "jubvenpd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 43,
+      "source": "resources/[cars]/showcasecars2/data/jubvenpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/jubvenpd/vehicles.meta"
+  },
+  {
+    "model": "kanjoep4",
+    "handlingId": "kanjoep4",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACT",
+    "rawHandling": {
+      "handlingName": "kanjoep4",
+      "fMass": 1150,
+      "fInitialDriveForce": 0.32,
+      "fDriveBiasFront": 1,
+      "fInitialDriveMaxFlatVel": 140,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.5,
+      "fTractionCurveMax": 1.97,
+      "fTractionCurveMin": 1.72,
+      "fSteeringLock": 48,
+      "source": "resources/[cars]/showcasecars2/data/kanjoep4/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/kanjoep4/vehicles.meta"
+  },
+  {
+    "model": "kanjox",
+    "handlingId": "kanjox",
+    "gameName": "",
+    "vehicleClass": "VC_COMPACT",
+    "rawHandling": {
+      "handlingName": "kanjox",
+      "fMass": 1500,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.7,
+      "fInitialDriveMaxFlatVel": 183,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.8,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/kanjox/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/kanjox/vehicles.meta"
+  },
+  {
+    "model": "omnvenpd",
+    "handlingId": "omnvenpd",
+    "gameName": "omnvenpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "omnvenpd",
+      "fMass": 1650,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/omnvenpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/omnvenpd/vehicles.meta"
+  },
+  {
+    "model": "reblax",
+    "handlingId": "reblax",
+    "gameName": "",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "reblax",
+      "fMass": 2185,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180.5,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars2/data/reblax/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/reblax/vehicles.meta"
+  },
+  {
+    "model": "reblaxpd",
+    "handlingId": "reblaxpd",
+    "gameName": "reblaxpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "reblaxpd",
+      "fMass": 2185,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180.5,
+      "nInitialDriveGears": 8,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars2/data/reblaxpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/reblaxpd/vehicles.meta"
+  },
+  {
+    "model": "rhinea19xpd",
+    "handlingId": "rhinea19xpd",
+    "gameName": "rhinea19xpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "rhinea19xpd",
+      "fMass": 1660,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/rhinea19xpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/rhinea19xpd/vehicles.meta"
+  },
+  {
+    "model": "schlagpd",
+    "handlingId": "schlagpd",
+    "gameName": "schlagpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "schlagpd",
+      "fMass": 1550,
+      "fInitialDriveForce": 0.37,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 159.2,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 0.8,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 38,
+      "source": "resources/[cars]/showcasecars2/data/schlagpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/schlagpd/vehicles.meta"
+  },
+  {
+    "model": "sen5tour",
+    "handlingId": "sen5tour",
+    "gameName": "sen5tour",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sen5tour",
+      "fMass": 1870,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 220,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sen5tour/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sen5tour/vehicles.meta"
+  },
+  {
+    "model": "sen5tourhyc",
+    "handlingId": "sen5tourhyc",
+    "gameName": "sen5tourhyc",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sen5tourhyc",
+      "fMass": 1870,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 220,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sen5tourhyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sen5tourhyc/vehicles.meta"
+  },
+  {
+    "model": "sent5bxane",
+    "handlingId": "sent5bxane",
+    "gameName": "sent5bxane",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sent5bxane",
+      "fMass": 1870,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 220,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sent5bxane/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sent5bxane/vehicles.meta"
+  },
+  {
+    "model": "sent5hyc",
+    "handlingId": "sent5hyc",
+    "gameName": "sent5hyc",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sent5hyc",
+      "fMass": 1870,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 220,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sent5hyc/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sent5hyc/vehicles.meta"
+  },
+  {
+    "model": "sent5wide",
+    "handlingId": "sent5wide",
+    "gameName": "sent5wide",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "sent5wide",
+      "fMass": 1870,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 220,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.3,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sent5wide/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sent5wide/vehicles.meta"
+  },
+  {
+    "model": "shenronpd",
+    "handlingId": "shenronpd",
+    "gameName": "shenronpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "shenronpd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/shenronpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/shenronpd/vehicles.meta"
+  },
+  {
+    "model": "sr8pd",
+    "handlingId": "sr8pd",
+    "gameName": "sr8pd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "sr8pd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/sr8pd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sr8pd/vehicles.meta"
+  },
+  {
+    "model": "srhatpd",
+    "handlingId": "srhatpd",
+    "gameName": "srhatpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "srhatpd",
+      "fMass": 1600,
+      "fInitialDriveForce": 0.35,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 180,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.6,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/srhatpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/srhatpd/vehicles.meta"
+  },
+  {
+    "model": "strcoupepd",
+    "handlingId": "strcoupepd",
+    "gameName": "strcoupepd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "strcoupepd",
+      "fMass": 2315,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 159.5,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.1,
+      "fTractionCurveMax": 2.515,
+      "fTractionCurveMin": 2.3505,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars2/data/strcoupepd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/strcoupepd/vehicles.meta"
+  },
+  {
+    "model": "sultlpd",
+    "handlingId": "sultlpd",
+    "gameName": "sultlpd",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "sultlpd",
+      "fMass": 1100,
+      "fInitialDriveForce": 0.33,
+      "fDriveBiasFront": 0.5,
+      "fInitialDriveMaxFlatVel": 145,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.5,
+      "fTractionCurveMax": 2.495,
+      "fTractionCurveMin": 2.255,
+      "fSteeringLock": 35,
+      "source": "resources/[cars]/showcasecars2/data/sultlpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/sultlpd/vehicles.meta"
+  },
+  {
+    "model": "taurion",
+    "handlingId": "taurion",
+    "gameName": "Taurion",
+    "vehicleClass": "VC_SUV",
+    "rawHandling": {
+      "handlingName": "taurion",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/taurion/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/taurion/vehicles.meta"
+  },
+  {
+    "model": "taurionpd",
+    "handlingId": "taurionpd",
+    "gameName": "taurionpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "taurionpd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.4,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 170,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1.2,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/taurionpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/taurionpd/vehicles.meta"
+  },
+  {
+    "model": "tenfhycpd",
+    "handlingId": "tenfhycpd",
+    "gameName": "tenfhycpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "tenfhycpd",
+      "fMass": 1300,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 150,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/tenfhycpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/tenfhycpd/vehicles.meta"
+  },
+  {
+    "model": "uranusx",
+    "handlingId": "uranusx",
+    "gameName": "",
+    "vehicleClass": "VC_SPORT_CLASSIC",
+    "rawHandling": {
+      "handlingName": "uranusx",
+      "fMass": 1240,
+      "fInitialDriveForce": 0.3245,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 155,
+      "nInitialDriveGears": 5,
+      "fBrakeForce": 0.48,
+      "fTractionCurveMax": 2.54,
+      "fTractionCurveMin": 2.4165,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/uranusx/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/uranusx/vehicles.meta"
+  },
+  {
+    "model": "varx",
+    "handlingId": "varx",
+    "gameName": "varx",
+    "vehicleClass": "VC_MOTORCYCLE",
+    "rawHandling": {
+      "handlingName": "varx",
+      "fMass": 150,
+      "fInitialDriveForce": 0.5,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 100,
+      "nInitialDriveGears": 4,
+      "fBrakeForce": 1.05,
+      "fTractionCurveMax": 2.16,
+      "fTractionCurveMin": 2.08,
+      "fSteeringLock": 40,
+      "source": "resources/[cars]/showcasecars2/data/varx/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/varx/vehicles.meta"
+  },
+  {
+    "model": "xlsstrpd",
+    "handlingId": "xlsstrpd",
+    "gameName": "xlsstrpd",
+    "vehicleClass": "VC_EMERGENCY",
+    "rawHandling": {
+      "handlingName": "xlsstrpd",
+      "fMass": 2000,
+      "fInitialDriveForce": 0.55,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 7,
+      "fBrakeForce": 1.5,
+      "fTractionCurveMax": 3,
+      "fTractionCurveMin": 2.9,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars2/data/xlsstrpd/handling.meta"
+    },
+    "source": "resources/[cars]/showcasecars2/data/xlsstrpd/vehicles.meta"
+  },
+  {
+    "model": "tempesta2",
+    "handlingId": "tempesta2",
+    "gameName": "tempesta2",
+    "vehicleClass": "VC_SUPER",
+    "rawHandling": {
+      "handlingName": "tempesta2",
+      "fMass": 1422,
+      "fInitialDriveForce": 0.46,
+      "fDriveBiasFront": 0.3,
+      "fInitialDriveMaxFlatVel": 195,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.65,
+      "fTractionCurveMin": 2.55,
+      "fSteeringLock": 40,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  },
+  {
+    "model": "sentinel_rts",
+    "handlingId": "sentinel_rts",
+    "gameName": "sentinel_rts",
+    "vehicleClass": "",
+    "rawHandling": {
+      "handlingName": "sentinel_rts",
+      "fMass": 1200,
+      "fInitialDriveForce": 0.525,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 230,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.675,
+      "fTractionCurveMax": 2,
+      "fTractionCurveMin": 1.8,
+      "fSteeringLock": 38,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  },
+  {
+    "model": "d7cyp",
+    "handlingId": "d7cyp",
+    "gameName": "",
+    "vehicleClass": "VC_SEDAN",
+    "rawHandling": {
+      "handlingName": "d7cyp",
+      "fMass": 1400,
+      "fInitialDriveForce": 0.42,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 182,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.9,
+      "fTractionCurveMax": 2.45,
+      "fTractionCurveMin": 2.15,
+      "fSteeringLock": 40,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  },
+  {
+    "model": "schlagenstr",
+    "handlingId": "schlagenstr",
+    "gameName": "SCHLAGENSTR",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "schlagenstr",
+      "fMass": 1450,
+      "fInitialDriveForce": 0.435,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 186,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.8,
+      "fTractionCurveMax": 2.6,
+      "fTractionCurveMin": 2.4,
+      "fSteeringLock": 40,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  },
+  {
+    "model": "cometcup",
+    "handlingId": "cometcup",
+    "gameName": "COMETCUP",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "cometcup",
+      "fMass": 1290,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0,
+      "fInitialDriveMaxFlatVel": 188,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.95,
+      "fTractionCurveMax": 2.655,
+      "fTractionCurveMin": 2.52,
+      "fSteeringLock": 41.65,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  },
+  {
+    "model": "h4rxst2",
+    "handlingId": "h4rxst2",
+    "gameName": "h4rxst2",
+    "vehicleClass": "VC_SPORT",
+    "rawHandling": {
+      "handlingName": "h4rxst2",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.45,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 200,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 0.9,
+      "fTractionCurveMax": 2.675,
+      "fTractionCurveMin": 2.58,
+      "fSteeringLock": 42,
+      "source": "resources/[sunset]/sunset_addon_vehicles/handling.meta"
+    },
+    "source": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+  }
+]

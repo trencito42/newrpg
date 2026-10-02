@@ -14,8 +14,8 @@ function SVD.ApplyHandling(veh, profile)
 
     local handling = profile.handling
 
-    -- Apply all configured handling properties
-    for _, prop in ipairs(SunsetVehicleDynamicsConfig.HandledProperties) do
+    -- Apply all configured handling properties with their respective native setters
+    for _, prop in ipairs(SunsetVehicleDynamics.Config.HandledProperties) do
         local val = handling[prop.name]
         if val ~= nil then
             if prop.type == 'float' and type(val) == 'number' then
@@ -36,15 +36,16 @@ function SVD.ApplyVehicleDynamics(veh, force)
     if not veh or not DoesEntityExist(veh) then return false end
 
     local classId = GetVehicleClass(veh)
-    if SunsetVehicleDynamicsConfig.ExcludedClasses[classId] then
+    if SunsetVehicleDynamics.Config.ExcludedClasses[classId] then
         return false
     end
 
     local modelHash = GetEntityModel(veh)
-    local stateKey = string.format('%d_%d', veh, modelHash)
+    local netId = NetworkGetEntityIsNetworked(veh) and NetworkGetNetworkIdFromEntity(veh) or 0
+    local stateKey = string.format('%d_%d_%d', veh, modelHash, netId)
 
     if not force and SVD.appliedEntities[veh] == stateKey then
-        return true -- Already applied
+        return true -- Already applied for this entity instance
     end
 
     local profile = SunsetVehicleDynamics.Resolve(modelHash, classId)
@@ -53,7 +54,7 @@ function SVD.ApplyVehicleDynamics(veh, force)
     local success = SVD.ApplyHandling(veh, profile)
     if success then
         SVD.appliedEntities[veh] = stateKey
-        if SunsetVehicleDynamicsConfig.Debug then
+        if SunsetVehicleDynamics.Config.Debug then
             print(string.format('^2[vehicle_dynamics] Applied baseline to veh %d (model: %s, source: %s)^7', veh, profile.model, profile.source))
         end
     end

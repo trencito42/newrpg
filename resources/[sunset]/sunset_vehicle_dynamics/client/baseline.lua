@@ -24,8 +24,8 @@ function SVD.GetCanonicalBaseline(modelHash, veh)
     local baseline = {}
     local handling = resolved.handling or {}
 
-    -- Populate handling values from the resolved profile
-    for _, prop in ipairs(SunsetVehicleDynamicsConfig.HandledProperties) do
+    -- Populate handling values from the resolved profile using central HandledProperties schema
+    for _, prop in ipairs(SunsetVehicleDynamics.Config.HandledProperties) do
         if handling[prop.name] ~= nil then
             baseline[prop.name] = handling[prop.name]
         end
@@ -43,7 +43,7 @@ function SVD.GetCanonicalBaseline(modelHash, veh)
     return baseline
 end
 
--- FiveM Exports
+-- FiveM Client Exports
 exports('GetCanonicalBaseline', function(modelHash, veh)
     return SVD.GetCanonicalBaseline(modelHash, veh)
 end)
@@ -53,8 +53,13 @@ exports('GetVehicleDynamicsProfile', function(modelHash, veh)
     return SunsetVehicleDynamics.Resolve(modelHash, classId)
 end)
 
+exports('GetModelProfile', function(modelHash, veh)
+    local classId = (veh and DoesEntityExist(veh) and GetVehicleClass(veh)) or 0
+    return SunsetVehicleDynamics.Resolve(modelHash, classId)
+end)
+
 exports('IsVehicleManaged', function(veh)
     if not veh or not DoesEntityExist(veh) then return false end
     local classId = GetVehicleClass(veh)
-    return not SunsetVehicleDynamicsConfig.ExcludedClasses[classId]
+    return not SunsetVehicleDynamics.Config.ExcludedClasses[classId]
 end)

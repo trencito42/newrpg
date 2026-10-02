@@ -13,3 +13,7 @@ print(string.format('^2[sunset_vehicle_dynamics] Initialized with %d canonical v
 exports('GetVehicleDynamicsProfile', function(modelIdentifier)
     return SunsetVehicleDynamics.Resolve(modelIdentifier, nil)
 end)
+
+exports('GetModelProfile', function(modelIdentifier)
+    return SunsetVehicleDynamics.Resolve(modelIdentifier, nil)
+end)
