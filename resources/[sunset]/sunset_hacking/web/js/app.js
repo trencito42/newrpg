@@ -1,7 +1,8 @@
 /**
  * Watch Dogs Network Hacking Minigame Controller
  * Full recreation with SVG directional energy propagation, custom targeting cursor,
- * 3D parallax depth, transform-isolated rotations, and authoritative session submission.
+ * 3D parallax depth, transform-isolated rotations, high-contrast cable layering,
+ * and unified node geometry.
  */
 
 (function () {
@@ -16,6 +17,7 @@
     // DOM Elements
     const rootEl = document.getElementById('hack-root');
     const svgEl = document.getElementById('network-svg');
+    const edgesShadowLayer = document.getElementById('edges-shadow-layer');
     const edgesBaseLayer = document.getElementById('edges-base-layer');
     const edgesPowerLayer = document.getElementById('edges-power-layer');
     const nodesLayer = document.getElementById('nodes-layer');
@@ -29,6 +31,15 @@
     const hudTimeBar = document.getElementById('hud-time-bar');
     const hudStatus = document.getElementById('hud-status');
     const hintCancel = document.getElementById('hint-cancel');
+
+    const GEOM = window.NODE_GEOMETRY || {
+        radius: 24,
+        armLength: 24,
+        portDistance: 24,
+        hitRadius: 34,
+        targetSize: 26,
+        centerDotRadius: 3.5
+    };
 
     // NUI Bridge Helper
     function postNui(event, data = {}) {
@@ -62,6 +73,7 @@
 
     // ── NETWORK RENDERING ────────────────────────────────────────────
     function drawNetwork() {
+        if (edgesShadowLayer) edgesShadowLayer.innerHTML = '';
         edgesBaseLayer.innerHTML = '';
         edgesPowerLayer.innerHTML = '';
         nodesLayer.innerHTML = '';
@@ -72,12 +84,22 @@
         const vb = graph.viewBox || { width: 1000, height: 650 };
         svgEl.setAttribute('viewBox', `0 0 ${vb.width} ${vb.height}`);
 
-        // 1. Draw Orthogonal Edges
+        // 1. Draw 3-Layer Orthogonal Edges (Shadow -> Inactive Base -> Luminous Power)
         graph.links.forEach(edge => {
             const pathD = edge.pathD || '';
             if (!pathD) return;
 
-            // Inactive base edge
+            // Layer 1: Dark Under-Stroke / Shadow for maximum contrast on transparent scenes
+            if (edgesShadowLayer) {
+                const pathShadow = createSvgEl('path', {
+                    d: pathD,
+                    class: 'edge-shadow',
+                    id: `${edge.id}_shadow`
+                });
+                edgesShadowLayer.appendChild(pathShadow);
+            }
+
+            // Layer 2: Inactive neutral physical cable (ALWAYS visible)
             const pathBase = createSvgEl('path', {
                 d: pathD,
                 class: 'edge-base',
@@ -85,7 +107,7 @@
             });
             edgesBaseLayer.appendChild(pathBase);
 
-            // Active luminous edge with traveling dashoffset
+            // Layer 3: Active luminous power flow edge
             const pathPower = createSvgEl('path', {
                 d: pathD,
                 class: 'edge-power',
@@ -93,7 +115,6 @@
             });
             edgesPowerLayer.appendChild(pathPower);
 
-            // Calculate length for dash animations
             try {
                 edge.length = pathPower.getTotalLength() || 100;
             } catch (e) {
@@ -105,7 +126,7 @@
             edge.powerDom = pathPower;
         });
 
-        // 2. Draw Nodes with Transform Isolation
+        // 2. Draw Nodes with Transform Isolation & Unified Geometry
         graph.nodes.forEach(node => {
             const group = createSvgEl('g', {
                 class: `node-group ${node.type.toLowerCase()}${node.locked ? ' locked' : ''}`,
@@ -113,13 +134,12 @@
                 transform: `translate(${node.x}, ${node.y})`
             });
 
-            // Rotator child group for clean transform isolation
             const rotator = createSvgEl('g', {
                 class: 'node-rotator'
             });
             rotator.style.transform = `rotate(${node.rotation}deg)`;
 
-            const r = 24;
+            const r = GEOM.radius;
 
             if (node.isSource) {
                 // SOURCE: Core + rotating dashed ring
@@ -131,7 +151,7 @@
                 group.appendChild(core);
             } else if (node.isTarget) {
                 // TARGET: Diamond shape
-                const size = 26;
+                const size = GEOM.targetSize;
                 const diamond = createSvgEl('rect', {
                     x: -size / 2, y: -size / 2,
                     width: size, height: size,
@@ -147,11 +167,11 @@
                 group.appendChild(diamond);
                 group.appendChild(innerDiamond);
             } else {
-                // INTERACTIVE NODE: Base circle + arms for base ports
+                // INTERACTIVE NODE: Base circle + all exposed arms for node type
                 const bgCircle = createSvgEl('circle', { r: r, class: 'node-border' });
                 rotator.appendChild(bgCircle);
 
-                const armLen = 22;
+                const armLen = GEOM.armLength;
                 node.basePorts.forEach(port => {
                     if (port === DIR.TOP) rotator.appendChild(createArm(0, -armLen));
                     if (port === DIR.RIGHT) rotator.appendChild(createArm(armLen, 0));
@@ -160,7 +180,7 @@
                 });
 
                 // Center node dot
-                const centerDot = createSvgEl('circle', { r: 3.5, class: 'node-center-dot' });
+                const centerDot = createSvgEl('circle', { r: GEOM.centerDotRadius, class: 'node-center-dot' });
                 rotator.appendChild(centerDot);
 
                 group.appendChild(rotator);
@@ -175,9 +195,9 @@
                 }
             }
 
-            // Click target (larger invisible hit zone)
+            // Click target (uses GEOM.hitRadius)
             const clickTarget = createSvgEl('circle', {
-                r: 32,
+                r: GEOM.hitRadius,
                 class: 'click-target'
             });
             group.appendChild(clickTarget);
@@ -324,7 +344,6 @@
         hudStatus.style.color = '#00e5ff';
 
         setTimeout(() => {
-            // Target Node expansion
             graph.targetIds.forEach(tId => {
                 const tNode = graph.nodes.get(tId);
                 if (tNode && tNode.domElement) {
@@ -332,23 +351,19 @@
                 }
             });
 
-            // Glitching Override Message
             successMsg.classList.add('visible');
 
-            // Brief 100ms flash
             document.body.style.filter = 'invert(1) hue-rotate(180deg)';
             setTimeout(() => {
                 document.body.style.filter = 'none';
             }, 100);
         }, 180);
 
-        // Collect node rotation map for authoritative server verification
         const nodeRotations = {};
         graph.nodes.forEach((node, id) => {
             nodeRotations[id] = node.rotation;
         });
 
-        // Notify FiveM after celebration delay
         setTimeout(() => {
             postNui('nui:complete', {
                 sessionId: activeSessionId,
@@ -408,7 +423,6 @@
 
         cursor.style.transform = `translate(${x}px, ${y}px)`;
 
-        // 3D Parallax Depth on puzzle container
         const cx = window.innerWidth / 2;
         const cy = window.innerHeight / 2;
         const px = (x - cx) / cx;
@@ -452,6 +466,7 @@
         rootEl.classList.remove('visible');
         setTimeout(() => {
             rootEl.classList.add('hidden');
+            if (edgesShadowLayer) edgesShadowLayer.innerHTML = '';
             edgesBaseLayer.innerHTML = '';
             edgesPowerLayer.innerHTML = '';
             nodesLayer.innerHTML = '';

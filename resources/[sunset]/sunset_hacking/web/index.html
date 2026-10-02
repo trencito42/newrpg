@@ -67,10 +67,13 @@
         <!-- Main Watch Dogs Puzzle Container (with 3D Parallax & SVG Network) -->
         <div class="puzzle-container" id="puzzle-container">
             <svg id="network-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-                <!-- Layer 1: Inactive Base Edges -->
+                <!-- Layer 1: Dark Under-Stroke / Shadow for Crisp Contrast -->
+                <g id="edges-shadow-layer"></g>
+
+                <!-- Layer 2: Inactive Neutral Physical Cable Edges -->
                 <g id="edges-base-layer"></g>
 
-                <!-- Layer 2: Energized Flow Edges with Dashoffset Sweep -->
+                <!-- Layer 3: Energized Flow Edges with Dashoffset Sweep -->
                 <g id="edges-power-layer"></g>
 
                 <!-- Layer 3: Interactive Circular & Diamond Nodes -->

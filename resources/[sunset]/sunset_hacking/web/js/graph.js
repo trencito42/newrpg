@@ -1,7 +1,7 @@
 /**
  * Watch Dogs Network Graph Model & Directional Energy Propagation Engine
- * Supports port-based orthogonal routing, deterministic BFS propagation,
- * and lock state persistence.
+ * Supports port-based pure orthogonal routing, deterministic BFS propagation,
+ * unified node geometry, and development invariant assertions.
  */
 
 const DIR = {
@@ -9,6 +9,23 @@ const DIR = {
     RIGHT: 1,
     BOTTOM: 2,
     LEFT: 3
+};
+
+const DIR_VECTORS = {
+    [DIR.TOP]:    { x: 0,  y: -1 },
+    [DIR.RIGHT]:  { x: 1,  y: 0  },
+    [DIR.BOTTOM]: { x: 0,  y: 1  },
+    [DIR.LEFT]:   { x: -1, y: 0  },
+};
+
+// Single Source of Truth for all Node Geometry
+const NODE_GEOMETRY = {
+    radius: 24,         // Circle outer radius
+    armLength: 24,      // Arm visual length from center (matches radius)
+    portDistance: 24,   // Port coordinate distance from center
+    hitRadius: 34,      // Click target radius
+    targetSize: 26,     // Target diamond side length
+    centerDotRadius: 3.5,
 };
 
 const NODE_TYPES = {
@@ -21,8 +38,6 @@ const NODE_TYPES = {
     TARGET: { ports: [DIR.TOP, DIR.RIGHT, DIR.BOTTOM, DIR.LEFT], rotatable: false },
     LOCKED_JUNCTION: { ports: [DIR.TOP, DIR.RIGHT], rotatable: true },
 };
-
-const NODE_RADIUS = 28;
 
 class PuzzleGraph {
     constructor(puzzleData) {
@@ -74,11 +89,10 @@ class PuzzleGraph {
                 pathD: '',
                 length: 0,
                 energized: false,
-                flowForward: true, // true: from -> to, false: to -> from
+                flowForward: true,
                 depth: 0,
             };
 
-            // Compute orthogonal SVG path
             const fromNode = this.nodes.get(link.from);
             const toNode = this.nodes.get(link.to);
             if (fromNode && toNode) {
@@ -99,68 +113,111 @@ class PuzzleGraph {
     }
 
     /**
-     * Calculates the exact cardinal port coordinates at node boundary
-     * 0 = TOP, 1 = RIGHT, 2 = BOTTOM, 3 = LEFT
+     * Calculates port coordinates at the exact node perimeter boundary
      */
     getNodePort(node, dir) {
-        const r = NODE_RADIUS;
-        switch (dir) {
-            case DIR.TOP:    return { x: node.x, y: node.y - r };
-            case DIR.RIGHT:  return { x: node.x + r, y: node.y };
-            case DIR.BOTTOM: return { x: node.x, y: node.y + r };
-            case DIR.LEFT:   return { x: node.x - r, y: node.y };
-            default:         return { x: node.x, y: node.y };
-        }
+        const d = NODE_GEOMETRY.portDistance;
+        const v = DIR_VECTORS[dir] || { x: 0, y: 0 };
+        return {
+            x: Math.round(node.x + v.x * d),
+            y: Math.round(node.y + v.y * d)
+        };
     }
 
     /**
-     * Builds a clean Watch Dogs-inspired orthogonal SVG path with 90-degree turns
+     * Builds a guaranteed 100% orthogonal SVG path (ZERO diagonal segments)
+     * Every single segment satisfies (x1 === x2 || y1 === y2)
      */
     buildOrthogonalPath(p1, p2, dir1, dir2) {
         const stub = 16;
-        let s1 = { x: p1.x, y: p1.y };
-        let s2 = { x: p2.x, y: p2.y };
+        const v1 = DIR_VECTORS[dir1];
+        const v2 = DIR_VECTORS[dir2];
 
-        // Step 1: outward stub from port 1
-        if (dir1 === DIR.TOP) s1.y -= stub;
-        else if (dir1 === DIR.RIGHT) s1.x += stub;
-        else if (dir1 === DIR.BOTTOM) s1.y += stub;
-        else if (dir1 === DIR.LEFT) s1.x -= stub;
+        // S1: Stub outward from port 1
+        const s1 = {
+            x: p1.x + v1.x * stub,
+            y: p1.y + v1.y * stub
+        };
 
-        // Step 2: outward stub from port 2
-        if (dir2 === DIR.TOP) s2.y -= stub;
-        else if (dir2 === DIR.RIGHT) s2.x += stub;
-        else if (dir2 === DIR.BOTTOM) s2.y += stub;
-        else if (dir2 === DIR.LEFT) s2.x -= stub;
+        // S2: Stub outward from port 2
+        const s2 = {
+            x: p2.x + v2.x * stub,
+            y: p2.y + v2.y * stub
+        };
 
-        // Step 3: Orthogonal waypoint routing
-        const points = [`M ${p1.x} ${p1.y}`, `L ${s1.x} ${s1.y}`];
+        const rawPoints = [p1, s1];
 
-        const isHorizontal1 = (dir1 === DIR.LEFT || dir1 === DIR.RIGHT);
-        const isHorizontal2 = (dir2 === DIR.LEFT || dir2 === DIR.RIGHT);
+        const isH1 = (v1.x !== 0);
+        const isH2 = (v2.x !== 0);
 
-        if (isHorizontal1 && isHorizontal2) {
-            // Both horizontal: use mid-X
-            const midX = (s1.x + s2.x) / 2;
-            points.push(`L ${midX} ${s1.y}`);
-            points.push(`L ${midX} ${s2.y}`);
-        } else if (!isHorizontal1 && !isHorizontal2) {
-            // Both vertical: use mid-Y
-            const midY = (s1.y + s2.y) / 2;
-            points.push(`L ${s1.x} ${midY}`);
-            points.push(`L ${s2.x} ${midY}`);
-        } else if (isHorizontal1 && !isHorizontal2) {
-            // P1 horizontal, P2 vertical: single corner at (s2.x, s1.y)
-            points.push(`L ${s2.x} ${s1.y}`);
+        if (isH1 && isH2) {
+            // Both horizontal: transition at mid-X
+            const midX = Math.round((s1.x + s2.x) / 2);
+            rawPoints.push({ x: midX, y: s1.y });
+            rawPoints.push({ x: midX, y: s2.y });
+        } else if (!isH1 && !isH2) {
+            // Both vertical: transition at mid-Y
+            const midY = Math.round((s1.y + s2.y) / 2);
+            rawPoints.push({ x: s1.x, y: midY });
+            rawPoints.push({ x: s2.x, y: midY });
+        } else if (isH1 && !isH2) {
+            // Port 1 horizontal, Port 2 vertical: single corner at (s2.x, s1.y)
+            rawPoints.push({ x: s2.x, y: s1.y });
         } else {
-            // P1 vertical, P2 horizontal: single corner at (s1.x, s2.y)
-            points.push(`L ${s1.x} ${s2.y}`);
+            // Port 1 vertical, Port 2 horizontal: single corner at (s1.x, s2.y)
+            rawPoints.push({ x: s1.x, y: s2.y });
         }
 
-        points.push(`L ${s2.x} ${s2.y}`);
-        points.push(`L ${p2.x} ${p2.y}`);
+        rawPoints.push(s2);
+        rawPoints.push(p2);
 
-        return points.join(' ');
+        // Simplify collinear adjacent points and duplicate points
+        const simplified = [];
+        for (let i = 0; i < rawPoints.length; i++) {
+            const pt = rawPoints[i];
+            if (simplified.length >= 2) {
+                const prev1 = simplified[simplified.length - 1];
+                const prev2 = simplified[simplified.length - 2];
+
+                // Check if prev2, prev1, pt are collinear on X or Y
+                const sameX = (Math.abs(prev2.x - prev1.x) < 0.001 && Math.abs(prev1.x - pt.x) < 0.001);
+                const sameY = (Math.abs(prev2.y - prev1.y) < 0.001 && Math.abs(prev1.y - pt.y) < 0.001);
+
+                if (sameX || sameY) {
+                    // Replace prev1 with pt
+                    simplified[simplified.length - 1] = pt;
+                    continue;
+                }
+            }
+
+            // Avoid consecutive duplicates
+            if (simplified.length > 0) {
+                const prev = simplified[simplified.length - 1];
+                if (Math.abs(prev.x - pt.x) < 0.001 && Math.abs(prev.y - pt.y) < 0.001) {
+                    continue;
+                }
+            }
+
+            simplified.push(pt);
+        }
+
+        // ── INVARIANT VALIDATION: Ensure 100% strictly orthogonal ────────
+        for (let i = 0; i < simplified.length - 1; i++) {
+            const a = simplified[i];
+            const b = simplified[i + 1];
+            const isOrthogonal = Math.abs(a.x - b.x) < 0.001 || Math.abs(a.y - b.y) < 0.001;
+            if (!isOrthogonal) {
+                console.error(`[sunset_hacking] INVARIANT VIOLATION: Diagonal segment generated from (${a.x},${a.y}) to (${b.x},${b.y})!`);
+            }
+        }
+
+        // Build SVG path string
+        const dParts = [`M ${simplified[0].x} ${simplified[0].y}`];
+        for (let i = 1; i < simplified.length; i++) {
+            dParts.push(`L ${simplified[i].x} ${simplified[i].y}`);
+        }
+
+        return dParts.join(' ');
     }
 
     getEffectivePorts(node) {
@@ -181,7 +238,6 @@ class PuzzleGraph {
 
     /**
      * Executes BFS deterministic power propagation from SOURCE
-     * Records traversal direction, depth, and unlocking conditions
      */
     propagate() {
         const energizedNodes = new Set();
@@ -221,12 +277,12 @@ class PuzzleGraph {
                 const neighborPorts = this.getEffectivePorts(neighborNode);
                 if (!neighborPorts.has(edge.dirIn)) continue;
 
-                // Connection is valid and energized
+                // Valid energized connection
                 energizedLinks.add(edge.link.id);
                 edge.link.flowForward = edge.isForward;
                 edge.link.depth = currDepth;
 
-                // Handle locked nodes: if locked junction receives power, unlock it
+                // Locked node unlock on energized route arrival
                 if (neighborNode.locked && neighborNode.unlockRequirement === 'power') {
                     neighborNode.locked = false;
                     neighborNode.rotatable = true;
@@ -261,7 +317,7 @@ class PuzzleGraph {
         this.lastEnergizedNodes = new Set(energizedNodes);
         this.lastEnergizedLinks = new Set(energizedLinks);
 
-        // Check victory (all targets reached)
+        // Check if all targets are reached
         let allTargetsReached = this.targetIds.size > 0;
         for (const tId of this.targetIds) {
             if (!energizedNodes.has(tId)) {
@@ -281,4 +337,5 @@ class PuzzleGraph {
     }
 }
 
+window.NODE_GEOMETRY = NODE_GEOMETRY;
 window.PuzzleGraph = PuzzleGraph;

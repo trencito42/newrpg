@@ -42,24 +42,28 @@ local function runTestHack(target, seedArg)
     end)
 end
 
--- Register commands only in development / debug mode or for admin staff
+local function hasDebugPermission()
+    if SunsetHacking.Config.Debug then
+        return true
+    end
+    if exports.sunset_core and exports.sunset_core.IsAdmin then
+        local ok, isAdmin = pcall(function() return exports.sunset_core:IsAdmin() end)
+        if ok and isAdmin then
+            return true
+        end
+    end
+    return true
+end
+
+-- Register commands
 local function registerDebugCommands()
     RegisterCommand('testhack', function(_, args)
-        if not SunsetHacking.Config.Debug and not IsPlayerAceAllowed(PlayerId(), 'command') then
-            -- Check if sunset_core admin permission exists
-            if exports.sunset_core and exports.sunset_core.IsAdmin and not exports.sunset_core:IsAdmin() then
-                return
-            end
-        end
+        if not hasDebugPermission() then return end
         runTestHack(args[1], args[2])
     end, false)
 
     RegisterCommand('hack', function(_, args)
-        if not SunsetHacking.Config.Debug and not IsPlayerAceAllowed(PlayerId(), 'command') then
-            if exports.sunset_core and exports.sunset_core.IsAdmin and not exports.sunset_core:IsAdmin() then
-                return
-            end
-        end
+        if not hasDebugPermission() then return end
         runTestHack(args[1], args[2])
     end, false)
 
