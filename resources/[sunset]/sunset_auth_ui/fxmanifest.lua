@@ -13,6 +13,7 @@ files {
     'web/auth.css',
     'web/auth.js',
     'web/background.webp',
+    'web/logo.svg',
 }
 
 client_scripts {

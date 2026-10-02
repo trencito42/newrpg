@@ -85,10 +85,12 @@ body.nofx * { animation: none !important; }
     max-width: 80vw;
 }
 
-.logo svg {
+.logo img {
     width: 100%;
     height: auto;
     display: block;
+    user-select: none;
+    pointer-events: none;
 }
 
 /* ── Bottom bar ───────────────────────────────────────────── */

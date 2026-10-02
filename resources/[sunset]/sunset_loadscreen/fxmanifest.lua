@@ -15,6 +15,7 @@ files {
     'index.html',
     'style.css',
     'script.js',
+    'logo.svg',
     'assets/sunset.webp',
     -- [AUDIT P7-05] self-hosted fonts
     'assets/fonts/gfonts.css',
