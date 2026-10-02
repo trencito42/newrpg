@@ -211,9 +211,14 @@ local function spawnPlayer(char, spawnPosition)
     if actualModel ~= model then
         print(('^1[SPAWN CRITICAL] SetPlayerModel mismatch: expected=%s actual=%s -> retrying default ped %s^7'):format(tostring(model), tostring(actualModel), defPedName))
         RequestModel(defPedHash)
-        while not HasModelLoaded(defPedHash) do Wait(10) end
-        SetPlayerModel(PlayerId(), defPedHash)
-        SetModelAsNoLongerNeeded(defPedHash)
+        local fbModelDeadline = GetGameTimer() + 2000
+        while not HasModelLoaded(defPedHash) and GetGameTimer() < fbModelDeadline do Wait(10) end
+        if not HasModelLoaded(defPedHash) then
+            print(('^1[SPAWN CRITICAL] Default ped model %s also failed to load within deadline; proceeding with current ped^7'):format(defPedName))
+        else
+            SetPlayerModel(PlayerId(), defPedHash)
+            SetModelAsNoLongerNeeded(defPedHash)
+        end
         ped = PlayerPedId()
         actualModel = GetEntityModel(ped)
     end

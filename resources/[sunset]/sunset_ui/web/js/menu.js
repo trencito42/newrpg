@@ -267,7 +267,7 @@ const Menu = {
 
     vehicleSnapshotKey(vehicles, selectedId, openEcuId) {
         const list = (vehicles || []).map((v) => [
-            v.id, v.model, v.plate, v.stored, v.inWorld, v.destroyed,
+            v.id, v.model, v.displayName, v.plate, v.stored, v.inWorld, v.destroyed,
             v.fuel, v.engine, v.body, v.odometer,
             v.insurancePoints, v.insuranceLevel, v.claimCost, v.renewCost,
             v.isCurrentVehicle, v.garage, v.parked_x, v.parked_y,
@@ -279,7 +279,11 @@ const Menu = {
     _vehicleStateOf(v) {
         const isDestroyed = v.destroyed === true || v.destroyed === 1 || v.destroyed === '1';
         const stored = !isDestroyed && (v.stored === true || v.stored === 1 || v.stored === '1' || Number(v.stored) === 1);
-        const inWorld = !isDestroyed && !stored;
+        // Trust the authoritative inWorld flag from buildMenuData (IsPlateInWorld).
+        // Only fall back to !stored when the server did not supply the field, so
+        // despawned-but-unstored vehicles are never shown as "in world".
+        const serverInWorld = v.inWorld === true || v.inWorld === 1 || v.inWorld === '1';
+        const inWorld = !isDestroyed && !stored && (v.inWorld != null ? serverInWorld : true);
         const hasPark = Number.isFinite(Number(v.parked_x)) && Number.isFinite(Number(v.parked_y));
         if (isDestroyed) return { key: 'impound', label: this.t('menu.vehicle.impounded'), stored: false, inWorld: false, isDestroyed: true };
         if (stored) return { key: 'garage', label: `${this.t('menu.vehicle.garage')} · ${v.garage || 'Central'}`, stored: true, inWorld: false };
@@ -355,7 +359,7 @@ const Menu = {
         const listHtml = (filtered.length ? filtered : vehicles).map((v) => {
             const status = this._vehicleStateOf(v);
             const tag = this.vmenuStatusTag(status.key);
-            const name = this.escape((v.label || v.model || this.t('common.vehicle')).toUpperCase());
+            const name = this.escape(v.displayName || v.label || this.t('common.vehicle'));
             const plate = this.escape(v.plate || '—');
             const isSelected = String(v.id) === String(this.selectedVehicleId);
             return `<button type="button" class="v-item ${isSelected ? 'active' : ''}" data-v-select="${Number(v.id) || 0}">
@@ -369,7 +373,7 @@ const Menu = {
         }).join('');
 
         const status = this._vehicleStateOf(selected);
-        const displayName = this.escape((selected.label || selected.model || this.t('common.vehicle')).toUpperCase());
+        const displayName = this.escape(selected.displayName || selected.label || this.t('common.vehicle'));
         const plate = this.escape(selected.plate || '—');
         const fuel = Math.max(0, Math.min(100, Math.round(Number(selected.fuel) || 0)));
         const engine = Math.max(0, Math.min(100, Math.round((Number(selected.engine) || 0) / 10)));

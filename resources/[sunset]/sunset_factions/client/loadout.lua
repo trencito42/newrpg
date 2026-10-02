@@ -18,10 +18,9 @@ local WEAPON_LABELS = {
     WEAPON_ASSAULTRIFLE = 'Assault Rifle',
 }
 
-local FREEMODE_MALE = `mp_m_freemode_01`
-local FREEMODE_FEMALE = `mp_f_freemode_01`
-local CIVILIAN_MALE = `mp_m_freemode_01`
-local CIVILIAN_FEMALE = `mp_f_freemode_01`
+-- [PED ARCH] Freemode/civilian model constants removed: outfit-only faction
+-- loadouts now apply component overrides on the player's current ped model.
+-- Only explicit customSkin / ResolveFactionSkin entries may switch the ped.
 local preDutyModel = nil
 
 local function getChar()
@@ -85,14 +84,6 @@ local function preloadPedModel(modelInput)
     end
 end
 
-local function freemodeModelFor(gender)
-    return (gender == 1) and FREEMODE_FEMALE or FREEMODE_MALE
-end
-
-local function civilianModelFor(gender)
-    return (gender == 1) and CIVILIAN_FEMALE or CIVILIAN_MALE
-end
-
 local function restoreScreenIfFaded()
     if IsScreenFadedOut() then
         DoScreenFadeIn(0)
@@ -115,13 +106,6 @@ local function applyOutfitComponents(ped, outfit)
                 SetPedComponentVariation(ped, componentId, drawable, texture, 2)
             end
         end
-    end
-end
-
-local function applySavedAppearance(ped, char, gender)
-    local model = GetEntityModel(ped)
-    if (model == FREEMODE_MALE or model == FREEMODE_FEMALE) and char and char.appearance and GetResourceState('sunset_appearance') == 'started' then
-        exports.sunset_appearance:ApplyAppearance(ped, char.appearance, gender)
     end
 end
 
@@ -218,12 +202,10 @@ function ApplyFactionLoadout(factionId, grade, customSkin)
         else
             local outfit = Sunset.ResolveFactionOutfit and Sunset.ResolveFactionOutfit(loadout, grade, gender)
             if outfit then
-                local freemodeModel = freemodeModelFor(gender)
-                if GetEntityModel(ped) ~= freemodeModel then
-                    switchPedModel(freemodeModel)
-                    ped = PlayerPedId()
-                    applySavedAppearance(ped, char, gender)
-                end
+                -- [PED ARCH] Outfit-only loadouts apply component overrides on the
+                -- player's current ped model. We NEVER switch to a freemode ped here;
+                -- only an explicit customSkin or ResolveFactionSkin entry may change
+                -- the ped model. This preserves the unified ped architecture.
                 if exports.sunset_appearance and exports.sunset_appearance.ApplyFactionOutfit then
                     exports.sunset_appearance:ApplyFactionOutfit(ped, outfit, gender, char.appearance)
                 else
@@ -254,10 +236,6 @@ end
 
 CreateThread(function()
     Wait(2000)
-    preloadPedModel(FREEMODE_MALE)
-    preloadPedModel(FREEMODE_FEMALE)
-    preloadPedModel(CIVILIAN_MALE)
-    preloadPedModel(CIVILIAN_FEMALE)
     if Sunset.FactionSkins then
         for _, def in pairs(Sunset.FactionSkins) do
             preloadPedModel(def.defaultMale)
