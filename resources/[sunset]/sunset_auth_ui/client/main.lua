@@ -13,6 +13,23 @@ local authBootEpoch = 0
 local authPresentationId = 0
 local lastShowPayload = nil
 local hudHideThread = nil
+local focusGuardThread = nil
+
+-- Re-asserts SetNuiFocus every 100ms so nothing can steal cursor during login.
+local function startFocusGuard()
+    if focusGuardThread then return end
+    focusGuardThread = CreateThread(function()
+        while authOpen do
+            SetNuiFocus(true, true)
+            Wait(100)
+        end
+        focusGuardThread = nil
+    end)
+end
+
+local function stopFocusGuard()
+    -- authOpen = false causes the thread to exit naturally next tick
+end
 
 -- Suppress native GTA HUD (minimap, ammo, etc.) every frame while auth is open.
 local function startHudSuppression()
@@ -82,9 +99,9 @@ exports('Show', function(screen, data)
     authVisibleRendered = false
     authPresentationId = authPresentationId + 1
     authFocus(true, true)
-    -- Direct call ensures cursor even if focus manager ownership is contested
     SetNuiFocus(true, true)
     startHudSuppression()
+    startFocusGuard()
 
     local payload = type(data) == 'table' and data or {}
     payload.presentationId = authPresentationId
@@ -102,6 +119,7 @@ exports('Hide', function()
     authOpen = false
     authVisibleRendered = false
     lastShowPayload = nil
+    stopFocusGuard()
     authFocus(false, false)
     SetNuiFocus(false, false)
     stopHudSuppression()
