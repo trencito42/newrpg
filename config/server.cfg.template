@@ -6,14 +6,14 @@ endpoint_add_tcp "0.0.0.0:30120"
 endpoint_add_udp "0.0.0.0:30120"
 
 # ── Authoritative version: change ONE value here ─────────────────────────────
-set blaze_version "0.7.0-alpha"
+set racket_version "0.7.0-alpha"
 
-# sv_hostname is set dynamically at startup from blaze_version (see sunset_core).
+# sv_hostname is set dynamically at startup from racket_version (see sunset_core).
 # The static fallback below is overridden immediately; it exists only so FiveM
 # has something to display before the first resource finishes loading.
-sv_hostname "Blaze RPG v0.7.0-alpha"
-sets sv_projectName "Blaze RPG"
-sets sv_projectDesc "Blaze RPG — build your story."
+sv_hostname "Racket RPG v0.7.0-alpha"
+sets sv_projectName "Racket RPG"
+sets sv_projectDesc "Racket RPG — build your story."
 sets tags "rpg, sunsetmp, english"
 sets locale "en-US"
 
@@ -149,7 +149,7 @@ ensure villa_island
 add_ace group.admin command allow
 add_ace group.admin command.quit deny
 
-# ═══ DISCORD LOGGING (Blaze Shield + audit) ═══
+# ═══ DISCORD LOGGING (Racket Shield + audit) ═══
 # Webhook URL injected from .env (DISCORD_WEBHOOK) at deploy time.
 # discord_webhook_all is the fallback for any channel without its own webhook.
 set discord_webhook_anticheat "__DISCORD_WEBHOOK__"

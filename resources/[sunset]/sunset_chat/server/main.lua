@@ -593,7 +593,7 @@ function RunServerCommand(source, name, args)
     name = string.lower(tostring(name or ''))
     args = args or {}
     if name == 'version' then
-        local ver = GetConvar('blaze_version', '0.0.0-dev')
+        local ver = GetConvar('racket_version', '0.0.0-dev')
         TriggerClientEvent('sunset:chat:system', source, t(source, 'core.cmd.version.line1'), 'info')
         TriggerClientEvent('sunset:chat:system', source, t(source, 'core.cmd.version.line2', { version = ver }), 'info')
         return true

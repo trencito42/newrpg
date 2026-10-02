@@ -283,7 +283,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     end
     rate.count = rate.count + 1
     if rate.count > 30 then
-        print(('^3[blaze.mp]^7 Callback flood blocked from %s'):format(source))
+        print(('^3[racket.gg]^7 Callback flood blocked from %s'):format(source))
         TriggerClientEvent('sunset:client:callbackResponse', source, requestId, { __cb = true, result = nil, err = Sunset.TFor(source, 'error.too_many_requests') })
         return
     end
@@ -334,7 +334,7 @@ if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then retu
     end
 
     if not ok then
-        print(('^1[blaze.mp]^7 Callback error (%s): %s'):format(name, tostring(packed)))
+        print(('^1[racket.gg]^7 Callback error (%s): %s'):format(name, tostring(packed)))
         if isSpecialTrace then
             print(('^1[CB-PERF] enterGame RESPONSE_SENT id=%s (error)^7'):format(tostring(requestId)))
         end
@@ -1200,18 +1200,18 @@ AddEventHandler('onResourceStop', function(resource)
     end
 end)
 
--- Authoritative runtime version, sourced from blaze_version convar (set in
+-- Authoritative runtime version, sourced from racket_version convar (set in
 -- server.cfg — change ONE value there to update hostname, /version, and logs).
-Sunset.Version = GetConvar('blaze_version', '0.0.0-dev')
+Sunset.Version = GetConvar('racket_version', '0.0.0-dev')
 
-exports('GetBlazeVersion', function() return Sunset.Version end)
+exports('GetRacketVersion', function() return Sunset.Version end)
 
 CreateThread(function()
     MySQL.ready(function()
         -- Update sv_hostname to reflect the current version.
-        SetConvar('sv_hostname', 'Blaze RPG v' .. Sunset.Version)
+        SetConvar('sv_hostname', 'Racket RPG v' .. Sunset.Version)
 
-        print(('^2[Blaze]^7 Blaze RPG v%s initialized'):format(Sunset.Version))
+        print(('^2[Racket]^7 Racket RPG v%s initialized'):format(Sunset.Version))
         local critical = { 'sunset_core', 'sunset_characters', 'sunset_properties', 'sunset_spawn', 'sunset_auth', 'sunset_ui' }
         local fingerprints = {}
         for _, resName in ipairs(critical) do
