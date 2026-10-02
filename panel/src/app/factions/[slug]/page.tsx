@@ -7,6 +7,7 @@ import { ArrowLeft, Settings, CheckCircle, XCircle } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 interface MemberRow extends RowDataPacket {
   id: number;
@@ -44,7 +45,7 @@ export default async function FactionDetailPage({
 
   const [members, leader, appSettings] = await Promise.all([
     dbQuery<MemberRow>(
-      `SELECT c.id, a.username, c.job_grade, c.level, c.last_played,
+      `SELECT c.id, a.username, ${factionGradeSql()} AS job_grade, c.level, c.last_played,
               fm.joined_at,
               cl.tag as clan_tag,
               cl.tag_color as clan_tag_color,
@@ -52,11 +53,11 @@ export default async function FactionDetailPage({
        FROM accounts a
        JOIN players p ON p.account_id = a.id
        JOIN characters c ON c.player_id = p.id
-       LEFT JOIN faction_membership fm ON fm.character_id = c.id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
-       WHERE c.job = ?
-       ORDER BY c.job_grade DESC, c.level DESC, a.id ASC`,
+       WHERE ${factionIdSql()} = fm.faction_id
+       ORDER BY job_grade DESC, c.level DESC, a.id ASC`,
       [slug]
     ),
     dbQuerySingle<LeaderRow>(
@@ -70,7 +71,9 @@ export default async function FactionDetailPage({
        JOIN accounts a ON a.id = p.account_id
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = fl.faction_id
        WHERE fl.faction_id = ?
+         AND ${factionIdSql()} = fm.faction_id
        LIMIT 1`,
       [slug]
     ),

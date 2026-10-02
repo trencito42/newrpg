@@ -5,6 +5,8 @@ import { RowDataPacket } from "mysql2";
 import { redirect } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { History } from "lucide-react";
+import { formatAuditDetails } from "@/lib/audit-details";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface Props {
   searchParams: Promise<{ search?: string }>;
@@ -40,6 +42,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
      ORDER BY pal.id DESC LIMIT 60`,
     params
   );
+  const identities = await resolvePlayerIdentities(logs.flatMap((l) => [l.actor_username, l.target_username].filter(Boolean)));
 
   return (
     <div className="space-y-4">
@@ -101,7 +104,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                     <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{l.id}</td>
                     <td className="px-3 py-2.5">
                       {l.actor_username ? (
-                        <PlayerIdentity username={l.actor_username} size="sm" />
+                        <PlayerIdentity {...identities.get(l.actor_username.toLowerCase())!} size="sm" />
                       ) : (
                         <span className="text-[#6f6f74]">SYSTEM</span>
                       )}
@@ -111,7 +114,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                     </td>
                     <td className="px-3 py-2.5">
                       {l.target_username ? (
-                        <PlayerIdentity username={l.target_username} size="sm" />
+                        <PlayerIdentity {...identities.get(l.target_username.toLowerCase())!} size="sm" />
                       ) : l.target_id ? (
                         <span className="font-mono text-[#6f6f74]">ID #{l.target_id}</span>
                       ) : (
@@ -122,7 +125,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                       <span className="text-[#f1f1f1] block max-w-sm truncate">{l.reason || "—"}</span>
                       {l.details && (
                         <span className="text-[10px] text-[#6f6f74] font-mono block max-w-sm truncate">
-                          {l.details}
+                          {formatAuditDetails(l.details)}
                         </span>
                       )}
                     </td>

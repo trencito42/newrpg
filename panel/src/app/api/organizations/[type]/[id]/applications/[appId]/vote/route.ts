@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -112,13 +113,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   let characterId: number | null = session.selectedCharacterId || null;
 
   if (type === "faction") {
-    const memberRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.id, c.job 
-       FROM characters c 
-       JOIN players p ON p.id = c.player_id 
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [session.accountId, orgId]
-    );
+    const memberRow = await getFactionAccess(session.accountId, orgId);
 
     if (memberRow) {
       isMember = true;

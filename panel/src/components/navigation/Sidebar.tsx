@@ -34,15 +34,18 @@ import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
 import { panelBrand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface SidebarProps {
   locale: Locale;
   session: ViewerSessionDTO | null;
+  identity: ResolvedPlayerIdentity | null;
   serverOnline: boolean;
   playerCount: number;
 }
 
-export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarProps) {
+export function Sidebar({ locale, session, identity, serverOnline, playerCount }: SidebarProps) {
   const pathname = usePathname();
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
   const isAdmin = session && session.adminLevel >= 1;
@@ -252,7 +255,7 @@ export function Sidebar({ locale, session, serverOnline, playerCount }: SidebarP
               className="min-w-0 flex-1 pr-2 hover:opacity-80 transition-opacity"
             >
               <span className="text-xs font-semibold text-[#f1f1f1] block truncate">
-                {session.username}
+                <PlayerIdentity {...(identity || { username: session.username })} size="sm" clickable={false} />
               </span>
               <span className="text-[10px] text-[#6f6f74] block font-mono">
                 {getStaffTitle()}

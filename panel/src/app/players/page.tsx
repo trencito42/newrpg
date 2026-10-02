@@ -6,6 +6,7 @@ import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { getFactionLabel, isFaction } from "@/lib/factions";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface PlayerListRow extends RowDataPacket {
   id: number;
@@ -14,6 +15,7 @@ interface PlayerListRow extends RowDataPacket {
   respect_points: number;
   paydays_received: number;
   job: string;
+  faction_id: string | null;
   last_played: string | null;
   clan_tag: string | null;
   clan_tag_color: string | null;
@@ -61,7 +63,8 @@ export default async function PlayersDirectoryPage({
   // Fetch paginated players with clan information
   const players = await dbQuery<PlayerListRow>(
     `SELECT 
-       a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job, c.last_played,
+       a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job,
+       ${factionIdSql()} AS faction_id, c.last_played,
        cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
      FROM accounts a
      JOIN players p ON p.account_id = a.id
@@ -120,9 +123,9 @@ export default async function PlayersDirectoryPage({
             <tbody className="divide-y divide-surface-border/50 text-[#a5a5a8]">
               {players.length > 0 ? (
                 players.map((p) => {
-                  const hasFaction = isFaction(p.job);
-                  const factionLabel = hasFaction ? getFactionLabel(p.job) : "-";
-                  const civilianJob = hasFaction ? "-" : p.job;
+                  const hasFaction = isFaction(p.faction_id);
+                  const factionLabel = hasFaction ? getFactionLabel(p.faction_id) : "-";
+                  const civilianJob = p.job;
 
                   return (
                     <tr
@@ -132,7 +135,7 @@ export default async function PlayersDirectoryPage({
                       <td className="py-2.5 px-3">
                         <PlayerIdentity
                           username={p.username}
-                          factionId={hasFaction ? p.job : null}
+                          factionId={p.faction_id}
                           clanTag={p.clan_tag}
                           clanColor={p.clan_tag_color}
                           clanTagStyle={p.clan_tag_style}

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { PlayerName } from "@/components/ui/PlayerName";
 import { getFactionLabel } from "@/lib/factions";
 import { vehicleDisplayName } from "@/lib/vehicle-names";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface RichPlayerRecord {
   id: number;
@@ -70,7 +72,7 @@ export default async function ServerStatsPage() {
         c.cash, 
         c.bank, 
         (c.cash + c.bank) as total_wealth,
-        c.job
+        ${factionIdSql()} AS job
       FROM characters c
       JOIN players p ON p.id = c.player_id
       JOIN accounts a ON a.id = p.account_id
@@ -110,6 +112,7 @@ export default async function ServerStatsPage() {
       LIMIT 6
     `),
   ]);
+  const identities = await resolvePlayerIdentities(richest.map((p) => p.name));
 
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat(lang === "ro" ? "ro-RO" : "en-US", {
@@ -178,7 +181,11 @@ export default async function ServerStatsPage() {
                   <tr key={p.id} className="hover:bg-surface-200/40">
                     <td className="py-2 px-3 font-mono text-[#6f6f74]">{idx + 1}</td>
                     <td className="py-2 px-3">
-                      <PlayerName name={p.name} factionId={p.job} href={`/players/${encodeURIComponent(p.name)}`} />
+                      <PlayerName name={p.name} factionId={p.job}
+                        clanTag={identities.get(p.name.toLowerCase())?.clanTag}
+                        clanColor={identities.get(p.name.toLowerCase())?.clanColor}
+                        clanTagStyle={identities.get(p.name.toLowerCase())?.clanTagStyle}
+                        href={`/players/${encodeURIComponent(p.name)}`} />
                     </td>
                     <td className="py-2 px-3 font-mono text-[#f1f1f1]">{p.level}</td>
                     <td className="py-2 px-3 text-right font-mono text-[#f1f1f1]">

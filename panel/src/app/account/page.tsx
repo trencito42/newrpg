@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { RowDataPacket } from "mysql2";
 import { revalidatePath } from "next/cache";
 import { PlayerName } from "@/components/ui/PlayerName";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface CharRow extends RowDataPacket {
   id: number;
@@ -14,6 +15,10 @@ interface CharRow extends RowDataPacket {
   lastname: string;
   level: number;
   job: string;
+  faction_id: string | null;
+  clan_tag: string | null;
+  clan_tag_color: string | null;
+  clan_tag_style: string | null;
   cash: number;
   bank: number;
   last_played: string | null;
@@ -40,9 +45,13 @@ export default async function AccountPage() {
 
   // Load account characters
   const characters = await dbQuery<CharRow>(
-    `SELECT c.id, c.firstname, c.lastname, c.level, c.job, c.cash, c.bank, c.last_played
+    `SELECT c.id, c.firstname, c.lastname, c.level, c.job, ${factionIdSql()} AS faction_id,
+            cl.tag AS clan_tag, cl.tag_color AS clan_tag_color, cl.tag_style AS clan_tag_style,
+            c.cash, c.bank, c.last_played
      FROM characters c
      JOIN players p ON p.id = c.player_id
+     LEFT JOIN clan_members cm ON cm.character_id = c.id
+     LEFT JOIN clans cl ON cl.id = cm.clan_id
      WHERE p.account_id = ?
      ORDER BY c.level DESC, c.slot ASC`,
     [session.accountId]
@@ -156,7 +165,9 @@ export default async function AccountPage() {
               <div className="space-y-2 text-[#a5a5a8]">
                 <div className="flex items-center justify-between">
                   <span className="text-[#6f6f74]">Player</span>
-                  <PlayerName name={session.username} factionId={characters[0].job} />
+                  <PlayerName name={session.username} factionId={characters[0].faction_id}
+                    clanTag={characters[0].clan_tag} clanColor={characters[0].clan_tag_color}
+                    clanTagStyle={characters[0].clan_tag_style} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#6f6f74]">Level</span>

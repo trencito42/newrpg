@@ -4,6 +4,7 @@ import { RowDataPacket } from "mysql2";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { Users, Flag, Shield, CheckCircle, XCircle } from "lucide-react";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface ClanRow extends RowDataPacket {
   id: number;
@@ -12,6 +13,7 @@ interface ClanRow extends RowDataPacket {
   description: string | null;
   tag_color: string;
   owner_username: string;
+  owner_faction_id: string | null;
   member_count: number;
   max_members: number;
   turfs_count: number;
@@ -30,6 +32,7 @@ export default async function ClansPage({
     SELECT 
       c.id, c.name, c.tag, c.description, c.tag_color, c.tag_style,
       acc.username as owner_username,
+      ${factionIdSql("ch")} as owner_faction_id,
       (SELECT COUNT(*) FROM clan_members cm WHERE cm.clan_id = c.id) as member_count,
       c.max_members,
       (SELECT COUNT(*) FROM turfs t WHERE t.owner_clan_id = c.id) as turfs_count,
@@ -133,6 +136,7 @@ export default async function ClansPage({
                     <td className="px-3 py-2.5">
                       <PlayerIdentity
                         username={clan.owner_username}
+                        factionId={clan.owner_faction_id}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
                         clanTagStyle={clan.tag_style}

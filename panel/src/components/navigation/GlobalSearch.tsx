@@ -11,6 +11,9 @@ interface SearchResult {
   name: string;
   level: number;
   job: string;
+  clanTag: string | null;
+  clanColor: string | null;
+  clanTagStyle: string | null;
 }
 
 export function GlobalSearch({ placeholder }: { placeholder: string }) {
@@ -98,7 +101,9 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                 className="w-full text-left px-3 py-1.5 hover:bg-surface-200 flex items-center justify-between text-xs transition-colors border-b border-surface-border/40 last:border-b-0"
               >
                 <div className="min-w-0 pr-2">
-                  <PlayerName name={res.name} factionId={res.job} clickable={false} className="text-xs font-semibold block truncate" />
+                  <PlayerName name={res.name} factionId={res.job}
+                    clanTag={res.clanTag} clanColor={res.clanColor} clanTagStyle={res.clanTagStyle}
+                    clickable={false} className="text-xs font-semibold block truncate" />
                   <span className="text-[11px] text-[#6f6f74] block">{res.job}</span>
                 </div>
                 <span className="text-[11px] text-[#6f6f74] font-mono">

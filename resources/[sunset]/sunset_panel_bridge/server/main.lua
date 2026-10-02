@@ -17,13 +17,17 @@ end
 local function getTargetCharacter(accountId, charId)
     if charId then
         return MySQL.single.await(
-            'SELECT c.id, c.player_id, c.job, c.job_grade, c.firstname, c.lastname, p.account_id ' ..
-            'FROM characters c JOIN players p ON p.id = c.player_id WHERE c.id = ? LIMIT 1',
-            { tonumber(charId) }
+            "SELECT c.id, c.player_id, JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
+            "CAST(JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction_grade')) AS UNSIGNED) AS faction_grade, " ..
+            'c.firstname, c.lastname, p.account_id ' ..
+            'FROM characters c JOIN players p ON p.id = c.player_id WHERE c.id = ? AND p.account_id = ? LIMIT 1',
+            { tonumber(charId), tonumber(accountId) }
         )
     end
     return MySQL.single.await(
-        'SELECT c.id, c.player_id, c.job, c.job_grade, c.firstname, c.lastname, p.account_id ' ..
+        "SELECT c.id, c.player_id, JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
+        "CAST(JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction_grade')) AS UNSIGNED) AS faction_grade, " ..
+        'c.firstname, c.lastname, p.account_id ' ..
         'FROM characters c JOIN players p ON p.id = c.player_id WHERE p.account_id = ? ORDER BY c.id ASC LIMIT 1',
         { tonumber(accountId) }
     )
@@ -31,16 +35,20 @@ end
 
 local function isLeaderOrSubleader(accountId, factionId)
     local char = MySQL.single.await([[
-        SELECT c.id, c.job, c.job_grade, fl.id as leader_id
+        SELECT c.id,
+               CAST(JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction_grade')) AS UNSIGNED) AS faction_grade,
+               fl.id as leader_id
         FROM characters c
         JOIN players p ON p.id = c.player_id
+        JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-        WHERE p.account_id = ? AND c.job = ? LIMIT 1
-    ]], { factionId, tonumber(accountId), factionId })
+        WHERE p.account_id = ? AND JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) = fm.faction_id LIMIT 1
+    ]], { factionId, factionId, tonumber(accountId) })
     if not char then return false, 0, nil end
-    local isLeader = (char.leader_id ~= nil) or (tonumber(char.job_grade or 0) >= 7)
-    local isSubLeader = tonumber(char.job_grade or 0) >= 6
-    return (isLeader or isSubLeader), tonumber(char.job_grade or 0), tonumber(char.id), isLeader
+    local factionGrade = tonumber(char.faction_grade or 0)
+    local isLeader = (char.leader_id ~= nil) or factionGrade >= 7
+    local isSubLeader = factionGrade >= 6
+    return (isLeader or isSubLeader), factionGrade, tonumber(char.id), isLeader
 end
 
 -- [SEC3] bounded, finite integer minutes (negative/NaN/inf/huge durations used to create instantly-expired
@@ -333,35 +341,48 @@ local function actionResult(row)
         -- and never grant a grade at/above their own (leaders cap at 6). Previously a leader of faction A could
         -- kick/warn anyone by naming factionId=A.
         if actorAdminLevel < 3 then
-            local tj = targetChar.job
+            local tj = targetChar.faction_id
             local own = tj == factionId
-            if not own and not (tj == 'unemployed' and (row.action == 'set_faction' or row.action == 'faction_set_member')) then
+            if not own and not ((tj == nil or tj == '' or tj == 'none') and (row.action == 'set_faction' or row.action == 'faction_set_member'))
+                and row.action ~= 'faction_pardon_fp' then
                 return false, 'target_not_in_faction'
             end
             local cap = actorIsLeader and 7 or math.max(actorGrade or 0, 0)
-            if grade >= cap then return false, 'grade_too_high' end
-            if own and tonumber(targetChar.job_grade or 0) >= cap then return false, 'target_rank_protected' end
+            if (row.action == 'set_faction' or row.action == 'faction_set_member' or row.action == 'faction_set_rank') and grade >= cap then
+                return false, 'grade_too_high'
+            end
+            if own and tonumber(targetChar.faction_grade or 0) >= cap and not actorIsLeader then
+                return false, 'target_rank_protected'
+            end
         end
 
         if row.action == 'set_faction' or row.action == 'faction_set_member' then
-            if factionId == 'none' or factionId == '' then factionId = 'unemployed'; grade = 0 end
-            MySQL.update.await('UPDATE characters SET job = ?, job_grade = ? WHERE id = ?', { factionId, grade, targetChar.id })
-            
-            if targetSrc and GetResourceState('sunset_core') == 'started' then
-                pcall(function() exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) end)
+            if factionId == 'none' or factionId == '' then factionId = nil; grade = 0 end
+            if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) then
+                return false, 'faction_change_failed'
+            end
+            if factionId then
+                MySQL.update.await([[
+                    INSERT INTO faction_membership (character_id, faction_id, joined_at)
+                    VALUES (?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE joined_at = IF(faction_id = VALUES(faction_id), joined_at, NOW()),
+                        faction_id = VALUES(faction_id)
+                ]], { targetChar.id, factionId })
+            else
+                MySQL.update.await('DELETE FROM faction_membership WHERE character_id = ?', { targetChar.id })
             end
 
             MySQL.insert.await([[
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
                 VALUES (?, ?, 'panel_set_faction', ?, ?)
-            ]], { factionId, actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
+            ]], { factionId or 'none', actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
             return true, { factionId = factionId, grade = grade }
         end
 
         if row.action == 'faction_set_rank' then
-            MySQL.update.await('UPDATE characters SET job_grade = ? WHERE id = ? AND job = ?', { grade, targetChar.id, factionId })
-            if targetSrc and GetResourceState('sunset_core') == 'started' then
-                pcall(function() exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) end)
+            if targetChar.faction_id ~= factionId then return false, 'target_not_in_faction' end
+            if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) then
+                return false, 'faction_change_failed'
             end
             MySQL.insert.await([[
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
@@ -383,16 +404,18 @@ local function actionResult(row)
         end
 
         if row.action == 'faction_kick' or row.action == 'faction_kick_fp' then
-            MySQL.update.await("UPDATE characters SET job = 'unemployed', job_grade = 0 WHERE id = ?", { targetChar.id })
-            if targetSrc and GetResourceState('sunset_core') == 'started' then
-                pcall(function() exports.sunset_core:SetFactionByCharacterId(targetChar.id, 'unemployed', 0) end)
+            if targetChar.faction_id ~= factionId then return false, 'target_not_in_faction' end
+            if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, nil, 0) then
+                return false, 'faction_change_failed'
             end
-            local fp = (row.action == 'faction_kick_fp') and (tonumber(payload.fp) or 10) or 0
+            MySQL.update.await('DELETE FROM faction_membership WHERE character_id = ?', { targetChar.id })
+            local fp = (row.action == 'faction_kick_fp') and math.min(60, math.max(1, math.floor(tonumber(payload.fp) or 60))) or 0
             if fp > 0 then
-                MySQL.insert.await([[
-                    INSERT INTO faction_punish (character_id, faction_id, fp_points, reason)
+                MySQL.update.await([[
+                    INSERT INTO faction_punish (character_id, fp, reason, set_by_character_id)
                     VALUES (?, ?, ?, ?)
-                ]], { targetChar.id, factionId, fp, row.reason })
+                    ON DUPLICATE KEY UPDATE fp = VALUES(fp), reason = VALUES(reason), set_by_character_id = VALUES(set_by_character_id)
+                ]], { targetChar.id, fp, row.reason, actorCharId })
             end
             MySQL.insert.await([[
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
@@ -401,17 +424,32 @@ local function actionResult(row)
             return true, { kicked = true, fp = fp }
         end
 
+        if row.action == 'faction_pardon_fp' then
+            if actorAdminLevel < 3 and not actorIsLeader then return false, 'faction_permission_denied' end
+            MySQL.update.await('DELETE FROM faction_punish WHERE character_id = ?', { targetChar.id })
+            MySQL.insert.await([[
+                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
+                VALUES (?, ?, 'panel_pardon_fp', ?, ?)
+            ]], { factionId, actorCharId, targetChar.id, json.encode({ reason = row.reason }) })
+            return true, { fp = 0 }
+        end
+
         if row.action == 'faction_set_leader' then
             if actorAdminLevel < 4 then return false, 'permission_denied' end
+            if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, 7) then
+                return false, 'faction_change_failed'
+            end
             MySQL.update.await('DELETE FROM faction_leaders WHERE faction_id = ?', { factionId })
             MySQL.insert.await([[
                 INSERT INTO faction_leaders (faction_id, character_id, assigned_by)
                 VALUES (?, ?, ?)
             ]], { factionId, targetChar.id, actorAccount.username })
-            MySQL.update.await('UPDATE characters SET job = ?, job_grade = 7 WHERE id = ?', { factionId, targetChar.id })
-            if targetSrc and GetResourceState('sunset_core') == 'started' then
-                pcall(function() exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, 7) end)
-            end
+            MySQL.update.await([[
+                INSERT INTO faction_membership (character_id, faction_id, joined_at)
+                VALUES (?, ?, NOW())
+                ON DUPLICATE KEY UPDATE joined_at = IF(faction_id = VALUES(faction_id), joined_at, NOW()),
+                    faction_id = VALUES(faction_id)
+            ]], { targetChar.id, factionId })
             return true, { leader_char_id = targetChar.id }
         end
     end

@@ -5,6 +5,8 @@ import { CANONICAL_FACTIONS, getFactionColor, getFactionLabel } from "@/lib/fact
 import { resolvePlayerIdentities } from "@/lib/player-identity";
 import { ApplicationThreadClient } from "@/components/applications/ApplicationThreadClient";
 import { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
+import { factionIdSql } from "@/lib/faction-sql";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,7 @@ export default async function FactionApplicationDetailPage({ params }: Props) {
        acc.username AS applicant_username,
        c.level AS applicant_level,
        c.paydays_received AS applicant_hours,
-       c.job AS applicant_faction
+       ${factionIdSql()} AS applicant_faction
      FROM panel_org_applications a
      JOIN accounts acc ON acc.id = a.account_id
      LEFT JOIN characters c ON c.id = a.character_id
@@ -112,14 +114,7 @@ export default async function FactionApplicationDetailPage({ params }: Props) {
   let currentVote: "pro" | "contra" | "neutral" | null = null;
 
   if (session) {
-    const memberRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.id, c.job, c.job_grade, fl.id as is_leader
-       FROM characters c 
-       JOIN players p ON p.id = c.player_id 
-       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [slug, session.accountId, slug]
-    );
+    const memberRow = await getFactionAccess(session.accountId, slug);
 
     if (memberRow) {
       isMember = true;

@@ -5,6 +5,8 @@ import { dbQuery, dbQuerySingle, dbTransaction } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import crypto from "crypto";
+import { getFactionAccess } from "@/lib/faction-access";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 interface Context {
   params: Promise<{ type: string; id: string }>;
@@ -28,14 +30,7 @@ export async function GET(req: NextRequest, { params }: Context) {
 
   let canManage = session.adminLevel >= 3;
   if (!canManage) {
-    const leaderRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.job, c.job_grade, fl.id as is_leader
-       FROM characters c
-       JOIN players p ON p.id = c.player_id
-       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [orgId, session.accountId, orgId]
-    );
+    const leaderRow = await getFactionAccess(session.accountId, orgId);
     if (leaderRow && (Number(leaderRow.job_grade) >= 6 || Boolean(leaderRow.is_leader))) {
       canManage = true;
     }
@@ -47,7 +42,7 @@ export async function GET(req: NextRequest, { params }: Context) {
         fr.id, fr.faction_id, fr.character_id, fr.reason, fr.status,
         fr.created_at, fr.handled_at,
         acc.username as member_username,
-        c.job_grade as rank,
+        ${factionGradeSql()} as rank,
         c.level,
         handler.username as handled_by_username
        FROM faction_resignations fr
@@ -111,7 +106,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // 1. Submit a resignation request
   if (action === "submit") {
     const char = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.id, c.job, c.job_grade
+      `SELECT c.id, ${factionIdSql()} AS job, ${factionGradeSql()} AS job_grade
        FROM characters c
        JOIN players p ON p.id = c.player_id
        WHERE c.id = ? AND p.account_id = ? LIMIT 1`,
@@ -142,14 +137,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // 2. Handle a resignation request (accept, accept_fp, decline)
   let canManage = session.adminLevel >= 3;
   if (!canManage) {
-    const leaderRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.job, c.job_grade, fl.id as is_leader
-       FROM characters c
-       JOIN players p ON p.id = c.player_id
-       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [orgId, session.accountId, orgId]
-    );
+    const leaderRow = await getFactionAccess(session.accountId, orgId);
     if (leaderRow && (Number(leaderRow.job_grade) >= 6 || Boolean(leaderRow.is_leader))) {
       canManage = true;
     }

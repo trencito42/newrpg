@@ -4,6 +4,8 @@ import { RowDataPacket } from "mysql2";
 import { redirect, notFound } from "next/navigation";
 import { CANONICAL_FACTIONS } from "@/lib/factions";
 import { FactionManageClient } from "./FactionManageClient";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface Context {
   params: Promise<{ slug: string }>;
@@ -24,12 +26,13 @@ export default async function FactionManagePage({ params }: Context) {
 
   if (session.adminLevel < 3) {
     const leaderRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.job_grade, fl.id as is_leader
+      `SELECT ${factionGradeSql()} AS job_grade, fl.id as is_leader
        FROM characters c
        JOIN players p ON p.id = c.player_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
        LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [slug, session.accountId, slug]
+       WHERE p.account_id = ? AND ${factionIdSql()} = fm.faction_id LIMIT 1`,
+      [slug, slug, session.accountId]
     );
 
     if (!leaderRow) redirect(`/factions/${slug}`);
@@ -76,23 +79,25 @@ export default async function FactionManagePage({ params }: Context) {
       c.id as character_id,
       a.id as account_id,
       a.username,
-      c.job_grade as rank,
+      ${factionGradeSql()} as rank,
       c.level,
       c.paydays_received as hours,
       c.last_played,
       fl.id as is_leader,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style,
       (SELECT COUNT(*) FROM faction_warnings fw WHERE fw.character_id = c.id AND fw.faction_id = ?) as faction_warns,
       (SELECT COALESCE(fp, 0) FROM faction_punish fp WHERE fp.character_id = c.id LIMIT 1) as faction_fp
      FROM characters c
+     JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
      JOIN players p ON p.id = c.player_id
      JOIN accounts a ON a.id = p.account_id
      LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
      LEFT JOIN clan_members cm ON cm.character_id = c.id
      LEFT JOIN clans cl ON cl.id = cm.clan_id
-     WHERE c.job = ?
-     ORDER BY (fl.id IS NOT NULL) DESC, c.job_grade DESC, c.level DESC`,
+     WHERE ${factionIdSql()} = fm.faction_id
+     ORDER BY (fl.id IS NOT NULL) DESC, rank DESC, c.level DESC`,
     [slug, slug, slug]
   );
 
@@ -102,7 +107,7 @@ export default async function FactionManagePage({ params }: Context) {
       fr.id, fr.faction_id, fr.character_id, fr.reason, fr.status,
       fr.created_at, fr.handled_at,
       acc.username as member_username,
-      c.job_grade as rank,
+      ${factionGradeSql()} as rank,
       c.level,
       handler.username as handled_by_username
      FROM faction_resignations fr
@@ -143,6 +148,12 @@ export default async function FactionManagePage({ params }: Context) {
      ORDER BY fal.id DESC LIMIT 40`,
     [slug]
   );
+  const identities = Object.fromEntries(await resolvePlayerIdentities([
+    ...members.map((m) => m.username),
+    ...applications.flatMap((a) => [a.applicant_username, a.reviewer_username]),
+    ...resignations.map((r) => r.member_username),
+    ...auditLogs.flatMap((log) => [log.actor_username, log.target_username]),
+  ]));
 
   return (
     <FactionManageClient
@@ -154,6 +165,7 @@ export default async function FactionManagePage({ params }: Context) {
       resignations={resignations}
       questions={questions}
       auditLogs={auditLogs}
+      identities={identities}
       isLeader={isLeader}
       isSubLeader={isSubLeader}
       locale={locale}

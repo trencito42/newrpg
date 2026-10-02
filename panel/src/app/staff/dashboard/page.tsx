@@ -3,6 +3,8 @@ import { query } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 import { Lock } from "lucide-react";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface OpenTicketRecord {
   id: number;
@@ -40,6 +42,7 @@ interface AdminSanctionRecord {
 interface PanelAuditRecord {
   id: number;
   actor_account_id: number;
+  actor_name: string | null;
   action: string;
   target_entity: string;
   target_id: number | null;
@@ -113,11 +116,19 @@ export default async function StaffDashboardPage() {
 
   // 3. Fetch panel audit log
   const auditLogs = await query<PanelAuditRecord>(
-    `SELECT id, actor_account_id, action, target_entity, target_id, reason, created_at
-     FROM panel_audit_log
-     ORDER BY id DESC
+    `SELECT pal.id, pal.actor_account_id, actor.username AS actor_name, pal.action,
+            pal.target_entity, pal.target_id, pal.reason, pal.created_at
+     FROM panel_audit_log pal
+     LEFT JOIN accounts actor ON actor.id = pal.actor_account_id
+     ORDER BY pal.id DESC
      LIMIT 10`
   );
+  const identities = await resolvePlayerIdentities([
+    ...openTickets.map((t) => t.creator_name),
+    ...pendingComplaints.map((c) => c.accused_name),
+    ...recentSanctions.flatMap((s) => [s.target_name, s.admin_name]),
+    ...auditLogs.map((a) => a.actor_name).filter((name): name is string => Boolean(name)),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -150,7 +161,7 @@ export default async function StaffDashboardPage() {
                 className="p-2.5 px-3 block hover:bg-surface-200/50 transition-colors"
               >
                 <div className="flex items-center justify-between text-[#6f6f74] text-[11px]">
-                  <span>#{t.id} • {t.creator_name}</span>
+                  <span>#{t.id} • <PlayerIdentity {...identities.get(t.creator_name.toLowerCase())!} size="sm" clickable={false} /></span>
                 </div>
                 <p className="font-medium text-[#f1f1f1] truncate mt-0.5">{t.title}</p>
               </Link>
@@ -176,7 +187,7 @@ export default async function StaffDashboardPage() {
                 className="p-2.5 px-3 block hover:bg-surface-200/50 transition-colors"
               >
                 <div className="flex items-center justify-between text-[#6f6f74] text-[11px]">
-                  <span>vs {c.accused_name}</span>
+                  <span>vs <PlayerIdentity {...identities.get(c.accused_name.toLowerCase())!} size="sm" clickable={false} /></span>
                   <span className="capitalize">{c.category}</span>
                 </div>
                 <p className="font-medium text-[#f1f1f1] truncate mt-0.5">{c.title}</p>
@@ -231,8 +242,8 @@ export default async function StaffDashboardPage() {
                 {recentSanctions.map((s) => (
                   <tr key={s.id} className="hover:bg-surface-200/40">
                     <td className="py-2 px-3 font-medium text-[#f1f1f1] capitalize">{s.action}</td>
-                    <td className="py-2 px-3 text-[#f1f1f1]">{s.target_name}</td>
-                    <td className="py-2 px-3 text-[#6f6f74]">{s.admin_name}</td>
+                    <td className="py-2 px-3 text-[#f1f1f1]"><PlayerIdentity {...identities.get(s.target_name.toLowerCase())!} size="sm" /></td>
+                    <td className="py-2 px-3 text-[#6f6f74]"><PlayerIdentity {...identities.get(s.admin_name.toLowerCase())!} size="sm" /></td>
                     <td className="py-2 px-3 text-[#6f6f74] max-w-[160px] truncate">{s.reason}</td>
                   </tr>
                 ))}
@@ -252,7 +263,7 @@ export default async function StaffDashboardPage() {
               <div key={a.id} className="p-2.5 px-3 flex items-center justify-between text-[#a5a5a8]">
                 <div>
                   <span className="font-semibold text-[#f1f1f1]">{a.action}</span>
-                  <span className="text-[#6f6f74] ml-2">by Acc #{a.actor_account_id} on {a.target_entity} #{a.target_id || "-"}</span>
+                  <span className="text-[#6f6f74] ml-2">by {a.actor_name ? <PlayerIdentity {...identities.get(a.actor_name.toLowerCase())!} size="sm" clickable={false} /> : `Acc #${a.actor_account_id}`} on {a.target_entity} #{a.target_id || "-"}</span>
                   {a.reason && <p className="text-[11px] text-[#6f6f74] italic mt-0.5">"{a.reason}"</p>}
                 </div>
               </div>

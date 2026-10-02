@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import { factionIdSql } from "@/lib/faction-sql";
 
 export async function GET(req: NextRequest) {
   const session = await getCurrentSession();
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
       c.id, c.name, c.tag, c.description, c.tag_color, c.tag_style,
       c.owner_character_id, c.max_members, c.created_at,
       acc.username as owner_username,
+      ${factionIdSql("ch")} as owner_faction_id,
       (SELECT COUNT(*) FROM clan_members cm WHERE cm.clan_id = c.id) as member_count,
       (SELECT COUNT(*) FROM turfs t WHERE t.owner_clan_id = c.id) as turfs_count,
       (SELECT COALESCE(SUM(warns), 0) FROM clan_members cm WHERE cm.clan_id = c.id) as total_warns,

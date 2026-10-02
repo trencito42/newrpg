@@ -4,6 +4,8 @@ import { RowDataPacket } from "mysql2";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ClanManageClient } from "./ClanManageClient";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -94,13 +96,14 @@ export default async function ClanManagePage({ params }: Context) {
       cm.warns,
       cm.joined_at,
       c.level,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.paydays_received as hours,
       c.last_played,
       (cl.owner_character_id = c.id) as is_owner,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
      FROM clan_members cm
      JOIN characters c ON c.id = cm.character_id
      JOIN players p ON p.id = c.player_id
@@ -133,6 +136,11 @@ export default async function ClanManagePage({ params }: Context) {
      ORDER BY cal.id DESC LIMIT 40`,
     [clanId]
   );
+  const identities = Object.fromEntries(await resolvePlayerIdentities([
+    ...members.map((m) => m.username),
+    ...applications.flatMap((a) => [a.applicant_username, a.reviewer_username]),
+    ...auditLogs.map((log) => log.actor_username),
+  ]));
 
   return (
     <ClanManageClient
@@ -141,6 +149,7 @@ export default async function ClanManagePage({ params }: Context) {
       applications={applications}
       questions={questions}
       auditLogs={auditLogs}
+      identities={identities}
       isLeader={isLeader}
       isCoLeader={isCoLeader}
       locale={locale}

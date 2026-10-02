@@ -3,6 +3,7 @@ import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { redirect } from "next/navigation";
 import { StaffTeamClient } from "./StaffTeamClient";
+import { factionIdSql } from "@/lib/faction-sql";
 
 export default async function StaffTeamPage() {
   const locale = await getViewerLocale();
@@ -21,7 +22,7 @@ export default async function StaffTeamPage() {
       c.id as character_id,
       c.level,
       c.last_played,
-      c.job as faction_id,
+      ${factionIdSql()} as faction_id,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,
       cl.tag_style as clan_tag_style

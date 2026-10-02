@@ -11,6 +11,7 @@ import { getFactionLabel, isFaction } from "@/lib/factions";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
 import { vehicleDisplayName } from "@/lib/vehicle-names";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 interface CharacterProfileRow extends RowDataPacket {
   id: number;
@@ -23,6 +24,7 @@ interface CharacterProfileRow extends RowDataPacket {
   respect_points: number;
   paydays_received: number;
   job: string;
+  faction_id: string | null;
   job_grade: number;
   phone_number: string | null;
   home_property_id: number | null;
@@ -100,7 +102,7 @@ export default async function PlayerProfilePage({
     `SELECT 
        c.id, c.player_id, p.account_id, c.firstname, c.lastname,
        c.level, c.xp, c.respect_points, c.paydays_received,
-       c.job, c.job_grade, c.phone_number,
+       c.job, ${factionIdSql()} AS faction_id, ${factionGradeSql()} AS job_grade, c.phone_number,
        c.home_property_id, c.nationality, c.metadata,
        c.created_at AS registered_at, c.last_played,
        a.username AS account_username,
@@ -119,7 +121,7 @@ export default async function PlayerProfilePage({
      FROM accounts a
      JOIN players p ON p.account_id = a.id
      JOIN characters c ON c.player_id = p.id
-     LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = c.job
+     LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ${factionIdSql()}
      LEFT JOIN clan_members cm ON cm.character_id = c.id
      LEFT JOIN clans cl ON cl.id = cm.clan_id
      LEFT JOIN panel_preferences pref ON pref.account_id = a.id
@@ -201,8 +203,8 @@ export default async function PlayerProfilePage({
     ),
   ]);
 
-  const hasFaction = isFaction(char.job);
-  const factionLabel = hasFaction ? getFactionLabel(char.job) : null;
+  const hasFaction = isFaction(char.faction_id);
+  const factionLabel = hasFaction ? getFactionLabel(char.faction_id) : null;
   const warningsCount = sanctionCountRow?.count || 0;
   const featuredVehicle = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
 
@@ -227,14 +229,14 @@ export default async function PlayerProfilePage({
       label: "FACTION LEADER",
       color: "#10b981",
       tooltip: `Leader of ${factionLabel || "Faction"}`,
-      href: `/factions/${char.job}`,
+      href: `/factions/${char.faction_id}`,
     });
   } else if (char.job_grade === 6) {
     roleBadges.push({
       label: "SUB-LEADER",
       color: "#10b981",
       tooltip: `Sub-Leader of ${factionLabel || "Faction"}`,
-      href: `/factions/${char.job}`,
+      href: `/factions/${char.faction_id}`,
     });
   }
   if (char.is_clan_owner || (char.clan_rank && char.clan_rank >= 7)) {
@@ -289,7 +291,7 @@ export default async function PlayerProfilePage({
                 <h1 className="text-xl font-bold tracking-tight">
                   <PlayerIdentity
                     username={char.account_username}
-                    factionId={char.job}
+                    factionId={char.faction_id}
                     clanTag={char.clan_tag}
                     clanColor={char.clan_tag_color}
                     clanTagStyle={char.clan_tag_style}
@@ -344,7 +346,7 @@ export default async function PlayerProfilePage({
                 {hasFaction ? (
                   <span>
                     Faction:{" "}
-                    <Link href={`/factions/${char.job}`} className="text-[#f1f1f1] font-medium hover:underline">
+                    <Link href={`/factions/${char.faction_id}`} className="text-[#f1f1f1] font-medium hover:underline">
                       {factionLabel}
                     </Link>{" "}
                     <span className="text-[#6f6f74]">(Rank {char.job_grade})</span>

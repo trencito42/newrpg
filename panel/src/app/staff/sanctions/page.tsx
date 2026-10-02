@@ -4,6 +4,7 @@ import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { redirect } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { factionIdSql } from "@/lib/faction-sql";
 import { AlertOctagon, Filter } from "lucide-react";
 
 interface Props {
@@ -42,8 +43,8 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
       COALESCE(adm_acc.username, s.admin_name) as clean_admin_username,
       cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style,
       adm_cl.tag as admin_clan_tag, adm_cl.tag_color as admin_clan_tag_color, adm_cl.tag_style as admin_clan_tag_style,
-      c.job as faction_id,
-      adm_c.job as admin_faction_id
+      ${factionIdSql()} as faction_id,
+      ${factionIdSql("adm_c")} as admin_faction_id
      FROM admin_sanctions s
      LEFT JOIN accounts a ON a.id = s.target_account_id
      LEFT JOIN players p ON p.account_id = a.id

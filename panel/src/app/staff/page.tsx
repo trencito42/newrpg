@@ -5,6 +5,8 @@ import { t } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { PlayerName } from "@/components/ui/PlayerName";
 import { getFactionLabel } from "@/lib/factions";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface StaffRow extends RowDataPacket {
   id: number;
@@ -45,6 +47,9 @@ export default async function StaffPage() {
        JOIN accounts a ON a.id = p.account_id
        ORDER BY fl.faction_id ASC`
     ),
+  ]);
+  const identities = await resolvePlayerIdentities([
+    ...admins.map((a) => a.username), ...helpers.map((h) => h.username), ...leaders.map((l) => l.leader_name),
   ]);
 
   const getAdminTitle = (level: number) => {
@@ -98,7 +103,7 @@ export default async function StaffPage() {
           <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
             {admins.map((a) => (
               <div key={a.id} className="p-2.5 px-3 flex items-center justify-between">
-                <span className="font-semibold text-[#f1f1f1]">{a.username}</span>
+                <PlayerIdentity {...identities.get(a.username.toLowerCase())!} size="sm" />
                 <span className="font-mono text-[11px] text-[#6f6f74]">{getAdminTitle(a.admin_level)}</span>
               </div>
             ))}
@@ -118,7 +123,7 @@ export default async function StaffPage() {
           <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
             {helpers.map((h) => (
               <div key={h.id} className="p-2.5 px-3 flex items-center justify-between">
-                <span className="font-semibold text-[#f1f1f1]">{h.username}</span>
+                <PlayerIdentity {...identities.get(h.username.toLowerCase())!} size="sm" />
                 <span className="font-mono text-[11px] text-[#6f6f74]">{getHelperTitle(h.helper_level)}</span>
               </div>
             ))}
@@ -138,7 +143,10 @@ export default async function StaffPage() {
           <div className="divide-y divide-surface-border/50 text-xs text-[#a5a5a8]">
             {leaders.map((l) => (
               <div key={l.faction_id} className="p-2.5 px-3 flex items-center justify-between">
-                <PlayerName name={l.leader_name} factionId={l.faction_id} />
+                <PlayerName name={l.leader_name} factionId={l.faction_id}
+                  clanTag={identities.get(l.leader_name.toLowerCase())?.clanTag}
+                  clanColor={identities.get(l.leader_name.toLowerCase())?.clanColor}
+                  clanTagStyle={identities.get(l.leader_name.toLowerCase())?.clanTagStyle} />
                 <span className="text-[11px] text-[#6f6f74] font-medium">{getFactionLabel(l.faction_id)}</span>
               </div>
             ))}

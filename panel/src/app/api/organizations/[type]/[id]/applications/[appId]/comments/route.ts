@@ -5,6 +5,7 @@ import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -89,14 +90,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   let memberCharacterId: number | null = session.selectedCharacterId || null;
 
   if (type === "faction") {
-    const memberRow = await dbQuerySingle<RowDataPacket>(
-      `SELECT c.id, c.job, c.job_grade, fl.id as is_leader
-       FROM characters c 
-       JOIN players p ON p.id = c.player_id 
-       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-       WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-      [orgId, session.accountId, orgId]
-    );
+    const memberRow = await getFactionAccess(session.accountId, orgId);
 
     if (memberRow) {
       isMember = true;

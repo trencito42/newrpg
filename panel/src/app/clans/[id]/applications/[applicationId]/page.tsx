@@ -4,6 +4,7 @@ import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
 import { ApplicationThreadClient } from "@/components/applications/ApplicationThreadClient";
 import { RowDataPacket } from "mysql2";
+import { factionIdSql } from "@/lib/faction-sql";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function ClanApplicationDetailPage({ params }: Props) {
        acc.username AS applicant_username,
        c.level AS applicant_level,
        c.paydays_received AS applicant_hours,
-       c.job AS applicant_faction
+       ${factionIdSql()} AS applicant_faction
      FROM panel_org_applications a
      JOIN accounts acc ON acc.id = a.account_id
      LEFT JOIN characters c ON c.id = a.character_id

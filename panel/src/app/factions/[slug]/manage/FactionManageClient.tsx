@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { formatAuditDetails } from "@/lib/audit-details";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 import {
   Users,
   FileText,
@@ -29,6 +31,7 @@ interface Props {
   resignations: any[];
   questions: any[];
   auditLogs: any[];
+  identities: Record<string, ResolvedPlayerIdentity>;
   isLeader: boolean;
   isSubLeader: boolean;
   locale: string;
@@ -43,11 +46,13 @@ export function FactionManageClient({
   resignations: initialResignations,
   questions: initialQuestions,
   auditLogs,
+  identities,
   isLeader,
   isSubLeader,
   locale,
 }: Props) {
   const router = useRouter();
+  const identityFor = (username: string) => identities[username?.toLowerCase()] || { username: username || "Unknown" };
   const [tab, setTab] = useState<"overview" | "applications" | "members" | "requests" | "history" | "settings">("overview");
 
   // Settings state (Leader only)
@@ -453,7 +458,7 @@ export function FactionManageClient({
                     <tr key={app.id} className="hover:bg-[#151517] transition-colors">
                       <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{app.id}</td>
                       <td className="px-3 py-2.5">
-                        <PlayerIdentity username={app.applicant_username} size="sm" />
+                        <PlayerIdentity {...identityFor(app.applicant_username)} size="sm" />
                       </td>
                       <td className="px-3 py-2.5">
                         <span
@@ -474,7 +479,7 @@ export function FactionManageClient({
                       </td>
                       <td className="px-3 py-2.5 text-[#a5a5a8]">
                         {app.reviewer_username ? (
-                          <PlayerIdentity username={app.reviewer_username} size="sm" />
+                          <PlayerIdentity {...identityFor(app.reviewer_username)} size="sm" />
                         ) : (
                           <span className="text-[#6f6f74]">—</span>
                         )}
@@ -522,6 +527,7 @@ export function FactionManageClient({
                         factionId={slug}
                         clanTag={m.clan_tag}
                         clanColor={m.clan_tag_color}
+                        clanTagStyle={m.clan_tag_style}
                         size="sm"
                       />
                     </td>
@@ -599,7 +605,7 @@ export function FactionManageClient({
                     <tr key={r.id} className="hover:bg-[#151517] transition-colors">
                       <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{r.id}</td>
                       <td className="px-3 py-2.5">
-                        <PlayerIdentity username={r.member_username} factionId={slug} size="sm" />
+                        <PlayerIdentity {...identityFor(r.member_username)} factionId={slug} size="sm" />
                       </td>
                       <td className="px-3 py-2.5 font-mono">Rank {r.rank}</td>
                       <td className="px-3 py-2.5 text-[#a5a5a8] max-w-xs truncate">{r.reason || "—"}</td>
@@ -666,7 +672,7 @@ export function FactionManageClient({
                       <td className="px-3 py-2 font-mono text-[#6f6f74]">#{log.id}</td>
                       <td className="px-3 py-2">
                         {log.actor_username ? (
-                          <PlayerIdentity username={log.actor_username} size="sm" />
+                          <PlayerIdentity {...identityFor(log.actor_username)} size="sm" />
                         ) : (
                           <span className="text-[#6f6f74]">SYSTEM</span>
                         )}
@@ -674,13 +680,13 @@ export function FactionManageClient({
                       <td className="px-3 py-2 font-mono text-[#f1f1f1]">{log.action}</td>
                       <td className="px-3 py-2">
                         {log.target_username ? (
-                          <PlayerIdentity username={log.target_username} size="sm" />
+                          <PlayerIdentity {...identityFor(log.target_username)} size="sm" />
                         ) : (
                           <span className="text-[#6f6f74]">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate font-mono text-[11px]">
-                        {log.details || "—"}
+                        {formatAuditDetails(log.details)}
                       </td>
                       <td className="px-3 py-2 font-mono text-[#6f6f74]">
                         {new Date(log.created_at).toLocaleString()}
@@ -831,7 +837,7 @@ export function FactionManageClient({
                 <span className="text-xs font-bold text-[#f1f1f1]">
                   Revizuire Aplicație #{selectedApp.id}
                 </span>
-                <PlayerIdentity username={selectedApp.applicant_username} size="sm" />
+                <PlayerIdentity {...identityFor(selectedApp.applicant_username)} size="sm" />
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
@@ -892,7 +898,7 @@ export function FactionManageClient({
                 <span className="text-xs font-bold text-[#f1f1f1]">
                   Gestionează Membru Facțiune:
                 </span>
-                <PlayerIdentity username={actionMember.username} factionId={slug} size="sm" />
+                <PlayerIdentity {...identityFor(actionMember.username)} factionId={slug} size="sm" />
               </div>
               <button
                 onClick={() => setActionMember(null)}
@@ -990,7 +996,7 @@ export function FactionManageClient({
                 <span className="text-xs font-bold text-[#f1f1f1]">
                   Procesează Demisie #{selectedResignation.id}
                 </span>
-                <PlayerIdentity username={selectedResignation.member_username} factionId={slug} size="sm" />
+                <PlayerIdentity {...identityFor(selectedResignation.member_username)} factionId={slug} size="sm" />
               </div>
               <button
                 onClick={() => setSelectedResignation(null)}

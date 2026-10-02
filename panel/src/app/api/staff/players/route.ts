@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 export async function GET(req: NextRequest) {
   const session = await getCurrentSession();
@@ -32,12 +33,13 @@ export async function GET(req: NextRequest) {
       c.id as character_id,
       c.level,
       c.paydays_received as hours,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.last_played,
       cl.id as clan_id,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style,
       cm.rank as clan_rank,
       (SELECT COUNT(*) FROM admin_sanctions s WHERE s.target_account_id = a.id AND s.action = 'warn' AND s.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as active_warns,
       (SELECT COUNT(*) FROM bans b JOIN players pl ON pl.license = b.license WHERE pl.account_id = a.id AND (b.expires_at IS NULL OR b.expires_at > NOW())) as is_banned

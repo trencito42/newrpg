@@ -4,6 +4,7 @@ import { RowDataPacket } from "mysql2";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { Flag, Users, Shield, Map, CheckCircle, XCircle, Settings, Award } from "lucide-react";
 
 interface Context {
@@ -33,7 +34,7 @@ export default async function ClanDetailPage({ params }: Context) {
     `SELECT 
       c.id, c.name, c.tag, c.description, c.tag_color, c.tag_style,
       c.owner_character_id, c.motd, c.max_members, c.created_at, c.rank_labels,
-      acc.username as owner_username,
+      acc.username as owner_username, ${factionIdSql("ch")} as owner_faction_id,
       (SELECT COUNT(*) FROM clan_members cm WHERE cm.clan_id = c.id) as member_count,
       (SELECT COUNT(*) FROM turfs t WHERE t.owner_clan_id = c.id) as turfs_count,
       COALESCE(s.applications_open, 0) as applications_open,
@@ -59,13 +60,14 @@ export default async function ClanDetailPage({ params }: Context) {
       cm.warns,
       cm.joined_at,
       c.level,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.paydays_received as hours,
       c.last_played,
       (cl.owner_character_id = c.id) as is_owner,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
      FROM clan_members cm
      JOIN characters c ON c.id = cm.character_id
      JOIN players p ON p.id = c.player_id
@@ -118,6 +120,7 @@ export default async function ClanDetailPage({ params }: Context) {
                 <span>{locale === "ro" ? "Lider:" : "Leader:"}</span>
                 <PlayerIdentity
                   username={clan.owner_username}
+                  factionId={clan.owner_faction_id}
                   clanTag={clan.tag}
                   clanColor={clan.tag_color}
                   clanTagStyle={clan.tag_style}

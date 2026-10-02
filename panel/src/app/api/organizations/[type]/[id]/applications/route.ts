@@ -4,6 +4,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle, dbTransaction } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface Context {
   params: Promise<{ type: string; id: string }>;
@@ -33,14 +35,7 @@ export async function GET(req: NextRequest, { params }: Context) {
   let canManage = session.adminLevel >= 3;
   if (!canManage) {
     if (type === "faction") {
-      const leaderRow = await dbQuerySingle<RowDataPacket>(
-        `SELECT c.job, c.job_grade, fl.id as is_leader
-         FROM characters c
-         JOIN players p ON p.id = c.player_id
-         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-         WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-        [orgId, session.accountId, orgId]
-      );
+      const leaderRow = await getFactionAccess(session.accountId, orgId);
       if (leaderRow && (Number(leaderRow.job_grade) >= 6 || Boolean(leaderRow.is_leader))) {
         canManage = true;
       }
@@ -125,7 +120,7 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   // 2. Fetch applicant character details
   const character = await dbQuerySingle<RowDataPacket>(
-    `SELECT c.id, c.level, c.job, c.paydays_received, p.license
+    `SELECT c.id, c.level, c.job, ${factionIdSql()} AS faction_id, c.paydays_received, p.license
      FROM characters c
      JOIN players p ON p.id = c.player_id
      WHERE c.id = ? AND p.account_id = ? LIMIT 1`,
@@ -137,7 +132,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   }
 
   // 3. Eligibility checks
-  if (type === "faction" && character.job && character.job !== "unemployed" && character.job !== "civ") {
+  if (type === "faction" && character.faction_id) {
     return NextResponse.json({ error: "already_in_faction" }, { status: 400 });
   }
 

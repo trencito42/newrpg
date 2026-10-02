@@ -9,6 +9,7 @@ import { MobileNav } from "@/components/navigation/MobileNav";
 import { panelBrand } from "@/lib/brand";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
+import { resolvePlayerIdentity } from "@/lib/player-identity";
 
 export const metadata: Metadata = {
   title: `${panelBrand.name} — Companion Panel`,
@@ -33,6 +34,7 @@ export default async function RootLayout({
     getServerStatus(),
   ]);
   const viewerSession = toViewerSessionDTO(session);
+  const viewerIdentity = viewerSession ? await resolvePlayerIdentity(viewerSession.username) : null;
 
   return (
     <html lang={locale} className="dark">
@@ -48,9 +50,10 @@ export default async function RootLayout({
 
           {/* Desktop Sidebar */}
           <div className="hidden lg:flex flex-shrink-0">
-            <Sidebar
-              locale={locale}
-              session={viewerSession}
+          <Sidebar
+            locale={locale}
+            session={viewerSession}
+            identity={viewerIdentity}
               serverOnline={serverStatus.online}
               playerCount={serverStatus.playerCount}
             />
@@ -58,7 +61,7 @@ export default async function RootLayout({
 
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col min-w-0">
-            <Header locale={locale} session={viewerSession} />
+            <Header locale={locale} session={viewerSession} identity={viewerIdentity} />
             <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
               {children}
             </main>

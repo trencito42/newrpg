@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { formatClanTag } from "./PlayerIdentity";
+import { formatClanTag } from "@/lib/clan-tag";
 import { GTAImage } from "./GTAImage";
 import { Shield, Award, User, Circle, ArrowRight } from "lucide-react";
 
@@ -218,7 +218,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 font-bold text-sm tracking-tight truncate">
+                  <div className="flex items-center gap-0 font-bold text-sm tracking-tight truncate">
                     {previewData.clan && (
                       <span style={{ color: previewData.clan.color }} className="font-mono">
                         {formatClanTag(previewData.clan.tag, previewData.clan.tagStyle).prefix}

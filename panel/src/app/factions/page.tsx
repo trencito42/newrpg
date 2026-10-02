@@ -4,7 +4,9 @@ import { dbQuery } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
-import { PlayerName } from "@/components/ui/PlayerName";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
+import { factionIdSql } from "@/lib/faction-sql";
 
 interface FactionMemberCountRow extends RowDataPacket {
   job: string;
@@ -22,17 +24,22 @@ export default async function FactionsPage() {
 
   const [memberCounts, leaders] = await Promise.all([
     dbQuery<FactionMemberCountRow>(
-      `SELECT job, COUNT(*) AS member_count
-       FROM characters
-       WHERE job IN (?)
-       GROUP BY job`,
+      `SELECT fm.faction_id AS job, COUNT(*) AS member_count
+       FROM faction_membership fm
+       JOIN characters c ON c.id = fm.character_id
+       WHERE fm.faction_id IN (?) AND ${factionIdSql()} = fm.faction_id
+       GROUP BY fm.faction_id`,
       [Object.keys(CANONICAL_FACTIONS)]
     ),
     dbQuery<FactionLeaderRow>(
       `SELECT fl.faction_id, fl.character_id,
-              CONCAT(c.firstname, ' ', COALESCE(c.lastname, '')) AS leader_name
+              a.username AS leader_name
        FROM faction_leaders fl
-       JOIN characters c ON c.id = fl.character_id`
+       JOIN characters c ON c.id = fl.character_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = fl.faction_id
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
+       WHERE ${factionIdSql()} = fm.faction_id`
     ),
   ]);
 
@@ -41,6 +48,7 @@ export default async function FactionsPage() {
 
   const leaderMap = new Map<string, { character_id: number; leader_name: string }>();
   leaders.forEach((r) => leaderMap.set(r.faction_id, { character_id: r.character_id, leader_name: r.leader_name }));
+  const identities = await resolvePlayerIdentities(leaders.map((r) => r.leader_name));
 
   const factionList = Object.values(CANONICAL_FACTIONS).map((f) => ({
     ...f,
@@ -93,7 +101,7 @@ export default async function FactionsPage() {
                 <span>
                   Leader:{" "}
                   {f.leader ? (
-                    <span className="text-[#f1f1f1] font-medium">{f.leader.leader_name}</span>
+                    <PlayerIdentity {...identities.get(f.leader.leader_name.toLowerCase())!} factionId={f.id} clickable={false} />
                   ) : (
                     <span className="text-[#6f6f74] italic">Vacant</span>
                   )}

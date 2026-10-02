@@ -5,9 +5,12 @@ import { RowDataPacket } from "mysql2";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { PlayerAdminManage } from "./PlayerAdminManage";
 import { ArrowLeft, Shield, AlertTriangle, Clock, Car, Home, Award, History, FileText } from "lucide-react";
 import { CANONICAL_FACTIONS } from "@/lib/factions";
+import { formatAuditDetails } from "@/lib/audit-details";
+import { resolvePlayerIdentities } from "@/lib/player-identity";
 
 interface Context {
   params: Promise<{ username: string }>;
@@ -39,8 +42,8 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
       c.cash,
       c.bank,
       c.paydays_received as hours,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.last_played,
       c.phone_number,
       c.gender,
@@ -100,6 +103,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
      ORDER BY id DESC LIMIT 15`,
     [player.account_id, player.account_id]
   );
+  const sanctionIdentities = await resolvePlayerIdentities(sanctions.map((s) => s.admin_name).filter(Boolean));
 
   const activeWarns = sanctions.filter((s) => s.action === "warn").length;
   const isBanned = bans.length > 0;
@@ -242,7 +246,9 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                         {s.action === "jail" && <span className="text-purple-400">JAIL</span>}
                         {s.action === "unban" && <span className="text-emerald-400">UNBAN</span>}
                       </td>
-                      <td className="px-3 py-2 font-medium text-[#f1f1f1]">{s.admin_name}</td>
+                      <td className="px-3 py-2 font-medium text-[#f1f1f1]">
+                        {s.admin_name ? <PlayerIdentity {...sanctionIdentities.get(s.admin_name.toLowerCase())!} size="sm" /> : "SYSTEM"}
+                      </td>
                       <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate">{s.reason}</td>
                       <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
                         {formatDate(s.created_at, locale)}
@@ -284,7 +290,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                     <tr key={log.id} className="hover:bg-[#151517]">
                       <td className="px-3 py-2 font-mono text-[#f1f1f1]">{log.action}</td>
                       <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate font-mono text-[11px]">
-                        {log.reason || log.details || "—"}
+                        {log.reason || formatAuditDetails(log.details) || "—"}
                       </td>
                       <td className="px-3 py-2 text-right font-mono text-[#6f6f74]">
                         {new Date(log.created_at).toLocaleDateString()}

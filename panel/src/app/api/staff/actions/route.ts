@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle, dbTransaction } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import type { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
 
 const requestSchema = z.object({
   requestId: z.string().uuid(),
@@ -115,14 +116,7 @@ export async function POST(req: NextRequest) {
       isAuthorized = true;
     } else if (input.factionId) {
       // Check if session user is leader or sub-leader
-      const leaderRow = await dbQuerySingle<RowDataPacket>(
-        `SELECT c.job, c.job_grade, fl.id as is_leader
-         FROM characters c
-         JOIN players p ON p.id = c.player_id
-         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-         WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-        [input.factionId, session.accountId, input.factionId]
-      );
+      const leaderRow = await getFactionAccess(session.accountId, input.factionId);
       if (leaderRow) {
         const grade = Number(leaderRow.job_grade) || 0;
         const isLeader = Boolean(leaderRow.is_leader) || grade >= 7;

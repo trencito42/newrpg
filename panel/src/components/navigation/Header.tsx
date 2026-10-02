@@ -5,13 +5,16 @@ import { ViewerSessionDTO } from "@/lib/types";
 import { GlobalSearch } from "./GlobalSearch";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface HeaderProps {
   locale: Locale;
   session: ViewerSessionDTO | null;
+  identity: ResolvedPlayerIdentity | null;
 }
 
-export async function Header({ locale, session }: HeaderProps) {
+export async function Header({ locale, session, identity }: HeaderProps) {
   return (
     <header className="hidden lg:flex items-center justify-between px-6 py-2.5 bg-[#101011] border-b border-surface-border sticky top-0 z-30">
       <div className="flex items-center space-x-3 flex-1 max-w-sm">
@@ -32,7 +35,7 @@ export async function Header({ locale, session }: HeaderProps) {
                 {session.username.charAt(0).toUpperCase()}
               </div>
               <span className="font-semibold text-xs hidden xl:inline">
-                {session.username}
+                <PlayerIdentity {...(identity || { username: session.username })} size="sm" clickable={false} />
               </span>
             </Link>
           </div>

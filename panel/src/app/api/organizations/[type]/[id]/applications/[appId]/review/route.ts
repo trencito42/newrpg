@@ -5,6 +5,7 @@ import { dbQuerySingle, dbTransaction, dbQuery } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import crypto from "crypto";
+import { getFactionAccess } from "@/lib/faction-access";
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -43,14 +44,7 @@ export async function GET(req: NextRequest, { params }: Context) {
   let canManage = session.adminLevel >= 3;
   if (!canManage) {
     if (type === "faction") {
-      const leaderRow = await dbQuerySingle<RowDataPacket>(
-        `SELECT c.job, c.job_grade, fl.id as is_leader
-         FROM characters c
-         JOIN players p ON p.id = c.player_id
-         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-         WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-        [orgId, session.accountId, orgId]
-      );
+      const leaderRow = await getFactionAccess(session.accountId, orgId);
       if (leaderRow && (Number(leaderRow.job_grade) >= 6 || Boolean(leaderRow.is_leader))) {
         canManage = true;
       }
@@ -161,14 +155,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   let canReview = session.adminLevel >= 3;
   if (!canReview) {
     if (type === "faction") {
-      const leaderRow = await dbQuerySingle<RowDataPacket>(
-        `SELECT c.job, c.job_grade, fl.id as is_leader
-         FROM characters c
-         JOIN players p ON p.id = c.player_id
-         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-         WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-        [orgId, session.accountId, orgId]
-      );
+      const leaderRow = await getFactionAccess(session.accountId, orgId);
       if (leaderRow && (Number(leaderRow.job_grade) >= 6 || Boolean(leaderRow.is_leader))) {
         canReview = true;
       }

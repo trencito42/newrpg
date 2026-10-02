@@ -1,6 +1,7 @@
 import { dbQuery } from "./db";
 import { CANONICAL_FACTIONS, getFactionColor } from "./factions";
 import { RowDataPacket } from "mysql2";
+import { factionIdSql } from "./faction-sql";
 
 export interface ResolvedPlayerIdentity {
   username: string;
@@ -36,7 +37,7 @@ export async function resolvePlayerIdentities(
   const query = `
     SELECT 
       a.username,
-      c.job,
+      ${factionIdSql()} AS job,
       cl.id as clan_id,
       cl.tag as clan_tag,
       cl.tag_color as clan_tag_color,

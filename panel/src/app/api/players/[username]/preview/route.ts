@@ -3,6 +3,7 @@ import { dbQuerySingle } from "@/lib/db";
 import { CANONICAL_FACTIONS, getFactionColor, getFactionLabel } from "@/lib/factions";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 const CLAN_RANKS: Record<number, string> = {
   1: "Recruit",
@@ -36,8 +37,8 @@ export async function GET(
         c.level,
         c.metadata,
         c.paydays_received as hours,
-        c.job as faction_id,
-        c.job_grade as faction_rank,
+        ${factionIdSql()} as faction_id,
+        ${factionGradeSql()} as faction_rank,
         c.last_played,
         fl.id as is_faction_leader,
         cl.id as clan_id,
@@ -51,7 +52,7 @@ export async function GET(
        FROM accounts a
        JOIN players p ON p.account_id = a.id
        JOIN characters c ON c.player_id = p.id
-       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = c.job
+       LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ${factionIdSql()}
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
        WHERE LOWER(a.username) = LOWER(?) LIMIT 1`,

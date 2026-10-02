@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { formatAuditDetails } from "@/lib/audit-details";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 import {
   Users,
   FileText,
@@ -38,6 +40,7 @@ interface Props {
   applications: any[];
   questions: any[];
   auditLogs: any[];
+  identities: Record<string, ResolvedPlayerIdentity>;
   isLeader: boolean;
   isCoLeader: boolean;
   locale: string;
@@ -49,11 +52,13 @@ export function ClanManageClient({
   applications: initialApps,
   questions: initialQuestions,
   auditLogs,
+  identities,
   isLeader,
   isCoLeader,
   locale,
 }: Props) {
   const router = useRouter();
+  const identityFor = (username: string) => identities[username?.toLowerCase()] || { username: username || "Unknown" };
   const [tab, setTab] = useState<"overview" | "applications" | "members" | "history" | "settings">("overview");
 
   // State
@@ -394,7 +399,7 @@ export function ClanManageClient({
                     <tr key={app.id} className="hover:bg-[#151517] transition-colors">
                       <td className="px-3 py-2.5 font-mono text-[#6f6f74]">#{app.id}</td>
                       <td className="px-3 py-2.5">
-                        <PlayerIdentity username={app.applicant_username} size="sm" />
+                        <PlayerIdentity {...identityFor(app.applicant_username)} size="sm" />
                       </td>
                       <td className="px-3 py-2.5">
                         <span
@@ -415,7 +420,7 @@ export function ClanManageClient({
                       </td>
                       <td className="px-3 py-2.5 text-[#a5a5a8]">
                         {app.reviewer_username ? (
-                          <PlayerIdentity username={app.reviewer_username} size="sm" />
+                          <PlayerIdentity {...identityFor(app.reviewer_username)} size="sm" />
                         ) : (
                           <span className="text-[#6f6f74]">—</span>
                         )}
@@ -462,6 +467,7 @@ export function ClanManageClient({
                         factionId={m.faction_id}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
+                        clanTagStyle={clan.tag_style}
                         size="sm"
                       />
                     </td>
@@ -531,14 +537,14 @@ export function ClanManageClient({
                       <td className="px-3 py-2 font-mono text-[#6f6f74]">#{log.id}</td>
                       <td className="px-3 py-2">
                         {log.actor_username ? (
-                          <PlayerIdentity username={log.actor_username} size="sm" />
+                          <PlayerIdentity {...identityFor(log.actor_username)} size="sm" />
                         ) : (
                           <span className="text-[#6f6f74]">SYSTEM</span>
                         )}
                       </td>
                       <td className="px-3 py-2 font-mono text-[#f1f1f1]">{log.action}</td>
                       <td className="px-3 py-2 text-[#a5a5a8] max-w-xs truncate font-mono text-[11px]">
-                        {log.details || "—"}
+                        {formatAuditDetails(log.details)}
                       </td>
                       <td className="px-3 py-2 font-mono text-[#6f6f74]">
                         {new Date(log.created_at).toLocaleString()}
@@ -691,7 +697,7 @@ export function ClanManageClient({
                 <span className="text-xs font-bold text-[#f1f1f1]">
                   Revizuire Aplicație #{selectedApp.id}
                 </span>
-                <PlayerIdentity username={selectedApp.applicant_username} size="sm" />
+                <PlayerIdentity {...identityFor(selectedApp.applicant_username)} size="sm" />
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
@@ -752,7 +758,7 @@ export function ClanManageClient({
                 <span className="text-xs font-bold text-[#f1f1f1]">
                   Gestionează Membru:
                 </span>
-                <PlayerIdentity username={actionMember.username} size="sm" />
+                <PlayerIdentity {...identityFor(actionMember.username)} size="sm" />
               </div>
               <button
                 onClick={() => setActionMember(null)}

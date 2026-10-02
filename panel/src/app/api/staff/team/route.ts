@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import { factionIdSql } from "@/lib/faction-sql";
 
 export async function GET(req: NextRequest) {
   const session = await getCurrentSession();
@@ -19,9 +20,10 @@ export async function GET(req: NextRequest) {
       c.id as character_id,
       c.level,
       c.last_played,
-      c.job as faction_id,
+      ${factionIdSql()} as faction_id,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
      FROM accounts a
      LEFT JOIN players p ON p.account_id = a.id
      LEFT JOIN characters c ON c.player_id = p.id

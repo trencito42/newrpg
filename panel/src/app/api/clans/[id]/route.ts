@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -45,13 +46,14 @@ export async function GET(req: NextRequest, { params }: Context) {
       cm.warns,
       cm.joined_at,
       c.level,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.paydays_received as hours,
       c.last_played,
       (cl.owner_character_id = c.id) as is_owner,
       cl.tag as clan_tag,
-      cl.tag_color as clan_tag_color
+      cl.tag_color as clan_tag_color,
+      cl.tag_style as clan_tag_style
      FROM clan_members cm
      JOIN characters c ON c.id = cm.character_id
      JOIN players p ON p.id = c.player_id

@@ -4,6 +4,7 @@ import { RowDataPacket } from "mysql2";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { Users, Search, Shield, AlertTriangle } from "lucide-react";
 
 interface Props {
@@ -40,8 +41,8 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
       c.id as character_id,
       c.level,
       c.paydays_received as hours,
-      c.job as faction_id,
-      c.job_grade as faction_rank,
+      ${factionIdSql()} as faction_id,
+      ${factionGradeSql()} as faction_rank,
       c.last_played,
       cl.id as clan_id,
       cl.tag as clan_tag,

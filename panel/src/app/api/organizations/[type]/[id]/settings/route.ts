@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
+import { getFactionAccess } from "@/lib/faction-access";
 
 interface Context {
   params: Promise<{ type: string; id: string }>;
@@ -70,14 +71,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   let isLeader = session.adminLevel >= 4;
   if (!isLeader) {
     if (type === "faction") {
-      const leaderRow = await dbQuerySingle<RowDataPacket>(
-        `SELECT c.job, c.job_grade, fl.id as is_leader
-         FROM characters c
-         JOIN players p ON p.id = c.player_id
-         LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
-         WHERE p.account_id = ? AND c.job = ? LIMIT 1`,
-        [orgId, session.accountId, orgId]
-      );
+      const leaderRow = await getFactionAccess(session.accountId, orgId);
       if (leaderRow && (Number(leaderRow.job_grade) >= 7 || Boolean(leaderRow.is_leader))) {
         isLeader = true;
       }

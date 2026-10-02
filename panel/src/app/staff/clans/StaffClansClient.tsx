@@ -128,6 +128,7 @@ export function StaffClansClient({
                     <td className="px-3 py-2.5">
                       <PlayerIdentity
                         username={clan.owner_username}
+                        factionId={clan.owner_faction_id}
                         clanTag={clan.tag}
                         clanColor={clan.tag_color}
                         clanTagStyle={clan.tag_style}

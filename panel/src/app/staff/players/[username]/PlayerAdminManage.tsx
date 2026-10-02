@@ -126,6 +126,7 @@ export function PlayerAdminManage({
                   factionId={player.faction_id}
                   clanTag={player.clan_tag}
                   clanColor={player.clan_tag_color}
+                  clanTagStyle={player.clan_tag_style}
                   size="sm"
                 />
               </div>

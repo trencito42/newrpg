@@ -4,6 +4,7 @@ import { RowDataPacket } from "mysql2";
 import { redirect } from "next/navigation";
 import { CANONICAL_FACTIONS } from "@/lib/factions";
 import { StaffFactionsClient } from "./StaffFactionsClient";
+import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 export default async function StaffFactionsPage() {
   const locale = await getViewerLocale();
@@ -18,21 +19,23 @@ export default async function StaffFactionsPage() {
   for (const fId of factionList) {
     const config = CANONICAL_FACTIONS[fId];
     const leader = await dbQuery<RowDataPacket>(
-      `SELECT c.id as character_id, a.id as account_id, a.username, c.job_grade, fl.assigned_at,
+      `SELECT c.id as character_id, a.id as account_id, a.username, ${factionGradeSql()} AS job_grade, fl.assigned_at,
               cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
        FROM characters c
        JOIN players p ON p.id = c.player_id
        JOIN accounts a ON a.id = p.account_id
+       JOIN faction_membership fm ON fm.character_id = c.id AND fm.faction_id = ?
        LEFT JOIN faction_leaders fl ON fl.character_id = c.id AND fl.faction_id = ?
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
-       WHERE c.job = ? AND (fl.id IS NOT NULL OR c.job_grade >= 7)
+       WHERE ${factionIdSql()} = fm.faction_id AND (fl.id IS NOT NULL OR ${factionGradeSql()} >= 7)
        LIMIT 1`,
       [fId, fId]
     );
 
     const membersCount = await dbQuery<RowDataPacket>(
-      `SELECT COUNT(*) as count FROM characters WHERE job = ?`,
+      `SELECT COUNT(*) as count FROM faction_membership fm JOIN characters c ON c.id = fm.character_id
+       WHERE fm.faction_id = ? AND ${factionIdSql()} = fm.faction_id`,
       [fId]
     );
 
