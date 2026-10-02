@@ -104,7 +104,7 @@ ensure sunset_addon_vehicles
 ensure showcasecars
 ensure showcasecars2
 ensure pitd_tol_car_pack_a
-ensure sunset_police_handling
+ensure sunset_vehicle_dynamics
 ensure sunset_tuning
 ensure sunset_properties
 ensure sunset_skins

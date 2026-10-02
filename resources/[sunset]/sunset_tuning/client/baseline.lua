@@ -31,7 +31,35 @@ function STC.captureModelBaseline(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return nil end
     local modelHash = STC.getModelHash(veh)
     if STC.modelBaselines[modelHash] then return STC.modelBaselines[modelHash] end
-    STC.modelBaselines[modelHash] = readBaselineFromVehicle(veh)
+
+    local baseline = {}
+    
+    -- Check if canonical baseline is available from sunset_vehicle_dynamics
+    local canonical = nil
+    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
+        pcall(function()
+            canonical = exports.sunset_vehicle_dynamics:GetCanonicalBaseline(modelHash, veh)
+        end)
+    end
+
+    if canonical and type(canonical) == 'table' then
+        for _, field in ipairs(TC.GetBaselineFields()) do
+            baseline[field] = canonical[field] or GetVehicleHandlingFloat(veh, 'CHandlingData', field)
+        end
+    else
+        for _, field in ipairs(TC.GetBaselineFields()) do
+            baseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
+        end
+    end
+
+    baseline.mods = {}
+    SetVehicleModKit(veh, 0)
+    for key, slot in pairs(SunsetTuning.HardwareSlots or {}) do
+        baseline.mods[key] = GetVehicleMod(veh, slot.modType)
+    end
+    baseline.turbo = IsToggleModOn(veh, 18)
+
+    STC.modelBaselines[modelHash] = baseline
     return STC.modelBaselines[modelHash]
 end
 
@@ -39,25 +67,35 @@ function STC.getVehicleCapabilities(veh)
     local modelHash = STC.getModelHash(veh)
     local modelName = GetDisplayNameFromVehicleModel(modelHash)
     if modelName then modelName = modelName:lower() end
-    -- Prefer spawn model name from entity if available via plate cache
     local classId = GetVehicleClass(veh)
     return SunsetTuning.ProfileResolver.Resolve(modelName, classId)
 end
 
 function STC.restoreBaselineHandling(veh, baseline)
-    if not baseline then return end
-    for field, value in pairs(baseline) do
-        if type(field) == 'string' and field:sub(1, 1) == 'f' and type(value) == 'number' then
-            SetVehicleHandlingFloat(veh, 'CHandlingData', field, value)
+    if not veh or not DoesEntityExist(veh) then return end
+
+    -- Re-apply canonical baseline from sunset_vehicle_dynamics if running
+    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
+        pcall(function()
+            exports.sunset_vehicle_dynamics:ApplyVehicleDynamics(veh, true)
+        end)
+    elseif baseline then
+        for field, value in pairs(baseline) do
+            if type(field) == 'string' and field:sub(1, 1) == 'f' and type(value) == 'number' then
+                SetVehicleHandlingFloat(veh, 'CHandlingData', field, value)
+            end
         end
     end
+
     SetVehicleModKit(veh, 0)
-    if baseline.mods then
+    if baseline and baseline.mods then
         for key, slot in pairs(SunsetTuning.HardwareSlots or {}) do
             SetVehicleMod(veh, slot.modType, baseline.mods[key] or -1, false)
         end
     end
-    ToggleVehicleMod(veh, 18, baseline.turbo == true)
+    if baseline then
+        ToggleVehicleMod(veh, 18, baseline.turbo == true)
+    end
     SetVehicleEnginePowerMultiplier(veh, 0.0)
     SetVehicleEngineTorqueMultiplier(veh, 1.0)
     ModifyVehicleTopSpeed(veh, 0.0)
