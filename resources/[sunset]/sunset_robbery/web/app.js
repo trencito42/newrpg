@@ -216,35 +216,206 @@ const Hack = {
 
 const Loot = {
     displayId: null,
+    items: [],
+    bagUsed: 0,
+    bagCap: 12,
+    estimated: 0,
+    selectedUids: new Set(),
+    timerInterval: null,
+    timeLeft: 270,
+
+    getIconHtml(item) {
+        const id = String(item.item || item.family || '').toLowerCase();
+        if (id.includes('watch')) return '⌚';
+        if (id.includes('gold') || id.includes('bar') || id.includes('brick')) return '🧈';
+        if (id.includes('diamond') || id.includes('jewelry') || id.includes('ring') || id.includes('necklace')) return '💎';
+        if (id.includes('cash') || id.includes('money')) return '💵';
+        if (id.includes('art') || id.includes('painting')) return '🖼️';
+        if (id.includes('weapon') || id.includes('gun')) return '🔫';
+        return '💰';
+    },
+
     show(data = {}) {
         this.displayId = data.displayId;
-        $('loot').classList.remove('hidden');
-        $('loot-title').textContent = (data.label || tr('ui.robbery.display', null)).toUpperCase();
-        $('loot-bag').textContent = `${data.bagUsed || 0} / ${data.bagCap || 12}`;
-        const grid = $('loot-grid');
+        this.items = Array.isArray(data.items) ? data.items : [];
+        this.bagUsed = Number(data.bagUsed) || 0;
+        this.bagCap = Math.max(1, Number(data.bagCap) || 12);
+        this.estimated = Number(data.estimated) || 0;
+        this.selectedUids.clear();
+
+        const wrapper = $('robbery-wrapper');
+        if (!wrapper) return;
+        wrapper.classList.remove('hidden');
+        wrapper.classList.add('visible');
+
+        const title = $('ui-rob-title');
+        if (title) title.textContent = (data.locationTitle || data.label || tr('ui.robbery.display', null, 'PACIFIC STANDARD BANK')).toUpperCase();
+        const subtitle = $('ui-rob-subtitle');
+        if (subtitle) subtitle.textContent = (data.label || tr('ui.robbery.vault_access', null, 'Seif Principal / Acces Acordat')).toUpperCase();
+
+        const maxWgtEl = $('ui-max-wgt');
+        if (maxWgtEl) maxWgtEl.textContent = this.bagCap.toFixed(1);
+
+        this.renderLootGrid();
+        this.calculateTotals();
+        this.startTimer(data.responseSeconds || 270);
+    },
+
+    startTimer(seconds) {
+        clearInterval(this.timerInterval);
+        this.timeLeft = Math.max(0, Math.floor(Number(seconds) || 270));
+        const update = () => {
+            const timerEl = $('ui-timer');
+            if (!timerEl) return;
+            const m = Math.floor(this.timeLeft / 60).toString().padStart(2, '0');
+            const s = (this.timeLeft % 60).toString().padStart(2, '0');
+            timerEl.textContent = `${m}:${s}`;
+        };
+        update();
+        this.timerInterval = setInterval(() => {
+            if (this.timeLeft > 0) {
+                this.timeLeft--;
+                update();
+            }
+        }, 1000);
+    },
+
+    renderLootGrid() {
+        const grid = $('ui-loot-grid');
+        if (!grid) return;
         grid.innerHTML = '';
-        (data.items || []).forEach((item) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'loot-item';
-            if (item.tier === 'RARE') btn.classList.add('is-rare');
-            if (item.tier === 'EPIC' || item.tier === 'VERY_RARE') btn.classList.add('is-epic');
-            if (item.taken) btn.classList.add('is-taken');
-            btn.dataset.uid = item.uid;
-            btn.innerHTML = `${item.label}<small>${item.tier} · ${money(item.baseValue)} · w${item.weight}</small>`;
-            btn.addEventListener('click', () => {
-                if (item.taken) return;
-                post('lootTake', { displayId: data.displayId, uid: item.uid });
+
+        this.items.forEach((item) => {
+            const isSelected = this.selectedUids.has(item.uid);
+            const isTaken = Boolean(item.taken);
+            const card = document.createElement('div');
+            card.className = `loot-card ${isSelected ? 'selected' : ''} ${isTaken ? 'is-taken' : ''}`;
+            card.dataset.uid = item.uid;
+
+            const timeSec = item.skill ? '45s' : '15s';
+            const weight = Number(item.weight || 1).toFixed(1);
+
+            card.innerHTML = `
+                <div class="check-icon"></div>
+                <div class="loot-icon">${this.getIconHtml(item)}</div>
+                <div class="loot-name">${item.label || item.item}</div>
+                <div class="loot-details">
+                    <span>Timp Colectare: <span style="color: var(--brand-primary); font-weight: 700;">~${timeSec}</span></span>
+                    <span>Valoare: <span class="val-text">${money(item.baseValue || 0)}</span></span>
+                    <span>Greutate: <span class="wgt-text">${weight} KG</span></span>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                if (isTaken) return;
+                this.toggleLoot(item.uid);
             });
-            grid.appendChild(btn);
+
+            grid.appendChild(card);
         });
     },
-    taken(data = {}) {
-        $('loot-bag').textContent = `${data.bagUsed || 0} / ${data.bagCap || 12}`;
-        const btn = $('loot-grid').querySelector(`[data-uid="${data.uid}"]`);
-        if (btn) btn.classList.add('is-taken');
+
+    toggleLoot(uid) {
+        if (this.selectedUids.has(uid)) {
+            this.selectedUids.delete(uid);
+        } else {
+            this.selectedUids.add(uid);
+        }
+        this.renderLootGrid();
+        this.calculateTotals();
     },
-    hide() { $('loot').classList.add('hidden'); },
+
+    calculateTotals() {
+        let selectedVal = 0;
+        let selectedWgt = 0;
+
+        this.selectedUids.forEach((uid) => {
+            const item = this.items.find((x) => x.uid === uid);
+            if (item) {
+                selectedVal += Number(item.baseValue || 0);
+                selectedWgt += Number(item.weight || 1);
+            }
+        });
+
+        const totalVal = this.estimated + selectedVal;
+        const totalWgt = this.bagUsed + selectedWgt;
+
+        const valEl = $('ui-total-val');
+        if (valEl) valEl.textContent = money(totalVal);
+        const wgtEl = $('ui-total-wgt');
+        if (wgtEl) wgtEl.textContent = totalWgt.toFixed(1);
+
+        const pct = Math.max(0, Math.min(100, (totalWgt / this.bagCap) * 100));
+        const barFill = $('ui-wgt-bar');
+        const warnEl = $('ui-wgt-warn');
+        const btn = $('btn-confirm');
+
+        if (barFill) barFill.style.width = `${pct}%`;
+
+        if (totalWgt > this.bagCap) {
+            barFill?.classList.add('overload');
+            if (warnEl) warnEl.style.display = 'block';
+            if (btn) {
+                btn.className = 'btn-start error';
+                btn.textContent = 'RUCSAC SUPRAÎNCĂRCAT';
+            }
+        } else if (this.selectedUids.size > 0) {
+            barFill?.classList.remove('overload');
+            if (warnEl) warnEl.style.display = 'none';
+            if (btn) {
+                btn.className = 'btn-start ready';
+                btn.textContent = `Începe Colectarea (${this.selectedUids.size})`;
+            }
+        } else {
+            barFill?.classList.remove('overload');
+            if (warnEl) warnEl.style.display = 'none';
+            if (btn) {
+                btn.className = 'btn-start';
+                btn.textContent = 'Selectează prada';
+            }
+        }
+    },
+
+    startRobbery() {
+        if (this.selectedUids.size === 0) return;
+        let selectedWgt = 0;
+        this.selectedUids.forEach((uid) => {
+            const item = this.items.find((x) => x.uid === uid);
+            if (item) selectedWgt += Number(item.weight || 1);
+        });
+        if (this.bagUsed + selectedWgt > this.bagCap) return;
+
+        const uids = Array.from(this.selectedUids);
+        uids.forEach((uid, index) => {
+            setTimeout(() => {
+                post('lootTake', { displayId: this.displayId, uid });
+            }, index * 100);
+        });
+        this.selectedUids.clear();
+        this.calculateTotals();
+    },
+
+    taken(data = {}) {
+        this.bagUsed = Number(data.bagUsed ?? this.bagUsed);
+        this.bagCap = Number(data.bagCap ?? this.bagCap);
+        this.estimated = Number(data.estimated ?? this.estimated);
+
+        const item = this.items.find((x) => x.uid === data.uid);
+        if (item) item.taken = true;
+        this.selectedUids.delete(data.uid);
+
+        this.renderLootGrid();
+        this.calculateTotals();
+    },
+
+    hide() {
+        clearInterval(this.timerInterval);
+        const wrapper = $('robbery-wrapper');
+        if (wrapper) {
+            wrapper.classList.remove('visible');
+            wrapper.classList.add('hidden');
+        }
+    },
 };
 
 const Fence = {
@@ -269,7 +440,8 @@ const Fence = {
     hide() { $('fence').classList.add('hidden'); },
 };
 
-$('loot-leave')?.addEventListener('click', () => post('lootClose'));
+$('btn-confirm')?.addEventListener('click', () => Loot.startRobbery());
+$('btn-leave-robbery')?.addEventListener('click', () => post('lootClose'));
 $('fence-leave')?.addEventListener('click', () => post('fenceClose'));
 
 window.addEventListener('message', (event) => {
@@ -292,6 +464,6 @@ window.addEventListener('message', (event) => {
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!$('hack').classList.contains('hidden')) post('hackClose');
-    if (!$('loot').classList.contains('hidden')) post('lootClose');
+    if ($('robbery-wrapper')?.classList.contains('visible') || !$('robbery-wrapper')?.classList.contains('hidden')) post('lootClose');
     if (!$('fence').classList.contains('hidden')) post('fenceClose');
 });

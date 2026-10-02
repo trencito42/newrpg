@@ -52,13 +52,65 @@
         </footer>
     </div>
 
-    <div id="loot" class="loot hidden">
-        <div class="loot__head">
-            <span id="loot-title"><span data-i18n="ui.robbery.display">DISPLAY</span></span>
-            <strong id="loot-bag">0 / 12</strong>
+    <!-- Racket Robbery Loot Selection HUD -->
+    <div id="robbery-wrapper" class="robbery-wrapper hidden">
+        <div class="robbery-panel">
+            
+            <!-- HEADER -->
+            <div class="r-header">
+                <div class="h-left">
+                    <h1 class="h-title" id="ui-rob-title">PACIFIC STANDARD BANK</h1>
+                    <div class="h-subtitle" id="ui-rob-subtitle">Seif Principal / Acces Acordat</div>
+                </div>
+                <div class="h-right">
+                    <div class="timer-label" id="ui-timer-label">Timp Până La Alarmă</div>
+                    <div class="timer-value" id="ui-timer">04:30</div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="r-content">
+                
+                <!-- STANGA: SELECȚIE -->
+                <div class="loot-section">
+                    <div class="section-title">Selectează ce dorești să bagi în rucsac</div>
+                    
+                    <div class="loot-grid" id="ui-loot-grid">
+                        <!-- Generat din JS -->
+                    </div>
+                </div>
+
+                <!-- DREAPTA: STATUS -->
+                <div class="status-section">
+                    <div class="bag-info">
+                        <div class="info-row">
+                            <div class="info-label">Valoare Estimată</div>
+                            <div class="val-total" id="ui-total-val">$0</div>
+                        </div>
+                        
+                        <div style="height: 1px; background: var(--border-lighter); margin: 5px 0;"></div>
+
+                        <div class="info-row">
+                            <div class="wgt-header">
+                                <div class="info-label">Capacitate Rucsac</div>
+                                <div class="wgt-total"><span id="ui-total-wgt">0.0</span> / <span id="ui-max-wgt">12.0</span> KG</div>
+                            </div>
+                            <div class="wgt-bar-bg">
+                                <div class="wgt-bar-fill" id="ui-wgt-bar"></div>
+                            </div>
+                            <div class="info-label" id="ui-wgt-warn" style="color: var(--status-bad); display: none; text-align: right; margin-top: 4px;">
+                                RUCSAC PREA PLIN!
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-start" id="btn-confirm">Selectează prada</button>
+                    <button type="button" class="btn-leave-robbery" id="btn-leave-robbery">Închide / Părăsește Seiful</button>
+                </div>
+
+            </div>
+
         </div>
-        <div id="loot-grid" class="loot__grid"></div>
-        <button type="button" class="loot__leave" id="loot-leave"><span data-i18n="ui.robbery.leave_case">LEAVE CASE</span></button>
     </div>
 
     <div id="fence" class="fence hidden">
