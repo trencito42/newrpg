@@ -87,15 +87,19 @@ body {
 
 /* ── Logo ─────────────────────────────────────────────────── */
 .auth-logo {
-    width: 250px;
+    width: 320px;
+    max-width: 90%;
     margin-bottom: 40px;
     flex-shrink: 0;
 }
 
+.auth-logo img,
 .auth-logo svg {
     width: 100%;
     height: auto;
     display: block;
+    user-select: none;
+    pointer-events: none;
 }
 
 /* ── Form slider ──────────────────────────────────────────── */
