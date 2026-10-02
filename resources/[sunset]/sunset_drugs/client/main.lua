@@ -74,15 +74,35 @@ CreateThread(function()
     end
 end)
 
--- NUI Callbacks for Harvest
-RegisterNUICallback('giveHarvestItem', function(data, cb)
-    local result = Sunset.AwaitCallback('sunset:drugs:harvestHit', data.token, data.type)
-    cb(result or { success = false })
+-- Dedicated E-key input loop for harvest minigame while walking/looking
+CreateThread(function()
+    while true do
+        if inHarvestZone and harvestSessionActive then
+            -- INPUT_CONTEXT (E key / control 38)
+            if IsControlJustPressed(0, 38) or IsDisabledControlJustPressed(0, 38) then
+                exports.sunset_ui:Send('triggerHarvestHit', {})
+            end
+            Wait(0)
+        else
+            Wait(200)
+        end
+    end
 end)
 
-RegisterNUICallback('failHarvestHit', function(data, cb)
-    cb({ ok = true })
-end)
+-- NUI Callbacks and Forwards for Harvest
+local function onGiveHarvestItem(data, cb)
+    local result = Sunset.AwaitCallback('sunset:drugs:harvestHit', data.token, data.type)
+    if cb then cb(result or { success = false }) end
+end
+
+local function onFailHarvestHit(data, cb)
+    if cb then cb({ ok = true }) end
+end
+
+RegisterNUICallback('giveHarvestItem', onGiveHarvestItem)
+RegisterNUICallback('failHarvestHit', onFailHarvestHit)
+AddEventHandler('sunset:nui:giveHarvestItem', function(data) onGiveHarvestItem(data, function() end) end)
+AddEventHandler('sunset:nui:failHarvestHit', function(data) onFailHarvestHit(data, function() end) end)
 
 -- ═══════════════════════════════════════════════════════════════
 -- 2. CLANDESTINE LAB PROCESSING
@@ -150,21 +170,30 @@ function OpenClandestineLab(labIndex)
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_lab')
 end
 
-RegisterNUICallback('processSuccess', function(data, cb)
+local function onProcessSuccess(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:processSuccess', data.token, data.type)
-    cb(res or { success = false })
-end)
+    if cb then cb(res or { success = false }) end
+end
 
-RegisterNUICallback('processFail', function(data, cb)
+local function onProcessFail(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:processFail', data.token, data.type)
-    cb(res or { success = false })
-end)
+    if cb then cb(res or { success = false }) end
+end
 
-RegisterNUICallback('closeMenu', function(data, cb)
+local function onCloseLabMenu(data, cb)
     labOpen = false
     exports.sunset_ui:SetFocus(false, false, false, 'drugs_lab')
-    cb({ ok = true })
-end)
+    if cb then cb({ ok = true }) end
+end
+
+RegisterNUICallback('processSuccess', onProcessSuccess)
+RegisterNUICallback('processFail', onProcessFail)
+RegisterNUICallback('closeMenu', onCloseLabMenu)
+RegisterNUICallback('drugsCloseMenu', onCloseLabMenu)
+AddEventHandler('sunset:nui:processSuccess', function(data) onProcessSuccess(data, function() end) end)
+AddEventHandler('sunset:nui:processFail', function(data) onProcessFail(data, function() end) end)
+AddEventHandler('sunset:nui:drugsCloseMenu', function(data) onCloseLabMenu(data, function() end) end)
+AddEventHandler('sunset:nui:drugsClose', function(data) onCloseLabMenu(data, function() end) end)
 
 -- ═══════════════════════════════════════════════════════════════
 -- 3. STREET SALE (Vânzare Stradală la NPC)
@@ -283,7 +312,7 @@ function InitiateStreetSale(npcPed)
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
 
-RegisterNUICallback('acceptDrugSale', function(data, cb)
+local function onAcceptDrugSale(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:acceptStreetSale', data)
     
     if currentSalePed and DoesEntityExist(currentSalePed) then
@@ -299,10 +328,10 @@ RegisterNUICallback('acceptDrugSale', function(data, cb)
         end)
     end
 
-    cb(res or { success = false })
-end)
+    if cb then cb(res or { success = false }) end
+end
 
-RegisterNUICallback('failNegotiation', function(data, cb)
+local function onFailNegotiation(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:failNegotiation', data)
 
     if currentSalePed and DoesEntityExist(currentSalePed) then
@@ -319,10 +348,10 @@ RegisterNUICallback('failNegotiation', function(data, cb)
         end)
     end
 
-    cb(res or { success = true })
-end)
+    if cb then cb(res or { success = true }) end
+end
 
-RegisterNUICallback('declineDrugSale', function(data, cb)
+local function onDeclineDrugSale(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:declineStreetSale', data)
 
     if currentSalePed and DoesEntityExist(currentSalePed) then
@@ -330,12 +359,21 @@ RegisterNUICallback('declineDrugSale', function(data, cb)
         TaskWanderStandard(currentSalePed, 10.0, 10)
     end
 
-    cb(res or { success = true })
-end)
+    if cb then cb(res or { success = true }) end
+end
 
-RegisterNUICallback('closeSaleUI', function(data, cb)
+local function onCloseSaleUI(data, cb)
     saleActive = false
     currentSalePed = nil
     exports.sunset_ui:SetFocus(false, false, false, 'drugs_sale')
-    cb({ ok = true })
-end)
+    if cb then cb({ ok = true }) end
+end
+
+RegisterNUICallback('acceptDrugSale', onAcceptDrugSale)
+RegisterNUICallback('failNegotiation', onFailNegotiation)
+RegisterNUICallback('declineDrugSale', onDeclineDrugSale)
+RegisterNUICallback('closeSaleUI', onCloseSaleUI)
+AddEventHandler('sunset:nui:acceptDrugSale', function(data) onAcceptDrugSale(data, function() end) end)
+AddEventHandler('sunset:nui:failNegotiation', function(data) onFailNegotiation(data, function() end) end)
+AddEventHandler('sunset:nui:declineDrugSale', function(data) onDeclineDrugSale(data, function() end) end)
+AddEventHandler('sunset:nui:closeSaleUI', function(data) onCloseSaleUI(data, function() end) end)

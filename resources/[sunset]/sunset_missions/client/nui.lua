@@ -40,7 +40,8 @@ function MSN_NUI_ShowOffer(missionId, contactId, variant, stats, cooldowns)
 
     local cooldownSec = 0
     if cooldowns and cooldowns[missionId] then
-        local remaining = def.cooldown - (os.time() - cooldowns[missionId])
+        local now = GetCloudTimeAsInt()
+        local remaining = def.cooldown - (now - cooldowns[missionId])
         if remaining > 0 then cooldownSec = remaining end
     end
 

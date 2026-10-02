@@ -47,6 +47,30 @@ local function addLockpickXP(source, amount)
 end
 
 -- ── Lockpick attempt ────────────────────────────────────────
+exports.sunset_core:RegisterCallback('sunset:carjack:hasLockpick', function(source)
+    local char = getChar(source)
+    if not char then return false end
+    return exports.sunset_inventory:HasItem(source, 'lockpick', 1) == true
+end)
+
+exports.sunset_core:RegisterCallback('sunset:carjack:onLockpickSuccess', function(source)
+    local char = getChar(source)
+    if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
+    local hasItem = exports.sunset_inventory:HasItem(source, 'lockpick', 1)
+    if not hasItem then return false, { localeKey = 'carjack.message.you_need_a_lockpick' } end
+    exports.sunset_inventory:RemoveItem(source, 'lockpick', 1)
+    addLockpickXP(source, 35)
+    return true
+end)
+
+exports.sunset_core:RegisterCallback('sunset:carjack:onLockpickFail', function(source)
+    local char = getChar(source)
+    if not char then return false end
+    exports.sunset_inventory:RemoveItem(source, 'lockpick', 1)
+    addLockpickXP(source, 8)
+    return true
+end)
+
 exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(source)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
@@ -101,9 +125,13 @@ end
 -- Chop-shop NPC positions (mirrored from client/main.lua). Server must own these so
 -- the sale can be validated by proximity instead of trusting the client menu.
 local CHOP_SHOPS = {
+    vector3(-1631.47, -968.58, 7.78),
+    vector3(42.66, -1400.39, 29.35),
+    vector3(167.63, -1284.35, 29.50),
+    vector3(1522.59, -2114.32, 76.68),
     vector3(835.6, -3001.4, 5.9),
-    vector3(-151.9, -1716.8, 29.3),
-    vector3(115.2, -1947.8, 20.8),
+    vector3(2341.0, 3125.0, 48.2),
+    vector3(-219.0, 6382.0, 31.5),
 }
 local CHOP_SELL_DIST = 8.0
 local SellCooldown = {}

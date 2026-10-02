@@ -772,3 +772,44 @@ AddEventHandler('onClientResourceStop', function(res)
         focusOwner = nil
     end
 end)
+
+-- ═══════════════════════════════════════════════════════════════
+--  LOCKPICK EXPORT & CALLBACKS
+-- ═══════════════════════════════════════════════════════════════
+local activeLockpickCb = nil
+
+function StartLockpick(data, cb)
+    data = type(data) == 'table' and data or {}
+    activeLockpickCb = cb
+    SetFocus(true, true, false, 'lockpick')
+    SendNUIMessage({
+        action = 'openLockpick',
+        data = {
+            title = data.title or 'SPARGERE CONTACT',
+            subtitle = data.subtitle or 'Sistem de Securitate Vehicul',
+            difficulty = data.difficulty or 'medium',
+        }
+    })
+end
+exports('StartLockpick', StartLockpick)
+
+RegisterNUICallback('lockpickResult', function(data, cb)
+    local success = data and data.success == true
+    if activeLockpickCb then
+        local fn = activeLockpickCb
+        activeLockpickCb = nil
+        fn(success)
+    end
+    cb('ok')
+end)
+
+RegisterNUICallback('closeLockpick', function(_, cb)
+    SetFocus(false, false, false, 'lockpick')
+    if activeLockpickCb then
+        local fn = activeLockpickCb
+        activeLockpickCb = nil
+        fn(false)
+    end
+    cb('ok')
+end)
+

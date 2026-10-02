@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════
+   RACKET LOCKPICK SYSTEM (Skyrim Style)
+   ═══════════════════════════════════════════════════════════════ */
+
+#lockpick-wrapper {
+    position: absolute;
+    inset: 0; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+}
+
+#lockpick-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(circle at center, rgba(8,8,10,0.65) 0%, rgba(8,8,10,0.98) 100%);
+}
+
+#lockpick-wrapper.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lp-panel {
+    width: 620px;
+    height: 400px;
+    background: rgba(8, 8, 10, 0.96);
+    border: 1px solid rgba(242, 239, 232, 0.15);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.98);
+    transition: transform 0.2s ease;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(215, 181, 88, 0.12);
+}
+
+#lockpick-wrapper.visible .lp-panel {
+    transform: scale(1);
+}
+
+.lp-panel.flash-green { animation: lpFlashGood 0.35s ease; }
+.lp-panel.flash-red { animation: lpFlashBad 0.35s ease; }
+
+@keyframes lpFlashGood {
+    0% { box-shadow: inset 0 0 50px rgba(16, 185, 129, 0.45); border-color: #10b981; }
+    100% { box-shadow: inset 0 0 0 transparent; border-color: rgba(242, 239, 232, 0.15); }
+}
+@keyframes lpFlashBad {
+    0% { box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.45); border-color: #ef4444; }
+    100% { box-shadow: inset 0 0 0 transparent; border-color: rgba(242, 239, 232, 0.15); }
+}
+
+.lp-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(242, 239, 232, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(242, 239, 232, 0.02); 
+    position: relative;
+}
+
+.lp-header .h-left { display: flex; flex-direction: column; gap: 4px; }
+.lp-header .h-title {
+    font-size: 20px; font-weight: 900; color: #F2EFE8;
+    text-transform: uppercase; letter-spacing: 2px; margin: 0;
+}
+.lp-header .h-subtitle {
+    font-size: 10px; font-weight: 800; color: #D7B558;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+
+.lp-header .instruction {
+    font-size: 10px; font-weight: 800; color: rgba(242, 239, 232, 0.65);
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 6px;
+}
+.lp-header .keybind {
+    background: #D7B558; color: #08080a; padding: 2px 6px;
+    border-radius: 3px; font-weight: 900; font-size: 11px;
+}
+
+.lp-close-btn {
+    background: transparent;
+    border: 1px solid rgba(242, 239, 232, 0.1);
+    color: rgba(242, 239, 232, 0.6);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+    margin-left: 12px;
+}
+.lp-close-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.lp-content {
+    flex: 1; display: flex; flex-direction: row;
+}
+
+.lp-info {
+    width: 38%;
+    padding: 25px;
+    border-right: 1px solid rgba(242, 239, 232, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.lp-info .stat-block { display: flex; flex-direction: column; gap: 8px; }
+.lp-info .stat-label { font-size: 10px; font-weight: 800; color: rgba(242, 239, 232, 0.5); text-transform: uppercase; letter-spacing: 1px; }
+
+.health-bar-bg { width: 100%; height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; overflow: hidden; }
+.health-bar-fill { height: 100%; background: #F2EFE8; transition: width 0.2s ease, background-color 0.2s ease; }
+
+.health-text { font-size: 20px; font-weight: 900; color: #F2EFE8; text-align: right; line-height: 1; }
+
+.pins-container { display: flex; gap: 10px; }
+.pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(242, 239, 232, 0.2); background: transparent;
+    transition: all 0.2s ease;
+}
+.pin-dot.unlocked {
+    background: #10b981; border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.lp-game {
+    width: 62%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(8, 8, 10, 0.4);
+    position: relative;
+}
+
+#lp-svg-container {
+    width: 230px; height: 230px;
+}
+
+.track-bg { fill: none; stroke: rgba(242, 239, 232, 0.15); stroke-width: 16; }
+.track-target { 
+    fill: none; stroke: #D7B558; stroke-width: 16;
+    stroke-linecap: square;
+    transition: stroke-dasharray 0.2s ease;
+}
+.center-hub { fill: rgba(242, 239, 232, 0.05); stroke: rgba(242, 239, 232, 0.15); stroke-width: 2; }
+
+.cursor-line {
+    fill: none; stroke: #F2EFE8; stroke-width: 4;
+    stroke-linecap: round;
+}
+.cursor-glow {
+    fill: none; stroke: #F2EFE8; stroke-width: 8;
+    opacity: 0.3; filter: blur(2px);
+}
+
+.status-overlay {
+    position: absolute; inset: 0; background: rgba(8,8,10,0.92); z-index: 10;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+}
+.status-overlay .o-title { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+.status-overlay .o-sub { font-size: 11px; font-weight: 600; color: rgba(242, 239, 232, 0.6); text-transform: uppercase; }

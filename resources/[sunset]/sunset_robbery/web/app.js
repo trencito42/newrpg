@@ -225,14 +225,14 @@ const Loot = {
     timeLeft: 270,
 
     getIconHtml(item) {
-        const id = String(item.item || item.family || '').toLowerCase();
-        if (id.includes('watch')) return '⌚';
-        if (id.includes('gold') || id.includes('bar') || id.includes('brick')) return '🧈';
-        if (id.includes('diamond') || id.includes('jewelry') || id.includes('ring') || id.includes('necklace')) return '💎';
-        if (id.includes('cash') || id.includes('money')) return '💵';
-        if (id.includes('art') || id.includes('painting')) return '🖼️';
-        if (id.includes('weapon') || id.includes('gun')) return '🔫';
-        return '💰';
+        const id = String(item.item || item.id || '').trim();
+        const family = String(item.family || '').toLowerCase();
+        let fallback = 'stolen_silver_watch';
+        if (family.includes('gold')) fallback = 'stolen_gold_chain';
+        else if (family.includes('jewel')) fallback = 'stolen_diamond_jewelry';
+        else if (family.includes('cash')) fallback = 'cash_stack';
+        const itemImg = id || fallback;
+        return `<img src="nui://sunset_ui/web/assets/items/${itemImg}.webp" onerror="this.onerror=null; this.src='nui://sunset_ui/web/assets/items/${fallback}.webp';" alt="${item.label || itemImg}" />`;
     },
 
     show(data = {}) {

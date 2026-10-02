@@ -333,51 +333,110 @@ body {
     text-align: center;
 }
 
-/* ── LOCKPICK ──────────────────────────────────────────────── */
-.lp-track {
-    position: relative;
-    width: 300px;
-    height: 16px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 8px;
-    overflow: hidden;
-}
-.lp-zone {
-    position: absolute;
-    top: 0; bottom: 0;
-    background: rgba(0,255,204,0.25);
-    border-radius: 8px;
-}
-.lp-pick {
-    position: absolute;
-    top: 2px; bottom: 2px;
-    width: 6px;
-    background: var(--ms-text);
-    border-radius: 3px;
-    box-shadow: 0 0 8px rgba(255,255,255,0.5);
-}
-
-.lp-pins {
+/* ── SKYRIM LOCKPICK ────────────────────────────────────────── */
+.lp-skyrim-panel {
+    width: 600px;
+    height: 380px;
+    background: rgba(8, 8, 10, 0.96);
+    border: 1px solid rgba(242, 239, 232, 0.15);
+    border-radius: 4px;
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(215, 181, 88, 0.1);
 }
-.lp-pin {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.2);
-    transition: background 0.2s, border-color 0.2s;
-}
-.lp-pin.set  { background: var(--ms-accent); border-color: var(--ms-accent); box-shadow: 0 0 8px rgba(0,255,204,0.6); }
-.lp-pin.fail { background: var(--ms-danger); border-color: var(--ms-danger); }
 
-.lp-attempts {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ms-muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+.lp-skyrim-panel.flash-green { animation: msLpFlashGood 0.35s ease; }
+.lp-skyrim-panel.flash-red { animation: msLpFlashBad 0.35s ease; }
+
+@keyframes msLpFlashGood {
+    0% { box-shadow: inset 0 0 50px rgba(16, 185, 129, 0.45); border-color: #10b981; }
+    100% { box-shadow: inset 0 0 0 transparent; border-color: rgba(242, 239, 232, 0.15); }
 }
+@keyframes msLpFlashBad {
+    0% { box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.45); border-color: #ef4444; }
+    100% { box-shadow: inset 0 0 0 transparent; border-color: rgba(242, 239, 232, 0.15); }
+}
+
+.ms-lp-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(242, 239, 232, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(242, 239, 232, 0.02);
+}
+
+.ms-lp-title-wrap { display: flex; flex-direction: column; gap: 3px; }
+.ms-lp-title {
+    font-size: 18px; font-weight: 900; color: #F2EFE8;
+    text-transform: uppercase; letter-spacing: 2px; margin: 0;
+}
+.ms-lp-subtitle {
+    font-size: 10px; font-weight: 800; color: #D7B558;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+
+.ms-lp-instruction {
+    font-size: 10px; font-weight: 800; color: rgba(242, 239, 232, 0.65);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 6px;
+}
+.ms-keybind {
+    background: #D7B558; color: #08080a; padding: 2px 6px;
+    border-radius: 3px; font-weight: 900; font-size: 11px;
+}
+
+.ms-lp-body {
+    flex: 1; display: flex; flex-direction: row;
+}
+
+.ms-lp-side {
+    width: 38%;
+    padding: 24px;
+    border-right: 1px solid rgba(242, 239, 232, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ms-stat-box { display: flex; flex-direction: column; gap: 6px; }
+.ms-stat-label { font-size: 10px; font-weight: 800; color: rgba(242, 239, 232, 0.5); text-transform: uppercase; letter-spacing: 1px; }
+
+.ms-hp-bg { width: 100%; height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; overflow: hidden; }
+.ms-hp-fill { height: 100%; background: #F2EFE8; transition: width 0.15s ease, background-color 0.2s ease; }
+.ms-hp-val { font-size: 18px; font-weight: 900; color: #F2EFE8; text-align: right; }
+
+.ms-pins-wrap { display: flex; gap: 10px; }
+.ms-pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(242, 239, 232, 0.2); background: transparent;
+    transition: all 0.2s ease;
+}
+.ms-pin-dot.unlocked {
+    background: #10b981; border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.ms-lp-visual {
+    width: 62%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(8, 8, 10, 0.4);
+    position: relative;
+}
+
+#ms-lp-svg { width: 220px; height: 220px; }
+.ms-track-bg { fill: none; stroke: rgba(242, 239, 232, 0.15); stroke-width: 16; }
+.ms-center-hub { fill: rgba(242, 239, 232, 0.05); stroke: rgba(242, 239, 232, 0.15); stroke-width: 2; }
+.ms-cursor-line { fill: none; stroke: #F2EFE8; stroke-width: 4; stroke-linecap: round; }
+.ms-cursor-glow { fill: none; stroke: #F2EFE8; stroke-width: 8; opacity: 0.3; filter: blur(2px); }
+
+.ms-lp-overlay {
+    position: absolute; inset: 0; background: rgba(8,8,10,0.92); z-index: 10;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.ms-lp-o-title { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+.ms-lp-o-sub { font-size: 11px; font-weight: 600; color: rgba(242, 239, 232, 0.6); text-transform: uppercase; }
 
 /* ── SEAL / PRESSURE BAR ───────────────────────────────────── */
 .sl-bar-wrap {

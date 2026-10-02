@@ -1,13 +1,53 @@
 /* ═══════════════════════════════════════════════════════════════
    SUNSETMP — DRUG SYSTEM CONTROLLER (Harvest, Lab, Street Sale)
-   Matches design templates 1:1 with animations, SVG icons & security.
+   Matches design templates 1:1 with real item icons, rich badges & security.
    ═══════════════════════════════════════════════════════════════ */
+
+const ITEM_CONFIG = {
+    weed_leaf: { label: 'Frunze Cannabis', img: 'assets/items/weed_leaf.webp' },
+    coke_leaf: { label: 'Frunze Coca', img: 'assets/items/coke_leaf.webp' },
+    meth_chemical: { label: 'Precursori Chimici', img: 'assets/items/meth_chemical.webp' },
+    chemicals: { label: 'Substanțe Chimice', img: 'assets/items/chemicals.webp' },
+    weed_brick: { label: 'Pachete Weed', img: 'assets/items/weed_brick.webp', value: 250 },
+    coke_brick: { label: 'Pudră Cocaină', img: 'assets/items/coke_brick.webp', value: 800 },
+    meth_bag: { label: 'Cristale Meth', img: 'assets/items/meth_bag.webp', value: 1200 },
+};
+
+function getItemMeta(key) {
+    if (ITEM_CONFIG[key]) return ITEM_CONFIG[key];
+    const clean = key ? key.toLowerCase() : '';
+    if (clean.includes('coke') || clean.includes('coca')) {
+        return clean.includes('brick') ? ITEM_CONFIG.coke_brick : ITEM_CONFIG.coke_leaf;
+    }
+    if (clean.includes('meth')) {
+        return clean.includes('bag') ? ITEM_CONFIG.meth_bag : ITEM_CONFIG.meth_chemical;
+    }
+    if (clean.includes('chem')) return ITEM_CONFIG.chemicals;
+    return ITEM_CONFIG.weed_brick;
+}
 
 const SVG_ICONS = {
     weed: `<svg viewBox="0 0 24 24"><path d="M17.5 11c-1.3 0-2.6-.4-3.7-1.1L12 8.7 10.2 9.9c-1.1.7-2.4 1.1-3.7 1.1C3.5 11 1 8.5 1 5.5v-1l2 .5c1.8.4 3.7 0 5.1-1.1L10 .2h4l1.9 3.7c1.4 1.1 3.3 1.5 5.1 1.1l2-.5v1C23 8.5 20.5 11 17.5 11zM12 11c-2.8 0-5 2.2-5 5v5h10v-5c0-2.8-2.2-5-5-5z"></path></svg>`,
     coca: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>`,
+    coke: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>`,
     meth: `<svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`
 };
+
+function postToResource(action, data = {}) {
+    // Post to sunset_ui (which forwards to sunset_drugs)
+    fetch(`https://sunset_ui/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).catch(() => {});
+
+    // Also direct post to sunset_drugs
+    fetch(`https://sunset_drugs/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).catch(() => {});
+}
 
 const Drugs = {
     // ─────────────────────────────────────────────────────────────
@@ -32,8 +72,8 @@ const Drugs = {
             this.visible = true;
             this.playing = true;
             this.type = data.type || 'weed';
-            this.currentAmount = data.amount || 0;
-            this.maxAmount = data.maxAmount || 50;
+            this.currentAmount = Number(data.amount) || 0;
+            this.maxAmount = Number(data.maxAmount) || 50;
             this.sessionToken = data.token || null;
             this.cursorPos = 0;
             this.cursorDir = 1;
@@ -48,21 +88,22 @@ const Drugs = {
             if (!wrap) return;
 
             wrap.className = `theme-${this.type} visible`;
-            if (titleEl) titleEl.innerText = this.type === 'coca' ? 'Recoltare Coca' : (this.type === 'meth' ? 'Recoltare Chimicale' : 'Recoltare Weed');
+            const typeLabel = (this.type === 'coca' || this.type === 'coke') ? 'Recoltare Coca' : (this.type === 'meth' ? 'Recoltare Chimicale' : 'Recoltare Weed');
+            if (titleEl) titleEl.innerText = typeLabel;
             if (iconEl) iconEl.innerHTML = SVG_ICONS[this.type] || SVG_ICONS.weed;
             if (instrEl) instrEl.innerHTML = 'Apasă <span class="keybind">E</span> în zona marcată';
 
             this.randomizeTarget();
             this.updateUI();
 
-            cancelAnimationFrame(this.animationFrame);
+            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             this.loop();
         },
 
         close() {
             this.visible = false;
             this.playing = false;
-            cancelAnimationFrame(this.animationFrame);
+            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             const wrap = document.getElementById('harvest-wrapper');
             if (wrap) wrap.classList.remove('visible', 'hit-success', 'hit-fail');
         },
@@ -108,17 +149,16 @@ const Drugs = {
 
             const isHit = (this.cursorPos >= this.targetPos && this.cursorPos <= (this.targetPos + this.targetWidth));
             if (isHit) {
-                if (wrap) wrap.classList.add('hit-success');
+                if (wrap) {
+                    wrap.classList.remove('hit-fail');
+                    wrap.classList.add('hit-success');
+                }
                 if (this.currentAmount < this.maxAmount) {
                     this.currentAmount++;
-                    this.cursorSpeed = Math.min(this.cursorSpeed + 0.05, 3.0);
+                    this.cursorSpeed = Math.min(this.cursorSpeed + 0.05, 2.8);
                     this.targetWidth = Math.max(this.targetWidth - 0.5, 12);
                     
-                    fetch(`https://${GetParentResourceName()}/giveHarvestItem`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ type: this.type, token: this.sessionToken })
-                    }).catch(() => {});
+                    postToResource('giveHarvestItem', { type: this.type, token: this.sessionToken });
                 }
 
                 if (this.currentAmount >= this.maxAmount) {
@@ -127,282 +167,435 @@ const Drugs = {
                     if (instrEl) instrEl.innerText = "Rucsacul este plin!";
                 }
             } else {
-                if (wrap) wrap.classList.add('hit-fail');
-                fetch(`https://${GetParentResourceName()}/failHarvestHit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: this.type, token: this.sessionToken })
-                }).catch(() => {});
+                if (wrap) {
+                    wrap.classList.remove('hit-success');
+                    wrap.classList.add('hit-fail');
+                }
+                postToResource('failHarvestHit', { type: this.type, token: this.sessionToken });
             }
 
             this.updateUI();
 
             setTimeout(() => {
-                if (!this.visible) return;
                 if (wrap) wrap.classList.remove('hit-success', 'hit-fail');
                 if (this.playing) {
-                    this.randomizeTarget();
                     this.isWaitingFeedback = false;
+                    this.randomizeTarget();
                     this.loop();
                 }
-            }, 300);
+            }, 320);
         }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 2. LAB PROCESSING CONTROLLER
+    // 2. CLANDESTINE LAB PROCESSING CONTROLLER
     // ─────────────────────────────────────────────────────────────
     lab: {
         visible: false,
-        playing: false,
-        currentRecipe: null,
         sessionToken: null,
-        temperature: 0,
+        inventory: {},
+        recipes: {},
+        selectedRecipeKey: null,
+        isPlayingMinigame: false,
+
+        // Minigame state
+        temp: 0,
+        targetTemp: 50,
+        targetZoneHeight: 22,
         progress: 0,
         isHeating: false,
-        animationFrame: null,
-        inventory: {},
-
-        recipes: {
-            weed: { title: "Pachete Weed", min: 30, max: 70, drop: 0.15, heat: 0.45, prog: 0.22 },
-            coca: { title: "Pudră Cocaină", min: 40, max: 60, drop: 0.25, heat: 0.55, prog: 0.17 },
-            meth: { title: "Cristale Meth", min: 45, max: 55, drop: 0.38, heat: 0.72, prog: 0.13 }
-        },
+        animFrame: null,
 
         open(data) {
             this.visible = true;
-            this.playing = false;
-            this.currentRecipe = null;
             this.sessionToken = data.token || null;
             this.inventory = data.inventory || {};
+            this.recipes = data.recipes || {
+                weed: {
+                    label: 'Pachete Weed',
+                    rawItem: 'weed_leaf',
+                    rawCount: 5,
+                    productItem: 'weed_brick',
+                    productCount: 1,
+                    difficulty: 'easy',
+                },
+                coca: {
+                    label: 'Pudră Cocaină',
+                    rawItem: 'coke_leaf',
+                    rawCount: 5,
+                    secondaryItem: 'chemicals',
+                    secondaryCount: 1,
+                    productItem: 'coke_brick',
+                    productCount: 1,
+                    difficulty: 'medium',
+                },
+                meth: {
+                    label: 'Cristale Meth',
+                    rawItem: 'meth_chemical',
+                    rawCount: 3,
+                    secondaryItem: 'chemicals',
+                    secondaryCount: 1,
+                    productItem: 'meth_bag',
+                    productCount: 1,
+                    difficulty: 'hard',
+                },
+            };
 
             const wrap = document.getElementById('lab-wrapper');
-            const emptyEl = document.getElementById('lab-empty-state');
-            const activeEl = document.getElementById('lab-active-state');
-            const overlayEl = document.getElementById('lab-game-overlay');
             if (!wrap) return;
 
+            this.renderRecipeList();
+            
+            // Select first recipe by default or clear selection
+            const firstKey = Object.keys(this.recipes)[0];
+            if (firstKey) {
+                this.selectRecipe(firstKey);
+            } else {
+                this.showEmptyState();
+            }
+
             wrap.classList.add('visible');
-            if (emptyEl) emptyEl.style.display = 'flex';
-            if (activeEl) activeEl.style.display = 'none';
-            if (overlayEl) overlayEl.style.display = 'none';
-
-            document.querySelectorAll('.recipe-card').forEach(c => c.classList.remove('selected'));
-            this.updateStockUI();
-        },
-
-        updateStockUI() {
-            const weedLeaves = this.inventory['weed_leaf'] || 0;
-            const cocaLeaves = this.inventory['coke_leaf'] || 0;
-            const methChem = this.inventory['meth_chemical'] || 0;
-            const chemicals = this.inventory['chemicals'] || 0;
-
-            const reqWeed = document.getElementById('req-weed');
-            if (reqWeed) reqWeed.innerHTML = `Necesită: <span>5x Frunze Weed (${weedLeaves}/5)</span>`;
-
-            const reqCoca = document.getElementById('req-coca');
-            if (reqCoca) reqCoca.innerHTML = `Necesită: <span>5x Frunze Coca (${cocaLeaves}/5), 1x Substanțe Chimice (${chemicals}/1)</span>`;
-
-            const reqMeth = document.getElementById('req-meth');
-            if (reqMeth) reqMeth.innerHTML = `Necesită: <span>3x Chimicale Meth (${methChem}/3), 1x Substanțe Chimice (${chemicals}/1)</span>`;
         },
 
         close() {
-            if (this.playing) return;
             this.visible = false;
-            cancelAnimationFrame(this.animationFrame);
+            this.isPlayingMinigame = false;
+            this.isHeating = false;
+            if (this.animFrame) cancelAnimationFrame(this.animFrame);
+
             const wrap = document.getElementById('lab-wrapper');
             if (wrap) wrap.classList.remove('visible');
-            fetch(`https://${GetParentResourceName()}/closeMenu`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+
+            postToResource('closeMenu', {});
+            postToResource('drugsCloseMenu', {});
         },
 
-        selectRecipe(type) {
-            if (this.playing) return;
-            this.currentRecipe = type;
+        showEmptyState() {
+            const emptyEl = document.getElementById('lab-empty-state');
+            const activeEl = document.getElementById('lab-active-state');
+            if (emptyEl) emptyEl.style.display = 'flex';
+            if (activeEl) activeEl.style.display = 'none';
+        },
 
-            document.querySelectorAll('.recipe-card').forEach(c => c.classList.remove('selected'));
-            const selectedCard = document.getElementById(`recipe-card-${type}`);
-            if (selectedCard) selectedCard.classList.add('selected');
+        checkHasMaterials(recipe) {
+            if (!recipe) return false;
+            const rawHave = Number(this.inventory[recipe.rawItem]) || 0;
+            if (rawHave < (recipe.rawCount || 1)) return false;
+
+            if (recipe.secondaryItem && recipe.secondaryCount > 0) {
+                const secHave = Number(this.inventory[recipe.secondaryItem]) || 0;
+                if (secHave < recipe.secondaryCount) return false;
+            }
+            return true;
+        },
+
+        renderRecipeList() {
+            const container = document.getElementById('lab-recipe-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            Object.entries(this.recipes).forEach(([key, recipe]) => {
+                const productMeta = getItemMeta(recipe.productItem || key);
+                const rawMeta = getItemMeta(recipe.rawItem);
+                const secMeta = recipe.secondaryItem ? getItemMeta(recipe.secondaryItem) : null;
+
+                const rawHave = Number(this.inventory[recipe.rawItem]) || 0;
+                const rawNeeded = Number(recipe.rawCount) || 1;
+                const hasRaw = rawHave >= rawNeeded;
+
+                let hasSec = true;
+                let secHave = 0;
+                let secNeeded = 0;
+                if (secMeta && recipe.secondaryCount > 0) {
+                    secHave = Number(this.inventory[recipe.secondaryItem]) || 0;
+                    secNeeded = Number(recipe.secondaryCount) || 1;
+                    hasSec = secHave >= secNeeded;
+                }
+
+                const isReady = hasRaw && hasSec;
+                const isSelected = this.selectedRecipeKey === key;
+
+                const card = document.createElement('div');
+                card.className = `lab-card ${isSelected ? 'selected' : ''}`;
+                card.dataset.key = key;
+
+                let diffClass = 'diff-easy';
+                let diffLabel = 'UȘOARĂ';
+                if (recipe.difficulty === 'medium') { diffClass = 'diff-medium'; diffLabel = 'MEDIE'; }
+                else if (recipe.difficulty === 'hard') { diffClass = 'diff-hard'; diffLabel = 'RIDICATĂ'; }
+
+                card.innerHTML = `
+                    <div class="lab-card-top">
+                        <div class="lab-card-thumb">
+                            <img src="${productMeta.img}" alt="${recipe.label}" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
+                        </div>
+                        <div class="lab-card-header">
+                            <div class="lab-card-name">${recipe.label}</div>
+                            <div class="lab-card-diff ${diffClass}">Dificultate: ${diffLabel}</div>
+                        </div>
+                    </div>
+                    <div class="lab-card-ingredients">
+                        <div class="ing-tag">
+                            <img src="${rawMeta.img}" alt="${rawMeta.label}">
+                            <span>${rawMeta.label}</span>
+                            <span class="ing-badge ${hasRaw ? 'ok' : 'missing'}">${rawHave}/${rawNeeded}</span>
+                        </div>
+                        ${secMeta ? `
+                            <div class="ing-tag">
+                                <img src="${secMeta.img}" alt="${secMeta.label}">
+                                <span>${secMeta.label}</span>
+                                <span class="ing-badge ${hasSec ? 'ok' : 'missing'}">${secHave}/${secNeeded}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="lab-card-status ${isReady ? 'ready' : 'missing'}">
+                        ${isReady ? '● DISPONIBIL PENTRU SINTEZĂ' : '○ LIPSESC MATERIALE'}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    this.selectRecipe(key);
+                });
+
+                container.appendChild(card);
+            });
+        },
+
+        selectRecipe(key) {
+            this.selectedRecipeKey = key;
+            const recipe = this.recipes[key];
+            if (!recipe) return;
+
+            // Highlight cards
+            document.querySelectorAll('.lab-card').forEach((el) => {
+                el.classList.toggle('selected', el.dataset.key === key);
+            });
 
             const emptyEl = document.getElementById('lab-empty-state');
             const activeEl = document.getElementById('lab-active-state');
-            const gameAreaEl = document.getElementById('lab-game-area');
-            const btnStart = document.getElementById('btn-lab-start');
-            const titleEl = document.getElementById('lab-process-title');
-            const statusEl = document.getElementById('lab-process-status');
-            const targetZoneEl = document.getElementById('lab-target-zone');
+            const detailsView = document.getElementById('lab-details-view');
+            const gameView = document.getElementById('lab-game-view');
+            const overlay = document.getElementById('lab-game-overlay');
 
             if (emptyEl) emptyEl.style.display = 'none';
             if (activeEl) activeEl.style.display = 'flex';
-            if (gameAreaEl) gameAreaEl.style.display = 'none';
-            if (btnStart) btnStart.style.display = 'block';
+            if (detailsView) detailsView.style.display = 'block';
+            if (gameView) gameView.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
 
-            const conf = this.recipes[type];
-            if (titleEl) titleEl.innerText = conf.title;
-            if (statusEl) {
-                statusEl.innerText = "Pregătit pentru sinteză";
-                statusEl.style.color = "var(--brand-accent)";
-            }
-
-            if (targetZoneEl) {
-                targetZoneEl.style.bottom = `${conf.min}%`;
-                targetZoneEl.style.height = `${conf.max - conf.min}%`;
-            }
+            this.renderDetailsView(recipe);
         },
 
-        startGame() {
-            if (!this.currentRecipe) return;
+        renderDetailsView(recipe) {
+            const productMeta = getItemMeta(recipe.productItem);
+            const rawMeta = getItemMeta(recipe.rawItem);
+            const secMeta = recipe.secondaryItem ? getItemMeta(recipe.secondaryItem) : null;
 
-            // Check inventory client-side before starting
-            const weedLeaves = this.inventory['weed_leaf'] || 0;
-            const cocaLeaves = this.inventory['coke_leaf'] || 0;
-            const methChem = this.inventory['meth_chemical'] || 0;
-            const chemicals = this.inventory['chemicals'] || 0;
-
-            let hasItems = false;
-            if (this.currentRecipe === 'weed' && weedLeaves >= 5) hasItems = true;
-            if (this.currentRecipe === 'coca' && cocaLeaves >= 5 && chemicals >= 1) hasItems = true;
-            if (this.currentRecipe === 'meth' && methChem >= 3 && chemicals >= 1) hasItems = true;
-
-            if (!hasItems) {
-                const statusEl = document.getElementById('lab-process-status');
-                if (statusEl) {
-                    statusEl.innerText = "Materiale insuficiente în inventar!";
-                    statusEl.style.color = "var(--status-bad)";
-                }
-                return;
-            }
-
-            this.temperature = 20;
-            this.progress = 0;
-            this.playing = true;
-            this.isHeating = false;
-
+            const productImg = document.getElementById('lab-product-img');
+            const productName = document.getElementById('lab-product-name');
+            const yieldText = document.getElementById('lab-yield-text');
+            const valText = document.getElementById('lab-val-text');
+            const diffText = document.getElementById('lab-diff-text');
+            const statusText = document.getElementById('lab-status-text');
             const btnStart = document.getElementById('btn-lab-start');
-            const gameAreaEl = document.getElementById('lab-game-area');
-            const statusEl = document.getElementById('lab-process-status');
+            const ingList = document.getElementById('lab-ingredients-list');
 
-            if (btnStart) btnStart.style.display = 'none';
-            if (gameAreaEl) gameAreaEl.style.display = 'flex';
-            if (statusEl) {
-                statusEl.innerText = "Procesare în curs...";
-                statusEl.style.color = "var(--brand-primary)";
+            if (productImg) productImg.src = productMeta.img;
+            if (productName) productName.innerText = recipe.label;
+            if (yieldText) yieldText.innerText = `${recipe.productCount || 1}x ${productMeta.label}`;
+            if (valText) valText.innerText = `~$${productMeta.value || 300}`;
+
+            let diffLabel = 'UȘOARĂ';
+            if (recipe.difficulty === 'medium') diffLabel = 'MEDIE';
+            else if (recipe.difficulty === 'hard') diffLabel = 'RIDICATĂ';
+            if (diffText) diffText.innerText = diffLabel;
+
+            const isReady = this.checkHasMaterials(recipe);
+            if (statusText) {
+                statusText.innerText = isReady ? 'DISPONIBIL' : 'LIPSESC MATERIALE';
+                statusText.style.color = isReady ? 'var(--drug-good)' : 'var(--drug-bad)';
             }
 
-            this.updateVisuals();
-            cancelAnimationFrame(this.animationFrame);
-            this.loop();
+            if (btnStart) {
+                btnStart.disabled = !isReady;
+                btnStart.innerText = isReady ? 'Începe Procesarea' : 'Materie Primă Insuficientă';
+            }
+
+            // Build detailed ingredients checklist
+            if (ingList) {
+                ingList.innerHTML = '';
+
+                // Raw Material Card
+                const rawHave = Number(this.inventory[recipe.rawItem]) || 0;
+                const rawNeeded = Number(recipe.rawCount) || 1;
+                const rawOk = rawHave >= rawNeeded;
+                const rawCard = document.createElement('div');
+                rawCard.className = 'ing-row-card';
+                rawCard.innerHTML = `
+                    <div class="ing-row-left">
+                        <div class="ing-row-thumb">
+                            <img src="${rawMeta.img}" alt="${rawMeta.label}" onerror="this.onerror=null; this.src='assets/items/weed_leaf.webp';">
+                        </div>
+                        <div class="ing-row-info">
+                            <div class="ing-row-name">${rawMeta.label}</div>
+                            <div class="ing-row-count">În inventar: <strong>${rawHave}</strong> / Necesar: <strong>${rawNeeded}</strong></div>
+                        </div>
+                    </div>
+                    <div class="ing-row-right">
+                        <span class="ing-stock-badge ${rawOk ? 'ready' : 'missing'}">${rawOk ? '✓ GATA' : '✗ LIPSĂ'}</span>
+                    </div>
+                `;
+                ingList.appendChild(rawCard);
+
+                // Secondary Material Card (if needed)
+                if (secMeta && recipe.secondaryCount > 0) {
+                    const secHave = Number(this.inventory[recipe.secondaryItem]) || 0;
+                    const secNeeded = Number(recipe.secondaryCount) || 1;
+                    const secOk = secHave >= secNeeded;
+                    const secCard = document.createElement('div');
+                    secCard.className = 'ing-row-card';
+                    secCard.innerHTML = `
+                        <div class="ing-row-left">
+                            <div class="ing-row-thumb">
+                                <img src="${secMeta.img}" alt="${secMeta.label}" onerror="this.onerror=null; this.src='assets/items/chemicals.webp';">
+                            </div>
+                            <div class="ing-row-info">
+                                <div class="ing-row-name">${secMeta.label}</div>
+                                <div class="ing-row-count">În inventar: <strong>${secHave}</strong> / Necesar: <strong>${secNeeded}</strong></div>
+                            </div>
+                        </div>
+                        <div class="ing-row-right">
+                            <span class="ing-stock-badge ${secOk ? 'ready' : 'missing'}">${secOk ? '✓ GATA' : '✗ LIPSĂ'}</span>
+                        </div>
+                    `;
+                    ingList.appendChild(secCard);
+                }
+            }
         },
 
-        startHeating() {
-            if (this.playing) this.isHeating = true;
-        },
+        startMinigame() {
+            const recipe = this.recipes[this.selectedRecipeKey];
+            if (!recipe || !this.checkHasMaterials(recipe)) return;
 
-        stopHeating() {
+            this.isPlayingMinigame = true;
+            this.temp = 10;
+            this.progress = 0;
             this.isHeating = false;
+
+            const detailsView = document.getElementById('lab-details-view');
+            const gameView = document.getElementById('lab-game-view');
+            const overlay = document.getElementById('lab-game-overlay');
+
+            if (detailsView) detailsView.style.display = 'none';
+            if (gameView) gameView.style.display = 'block';
+            if (overlay) overlay.style.display = 'none';
+
+            // Target temperature band
+            const diff = recipe.difficulty || 'medium';
+            if (diff === 'easy') {
+                this.targetZoneHeight = 26;
+                this.targetTemp = 35 + (Math.random() * 30);
+            } else if (diff === 'hard') {
+                this.targetZoneHeight = 16;
+                this.targetTemp = 40 + (Math.random() * 35);
+            } else {
+                this.targetZoneHeight = 20;
+                this.targetTemp = 35 + (Math.random() * 35);
+            }
+
+            const targetZone = document.getElementById('lab-target-zone');
+            if (targetZone) {
+                targetZone.style.bottom = `${this.targetTemp}%`;
+                targetZone.style.height = `${this.targetZoneHeight}%`;
+            }
+
+            const titleEl = document.getElementById('lab-process-title');
+            if (titleEl) titleEl.innerText = `Sinteză: ${recipe.label}`;
+
+            if (this.animFrame) cancelAnimationFrame(this.animFrame);
+            this.minigameLoop();
         },
 
-        loop() {
-            if (!this.playing) return;
-            const conf = this.recipes[this.currentRecipe];
+        minigameLoop() {
+            if (!this.isPlayingMinigame) return;
 
+            // Physics: Heating increases temp, ambient cools it down
             if (this.isHeating) {
-                this.temperature += conf.heat;
+                this.temp = Math.min(100, this.temp + 1.25);
             } else {
-                this.temperature -= conf.drop;
+                this.temp = Math.max(0, this.temp - 0.75);
             }
 
-            if (this.temperature > 100) this.temperature = 100;
-            if (this.temperature < 0) this.temperature = 0;
+            const inZone = (this.temp >= this.targetTemp && this.temp <= (this.targetTemp + this.targetZoneHeight));
 
-            if (this.temperature <= 0 || this.temperature >= 100) {
-                this.endGame(false, "Temperatura a ieșit de sub control. Lot distrus.");
-                return;
-            }
-
-            const tempGauge = document.getElementById('lab-temp-gauge');
-            const inZone = (this.temperature >= conf.min && this.temperature <= conf.max);
             if (inZone) {
-                if (tempGauge) tempGauge.classList.add('in-zone');
-                this.progress += conf.prog;
+                this.progress += 0.38; // Progress advances while temperature is inside stable zone
             } else {
-                if (tempGauge) tempGauge.classList.remove('in-zone');
+                if (this.temp > (this.targetTemp + this.targetZoneHeight + 15)) {
+                    // Overheated dangerous spike
+                    this.progress = Math.max(0, this.progress - 0.15);
+                }
             }
 
-            if (this.progress >= 100) {
-                this.progress = 100;
-                this.endGame(true, "Lot procesat cu succes. Ai obținut produsele.");
-                return;
-            }
-
-            this.updateVisuals();
-            this.animationFrame = requestAnimationFrame(() => this.loop());
-        },
-
-        updateVisuals() {
-            const tempFill = document.getElementById('lab-temp-fill');
+            const gaugeEl = document.getElementById('lab-temp-gauge');
+            const fillEl = document.getElementById('lab-temp-fill');
             const progFill = document.getElementById('lab-prog-fill');
             const progText = document.getElementById('lab-prog-text');
 
-            if (tempFill) tempFill.style.height = `${this.temperature}%`;
-            if (progFill) progFill.style.width = `${this.progress}%`;
-            if (progText) progText.innerText = `${Math.floor(this.progress)}%`;
+            if (fillEl) fillEl.style.height = `${this.temp}%`;
+            if (gaugeEl) gaugeEl.classList.toggle('in-zone', inZone);
+
+            const displayPct = Math.min(100, Math.floor(this.progress));
+            if (progFill) progFill.style.width = `${displayPct}%`;
+            if (progText) progText.innerText = `${displayPct}%`;
+
+            if (this.progress >= 100) {
+                this.endMinigame(true);
+                return;
+            }
+
+            this.animFrame = requestAnimationFrame(() => this.minigameLoop());
         },
 
-        endGame(success, message) {
-            this.playing = false;
-            cancelAnimationFrame(this.animationFrame);
+        endMinigame(success) {
+            this.isPlayingMinigame = false;
+            this.isHeating = false;
+            if (this.animFrame) cancelAnimationFrame(this.animFrame);
 
             const overlay = document.getElementById('lab-game-overlay');
+            const resIcon = document.getElementById('lab-res-icon');
             const resTitle = document.getElementById('lab-res-title');
             const resDesc = document.getElementById('lab-res-desc');
+            const recipe = this.recipes[this.selectedRecipeKey];
 
             if (overlay) overlay.style.display = 'flex';
-            if (resDesc) resDesc.innerText = message;
 
-            if (success) {
-                if (resTitle) {
-                    resTitle.innerText = "SUCCES";
-                    resTitle.style.color = "var(--status-good)";
+            if (success && recipe) {
+                if (resIcon) { resIcon.innerText = '✓'; resIcon.className = 'overlay-icon'; }
+                if (resTitle) { resTitle.innerText = 'SUCCES'; resTitle.className = 'overlay-title'; }
+                if (resDesc) resDesc.innerText = `Lotul de ${recipe.label} a fost sintezat și adăugat în inventar.`;
+
+                // Update local inventory state
+                this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - recipe.rawCount);
+                if (recipe.secondaryItem && recipe.secondaryCount > 0) {
+                    this.inventory[recipe.secondaryItem] = Math.max(0, (this.inventory[recipe.secondaryItem] || 0) - recipe.secondaryCount);
                 }
-                fetch(`https://${GetParentResourceName()}/processSuccess`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: this.currentRecipe, token: this.sessionToken })
-                }).catch(() => {});
+                this.inventory[recipe.productItem] = (this.inventory[recipe.productItem] || 0) + (recipe.productCount || 1);
+
+                postToResource('processSuccess', { token: this.sessionToken, type: this.selectedRecipeKey });
             } else {
-                if (resTitle) {
-                    resTitle.innerText = "EȘEC";
-                    resTitle.style.color = "var(--status-bad)";
+                if (resIcon) { resIcon.innerText = '✕'; resIcon.className = 'overlay-icon fail'; }
+                if (resTitle) { resTitle.innerText = 'EȘEC'; resTitle.className = 'overlay-title fail'; }
+                if (resDesc) resDesc.innerText = 'Reacția chimică a fost compromisă din cauza instabilității termice.';
+
+                if (recipe) {
+                    this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - 1);
                 }
-                fetch(`https://${GetParentResourceName()}/processFail`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: this.currentRecipe, token: this.sessionToken })
-                }).catch(() => {});
+
+                postToResource('processFail', { token: this.sessionToken, type: this.selectedRecipeKey });
             }
-        },
 
-        resetUI() {
-            const overlay = document.getElementById('lab-game-overlay');
-            const gameAreaEl = document.getElementById('lab-game-area');
-            const btnStart = document.getElementById('btn-lab-start');
-            const tempGauge = document.getElementById('lab-temp-gauge');
-            const statusEl = document.getElementById('lab-process-status');
-
-            if (overlay) overlay.style.display = 'none';
-            if (gameAreaEl) gameAreaEl.style.display = 'none';
-            if (btnStart) btnStart.style.display = 'block';
-
-            this.temperature = 0;
-            this.progress = 0;
-            this.updateVisuals();
-            if (tempGauge) tempGauge.classList.remove('in-zone');
-
-            if (statusEl) {
-                statusEl.innerText = "Pregătit pentru sinteză";
-                statusEl.style.color = "var(--brand-accent)";
-            }
+            this.renderRecipeList();
         }
     },
 
@@ -413,15 +606,15 @@ const Drugs = {
         visible: false,
         isNegotiating: false,
         hasNegotiated: false,
-        currentPrice: 0,
-        basePrice: 0,
-        qty: 1,
         type: 'weed',
+        qty: 1,
+        basePrice: 250,
+        currentPrice: 250,
         riskLevel: 'low',
         sessionToken: null,
         cursorPos: 0,
         cursorDir: 1,
-        cursorSpeed: 2.5,
+        cursorSpeed: 2.2,
         targetPos: 0,
         targetWidth: 20,
         animationFrame: null,
@@ -431,8 +624,8 @@ const Drugs = {
             this.isNegotiating = false;
             this.hasNegotiated = false;
             this.type = data.type || 'weed';
-            this.qty = data.qty || 1;
-            this.basePrice = data.price || 250;
+            this.qty = Number(data.qty) || 1;
+            this.basePrice = Number(data.price) || 250;
             this.currentPrice = this.basePrice;
             this.riskLevel = data.risk || 'low';
             this.sessionToken = data.token || null;
@@ -443,7 +636,7 @@ const Drugs = {
             const negoBox = document.getElementById('sale-nego-box');
             const btnNego = document.getElementById('btn-sale-nego');
             const priceEl = document.getElementById('sale-price');
-            const iconEl = document.getElementById('sale-icon');
+            const drugImg = document.getElementById('sale-drug-img');
             const itemNameEl = document.getElementById('sale-item-name');
             const itemQtyEl = document.getElementById('sale-item-qty');
             const riskEl = document.getElementById('sale-risk');
@@ -462,9 +655,10 @@ const Drugs = {
                 priceEl.innerText = `$${this.currentPrice}`;
             }
 
+            const itemMeta = getItemMeta(this.type === 'coca' || this.type === 'coke' ? 'coke_brick' : (this.type === 'meth' ? 'meth_bag' : 'weed_brick'));
             wrap.setAttribute('data-theme', this.type);
-            if (iconEl) iconEl.innerHTML = SVG_ICONS[this.type] || SVG_ICONS.weed;
-            if (itemNameEl) itemNameEl.innerText = this.type === 'coca' ? 'Pachete Coca' : (this.type === 'meth' ? 'Pachete Meth' : 'Pachete Weed');
+            if (drugImg) drugImg.src = itemMeta.img;
+            if (itemNameEl) itemNameEl.innerText = itemMeta.label;
             if (itemQtyEl) itemQtyEl.innerText = `Cantitate: ${this.qty}x`;
 
             if (riskEl) {
@@ -486,10 +680,11 @@ const Drugs = {
         close() {
             this.visible = false;
             this.isNegotiating = false;
-            cancelAnimationFrame(this.animationFrame);
+            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             const wrap = document.getElementById('sale-wrapper');
             if (wrap) wrap.classList.remove('visible');
-            fetch(`https://${GetParentResourceName()}/closeSaleUI`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+
+            postToResource('closeSaleUI', {});
         },
 
         accept() {
@@ -501,24 +696,23 @@ const Drugs = {
             if (statusMsg) {
                 statusMsg.className = 'success';
                 statusMsg.innerText = `Tranzacție Reușită! (+$${this.currentPrice})`;
+                statusMsg.style.display = 'block';
             }
 
-            fetch(`https://${GetParentResourceName()}/acceptDrugSale`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: this.type, qty: this.qty, price: this.currentPrice, token: this.sessionToken, negotiated: this.hasNegotiated })
-            }).catch(() => {});
+            postToResource('acceptDrugSale', {
+                type: this.type,
+                qty: this.qty,
+                price: this.currentPrice,
+                token: this.sessionToken,
+                negotiated: this.hasNegotiated
+            });
 
             setTimeout(() => this.close(), 1500);
         },
 
         decline() {
             if (this.isNegotiating) return;
-            fetch(`https://${GetParentResourceName()}/declineDrugSale`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: this.sessionToken })
-            }).catch(() => {});
+            postToResource('declineDrugSale', { token: this.sessionToken });
             this.close();
         },
 
@@ -543,7 +737,7 @@ const Drugs = {
             this.cursorPos = 0;
             this.cursorDir = 1;
 
-            cancelAnimationFrame(this.animationFrame);
+            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             this.loop();
         },
 
@@ -561,134 +755,128 @@ const Drugs = {
 
             const cursorEl = document.getElementById('sale-cursor');
             if (cursorEl) cursorEl.style.left = `${this.cursorPos}%`;
+
             this.animationFrame = requestAnimationFrame(() => this.loop());
         },
 
-        handleHit() {
+        handleNegotiationHit() {
             if (!this.isNegotiating) return;
             this.isNegotiating = false;
-            cancelAnimationFrame(this.animationFrame);
+            this.hasNegotiated = true;
+            if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
 
             const isHit = (this.cursorPos >= this.targetPos && this.cursorPos <= (this.targetPos + this.targetWidth));
             const negoBox = document.getElementById('sale-nego-box');
             const actionsEl = document.getElementById('sale-actions');
+            const statusMsg = document.getElementById('sale-status-msg');
             const btnNego = document.getElementById('btn-sale-nego');
             const priceEl = document.getElementById('sale-price');
-            const statusMsg = document.getElementById('sale-status-msg');
+
+            if (negoBox) negoBox.style.display = 'none';
 
             if (isHit) {
-                const increase = Math.floor(this.currentPrice * 0.25);
-                this.currentPrice += increase;
+                // Success: +25% payout bonus
+                this.currentPrice = Math.floor(this.basePrice * 1.25);
                 if (priceEl) {
                     priceEl.innerText = `$${this.currentPrice}`;
                     priceEl.classList.add('updated');
                 }
-
-                this.hasNegotiated = true;
-                if (negoBox) negoBox.style.display = 'none';
-                if (actionsEl) actionsEl.style.display = 'flex';
+                if (statusMsg) {
+                    statusMsg.className = 'success';
+                    statusMsg.innerText = 'Negociere Reușită! Preț crescut cu 25%.';
+                    statusMsg.style.display = 'block';
+                }
                 if (btnNego) btnNego.style.display = 'none';
+                if (actionsEl) actionsEl.style.display = 'flex';
             } else {
-                if (negoBox) negoBox.style.display = 'none';
+                // Fail: Deal canceled
                 if (statusMsg) {
                     statusMsg.className = 'fail';
-                    statusMsg.innerText = 'Clientul s-a speriat și a plecat!';
+                    statusMsg.innerText = 'Clientul s-a speriat de insistență și a anulat târgul!';
+                    statusMsg.style.display = 'block';
                 }
-
-                fetch(`https://${GetParentResourceName()}/failNegotiation`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: this.sessionToken, risk: this.riskLevel })
-                }).catch(() => {});
-
-                setTimeout(() => this.close(), 1500);
+                postToResource('failNegotiation', { token: this.sessionToken });
+                setTimeout(() => this.close(), 1800);
             }
         }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // INITIALIZATION & EVENT LISTENERS
-    // ─────────────────────────────────────────────────────────────
-    init() {
-        // Lab recipe click handlers
-        document.getElementById('recipe-card-weed')?.addEventListener('click', () => this.lab.selectRecipe('weed'));
-        document.getElementById('recipe-card-coca')?.addEventListener('click', () => this.lab.selectRecipe('coca'));
-        document.getElementById('recipe-card-meth')?.addEventListener('click', () => this.lab.selectRecipe('meth'));
-
-        // Lab buttons
-        document.getElementById('btn-lab-start')?.addEventListener('click', () => this.lab.startGame());
-        document.getElementById('btn-lab-continue')?.addEventListener('click', () => this.lab.resetUI());
-        document.getElementById('lab-close-btn')?.addEventListener('click', () => this.lab.close());
-
-        const btnHeat = document.getElementById('btn-lab-heat');
-        if (btnHeat) {
-            btnHeat.addEventListener('mousedown', () => this.lab.startHeating());
-            btnHeat.addEventListener('mouseup', () => this.lab.stopHeating());
-            btnHeat.addEventListener('mouseleave', () => this.lab.stopHeating());
-        }
-
-        // Sale buttons
-        document.getElementById('btn-sale-accept')?.addEventListener('click', () => this.sale.accept());
-        document.getElementById('btn-sale-nego')?.addEventListener('click', () => this.sale.startNegotiation());
-        document.getElementById('btn-sale-decline')?.addEventListener('click', () => this.sale.decline());
-
-        // Keyboard listeners
-        document.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            if (key === 'e') {
-                if (this.harvest.visible && this.harvest.playing) {
-                    this.harvest.handleHit();
-                } else if (this.sale.visible && this.sale.isNegotiating) {
-                    this.sale.handleHit();
-                }
-            } else if (e.code === 'Space' && this.lab.visible && this.lab.playing) {
-                e.preventDefault();
-                this.lab.startHeating();
-                btnHeat?.classList.add('active');
-            } else if (e.key === 'Escape') {
-                if (this.lab.visible && !this.lab.playing) {
-                    this.lab.close();
-                } else if (this.sale.visible && !this.sale.isNegotiating) {
-                    this.sale.close();
-                }
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space' && this.lab.visible) {
-                this.lab.stopHeating();
-                btnHeat?.classList.remove('active');
-            }
-        });
     }
 };
 
-// Expose globally
 window.Drugs = Drugs;
 
-// NUI Messages
-window.addEventListener('message', (event) => {
-    const data = event.data;
-    if (!data) return;
+// Event Listeners for Keyboard & Controls
+document.addEventListener('keydown', (e) => {
+    // Harvest hit on E
+    if (e.key === 'e' || e.key === 'E') {
+        if (Drugs.harvest.visible) {
+            Drugs.harvest.handleHit();
+        }
+    }
 
-    if (data.action === "showHarvest") {
-        Drugs.harvest.open(data);
-    } else if (data.action === "hideHarvest") {
-        Drugs.harvest.close();
-    } else if (data.action === "openLab") {
-        Drugs.lab.open(data);
-    } else if (data.action === "closeLab") {
-        Drugs.lab.close();
-    } else if (data.action === "openStreetSale") {
-        Drugs.sale.open(data);
-    } else if (data.action === "closeStreetSale") {
-        Drugs.sale.close();
+    // Lab heating on Space
+    if (e.code === 'Space') {
+        if (Drugs.lab.visible && Drugs.lab.isPlayingMinigame) {
+            e.preventDefault();
+            Drugs.lab.isHeating = true;
+            const btn = document.getElementById('btn-lab-heat');
+            if (btn) btn.classList.add('active');
+        }
+    }
+
+    // Escape closes modals
+    if (e.key === 'Escape') {
+        if (Drugs.lab.visible) Drugs.lab.close();
+        if (Drugs.sale.visible) Drugs.sale.close();
     }
 });
 
-// Auto-init on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => Drugs.init());
-} else {
-    Drugs.init();
-}
+document.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+        if (Drugs.lab.visible) {
+            Drugs.lab.isHeating = false;
+            const btn = document.getElementById('btn-lab-heat');
+            if (btn) btn.classList.remove('active');
+        }
+    }
+});
+
+// DOM Binding
+document.addEventListener('DOMContentLoaded', () => {
+    // Lab buttons
+    const labClose = document.getElementById('lab-close-btn');
+    if (labClose) labClose.addEventListener('click', () => Drugs.lab.close());
+
+    const btnStart = document.getElementById('btn-lab-start');
+    if (btnStart) btnStart.addEventListener('click', () => Drugs.lab.startMinigame());
+
+    const btnContinue = document.getElementById('btn-lab-continue');
+    if (btnContinue) btnContinue.addEventListener('click', () => {
+        const overlay = document.getElementById('lab-game-overlay');
+        const detailsView = document.getElementById('lab-details-view');
+        const gameView = document.getElementById('lab-game-view');
+        if (overlay) overlay.style.display = 'none';
+        if (gameView) gameView.style.display = 'none';
+        if (detailsView) detailsView.style.display = 'block';
+        if (Drugs.lab.selectedRecipeKey) Drugs.lab.selectRecipe(Drugs.lab.selectedRecipeKey);
+    });
+
+    const btnHeat = document.getElementById('btn-lab-heat');
+    if (btnHeat) {
+        btnHeat.addEventListener('mousedown', () => { Drugs.lab.isHeating = true; btnHeat.classList.add('active'); });
+        btnHeat.addEventListener('mouseup', () => { Drugs.lab.isHeating = false; btnHeat.classList.remove('active'); });
+        btnHeat.addEventListener('mouseleave', () => { Drugs.lab.isHeating = false; btnHeat.classList.remove('active'); });
+    }
+
+    // Street Sale buttons
+    const btnAccept = document.getElementById('btn-sale-accept');
+    if (btnAccept) btnAccept.addEventListener('click', () => Drugs.sale.accept());
+
+    const btnDecline = document.getElementById('btn-sale-decline');
+    if (btnDecline) btnDecline.addEventListener('click', () => Drugs.sale.decline());
+
+    const btnNego = document.getElementById('btn-sale-nego');
+    if (btnNego) btnNego.addEventListener('click', () => Drugs.sale.startNegotiation());
+
+    const btnHit = document.getElementById('btn-sale-hit');
+    if (btnHit) btnHit.addEventListener('click', () => Drugs.sale.handleNegotiationHit());
+});

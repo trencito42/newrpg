@@ -66,17 +66,53 @@
      LOCKPICK MINIGAME
 ═══════════════════════════════════════════════════════ -->
 <div id="lockpick" class="ms-mg-root hidden">
-    <div class="ms-mg-card">
-        <div class="ms-mg-label"><span data-i18n="ui.missions.pick_the_lock">PICK THE LOCK</span></div>
-        <div class="ms-mg-hint"><span data-i18n="ui.missions.click_when_the_pick_reaches_the">Click when the pick reaches the</span> <em><span data-i18n="ui.missions.green_zone">green zone</span></em></div>
-        <div class="lp-track">
-            <div class="lp-zone" id="lp-zone"></div>
-            <div class="lp-pick" id="lp-pick"></div>
+    <div class="lp-skyrim-panel" id="ms-lp-panel">
+        <div class="ms-lp-header">
+            <div class="ms-lp-title-wrap">
+                <h2 class="ms-lp-title"><span data-i18n="ui.missions.pick_the_lock">SPARGERE CONTACT</span></h2>
+                <div class="ms-lp-subtitle">Sistem de Securitate Vehicul</div>
+            </div>
+            <div class="ms-lp-instruction">
+                <span class="ms-keybind">A</span> / <span class="ms-keybind">D</span> Rotește &nbsp;|&nbsp; Ține <span class="ms-keybind">SPACE</span> forțează
+            </div>
         </div>
-        <div class="lp-pins" id="lp-pins"></div>
-        <div class="lp-attempts" id="lp-attempts"></div>
-        <button class="ms-mg-btn" id="btn-pick"><span data-i18n="ui.missions.pick">PICK</span></button>
-        <div class="ms-mg-feedback" id="lp-feedback"></div>
+        <div class="ms-lp-body">
+            <div class="ms-lp-side">
+                <div class="ms-stat-box">
+                    <div class="ms-stat-label">Integritate Șperaclu</div>
+                    <div class="ms-hp-bg"><div class="ms-hp-fill" id="ms-lp-hp-fill"></div></div>
+                    <div class="ms-hp-val" id="ms-lp-hp-text">100%</div>
+                </div>
+                <div style="flex:1;"></div>
+                <div class="ms-stat-box">
+                    <div class="ms-stat-label">Pini Deblocați</div>
+                    <div class="ms-pins-wrap">
+                        <div class="ms-pin-dot" id="ms-pin-1"></div>
+                        <div class="ms-pin-dot" id="ms-pin-2"></div>
+                        <div class="ms-pin-dot" id="ms-pin-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ms-lp-visual">
+                <svg viewBox="0 0 200 200" id="ms-lp-svg">
+                    <circle class="ms-track-bg" cx="100" cy="100" r="70"></circle>
+                    <line x1="100" y1="20" x2="100" y2="35" stroke="rgba(242, 239, 232, 0.2)" stroke-width="4" stroke-linecap="round"></line>
+                    <g id="ms-lp-cylinder" transform="rotate(0 100 100)">
+                        <circle class="ms-center-hub" cx="100" cy="100" r="45"></circle>
+                        <rect x="96" y="70" width="8" height="60" fill="#08080a" rx="2"></rect>
+                        <circle cx="100" cy="100" r="8" fill="#08080a"></circle>
+                        <g id="ms-lp-cursor" transform="rotate(0 100 100)">
+                            <line class="ms-cursor-glow" x1="100" y1="100" x2="100" y2="10"></line>
+                            <line class="ms-cursor-line" x1="100" y1="100" x2="100" y2="10"></line>
+                        </g>
+                    </g>
+                </svg>
+                <div class="ms-lp-overlay" id="ms-lp-overlay">
+                    <div class="ms-lp-o-title" id="ms-lp-o-title">REZULTAT</div>
+                    <div class="ms-lp-o-sub" id="ms-lp-o-sub">Mesaj</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -160,6 +160,7 @@ Sunset.Shops = {
             { item = 'weapon_sniperrifle', price = 28000, minLevel = 5, requiredLicense = 'weapon', maxAmount = 1 },
             { item = 'ammo_rifle', price = 320, requiredLicense = 'weapon', maxAmount = 10 },
             { item = 'hunting_knife', price = 800, maxAmount = 1 },
+            { item = 'lockpick', price = 350, maxAmount = 5 },
         },
     },
 }

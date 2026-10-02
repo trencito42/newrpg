@@ -1,0 +1,72 @@
+<!-- ═══ RACKET SKYRIM-STYLE LOCKPICK MINIGAME ═══ -->
+<div id="lockpick-wrapper">
+    <div class="lp-panel" id="lp-ui-panel">
+        
+        <div class="lp-header">
+            <div class="h-left">
+                <h1 class="h-title" id="lp-title">SPARGERE CONTACT</h1>
+                <div class="h-subtitle" id="lp-subtitle">Sistem de Securitate Vehicul</div>
+            </div>
+            <div class="instruction">
+                <span class="keybind">A</span> / <span class="keybind">D</span> Rotește șperaclul &nbsp;&nbsp;|&nbsp;&nbsp; Ține <span class="keybind">SPACE</span> forțează
+            </div>
+            <button type="button" class="lp-close-btn" id="lp-close-btn" title="Închide (ESC)">✕</button>
+        </div>
+
+        <div class="lp-content">
+            
+            <!-- STANGA: Info si Status -->
+            <div class="lp-info">
+                <div class="stat-block">
+                    <div class="stat-label">Integritate Șperaclu</div>
+                    <div class="health-bar-bg"><div class="health-bar-fill" id="lp-hp-fill"></div></div>
+                    <div class="health-text" id="lp-hp-text">100%</div>
+                </div>
+
+                <div style="flex: 1;"></div>
+
+                <div class="stat-block">
+                    <div class="stat-label">Pini Deblocați</div>
+                    <div class="pins-container">
+                        <div class="pin-dot" id="lp-pin-1"></div>
+                        <div class="pin-dot" id="lp-pin-2"></div>
+                        <div class="pin-dot" id="lp-pin-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DREAPTA: SVG Minigame -->
+            <div class="lp-game">
+                <svg viewBox="0 0 200 200" id="lp-svg-container">
+                    <!-- Fundal Track -->
+                    <circle class="track-bg" cx="100" cy="100" r="70"></circle>
+                    
+                    <!-- Marker Sus (Centru) orientativ -->
+                    <line x1="100" y1="20" x2="100" y2="35" stroke="rgba(242, 239, 232, 0.2)" stroke-width="4" stroke-linecap="round"></line>
+
+                    <!-- Cilindrul Rotativ (Contactul) -->
+                    <g id="lp-cylinder" transform="rotate(0 100 100)">
+                        <!-- Baza Cilindru -->
+                        <circle class="center-hub" cx="100" cy="100" r="45"></circle>
+                        <!-- Fanta cheie -->
+                        <rect x="96" y="70" width="8" height="60" fill="var(--bg-base)" rx="2"></rect>
+                        <circle cx="100" cy="100" r="8" fill="var(--bg-base)"></circle>
+                        
+                        <!-- Șperaclul - se rotește odată cu cilindrul dar are și unghiul propriu din A/D -->
+                        <g id="lp-cursor" transform="rotate(0 100 100)">
+                            <line class="cursor-glow" x1="100" y1="100" x2="100" y2="10"></line>
+                            <line class="cursor-line" x1="100" y1="100" x2="100" y2="10"></line>
+                        </g>
+                    </g>
+                </svg>
+
+                <!-- Overlay Succes/Esec -->
+                <div class="status-overlay" id="lp-overlay">
+                    <div class="o-title" id="lp-o-title">REZULTAT</div>
+                    <div class="o-sub" id="lp-o-sub">Mesaj</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

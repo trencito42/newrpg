@@ -1,198 +1,166 @@
 /* ═══════════════════════════════════════════════════════════════
-   SUNSETMP — DRUG SYSTEM HUDs (Harvest, Lab, Street Sale)
-   Matches design templates 1:1 with Montserrat font and brand tokens.
+   SUNSETMP — DRUGS SYSTEM STYLES (Harvest, Lab, Street Sale)
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-    --brand-primary: #F2EFE8;
-    --brand-accent: #D7B558;
-    --bg-panel: rgba(8, 8, 10, 0.95);
-    --bg-slot: rgba(242, 239, 232, 0.02);
-    --bg-hover: rgba(242, 239, 232, 0.05);
-    --border-faint: rgba(242, 239, 232, 0.15);
-    --border-lighter: rgba(242, 239, 232, 0.05);
-
-    --status-good: #10b981;
-    --status-warn: #f59e0b;
-    --status-bad: #ef4444;
-
-    --color-weed: #10b981;
-    --color-coca: #e2e8f0;
-    --color-meth: #06b6d4;
+    --drug-gold: #D7B558;
+    --drug-primary: #F2EFE8;
+    --drug-bg: rgba(8, 8, 10, 0.96);
+    --drug-border: rgba(242, 239, 232, 0.15);
+    --drug-border-light: rgba(242, 239, 232, 0.06);
+    --drug-good: #10b981;
+    --drug-bad: #ef4444;
+    --drug-warn: #f59e0b;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   1. HARVEST HUD (Bottom-Center Proximity UI)
+   1. HARVEST PROXIMITY HUD
    ═══════════════════════════════════════════════════════════════ */
+
 #harvest-wrapper {
     position: fixed;
-    bottom: 90px;
+    bottom: 40px;
     left: 50%;
-    width: 320px;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-faint);
+    transform: translateX(-50%) translateY(20px);
+    width: 380px;
+    background: var(--drug-bg);
+    border: 1px solid var(--drug-border);
     border-radius: 6px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    z-index: 5200;
-    font-family: 'Montserrat', sans-serif;
-    color: var(--brand-primary);
-    box-sizing: border-box;
-
+    gap: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.9), 0 0 25px rgba(215, 181, 88, 0.15);
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 900;
 }
 
 #harvest-wrapper.visible {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
     pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
 }
 
-#harvest-wrapper .h-header {
-    padding: 14px 18px;
+#harvest-wrapper.hit-success {
+    border-color: var(--drug-good);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+}
+
+#harvest-wrapper.hit-fail {
+    border-color: var(--drug-bad);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+}
+
+.h-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid var(--border-lighter);
 }
 
-#harvest-wrapper .h-icon {
-    width: 24px;
-    height: 24px;
+.h-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--drug-gold);
     display: flex;
     align-items: center;
     justify-content: center;
 }
+.h-icon svg { width: 100%; height: 100%; fill: currentColor; }
 
-#harvest-wrapper .h-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
-
-#harvest-wrapper .h-texts {
+.h-texts {
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
 
-#harvest-wrapper .h-subtitle {
+.h-subtitle {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--drug-gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.h-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--drug-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.h-instruction {
     font-size: 10px;
     font-weight: 800;
-    color: rgba(242, 239, 232, 0.5);
+    color: rgba(242, 239, 232, 0.75);
     text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-#harvest-wrapper .h-title {
-    font-size: 15px;
-    font-weight: 900;
-    color: var(--brand-primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 0;
-    line-height: 1;
-}
-
-#harvest-wrapper .h-content {
-    padding: 16px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-#harvest-wrapper .h-instruction {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--brand-primary);
+    letter-spacing: 0.5px;
     text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    margin-bottom: 4px;
 }
 
-#harvest-wrapper .keybind,
-#sale-wrapper .keybind {
-    background: var(--brand-accent);
+.h-instruction .keybind {
+    background: var(--drug-gold);
     color: #08080a;
-    padding: 2px 7px;
-    border-radius: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
     font-weight: 900;
-    font-size: 13px;
+    font-size: 11px;
 }
 
-#harvest-wrapper .skill-track,
-#sale-wrapper .skill-track {
-    position: relative;
+.skill-track {
     width: 100%;
-    height: 12px;
-    background: rgba(242, 239, 232, 0.05);
-    border-radius: 6px;
+    height: 14px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--drug-border);
+    border-radius: 7px;
+    position: relative;
     overflow: hidden;
-    border: 1px solid rgba(8, 8, 10, 0.8);
-    box-sizing: border-box;
 }
 
-#harvest-wrapper .target-zone,
-#sale-wrapper .target-zone {
+.skill-track .target-zone {
     position: absolute;
     top: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.2);
-    transition: background-color 0.1s;
+    background: rgba(215, 181, 88, 0.35);
+    border-left: 2px solid var(--drug-gold);
+    border-right: 2px solid var(--drug-gold);
+    transition: left 0.15s ease, width 0.15s ease;
 }
 
-#harvest-wrapper .cursor,
-#sale-wrapper .cursor {
+.skill-track .cursor {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: -2px;
+    bottom: -2px;
     width: 4px;
-    background: var(--brand-primary);
-    box-shadow: 0 0 6px var(--brand-primary);
+    background: #fff;
+    box-shadow: 0 0 8px #fff;
+    border-radius: 2px;
     transform: translateX(-50%);
 }
 
-#harvest-wrapper .h-footer {
+.h-footer {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(242, 239, 232, 0.5);
+    font-size: 10px;
+    font-weight: 800;
+    color: rgba(242, 239, 232, 0.6);
     text-transform: uppercase;
 }
 
-#harvest-wrapper .h-count {
-    color: var(--brand-primary);
+.h-count {
+    color: var(--drug-primary);
     font-weight: 900;
+    font-size: 12px;
 }
 
-/* Harvest Themes */
-#harvest-wrapper.theme-weed .h-icon { color: var(--color-weed); }
-#harvest-wrapper.theme-weed .target-zone { background: rgba(16, 185, 129, 0.3); border-left: 2px solid var(--color-weed); border-right: 2px solid var(--color-weed); }
-#harvest-wrapper.theme-weed .keybind { background: var(--color-weed); }
-
-#harvest-wrapper.theme-coca .h-icon { color: var(--color-coca); }
-#harvest-wrapper.theme-coca .target-zone { background: rgba(226, 232, 240, 0.3); border-left: 2px solid var(--color-coca); border-right: 2px solid var(--color-coca); }
-#harvest-wrapper.theme-coca .keybind { background: var(--color-coca); }
-
-#harvest-wrapper.theme-meth .h-icon { color: var(--color-meth); }
-#harvest-wrapper.theme-meth .target-zone { background: rgba(6, 182, 212, 0.3); border-left: 2px solid var(--color-meth); border-right: 2px solid var(--color-meth); }
-#harvest-wrapper.theme-meth .keybind { background: var(--color-meth); }
-
-/* Harvest feedback */
-#harvest-wrapper.hit-success .target-zone { background: rgba(16, 185, 129, 0.8) !important; }
-#harvest-wrapper.hit-fail .target-zone { background: rgba(239, 68, 68, 0.8) !important; border-color: rgba(239, 68, 68, 1) !important; }
-
 /* ═══════════════════════════════════════════════════════════════
-   2. LAB PROCESSING HUD (Clandestine Lab Modal)
+   2. CLANDESTINE LAB PROCESSING MODAL
    ═══════════════════════════════════════════════════════════════ */
+
 #lab-wrapper {
-    position: fixed;
+    position: absolute;
     inset: 0;
     display: flex;
     justify-content: center;
@@ -200,9 +168,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
-    z-index: 5300;
-    font-family: 'Montserrat', sans-serif;
-    color: var(--brand-primary);
+    z-index: 1000;
 }
 
 #lab-wrapper::before {
@@ -211,7 +177,7 @@
     inset: 0;
     pointer-events: none;
     z-index: -1;
-    background: radial-gradient(circle at center, rgba(8,8,10,0.6) 0%, rgba(8,8,10,0.98) 100%);
+    background: radial-gradient(circle at center, rgba(8,8,10,0.65) 0%, rgba(8,8,10,0.98) 100%);
 }
 
 #lab-wrapper.visible {
@@ -220,258 +186,528 @@
 }
 
 .lab-panel {
-    width: min(900px, 94vw);
-    height: min(600px, 90vh);
-    background: var(--bg-panel);
-    border: 1px solid var(--border-faint);
+    width: 960px;
+    height: 640px;
+    background: var(--drug-bg);
+    border: 1px solid var(--drug-border);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
     transform: scale(0.98);
     transition: transform 0.2s ease;
     overflow: hidden;
-    box-sizing: border-box;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.98), 0 0 35px rgba(215, 181, 88, 0.12);
 }
 
 #lab-wrapper.visible .lab-panel {
     transform: scale(1);
 }
 
-.lab-panel .l-header {
-    padding: 22px 28px;
-    border-bottom: 1px solid var(--border-faint);
+.l-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--drug-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: rgba(242, 239, 232, 0.02);
 }
 
-.lab-panel .h-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.lab-panel .h-title {
+.l-header .h-title {
     font-size: 22px;
     font-weight: 900;
-    color: var(--brand-primary);
+    color: var(--drug-primary);
     text-transform: uppercase;
     letter-spacing: 2px;
     margin: 0;
 }
 
-.lab-panel .h-subtitle {
-    font-size: 11px;
+.l-header .h-subtitle {
+    font-size: 10px;
     font-weight: 800;
-    color: var(--brand-accent);
+    color: var(--drug-gold);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 .lab-close-btn {
     background: transparent;
-    border: 1px solid var(--border-faint);
-    color: rgba(242, 239, 232, 0.7);
+    border: 1px solid rgba(242, 239, 232, 0.1);
+    color: rgba(242, 239, 232, 0.6);
     width: 32px;
     height: 32px;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 14px;
-    transition: all 0.15s ease;
+    transition: all 0.12s;
 }
-
 .lab-close-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.5);
-    color: #ff6b6b;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
 }
 
-.lab-panel .l-content {
+.l-content {
     flex: 1;
     display: flex;
     flex-direction: row;
     overflow: hidden;
 }
 
-/* Left: Recipe selection */
+/* Left: Recipes List */
 .recipe-section {
-    width: 45%;
-    padding: 25px;
-    border-right: 1px solid var(--border-faint);
+    width: 42%;
+    padding: 24px 20px;
+    border-right: 1px solid var(--drug-border);
     display: flex;
     flex-direction: column;
     gap: 12px;
     overflow-y: auto;
-    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.2);
 }
-
 .recipe-section::-webkit-scrollbar { width: 4px; }
-.recipe-section::-webkit-scrollbar-thumb { background: rgba(242, 239, 232, 0.1); border-radius: 2px; }
+.recipe-section::-webkit-scrollbar-thumb { background: rgba(242, 239, 232, 0.15); border-radius: 2px; }
 
 .section-title {
     font-size: 11px;
     font-weight: 800;
     color: rgba(242, 239, 232, 0.5);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     margin-bottom: 4px;
 }
 
-.recipe-card {
-    background: var(--bg-slot);
-    border: 1px solid var(--border-lighter);
-    border-radius: 4px;
+.recipe-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lab-card {
+    background: rgba(242, 239, 232, 0.02);
+    border: 1px solid var(--drug-border-light);
+    border-radius: 6px;
     padding: 16px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
     cursor: pointer;
     transition: all 0.15s ease;
-    position: relative;
     border-left: 4px solid transparent;
 }
 
-.recipe-card:hover {
-    background: var(--bg-hover);
+.lab-card:hover {
+    background: rgba(242, 239, 232, 0.05);
+    border-color: rgba(242, 239, 232, 0.18);
+    transform: translateY(-1px);
 }
 
-.recipe-card.selected[data-type="weed"] {
-    background: rgba(16, 185, 129, 0.05);
-    border-left-color: var(--color-weed);
-    border-top-color: var(--border-faint);
-    border-right-color: var(--border-faint);
-    border-bottom-color: var(--border-faint);
+.lab-card.selected {
+    background: rgba(215, 181, 88, 0.07);
+    border-color: rgba(215, 181, 88, 0.4);
+    border-left-color: var(--drug-gold);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5);
 }
 
-.recipe-card.selected[data-type="coca"] {
-    background: rgba(226, 232, 240, 0.05);
-    border-left-color: var(--color-coca);
-    border-top-color: var(--border-faint);
-    border-right-color: var(--border-faint);
-    border-bottom-color: var(--border-faint);
-}
-
-.recipe-card.selected[data-type="meth"] {
-    background: rgba(6, 182, 212, 0.05);
-    border-left-color: var(--color-meth);
-    border-top-color: var(--border-faint);
-    border-right-color: var(--border-faint);
-    border-bottom-color: var(--border-faint);
-}
-
-.r-header {
+.lab-card-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 12px;
 }
 
-.r-name {
+.lab-card-thumb {
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--drug-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.lab-card-thumb img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.lab-card-header {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 2px;
+}
+
+.lab-card-name {
     font-size: 15px;
     font-weight: 900;
-    color: var(--brand-primary);
+    color: var(--drug-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lab-card-diff {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
 }
+.lab-card-diff.diff-easy { color: var(--drug-good); }
+.lab-card-diff.diff-medium { color: var(--drug-gold); }
+.lab-card-diff.diff-hard { color: var(--drug-bad); }
 
-.r-icon {
-    width: 22px;
-    height: 22px;
+.lab-card-ingredients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
 }
 
-.r-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
-
-.recipe-card[data-type="weed"] .r-icon { color: var(--color-weed); }
-.recipe-card[data-type="coca"] .r-icon { color: var(--color-coca); }
-.recipe-card[data-type="meth"] .r-icon { color: var(--color-meth); }
-
-.r-req {
+.ing-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--drug-border-light);
+    border-radius: 3px;
+    padding: 3px 6px;
     font-size: 10px;
     font-weight: 700;
-    color: rgba(242, 239, 232, 0.6);
+    color: rgba(242, 239, 232, 0.8);
+}
+.ing-tag img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.ing-badge {
+    font-weight: 900;
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+.ing-badge.ok {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--drug-good);
+}
+.ing-badge.missing {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--drug-bad);
+}
+
+.lab-card-status {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
     display: flex;
-    flex-direction: column;
-    gap: 3px;
+    align-items: center;
+    justify-content: flex-end;
 }
+.lab-card-status.ready { color: var(--drug-good); }
+.lab-card-status.missing { color: var(--drug-bad); opacity: 0.8; }
 
-.r-req span {
-    color: var(--brand-accent);
-}
-
-/* Right: Process Workstation */
+/* Right: Detail View & Workstation */
 .process-section {
-    width: 55%;
+    width: 58%;
     display: flex;
     flex-direction: column;
-    background: rgba(8, 8, 10, 0.4);
+    background: rgba(8, 8, 10, 0.5);
     position: relative;
-    box-sizing: border-box;
+    padding: 24px 28px;
+    overflow-y: auto;
 }
+.process-section::-webkit-scrollbar { width: 4px; }
+.process-section::-webkit-scrollbar-thumb { background: rgba(242, 239, 232, 0.15); border-radius: 2px; }
 
 #lab-empty-state {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
-    color: rgba(242, 239, 232, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    gap: 8px;
+    color: rgba(242, 239, 232, 0.4);
+    text-align: center;
+    padding: 40px;
 }
+#lab-empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
+#lab-empty-state .empty-text { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: var(--drug-primary); opacity: 0.6; }
+#lab-empty-state .empty-sub { font-size: 11px; font-weight: 600; }
 
 #lab-active-state {
     display: none;
     flex-direction: column;
     height: 100%;
-    padding: 25px;
-    box-sizing: border-box;
 }
 
-.process-header {
-    text-align: center;
-    margin-bottom: 25px;
+/* Phase A: Details */
+.product-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(242, 239, 232, 0.03);
+    border: 1px solid var(--drug-border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
 }
 
-.process-title {
-    font-size: 19px;
-    font-weight: 900;
-    color: var(--brand-primary);
+.product-icon-frame {
+    width: 64px;
+    height: 64px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--drug-gold);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(215, 181, 88, 0.15);
+}
+.product-icon-frame img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.product-tier {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--drug-gold);
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
-.process-status {
+.product-name {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--drug-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.product-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(242, 239, 232, 0.7);
+    margin-top: 2px;
+}
+.gold-text { color: var(--drug-gold); font-weight: 900; }
+
+.req-section-title {
     font-size: 11px;
     font-weight: 800;
-    color: var(--status-good);
+    color: rgba(242, 239, 232, 0.5);
     text-transform: uppercase;
-    margin-top: 5px;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    margin-bottom: 12px;
+}
+
+.ingredients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.ing-row-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--drug-border-light);
+    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.ing-row-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ing-row-thumb {
+    width: 38px;
+    height: 38px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--drug-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ing-row-thumb img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.ing-row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ing-row-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--drug-primary);
+}
+
+.ing-row-count {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(242, 239, 232, 0.6);
+}
+
+.ing-row-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.ing-stock-badge {
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.ing-stock-badge.ready {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid var(--drug-good);
+    color: var(--drug-good);
+}
+.ing-stock-badge.missing {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid var(--drug-bad);
+    color: var(--drug-bad);
+}
+
+.lab-recipe-info-box {
+    background: rgba(242, 239, 232, 0.02);
+    border: 1px solid var(--drug-border-light);
+    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.info-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(242, 239, 232, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.info-val {
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--drug-primary);
+    text-transform: uppercase;
+}
+
+.lab-actions-row {
+    margin-top: auto;
+}
+
+.btn-action {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    border: 1px solid var(--drug-border);
+    color: var(--drug-primary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.btn-action:hover:not(:disabled) {
+    background: rgba(242, 239, 232, 0.08);
+}
+
+.btn-action.primary {
+    background: var(--drug-gold);
+    color: #08080a;
+    border-color: var(--drug-gold);
+}
+.btn-action.primary:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: 0 0 20px rgba(215, 181, 88, 0.4);
+}
+
+.btn-action:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: rgba(242, 239, 232, 0.04);
+    border-color: var(--drug-border-light);
+    color: rgba(242, 239, 232, 0.4);
+}
+
+/* Phase B: Mini Game Workstation */
+.process-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+.process-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--drug-primary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.process-status {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--drug-gold);
+    margin-top: 4px;
 }
 
 .game-container {
     flex: 1;
     display: flex;
     flex-direction: row;
-    gap: 35px;
+    gap: 32px;
     align-items: center;
     justify-content: center;
 }
 
-/* Thermometer Gauge */
 .temp-gauge {
-    width: 38px;
-    height: 230px;
-    background: rgba(0,0,0,0.6);
-    border: 2px solid var(--border-faint);
+    width: 44px;
+    height: 250px;
+    background: rgba(0,0,0,0.7);
+    border: 2px solid var(--drug-border);
     border-radius: 4px;
     position: relative;
     overflow: hidden;
@@ -483,45 +719,40 @@
 .temp-target-zone {
     position: absolute;
     width: 100%;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.1);
-    border-top: 2px dashed rgba(255, 255, 255, 0.5);
-    border-bottom: 2px dashed rgba(255, 255, 255, 0.5);
-    bottom: 40%;
-    transition: border-color 0.2s, background-color 0.2s;
+    background: rgba(215, 181, 88, 0.25);
+    border-top: 2px dashed var(--drug-gold);
+    border-bottom: 2px dashed var(--drug-gold);
+    transition: all 0.2s ease;
 }
 
 .temp-fill {
     width: 100%;
     height: 0%;
-    background: var(--status-bad);
+    background: var(--drug-bad);
     transition: height 0.08s linear, background-color 0.2s ease;
 }
 
 .temp-gauge.in-zone .temp-target-zone {
-    background: rgba(16, 185, 129, 0.2);
-    border-color: var(--status-good);
+    background: rgba(16, 185, 129, 0.25);
+    border-color: var(--drug-good);
 }
-
 .temp-gauge.in-zone .temp-fill {
-    background: var(--status-good);
+    background: var(--drug-good);
 }
 
-/* Controls */
 .control-panel {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
     flex: 1;
 }
 
 .progress-box {
-    background: var(--bg-slot);
-    border: 1px solid var(--border-lighter);
-    padding: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--drug-border-light);
+    padding: 16px;
     border-radius: 4px;
 }
-
 .p-label {
     font-size: 10px;
     font-weight: 800;
@@ -533,102 +764,74 @@
 .p-bar-bg {
     width: 100%;
     height: 8px;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.6);
     border-radius: 4px;
     overflow: hidden;
 }
-
 .p-bar-fill {
     height: 100%;
     width: 0%;
-    background: var(--brand-accent);
-    transition: width 0.08s linear;
+    background: var(--drug-gold);
+    transition: width 0.1s linear;
 }
 
 .p-pct {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 900;
-    color: var(--brand-primary);
+    color: var(--drug-primary);
     text-align: right;
-    margin-top: 5px;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 .p-hint {
-    font-size: 9px;
-    color: rgba(242, 239, 232, 0.4);
-    margin-top: 5px;
-    text-transform: uppercase;
-}
-
-.btn-action {
-    width: 100%;
-    padding: 15px;
-    background: transparent;
-    border: 1px solid var(--border-faint);
-    color: var(--brand-primary);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 11px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.15s ease;
-    text-align: center;
-    box-sizing: border-box;
-}
-
-.btn-action:hover:not(:disabled) {
-    background: var(--bg-hover);
-}
-
-.btn-action.primary {
-    background: var(--brand-accent);
-    color: #08080a;
-    border-color: var(--brand-accent);
-}
-
-.btn-action.primary:hover:not(:disabled) {
-    background: #e3c162;
-}
-
-.btn-action.danger {
-    color: var(--status-bad);
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-.btn-action.danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.btn-action:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(242, 239, 232, 0.6);
+    margin-top: 10px;
+    line-height: 1.4;
 }
 
 .btn-hold {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: var(--status-bad);
-    color: var(--status-bad);
+    background: rgba(239, 68, 68, 0.12);
+    border-color: var(--drug-bad);
+    color: var(--drug-bad);
+    user-select: none;
 }
-
-.btn-hold:active,
-.btn-hold.active {
-    background: var(--status-bad);
+.btn-hold:active, .btn-hold.active {
+    background: var(--drug-bad);
     color: #08080a;
 }
 
-/* Result Overlay */
+/* Phase C: Overlay */
 #lab-game-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(8,8,10,0.92);
+    background: rgba(8, 8, 10, 0.94);
     z-index: 10;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: 12px;
+    padding: 30px;
+    text-align: center;
+}
+
+.overlay-icon {
+    font-size: 36px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--drug-good);
+    color: var(--drug-good);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.overlay-icon.fail {
+    border-color: var(--drug-bad);
+    color: var(--drug-bad);
 }
 
 .overlay-title {
@@ -636,200 +839,249 @@
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 2px;
+    color: var(--drug-good);
+}
+.overlay-title.fail {
+    color: var(--drug-bad);
 }
 
 .overlay-desc {
     font-size: 12px;
     font-weight: 600;
-    color: rgba(242, 239, 232, 0.6);
-    text-align: center;
-    max-width: 80%;
+    color: rgba(242, 239, 232, 0.7);
+    max-width: 360px;
+    line-height: 1.5;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   3. STREET SALE HUD (Right-Side Pedestrian Deal)
+   3. STREET SALE HUD (Right Side)
    ═══════════════════════════════════════════════════════════════ */
+
 #sale-wrapper {
     position: fixed;
     right: 40px;
     top: 50%;
     transform: translateY(-50%) translateX(20px);
-    width: 320px;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-faint);
-    border-radius: 4px;
+    width: 360px;
+    background: var(--drug-bg);
+    border: 1px solid var(--drug-border);
+    border-radius: 6px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 25px rgba(215, 181, 88, 0.1);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 5200;
-    font-family: 'Montserrat', sans-serif;
-    color: var(--brand-primary);
-    box-sizing: border-box;
+    z-index: 950;
 }
 
 #sale-wrapper.visible {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
     pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
 }
 
-#sale-wrapper .s-header {
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border-faint);
+.s-header {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    border-bottom: 1px solid var(--drug-border-light);
+    padding-bottom: 12px;
 }
 
-#sale-wrapper .s-subtitle {
-    font-size: 10px;
+.s-subtitle {
+    font-size: 9px;
     font-weight: 800;
-    color: rgba(242, 239, 232, 0.5);
-    text-transform: uppercase;
+    color: rgba(242, 239, 232, 0.6);
     letter-spacing: 1px;
+    text-transform: uppercase;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.s-risk { font-weight: 900; }
-.risk-low { color: var(--status-good); }
-.risk-med { color: var(--status-warn); }
-.risk-high { color: var(--status-bad); }
-
-#sale-wrapper .s-title {
-    font-size: 17px;
+.s-risk {
+    padding: 2px 6px;
+    border-radius: 3px;
     font-weight: 900;
-    color: var(--brand-primary);
+}
+.s-risk.risk-low { background: rgba(16, 185, 129, 0.2); color: var(--drug-good); }
+.s-risk.risk-med { background: rgba(245, 158, 11, 0.2); color: var(--drug-warn); }
+.s-risk.risk-high { background: rgba(239, 68, 68, 0.2); color: var(--drug-bad); }
+
+.s-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--drug-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin: 0;
 }
 
-#sale-wrapper .s-content {
-    padding: 18px 20px;
+.s-content {
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
 .deal-box {
-    background: var(--bg-slot);
-    border: 1px solid var(--border-lighter);
-    border-radius: 4px;
-    padding: 14px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--drug-border-light);
+    border-radius: 4px;
+    padding: 12px 14px;
 }
 
 .deal-icon {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--drug-border);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
-
-.deal-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
+.deal-icon img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
 }
 
 .deal-details {
     display: flex;
     flex-direction: column;
     flex: 1;
+    gap: 2px;
 }
-
 .d-item {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--brand-primary);
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--drug-primary);
     text-transform: uppercase;
 }
-
 .d-qty {
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     color: rgba(242, 239, 232, 0.6);
-    margin-top: 2px;
 }
 
 .d-price {
-    font-size: 19px;
+    font-size: 18px;
     font-weight: 900;
-    color: var(--status-good);
-    text-align: right;
-    transition: color 0.2s ease, transform 0.2s ease;
+    color: var(--drug-gold);
+    font-family: 'JetBrains Mono', monospace;
 }
-
 .d-price.updated {
-    color: var(--brand-accent) !important;
-    transform: scale(1.1);
+    color: var(--drug-good);
+    animation: pulsePrice 0.3s ease;
 }
 
-/* Sale themes */
-#sale-wrapper[data-theme="weed"] .deal-icon { color: var(--color-weed); }
-#sale-wrapper[data-theme="coca"] .deal-icon { color: var(--color-coca); }
-#sale-wrapper[data-theme="meth"] .deal-icon { color: var(--color-meth); }
+@keyframes pulsePrice {
+    0% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
 
 .nego-container {
     display: none;
     flex-direction: column;
-    gap: 10px;
-    background: rgba(8, 8, 10, 0.5);
-    padding: 14px;
-    border: 1px solid var(--border-faint);
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--drug-border-light);
     border-radius: 4px;
+    padding: 12px;
 }
 
 .nego-title {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
-    color: var(--brand-accent);
+    color: var(--drug-gold);
     text-transform: uppercase;
+    letter-spacing: 0.8px;
     text-align: center;
-    letter-spacing: 1px;
 }
 
-.nego-instruction {
+.btn-hit {
+    width: 100%;
+    padding: 10px;
+    background: var(--drug-gold);
+    border: none;
+    color: #08080a;
+    font-family: inherit;
     font-size: 10px;
-    font-weight: 600;
-    color: rgba(242, 239, 232, 0.5);
-    text-align: center;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 4px;
 }
 
-.actions {
+#sale-status-msg {
+    display: none;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+#sale-status-msg.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--drug-good);
+    border: 1px solid var(--drug-good);
+}
+#sale-status-msg.fail {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--drug-bad);
+    border: 1px solid var(--drug-bad);
+}
+
+.deal-actions {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-#sale-status-msg {
-    display: none;
-    padding: 14px;
-    text-align: center;
+.btn-deal {
+    width: 100%;
+    padding: 12px;
+    font-family: inherit;
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 1.5px;
     border-radius: 4px;
-    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    text-align: center;
 }
 
-#sale-status-msg.success {
-    display: block;
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--status-good);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+.btn-accept {
+    background: var(--drug-good);
+    color: #08080a;
+    border: 1px solid var(--drug-good);
 }
+.btn-accept:hover { opacity: 0.9; }
 
-#sale-status-msg.fail {
-    display: block;
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--status-bad);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+.btn-nego {
+    background: transparent;
+    color: var(--drug-gold);
+    border: 1px solid var(--drug-gold);
+}
+.btn-nego:hover { background: rgba(215, 181, 88, 0.1); }
+
+.btn-decline {
+    background: transparent;
+    color: rgba(242, 239, 232, 0.5);
+    border: 1px solid rgba(242, 239, 232, 0.1);
+}
+.btn-decline:hover {
+    color: var(--drug-bad);
+    border-color: rgba(239, 68, 68, 0.3);
 }

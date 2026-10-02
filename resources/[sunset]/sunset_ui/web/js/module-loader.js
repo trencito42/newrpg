@@ -160,6 +160,11 @@
             css: ['css/drugs.css'],
             js: ['js/drugs.js']
         },
+        lockpick: {
+            html: 'modules/lockpick/index.html',
+            css: ['css/lockpick.css'],
+            js: ['js/lockpick.js']
+        },
         marriage: {
             html: 'modules/marriage/index.html',
             css: ['css/marriage.css'],

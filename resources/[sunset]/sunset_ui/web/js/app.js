@@ -356,8 +356,12 @@
         licenseTestUpdate: 'licenses', jobShiftShow: 'job_hud', jobShiftHide: 'job_hud', jobHud: 'job_hud', jobHudResult: 'job_hud', jobHudClear: 'job_hud', jobSkillShow: 'jobcenter', jobSkillHide: 'jobcenter',
         courierUpdate: 'courier',
         casinoBlackjackUpdate: 'casino', casinoSlotsResult: 'casino', casinoRouletteResult: 'casino', casinoWheelResult: 'casino', casinoCashierUpdate: 'casino', casinoBarUpdate: 'casino',
-        impoundUpdate: 'impound', racingHud: 'racing', racingHudHide: 'racing', racingCountdown: 'racing', racingGo: 'racing', racingFinished: 'racing',
-        drugsUpdate: 'drugs', drugsBusy: 'drugs', drugsProgress: 'drugs', marriageProposal: 'marriage',
+        drugsUpdate: 'drugs', drugsBusy: 'drugs', drugsProgress: 'drugs',
+        showHarvest: 'drugs', hideHarvest: 'drugs', triggerHarvestHit: 'drugs',
+        openLab: 'drugs', closeLab: 'drugs',
+        openStreetSale: 'drugs', closeStreetSale: 'drugs',
+        openLockpick: 'lockpick', closeLockpick: 'lockpick',
+        marriageProposal: 'marriage',
         warHudShow: 'clans', warHudUpdate: 'clans', warHudHide: 'clans', warArmoryShow: 'clans', warArmoryHide: 'clans',
         warScoreboardShow: 'clans', warScoreboardHide: 'clans', warEndShow: 'clans', warEndHide: 'clans', warRespawnShow: 'clans', warRespawnHide: 'clans',
         helpdeskRefresh: 'helpdesk', helpdeskHistory: 'helpdesk', helpdeskTicks: 'helpdesk', shieldHud: 'helpdesk', shieldHudHide: 'helpdesk',
@@ -1052,10 +1056,13 @@
                 case 'drugsProgress': window.Drugs?.showProgress?.(payload); return;
                 case 'showHarvest': window.Drugs?.harvest?.open?.(payload); return;
                 case 'hideHarvest': window.Drugs?.harvest?.close?.(); return;
+                case 'triggerHarvestHit': window.Drugs?.harvest?.handleHit?.(); return;
                 case 'openLab': window.Drugs?.lab?.open?.(payload); return;
                 case 'closeLab': window.Drugs?.lab?.close?.(); return;
                 case 'openStreetSale': window.Drugs?.sale?.open?.(payload); return;
                 case 'closeStreetSale': window.Drugs?.sale?.close?.(); return;
+                case 'openLockpick': window.LockpickGame?.open?.(payload); return;
+                case 'closeLockpick': window.LockpickGame?.close?.(); return;
                 case 'marriageProposal': window.Marriage?.showProposal?.(payload); return;
                 case 'marriageHide': window.Marriage?.hide?.(); return;
                 case 'helpdeskShow': case 'helpdeskRefresh': window.Helpdesk?.show?.(payload); return;

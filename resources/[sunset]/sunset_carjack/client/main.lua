@@ -6,9 +6,13 @@ local LOCKPICK_DIST     = 2.5
 local NPC_INTERACT_DIST = 3.5
 
 local CHOP_NPCS = {
-    { coords = vector4(835.6, -3001.4, 5.9,  270.0), label = 'Samsar Dubios' },
-    { coords = vector4(-151.9, -1716.8, 29.3, 90.0),  label = 'Samsar Dubios' },
-    { coords = vector4(115.2,  -1947.8, 20.8, 180.0), label = 'Samsar Dubios' },
+    { coords = vector4(-1631.47, -968.58, 7.78, 358.84),  label = 'Samsar Dubios (Del Perro)' },
+    { coords = vector4(42.66, -1400.39, 29.35, 219.85),   label = 'Samsar Dubios (Strawberry)' },
+    { coords = vector4(167.63, -1284.35, 29.50, 62.26),   label = 'Samsar Dubios (Davis)' },
+    { coords = vector4(1522.59, -2114.32, 76.68, 313.50), label = 'Samsar Dubios (El Burro)' },
+    { coords = vector4(835.6, -3001.4, 5.9, 270.0),       label = 'Samsar Dubios (Docks)' },
+    { coords = vector4(2341.0, 3125.0, 48.2, 180.0),      label = 'Samsar Dubios (Sandy Shores)' },
+    { coords = vector4(-219.0, 6382.0, 31.5, 45.0),       label = 'Samsar Dubios (Paleto Bay)' },
 }
 
 local spawnedNpcs  = {}
@@ -195,16 +199,37 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         closeMenu()
         if not nearVehicle or not DoesEntityExist(nearVehicle) then return end
         inCooldown = true
-        local ok, err = Sunset.AwaitCallback('sunset:carjack:tryLockpick')
-        if ok then
-            notify(exports.sunset_core:Translate('carjack.message.usa_fortata_urca_repede'), 'success')
-            SetPedIntoVehicle(PlayerPedId(), nearVehicle, -1)
-            hasStolenCar = true
-            showNpcBlips()
-        else
-            notify(err or exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
+
+        local hasLockpick = Sunset.AwaitCallback('sunset:carjack:hasLockpick')
+        if not hasLockpick then
+            notify(exports.sunset_core:Translate('carjack.message.you_need_a_lockpick'), 'error')
+            inCooldown = false
+            return
         end
-        SetTimeout(2000, function() inCooldown = false end)
+
+        exports.sunset_ui:StartLockpick({
+            title = 'SPARGERE VEHICUL',
+            subtitle = 'Sistem Securitate Contact',
+            difficulty = 'medium'
+        }, function(success)
+            if success then
+                local ok, err = Sunset.AwaitCallback('sunset:carjack:onLockpickSuccess')
+                if ok then
+                    notify(exports.sunset_core:Translate('carjack.message.usa_fortata_urca_repede'), 'success')
+                    if nearVehicle and DoesEntityExist(nearVehicle) then
+                        SetPedIntoVehicle(PlayerPedId(), nearVehicle, -1)
+                    end
+                    hasStolenCar = true
+                    showNpcBlips()
+                else
+                    notify(err or exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
+                end
+            else
+                Sunset.AwaitCallback('sunset:carjack:onLockpickFail')
+                notify(exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
+            end
+            SetTimeout(1500, function() inCooldown = false end)
+        end)
 
     elseif data.action == 'sell_stolen_car' then
         closeMenu()

@@ -36,7 +36,7 @@
         <div class="l-header">
             <div class="h-left">
                 <h1 class="h-title">LABORATOR CLANDESTIN</h1>
-                <div class="h-subtitle">Sinteză și Procesare</div>
+                <div class="h-subtitle">Sinteză & Procesare Substanțe Ilegale</div>
             </div>
             <button type="button" class="lab-close-btn" id="lab-close-btn" title="Închide (ESC)">✕</button>
         </div>
@@ -44,87 +44,99 @@
         <!-- Content -->
         <div class="l-content">
             <!-- Left: Recipes List -->
-            <div class="recipe-section" id="lab-recipe-list">
-                <div class="section-title">Alege Operațiunea</div>
-                
-                <!-- Card Weed -->
-                <div class="recipe-card" data-type="weed" id="recipe-card-weed">
-                    <div class="r-header">
-                        <div class="r-name">Pachete Weed</div>
-                        <div class="r-icon">
-                            <svg viewBox="0 0 24 24"><path d="M17.5 11c-1.3 0-2.6-.4-3.7-1.1L12 8.7 10.2 9.9c-1.1.7-2.4 1.1-3.7 1.1C3.5 11 1 8.5 1 5.5v-1l2 .5c1.8.4 3.7 0 5.1-1.1L10 .2h4l1.9 3.7c1.4 1.1 3.3 1.5 5.1 1.1l2-.5v1C23 8.5 20.5 11 17.5 11zM12 11c-2.8 0-5 2.2-5 5v5h10v-5c0-2.8-2.2-5-5-5z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="r-req" id="req-weed">Necesită: <span>5x Frunze Weed</span></div>
-                    <div class="r-req" style="margin-top: 5px;">Dificultate: <span style="color: var(--status-good);">Ușoară</span></div>
-                </div>
-
-                <!-- Card Coca -->
-                <div class="recipe-card" data-type="coca" id="recipe-card-coca">
-                    <div class="r-header">
-                        <div class="r-name">Pudră Cocaină</div>
-                        <div class="r-icon">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="r-req" id="req-coca">Necesită: <span>5x Frunze Coca, 1x Substanțe Chimice</span></div>
-                    <div class="r-req" style="margin-top: 5px;">Dificultate: <span style="color: var(--brand-accent);">Medie</span></div>
-                </div>
-
-                <!-- Card Meth -->
-                <div class="recipe-card" data-type="meth" id="recipe-card-meth">
-                    <div class="r-header">
-                        <div class="r-name">Cristale Meth</div>
-                        <div class="r-icon">
-                            <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                        </div>
-                    </div>
-                    <div class="r-req" id="req-meth">Necesită: <span>3x Chimicale Meth, 1x Substanțe Chimice</span></div>
-                    <div class="r-req" style="margin-top: 5px;">Dificultate: <span style="color: var(--status-bad);">Ridicată</span></div>
+            <div class="recipe-section">
+                <div class="section-title">Operațiuni Disponibile</div>
+                <div class="recipe-cards-container" id="lab-recipe-list">
+                    <!-- Dynamic Recipe Cards will be rendered by JS -->
                 </div>
             </div>
 
-            <!-- Right: Workstation -->
+            <!-- Right: Workstation / Detail View -->
             <div class="process-section">
-                <div id="lab-empty-state">Selectează o rețetă din stânga</div>
+                <div id="lab-empty-state">
+                    <div class="empty-icon">⚗️</div>
+                    <div class="empty-text">Selectează o operațiune din stânga</div>
+                    <div class="empty-sub">Vezi necesarul de materie primă și pornește sinteza</div>
+                </div>
 
                 <div id="lab-active-state">
-                    <div class="process-header">
-                        <div class="process-title" id="lab-process-title">Pachete Weed</div>
-                        <div class="process-status" id="lab-process-status">Pregătit pentru sinteză</div>
-                    </div>
-
-                    <!-- Mini Game Area -->
-                    <div class="game-container" id="lab-game-area" style="display: none;">
-                        <!-- Thermometer Gauge -->
-                        <div class="temp-gauge" id="lab-temp-gauge">
-                            <div class="temp-target-zone" id="lab-target-zone" style="bottom: 40%; height: 20%;"></div>
-                            <div class="temp-fill" id="lab-temp-fill"></div>
+                    <!-- Phase A: Recipe Details & Requirements -->
+                    <div id="lab-details-view">
+                        <div class="product-banner">
+                            <div class="product-icon-frame">
+                                <img id="lab-product-img" src="assets/items/weed_brick.webp" alt="Product" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
+                            </div>
+                            <div class="product-info">
+                                <div class="product-tier" id="lab-product-tier">PRODUS FINIT</div>
+                                <div class="product-name" id="lab-product-name">Pachete Weed</div>
+                                <div class="product-meta">
+                                    <span>Rezultat: <strong id="lab-yield-text">1x Brick</strong></span>
+                                    <span>Valoare Piață: <strong id="lab-val-text" class="gold-text">~$250</strong></span>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Controls -->
-                        <div class="control-panel">
-                            <div class="progress-box">
-                                <div class="p-label">Progres Lot</div>
-                                <div class="p-bar-bg"><div class="p-bar-fill" id="lab-prog-fill"></div></div>
-                                <div class="p-pct" id="lab-prog-text">0%</div>
-                                <div class="p-hint">Menține temperatura în zona marcată [Ține SPACE sau Click]</div>
+                        <div class="req-section-title">Ingrediente Necesare</div>
+                        <div class="ingredients-list" id="lab-ingredients-list">
+                            <!-- Dynamic Ingredient Cards -->
+                        </div>
+
+                        <div class="lab-recipe-info-box">
+                            <div class="info-item">
+                                <span class="info-label">Dificultate Proces</span>
+                                <span class="info-val" id="lab-diff-text">UȘOARĂ</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Stare Ingrediente</span>
+                                <span class="info-val" id="lab-status-text">DISPONIBIL</span>
+                            </div>
+                        </div>
+
+                        <div class="lab-actions-row">
+                            <button type="button" class="btn-action primary" id="btn-lab-start">
+                                Începe Procesarea
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Phase B: Mini Game Workstation -->
+                    <div id="lab-game-view" style="display: none;">
+                        <div class="process-header">
+                            <div class="process-title" id="lab-process-title">Sinteză în Desfășurare</div>
+                            <div class="process-status" id="lab-process-status">Menține temperatura stabilă în zona marcată</div>
+                        </div>
+
+                        <div class="game-container">
+                            <!-- Thermometer Gauge -->
+                            <div class="temp-gauge" id="lab-temp-gauge">
+                                <div class="temp-target-zone" id="lab-target-zone" style="bottom: 40%; height: 22%;"></div>
+                                <div class="temp-fill" id="lab-temp-fill"></div>
                             </div>
 
-                            <button type="button" class="btn-action btn-hold" id="btn-lab-heat">ȚINE APĂSAT PT CĂLDURĂ</button>
+                            <!-- Controls -->
+                            <div class="control-panel">
+                                <div class="progress-box">
+                                    <div class="p-label">Progres Sinteză Lot</div>
+                                    <div class="p-bar-bg"><div class="p-bar-fill" id="lab-prog-fill"></div></div>
+                                    <div class="p-pct" id="lab-prog-text">0%</div>
+                                    <div class="p-hint">Apasă și ține apăsat butonul sau tasta [SPACE] pentru a crește temperatura.</div>
+                                </div>
+
+                                <button type="button" class="btn-action btn-hold" id="btn-lab-heat">
+                                    ȚINE APĂSAT PENTRU CĂLDURĂ
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Start Button -->
-                    <div style="margin-top: auto;">
-                        <button type="button" class="btn-action primary" id="btn-lab-start">Începe Procesarea</button>
-                    </div>
-
-                    <!-- Result Overlay -->
+                    <!-- Phase C: Result Overlay -->
                     <div id="lab-game-overlay">
+                        <div class="overlay-icon" id="lab-res-icon">✓</div>
                         <div class="overlay-title" id="lab-res-title">SUCCES</div>
                         <div class="overlay-desc" id="lab-res-desc">Lotul a fost procesat cu succes.</div>
-                        <button type="button" class="btn-action" id="btn-lab-continue" style="width: 200px; margin-top: 20px;">Continuă</button>
+                        <button type="button" class="btn-action primary" id="btn-lab-continue" style="width: 200px; margin-top: 15px;">
+                            Continuă
+                        </button>
                     </div>
                 </div>
             </div>
@@ -145,7 +157,7 @@
     <div class="s-content">
         <div class="deal-box">
             <div class="deal-icon" id="sale-icon">
-                <svg viewBox="0 0 24 24"><path d="M17.5 11c-1.3 0-2.6-.4-3.7-1.1L12 8.7 10.2 9.9c-1.1.7-2.4 1.1-3.7 1.1C3.5 11 1 8.5 1 5.5v-1l2 .5c1.8.4 3.7 0 5.1-1.1L10 .2h4l1.9 3.7c1.4 1.1 3.3 1.5 5.1 1.1l2-.5v1C23 8.5 20.5 11 17.5 11zM12 11c-2.8 0-5 2.2-5 5v5h10v-5c0-2.8-2.2-5-5-5z"></path></svg>
+                <img id="sale-drug-img" src="assets/items/weed_brick.webp" alt="Drug" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
             </div>
             <div class="deal-details">
                 <div class="d-item" id="sale-item-name">Pachete Weed</div>
@@ -161,17 +173,16 @@
                 <div class="target-zone" id="sale-target-zone"></div>
                 <div class="cursor" id="sale-cursor"></div>
             </div>
-            <div class="nego-instruction">Apasă <span class="keybind">E</span> în zona marcată</div>
+            <button type="button" class="btn-hit" id="btn-sale-hit">APASĂ PENTRU NEGOCIERE</button>
         </div>
 
-        <!-- Mesaj Status -->
+        <!-- Feedback & Actiuni -->
         <div id="sale-status-msg"></div>
 
-        <!-- Controale -->
-        <div class="actions" id="sale-actions">
-            <button type="button" class="btn-action primary" id="btn-sale-accept">Acceptă Oferta</button>
-            <button type="button" class="btn-action" id="btn-sale-nego">Negociază Prețul</button>
-            <button type="button" class="btn-action danger" id="btn-sale-decline">Refuză</button>
+        <div class="deal-actions" id="sale-actions">
+            <button type="button" class="btn-deal btn-accept" id="btn-sale-accept">Acceptă Oferta</button>
+            <button type="button" class="btn-deal btn-nego" id="btn-sale-nego">Negociază Prețul</button>
+            <button type="button" class="btn-deal btn-decline" id="btn-sale-decline">Refuză</button>
         </div>
     </div>
 </div>

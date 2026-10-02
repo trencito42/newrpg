@@ -6,103 +6,216 @@
    sliding needle is in the zone to set the pin.
 ════════════════════════════════════════════════════════════════ */
 const LockpickGame = (() => {
-    const PIN_COUNT = 5;
-    let pins        = [];
-    let currentPin  = 0;
-    let pickPos     = 0;       // 0..100%
-    let pickDir     = 1;
-    let pickSpeed   = 1.2;     // % per frame
-    let attempts    = 3;
-    let rAF         = null;
-    let onDone      = null;
+    let isPlaying = false;
+    let isTransitioning = false;
+    let rAF = null;
+    let onDone = null;
+
+    let health = 100;
+    let currentStage = 1;
+    const TOTAL_PINS = 3;
+
+    let pickAngle = 0;
+    let cylinderAngle = 0;
+    let sweetSpot = 0;
+    let tolerance = 15;
+
+    let keys = { a: false, d: false, space: false };
 
     const $ = sel => document.querySelector(sel);
 
-    function buildPins() {
-        const container = $('#lp-pins');
-        container.innerHTML = '';
-        pins = [];
-        for (let i = 0; i < PIN_COUNT; i++) {
-            const zoneStart = 20 + Math.random() * 50;
-            const zoneWidth = 12 + Math.random() * 14;
-            const el = document.createElement('div');
-            el.className = 'lp-pin';
-            el.style.height = (16 + Math.random() * 20) + 'px';
-            container.appendChild(el);
-            pins.push({ el, zoneStart, zoneEnd: zoneStart + zoneWidth, set: false });
+    function updateHealthUI() {
+        const fill = $('#ms-lp-hp-fill');
+        const text = $('#ms-lp-hp-text');
+        if (!fill || !text) return;
+
+        const val = Math.max(0, Math.floor(health));
+        fill.style.width = `${val}%`;
+        text.innerText = `${val}%`;
+
+        if (val <= 30) fill.style.backgroundColor = '#ef4444';
+        else if (val <= 60) fill.style.backgroundColor = '#D7B558';
+        else fill.style.backgroundColor = '#F2EFE8';
+    }
+
+    function generateStage() {
+        tolerance = Math.max(7, 15 - (currentStage * 2.2));
+        sweetSpot = (Math.random() * 150) - 75;
+
+        pickAngle = 0;
+        cylinderAngle = 0;
+
+        const cursorGrp = $('#ms-lp-cursor');
+        const cylinderGrp = $('#ms-lp-cylinder');
+        if (cursorGrp) cursorGrp.setAttribute('transform', 'rotate(0 100 100)');
+        if (cylinderGrp) cylinderGrp.setAttribute('transform', 'rotate(0 100 100)');
+    }
+
+    function gameLoop() {
+        if (!isPlaying) return;
+
+        const cursorGrp = $('#ms-lp-cursor');
+        const cylinderGrp = $('#ms-lp-cylinder');
+
+        if (!isTransitioning) {
+            if (!keys.space) {
+                if (cylinderAngle > 0) {
+                    cylinderAngle = Math.max(0, cylinderAngle - 8);
+                }
+                if (keys.a) pickAngle -= 2.2;
+                if (keys.d) pickAngle += 2.2;
+
+                pickAngle = Math.max(-88, Math.min(88, pickAngle));
+                if (cursorGrp) cursorGrp.setAttribute('transform', `rotate(${pickAngle} 100 100)`);
+            } else {
+                const distance = Math.abs(pickAngle - sweetSpot);
+                let maxTurn = 90;
+
+                if (distance > tolerance) {
+                    const penalty = (distance - tolerance) / 160;
+                    maxTurn = 90 * (1 - (penalty * 1.6));
+                    maxTurn = Math.max(4, maxTurn);
+                }
+
+                if (cylinderAngle < maxTurn) {
+                    cylinderAngle += 3.2;
+                } else {
+                    if (cylinderAngle < 90) {
+                        const shake = (Math.random() - 0.5) * 6;
+                        if (cursorGrp) cursorGrp.setAttribute('transform', `rotate(${pickAngle + shake} 100 100)`);
+
+                        health -= 0.35;
+                        updateHealthUI();
+
+                        if (health <= 0) {
+                            health = 0;
+                            updateHealthUI();
+                            finish(false);
+                        }
+                    } else {
+                        handleHit();
+                    }
+                }
+            }
+
+            if (cylinderGrp) cylinderGrp.setAttribute('transform', `rotate(${cylinderAngle} 100 100)`);
         }
+
+        rAF = requestAnimationFrame(gameLoop);
     }
 
-    function updateZone() {
-        const p   = pins[currentPin];
-        const zone = $('#lp-zone');
-        if (!zone || !p) return;
-        zone.style.left  = p.zoneStart + '%';
-        zone.style.width = (p.zoneEnd - p.zoneStart) + '%';
-    }
+    function handleHit() {
+        isTransitioning = true;
+        keys.space = false;
 
-    function frame() {
-        pickPos += pickDir * pickSpeed;
-        if (pickPos >= 100) { pickPos = 100; pickDir = -1; }
-        if (pickPos <= 0)   { pickPos = 0;   pickDir =  1; }
-        const pick = $('#lp-pick');
-        if (pick) pick.style.left = pickPos + '%';
-        rAF = requestAnimationFrame(frame);
-    }
+        cylinderAngle = 0;
+        const cylinderGrp = $('#ms-lp-cylinder');
+        if (cylinderGrp) cylinderGrp.setAttribute('transform', 'rotate(0 100 100)');
 
-    function pick() {
-        const p = pins[currentPin];
-        if (!p) return;
-        const inZone = pickPos >= p.zoneStart && pickPos <= p.zoneEnd;
-        if (inZone) {
-            p.set = true;
-            p.el.classList.add('set');
-            const fb = $('#lp-feedback');
-            if (fb) { fb.textContent = I18n.t('dynamic.minigames.pin_set'); fb.style.color = '#00ffcc'; }
-            currentPin++;
-            pickSpeed += 0.3;
-            if (currentPin >= PIN_COUNT) {
-                setTimeout(() => finish(true), 400);
-                return;
-            }
-            updateZone();
+        const panelEl = $('#ms-lp-panel');
+        if (panelEl) {
+            panelEl.classList.remove('flash-green', 'flash-red');
+            void panelEl.offsetWidth;
+            panelEl.classList.add('flash-green');
+        }
+
+        const pinDot = $(`#ms-pin-${currentStage}`);
+        if (pinDot) pinDot.classList.add('unlocked');
+
+        currentStage++;
+
+        if (currentStage > TOTAL_PINS) {
+            finish(true);
         } else {
-            attempts--;
-            const fb = $('#lp-feedback');
-            if (fb) { fb.textContent = I18n.t('dynamic.minigames.missed'); fb.style.color = '#f87171'; }
-            const att = $('#lp-attempts');
-            if (att) att.textContent = I18n.t('ui.missions.attempts_remaining', { count: attempts });
-            if (attempts <= 0) {
-                setTimeout(() => finish(false), 600);
-            }
+            setTimeout(() => {
+                if (health > 0 && isPlaying) {
+                    generateStage();
+                    isTransitioning = false;
+                }
+            }, 300);
         }
     }
 
     function finish(success) {
-        cancelAnimationFrame(rAF);
-        rAF = null;
-        if (onDone) { const fn = onDone; onDone = null; fn(success); }
+        isPlaying = false;
+        isTransitioning = false;
+        keys = { a: false, d: false, space: false };
+        if (rAF) cancelAnimationFrame(rAF);
+
+        const overlay = $('#ms-lp-overlay');
+        const oTitle = $('#ms-lp-o-title');
+        const oSub = $('#ms-lp-o-sub');
+        const panelEl = $('#ms-lp-panel');
+
+        if (panelEl) {
+            panelEl.classList.remove('flash-green', 'flash-red');
+            panelEl.classList.add(success ? 'flash-green' : 'flash-red');
+        }
+
+        if (overlay) {
+            overlay.style.display = 'flex';
+            if (success) {
+                if (oTitle) { oTitle.innerText = "SUCCES"; oTitle.style.color = "#10b981"; }
+                if (oSub) oSub.innerText = "Contactul a fost deblocat.";
+            } else {
+                if (oTitle) { oTitle.innerText = "EȘEC"; oTitle.style.color = "#ef4444"; }
+                if (oSub) oSub.innerText = "Șperaclul s-a rupt.";
+            }
+        }
+
+        setTimeout(() => {
+            if (overlay) overlay.style.display = 'none';
+            if (onDone) {
+                const fn = onDone;
+                onDone = null;
+                fn(success);
+            }
+        }, 1500);
     }
 
-    function start(cb) {
-        onDone     = cb;
-        currentPin = 0;
-        pickPos    = 0;
-        pickDir    = 1;
-        pickSpeed  = 1.2;
-        attempts   = 3;
-        buildPins();
-        updateZone();
-        const att = $('#lp-attempts');
-        if (att) att.textContent = I18n.t('ui.missions.attempts_remaining', { count: attempts });
-        const fb = $('#lp-feedback');
-        if (fb) fb.textContent = '';
+    // Keyboard handlers for Skyrim lockpick in missions
+    window.addEventListener('keydown', (e) => {
+        const root = $('#lockpick');
+        if (!isPlaying || isTransitioning || !root || root.classList.contains('hidden')) return;
 
-        const btn = $('#btn-pick');
-        if (btn) btn.onclick = pick;
+        const key = e.key.toLowerCase();
+        if (key === 'a') keys.a = true;
+        if (key === 'd') keys.d = true;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            keys.space = true;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        const key = e.key.toLowerCase();
+        if (key === 'a') keys.a = false;
+        if (key === 'd') keys.d = false;
+        if (e.code === 'Space') keys.space = false;
+    });
+
+    function start(cb) {
+        onDone = cb;
+        isPlaying = true;
+        isTransitioning = false;
+        health = 100;
+        currentStage = 1;
+        keys = { a: false, d: false, space: false };
+
+        updateHealthUI();
+
+        for (let i = 1; i <= TOTAL_PINS; i++) {
+            const p = $(`#ms-pin-${i}`);
+            if (p) p.classList.remove('unlocked');
+        }
+
+        const overlay = $('#ms-lp-overlay');
+        if (overlay) overlay.style.display = 'none';
+
+        generateStage();
 
         if (rAF) cancelAnimationFrame(rAF);
-        rAF = requestAnimationFrame(frame);
+        rAF = requestAnimationFrame(gameLoop);
     }
 
     return { start };
