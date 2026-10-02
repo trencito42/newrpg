@@ -1,19 +1,26 @@
 <div id="inventory" class="inventory-forza hidden" aria-hidden="true">
-        <div class="inv-forza-overlay"></div>
+    <div class="inv-forza-overlay"></div>
+
     <!-- Floating Item Tooltip on Hover -->
     <div id="item-tooltip" class="item-tooltip">
-        <div class="tt-header">
+        <div class="tt-preview-box">
             <div class="tt-icon-wrap" id="tt-icon"></div>
-            <div class="tt-info">
-                <div class="tt-name" id="tt-name">Item Name</div>
-                <div class="tt-meta">
-                    <span class="tt-count" id="tt-count">x1</span>
-                    <span class="tt-weight" id="tt-weight">0.0kg</span>
-                </div>
+        </div>
+        <div class="tt-header">
+            <div class="tt-name" id="tt-name">Nume Obiect</div>
+        </div>
+        <div class="tt-specs">
+            <div class="tt-spec-row">
+                <span class="tt-spec-label"><i class="ph-bold ph-stack"></i> Cantitate:</span>
+                <span class="tt-spec-val" id="tt-count">1 buc</span>
+            </div>
+            <div class="tt-spec-row">
+                <span class="tt-spec-label"><i class="ph-bold ph-scales"></i> Greutate:</span>
+                <span class="tt-spec-val" id="tt-weight">0.20 kg</span>
             </div>
         </div>
-        <div class="tt-desc" id="tt-desc">Description of the item goes here.</div>
-        <div class="tt-footer" id="tt-footer">Dublu-click pentru a folosi</div>
+        <div class="tt-desc" id="tt-desc">Descrierea obiectului.</div>
+        <div class="tt-footer" id="tt-footer"><i class="ph-bold ph-lightning"></i> DUBLU-CLICK PENTRU A FOLOSI</div>
     </div>
 
     <div class="inventory-forza-wrapper" id="inventory-wrapper">
@@ -49,50 +56,51 @@
             <div class="nearby-list" id="inventory-nearby-list"></div>
         </div>
     </div>
-        <div class="premium-trade-panel hidden" id="inventory-trade-panel">
-            <div class="premium-side-heading"><span data-i18n="ui.inventory.trade_with"></span> <strong id="inventory-trade-target"><span data-i18n="ui.inventory.player"></span></strong></div>
-            <span class="premium-trade-label"><span data-i18n="ui.inventory.your_offer_drag_items_or_cash_here"></span></span>
-            <div class="premium-trade-zone" id="inventory-my-offer"></div>
-            <span class="premium-trade-label"><span data-i18n="ui.inventory.your_assets"></span></span>
-            <div class="premium-trade-assets" id="inventory-my-assets"></div>
-            <button type="button" class="premium-trade-add-asset" id="inventory-trade-add-asset"><span data-i18n="ui.inventory.add_house_vehicle_business"></span></button>
-            <span class="premium-trade-label"><span data-i18n="ui.inventory.their_offer"></span></span>
-            <div class="premium-trade-zone is-readonly" id="inventory-their-offer"></div>
-            <span class="premium-trade-label"><span data-i18n="ui.inventory.their_assets"></span></span>
-            <div class="premium-trade-assets is-readonly" id="inventory-their-assets"></div>
-            <button type="button" class="premium-trade-confirm" id="inventory-trade-confirm"><span data-i18n="ui.inventory.accept_trade"></span></button>
-            <button type="button" class="premium-trade-cancel" id="inventory-trade-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
-        </div>
-        <div class="premium-trade-asset-modal hidden" id="inventory-trade-asset-modal" aria-hidden="true">
-            <div class="premium-qty-box premium-trade-asset-box">
-                <h3><span data-i18n="ui.inventory.add_asset_to_trade"></span></h3>
-                <p class="premium-trade-asset-hint"><span data-i18n="ui.inventory.only_garage_stored_vehicles_and_assets_you_own_can"></span></p>
-                <div class="premium-trade-asset-list" id="inventory-trade-asset-list"></div>
-                <div class="premium-qty-actions">
-                    <button type="button" class="premium-qty-cancel" id="inventory-trade-asset-close"><span data-i18n="ui.inventory.close"></span></button>
-                </div>
-            </div>
-        </div>
-        <div class="premium-qty-modal hidden" id="inventory-qty-modal" aria-hidden="true">
-            <div class="premium-qty-box">
-                <h3 id="inventory-qty-title"><span data-i18n="ui.inventory.select_amount"></span></h3>
-                <p class="premium-qty-item" id="inventory-qty-item-name"><span data-i18n="ui.inventory.item"></span></p>
-                <div class="premium-qty-controls">
-                    <button type="button" class="premium-qty-btn" id="inventory-qty-minus">-</button>
-                    <input type="number" id="inventory-qty-input" min="1" max="1" value="1" class="premium-qty-input">
-                    <button type="button" class="premium-qty-btn" id="inventory-qty-plus">+</button>
-                </div>
-                <input type="range" id="inventory-qty-slider" min="1" max="1" value="1" class="premium-qty-slider">
-                <div class="premium-qty-quick">
-                    <button type="button" id="inventory-qty-quick-1">1</button>
-                    <button type="button" id="inventory-qty-quick-half">50%</button>
-                    <button type="button" id="inventory-qty-quick-all"><span data-i18n="ui.inventory.all"></span></button>
-                </div>
-                <div class="premium-qty-actions">
-                    <button type="button" class="premium-qty-cancel" id="inventory-qty-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
-                    <button type="button" class="premium-qty-confirm" id="inventory-qty-confirm"><span data-i18n="ui.inventory.confirm"></span></button>
-                </div>
-            </div>
-        </div>
-        <div class="inv-close-hint"><span data-i18n="ui.inventory.apasa_esc_sau_i_pentru_a_inchide"></span></div>
+
+    <div class="premium-trade-panel hidden" id="inventory-trade-panel">
+        <div class="premium-side-heading"><span data-i18n="ui.inventory.trade_with"></span> <strong id="inventory-trade-target"><span data-i18n="ui.inventory.player"></span></strong></div>
+        <span class="premium-trade-label"><span data-i18n="ui.inventory.your_offer_drag_items_or_cash_here"></span></span>
+        <div class="premium-trade-zone" id="inventory-my-offer"></div>
+        <span class="premium-trade-label"><span data-i18n="ui.inventory.your_assets"></span></span>
+        <div class="premium-trade-assets" id="inventory-my-assets"></div>
+        <button type="button" class="premium-trade-add-asset" id="inventory-trade-add-asset"><span data-i18n="ui.inventory.add_house_vehicle_business"></span></button>
+        <span class="premium-trade-label"><span data-i18n="ui.inventory.their_offer"></span></span>
+        <div class="premium-trade-zone is-readonly" id="inventory-their-offer"></div>
+        <span class="premium-trade-label"><span data-i18n="ui.inventory.their_assets"></span></span>
+        <div class="premium-trade-assets is-readonly" id="inventory-their-assets"></div>
+        <button type="button" class="premium-trade-confirm" id="inventory-trade-confirm"><span data-i18n="ui.inventory.accept_trade"></span></button>
+        <button type="button" class="premium-trade-cancel" id="inventory-trade-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
     </div>
+    <div class="premium-trade-asset-modal hidden" id="inventory-trade-asset-modal" aria-hidden="true">
+        <div class="premium-qty-box premium-trade-asset-box">
+            <h3><span data-i18n="ui.inventory.add_asset_to_trade"></span></h3>
+            <p class="premium-trade-asset-hint"><span data-i18n="ui.inventory.only_garage_stored_vehicles_and_assets_you_own_can"></span></p>
+            <div class="premium-trade-asset-list" id="inventory-trade-asset-list"></div>
+            <div class="premium-qty-actions">
+                <button type="button" class="premium-qty-cancel" id="inventory-trade-asset-close"><span data-i18n="ui.inventory.close"></span></button>
+            </div>
+        </div>
+    </div>
+    <div class="premium-qty-modal hidden" id="inventory-qty-modal" aria-hidden="true">
+        <div class="premium-qty-box">
+            <h3 id="inventory-qty-title"><span data-i18n="ui.inventory.select_amount"></span></h3>
+            <p class="premium-qty-item" id="inventory-qty-item-name"><span data-i18n="ui.inventory.item"></span></p>
+            <div class="premium-qty-controls">
+                <button type="button" class="premium-qty-btn" id="inventory-qty-minus">-</button>
+                <input type="number" id="inventory-qty-input" min="1" max="1" value="1" class="premium-qty-input">
+                <button type="button" class="premium-qty-btn" id="inventory-qty-plus">+</button>
+            </div>
+            <input type="range" id="inventory-qty-slider" min="1" max="1" value="1" class="premium-qty-slider">
+            <div class="premium-qty-quick">
+                <button type="button" id="inventory-qty-quick-1">1</button>
+                <button type="button" id="inventory-qty-quick-half">50%</button>
+                <button type="button" id="inventory-qty-quick-all"><span data-i18n="ui.inventory.all"></span></button>
+            </div>
+            <div class="premium-qty-actions">
+                <button type="button" class="premium-qty-cancel" id="inventory-qty-cancel"><span data-i18n="ui.inventory.cancel"></span></button>
+                <button type="button" class="premium-qty-confirm" id="inventory-qty-confirm"><span data-i18n="ui.inventory.confirm"></span></button>
+            </div>
+        </div>
+    </div>
+    <div class="inv-close-hint"><span data-i18n="ui.inventory.apasa_esc_sau_i_pentru_a_inchide"></span></div>
+</div>
