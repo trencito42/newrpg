@@ -12,6 +12,27 @@ local authVisibleRendered = false
 local authBootEpoch = 0
 local authPresentationId = 0
 local lastShowPayload = nil
+local hudHideThread = nil
+
+-- Suppress native GTA HUD (minimap, ammo, etc.) every frame while auth is open.
+local function startHudSuppression()
+    if hudHideThread then return end
+    hudHideThread = CreateThread(function()
+        while authOpen do
+            DisplayRadar(false)
+            HideHudAndRadarThisFrame()
+            Wait(0)
+        end
+        -- Restore when auth closes
+        DisplayRadar(true)
+        hudHideThread = nil
+    end)
+end
+
+local function stopHudSuppression()
+    -- Setting authOpen = false lets the thread exit on its own next tick
+    DisplayRadar(true)
+end
 
 -- [NUI FOCUS] Register the auth screen as focus owner 'auth' in the central
 -- manager so no other resource can silently steal/release the login cursor.
@@ -61,6 +82,7 @@ exports('Show', function(screen, data)
     authVisibleRendered = false
     authPresentationId = authPresentationId + 1
     authFocus(true, true)
+    startHudSuppression()
 
     local payload = type(data) == 'table' and data or {}
     payload.presentationId = authPresentationId
@@ -79,6 +101,7 @@ exports('Hide', function()
     authVisibleRendered = false
     lastShowPayload = nil
     authFocus(false, false)
+    stopHudSuppression()
     send('authHide', {})
 end)
 

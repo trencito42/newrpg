@@ -24,7 +24,8 @@ body {
     overflow: hidden;
     width: 100vw;
     height: 100vh;
-    background: transparent !important;
+    /* Solid background so game world never bleeds through before .is-visible */
+    background: var(--bg-base);
 }
 
 .hidden,
