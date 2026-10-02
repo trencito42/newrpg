@@ -46,7 +46,7 @@ Sunset.Items = {
     gas_can = { label = 'Gas Can', weight = 3.0, usable = true, maxLiters = 20, category = 'tools', icon = 'jerry_can' },
     fresh_fish    = { label = 'Fresh Fish',      weight = 0.8,  usable = false, category = 'food',    icon = 'cooked_fish' },
     -- Typed fish (caught with new rarity system) — heavier rarity = more bag space used
-    fish_common   = { label = 'Common Fish',     weight = 0.8,  usable = false, category = 'food',    icon = 'cooked_fish' },
+    fish_common   = { label = 'Common Fish',     weight = 0.8,  usable = false, category = 'food',    icon = 'fish_common' },
     fish_uncommon = { label = 'Uncommon Fish',   weight = 1.2,  usable = false, category = 'food',    icon = 'fish_uncommon' },
     fish_rare     = { label = 'Rare Fish',        weight = 2.0,  usable = false, category = 'food',    icon = 'fish_rare' },
     fish_epic     = { label = 'Epic Fish',        weight = 3.0,  usable = false, category = 'food',    icon = 'fish_epic' },
