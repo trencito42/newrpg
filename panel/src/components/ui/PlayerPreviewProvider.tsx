@@ -213,7 +213,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                     src={previewData.avatarUrl || "https://docs-backend.fivem.net/peds/mp_m_freemode_01.webp"}
                     alt={previewData.username}
                     fallbackIcon={<User className="w-6 h-6 text-[#77736D]" />}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                   />
                 </div>
 

@@ -282,7 +282,7 @@ export default async function PlayerProfilePage({
                 src={getPedAvatarUrl(characterSkin)}
                 alt={char.account_username}
                 fallbackText="GTA Skin"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
               />
             </div>
 
