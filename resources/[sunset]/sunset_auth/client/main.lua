@@ -199,56 +199,11 @@ RegisterNetEvent('sunset:client:sessionReady', function(data)
     sessionLicense = data and data.license
     if authenticated then return end
 
-    -- Attempt silent quick login before showing the auth screen.
-    -- If there is a saved account with a valid token on this device,
-    -- the player skips the screen entirely on every subsequent join.
-    local store = SunsetAuthAccounts.load(activeLicense())
-    local saved = SunsetAuthAccounts.mostRecent(store)
-    if saved and type(saved.token) == 'string' and saved.token ~= '' then
-        if SunsetBoot and SunsetBoot.Log then
-            SunsetBoot.Log('auth', 'quick_login:start', ('username=%s'):format(tostring(saved.username)))
-        else
-            pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:start', ('username=%s'):format(tostring(saved.username))) end)
-        end
-        openQuickAuth(saved.username)
-        setBootState('AUTHENTICATING', 'quick login request')
-        authRequestBusy = true
-        CreateThread(function()
-            local tQuickStart = GetGameTimer()
-            local result, err = Sunset.AwaitCallback('sunset:authQuickLogin', saved.username, saved.token)
-            authRequestBusy = false
-            local quickDur = GetGameTimer() - tQuickStart
-            if SunsetBoot and SunsetBoot.RecordMilestone then
-                SunsetBoot.RecordMilestone('auth_quick_login', quickDur, ('username=%s ok=%s'):format(tostring(saved.username), tostring(result and not result.needsEmail)))
-            else
-                pcall(function() exports.sunset_core:RecordMilestone('auth_quick_login', quickDur) end)
-            end
-            if result and not result.needsEmail then
-                if SunsetBoot and SunsetBoot.Log then
-                    SunsetBoot.Log('auth', 'quick_login:success', ('elapsed=%dms'):format(quickDur))
-                else
-                    pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:success', ('elapsed=%dms'):format(quickDur)) end)
-                end
-                completeAuthentication(saved.username, result.quickToken, true)
-            else
-                -- Token expired or invalid — remove it and fall back to the form.
-                if SunsetBoot and SunsetBoot.Log then
-                    SunsetBoot.Log('auth', 'quick_login:failed', ('elapsed=%dms err=%s'):format(quickDur, tostring(err)))
-                else
-                    pcall(function() exports.sunset_core:BootLog('auth', 'quick_login:failed', ('elapsed=%dms err=%s'):format(quickDur, tostring(err))) end)
-                end
-                SunsetAuthAccounts.remove(activeLicense(), saved.username)
-                openAuth()
-                scheduleAuthWatchdog()
-            end
-        end)
-        return
-    end
-
+    -- Quick login disabled: always show the auth form.
     if SunsetBoot and SunsetBoot.Log then
-        SunsetBoot.Log('auth', 'form:open', 'no saved token, opening auth form')
+        SunsetBoot.Log('auth', 'form:open', 'quick login disabled, opening auth form')
     else
-        pcall(function() exports.sunset_core:BootLog('auth', 'form:open', 'no saved token, opening auth form') end)
+        pcall(function() exports.sunset_core:BootLog('auth', 'form:open', 'quick login disabled') end)
     end
     openAuth()
     scheduleAuthWatchdog()
