@@ -15,7 +15,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected />
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>schlagen</audioNameHash>
+      <audioNameHash>POLICE2</audioNameHash>
       <layout>LAYOUT_STD_BALLER8</layout>
       <coverBoundOffsets>BALLER8_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
