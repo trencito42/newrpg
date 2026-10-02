@@ -51,7 +51,15 @@ local function applyAtmosphere()
     preHackState.radarHidden = (IsRadarHidden() == 1) or not IsRadarEnabled()
     preHackState.playerFrozen = DoesEntityExist(ped) and IsEntityPositionFrozen(ped)
 
-    -- 2. Apply Timecycle
+    -- 2. Suppress HUD, Chat and Overhead Nametags
+    if GetResourceState('sunset_hud') == 'started' then
+        pcall(function() exports.sunset_hud:SetHudSuppressed(true) end)
+    end
+    if GetResourceState('sunset_ui') == 'started' then
+        pcall(function() exports.sunset_ui:HideHudChrome() end)
+    end
+
+    -- 3. Apply Timecycle
     local mod = cfg.TimecycleModifier or 'scanline_cam'
     local ok = pcall(SetTimecycleModifier, mod)
     if not ok then
@@ -63,19 +71,19 @@ local function applyAtmosphere()
     SetTimecycleModifierStrength(cfg.TimecycleStrength or 0.85)
     preHackState.timecycleApplied = true
 
-    -- 3. Screen Effect
+    -- 4. Screen Effect
     if cfg.ScreenEffect then
         pcall(StartScreenEffect, cfg.ScreenEffect, 0, true)
         preHackState.screenEffectApplied = true
         preHackState.activeScreenEffect = cfg.ScreenEffect
     end
 
-    -- 4. Radar
+    -- 5. Radar
     if cfg.HideRadar and not preHackState.radarHidden then
         DisplayRadar(false)
     end
 
-    -- 5. Freeze Player
+    -- 6. Freeze Player
     if cfg.FreezePlayer and not preHackState.playerFrozen and DoesEntityExist(ped) then
         FreezeEntityPosition(ped, true)
     end
@@ -107,6 +115,14 @@ local function restoreAtmosphere()
     -- 4. Restore Player Frozen State to prior state
     if cfg.FreezePlayer and not preHackState.playerFrozen and DoesEntityExist(ped) then
         FreezeEntityPosition(ped, false)
+    end
+
+    -- 5. Restore HUD, Chat and Overhead Nametags
+    if GetResourceState('sunset_hud') == 'started' then
+        pcall(function() exports.sunset_hud:SetHudSuppressed(false) end)
+    end
+    if GetResourceState('sunset_ui') == 'started' then
+        pcall(function() exports.sunset_ui:ShowHudChrome() end)
     end
 end
 
@@ -146,6 +162,11 @@ end
 local function startControlDisabler()
     CreateThread(function()
         while currentState == State.ACTIVE or currentState == State.ENTERING or currentState == State.SOLVING do
+            HideHudAndRadarThisFrame()
+            for i = 1, 22 do
+                HideHudComponentThisFrame(i)
+            end
+
             DisableControlAction(0, 1, true)   -- Look LR
             DisableControlAction(0, 2, true)   -- Look UD
             DisableControlAction(0, 24, true)  -- Attack

@@ -17,6 +17,18 @@ html, body {
 }
 
 .hidden { display: none !important; }
+ 
+/* ═══ HUD CHROME HIDE (e.g. Minigames / Cutscenes / Character Selector) ═══ */
+body.hud-chrome-hidden #hud,
+body.hud-chrome-hidden .hud,
+body.hud-chrome-hidden #chat,
+body.hud-chrome-hidden #chat-backdrop,
+body.hud-chrome-hidden #notifications,
+body.hud-chrome-hidden #hunter-compass,
+body.hud-chrome-hidden #weapon-ammo-hud,
+body.hud-chrome-hidden .hud-container {
+    display: none !important;
+}
 
 .transition-root {
     position: fixed;

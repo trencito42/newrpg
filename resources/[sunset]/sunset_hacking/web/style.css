@@ -389,14 +389,26 @@ html, body {
     stroke: var(--color-power);
 }
 
-.target-win {
-    animation: targetWonAnim 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.target-win .target-diamond {
+    animation: targetDiamondWon 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: 0px 0px;
 }
 
-@keyframes targetWonAnim {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); filter: drop-shadow(0 0 25px var(--color-power)); }
-    100% { transform: scale(1.2); }
+.target-win .target-inner-diamond {
+    animation: targetInnerDiamondWon 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: 0px 0px;
+}
+
+@keyframes targetDiamondWon {
+    0% { transform: rotate(45deg) scale(1); }
+    50% { transform: rotate(45deg) scale(1.4); filter: drop-shadow(0 0 25px var(--color-power)); }
+    100% { transform: rotate(45deg) scale(1.2); filter: drop-shadow(0 0 18px var(--color-power)); }
+}
+
+@keyframes targetInnerDiamondWon {
+    0% { transform: rotate(45deg) scale(1); }
+    50% { transform: rotate(45deg) scale(1.4); }
+    100% { transform: rotate(45deg) scale(1.2); }
 }
 
 /* Lock Padlock Graphic */

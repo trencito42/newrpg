@@ -4,10 +4,27 @@ local defaultLayoutCache = nil
 local char = nil
 local hudActive = false
 local pauseHidden = false
+local hudSuppressed = false
 
 local function nui(action, data)
     exports.sunset_ui:Send(action, data or {})
 end
+
+function SetHudSuppressed(suppressed)
+    hudSuppressed = (suppressed == true)
+    if hudSuppressed then
+        nui('hideHud', {})
+        pcall(function() exports.sunset_ui:HideHudChrome() end)
+    else
+        pcall(function() exports.sunset_ui:ShowHudChrome() end)
+        lastHudHash = ''
+        if hudActive and char then
+            activateHud(char)
+        end
+    end
+end
+exports('SetHudSuppressed', SetHudSuppressed)
+exports('IsHudSuppressed', function() return hudSuppressed end)
 
 local function getStreetName()
     local ped = PlayerPedId()
@@ -208,7 +225,7 @@ end
 
 local lastHudHash = ''
 local function updateHud()
-    if not hudActive then return end
+    if not hudActive or hudSuppressed then return end
     local data = buildHudData()
     if not data then return end
     -- Change-detection key. Previously omitted name/job/payday/heading/waypoint/voice, so
@@ -264,10 +281,10 @@ end)
 -- `restart sunset_hud`: hide the page HUD and give the radar back on stop.
 AddEventHandler('sunset:ui:ready', function()
     lastHudHash = ''
-    if hudActive and char then
+    if hudActive and char and not hudSuppressed then
         CreateThread(function()
             Wait(300)
-            if hudActive then activateHud(char) end
+            if hudActive and not hudSuppressed then activateHud(char) end
         end)
     end
 end)
@@ -285,7 +302,7 @@ exports('GetPaydaySeconds', GetPaydaySeconds)
 
 CreateThread(function()
     while true do
-        if hudActive and not pauseHidden then
+        if hudActive and not pauseHidden and not hudSuppressed then
             updateHud()
             Wait(500)
         else
@@ -298,7 +315,7 @@ end)
 local lastGauge = nil
 CreateThread(function()
     while true do
-        if hudActive and not pauseHidden then
+        if hudActive and not pauseHidden and not hudSuppressed then
             local ped = PlayerPedId()
             if IsPedInAnyVehicle(ped, false) then
                 local veh = GetVehiclePedIsIn(ped, false)
@@ -664,7 +681,7 @@ end)
 -- Main 3D Render Thread (runs each frame)
 CreateThread(function()
     while true do
-        local hideAll = IsPauseMenuActive() or IsScreenFadedOut()
+        local hideAll = IsPauseMenuActive() or IsScreenFadedOut() or hudSuppressed
         if hideAll or not next(cachedPlayers) then
             Wait(150)
         else

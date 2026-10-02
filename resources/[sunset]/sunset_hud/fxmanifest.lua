@@ -39,6 +39,8 @@ exports {
     'SetVoiceProximity',
     'GetVoiceProximity',
     'GetVoiceHudData',
+    'SetHudSuppressed',
+    'IsHudSuppressed',
 }
 
 -- [AUDIT 3-9.1] pma-voice is NOT shipped in resources/ (Docker installs it at build
