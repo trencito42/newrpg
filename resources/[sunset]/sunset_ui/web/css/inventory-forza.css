@@ -752,3 +752,95 @@ body.inventory-open .hotbar-container {
 .inventory-forza .premium-trade-panel {
     display: none !important;
 }
+
+/* --- DRAG GHOST PREVIEW FOLLOWING CURSOR --- */
+.premium-drag-ghost {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 70px !important;
+    height: 70px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(13, 13, 17, 0.94) !important;
+    border: 1.5px solid var(--brand-accent) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.95), 0 0 15px rgba(215, 181, 88, 0.35) !important;
+    pointer-events: none !important;
+    z-index: 999999 !important;
+    will-change: transform !important;
+    opacity: 0.95 !important;
+    transform: translate3d(-9999px, -9999px, 0);
+    transition: none !important;
+    box-sizing: border-box !important;
+    padding: 4px !important;
+}
+
+.premium-drag-ghost * {
+    pointer-events: none !important;
+}
+
+.premium-drag-ghost .premium-drag-ghost__icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.premium-drag-ghost .premium-drag-ghost__icon img {
+    width: 42px;
+    height: 42px;
+    max-width: 42px;
+    max-height: 42px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85));
+}
+
+.premium-drag-ghost .premium-drag-ghost__icon i {
+    font-size: 38px;
+    color: var(--brand-accent);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+}
+
+.premium-drag-ghost .ghost-count {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    color: #08080a;
+    background: var(--brand-accent);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+}
+
+.premium-drag-ghost .ghost-label {
+    font-size: 8px;
+    font-weight: 800;
+    color: rgba(242, 239, 232, 0.9);
+    text-transform: uppercase;
+    max-width: 92%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    margin-top: 2px;
+}
+
+.premium-drag-ghost--cash {
+    background: radial-gradient(circle at center, rgba(34, 197, 94, 0.25) 0%, rgba(13, 13, 17, 0.95) 100%) !important;
+    border-color: #22c55e !important;
+}
+
+.premium-drag-ghost__cash {
+    font-size: 28px;
+    font-weight: 900;
+    color: #22c55e;
+    font-family: 'JetBrains Mono', monospace;
+}

@@ -499,6 +499,9 @@ const Panels = {
 
             if (!state.moved) {
                 state.moved = true;
+                if (window.InventoryForza && typeof window.InventoryForza.hideTooltip === 'function') {
+                    window.InventoryForza.hideTooltip();
+                }
                 document.body.classList.add('inventory-dragging');
                 const ghost = document.createElement('div');
                 ghost.className = 'premium-drag-ghost';
@@ -513,7 +516,38 @@ const Panels = {
                     ghost.appendChild(createItemArtwork(state.dutyWeapon, 'premium-drag-ghost__icon'));
                     state.itemEl?.classList.add('is-dragging');
                 } else {
-                    ghost.appendChild(createItemArtwork(state.row, 'premium-drag-ghost__icon'));
+                    const row = state.row;
+                    if (row) {
+                        const iconWrap = document.createElement('div');
+                        iconWrap.className = 'premium-drag-ghost__icon';
+                        if (row.icon && String(row.icon).startsWith('ph-')) {
+                            iconWrap.innerHTML = `<i class="ph-fill ${row.icon}"></i>`;
+                        } else {
+                            const img = document.createElement('img');
+                            img.src = itemIconUrl(row.icon);
+                            img.alt = '';
+                            img.draggable = false;
+                            img.onerror = () => { img.src = ITEM_ICON_FALLBACK; };
+                            iconWrap.appendChild(img);
+                        }
+                        ghost.appendChild(iconWrap);
+
+                        const count = Number(row.count) || 1;
+                        if (count > 1) {
+                            const countEl = document.createElement('div');
+                            countEl.className = 'ghost-count';
+                            countEl.textContent = count;
+                            ghost.appendChild(countEl);
+                        }
+
+                        const label = window.InventoryForza ? window.InventoryForza.itemLabel(row) : (row.label || row.item);
+                        if (label) {
+                            const labelEl = document.createElement('div');
+                            labelEl.className = 'ghost-label';
+                            labelEl.textContent = label;
+                            ghost.appendChild(labelEl);
+                        }
+                    }
                     state.itemEl?.classList.add('is-dragging');
                 }
                 document.body.appendChild(ghost);
@@ -522,7 +556,7 @@ const Panels = {
 
             e.preventDefault();
             if (state.ghost) {
-                state.ghost.style.transform = `translate(${e.clientX - 28}px, ${e.clientY - 28}px)`;
+                state.ghost.style.transform = `translate3d(${e.clientX - 35}px, ${e.clientY - 35}px, 0)`;
             }
 
             clearHover();
