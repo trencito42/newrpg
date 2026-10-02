@@ -136,7 +136,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>z33u2</audioNameHash>
+      <audioNameHash>SENTINEL3</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>ITALIGTB_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -244,7 +244,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>aqls7raceswap</audioNameHash>
+      <audioNameHash>MASSACRO</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>AIRTUG_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -474,7 +474,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>cvpiv8</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_HIGHWINDOW</layout>
       <coverBoundOffsets>HOTKNIFE_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -587,7 +587,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>hemisound</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>ZENTORNO_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -697,7 +697,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>cvpiv8</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_HIGHWINDOW</layout>
       <coverBoundOffsets>HOTKNIFE_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -810,7 +810,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>aq2jzgterace</audioNameHash>
+      <audioNameHash>elegy2</audioNameHash>
       <layout>LAYOUT_STD_LOWRIDER</layout>
       <coverBoundOffsets>ZION_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1154,7 +1154,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>n4g63t</audioNameHash>
+      <audioNameHash>ITALIRSX</audioNameHash>
       <layout>LAYOUT_STD_EXITFIXUP</layout>
       <coverBoundOffsets>SULTAN_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1375,7 +1375,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>aqls7raceswap</audioNameHash>
+      <audioNameHash>MASSACRO</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>LYNX_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1484,7 +1484,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>f136</audioNameHash>
+      <audioNameHash>carbonizzare</audioNameHash>
       <layout>LAYOUT_LOW_INFERNUS</layout>
       <coverBoundOffsets>T20_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1596,7 +1596,7 @@
         <Item>VEH_EXT_WINDSCREEN_R</Item>
       </animConvRoofWindowsAffected>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>aq31maz13btune</audioNameHash>
+      <audioNameHash>RE7B</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>CARBONIZ_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1701,7 +1701,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lamavgineng</audioNameHash>
+      <audioNameHash>adder</audioNameHash>
       <layout>LAYOUT_LOW_INFERNUS</layout>
       <coverBoundOffsets>T20_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -1933,7 +1933,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>elegyx</audioNameHash>
+      <audioNameHash>elegy2</audioNameHash>
       <layout>LAYOUT_LOW_6SEAT</layout>
       <coverBoundOffsets>ELEGY_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2038,7 +2038,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>elegyx</audioNameHash>
+      <audioNameHash>elegy2</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>ELEGY_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2149,7 +2149,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>ferrarif140fe</audioNameHash>
+      <audioNameHash>carbonizzare</audioNameHash>
       <layout>LAYOUT_LOW_INFERNUS</layout>
       <coverBoundOffsets>INFERNUS_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2260,7 +2260,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lambov10</audioNameHash>
+      <audioNameHash>t20</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>FELTZER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2481,7 +2481,7 @@
         <Item>VEH_EXT_WINDSCREEN_R</Item>
       </animConvRoofWindowsAffected>
       <ptfxAssetName>veh_tol675ltsp</ptfxAssetName>
-      <audioNameHash>ftypesound</audioNameHash>
+      <audioNameHash>SCHAFTER4</audioNameHash>
       <layout>LAYOUT_LOW_675LTSP</layout>
       <coverBoundOffsets>TOL675LTSP_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2591,7 +2591,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>f10m5</audioNameHash>
+      <audioNameHash>ENTITY3</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>STREITER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2712,7 +2712,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>f10m5</audioNameHash>
+      <audioNameHash>ENTITY3</audioNameHash>
       <layout>LAYOUT_STD_EXITFIXUP</layout>
       <coverBoundOffsets>ORACLE2_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -2957,7 +2957,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>ta018ferf140b</audioNameHash>
+      <audioNameHash>NIGHTSHARK</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>ELEGY_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3195,7 +3195,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>fordvoodoo</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_EXITFIXUP</layout>
       <coverBoundOffsets>DOMINATOR_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3300,7 +3300,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>fordvoodoo</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_HABANERO</layout>
       <coverBoundOffsets>DOMINATOR_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3409,7 +3409,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>fordvoodoo</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>ZENTORNO_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3518,7 +3518,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lgcy04murciv12</audioNameHash>
+      <audioNameHash>t20</audioNameHash>
       <layout>LAYOUT_LOW_RESTRICTED</layout>
       <coverBoundOffsets>REAPER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3626,7 +3626,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>r34sound</audioNameHash>
+      <audioNameHash>elegy</audioNameHash>
       <layout>LAYOUT_STD_r34g</layout>
       <coverBoundOffsets>BLISTA_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -3735,7 +3735,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lgcy04murciv12</audioNameHash>
+      <audioNameHash>t20</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>lp700_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4063,7 +4063,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>hemisound</audioNameHash>
+      <audioNameHash>hotknife</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>HOTKNIFE_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4425,7 +4425,7 @@
       <animConvRoofName>rmodrs5</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>kc33mitsu4g63t</audioNameHash>
+      <audioNameHash>elegy</audioNameHash>
       <layout>LAYOUT_STANDARD</layout>
       <coverBoundOffsets>DRAFTER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4529,7 +4529,7 @@
       <animConvRoofName>new_rs6</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lg18bmwm4</audioNameHash>
+      <audioNameHash>SCHLAGEN</audioNameHash>
       <layout>LAYOUT_STANDARD</layout>
       <coverBoundOffsets>NERO_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4639,7 +4639,7 @@
       <animConvRoofName>rs7c821</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lg116slsamg</audioNameHash>
+      <audioNameHash>SCHLAGEN</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>STREITER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4760,7 +4760,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>ea888</audioNameHash>
+      <audioNameHash>sultan2</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>HOTKNIFE_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4873,7 +4873,7 @@
       <animConvRoofName>tols63amg</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lg116slsamg</audioNameHash>
+      <audioNameHash>SCHLAGEN</audioNameHash>
       <layout>LAYOUT_STD_STRETCH</layout>
       <coverBoundOffsets>NERO_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -4983,7 +4983,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>taaud40v8</audioNameHash>
+      <audioNameHash>SCHAFTER4</audioNameHash>
       <layout>LAYOUT_STD_LOWROOF</layout>
       <coverBoundOffsets>TAILGATER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -5106,7 +5106,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>aq2jzgterace</audioNameHash>
+      <audioNameHash>elegy2</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>SCHWARZER_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -5215,7 +5215,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>lambov10</audioNameHash>
+      <audioNameHash>t20</audioNameHash>
       <layout>LAYOUT_LOW_RESTRICTED</layout>
       <coverBoundOffsets>NINEF_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
@@ -5324,7 +5324,7 @@
       <animConvRoofName>null</animConvRoofName>
       <animConvRoofWindowsAffected/>
       <ptfxAssetName>null</ptfxAssetName>
-      <audioNameHash>ftypesound</audioNameHash>
+      <audioNameHash>SCHAFTER4</audioNameHash>
       <layout>LAYOUT_LOW</layout>
       <coverBoundOffsets>VACCA_COVER_OFFSET_INFO</coverBoundOffsets>
       <explosionInfo>EXPLOSION_INFO_DEFAULT</explosionInfo>
