@@ -470,7 +470,10 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             Sunset.Jobs.StartCourier()
         elseif wp.jobId == 'fisherman' and Sunset.Jobs and Sunset.Jobs.StartFisherman then
             Sunset.Jobs.StartFisherman()
+        elseif wp.jobId == 'busdriver' and Sunset.Jobs and Sunset.Jobs.StartBusDriver then
+            Sunset.Jobs.StartBusDriver()
         elseif wp.jobId == 'hunter' then
+
             CreateThread(function()
                 local data, err = Sunset.AwaitCallback('sunset:jobs:hunter:start')
                 if not data then

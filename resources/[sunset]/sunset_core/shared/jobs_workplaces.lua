@@ -279,4 +279,45 @@ Sunset.JobWorkplaces = {
             },
         },
     },
+
+    busdriver = {
+        jobId = 'busdriver',
+        jobLabel = 'Bus Driver',
+        locationLabel = 'Transit Terminal',
+        address = 'Integrity Way / Pillbox Hill Transit Center',
+        description = 'Operate scheduled public bus lines across Los Santos. Pick up waiting passengers at bus stops, issue tickets, and earn passenger fares + transit bonuses.',
+        npc = {
+            id = 'workplace_busdriver',
+            name = 'Gus - Transit Dispatcher',
+            title = 'Operations Supervisor',
+            model = 's_m_m_cntrybar_01',
+            coords = vector4(435.44, -646.28, 28.74, 124.73),
+            scenario = 'WORLD_HUMAN_CLIPBOARD',
+            icon = 'ph-bus',
+            badgeClass = 'busdriver',
+            badge = 'TRANSIT DEPOT',
+        },
+        guide = {
+            title = 'Bus Driver Career Guide',
+            steps = {
+                '1. Apply as a Bus Driver with Dispatcher Gus at the Transit Terminal.',
+                '2. Start your shift to dispatch an official LS Transit Bus.',
+                '3. Follow the Green Line route markers to each designated bus stop in order.',
+                '4. Pull into the bus bay, stop and press [E] to board waiting passengers.',
+                '5. Complete all scheduled stops and return the bus to the depot for your route completion bonus.'
+            }
+        },
+        requirements = {
+            minLevel = 1,
+            licenses = { 'driver' },
+        },
+        actions = {
+            apply = true,
+            startShift = true,
+            stopShift = true,
+            guide = true,
+            quitJob = true,
+        },
+    },
 }
+

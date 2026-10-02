@@ -34,6 +34,7 @@ client_scripts {
     'client/trucker_npc.lua',
     'client/garbage.lua',
     'client/courier.lua',
+    'client/busdriver.lua',
     'client/fisherman.lua',
     'client/mechanic.lua',
     'client/hunter.lua',
@@ -50,12 +51,14 @@ server_scripts {
     'server/trucker.lua',
     'server/garbage.lua',
     'server/courier.lua',
+    'server/busdriver.lua',
     'server/fisherman.lua',
     'server/mechanic.lua',
     'server/hunter.lua',
     'server/diver.lua',
     'server/main.lua',
 }
+
 
 server_exports {
     'GetMechanicProviders',

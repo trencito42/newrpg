@@ -407,8 +407,51 @@ Sunset.JobsConfig = {
         timeoutSec = 2400,
         dispatchServiceType = 'mechanic',
     },
+
+    busdriver = {
+        label = 'Bus Driver',
+        help = 'Drive your transit bus along the scheduled route, stop at bus stops [E] to board passengers, collect fares, and return to depot for the route bonus.',
+        depot = {
+            coords = vector3(435.44, -646.28, 28.74),
+            blip = { sprite = 513, color = 46, scale = 0.85 },
+            spawns = {
+                vector4(463.21, -606.43, 28.49, 214.23),
+                vector4(461.90, -611.70, 28.50, 214.44),
+                vector4(461.28, -619.32, 28.50, 214.44),
+                vector4(460.95, -626.78, 28.50, 214.44),
+                vector4(459.93, -633.95, 28.50, 214.44),
+                vector4(459.96, -641.55, 28.50, 214.44),
+                vector4(458.80, -648.45, 28.50, 214.44),
+            },
+            returnCoords = vector4(463.21, -606.43, 28.49, 214.23),
+        },
+        busModel = 'bus',
+        stopRadius = 7.5,
+        boardingDurationMs = 3500,
+        payPerStop = 120,
+        payPerPassenger = 35,
+        routeBonusPay = 450,
+        xpPerStop = 20,
+        xpPerRoute = 65,
+        routes = {
+            {
+                id = 'green_route',
+                label = 'Linia Verde (Green Route Express)',
+                stops = {
+                    { coords = vector4(306.71, -766.26, 28.79, 162.78), label = 'Oprirea 1: Transit Center West' },
+                    { coords = vector4(785.89, -776.10, 25.91, 3.63), label = 'Oprirea 2: Mirror Park Blvd' },
+                    { coords = vector4(770.40, -941.32, 25.17, 188.14), label = 'Oprirea 3: East Los Santos' },
+                    { coords = vector4(787.35, -1369.32, 26.03, 182.59), label = 'Oprirea 4: Popular Street' },
+                    { coords = vector4(808.11, -1352.63, 25.80, 1.31), label = 'Oprirea 5: Cypress Flats North' },
+                    { coords = vector4(824.75, -1639.46, 29.80, 175.04), label = 'Oprirea 6: Port Boulevard' },
+                },
+                returnDepot = vector4(463.21, -606.43, 28.49, 214.23),
+            },
+        },
+    },
 }
 
 function Sunset.GetJobConfig(jobId)
     return Sunset.JobsConfig and Sunset.JobsConfig[jobId]
 end
+

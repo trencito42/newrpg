@@ -56,6 +56,13 @@ Sunset.CivilianJobs = {
         grades = { [0] = { label = 'Trainee Diver', salary = 0, perms = {} } },
         npcCoords = { x = -812.0, y = -1282.0 },
     },
+    busdriver = {
+        label = 'Bus Driver',
+        type = 'civilian',
+        description = 'Operate public transit bus routes across Los Santos and transport passengers.',
+        grades = { [0] = { label = 'Transit Driver', salary = 420, perms = {} } },
+        npcCoords = { x = 435.44, y = -646.28 },
+    },
     lockpicking = {
         label = 'Lockpicking',
         type = 'criminal',
@@ -63,3 +70,4 @@ Sunset.CivilianJobs = {
         grades = { [0] = { label = 'Novice', salary = 0, perms = {} } },
     },
 }
+
