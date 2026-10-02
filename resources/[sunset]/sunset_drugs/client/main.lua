@@ -211,7 +211,10 @@ local function GetTargetPedInFront()
     local closestDist = Cfg.streetSale.interactionDistance or 2.5
 
     repeat
-        if entity ~= ped and not IsPedAPlayer(entity) and not IsPedDeadOrDying(entity, true) and not IsPedInAnyVehicle(entity, true) then
+        if entity ~= ped and not IsPedAPlayer(entity) and not IsPedDeadOrDying(entity, true) 
+           and not IsPedInAnyVehicle(entity, true) 
+           and not IsEntityAMissionEntity(entity) 
+           and not IsEntityPositionFrozen(entity) then
             local pCoords = GetEntityCoords(entity)
             local dist = #(coords - pCoords)
             if dist <= closestDist then
