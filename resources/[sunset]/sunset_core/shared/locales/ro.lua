@@ -2121,6 +2121,7 @@ Sunset.Locales['ro'] = {
     ['chat.suggestion.uncuff'] = 'Uncuff player (PD)',
     ['chat.suggestion.unglue'] = 'Desprindeți de vehiculul de care sunteți lipit',
     ['chat.suggestion.v'] = 'Garaj pentru vehicule personale',
+    ['chat.suggestion.version'] = 'Afișează versiunea serverului',
     ['chat.suggestion.wanted'] = 'Listați jucători activi căutați (LSPD)',
     ['chat.suggestion.wardrobe'] = 'Deschide garderoba (la magazin de haine sau in casa ta/unde ai chirie)',
     ['chat.suggestion.work'] = 'Începeți-vă tura de serviciu civil',
@@ -3847,4 +3848,7 @@ Sunset.Locales['ro'] = {
     ['core.msg.player_is_connected_but_has_not'] = 'Jucătorul #{target_id} e conectat, dar nu și-a încărcat încă personajul.',
     ['core.msg.players_online_list'] = 'Jucători online: {ids}.',
     ['core.msg.nobody_online'] = 'Nu e nimeni online acum.',
+    -- /version command
+    ['core.cmd.version.line1'] = 'Blaze RPG',
+    ['core.cmd.version.line2'] = 'Versiunea serverului: v{version}',
 }

@@ -669,6 +669,27 @@ exports.sunset_core:RegisterCallback('sunset:getChatChannels', function(source)
     return buildChatChannels(source)
 end)
 
+-- /version — available to all players, no character required.
+RegisterCommand('version', function(source)
+    if source == 0 then
+        -- console call: print directly
+        local ver = GetConvar('blaze_version', '0.0.0-dev')
+        print(('[Blaze] Blaze RPG v%s'):format(ver))
+        return
+    end
+    local ver
+    if GetResourceState('sunset_core') == 'started' then
+        local ok, v = pcall(function() return exports.sunset_core:GetBlazeVersion() end)
+        ver = (ok and type(v) == 'string' and v ~= '') and v or GetConvar('blaze_version', '0.0.0-dev')
+    else
+        ver = GetConvar('blaze_version', '0.0.0-dev')
+    end
+    local line1 = t(source, 'core.cmd.version.line1')
+    local line2 = t(source, 'core.cmd.version.line2', { version = ver })
+    TriggerClientEvent('sunset:chat:system', source, line1, 'info')
+    TriggerClientEvent('sunset:chat:system', source, line2, 'info')
+end, false)
+
 -- /cc — staff chat wipe (level 1+). Clears every player's chat window.
 RegisterCommand('cc', function(source, args)
     if source ~= 0 then

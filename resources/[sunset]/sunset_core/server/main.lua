@@ -1200,9 +1200,18 @@ AddEventHandler('onResourceStop', function(resource)
     end
 end)
 
+-- Authoritative runtime version, sourced from blaze_version convar (set in
+-- server.cfg — change ONE value there to update hostname, /version, and logs).
+Sunset.Version = GetConvar('blaze_version', '0.0.0-dev')
+
+exports('GetBlazeVersion', function() return Sunset.Version end)
+
 CreateThread(function()
     MySQL.ready(function()
-        print('^2[blaze.mp]^7 Core framework loaded — database connected.')
+        -- Update sv_hostname to reflect the current version.
+        SetConvar('sv_hostname', 'Blaze RPG v' .. Sunset.Version)
+
+        print(('^2[Blaze]^7 Blaze RPG v%s initialized'):format(Sunset.Version))
         local critical = { 'sunset_core', 'sunset_characters', 'sunset_properties', 'sunset_spawn', 'sunset_auth', 'sunset_ui' }
         local fingerprints = {}
         for _, resName in ipairs(critical) do
@@ -1213,7 +1222,7 @@ CreateThread(function()
         print(('^2[RESOURCE-VERSIONS]^7 %s'):format(table.concat(fingerprints, ', ')))
 
         -- [P0 #7] Build fingerprint for production diagnostics
-        local commitHash = GetConvar('sunset_build_commit', 'git-main-90c62b3')
+        local commitHash = GetConvar('sunset_build_commit', 'git-main-b4780fb')
         local builtAt = GetConvar('sunset_build_time', os.date('!%Y-%m-%dT%H:%M:%SZ'))
         local env = GetConvar('sunset_environment', 'production')
         print(('^2[BUILD]^7 commit=%s builtAt=%s environment=%s'):format(commitHash, builtAt, env))

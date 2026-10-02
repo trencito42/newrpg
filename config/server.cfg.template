@@ -5,8 +5,14 @@
 endpoint_add_tcp "0.0.0.0:30120"
 endpoint_add_udp "0.0.0.0:30120"
 
-sv_hostname "blaze.mp | RPG Roleplay"
-sets sv_projectName "blaze.mp"
+# ── Authoritative version: change ONE value here ─────────────────────────────
+set blaze_version "0.7.0-alpha"
+
+# sv_hostname is set dynamically at startup from blaze_version (see sunset_core).
+# The static fallback below is overridden immediately; it exists only so FiveM
+# has something to display before the first resource finishes loading.
+sv_hostname "Blaze RPG v0.7.0-alpha"
+sets sv_projectName "Blaze RPG"
 sets sv_projectDesc "Blaze RPG — build your story."
 sets tags "rpg, sunsetmp, english"
 sets locale "en-US"

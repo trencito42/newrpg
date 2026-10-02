@@ -197,6 +197,7 @@ Sunset.CommandUsage = {
     su = { usage = '/su [id] [reason_code]', minArgs = 0 },
     startradar = { usage = '/startradar [limit_kmh]', minArgs = 0 },
     help = { usage = '/help', minArgs = 0 },
+    version = { usage = '/version', minArgs = 0 },
     stats = { usage = '/stats', minArgs = 0 },
     buylevel = { usage = '/buylevel', minArgs = 0 },
     inventory = { usage = '/inventory', minArgs = 0 },

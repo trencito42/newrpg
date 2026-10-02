@@ -2128,6 +2128,7 @@ Sunset.Locales['en'] = {
     ['chat.suggestion.uncuff'] = 'Uncuff player (PD)',
     ['chat.suggestion.unglue'] = 'Detach from the vehicle you are glued to',
     ['chat.suggestion.v'] = 'Personal vehicle garage',
+    ['chat.suggestion.version'] = 'Show the server version',
     ['chat.suggestion.wanted'] = 'List active wanted players (LSPD)',
     ['chat.suggestion.wardrobe'] = 'Open the wardrobe at a clothing store, your home, or your rental',
     ['chat.suggestion.work'] = 'Start your civilian job shift',
@@ -3854,4 +3855,7 @@ Sunset.Locales['en'] = {
     ['core.msg.player_is_connected_but_has_not'] = 'Player #{target_id} is connected but has not loaded a character yet.',
     ['core.msg.players_online_list'] = 'Players online: {ids}.',
     ['core.msg.nobody_online'] = 'Nobody is online right now.',
+    -- /version command
+    ['core.cmd.version.line1'] = 'Blaze RPG',
+    ['core.cmd.version.line2'] = 'Server version: v{version}',
 }
