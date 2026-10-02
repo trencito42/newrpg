@@ -380,3 +380,110 @@ AddEventHandler('sunset:nui:acceptDrugSale', function(data) onAcceptDrugSale(dat
 AddEventHandler('sunset:nui:failNegotiation', function(data) onFailNegotiation(data, function() end) end)
 AddEventHandler('sunset:nui:declineDrugSale', function(data) onDeclineDrugSale(data, function() end) end)
 AddEventHandler('sunset:nui:closeSaleUI', function(data) onCloseSaleUI(data, function() end) end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- 4. WHOLESALE DELIVERY SYSTEM (Locații Livrare Droguri pe Rank)
+-- ═══════════════════════════════════════════════════════════════
+
+local spawnedDeliveryPeds = {}
+local deliveryBlips = {}
+
+-- ── Spawn Delivery Dealer NPCs & Create Blips ────────────────
+CreateThread(function()
+    Sunset.AwaitGameReady()
+
+    for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
+        -- 1. Create Blip
+        local blip = Sunset.CreateSafeBlip(vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z), {
+            sprite = 514,
+            color = 27,
+            scale = 0.80,
+            name = ('[%s] %s'):format(dropoff.rankBadge or 'Livrare', dropoff.name or 'Livrare Droguri'),
+            shortRange = true,
+        })
+        if blip then table.insert(deliveryBlips, blip) end
+
+        -- 2. Spawn NPC
+        local ok, model = Sunset.RequestModelSafe(dropoff.pedModel or 'g_m_y_famca_02', 5000)
+        if ok then
+            local ped = CreatePed(4, model,
+                dropoff.coords.x, dropoff.coords.y, dropoff.coords.z - 1.0, dropoff.coords.w,
+                false, true)
+            if ped and ped ~= 0 and DoesEntityExist(ped) then
+                SetEntityAsMissionEntity(ped, true, true)
+                FreezeEntityPosition(ped, true)
+                SetEntityInvincible(ped, true)
+                SetBlockingOfNonTemporaryEvents(ped, true)
+                if dropoff.scenario then
+                    TaskStartScenarioInPlace(ped, dropoff.scenario, 0, true)
+                end
+                spawnedDeliveryPeds[dropoff.id] = ped
+            end
+            SetModelAsNoLongerNeeded(model)
+        end
+    end
+end)
+
+-- ── Proximity Interaction Loop ───────────────────────────────
+CreateThread(function()
+    while true do
+        local sleep = 500
+        local ped = PlayerPedId()
+        local coords = GetEntityCoords(ped)
+
+        if not saleActive and not labOpen and not IsPedInAnyVehicle(ped, true) then
+            for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
+                local dCoords = vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z)
+                local dist = #(coords - dCoords)
+
+                if dist < ((Cfg.delivery and Cfg.delivery.interactionRadius) or 2.5) + 4.0 then
+                    sleep = 0
+
+                    -- Floating 3D Text
+                    local onScreen, screenX, screenY = World3dToScreen2d(dCoords.x, dCoords.y, dCoords.z + 1.05)
+                    if onScreen then
+                        SetTextScale(0.32, 0.32)
+                        SetTextFont(4)
+                        SetTextProportional(1)
+                        SetTextColour(215, 181, 88, 255)
+                        SetTextCentre(1)
+                        SetTextEntry("STRING")
+                        AddTextComponentString(("~y~[%s]~s~ %s"):format(dropoff.rankBadge or 'Livrare', dropoff.dealerLabel or 'Dealer'))
+                        DrawText(screenX, screenY - 0.025)
+
+                        SetTextScale(0.28, 0.28)
+                        SetTextColour(255, 255, 255, 220)
+                        SetTextCentre(1)
+                        SetTextEntry("STRING")
+                        AddTextComponentString("Apasă ~g~[E]~s~ pentru Livrare En-gros")
+                        DrawText(screenX, screenY)
+                    end
+
+                    -- Input check
+                    if dist <= ((Cfg.delivery and Cfg.delivery.interactionRadius) or 2.5) then
+                        if IsControlJustReleased(0, 38) then
+                            DoWholesaleDelivery(dropoff)
+                        end
+                    end
+                    break
+                end
+            end
+        end
+
+        Wait(sleep)
+    end
+end)
+
+function DoWholesaleDelivery(dropoff)
+    -- Play brief handshake/handover animation
+    local playerPed = PlayerPedId()
+    RequestAnimDict("mp_common")
+    while not HasAnimDictLoaded("mp_common") do Wait(10) end
+    TaskPlayAnim(playerPed, "mp_common", "givetake2_a", 2.0, 2.0, 1200, 49, 0, false, false, false)
+
+    local res = Sunset.AwaitCallback('sunset:drugs:deliverWholesale', dropoff.id)
+    if not res or not res.success then
+        Notify(res and res.err or 'Livrarea nu a putut fi efectuată.', 'error')
+    end
+end
+

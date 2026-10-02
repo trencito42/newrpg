@@ -94,6 +94,49 @@ SunsetDrugs.Config = {
         },
     },
 
+    -- ═══ STAGE 4: WHOLESALE DELIVERY DROPOFFS (Locații Livrare Droguri) ═══
+    delivery = {
+        interactionRadius = 2.5,
+        dropoffs = {
+            {
+                id = 1,
+                coords = vector4(130.74, -1181.86, 29.50, 179.72),
+                minRank = 1,
+                maxRank = 3,
+                name = 'Livrare Cartier (Strawberry)',
+                dealerLabel = 'Contact Local',
+                rankBadge = 'Rank 1 - 3',
+                pedModel = 'g_m_y_famca_02',
+                bonusPct = 0.05, -- +5% bonus en-gros
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+            {
+                id = 2,
+                coords = vector4(-810.95, 187.93, 72.48, 106.99),
+                minRank = 4,
+                maxRank = 5,
+                name = 'Livrare Cartel (Rockford Hills)',
+                dealerLabel = 'Intermediar Cartel',
+                rankBadge = 'Rank 4 - 5',
+                pedModel = 'g_m_m_mexboss_01',
+                bonusPct = 0.15, -- +15% bonus en-gros
+                scenario = 'WORLD_HUMAN_STAND_MOBILE',
+            },
+            {
+                id = 3,
+                coords = vector4(1237.81, -1632.55, 52.06, 20.93),
+                minRank = 6,
+                maxRank = 999,
+                name = 'Livrare Sindicat (El Burro)',
+                dealerLabel = 'Boss Sindicat',
+                rankBadge = 'Rank 6+ (Elită)',
+                pedModel = 'g_m_m_armboss_01',
+                bonusPct = 0.30, -- +30% bonus en-gros
+                scenario = 'WORLD_HUMAN_GUARD_STAND',
+            },
+        },
+    },
+
     -- Shared Drug definitions for legacy references
     drugs = {
         weed = {
@@ -122,3 +165,4 @@ SunsetDrugs.Config = {
         },
     },
 }
+
