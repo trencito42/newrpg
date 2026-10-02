@@ -264,10 +264,15 @@ window.addEventListener('message', (event) => {
 
     switch (action) {
         case 'authShow':
+            document.body.style.background = '';
             AuthUI.show(payload);
             break;
         case 'authHide':
             AuthUI.hide();
+            // After hiding, make the NUI body transparent so the game world
+            // shows through — body default is solid #08080a to prevent flicker
+            // on first load, but must not block the game after auth completes.
+            document.body.style.background = 'transparent';
             break;
         case 'authError':
             AuthUI.showError(payload.message || tr('auth.generic_error'));

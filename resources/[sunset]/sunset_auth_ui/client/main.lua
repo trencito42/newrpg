@@ -82,6 +82,8 @@ exports('Show', function(screen, data)
     authVisibleRendered = false
     authPresentationId = authPresentationId + 1
     authFocus(true, true)
+    -- Direct call ensures cursor even if focus manager ownership is contested
+    SetNuiFocus(true, true)
     startHudSuppression()
 
     local payload = type(data) == 'table' and data or {}
@@ -101,6 +103,7 @@ exports('Hide', function()
     authVisibleRendered = false
     lastShowPayload = nil
     authFocus(false, false)
+    SetNuiFocus(false, false)
     stopHudSuppression()
     send('authHide', {})
 end)

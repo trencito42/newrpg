@@ -27,24 +27,25 @@ html, body {
     align-items: center;
     justify-content: center;
     gap: 18px;
-    background: #07090d;
-    color: #f4f7fa;
+    background: #08080a;
+    color: #F2EFE8;
     pointer-events: auto;
 }
 
 .transition-spinner {
-    width: 42px;
-    height: 42px;
-    border: 3px solid rgba(255, 255, 255, 0.12);
-    border-top-color: #00ffcc;
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(215, 181, 88, 0.15);
+    border-top-color: #D7B558;
     border-radius: 50%;
     animation: transition-spin 800ms linear infinite;
 }
 
 .transition-status {
-    font: 700 13px/1.2 var(--font-body);
-    letter-spacing: 0.12em;
+    font: 700 11px/1.2 var(--font-body);
+    letter-spacing: 0.14em;
     text-transform: uppercase;
+    color: rgba(242, 239, 232, 0.55);
 }
 
 @keyframes transition-spin { to { transform: rotate(360deg); } }
