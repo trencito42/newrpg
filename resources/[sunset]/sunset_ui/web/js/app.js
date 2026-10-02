@@ -274,6 +274,12 @@
         // Drugs
         drugsShow: 'drugs',
         drugsHide: 'drugs',
+        showHarvest: 'drugs',
+        hideHarvest: 'drugs',
+        openLab: 'drugs',
+        closeLab: 'drugs',
+        openStreetSale: 'drugs',
+        closeStreetSale: 'drugs',
 
         // Marriage
         marriageShow: 'marriage',
@@ -1044,6 +1050,12 @@
                 case 'drugsUpdate': window.Drugs?.update?.(payload); return;
                 case 'drugsBusy': window.Drugs?.setBusy?.(payload.busy); return;
                 case 'drugsProgress': window.Drugs?.showProgress?.(payload); return;
+                case 'showHarvest': window.Drugs?.harvest?.open?.(payload); return;
+                case 'hideHarvest': window.Drugs?.harvest?.close?.(); return;
+                case 'openLab': window.Drugs?.lab?.open?.(payload); return;
+                case 'closeLab': window.Drugs?.lab?.close?.(); return;
+                case 'openStreetSale': window.Drugs?.sale?.open?.(payload); return;
+                case 'closeStreetSale': window.Drugs?.sale?.close?.(); return;
                 case 'marriageProposal': window.Marriage?.showProposal?.(payload); return;
                 case 'marriageHide': window.Marriage?.hide?.(); return;
                 case 'helpdeskShow': case 'helpdeskRefresh': window.Helpdesk?.show?.(payload); return;

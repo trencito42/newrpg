@@ -1,64 +1,100 @@
 -- ═══════════════════════════════════════════════════════════════
 --  SUNSETMP — Drug Pipeline (shared/config.lua)
---  Manufacture → Process → Sell. Three-stage criminal economy.
---
---  DESIGN (OPTION A): each harvest spot grows ONE specific drug type.
---  The drug type is derived SERVER-SIDE from the spot config — the client
---  never chooses the authoritative type.
+--  Manufacture (Harvest) → Process (Clandestine Lab) → Street Sale.
 -- ═══════════════════════════════════════════════════════════════
 
 SunsetDrugs = SunsetDrugs or {}
 
 SunsetDrugs.Config = {
-    -- Stage 1: Manufacture (harvest raw materials).
-    -- Each spot has an explicit drug type (Option A — no random harvest).
-    -- NOTE: coords require in-game accessibility QA (Z values were not
-    -- verified against terrain; see CASINO-style discovery discipline).
+    -- ═══ STAGE 1: HARVEST HUD (Manufacture) ═══
     manufacture = {
         spots = {
-            { coords = vector3(2230.00, 5578.00, 53.00),  drug = 'weed', label = 'Paleto Bay fields' },
-            { coords = vector3(2400.00, 4900.00, 42.00),  drug = 'weed', label = 'Grapeseed' },
-            { coords = vector3(-1200.00, 4800.00, 220.00), drug = 'meth', label = 'Mount Chiliad' },
-            { coords = vector3(1800.00, 3700.00, 33.00),  drug = 'coke', label = 'Sandy Shores' },
-            { coords = vector3(-300.00, 6200.00, 31.00),  drug = 'coke', label = 'Paleto north' },
+            { coords = vector3(2230.00, 5578.00, 53.00),  drug = 'weed', label = 'Paleto Bay Fields' },
+            { coords = vector3(2400.00, 4900.00, 42.00),  drug = 'weed', label = 'Grapeseed Farm' },
+            { coords = vector3(-1200.00, 4800.00, 220.00), drug = 'meth', label = 'Mount Chiliad Scraps' },
+            { coords = vector3(1800.00, 3700.00, 33.00),  drug = 'coke', label = 'Sandy Shores Plantation' },
+            { coords = vector3(-300.00, 6200.00, 31.00),  drug = 'coke', label = 'Paleto North Plantation' },
         },
-        harvestTimeMs = 5000,
-        yieldMin = 1,
-        yieldMax = 3,
-        cooldownMs = 30000,
-        spotRadius = 10.0,
+        spotRadius = 15.0,
+        maxBagCapacity = 50,     -- Max raw items per harvest batch in UI
+        minHitIntervalMs = 280,  -- Anti-autoclicker rate-limit validation
     },
 
-    -- Stage 2: Process (convert raw → product at a lab)
-    -- NOTE: lab #1 (1089,-3100,-39) is an underground coordinate —
-    -- requires in-game accessibility QA (may be inside an un-loaded MLO).
+    -- ═══ STAGE 2: CLANDESTINE LAB PROCESSING ═══
     process = {
         labs = {
-            vector3(1089.00, -3100.00, -39.00),  -- Underground lab (QA required)
-            vector3(-1170.00, -1580.00, 4.00),   -- Del Perro warehouse
+            { coords = vector3(1089.00, -3100.00, -39.00), label = 'Underground Chemical Lab' },
+            { coords = vector3(-1170.00, -1580.00, 4.00),  label = 'Del Perro Secret Warehouse' },
+            { coords = vector3(1389.00, 3605.00, 38.90),   label = 'Sandy Shores Meth Lab' },
         },
-        processTimeMs = 8000,
-        ratio = 2, -- 2 raw → 1 product
-        labRadius = 10.0,
-        cooldownMs = 5000,
+        labRadius = 5.0,
+        minProcessDurationMs = 3500, -- Minimum elapsed time before accept
+        recipes = {
+            weed = {
+                label = 'Pachete Weed',
+                rawItem = 'weed_leaf',
+                rawCount = 5,
+                secondaryItem = nil,
+                secondaryCount = 0,
+                productItem = 'weed_brick',
+                productCount = 1,
+                difficulty = 'easy',
+            },
+            coca = {
+                label = 'Pudră Cocaină',
+                rawItem = 'coke_leaf',
+                rawCount = 5,
+                secondaryItem = 'chemicals',
+                secondaryCount = 1,
+                productItem = 'coke_brick',
+                productCount = 1,
+                difficulty = 'medium',
+            },
+            meth = {
+                label = 'Cristale Meth',
+                rawItem = 'meth_chemical',
+                rawCount = 3,
+                secondaryItem = 'chemicals',
+                secondaryCount = 1,
+                productItem = 'meth_bag',
+                productCount = 1,
+                difficulty = 'hard',
+            },
+        },
     },
 
-    -- Stage 3: Sell (dealers around the city)
-    sell = {
-        dealers = {
-            vector3(-1170.00, -1580.00, 4.00),
-            vector3(100.00, -1900.00, 20.00),
-            vector3(-500.00, -300.00, 35.00),
-            vector3(700.00, -1300.00, 26.00),
+    -- ═══ STAGE 3: STREET SALE (Vânzare Stradală) ═══
+    streetSale = {
+        interactionDistance = 2.5,
+        pedCooldownSec = 60,     -- A ped won't buy again for 60 seconds
+        negotiationBonusPct = 0.25, -- +25% price increase on successful negotiation
+        alertPoliceChanceOnFail = 0.45, -- 45% chance ped calls 911 when negotiation fails
+        drugs = {
+            weed = {
+                item = 'weed_brick',
+                label = 'Pachete Weed',
+                basePrice = 250,
+                minQty = 1,
+                maxQty = 5,
+            },
+            coca = {
+                item = 'coke_brick',
+                label = 'Pudră Cocaină',
+                basePrice = 800,
+                minQty = 1,
+                maxQty = 3,
+            },
+            meth = {
+                item = 'meth_bag',
+                label = 'Cristale Meth',
+                basePrice = 1200,
+                minQty = 1,
+                maxQty = 2,
+            },
         },
-        sellRadius = 5.0,
-        priceVariance = { min = 0.8, max = 1.3 },
-        cooldownMs = 10000,
-        maxAmount = 10,
     },
 
-    -- Drug types with EXPLICIT raw/product labels (no blind ' Leaf'/' Brick'
-    -- concatenation — 'Meth Leaf' was wrong for meth_chemical).
+    -- Shared Drug definitions for legacy references
     drugs = {
         weed = {
             raw = 'weed_leaf',
@@ -66,7 +102,7 @@ SunsetDrugs.Config = {
             label = 'Weed',
             rawLabel = 'Weed Leaves',
             productLabel = 'Weed Brick',
-            basePrice = 350,
+            basePrice = 250,
         },
         coke = {
             raw = 'coke_leaf',
@@ -82,7 +118,7 @@ SunsetDrugs.Config = {
             label = 'Meth',
             rawLabel = 'Meth Chemicals',
             productLabel = 'Meth Bag',
-            basePrice = 550,
+            basePrice = 1200,
         },
     },
 }

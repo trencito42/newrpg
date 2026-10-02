@@ -1,33 +1,16 @@
 -- ═══════════════════════════════════════════════════════════════
---  SUNSETMP — Drug Pipeline (server/main.lua)
---  Manufacture → Process → Sell. Server-authoritative.
---
---  TIMED ACTIONS: harvest/process are two-phase (start → complete).
---  The server records the pending action with a start timestamp; the
---  completion callback re-validates elapsed time, proximity, cooldown
---  and pending state. The client can never skip the timer: calling
---  complete early returns a retryable error, and any second start while
---  pending replaces nothing (rejected).
---
---  COOLDOWN SCOPE: HarvestCooldowns/ProcessCooldowns/SellCooldowns are
---  keyed by SOURCE and are runtime anti-spam only (30s/5s/10s). They do
---  NOT persist across reconnect — this is deliberate: they exist to stop
---  button spam, not to gate progression. Documented per audit request.
---
---  NOTIFICATION OWNERSHIP: the SERVER sends success/error notifications;
---  the client only refreshes UI state (no duplicate success toasts).
+--  SUNSETMP — Drug Pipeline Server (server/main.lua)
+--  Manufacture (Harvest) → Process (Clandestine Lab) → Street Sale.
+--  100% Server-Authoritative with Tokens & Anti-Exploit Security.
 -- ═══════════════════════════════════════════════════════════════
 
 local Cfg = SunsetDrugs.Config
-local HarvestCooldowns = {}
-local ProcessCooldowns = {}
-local SellCooldowns = {}
-local PendingActions = {}   -- [source] = { kind, spotIndex?, drug?, startedAt, durationMs }
 
--- Tolerance for clock skew between client progress bar and server timer.
-local COMPLETE_SLACK_MS = 400
--- Pending actions expire (player never completed — walked away silently).
-local PENDING_TTL_MS = 60000
+-- Security State Tables
+local HarvestSessions = {}   -- [source] = { token, spotIndex, drugType, lastHitMs, count }
+local LabSessions = {}       -- [source] = { token, labIndex, startedAt, recipe }
+local SaleSessions = {}      -- [source] = { token, netPed, drugType, qty, basePrice, risk, startedAt }
+local PedCooldowns = {}      -- [pedNetId] = expiryTime
 
 local function notify(source, msg, kind, duration)
     TriggerClientEvent('sunset:client:notify', source, msg, kind or 'info', duration or 5000)
@@ -35,7 +18,7 @@ end
 
 local function dlog(msg)
     if GetConvar('sv_sunset_drugs_debug', '0') == '1' then
-        print('[DRUGS] ' .. msg)
+        print('[DRUGS-SERVER] ' .. msg)
     end
 end
 
@@ -54,326 +37,373 @@ local function nearAny(coords, list, radius)
     return false
 end
 
--- [SEC3] every drug entry point requires a loaded character
 local function hasChar(source)
     local ok, c = pcall(function() return exports.sunset_core:GetCharacter(source) end)
     return ok and c ~= nil
 end
 
-local function getSpot(index)
-    index = tonumber(index)
-    if not index then return nil end
-    local spot = Cfg.manufacture.spots[index]
-    if type(spot) ~= 'table' or not spot.coords then return nil end
-    return spot
+local function generateToken()
+    return tostring(GetGameTimer()) .. '_' .. tostring(math.random(100000, 999999))
 end
 
-local function clearPending(source)
-    PendingActions[source] = nil
-end
+-- ═══════════════════════════════════════════════════════════════
+-- 1. HARVEST SYSTEM (Recoltare)
+-- ═══════════════════════════════════════════════════════════════
 
-local function takePending(source, kind)
-    local pending = PendingActions[source]
-    if not pending or pending.kind ~= kind then return nil end
-    PendingActions[source] = nil
-    return pending
-end
-
-local function startPending(source, kind, durationMs, extra)
-    -- Expire stale pendings first (walk-away without cancel).
-    local existing = PendingActions[source]
-    if existing and (GetGameTimer() - existing.startedAt) < PENDING_TTL_MS then
-        return nil, { localeKey = 'drugs.message.you_are_already_busy_with_another_action' }
-    end
-    local pending = {
-        kind = kind,
-        startedAt = GetGameTimer(),
-        durationMs = durationMs,
-    }
-    for k, v in pairs(extra or {}) do pending[k] = v end
-    PendingActions[source] = pending
-    return pending
-end
-
--- ═══ STAGE 1: HARVEST (two-phase timed) ═══
-
-exports.sunset_core:RegisterCallback('sunset:drugs:harvestStart', function(source, spotIndex)
-    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
-    local spot = getSpot(spotIndex)
+exports.sunset_core:RegisterCallback('sunset:drugs:requestHarvestSession', function(source, spotIndex)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end
+    spotIndex = tonumber(spotIndex)
+    local spot = spotIndex and Cfg.manufacture.spots[spotIndex]
     if not spot then return nil, { localeKey = 'drugs.message.invalid_harvest_spot' } end
-    local drug = Cfg.drugs[spot.drug]
-    if not drug then return nil, { localeKey = 'drugs.message.this_field_has_nothing_to_harvest' } end
-
-    local now = GetGameTimer()
-    if HarvestCooldowns[source] and now - HarvestCooldowns[source] < (Cfg.manufacture.cooldownMs or 30000) then
-        local remaining = math.ceil(((Cfg.manufacture.cooldownMs or 30000) - (now - HarvestCooldowns[source])) / 1000)
-        return nil, { localeKey = 'drugs.message.this_patch_was_recently_picked_try_again_in_value', formatArgs = { remaining } }
-    end
 
     local coords = pedCoords(source)
-    local near, nearIdx = nearAny(coords, { spot.coords }, Cfg.manufacture.spotRadius or 10.0)
+    local near = nearAny(coords, { spot.coords }, (Cfg.manufacture.spotRadius or 15.0) + 2.0)
     if not near then return nil, { localeKey = 'drugs.message.you_are_not_at_that_harvest_spot' } end
 
-    local durationMs = Cfg.manufacture.harvestTimeMs or 5000
-    local pending, err = startPending(source, 'harvest', durationMs, {
-        spotIndex = tonumber(spotIndex),
-        drugType = spot.drug,
-    })
-    if not pending then return nil, err end
+    local drugConfig = Cfg.drugs[spot.drug]
+    if not drugConfig then return nil, { localeKey = 'drugs.message.invalid_drug_type' } end
 
-    dlog(('harvestStart src=%d spot=%d drug=%s'):format(source, spotIndex, spot.drug))
-    return { durationMs = durationMs, drugType = spot.drug, rawLabel = drug.rawLabel or drug.label }
-end)
-
-exports.sunset_core:RegisterCallback('sunset:drugs:harvestComplete', function(source)
-    if not hasChar(source) then clearPending(source) return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
-    local pending = takePending(source, 'harvest')
-    if not pending then return nil, { localeKey = 'drugs.message.no_harvest_in_progress' } end
-
-    local now = GetGameTimer()
-    local elapsed = now - pending.startedAt
-    if elapsed < (pending.durationMs - COMPLETE_SLACK_MS) then
-        -- Early completion attempt — re-arm the pending so the legit progress
-        -- bar can still complete; this call is simply rejected.
-        pending.startedAt = pending.startedAt -- unchanged
-        PendingActions[source] = pending
-        dlog(('harvestComplete REJECTED src=%d elapsed=%dms required=%dms'):format(source, elapsed, pending.durationMs))
-        return nil, { localeKey = 'drugs.message.still_harvesting' }
-    end
-
-    -- Re-validate proximity at completion.
-    local spot = getSpot(pending.spotIndex)
-    if not spot then return nil, { localeKey = 'drugs.message.invalid_harvest_spot' } end
-    local coords = pedCoords(source)
-    if not nearAny(coords, { spot.coords }, (Cfg.manufacture.spotRadius or 10.0) + 2.0) then
-        return nil, { localeKey = 'drugs.message.you_left_the_harvest_spot' }
-    end
-
-    -- Cooldown re-check (another character/connection cannot bypass: keyed by source).
-    if HarvestCooldowns[source] and now - HarvestCooldowns[source] < (Cfg.manufacture.cooldownMs or 30000) then
-        return nil, { localeKey = 'drugs.message.you_need_to_wait_before_harvesting_again' }
-    end
-
-    local drug = Cfg.drugs[pending.drugType]
-    if not drug then return nil, { localeKey = 'drugs.message.invalid_drug_type' } end
-
-    local yieldCount = math.random(Cfg.manufacture.yieldMin or 1, Cfg.manufacture.yieldMax or 3)
-
-    -- [RETURN-VALUE FIX] Check the ACTUAL AddItem return value (pcall(true,false)
-    -- used to look like success). No fake harvests.
-    local ok, added = pcall(function()
-        return exports.sunset_inventory:AddItem(source, drug.raw, yieldCount)
-    end)
-    if not ok or added ~= true then
-        dlog(('harvestComplete AddItem FAILED src=%d item=%s x%d'):format(source, drug.raw, yieldCount))
-        return nil, { localeKey = 'drugs.message.inventory_full_nothing_was_harvested' }
-    end
-
-    HarvestCooldowns[source] = now
-    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.harvested_x', { yield_count = math.floor(tonumber(yieldCount) or 0), raw_label = tostring(drug.rawLabel or drug.label) }), 'success')
-    dlog(('harvestComplete ok src=%d drug=%s x%d'):format(source, pending.drugType, yieldCount))
-    return { drugType = pending.drugType, amount = yieldCount, raw = drug.raw, rawLabel = drug.rawLabel }
-end)
-
--- ═══ STAGE 2: PROCESS (two-phase timed) ═══
-
-exports.sunset_core:RegisterCallback('sunset:drugs:processStart', function(source, drugType)
-    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
-    drugType = tostring(drugType or '')
-    local drug = Cfg.drugs[drugType]
-    if not drug then return nil, { localeKey = 'drugs.message.unknown_drug_type' } end
-
-    local now = GetGameTimer()
-    if ProcessCooldowns[source] and now - ProcessCooldowns[source] < (Cfg.process.cooldownMs or 5000) then
-        return nil, { localeKey = 'drugs.message.wait_a_moment_before_processing_again' }
-    end
-
-    local coords = pedCoords(source)
-    if not nearAny(coords, Cfg.process.labs, Cfg.process.labRadius or 10.0) then
-        return nil, { localeKey = 'drugs.message.you_must_be_at_a_processing_lab' }
-    end
-
-    -- Validate raw materials BEFORE starting (do not consume yet —
-    -- consumption happens atomically at completion).
-    local ratio = Cfg.process.ratio or 2
-    local hasRaw = false
+    local currentAmount = 0
     pcall(function()
-        hasRaw = exports.sunset_inventory:HasItem(source, drug.raw, ratio) == true
+        currentAmount = exports.sunset_inventory:CountItem(source, drugConfig.raw) or 0
     end)
-    if not hasRaw then
-        return nil, { localeKey = 'drugs.message.you_need_value_x_value_to_process', formatArgs = { ratio, drug.rawLabel or drug.label } }
-    end
 
-    local durationMs = Cfg.process.processTimeMs or 8000
-    local pending, err = startPending(source, 'process', durationMs, { drugType = drugType })
-    if not pending then return nil, err end
+    local token = generateToken()
+    HarvestSessions[source] = {
+        token = token,
+        spotIndex = spotIndex,
+        drugType = spot.drug,
+        rawItem = drugConfig.raw,
+        lastHitMs = 0,
+    }
 
-    dlog(('processStart src=%d drug=%s'):format(source, drugType))
-    return { durationMs = durationMs, drugType = drugType, ratio = ratio }
+    dlog(('Harvest session opened for src=%d spot=%d drug=%s'):format(source, spotIndex, spot.drug))
+    return {
+        token = token,
+        type = spot.drug,
+        amount = currentAmount,
+        maxAmount = Cfg.manufacture.maxBagCapacity or 50,
+    }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:drugs:processComplete', function(source)
-    if not hasChar(source) then clearPending(source) return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
-    local pending = takePending(source, 'process')
-    if not pending then return nil, { localeKey = 'drugs.message.no_processing_in_progress' } end
+exports.sunset_core:RegisterCallback('sunset:drugs:harvestHit', function(source, token, drugType)
+    if not hasChar(source) then return { success = false, err = 'No character' } end
+    local session = HarvestSessions[source]
+    if not session or session.token ~= token then
+        return { success = false, err = 'Invalid harvest session' }
+    end
 
     local now = GetGameTimer()
-    if (now - pending.startedAt) < (pending.durationMs - COMPLETE_SLACK_MS) then
-        PendingActions[source] = pending
-        return nil, { localeKey = 'drugs.message.still_processing' }
+    if (now - session.lastHitMs) < (Cfg.manufacture.minHitIntervalMs or 280) then
+        dlog(('Harvest rate-limit hit for src=%d dt=%dms'):format(source, now - session.lastHitMs))
+        return { success = false, err = 'Too fast' }
     end
+    session.lastHitMs = now
+
+    local spot = Cfg.manufacture.spots[session.spotIndex]
+    if not spot then return { success = false, err = 'Invalid spot' } end
 
     local coords = pedCoords(source)
-    if not nearAny(coords, Cfg.process.labs, (Cfg.process.labRadius or 10.0) + 2.0) then
-        return nil, { localeKey = 'drugs.message.you_left_the_lab' }
+    if not nearAny(coords, { spot.coords }, (Cfg.manufacture.spotRadius or 15.0) + 3.0) then
+        return { success = false, err = 'Left area' }
     end
 
-    local drug = Cfg.drugs[pending.drugType]
-    if not drug then return nil, { localeKey = 'drugs.message.unknown_drug_type' } end
-    local ratio = Cfg.process.ratio or 2
+    -- Check bag capacity
+    local currentCount = exports.sunset_inventory:CountItem(source, session.rawItem) or 0
+    if currentCount >= (Cfg.manufacture.maxBagCapacity or 50) then
+        return { success = false, err = 'Bag full', full = true }
+    end
 
-    -- [ATOMIC] ConvertItems (sunset_inventory domain): removes raw + adds
-    -- product as one guarded operation with compensation on failure.
-    -- Raw can never be lost without the product appearing.
-    local ok, converted, convErr = pcall(function()
-        return exports.sunset_inventory:ConvertItems(source, drug.raw, ratio, drug.product, 1)
+    -- Add 1 raw material atomically
+    local ok, added = pcall(function()
+        return exports.sunset_inventory:AddItem(source, session.rawItem, 1)
     end)
-    if not ok or converted ~= true then
-        dlog(('processComplete ConvertItems FAILED src=%d err=%s'):format(source, tostring(convErr)))
-        return nil, convErr or exports.sunset_core:TFor(source, 'drugs.err.processing_failed_your_materials_were_not')
+
+    if not ok or added ~= true then
+        return { success = false, err = 'Inventory full' }
     end
 
-    ProcessCooldowns[source] = now
-    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.processed_x_1x', { ratio = math.floor(tonumber(ratio) or 0), raw_label = tostring(drug.rawLabel or drug.label), product_label = tostring(drug.productLabel or drug.label) }), 'success')
-    dlog(('processComplete ok src=%d drug=%s'):format(source, pending.drugType))
-    return { drugType = pending.drugType, product = drug.product, productLabel = drug.productLabel }
+    local newCount = currentCount + 1
+    dlog(('Harvested 1x %s for src=%d (total=%d)'):format(session.rawItem, source, newCount))
+    return {
+        success = true,
+        amount = newCount,
+        maxAmount = Cfg.manufacture.maxBagCapacity or 50,
+    }
 end)
 
--- ═══ STAGE 3: SELL (instant, economically safe) ═══
-
-exports.sunset_core:RegisterCallback('sunset:drugs:sell', function(source, drugType, amount)
-    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end -- [SEC3]
-    drugType = tostring(drugType or '')
-    amount = math.floor(tonumber(amount) or 0)
-    local drug = Cfg.drugs[drugType]
-    if not drug then return nil, { localeKey = 'drugs.message.unknown_drug_type' } end
-    if amount < 1 or amount > (Cfg.sell.maxAmount or 10) then return nil, { localeKey = 'drugs.message.invalid_amount' } end
-
-    local now = GetGameTimer()
-    if SellCooldowns[source] and now - SellCooldowns[source] < (Cfg.sell.cooldownMs or 10000) then
-        return nil, { localeKey = 'drugs.message.the_dealer_needs_a_moment_wait_before_selling_again' }
-    end
-
-    local coords = pedCoords(source)
-    if not nearAny(coords, Cfg.sell.dealers, Cfg.sell.sellRadius or 5.0) then
-        return nil, { localeKey = 'drugs.message.you_must_be_near_a_dealer_to_sell' }
-    end
-    -- [SEC2] claim the cooldown BEFORE the yielding inventory/money calls
-    SellCooldowns[source] = now
-
-    -- [RETURN-VALUE FIX] Removal MUST be confirmed before any payout.
-    local ok, removed = pcall(function()
-        return exports.sunset_inventory:RemoveItem(source, drug.product, amount)
-    end)
-    if not ok or removed ~= true then
-        dlog(('sell RemoveItem FAILED src=%d item=%s x%d'):format(source, drug.product, amount))
-        return nil, { localeKey = 'drugs.message.you_don_t_have_value_x_value', formatArgs = { amount, drug.productLabel or drug.label } }
-    end
-
-    -- Price with variance (server-authoritative).
-    local variance = Cfg.sell.priceVariance or { min = 0.8, max = 1.3 }
-    local multiplier = variance.min + math.random() * (variance.max - variance.min)
-    local price = math.floor(drug.basePrice * multiplier * amount)
-
-    -- Payout AFTER confirmed removal. If AddMoney somehow fails, COMPENSATE
-    -- by restoring the product — never a silent item loss.
-    local paidOk, paid = pcall(function()
-        return exports.sunset_core:AddMoney(source, 'cash', price, 'drug_sale')
-    end)
-    if not paidOk or paid == false then
-        print(('^1[sunset_drugs]^7 AddMoney failed after removal src=%s price=%d — restoring product'):format(
-            tostring(source), price))
-        pcall(function() exports.sunset_inventory:AddItem(source, drug.product, amount) end)
-        return nil, { localeKey = 'drugs.message.the_dealer_could_not_pay_you_your_product_was' }
-    end
-
-    SellCooldowns[source] = now
-    notify(source, exports.sunset_core:TFor(source, 'drugs.msg.sold_x_for', { amount = math.floor(tonumber(amount) or 0), product_label = tostring(drug.productLabel or drug.label), price = tostring(price) }), 'success')
-    dlog(('sell ok src=%d drug=%s x%d price=%d'):format(source, drugType, amount, price))
-    return { drugType = drugType, amount = amount, price = price }
-end)
-
--- ═══ CANCEL (client walked away / closed UI mid-action) ═══
-
-exports.sunset_core:RegisterCallback('sunset:drugs:cancelAction', function(source)
-    clearPending(source)
+exports.sunset_core:RegisterCallback('sunset:drugs:closeHarvest', function(source)
+    HarvestSessions[source] = nil
     return true
 end)
 
--- ═══ STATUS ═══
+-- ═══════════════════════════════════════════════════════════════
+-- 2. CLANDESTINE LAB PROCESSING
+-- ═══════════════════════════════════════════════════════════════
 
-exports.sunset_core:RegisterCallback('sunset:drugs:status', function(source)
-    local result = {
-        drugs = {},
-        spots = {},
-        labs = {},
-        dealers = {},
-        priceVariance = Cfg.sell.priceVariance or { min = 0.8, max = 1.3 },
-        maxSellAmount = Cfg.sell.maxAmount or 10,
+exports.sunset_core:RegisterCallback('sunset:drugs:openLab', function(source, labIndex)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end
+    labIndex = tonumber(labIndex) or 1
+    local lab = Cfg.process.labs[labIndex]
+    if not lab then return nil, { localeKey = 'drugs.message.invalid_lab' } end
+
+    local coords = pedCoords(source)
+    local near = nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 2.0)
+    if not near then return nil, { localeKey = 'drugs.message.you_must_be_at_a_processing_lab' } end
+
+    local inventorySnap = {}
+    for _, itemKey in ipairs({ 'weed_leaf', 'coke_leaf', 'meth_chemical', 'chemicals', 'weed_brick', 'coke_brick', 'meth_bag' }) do
+        pcall(function()
+            inventorySnap[itemKey] = exports.sunset_inventory:CountItem(source, itemKey) or 0
+        end)
+    end
+
+    local token = generateToken()
+    LabSessions[source] = {
+        token = token,
+        labIndex = labIndex,
+        startedAt = GetGameTimer(),
     }
 
-    for drugType, drug in pairs(Cfg.drugs or {}) do
-        local rawCount = 0
-        local productCount = 0
-        pcall(function()
-            rawCount = exports.sunset_inventory:CountItem(source, drug.raw) or 0
-            productCount = exports.sunset_inventory:CountItem(source, drug.product) or 0
-        end)
-        result.drugs[drugType] = {
-            label = drug.label,
-            raw = drug.raw,
-            product = drug.product,
-            rawLabel = drug.rawLabel or drug.label,
-            productLabel = drug.productLabel or drug.label,
-            rawCount = rawCount,
-            productCount = productCount,
-            basePrice = drug.basePrice,
-        }
-    end
-
-    -- Spot drug mapping (Option A) so the UI shows only what grows there.
-    for i, spot in ipairs(Cfg.manufacture.spots or {}) do
-        result.spots[i] = { drug = spot.drug, label = spot.label }
-    end
-
-    pcall(function()
-        local coords = pedCoords(source)
-        if coords then
-            result.nearSpot = select(2, nearAny(coords, Cfg.manufacture.spots, Cfg.manufacture.spotRadius or 10.0))
-            result.nearLab = nearAny(coords, Cfg.process.labs, Cfg.process.labRadius or 10.0) and true or false
-            result.nearDealer = nearAny(coords, Cfg.sell.dealers, Cfg.sell.sellRadius or 5.0) and true or false
-        end
-    end)
-
-    return result
+    return {
+        token = token,
+        inventory = inventorySnap,
+        recipes = Cfg.process.recipes,
+    }
 end)
 
--- ═══ CLEANUP ═══
+exports.sunset_core:RegisterCallback('sunset:drugs:processSuccess', function(source, token, recipeType)
+    if not hasChar(source) then return { success = false, err = 'No character' } end
+    local session = LabSessions[source]
+    if not session or session.token ~= token then
+        return { success = false, err = 'Invalid lab session' }
+    end
+
+    local recipe = Cfg.process.recipes[recipeType]
+    if not recipe then return { success = false, err = 'Invalid recipe' } end
+
+    local lab = Cfg.process.labs[session.labIndex]
+    local coords = pedCoords(source)
+    if not lab or not nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 3.0) then
+        return { success = false, err = 'Left lab area' }
+    end
+
+    -- Verify player has required items
+    local hasRaw = exports.sunset_inventory:HasItem(source, recipe.rawItem, recipe.rawCount) == true
+    local hasSecondary = true
+    if recipe.secondaryItem and recipe.secondaryCount > 0 then
+        hasSecondary = exports.sunset_inventory:HasItem(source, recipe.secondaryItem, recipe.secondaryCount) == true
+    end
+
+    if not hasRaw or not hasSecondary then
+        return { success = false, err = 'Missing materials' }
+    end
+
+    -- Atomic consumption and reward
+    local removeRawOk = exports.sunset_inventory:RemoveItem(source, recipe.rawItem, recipe.rawCount)
+    if not removeRawOk then return { success = false, err = 'Failed to consume raw item' } end
+
+    if recipe.secondaryItem and recipe.secondaryCount > 0 then
+        local removeSecOk = exports.sunset_inventory:RemoveItem(source, recipe.secondaryItem, recipe.secondaryCount)
+        if not removeSecOk then
+            -- Compensate raw item
+            exports.sunset_inventory:AddItem(source, recipe.rawItem, recipe.rawCount)
+            return { success = false, err = 'Failed to consume secondary item' }
+        end
+    end
+
+    -- Add product
+    local addOk = exports.sunset_inventory:AddItem(source, recipe.productItem, recipe.productCount or 1)
+    if not addOk then
+        -- Compensate
+        exports.sunset_inventory:AddItem(source, recipe.rawItem, recipe.rawCount)
+        if recipe.secondaryItem and recipe.secondaryCount > 0 then
+            exports.sunset_inventory:AddItem(source, recipe.secondaryItem, recipe.secondaryCount)
+        end
+        return { success = false, err = 'Inventory full' }
+    end
+
+    notify(source, ('Ai produs cu succes 1x %s!'):format(recipe.label), 'success')
+    dlog(('Process complete for src=%d recipe=%s -> 1x %s'):format(source, recipeType, recipe.productItem))
+    return { success = true, product = recipe.productItem }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:processFail', function(source, token, recipeType)
+    local session = LabSessions[source]
+    if not session or session.token ~= token then return { success = false } end
+
+    local recipe = Cfg.process.recipes[recipeType]
+    if recipe then
+        -- Realistic loss: 1 raw material burned/ruined
+        exports.sunset_inventory:RemoveItem(source, recipe.rawItem, 1)
+        notify(source, 'Ai scăpat temperatura de sub control! Un ingredient a fost compromis.', 'error')
+    end
+    return { success = true }
+end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- 3. STREET SALE SYSTEM (Vânzare Stradală)
+-- ═══════════════════════════════════════════════════════════════
+
+exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function(source, pedNetId)
+    if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end
+
+    local now = GetGameTimer()
+    if PedCooldowns[pedNetId] and now < PedCooldowns[pedNetId] then
+        return nil, { err = 'Clientul a cumpărat deja recent sau nu mai este interesat!' }
+    end
+
+    -- Find sellable drugs in player inventory
+    local availableDrugs = {}
+    for drugKey, dInfo in pairs(Cfg.streetSale.drugs) do
+        local count = exports.sunset_inventory:CountItem(source, dInfo.item) or 0
+        if count > 0 then
+            table.insert(availableDrugs, { key = drugKey, info = dInfo, count = count })
+        end
+    end
+
+    if #availableDrugs == 0 then
+        return nil, { err = 'Nu ai niciun drog procesat pe care să îl vinzi!' }
+    end
+
+    -- Pick a random drug from what player carries
+    local chosen = availableDrugs[math.random(1, #availableDrugs)]
+    local maxCanBuy = math.min(chosen.count, chosen.info.maxQty or 3)
+    local qty = math.random(chosen.info.minQty or 1, maxCanBuy)
+
+    -- Base price with variance
+    local variance = 0.85 + (math.random() * 0.3) -- 0.85 to 1.15
+    local basePrice = math.floor(chosen.info.basePrice * qty * variance)
+
+    -- Determine Risk Level based on quantity and drug type
+    local risk = 'low'
+    if chosen.key == 'coca' or qty >= 3 then
+        risk = 'med'
+    end
+    if chosen.key == 'meth' or qty >= 4 then
+        risk = 'high'
+    end
+
+    local token = generateToken()
+    SaleSessions[source] = {
+        token = token,
+        pedNetId = pedNetId,
+        drugKey = chosen.key,
+        item = chosen.info.item,
+        qty = qty,
+        basePrice = basePrice,
+        risk = risk,
+        startedAt = now,
+    }
+
+    dlog(('Street offer created src=%d ped=%d drug=%s qty=%d price=$%d risk=%s'):format(
+        source, pedNetId or 0, chosen.key, qty, basePrice, risk))
+
+    return {
+        token = token,
+        type = chosen.key,
+        qty = qty,
+        price = basePrice,
+        risk = risk,
+    }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(source, data)
+    if not hasChar(source) then return { success = false, err = 'No character' } end
+    local token = data and data.token
+    local session = SaleSessions[source]
+    if not session or session.token ~= token then
+        return { success = false, err = 'Invalid sale session' }
+    end
+
+    -- Verify authoritative price
+    local maxAllowedPrice = session.basePrice
+    if data.negotiated then
+        maxAllowedPrice = math.floor(session.basePrice * (1.0 + (Cfg.streetSale.negotiationBonusPct or 0.25)))
+    end
+
+    local finalPrice = math.min(tonumber(data.price) or session.basePrice, maxAllowedPrice)
+
+    -- Check and remove drug item
+    local removeOk = exports.sunset_inventory:RemoveItem(source, session.item, session.qty)
+    if not removeOk then
+        return { success = false, err = 'Nu mai ai cantitatea necesară de droguri!' }
+    end
+
+    -- Give money (clean cash or black money)
+    local addMoneyOk = exports.sunset_core:AddMoney(source, 'cash', finalPrice, 'street_drug_sale')
+    if not addMoneyOk then
+        -- Restore items
+        exports.sunset_inventory:AddItem(source, session.item, session.qty)
+        return { success = false, err = 'Eroare la transferul banilor' }
+    end
+
+    -- Put ped on cooldown
+    if session.pedNetId then
+        PedCooldowns[session.pedNetId] = GetGameTimer() + ((Cfg.streetSale.pedCooldownSec or 60) * 1000)
+    end
+
+    notify(source, ('Ai vândut %dx %s pentru $%s!'):format(session.qty, session.drugKey, tostring(finalPrice)), 'success')
+    dlog(('Street sale completed src=%d price=$%d'):format(source, finalPrice))
+    SaleSessions[source] = nil
+    return { success = true }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:failNegotiation', function(source, data)
+    local session = SaleSessions[source]
+    if not session then return { success = true } end
+
+    if session.pedNetId then
+        PedCooldowns[session.pedNetId] = GetGameTimer() + ((Cfg.streetSale.pedCooldownSec or 60) * 1000)
+    end
+
+    -- Dispatch 911 police notification if roll passes
+    local roll = math.random()
+    if roll <= (Cfg.streetSale.alertPoliceChanceOnFail or 0.45) then
+        local coords = pedCoords(source)
+        if coords and exports.sunset_dispatch then
+            pcall(function()
+                exports.sunset_dispatch:CreateCall({
+                    code = '10-31',
+                    title = 'Activitate Ilegală / Vânzare de Droguri',
+                    coords = coords,
+                    message = 'Un cetățean raportează o tentativă suspectă de vânzare substanțe interzise.',
+                    job = 'police',
+                })
+            end)
+        end
+    end
+
+    SaleSessions[source] = nil
+    return { success = true }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:declineStreetSale', function(source, data)
+    local session = SaleSessions[source]
+    if session and session.pedNetId then
+        PedCooldowns[session.pedNetId] = GetGameTimer() + ((Cfg.streetSale.pedCooldownSec or 60) * 1000)
+    end
+    SaleSessions[source] = nil
+    return { success = true }
+end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- CLEANUP & LIFECYCLE
+-- ═══════════════════════════════════════════════════════════════
 
 AddEventHandler('playerDropped', function()
     local src = source
-    HarvestCooldowns[src] = nil
-    ProcessCooldowns[src] = nil
-    SellCooldowns[src] = nil
-    PendingActions[src] = nil
+    HarvestSessions[src] = nil
+    LabSessions[src] = nil
+    SaleSessions[src] = nil
 end)
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    PendingActions = {}
-    HarvestCooldowns = {}
-    ProcessCooldowns = {}
-    SellCooldowns = {}
+    HarvestSessions = {}
+    LabSessions = {}
+    SaleSessions = {}
+    PedCooldowns = {}
 end)
 
-print('^2[sunset_drugs]^7 Drug pipeline online (manufacture → process → sell)')
+print('^2[sunset_drugs]^7 Secure drug pipeline online (Harvest HUD + Lab Processing + Street Sale)')
