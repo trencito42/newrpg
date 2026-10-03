@@ -75,7 +75,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
                 {t(locale, "auth.password")}
               </label>
               <Link href="/forgot-password" className="text-xs text-brand hover:text-brand-light transition-colors">
-                Ai uitat parola?
+                {t(locale, "auth.forgot_password_link")}
               </Link>
             </div>
             <input type="password" required autoComplete="current-password" value={password}

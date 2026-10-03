@@ -177,11 +177,11 @@ const AuthUI = {
         if (this.pendingSubmit) return;
         const identifier = ($('#forgot-user')?.value || '').trim();
         if (!identifier) {
-            return this.showError('Te rugăm să introduci numele de utilizator sau emailul.');
+            return this.showError(tr('auth.forgot_required', null, 'Please enter your username or email address.'));
         }
 
         this.hideError();
-        this.showLoading(true, 'Se trimite emailul de resetare...');
+        this.showLoading(true, tr('auth.forgot_sending', null, 'Sending password reset request…'));
         this.pendingSubmit = true;
 
         post('authForgotPassword', {

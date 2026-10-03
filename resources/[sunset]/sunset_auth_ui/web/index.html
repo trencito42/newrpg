@@ -39,7 +39,7 @@
 
                     <div class="auth-links">
                         <button type="button" class="auth-link" id="auth-go-register" data-i18n="auth.create_link">No account? Create one →</button>
-                        <button type="button" class="auth-link auth-link-forgot" id="auth-go-forgot">Ai uitat parola? (Lost Password)</button>
+                        <button type="button" class="auth-link auth-link-forgot" id="auth-go-forgot" data-i18n="auth.forgot_password">Lost password? (Reset via email)</button>
                     </div>
                 </div>
 
@@ -77,20 +77,20 @@
                 <!-- Forgot Password Form -->
                 <div class="auth-form hidden" id="auth-form-forgot">
                     <div class="auth-field">
-                        <label for="forgot-user">USERNAME / EMAIL</label>
-                        <input type="text" id="forgot-user" maxlength="254" autocomplete="username" spellcheck="false" placeholder="Introdu username-ul contului">
+                        <label for="forgot-user" data-i18n="auth.forgot_identifier">USERNAME / EMAIL</label>
+                        <input type="text" id="forgot-user" maxlength="254" autocomplete="username" spellcheck="false" placeholder="Enter your account username or email" data-i18n-placeholder="auth.forgot_placeholder">
                     </div>
 
-                    <p style="font-size: 11px; color: #94a3b8; margin: -4px 0 12px; line-height: 1.4;">
-                        Vei primi un email pe adresa asociată contului tău cu un link securizat pentru resetarea parolei.
+                    <p style="font-size: 11px; color: #94a3b8; margin: -4px 0 12px; line-height: 1.4;" data-i18n="auth.forgot_desc">
+                        You will receive an email on your registered address with a secure link to reset your password.
                     </p>
 
                     <button type="button" class="auth-btn" id="auth-forgot-btn">
-                        <span>TRIMITE EMAIL DE RESETARE</span>
+                        <span data-i18n="auth.forgot_submit">SEND RESET EMAIL</span>
                     </button>
 
                     <div class="auth-links">
-                        <button type="button" class="auth-link" id="auth-forgot-back">← Înapoi la Autentificare</button>
+                        <button type="button" class="auth-link" id="auth-forgot-back" data-i18n="auth.forgot_back">← Back to Sign In</button>
                     </div>
                 </div>
             </div>

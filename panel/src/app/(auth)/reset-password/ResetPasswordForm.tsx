@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Lock, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { type Locale } from "@/lib/i18n";
+import { t, type Locale } from "@/lib/i18n";
 
 export function ResetPasswordForm({ token, locale }: { token: string; locale: Locale }) {
   const router = useRouter();
@@ -19,17 +19,17 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!token) {
-      setError("Token-ul de resetare lipsește din link. Te rugăm să deschizi linkul complet primit pe email.");
+      setError(t(locale, "auth.reset_error_missing_token"));
       return;
     }
 
     if (!password || password.length < 6) {
-      setError("Parola nouă trebuie să conțină minim 6 caractere.");
+      setError(t(locale, "auth.reset_error_min_length"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Parola nouă și confirmarea nu coincid.");
+      setError(t(locale, "auth.reset_error_mismatch"));
       return;
     }
 
@@ -45,7 +45,7 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
 
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error || "A apărut o eroare la salvarea noii parole.");
+        setError(data.error || t(locale, "common.error"));
         return;
       }
 
@@ -54,7 +54,7 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
         router.push("/login");
       }, 2500);
     } catch {
-      setError("A apărut o eroare de conexiune la server.");
+      setError(t(locale, "auth.network_error"));
     } finally {
       setLoading(false);
     }
@@ -68,15 +68,15 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
             <div className="mx-auto w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-3">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <CardTitle className="text-lg justify-center">Link Invalid</CardTitle>
+            <CardTitle className="text-lg justify-center">{t(locale, "auth.reset_invalid_title")}</CardTitle>
             <CardDescription>
-              Linkul de resetare a parolei este incomplet sau lipsește token-ul de securitate.
+              {t(locale, "auth.reset_invalid_subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center pt-2">
             <Link href="/forgot-password">
               <Button variant="secondary" className="w-full">
-                Solicită un link nou de resetare
+                {t(locale, "auth.reset_request_new")}
               </Button>
             </Link>
           </CardContent>
@@ -92,9 +92,9 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
           <div className="mx-auto w-12 h-12 rounded-xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand mb-3 shadow-[0_0_15px_rgba(99,102,241,0.25)]">
             <Lock className="w-6 h-6" />
           </div>
-          <CardTitle className="text-lg justify-center">Setare Parolă Nouă</CardTitle>
+          <CardTitle className="text-lg justify-center">{t(locale, "auth.reset_title")}</CardTitle>
           <CardDescription>
-            Alege noua parolă securizată pentru contul tău.
+            {t(locale, "auth.reset_subtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -109,22 +109,22 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
             <div className="text-center py-4 space-y-3">
               <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>Parola a fost schimbată cu succes! Te redirecționăm...</span>
+                <span>{t(locale, "auth.reset_success")}</span>
               </div>
               <Link href="/login" className="inline-block mt-2">
                 <Button className="w-full">
-                  Mergi la Autentificare <ArrowRight className="w-4 h-4 ml-1.5" />
+                  {t(locale, "auth.reset_go_to_login")} <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <label className="block text-xs font-medium text-[#B4AFA4]">
-                Parola Nouă
+                {t(locale, "auth.reset_new_password_label")}
                 <input
                   type="password"
                   required
-                  placeholder="Minim 6 caractere..."
+                  placeholder={t(locale, "auth.reset_new_password_placeholder")}
                   autoComplete="new-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -133,11 +133,11 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
               </label>
 
               <label className="block text-xs font-medium text-[#B4AFA4]">
-                Confirmare Parolă Nouă
+                {t(locale, "auth.reset_confirm_password_label")}
                 <input
                   type="password"
                   required
-                  placeholder="Reintrodu parola nouă..."
+                  placeholder={t(locale, "auth.reset_confirm_password_placeholder")}
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
@@ -146,7 +146,7 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
               </label>
 
               <Button type="submit" loading={loading} className="w-full mt-2">
-                Salvează Noua Parolă
+                {loading ? t(locale, "auth.reset_saving") : t(locale, "auth.reset_button")}
               </Button>
             </form>
           )}
@@ -154,9 +154,10 @@ export function ResetPasswordForm({ token, locale }: { token: string; locale: Lo
           <div className="mt-6 pt-4 border-t border-surface-border/60 text-center">
             <Link
               href="/login"
-              className="text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
+              className="inline-flex items-center text-xs text-brand hover:text-brand-light font-medium transition-colors"
             >
-              Înapoi la pagina de login
+              <ArrowRight className="w-3.5 h-3.5 mr-1.5 rotate-180" />
+              {t(locale, "auth.forgot_back_to_login")}
             </Link>
           </div>
         </CardContent>
