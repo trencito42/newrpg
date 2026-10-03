@@ -136,8 +136,12 @@ export async function POST(req: NextRequest, { params }: Context) {
     return NextResponse.json({ error: "already_in_faction" }, { status: 400 });
   }
 
-  if (Number(character.level) < Number(settings.min_level)) {
-    return NextResponse.json({ error: "level_too_low", minLevel: settings.min_level }, { status: 400 });
+  // Canonical progression rule: Factions unlock globally at Level 10+
+  const globalMinLevel = type === "faction" ? 10 : 10;
+  const effectiveMinLevel = Math.max(globalMinLevel, Number(settings.min_level || 0));
+
+  if (Number(character.level || 1) < effectiveMinLevel) {
+    return NextResponse.json({ error: "level_too_low", minLevel: effectiveMinLevel }, { status: 400 });
   }
 
   // Check active warns

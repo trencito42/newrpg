@@ -4015,7 +4015,10 @@ Sunset.Locales['ro'] = {
     ["world.ui.e_lobby"] = "[E] {label} — Recepție",
     ["world.ui.npc"] = "Personaj",
     ["world.ui.open"] = "Deschide {shop_label}",
-    ["world.ui.buy_business"] = "Cumpără afacerea — {format_money}",
     ["chat.suggestion.hack"] = "Pornește un puzzle de hacking.",
     ["chat.suggestion.testhack"] = "Testează un puzzle de hacking (doar pentru dezvoltare).",
+    ["clans.notify.lifetime_extended"] = "Ai prelungit durata clanului cu {days} zile!",
+    ["clans.notify.slots_upgraded"] = "Ai mărit capacitatea clanului la {slots} membri!",
+    ["clans.err.level_required"] = "Necesită nivelul de caracter {level}.",
+    ["clans.err.clan_is_expired"] = "Acest clan a expirat și nu poate primi membri noi.",
 }

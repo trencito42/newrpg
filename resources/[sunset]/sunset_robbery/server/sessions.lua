@@ -137,6 +137,14 @@ function RobberySessions.canStart(source, locationId, skipGates)
     local char = RobberyAdapter.getCharacter(source)
     if not char or not tonumber(char.id) then return nil, { localeKey = 'robbery.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if skipGates or RobberyAdapter.isAdmin(source) then return loc, nil, char end
+
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'criminal.robbery')
+        if access and access.allowed == false then
+            return nil, access.reason or exports.sunset_core:TFor(source, 'robbery.message.you_cannot_start_a_robbery_right_now')
+        end
+    end
+
     if RobberyAdapter.isDead(source) then return nil, { localeKey = 'robbery.message.you_cannot_start_a_robbery_right_now' } end
     if RobberyAdapter.isPoliceRestricted(source) then return nil, { localeKey = 'robbery.message.law_enforcement_cannot_commit_robberies' } end
     if RobberyAdapter.isJailed(source) then return nil, { localeKey = 'robbery.message.you_cannot_start_a_robbery_while_in_custody' } end

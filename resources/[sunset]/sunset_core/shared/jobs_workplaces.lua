@@ -308,8 +308,9 @@ Sunset.JobWorkplaces = {
             }
         },
         requirements = {
-            minLevel = 1,
+            minLevel = 4,
             licenses = { 'driver' },
+            progressionGate = 'job.busdriver',
         },
         actions = {
             apply = true,

@@ -379,9 +379,6 @@ function GrantLicense(source, licenseType, issuedByCharacterId)
     notify(source, exports.sunset_core:TFor(source, 'licenses.msg.issued_valid_until_payday', { label = tostring(SunsetLicenses.Types[licenseType].label), expires = math.floor(tonumber(expires) or 0) }), 'success')
     -- [QUESTS] License acquisition progress
     TriggerEvent('sunset:quest:progress', cid, 'license_obtained', 1, { license = licenseType })
-    if licenseType == 'hunting' then
-        TriggerEvent('sunset:quest:progress', cid, 'hunting_range_passed', 1)
-    end
     return true
 end
 exports('GrantLicense', GrantLicense)
@@ -786,6 +783,12 @@ exports.sunset_core:RegisterCallback('sunset:license:completePractical', functio
         return nil, err
     end
     if type(FinalizeLicenseExamReport) == 'function' then FinalizeLicenseExamReport(session, 'passed') end
+    if licenseType == 'hunting' then
+        local cid = charId(source)
+        if cid then
+            TriggerEvent('sunset:quest:progress', cid, 'hunting_range_passed', 1)
+        end
+    end
     TriggerClientEvent('sunset:licenses:testComplete', source, licenseType)
     return { licenseType = licenseType }
 end)

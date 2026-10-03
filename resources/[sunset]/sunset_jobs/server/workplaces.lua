@@ -19,10 +19,22 @@ local function getCharacterData(source)
     return char
 end
 
-local function checkRequirements(source, char, reqs)
+local function checkRequirements(source, char, reqs, jobId)
+    -- Canonical Progression Gate check
+    if jobId then
+        local gateId = 'job.' .. tostring(jobId):lower()
+        if Sunset.ProgressionGates and Sunset.ProgressionGates[gateId] then
+            local access = exports.sunset_core:CanAccess(source, gateId)
+            if access and access.allowed == false then
+                return false, access.reason or exports.sunset_core:TFor(source, 'jobs.err.you_do_not_meet_the_job')
+            end
+            return true
+        end
+    end
+
     if not reqs then return true end
 
-    -- 1. Level check
+    -- Fallback level check
     if reqs.minLevel and reqs.minLevel > 1 then
         local playerLevel = tonumber(char.level) or 1
         if playerLevel < reqs.minLevel then
@@ -30,14 +42,7 @@ local function checkRequirements(source, char, reqs)
         end
     end
 
-    -- 2. License check — FAIL CLOSED: if the license resource is unavailable
-    -- and this job explicitly declares license requirements, deny access rather
-    -- than silently treating the missing check as "licensed". This prevents
-    -- bypassing the Hunting / Weapon license gate during resource restarts.
-    -- [SECTIONS 2-3] Check ALL required licenses and report EACH missing one by
-    -- its proper label (from SunsetLicenses.Types) rather than the raw key.
-    -- This gives players actionable information: "Missing: Firearm License, Hunting License"
-    -- instead of the generic "[Missing License]".
+    -- Fallback license check
     if reqs.licenses and #reqs.licenses > 0 then
         if GetResourceState('sunset_licenses') ~= 'started' then
             return false, { localeKey = 'jobs.message.licensing_service_unavailable_try_again_in_a_moment' }
@@ -49,9 +54,6 @@ local function checkRequirements(source, char, reqs)
             end)
             local hasLic = (ok and res == true)
             if not hasLic then
-                -- Use the proper label from SunsetLicenses.Types if available,
-                -- fall back to capitalizing the raw key.
-                -- Prefer the local label table; fall back to capitalizing the raw key.
                 local licLabel = LicenseLabels[lic] or (lic:sub(1,1):upper() .. lic:sub(2))
                 missing[#missing + 1] = licLabel
             end
@@ -75,9 +77,9 @@ end
 function SunsetJobs_CheckRequirements(source, jobId)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return false, { localeKey = 'jobs.message.character_not_loaded' } end
-    local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[tostring(jobId or ''):lower()]
-    if not wp then return true end
-    return checkRequirements(source, char, wp.requirements)
+    local cleanJobId = tostring(jobId or ''):lower()
+    local wp = Sunset.JobWorkplaces and Sunset.JobWorkplaces[cleanJobId]
+    return checkRequirements(source, char, wp and wp.requirements, cleanJobId)
 end
 
 local function isPlayerNearCoords(source, targetCoords, maxDist)

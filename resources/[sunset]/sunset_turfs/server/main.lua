@@ -504,6 +504,14 @@ local function runAttackTurf(source)
         return
     end
 
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'turf.participate')
+        if access and access.allowed == false then
+            TriggerClientEvent('sunset:client:notify', source, access.reason or exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
+            return
+        end
+    end
+
     if not canDeclareTurfAttack(pClan.rank) then
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.only_clan_officers_and_leaders_rank_5_can_declare'), 'error')
         return
@@ -699,6 +707,15 @@ local function runIntervene(source)
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
         return
     end
+
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'turf.participate')
+        if access and access.allowed == false then
+            TriggerClientEvent('sunset:client:notify', source, access.reason or exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
+            return
+        end
+    end
+
     if not canDeclareTurfAttack(pClan.rank) then
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.only_clan_officers_and_leaders_rank_5_can_declare_7bce50'), 'error')
         return
@@ -938,6 +955,13 @@ exports.sunset_core:RegisterCallback('sunset:turfs:takeLoadout', function(source
     if not war then return nil, { localeKey = 'turfs.message.you_are_not_in_an_active_war' } end
     local pClan = getPlayerClan(source)
     if not pClan then return nil, { localeKey = 'turfs.message.you_are_not_in_a_clan' } end
+
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'turf.participate')
+        if access and access.allowed == false then
+            return nil, access.reason or exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan')
+        end
+    end
 
     local pkg = getLoadoutById(tostring(loadoutId or ''))
     if not pkg then return nil, { localeKey = 'turfs.message.invalid_package' } end

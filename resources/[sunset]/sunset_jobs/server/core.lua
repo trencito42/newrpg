@@ -503,6 +503,11 @@ function SunsetJobs_StartSession(source, jobId, data)
         return nil, exports.sunset_core:TFor(source, 'jobs.err.you_are_not_employed_as', { civilian_jobs = tostring(Sunset.CivilianJobs[jobId] and Sunset.CivilianJobs[jobId].label or jobId) })
     end
 
+    local access = exports.sunset_core:CanAccess(source, 'job.' .. jobId)
+    if access and access.allowed == false then
+        return nil, access.reason or exports.sunset_core:TFor(source, 'jobs.err.you_do_not_meet_the_job')
+    end
+
     local cfg = Sunset.GetJobConfig(jobId)
     if not cfg then return nil, { localeKey = 'jobs.message.job_not_configured' } end
 

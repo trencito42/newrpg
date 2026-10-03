@@ -1,6 +1,11 @@
 Sunset = Sunset or {}
 Sunset.ProgressionGates = {
     -- Civilian Starter Jobs
+    ['job.fisherman'] = {
+        label = 'Fisherman Job',
+        minLevel = 1,
+        description = 'Available immediately to all citizens with basic fishing equipment.',
+    },
     ['job.courier'] = {
         label = 'Courier Job',
         minLevel = 1,
@@ -12,11 +17,6 @@ Sunset.ProgressionGates = {
         minLevel = 1,
         licenses = { 'driver' },
         description = 'Requires a valid Driver License to drive the municipal waste truck.',
-    },
-    ['job.fisherman'] = {
-        label = 'Fisherman Job',
-        minLevel = 1,
-        description = 'Available immediately to all citizens with basic fishing equipment.',
     },
     ['job.mechanic'] = {
         label = 'Roadside Mechanic Job',
@@ -46,14 +46,14 @@ Sunset.ProgressionGates = {
         minLevel = 10,
         licenses = { 'weapon', 'hunting' },
         completedQuests = { 'hunt_range_challenge' },
-        description = 'Requires Character Level 10, Firearm & Hunting Licenses, and completion of the Hunting Range.',
+        description = 'Requires Character Level 10, Firearm & Hunting Licenses, and completion of the Hunting Range qualification.',
     },
 
     -- Criminal Branch (Level 10+)
     ['criminal.lockpicking'] = {
         label = 'Criminal Lockpicking & Contact',
         minLevel = 10,
-        completedQuests = { 'main_ch4_first_car' },
+        completedQuests = { 'car_garage_park' },
         description = 'Unlocked at Character Level 10 after establishing city independence.',
     },
     ['criminal.carjack'] = {
@@ -65,8 +65,8 @@ Sunset.ProgressionGates = {
     ['criminal.robbery'] = {
         label = 'Commercial & Vault Robberies',
         minLevel = 12,
-        completedQuests = { 'crim_chop_first' },
-        description = 'Requires Character Level 12 and completed vehicle chop contract.',
+        completedQuests = { 'crim_chop' },
+        description = 'Requires Character Level 12 and a completed vehicle chop contract.',
     },
 
     -- Dealership & Vehicles
@@ -93,7 +93,7 @@ Sunset.ProgressionGates = {
     ['faction.apply'] = {
         label = 'Official Faction Application',
         minLevel = 10,
-        completedQuests = { 'main_ch5_life' },
+        completedQuests = { 'life_reach_level10' },
         description = 'Requires Character Level 10 and completion of the Main City Orientation.',
     },
 

@@ -388,6 +388,14 @@ exports.sunset_core:RegisterCallback('sunset:buyProperty', function(source,id)
     if not nearby(source,prop) then return nil,t(source, 'property.buy.nearby') end
     if not dbBool(prop.for_sale) then return nil,t(source, 'property.buy.not_for_sale') end
     if prop.owner_character_id then return nil,t(source, 'property.buy.owned') end
+
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'property.buy')
+        if access and access.allowed == false then
+            return nil, access.reason or t(source, 'property.buy.level', { required = 8, current = tonumber(char.level) or 1 })
+        end
+    end
+
     local currentLevel, requiredLevel = tonumber(char.level) or 1, tonumber(prop.minimum_level) or 1
     if currentLevel < requiredLevel then
         return nil,t(source, 'property.buy.level', { required = requiredLevel, current = currentLevel })
@@ -440,6 +448,13 @@ exports.sunset_core:RegisterCallback('sunset:rentProperty', function(source,id)
     if not prop or not prop.owner_character_id then return nil,t(source, 'property.rent.no_owner') end
     if not nearby(source,prop) then return nil,t(source, 'property.rent.nearby') end
     if tonumber(prop.owner_character_id)==tonumber(char.id) then return nil,t(source, 'property.rent.own') end
+
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'property.rent')
+        if access and access.allowed == false then
+            return nil, access.reason or t(source, 'property.buy.level', { required = 3, current = tonumber(char.level) or 1 })
+        end
+    end
     if not dbBool(prop.rent_enabled) then return nil,t(source, 'property.rent.disabled') end
     if tonumber(prop.renter_count)>=tonumber(prop.max_renters) then return nil,t(source, 'property.rent.full') end
     if activeRental(char.id,prop.id) then return nil,t(source, 'property.rent.already') end

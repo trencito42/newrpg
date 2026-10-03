@@ -4022,7 +4022,10 @@ Sunset.Locales['en'] = {
     ["world.ui.e_lobby"] = "[E] {label} — Lobby",
     ["world.ui.npc"] = "Character",
     ["world.ui.open"] = "Open {shop_label}",
-    ["world.ui.buy_business"] = "Buy business — {format_money}",
     ["chat.suggestion.hack"] = "Start a hacking puzzle.",
     ["chat.suggestion.testhack"] = "Test a hacking puzzle (development only).",
+    ["clans.notify.lifetime_extended"] = "You extended the clan duration by {days} days!",
+    ["clans.notify.slots_upgraded"] = "You upgraded clan capacity to {slots} members!",
+    ["clans.err.level_required"] = "Requires Character Level {level}.",
+    ["clans.err.clan_is_expired"] = "This clan has expired and cannot accept new members.",
 }

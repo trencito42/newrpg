@@ -515,6 +515,13 @@ ClanCreateImpl = function(source, payload)
     if not cid then return nil, { localeKey = 'clans.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if ClanDisplay.getMembership(cid) then return nil, { localeKey = 'clans.message.you_are_already_in_a_clan' } end
 
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'clan.create')
+        if access and access.allowed == false then
+            return nil, access.reason or exports.sunset_core:TFor(source, 'clans.err.level_required', { level = 15 })
+        end
+    end
+
     local name = cleanName(payload.name)
     local tag = cleanTag(payload.tag)
     local description = cleanText(payload.description, SunsetClans.MaxDescriptionLength)
@@ -899,7 +906,7 @@ local function handleClanManage(source, payload)
         safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.extended_clan_lifetime', params = { days = days } })
         TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'lifetime_extension' })
         syncClanMembers(row.clan_id)
-        notify(source, ('Ai prelungit durata clanului cu %d zile!'):format(days), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'clans.notify.lifetime_extended', { days = days }), 'success')
         return clanManageDashboard(source, cid)
     end
 
@@ -945,7 +952,7 @@ local function handleClanManage(source, payload)
         safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.upgraded_clan_slots', params = { slots = targetSlots } })
         TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'slots_upgrade', targetSlots = targetSlots })
         syncClanMembers(row.clan_id)
-        notify(source, ('Ai mărit capacitatea clanului la %d membri!'):format(targetSlots), 'success')
+        notify(source, exports.sunset_core:TFor(source, 'clans.notify.slots_upgraded', { slots = targetSlots }), 'success')
         return clanManageDashboard(source, cid)
     end
 
@@ -984,8 +991,20 @@ local function acceptInvite(source)
         return nil, { localeKey = 'clans.message.that_clan_invite_expired' }
     end
 
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'clan.join')
+        if access and access.allowed == false then
+            return nil, access.reason or exports.sunset_core:TFor(source, 'clans.err.level_required', { level = 10 })
+        end
+    end
+
+    local clanRow = MySQL.single.await('SELECT max_members, status FROM clans WHERE id = ?', { invite.clan_id })
+    if clanRow and clanRow.status == 'expired' then
+        return nil, exports.sunset_core:TFor(source, 'clans.err.clan_is_expired')
+    end
+
     local count = clanMemberCount(invite.clan_id)
-    local maxMembers = tonumber(MySQL.scalar.await('SELECT max_members FROM clans WHERE id = ?', { invite.clan_id })) or SunsetClans.MaxMembers
+    local maxMembers = tonumber(clanRow and clanRow.max_members) or SunsetClans.MaxMembers
     if count >= maxMembers then
         return nil, { localeKey = 'clans.message.that_clan_is_full' }
     end
@@ -1063,6 +1082,29 @@ AddEventHandler('onResourceStart', function(resourceName)
     end
 end)
 
+
+-- [CLAN LIFECYCLE TICKER] Transitions active -> grace -> expired periodically
+CreateThread(function()
+    while true do
+        Wait(60000)
+        pcall(function()
+            local graceDays = SunsetClans.GracePeriodDays or 7
+            -- 1. Active clans whose expires_at < NOW() -> grace
+            MySQL.update.await([[
+                UPDATE clans
+                SET status = 'grace'
+                WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()
+            ]])
+
+            -- 2. Grace clans whose expires_at + INTERVAL GracePeriodDays DAY < NOW() -> expired
+            MySQL.update.await([[
+                UPDATE clans
+                SET status = 'expired'
+                WHERE status = 'grace' AND expires_at IS NOT NULL AND DATE_ADD(expires_at, INTERVAL ? DAY) < NOW()
+            ]], { graceDays })
+        end)
+    end
+end)
 
 -- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
 CreateThread(function()
