@@ -34,7 +34,7 @@
             'menu.profile.buy_level': 'Buy next level',
             'menu.profile.buy_level_hint': 'RP and money required',
             'menu.money.cash': 'Cash Wallet', 'menu.money.bank': 'Bank Account',
-            'menu.money.points': 'Racket Credits', 'menu.playtime': 'Playtime',
+            'menu.money.points': 'Racket Coins', 'menu.playtime': 'Playtime',
             'menu.player.vitals': 'Character Vitals', 'menu.player.health': 'Health',
             'menu.player.armor': 'Armor', 'menu.player.hunger': 'Hunger',
             'menu.player.thirst': 'Thirst', 'menu.player.stress': 'Stress',
