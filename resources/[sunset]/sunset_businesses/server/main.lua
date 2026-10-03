@@ -234,10 +234,29 @@ function TransferOwnership(businessId, fromCharId, toCharId)
     fromCharId = tonumber(fromCharId)
     toCharId = tonumber(toCharId)
     if not businessId or not fromCharId or not toCharId then return false, { localeKey = 'businesses.message.invalid_business_transfer' } end
-    local changed = MySQL.update.await(
-        'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id = ?',
-        { toCharId, businessId, fromCharId }
-    )
+    -- [BUSINESS CAP] Guarded single statement: the receiver's owned count is
+    -- evaluated in the same UPDATE so concurrent transfers cannot exceed the cap.
+    local maxOwned = tonumber(SunsetBusinesses.MaxOwnedPerCharacter) or 0
+    local changed
+    if maxOwned > 0 and toCharId ~= fromCharId then
+        changed = MySQL.update.await([[
+            UPDATE player_businesses b
+            JOIN (SELECT COUNT(*) AS total FROM player_businesses WHERE owner_character_id = ?) owned ON owned.total < ?
+            SET b.owner_character_id = ?, b.for_sale = 0
+            WHERE b.id = ? AND b.owner_character_id = ?
+        ]], { toCharId, maxOwned, toCharId, businessId, fromCharId })
+        if not changed or changed < 1 then
+            local ownedNow = tonumber(MySQL.scalar.await('SELECT COUNT(*) FROM player_businesses WHERE owner_character_id = ?', { toCharId })) or 0
+            if ownedNow >= maxOwned then
+                return false, { localeKey = 'businesses.message.business_ownership_limit_reached', formatArgs = { maxOwned } }
+            end
+        end
+    else
+        changed = MySQL.update.await(
+            'UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id = ?',
+            { toCharId, businessId, fromCharId }
+        )
+    end
     if not changed or changed < 1 then return false, { localeKey = 'businesses.message.business_ownership_could_not_be_transferred' } end
     return true
 end
@@ -369,6 +388,15 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
     if not nearby(source, coords) then return nil, { localeKey = 'businesses.message.stand_at_the_business_entrance_to_buy_it' } end
 
     local maxOwned = tonumber(SunsetBusinesses.MaxOwnedPerCharacter) or 0
+    if maxOwned > 0 then
+        -- [BUSINESS CAP] Friendly pre-check; the authoritative check is repeated
+        -- inside the purchase transaction below.
+        local ownedNow = tonumber(MySQL.scalar.await(
+            'SELECT COUNT(*) FROM player_businesses WHERE owner_character_id = ?', { char.id })) or 0
+        if ownedNow >= maxOwned then
+            return nil, { localeKey = 'businesses.message.business_ownership_limit_reached', formatArgs = { maxOwned } }
+        end
+    end
 
     local price = tonumber(row.price) or 0
     local account

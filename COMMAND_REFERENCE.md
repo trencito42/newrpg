@@ -31,6 +31,7 @@ Generated from `RegisterCommand` across `resources/[sunset]`.
 | /help | client | Personalized command guide |
 | /stats | client | M-menu statistics |
 | /pass | client | Blaze Pass panel |
+| /shop | client | Racket Shop (Racket Credits store; also M menu → Racket Shop) |
 | /missions | client | Pass missions |
 | /inventory | client | Inventory |
 | /phone | client | Phone |

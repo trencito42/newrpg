@@ -472,6 +472,16 @@ local function completeTrade(trade)
             elseif asset.assetType == 'business' then
                 changed = query.await('UPDATE player_businesses SET owner_character_id = ?, for_sale = 0 WHERE id = ? AND owner_character_id = ?',
                     { toCharId, asset.id, fromCharId })
+                -- [BUSINESS CAP] Re-check the ownership cap inside the settlement
+                -- transaction: the pre-flight check runs per asset, so a trade
+                -- carrying several businesses could otherwise exceed the cap.
+                if tonumber(changed) == 1 and GetResourceState('sunset_businesses') == 'started' then
+                    local maxOwned = tonumber(exports.sunset_businesses:GetMaxOwnedPerCharacter()) or 0
+                    if maxOwned > 0 then
+                        local countRows = query.await('SELECT COUNT(*) AS total FROM player_businesses WHERE owner_character_id = ?', { toCharId }) or {}
+                        if (tonumber(countRows[1] and countRows[1].total) or 0) > maxOwned then return false end
+                    end
+                end
             end
             if tonumber(changed) ~= 1 then return false end
         end

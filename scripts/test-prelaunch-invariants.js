@@ -20,9 +20,15 @@ const casino = read('resources/[sunset]/sunset_casino/server/main.lua');
 const missions = read('resources/[sunset]/sunset_missions/server/main.lua');
 const cfg = read('config/server.cfg.template');
 const brand = read('resources/[sunset]/sunset_core/shared/config.lua');
+const gates = read('resources/[sunset]/sunset_core/shared/progression_gates.lua');
+const businessCfg = read('resources/[sunset]/sunset_businesses/shared/config.lua');
+const shopProducts = read('resources/[sunset]/sunset_shop/shared/products.lua');
+const clanConfig = read('resources/[sunset]/sunset_clans/shared/config.lua');
 
 must(chains.includes("key = 'life_reach_level10'"), 'missing life_reach_level10 quest');
-must(quests.includes("['faction.apply'] = { minLevel = 10, questKey = 'life_reach_level10' }"), 'canonical faction gate drifted');
+// The faction gate lives in the canonical progression registry
+// (sunset_core/shared/progression_gates.lua, evaluated by CanAccess).
+must(/\['faction\.apply'\] = \{[^}]*minLevel = 10,[^}]*completedQuests = \{ 'life_reach_level10' \}/.test(gates), 'canonical faction gate drifted');
 must(factions.includes("CanAccess(playerSource, 'faction.apply')"), 'in-game faction join does not use canonical gate');
 must(panelApply.includes('getFactionApplicationAccess'), 'panel apply bypasses canonical panel progression gate');
 must(panelReview.includes('session.adminLevel < 3'), 'panel review lacks explicit admin-only bypass');
@@ -44,6 +50,12 @@ must(cfg.includes('#@dev add_unsafe_child_process_permission racket_vehicle_thum
 must(!/^add_unsafe_child_process_permission racket_vehicle_thumbs$/m.test(cfg), 'thumbnail child process permission is enabled in production');
 must(/^# ensure sunset_needs$/m.test(cfg), 'legacy survival drain is enabled in production');
 must(brand.includes("DisplayName = 'Racket RPG'") && brand.includes("CurrencyShort = 'RC'"), 'canonical Racket brand config drifted');
+
+must(/SunsetBusinesses\.MaxOwnedPerCharacter = 2\b/.test(businessCfg), 'business ownership cap is not 2 per character');
+must(/^ensure sunset_shop$/m.test(cfg), 'Racket Shop is not ensured in production config');
+must(/char_name_change = \{[\s\S]*?price = 500,/.test(shopProducts), 'Racket Shop catalog drifted');
+must(!/RenewalPP/.test(clanConfig), 'clan RC prices duplicated outside sunset_shop/shared/products.lua');
+must(/standard_tank\s*=/.test(items), 'standard_tank removed without updating the diver gear tiers');
 
 if (failures.length) {
   console.error(failures.map((failure) => `FAIL: ${failure}`).join('\n'));

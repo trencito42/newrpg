@@ -202,6 +202,39 @@ function Sunset.AddBlazePoints(source, amount)
     return true
 end
 
+-- [SHOP] Owner-side writer for characters.firstname/lastname, used by the
+-- Racket Shop rename entitlement (sunset_shop never writes characters itself).
+-- Re-validates the name (2-32 chars, letters with single inner spaces/hyphens)
+-- and returns true, nil, oldName on success.
+local function validRenamePart(value)
+    if type(value) ~= 'string' or #value < 2 or #value > 32 then return nil end
+    if value:match('^%s') or value:match('%s$') then return nil end
+    if not value:match('^[%a][%a %-]*[%a]$') then return nil end
+    if value:find('  ', 1, true) or value:find('--', 1, true) then return nil end
+    return value
+end
+
+function Sunset.RenameCharacter(source, firstname, lastname)
+    local player = Sunset.GetPlayer(source)
+    local char = player and player.character
+    if not char then return false, { localeKey = 'core.message.character_data_is_unavailable' } end
+    firstname, lastname = validRenamePart(firstname), validRenamePart(lastname)
+    if not firstname or not lastname then return false, { localeKey = 'shop.name_change.invalid' } end
+
+    local oldName = ((char.firstname or '') .. ' ' .. (char.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+    local changed = MySQL.update.await(
+        'UPDATE characters SET firstname = ?, lastname = ? WHERE id = ? AND player_id = ?',
+        { firstname, lastname, char.id, player.id }
+    )
+    if not changed or changed < 1 then return false, { localeKey = 'shop.name_change.failed' } end
+
+    char.firstname, char.lastname = firstname, lastname
+    TriggerClientEvent('sunset:client:updateCharacter', source, char)
+    Player(source).state:set('sunsetDisplayName', GetPlayerDisplayName(source), true)
+    TriggerEvent('sunset:server:characterRenamed', source, char.id, oldName, firstname .. ' ' .. lastname)
+    return true, nil, oldName
+end
+
 function Sunset.SetHomeProperty(source, propertyId)
     local char = Sunset.GetCharacter(source)
     if not char then return false end
@@ -762,6 +795,7 @@ end)
 exports('RefreshBlazePoints', Sunset.RefreshBlazePoints)
 exports('SpendBlazePoints', Sunset.SpendBlazePoints)
 exports('AddBlazePoints', Sunset.AddBlazePoints)
+exports('RenameCharacter', Sunset.RenameCharacter)
 exports('SetHomeProperty', Sunset.SetHomeProperty)
 exports('RefreshMoney', Sunset.RefreshMoney)
 exports('SetJob', Sunset.SetJob)

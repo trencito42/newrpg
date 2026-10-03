@@ -10,6 +10,7 @@ version '1.0.0'
 shared_scripts {
     '@sunset_core/shared/config.lua',
     'shared/config.lua',
+    'shared/validation.lua',
     'shared/tag.lua',
     'shared/ranks.lua',
 }
@@ -25,6 +26,7 @@ server_scripts {
     'server/main.lua',
     'server/chat.lua',
     'server/admin_ops.lua',
+    'server/shop_ops.lua',
 }
 
 dependencies {
@@ -39,4 +41,10 @@ exports {
     'RunChatCommand',
     'RunMotdCommand',
     'GetConnectMotd',
+}
+
+server_exports {
+    'ShopCheckClanProduct',
+    'ShopApplyClanProduct',
+    'GetShopClanContext',
 }

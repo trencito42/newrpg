@@ -123,6 +123,7 @@ ensure sunset_licenses
 ensure sunset_hacking
 ensure sunset_robbery
 ensure sunset_pass
+ensure sunset_shop
 ensure sunset_hud
 ensure sunset_dealership
 ensure sunset_scoreboard

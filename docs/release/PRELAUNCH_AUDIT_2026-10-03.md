@@ -6,7 +6,7 @@
 
 ## Scope and canonical evidence
 
-- [Resource matrix](RESOURCE_MATRIX_2026-10-03.md): all 71 `sunset_*` resources, with production/dev/retired status and runtime-test column.
+- [Resource matrix](RESOURCE_MATRIX_2026-10-03.md): all 72 `sunset_*` resources (including the new `sunset_shop`), with production/dev/retired status and runtime-test column.
 - [Item economy matrix](ITEM_ECONOMY_MATRIX.md): 90 catalog items with detected sources, sinks, recipes and orphan review.
 - [Release gate](RELEASE_GATE.md): launch blockers and required runtime evidence.
 - [Identity model](../architecture/AUTH_IDENTITY.md), [domain ownership](../architecture/DOMAIN_OWNERSHIP.md) and [invariants](../architecture/INVARIANTS.md).
@@ -39,13 +39,24 @@ Old final/economy audits now carry a historical banner and are not implementatio
 
 Police/Sheriff/FIB share the police duty, permissions, detention, wanted and dispatch stack, with organization-specific ranks/configuration. EMS and LSFD use the emergency duty/dispatch surface; LSSI owns license examination; Taxi has its dedicated civilian job loop; CNN supplies advertisements/news workflow. Illegal factions share membership, chat, storage and permission-controlled crafting. These paths are connected technically but still require faction-by-faction live roleplay acceptance tests.
 
-Clan creation currently costs 500 Racket Credits and supports membership/invitations/turfs. Clan expiry, grace renewal, lifetime extension and slot upgrades do not exist. This is an absent product feature, not a verified transaction path; do not advertise or sell it before schema, atomic purchase/refund behavior and expiry recovery are implemented and tested.
+### Clan lifecycle — IMPLEMENTED (static + interpreter-tested; runtime untested)
+
+Clan creation costs 500 Racket Credits (now debited with the core guarded `SpendBlazePoints` and refunded with `AddBlazePoints`, replacing a stale balance-snapshot restore). Clans carry `expires_at` and an `active → grace → expired` status (migration 76 + 60 s ticker).
+
+- **Legacy expiry fix (`sql/77-clan-lifecycle-fix.sql`)**: migration 76 backfilled `created_at + 30 days`, so older clans were born expired. Migration 77 grants every NULL/lapsed clan `GREATEST(IFNULL(expires_at, NOW()), NOW() + INTERVAL 30 DAY)` and status `active`; a valid future expiry is never shortened. Because `docker/fivem/entrypoint.sh` re-imports every migration on each start, the repair is one-shot via a `schema_data_fixes` marker row.
+- **Atomic renewal and slot upgrades**: the clan panel actions (`extendLifetime`, `upgradeSlots`) run under per-player `ClansRenewLocks` / `ClansSlotLocks`; cash payments are debited first, the mutation is a guarded single `UPDATE` inside `pcall` (`status IN ('active','grace')`, `max_members < target`), and any failure refunds in full. Racket Credit payments are routed to `sunset_shop` so price, `TrySpendRacketCredits`, refunds and the `shop_orders` ledger have a single owner.
+- **Racket Shop clan products**: name (entitlement), tag, color, 15/20/25 member capacity and 7/30/90-day renewal. `sunset_clans/server/shop_ops.lua` re-verifies character, membership, leader rank and lifecycle status at the moment of mutation. Expired clans cannot be renewed (staff restore only); clans in grace are restored from `NOW()`.
+- Tag and color changes are no longer free in clan settings; they are Racket Shop products (the settings form shows them read-only).
+
+### Racket Shop — IMPLEMENTED (static + interpreter-tested; runtime untested)
+
+New resource `sunset_shop` (`/shop`, M menu → Racket Shop). One registry, `sunset_shop/shared/products.lua`, owns every price and reward; handlers never read a client price or amount. Settlement (`server/settlement.lua`): product lookup → request-id validation → per-player cooldown + lock → idempotency on `shop_orders.request_id` (UNIQUE) → handler preflight → order `pending` → guarded RC debit → `processing` → delivery in `pcall` → `completed`, or full refund → `refunded` (`failed` + critical log + audit row if the refund itself fails). Every RC debit/refund and every entitlement use is written to `shop_audit_log`. Products: character name change (entitlement → rename via new core export `RenameCharacter`), clan products above, and cash packs (100/250/500 RC → $25,000/$70,000/$150,000 bank through `AddMoney`). Vehicle and quality-of-life categories are intentionally empty: vanity plates are already a cash product in `sunset_tuning`.
 
 ## Economy findings
 
 Static configuration shows bounded legal rewards (examples: garbage $504 per full route, courier $540 per six-package run, truck routes $650–$900 before manual-docking multiplier, mechanic $160 per repair, taxi $75 base plus $35/km with caps). Contact missions pay $4,200–$8,000 but enforce minimum durations and 30–40 minute cooldowns. Drug and robbery value is server-generated and subject to quantity, negotiation, fence factors, demand and cooldowns.
 
-No defensible dollars-per-hour conclusion is possible without route time, player concurrency, failure rate and sink telemetry. Business income comes from real player sales rather than a passive timer, but `MaxOwnedPerCharacter = 0` permits unlimited ownership and is a pacing risk. The generated item matrix flags literal-source gaps such as `standard_tank`; dynamic paths and every flagged orphan require live/manual verification before catalog promises are made.
+No defensible dollars-per-hour conclusion is possible without route time, player concurrency, failure rate and sink telemetry. Business income comes from real player sales rather than a passive timer. **Business ownership is now capped at `MaxOwnedPerCharacter = 2`**, enforced in `buyBusiness` (pre-check + in-transaction re-check), the `TransferOwnership` export (guarded single `UPDATE`) and player trades (pre-flight + in-transaction re-check); admin `clearOwner` never assigns ownership and is unaffected. **`standard_tank` is resolved**: it is kept and connected to the diver job — the standard gear tier (diver rank 2) now grants `standard_tank` instead of `scuba_gear`, contracts accept it and shift end removes it. Other flagged orphans in the item matrix still require live/manual verification before catalog promises are made.
 
 ## Verification executed in this pass
 
@@ -82,12 +93,29 @@ Three repository checks remain non-green and are release inputs rather than hidd
 
 `test-threads-permissions.js` also passed against the configured database when run with `NODE_PATH=panel/node_modules`; it created and removed its temporary records. This report makes no FiveM runtime claim.
 
+## Verification executed in the final pass (Racket Shop / clans / business cap)
+
+```bash
+node scripts/check-lua-syntax.js          # 469/469 OK
+node scripts/check-nui-bridge.js          # OK, all posted NUI callbacks registered
+node scripts/check-nui-modules.js         # OK
+node scripts/check-nui-assets.js          # OK
+node scripts/check-db-writes.js           # 0 new cross-domain writes (shop tables registered to sunset_shop)
+node scripts/test-shop.js                 # 134/134
+node scripts/test-prelaunch-invariants.js # OK (faction gate check re-pointed to progression_gates.lua)
+npm run i18n:check                        # FAILS: 291 findings, all pre-existing (panel pages, quest chains, carjack/dealership keys); 0 introduced by this pass
+npm --prefix panel run build              # FAILS at its i18n:check pre-step for the same pre-existing findings; panel code untouched
+```
+
+`scripts/test-shop.js` executes the real Lua modules (shop registry, validation, settlement engine, handlers and `sunset_clans/server/shop_ops.lua`) through a small luaparse-based interpreter (`scripts/lib/mini-lua.js`) with in-memory database/currency mocks. It proves settlement logic, not oxmysql, FiveM export marshalling or NUI rendering: **no FiveM runtime test of the shop has been executed.**
+
 ## Required staging sequence
 
-1. Clone the production database, run `scripts/account-identity-audit.sql`, reconcile rows and apply all migrations through 76.
+1. Clone the production database, run `scripts/account-identity-audit.sql`, reconcile rows and apply all migrations through 79 (77 clan expiry repair, 78/79 shop tables). Re-run the container once more and confirm migration 77 does not extend clans a second time.
 2. Test two accounts on one license, duplicate-login eviction, reconnect and legacy account/player combinations.
 3. Confirm OneSync in txAdmin; exercise damage, explosions, position/entity checks and routing buckets.
 4. Execute the gameplay regression matrix with at least two clients, including disconnect and resource restart during each valuable session.
 5. Test inventory-full and concurrent settlement paths for crafting, missions, casino, businesses, clans and criminal loops.
 6. Measure DB latency, server tick and client frame time at 2, 10, 25 and 48 players.
-7. Review economy telemetry and decide business ownership caps and any reward changes from observed completion times.
+7. Racket Shop runtime: buy every product with two clients; double-click confirm; disconnect mid-purchase; stop `sunset_clans` and confirm clan purchases refund; verify `shop_orders`/`shop_audit_log` rows, name change propagation (chat, scoreboard, clan roster) and focus release on ESC/death/resource restart.
+8. Review economy telemetry (including RC → bank pack volume) and adjust business cap or rewards from observed completion times.

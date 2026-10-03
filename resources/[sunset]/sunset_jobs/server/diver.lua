@@ -20,6 +20,16 @@ local function checkRate(source, action)
     return true
 end
 
+-- ── Dive gear items per rental tier ──────────────────────────
+-- Granted on rental (sunset:jobs:diver:rentGear, tier gated by diver rank via
+-- JobsConfig.diver.gear[tier].minRank) and consumed on shift end through
+-- session.data.rentedGearItem. Contract start accepts any tier.
+local DIVE_GEAR_ITEMS = {
+    basic = 'scuba_gear',
+    standard = 'standard_tank',
+    advanced = 'advanced_tank',
+}
+
 -- ── Active Contract Snapshots ────────────────────────────────
 -- Snapshots[source] = { siteId, lootPoints=[{x,y,z,claimed=false}],
 --                       required, recovered=0, pay, difficulty, gear, boatNetId }
@@ -145,10 +155,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:startContract', function
         end
     end
 
-    -- Check player has scuba gear (also accept advanced_tank)
-    local hasScuba  = exports.sunset_inventory:HasItem(source, 'scuba_gear', 1)
-    local hasAdv    = exports.sunset_inventory:HasItem(source, 'advanced_tank', 1)
-    if not hasScuba and not hasAdv then
+    -- Check player has rented dive gear of any tier (scuba_gear / standard_tank / advanced_tank)
+    local hasGear = false
+    for _, gearItem in pairs(DIVE_GEAR_ITEMS) do
+        if exports.sunset_inventory:HasItem(source, gearItem, 1) then hasGear = true break end
+    end
+    if not hasGear then
         return nil, { localeKey = 'jobs.message.you_need_diving_gear_rent_from_terry_first' }
     end
 
@@ -240,7 +252,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:diver:rentGear', function(sour
     if not removed then return nil, { localeKey = 'jobs.message.insufficient_funds_gear_costs_value', formatArgs = { cost } } end
 
     -- Grant gear item
-    local item = tierName == 'advanced' and 'advanced_tank' or 'scuba_gear'
+    -- [ITEM standard_tank] Each rental tier grants its own catalog item; the
+    -- standard tier previously handed out scuba_gear, leaving standard_tank orphaned.
+    local item = DIVE_GEAR_ITEMS[tierName] or 'scuba_gear'
     local ok = exports.sunset_inventory:AddItem(source, item, 1)
     if not ok then
         exports.sunset_core:AddMoney(source, 'cash', cost, 'gear_rental_refund')

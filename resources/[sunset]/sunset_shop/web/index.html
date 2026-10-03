@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="shop.title">Racket Shop</title>
+    <script>
+        window.prompt = function () { return null; };
+        window.alert = function () {};
+        window.confirm = function () { return false; };
+    </script>
+    <link rel="stylesheet" href="nui://sunset_ui/web/css/fonts.css">
+    <link rel="stylesheet" href="css/shop.css?v=1">
+    <!-- [CEF FIX] FiveM Chromium renders backdrop-filter as black boxes; keep it off. -->
+    <style>*,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}</style>
+</head>
+<body>
+    <div id="shop" class="shop hidden" role="dialog" aria-modal="true">
+        <header class="shop-top">
+            <div class="shop-brand">
+                <span class="shop-brand__mark"></span>
+                <h1 data-i18n="shop.title">Racket Shop</h1>
+            </div>
+            <div class="shop-top__right">
+                <div class="shop-balance">
+                    <span class="shop-balance__label" data-i18n="shop.balance_rc">Racket Credits</span>
+                    <strong class="shop-balance__value" id="shop-balance">0</strong>
+                </div>
+                <button type="button" class="shop-btn shop-btn--ghost" id="shop-history-btn" data-i18n="shop.history.title">Purchase History</button>
+                <button type="button" class="shop-btn shop-btn--icon" id="shop-close-btn" data-i18n-aria="shop.ui.close" aria-label="Close">&times;</button>
+            </div>
+        </header>
+
+        <div class="shop-body">
+            <nav class="shop-categories" id="shop-categories"></nav>
+
+            <main class="shop-grid-wrap">
+                <div class="shop-entitlements hidden" id="shop-entitlements"></div>
+                <div class="shop-grid" id="shop-grid"></div>
+                <div class="shop-empty hidden" id="shop-empty" data-i18n="shop.ui.empty_category">No offers in this category yet.</div>
+            </main>
+
+            <aside class="shop-detail" id="shop-detail">
+                <div class="shop-detail__placeholder" id="shop-detail-placeholder">
+                    <strong data-i18n="shop.ui.select_product">Select a product</strong>
+                    <span data-i18n="shop.ui.select_product_hint">Pick an item on the left to see its details.</span>
+                </div>
+                <div class="shop-detail__body hidden" id="shop-detail-body">
+                    <div class="shop-detail__icon" id="shop-detail-icon"></div>
+                    <h2 class="shop-detail__name" id="shop-detail-name"></h2>
+                    <p class="shop-detail__desc" id="shop-detail-desc"></p>
+                    <ul class="shop-detail__facts" id="shop-detail-facts"></ul>
+                    <div class="shop-detail__input hidden" id="shop-input-tag">
+                        <label for="shop-tag-field" data-i18n="shop.ui.tag_input">New clan tag</label>
+                        <input type="text" id="shop-tag-field" maxlength="6" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="shop-detail__input hidden" id="shop-input-color">
+                        <label for="shop-color-hex" data-i18n="shop.ui.color_input">New tag color</label>
+                        <div class="shop-color-row">
+                            <input type="color" id="shop-color-picker" value="#d7b558">
+                            <input type="text" id="shop-color-hex" maxlength="7" value="#D7B558" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                    <div class="shop-detail__block hidden" id="shop-detail-block"></div>
+                    <div class="shop-detail__price">
+                        <span data-i18n="shop.ui.price">Price</span>
+                        <strong id="shop-detail-price"></strong>
+                    </div>
+                    <button type="button" class="shop-btn shop-btn--primary" id="shop-buy-btn" data-i18n="shop.ui.purchase">Purchase</button>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="shop-foot"><span data-i18n="shop.ui.esc_hint">Press ESC to close</span></footer>
+
+        <!-- Confirmation -->
+        <div class="shop-modal hidden" id="shop-confirm">
+            <div class="shop-modal__card">
+                <h3 data-i18n="shop.confirm.title">Confirm Purchase</h3>
+                <p id="shop-confirm-text"></p>
+                <p class="shop-modal__sub" id="shop-confirm-after"></p>
+                <div class="shop-modal__state hidden" id="shop-confirm-state"></div>
+                <div class="shop-modal__actions">
+                    <button type="button" class="shop-btn shop-btn--ghost" id="shop-confirm-cancel" data-i18n="shop.confirm.cancel">Cancel</button>
+                    <button type="button" class="shop-btn shop-btn--primary" id="shop-confirm-ok" data-i18n="shop.confirm.buy">Confirm Purchase</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result + Use Now -->
+        <div class="shop-modal hidden" id="shop-result">
+            <div class="shop-modal__card">
+                <h3 id="shop-result-title"></h3>
+                <p id="shop-result-text"></p>
+                <div class="shop-modal__actions">
+                    <button type="button" class="shop-btn shop-btn--ghost" id="shop-result-close" data-i18n="shop.ui.later">Later</button>
+                    <button type="button" class="shop-btn shop-btn--primary hidden" id="shop-result-use" data-i18n="shop.ui.use_now">Use Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character rename -->
+        <div class="shop-modal hidden" id="shop-rename">
+            <form class="shop-modal__card" id="shop-rename-form" autocomplete="off">
+                <h3 data-i18n="shop.name_change.prompt">Enter your new name</h3>
+                <label for="shop-rename-first" data-i18n="shop.name_change.firstname">First Name</label>
+                <input type="text" id="shop-rename-first" maxlength="32" spellcheck="false">
+                <label for="shop-rename-last" data-i18n="shop.name_change.lastname">Last Name</label>
+                <input type="text" id="shop-rename-last" maxlength="32" spellcheck="false">
+                <div class="shop-modal__state hidden" id="shop-rename-state"></div>
+                <div class="shop-modal__actions">
+                    <button type="button" class="shop-btn shop-btn--ghost" id="shop-rename-cancel" data-i18n="shop.confirm.cancel">Cancel</button>
+                    <button type="submit" class="shop-btn shop-btn--primary" id="shop-rename-submit" data-i18n="shop.ui.submit">Apply</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Clan rename -->
+        <div class="shop-modal hidden" id="shop-clanname">
+            <form class="shop-modal__card" id="shop-clanname-form" autocomplete="off">
+                <h3 data-i18n="shop.ui.clan_name_title">Rename your clan</h3>
+                <label for="shop-clanname-field" data-i18n="shop.ui.clan_name_input">New clan name</label>
+                <input type="text" id="shop-clanname-field" maxlength="32" spellcheck="false">
+                <div class="shop-modal__state hidden" id="shop-clanname-state"></div>
+                <div class="shop-modal__actions">
+                    <button type="button" class="shop-btn shop-btn--ghost" id="shop-clanname-cancel" data-i18n="shop.confirm.cancel">Cancel</button>
+                    <button type="submit" class="shop-btn shop-btn--primary" id="shop-clanname-submit" data-i18n="shop.ui.submit">Apply</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- History -->
+        <div class="shop-modal hidden" id="shop-history">
+            <div class="shop-modal__card shop-modal__card--wide">
+                <h3 data-i18n="shop.history.title">Purchase History</h3>
+                <div class="shop-history" id="shop-history-list"></div>
+                <div class="shop-modal__actions">
+                    <button type="button" class="shop-btn shop-btn--ghost" id="shop-history-close" data-i18n="shop.ui.close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.generated.js?v=3"></script>
+    <script src="https://cfx-nui-sunset_ui/web/js/i18n.js?v=3"></script>
+    <script src="js/shop.js?v=1"></script>
+</body>
+</html>

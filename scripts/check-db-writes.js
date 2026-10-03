@@ -36,6 +36,7 @@ const TABLE_OWNER = {
     payday_runs: 'sunset_economy', lottery_state: 'sunset_economy',
     lottery_tickets: 'sunset_economy', lottery_draws: 'sunset_economy',
     anticheat_strikes: 'sunset_anticheat', anticheat_flags: 'sunset_anticheat',
+    shop_orders: 'sunset_shop', shop_entitlements: 'sunset_shop', shop_audit_log: 'sunset_shop',
 };
 
 // Documented cross-domain writers (RESOURCE_MAP.md §4 "Other writers" + audit fixes).

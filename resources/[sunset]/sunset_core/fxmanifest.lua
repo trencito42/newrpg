@@ -100,6 +100,7 @@ server_exports {
     'RefreshBlazePoints',
     'SpendBlazePoints',
     'AddBlazePoints',
+    'RenameCharacter',
     'SetHomeProperty',
     'SetJob',
     'SetFaction',

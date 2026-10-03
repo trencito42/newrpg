@@ -13,7 +13,8 @@
 | Inventory & item metadata | **sunset_inventory** | `AddItem`, `RemoveItem`, `HasItem`, `UseItem`, `SetItemMetadata`, `CountItem`, `GetInventory`, `ReloadInventory`, containers via callbacks | character_inventory, container_inventory |
 | Jobs & job progression | **sunset_jobs** | `HireCivilianJob`, job session callbacks, `SunsetJobs_PayReward` (internal), `ExecutePlayerCommand` | job_progress |
 | Factions & membership | **sunset_factions** | `IsOnDuty`, `GetDutyState`, `HasFactionPerm`, `IsFactionLeader`, `GetDetentionState`, `IsCuffed`, `IsJailed` | (faction membership lives on characters.job via core `SetFaction`) |
-| Clans | **sunset_clans** | clan callbacks, `FormatDisplayName`, `sunset:clans:dissolved` event | clans, clan_members, clan_invites, clan_audit_log |
+| Clans | **sunset_clans** | clan callbacks, `FormatDisplayName`, `sunset:clans:dissolved` event, `ShopCheckClanProduct` / `ShopApplyClanProduct` / `GetShopClanContext` (Racket Shop clan products) | clans, clan_members, clan_invites, clan_audit_log |
+| Racket Shop | **sunset_shop** | `PurchaseProduct`, `GetProductPrice`, `GetRacketCredits`, `TrySpendRacketCredits`; prices only in `shared/products.lua` | shop_orders, shop_entitlements, shop_audit_log (character names written through core `RenameCharacter`) |
 | Turfs | **sunset_turfs** | attack/sync callbacks; listens `sunset:clans:dissolved` | turfs |
 | Wanted/surrender/jail | **sunset_factions** (police module) | `AddWantedCharge`, `GetWantedState`, jail via detention; events `sunset:faction:playerJailed`, `sunset:faction:forceDutyOff` | wanted_records, jail_sentences |
 | Vehicles/keys/fuel | **sunset_vehicles** | spawn/store/park callbacks, `TransferVehicleOwnership`, `ClearKeysForPlate`, `ClearKeysForCharacter`, `EnrichVehicleRow` | vehicles |

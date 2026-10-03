@@ -12,10 +12,6 @@ local function normalizeInvite(invite)
     }
 end
 
-local function setPremiumPoints(source, value)
-    return exports.sunset_core:SetPersistentStat(source, 'account', 'premium_points', value)
-end
-
 local function getChar(source)
     return exports.sunset_core:GetCharacter(source)
 end
@@ -46,24 +42,25 @@ local function playerName(characterId)
     return full ~= '' and full or ('CID %d'):format(characterId)
 end
 
-local function cleanColor(hex)
-    hex = tostring(hex or ''):gsub('#', '')
-    if not hex:match('^%x%x%x%x%x%x$') then return '#FF8C00' end
-    return '#' .. string.upper(hex)
+-- Canonical rules live in shared/validation.lua (shared with server/shop_ops.lua).
+local cleanColor = SunsetClans.cleanColor
+local cleanTag = SunsetClans.cleanTag
+local cleanName = SunsetClans.cleanName
+
+-- [SHOP] Racket Credit prices for clan upgrades are owned by
+-- sunset_shop/shared/products.lua; the clan panel only displays them.
+local function shopPrice(productId)
+    if GetResourceState('sunset_shop') ~= 'started' then return nil end
+    local ok, price = pcall(function() return exports.sunset_shop:GetProductPrice(productId) end)
+    return ok and tonumber(price) or nil
 end
 
-local function cleanTag(tag)
-    tag = tostring(tag or ''):gsub('%s+', '')
-    if not tag:match('^[%w]+$') then return nil end
-    if #tag < SunsetClans.MinTagLength or #tag > SunsetClans.MaxTagLength then return nil end
-    return tag
-end
-
-local function cleanName(name)
-    name = tostring(name or ''):gsub('^%s+', ''):gsub('%s+$', '')
-    if #name < SunsetClans.MinNameLength or #name > SunsetClans.MaxNameLength then return nil end
-    if not name:match('^[%w%s%-%.]+$') then return nil end
-    return name
+local function shopSlotTiers()
+    local out = {}
+    for i, tier in ipairs(SunsetClans.SlotTiers or {}) do
+        out[i] = { slots = tier.slots, cash = tier.cash, pp = shopPrice(('clan_slots_%d'):format(tier.slots)) }
+    end
+    return out
 end
 
 local function cleanText(value, maxLen)
@@ -276,9 +273,9 @@ local function dashboardPayload(source, row, cid)
         maxMembers = row and (row.max_members or SunsetClans.BaseSlots or 10) or (SunsetClans.BaseSlots or 10),
         expiresAt = row and row.expires_at or nil,
         status = row and row.status or 'active',
-        slotTiers = SunsetClans.SlotTiers,
+        slotTiers = shopSlotTiers(),
         renewalCash = SunsetClans.RenewalCash or 250000,
-        renewalPP = SunsetClans.RenewalPP or 500,
+        renewalPP = shopPrice(('clan_renew_%d'):format(SunsetClans.LifetimeDays or 30)),
         members = row and buildRoster(row.clan_id, labels) or {},
         leader = row and isLeader(row, cid) or false,
         officer = row and isOfficer(row, cid) or false,
@@ -306,18 +303,30 @@ local function dashboardPayload(source, row, cid)
     }
 end
 
+-- [SHOP] Guarded atomic debit (UPDATE ... WHERE premium_points >= ?) instead of
+-- the old read-modify-write SetPersistentStat, which could lose concurrent changes.
 local function spendCoins(source, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount <= 0 then return true end
     local player = exports.sunset_core:GetPlayer(source)
     if not player then return false, { localeKey = 'clans.message.account_not_loaded' } end
-    local balance = tonumber(player.premium_points) or 0
-    if balance < amount then
+    local ok, err = exports.sunset_core:SpendBlazePoints(source, amount)
+    if not ok then
+        local balance = tonumber(exports.sunset_core:RefreshBlazePoints(source)) or 0
+        if err then return false, err end
         return false, { localeKey = 'clans.message.you_need_value_blaze_points_you_have_value', formatArgs = { amount, balance } }
     end
-    local ok, err = setPremiumPoints(source, balance - amount)
-    if not ok then return false, err or exports.sunset_core:TFor(source, 'clans.err.could_not_spend_blaze_points') end
     return true
+end
+
+local function refundCoinsAtomic(source, amount, reason)
+    amount = math.floor(tonumber(amount) or 0)
+    if amount <= 0 then return true end
+    local ok = exports.sunset_core:AddBlazePoints(source, amount)
+    if not ok then
+        print(('^1[sunset_clans]^7 CRITICAL: RC refund of %d failed for src %s (%s)'):format(amount, tostring(source), tostring(reason)))
+    end
+    return ok
 end
 
 local function broadcastClanManagement(clanId, actorSource, message)
@@ -537,16 +546,12 @@ ClanCreateImpl = function(source, payload)
     local existing = MySQL.scalar.await('SELECT id FROM clans WHERE LOWER(name) = LOWER(?) OR LOWER(tag) = LOWER(?) LIMIT 1', { name, tag })
     if existing then return nil, { localeKey = 'clans.message.that_clan_name_or_tag_is_already_taken' } end
 
-    local player = exports.sunset_core:GetPlayer(source)
-    local balanceBefore = player and tonumber(player.premium_points) or 0
     local cost = SunsetClans.CreationCost
     local paid, payErr = spendCoins(source, cost)
     if not paid then return nil, payErr end
 
     local function refundCoins()
-        if cost > 0 then
-            setPremiumPoints(source, balanceBefore)
-        end
+        refundCoinsAtomic(source, cost, 'clan_create_refund')
     end
 
     local clanId
@@ -612,6 +617,150 @@ exports.sunset_core:RegisterCallback('sunset:clanGetMotd', function(source)
     }
 end)
 
+-- ═══ [CLAN LIFECYCLE] Atomic renewal + slot upgrades ═══════════════════
+-- Pattern (mirrors BuyLevelLocks in sunset_core/server/player.lua):
+--   lock per source → debit first → guarded DB mutation inside pcall →
+--   on ANY failure refund in full and log → always release the lock.
+-- Racket Credit (pp) purchases are settled by sunset_shop (the single owner of
+-- RC prices, the shop_orders ledger, TrySpendRacketCredits and refunds); this
+-- panel path only routes the request there. Cash purchases settle here.
+local ClansRenewLocks = {}
+local ClansSlotLocks = {}
+
+local function runLocked(locks, source, label, fn)
+    if locks[source] then
+        return nil, { localeKey = 'clans.message.clan_purchase_in_progress' }
+    end
+    locks[source] = true
+    local ok, res, err = pcall(fn)
+    locks[source] = nil
+    if not ok then
+        print(('^1[sunset_clans]^7 %s crashed for src %s: %s'):format(label, tostring(source), tostring(res)))
+        return nil, { localeKey = 'error.server_action_failed' }
+    end
+    return res, err
+end
+
+local function shopPurchase(source, productId)
+    if GetResourceState('sunset_shop') ~= 'started' then
+        return nil, { localeKey = 'shop.unavailable' }
+    end
+    local requestId = ('clan-%d-%d-%d'):format(tonumber(source) or 0, os.time(), math.random(100000, 999999))
+    local ok, res, err = pcall(function()
+        return exports.sunset_shop:PurchaseProduct(source, productId, requestId, {})
+    end)
+    if not ok then
+        print(('^1[sunset_clans]^7 shop purchase %s failed for src %s: %s'):format(productId, tostring(source), tostring(res)))
+        return nil, { localeKey = 'shop.purchase.failed' }
+    end
+    return res, err
+end
+
+local function refundCash(source, amount, reason)
+    local ok = exports.sunset_core:AddMoney(source, 'cash', amount, reason)
+    if not ok then
+        print(('^1[sunset_clans]^7 CRITICAL: cash refund of $%d failed for src %s (%s)'):format(amount, tostring(source), tostring(reason)))
+    end
+    return ok
+end
+
+local function extendLifetimeLocked(source, row, cid, payload)
+    local days = SunsetClans.LifetimeDays or 30
+    local currency = tostring(payload.currency or 'cash'):lower()
+    if row.status == 'expired' then
+        return nil, { localeKey = 'clans.err.clan_is_expired' }
+    end
+
+    if currency == 'pp' or currency == 'points' or currency == 'rc' then
+        local res, err = shopPurchase(source, ('clan_renew_%d'):format(days))
+        if not res then return nil, err end
+        return clanManageDashboard(source, cid)
+    end
+
+    local cost = math.floor(tonumber(SunsetClans.RenewalCash) or 250000)
+    if not exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_extend_lifetime') then
+        return nil, { localeKey = 'economy.message.not_enough_cash' }
+    end
+    local okDb, changed = pcall(function()
+        return MySQL.update.await([[
+            UPDATE clans
+            SET expires_at = DATE_ADD(GREATEST(COALESCE(expires_at, NOW()), NOW()), INTERVAL ? DAY),
+                status = 'active'
+            WHERE id = ? AND status IN ('active', 'grace')
+        ]], { days, row.clan_id })
+    end)
+    if not okDb or tonumber(changed) ~= 1 then
+        refundCash(source, cost, 'clan_extend_lifetime_refund')
+        print(('^1[sunset_clans]^7 extendLifetime mutation failed for clan %s: %s'):format(tostring(row.clan_id), tostring(changed)))
+        return nil, { localeKey = 'clans.message.clan_purchase_refunded' }
+    end
+
+    safeAudit(row.clan_id, cid, 'extend_lifetime', { currency = 'cash', cost = cost, days = days })
+    safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.extended_clan_lifetime', params = { days = days } })
+    TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'lifetime_extension' })
+    safeSyncMembers(row.clan_id)
+    notify(source, exports.sunset_core:TFor(source, 'clans.notify.lifetime_extended', { days = days }), 'success')
+    return clanManageDashboard(source, cid)
+end
+
+local function upgradeSlotsLocked(source, row, cid, payload)
+    local targetSlots = tonumber(payload.targetSlots or payload.slots)
+    if not targetSlots then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
+    local currentMax = tonumber(row.max_members) or (SunsetClans.BaseSlots or 10)
+    if targetSlots <= currentMax then
+        return nil, { localeKey = 'shop.purchase.already_owned' }
+    end
+    local tierMeta
+    for _, t in ipairs(SunsetClans.SlotTiers or {}) do
+        if t.slots == targetSlots then tierMeta = t break end
+    end
+    if not tierMeta then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
+
+    local currency = tostring(payload.currency or 'cash'):lower()
+    if currency == 'pp' or currency == 'points' or currency == 'rc' then
+        local res, err = shopPurchase(source, ('clan_slots_%d'):format(targetSlots))
+        if not res then return nil, err end
+        return clanManageDashboard(source, cid)
+    end
+
+    local cost = math.floor(tonumber(tierMeta.cash) or 0)
+    if cost > 0 and not exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_upgrade_slots') then
+        return nil, { localeKey = 'economy.message.not_enough_cash' }
+    end
+    -- Guarded: only raises capacity; a concurrent upgrade to the same or a higher
+    -- tier makes this affect 0 rows and the payment is refunded.
+    local okDb, changed = pcall(function()
+        return MySQL.update.await(
+            'UPDATE clans SET max_members = ? WHERE id = ? AND max_members < ?',
+            { targetSlots, row.clan_id, targetSlots }
+        )
+    end)
+    if not okDb or tonumber(changed) ~= 1 then
+        if cost > 0 then refundCash(source, cost, 'clan_upgrade_slots_refund') end
+        print(('^3[sunset_clans]^7 upgradeSlots mutation rejected for clan %s: %s'):format(tostring(row.clan_id), tostring(changed)))
+        return nil, { localeKey = 'clans.message.clan_purchase_refunded' }
+    end
+
+    safeAudit(row.clan_id, cid, 'upgrade_slots', { targetSlots = targetSlots, currency = 'cash', cost = cost })
+    safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.upgraded_clan_slots', params = { slots = targetSlots } })
+    TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'slots_upgrade', targetSlots = targetSlots })
+    safeSyncMembers(row.clan_id)
+    notify(source, exports.sunset_core:TFor(source, 'clans.notify.slots_upgraded', { slots = targetSlots }), 'success')
+    return clanManageDashboard(source, cid)
+end
+
+-- Hooks for server/shop_ops.lua (loaded after this file).
+ClanShopHooks = {
+    audit = safeAudit,
+    broadcast = safeBroadcast,
+    syncMembers = safeSyncMembers,
+}
+
+AddEventHandler('playerDropped', function()
+    ClansRenewLocks[source] = nil
+    ClansSlotLocks[source] = nil
+end)
+
 local function handleClanManage(source, payload)
     if type(payload) ~= 'table' then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
     local action = tostring(payload.action or '')
@@ -625,19 +774,17 @@ local function handleClanManage(source, payload)
     if action == 'settings' then
         if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
         local description = cleanText(payload.description, SunsetClans.MaxDescriptionLength)
-        local tag = cleanTag(payload.tag)
-        if not tag then
-            return nil, { localeKey = 'clans.message.clan_tag_must_be_value_value_letters_or_numbers_537a07', formatArgs = {
-                SunsetClans.MinTagLength, SunsetClans.MaxTagLength } }
+        -- [SHOP] Tag and colour changes are Racket Shop products (clan_tag_change /
+        -- clan_color_change). Settings keep the current values; an attempt to change
+        -- them here is refused instead of being applied for free.
+        local tag = tostring(row.tag or '')
+        if payload.tag ~= nil and tostring(payload.tag):gsub('%s+', ''):lower() ~= tag:lower() then
+            return nil, { localeKey = 'clans.message.tag_color_changes_in_shop' }
         end
-        if tag:lower() ~= tostring(row.tag or ''):lower() then
-            local taken = MySQL.scalar.await(
-                'SELECT id FROM clans WHERE LOWER(tag) = LOWER(?) AND id <> ? LIMIT 1',
-                { tag, row.clan_id }
-            )
-            if taken then return nil, { localeKey = 'clans.message.that_clan_tag_is_already_taken' } end
+        local tagColor = cleanColor(row.tag_color)
+        if payload.tagColor ~= nil and cleanColor(payload.tagColor) ~= tagColor then
+            return nil, { localeKey = 'clans.message.tag_color_changes_in_shop' }
         end
-        local tagColor = cleanColor(payload.tagColor)
         local tagStyle = tostring(payload.tagStyle or row.tag_style or 'brackets')
         if not SunsetClans.isValidTagStyle(tagStyle) then return nil, { localeKey = 'clans.message.invalid_tag_style' } end
         MySQL.update.await(
@@ -879,81 +1026,16 @@ local function handleClanManage(source, payload)
 
     if action == 'extendLifetime' then
         if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
-        local currency = tostring(payload.currency or 'cash'):lower()
-        if currency == 'pp' or currency == 'points' then
-            local cost = SunsetClans.RenewalPP or 500
-            local paid, payErr = spendCoins(source, cost)
-            if not paid then return nil, payErr end
-        else
-            local cost = SunsetClans.RenewalCash or 250000
-            local money = exports.sunset_core:GetMoney(source, 'cash') or 0
-            if money < cost then
-                return nil, { localeKey = 'economy.message.not_enough_cash' }
-            end
-            local ok = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_extend_lifetime')
-            if not ok then return nil, { localeKey = 'economy.message.not_enough_cash' } end
-        end
-
-        local days = SunsetClans.LifetimeDays or 30
-        MySQL.update.await([[
-            UPDATE clans 
-            SET expires_at = DATE_ADD(GREATEST(COALESCE(expires_at, NOW()), NOW()), INTERVAL ? DAY),
-                status = 'active'
-            WHERE id = ?
-        ]], { days, row.clan_id })
-
-        safeAudit(row.clan_id, cid, 'extend_lifetime', { currency = currency, days = days })
-        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.extended_clan_lifetime', params = { days = days } })
-        TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'lifetime_extension' })
-        syncClanMembers(row.clan_id)
-        notify(source, exports.sunset_core:TFor(source, 'clans.notify.lifetime_extended', { days = days }), 'success')
-        return clanManageDashboard(source, cid)
+        return runLocked(ClansRenewLocks, source, 'extendLifetime', function()
+            return extendLifetimeLocked(source, row, cid, payload)
+        end)
     end
 
     if action == 'upgradeSlots' then
         if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
-        local targetSlots = tonumber(payload.targetSlots or payload.slots)
-        if not targetSlots then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
-        local currentMax = tonumber(row.max_members) or (SunsetClans.BaseSlots or 10)
-        if targetSlots <= currentMax then
-            return nil, { localeKey = 'clans.message.invalid_clan_action' }
-        end
-
-        local tierMeta
-        for _, t in ipairs(SunsetClans.SlotTiers or {}) do
-            if t.slots == targetSlots then
-                tierMeta = t
-                break
-            end
-        end
-        if not tierMeta then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
-
-        local currency = tostring(payload.currency or 'cash'):lower()
-        if currency == 'pp' or currency == 'points' then
-            local cost = tierMeta.pp or 0
-            if cost > 0 then
-                local paid, payErr = spendCoins(source, cost)
-                if not paid then return nil, payErr end
-            end
-        else
-            local cost = tierMeta.cash or 0
-            if cost > 0 then
-                local money = exports.sunset_core:GetMoney(source, 'cash') or 0
-                if money < cost then
-                    return nil, { localeKey = 'economy.message.not_enough_cash' }
-                end
-                local ok = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_upgrade_slots')
-                if not ok then return nil, { localeKey = 'economy.message.not_enough_cash' } end
-            end
-        end
-
-        MySQL.update.await('UPDATE clans SET max_members = ? WHERE id = ?', { targetSlots, row.clan_id })
-        safeAudit(row.clan_id, cid, 'upgrade_slots', { targetSlots = targetSlots, currency = currency })
-        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.upgraded_clan_slots', params = { slots = targetSlots } })
-        TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'slots_upgrade', targetSlots = targetSlots })
-        syncClanMembers(row.clan_id)
-        notify(source, exports.sunset_core:TFor(source, 'clans.notify.slots_upgraded', { slots = targetSlots }), 'success')
-        return clanManageDashboard(source, cid)
+        return runLocked(ClansSlotLocks, source, 'upgradeSlots', function()
+            return upgradeSlotsLocked(source, row, cid, payload)
+        end)
     end
 
     return nil, { localeKey = 'clans.message.unknown_clan_action' }

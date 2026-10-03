@@ -425,6 +425,14 @@ AddEventHandler('sunset:nui:menuAction', function(data)
         end)
         return
     end
+    if data.action == 'shop' then
+        closeMenu()
+        CreateThread(function()
+            Wait(150)
+            TriggerEvent('sunset:shop:open')
+        end)
+        return
+    end
     if data.action == 'pass' or data.action == 'missions' then
         closeMenu()
         CreateThread(function()

@@ -11,6 +11,11 @@ const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entr
 });
 const escape = (value) => String(value ?? '—').replaceAll('|', '\\|').replaceAll('\n', ' ');
 
+// Recorded release decisions for items the literal scan cannot fully explain.
+const ITEM_NOTES = {
+  standard_tank: 'DECISION 2026-10-03: kept and connected. Diver standard-tier gear rental (rank 2+, sunset_jobs rentGear) grants it, dive contracts accept it, and shift end removes it via session.data.rentedGearItem (dynamic RemoveItem, not detected literally).',
+};
+
 function itemMatrix() {
   const itemFile = 'resources/[sunset]/sunset_core/shared/items.lua';
   const source = read(itemFile);
@@ -48,7 +53,7 @@ function itemMatrix() {
     const usedBy = [...users].filter(Boolean).sort().join(', ') || 'catalog only';
     const obtainable = sources.length ? 'yes' : 'review';
     const orphan = users.size === 0 && !sources.length ? 'yes' : 'no';
-    return `| ${escape(id)} | ${escape(label)} | ${escape(sources.join(', ') || 'none detected')} | ${escape(sinks.join(', ') || 'none detected')} | ${escape(usedBy)} | — | ${craftInput} | ${craftOutput} | ${usedBy.includes('sunset_quests') ? 'yes' : 'no'} | ${usedBy.includes('sunset_factions') ? 'yes' : 'no'} | ${obtainable} | ${orphan} | Static literal analysis; dynamic loot paths require live verification. |`;
+    return `| ${escape(id)} | ${escape(label)} | ${escape(sources.join(', ') || 'none detected')} | ${escape(sinks.join(', ') || 'none detected')} | ${escape(usedBy)} | — | ${craftInput} | ${craftOutput} | ${usedBy.includes('sunset_quests') ? 'yes' : 'no'} | ${usedBy.includes('sunset_factions') ? 'yes' : 'no'} | ${obtainable} | ${orphan} | ${escape(ITEM_NOTES[id] || 'Static literal analysis; dynamic loot paths require live verification.')} |`;
   });
   return `# Item Economy Matrix\n\nCanonical static inventory map generated from current code on 2026-10-03. “Review” means no literal shop, craft output, or direct server reward was detected; it is a release checklist item, not proof that an item is impossible to obtain.\n\n| item_id | label | source(s) | sink(s) | used_by | sell_value | craft_input | craft_output | quest use | faction use | obtainable? | orphan? | notes |\n|---|---|---|---|---|---:|---|---|---|---|---|---|---|\n${rows.join('\n')}\n`;
 }
@@ -73,7 +78,7 @@ function resourceMatrix() {
     const remaining = state === 'dev only' ? 'Keep disabled in production.' : state === 'disabled/optional' ? 'Confirm product decision before enable.' : 'Run resource restart and multiplayer scenario.';
     return `| ${name} | ${state} | ${completeness} | ${security} | ${progression} | ${economy} | ${escape(integration)} | no | ${remaining} |`;
   });
-  return `# Current Resource Matrix\n\nGenerated from the 71 current \`sunset_*\` manifests and production configuration on 2026-10-03. “Runtime Tested: no” is deliberate: this pass had no live FiveM server/client evidence. Static review cannot establish restart, OneSync, or 48-player readiness.\n\n| Resource | Production State | Completeness | Security | Progression | Economy | Integration | Runtime Tested | Remaining Work |\n|---|---|---|---|---|---|---|---|---|\n${rows.join('\n')}\n`;
+  return `# Current Resource Matrix\n\nGenerated from the ${resources.length} current \`sunset_*\` manifests and production configuration on 2026-10-03. “Runtime Tested: no” is deliberate: this pass had no live FiveM server/client evidence. Static review cannot establish restart, OneSync, or 48-player readiness.\n\n| Resource | Production State | Completeness | Security | Progression | Economy | Integration | Runtime Tested | Remaining Work |\n|---|---|---|---|---|---|---|---|---|\n${rows.join('\n')}\n`;
 }
 
 const mode = process.argv[2];

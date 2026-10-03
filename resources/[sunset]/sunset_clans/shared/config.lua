@@ -14,15 +14,16 @@ SunsetClans.InviteExpirySec = 120
 SunsetClans.LifetimeDays = 30
 SunsetClans.GracePeriodDays = 7
 SunsetClans.RenewalCash = 250000
-SunsetClans.RenewalPP = 500
+-- Racket Credit (RC) prices for renewals and slot tiers are NOT configured here:
+-- they live only in sunset_shop/shared/products.lua (clan_renew_* / clan_slots_*).
 
--- Clan Member Slot Upgrade Tiers (Base is 10 slots)
+-- Clan Member Slot Upgrade Tiers (Base is 10 slots). Cash prices only.
 SunsetClans.BaseSlots = 10
 SunsetClans.SlotTiers = {
-    { slots = 10, cash = 0, pp = 0 },
-    { slots = 15, cash = 100000, pp = 200 },
-    { slots = 20, cash = 250000, pp = 400 },
-    { slots = 25, cash = 500000, pp = 750 },
+    { slots = 10, cash = 0 },
+    { slots = 15, cash = 100000 },
+    { slots = 20, cash = 250000 },
+    { slots = 25, cash = 500000 },
 }
 
 SunsetClans.TagStyles = {
