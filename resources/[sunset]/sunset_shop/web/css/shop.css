@@ -39,7 +39,7 @@ html, body {
     inset: 0;
     display: flex;
     flex-direction: column;
-    background: var(--s-bg);
+    background: transparent;
     overflow: hidden;
 }
 
@@ -54,9 +54,8 @@ html, body {
 .shop-bg__overlay {
     position: absolute;
     inset: 0;
-    background:
-        linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.38) 45%, rgba(0,0,0,0.38) 55%, rgba(0,0,0,0.92) 100%),
-        radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.45) 100%);
+    /* Vignette only on edges so game world is visible in the middle */
+    background: radial-gradient(ellipse 90% 85% at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%);
 }
 
 .shop-bg__layer {
@@ -68,11 +67,11 @@ html, body {
     background-position: center;
 }
 
-/* Per-category ambient gradient (replaces external images for FiveM) */
-.shop-bg__layer--character { background: radial-gradient(ellipse 120% 80% at 60% 40%, rgba(45,35,90,0.7) 0%, transparent 70%), var(--s-bg); }
-.shop-bg__layer--clan      { background: radial-gradient(ellipse 120% 80% at 30% 60%, rgba(90,20,20,0.7) 0%, transparent 70%), var(--s-bg); }
-.shop-bg__layer--economy   { background: radial-gradient(ellipse 120% 80% at 50% 30%, rgba(40,80,40,0.5) 0%, transparent 70%), var(--s-bg); }
-.shop-bg__layer--vehicle   { background: radial-gradient(ellipse 120% 80% at 70% 50%, rgba(20,40,80,0.6) 0%, transparent 70%), var(--s-bg); }
+/* Per-category ambient color wash — fully transparent so game world shows through */
+.shop-bg__layer--character { background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(45,35,90,0.45) 0%, transparent 70%); }
+.shop-bg__layer--clan      { background: radial-gradient(ellipse 80% 60% at 30% 60%, rgba(90,20,20,0.45) 0%, transparent 70%); }
+.shop-bg__layer--economy   { background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(30,70,30,0.35) 0%, transparent 70%); }
+.shop-bg__layer--vehicle   { background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(20,40,80,0.40) 0%, transparent 70%); }
 
 /* Activate layer matching data-bg on #shop */
 .shop[data-bg="character"] .shop-bg__layer--character,

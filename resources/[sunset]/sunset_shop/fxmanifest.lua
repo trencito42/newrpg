@@ -34,6 +34,7 @@ files {
     'web/index.html',
     'web/css/shop.css',
     'web/js/shop.js',
+    'web/racket-coin.svg',
 }
 
 dependencies {
