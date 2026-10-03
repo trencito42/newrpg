@@ -282,3 +282,73 @@ exports.sunset_core:RegisterCallback('sunset:authSetEmail', function(source, ema
     AuthenticatedPlayers[source] = true
     return { username = account.username, needsEmail = false, quickToken = issueQuickToken(source, account.id) }
 end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- /changepass <oldPassword> <newPassword> <confirmPassword>
+-- ═══════════════════════════════════════════════════════════════
+RegisterCommand('changepass', function(source, args, raw)
+    if source == 0 then
+        print('[sunset_auth] /changepass cannot be run from server console.')
+        return
+    end
+
+    local player = exports.sunset_core:GetPlayer(source)
+    if not player or not player.account_id then
+        TriggerClientEvent('sunset:client:notify', source, 'Nu ești autentificat pe un cont valid!', 'error', 5000)
+        return
+    end
+
+    local oldPassword = args[1]
+    local newPassword = args[2]
+    local confirmPassword = args[3]
+
+    if not oldPassword or not newPassword or not confirmPassword then
+        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /changepass <parola_veche> <parola_noua> <confirmare_parola_noua>', 'info', 7000)
+        return
+    end
+
+    if newPassword ~= confirmPassword then
+        TriggerClientEvent('sunset:client:notify', source, 'Parola nouă și confirmarea nu coincid!', 'error', 6000)
+        return
+    end
+
+    if #newPassword < 6 or #newPassword > 128 then
+        TriggerClientEvent('sunset:client:notify', source, 'Parola nouă trebuie să aibă între 6 și 128 de caractere!', 'error', 6000)
+        return
+    end
+
+    local account = MySQL.single.await(
+        'SELECT id, password_hash, password_salt FROM accounts WHERE id = ?',
+        { player.account_id }
+    )
+
+    if not account then
+        TriggerClientEvent('sunset:client:notify', source, 'Contul tău nu a fost găsit în baza de date!', 'error', 5000)
+        return
+    end
+
+    local modern = type(account.password_hash) == 'string' and account.password_hash:sub(1, 8) == '$scrypt$'
+    local valid = modern and exports.sunset_auth:VerifyPassword(oldPassword, account.password_hash)
+        or Sunset.Password.Verify(oldPassword, account.password_salt, account.password_hash)
+
+    if not valid then
+        TriggerClientEvent('sunset:client:notify', source, 'Parola veche introdusă este incorectă!', 'error', 6000)
+        return
+    end
+
+    local newHash = exports.sunset_auth:HashPassword(newPassword)
+    if not newHash then
+        TriggerClientEvent('sunset:client:notify', source, 'Eroare la criptarea noii parole!', 'error', 5000)
+        return
+    end
+
+    MySQL.update.await('UPDATE accounts SET password_hash = ?, password_salt = ? WHERE id = ?', {
+        newHash, '', account.id
+    })
+
+    -- Invalidate existing quick tokens
+    MySQL.update.await('DELETE FROM auth_quick_tokens WHERE account_id = ?', { account.id })
+
+    TriggerClientEvent('sunset:client:notify', source, 'Parola contului tău a fost schimbată cu succes!', 'success', 6000)
+end, false)
+

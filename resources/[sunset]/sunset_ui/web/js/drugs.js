@@ -87,11 +87,18 @@ const Drugs = {
             const instrEl = document.getElementById('harvest-instruction');
             if (!wrap) return;
 
-            wrap.className = `theme-${this.type} visible`;
-            const typeLabel = (this.type === 'coca' || this.type === 'coke') ? 'Recoltare Coca' : (this.type === 'meth' ? 'Recoltare Chimicale' : 'Recoltare Weed');
+            const typeLabel = (this.type === 'coca' || this.type === 'coke') ? 'Recoltare Coca' : (this.type === 'meth' ? 'Recoltare Precursori Chimici' : 'Recoltare Cannabis');
             if (titleEl) titleEl.innerText = typeLabel;
-            if (iconEl) iconEl.innerHTML = SVG_ICONS[this.type] || SVG_ICONS.weed;
+
+            const iconSrc = (this.type === 'coca' || this.type === 'coke') 
+                ? 'assets/items/coke_leaf.webp' 
+                : (this.type === 'meth' ? 'assets/items/meth_chemical.webp' : 'assets/items/weed_leaf.webp');
+
+            if (iconEl) {
+                iconEl.innerHTML = `<img src="${iconSrc}" style="width: 32px; height: 32px; object-fit: contain;" alt="${this.type}" onerror="this.onerror=null; this.src='assets/items/weed_leaf.webp';">`;
+            }
             if (instrEl) instrEl.innerHTML = 'Apasă <span class="keybind">E</span> în zona marcată';
+
 
             this.randomizeTarget();
             this.updateUI();
