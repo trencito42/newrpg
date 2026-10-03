@@ -28,3 +28,20 @@ end)
 exports('GetModelProfile', function(modelIdentifier)
     return SunsetVehicleDynamics.Resolve(modelIdentifier, nil)
 end)
+
+local function canDiagnose(source)
+    if source == 0 then return true end
+    if GetResourceState('sunset_admin') ~= 'started' then return false end
+    local ok, allowed = pcall(function() return exports.sunset_admin:IsAdmin(source, 2) end)
+    return ok and allowed == true
+end
+
+RegisterCommand('vehphysics', function(source)
+    if not canDiagnose(source) then return end
+    if source > 0 then TriggerClientEvent('sunset:vehicleDynamics:diagnose', source) end
+end, false)
+
+RegisterCommand('reapplyhandling', function(source)
+    if not canDiagnose(source) then return end
+    if source > 0 then TriggerClientEvent('sunset:vehicleDynamics:reapply', source) end
+end, false)

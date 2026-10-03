@@ -57,6 +57,9 @@ function SVD.ApplyVehicleDynamics(veh, force)
         if SunsetVehicleDynamics.Config.Debug then
             print(string.format('^2[vehicle_dynamics] Applied baseline to veh %d (model: %s, source: %s)^7', veh, profile.model, profile.source))
         end
+        if not force then
+            TriggerEvent('sunset:vehicleDynamics:applied', veh, profile.model)
+        end
     end
 
     return success

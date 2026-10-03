@@ -88,10 +88,10 @@ function SunsetVehicleDynamics.Resolve(modelIdentifier, classId)
     end
 
     if modelKey and resolvedCache[modelKey] then
-        return resolvedCache[modelKey]
+        return deepCopy(resolvedCache[modelKey])
     end
     if modelHash and resolvedCache[modelHash] then
-        return resolvedCache[modelHash]
+        return deepCopy(resolvedCache[modelHash])
     end
 
     -- 1. Direct explicit profile lookup
@@ -147,7 +147,7 @@ function SunsetVehicleDynamics.Resolve(modelIdentifier, classId)
         resolvedCache[modelHash] = resolved
     end
 
-    return resolved
+    return deepCopy(resolved)
 end
 
 function SunsetVehicleDynamics.GetProfile(modelIdentifier)

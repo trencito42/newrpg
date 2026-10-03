@@ -180,6 +180,19 @@ for (const v of discovered) {
 }
 assert(missingAddons === 0, `100% of discovered addon vehicles (${discovered.length}/${discovered.length}) have explicit canonical profiles.`);
 
+// Dealership seeds are player-facing inventory even when they use vanilla models.
+const dealershipSql = [
+  fs.readFileSync(path.join(root, 'sql/12-dealership.sql'), 'utf8'),
+  fs.readFileSync(path.join(root, 'sql/53-addon-vehicles.sql'), 'utf8'),
+].join('\n');
+const dealershipModels = new Set([
+  ...[...dealershipSql.matchAll(/'([a-zA-Z0-9_]+)'\s+AS\s+`model`/g)].map((match) => match[1].toLowerCase()),
+  ...[...dealershipSql.matchAll(/UNION\s+ALL\s+SELECT\s+'([a-zA-Z0-9_]+)'/gi)].map((match) => match[1].toLowerCase()),
+  ...[...dealershipSql.matchAll(/^\s*\('([a-zA-Z0-9_]+)'\s*,/gm)].map((match) => match[1].toLowerCase()),
+]);
+const missingDealership = [...dealershipModels].filter((model) => !allExplicit.has(model));
+assert(missingDealership.length === 0, `All ${dealershipModels.size} dealership seed models have explicit canonical profiles.`);
+
 // -------------------------------------------------------------
 // Test 6: Old Police Handling Migration Parity
 // -------------------------------------------------------------
@@ -197,9 +210,14 @@ assert(missingPolice === 0, `All legacy sunset_police_handling models (${oldPoli
 // Test 7: Tuning Integration
 // -------------------------------------------------------------
 const tuningBaseline = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/baseline.lua'), 'utf8');
+const tuningApply = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/apply.lua'), 'utf8');
 assert(tuningBaseline.includes('sunset_vehicle_dynamics'), 'sunset_tuning checks sunset_vehicle_dynamics.');
 assert(tuningBaseline.includes('GetCanonicalBaseline'), 'sunset_tuning queries GetCanonicalBaseline.');
 assert(tuningBaseline.includes('ApplyVehicleDynamics'), 'sunset_tuning calls ApplyVehicleDynamics on stock reset.');
+assert(tuningBaseline.includes('STC.modelBaselines[modelHash] = copyTable(handlingBaseline)'), 'Model baseline cache contains handling only, isolated from entity hardware.');
+assert(tuningApply.includes('priorState.modelHash == modelHash'), 'Repeated tuning reuses the original entity baseline without stacking.');
+assert(tuningApply.includes("AddEventHandler('sunset:vehicleDynamics:applied'"), 'Persisted tunes are restored after canonical dynamics reapplication.');
+assert(applyContent.includes("TriggerEvent('sunset:vehicleDynamics:applied'"), 'Dynamics application publishes the tuning integration event.');
 
 // -------------------------------------------------------------
 // Test 8: Server Startup Order
@@ -213,7 +231,9 @@ assert(vdPos !== -1 && tuningPos !== -1 && vdPos < tuningPos, 'sunset_vehicle_dy
 // Test 9: Diagnostic Security Gating
 // -------------------------------------------------------------
 const diagContent = fs.readFileSync(path.join(vdDir, 'client/diagnostics.lua'), 'utf8');
-assert(diagContent.includes('if not SunsetVehicleDynamics.Config.Debug then'), 'Diagnostic commands (/handlinginfo, /handlingreload, /handlingtest) are gated by Config.Debug.');
+assert(diagContent.includes('if not SunsetVehicleDynamics.Config.Debug then'), 'Developer benchmark command is gated by Config.Debug.');
+assert(serverContent.includes("exports.sunset_admin:IsAdmin(source, 2)"), 'Production diagnostic commands require sunset_admin level 2.');
+assert(serverContent.includes("RegisterCommand('vehphysics'") && serverContent.includes("RegisterCommand('reapplyhandling'"), 'Admin vehicle diagnostic and reapply commands are registered server-side.');
 
 // -------------------------------------------------------------
 // Summary

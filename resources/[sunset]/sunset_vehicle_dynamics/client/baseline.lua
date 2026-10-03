@@ -7,6 +7,15 @@ SunsetVehicleDynamicsClient = SunsetVehicleDynamicsClient or {}
 local SVD = SunsetVehicleDynamicsClient
 local baselineModelCache = {}
 
+local function copyTable(value)
+    if type(value) ~= 'table' then return value end
+    local result = {}
+    for key, child in pairs(value) do
+        result[key] = copyTable(child)
+    end
+    return result
+end
+
 function SVD.GetCanonicalBaseline(modelHash, veh)
     if not modelHash and veh and DoesEntityExist(veh) then
         modelHash = GetEntityModel(veh)
@@ -14,7 +23,7 @@ function SVD.GetCanonicalBaseline(modelHash, veh)
     if not modelHash then return nil end
 
     if baselineModelCache[modelHash] then
-        return baselineModelCache[modelHash]
+        return copyTable(baselineModelCache[modelHash])
     end
 
     local classId = (veh and DoesEntityExist(veh) and GetVehicleClass(veh)) or 0
@@ -40,7 +49,7 @@ function SVD.GetCanonicalBaseline(modelHash, veh)
     baseline.isFallback = resolved.isFallback == true
 
     baselineModelCache[modelHash] = baseline
-    return baseline
+    return copyTable(baseline)
 end
 
 -- FiveM Client Exports

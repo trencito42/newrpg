@@ -4,18 +4,13 @@ local TC = SunsetTuning.TuneCalculator
 
 STC.modelBaselines = STC.modelBaselines or {}
 
-local function readBaselineFromVehicle(veh)
-    local baseline = {}
-    for _, field in ipairs(TC.GetBaselineFields()) do
-        baseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
+local function copyTable(value)
+    if type(value) ~= 'table' then return value end
+    local result = {}
+    for key, child in pairs(value) do
+        result[key] = copyTable(child)
     end
-    baseline.mods = {}
-    SetVehicleModKit(veh, 0)
-    for key, slot in pairs(SunsetTuning.HardwareSlots or {}) do
-        baseline.mods[key] = GetVehicleMod(veh, slot.modType)
-    end
-    baseline.turbo = IsToggleModOn(veh, 18)
-    return baseline
+    return result
 end
 
 function STC.getModelHash(veh)
@@ -30,27 +25,34 @@ exports('CaptureModelBaseline', CaptureModelBaseline)
 function STC.captureModelBaseline(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return nil end
     local modelHash = STC.getModelHash(veh)
-    if STC.modelBaselines[modelHash] then return STC.modelBaselines[modelHash] end
+    local handlingBaseline = STC.modelBaselines[modelHash]
 
-    local baseline = {}
-    
-    -- Check if canonical baseline is available from sunset_vehicle_dynamics
-    local canonical = nil
-    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
-        pcall(function()
-            canonical = exports.sunset_vehicle_dynamics:GetCanonicalBaseline(modelHash, veh)
-        end)
+    if not handlingBaseline then
+        handlingBaseline = {}
+
+        -- Cache only model-level handling. Hardware is entity-specific and must never
+        -- leak between two vehicles that share the same model hash.
+        local canonical = nil
+        if GetResourceState('sunset_vehicle_dynamics') == 'started' then
+            pcall(function()
+                canonical = exports.sunset_vehicle_dynamics:GetCanonicalBaseline(modelHash, veh)
+            end)
+        end
+
+        if canonical and type(canonical) == 'table' then
+            for _, field in ipairs(TC.GetBaselineFields()) do
+                handlingBaseline[field] = canonical[field] or GetVehicleHandlingFloat(veh, 'CHandlingData', field)
+            end
+        else
+            for _, field in ipairs(TC.GetBaselineFields()) do
+                handlingBaseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
+            end
+        end
+
+        STC.modelBaselines[modelHash] = copyTable(handlingBaseline)
     end
 
-    if canonical and type(canonical) == 'table' then
-        for _, field in ipairs(TC.GetBaselineFields()) do
-            baseline[field] = canonical[field] or GetVehicleHandlingFloat(veh, 'CHandlingData', field)
-        end
-    else
-        for _, field in ipairs(TC.GetBaselineFields()) do
-            baseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
-        end
-    end
+    local baseline = copyTable(handlingBaseline)
 
     baseline.mods = {}
     SetVehicleModKit(veh, 0)
@@ -59,8 +61,7 @@ function STC.captureModelBaseline(veh)
     end
     baseline.turbo = IsToggleModOn(veh, 18)
 
-    STC.modelBaselines[modelHash] = baseline
-    return STC.modelBaselines[modelHash]
+    return baseline
 end
 
 function STC.getVehicleCapabilities(veh)

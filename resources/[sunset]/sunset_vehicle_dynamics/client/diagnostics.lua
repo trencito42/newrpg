@@ -1,18 +1,13 @@
 --[[
     Sunset Vehicle Dynamics - Diagnostics & Benchmark Suite
-    Gated by Config.Debug.
-    Provides deep inspection of canonical baseline vs live effective handling,
-    hot reloading, and live physical performance benchmarking.
+    Server-authorized inspection/reapply plus Config.Debug developer commands.
+    Provides canonical-versus-live handling, hot reloading, and benchmarking.
 ]]
 
 SunsetVehicleDynamicsClient = SunsetVehicleDynamicsClient or {}
 local SVD = SunsetVehicleDynamicsClient
 
-RegisterCommand('handlinginfo', function()
-    if not SunsetVehicleDynamics.Config.Debug then
-        return
-    end
-
+local function showHandlingInfo()
     local ped = PlayerPedId()
     if not IsPedInAnyVehicle(ped, false) then
         TriggerEvent('chat:addMessage', {
@@ -40,6 +35,12 @@ RegisterCommand('handlinginfo', function()
     local liveSteerLock = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fSteeringLock')
     local liveDriveBias = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fDriveBiasFront')
     local liveGears = GetVehicleHandlingInt(veh, 'CHandlingData', 'nInitialDriveGears')
+    local liveDrag = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fInitialDragCoeff')
+    local liveSuspension = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fSuspensionForce')
+    local liveAntiRoll = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fAntiRollBarForce')
+    local liveRollFront = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fRollCentreHeightFront')
+    local liveRollRear = GetVehicleHandlingFloat(veh, 'CHandlingData', 'fRollCentreHeightRear')
+    local speedKmh = GetEntitySpeed(veh) * 3.6
 
     -- Tuning State
     local activeTuneInfo = 'Stock (No ECU Tune)'
@@ -57,7 +58,7 @@ RegisterCommand('handlinginfo', function()
 
     print('^3=======================================================^7')
     print(string.format('^3--- Vehicle Dynamics Diagnostic: %s (Hash: %d) ---^7', modelName, modelHash))
-    print(string.format('^2Profile Model: %s | Source: %s | Archetype: %s | Class: %d^7', profile.model or 'unknown', profile.source or 'unknown', profile.archetype or 'custom', classId))
+    print(string.format('^2Identity: %s | Profile: %s | Source: %s | Archetype: %s | Tier: %s | Class: %d^7', profile.displayName or modelName, profile.model or 'unknown', profile.source or 'unknown', profile.archetype or 'custom', profile.performanceTier or 'unknown', classId))
     print(string.format('Drivetrain: ^5%s^7 (DriveBiasFront: %.2f) | Weight: ^5%d kg^7', profile.drivetrain or 'unknown', liveDriveBias, math.floor(liveMass)))
     print(string.format('Tuning Status: ^5%s^7', activeTuneInfo))
     print('^6--- CANONICAL BASELINE vs LIVE EFFECTIVE ---^7')
@@ -69,21 +70,28 @@ RegisterCommand('handlinginfo', function()
     print(string.format('  Traction Min:   Canon: %.2f      | Live: %.2f', canon.fTractionCurveMin or 0, liveTractionMin))
     print(string.format('  Steering Lock:  Canon: %.1f deg  | Live: %.1f deg', canon.fSteeringLock or 0, liveSteerLock))
     print(string.format('  Gears:          Canon: %d        | Live: %d', canon.nInitialDriveGears or 0, liveGears))
+    print(string.format('  Drag:           Canon: %.2f      | Live: %.2f', canon.fInitialDragCoeff or 0, liveDrag))
+    print(string.format('  Suspension:     Canon: %.2f      | Live: %.2f', canon.fSuspensionForce or 0, liveSuspension))
+    print(string.format('  Anti-roll:      Canon: %.2f      | Live: %.2f', canon.fAntiRollBarForce or 0, liveAntiRoll))
+    print(string.format('  Roll centres:   Canon: %.3f/%.3f | Live: %.3f/%.3f', canon.fRollCentreHeightFront or 0, canon.fRollCentreHeightRear or 0, liveRollFront, liveRollRear))
+    print(string.format('  Target speed:   %.0f km/h        | Current: %.1f km/h', profile.targetTopSpeedKmh or 0, speedKmh))
     print('^3=======================================================^7')
 
     TriggerEvent('chat:addMessage', {
         color = { 60, 180, 240 },
         multiline = true,
         args = { 'Dynamics', string.format('[%s] %s | Drivetrain: %s | Mass: %d kg | Tune: %s\nCanon Force: %.3f (Live: %.3f) | Canon Grip: %.2f (Live: %.2f)',
-            modelName, profile.source, profile.drivetrain, math.floor(liveMass), activeTuneInfo, canon.fInitialDriveForce or 0, liveDriveForce, canon.fTractionCurveMax or 0, liveTractionMax) }
+            profile.displayName or modelName, profile.source, profile.drivetrain, math.floor(liveMass), activeTuneInfo, canon.fInitialDriveForce or 0, liveDriveForce, canon.fTractionCurveMax or 0, liveTractionMax) }
     })
+end
+
+RegisterCommand('handlinginfo', function()
+    if SunsetVehicleDynamics.Config.Debug then showHandlingInfo() end
 end, false)
 
-RegisterCommand('handlingreload', function()
-    if not SunsetVehicleDynamics.Config.Debug then
-        return
-    end
+RegisterNetEvent('sunset:vehicleDynamics:diagnose', showHandlingInfo)
 
+local function reapplyHandling()
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         local veh = GetVehiclePedIsIn(ped, false)
@@ -108,7 +116,13 @@ RegisterCommand('handlingreload', function()
         multiline = false,
         args = { 'Dynamics', 'Vehicle dynamics profile reloaded and synchronized with active tuning.' }
     })
+end
+
+RegisterCommand('handlingreload', function()
+    if SunsetVehicleDynamics.Config.Debug then reapplyHandling() end
 end, false)
+
+RegisterNetEvent('sunset:vehicleDynamics:reapply', reapplyHandling)
 
 local isTesting = false
 RegisterCommand('handlingtest', function()

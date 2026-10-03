@@ -6,7 +6,10 @@
     "i18n:test": "node --test scripts/i18n-gate.test.mjs",
     "auth:check": "node scripts/test-auth-identity.js",
     "authority:check": "node scripts/test-critical-authority.js",
-    "prelaunch:check": "node scripts/test-prelaunch-invariants.js"
+    "prelaunch:check": "node scripts/test-prelaunch-invariants.js",
+    "discover:vehicles": "node scripts/audit-server-vehicles.js --write",
+    "generate:vehicles": "node scripts/generate-addon-profiles.js",
+    "audit:vehicles": "node scripts/audit-server-vehicles.js --check && node scripts/generate-addon-profiles.js --check && node scripts/generate-vehicle-report.js --check && node scripts/audit-vehicle-physics.js && node scripts/validate-vehicle-dynamics.js && node scripts/check-lua-syntax.js resources/[sunset]/sunset_vehicle_dynamics resources/[sunset]/sunset_tuning"
   },
   "devDependencies": {
     "luaparse": "^0.3.1",

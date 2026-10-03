@@ -71,7 +71,10 @@ function ApplyTune(veh, tune, persist, modelName)
     if not caps.supported then return false end
 
     tune = SunsetTuning.SanitizeTune(tune, caps)
-    local baseline = STC.captureModelBaseline(veh)
+    local modelHash = GetEntityModel(veh)
+    local priorState = STC.appliedVehicles[veh]
+    local baseline = priorState and priorState.modelHash == modelHash and priorState.baseline
+        or STC.captureModelBaseline(veh)
     if not baseline then return false end
 
     -- Idempotent: always restore stock baseline before applying tune
@@ -92,6 +95,7 @@ function ApplyTune(veh, tune, persist, modelName)
         baseline = baseline,
         calculated = calculated,
         model = modelName,
+        modelHash = modelHash,
     }
 
     if tune.nitrous and tune.nitrous.installed and STC.RefillNitrous then
@@ -170,6 +174,25 @@ RegisterNetEvent('sunset:tuning:client:loadPlateTune', function(plate, tune, per
         STC.plateTunes[plate] = nil
         STC.persistedPlates[plate] = nil
         STC.plateModels[plate] = nil
+        for _, veh in ipairs(GetGamePool('CVehicle')) do
+            if STC.plateOf(veh) == plate then
+                local state = STC.appliedVehicles[veh]
+                local baseline = state and state.baseline or STC.captureModelBaseline(veh)
+                STC.restoreBaselineHandling(veh, baseline)
+                STC.appliedVehicles[veh] = nil
+            end
+        end
+    end
+end)
+
+-- The dynamics resource can intentionally restore its canonical handling (resource
+-- restart or admin reapply). Put a persisted non-stock tune back on top exactly once.
+AddEventHandler('sunset:vehicleDynamics:applied', function(veh)
+    if not veh or veh == 0 or not DoesEntityExist(veh) then return end
+    local plate = STC.plateOf(veh)
+    local tune = plate ~= '' and STC.persistedPlates[plate] and STC.plateTunes[plate] or nil
+    if tune and not SunsetTuning.IsStockTune(tune) then
+        ApplyTune(veh, tune, false, STC.plateModels[plate])
     end
 end)
 

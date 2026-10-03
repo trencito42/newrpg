@@ -1,188 +1,272 @@
+#!/usr/bin/env node
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
+const { TIERS, ARCHETYPES, VANILLA, resolveIdentity } = require('./vehicle-physics/catalog');
 
 const root = path.resolve(__dirname, '..');
-const vdDir = path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics');
-const allVehicles = JSON.parse(fs.readFileSync(path.join(root, 'scripts/discovered_addon_vehicles.json'), 'utf8'));
+const dynamicsDir = path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics');
+const discoveredPath = path.join(root, 'scripts/discovered_addon_vehicles.json');
+const inventoryPath = path.join(root, 'scripts/vehicle_inventory.json');
+const auditCsvPath = path.join(root, 'docs/vehicles/VEHICLE_PHYSICS_AUDIT.csv');
+const auditMdPath = path.join(root, 'docs/vehicles/VEHICLE_PHYSICS_AUDIT.md');
+const addonVehicles = JSON.parse(fs.readFileSync(discoveredPath, 'utf8'));
 
-const emergency = [];
-const civilian = [];
+const EMERGENCY_VANILLA = new Set(['police','police2','police3','police4','policeb','policet','sheriff','sheriff2','fbi','fbi2','pranger','ambulance','firetruk','riot','lguard']);
 
-for (const v of allVehicles) {
-  const isEmerg = v.vehicleClass.includes('EMERGENCY') || v.model.endsWith('pd') || v.model.includes('police') || v.model.includes('sheriff') || v.model.includes('fbi') || v.model.includes('ambo') || v.model.includes('mech');
-  if (isEmerg) emergency.push(v);
-  else civilian.push(v);
+function isEmergency(v) {
+  const model = String(v.model || '').toLowerCase();
+  const cls = String(v.vehicleClass || '').toUpperCase();
+  return cls.includes('EMERGENCY') || /(pd|police|sheriff|fbi|vmark|wmark|mark|mech|ambo)$/.test(model);
 }
 
-function determineArchetype(v, isEmergency) {
-  if (isEmergency) {
-    if (v.vehicleClass.includes('SUV') || (v.rawHandling && v.rawHandling.fMass > 2200)) return 'emergency_suv';
-    return 'emergency_sedan';
-  }
-
-  const cls = (v.vehicleClass || '').toUpperCase();
-  const raw = v.rawHandling || {};
-  const driveBias = raw.fDriveBiasFront != null ? raw.fDriveBiasFront : 0.0;
-  const isAWD = driveBias >= 0.25 && driveBias <= 0.75;
-  const isFWD = driveBias > 0.75;
-
-  if (cls.includes('MOTORCYCLE')) return 'motorcycle_sport';
-  if (cls.includes('SUPER')) return isAWD ? 'super_awd' : 'super_rwd';
-  if (cls.includes('SPORT')) return isAWD ? 'sports_awd' : (isFWD ? 'compact_fwd' : 'sports_rwd');
-  if (cls.includes('MUSCLE')) return 'muscle_rwd';
-  if (cls.includes('SUV')) return 'suv_awd';
-  if (cls.includes('OFF_ROAD') || cls.includes('OFFROAD')) return 'offroad';
-  if (cls.includes('COMPACT')) return isFWD ? 'compact_fwd' : 'sports_rwd';
-  if (cls.includes('SEDAN') || cls.includes('COUPE')) return isAWD ? 'sedan_awd' : 'sedan_rwd';
-  if (cls.includes('VAN') || cls.includes('SERVICE')) return 'van';
-
-  const mass = raw.fMass || 1500;
-  if (mass > 2200) return isAWD ? 'suv_awd' : 'sedan_rwd';
-  if (mass < 1300 && isFWD) return 'compact_fwd';
-  if ((raw.fInitialDriveForce || 0.3) > 0.35) return isAWD ? 'super_awd' : 'super_rwd';
-  return isAWD ? 'sports_awd' : 'sports_rwd';
+function hash01(text) {
+  let hash = 2166136261;
+  for (const char of text) { hash ^= char.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+  return (hash >>> 0) / 4294967295;
 }
 
-function buildHandlingProfile(v, isEmergency) {
-  const arch = determineArchetype(v, isEmergency);
-  const raw = v.rawHandling || {};
+function round(value, digits = 3) {
+  const scale = 10 ** digits;
+  return Math.round(value * scale) / scale;
+}
 
-  let mass = raw.fMass || 1500.0;
-  if (mass < 800) mass = 1200.0;
-  if (mass > 3500) mass = 2800.0;
+function biasFor(drivetrain) {
+  return ({ rwd: 0.0, fwd: 1.0, awd_rear: 0.32, awd_balanced: 0.5, awd_front: 0.62 })[drivetrain];
+}
 
-  let driveBias = raw.fDriveBiasFront != null ? raw.fDriveBiasFront : 0.0;
-  let drivetrain = 'rwd';
-  if (driveBias >= 0.25 && driveBias <= 0.75) {
-    drivetrain = 'awd';
-    if (driveBias < 0.30) driveBias = 0.35;
-    if (driveBias > 0.50) driveBias = 0.50;
-  } else if (driveBias > 0.75) {
-    drivetrain = 'fwd';
-    driveBias = 1.0;
-  } else {
-    drivetrain = 'rwd';
-    driveBias = 0.0;
-  }
+function buildProfile(record) {
+  const identity = record.identity;
+  const arch = ARCHETYPES[identity.archetype];
+  const tier = TIERS[identity.tier || arch.tier];
+  if (!arch) throw new Error(`${record.model}: unknown archetype ${identity.archetype}`);
+  if (!tier) throw new Error(`${record.model}: unknown tier ${identity.tier}`);
 
-  let driveForce = raw.fInitialDriveForce || (isEmergency ? 0.35 : 0.32);
-  if (driveForce > 0.42) driveForce = 0.40;
-  if (driveForce < 0.23) driveForce = 0.26;
-
-  let maxFlatVel = raw.fInitialDriveMaxFlatVel || (isEmergency ? 168.0 : 165.0);
-  if (maxFlatVel > 210.0) maxFlatVel = 195.0;
-  if (maxFlatVel < 130.0) maxFlatVel = 145.0;
-
-  let brakeForce = raw.fBrakeForce || (isEmergency ? 1.00 : 0.90);
-  if (brakeForce > 1.25) brakeForce = 1.15;
-  if (brakeForce < 0.65) brakeForce = 0.75;
-
-  let tractionMax = raw.fTractionCurveMax || (isEmergency ? 2.50 : 2.45);
-  if (tractionMax > 2.80) tractionMax = 2.72;
-  if (tractionMax < 2.10) tractionMax = 2.25;
-
-  let tractionMin = raw.fTractionCurveMin || (tractionMax * 0.90);
-  if (tractionMin >= tractionMax) tractionMin = tractionMax * 0.92;
-
-  let steerLock = raw.fSteeringLock || 38.0;
-  if (steerLock > 43.0) steerLock = 40.0;
-  if (steerLock < 33.0) steerLock = 36.0;
-
-  let gears = raw.nInitialDriveGears || 6;
-  if (gears < 4) gears = 5;
-  if (gears > 8) gears = 8;
+  const variation = 0.985 + hash01(record.model) * 0.03;
+  const targetKmh = round((identity.targetKmh || tier.targetKmh) * variation, 0);
+  const drivetrain = identity.drivetrain || arch.drivetrain;
+  const driveBias = biasFor(drivetrain);
+  if (driveBias === undefined) throw new Error(`${record.model}: unsupported drivetrain ${drivetrain}`);
+  const mass = Math.round(identity.mass || arch.mass);
+  const grip = identity.grip || arch.grip;
+  const comZ = identity.comZ !== undefined ? identity.comZ : arch.comZ;
+  const antiRoll = identity.antiRoll || arch.antiRoll;
+  const rollFront = identity.rollFront || arch.roll[0];
+  const rollRear = identity.rollRear || arch.roll[1];
+  const lowLoss = identity.lowLoss || arch.lowLoss;
+  const performanceVariation = 0.99 + hash01(`${record.model}:power`) * 0.02;
 
   return {
-    archetype: arch,
-    category: isEmergency ? ('police_' + (arch.includes('suv') ? 'suv' : 'sedan')) : ('addon_' + (v.vehicleClass ? v.vehicleClass.replace('VC_', '').toLowerCase() : 'custom')),
-    drivetrain: drivetrain,
-    weightKg: Math.round(mass),
+    model: record.model,
+    displayName: identity.identity,
+    manufacturer: identity.manufacturer || 'Unknown',
+    inspiration: identity.inspiration,
+    generation: identity.generation,
+    bodyStyle: identity.body || arch.body,
+    engineType: identity.propulsion || 'combustion',
+    archetype: identity.archetype,
+    performanceTier: identity.tier || arch.tier,
+    drivetrain,
+    identityConfidence: identity.confidence || 'uncertain',
+    intendedRole: identity.intendedRole || (record.emergency ? 'emergency fleet' : arch.category),
+    sourceResource: record.sourceResource,
+    sourceHandlingId: record.handlingId || record.model,
+    sourceVehicleClass: record.vehicleClass || '',
+    sourceHandling: record.rawHandling || null,
+    targetTopSpeedKmh: targetKmh,
+    expectedZeroTo100: identity.zeroTo100 || tier.zeroTo100,
+    weightKg: mass,
     handling: {
-      fMass: Number(mass.toFixed(1)),
-      fInitialDragCoeff: arch.includes('super') ? 6.0 : (arch.includes('suv') ? 8.0 : 6.8),
-      vecCentreOfMassOffset: { x: 0.0, y: 0.0, z: arch.includes('super') ? -0.12 : (arch.includes('suv') ? 0.01 : -0.09) },
-      fDriveBiasFront: Number(driveBias.toFixed(2)),
-      nInitialDriveGears: gears,
-      fInitialDriveForce: Number(driveForce.toFixed(3)),
-      fDriveInertia: 1.0,
-      fInitialDriveMaxFlatVel: Number(maxFlatVel.toFixed(1)),
-      fBrakeForce: Number(brakeForce.toFixed(2)),
-      fBrakeBiasFront: drivetrain === 'fwd' ? 0.60 : 0.53,
-      fHandBrakeForce: 0.75,
-      fSteeringLock: Number(steerLock.toFixed(1)),
-      fTractionCurveMax: Number(tractionMax.toFixed(2)),
-      fTractionCurveMin: Number(tractionMin.toFixed(2)),
-      fSuspensionForce: arch.includes('super') ? 2.6 : (arch.includes('suv') ? 2.4 : 2.2),
-      fSuspensionCompDamp: arch.includes('super') ? 1.9 : 1.6,
-      fSuspensionReboundDamp: arch.includes('super') ? 3.3 : 2.8,
-      fAntiRollBarForce: arch.includes('super') ? 1.40 : (arch.includes('suv') ? 0.90 : 1.15)
-    }
+      fMass: mass,
+      fInitialDragCoeff: round(identity.drag || arch.drag, 2),
+      vecCentreOfMassOffset: { x: 0.0, y: identity.comY || 0.0, z: round(comZ, 3) },
+      vecInertiaMultiplier: { x: arch.inertia[0], y: arch.inertia[1], z: arch.inertia[2] },
+      fDriveBiasFront: driveBias,
+      nInitialDriveGears: identity.gears || tier.gears,
+      fInitialDriveForce: round((identity.driveForce || tier.driveForce) * performanceVariation, 3),
+      fDriveInertia: round(identity.driveInertia || (tier.driveForce >= 0.4 ? 1.08 : 1.0), 2),
+      fClutchChangeRateScaleUpShift: round(identity.shift || tier.shift, 2),
+      fClutchChangeRateScaleDownShift: round((identity.shift || tier.shift) * 0.96, 2),
+      fInitialDriveMaxFlatVel: round(targetKmh / 1.32, 1),
+      fBrakeForce: round(identity.brake || arch.brake, 2),
+      fBrakeBiasFront: drivetrain === 'fwd' ? 0.61 : (drivetrain.startsWith('awd') ? 0.54 : 0.52),
+      fHandBrakeForce: arch.category === 'muscle' ? 0.82 : 0.72,
+      fSteeringLock: round(identity.steer || arch.steer, 1),
+      fTractionCurveMax: round(grip, 2),
+      fTractionCurveMin: round(grip - arch.gripGap, 2),
+      fTractionCurveLateral: round(21.0 + (grip - 2.1) * 3.4, 1),
+      fTractionSpringDeltaMax: arch.body === 'suv' || arch.body === 'offroad' || arch.body === 'pickup' ? 0.17 : 0.13,
+      fLowSpeedTractionLossMult: round(lowLoss, 2),
+      fCamberStiffnesss: 0.0,
+      fTractionBiasFront: drivetrain === 'fwd' ? 0.55 : (drivetrain.startsWith('awd') ? 0.5 : 0.47),
+      fTractionLossMult: arch.category === 'offroad' ? 0.82 : 1.0,
+      fSuspensionForce: arch.suspension[0],
+      fSuspensionCompDamp: arch.suspension[1],
+      fSuspensionReboundDamp: arch.suspension[2],
+      fSuspensionUpperLimit: arch.suspension[3],
+      fSuspensionLowerLimit: arch.suspension[4],
+      fSuspensionRaise: 0.0,
+      fSuspensionBiasFront: drivetrain === 'fwd' ? 0.55 : 0.51,
+      fAntiRollBarForce: round(antiRoll, 2),
+      fAntiRollBarBiasFront: arch.body === 'suv' ? 0.56 : 0.52,
+      fRollCentreHeightFront: round(rollFront, 3),
+      fRollCentreHeightRear: round(rollRear, 3),
+    },
   };
 }
 
-function generateLuaFile(modelsList, tableName, registerGroup, headerDesc) {
-  let lua = `--[[\n    Sunset Vehicle Dynamics - ${headerDesc}\n    Calibrated canonical handling profiles normalized from repository vehicles.meta and handling.meta.\n]]\n\nSunsetVehicleDynamics = SunsetVehicleDynamics or {}\nSunsetVehicleDynamics.${tableName} = {\n`;
-
-  for (let i = 0; i < modelsList.length; i++) {
-    const v = modelsList[i];
-    const isEmerg = registerGroup === 'emergency';
-    const profile = buildHandlingProfile(v, isEmerg);
-    const h = profile.handling;
-    const comma = i < modelsList.length - 1 ? ',' : '';
-
-    lua += `    ['${v.model}'] = {\n`;
-    lua += `        archetype = '${profile.archetype}',\n`;
-    lua += `        category = '${profile.category}',\n`;
-    lua += `        drivetrain = '${profile.drivetrain}',\n`;
-    lua += `        weightKg = ${profile.weightKg},\n`;
-    lua += `        handling = {\n`;
-    lua += `            fMass = ${h.fMass},\n`;
-    lua += `            fInitialDragCoeff = ${h.fInitialDragCoeff},\n`;
-    lua += `            vecCentreOfMassOffset = { x = ${h.vecCentreOfMassOffset.x}, y = ${h.vecCentreOfMassOffset.y}, z = ${h.vecCentreOfMassOffset.z} },\n`;
-    lua += `            fDriveBiasFront = ${h.fDriveBiasFront},\n`;
-    lua += `            nInitialDriveGears = ${h.nInitialDriveGears},\n`;
-    lua += `            fInitialDriveForce = ${h.fInitialDriveForce},\n`;
-    lua += `            fDriveInertia = ${h.fDriveInertia},\n`;
-    lua += `            fInitialDriveMaxFlatVel = ${h.fInitialDriveMaxFlatVel},\n`;
-    lua += `            fBrakeForce = ${h.fBrakeForce},\n`;
-    lua += `            fBrakeBiasFront = ${h.fBrakeBiasFront},\n`;
-    lua += `            fHandBrakeForce = ${h.fHandBrakeForce},\n`;
-    lua += `            fSteeringLock = ${h.fSteeringLock},\n`;
-    lua += `            fTractionCurveMax = ${h.fTractionCurveMax},\n`;
-    lua += `            fTractionCurveMin = ${h.fTractionCurveMin},\n`;
-    lua += `            fSuspensionForce = ${h.fSuspensionForce},\n`;
-    lua += `            fSuspensionCompDamp = ${h.fSuspensionCompDamp},\n`;
-    lua += `            fSuspensionReboundDamp = ${h.fSuspensionReboundDamp},\n`;
-    lua += `            fAntiRollBarForce = ${h.fAntiRollBarForce}\n`;
-    lua += `        }\n`;
-    lua += `    }${comma}\n\n`;
-  }
-
-  lua += `}\n\nSunsetVehicleDynamics.RegisterBatch(SunsetVehicleDynamics.${tableName}, '${registerGroup}')\n`;
-  return lua;
+function luaValue(value, indent = 0) {
+  if (typeof value === 'number') return Number.isInteger(value) ? `${value}.0` : String(value);
+  if (typeof value === 'string') return `'${value.replace(/'/g, "\\'")}'`;
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (value === null || value === undefined) return 'nil';
+  const pad = ' '.repeat(indent);
+  const parts = Object.entries(value).map(([key, val]) => `${key} = ${luaValue(val, indent + 4)}`);
+  return `{ ${parts.join(', ')} }`;
 }
 
-// Generate Addon Profiles
-const addonLua = generateLuaFile(civilian, 'AddonProfiles', 'addon', 'Addon Vehicle Profiles');
-fs.writeFileSync(path.join(vdDir, 'shared/profiles_addon.lua'), addonLua);
-console.log(`Generated profiles_addon.lua with ${civilian.length} addon civilian vehicles.`);
-
-// Generate Emergency Profiles (including vanilla emergency + addon emergency)
-const vanillaEmergencyList = [
-  { model: 'police', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1750, fDriveBiasFront: 0.0, fInitialDriveForce: 0.33, fInitialDriveMaxFlatVel: 160, fBrakeForce: 0.95, fTractionCurveMax: 2.45, fSteeringLock: 39, nInitialDriveGears: 6 } },
-  { model: 'police2', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1800, fDriveBiasFront: 0.0, fInitialDriveForce: 0.36, fInitialDriveMaxFlatVel: 170, fBrakeForce: 1.05, fTractionCurveMax: 2.55, fSteeringLock: 38.5, nInitialDriveGears: 6 } },
-  { model: 'police3', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1820, fDriveBiasFront: 0.45, fInitialDriveForce: 0.35, fInitialDriveMaxFlatVel: 168, fBrakeForce: 1.00, fTractionCurveMax: 2.50, fSteeringLock: 38, nInitialDriveGears: 6 } },
-  { model: 'police4', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1720, fDriveBiasFront: 0.0, fInitialDriveForce: 0.33, fInitialDriveMaxFlatVel: 162, fBrakeForce: 0.95, fTractionCurveMax: 2.45, fSteeringLock: 39, nInitialDriveGears: 6 } },
-  { model: 'sheriff', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1760, fDriveBiasFront: 0.0, fInitialDriveForce: 0.33, fInitialDriveMaxFlatVel: 160, fBrakeForce: 0.95, fTractionCurveMax: 2.45, fSteeringLock: 39, nInitialDriveGears: 6 } },
-  { model: 'sheriff2', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 2650, fDriveBiasFront: 0.40, fInitialDriveForce: 0.31, fInitialDriveMaxFlatVel: 155, fBrakeForce: 0.88, fTractionCurveMax: 2.30, fSteeringLock: 36, nInitialDriveGears: 6 } },
-  { model: 'fbi', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 1800, fDriveBiasFront: 0.0, fInitialDriveForce: 0.36, fInitialDriveMaxFlatVel: 170, fBrakeForce: 1.05, fTractionCurveMax: 2.55, fSteeringLock: 38.5, nInitialDriveGears: 6 } },
-  { model: 'fbi2', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 2650, fDriveBiasFront: 0.40, fInitialDriveForce: 0.31, fInitialDriveMaxFlatVel: 155, fBrakeForce: 0.88, fTractionCurveMax: 2.30, fSteeringLock: 36, nInitialDriveGears: 6 } },
-  { model: 'pranger', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 2700, fDriveBiasFront: 0.45, fInitialDriveForce: 0.30, fInitialDriveMaxFlatVel: 150, fBrakeForce: 0.85, fTractionCurveMax: 2.25, fSteeringLock: 36, nInitialDriveGears: 6 } },
-  { model: 'ambulance', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 3800, fDriveBiasFront: 0.0, fInitialDriveForce: 0.25, fInitialDriveMaxFlatVel: 140, fBrakeForce: 0.72, fTractionCurveMax: 2.05, fSteeringLock: 35, nInitialDriveGears: 5 } },
-  { model: 'firetruk', vehicleClass: 'VC_EMERGENCY', rawHandling: { fMass: 8500, fDriveBiasFront: 0.0, fInitialDriveForce: 0.22, fInitialDriveMaxFlatVel: 125, fBrakeForce: 0.60, fTractionCurveMax: 1.90, fSteeringLock: 32, nInitialDriveGears: 6 } }
+const HANDLING_ORDER = [
+  'fMass','fInitialDragCoeff','vecCentreOfMassOffset','vecInertiaMultiplier','fDriveBiasFront','nInitialDriveGears',
+  'fInitialDriveForce','fDriveInertia','fClutchChangeRateScaleUpShift','fClutchChangeRateScaleDownShift','fInitialDriveMaxFlatVel',
+  'fBrakeForce','fBrakeBiasFront','fHandBrakeForce','fSteeringLock','fTractionCurveMax','fTractionCurveMin','fTractionCurveLateral',
+  'fTractionSpringDeltaMax','fLowSpeedTractionLossMult','fCamberStiffnesss','fTractionBiasFront','fTractionLossMult',
+  'fSuspensionForce','fSuspensionCompDamp','fSuspensionReboundDamp','fSuspensionUpperLimit','fSuspensionLowerLimit','fSuspensionRaise',
+  'fSuspensionBiasFront','fAntiRollBarForce','fAntiRollBarBiasFront','fRollCentreHeightFront','fRollCentreHeightRear',
 ];
 
-const fullEmergency = [...vanillaEmergencyList, ...emergency];
-const emergLua = generateLuaFile(fullEmergency, 'EmergencyProfiles', 'emergency', 'Emergency & Police Vehicle Profiles');
-fs.writeFileSync(path.join(vdDir, 'shared/profiles_emergency.lua'), emergLua);
-console.log(`Generated profiles_emergency.lua with ${fullEmergency.length} total emergency vehicles (11 vanilla + ${emergency.length} addon).`);
+function generateProfileLua(profiles, tableName, group, title) {
+  const lines = [
+    '-- AUTO-GENERATED by scripts/generate-addon-profiles.js. DO NOT EDIT BY HAND.',
+    `-- Maintained identity source: scripts/vehicle-physics/catalog.js (${title}).`,
+    '', 'SunsetVehicleDynamics = SunsetVehicleDynamics or {}', `SunsetVehicleDynamics.${tableName} = {`,
+  ];
+  for (const profile of profiles.sort((a, b) => a.model.localeCompare(b.model))) {
+    lines.push(`    ['${profile.model}'] = {`);
+    for (const [key, value] of [
+      ['displayName', profile.displayName], ['manufacturer', profile.manufacturer], ['bodyStyle', profile.bodyStyle],
+      ['archetype', profile.archetype], ['category', profile.category || ARCHETYPES[profile.archetype].category],
+      ['performanceTier', profile.performanceTier], ['drivetrain', profile.drivetrain], ['weightKg', profile.weightKg],
+      ['targetTopSpeedKmh', profile.targetTopSpeedKmh], ['expectedZeroTo100', profile.expectedZeroTo100],
+      ['identityConfidence', profile.identityConfidence], ['intendedRole', profile.intendedRole],
+      ['sourceResource', profile.sourceResource], ['sourceHandlingId', profile.sourceHandlingId],
+    ]) if (value !== undefined) lines.push(`        ${key} = ${luaValue(value)},`);
+    lines.push('        handling = {');
+    for (const key of HANDLING_ORDER) lines.push(`            ${key} = ${luaValue(profile.handling[key])},`);
+    lines.push('        },', '    },');
+  }
+  lines.push('}', '', `SunsetVehicleDynamics.RegisterBatch(SunsetVehicleDynamics.${tableName}, '${group}')`, '');
+  return lines.join('\n');
+}
+
+function generateArchetypesLua() {
+  const lines = [
+    '-- AUTO-GENERATED by scripts/generate-addon-profiles.js. DO NOT EDIT BY HAND.',
+    '-- Fallback archetypes use the same physical model as explicit profiles.', '',
+    'SunsetVehicleDynamics = SunsetVehicleDynamics or {}', 'SunsetVehicleDynamics.Archetypes = {',
+  ];
+  for (const [name, arch] of Object.entries(ARCHETYPES).sort(([a], [b]) => a.localeCompare(b))) {
+    const identity = { identity: `Fallback ${name}`, manufacturer: 'Canonical fallback', archetype: name, tier: arch.tier, drivetrain: arch.drivetrain, mass: arch.mass, confidence: 'fallback' };
+    const profile = buildProfile({ model: `fallback_${name}`, identity, sourceResource: 'sunset_vehicle_dynamics', vehicleClass: '', rawHandling: null });
+    lines.push(`    ['${name}'] = { category = '${arch.category}', drivetrain = '${profile.drivetrain}', weightKg = ${profile.weightKg}, performanceTier = '${profile.performanceTier}', handling = {`);
+    for (const key of HANDLING_ORDER) lines.push(`        ${key} = ${luaValue(profile.handling[key])},`);
+    lines.push('    } },');
+  }
+  lines.push('}', '', 'SunsetVehicleDynamics.ClassToArchetype = {',
+    "    [0] = 'economy_fwd', [1] = 'sedan_rwd', [2] = 'suv_awd', [3] = 'sedan_rwd',",
+    "    [4] = 'muscle_rwd', [5] = 'luxury_gt', [6] = 'sports_rwd', [7] = 'super_rwd',",
+    "    [8] = 'motorcycle_sport', [9] = 'offroad', [10] = 'commercial', [11] = 'commercial',",
+    "    [12] = 'van', [17] = 'emergency_sedan', [18] = 'emergency_sedan', [20] = 'commercial',",
+    '}', '');
+  return lines.join('\n');
+}
+
+function buildAll() {
+  const records = [];
+  for (const [model, identity] of Object.entries(VANILLA)) {
+    records.push({ model, identity: { ...identity, model }, emergency: EMERGENCY_VANILLA.has(model), sourceResource: 'gta5', handlingId: model.toUpperCase(), vehicleClass: '', rawHandling: null });
+  }
+  for (const raw of addonVehicles) {
+    const emergency = isEmergency(raw);
+    records.push({
+      model: raw.model.toLowerCase(), emergency,
+      identity: resolveIdentity(raw.model, raw.vehicleClass, emergency),
+      sourceResource: raw.source.split('/vehicles.meta')[0], handlingId: raw.handlingId,
+      vehicleClass: raw.vehicleClass || '', rawHandling: raw.rawHandling || null,
+    });
+  }
+  const seen = new Set();
+  for (const record of records) {
+    if (seen.has(record.model)) throw new Error(`duplicate model ${record.model}`);
+    seen.add(record.model);
+  }
+  const profiles = records.map(buildProfile);
+  return {
+    profiles,
+    vanilla: profiles.filter((_, i) => records[i].sourceResource === 'gta5' && !records[i].emergency),
+    addon: profiles.filter((_, i) => records[i].sourceResource !== 'gta5' && !records[i].emergency),
+    emergency: profiles.filter((_, i) => records[i].emergency),
+  };
+}
+
+function inventoryJson(all) {
+  const sourceGroup = new Map([
+    ...all.vanilla.map((profile) => [profile.model, 'vanilla']),
+    ...all.addon.map((profile) => [profile.model, 'addon']),
+    ...all.emergency.map((profile) => [profile.model, 'emergency']),
+  ]);
+  return JSON.stringify(all.profiles.map((p) => ({
+    model: p.model, displayName: p.displayName, manufacturer: p.manufacturer, sourceResource: p.sourceResource,
+    sourceGroup: sourceGroup.get(p.model),
+    gtaClass: p.sourceVehicleClass, inspiration: p.inspiration || null, generation: p.generation || null,
+    bodyStyle: p.bodyStyle, engineType: p.engineType, drivetrain: p.drivetrain, massKg: p.weightKg,
+    category: ARCHETYPES[p.archetype].category, performanceTier: p.performanceTier, expectedZeroTo100: p.expectedZeroTo100, targetTopSpeedKmh: p.targetTopSpeedKmh,
+    intendedRole: p.intendedRole, sourceHandlingId: p.sourceHandlingId, archetype: p.archetype,
+    identityConfidence: p.identityConfidence, handling: p.handling,
+  })), null, 2) + '\n';
+}
+
+function auditCsv(profiles) {
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const header = ['model','identity','manufacturer','category','archetype','tier','drivetrain','massKg','driveForce','maxFlatVel','targetKmh','drag','tractionMax','tractionMin','brake','antiRoll','rollFront','rollRear','confidence','source'];
+  const rows = profiles.slice().sort((a,b) => a.manufacturer.localeCompare(b.manufacturer) || a.model.localeCompare(b.model)).map((p) => {
+    const h = p.handling;
+    return [p.model,p.displayName,p.manufacturer,ARCHETYPES[p.archetype].category,p.archetype,p.performanceTier,p.drivetrain,p.weightKg,h.fInitialDriveForce,h.fInitialDriveMaxFlatVel,p.targetTopSpeedKmh,h.fInitialDragCoeff,h.fTractionCurveMax,h.fTractionCurveMin,h.fBrakeForce,h.fAntiRollBarForce,h.fRollCentreHeightFront,h.fRollCentreHeightRear,p.identityConfidence,p.sourceResource].map(esc).join(',');
+  });
+  return [header.join(','), ...rows].join('\n') + '\n';
+}
+
+function auditMarkdown(all) {
+  const unknown = all.profiles.filter((p) => p.identityConfidence === 'uncertain');
+  const counts = Object.fromEntries(Object.keys(TIERS).map((tier) => [tier, all.profiles.filter((p) => p.performanceTier === tier).length]));
+  return `# Vehicle physics audit\n\nGenerated deterministically from \`scripts/vehicle-physics/catalog.js\` and repository metadata. GTA's \`fInitialDriveMaxFlatVel\` is stored as a handling parameter; \`targetTopSpeedKmh\` is the gameplay design target used to derive it.\n\n- Total deliberate profiles: **${all.profiles.length}**\n- Vanilla/configured road vehicles: **${all.vanilla.length}**\n- Addon civilian vehicles: **${all.addon.length}**\n- Emergency/faction vehicles: **${all.emergency.length}**\n- Uncertain identities: **${unknown.length}**\n\n## Tier distribution\n\n${Object.entries(counts).map(([k,v]) => `- ${k}: ${v}`).join('\n')}\n\n## Genuinely uncertain models\n\n${unknown.length ? unknown.map((p) => `- \`${p.model}\`: ${p.displayName}; source \`${p.sourceResource}\`.`).join('\n') : 'None.'}\n\nThe sortable numeric dataset is [VEHICLE_PHYSICS_AUDIT.csv](VEHICLE_PHYSICS_AUDIT.csv); the full machine-readable catalog is \`scripts/vehicle_inventory.json\`. Runtime road tests are still required for measured acceleration, braking distance and rollover behavior.\n`;
+}
+
+function outputs(all) {
+  return new Map([
+    [path.join(dynamicsDir, 'shared/classes.lua'), generateArchetypesLua()],
+    [path.join(dynamicsDir, 'shared/profiles_vanilla.lua'), generateProfileLua(all.vanilla, 'VanillaProfiles', 'vanilla', 'configured GTA vehicles')],
+    [path.join(dynamicsDir, 'shared/profiles_addon.lua'), generateProfileLua(all.addon, 'AddonProfiles', 'addon', 'addon civilian vehicles')],
+    [path.join(dynamicsDir, 'shared/profiles_emergency.lua'), generateProfileLua(all.emergency, 'EmergencyProfiles', 'emergency', 'emergency and faction vehicles')],
+    [inventoryPath, inventoryJson(all)], [auditCsvPath, auditCsv(all.profiles)], [auditMdPath, auditMarkdown(all)],
+  ]);
+}
+
+function main() {
+  const check = process.argv.includes('--check');
+  const all = buildAll();
+  let drift = 0;
+  for (const [file, content] of outputs(all)) {
+    if (check) {
+      if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== content) { console.error(`DRIFT ${path.relative(root, file)}`); drift++; }
+    } else {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content);
+    }
+  }
+  console.log(`${check ? 'Checked' : 'Generated'} ${all.profiles.length} profiles (${all.vanilla.length} vanilla, ${all.addon.length} addon, ${all.emergency.length} emergency).`);
+  if (check && drift) process.exit(1);
+}
+
+if (require.main === module) main();
+module.exports = { buildAll, buildProfile, outputs, isEmergency, biasFor };
