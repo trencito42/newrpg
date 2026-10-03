@@ -426,7 +426,12 @@ const Drugs = {
             if (btnStart) {
                 btnStart.disabled = !isReady;
                 btnStart.innerText = isReady ? 'Începe Procesarea' : 'Materie Primă Insuficientă';
+                btnStart.onclick = (e) => {
+                    e.preventDefault();
+                    if (isReady) this.startMinigame();
+                };
             }
+
 
             // Build detailed ingredients checklist
             if (ingList) {
@@ -847,17 +852,19 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-// DOM Binding
-document.addEventListener('DOMContentLoaded', () => {
-    // Lab buttons
-    const labClose = document.getElementById('lab-close-btn');
-    if (labClose) labClose.addEventListener('click', () => Drugs.lab.close());
+// Global Event Delegation for all dynamically injected Lab & Sale controls
+document.addEventListener('click', (e) => {
+    const target = e.target.closest('button, .btn-action, .btn-deal, .lab-close-btn');
+    if (!target) return;
 
-    const btnStart = document.getElementById('btn-lab-start');
-    if (btnStart) btnStart.addEventListener('click', () => Drugs.lab.startMinigame());
-
-    const btnContinue = document.getElementById('btn-lab-continue');
-    if (btnContinue) btnContinue.addEventListener('click', () => {
+    if (target.id === 'btn-lab-start') {
+        e.preventDefault();
+        Drugs.lab.startMinigame();
+    } else if (target.id === 'lab-close-btn') {
+        e.preventDefault();
+        Drugs.lab.close();
+    } else if (target.id === 'btn-lab-continue') {
+        e.preventDefault();
         const overlay = document.getElementById('lab-game-overlay');
         const detailsView = document.getElementById('lab-details-view');
         const gameView = document.getElementById('lab-game-view');
@@ -865,25 +872,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameView) gameView.style.display = 'none';
         if (detailsView) detailsView.style.display = 'block';
         if (Drugs.lab.selectedRecipeKey) Drugs.lab.selectRecipe(Drugs.lab.selectedRecipeKey);
-    });
-
-    const btnHeat = document.getElementById('btn-lab-heat');
-    if (btnHeat) {
-        btnHeat.addEventListener('mousedown', () => { Drugs.lab.isHeating = true; btnHeat.classList.add('active'); });
-        btnHeat.addEventListener('mouseup', () => { Drugs.lab.isHeating = false; btnHeat.classList.remove('active'); });
-        btnHeat.addEventListener('mouseleave', () => { Drugs.lab.isHeating = false; btnHeat.classList.remove('active'); });
+    } else if (target.id === 'btn-sale-accept') {
+        e.preventDefault();
+        Drugs.sale.accept();
+    } else if (target.id === 'btn-sale-nego') {
+        e.preventDefault();
+        Drugs.sale.startNegotiation();
+    } else if (target.id === 'btn-sale-decline') {
+        e.preventDefault();
+        Drugs.sale.decline();
+    } else if (target.id === 'btn-sale-hit') {
+        e.preventDefault();
+        Drugs.sale.handleNegotiationHit();
     }
-
-    // Street Sale buttons
-    const btnAccept = document.getElementById('btn-sale-accept');
-    if (btnAccept) btnAccept.addEventListener('click', () => Drugs.sale.accept());
-
-    const btnDecline = document.getElementById('btn-sale-decline');
-    if (btnDecline) btnDecline.addEventListener('click', () => Drugs.sale.decline());
-
-    const btnNego = document.getElementById('btn-sale-nego');
-    if (btnNego) btnNego.addEventListener('click', () => Drugs.sale.startNegotiation());
-
-    const btnHit = document.getElementById('btn-sale-hit');
-    if (btnHit) btnHit.addEventListener('click', () => Drugs.sale.handleNegotiationHit());
 });
+
+// Heat button hold events (mouse and touch)
+document.addEventListener('mousedown', (e) => {
+    const btn = e.target.closest('#btn-lab-heat');
+    if (btn && Drugs.lab.visible && Drugs.lab.isPlayingMinigame) {
+        Drugs.lab.isHeating = true;
+        btn.classList.add('active');
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (Drugs.lab.visible) {
+        Drugs.lab.isHeating = false;
+        const btn = document.getElementById('btn-lab-heat');
+        if (btn) btn.classList.remove('active');
+    }
+});
+
+document.addEventListener('touchstart', (e) => {
+    const btn = e.target.closest('#btn-lab-heat');
+    if (btn && Drugs.lab.visible && Drugs.lab.isPlayingMinigame) {
+        Drugs.lab.isHeating = true;
+        btn.classList.add('active');
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+    if (Drugs.lab.visible) {
+        Drugs.lab.isHeating = false;
+        const btn = document.getElementById('btn-lab-heat');
+        if (btn) btn.classList.remove('active');
+    }
+}, { passive: true });
+
