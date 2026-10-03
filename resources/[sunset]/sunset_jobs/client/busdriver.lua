@@ -269,45 +269,92 @@ function Sunset.Jobs.StartBusDriver()
                                     SetVehicleDoorOpen(bus, 1, false, false)
                                     PlaySoundFrontend(-1, "Bus_Bell", "GTAO_Script_Sounds_Soundset", false)
 
-                                    -- Instruct waiting passengers to enter specific passenger seats (0 to max-1)
-                                    local maxSeats = math.max(1, GetVehicleMaxNumberOfPassengers(bus))
-                                    local seatAssignment = 0
+                                    local isFinalStop = (currentStopIdx >= totalStops)
+                                    local alightingCount = 0
+                                    local boardingCount = #waitingPassengers
 
-                                    for _, p in ipairs(waitingPassengers) do
-                                        if DoesEntityExist(p) then
-                                            ClearPedTasksImmediately(p)
-                                            FreezeEntityPosition(p, false)
-                                            SetEntityInvincible(p, true)
-                                            SetBlockingOfNonTemporaryEvents(p, false)
-
-                                            while seatAssignment < maxSeats and not IsVehicleSeatFree(bus, seatAssignment) do
-                                                seatAssignment = seatAssignment + 1
+                                    -- 1. Pasageri care coboară din autobuz (Alighting)
+                                    if #busPassengers > 0 then
+                                        local toAlight = isFinalStop and #busPassengers or math.min(#busPassengers, math.random(1, 2))
+                                        for _ = 1, toAlight do
+                                            local p = table.remove(busPassengers, 1)
+                                            if p and DoesEntityExist(p) then
+                                                alightingCount = alightingCount + 1
+                                                TaskLeaveVehicle(p, bus, 0)
+                                                CreateThread(function()
+                                                    Wait(1400)
+                                                    if DoesEntityExist(p) then
+                                                        TaskWanderStandard(p, 10.0, 10)
+                                                        SetPedAsNoLongerNeeded(p)
+                                                        Wait(9000)
+                                                        if DoesEntityExist(p) and not IsPedInVehicle(p, bus, false) then
+                                                            DeleteEntity(p)
+                                                        end
+                                                    end
+                                                end)
                                             end
-                                            local targetSeat = (seatAssignment < maxSeats) and seatAssignment or 0
-                                            seatAssignment = seatAssignment + 1
-
-                                            TaskEnterVehicle(p, bus, 8000, targetSeat, 1.8, 1, 0)
                                         end
                                     end
 
-                                    exports.sunset_ui:Notify('Pasagerii urcă în autobuz... Validare titluri de călătorie.', 'info', 3000)
+                                    -- 2. Pasageri noi care urcă în autobuz (Boarding - doar dacă nu e capăt de linie)
+                                    if not isFinalStop then
+                                        local maxSeats = math.max(1, GetVehicleMaxNumberOfPassengers(bus))
+                                        local seatAssignment = 0
+
+                                        for _, p in ipairs(waitingPassengers) do
+                                            if DoesEntityExist(p) then
+                                                ClearPedTasksImmediately(p)
+                                                FreezeEntityPosition(p, false)
+                                                SetEntityInvincible(p, true)
+                                                SetBlockingOfNonTemporaryEvents(p, false)
+
+                                                while seatAssignment < maxSeats and not IsVehicleSeatFree(bus, seatAssignment) do
+                                                    seatAssignment = seatAssignment + 1
+                                                end
+                                                local targetSeat = (seatAssignment < maxSeats) and seatAssignment or 0
+                                                seatAssignment = seatAssignment + 1
+
+                                                TaskEnterVehicle(p, bus, 8000, targetSeat, 1.8, 1, 0)
+                                            end
+                                        end
+                                    else
+                                        cleanupWaitingPassengers()
+                                        boardingCount = 0
+                                    end
+
+                                    local notifyMsg
+                                    if isFinalStop then
+                                        notifyMsg = ('Capăt de linie! Au coborât toți cei %d pasageri.'):format(alightingCount)
+                                    elseif alightingCount > 0 and boardingCount > 0 then
+                                        notifyMsg = ('Flux călători: %d au coborât, %d urcă în autobuz...'):format(alightingCount, boardingCount)
+                                    elseif alightingCount > 0 then
+                                        notifyMsg = ('Au coborât %d pasageri în stație...'):format(alightingCount)
+                                    else
+                                        notifyMsg = ('Îmbarcare: urcă %d pasageri noi...'):format(boardingCount)
+                                    end
+                                    exports.sunset_ui:Notify(notifyMsg, 'info', 3000)
+
                                     local waitDuration = cfg.boardingDurationMs or 3500
                                     Wait(waitDuration)
 
-                                    -- Warp any remaining slow peds into free seats and transfer to busPassengers
-                                    local maxSeats = GetVehicleMaxNumberOfPassengers(bus)
-                                    for _, p in ipairs(waitingPassengers) do
-                                        if DoesEntityExist(p) then
-                                            if not IsPedInVehicle(p, bus, false) then
-                                                for seat = 0, maxSeats - 1 do
-                                                    if IsVehicleSeatFree(bus, seat) then
-                                                        TaskWarpPedIntoVehicle(p, bus, seat)
-                                                        break
+                                    -- 3. Așezare în scaune a celor care au urcat
+                                    if not isFinalStop then
+                                        local maxSeats = GetVehicleMaxNumberOfPassengers(bus)
+                                        for _, p in ipairs(waitingPassengers) do
+                                            if DoesEntityExist(p) then
+                                                if not IsPedInVehicle(p, bus, false) then
+                                                    for seat = 0, maxSeats - 1 do
+                                                        if IsVehicleSeatFree(bus, seat) then
+                                                            TaskWarpPedIntoVehicle(p, bus, seat)
+                                                            break
+                                                        end
                                                     end
                                                 end
+                                                table.insert(busPassengers, p)
                                             end
-                                            table.insert(busPassengers, p)
                                         end
+                                    else
+                                        cleanupBusPassengers()
                                     end
                                     waitingPassengers = {}
 
