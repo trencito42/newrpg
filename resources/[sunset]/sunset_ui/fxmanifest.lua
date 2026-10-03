@@ -20,6 +20,9 @@ files {
 
 shared_scripts {
     '@sunset_core/shared/boot_debug.lua',
+    '@sunset_core/shared/locales/en.lua',
+    '@sunset_core/shared/locales/ro.lua',
+    '@sunset_core/shared/locale.lua',
 }
 
 client_scripts {
