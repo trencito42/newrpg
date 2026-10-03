@@ -158,8 +158,8 @@ const LockpickGame = (() => {
                 if (oTitle) { oTitle.innerText = "SUCCES"; oTitle.style.color = "#10b981"; }
                 if (oSub) oSub.innerText = "Contactul a fost deblocat.";
             } else {
-                if (oTitle) { oTitle.innerText = "EȘEC"; oTitle.style.color = "#ef4444"; }
-                if (oSub) oSub.innerText = "Șperaclul s-a rupt.";
+                if (oTitle) { oTitle.innerText = "ESEC"; oTitle.style.color = "#ef4444"; }
+                if (oSub) oSub.innerText = "Speraclul s-a rupt.";
             }
         }
 

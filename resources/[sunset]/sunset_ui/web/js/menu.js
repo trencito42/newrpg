@@ -268,7 +268,7 @@ const Menu = {
             badges.push(`<span class="tune-chip"><i class="ph-bold ph-engine"></i> MOTOR STG ${Number(mods.engine) + 1}</span>`);
         }
         if (mods.brakes != null && Number(mods.brakes) >= 0) {
-            badges.push(`<span class="tune-chip"><i class="ph-bold ph-circle-dashed"></i> FRÂNE STG ${Number(mods.brakes) + 1}</span>`);
+            badges.push(`<span class="tune-chip"><i class="ph-bold ph-circle-dashed"></i> FRANE STG ${Number(mods.brakes) + 1}</span>`);
         }
         if (mods.transmission != null && Number(mods.transmission) >= 0) {
             badges.push(`<span class="tune-chip"><i class="ph-bold ph-gear-six"></i> CUTIE STG ${Number(mods.transmission) + 1}</span>`);
@@ -434,7 +434,7 @@ const Menu = {
         const fuelCls = fuel < 15 ? 'bad' : (fuel < 35 ? 'warn' : 'ok');
         const insCls = insurancePts === 0 ? 'bad' : (insurancePts <= 2 ? 'warn' : 'ok');
         const locCls = status.isDestroyed ? 'bad' : (status.stored ? 'ok' : 'warn');
-        const locText = status.isDestroyed ? 'Confiscat / Daună' : (status.stored ? 'În Garaj' : 'Pe Stradă');
+        const locText = status.isDestroyed ? 'Confiscat / Dauna' : (status.stored ? 'In Garaj' : 'Pe Strada');
 
         grid.innerHTML = `<div class="v-sidebar">
                 <div class="v-header">
@@ -490,7 +490,7 @@ const Menu = {
                             </div>
                             <div class="spec-card-main">
                                 <div class="spec-odometer">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span></div>
-                                <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0 ? 'Achiziționat azi' : `Deținut de ${ownershipDays} ${ownershipDays === 1 ? 'zi' : 'zile'}`}</div>
+                                <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0 ? 'Achizitionat azi' : `Detinut de ${ownershipDays} ${ownershipDays === 1 ? 'zi' : 'zile'}`}</div>
                             </div>
                         </div>
 
@@ -501,14 +501,14 @@ const Menu = {
                             </div>
                             <div class="spec-card-main">
                                 <div class="spec-insurance ${insCls}">${insurancePts}/5 <span class="spec-unit">Puncte</span></div>
-                                <div class="spec-sub"><i class="ph-bold ph-receipt"></i> Nivel ${selected.insuranceLevel || 1} · Daună: ${formatMoney(claimCost)}</div>
+                                <div class="spec-sub"><i class="ph-bold ph-receipt"></i> Nivel ${selected.insuranceLevel || 1} · Dauna: ${formatMoney(claimCost)}</div>
                             </div>
                         </div>
 
                         <div class="spec-card">
                             <div class="spec-card-head">
                                 <i class="ph-bold ph-map-pin"></i>
-                                <span>LOCAȚIE & STARE</span>
+                                <span>LOCATIE & STARE</span>
                             </div>
                             <div class="spec-card-main">
                                 <div class="spec-loc truncate">${this.escape(status.label)}</div>

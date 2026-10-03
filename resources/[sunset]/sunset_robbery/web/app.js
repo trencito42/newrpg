@@ -357,21 +357,21 @@ const Loot = {
             if (warnEl) warnEl.style.display = 'block';
             if (btn) {
                 btn.className = 'btn-start error';
-                btn.textContent = 'RUCSAC SUPRAÎNCĂRCAT';
+                btn.textContent = 'RUCSAC SUPRAINCARCAT';
             }
         } else if (this.selectedUids.size > 0) {
             barFill?.classList.remove('overload');
             if (warnEl) warnEl.style.display = 'none';
             if (btn) {
                 btn.className = 'btn-start ready';
-                btn.textContent = `Începe Colectarea (${this.selectedUids.size})`;
+                btn.textContent = `Incepe Colectarea (${this.selectedUids.size})`;
             }
         } else {
             barFill?.classList.remove('overload');
             if (warnEl) warnEl.style.display = 'none';
             if (btn) {
                 btn.className = 'btn-start';
-                btn.textContent = 'Selectează prada';
+                btn.textContent = 'Selecteaza prada';
             }
         }
     },

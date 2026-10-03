@@ -1320,28 +1320,28 @@ const Panels = {
 
             if (isDestroyed) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-bad)';
-                if (statText) statText.innerText = `Totalizată / Confiscat (${garageName})`;
+                if (statText) statText.innerText = `Totalizata / Confiscat (${garageName})`;
                 const claimCost = v.claimCost != null ? Number(v.claimCost) : 250;
                 const points = v.insurancePoints != null ? Number(v.insurancePoints) : 5;
                 if (points > 0) {
-                    addActionBtn(`Plătește Cauțiune (${formatMoney(claimCost)})`, true, () => post('garageClaimInsurance', { vehicleId: v.id }));
+                    addActionBtn(`Plateste Cautiune (${formatMoney(claimCost)})`, true, () => post('garageClaimInsurance', { vehicleId: v.id }));
                 } else {
                     const renewCost = v.renewCost != null ? Number(v.renewCost) : 750;
-                    addActionBtn(`Reînnoiește Asigurare (${formatMoney(renewCost)})`, true, () => post('garageRenewInsurance', { vehicleId: v.id }));
+                    addActionBtn(`Reinnoieste Asigurare (${formatMoney(renewCost)})`, true, () => post('garageRenewInsurance', { vehicleId: v.id }));
                 }
             } else if (stored) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-ok)';
-                if (statText) statText.innerText = `În ${garageName}`;
+                if (statText) statText.innerText = `In ${garageName}`;
                 addActionBtn('Scoate Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
             } else if (inWorld) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
-                if (statText) statText.innerText = 'Parcat afară';
-                addActionBtn('Setează GPS', true, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
+                if (statText) statText.innerText = 'Parcat afara';
+                addActionBtn('Seteaza GPS', true, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
             } else {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
-                if (statText) statText.innerText = 'În afara garajului';
-                addActionBtn('Setează GPS', false, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
-                addActionBtn('Recuperează Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
+                if (statText) statText.innerText = 'In afara garajului';
+                addActionBtn('Seteaza GPS', false, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
+                addActionBtn('Recupereaza Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
             }
 
             const engine = Math.max(0, Math.min(100, Math.round(Number(v.engineHealth != null ? (v.engineHealth / 10) : (v.engine || 100)))));

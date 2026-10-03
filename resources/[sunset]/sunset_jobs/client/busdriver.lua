@@ -136,21 +136,21 @@ local function updateBusHud(session, totalStops, currentStop, isReturn)
     if isReturn then
         JC.hud({
             title = 'LS Transit — ' .. (session.label or 'Linia Verde'),
-            objective = 'Traseu completat! Returnează autobuzul la depou.',
+            objective = 'Traseu completat! Returneaza autobuzul la depou.',
             progress = { current = totalStops, total = totalStops },
             earnings = session.totalEarned or 0,
             keyHints = {
-                { key = 'E', label = 'Parcare & Finalizare Tură' },
+                { key = 'E', label = 'Parcare & Finalizare Tura' },
             },
         })
     else
         JC.hud({
             title = 'LS Transit — ' .. (session.label or 'Linia Verde'),
-            objective = ('Condu către stația %d/%d'):format(stopIdx, totalStops),
+            objective = ('Condu catre statia %d/%d'):format(stopIdx, totalStops),
             progress = { current = stopIdx - 1, total = totalStops },
             earnings = session.totalEarned or 0,
             keyHints = {
-                { key = 'E', label = 'Îmbarcare Pasageri' },
+                { key = 'E', label = 'Imbarcare Pasageri' },
             },
         })
     end
@@ -159,13 +159,13 @@ end
 function Sunset.Jobs.StartBusDriver()
     local cfg = Sunset.GetJobConfig('busdriver')
     if not cfg then
-        JC.notify('Configurația jobului de șofer de autobuz lipsește.', 'error')
+        JC.notify('Configuratia jobului de sofer de autobuz lipseste.', 'error')
         return
     end
 
     local data, err = Sunset.AwaitCallback('sunset:jobs:busdriver:start')
     if not data then
-        JC.notify(err or 'Nu s-a putut începe tura de șofer de autobuz.', 'error')
+        JC.notify(err or 'Nu s-a putut incepe tura de sofer de autobuz.', 'error')
         return
     end
 
@@ -188,7 +188,7 @@ function Sunset.Jobs.StartBusDriver()
     if not ok then
         JC.deleteVehicles()
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify(regErr or 'Eroare la înregistrarea autobuzului de serviciu.', 'error')
+        JC.notify(regErr or 'Eroare la inregistrarea autobuzului de serviciu.', 'error')
         return
     end
 
@@ -216,7 +216,7 @@ function Sunset.Jobs.StartBusDriver()
     }
     updateBusHud(JC.sessionData, totalStops, currentStopIdx, false)
 
-    JC.notify('Tura a început! Urmează traseul Liniei Verzi și oprește în fiecare stație.', 'info', 6000)
+    JC.notify('Tura a inceput! Urmeaza traseul Liniei Verzi si opreste in fiecare statie.', 'info', 6000)
 
     -- ── Active Shift Loop ─────────────────────────────────────────
     CreateThread(function()
@@ -253,8 +253,8 @@ function Sunset.Jobs.StartBusDriver()
                             if speed < 2.0 then
                                 -- Prompt to board passengers
                                 BeginTextCommandDisplayHelp("THREESTRINGS")
-                                AddTextComponentSubstringPlayerName("Apasă ~INPUT_CONTEXT~ pentru ")
-                                AddTextComponentSubstringPlayerName("~g~Îmbarcare Pasageri & Bilete~s~")
+                                AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
+                                AddTextComponentSubstringPlayerName("~g~Imbarcare Pasageri & Bilete~s~")
                                 EndTextCommandDisplayHelp(0, false, false, -1)
 
                                 if IsControlJustPressed(0, 38) then
@@ -273,7 +273,7 @@ function Sunset.Jobs.StartBusDriver()
                                     local alightingCount = 0
                                     local boardingCount = #waitingPassengers
 
-                                    -- 1. Pasageri care coboară din autobuz (Alighting)
+                                    -- 1. Pasageri care coboara din autobuz (Alighting)
                                     if #busPassengers > 0 then
                                         local toAlight = isFinalStop and #busPassengers or math.min(#busPassengers, math.random(1, 2))
                                         for _ = 1, toAlight do
@@ -296,7 +296,7 @@ function Sunset.Jobs.StartBusDriver()
                                         end
                                     end
 
-                                    -- 2. Pasageri noi care urcă în autobuz (Boarding - doar dacă nu e capăt de linie)
+                                    -- 2. Pasageri noi care urca in autobuz (Boarding - doar daca nu e capat de linie)
                                     if not isFinalStop then
                                         local maxSeats = math.max(1, GetVehicleMaxNumberOfPassengers(bus))
                                         local seatAssignment = 0
@@ -324,20 +324,20 @@ function Sunset.Jobs.StartBusDriver()
 
                                     local notifyMsg
                                     if isFinalStop then
-                                        notifyMsg = ('Capăt de linie! Au coborât toți cei %d pasageri.'):format(alightingCount)
+                                        notifyMsg = ('Capat de linie! Au coborat toti cei %d pasageri.'):format(alightingCount)
                                     elseif alightingCount > 0 and boardingCount > 0 then
-                                        notifyMsg = ('Flux călători: %d au coborât, %d urcă în autobuz...'):format(alightingCount, boardingCount)
+                                        notifyMsg = ('Flux calatori: %d au coborat, %d urca in autobuz...'):format(alightingCount, boardingCount)
                                     elseif alightingCount > 0 then
-                                        notifyMsg = ('Au coborât %d pasageri în stație...'):format(alightingCount)
+                                        notifyMsg = ('Au coborat %d pasageri in statie...'):format(alightingCount)
                                     else
-                                        notifyMsg = ('Îmbarcare: urcă %d pasageri noi...'):format(boardingCount)
+                                        notifyMsg = ('Imbarcare: urca %d pasageri noi...'):format(boardingCount)
                                     end
                                     exports.sunset_ui:Notify(notifyMsg, 'info', 3000)
 
                                     local waitDuration = cfg.boardingDurationMs or 3500
                                     Wait(waitDuration)
 
-                                    -- 3. Așezare în scaune a celor care au urcat
+                                    -- 3. Asezare in scaune a celor care au urcat
                                     if not isFinalStop then
                                         local maxSeats = GetVehicleMaxNumberOfPassengers(bus)
                                         for _, p in ipairs(waitingPassengers) do
@@ -371,7 +371,7 @@ function Sunset.Jobs.StartBusDriver()
                                         JC.sessionData.totalEarned = res.totalEarned
                                         JC.sessionData.passengers = res.passengersTotal
 
-                                        exports.sunset_ui:Notify(('Ai îmbarcat %d pasageri! +$%d încasări bilete.'):format(res.passengers, res.earned), 'success', 5000)
+                                        exports.sunset_ui:Notify(('Ai imbarcat %d pasageri! +$%d incasari bilete.'):format(res.passengers, res.earned), 'success', 5000)
 
                                         if res.isLastStop then
                                             isReturnStage = true
@@ -385,7 +385,7 @@ function Sunset.Jobs.StartBusDriver()
                                             setBusCheckpoint(returnV3, 215, 181, 88)
 
                                             updateBusHud(JC.sessionData, totalStops, totalStops, true)
-                                            JC.notify('Traseul a fost finalizat cu succes! Condu autobuzul înapoi la depou pentru bonus.', 'success', 7000)
+                                            JC.notify('Traseul a fost finalizat cu succes! Condu autobuzul inapoi la depou pentru bonus.', 'success', 7000)
                                         else
                                             currentStopIdx = res.nextStopIndex
                                             local nextStop = stops[currentStopIdx]
@@ -401,7 +401,7 @@ function Sunset.Jobs.StartBusDriver()
                                             updateBusHud(JC.sessionData, totalStops, currentStopIdx, false)
                                         end
                                     else
-                                        JC.notify(res and res.err or 'Eroare la înregistrarea stației.', 'error')
+                                        JC.notify(res and res.err or 'Eroare la inregistrarea statiei.', 'error')
                                     end
 
                                     isBoardingActive = false
@@ -409,7 +409,7 @@ function Sunset.Jobs.StartBusDriver()
                             else
                                 -- Remind player to stop bus completely
                                 BeginTextCommandDisplayHelp("STRING")
-                                AddTextComponentSubstringPlayerName("~y~Oprește complet autobuzul în stație!~s~")
+                                AddTextComponentSubstringPlayerName("~y~Opreste complet autobuzul in statie!~s~")
                                 EndTextCommandDisplayHelp(0, false, false, -1)
                             end
                         end
@@ -434,7 +434,7 @@ function Sunset.Jobs.StartBusDriver()
 
                         if speed < 2.0 then
                             BeginTextCommandDisplayHelp("THREESTRINGS")
-                            AddTextComponentSubstringPlayerName("Apasă ~INPUT_CONTEXT~ pentru ")
+                            AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
                             AddTextComponentSubstringPlayerName("~y~Parcare & Finalizare Traseu~s~")
                             EndTextCommandDisplayHelp(0, false, false, -1)
 
@@ -450,7 +450,7 @@ function Sunset.Jobs.StartBusDriver()
                                 JC.hudClear(true)
 
                                 if finRes and finRes.success then
-                                    exports.sunset_ui:Notify(('Felicitări! Ai finalizat tura pe Linia Verde.\nBonus traseu: +$%d\nTotal câștigat: $%d (%d pasageri transportați)'):format(
+                                    exports.sunset_ui:Notify(('Felicitari! Ai finalizat tura pe Linia Verde.\nBonus traseu: +$%d\nTotal castigat: $%d (%d pasageri transportati)'):format(
                                         finRes.bonus, finRes.grandTotal, finRes.passengersTotal
                                     ), 'success', 9000)
                                 else

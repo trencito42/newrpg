@@ -133,7 +133,7 @@ CreateThread(function()
                 if not labOpen then
                     -- Display hint
                     BeginTextCommandDisplayHelp("THREESTRINGS")
-                    AddTextComponentSubstringPlayerName("Apasă ~INPUT_CONTEXT~ pentru ")
+                    AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
                     AddTextComponentSubstringPlayerName("~y~Laborator Clandestin~s~")
                     EndTextCommandDisplayHelp(0, false, false, -1)
 
@@ -196,7 +196,7 @@ AddEventHandler('sunset:nui:drugsCloseMenu', function(data) onCloseLabMenu(data,
 AddEventHandler('sunset:nui:drugsClose', function(data) onCloseLabMenu(data, function() end) end)
 
 -- ═══════════════════════════════════════════════════════════════
--- 3. STREET SALE (Vânzare Stradală la NPC)
+-- 3. STREET SALE (Vanzare Stradala la NPC)
 -- ═══════════════════════════════════════════════════════════════
 
 local function GetTargetPedInFront()
@@ -253,7 +253,7 @@ CreateThread(function()
                     SetTextColour(242, 239, 232, 230)
                     SetTextEntry("STRING")
                     SetTextCentre(1)
-                    AddTextComponentString("~y~[E]~s~ Oferă Marfă")
+                    AddTextComponentString("~y~[E]~s~ Ofera Marfa")
                     DrawText(screenX, screenY)
                 end
 
@@ -288,7 +288,7 @@ function InitiateStreetSale(npcPed)
     -- Request offer from server
     local offer = Sunset.AwaitCallback('sunset:drugs:requestStreetOffer', netId)
     if not offer or not offer.token then
-        local errMsg = (type(offer) == 'table' and offer.err) or 'Persoana nu este interesată și își continuă drumul.'
+        local errMsg = (type(offer) == 'table' and offer.err) or 'Persoana nu este interesata si isi continua drumul.'
         Notify(errMsg, 'error')
         
         -- NPC declines gesture
@@ -382,7 +382,7 @@ AddEventHandler('sunset:nui:declineDrugSale', function(data) onDeclineDrugSale(d
 AddEventHandler('sunset:nui:closeSaleUI', function(data) onCloseSaleUI(data, function() end) end)
 
 -- ═══════════════════════════════════════════════════════════════
--- 4. WHOLESALE DELIVERY SYSTEM (Locații Livrare Droguri pe Rank)
+-- 4. WHOLESALE DELIVERY SYSTEM (Locatii Livrare Droguri pe Rank)
 -- ═══════════════════════════════════════════════════════════════
 
 local spawnedDeliveryPeds = {}
@@ -524,7 +524,7 @@ function DoWholesaleDelivery(dropoff)
     if not offer or not offer.token then
         local msg = (type(err) == 'table' and (err.err or err.localeKey or err.message))
                  or (type(err) == 'string' and err)
-                 or 'Nu ai niciun pachet de droguri procesate în inventar! (Pachete Weed, Pudră Cocaină, Cristale Meth)'
+                 or 'Nu ai niciun pachet de droguri procesate in inventar! (Pachete Weed, Pudra Cocaina, Cristale Meth)'
         Notify(msg, 'error', 6000)
         return
     end

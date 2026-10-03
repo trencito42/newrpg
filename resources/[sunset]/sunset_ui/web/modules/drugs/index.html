@@ -7,14 +7,14 @@
             <svg viewBox="0 0 24 24"><path d="M12 2L9 8l-6 2 4 4-2 7 7-4 7 4-2-7 4-4-6-2-3-6z"></path></svg>
         </div>
         <div class="h-texts">
-            <div class="h-subtitle">ZONĂ ACTIVĂ</div>
+            <div class="h-subtitle">ZONA ACTIVA</div>
             <div class="h-title" id="harvest-title">Recoltare Weed</div>
         </div>
     </div>
 
     <div class="h-content">
         <div class="h-instruction" id="harvest-instruction">
-            Apasă <span class="keybind">E</span> în zona marcată
+            Apasa <span class="keybind">E</span> in zona marcata
         </div>
 
         <div class="skill-track">
@@ -36,16 +36,16 @@
         <div class="l-header">
             <div class="h-left">
                 <h1 class="h-title">LABORATOR CLANDESTIN</h1>
-                <div class="h-subtitle">Sinteză & Procesare Substanțe Ilegale</div>
+                <div class="h-subtitle">Sinteza & Procesare Substante Ilegale</div>
             </div>
-            <button type="button" class="lab-close-btn" id="lab-close-btn" title="Închide (ESC)">✕</button>
+            <button type="button" class="lab-close-btn" id="lab-close-btn" title="Inchide (ESC)">✕</button>
         </div>
 
         <!-- Content -->
         <div class="l-content">
             <!-- Left: Recipes List -->
             <div class="recipe-section">
-                <div class="section-title">Operațiuni Disponibile</div>
+                <div class="section-title">Operatiuni Disponibile</div>
                 <div class="recipe-cards-container" id="lab-recipe-list">
                     <!-- Dynamic Recipe Cards will be rendered by JS -->
                 </div>
@@ -55,8 +55,8 @@
             <div class="process-section">
                 <div id="lab-empty-state">
                     <div class="empty-icon">⚗️</div>
-                    <div class="empty-text">Selectează o operațiune din stânga</div>
-                    <div class="empty-sub">Vezi necesarul de materie primă și pornește sinteza</div>
+                    <div class="empty-text">Selecteaza o operatiune din stanga</div>
+                    <div class="empty-sub">Vezi necesarul de materie prima si porneste sinteza</div>
                 </div>
 
                 <div id="lab-active-state">
@@ -71,7 +71,7 @@
                                 <div class="product-name" id="lab-product-name">Pachete Weed</div>
                                 <div class="product-meta">
                                     <span>Rezultat: <strong id="lab-yield-text">1x Brick</strong></span>
-                                    <span>Valoare Piață: <strong id="lab-val-text" class="gold-text">~$250</strong></span>
+                                    <span>Valoare Piata: <strong id="lab-val-text" class="gold-text">~$250</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -84,7 +84,7 @@
                         <div class="lab-recipe-info-box">
                             <div class="info-item">
                                 <span class="info-label">Dificultate Proces</span>
-                                <span class="info-val" id="lab-diff-text">UȘOARĂ</span>
+                                <span class="info-val" id="lab-diff-text">USOARA</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Stare Ingrediente</span>
@@ -94,7 +94,7 @@
 
                         <div class="lab-actions-row">
                             <button type="button" class="btn-action primary" id="btn-lab-start">
-                                Începe Procesarea
+                                Incepe Procesarea
                             </button>
                         </div>
                     </div>
@@ -102,8 +102,8 @@
                     <!-- Phase B: Mini Game Workstation -->
                     <div id="lab-game-view" style="display: none;">
                         <div class="process-header">
-                            <div class="process-title" id="lab-process-title">Sinteză în Desfășurare</div>
-                            <div class="process-status" id="lab-process-status">Menține temperatura stabilă în zona marcată</div>
+                            <div class="process-title" id="lab-process-title">Sinteza in Desfasurare</div>
+                            <div class="process-status" id="lab-process-status">Mentine temperatura stabila in zona marcata</div>
                         </div>
 
                         <div class="game-container">
@@ -116,14 +116,14 @@
                             <!-- Controls -->
                             <div class="control-panel">
                                 <div class="progress-box">
-                                    <div class="p-label">Progres Sinteză Lot</div>
+                                    <div class="p-label">Progres Sinteza Lot</div>
                                     <div class="p-bar-bg"><div class="p-bar-fill" id="lab-prog-fill"></div></div>
                                     <div class="p-pct" id="lab-prog-text">0%</div>
-                                    <div class="p-hint">Apasă și ține apăsat butonul sau tasta [SPACE] pentru a crește temperatura.</div>
+                                    <div class="p-hint">Apasa si tine apasat butonul sau tasta [SPACE] pentru a creste temperatura.</div>
                                 </div>
 
                                 <button type="button" class="btn-action btn-hold" id="btn-lab-heat">
-                                    ȚINE APĂSAT PENTRU CĂLDURĂ
+                                    TINE APASAT PENTRU CALDURA
                                 </button>
                             </div>
                         </div>
@@ -135,7 +135,7 @@
                         <div class="overlay-title" id="lab-res-title">SUCCES</div>
                         <div class="overlay-desc" id="lab-res-desc">Lotul a fost procesat cu succes.</div>
                         <button type="button" class="btn-action primary" id="btn-lab-continue" style="width: 200px; margin-top: 15px;">
-                            Continuă
+                            Continua
                         </button>
                     </div>
                 </div>
@@ -149,9 +149,9 @@
     <div class="s-header">
         <div class="s-subtitle">
             CLIENT INTERESAT
-            <span class="s-risk risk-low" id="sale-risk">RISC: SCĂZUT</span>
+            <span class="s-risk risk-low" id="sale-risk">RISC: SCAZUT</span>
         </div>
-        <h2 class="s-title">Vânzare Stradală</h2>
+        <h2 class="s-title">Vanzare Stradala</h2>
     </div>
 
     <div class="s-content">
@@ -173,16 +173,16 @@
                 <div class="target-zone" id="sale-target-zone"></div>
                 <div class="cursor" id="sale-cursor"></div>
             </div>
-            <button type="button" class="btn-hit" id="btn-sale-hit">APASĂ PENTRU NEGOCIERE</button>
+            <button type="button" class="btn-hit" id="btn-sale-hit">APASA PENTRU NEGOCIERE</button>
         </div>
 
         <!-- Feedback & Actiuni -->
         <div id="sale-status-msg"></div>
 
         <div class="deal-actions" id="sale-actions">
-            <button type="button" class="btn-deal btn-accept" id="btn-sale-accept">Acceptă Oferta</button>
-            <button type="button" class="btn-deal btn-nego" id="btn-sale-nego">Negociază Prețul</button>
-            <button type="button" class="btn-deal btn-decline" id="btn-sale-decline">Refuză</button>
+            <button type="button" class="btn-deal btn-accept" id="btn-sale-accept">Accepta Oferta</button>
+            <button type="button" class="btn-deal btn-nego" id="btn-sale-nego">Negociaza Pretul</button>
+            <button type="button" class="btn-deal btn-decline" id="btn-sale-decline">Refuza</button>
         </div>
     </div>
 </div>

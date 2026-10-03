@@ -106,24 +106,24 @@
                 const confirmPassword = els.confirmPass ? els.confirmPass.value.trim() : '';
 
                 if (!oldPassword) {
-                    showFeedback('Te rugăm să introduci parola curentă.', 'error');
+                    showFeedback('Te rugam sa introduci parola curenta.', 'error');
                     return;
                 }
 
                 if (!newPassword || newPassword.length < 6) {
-                    showFeedback('Parola nouă trebuie să aibă minim 6 caractere.', 'error');
+                    showFeedback('Parola noua trebuie sa aiba minim 6 caractere.', 'error');
                     return;
                 }
 
                 if (newPassword !== confirmPassword) {
-                    showFeedback('Parola nouă și confirmarea nu coincid.', 'error');
+                    showFeedback('Parola noua si confirmarea nu coincid.', 'error');
                     return;
                 }
 
                 if (els.submitBtn) {
                     els.submitBtn.disabled = true;
                     const btnText = els.submitBtn.querySelector('.cp-btn-text');
-                    if (btnText) btnText.textContent = 'Se procesează...';
+                    if (btnText) btnText.textContent = 'Se proceseaza...';
                 }
 
                 try {
@@ -139,7 +139,7 @@
 
                     const res = await response.json();
                     if (res && res.success) {
-                        showFeedback(res.message || 'Parola a fost schimbată cu succes!', 'success');
+                        showFeedback(res.message || 'Parola a fost schimbata cu succes!', 'success');
                         setTimeout(() => {
                             closeModal();
                         }, 1800);
@@ -152,7 +152,7 @@
                     if (els.submitBtn) {
                         els.submitBtn.disabled = false;
                         const btnText = els.submitBtn.querySelector('.cp-btn-text');
-                        if (btnText) btnText.textContent = 'Salvează Parola';
+                        if (btnText) btnText.textContent = 'Salveaza Parola';
                     }
                 }
             });

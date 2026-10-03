@@ -200,8 +200,8 @@ const LockpickGame = (() => {
                 post('lockpickResult', { success: true });
                 post('lockpickSuccess', {});
             } else {
-                if (oTitle) { oTitle.innerText = "EȘEC"; oTitle.style.color = "#ef4444"; }
-                if (oSub) oSub.innerText = "Șperaclul s-a rupt.";
+                if (oTitle) { oTitle.innerText = "ESEC"; oTitle.style.color = "#ef4444"; }
+                if (oSub) oSub.innerText = "Speraclul s-a rupt.";
                 post('lockpickResult', { success: false });
                 post('lockpickFail', {});
             }

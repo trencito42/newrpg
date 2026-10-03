@@ -24,17 +24,17 @@ const LOADSCREEN_LOCALES = {
         tip_4: 'Need help? Use /report and describe the issue clearly.',
     },
     ro: {
-        title: 'Racket RPG — Se încarcă', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server', // i18n-ignore: dictionary
-        discord_header: 'Comunitate', discord_desc: 'Alătură-te comunității',
-        initializing_session: 'Se inițializează sesiunea...', entering_session: 'Se intră în sesiune...',
-        loading_assets: 'Se încarcă fișierele jocului...', downloading_files: 'Se descarcă {count} fișiere...',
-        initializing_resources: 'Se inițializează resursele...', preparing_world: 'Se pregătește lumea...',
-        connecting_server: 'Se conectează la server...',
-        tip_0: 'Rămâi în caracter în permanență. Apasă [G] pentru meniul rapid de interacțiune.',
-        tip_1: 'Raza vocii este afișată pe HUD. Poți ajusta vocea din meniul de pauză.',
-        tip_2: 'Vehiculele lăsate pe carosabil pot fi ridicate după restartul serverului.',
-        tip_3: 'Apasă [G] lângă alți jucători pentru opțiunile de interacțiune.',
-        tip_4: 'Ai nevoie de ajutor? Folosește /report și descrie clar problema.',
+        title: 'Racket RPG — Se incarca', brand_subtitle: 'Din 2026 · Los Santos', tips_header: 'Sfaturi pentru server', // i18n-ignore: dictionary
+        discord_header: 'Comunitate', discord_desc: 'Alatura-te comunitatii',
+        initializing_session: 'Se initializeaza sesiunea...', entering_session: 'Se intra in sesiune...',
+        loading_assets: 'Se incarca fisierele jocului...', downloading_files: 'Se descarca {count} fisiere...',
+        initializing_resources: 'Se initializeaza resursele...', preparing_world: 'Se pregateste lumea...',
+        connecting_server: 'Se conecteaza la server...',
+        tip_0: 'Ramai in caracter in permanenta. Apasa [G] pentru meniul rapid de interactiune.',
+        tip_1: 'Raza vocii este afisata pe HUD. Poti ajusta vocea din meniul de pauza.',
+        tip_2: 'Vehiculele lasate pe carosabil pot fi ridicate dupa restartul serverului.',
+        tip_3: 'Apasa [G] langa alti jucatori pentru optiunile de interactiune.',
+        tip_4: 'Ai nevoie de ajutor? Foloseste /report si descrie clar problema.',
     },
 };
 const loadscreenLocale = String(navigator.language || 'en').toLowerCase().startsWith('ro') ? 'ro' : 'en';

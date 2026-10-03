@@ -134,7 +134,7 @@ function updatePlayerStats(data) {
             premiumBox.innerHTML = `
                 <button class="btn-upgrade" id="btn-upgrade" onclick="buyPremium()">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>
-                    <span>${tr('pass.buy_premium', { cost: costLabel }, `CUMPĂRĂ PREMIUM (${costLabel})`)}</span>
+                    <span>${tr('pass.buy_premium', { cost: costLabel }, `CUMPARA PREMIUM (${costLabel})`)}</span>
                 </button>`;
         }
     }
@@ -155,7 +155,7 @@ async function buyPremium() {
 async function claimBP(level, track) {
     const res = await post('passClaim', { level: Number(level), track });
     if (res?.state) {
-        showNotify(tr('pass.reward_claimed', { level }, `Recompensă revendicată (Nivel ${level})!`));
+        showNotify(tr('pass.reward_claimed', { level }, `Recompensa revendicata (Nivel ${level})!`));
         renderAll(res.state);
     }
 }
@@ -194,7 +194,7 @@ function renderBattlepass(data) {
             if (tier.free.claimed) {
                 freeBtnHtml = `<button class="btn-claim claimed">${tr('pass.claimed', null, 'REVENDICAT')}</button>`;
             } else if (currentTier >= tier.level) {
-                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">${tr('pass.claim', null, 'REVENDICĂ')}</button>`;
+                freeBtnHtml = `<button class="btn-claim" onclick="claimBP(${tier.level}, 'free')">${tr('pass.claim', null, 'REVENDICA')}</button>`;
             }
         }
 
@@ -213,7 +213,7 @@ function renderBattlepass(data) {
                 if (tier.premium.claimed) {
                     premBtnHtml = `<button class="btn-claim claimed">${tr('pass.claimed', null, 'REVENDICAT')}</button>`;
                 } else if (currentTier >= tier.level) {
-                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">${tr('pass.claim', null, 'REVENDICĂ')}</button>`;
+                    premBtnHtml = `<button class="btn-claim btn-premium" onclick="claimBP(${tier.level}, 'premium')">${tr('pass.claim', null, 'REVENDICA')}</button>`;
                 }
             }
         }
@@ -293,7 +293,7 @@ function renderMissions(data) {
                     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                     +${m.xp} XP
                 </span>
-                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${tr(isDone ? 'pass.claimed' : 'pass.in_progress', null, isDone ? 'FINALIZAT' : 'ÎN DESFĂȘURARE')}</button>
+                <button class="btn ${isDone ? '' : 'btn-primary'}" disabled>${tr(isDone ? 'pass.claimed' : 'pass.in_progress', null, isDone ? 'FINALIZAT' : 'IN DESFASURARE')}</button>
             </div>
         `;
 
@@ -309,11 +309,11 @@ function renderMissions(data) {
     });
 
     if (!dailyList.hasChildNodes()) {
-        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_daily_missions', null, 'Nu există misiuni zilnice disponibile.')}</div>`;
+        dailyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_daily_missions', null, 'Nu exista misiuni zilnice disponibile.')}</div>`;
     }
 
     if (!weeklyList.hasChildNodes()) {
-        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_weekly_missions', null, 'Nu există misiuni săptămânale disponibile.')}</div>`;
+        weeklyList.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:30px; font-size:12px;">${tr('pass.no_weekly_missions', null, 'Nu exista misiuni saptamanale disponibile.')}</div>`;
     }
 }
 
@@ -406,11 +406,11 @@ if (new URLSearchParams(window.location.search).get('qa') === '1') {
                 premium: { level: i + 1, type: 'item', label: i % 3 === 0 ? 'VIP Vehicle' : `Crate Lvl ${i + 1}`, icon: i % 3 === 0 ? 'veh_engine' : 'backpack', claimed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
             })),
             missions: [
-                { id: '1', type: 'daily', title: 'Șofer Model', description: 'Condu un total de 15km fără a lovi vehiculul.', progress: 15, goal: 15, xp: 500, icon: 'veh_engine', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
-                { id: '2', type: 'daily', title: 'Harnic', description: 'Completează 3 ture la jobul de Livrator.', progress: 1, goal: 3, xp: 300, icon: 'backpack', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '1', type: 'daily', title: 'Sofer Model', description: 'Condu un total de 15km fara a lovi vehiculul.', progress: 15, goal: 15, xp: 500, icon: 'veh_engine', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '2', type: 'daily', title: 'Harnic', description: 'Completeaza 3 ture la jobul de Livrator.', progress: 1, goal: 3, xp: 300, icon: 'backpack', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
                 { id: '3', type: 'daily', title: 'Timp cu Prietenii', description: 'Petrece 2 ore activ pe server.', progress: 120, goal: 120, xp: 400, icon: 'cash_stack', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
-                { id: '4', type: 'weekly', title: 'Magnat Local', description: 'Câștigă un total de $50,000.', progress: 32000, goal: 50000, xp: 2500, icon: 'bank_card', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
-                { id: '5', type: 'weekly', title: 'Infractor Căutat', description: 'Evadează cu succes din 3 jafuri auto.', progress: 3, goal: 3, xp: 3000, icon: 'golden_watch', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '4', type: 'weekly', title: 'Magnat Local', description: 'Castiga un total de $50,000.', progress: 32000, goal: 50000, xp: 2500, icon: 'bank_card', completed: false }, // i18n-ignore: dev-preview mock data (not shown in game)
+                { id: '5', type: 'weekly', title: 'Infractor Cautat', description: 'Evadeaza cu succes din 3 jafuri auto.', progress: 3, goal: 3, xp: 3000, icon: 'golden_watch', completed: true }, // i18n-ignore: dev-preview mock data (not shown in game)
             ],
         },
     });

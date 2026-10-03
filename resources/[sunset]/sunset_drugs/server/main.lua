@@ -236,13 +236,13 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processFail', function(source
     if recipe then
         -- Realistic loss: 1 raw material burned/ruined
         exports.sunset_inventory:RemoveItem(source, recipe.rawItem, 1)
-        notify(source, 'Ai scăpat temperatura de sub control! Un ingredient a fost compromis.', 'error')
+        notify(source, 'Ai scapat temperatura de sub control! Un ingredient a fost compromis.', 'error')
     end
     return { success = true }
 end)
 
 -- ═══════════════════════════════════════════════════════════════
--- 3. STREET SALE SYSTEM (Vânzare Stradală)
+-- 3. STREET SALE SYSTEM (Vanzare Stradala)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function(source, pedNetId)
@@ -250,7 +250,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
 
     local now = GetGameTimer()
     if PedCooldowns[pedNetId] and now < PedCooldowns[pedNetId] then
-        return nil, { err = 'Clientul a cumpărat deja recent sau nu mai este interesat!' }
+        return nil, { err = 'Clientul a cumparat deja recent sau nu mai este interesat!' }
     end
 
     -- Find sellable drugs in player inventory
@@ -263,7 +263,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
     end
 
     if #availableDrugs == 0 then
-        return nil, { err = 'Nu ai niciun drog procesat pe care să îl vinzi!' }
+        return nil, { err = 'Nu ai niciun drog procesat pe care sa il vinzi!' }
     end
 
     -- Pick a random drug from what player carries
@@ -327,7 +327,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(s
     -- Check and remove drug item
     local removeOk = exports.sunset_inventory:RemoveItem(source, session.item, session.qty)
     if not removeOk then
-        return { success = false, err = 'Nu mai ai cantitatea necesară de droguri!' }
+        return { success = false, err = 'Nu mai ai cantitatea necesara de droguri!' }
     end
 
     -- Give money (clean cash or black money)
@@ -343,7 +343,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(s
         PedCooldowns[session.pedNetId] = GetGameTimer() + ((Cfg.streetSale.pedCooldownSec or 60) * 1000)
     end
 
-    notify(source, ('Ai vândut %dx %s pentru $%s!'):format(session.qty, session.drugKey, tostring(finalPrice)), 'success')
+    notify(source, ('Ai vandut %dx %s pentru $%s!'):format(session.qty, session.drugKey, tostring(finalPrice)), 'success')
     dlog(('Street sale completed src=%d price=$%d'):format(source, finalPrice))
     SaleSessions[source] = nil
     return { success = true }
@@ -365,9 +365,9 @@ exports.sunset_core:RegisterCallback('sunset:drugs:failNegotiation', function(so
             pcall(function()
                 exports.sunset_dispatch:CreateCall({
                     code = '10-31',
-                    title = 'Activitate Ilegală / Vânzare de Droguri',
+                    title = 'Activitate Ilegala / Vanzare de Droguri',
                     coords = coords,
-                    message = 'Un cetățean raportează o tentativă suspectă de vânzare substanțe interzise.',
+                    message = 'Un cetatean raporteaza o tentativa suspecta de vanzare substante interzise.',
                     job = 'police',
                 })
             end)
@@ -388,7 +388,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:declineStreetSale', function(
 end)
 
 -- ═══════════════════════════════════════════════════════════════
--- 4. WHOLESALE DELIVERY SYSTEM (Locații Livrare Droguri pe Rank)
+-- 4. WHOLESALE DELIVERY SYSTEM (Locatii Livrare Droguri pe Rank)
 -- ═══════════════════════════════════════════════════════════════
 
 exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', function(source, dropoffId)
@@ -410,13 +410,13 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', functi
     local coords = pedCoords(source)
     local targetCoords = vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z)
     if not coords or #(coords - targetCoords) > ((Cfg.delivery.interactionRadius or 2.5) + 5.0) then
-        return nil, { err = 'Ești prea departe de contactul de livrare!' }
+        return nil, { err = 'Esti prea departe de contactul de livrare!' }
     end
 
     -- Rank check: Player must have at least minRank (Rank 13 unlocks ALL spots!)
     if playerRank < (dropoff.minRank or 1) then
         return nil, { 
-            err = ('Acces refuzat! Acest contact acceptă livrări începând de la Rank %d+ (Rank-ul tău: %d)'):format(dropoff.minRank, playerRank) 
+            err = ('Acces refuzat! Acest contact accepta livrari incepand de la Rank %d+ (Rank-ul tau: %d)'):format(dropoff.minRank, playerRank) 
         }
     end
 
@@ -430,7 +430,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', functi
     end
 
     if #availableDrugs == 0 then
-        return nil, { err = 'Nu ai niciun pachet de droguri procesate în inventar pentru livrare!' }
+        return nil, { err = 'Nu ai niciun pachet de droguri procesate in inventar pentru livrare!' }
     end
 
     -- Pick the primary drug carried with all available units (bulk delivery)

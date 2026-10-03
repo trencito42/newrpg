@@ -74,28 +74,28 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:boardPassengers', fu
     local cfg = Sunset.GetJobConfig('busdriver')
     local session = SunsetJobs_GetSession(source)
     if not session or session.jobId ~= 'busdriver' then
-        return { success = false, err = 'Nicio tură activă de șofer de autobuz!' }
+        return { success = false, err = 'Nicio tura activa de sofer de autobuz!' }
     end
 
     local bus = resolveBus(session, cfg, vehicleNetId)
     if not bus then
-        return { success = false, err = 'Autobuzul tău oficial de serviciu trebuie să fie în stație!' }
+        return { success = false, err = 'Autobuzul tau oficial de serviciu trebuie sa fie in statie!' }
     end
 
     local expectedIndex = session.data.currentStopIndex or 1
     if stopIndex and tonumber(stopIndex) ~= expectedIndex then
-        return { success = false, err = 'Oprire necorespunzătoare cu traseul!' }
+        return { success = false, err = 'Oprire necorespunzatoare cu traseul!' }
     end
 
     local stop = session.data.stops and session.data.stops[expectedIndex]
     if not stop then
-        return { success = false, err = 'Stația de autobuz nu a fost găsită!' }
+        return { success = false, err = 'Statia de autobuz nu a fost gasita!' }
     end
 
     -- Validate bus position near stop
     local stopCoords = vector3(stop.coords.x, stop.coords.y, stop.coords.z)
     if not SunsetJobs_ValidateCoordsHorizontal(source, stopCoords, (cfg.stopRadius or 7.5) + 6.0) then
-        return { success = false, err = 'Parchează autobuzul în zona marcată a stației!' }
+        return { success = false, err = 'Parcheaza autobuzul in zona marcata a statiei!' }
     end
 
     -- Random passenger count (1 - 3 passengers)
@@ -136,7 +136,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:finishRoute', functi
     local cfg = Sunset.GetJobConfig('busdriver')
     local session = SunsetJobs_GetSession(source)
     if not session or session.jobId ~= 'busdriver' then
-        return { success = false, err = 'Nicio tură activă de șofer de autobuz!' }
+        return { success = false, err = 'Nicio tura activa de sofer de autobuz!' }
     end
 
     if (session.data.currentStopIndex or 1) <= (session.data.totalStops or 6) then
@@ -146,7 +146,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:finishRoute', functi
     local returnTarget = cfg.depot.returnCoords or cfg.depot.coords
     local returnV3 = vector3(returnTarget.x, returnTarget.y, returnTarget.z)
     if not SunsetJobs_ValidateCoordsHorizontal(source, returnV3, 20.0) then
-        return { success = false, err = 'Trebuie să returnezi autobuzul la depou pentru a încasa bonusul!' }
+        return { success = false, err = 'Trebuie sa returnezi autobuzul la depou pentru a incasa bonusul!' }
     end
 
     local bonus = cfg.routeBonusPay or 450

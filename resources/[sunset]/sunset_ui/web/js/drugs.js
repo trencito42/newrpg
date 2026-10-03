@@ -7,9 +7,9 @@ const ITEM_CONFIG = {
     weed_leaf: { label: 'Frunze Cannabis', img: 'assets/items/weed_leaf.webp' },
     coke_leaf: { label: 'Frunze Coca', img: 'assets/items/coke_leaf.webp' },
     meth_chemical: { label: 'Precursori Chimici', img: 'assets/items/meth_chemical.webp' },
-    chemicals: { label: 'Substanțe Chimice', img: 'assets/items/chemicals.webp' },
+    chemicals: { label: 'Substante Chimice', img: 'assets/items/chemicals.webp' },
     weed_brick: { label: 'Pachete Weed', img: 'assets/items/weed_brick.webp', value: 250 },
-    coke_brick: { label: 'Pudră Cocaină', img: 'assets/items/coke_brick.webp', value: 800 },
+    coke_brick: { label: 'Pudra Cocaina', img: 'assets/items/coke_brick.webp', value: 800 },
     meth_bag: { label: 'Cristale Meth', img: 'assets/items/meth_bag.webp', value: 1200 },
 };
 
@@ -97,7 +97,7 @@ const Drugs = {
             if (iconEl) {
                 iconEl.innerHTML = `<img src="${iconSrc}" style="width: 32px; height: 32px; object-fit: contain;" alt="${this.type}" onerror="this.onerror=null; this.src='assets/items/weed_leaf.webp';">`;
             }
-            if (instrEl) instrEl.innerHTML = 'Apasă <span class="keybind">E</span> în zona marcată';
+            if (instrEl) instrEl.innerHTML = 'Apasa <span class="keybind">E</span> in zona marcata';
 
 
             this.randomizeTarget();
@@ -227,7 +227,7 @@ const Drugs = {
                     difficulty: 'easy',
                 },
                 coca: {
-                    label: 'Pudră Cocaină',
+                    label: 'Pudra Cocaina',
                     rawItem: 'coke_leaf',
                     rawCount: 5,
                     secondaryItem: 'chemicals',
@@ -327,9 +327,9 @@ const Drugs = {
                 card.dataset.key = key;
 
                 let diffClass = 'diff-easy';
-                let diffLabel = 'UȘOARĂ';
+                let diffLabel = 'USOARA';
                 if (recipe.difficulty === 'medium') { diffClass = 'diff-medium'; diffLabel = 'MEDIE'; }
-                else if (recipe.difficulty === 'hard') { diffClass = 'diff-hard'; diffLabel = 'RIDICATĂ'; }
+                else if (recipe.difficulty === 'hard') { diffClass = 'diff-hard'; diffLabel = 'RIDICATA'; }
 
                 card.innerHTML = `
                     <div class="lab-card-top">
@@ -356,7 +356,7 @@ const Drugs = {
                         ` : ''}
                     </div>
                     <div class="lab-card-status ${isReady ? 'ready' : 'missing'}">
-                        ${isReady ? '● DISPONIBIL PENTRU SINTEZĂ' : '○ LIPSESC MATERIALE'}
+                        ${isReady ? '● DISPONIBIL PENTRU SINTEZA' : '○ LIPSESC MATERIALE'}
                     </div>
                 `;
 
@@ -412,9 +412,9 @@ const Drugs = {
             if (yieldText) yieldText.innerText = `${recipe.productCount || 1}x ${productMeta.label}`;
             if (valText) valText.innerText = `~$${productMeta.value || 300}`;
 
-            let diffLabel = 'UȘOARĂ';
+            let diffLabel = 'USOARA';
             if (recipe.difficulty === 'medium') diffLabel = 'MEDIE';
-            else if (recipe.difficulty === 'hard') diffLabel = 'RIDICATĂ';
+            else if (recipe.difficulty === 'hard') diffLabel = 'RIDICATA';
             if (diffText) diffText.innerText = diffLabel;
 
             const isReady = this.checkHasMaterials(recipe);
@@ -425,7 +425,7 @@ const Drugs = {
 
             if (btnStart) {
                 btnStart.disabled = !isReady;
-                btnStart.innerText = isReady ? 'Începe Procesarea' : 'Materie Primă Insuficientă';
+                btnStart.innerText = isReady ? 'Incepe Procesarea' : 'Materie Prima Insuficienta';
                 btnStart.onclick = (e) => {
                     e.preventDefault();
                     if (isReady) this.startMinigame();
@@ -450,11 +450,11 @@ const Drugs = {
                         </div>
                         <div class="ing-row-info">
                             <div class="ing-row-name">${rawMeta.label}</div>
-                            <div class="ing-row-count">În inventar: <strong>${rawHave}</strong> / Necesar: <strong>${rawNeeded}</strong></div>
+                            <div class="ing-row-count">In inventar: <strong>${rawHave}</strong> / Necesar: <strong>${rawNeeded}</strong></div>
                         </div>
                     </div>
                     <div class="ing-row-right">
-                        <span class="ing-stock-badge ${rawOk ? 'ready' : 'missing'}">${rawOk ? '✓ GATA' : '✗ LIPSĂ'}</span>
+                        <span class="ing-stock-badge ${rawOk ? 'ready' : 'missing'}">${rawOk ? '✓ GATA' : '✗ LIPSA'}</span>
                     </div>
                 `;
                 ingList.appendChild(rawCard);
@@ -473,11 +473,11 @@ const Drugs = {
                             </div>
                             <div class="ing-row-info">
                                 <div class="ing-row-name">${secMeta.label}</div>
-                                <div class="ing-row-count">În inventar: <strong>${secHave}</strong> / Necesar: <strong>${secNeeded}</strong></div>
+                                <div class="ing-row-count">In inventar: <strong>${secHave}</strong> / Necesar: <strong>${secNeeded}</strong></div>
                             </div>
                         </div>
                         <div class="ing-row-right">
-                            <span class="ing-stock-badge ${secOk ? 'ready' : 'missing'}">${secOk ? '✓ GATA' : '✗ LIPSĂ'}</span>
+                            <span class="ing-stock-badge ${secOk ? 'ready' : 'missing'}">${secOk ? '✓ GATA' : '✗ LIPSA'}</span>
                         </div>
                     `;
                     ingList.appendChild(secCard);
@@ -522,7 +522,7 @@ const Drugs = {
             }
 
             const titleEl = document.getElementById('lab-process-title');
-            if (titleEl) titleEl.innerText = `Sinteză: ${recipe.label}`;
+            if (titleEl) titleEl.innerText = `Sinteza: ${recipe.label}`;
 
             if (this.animFrame) cancelAnimationFrame(this.animFrame);
             this.minigameLoop();
@@ -585,7 +585,7 @@ const Drugs = {
             if (success && recipe) {
                 if (resIcon) { resIcon.innerText = '✓'; resIcon.className = 'overlay-icon'; }
                 if (resTitle) { resTitle.innerText = 'SUCCES'; resTitle.className = 'overlay-title'; }
-                if (resDesc) resDesc.innerText = `Lotul de ${recipe.label} a fost sintezat și adăugat în inventar.`;
+                if (resDesc) resDesc.innerText = `Lotul de ${recipe.label} a fost sintezat si adaugat in inventar.`;
 
                 // Update local inventory state
                 this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - recipe.rawCount);
@@ -597,8 +597,8 @@ const Drugs = {
                 postToResource('processSuccess', { token: this.sessionToken, type: this.selectedRecipeKey });
             } else {
                 if (resIcon) { resIcon.innerText = '✕'; resIcon.className = 'overlay-icon fail'; }
-                if (resTitle) { resTitle.innerText = 'EȘEC'; resTitle.className = 'overlay-title fail'; }
-                if (resDesc) resDesc.innerText = 'Reacția chimică a fost compromisă din cauza instabilității termice.';
+                if (resTitle) { resTitle.innerText = 'ESEC'; resTitle.className = 'overlay-title fail'; }
+                if (resDesc) resDesc.innerText = 'Reactia chimica a fost compromisa din cauza instabilitatii termice.';
 
                 if (recipe) {
                     this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - 1);
@@ -676,7 +676,7 @@ const Drugs = {
             if (riskEl) {
                 if (this.riskLevel === 'low') {
                     riskEl.className = 's-risk risk-low';
-                    riskEl.innerText = 'RISC: SCĂZUT';
+                    riskEl.innerText = 'RISC: SCAZUT';
                 } else if (this.riskLevel === 'med') {
                     riskEl.className = 's-risk risk-med';
                     riskEl.innerText = 'RISC: MEDIU';
@@ -707,7 +707,7 @@ const Drugs = {
             if (actionsEl) actionsEl.style.display = 'none';
             if (statusMsg) {
                 statusMsg.className = 'success';
-                statusMsg.innerText = `Tranzacție Reușită! (+$${this.currentPrice})`;
+                statusMsg.innerText = `Tranzactie Reusita! (+$${this.currentPrice})`;
                 statusMsg.style.display = 'block';
             }
 
@@ -795,7 +795,7 @@ const Drugs = {
                 }
                 if (statusMsg) {
                     statusMsg.className = 'success';
-                    statusMsg.innerText = 'Negociere Reușită! Preț crescut cu 25%.';
+                    statusMsg.innerText = 'Negociere Reusita! Pret crescut cu 25%.';
                     statusMsg.style.display = 'block';
                 }
                 if (btnNego) btnNego.style.display = 'none';
@@ -804,7 +804,7 @@ const Drugs = {
                 // Fail: Deal canceled
                 if (statusMsg) {
                     statusMsg.className = 'fail';
-                    statusMsg.innerText = 'Clientul s-a speriat de insistență și a anulat târgul!';
+                    statusMsg.innerText = 'Clientul s-a speriat de insistenta si a anulat targul!';
                     statusMsg.style.display = 'block';
                 }
                 postToResource('failNegotiation', { token: this.sessionToken });

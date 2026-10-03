@@ -782,7 +782,7 @@ local function parseTpCoords(args, rest)
     return nil
 end
 
--- /tp [id] sau /tp x y z (acceptă și paste din /coords: vector3(...) sau x, y, z)
+-- /tp [id] sau /tp x y z (accepta si paste din /coords: vector3(...) sau x, y, z)
 registerServerCommand('tp', function(source, args)
     if source == 0 then return end
     if not requirePerm(source, 'tp') then return end

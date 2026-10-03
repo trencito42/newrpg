@@ -26,7 +26,7 @@ local function languageCommand(source, args)
         reply(source, Sunset.TFor(source, 'locale.save_failed'))
         return
     end
-    reply(source, Sunset.TFor(source, 'locale.changed', { language = locale == 'ro' and 'română' or 'English' }))
+    reply(source, Sunset.TFor(source, 'locale.changed', { language = locale == 'ro' and 'romana' or 'English' }))
 end
 
 RegisterCommand('language', languageCommand, false)

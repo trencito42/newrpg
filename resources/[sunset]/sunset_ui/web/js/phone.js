@@ -541,9 +541,9 @@ const Phone = {
         const emergencyMatches = !query ||
             '112'.includes(query) ||
             'urgente'.includes(query) ||
-            'urgențe'.includes(query) ||
+            'urgente'.includes(query) ||
             'politie'.includes(query) ||
-            'poliție'.includes(query) ||
+            'politie'.includes(query) ||
             'medic'.includes(query) ||
             'medici'.includes(query) ||
             'salvare'.includes(query) ||

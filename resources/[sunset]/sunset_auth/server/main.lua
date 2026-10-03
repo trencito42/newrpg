@@ -290,23 +290,23 @@ RegisterCommand('changepass', function(source, args, raw)
 local function processPasswordChange(source, oldPassword, newPassword, confirmPassword)
     local player = exports.sunset_core:GetPlayer(source)
     if not player or not player.account_id then
-        return { success = false, message = 'Nu ești autentificat pe un cont valid!' }
+        return { success = false, message = 'Nu esti autentificat pe un cont valid!' }
     end
 
     if type(oldPassword) ~= 'string' or oldPassword == '' then
-        return { success = false, message = 'Te rugăm să introduci parola actuală a contului!' }
+        return { success = false, message = 'Te rugam sa introduci parola actuala a contului!' }
     end
 
     if type(newPassword) ~= 'string' or newPassword == '' then
-        return { success = false, message = 'Te rugăm să introduci parola nouă!' }
+        return { success = false, message = 'Te rugam sa introduci parola noua!' }
     end
 
     if newPassword ~= confirmPassword then
-        return { success = false, message = 'Parola nouă și confirmarea nu coincid!' }
+        return { success = false, message = 'Parola noua si confirmarea nu coincid!' }
     end
 
     if #newPassword < 6 or #newPassword > 128 then
-        return { success = false, message = 'Parola nouă trebuie să aibă între 6 și 128 de caractere!' }
+        return { success = false, message = 'Parola noua trebuie sa aiba intre 6 si 128 de caractere!' }
     end
 
     local account = MySQL.single.await(
@@ -315,7 +315,7 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
     )
 
     if not account then
-        return { success = false, message = 'Contul tău nu a fost găsit în baza de date!' }
+        return { success = false, message = 'Contul tau nu a fost gasit in baza de date!' }
     end
 
     local modern = type(account.password_hash) == 'string' and account.password_hash:sub(1, 8) == '$scrypt$'
@@ -323,12 +323,12 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
         or Sunset.Password.Verify(oldPassword, account.password_salt, account.password_hash)
 
     if not valid then
-        return { success = false, message = 'Parola actuală introdusă este incorectă!' }
+        return { success = false, message = 'Parola actuala introdusa este incorecta!' }
     end
 
     local newHash = exports.sunset_auth:HashPassword(newPassword)
     if not newHash then
-        return { success = false, message = 'Eroare la criptarea securizată a noii parole!' }
+        return { success = false, message = 'Eroare la criptarea securizata a noii parole!' }
     end
 
     MySQL.update.await('UPDATE accounts SET password_hash = ?, password_salt = ? WHERE id = ?', {
@@ -338,7 +338,7 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
     -- Invalidate existing quick tokens
     MySQL.update.await('DELETE FROM auth_quick_tokens WHERE account_id = ?', { account.id })
 
-    return { success = true, message = 'Parola contului tău a fost schimbată cu succes!' }
+    return { success = true, message = 'Parola contului tau a fost schimbata cu succes!' }
 end
 
 exports.sunset_core:RegisterCallback('sunset:auth:changePassword', function(source, oldPassword, newPassword, confirmPassword)
@@ -348,7 +348,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', function(source, identifier)
     identifier = tostring(identifier or ''):match('^%s*(.-)%s*$')
     if identifier == '' then
-        return { success = false, message = 'Te rugăm să introduci username-ul sau emailul contului!' }
+        return { success = false, message = 'Te rugam sa introduci username-ul sau emailul contului!' }
     end
 
     local account = MySQL.single.await(
@@ -379,7 +379,7 @@ exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', functio
 
     return {
         success = true,
-        message = 'Dacă datele introduse corespund unui cont activ, a fost trimis un email cu linkul de resetare pe adresa asociată.',
+        message = 'Daca datele introduse corespund unui cont activ, a fost trimis un email cu linkul de resetare pe adresa asociata.',
     }
 end)
 
@@ -415,7 +415,7 @@ RegisterCommand('lostpass', function(source, args)
         PerformHttpRequest('http://127.0.0.1:3000/api/auth/forgot-password', function() end, 'POST', postData, { ['Content-Type'] = 'application/json' })
     end
 
-    TriggerClientEvent('sunset:client:notify', source, 'Dacă contul există, a fost trimis un link de resetare pe email!', 'success', 7000)
+    TriggerClientEvent('sunset:client:notify', source, 'Daca contul exista, a fost trimis un link de resetare pe email!', 'success', 7000)
 end, false)
 
 RegisterCommand('forgotpass', function(source, args)

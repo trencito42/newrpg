@@ -57,7 +57,7 @@
     transform: scale(1);
 }
 
-/* --- STÂNGA: INVENTAR + TRASH --- */
+/* --- STANGA: INVENTAR + TRASH --- */
 .inventory-forza .inv-left {
     width: 65%;
     border-right: 1px solid var(--border-faint);

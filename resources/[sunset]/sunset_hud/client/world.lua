@@ -1,4 +1,4 @@
--- Lume RP: fără NPC-uri/trafic, fără wanted automat GTA
+-- Lume RP: fara NPC-uri/trafic, fara wanted automat GTA
 local customWanted = 0
 local customWantedDecayAt = nil
 

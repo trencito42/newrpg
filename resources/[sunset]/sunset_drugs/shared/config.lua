@@ -41,7 +41,7 @@ SunsetDrugs.Config = {
                 difficulty = 'easy',
             },
             coca = {
-                label = 'Pudră Cocaină',
+                label = 'Pudra Cocaina',
                 rawItem = 'coke_leaf',
                 rawCount = 5,
                 secondaryItem = 'chemicals',
@@ -63,7 +63,7 @@ SunsetDrugs.Config = {
         },
     },
 
-    -- ═══ STAGE 3: STREET SALE (Vânzare Stradală) ═══
+    -- ═══ STAGE 3: STREET SALE (Vanzare Stradala) ═══
     streetSale = {
         interactionDistance = 2.5,
         pedCooldownSec = 60,     -- A ped won't buy again for 60 seconds
@@ -79,7 +79,7 @@ SunsetDrugs.Config = {
             },
             coca = {
                 item = 'coke_brick',
-                label = 'Pudră Cocaină',
+                label = 'Pudra Cocaina',
                 basePrice = 800,
                 minQty = 1,
                 maxQty = 3,
@@ -94,7 +94,7 @@ SunsetDrugs.Config = {
         },
     },
 
-    -- ═══ STAGE 4: WHOLESALE DELIVERY DROPOFFS (Locații Livrare Droguri) ═══
+    -- ═══ STAGE 4: WHOLESALE DELIVERY DROPOFFS (Locatii Livrare Droguri) ═══
     delivery = {
         interactionRadius = 3.0,
         dropoffs = {
@@ -102,7 +102,7 @@ SunsetDrugs.Config = {
                 id = 1,
                 coords = vector4(130.74, -1181.86, 24.50, 179.72),
                 minRank = 1,
-                name = 'Livrare Stradală (Strawberry)',
+                name = 'Livrare Stradala (Strawberry)',
                 dealerLabel = 'Boschetarul Cartierului',
                 rankBadge = 'RANK 1+',
                 desc = 'Preluare Pachete Mici & Ilegale',
@@ -128,7 +128,7 @@ SunsetDrugs.Config = {
                 minRank = 6,
                 name = 'Livrare Sindicat (El Burro / Grove)',
                 dealerLabel = 'OG Grove Street',
-                rankBadge = 'RANK 6+ (ELITĂ)',
+                rankBadge = 'RANK 6+ (ELITA)',
                 desc = 'Boss Sindicat (+30% Bonus)',
                 pedModel = 'g_m_y_famca_01',
                 bonusPct = 0.30, -- +30% bonus en-gros
