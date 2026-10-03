@@ -87,6 +87,9 @@ const Drugs = {
             const instrEl = document.getElementById('harvest-instruction');
             if (!wrap) return;
 
+            wrap.classList.remove('hit-success', 'hit-fail');
+            wrap.classList.add('visible');
+
             const typeLabel = (this.type === 'coca' || this.type === 'coke') ? 'Recoltare Coca' : (this.type === 'meth' ? 'Recoltare Precursori Chimici' : 'Recoltare Cannabis');
             if (titleEl) titleEl.innerText = typeLabel;
 

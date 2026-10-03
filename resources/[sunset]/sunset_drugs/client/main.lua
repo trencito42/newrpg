@@ -22,25 +22,53 @@ local function Notify(msg, kind)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- 1. HARVEST PROXIMITY HUD
+-- 1. HARVEST PROXIMITY HUD & 3D MARKERS
 -- ═══════════════════════════════════════════════════════════════
 
 CreateThread(function()
     while true do
         local ped = PlayerPedId()
         local coords = GetEntityCoords(ped)
-        local sleep = 500
+        local sleep = 400
 
         local nearSpot = nil
         local nearIndex = nil
 
         for i, spot in ipairs(Cfg.manufacture.spots or {}) do
             local dist = #(coords - spot.coords)
-            if dist < (Cfg.manufacture.spotRadius or 15.0) then
-                nearSpot = spot
-                nearIndex = i
-                sleep = 50
-                break
+            if dist < 60.0 then
+                sleep = 0
+                -- Draw 3D ground cylinder marking harvest zone
+                local r, g, b = 46, 204, 113
+                if spot.drug == 'coke' or spot.drug == 'coca' then
+                    r, g, b = 240, 240, 240
+                elseif spot.drug == 'meth' then
+                    r, g, b = 52, 152, 219
+                end
+
+                DrawMarker(1, spot.coords.x, spot.coords.y, spot.coords.z - 1.0,
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    (Cfg.manufacture.spotRadius or 15.0) * 2.0, (Cfg.manufacture.spotRadius or 15.0) * 2.0, 1.0,
+                    r, g, b, 45,
+                    false, false, 2, false, nil, nil, false)
+
+                -- 3D Text Prompt
+                local onScreen, sX, sY = World3dToScreen2d(spot.coords.x, spot.coords.y, spot.coords.z + 1.2)
+                if onScreen and dist < 35.0 then
+                    SetTextScale(0.34, 0.34)
+                    SetTextFont(4)
+                    SetTextProportional(1)
+                    SetTextColour(242, 239, 232, 230)
+                    SetTextEntry("STRING")
+                    SetTextCentre(1)
+                    AddTextComponentString(("~g~[Recoltare] ~w~%s\n~s~Apasa ~y~[E]~s~ in zona verde pentru recoltare"):format(spot.label or 'Droguri'))
+                    DrawText(sX, sY)
+                end
+
+                if dist < (Cfg.manufacture.spotRadius or 15.0) then
+                    nearSpot = spot
+                    nearIndex = i
+                end
             end
         end
 
@@ -119,25 +147,32 @@ CreateThread(function()
 
         for i, lab in ipairs(Cfg.process.labs or {}) do
             local dist = #(coords - lab.coords)
-            if dist < (Cfg.process.labRadius or 5.0) then
-                nearLab = true
-                labIdx = i
+            if dist < 30.0 then
                 sleep = 0
-                -- Subtle glowing cylinder marker
+                -- Glowing cylinder marker
                 DrawMarker(1, lab.coords.x, lab.coords.y, lab.coords.z - 1.0,
                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                    1.2, 1.2, 0.8,
-                    215, 181, 88, 70,
+                    1.6, 1.6, 0.9,
+                    215, 181, 88, 80,
                     false, false, 2, false, nil, nil, false)
-                
-                if not labOpen then
-                    -- Display hint
-                    BeginTextCommandDisplayHelp("THREESTRINGS")
-                    AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
-                    AddTextComponentSubstringPlayerName("~y~Laborator Clandestin~s~")
-                    EndTextCommandDisplayHelp(0, false, false, -1)
 
-                    if IsControlJustReleased(0, 38) then
+                local onScreen, sX, sY = World3dToScreen2d(lab.coords.x, lab.coords.y, lab.coords.z + 0.8)
+                if onScreen and dist < 15.0 then
+                    SetTextScale(0.32, 0.32)
+                    SetTextFont(4)
+                    SetTextProportional(1)
+                    SetTextColour(242, 239, 232, 230)
+                    SetTextEntry("STRING")
+                    SetTextCentre(1)
+                    AddTextComponentString(("~y~[Laborator Clandestin]~s~\n%s\n~w~Apasa ~y~[E]~w~ pentru procesare"):format(lab.label or 'Laborator'))
+                    DrawText(sX, sY)
+                end
+
+                if dist < (Cfg.process.labRadius or 5.0) then
+                    nearLab = true
+                    labIdx = i
+
+                    if not labOpen and IsControlJustReleased(0, 38) then
                         OpenClandestineLab(i)
                     end
                 end
@@ -409,7 +444,41 @@ end
 
 -- ── Spawn Delivery Dealer NPCs & Create Blips ────────────────
 CreateThread(function()
-    -- Initialize map blips immediately
+    -- Initialize Harvest Spots Blips
+    for _, spot in ipairs((Cfg.manufacture and Cfg.manufacture.spots) or {}) do
+        local sprite = 140
+        local color = 25
+        if spot.drug == 'coke' or spot.drug == 'coca' then
+            sprite = 501
+            color = 4
+        elseif spot.drug == 'meth' then
+            sprite = 499
+            color = 26
+        end
+
+        local blip = makeSafeBlip(spot.coords, {
+            sprite = sprite,
+            color = color,
+            scale = 0.75,
+            name = ('[Recoltare] %s'):format(spot.label or 'Camp Droguri'),
+            shortRange = true,
+        })
+        if blip then table.insert(deliveryBlips, blip) end
+    end
+
+    -- Initialize Processing Labs Blips
+    for _, lab in ipairs((Cfg.process and Cfg.process.labs) or {}) do
+        local blip = makeSafeBlip(lab.coords, {
+            sprite = 499,
+            color = 28,
+            scale = 0.75,
+            name = ('[Laborator] %s'):format(lab.label or 'Laborator Clandestin'),
+            shortRange = true,
+        })
+        if blip then table.insert(deliveryBlips, blip) end
+    end
+
+    -- Initialize Delivery Dropoffs Blips
     for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
         local blip = makeSafeBlip(vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z), {
             sprite = 514,
