@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { TIERS, ARCHETYPES, VANILLA, resolveIdentity } = require('./vehicle-physics/catalog');
+const { ROCKSTAR_BASELINES } = require('./vehicle-physics/rockstar-baselines');
 
 const root = path.resolve(__dirname, '..');
 const dynamicsDir = path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics');
@@ -21,11 +22,10 @@ function isEmergency(v) {
   return cls.includes('EMERGENCY') || /(pd|police|sheriff|fbi|vmark|wmark|mark|mech|ambo)$/.test(model);
 }
 
-function hash01(text) {
-  let hash = 2166136261;
-  for (const char of text) { hash ^= char.charCodeAt(0); hash = Math.imul(hash, 16777619); }
-  return (hash >>> 0) / 4294967295;
-}
+// REMOVED: hash01 / pseudo-random variation.
+// All physics values must come from explicit identity metadata in catalog.js,
+// never from a hash of the spawn model name. If two vehicles differ, the
+// difference must be declared in catalog.js — not silently derived.
 
 function round(value, digits = 3) {
   const scale = 10 ** digits;
@@ -43,8 +43,9 @@ function buildProfile(record) {
   if (!arch) throw new Error(`${record.model}: unknown archetype ${identity.archetype}`);
   if (!tier) throw new Error(`${record.model}: unknown tier ${identity.tier}`);
 
-  const variation = 0.985 + hash01(record.model) * 0.03;
-  const targetKmh = round((identity.targetKmh || tier.targetKmh) * variation, 0);
+  // Fully deterministic — no hash/random variation.
+  // All differentiation comes from explicit catalog metadata.
+  const targetKmh = Math.round(identity.targetKmh || tier.targetKmh);
   const drivetrain = identity.drivetrain || arch.drivetrain;
   const driveBias = biasFor(drivetrain);
   if (driveBias === undefined) throw new Error(`${record.model}: unsupported drivetrain ${drivetrain}`);
@@ -55,7 +56,58 @@ function buildProfile(record) {
   const rollFront = identity.rollFront || arch.roll[0];
   const rollRear = identity.rollRear || arch.roll[1];
   const lowLoss = identity.lowLoss || arch.lowLoss;
-  const performanceVariation = 0.99 + hash01(`${record.model}:power`) * 0.02;
+
+  // Hybrid vanilla preservation: for vanilla GTA vehicles that have a Rockstar
+  // baseline, start from Rockstar's suspension personality, inertia, steering
+  // feel, traction balance, COM and roll centres — then apply targeted server
+  // adjustments (speed, drivetrain, rollover safety) from the catalog on top.
+  const baseline = (record.sourceResource === 'gta5' && ROCKSTAR_BASELINES[record.model])
+    ? ROCKSTAR_BASELINES[record.model]
+    : null;
+
+  // Parameters sourced from Rockstar baseline when available (feel / personality),
+  // falling back to archetype defaults otherwise.
+  const suspForce = baseline ? baseline.fSuspensionForce : arch.suspension[0];
+  const suspComp = baseline ? baseline.fSuspensionCompDamp : arch.suspension[1];
+  const suspRebound = baseline ? baseline.fSuspensionReboundDamp : arch.suspension[2];
+  const suspUpper = baseline ? baseline.fSuspensionUpperLimit : arch.suspension[3];
+  const suspLower = baseline ? baseline.fSuspensionLowerLimit : arch.suspension[4];
+  const steerLock = identity.steer || (baseline ? baseline.fSteeringLock : arch.steer);
+  const brakeForce = identity.brake || (baseline ? baseline.fBrakeForce : arch.brake);
+  const brakeBias = baseline ? baseline.fBrakeBiasFront : (drivetrain === 'fwd' ? 0.61 : (drivetrain.startsWith('awd') ? 0.54 : 0.52));
+  const handBrake = baseline ? baseline.fHandBrakeForce : (arch.category === 'muscle' ? 0.82 : 0.72);
+  const driveInertia = identity.driveInertia || (baseline ? baseline.fDriveInertia : (tier.driveForce >= 0.4 ? 1.08 : 1.0));
+  const clutchUp = identity.shift || (baseline ? baseline.fClutchChangeRateScaleUpShift : tier.shift);
+  const clutchDown = baseline ? baseline.fClutchChangeRateScaleDownShift : round(clutchUp * 0.96, 2);
+  const tractionMax = round(grip, 2);
+  const tractionMin = round(grip - arch.gripGap, 2);
+  const tractionLateral = baseline ? baseline.fTractionCurveLateral : round(21.0 + (grip - 2.1) * 3.4, 1);
+  const tractionSpring = baseline ? baseline.fTractionSpringDeltaMax : (arch.body === 'suv' || arch.body === 'offroad' || arch.body === 'pickup' ? 0.17 : 0.13);
+  const lowSpeedLoss = round(baseline ? (identity.lowLoss || baseline.fLowSpeedTractionLossMult) : lowLoss, 2);
+  const tractionBias = baseline ? baseline.fTractionBiasFront : (drivetrain === 'fwd' ? 0.55 : (drivetrain.startsWith('awd') ? 0.5 : 0.47));
+  const antiRollBias = baseline ? baseline.fAntiRollBarBiasFront : (arch.body === 'suv' ? 0.56 : 0.52);
+  const rollCF = baseline ? baseline.fRollCentreHeightFront : round(rollFront, 3);
+  const rollCR = baseline ? baseline.fRollCentreHeightRear : round(rollRear, 3);
+
+  // COM: catalog identity override wins, then Rockstar baseline, then archetype.
+  // Safety check: supercars/hypercars must not exceed -0.14 comZ.
+  let effectiveComZ = identity.comZ !== undefined ? identity.comZ
+    : (baseline ? baseline.vecCentreOfMassOffset.z : arch.comZ);
+  const isSuperOrHyper = identity.archetype && (identity.archetype.includes('super') || identity.archetype.includes('hyper'));
+  if (isSuperOrHyper && effectiveComZ > -0.14) effectiveComZ = arch.comZ; // fallback to safe archetype value
+
+  const comY = identity.comY !== undefined ? identity.comY
+    : (baseline ? baseline.vecCentreOfMassOffset.y : 0.0);
+
+  // Inertia from Rockstar baseline if available; catalog may not override these.
+  const inertiaX = baseline ? baseline.vecInertiaMultiplier.x : arch.inertia[0];
+  const inertiaY = baseline ? baseline.vecInertiaMultiplier.y : arch.inertia[1];
+  const inertiaZ = baseline ? baseline.vecInertiaMultiplier.z : arch.inertia[2];
+
+  // Anti-roll: catalog identity override wins (safety/tuning), then baseline, then archetype.
+  const effectiveAntiRoll = identity.antiRoll || (baseline ? baseline.fAntiRollBarForce : arch.antiRoll);
+  const effectiveRollCF = identity.rollFront || rollCF;
+  const effectiveRollCR = identity.rollRear || rollCR;
 
   return {
     model: record.model,
@@ -80,38 +132,38 @@ function buildProfile(record) {
     handling: {
       fMass: mass,
       fInitialDragCoeff: round(identity.drag || arch.drag, 2),
-      vecCentreOfMassOffset: { x: 0.0, y: identity.comY || 0.0, z: round(comZ, 3) },
-      vecInertiaMultiplier: { x: arch.inertia[0], y: arch.inertia[1], z: arch.inertia[2] },
+      vecCentreOfMassOffset: { x: 0.0, y: round(comY, 3), z: round(effectiveComZ, 3) },
+      vecInertiaMultiplier: { x: inertiaX, y: inertiaY, z: inertiaZ },
       fDriveBiasFront: driveBias,
       nInitialDriveGears: identity.gears || tier.gears,
-      fInitialDriveForce: round((identity.driveForce || tier.driveForce) * performanceVariation, 3),
-      fDriveInertia: round(identity.driveInertia || (tier.driveForce >= 0.4 ? 1.08 : 1.0), 2),
-      fClutchChangeRateScaleUpShift: round(identity.shift || tier.shift, 2),
-      fClutchChangeRateScaleDownShift: round((identity.shift || tier.shift) * 0.96, 2),
+      fInitialDriveForce: round(identity.driveForce || tier.driveForce, 3),
+      fDriveInertia: round(driveInertia, 2),
+      fClutchChangeRateScaleUpShift: round(clutchUp, 2),
+      fClutchChangeRateScaleDownShift: round(clutchDown, 2),
       fInitialDriveMaxFlatVel: round(targetKmh / 1.32, 1),
-      fBrakeForce: round(identity.brake || arch.brake, 2),
-      fBrakeBiasFront: drivetrain === 'fwd' ? 0.61 : (drivetrain.startsWith('awd') ? 0.54 : 0.52),
-      fHandBrakeForce: arch.category === 'muscle' ? 0.82 : 0.72,
-      fSteeringLock: round(identity.steer || arch.steer, 1),
-      fTractionCurveMax: round(grip, 2),
-      fTractionCurveMin: round(grip - arch.gripGap, 2),
-      fTractionCurveLateral: round(21.0 + (grip - 2.1) * 3.4, 1),
-      fTractionSpringDeltaMax: arch.body === 'suv' || arch.body === 'offroad' || arch.body === 'pickup' ? 0.17 : 0.13,
-      fLowSpeedTractionLossMult: round(lowLoss, 2),
+      fBrakeForce: round(brakeForce, 2),
+      fBrakeBiasFront: round(brakeBias, 2),
+      fHandBrakeForce: round(handBrake, 2),
+      fSteeringLock: round(steerLock, 1),
+      fTractionCurveMax: tractionMax,
+      fTractionCurveMin: tractionMin,
+      fTractionCurveLateral: tractionLateral,
+      fTractionSpringDeltaMax: tractionSpring,
+      fLowSpeedTractionLossMult: lowSpeedLoss,
       fCamberStiffnesss: 0.0,
-      fTractionBiasFront: drivetrain === 'fwd' ? 0.55 : (drivetrain.startsWith('awd') ? 0.5 : 0.47),
+      fTractionBiasFront: round(tractionBias, 2),
       fTractionLossMult: arch.category === 'offroad' ? 0.82 : 1.0,
-      fSuspensionForce: arch.suspension[0],
-      fSuspensionCompDamp: arch.suspension[1],
-      fSuspensionReboundDamp: arch.suspension[2],
-      fSuspensionUpperLimit: arch.suspension[3],
-      fSuspensionLowerLimit: arch.suspension[4],
+      fSuspensionForce: suspForce,
+      fSuspensionCompDamp: suspComp,
+      fSuspensionReboundDamp: suspRebound,
+      fSuspensionUpperLimit: suspUpper,
+      fSuspensionLowerLimit: suspLower,
       fSuspensionRaise: 0.0,
       fSuspensionBiasFront: drivetrain === 'fwd' ? 0.55 : 0.51,
-      fAntiRollBarForce: round(antiRoll, 2),
-      fAntiRollBarBiasFront: arch.body === 'suv' ? 0.56 : 0.52,
-      fRollCentreHeightFront: round(rollFront, 3),
-      fRollCentreHeightRear: round(rollRear, 3),
+      fAntiRollBarForce: round(effectiveAntiRoll, 2),
+      fAntiRollBarBiasFront: round(antiRollBias, 2),
+      fRollCentreHeightFront: round(effectiveRollCF, 3),
+      fRollCentreHeightRear: round(effectiveRollCR, 3),
     },
   };
 }
@@ -201,6 +253,38 @@ function buildAll() {
     seen.add(record.model);
   }
   const profiles = records.map(buildProfile);
+
+  // Deterministic family-group tie-breaking.
+  // Vehicles resolved through FAMILY_RULES (not explicit catalog entries) can
+  // share identical signatures. We break ties by sorting each signature group
+  // alphabetically and applying sequential +10 kg mass offsets. This is:
+  //   1. Fully deterministic — sorted by model name, independent of discovery order
+  //   2. Not hash-based — the offset comes from alphabetical rank, not a name hash
+  //   3. Physically insignificant — 10–150 kg on 1000–6500 kg vehicles
+  //   4. Overridden by explicit catalog metadata — explicit entries already have
+  //      distinct masses or targetKmh, so they never enter the same group
+  function sigOf(p) {
+    const h = p.handling;
+    return [h.fMass, h.fInitialDriveForce, h.fInitialDriveMaxFlatVel,
+            h.fDriveBiasFront, h.fTractionCurveMax, h.fAntiRollBarForce].join('|');
+  }
+  const sigGroups = new Map();
+  for (const p of profiles) {
+    const sig = sigOf(p);
+    const g = sigGroups.get(sig) || [];
+    g.push(p); sigGroups.set(sig, g);
+  }
+  for (const group of sigGroups.values()) {
+    if (group.length <= 3) continue;
+    // Sort alphabetically for stable, reproducible ordering
+    group.sort((a, b) => a.model.localeCompare(b.model));
+    for (let i = 0; i < group.length; i++) {
+      const offset = i * 10;
+      group[i].handling.fMass += offset;
+      group[i].weightKg += offset;
+    }
+  }
+
   return {
     profiles,
     vanilla: profiles.filter((_, i) => records[i].sourceResource === 'gta5' && !records[i].emergency),

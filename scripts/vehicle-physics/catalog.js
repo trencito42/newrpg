@@ -99,8 +99,12 @@ const VANILLA = {
   manchez: v('Maibatsu Manchez', 'Maibatsu', 'motorcycle_sport', 'warm', 'rwd', 150),
 };
 
-const addSimple = (models, archetype, tier, drivetrain, mass, manufacturer = 'GTA') => {
-  for (const model of models) VANILLA[model] = v(model, manufacturer, archetype, tier, drivetrain, mass, { confidence: 'inferred' });
+// Sequential mass offsets ensure deterministic unique physics signatures
+// for fleet groups without hash-based pseudo-random variation.
+const addSimple = (models, archetype, tier, drivetrain, baseMass, manufacturer = 'GTA') => {
+  for (let i = 0; i < models.length; i++) {
+    VANILLA[models[i]] = v(models[i], manufacturer, archetype, tier, drivetrain, baseMass + i * 10, { confidence: 'inferred' });
+  }
 };
 addSimple(['police','police2','police3','police4','sheriff','fbi'], 'emergency_sedan', 'pursuit', 'awd_rear', 1850, 'Emergency fleet');
 addSimple(['sheriff2','fbi2','pranger','lguard'], 'emergency_suv', 'pursuit_suv', 'awd_balanced', 2400, 'Emergency fleet');
@@ -115,49 +119,97 @@ addSimple(['insurgent2'], 'offroad', 'offroad', 'awd_balanced', 5200);
 addSimple(['bus','trash','towtruck','towtruck2','flatbed','utillitruck3','slamtruck','phantom','tanker'], 'commercial', 'commercial', 'rwd', 6500);
 
 const ADDON = {
-  tol22m5: v('BMW M5 (G30)', 'BMW', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1900, { generation: '2017–2023', targetKmh: 270 }),
-  tolm5cs22: v('BMW M5 CS', 'BMW', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1825, { generation: '2022', targetKmh: 278 }),
-  tolm5e60: v('BMW M5 (E60)', 'BMW', 'performance_sedan_rwd', 'performance_sedan', 'rwd', 1830, { generation: '2005–2010', targetKmh: 262 }),
-  tole36prb: v('BMW 3 Series E36 performance build', 'BMW', 'lightweight_sports', 'sport', 'rwd', 1350, { confidence: 'inferred' }),
+  // ── BMW ────────────────────────────────────────────────────────────────────
+  // G30 M5: AWD rear-biased, ~0.35 front bias, modern xDrive
+  tol22m5: v('BMW M5 (G30)', 'BMW', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1945, { generation: '2017–2023', targetKmh: 275, zeroTo100: 3.4 }),
+  // M5 CS: lighter competition version, slightly sharper
+  tolm5cs22: v('BMW M5 CS', 'BMW', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1870, { generation: '2022', targetKmh: 280, zeroTo100: 3.2 }),
+  // E60 M5: pure RWD S85 V10, heavier feel, more rear-drive character
+  tolm5e60: v('BMW M5 (E60)', 'BMW', 'performance_sedan_rwd', 'performance_sedan', 'rwd', 1830, { generation: '2005–2010', targetKmh: 265, zeroTo100: 4.2 }),
+  tole36prb: v('BMW 3 Series E36 performance build', 'BMW', 'lightweight_sports', 'sport', 'rwd', 1350, { targetKmh: 232, confidence: 'inferred' }),
   tole36v: v('BMW E36 off-road conversion', 'BMW', 'offroad', 'offroad', 'rwd', 1450, { confidence: 'inferred' }),
-  tole6314: v('BMW M6 (E63)', 'BMW', 'luxury_gt', 'sport_high', 'rwd', 1785, { confidence: 'inferred' }),
-  tol240sx: v('Nissan 240SX', 'Nissan', 'lightweight_sports', 'sport', 'rwd', 1270),
-  tolc7: v('Chevrolet Corvette C7', 'Chevrolet', 'sports_rwd', 'sport_high', 'rwd', 1530),
-  tolcharger2: v('Dodge Charger performance build', 'Dodge', 'performance_sedan_rwd', 'sport_high', 'rwd', 1980),
-  toldemon: v('Dodge Challenger SRT Demon', 'Dodge', 'muscle_rwd', 'performance_sedan', 'rwd', 1940, { targetKmh: 268, lowLoss: 1.6 }),
-  tolmustan: v('Ford Mustang', 'Ford', 'muscle_rwd', 'sport', 'rwd', 1750),
-  tolmustang: v('Ford Mustang performance build', 'Ford', 'muscle_rwd', 'sport_high', 'rwd', 1780),
-  tolmus2: v('Ford Mustang custom', 'Ford', 'muscle_rwd', 'sport_high', 'rwd', 1800, { confidence: 'inferred' }),
-  tolcurus: v('Lamborghini Urus', 'Lamborghini', 'performance_suv', 'performance_suv', 'awd_rear', 2200),
-  tolrsurus: v('Lamborghini Urus performance build', 'Lamborghini', 'performance_suv', 'performance_suv', 'awd_rear', 2180),
-  tollam2: v('Lamborghini supercar', 'Lamborghini', 'super_awd', 'super', 'awd_rear', 1550, { confidence: 'inferred' }),
-  tolf360: v('Ferrari 360', 'Ferrari', 'super_rwd', 'super', 'rwd', 1390, { targetKmh: 275 }),
-  tolf8spider: v('Ferrari F8 Spider', 'Ferrari', 'super_rwd', 'super', 'rwd', 1640, { targetKmh: 290 }),
-  tolfxxk: v('Ferrari FXX-K', 'Ferrari', 'hypercar_rwd', 'hyper', 'rwd', 1265, { targetKmh: 305, grip: 3.08 }),
-  tollwalk458: v('Ferrari 458 Liberty Walk', 'Ferrari', 'super_rwd', 'super', 'rwd', 1500),
-  tol675ltsp: v('McLaren 675LT Spider', 'McLaren', 'super_rwd', 'super', 'rwd', 1368, { targetKmh: 292 }),
-  tolgtr: v('Nissan GT-R', 'Nissan', 'sports_awd', 'sport_high', 'awd_rear', 1760, { targetKmh: 265 }),
-  tolgtrlw: v('Nissan GT-R Liberty Walk', 'Nissan', 'sports_awd', 'sport_high', 'awd_rear', 1810),
-  tolr33: v('Nissan Skyline GT-R R33', 'Nissan', 'sports_awd', 'sport', 'awd_rear', 1540),
-  tolevo9: v('Mitsubishi Lancer Evolution IX', 'Mitsubishi', 'sports_awd', 'sport', 'awd_balanced', 1490),
-  tolr8c: v('Audi R8', 'Audi', 'super_awd', 'super', 'awd_rear', 1650),
-  tolr8v10: v('Audi R8 V10', 'Audi', 'super_awd', 'super', 'awd_rear', 1670, { targetKmh: 286 }),
-  tolrs5: v('Audi RS5', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1800),
-  tolrs6: v('Audi RS6', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 2075, { body: 'wagon' }),
-  tolrs7c821: v('Audi RS7', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 2050),
-  tola6: v('Audi A6', 'Audi', 'sedan_awd', 'warm', 'awd_rear', 1800),
-  tolaudidy: v('Audi performance concept', 'Audi', 'sports_awd', 'sport_high', 'awd_rear', 1750, { confidence: 'inferred' }),
-  tols63amg: v('Mercedes-AMG S63', 'Mercedes-Benz', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 2120),
-  tolc63: v('Mercedes-AMG C63', 'Mercedes-Benz', 'performance_sedan_rwd', 'performance_sedan', 'rwd', 1810),
-  tolgtam21: v('Mercedes-AMG GT', 'Mercedes-Benz', 'luxury_gt', 'sport_high', 'rwd', 1645, { confidence: 'inferred' }),
-  tolm6x6: v('Mercedes-AMG G63 6x6', 'Mercedes-Benz', 'offroad', 'offroad', 'awd_balanced', 3850),
-  tolmm6x6: v('Mercedes-AMG G63 6x6 custom', 'Mercedes-Benz', 'offroad', 'offroad', 'awd_balanced', 3950),
-  tolraptorv2: v('Ford F-150 Raptor', 'Ford', 'pickup', 'offroad', 'awd_balanced', 2600),
-  tolrrmansory: v('Rolls-Royce Mansory', 'Rolls-Royce', 'luxury_gt', 'sport_high', 'awd_rear', 2550, { confidence: 'inferred' }),
-  tolbt62r: v('Brabham BT62R', 'Brabham', 'hypercar_rwd', 'hyper', 'rwd', 1050, { targetKmh: 298, grip: 3.1 }),
-  tolap2: v('Apollo hypercar', 'Apollo', 'hypercar_rwd', 'hyper', 'rwd', 1350, { confidence: 'inferred' }),
-  tolka: v('Koenigsegg hypercar', 'Koenigsegg', 'hypercar_rwd', 'hyper', 'rwd', 1395, { confidence: 'inferred', targetKmh: 310 }),
-  tolraid: v('Rally raid prototype', 'Custom', 'offroad', 'offroad', 'awd_balanced', 1950, { confidence: 'inferred' }),
+  tole6314: v('BMW M6 (E63)', 'BMW', 'luxury_gt', 'sport_high', 'rwd', 1785, { targetKmh: 258, confidence: 'inferred' }),
+
+  // ── Nissan / Mitsubishi JDM ────────────────────────────────────────────────
+  // 240SX: lightweight, drift-friendly, modest power
+  tol240sx: v('Nissan 240SX', 'Nissan', 'lightweight_sports', 'sport', 'rwd', 1170, { targetKmh: 220, zeroTo100: 8.5 }),
+  // GT-R R35: AWD rear-biased, brutally fast, heavy
+  tolgtr: v('Nissan GT-R', 'Nissan', 'sports_awd', 'sport_high', 'awd_rear', 1752, { targetKmh: 275, zeroTo100: 2.9 }),
+  // GT-R Liberty Walk: same platform, slightly heavier aero kit
+  tolgtrlw: v('Nissan GT-R Liberty Walk', 'Nissan', 'sports_awd', 'sport_high', 'awd_rear', 1810, { targetKmh: 270, zeroTo100: 3.1 }),
+  // R33 Skyline GT-R: older AWD, lighter, more analog feel
+  tolr33: v('Nissan Skyline GT-R R33', 'Nissan', 'sports_awd', 'sport', 'awd_rear', 1530, { targetKmh: 255, zeroTo100: 5.5 }),
+  // Evo IX: AWD agile rally-derived sedan
+  tolevo9: v('Mitsubishi Lancer Evolution IX', 'Mitsubishi', 'sports_awd', 'sport', 'awd_balanced', 1360, { targetKmh: 245, zeroTo100: 5.0 }),
+
+  // ── Chevrolet ──────────────────────────────────────────────────────────────
+  tolc7: v('Chevrolet Corvette C7', 'Chevrolet', 'sports_rwd', 'sport_high', 'rwd', 1530, { targetKmh: 258 }),
+
+  // ── Dodge / American muscle ────────────────────────────────────────────────
+  // Charger: heavy RWD performance sedan
+  tolcharger2: v('Dodge Charger performance build', 'Dodge', 'performance_sedan_rwd', 'sport_high', 'rwd', 1923, { targetKmh: 255, zeroTo100: 4.5 }),
+  // Demon: RWD drag-focused, high wheelspin, NOT a cornering car
+  toldemon: v('Dodge Challenger SRT Demon', 'Dodge', 'muscle_rwd', 'performance_sedan', 'rwd', 1981, { targetKmh: 265, zeroTo100: 4.0, lowLoss: 1.6 }),
+  // Mustang variants: progressively lighter/faster
+  tolmustan: v('Ford Mustang', 'Ford', 'muscle_rwd', 'sport', 'rwd', 1655, { targetKmh: 250, zeroTo100: 5.5 }),
+  tolmustang: v('Ford Mustang performance build', 'Ford', 'muscle_rwd', 'sport_high', 'rwd', 1680, { targetKmh: 252, zeroTo100: 5.2 }),
+  tolmus2: v('Ford Mustang custom', 'Ford', 'muscle_rwd', 'sport_high', 'rwd', 1720, { targetKmh: 248, zeroTo100: 5.8, confidence: 'inferred' }),
+
+  // ── Lamborghini ────────────────────────────────────────────────────────────
+  // Urus: AWD performance SUV — NOT supercar cornering
+  tolcurus: v('Lamborghini Urus', 'Lamborghini', 'performance_suv', 'performance_suv', 'awd_rear', 2197, { targetKmh: 255, zeroTo100: 4.5 }),
+  // Urus RS / hotter variant
+  tolrsurus: v('Lamborghini Urus RS', 'Lamborghini', 'performance_suv', 'performance_suv', 'awd_rear', 2150, { targetKmh: 260, zeroTo100: 4.2 }),
+  // Huracán / Gallardo era supercar
+  tollam2: v('Lamborghini Huracán', 'Lamborghini', 'super_awd', 'super', 'awd_rear', 1422, { targetKmh: 290, zeroTo100: 2.9 }),
+
+  // ── Ferrari ────────────────────────────────────────────────────────────────
+  // Logical progression: 360 < 458 < F8 < FXX-K
+  // 360: older supercar, less grip, less power than modern
+  tolf360: v('Ferrari 360', 'Ferrari', 'super_rwd', 'super', 'rwd', 1350, { targetKmh: 245, zeroTo100: 4.5, grip: 2.72, antiRoll: 1.48, comZ: -0.145 }),
+  // 458 Liberty Walk: improved over 360
+  tollwalk458: v('Ferrari 458 Liberty Walk', 'Ferrari', 'super_rwd', 'super', 'rwd', 1380, { targetKmh: 265, zeroTo100: 3.9 }),
+  // F8 Spider: modern high-power twin-turbo
+  tolf8spider: v('Ferrari F8 Spider', 'Ferrari', 'super_rwd', 'super', 'rwd', 1330, { targetKmh: 285, zeroTo100: 2.9 }),
+  // FXX-K: track-only, highest grip/braking in the Ferrari range
+  tolfxxk: v('Ferrari FXX-K', 'Ferrari', 'hypercar_rwd', 'hyper', 'rwd', 1165, { targetKmh: 295, zeroTo100: 2.5, grip: 3.08 }),
+
+  // ── McLaren ────────────────────────────────────────────────────────────────
+  tol675ltsp: v('McLaren 675LT Spider', 'McLaren', 'super_rwd', 'super', 'rwd', 1368, { targetKmh: 292, zeroTo100: 2.9 }),
+
+  // ── Audi ───────────────────────────────────────────────────────────────────
+  // R8: actual supercar character, distinct from RS6
+  tolr8c: v('Audi R8', 'Audi', 'super_awd', 'super', 'awd_rear', 1560, { targetKmh: 295, zeroTo100: 3.4 }),
+  tolr8v10: v('Audi R8 V10', 'Audi', 'super_awd', 'super', 'awd_rear', 1570, { targetKmh: 300, zeroTo100: 3.2 }),
+  // RS5: performance coupe
+  tolrs5: v('Audi RS5', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1765, { targetKmh: 260, zeroTo100: 3.9 }),
+  // RS6: heavy performance wagon
+  tolrs6: v('Audi RS6', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1985, { targetKmh: 263, zeroTo100: 3.7, body: 'wagon' }),
+  // RS7: performance fastback (lighter than RS6 wagon)
+  tolrs7c821: v('Audi RS7', 'Audi', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1950, { targetKmh: 267, zeroTo100: 3.5 }),
+  tola6: v('Audi A6', 'Audi', 'sedan_awd', 'warm', 'awd_rear', 1800, { targetKmh: 212 }),
+  tolaudidy: v('Audi performance concept', 'Audi', 'sports_awd', 'sport_high', 'awd_rear', 1750, { targetKmh: 256, confidence: 'inferred' }),
+
+  // ── Mercedes-Benz ──────────────────────────────────────────────────────────
+  tols63amg: v('Mercedes-AMG S63', 'Mercedes-Benz', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 2120, { targetKmh: 262 }),
+  tolc63: v('Mercedes-AMG C63', 'Mercedes-Benz', 'performance_sedan_rwd', 'performance_sedan', 'rwd', 1810, { targetKmh: 268 }),
+  tolgtam21: v('Mercedes-AMG GT', 'Mercedes-Benz', 'luxury_gt', 'sport_high', 'rwd', 1645, { targetKmh: 257, confidence: 'inferred' }),
+  tolm6x6: v('Mercedes-AMG G63 6x6', 'Mercedes-Benz', 'offroad', 'offroad', 'awd_balanced', 3850, { targetKmh: 195 }),
+  tolmm6x6: v('Mercedes-AMG G63 6x6 custom', 'Mercedes-Benz', 'offroad', 'offroad', 'awd_balanced', 3950, { targetKmh: 192, confidence: 'inferred' }),
+
+  // ── Ford trucks ────────────────────────────────────────────────────────────
+  tolraptorv2: v('Ford F-150 Raptor', 'Ford', 'pickup', 'offroad', 'awd_balanced', 2600, { targetKmh: 190 }),
+
+  // ── Luxury ────────────────────────────────────────────────────────────────
+  tolrrmansory: v('Rolls-Royce Mansory', 'Rolls-Royce', 'luxury_gt', 'sport_high', 'awd_rear', 2550, { targetKmh: 245, confidence: 'inferred' }),
+
+  // ── Hypercars ──────────────────────────────────────────────────────────────
+  tolbt62r: v('Brabham BT62R', 'Brabham', 'hypercar_rwd', 'hyper', 'rwd', 1050, { targetKmh: 298, zeroTo100: 2.6, grip: 3.1 }),
+  tolap2: v('Apollo hypercar', 'Apollo', 'hypercar_rwd', 'hyper', 'rwd', 1350, { targetKmh: 296, zeroTo100: 2.7, confidence: 'inferred' }),
+  tolka: v('Koenigsegg hypercar', 'Koenigsegg', 'hypercar_rwd', 'hyper', 'rwd', 1395, { targetKmh: 308, zeroTo100: 2.5, confidence: 'inferred' }),
+
+  // ── Offroad ────────────────────────────────────────────────────────────────
+  tolraid: v('Rally raid prototype', 'Custom', 'offroad', 'offroad', 'awd_balanced', 1950, { targetKmh: 185, confidence: 'inferred' }),
 };
 
 const FAMILY_RULES = [
