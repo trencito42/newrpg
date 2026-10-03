@@ -62,9 +62,10 @@ for (const [f, rule] of Object.entries(ALLOWED)) {
     if (!rule.fns.includes(fn)) fail(`${f}:${i + 1} chip credit outside the settle function (in ${fn}): ${line.trim()}`);
   });
 }
-for (const f of ['sunset_slots/server.lua', 'sunset_roulette/server.lua', 'sunset_luckywheel/server.lua', 'sunset_casino/server/main.lua', 'sunset_blackjack/server.lua']) {
+for (const f of ['sunset_slots/server.lua', 'sunset_roulette/server.lua', 'sunset_luckywheel/server.lua', 'sunset_blackjack/server.lua']) {
   if (!/CasinoRNG/.test(src[f])) fail(`${f}: does not use CasinoRNG`);
 }
+if (/casino:(blackjack|slots|roulette|wheel)/.test(src['sunset_casino/server/main.lua'])) fail('casino hub reintroduced a game callback');
 if (/RegisterNetEvent\('sunset_slots:PayOutRewards'|sunset_slots:BetsAndMoney/.test(src['sunset_slots/server.lua'])) fail('legacy slots PayOutRewards/BetsAndMoney events still registered');
 
 // (c) no math.random in gameplay files
