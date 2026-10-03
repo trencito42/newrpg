@@ -45,12 +45,10 @@ export async function POST(request: NextRequest) {
         [account.id, tokenHash, account.email, clientIp]
       );
 
-      const host =
-        request.headers.get("x-forwarded-host") ||
-        request.headers.get("host") ||
-        "rpg.blipmade.com";
-      const protocol = request.headers.get("x-forwarded-proto") || "https";
-      const resetUrl = `${protocol}://${host}/reset-password?token=${encodeURIComponent(rawToken)}`;
+      const origin =
+        process.env.PANEL_PUBLIC_ORIGIN ||
+        `${request.headers.get("x-forwarded-proto") || "https"}://${request.headers.get("x-forwarded-host") || request.headers.get("host") || "rpg.blipmade.com"}`;
+      const resetUrl = `${origin.replace(/\/+$/, "")}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
       // Send email asynchronously
       sendPasswordResetEmail({

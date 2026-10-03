@@ -1053,7 +1053,7 @@ const Chat = {
             return `${timeHtml}<span class="chat-color-news">[${I18n.t('ui.chat.breaking_news')}] ${msg}</span>`;
         }
         if (type === 'ad' || type === 'advertisement') {
-            return `${timeHtml}<span class="chat-color-ad">[${I18n.t('ui.chat.advertisement')}] ${who}: ${msg}</span>`;
+            return `${timeHtml}<span class="chat-color-ad">[Ad] ${who}: ${msg}</span>`;
         }
 
         // 10. Emergency / Police / Dispatch / Radio / Department

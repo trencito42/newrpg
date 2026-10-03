@@ -286,7 +286,6 @@ end)
 -- ═══════════════════════════════════════════════════════════════
 -- /changepass <oldPassword> <newPassword> <confirmPassword>
 -- ═══════════════════════════════════════════════════════════════
-RegisterCommand('changepass', function(source, args, raw)
 local function processPasswordChange(source, oldPassword, newPassword, confirmPassword)
     local player = exports.sunset_core:GetPlayer(source)
     if not player or not player.account_id then
