@@ -66,6 +66,10 @@ SunsetDrugs.Config = {
     -- ═══ STAGE 3: STREET SALE (Vanzare Stradala) ═══
     streetSale = {
         interactionDistance = 2.5,
+        blacklistedPedModels = {
+            's_m_y_cop_01', 's_f_y_cop_01', 's_m_y_sheriff_01',
+            's_m_y_hwaycop_01', 's_m_m_paramedic_01', 's_m_y_fireman_01',
+        },
         pedCooldownSec = 60,     -- A ped won't buy again for 60 seconds
         negotiationBonusPct = 0.25, -- +25% price increase on successful negotiation
         alertPoliceChanceOnFail = 0.45, -- 45% chance ped calls 911 when negotiation fails
@@ -166,4 +170,3 @@ SunsetDrugs.Config = {
         },
     },
 }
-

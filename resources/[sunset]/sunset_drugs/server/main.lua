@@ -46,6 +46,35 @@ local function generateToken()
     return tostring(GetGameTimer()) .. '_' .. tostring(math.random(100000, 999999))
 end
 
+local function validateStreetPed(source, pedNetId)
+    pedNetId = tonumber(pedNetId)
+    if not pedNetId or pedNetId <= 0 or not NetworkDoesNetworkIdExist(pedNetId) then
+        return nil, 'INVALID_PED_NETWORK_ID'
+    end
+    local entity = NetworkGetEntityFromNetworkId(pedNetId)
+    if not entity or entity == 0 or not DoesEntityExist(entity) or GetEntityType(entity) ~= 1 then
+        return nil, 'INVALID_PED_ENTITY'
+    end
+    if IsPedAPlayer(entity) or IsEntityDead(entity) then return nil, 'PROTECTED_PED' end
+    local owner = NetworkGetEntityOwner(entity)
+    if owner == nil or owner < 0 then return nil, 'INVALID_PED_OWNER' end
+    if GetEntityRoutingBucket(entity) ~= GetPlayerRoutingBucket(source) then return nil, 'ROUTING_BUCKET_MISMATCH' end
+    local playerPos = pedCoords(source)
+    local entityPos = GetEntityCoords(entity)
+    if not playerPos or not entityPos or #(playerPos - entityPos) > ((Cfg.streetSale.interactionDistance or 2.5) + 1.5) then
+        return nil, 'PED_TOO_FAR'
+    end
+    local state = Entity(entity).state
+    if state and (state.sunsetProtected == true or state.jobPed == true or state.factionPed == true) then
+        return nil, 'PROTECTED_PED'
+    end
+    local model = GetEntityModel(entity)
+    for _, blocked in ipairs(Cfg.streetSale.blacklistedPedModels or {}) do
+        if model == joaat(blocked) then return nil, 'PROTECTED_PED_MODEL' end
+    end
+    return entity
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- 1. HARVEST SYSTEM (Recoltare)
 -- ═══════════════════════════════════════════════════════════════
@@ -182,11 +211,19 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processSuccess', function(sou
     local recipe = Cfg.process.recipes[recipeType]
     if not recipe then return { success = false, err = 'Invalid recipe' } end
 
+    local elapsed = GetGameTimer() - (session.startedAt or GetGameTimer())
+    if elapsed < (Cfg.process.minProcessDurationMs or 3500) then
+        return { success = false, err = 'PROCESS_TOO_FAST' }
+    end
+
     local lab = Cfg.process.labs[session.labIndex]
     local coords = pedCoords(source)
     if not lab or not nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 3.0) then
         return { success = false, err = 'Left lab area' }
     end
+
+    -- One-shot before any inventory operation can yield.
+    LabSessions[source] = nil
 
     -- Verify player has required items
     local hasRaw = exports.sunset_inventory:HasItem(source, recipe.rawItem, recipe.rawCount) == true
@@ -232,6 +269,8 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processFail', function(source
     local session = LabSessions[source]
     if not session or session.token ~= token then return { success = false } end
 
+    LabSessions[source] = nil
+
     local recipe = Cfg.process.recipes[recipeType]
     if recipe then
         -- Realistic loss: 1 raw material burned/ruined
@@ -247,6 +286,11 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function(source, pedNetId)
     if not hasChar(source) then return nil, { localeKey = 'drugs.message.no_character' } end
+    if SaleSessions[source] then return nil, { err = 'SALE_SESSION_ALREADY_ACTIVE' } end
+
+    pedNetId = tonumber(pedNetId)
+    local ped, pedError = validateStreetPed(source, pedNetId)
+    if not ped then return nil, { err = pedError } end
 
     local now = GetGameTimer()
     if PedCooldowns[pedNetId] and now < PedCooldowns[pedNetId] then
@@ -294,6 +338,13 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
         basePrice = basePrice,
         risk = risk,
         startedAt = now,
+        negotiation = {
+            token = generateToken(),
+            targetPos = math.random(8, 72),
+            targetWidth = 20,
+            resolved = false,
+            verified = false,
+        },
     }
 
     dlog(('Street offer created src=%d ped=%d drug=%s qty=%d price=$%d risk=%s'):format(
@@ -305,7 +356,34 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
         qty = qty,
         price = basePrice,
         risk = risk,
+        negotiation = {
+            token = SaleSessions[source].negotiation.token,
+            targetPos = SaleSessions[source].negotiation.targetPos,
+            targetWidth = SaleSessions[source].negotiation.targetWidth,
+        },
     }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:resolveNegotiation', function(source, data)
+    local session = SaleSessions[source]
+    local challenge = session and session.negotiation
+    if not challenge or challenge.resolved or not data or data.token ~= session.token
+        or data.challengeToken ~= challenge.token then
+        return { success = false, reason = 'INVALID_NEGOTIATION_SESSION' }
+    end
+    challenge.resolved = true
+    local elapsed = GetGameTimer() - (session.startedAt or GetGameTimer())
+    local cursor = tonumber(data.cursorPos)
+    challenge.verified = elapsed >= 450 and cursor ~= nil
+        and cursor >= challenge.targetPos
+        and cursor <= (challenge.targetPos + challenge.targetWidth)
+    if not challenge.verified then
+        if session.pedNetId then
+            PedCooldowns[session.pedNetId] = GetGameTimer() + ((Cfg.streetSale.pedCooldownSec or 60) * 1000)
+        end
+        SaleSessions[source] = nil
+    end
+    return { success = challenge.verified == true }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(source, data)
@@ -316,13 +394,25 @@ exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(s
         return { success = false, err = 'Invalid sale session' }
     end
 
+    if session.pedNetId then
+        local ped, pedError = validateStreetPed(source, session.pedNetId)
+        if not ped then
+            SaleSessions[source] = nil
+            return { success = false, err = pedError }
+        end
+    end
+
+    -- Consume before inventory or money mutations. This serializes duplicate NUI
+    -- posts and makes the offer exactly once regardless of callback retries.
+    SaleSessions[source] = nil
+
     -- Verify authoritative price
     local maxAllowedPrice = session.basePrice
-    if data.negotiated then
+    if session.negotiation and session.negotiation.verified == true then
         maxAllowedPrice = math.floor(session.basePrice * (1.0 + (Cfg.streetSale.negotiationBonusPct or 0.25)))
     end
 
-    local finalPrice = math.min(tonumber(data.price) or session.basePrice, maxAllowedPrice)
+    local finalPrice = maxAllowedPrice
 
     -- Check and remove drug item
     local removeOk = exports.sunset_inventory:RemoveItem(source, session.item, session.qty)
@@ -345,7 +435,6 @@ exports.sunset_core:RegisterCallback('sunset:drugs:acceptStreetSale', function(s
 
     notify(source, ('Ai vandut %dx %s pentru $%s!'):format(session.qty, session.drugKey, tostring(finalPrice)), 'success')
     dlog(('Street sale completed src=%d price=$%d'):format(source, finalPrice))
-    SaleSessions[source] = nil
     return { success = true }
 end)
 

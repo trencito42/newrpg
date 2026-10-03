@@ -131,10 +131,33 @@ RegisterNetEvent('sunset:robbery:hackOpen', function()
     if not nearPoint(source, session.location.hackTerminal.coords, 4.0) then
         return RobberyAdapter.notify(source, exports.sunset_core:TFor(source, 'robbery.msg.stay_at_the_security_terminal'), 'error')
     end
-    if not session.hack.startedAt then
-        session.hack.startedAt = os.time()
+    if GetResourceState('sunset_hacking') == 'started' then
+        if session.hackingSessionId then return end
+        local challenge, err = exports.sunset_hacking:CreateHackingSession(source, {
+            difficulty = 'medium',
+            timeLimit = session.hack.timeLimit,
+            title = exports.sunset_core:TFor(source, 'config.robbery.title.security_terminal_fleeca_bypass.56c24ccd'),
+            allowCancel = true,
+            context = {
+                consumer = 'sunset_robbery',
+                robberySessionId = session.id,
+                robberyLocation = session.locationId,
+            },
+        })
+        if not challenge then
+            return RobberyAdapter.notify(source,
+                exports.sunset_core:TFor(source, 'robbery.message.the_robbery_ledger_is_unavailable_try_again_shortly'), 'error')
+        end
+        session.hackingSessionId = challenge.sessionId
+        TriggerClientEvent('sunset:robbery:startAuthoritativeHack', source, challenge)
+        return
     end
+
+    -- The built-in circuit remains server-authoritative when the dedicated
+    -- hacking resource is unavailable; all clicks are validated below.
+    if not session.hack.startedAt then session.hack.startedAt = os.time() end
     local payload = hackPayload(session)
+    payload.native = true
     payload.timeLimit = math.max(1, session.hack.timeLimit - (os.time() - session.hack.startedAt))
     TriggerClientEvent('sunset:robbery:hackOpenUi', source, payload)
 end)
@@ -229,15 +252,24 @@ RegisterNetEvent('sunset:robbery:hackClick', function(nodeId)
     })
 end)
 
-RegisterNetEvent('sunset:robbery:hackComplete', function(result)
-    local source = source
+local function completeHackingChallenge(source, robberySessionId, hackingSessionId, result)
     local session = RobberySessions.get(source)
-    if not session or session.stage ~= 'HACKING' then return end
-    if not nearPoint(source, session.location.hackTerminal.coords, 6.0) then return end
-    local outcome = result == 'perfect' and 'perfect' or (result == 'normal' and 'normal' or 'failed')
+    if not session or session.stage ~= 'HACKING' then return false end
+    if session.id ~= robberySessionId or session.hackingSessionId ~= hackingSessionId then return false end
+    session.hackingSessionId = nil
+    if not nearPoint(source, session.location.hackTerminal.coords, 6.0) then
+        result = { success = false, reason = 'LEFT_TERMINAL' }
+    end
+    local outcome = 'failed'
+    if result and result.success == true then
+        local elapsed = tonumber(result.timeSpent) or session.hack.timeLimit
+        outcome = elapsed <= math.max(5, math.floor(session.hack.timeLimit * 0.5)) and 'perfect' or 'normal'
+    end
     applyHackResult(session, outcome)
     TriggerClientEvent('sunset:robbery:hackResult', source, { result = outcome, hud = RobberySessions.hud(session) })
-end)
+    return true
+end
+exports('CompleteHackingChallenge', completeHackingChallenge)
 
 RegisterNetEvent('sunset:robbery:smash', function(displayId)
     local source = source

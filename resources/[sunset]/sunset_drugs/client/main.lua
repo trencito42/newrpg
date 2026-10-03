@@ -350,6 +350,7 @@ function InitiateStreetSale(npcPed)
         price = offer.price,
         risk = offer.risk,
         token = offer.token,
+        negotiation = offer.negotiation,
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
@@ -393,6 +394,11 @@ local function onFailNegotiation(data, cb)
     if cb then cb(res or { success = true }) end
 end
 
+local function onResolveNegotiation(data, cb)
+    local res = Sunset.AwaitCallback('sunset:drugs:resolveNegotiation', data)
+    if cb then cb(res or { success = false }) end
+end
+
 local function onDeclineDrugSale(data, cb)
     local res = Sunset.AwaitCallback('sunset:drugs:declineStreetSale', data)
 
@@ -413,10 +419,12 @@ end
 
 RegisterNUICallback('acceptDrugSale', onAcceptDrugSale)
 RegisterNUICallback('failNegotiation', onFailNegotiation)
+RegisterNUICallback('resolveNegotiation', onResolveNegotiation)
 RegisterNUICallback('declineDrugSale', onDeclineDrugSale)
 RegisterNUICallback('closeSaleUI', onCloseSaleUI)
 AddEventHandler('sunset:nui:acceptDrugSale', function(data) onAcceptDrugSale(data, function() end) end)
 AddEventHandler('sunset:nui:failNegotiation', function(data) onFailNegotiation(data, function() end) end)
+AddEventHandler('sunset:nui:resolveNegotiation', function(data) onResolveNegotiation(data, function() end) end)
 AddEventHandler('sunset:nui:declineDrugSale', function(data) onDeclineDrugSale(data, function() end) end)
 AddEventHandler('sunset:nui:closeSaleUI', function(data) onCloseSaleUI(data, function() end) end)
 
@@ -633,4 +641,3 @@ function DoWholesaleDelivery(dropoff)
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
-

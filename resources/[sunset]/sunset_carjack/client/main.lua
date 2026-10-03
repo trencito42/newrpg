@@ -200,9 +200,11 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         if not nearVehicle or not DoesEntityExist(nearVehicle) then return end
         inCooldown = true
 
-        local hasLockpick = Sunset.AwaitCallback('sunset:carjack:hasLockpick')
-        if not hasLockpick then
-            notify(exports.sunset_core:Translate('carjack.message.you_need_a_lockpick'), 'error')
+        local targetVehicle = nearVehicle
+        local targetNetId = NetworkGetNetworkIdFromEntity(targetVehicle)
+        local attempt, beginErr = Sunset.AwaitCallback('sunset:carjack:beginLockpick', targetNetId)
+        if not attempt or not attempt.token then
+            notify(beginErr or exports.sunset_core:Translate('carjack.message.you_need_a_lockpick'), 'error')
             inCooldown = false
             return
         end
@@ -212,21 +214,18 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
             subtitleKey = "config.carjack.subtitle.ignition_security_system.834cf32a", subtitle = 'Sistem Securitate Contact',
             difficulty = 'medium'
         }, function(success)
-            if success then
-                local ok, err = Sunset.AwaitCallback('sunset:carjack:onLockpickSuccess')
-                if ok then
-                    notify(exports.sunset_core:Translate('carjack.message.usa_fortata_urca_repede'), 'success')
-                    if nearVehicle and DoesEntityExist(nearVehicle) then
-                        SetPedIntoVehicle(PlayerPedId(), nearVehicle, -1)
-                    end
-                    hasStolenCar = true
-                    showNpcBlips()
-                else
-                    notify(err or exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
+            local ok, err = Sunset.AwaitCallback(
+                'sunset:carjack:completeLockpick', attempt.token, targetNetId, success == true)
+            if ok then
+                notify(exports.sunset_core:Translate('carjack.message.usa_fortata_urca_repede'), 'success')
+                if DoesEntityExist(targetVehicle) then
+                    SetVehicleDoorsLocked(targetVehicle, 1)
+                    SetPedIntoVehicle(PlayerPedId(), targetVehicle, -1)
                 end
+                hasStolenCar = true
+                showNpcBlips()
             else
-                Sunset.AwaitCallback('sunset:carjack:onLockpickFail')
-                notify(exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
+                notify(err or exports.sunset_core:Translate('carjack.msg.the_lockpick_broke'), 'error')
             end
             SetTimeout(1500, function() inCooldown = false end)
         end)

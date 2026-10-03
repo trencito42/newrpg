@@ -24,6 +24,7 @@ local function runTestHack(target, seedArg)
         local res = StartHackingPuzzle({
             puzzle = puzzleId,
             difficulty = difficulty,
+            localDev = SunsetHacking.Config.Debug == true,
             allowCancel = true,
             title = ('TEST_TERMINAL // %s'):format(string.upper(target))
         })

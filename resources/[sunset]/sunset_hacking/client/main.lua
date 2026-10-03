@@ -144,6 +144,11 @@ local function cleanupHackingSession(reason, success, serverResult)
     local p = activePromise
     local session = activeSession
 
+    if session and session.sessionId and success ~= true and not (serverResult and serverResult.reason) then
+        TriggerServerEvent('sunset:hacking:cancelSession', session.sessionId,
+            reason == 'player_dead' and 'PLAYER_DEAD' or 'CANCELLED')
+    end
+
     activePromise = nil
     activeSession = nil
     currentState = State.CLOSED
@@ -213,8 +218,16 @@ function StartHackingPuzzle(config)
     local puzzleData
     local serverSessionId = nil
 
-    -- 1. Try resolving or creating session
-    if type(config.puzzle) == 'table' then
+    -- Production gameplay must use a server-created session. A local puzzle is
+    -- permitted only for the explicitly server-gated debug command.
+    if type(config.serverSession) == 'table' and config.serverSession.sessionId then
+        puzzleData = config.serverSession.puzzle
+        serverSessionId = config.serverSession.sessionId
+        difficulty = config.serverSession.difficulty or difficulty
+        config.timeLimit = config.serverSession.timeLimit or config.timeLimit
+        config.title = config.serverSession.title or config.title
+        config.allowCancel = config.serverSession.allowCancel
+    elseif type(config.puzzle) == 'table' and config.localDev == true and SunsetHacking.Config.Debug == true then
         puzzleData = config.puzzle
     else
         -- Request server session
@@ -244,8 +257,7 @@ function StartHackingPuzzle(config)
             serverSessionId = sResult.data.sessionId
             difficulty = sResult.data.difficulty or difficulty
         else
-            -- Local fallback
-            puzzleData = SunsetHacking.GetPuzzle(config.puzzle or difficulty)
+            return { success = false, state = 'SERVER_UNAVAILABLE', error = sResult and sResult.err or 'Session creation timed out' }
         end
     end
 
@@ -349,18 +361,21 @@ RegisterNUICallback('nui:complete', function(data, cb)
             TriggerServerEvent('sunset:hacking:submitSolution', sessId, clientRotations)
 
             SetTimeout(2500, function()
-                if pVerify then pVerify:resolve({ success = true, timeout = true }) end
+                if pVerify then pVerify:resolve({ success = false, reason = 'VERIFY_TIMEOUT', timeout = true }) end
             end)
 
             local sResult = Citizen.Await(pVerify)
             SetTimeout(600, function()
                 cleanupHackingSession(sResult.success and 'success' or 'invalid_solution', sResult.success == true, sResult)
             end)
-        else
-            -- Standalone / offline validation
+        elseif SunsetHacking.Config.Debug == true then
+            -- Explicit dev-only local mode can never authorize an external
+            -- economy or robbery transition.
             SetTimeout(600, function()
                 cleanupHackingSession('success', true)
             end)
+        else
+            cleanupHackingSession('missing_server_session', false)
         end
     end
     cb('ok')

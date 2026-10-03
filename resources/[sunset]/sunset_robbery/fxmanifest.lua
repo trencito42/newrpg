@@ -45,6 +45,7 @@ files {
 
 dependencies {
     'sunset_core',
+    'sunset_hacking',
     'sunset_inventory',
     'sunset_ui',
 }

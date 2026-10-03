@@ -34,19 +34,13 @@ const SVG_ICONS = {
 };
 
 function postToResource(action, data = {}) {
-    // Post to sunset_ui (which forwards to sunset_drugs)
-    fetch(`https://sunset_ui/${action}`, {
+    // The controller is hosted by sunset_ui, but sunset_drugs owns these
+    // callbacks. Send exactly one request so economic actions cannot duplicate.
+    return fetch(`https://sunset_drugs/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
-    }).catch(() => {});
-
-    // Also direct post to sunset_drugs
-    fetch(`https://sunset_drugs/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    }).catch(() => {});
+    }).then((response) => response.json()).catch(() => ({ success: false }));
 }
 
 const Drugs = {
@@ -75,6 +69,7 @@ const Drugs = {
             this.currentAmount = Number(data.amount) || 0;
             this.maxAmount = Number(data.maxAmount) || 50;
             this.sessionToken = data.token || null;
+            this.negotiationChallenge = data.negotiation || null;
             this.cursorPos = 0;
             this.cursorDir = 1;
             this.cursorSpeed = 1.2;
@@ -742,8 +737,9 @@ const Drugs = {
             if (actionsEl) actionsEl.style.display = 'none';
             if (negoBox) negoBox.style.display = 'flex';
 
-            this.targetWidth = 20;
-            this.targetPos = Math.random() * (100 - this.targetWidth - 10) + 5;
+            this.targetWidth = Number(this.negotiationChallenge?.targetWidth) || 20;
+            this.targetPos = Number(this.negotiationChallenge?.targetPos);
+            if (!Number.isFinite(this.targetPos)) return this.close();
             if (targetZoneEl) {
                 targetZoneEl.style.left = `${this.targetPos}%`;
                 targetZoneEl.style.width = `${this.targetWidth}%`;
@@ -774,13 +770,18 @@ const Drugs = {
             this.animationFrame = requestAnimationFrame(() => this.loop());
         },
 
-        handleNegotiationHit() {
+        async handleNegotiationHit() {
             if (!this.isNegotiating) return;
             this.isNegotiating = false;
             this.hasNegotiated = true;
             if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
 
-            const isHit = (this.cursorPos >= this.targetPos && this.cursorPos <= (this.targetPos + this.targetWidth));
+            const result = await postToResource('resolveNegotiation', {
+                token: this.sessionToken,
+                challengeToken: this.negotiationChallenge?.token,
+                cursorPos: this.cursorPos,
+            });
+            const isHit = result?.success === true;
             const negoBox = document.getElementById('sale-nego-box');
             const actionsEl = document.getElementById('sale-actions');
             const statusMsg = document.getElementById('sale-status-msg');

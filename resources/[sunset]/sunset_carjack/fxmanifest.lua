@@ -10,6 +10,8 @@ dependencies {
     'sunset_core',
     'sunset_inventory',
     'sunset_vehicles',
+    'sunset_jobs',
+    'sunset_quests',
     'oxmysql',
 }
 

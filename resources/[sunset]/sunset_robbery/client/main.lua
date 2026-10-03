@@ -160,24 +160,16 @@ end)
 RegisterNetEvent('sunset:robbery:hackOpenUi', function(payload)
     if not session or session.stage ~= 'HACKING' then return end
     RobberyAnims.play('hack', -1)
-    if GetResourceState('sunset_hacking') == 'started' then
-        CreateThread(function()
-            local res = exports.sunset_hacking:StartHackingPuzzle({
-                difficulty = 'medium',
-                timeLimit = payload and payload.timeLimit or 35,
-                titleKey = "config.robbery.title.security_terminal_fleeca_bypass.56c24ccd", title = 'SECURITY_TERMINAL // FLEECA_BYPASS',
-                allowCancel = true
-            })
-            if res.success then
-                TriggerServerEvent('sunset:robbery:hackComplete', 'perfect')
-            else
-                TriggerServerEvent('sunset:robbery:hackComplete', 'failed')
-            end
-        end)
-    else
-        RobberyNui.focus(true, true)
-        RobberyNui.send('hackShow', payload or {})
-    end
+    RobberyNui.focus(true, true)
+    RobberyNui.send('hackShow', payload or {})
+end)
+
+RegisterNetEvent('sunset:robbery:startAuthoritativeHack', function(challenge)
+    if not session or session.stage ~= 'HACKING' or GetResourceState('sunset_hacking') ~= 'started' then return end
+    RobberyAnims.play('hack', -1)
+    CreateThread(function()
+        exports.sunset_hacking:StartHackingPuzzle({ serverSession = challenge })
+    end)
 end)
 
 RegisterNetEvent('sunset:robbery:hackProgress', function(payload)

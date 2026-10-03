@@ -4,7 +4,8 @@
   "scripts": {
     "i18n:check": "node scripts/i18n-gate.mjs --strict",
     "i18n:test": "node --test scripts/i18n-gate.test.mjs",
-    "auth:check": "node scripts/test-auth-identity.js"
+    "auth:check": "node scripts/test-auth-identity.js",
+    "authority:check": "node scripts/test-critical-authority.js"
   },
   "devDependencies": {
     "luaparse": "^0.3.1",
