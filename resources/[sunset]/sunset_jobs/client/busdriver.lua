@@ -10,6 +10,7 @@ local JC = Sunset.JobClient
 
 local currentBusCheckpoint = nil
 local waitingPassengers = {}
+local busPassengers = {}
 local isBoardingActive = false
 
 local PASSENGER_MODELS = {
@@ -42,6 +43,16 @@ local function cleanupWaitingPassengers()
         end
     end
     waitingPassengers = {}
+end
+
+local function cleanupBusPassengers()
+    for _, ped in ipairs(busPassengers) do
+        if DoesEntityExist(ped) then
+            SetEntityAsMissionEntity(ped, false, true)
+            DeleteEntity(ped)
+        end
+    end
+    busPassengers = {}
 end
 
 local function spawnWaitingPassengers(stop)
@@ -161,6 +172,7 @@ function Sunset.Jobs.StartBusDriver()
     JC.deleteVehicles()
     JC.clearBlips()
     cleanupWaitingPassengers()
+    cleanupBusPassengers()
 
     -- 1. Spawn Bus at open bay
     local spawnBay = getFreeSpawnBay(cfg.depot.spawns) or cfg.depot.spawns[1]
@@ -211,6 +223,7 @@ function Sunset.Jobs.StartBusDriver()
         local isReturnStage = false
 
         while JC.jobId == 'busdriver' and JC.state ~= 'IDLE' do
+            local sleep = 250
             local ped = PlayerPedId()
             local inBus = IsPedInVehicle(ped, bus, false) and GetPedInVehicleSeat(bus, -1) == ped
 
@@ -224,7 +237,10 @@ function Sunset.Jobs.StartBusDriver()
                         local dist = #(busCoords - targetV3)
                         local speed = GetEntitySpeed(bus)
 
-                        JC.hudDistance(targetV3)
+                        if dist < 45.0 then
+                            sleep = 0
+                            JC.hudDistance(targetV3)
+                        end
 
                         if dist <= (cfg.stopRadius or 7.5) then
                             -- Draw stop marker
@@ -249,25 +265,46 @@ function Sunset.Jobs.StartBusDriver()
                                     SetVehicleDoorOpen(bus, 1, false, false)
                                     PlaySoundFrontend(-1, "Bus_Bell", "GTAO_Script_Sounds_Soundset", false)
 
-                                    -- Show passenger boarding animation/progress
+                                    -- Instruct waiting passengers to enter bus
                                     for _, p in ipairs(waitingPassengers) do
                                         if DoesEntityExist(p) then
-                                            ClearPedTasks(p)
+                                            ClearPedTasksImmediately(p)
                                             FreezeEntityPosition(p, false)
-                                            TaskEnterVehicle(p, bus, 8000, 1, 1.0, 1, 0)
+                                            SetEntityInvincible(p, true)
+                                            SetBlockingOfNonTemporaryEvents(p, false)
+                                            TaskEnterVehicle(p, bus, 7000, -2, 1.8, 1, 0)
                                         end
                                     end
 
                                     exports.sunset_ui:Notify('Pasagerii urcă în autobuz... Validare titluri de călătorie.', 'info', 3000)
-                                    Wait(cfg.boardingDurationMs or 3500)
+                                    local waitDuration = cfg.boardingDurationMs or 3500
+                                    Wait(waitDuration)
 
-                                    -- Server callback
-                                    local netId = VehToNet(bus)
-                                    local res = Sunset.AwaitCallback('sunset:jobs:busdriver:boardPassengers', netId, currentStopIdx)
+                                    -- Warp any remaining slow peds into free seats and transfer to busPassengers
+                                    local maxSeats = GetVehicleMaxNumberOfPassengers(bus)
+                                    for _, p in ipairs(waitingPassengers) do
+                                        if DoesEntityExist(p) then
+                                            if not IsPedInVehicle(p, bus, false) then
+                                                for seat = 0, maxSeats - 1 do
+                                                    if IsVehicleSeatFree(bus, seat) then
+                                                        TaskWarpPedIntoVehicle(p, bus, seat)
+                                                        break
+                                                    end
+                                                end
+                                            end
+                                            table.insert(busPassengers, p)
+                                        end
+                                    end
+                                    waitingPassengers = {}
 
                                     -- Close doors
                                     SetVehicleDoorShut(bus, 0, false)
                                     SetVehicleDoorShut(bus, 1, false)
+                                    PlaySoundFrontend(-1, "Bus_Bell", "GTAO_Script_Sounds_Soundset", false)
+
+                                    -- Server callback
+                                    local netId = VehToNet(bus)
+                                    local res = Sunset.AwaitCallback('sunset:jobs:busdriver:boardPassengers', netId, currentStopIdx)
 
                                     if res and res.success then
                                         JC.sessionData.totalEarned = res.totalEarned
@@ -322,7 +359,10 @@ function Sunset.Jobs.StartBusDriver()
                     local dist = #(busCoords - returnV3)
                     local speed = GetEntitySpeed(bus)
 
-                    JC.hudDistance(returnV3)
+                    if dist < 45.0 then
+                        sleep = 0
+                        JC.hudDistance(returnV3)
+                    end
 
                     if dist <= 12.0 then
                         DrawMarker(1, returnV3.x, returnV3.y, returnV3.z - 1.0,
@@ -343,6 +383,7 @@ function Sunset.Jobs.StartBusDriver()
                                 
                                 clearBusCheckpoint()
                                 cleanupWaitingPassengers()
+                                cleanupBusPassengers()
                                 JC.deleteVehicles()
                                 JC.cleanup()
                                 JC.hudClear(true)
@@ -361,10 +402,11 @@ function Sunset.Jobs.StartBusDriver()
                 end
             end
 
-            Wait(100)
+            Wait(sleep)
         end
 
         clearBusCheckpoint()
         cleanupWaitingPassengers()
+        cleanupBusPassengers()
     end)
 end
