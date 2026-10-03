@@ -163,6 +163,7 @@ local FORWARDED = {
     'authReady',
     'authLogin',
     'authRegister',
+    'authForgotPassword',
     'authPickAccount',
     'authRemoveAccount',
     'authSetEmail',

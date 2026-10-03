@@ -345,6 +345,44 @@ exports.sunset_core:RegisterCallback('sunset:auth:changePassword', function(sour
     return processPasswordChange(source, oldPassword, newPassword, confirmPassword)
 end)
 
+exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', function(source, identifier)
+    identifier = tostring(identifier or ''):match('^%s*(.-)%s*$')
+    if identifier == '' then
+        return { success = false, message = 'Te rugăm să introduci username-ul sau emailul contului!' }
+    end
+
+    local account = MySQL.single.await(
+        'SELECT id, username, email FROM accounts WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1',
+        { identifier, identifier }
+    )
+
+    if account and account.email and string.find(account.email, '@') then
+        local rawToken = Sunset.Password.GenerateSalt(32) or tostring(GetGameTimer()) .. tostring(math.random(100000, 999999))
+        local tokenRow = MySQL.single.await('SELECT SHA2(?, 256) AS thash', { rawToken })
+        local tokenHash = tokenRow and tokenRow.thash or rawToken
+        local ip = GetPlayerEndpoint(source) or '127.0.0.1'
+
+        MySQL.insert.await([[
+            INSERT INTO account_password_resets (account_id, token_hash, email, ip_address, expires_at)
+            VALUES (?, ?, ?, ?, NOW() + INTERVAL 30 MINUTE)
+        ]], { account.id, tokenHash, account.email, ip })
+
+        -- Dispatch email via panel internal API
+        local postData = json.encode({
+            identifier = account.username,
+        })
+
+        PerformHttpRequest('http://127.0.0.1:3000/api/auth/forgot-password', function(statusCode, responseText)
+            -- Dispatch logged
+        end, 'POST', postData, { ['Content-Type'] = 'application/json' })
+    end
+
+    return {
+        success = true,
+        message = 'Dacă datele introduse corespund unui cont activ, a fost trimis un email cu linkul de resetare pe adresa asociată.',
+    }
+end)
+
 RegisterCommand('changepass', function(source, args)
     if source == 0 then
         print('[sunset_auth] /changepass cannot be run from server console.')
@@ -358,5 +396,37 @@ RegisterCommand('changepass', function(source, args)
         TriggerClientEvent('sunset:auth:openChangePassUI', source)
     end
 end, false)
+
+RegisterCommand('lostpass', function(source, args)
+    if source == 0 then return end
+    local user = args[1]
+    if not user or user == '' then
+        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /lostpass <username_sau_email>', 'info', 6000)
+        return
+    end
+
+    local account = MySQL.single.await(
+        'SELECT id, username, email FROM accounts WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1',
+        { user, user }
+    )
+
+    if account and account.email and string.find(account.email, '@') then
+        local postData = json.encode({ identifier = account.username })
+        PerformHttpRequest('http://127.0.0.1:3000/api/auth/forgot-password', function() end, 'POST', postData, { ['Content-Type'] = 'application/json' })
+    end
+
+    TriggerClientEvent('sunset:client:notify', source, 'Dacă contul există, a fost trimis un link de resetare pe email!', 'success', 7000)
+end, false)
+
+RegisterCommand('forgotpass', function(source, args)
+    if source == 0 then return end
+    local user = args[1]
+    if not user or user == '' then
+        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /forgotpass <username_sau_email>', 'info', 6000)
+        return
+    end
+    ExecuteCommand(('lostpass %s'):format(user))
+end, false)
+
 
 

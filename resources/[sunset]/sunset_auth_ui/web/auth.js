@@ -56,6 +56,8 @@ const AuthUI = {
         // Form switches
         $('#auth-go-register')?.addEventListener('click', () => this.switchMode('register'));
         $('#auth-go-login')?.addEventListener('click', () => this.switchMode('login'));
+        $('#auth-go-forgot')?.addEventListener('click', () => this.switchMode('forgot'));
+        $('#auth-forgot-back')?.addEventListener('click', () => this.switchMode('login'));
 
         // Login
         $('#auth-login-btn')?.addEventListener('click', () => this.submitLogin());
@@ -64,6 +66,12 @@ const AuthUI = {
         });
         $('#auth-user')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') $('#auth-pass')?.focus();
+        });
+
+        // Forgot Password
+        $('#auth-forgot-btn')?.addEventListener('click', () => this.submitForgot());
+        $('#forgot-user')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.submitForgot();
         });
 
         // Register
@@ -144,18 +152,41 @@ const AuthUI = {
     },
 
     switchMode(mode) {
-        this.mode = mode;
+        this.mode = mode; // 'login' | 'register' | 'forgot'
         const isLogin = mode === 'login';
+        const isRegister = mode === 'register';
+        const isForgot = mode === 'forgot';
+
         $('#auth-form-login')?.classList.toggle('hidden', !isLogin);
-        $('#auth-form-register')?.classList.toggle('hidden', isLogin);
+        $('#auth-form-register')?.classList.toggle('hidden', !isRegister);
+        $('#auth-form-forgot')?.classList.toggle('hidden', !isForgot);
+
         this.hideError();
         setTimeout(() => {
             if (isLogin) {
                 $('#auth-user')?.focus({ preventScroll: true });
-            } else {
+            } else if (isRegister) {
                 $('#reg-user')?.focus({ preventScroll: true });
+            } else if (isForgot) {
+                $('#forgot-user')?.focus({ preventScroll: true });
             }
         }, 50);
+    },
+
+    submitForgot() {
+        if (this.pendingSubmit) return;
+        const identifier = ($('#forgot-user')?.value || '').trim();
+        if (!identifier) {
+            return this.showError('Te rugăm să introduci numele de utilizator sau emailul.');
+        }
+
+        this.hideError();
+        this.showLoading(true, 'Se trimite emailul de resetare...');
+        this.pendingSubmit = true;
+
+        post('authForgotPassword', {
+            identifier: identifier,
+        });
     },
 
     showError(msg) {

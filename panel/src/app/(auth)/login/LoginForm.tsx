@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
@@ -69,17 +70,24 @@ export function LoginForm({ locale }: { locale: Locale }) {
                 onChange={(event) => setUsername(event.target.value)}
                 className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-[#F2EFE8] focus:outline-none focus:border-brand" />
             </label>
-            <label className="block text-xs font-medium text-[#B4AFA4]">
-              {t(locale, "auth.password")}
-              <input type="password" required autoComplete="current-password" value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="mt-1.5 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-[#F2EFE8] focus:outline-none focus:border-brand" />
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-[#B4AFA4]">
+                {t(locale, "auth.password")}
+              </label>
+              <Link href="/forgot-password" className="text-xs text-brand hover:text-brand-light transition-colors">
+                Ai uitat parola?
+              </Link>
+            </div>
+            <input type="password" required autoComplete="current-password" value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="mt-1 w-full px-3 py-2 text-sm bg-surface-100 border border-surface-border rounded-lg text-[#F2EFE8] focus:outline-none focus:border-brand" />
             <Button type="submit" loading={loading} className="w-full mt-2">{t(locale, "auth.login_button")}</Button>
           </form>
-          <p className="mt-6 pt-4 border-t border-surface-border/60 text-center text-xs text-[#8F8B83]">
-            {t(locale, "auth.not_registered")} {t(locale, "auth.register_guide")}
-          </p>
+          <div className="mt-6 pt-4 border-t border-surface-border/60 text-center space-y-2">
+            <p className="text-xs text-[#8F8B83]">
+              {t(locale, "auth.not_registered")} {t(locale, "auth.register_guide")}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

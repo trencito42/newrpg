@@ -289,6 +289,27 @@ AddEventHandler('sunset:nui:authRegister', function(data)
     handleAuthResult(result, data.username, data.password, remember)
 end)
 
+AddEventHandler('sunset:nui:authForgotPassword', function(data)
+    local identifier = tostring(data and data.identifier or '')
+    if identifier == '' then
+        authUiSend('authError', { message = 'Te rugăm să introduci username-ul sau emailul contului.' })
+        return
+    end
+
+    authUiSend('authLoading', { loading = true, text = 'Se trimite emailul de resetare...' })
+    local res = Sunset.AwaitCallback('sunset:auth:requestPasswordReset', identifier)
+    authUiSend('authLoading', { loading = false })
+
+    if res and res.success then
+        authUiSend('authError', { message = res.message or 'Un email de resetare a fost trimis pe adresa asociată contului.' })
+        uiNotify(res.message or 'Emailul de resetare a fost trimis!', 'success', 8000)
+    else
+        authUiSend('authError', { message = res and res.message or 'Eroare la trimiterea emailului de resetare.' })
+        uiNotify(res and res.message or 'Eroare la trimiterea emailului.', 'error', 6000)
+    end
+end)
+
+
 AddEventHandler('sunset:nui:authSetEmail', function(data)
     local result, err = Sunset.AwaitCallback('sunset:authSetEmail', data and data.email)
     if not result then
