@@ -57,7 +57,7 @@ Sunset.Config = {
 }
 
 Sunset.Jobs = {
-    unemployed = { label = 'Unemployed', type = 'civilian', grades = { [0] = { label = 'Freelancer', salary = 0, perms = {} } } },
+    unemployed = { labelKey = "config.core.label.unemployed.11ef83e7", label = 'Unemployed', type = 'civilian', grades = { [0] = { labelKey = "config.core.label.freelancer.da6c5e45", label = 'Freelancer', salary = 0, perms = {} } } },
 }
 
 Sunset.Nationalities = {

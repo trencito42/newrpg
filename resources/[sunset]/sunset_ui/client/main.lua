@@ -18,7 +18,7 @@ function Show(screen, data)
     SendNUIMessage({
         action = 'show',
         screen = screen,
-        data = data or {},
+        data = Sunset.LocalizePresentation(data or {}, Sunset.GetLocale()),
     })
 end
 exports('Show', Show)
@@ -324,6 +324,9 @@ local dedupeLast = {} -- [action] = { key, at }
 local DEDUPE_RESET_ACTIONS = { showHud = true, hudChromeHide = true, transitionShow = true, transitionHide = true, pauseState = true, hide = true, show = true }
 
 function Send(action, data)
+    -- Resolve shared config descriptors for this player before crossing the NUI
+    -- boundary. This prevents an English canonical fallback from becoming UI.
+    data = Sunset.LocalizePresentation(data or {}, Sunset.GetLocale())
     if DEDUPE_RESET_ACTIONS[action] then dedupeLast = {} end
     if DEDUPE_ACTIONS[action] then
         local ok, key = pcall(json.encode, data or {})
@@ -785,8 +788,8 @@ function StartLockpick(data, cb)
     SendNUIMessage({
         action = 'openLockpick',
         data = {
-            title = data.title or 'SPARGERE CONTACT',
-            subtitle = data.subtitle or 'Sistem de Securitate Vehicul',
+            title = data.title or exports.sunset_core:Translate('lockpick.title.vehicle_break_in'),
+            subtitle = data.subtitle or exports.sunset_core:Translate('lockpick.subtitle.vehicle_security'),
             difficulty = data.difficulty or 'medium',
         }
     })
@@ -812,4 +815,3 @@ RegisterNUICallback('closeLockpick', function(_, cb)
     end
     cb('ok')
 end)
-

@@ -27,7 +27,7 @@ const Courier = (() => {
         panel.className = `courier-shell state-${state} is-visible`;
         panel.classList.remove('hidden');
         if (get('courier-title')) get('courier-title').textContent = data.title || I18n.t('ui.courier.title');
-        if (get('courier-counter')) get('courier-counter').textContent = data.counter || 'Package 0/0';
+        if (get('courier-counter')) get('courier-counter').textContent = data.counter || I18n.t('ui.courier.package_0_0');
         if (get('courier-detail')) get('courier-detail').textContent = data.detail || '';
         if (get('courier-progress')) {
             const progress = Math.max(0, Math.min(100, Number(data.progress) || 0));

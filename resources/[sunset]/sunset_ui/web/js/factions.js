@@ -133,7 +133,7 @@ const FactionPanels = {
             const field = document.createElement('label');
             field.className = 'premium-faction__rank-field';
             field.innerHTML = `
-                <span>Grade ${row.grade}</span>
+                <span>${I18n.t('ui.factions.grade_number', { grade: row.grade })}</span>
                 <input class="premium-faction__form-control" type="text" data-grade="${row.grade}" maxlength="64" value="${this.escape(row.label || '')}" placeholder="${this.escape(row.defaultLabel || '')}">
             `;
             form.appendChild(field);

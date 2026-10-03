@@ -609,7 +609,9 @@ local function teleportRig(targetArg)
         destCoords = vector3(r.delivery.x, r.delivery.y, r.delivery.z)
         destHeading = (r.delivery and (r.delivery.w or r.delivery.heading)) or 0.0
         offsetDist = 30.0
-        label = 'Route #' .. routeNum .. ' (' .. (r.label or 'Delivery') .. ')'
+        label = exports.sunset_core:Translate('jobs.trucker.label.route', {
+            route = routeNum, destination = r.label or exports.sunset_core:Translate('jobs.trucker.label.delivery'),
+        })
     elseif lowerArg == 'wp' or lowerArg == 'waypoint' then
         local blip = GetFirstBlipInfoId(8)
         if not DoesBlipExist(blip) then
@@ -617,37 +619,37 @@ local function teleportRig(targetArg)
         end
         local wp = GetBlipInfoIdCoord(blip)
         destCoords = vector3(wp.x, wp.y, wp.z)
-        label = 'GPS Waypoint'
+        label = exports.sunset_core:Translate('jobs.trucker.label.gps_waypoint')
     elseif lowerArg == 'depot' and cfg and cfg.depot then
         destCoords = cfg.depot.coords
         destHeading = (cfg.depot.spawn and cfg.depot.spawn.w) or 270.0
         offsetDist = 0.0
-        label = 'Trucker Depot'
+        label = exports.sunset_core:Translate('jobs.trucker.label.depot')
     elseif lowerArg == 'pickup' and session and session.pickup then
         destCoords = vector3(session.pickup.x, session.pickup.y, session.pickup.z)
         destHeading = session.pickup.heading or session.pickup.w or 0.0
-        label = 'Trailer Yard / Pickup'
+        label = exports.sunset_core:Translate('jobs.trucker.label.trailer_pickup')
     elseif lowerArg == 'delivery' and session and session.delivery then
         destCoords = vector3(session.delivery.x, session.delivery.y, session.delivery.z)
         destHeading = (session.delivery and (session.delivery.w or session.delivery.heading)) or 0.0
         offsetDist = 30.0
-        label = 'Delivery Destination'
+        label = exports.sunset_core:Translate('jobs.trucker.label.delivery_destination')
     elseif session and session.stage then
         if session.stage == 'to_pickup' then
             local p = session.pickup or (cfg and cfg.depot and cfg.depot.trailerSpawn)
             destCoords = p and vector3(p.x, p.y, p.z)
             destHeading = (p and (p.w or p.heading)) or 0.0
-            label = 'Trailer Yard'
+            label = exports.sunset_core:Translate('jobs.trucker.label.trailer_yard')
         elseif session.stage == 'to_delivery' then
             local d = session.delivery
             destCoords = d and vector3(d.x, d.y, d.z)
             destHeading = (d and (d.w or d.heading)) or 0.0
             offsetDist = 30.0
-            label = 'Delivery Destination (30m approach)'
+            label = exports.sunset_core:Translate('jobs.trucker.label.delivery_approach')
         elseif session.stage == 'return_depot' and cfg and cfg.depot then
             destCoords = cfg.depot.coords
             destHeading = (cfg.depot.spawn and cfg.depot.spawn.w) or 270.0
-            label = 'Trucker Depot'
+            label = exports.sunset_core:Translate('jobs.trucker.label.depot')
         end
     end
 
@@ -656,7 +658,7 @@ local function teleportRig(targetArg)
         if DoesBlipExist(blip) then
             local wp = GetBlipInfoIdCoord(blip)
             destCoords = vector3(wp.x, wp.y, wp.z)
-            label = 'Map Waypoint'
+            label = exports.sunset_core:Translate('jobs.trucker.label.map_waypoint')
         else
             return JC.notify(exports.sunset_core:Translate('jobs.message.no_active_trucker_objective_or_waypoint_found_usage_tptruck'), 'error')
         end
@@ -785,4 +787,3 @@ CreateThread(function()
         end
     end
 end)
-

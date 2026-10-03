@@ -178,7 +178,7 @@ RegisterNetEvent('sunset:server:playerDied', function()
             if not MurderWindow[source] then
                 MurderWindow[source] = { killerId = killer, expires = now + 60 }
                 TriggerClientEvent('sunset:client:notify', source,
-                    'You were attacked! You have 60 seconds to use /112 to report the attacker.',
+            exports.sunset_core:TFor(source, 'death.message.attacked_report_window'),
                     'error', 10000)
                 SetTimeout(61000, function()
                     local row = MurderWindow[source]

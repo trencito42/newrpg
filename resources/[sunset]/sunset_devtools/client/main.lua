@@ -53,7 +53,7 @@ local function guardPerm()
     end
     if not isPermitted then
         TriggerServerEvent('sunset:devtools:checkPerm')
-        notify(exports.sunset_core:Translate('devtools.message.devtools_requires_admin_level') .. Cfg.minAdminLevel .. '. Checking permission...', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.checking_permission', { level = Cfg.minAdminLevel }), 'error')
         return false
     end
     return true
@@ -73,8 +73,8 @@ RegisterCommand('devplace', function(src, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/devplace', 'Placement Studio — move NPCs, vehicles, points', {
-    { name = 'adapter', help = 'missions | trucker' },
-    { name = 'key',     help = 'hank | route1_pickup | ...' },
+    { name = 'adapter', helpKey = "config.devtools.help.missions_trucker.bc95ee03", help = 'missions | trucker' },
+    { name = 'key',     helpKey = "config.devtools.help.hank_route1_pickup.88ecfed9", help = 'hank | route1_pickup | ...' },
 })
 
 -- ── /devpos — capture player position ────────────────────────
@@ -102,7 +102,7 @@ RegisterCommand('devroute', function(src, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/devroute', 'Route editor — view/edit all stages of a job route', {
-    { name = 'adapter', help = 'trucker' },
+    { name = 'adapter', helpKey = "config.devtools.help.trucker.61ea6572", help = 'trucker' },
     { name = 'route',   help = '1 | 2 | ...' },
 })
 
@@ -166,7 +166,7 @@ RegisterCommand('devvalidate', function(src, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/devvalidate', 'Validate all placement coords for an adapter', {
-    { name = 'adapter', help = 'trucker | missions' },
+    { name = 'adapter', helpKey = "config.devtools.help.trucker_missions.51fa4e88", help = 'trucker | missions' },
 })
 
 -- ── Admin teleport event is already registered by sunset_admin.

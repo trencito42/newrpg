@@ -211,21 +211,23 @@ const InventoryForza = {
         const nameEl = tooltip.querySelector('#tt-name');
         if (nameEl) nameEl.textContent = label;
         const countEl = tooltip.querySelector('#tt-count');
-        if (countEl) countEl.textContent = `${count} buc`;
+        if (countEl) countEl.textContent = I18n.t('ui.inventory.pieces', { count });
         const weightEl = tooltip.querySelector('#tt-weight');
         if (weightEl) {
-            weightEl.textContent = count > 1 ? `${totalWeight} kg (${unitWeight.toFixed(2)} kg/buc)` : `${unitWeight.toFixed(2)} kg`;
+            weightEl.textContent = count > 1
+                ? I18n.t('ui.inventory.total_unit_weight', { total: totalWeight, unit: unitWeight.toFixed(2) })
+                : I18n.t('ui.inventory.weight', { weight: unitWeight.toFixed(2) });
         }
         const descEl = tooltip.querySelector('#tt-desc');
         if (descEl) descEl.textContent = desc;
         const footerEl = tooltip.querySelector('#tt-footer');
         if (footerEl) {
             if (row.weapon || (row.item && String(row.item).startsWith('weapon_'))) {
-                footerEl.innerHTML = '<i class="ph-bold ph-crosshair"></i> DUBLU-CLICK PENTRU A ECHIPA ARMA';
+                footerEl.innerHTML = `<i class="ph-bold ph-crosshair"></i> ${I18n.t('ui.inventory.double_click_equip')}`;
             } else if (row.usable) {
-                footerEl.innerHTML = '<i class="ph-bold ph-lightning"></i> DUBLU-CLICK PENTRU A UTILIZA';
+                footerEl.innerHTML = `<i class="ph-bold ph-lightning"></i> ${I18n.t('ui.inventory.double_click_use')}`;
             } else {
-                footerEl.innerHTML = '<i class="ph-bold ph-hand-coins"></i> OBIECT PENTRU COMERT / SCHIMB';
+                footerEl.innerHTML = `<i class="ph-bold ph-hand-coins"></i> ${I18n.t('ui.inventory.trade_item')}`;
             }
         }
 
@@ -311,7 +313,7 @@ const InventoryForza = {
         if (!nearby.length) {
             const empty = document.createElement('div');
             empty.className = 'prox-empty';
-            empty.textContent = I18n.t('dynamic.inventory_forza.no_players_nearby_3m') || 'Niciun jucator in apropiere (3m)';
+            empty.textContent = I18n.t('dynamic.inventory_forza.no_players_nearby_3m');
             list.appendChild(empty);
             return;
         }
@@ -325,9 +327,9 @@ const InventoryForza = {
                     <div class="p-name">${name}</div>
                     <div class="p-id">#${player.id}</div>
                 </div>
-                <button type="button" class="btn-trade-invite" title="Invita la trade">
+                <button type="button" class="btn-trade-invite" title="${I18n.t('ui.inventory.invite_trade')}">
                     <i class="ph-bold ph-handshake"></i>
-                    <span>INVITA LA TRADE</span>
+                    <span>${I18n.t('ui.inventory.invite_trade')}</span>
                 </button>
             `;
             const btn = card.querySelector('.btn-trade-invite');

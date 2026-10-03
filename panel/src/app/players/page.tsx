@@ -182,7 +182,7 @@ export default async function PlayersDirectoryPage({
                         {p.paydays_received}h
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-[#8F8B83]">
-                        {p.last_played ? formatDate(p.last_played, locale) : "Never"}
+                        {p.last_played ? formatDate(p.last_played, locale) : t(locale, "interface.never")}
                       </td>
                     </tr>
                   );

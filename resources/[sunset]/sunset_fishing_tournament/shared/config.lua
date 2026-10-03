@@ -24,9 +24,9 @@ SunsetFishingTournament.Config = {
 
     -- Placement rewards (paid strictly by sunset_fishing_tournament)
     rewards = {
-        [1] = { cash = 15000, xp = 500, label = '1st Place' },
-        [2] = { cash = 7500, xp = 250, label = '2nd Place' },
-        [3] = { cash = 3000, xp = 100, label = '3rd Place' },
+        [1] = { cash = 15000, xp = 500, labelKey = "config.fishing_tournament.label.1st_place.f88e6a82", label = '1st Place' },
+        [2] = { cash = 7500, xp = 250, labelKey = "config.fishing_tournament.label.2nd_place.7c4c1642", label = '2nd Place' },
+        [3] = { cash = 3000, xp = 100, labelKey = "config.fishing_tournament.label.3rd_place.c6ecba6d", label = '3rd Place' },
     },
 
     -- Throttled sync interval for live HUD updates (ms)

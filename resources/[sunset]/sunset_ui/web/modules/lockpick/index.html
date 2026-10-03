@@ -4,13 +4,12 @@
         
         <div class="lp-header">
             <div class="h-left">
-                <h1 class="h-title" id="lp-title">SPARGERE CONTACT</h1>
-                <div class="h-subtitle" id="lp-subtitle">Sistem de Securitate Vehicul</div>
+                <h1 class="h-title" id="lp-title"><span data-i18n="interface.pick_ignition_lock"></span></h1>
+                <div class="h-subtitle" id="lp-subtitle"><span data-i18n="interface.vehicle_security_system"></span></div>
             </div>
             <div class="instruction">
-                <span class="keybind">A</span> / <span class="keybind">D</span> Roteste speraclul &nbsp;&nbsp;|&nbsp;&nbsp; Tine <span class="keybind">SPACE</span> forteaza
-            </div>
-            <button type="button" class="lp-close-btn" id="lp-close-btn" title="Inchide (ESC)">✕</button>
+                <span class="keybind">A</span> / <span class="keybind">D</span><span data-i18n="interface.rotate_the_lockpick_hold"></span><span class="keybind">SPACE</span><span data-i18n="interface.force"></span></div>
+            <button type="button" class="lp-close-btn" id="lp-close-btn" title="" data-i18n-title="interface.close_esc">✕</button>
         </div>
 
         <div class="lp-content">
@@ -18,7 +17,7 @@
             <!-- STANGA: Info si Status -->
             <div class="lp-info">
                 <div class="stat-block">
-                    <div class="stat-label">Integritate Speraclu</div>
+                    <div class="stat-label"><span data-i18n="interface.lockpick_condition"></span></div>
                     <div class="health-bar-bg"><div class="health-bar-fill" id="lp-hp-fill"></div></div>
                     <div class="health-text" id="lp-hp-text">100%</div>
                 </div>
@@ -26,7 +25,7 @@
                 <div style="flex: 1;"></div>
 
                 <div class="stat-block">
-                    <div class="stat-label">Pini Deblocati</div>
+                    <div class="stat-label"><span data-i18n="interface.pins_unlocked"></span></div>
                     <div class="pins-container">
                         <div class="pin-dot" id="lp-pin-1"></div>
                         <div class="pin-dot" id="lp-pin-2"></div>
@@ -62,8 +61,8 @@
 
                 <!-- Overlay Succes/Esec -->
                 <div class="status-overlay" id="lp-overlay">
-                    <div class="o-title" id="lp-o-title">REZULTAT</div>
-                    <div class="o-sub" id="lp-o-sub">Mesaj</div>
+                    <div class="o-title" id="lp-o-title"><span data-i18n="interface.result"></span></div>
+                    <div class="o-sub" id="lp-o-sub"><span data-i18n="interface.message"></span></div>
                 </div>
             </div>
 

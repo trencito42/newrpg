@@ -236,7 +236,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:processFail', function(source
     if recipe then
         -- Realistic loss: 1 raw material burned/ruined
         exports.sunset_inventory:RemoveItem(source, recipe.rawItem, 1)
-        notify(source, 'Ai scapat temperatura de sub control! Un ingredient a fost compromis.', 'error')
+        notify(source, exports.sunset_core:TFor(source, 'drugs.message.temperature_out_of_control'), 'error')
     end
     return { success = true }
 end)
@@ -365,9 +365,9 @@ exports.sunset_core:RegisterCallback('sunset:drugs:failNegotiation', function(so
             pcall(function()
                 exports.sunset_dispatch:CreateCall({
                     code = '10-31',
-                    title = 'Activitate Ilegala / Vanzare de Droguri',
+                    titleKey = "config.drugs.title.illegal_activity_drug_dealing.64703130", title = 'Activitate Ilegala / Vanzare de Droguri',
                     coords = coords,
-                    message = 'Un cetatean raporteaza o tentativa suspecta de vanzare substante interzise.',
+                    messageKey = "config.drugs.message.a_citizen_reports_a_suspicious_attempt_to_sell_illegal_substance.58826659", message = 'Un cetatean raporteaza o tentativa suspecta de vanzare substante interzise.',
                     job = 'police',
                 })
             end)

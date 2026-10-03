@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { dbQuery, dbQuerySingle, dbExecute } from "./db";
@@ -197,7 +198,7 @@ export async function switchSelectedCharacter(
   characterId: number
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getCurrentSession();
-  if (!session) return { success: false, error: "Not logged in" };
+  if (!session) return { success: false, error: t(await getViewerLocale(), "auth.not_logged_in") };
 
   interface OwnershipRow extends RowDataPacket {
     id: number;
@@ -212,11 +213,11 @@ export async function switchSelectedCharacter(
   );
 
   if (!verified) {
-    return { success: false, error: "Character does not belong to this account" };
+    return { success: false, error: t(await getViewerLocale(), "auth.character_not_owned") };
   }
 
   const tokenHash = await getCurrentSessionTokenHash();
-  if (!tokenHash) return { success: false, error: "Not logged in" };
+  if (!tokenHash) return { success: false, error: t(await getViewerLocale(), "auth.not_logged_in") };
   await dbExecute(
     "UPDATE panel_web_sessions SET selected_character_id = ? WHERE token_hash = ?",
     [characterId, tokenHash]

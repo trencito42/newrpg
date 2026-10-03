@@ -6,6 +6,9 @@ import Link from "next/link";
 import { formatClanTag } from "@/lib/clan-tag";
 import { GTAImage } from "./GTAImage";
 import { Shield, Award, User, Circle, ArrowRight } from "lucide-react";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t } from "@/lib/i18n";
+
 
 interface PlayerPreviewData {
   username: string;
@@ -41,6 +44,7 @@ const previewCache = new Map<string, { data: PlayerPreviewData; timestamp: numbe
 const CACHE_TTL = 30 * 1000; // reflect MySkins changes on the next preview
 
 export function PlayerPreviewProvider({ children }: { children: React.ReactNode }) {
+  const locale = useViewerLocale();
   const [mounted, setMounted] = useState(false);
   const [activeUsername, setActiveUsername] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<PlayerPreviewData | null>(null);
@@ -202,7 +206,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
         >
           {loading && !previewData ? (
             <div className="flex items-center justify-center py-6 text-xs text-[#8F8B83]">
-              <span>Loading player...</span>
+              <span>{t(locale, "interface.loading_player")}</span>
             </div>
           ) : previewData ? (
             <div className="space-y-3">
@@ -259,9 +263,9 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                   )}
 
                   <div className="text-[11px] text-[#99958E] mt-1 flex items-center gap-2">
-                    <span className="font-mono font-medium">Level {previewData.level}</span>
+                    <span className="font-mono font-medium">{t(locale, "common.level")} {previewData.level}</span>
                     <span>•</span>
-                    <span className="font-mono">{previewData.playtimeHours}h played</span>
+                    <span className="font-mono">{previewData.playtimeHours}{t(locale, "interface.h_played")}</span>
                   </div>
                 </div>
               </div>
@@ -270,24 +274,24 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
               <div className="space-y-1.5 pt-2 border-t border-surface-border text-[11px]">
                 {previewData.faction ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#8F8B83]">Faction:</span>
+                    <span className="text-[#8F8B83]">{t(locale, "interface.faction")}</span>
                     <span
                       style={{ color: previewData.faction.color || "#F2EFE8" }}
                       className="font-medium truncate max-w-[180px]"
                     >
-                      {previewData.faction.name} (R{previewData.faction.rank})
+                      {previewData.faction.name} {t(locale, "interface.r")}{previewData.faction.rank})
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#8F8B83]">Job:</span>
+                    <span className="text-[#8F8B83]">{t(locale, "interface.job_2")}</span>
                     <span className="text-[#B4AFA4] capitalize">{previewData.job.replace(/_/g, " ")}</span>
                   </div>
                 )}
 
                 {previewData.clan && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#8F8B83]">Clan:</span>
+                    <span className="text-[#8F8B83]">{t(locale, "interface.clan")}</span>
                     <span style={{ color: previewData.clan.color }} className="font-medium truncate max-w-[180px]">
                       [{previewData.clan.tag}] {previewData.clan.name}
                     </span>
@@ -296,12 +300,11 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
 
                 {/* Online state */}
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[#8F8B83]">Status:</span>
+                  <span className="text-[#8F8B83]">{t(locale, "interface.status")}</span>
                   {previewData.online ? (
                     <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Online
-                    </span>
+                      {t(locale, "interface.online")}</span>
                   ) : (
                     <span className="text-[#8F8B83]">
                       {previewData.lastSeen ? `Last seen ${new Date(previewData.lastSeen).toLocaleDateString()}` : "Offline"}
@@ -316,7 +319,7 @@ export function PlayerPreviewProvider({ children }: { children: React.ReactNode 
                   href={`/players/${encodeURIComponent(previewData.username)}`}
                   className="inline-flex items-center gap-1 text-[11px] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors"
                 >
-                  <span>View profile</span>
+                  <span>{t(locale, "interface.view_profile")}</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>

@@ -17,24 +17,24 @@ SunsetTurfs.Loadouts = {
     {
         id = 'standard', name = 'Standard Package', rank = 1, cost = 0,
         weapons = {
-            { weapon = 'WEAPON_PISTOL', ammo = 150, label = 'Pistol', tag = 'PISTOL' },
-            { weapon = 'WEAPON_ASSAULTRIFLE', ammo = 300, label = 'Assault Rifle', tag = 'ASALT' },
+            { weapon = 'WEAPON_PISTOL', ammo = 150, labelKey = "config.turfs.label.pistol.05fa1900", label = 'Pistol', tag = 'PISTOL' },
+            { weapon = 'WEAPON_ASSAULTRIFLE', ammo = 300, labelKey = "config.turfs.label.assault_rifle.2c789dfb", label = 'Assault Rifle', tag = 'ASALT' },
         },
         armor = 100,
     },
     {
         id = 'advanced', name = 'Advanced Package', rank = 3, cost = 0,
         weapons = {
-            { weapon = 'WEAPON_HEAVYPISTOL', ammo = 200, label = 'Heavy Pistol', tag = 'PISTOL' },
-            { weapon = 'WEAPON_ADVANCEDRIFLE', ammo = 400, label = 'Advanced Rifle', tag = 'ASALT' },
+            { weapon = 'WEAPON_HEAVYPISTOL', ammo = 200, labelKey = "config.turfs.label.heavy_pistol.39204dcf", label = 'Heavy Pistol', tag = 'PISTOL' },
+            { weapon = 'WEAPON_ADVANCEDRIFLE', ammo = 400, labelKey = "config.turfs.label.advanced_rifle.402b9915", label = 'Advanced Rifle', tag = 'ASALT' },
         },
         armor = 100,
     },
     {
         id = 'sniper', name = 'Sniper Package', rank = 1, cost = 5000,
         weapons = {
-            { weapon = 'WEAPON_PISTOL', ammo = 100, label = 'Pistol', tag = 'PISTOL' },
-            { weapon = 'WEAPON_HEAVYSNIPER', ammo = 50, label = 'Heavy Sniper', tag = 'SNIPER' },
+            { weapon = 'WEAPON_PISTOL', ammo = 100, labelKey = "config.turfs.label.pistol.05fa1900", label = 'Pistol', tag = 'PISTOL' },
+            { weapon = 'WEAPON_HEAVYSNIPER', ammo = 50, labelKey = "config.turfs.label.heavy_sniper.7b00429a", label = 'Heavy Sniper', tag = 'SNIPER' },
         },
         armor = 100,
     },

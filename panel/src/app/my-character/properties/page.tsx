@@ -78,7 +78,7 @@ export default async function MyPropertiesPage() {
                     #{prop.id}
                   </span>
                   <span className={`font-medium ${prop.locked ? "text-[#8F8B83]" : "text-amber-400"}`}>
-                    {prop.locked ? "Locked" : "Unlocked"}
+                    {prop.locked ? t(locale, "interface.locked") : t(locale, "interface.unlocked")}
                   </span>
                 </div>
 

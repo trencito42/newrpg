@@ -40,13 +40,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:start', function(sou
         stopsData[#stopsData + 1] = {
             coords = { x = s.coords.x, y = s.coords.y, z = s.coords.z, w = s.coords.w or 0.0 },
             passengerCoords = pCoords,
-            label  = s.label or ('Oprirea ' .. i),
+            label  = s.label or (exports.sunset_core:TFor(source, 'jobs.presentation.stop') .. i),
         }
     end
 
     local session, err = SunsetJobs_StartSession(source, 'busdriver', {
         routeId               = route.id or 'green_route',
-        label                 = route.label or 'Linia Verde',
+        label                 = route.label or exports.sunset_core:TFor(source, 'jobs.presentation.green_line'),
         stops                 = stopsData,
         totalStops            = #stopsData,
         currentStopIndex      = 1,

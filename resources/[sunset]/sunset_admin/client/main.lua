@@ -652,30 +652,30 @@ CreateThread(function()
     Wait(4000)
     TriggerEvent('chat:addSuggestion', '/dl', 'Toggle SA-MP-style vehicle debug labels (admin)')
     TriggerEvent('chat:addSuggestion', '/coords', 'Show your position for configs (admin)', {
-        { name = 'v4', help = 'Optional — output vector4 with heading' },
+        { name = 'v4', helpKey = "config.admin.help.optional_output_vector4_with_heading.a6d37bb5", help = 'Optional — output vector4 with heading' },
     })
     TriggerEvent('chat:addSuggestion', '/getpos', 'Alias for /coords (admin)')
     TriggerEvent('chat:addSuggestion', '/pos', 'Alias for /coords (admin)')
     TriggerEvent('chat:addSuggestion', '/setcp', 'Save your current position as a named checkpoint (admin)', {
-        { name = 'name', help = 'e.g. staging, event_spawn' },
+        { name = 'name', helpKey = "config.admin.help.e_g_staging_event_spawn.461a4590", help = 'e.g. staging, event_spawn' },
     })
     TriggerEvent('chat:addSuggestion', '/delcp', 'Delete a saved checkpoint (admin)', {
-        { name = 'name', help = 'Checkpoint name saved with /setcp' },
+        { name = 'name', helpKey = "config.admin.help.checkpoint_name_saved_with_setcp.4e2a1c6e", help = 'Checkpoint name saved with /setcp' },
     })
     TriggerEvent('chat:addSuggestion', '/gotocp', 'Teleport to a saved admin checkpoint', {
-        { name = 'name', help = 'Omit or use list to show saved checkpoints' },
+        { name = 'name', helpKey = "config.admin.help.omit_or_use_list_to_show_saved_checkpoints.ead1600a", help = 'Omit or use list to show saved checkpoints' },
     })
     TriggerEvent('chat:addSuggestion', '/gotoloc', 'Teleport to a predefined world location (admin)', {
-        { name = 'id or name', help = 'e.g. hq_medic, hospital — omit or use list' },
+        { name = 'id or name', helpKey = "config.admin.help.e_g_hq_medic_hospital_omit_or_use_list.ceb1e5d3", help = 'e.g. hq_medic, hospital — omit or use list' },
     })
     TriggerEvent('chat:addSuggestion', '/speed', 'Vehicle speed multiplier while driving (admin)', {
-        { name = 'multiplier', help = 'e.g. 2.5 — omit or use off/1 to reset' },
+        { name = 'multiplier', helpKey = "config.admin.help.e_g_2_5_omit_or_use_off_1_to_reset.76460665", help = 'e.g. 2.5 — omit or use off/1 to reset' },
     })
     TriggerEvent('chat:addSuggestion', '/tpwp', 'Teleport to your map waypoint (admin)')
     TriggerEvent('chat:addSuggestion', '/tp', 'Teleport to a player or coordinates (admin)', {
-        { name = 'id or x', help = 'Player server id, or X coordinate / vector3(...)' },
-        { name = 'y', help = 'Y coordinate (when using x y z)' },
-        { name = 'z', help = 'Z coordinate (when using x y z)' },
+        { name = 'id or x', helpKey = "config.admin.help.player_server_id_or_x_coordinate_vector3.52cea16f", help = 'Player server id, or X coordinate / vector3(...)' },
+        { name = 'y', helpKey = "config.admin.help.y_coordinate_when_using_x_y_z.5ed99db2", help = 'Y coordinate (when using x y z)' },
+        { name = 'z', helpKey = "config.admin.help.z_coordinate_when_using_x_y_z.355223e9", help = 'Z coordinate (when using x y z)' },
     })
 end)
 

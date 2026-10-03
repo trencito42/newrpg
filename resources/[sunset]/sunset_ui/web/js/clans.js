@@ -149,7 +149,7 @@ const ClanPanels = {
         if (!select) return;
         select.innerHTML = '';
         const rows = (styles && styles.length) ? styles : [
-            { id: 'brackets', label: '[TAG]Name' },
+            { id: 'brackets', label: '[TAG]Name' }, // i18n-ignore: literal tag-format example, not translatable
             { id: 'prefix_dot', label: 'TAG.Name' }, // i18n-ignore: literal tag-format example, not translatable
             { id: 'suffix_brackets', label: 'Name[TAG]' }, // i18n-ignore: literal tag-format example, not translatable
             { id: 'suffix_dot', label: 'Name.TAG' }, // i18n-ignore: literal tag-format example, not translatable
@@ -263,7 +263,10 @@ const ClanPanels = {
             if (rosterMeta) {
                 // [LEADERBOARD] show territories held next to member counts.
                 const turfCount = Number(payload.turfs) || 0;
-                rosterMeta.textContent = `${onlineCount} online · ${payload.memberCount || 0}/${payload.maxMembers || 25} members · ${turfCount} turfs`;
+                rosterMeta.textContent = I18n.t('ui.clans.roster_summary', {
+                    online: onlineCount, members: payload.memberCount || 0,
+                    max: payload.maxMembers || 25, turfs: turfCount,
+                });
             }
 
             // Management Select
@@ -348,7 +351,7 @@ const ClanPanels = {
 
             item.innerHTML = `
                 <div class="premium-clan__roster-info">
-                    <div class="premium-clan__status-dot ${dotClass}" title="${member.online ? 'Online' : 'Offline'}"></div>
+                    <div class="premium-clan__status-dot ${dotClass}" title="${member.online ? I18n.t('common.online') : I18n.t('common.offline')}"></div>
                     <div>
                         <div class="premium-clan__member-name">${this.escape(member.name || I18n.t('ui.clans.unknown'))} ${serverIdBadge}</div>
                         <div class="premium-clan__member-rank">${member.leader ? '<span style="color:var(--pf-accent-orange);font-weight:800;">' + I18n.t('ui.clans.leader_caps') + '</span> · ' : ''}${this.escape(member.rankLabel || I18n.t('ui.clans.member'))}</div>

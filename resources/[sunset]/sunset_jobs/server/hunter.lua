@@ -829,7 +829,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
                 session.data.trophyRequired = prevTrophy
                 HunterContracts[source] = contract
                 TriggerClientEvent('sunset:client:notify', source,
-                    'Contract payout failed - harvest another animal to retry.', 'error', 6000)
+                    exports.sunset_core:TFor(source, 'jobs.message.hunter_payout_retry'), 'error', 6000)
             end
         end
     end

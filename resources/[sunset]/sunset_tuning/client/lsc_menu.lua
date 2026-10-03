@@ -117,7 +117,7 @@ end)
 
 AddEventHandler('sunset:tuning:openLsCustomsMenu', function()
     OpenLsCustomsMenu({
-        title = 'LS Customs',
+        titleKey = "config.tuning.title.ls_customs.ec617309", title = 'LS Customs',
         shopLabel = 'LS Customs — Burton',
         repairAvailable = true,
         repairPrice = 250,
@@ -127,7 +127,7 @@ end)
 
 AddEventHandler('sunset:tuning:openHarmonyMenu', function()
     OpenLsCustomsMenu({
-        title = 'Harmony Tuning',
+        titleKey = "config.tuning.title.harmony_tuning.938ca163", title = 'Harmony Tuning',
         shopLabel = 'Harmony — ECU Bay',
         repairAvailable = false,
         shop = SunsetTuning.Shops[2],

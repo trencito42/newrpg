@@ -625,7 +625,7 @@ end)
 RegisterCommand('buylevel', function(source)
     if source == 0 then return end
     local ok, message = buyLevel(source)
-    TriggerClientEvent('sunset:client:notify', source, message or (ok and 'Level purchased.' or 'Level purchase failed.'), ok and 'success' or 'error', ok and 9000 or 7000)
+    TriggerClientEvent('sunset:client:notify', source, message or exports.sunset_core:TFor(source, ok and 'core.message.level_purchased' or 'core.message.level_purchase_failed'), ok and 'success' or 'error', ok and 9000 or 7000)
 end, false)
 
 function ExecutePlayerCommand(source, name, args)
@@ -633,7 +633,7 @@ function ExecutePlayerCommand(source, name, args)
     name = string.lower(tostring(name or ''))
     if name == 'buylevel' then
         local ok, message = buyLevel(source)
-        TriggerClientEvent('sunset:client:notify', source, message or (ok and 'Level purchased.' or 'Level purchase failed.'), ok and 'success' or 'error', ok and 9000 or 7000)
+        TriggerClientEvent('sunset:client:notify', source, message or exports.sunset_core:TFor(source, ok and 'core.message.level_purchased' or 'core.message.level_purchase_failed'), ok and 'success' or 'error', ok and 9000 or 7000)
         return true
     end
     return false

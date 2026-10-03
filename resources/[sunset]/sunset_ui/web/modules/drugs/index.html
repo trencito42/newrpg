@@ -7,15 +7,13 @@
             <svg viewBox="0 0 24 24"><path d="M12 2L9 8l-6 2 4 4-2 7 7-4 7 4-2-7 4-4-6-2-3-6z"></path></svg>
         </div>
         <div class="h-texts">
-            <div class="h-subtitle">ZONA ACTIVA</div>
-            <div class="h-title" id="harvest-title">Recoltare Weed</div>
+            <div class="h-subtitle"><span data-i18n="interface.active_area"></span></div>
+            <div class="h-title" id="harvest-title"><span data-i18n="interface.harvest_cannabis"></span></div>
         </div>
     </div>
 
     <div class="h-content">
-        <div class="h-instruction" id="harvest-instruction">
-            Apasa <span class="keybind">E</span> in zona marcata
-        </div>
+        <div class="h-instruction" id="harvest-instruction"><span data-i18n="interface.press"></span><span class="keybind">E</span><span data-i18n="interface.in_the_marked_area"></span></div>
 
         <div class="skill-track">
             <div class="target-zone" id="harvest-target-zone"></div>
@@ -23,7 +21,7 @@
         </div>
 
         <div class="h-footer">
-            <span>Rucsac</span>
+            <span><span data-i18n="interface.backpack"></span></span>
             <span><span class="h-count" id="harvest-count">0</span> / <span id="harvest-max">50</span></span>
         </div>
     </div>
@@ -35,17 +33,17 @@
         <!-- Header -->
         <div class="l-header">
             <div class="h-left">
-                <h1 class="h-title">LABORATOR CLANDESTIN</h1>
-                <div class="h-subtitle">Sinteza & Procesare Substante Ilegale</div>
+                <h1 class="h-title"><span data-i18n="interface.clandestine_lab"></span></h1>
+                <div class="h-subtitle"><span data-i18n="interface.synthesis_processing_of_illegal_substances"></span></div>
             </div>
-            <button type="button" class="lab-close-btn" id="lab-close-btn" title="Inchide (ESC)">✕</button>
+            <button type="button" class="lab-close-btn" id="lab-close-btn" title="" data-i18n-title="interface.close_esc">✕</button>
         </div>
 
         <!-- Content -->
         <div class="l-content">
             <!-- Left: Recipes List -->
             <div class="recipe-section">
-                <div class="section-title">Operatiuni Disponibile</div>
+                <div class="section-title"><span data-i18n="interface.available_operations"></span></div>
                 <div class="recipe-cards-container" id="lab-recipe-list">
                     <!-- Dynamic Recipe Cards will be rendered by JS -->
                 </div>
@@ -55,8 +53,8 @@
             <div class="process-section">
                 <div id="lab-empty-state">
                     <div class="empty-icon">⚗️</div>
-                    <div class="empty-text">Selecteaza o operatiune din stanga</div>
-                    <div class="empty-sub">Vezi necesarul de materie prima si porneste sinteza</div>
+                    <div class="empty-text"><span data-i18n="interface.select_an_operation_on_the_left"></span></div>
+                    <div class="empty-sub"><span data-i18n="interface.check_the_required_materials_and_start_synthesis"></span></div>
                 </div>
 
                 <div id="lab-active-state">
@@ -64,46 +62,44 @@
                     <div id="lab-details-view">
                         <div class="product-banner">
                             <div class="product-icon-frame">
-                                <img id="lab-product-img" src="assets/items/weed_brick.webp" alt="Product" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
+                                <img id="lab-product-img" src="assets/items/weed_brick.webp" alt="" data-i18n-alt="interface.product" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
                             </div>
                             <div class="product-info">
-                                <div class="product-tier" id="lab-product-tier">PRODUS FINIT</div>
-                                <div class="product-name" id="lab-product-name">Pachete Weed</div>
+                                <div class="product-tier" id="lab-product-tier"><span data-i18n="interface.finished_product"></span></div>
+                                <div class="product-name" id="lab-product-name"><span data-i18n="interface.cannabis_packages"></span></div>
                                 <div class="product-meta">
-                                    <span>Rezultat: <strong id="lab-yield-text">1x Brick</strong></span>
-                                    <span>Valoare Piata: <strong id="lab-val-text" class="gold-text">~$250</strong></span>
+                                    <span><span data-i18n="interface.yield"></span><strong id="lab-yield-text"><span data-i18n="interface.1_package"></span></strong></span>
+                                    <span><span data-i18n="interface.market_value"></span><strong id="lab-val-text" class="gold-text">~$250</strong></span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="req-section-title">Ingrediente Necesare</div>
+                        <div class="req-section-title"><span data-i18n="interface.required_ingredients"></span></div>
                         <div class="ingredients-list" id="lab-ingredients-list">
                             <!-- Dynamic Ingredient Cards -->
                         </div>
 
                         <div class="lab-recipe-info-box">
                             <div class="info-item">
-                                <span class="info-label">Dificultate Proces</span>
-                                <span class="info-val" id="lab-diff-text">USOARA</span>
+                                <span class="info-label"><span data-i18n="interface.process_difficulty"></span></span>
+                                <span class="info-val" id="lab-diff-text"><span data-i18n="interface.easy"></span></span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Stare Ingrediente</span>
-                                <span class="info-val" id="lab-status-text">DISPONIBIL</span>
+                                <span class="info-label"><span data-i18n="interface.ingredient_status"></span></span>
+                                <span class="info-val" id="lab-status-text"><span data-i18n="interface.available"></span></span>
                             </div>
                         </div>
 
                         <div class="lab-actions-row">
-                            <button type="button" class="btn-action primary" id="btn-lab-start">
-                                Incepe Procesarea
-                            </button>
+                            <button type="button" class="btn-action primary" id="btn-lab-start"><span data-i18n="interface.start_processing"></span></button>
                         </div>
                     </div>
 
                     <!-- Phase B: Mini Game Workstation -->
                     <div id="lab-game-view" style="display: none;">
                         <div class="process-header">
-                            <div class="process-title" id="lab-process-title">Sinteza in Desfasurare</div>
-                            <div class="process-status" id="lab-process-status">Mentine temperatura stabila in zona marcata</div>
+                            <div class="process-title" id="lab-process-title"><span data-i18n="interface.synthesis_in_progress"></span></div>
+                            <div class="process-status" id="lab-process-status"><span data-i18n="interface.keep_the_temperature_stable_in_the_marked_range"></span></div>
                         </div>
 
                         <div class="game-container">
@@ -116,15 +112,13 @@
                             <!-- Controls -->
                             <div class="control-panel">
                                 <div class="progress-box">
-                                    <div class="p-label">Progres Sinteza Lot</div>
+                                    <div class="p-label"><span data-i18n="interface.batch_synthesis_progress"></span></div>
                                     <div class="p-bar-bg"><div class="p-bar-fill" id="lab-prog-fill"></div></div>
                                     <div class="p-pct" id="lab-prog-text">0%</div>
-                                    <div class="p-hint">Apasa si tine apasat butonul sau tasta [SPACE] pentru a creste temperatura.</div>
+                                    <div class="p-hint"><span data-i18n="interface.hold_the_button_or_space_to_increase_the_temperature"></span></div>
                                 </div>
 
-                                <button type="button" class="btn-action btn-hold" id="btn-lab-heat">
-                                    TINE APASAT PENTRU CALDURA
-                                </button>
+                                <button type="button" class="btn-action btn-hold" id="btn-lab-heat"><span data-i18n="interface.hold_to_heat"></span></button>
                             </div>
                         </div>
                     </div>
@@ -132,11 +126,9 @@
                     <!-- Phase C: Result Overlay -->
                     <div id="lab-game-overlay">
                         <div class="overlay-icon" id="lab-res-icon">✓</div>
-                        <div class="overlay-title" id="lab-res-title">SUCCES</div>
-                        <div class="overlay-desc" id="lab-res-desc">Lotul a fost procesat cu succes.</div>
-                        <button type="button" class="btn-action primary" id="btn-lab-continue" style="width: 200px; margin-top: 15px;">
-                            Continua
-                        </button>
+                        <div class="overlay-title" id="lab-res-title"><span data-i18n="interface.success"></span></div>
+                        <div class="overlay-desc" id="lab-res-desc"><span data-i18n="interface.the_batch_was_processed_successfully"></span></div>
+                        <button type="button" class="btn-action primary" id="btn-lab-continue" style="width: 200px; margin-top: 15px;"><span data-i18n="interface.continue"></span></button>
                     </div>
                 </div>
             </div>
@@ -147,42 +139,40 @@
 <!-- 3. STREET SALE HUD (Right-Side Pedestrian Deal) -->
 <div id="sale-wrapper" data-theme="weed">
     <div class="s-header">
-        <div class="s-subtitle">
-            CLIENT INTERESAT
-            <span class="s-risk risk-low" id="sale-risk">RISC: SCAZUT</span>
+        <div class="s-subtitle"><span data-i18n="interface.interested_customer"></span><span class="s-risk risk-low" id="sale-risk"><span data-i18n="interface.risk_low"></span></span>
         </div>
-        <h2 class="s-title">Vanzare Stradala</h2>
+        <h2 class="s-title"><span data-i18n="interface.street_sale"></span></h2>
     </div>
 
     <div class="s-content">
         <div class="deal-box">
             <div class="deal-icon" id="sale-icon">
-                <img id="sale-drug-img" src="assets/items/weed_brick.webp" alt="Drug" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
+                <img id="sale-drug-img" src="assets/items/weed_brick.webp" alt="" data-i18n-alt="interface.drug" onerror="this.onerror=null; this.src='assets/items/weed_brick.webp';">
             </div>
             <div class="deal-details">
-                <div class="d-item" id="sale-item-name">Pachete Weed</div>
-                <div class="d-qty" id="sale-item-qty">Cantitate: 5x</div>
+                <div class="d-item" id="sale-item-name"><span data-i18n="interface.cannabis_packages"></span></div>
+                <div class="d-qty" id="sale-item-qty"><span data-i18n="interface.quantity_5"></span></div>
             </div>
             <div class="d-price" id="sale-price">$250</div>
         </div>
 
         <!-- Minigame Negociere -->
         <div class="nego-container" id="sale-nego-box">
-            <div class="nego-title">Tensiune Negociere</div>
+            <div class="nego-title"><span data-i18n="interface.negotiation_tension"></span></div>
             <div class="skill-track">
                 <div class="target-zone" id="sale-target-zone"></div>
                 <div class="cursor" id="sale-cursor"></div>
             </div>
-            <button type="button" class="btn-hit" id="btn-sale-hit">APASA PENTRU NEGOCIERE</button>
+            <button type="button" class="btn-hit" id="btn-sale-hit"><span data-i18n="interface.press_to_negotiate"></span></button>
         </div>
 
         <!-- Feedback & Actiuni -->
         <div id="sale-status-msg"></div>
 
         <div class="deal-actions" id="sale-actions">
-            <button type="button" class="btn-deal btn-accept" id="btn-sale-accept">Accepta Oferta</button>
-            <button type="button" class="btn-deal btn-nego" id="btn-sale-nego">Negociaza Pretul</button>
-            <button type="button" class="btn-deal btn-decline" id="btn-sale-decline">Refuza</button>
+            <button type="button" class="btn-deal btn-accept" id="btn-sale-accept"><span data-i18n="interface.accept_offer"></span></button>
+            <button type="button" class="btn-deal btn-nego" id="btn-sale-nego"><span data-i18n="interface.negotiate_price"></span></button>
+            <button type="button" class="btn-deal btn-decline" id="btn-sale-decline"><span data-i18n="interface.decline"></span></button>
         </div>
     </div>
 </div>

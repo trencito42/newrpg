@@ -127,11 +127,11 @@ export default async function AccountPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#8F8B83]">{t(locale, "account.admin_level")}</span>
-              <span className="font-mono text-[#F2EFE8]">{session.adminLevel > 0 ? `Level ${session.adminLevel}` : "None"}</span>
+              <span className="font-mono text-[#F2EFE8]">{session.adminLevel > 0 ? t(locale, "interface.level_number", { level: session.adminLevel }) : t(locale, "common.none")}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#8F8B83]">{t(locale, "account.helper_level")}</span>
-              <span className="font-mono text-[#F2EFE8]">{session.helperLevel > 0 ? `Level ${session.helperLevel}` : "None"}</span>
+              <span className="font-mono text-[#F2EFE8]">{session.helperLevel > 0 ? t(locale, "interface.level_number", { level: session.helperLevel }) : t(locale, "common.none")}</span>
             </div>
           </div>
 

@@ -24,7 +24,7 @@ end
 function RobberyPolice.alert(session, stage)
     local loc = session.location
     if not session.policeSnapshot then
-        local snapshot = { description = 'Unknown suspect', vehicle = 'No getaway vehicle identified' }
+        local snapshot = { descriptionKey = "config.robbery.description.unknown_suspect.215e07fa", description = 'Unknown suspect', vehicle = 'No getaway vehicle identified' }
         pcall(function()
             local src = session.source
             local name = exports.sunset_core:GetPlayerDisplayName(src) or ('Player %s'):format(src)

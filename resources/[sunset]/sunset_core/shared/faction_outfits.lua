@@ -222,7 +222,7 @@ end
 -- ====================================================================
 Sunset.FactionSkins = {
     police = {
-        label = 'LSPD',
+        labelKey = "config.core.label.lspd.6cf89c44", label = 'LSPD',
         defaultMale = 's_m_y_cop_01',
         defaultFemale = 's_f_y_cop_01',
         gradeMale = {
@@ -246,15 +246,15 @@ Sunset.FactionSkins = {
             [7] = 's_f_y_cop_01',
         },
         options = {
-            { key = 'cop', label = 'LSPD Patrol Officer', male = 's_m_y_cop_01', female = 's_f_y_cop_01', minGrade = 0 },
-            { key = 'hway', label = 'Highway Patrol Officer', male = 's_m_y_hwaycop_01', female = 's_f_y_cop_01', minGrade = 1 },
-            { key = 'senior', label = 'LSPD Senior / Sergeant', male = 'csb_cop', female = 's_f_y_cop_01', minGrade = 2 },
-            { key = 'swat', label = 'SWAT Special Weapons & Tactics', male = 's_m_y_swat_01', female = 's_f_y_cop_01', minGrade = 4 },
-            { key = 'command', label = 'Command / Chief Executive', male = 'ig_fbisuit_01', female = 's_f_y_cop_01', minGrade = 6 },
+            { key = 'cop', labelKey = "config.core.label.lspd_patrol_officer.b72062a6", label = 'LSPD Patrol Officer', male = 's_m_y_cop_01', female = 's_f_y_cop_01', minGrade = 0 },
+            { key = 'hway', labelKey = "config.core.label.highway_patrol_officer.9f332959", label = 'Highway Patrol Officer', male = 's_m_y_hwaycop_01', female = 's_f_y_cop_01', minGrade = 1 },
+            { key = 'senior', labelKey = "config.core.label.lspd_senior_sergeant.0f5a7d5e", label = 'LSPD Senior / Sergeant', male = 'csb_cop', female = 's_f_y_cop_01', minGrade = 2 },
+            { key = 'swat', labelKey = "config.core.label.swat_special_weapons_tactics.5b68ba6e", label = 'SWAT Special Weapons & Tactics', male = 's_m_y_swat_01', female = 's_f_y_cop_01', minGrade = 4 },
+            { key = 'command', labelKey = "config.core.label.command_chief_executive.94014fe1", label = 'Command / Chief Executive', male = 'ig_fbisuit_01', female = 's_f_y_cop_01', minGrade = 6 },
         },
     },
     sheriff = {
-        label = 'San Andreas Sheriff',
+        labelKey = "config.core.label.san_andreas_sheriff.9c5edfc3", label = 'San Andreas Sheriff',
         defaultMale = 's_m_y_sheriff_01',
         defaultFemale = 's_f_y_sheriff_01',
         gradeMale = {
@@ -278,15 +278,15 @@ Sunset.FactionSkins = {
             [7] = 's_f_y_sheriff_01',
         },
         options = {
-            { key = 'sheriff', label = 'Sheriff Patrol Deputy', male = 's_m_y_sheriff_01', female = 's_f_y_sheriff_01', minGrade = 0 },
-            { key = 'hway', label = 'County Highway Patrol', male = 's_m_y_hwaycop_01', female = 's_f_y_sheriff_01', minGrade = 1 },
-            { key = 'ranger', label = 'Park & County Ranger', male = 's_m_y_ranger_01', female = 's_f_y_ranger_01', minGrade = 3 },
-            { key = 'swat', label = 'County Tactical Response / SWAT', male = 's_m_y_swat_01', female = 's_f_y_sheriff_01', minGrade = 4 },
-            { key = 'command', label = 'High Sheriff Command', male = 's_m_m_highsec_01', female = 's_f_y_sheriff_01', minGrade = 6 },
+            { key = 'sheriff', labelKey = "config.core.label.sheriff_patrol_deputy.7d4575c2", label = 'Sheriff Patrol Deputy', male = 's_m_y_sheriff_01', female = 's_f_y_sheriff_01', minGrade = 0 },
+            { key = 'hway', labelKey = "config.core.label.county_highway_patrol.a0b16985", label = 'County Highway Patrol', male = 's_m_y_hwaycop_01', female = 's_f_y_sheriff_01', minGrade = 1 },
+            { key = 'ranger', labelKey = "config.core.label.park_county_ranger.50c4de5c", label = 'Park & County Ranger', male = 's_m_y_ranger_01', female = 's_f_y_ranger_01', minGrade = 3 },
+            { key = 'swat', labelKey = "config.core.label.county_tactical_response_swat.9f4cb67c", label = 'County Tactical Response / SWAT', male = 's_m_y_swat_01', female = 's_f_y_sheriff_01', minGrade = 4 },
+            { key = 'command', labelKey = "config.core.label.high_sheriff_command.54c2b7dd", label = 'High Sheriff Command', male = 's_m_m_highsec_01', female = 's_f_y_sheriff_01', minGrade = 6 },
         },
     },
     fib = {
-        label = 'FIB',
+        labelKey = "config.core.label.fib.dbe1d4cc", label = 'FIB',
         defaultMale = 'mp_m_fibsec_01',
         defaultFemale = 's_f_m_fembarber',
         gradeMale = {
@@ -310,14 +310,14 @@ Sunset.FactionSkins = {
             [7] = 's_f_m_fembarber',
         },
         options = {
-            { key = 'tactical', label = 'FIB Security Agent', male = 'mp_m_fibsec_01', female = 's_f_y_cop_01', minGrade = 0 },
-            { key = 'agent', label = 'Special Agent Suit', male = 's_m_m_fiboffice_02', female = 's_f_m_fembarber', minGrade = 1 },
-            { key = 'raid', label = 'Black Ops Raid Specialist', male = 's_m_y_blackops_01', female = 's_f_y_cop_01', minGrade = 3 },
-            { key = 'director', label = 'FIB Executive Director', male = 'ig_stevehains', female = 's_f_m_fembarber', minGrade = 5 },
+            { key = 'tactical', labelKey = "config.core.label.fib_security_agent.f5ed22d1", label = 'FIB Security Agent', male = 'mp_m_fibsec_01', female = 's_f_y_cop_01', minGrade = 0 },
+            { key = 'agent', labelKey = "config.core.label.special_agent_suit.7344511c", label = 'Special Agent Suit', male = 's_m_m_fiboffice_02', female = 's_f_m_fembarber', minGrade = 1 },
+            { key = 'raid', labelKey = "config.core.label.black_ops_raid_specialist.93f7045a", label = 'Black Ops Raid Specialist', male = 's_m_y_blackops_01', female = 's_f_y_cop_01', minGrade = 3 },
+            { key = 'director', labelKey = "config.core.label.fib_executive_director.86a267b3", label = 'FIB Executive Director', male = 'ig_stevehains', female = 's_f_m_fembarber', minGrade = 5 },
         },
     },
     medic = {
-        label = 'Pillbox EMS',
+        labelKey = "config.core.label.pillbox_ems.9792953d", label = 'Pillbox EMS',
         defaultMale = 's_m_m_paramedic_01',
         defaultFemale = 's_f_y_scrubs_01',
         gradeMale = {
@@ -341,13 +341,13 @@ Sunset.FactionSkins = {
             [7] = 's_f_y_scrubs_01',
         },
         options = {
-            { key = 'paramedic', label = 'Ambulance Paramedic', male = 's_m_m_paramedic_01', female = 's_f_y_scrubs_01', minGrade = 0 },
-            { key = 'coroner', label = 'Medical Examiner / Coroner', male = 's_m_y_autopsy_01', female = 's_f_y_scrubs_01', minGrade = 2 },
-            { key = 'doctor', label = 'Hospital Doctor / Surgeon', male = 's_m_m_doctor_01', female = 's_f_y_scrubs_01', minGrade = 4 },
+            { key = 'paramedic', labelKey = "config.core.label.ambulance_paramedic.fb8d0249", label = 'Ambulance Paramedic', male = 's_m_m_paramedic_01', female = 's_f_y_scrubs_01', minGrade = 0 },
+            { key = 'coroner', labelKey = "config.core.label.medical_examiner_coroner.a9f830a2", label = 'Medical Examiner / Coroner', male = 's_m_y_autopsy_01', female = 's_f_y_scrubs_01', minGrade = 2 },
+            { key = 'doctor', labelKey = "config.core.label.hospital_doctor_surgeon.ae98ee42", label = 'Hospital Doctor / Surgeon', male = 's_m_m_doctor_01', female = 's_f_y_scrubs_01', minGrade = 4 },
         },
     },
     lsfd = {
-        label = 'LS Fire Department',
+        labelKey = "config.core.label.ls_fire_department.29e234c9", label = 'LS Fire Department',
         defaultMale = 's_m_y_fireman_01',
         defaultFemale = 's_m_y_fireman_01',
         gradeMale = {
@@ -371,13 +371,13 @@ Sunset.FactionSkins = {
             [7] = 's_m_m_highsec_01',
         },
         options = {
-            { key = 'fireman', label = 'Firefighter Bunker Gear', male = 's_m_y_fireman_01', female = 's_m_y_fireman_01', minGrade = 0 },
-            { key = 'paramedic', label = 'Paramedic / First Responder', male = 's_m_m_paramedic_01', female = 's_f_y_scrubs_01', minGrade = 2 },
-            { key = 'chief', label = 'Battalion Fire Chief', male = 's_m_m_highsec_01', female = 's_m_m_highsec_01', minGrade = 6 },
+            { key = 'fireman', labelKey = "config.core.label.firefighter_bunker_gear.d3a170e8", label = 'Firefighter Bunker Gear', male = 's_m_y_fireman_01', female = 's_m_y_fireman_01', minGrade = 0 },
+            { key = 'paramedic', labelKey = "config.core.label.paramedic_first_responder.7faaabf0", label = 'Paramedic / First Responder', male = 's_m_m_paramedic_01', female = 's_f_y_scrubs_01', minGrade = 2 },
+            { key = 'chief', labelKey = "config.core.label.battalion_fire_chief.565ef13b", label = 'Battalion Fire Chief', male = 's_m_m_highsec_01', female = 's_m_m_highsec_01', minGrade = 6 },
         },
     },
     mechanic = {
-        label = 'LS Customs',
+        labelKey = "config.core.label.ls_customs.48d021ab", label = 'LS Customs',
         defaultMale = 's_m_y_xmech_01',
         defaultFemale = 's_f_y_airhostess_01',
         gradeMale = {
@@ -401,15 +401,15 @@ Sunset.FactionSkins = {
             [7] = 's_f_y_migrant_01',
         },
         options = {
-            { key = 'apprentice', label = 'Apprentice Mechanic', male = 's_m_y_construct_01', female = 's_f_y_airhostess_01', minGrade = 0 },
-            { key = 'mechanic', label = 'Customs Tuner Overalls', male = 's_m_y_xmech_01', female = 's_f_y_migrant_01', minGrade = 1 },
-            { key = 'master', label = 'Master Autoshop Specialist', male = 's_m_m_autoshop_01', female = 's_f_y_migrant_01', minGrade = 3 },
-            { key = 'legend', label = 'Legendary Street Tuner', male = 'ig_hao', female = 's_f_y_migrant_01', minGrade = 5 },
-            { key = 'benny', label = 'Benny Motorworks Boss', male = 'ig_benny', female = 's_f_y_migrant_01', minGrade = 7 },
+            { key = 'apprentice', labelKey = "config.core.label.apprentice_mechanic.86415eba", label = 'Apprentice Mechanic', male = 's_m_y_construct_01', female = 's_f_y_airhostess_01', minGrade = 0 },
+            { key = 'mechanic', labelKey = "config.core.label.customs_tuner_overalls.17e24230", label = 'Customs Tuner Overalls', male = 's_m_y_xmech_01', female = 's_f_y_migrant_01', minGrade = 1 },
+            { key = 'master', labelKey = "config.core.label.master_autoshop_specialist.0e258eac", label = 'Master Autoshop Specialist', male = 's_m_m_autoshop_01', female = 's_f_y_migrant_01', minGrade = 3 },
+            { key = 'legend', labelKey = "config.core.label.legendary_street_tuner.b6213911", label = 'Legendary Street Tuner', male = 'ig_hao', female = 's_f_y_migrant_01', minGrade = 5 },
+            { key = 'benny', labelKey = "config.core.label.benny_motorworks_boss.e721dc11", label = 'Benny Motorworks Boss', male = 'ig_benny', female = 's_f_y_migrant_01', minGrade = 7 },
         },
     },
     taxi = {
-        label = 'Downtown Cab Co.',
+        labelKey = "config.core.label.downtown_cab_co.508964e9", label = 'Downtown Cab Co.',
         defaultMale = 'a_m_y_stlat_01',
         defaultFemale = 'a_f_y_business_01',
         gradeMale = {
@@ -433,14 +433,14 @@ Sunset.FactionSkins = {
             [7] = 'a_f_m_business_02',
         },
         options = {
-            { key = 'driver', label = 'Classic City Cab Driver', male = 'a_m_y_stlat_01', female = 'a_f_y_business_01', minGrade = 0 },
-            { key = 'tour', label = 'Airport / Tourist Chauffeur', male = 'a_m_m_salton_02', female = 'a_f_y_tourist_01', minGrade = 2 },
-            { key = 'vip', label = 'VIP Luxury Chauffeur', male = 'a_m_y_business_02', female = 'a_f_y_business_03', minGrade = 4 },
-            { key = 'director', label = 'Company Director Suit', male = 'a_m_m_business_01', female = 'a_f_m_business_02', minGrade = 6 },
+            { key = 'driver', labelKey = "config.core.label.classic_city_cab_driver.e6aed36f", label = 'Classic City Cab Driver', male = 'a_m_y_stlat_01', female = 'a_f_y_business_01', minGrade = 0 },
+            { key = 'tour', labelKey = "config.core.label.airport_tourist_chauffeur.0347923f", label = 'Airport / Tourist Chauffeur', male = 'a_m_m_salton_02', female = 'a_f_y_tourist_01', minGrade = 2 },
+            { key = 'vip', labelKey = "config.core.label.vip_luxury_chauffeur.323cb26b", label = 'VIP Luxury Chauffeur', male = 'a_m_y_business_02', female = 'a_f_y_business_03', minGrade = 4 },
+            { key = 'director', labelKey = "config.core.label.company_director_suit.834ff5bd", label = 'Company Director Suit', male = 'a_m_m_business_01', female = 'a_f_m_business_02', minGrade = 6 },
         },
     },
     lssi = {
-        label = 'LSSI — License & Safety',
+        labelKey = "config.core.label.lssi_license_safety.76d13142", label = 'LSSI — License & Safety',
         defaultMale = 's_m_m_highsec_02',
         defaultFemale = 'a_f_y_business_02',
         gradeMale = {
@@ -464,13 +464,13 @@ Sunset.FactionSkins = {
             [7] = 's_f_m_fembarber',
         },
         options = {
-            { key = 'inspector', label = 'Driving Instructor Uniform', male = 's_m_m_security_01', female = 's_f_y_cop_01', minGrade = 0 },
-            { key = 'investigator', label = 'State Safety Investigator', male = 's_m_m_highsec_02', female = 's_f_m_fembarber', minGrade = 2 },
-            { key = 'commissioner', label = 'State Commissioner Suit', male = 's_m_m_fiboffice_02', female = 's_f_m_fembarber', minGrade = 6 },
+            { key = 'inspector', labelKey = "config.core.label.driving_instructor_uniform.a5c2ad35", label = 'Driving Instructor Uniform', male = 's_m_m_security_01', female = 's_f_y_cop_01', minGrade = 0 },
+            { key = 'investigator', labelKey = "config.core.label.state_safety_investigator.54a0a154", label = 'State Safety Investigator', male = 's_m_m_highsec_02', female = 's_f_m_fembarber', minGrade = 2 },
+            { key = 'commissioner', labelKey = "config.core.label.state_commissioner_suit.7fb9a0ae", label = 'State Commissioner Suit', male = 's_m_m_fiboffice_02', female = 's_f_m_fembarber', minGrade = 6 },
         },
     },
     sunset_cartel = {
-        label = 'Sunset Cartel',
+        labelKey = "config.core.label.sunset_cartel.818b6f6a", label = 'Sunset Cartel',
         defaultMale = 'g_m_y_mexgoon_01',
         defaultFemale = 'g_f_y_vagos_01',
         gradeMale = {
@@ -494,14 +494,14 @@ Sunset.FactionSkins = {
             [7] = 'g_f_y_vagos_01',
         },
         options = {
-            { key = 'sicario', label = 'Cartel Sicario Tatuat', male = 'g_m_y_mexgang_01', female = 'g_f_y_vagos_01', minGrade = 0 },
-            { key = 'enforcer', label = 'Soldat Cartel Tactic', male = 'g_m_y_mexgoon_02', female = 'g_f_y_vagos_01', minGrade = 2 },
-            { key = 'capo', label = 'Capo Cartel', male = 'g_m_m_mexboss_01', female = 'g_f_y_vagos_01', minGrade = 4 },
-            { key = 'patron', label = 'El Patrón / Lider Suprem', male = 'ig_ortega', female = 'g_f_y_vagos_01', minGrade = 6 },
+            { key = 'sicario', labelKey = "config.core.label.tattooed_cartel_hitman.b6d85e85", label = 'Cartel Sicario Tatuat', male = 'g_m_y_mexgang_01', female = 'g_f_y_vagos_01', minGrade = 0 },
+            { key = 'enforcer', labelKey = "config.core.label.cartel_tactical_soldier.8c165245", label = 'Soldat Cartel Tactic', male = 'g_m_y_mexgoon_02', female = 'g_f_y_vagos_01', minGrade = 2 },
+            { key = 'capo', labelKey = "config.core.label.cartel_capo.1b62c802", label = 'Capo Cartel', male = 'g_m_m_mexboss_01', female = 'g_f_y_vagos_01', minGrade = 4 },
+            { key = 'patron', labelKey = "config.core.label.el_patron_supreme_leader.f8521420", label = 'El Patrón / Lider Suprem', male = 'ig_ortega', female = 'g_f_y_vagos_01', minGrade = 6 },
         },
     },
     night_syndicate = {
-        label = 'Night Syndicate',
+        labelKey = "config.core.label.night_syndicate.a1475a1a", label = 'Night Syndicate',
         defaultMale = 'g_m_y_korean_01',
         defaultFemale = 'g_f_y_ballas_01',
         gradeMale = {
@@ -525,10 +525,10 @@ Sunset.FactionSkins = {
             [7] = 'g_f_y_ballas_01',
         },
         options = {
-            { key = 'associate', label = 'Syndicate Street Enforcer', male = 'g_m_y_korean_01', female = 'g_f_y_ballas_01', minGrade = 0 },
-            { key = 'hitman', label = 'Syndicate Hitman', male = 'g_m_y_korlieut_01', female = 'g_f_y_ballas_01', minGrade = 2 },
-            { key = 'captain', label = 'Syndicate Underboss', male = 'g_m_m_chigoon_01', female = 'g_f_y_ballas_01', minGrade = 4 },
-            { key = 'kingpin', label = 'Syndicate Kingpin / Don', male = 'ig_popov', female = 'g_f_y_ballas_01', minGrade = 6 },
+            { key = 'associate', labelKey = "config.core.label.syndicate_street_enforcer.a28795bd", label = 'Syndicate Street Enforcer', male = 'g_m_y_korean_01', female = 'g_f_y_ballas_01', minGrade = 0 },
+            { key = 'hitman', labelKey = "config.core.label.syndicate_hitman.d692a584", label = 'Syndicate Hitman', male = 'g_m_y_korlieut_01', female = 'g_f_y_ballas_01', minGrade = 2 },
+            { key = 'captain', labelKey = "config.core.label.syndicate_underboss.4694798d", label = 'Syndicate Underboss', male = 'g_m_m_chigoon_01', female = 'g_f_y_ballas_01', minGrade = 4 },
+            { key = 'kingpin', labelKey = "config.core.label.syndicate_kingpin_don.c07bd4bf", label = 'Syndicate Kingpin / Don', male = 'ig_popov', female = 'g_f_y_ballas_01', minGrade = 6 },
         },
     },
 }

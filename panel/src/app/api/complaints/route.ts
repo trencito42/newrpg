@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewerLocale, getCurrentUser } from "@/lib/auth";
 import { queryOne, execute } from "@/lib/db";
 import { z } from "zod";
 import { isSameOriginWrite } from "@/lib/request-security";
+import { t } from "@/lib/i18n";
+
 
 const complaintSchema = z.object({
   accusedName: z.string().trim().min(2).max(64),
@@ -22,11 +24,12 @@ const complaintSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: t(locale, "interface.authentication_required") }, { status: 401 });
     }
 
     const body = await req.json();
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     if (recent && recent.count >= 3) {
       return NextResponse.json(
-        { error: "Rate limit exceeded. You can only file 3 complaints every 10 minutes." },
+        { error: t(locale, "interface.you_can_only_file_3_complaints_every_10_minutes") },
         { status: 429 }
       );
     }
@@ -117,10 +120,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       complaintId: insertRes.insertId,
-      message: "Complaint registered successfully and queued for staff review.",
+      message: t(locale, "interface.complaint_submitted_and_awaiting_staff_review"),
     });
   } catch (error: any) {
     console.error("Error creating complaint:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: t(locale, "interface.an_internal_error_occurred_try_again_later") }, { status: 500 });
   }
 }

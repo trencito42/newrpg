@@ -3,7 +3,7 @@
         <div class="sidebar">
             <div class="header">
                 <h1 data-i18n="ui.garage.personal_vehicles">Vehicule Personale</h1>
-                <p id="ui-count">0 Vehicule</p>
+                <p id="ui-count"><span data-i18n="interface.0_vehicles"></span></p>
             </div>
             <div class="list-container" id="ui-list"></div>
         </div>
@@ -13,11 +13,11 @@
             
             <div id="details-panel" style="display: none;">
                 <div class="detail-top">
-                    <div class="detail-plate" id="det-plate">PLATE</div>
-                    <h2 class="detail-model" id="det-model">MODEL</h2>
+                    <div class="detail-plate" id="det-plate"><span data-i18n="interface.plate"></span></div>
+                    <h2 class="detail-model" id="det-model"><span data-i18n="interface.model"></span></h2>
                     <div class="detail-status">
                         <div class="dot" id="det-status-dot"></div>
-                        <span id="det-status-text">STATUS</span>
+                        <span id="det-status-text"><span data-i18n="interface.status"></span></span>
                     </div>
                 </div>
 
@@ -38,7 +38,7 @@
                 </div>
             </div>
         </div>
-        <button type="button" class="vmenu-close-x" id="garage-close" aria-label="Close">×</button>
+        <button type="button" class="vmenu-close-x" id="garage-close" aria-label="" data-i18n-aria="interface.close">×</button>
     </div>
 </div>
 

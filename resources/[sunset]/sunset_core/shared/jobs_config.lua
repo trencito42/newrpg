@@ -3,8 +3,8 @@ Sunset = Sunset or {}
 --- Civilian job gameplay config (depots, routes, payouts). Hire data in jobs_civilian.lua.
 Sunset.JobsConfig = {
     trucker = {
-        label = 'Trucker',
-        help = 'Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.',
+        labelKey = "config.core.label.trucker.08296ea5", label = 'Trucker',
+        helpKey = "config.core.help.go_to_the_depot_spawn_your_rig_pick_up_cargo_deliver_then_return.227f42e7", help = 'Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.',
         depot = {
             coords = vector3(1208.77, -3114.84, 5.54),
             -- Spawn & Return camion Phantom la depou (h=266.29).
@@ -34,23 +34,23 @@ Sunset.JobsConfig = {
               pickup     = vector4(1234.3, -3104.2, 4.8, 3.5),
               delivery   = vector4(-1434.9, -298.1, 45.1, 311.2),
               parkingBay = vector4(-1434.1, -250.7, 48.0, 131.9),
-              label      = 'Depot → West Eclipse Gas Station' },
+              labelKey = "config.core.label.depot_west_eclipse_gas_station.15ee7bf1", label      = 'Depot → West Eclipse Gas Station' },
             { category = 'fuel', pay = 700,
               pickup   = vector4(1219.3, -3104.1, 4.8, 3.5),
               delivery = vector3(1181.2, 2671.5, 37.9),
-              label    = 'Depot → Sandy Shores Gas Station' },
+              labelKey = "config.core.label.depot_sandy_shores_gas_station.6a66196b", label    = 'Depot → Sandy Shores Gas Station' },
             { category = 'fuel', pay = 750,
               pickup   = vector4(1178.8, -3135.6, 4.6, 89.4),
               delivery = vector3(1702.55, 6416.12, 32.76),
-              label    = 'Depot → Paleto Bay Gas Station' },
+              labelKey = "config.core.label.depot_paleto_bay_gas_station.138bfb47", label    = 'Depot → Paleto Bay Gas Station' },
             { category = 'fuel', pay = 800,
               pickup   = vector4(1178.8, -3148.8, 4.6, 89.4),
               delivery = vector3(2747.32, 3472.88, 55.67),
-              label    = 'Depot → Sandy Shores Refinery' },
+              labelKey = "config.core.label.depot_sandy_shores_refinery.17463b83", label    = 'Depot → Sandy Shores Refinery' },
             { category = 'fuel', pay = 900,
               pickup   = vector4(1178.8, -3155.9, 4.6, 89.4),
               delivery = vector3(-1710.29, 4924.05, 42.06),
-              label    = 'Depot → Grapeseed Gas Station' },
+              labelKey = "config.core.label.depot_grapeseed_gas_station.6dfde031", label    = 'Depot → Grapeseed Gas Station' },
         },
         xpPerDelivery = 45,
         timeoutSec = 1800,
@@ -72,8 +72,8 @@ Sunset.JobsConfig = {
     },
 
     garbage = {
-        label = 'Garbage Collector',
-        help = 'Drive to bins, pick up trash (E), dump at the truck rear, then unload at the depot when full.',
+        labelKey = "config.core.label.garbage_collector.12de66e9", label = 'Garbage Collector',
+        helpKey = "config.core.help.drive_to_bins_pick_up_trash_e_dump_at_the_truck_rear_then_unload.90281167", help = 'Drive to bins, pick up trash (E), dump at the truck rear, then unload at the depot when full.',
         depot = {
             coords = vector3(-321.70, -1545.94, 27.72),
             spawn = vector4(-341.12, -1530.45, 27.72, 270.0),
@@ -108,8 +108,8 @@ Sunset.JobsConfig = {
     },
 
     courier = {
-        label = 'Courier',
-        help = 'Spawn your van, load all packages at the warehouse loading dock, then deliver them door-to-door without returning between stops.',
+        labelKey = "config.core.label.courier.3aea6d8c", label = 'Courier',
+        helpKey = "config.core.help.spawn_your_van_load_all_packages_at_the_warehouse_loading_dock_t.c25c22b4", help = 'Spawn your van, load all packages at the warehouse loading dock, then deliver them door-to-door without returning between stops.',
         warehouse = {
             coords = vector3(112.48, 103.98, 81.15),
             blip = { sprite = 478, color = 3, scale = 0.85 },
@@ -120,13 +120,13 @@ Sunset.JobsConfig = {
         vehicleModel = 'speedo',
         vehicleSpawn = vector4(62.8, 123.7, 78.9, 161.0),
         deliveries = {
-            { coords = vector3(-47.22, -1758.45, 29.42),  label = 'Davis Ave' },
-            { coords = vector3(213.88, -810.45, 30.73),   label = 'Legion Square' },
-            { coords = vector3(-706.22, -914.55, 19.22),  label = 'Little Seoul' },
-            { coords = vector3(373.45, -828.22, 29.28),   label = 'Pillbox Hill' },
-            { coords = vector3(-1288.45, -1115.22, 6.99), label = 'Vespucci Canals' },
-            { coords = vector3(127.55, -1298.88, 29.22),  label = 'Strawberry' },
-            { coords = vector3(-540.22, -183.55, 37.65),  label = 'Rockford Hills' },
+            { coords = vector3(-47.22, -1758.45, 29.42),  labelKey = "config.core.label.davis_ave.0b602fc3", label = 'Davis Ave' },
+            { coords = vector3(213.88, -810.45, 30.73),   labelKey = "config.core.label.legion_square.b49fa4c7", label = 'Legion Square' },
+            { coords = vector3(-706.22, -914.55, 19.22),  labelKey = "config.core.label.little_seoul.2c0c8b3f", label = 'Little Seoul' },
+            { coords = vector3(373.45, -828.22, 29.28),   labelKey = "config.core.label.pillbox_hill.ec979169", label = 'Pillbox Hill' },
+            { coords = vector3(-1288.45, -1115.22, 6.99), labelKey = "config.core.label.vespucci_canals.c5079bb2", label = 'Vespucci Canals' },
+            { coords = vector3(127.55, -1298.88, 29.22),  labelKey = "config.core.label.strawberry.4656e2f4", label = 'Strawberry' },
+            { coords = vector3(-540.22, -183.55, 37.65),  labelKey = "config.core.label.rockford_hills.db942feb", label = 'Rockford Hills' },
         },
         packageProp = 'prop_cs_cardbox_01',
         packagesPerRun = 6,
@@ -142,8 +142,8 @@ Sunset.JobsConfig = {
     },
 
     fisherman = {
-        label = 'Fisherman',
-        help = 'Fish in the Paleto Bay area near Billy Ray, then sell your catch at any 24/7 store.',
+        labelKey = "config.core.label.fisherman.d4487d6e", label = 'Fisherman',
+        helpKey = "config.core.help.fish_in_the_paleto_bay_area_near_billy_ray_then_sell_your_catch_.3805a419", help = 'Fish in the Paleto Bay area near Billy Ray, then sell your catch at any 24/7 store.',
         -- [ZONE FIX] The fishing spot is the measured water/pontoon area, NOT the
         -- NPC position. GPS/objective point here on shift start.
         -- Derived from the centroid of the previously measured waterfront strip.
@@ -189,8 +189,8 @@ Sunset.JobsConfig = {
     },
 
     hunter = {
-        label = 'Hunter',
-        help = 'Choose a hunting contract, travel to the zone, track and harvest wildlife. Requires Firearm and Hunting Licenses.',
+        labelKey = "config.core.label.hunter.4144d202", label = 'Hunter',
+        helpKey = "config.core.help.choose_a_hunting_contract_travel_to_the_zone_track_and_harvest_w.c32b213a", help = 'Choose a hunting contract, travel to the zone, track and harvest wildlife. Requires Firearm and Hunting Licenses.',
         timeoutSec = 7200,
 
         -- Licensed hunting firearms (reward quality penalty for others)
@@ -206,7 +206,7 @@ Sunset.JobsConfig = {
         species = {
             deer = {
                 model = 'a_c_deer',
-                label = 'Deer',
+                labelKey = "config.core.label.deer.9e0ed6f3", label = 'Deer',
                 minRank = 1,
                 protected = false,
                 weightMin = 55.0,
@@ -221,7 +221,7 @@ Sunset.JobsConfig = {
             },
             boar = {
                 model = 'a_c_boar',
-                label = 'Wild Boar',
+                labelKey = "config.core.label.wild_boar.d5a5a146", label = 'Wild Boar',
                 minRank = 2,
                 protected = false,
                 weightMin = 40.0,
@@ -235,7 +235,7 @@ Sunset.JobsConfig = {
             },
             coyote = {
                 model = 'a_c_coyote',
-                label = 'Coyote',
+                labelKey = "config.core.label.coyote.044ce9cd", label = 'Coyote',
                 minRank = 3,
                 protected = false,
                 weightMin = 10.0,
@@ -251,18 +251,18 @@ Sunset.JobsConfig = {
 
         -- Rank thresholds and unlock descriptions
         ranks = {
-            [1] = { label = 'Novice',        xpRequired = 0,    unlocks = 'Deer contracts, Paleto Forest zone' },
-            [2] = { label = 'Tracker',        xpRequired = 200,  unlocks = 'Boar contracts, Alamo Sea Hills zone' },
-            [3] = { label = 'Marksman',       xpRequired = 500,  unlocks = 'Coyote contracts, night-time zone access' },
-            [4] = { label = 'Guide',          xpRequired = 1000, unlocks = 'Trophy contracts, premium payout multiplier' },
-            [5] = { label = 'Master Hunter',  xpRequired = 2000, unlocks = 'Rare high-difficulty hunts' },
+            [1] = { labelKey = "config.core.label.novice.82f3802a", label = 'Novice',        xpRequired = 0,    unlocks = 'Deer contracts, Paleto Forest zone' },
+            [2] = { labelKey = "config.core.label.tracker.98d8c247", label = 'Tracker',        xpRequired = 200,  unlocks = 'Boar contracts, Alamo Sea Hills zone' },
+            [3] = { labelKey = "config.core.label.marksman.adb81302", label = 'Marksman',       xpRequired = 500,  unlocks = 'Coyote contracts, night-time zone access' },
+            [4] = { labelKey = "config.core.label.guide.29e5eba2", label = 'Guide',          xpRequired = 1000, unlocks = 'Trophy contracts, premium payout multiplier' },
+            [5] = { labelKey = "config.core.label.master_hunter.4396a0cc", label = 'Master Hunter',  xpRequired = 2000, unlocks = 'Rare high-difficulty hunts' },
         },
 
         contracts = {
             {
                 id = 'deer_paleto_01',
-                label = 'Paleto Deer Control',
-                description = 'Manage deer population in Paleto Forest.',
+                labelKey = "config.core.label.paleto_deer_control.a90c63ab", label = 'Paleto Deer Control',
+                descriptionKey = "config.core.description.manage_deer_population_in_paleto_forest.d03eb059", description = 'Manage deer population in Paleto Forest.',
                 species = 'deer',
                 requiredHarvests = 3,
                 minRank = 1,
@@ -272,8 +272,8 @@ Sunset.JobsConfig = {
             },
             {
                 id = 'boar_alamo_01',
-                label = 'Alamo Boar Control',
-                description = 'Control the wild boar numbers in the Alamo Sea hills.',
+                labelKey = "config.core.label.alamo_boar_control.862c8ee6", label = 'Alamo Boar Control',
+                descriptionKey = "config.core.description.control_the_wild_boar_numbers_in_the_alamo_sea_hills.f936c6fa", description = 'Control the wild boar numbers in the Alamo Sea hills.',
                 species = 'boar',
                 requiredHarvests = 3,
                 minRank = 2,
@@ -283,8 +283,8 @@ Sunset.JobsConfig = {
             },
             {
                 id = 'coyote_blaine_01',
-                label = 'Blaine Coyote Control',
-                description = 'Reduce predator numbers in the Sandy Shores area.',
+                labelKey = "config.core.label.blaine_coyote_control.e70799ea", label = 'Blaine Coyote Control',
+                descriptionKey = "config.core.description.reduce_predator_numbers_in_the_sandy_shores_area.faba271c", description = 'Reduce predator numbers in the Sandy Shores area.',
                 species = 'coyote',
                 requiredHarvests = 2,
                 minRank = 3,
@@ -294,8 +294,8 @@ Sunset.JobsConfig = {
             },
             {
                 id = 'deer_trophy_01',
-                label = 'Trophy Buck',
-                description = 'Harvest one high-quality qualifying deer. Shot discipline matters.',
+                labelKey = "config.core.label.trophy_buck.689a9e16", label = 'Trophy Buck',
+                descriptionKey = "config.core.description.harvest_one_high_quality_qualifying_deer_shot_discipline_matters.6c2ad1fd", description = 'Harvest one high-quality qualifying deer. Shot discipline matters.',
                 species = 'deer',
                 requiredHarvests = 1,
                 minRank = 4,
@@ -333,16 +333,16 @@ Sunset.JobsConfig = {
     },
 
     diver = {
-        label = 'Marine Salvage Diver',
-        help = 'Pick a salvage contract, dive to the search area, use the detector to locate cargo, and return to sell.',
+        labelKey = "config.core.label.marine_salvage_diver.6062ab32", label = 'Marine Salvage Diver',
+        helpKey = "config.core.help.pick_a_salvage_contract_dive_to_the_search_area_use_the_detector.001bbf05", help = 'Pick a salvage contract, dive to the search area, use the detector to locate cargo, and return to sell.',
         timeoutSec = 5400,
 
         ranks = {
-            [1] = { label = 'Snorkeler',      xpRequired = 0,    unlocks = 'Nearshore sites, basic scuba gear' },
-            [2] = { label = 'Open Water',     xpRequired = 200,  unlocks = 'Offshore sites (requires Boat License)' },
-            [3] = { label = 'Advanced Diver', xpRequired = 500,  unlocks = 'Deeper wrecks, improved detector' },
-            [4] = { label = 'Rescue Diver',   xpRequired = 1000, unlocks = 'Aircraft / cargo wrecks' },
-            [5] = { label = 'Master Diver',   xpRequired = 2000, unlocks = 'Rare deep salvage contracts' },
+            [1] = { labelKey = "config.core.label.snorkeler.79c3b2fb", label = 'Snorkeler',      xpRequired = 0,    unlocks = 'Nearshore sites, basic scuba gear' },
+            [2] = { labelKey = "config.core.label.open_water.b3e14861", label = 'Open Water',     xpRequired = 200,  unlocks = 'Offshore sites (requires Boat License)' },
+            [3] = { labelKey = "config.core.label.advanced_diver.33c82fdd", label = 'Advanced Diver', xpRequired = 500,  unlocks = 'Deeper wrecks, improved detector' },
+            [4] = { labelKey = "config.core.label.rescue_diver.82d129fb", label = 'Rescue Diver',   xpRequired = 1000, unlocks = 'Aircraft / cargo wrecks' },
+            [5] = { labelKey = "config.core.label.master_diver.c2f2aa11", label = 'Master Diver',   xpRequired = 2000, unlocks = 'Rare deep salvage contracts' },
         },
 
         -- Scuba gear tiers (rented at workplace).
@@ -350,9 +350,9 @@ Sunset.JobsConfig = {
         -- server/diver.lua reads gearCfg.o2Duration; changing the key here without changing
         -- server reads caused all tiers to silently fall back to 120s (basic tier only).
         gear = {
-            basic    = { label = 'Basic Scuba Set',    o2Duration = 120, minRank = 1, rentCost = 30  },
-            standard = { label = 'Standard Tank',      o2Duration = 200, minRank = 2, rentCost = 60  },
-            advanced = { label = 'Advanced Tank',      o2Duration = 320, minRank = 3, rentCost = 100 },
+            basic    = { labelKey = "config.core.label.basic_scuba_set.352354f4", label = 'Basic Scuba Set',    o2Duration = 120, minRank = 1, rentCost = 30  },
+            standard = { labelKey = "config.core.label.standard_tank.e0f293f4", label = 'Standard Tank',      o2Duration = 200, minRank = 2, rentCost = 60  },
+            advanced = { labelKey = "config.core.label.advanced_tank.cb041694", label = 'Advanced Tank',      o2Duration = 320, minRank = 3, rentCost = 100 },
         },
 
         -- Detector radius at which each pulse tier activates
@@ -392,8 +392,8 @@ Sunset.JobsConfig = {
     },
 
     mechanic = {
-        label = 'Roadside Mechanic',
-        help = 'Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.',
+        labelKey = "config.core.label.roadside_mechanic.74b937c8", label = 'Roadside Mechanic',
+        helpKey = "config.core.help.go_on_duty_to_accept_service_mechanic_calls_repair_vehicles_to_e.72329385", help = 'Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.',
         depot = {
             coords = vector3(-347.45, -133.22, 39.01),
             blip = { sprite = 402, color = 47, scale = 0.85 },
@@ -409,8 +409,8 @@ Sunset.JobsConfig = {
     },
 
     busdriver = {
-        label = 'Bus Driver',
-        help = 'Drive your transit bus along the scheduled route, stop at bus stops [E] to board passengers, collect fares, and return to depot for the route bonus.',
+        labelKey = "config.core.label.bus_driver.6b337896", label = 'Bus Driver',
+        helpKey = "config.core.help.drive_your_transit_bus_along_the_scheduled_route_stop_at_bus_sto.706c2e7f", help = 'Drive your transit bus along the scheduled route, stop at bus stops [E] to board passengers, collect fares, and return to depot for the route bonus.',
         depot = {
             coords = vector3(435.44, -646.28, 28.74),
             blip = { sprite = 513, color = 46, scale = 0.85 },
@@ -436,11 +436,11 @@ Sunset.JobsConfig = {
         routes = {
             {
                 id = 'green_route',
-                label = 'Linia Verde (Green Route Express)',
+                labelKey = "config.core.label.green_line_express.2b1696d6", label = 'Linia Verde (Green Route Express)',
                 stops = {
                     {
                         coords = vector4(306.71, -766.26, 28.79, 162.78),
-                        label = 'Oprirea 1: Transit Center West',
+                        labelKey = "config.core.label.stop_1_transit_center_west.0e7b1e35", label = 'Oprirea 1: Transit Center West',
                         passengerCoords = {
                             vector4(304.07, -766.32, 29.31, 239.64),
                             vector4(305.14, -763.82, 29.31, 272.49),
@@ -448,7 +448,7 @@ Sunset.JobsConfig = {
                     },
                     {
                         coords = vector4(785.89, -776.10, 25.91, 3.63),
-                        label = 'Oprirea 2: Mirror Park Blvd',
+                        labelKey = "config.core.label.stop_2_mirror_park_blvd.ed134c72", label = 'Oprirea 2: Mirror Park Blvd',
                         passengerCoords = {
                             vector4(788.65, -776.10, 26.25, 270.0),
                             vector4(788.75, -778.50, 26.25, 270.0),
@@ -456,7 +456,7 @@ Sunset.JobsConfig = {
                     },
                     {
                         coords = vector4(770.40, -941.32, 25.17, 188.14),
-                        label = 'Oprirea 3: East Los Santos',
+                        labelKey = "config.core.label.stop_3_east_los_santos.02b20f4f", label = 'Oprirea 3: East Los Santos',
                         passengerCoords = {
                             vector4(767.15, -941.32, 25.55, 90.0),
                             vector4(767.25, -943.60, 25.55, 90.0),
@@ -464,7 +464,7 @@ Sunset.JobsConfig = {
                     },
                     {
                         coords = vector4(787.35, -1369.32, 26.03, 182.59),
-                        label = 'Oprirea 4: Popular Street',
+                        labelKey = "config.core.label.stop_4_popular_street.63610bd0", label = 'Oprirea 4: Popular Street',
                         passengerCoords = {
                             vector4(784.15, -1369.32, 26.45, 90.0),
                             vector4(784.25, -1371.80, 26.45, 90.0),
@@ -472,7 +472,7 @@ Sunset.JobsConfig = {
                     },
                     {
                         coords = vector4(808.11, -1352.63, 25.80, 1.31),
-                        label = 'Oprirea 5: Cypress Flats North',
+                        labelKey = "config.core.label.stop_5_cypress_flats_north.4ec83f8d", label = 'Oprirea 5: Cypress Flats North',
                         passengerCoords = {
                             vector4(811.35, -1352.63, 26.25, 270.0),
                             vector4(811.45, -1355.00, 26.25, 270.0),
@@ -480,7 +480,7 @@ Sunset.JobsConfig = {
                     },
                     {
                         coords = vector4(824.75, -1639.46, 29.80, 175.04),
-                        label = 'Oprirea 6: Port Boulevard',
+                        labelKey = "config.core.label.stop_6_port_boulevard.ed8e0630", label = 'Oprirea 6: Port Boulevard',
                         passengerCoords = {
                             vector4(821.45, -1639.46, 30.25, 90.0),
                             vector4(821.55, -1642.00, 30.25, 90.0),

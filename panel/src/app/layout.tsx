@@ -1,3 +1,4 @@
+import { LocaleProvider } from "@/components/LocaleProvider";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
@@ -48,6 +49,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
+        <LocaleProvider locale={locale}>
         <PlayerPreviewProvider>
           {/* Mobile Navigation */}
           <MobileNav
@@ -76,6 +78,7 @@ export default async function RootLayout({
             </main>
           </div>
         </PlayerPreviewProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

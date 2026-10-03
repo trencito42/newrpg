@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skin Shop</title>
+  <title data-i18n="interface.skin_shop"></title>
   <link rel="stylesheet" href="css/skins.css"/>
+<script src="nui://sunset_ui/web/js/i18n.generated.js"></script>
+<script src="nui://sunset_ui/web/js/i18n.js"></script>
 </head>
 <body>
   <div id="overlay" class="hidden">
     <div id="panel">
       <div id="header">
-        <span id="title">Skin Shop</span>
+        <span id="title"><span data-i18n="interface.skin_shop"></span></span>
         <button id="closeBtn">✕</button>
       </div>
       <div id="filters">
-        <button class="filter-btn active" data-cat="all">All</button>
-        <button class="filter-btn" data-cat="civilian">Civilian</button>
-        <button class="filter-btn" data-cat="special">Special</button>
-        <button class="filter-btn" data-cat="premium">Premium</button>
-        <button class="filter-btn" data-cat="exclusive">Exclusive</button>
+        <button class="filter-btn active" data-cat="all"><span data-i18n="ui.panels.cat_all"></span></button>
+        <button class="filter-btn" data-cat="civilian"><span data-i18n="interface.civilian"></span></button>
+        <button class="filter-btn" data-cat="special"><span data-i18n="interface.special"></span></button>
+        <button class="filter-btn" data-cat="premium"><span data-i18n="interface.premium"></span></button>
+        <button class="filter-btn" data-cat="exclusive"><span data-i18n="interface.exclusive"></span></button>
       </div>
       <div id="grid"></div>
     </div>

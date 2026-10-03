@@ -4,13 +4,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 const ITEM_CONFIG = {
-    weed_leaf: { label: 'Frunze Cannabis', img: 'assets/items/weed_leaf.webp' },
-    coke_leaf: { label: 'Frunze Coca', img: 'assets/items/coke_leaf.webp' },
-    meth_chemical: { label: 'Precursori Chimici', img: 'assets/items/meth_chemical.webp' },
-    chemicals: { label: 'Substante Chimice', img: 'assets/items/chemicals.webp' },
-    weed_brick: { label: 'Pachete Weed', img: 'assets/items/weed_brick.webp', value: 250 },
-    coke_brick: { label: 'Pudra Cocaina', img: 'assets/items/coke_brick.webp', value: 800 },
-    meth_bag: { label: 'Cristale Meth', img: 'assets/items/meth_bag.webp', value: 1200 },
+    weed_leaf: { get label() { return I18n.t('interface.cannabis_leaves'); }, img: 'assets/items/weed_leaf.webp' },
+    coke_leaf: { get label() { return I18n.t('interface.coca_leaves'); }, img: 'assets/items/coke_leaf.webp' },
+    meth_chemical: { get label() { return I18n.t('interface.chemical_precursors'); }, img: 'assets/items/meth_chemical.webp' },
+    chemicals: { get label() { return I18n.t('interface.chemicals'); }, img: 'assets/items/chemicals.webp' },
+    weed_brick: { get label() { return I18n.t('interface.cannabis_packages'); }, img: 'assets/items/weed_brick.webp', value: 250 },
+    coke_brick: { get label() { return I18n.t('interface.cocaine_powder'); }, img: 'assets/items/coke_brick.webp', value: 800 },
+    meth_bag: { get label() { return I18n.t('interface.meth_crystals'); }, img: 'assets/items/meth_bag.webp', value: 1200 },
 };
 
 function getItemMeta(key) {
@@ -100,7 +100,7 @@ const Drugs = {
             if (iconEl) {
                 iconEl.innerHTML = `<img src="${iconSrc}" style="width: 32px; height: 32px; object-fit: contain;" alt="${this.type}" onerror="this.onerror=null; this.src='assets/items/weed_leaf.webp';">`;
             }
-            if (instrEl) instrEl.innerHTML = 'Apasa <span class="keybind">E</span> in zona marcata';
+            if (instrEl) instrEl.innerHTML = I18n.t('ui.drugs.press_e_marked_area');
 
 
             this.randomizeTarget();
@@ -174,7 +174,7 @@ const Drugs = {
                 if (this.currentAmount >= this.maxAmount) {
                     this.playing = false;
                     const instrEl = document.getElementById('harvest-instruction');
-                    if (instrEl) instrEl.innerText = "Rucsacul este plin!";
+                    if (instrEl) instrEl.innerText = I18n.t('interface.your_backpack_is_full');
                 }
             } else {
                 if (wrap) {
@@ -222,7 +222,7 @@ const Drugs = {
             this.inventory = data.inventory || {};
             this.recipes = data.recipes || {
                 weed: {
-                    label: 'Pachete Weed',
+                    get label() { return I18n.t('interface.cannabis_packages'); },
                     rawItem: 'weed_leaf',
                     rawCount: 5,
                     productItem: 'weed_brick',
@@ -230,7 +230,7 @@ const Drugs = {
                     difficulty: 'easy',
                 },
                 coca: {
-                    label: 'Pudra Cocaina',
+                    get label() { return I18n.t('interface.cocaine_powder'); },
                     rawItem: 'coke_leaf',
                     rawCount: 5,
                     secondaryItem: 'chemicals',
@@ -240,7 +240,7 @@ const Drugs = {
                     difficulty: 'medium',
                 },
                 meth: {
-                    label: 'Cristale Meth',
+                    get label() { return I18n.t('interface.meth_crystals'); },
                     rawItem: 'meth_chemical',
                     rawCount: 3,
                     secondaryItem: 'chemicals',
@@ -330,9 +330,9 @@ const Drugs = {
                 card.dataset.key = key;
 
                 let diffClass = 'diff-easy';
-                let diffLabel = 'USOARA';
-                if (recipe.difficulty === 'medium') { diffClass = 'diff-medium'; diffLabel = 'MEDIE'; }
-                else if (recipe.difficulty === 'hard') { diffClass = 'diff-hard'; diffLabel = 'RIDICATA'; }
+                let diffLabel = I18n.t('ui.drugs.difficulty_easy');
+                if (recipe.difficulty === 'medium') { diffClass = 'diff-medium'; diffLabel = I18n.t('ui.drugs.difficulty_medium'); }
+                else if (recipe.difficulty === 'hard') { diffClass = 'diff-hard'; diffLabel = I18n.t('ui.drugs.difficulty_hard'); }
 
                 card.innerHTML = `
                     <div class="lab-card-top">
@@ -341,7 +341,7 @@ const Drugs = {
                         </div>
                         <div class="lab-card-header">
                             <div class="lab-card-name">${recipe.label}</div>
-                            <div class="lab-card-diff ${diffClass}">Dificultate: ${diffLabel}</div>
+                            <div class="lab-card-diff ${diffClass}">${I18n.t('ui.drugs.difficulty_label', { difficulty: diffLabel })}</div>
                         </div>
                     </div>
                     <div class="lab-card-ingredients">
@@ -415,20 +415,20 @@ const Drugs = {
             if (yieldText) yieldText.innerText = `${recipe.productCount || 1}x ${productMeta.label}`;
             if (valText) valText.innerText = `~$${productMeta.value || 300}`;
 
-            let diffLabel = 'USOARA';
-            if (recipe.difficulty === 'medium') diffLabel = 'MEDIE';
-            else if (recipe.difficulty === 'hard') diffLabel = 'RIDICATA';
+            let diffLabel = I18n.t('ui.drugs.difficulty_easy');
+            if (recipe.difficulty === 'medium') diffLabel = I18n.t('ui.drugs.difficulty_medium');
+            else if (recipe.difficulty === 'hard') diffLabel = I18n.t('ui.drugs.difficulty_hard');
             if (diffText) diffText.innerText = diffLabel;
 
             const isReady = this.checkHasMaterials(recipe);
             if (statusText) {
-                statusText.innerText = isReady ? 'DISPONIBIL' : 'LIPSESC MATERIALE';
+                statusText.innerText = isReady ? I18n.t('interface.available') : I18n.t('ui.drugs.materials_missing');
                 statusText.style.color = isReady ? 'var(--drug-good)' : 'var(--drug-bad)';
             }
 
             if (btnStart) {
                 btnStart.disabled = !isReady;
-                btnStart.innerText = isReady ? 'Incepe Procesarea' : 'Materie Prima Insuficienta';
+                btnStart.innerText = isReady ? I18n.t('interface.start_processing') : I18n.t('ui.drugs.insufficient_raw_material');
                 btnStart.onclick = (e) => {
                     e.preventDefault();
                     if (isReady) this.startMinigame();
@@ -453,11 +453,11 @@ const Drugs = {
                         </div>
                         <div class="ing-row-info">
                             <div class="ing-row-name">${rawMeta.label}</div>
-                            <div class="ing-row-count">In inventar: <strong>${rawHave}</strong> / Necesar: <strong>${rawNeeded}</strong></div>
+                            <div class="ing-row-count">${I18n.t('ui.drugs.inventory_required', { have: rawHave, needed: rawNeeded })}</div>
                         </div>
                     </div>
                     <div class="ing-row-right">
-                        <span class="ing-stock-badge ${rawOk ? 'ready' : 'missing'}">${rawOk ? '✓ GATA' : '✗ LIPSA'}</span>
+                        <span class="ing-stock-badge ${rawOk ? 'ready' : 'missing'}">${rawOk ? I18n.t('ui.drugs.ready') : I18n.t('ui.drugs.missing')}</span>
                     </div>
                 `;
                 ingList.appendChild(rawCard);
@@ -476,7 +476,7 @@ const Drugs = {
                             </div>
                             <div class="ing-row-info">
                                 <div class="ing-row-name">${secMeta.label}</div>
-                                <div class="ing-row-count">In inventar: <strong>${secHave}</strong> / Necesar: <strong>${secNeeded}</strong></div>
+                                <div class="ing-row-count">${I18n.t('ui.drugs.inventory_required', { have: secHave, needed: secNeeded })}</div>
                             </div>
                         </div>
                         <div class="ing-row-right">
@@ -525,7 +525,7 @@ const Drugs = {
             }
 
             const titleEl = document.getElementById('lab-process-title');
-            if (titleEl) titleEl.innerText = `Sinteza: ${recipe.label}`;
+            if (titleEl) titleEl.innerText = I18n.t('ui.drugs.synthesis_title', { item: recipe.label });
 
             if (this.animFrame) cancelAnimationFrame(this.animFrame);
             this.minigameLoop();
@@ -587,8 +587,8 @@ const Drugs = {
 
             if (success && recipe) {
                 if (resIcon) { resIcon.innerText = '✓'; resIcon.className = 'overlay-icon'; }
-                if (resTitle) { resTitle.innerText = 'SUCCES'; resTitle.className = 'overlay-title'; }
-                if (resDesc) resDesc.innerText = `Lotul de ${recipe.label} a fost sintezat si adaugat in inventar.`;
+                if (resTitle) { resTitle.innerText = I18n.t('interface.success'); resTitle.className = 'overlay-title'; }
+                if (resDesc) resDesc.innerText = I18n.t('ui.drugs.synthesis_success', { item: recipe.label });
 
                 // Update local inventory state
                 this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - recipe.rawCount);
@@ -600,8 +600,8 @@ const Drugs = {
                 postToResource('processSuccess', { token: this.sessionToken, type: this.selectedRecipeKey });
             } else {
                 if (resIcon) { resIcon.innerText = '✕'; resIcon.className = 'overlay-icon fail'; }
-                if (resTitle) { resTitle.innerText = 'ESEC'; resTitle.className = 'overlay-title fail'; }
-                if (resDesc) resDesc.innerText = 'Reactia chimica a fost compromisa din cauza instabilitatii termice.';
+                if (resTitle) { resTitle.innerText = I18n.t('interface.failed'); resTitle.className = 'overlay-title fail'; }
+                if (resDesc) resDesc.innerText = I18n.t('interface.the_chemical_reaction_failed_due_to_unstable_temperature');
 
                 if (recipe) {
                     this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - 1);
@@ -674,18 +674,18 @@ const Drugs = {
             wrap.setAttribute('data-theme', this.type);
             if (drugImg) drugImg.src = itemMeta.img;
             if (itemNameEl) itemNameEl.innerText = itemMeta.label;
-            if (itemQtyEl) itemQtyEl.innerText = `Cantitate: ${this.qty}x`;
+            if (itemQtyEl) itemQtyEl.innerText = I18n.t('ui.drugs.quantity', { quantity: this.qty });
 
             if (riskEl) {
                 if (this.riskLevel === 'low') {
                     riskEl.className = 's-risk risk-low';
-                    riskEl.innerText = 'RISC: SCAZUT';
+                    riskEl.innerText = I18n.t('interface.risk_low');
                 } else if (this.riskLevel === 'med') {
                     riskEl.className = 's-risk risk-med';
-                    riskEl.innerText = 'RISC: MEDIU';
+                    riskEl.innerText = I18n.t('interface.risk_medium');
                 } else {
                     riskEl.className = 's-risk risk-high';
-                    riskEl.innerText = 'RISC: RIDICAT';
+                    riskEl.innerText = I18n.t('interface.risk_high');
                 }
             }
 
@@ -710,7 +710,7 @@ const Drugs = {
             if (actionsEl) actionsEl.style.display = 'none';
             if (statusMsg) {
                 statusMsg.className = 'success';
-                statusMsg.innerText = `Tranzactie Reusita! (+$${this.currentPrice})`;
+                statusMsg.innerText = I18n.t('ui.drugs.transaction_success', { amount: this.currentPrice });
                 statusMsg.style.display = 'block';
             }
 
@@ -798,7 +798,7 @@ const Drugs = {
                 }
                 if (statusMsg) {
                     statusMsg.className = 'success';
-                    statusMsg.innerText = 'Negociere Reusita! Pret crescut cu 25%.';
+                    statusMsg.innerText = I18n.t('interface.negotiation_successful_price_increased_by_25');
                     statusMsg.style.display = 'block';
                 }
                 if (btnNego) btnNego.style.display = 'none';
@@ -807,7 +807,7 @@ const Drugs = {
                 // Fail: Deal canceled
                 if (statusMsg) {
                     statusMsg.className = 'fail';
-                    statusMsg.innerText = 'Clientul s-a speriat de insistenta si a anulat targul!';
+                    statusMsg.innerText = I18n.t('interface.the_customer_was_scared_off_by_your_persistence_and_cancelled_the_deal');
                     statusMsg.style.display = 'block';
                 }
                 postToResource('failNegotiation', { token: this.sessionToken });
@@ -922,4 +922,3 @@ document.addEventListener('touchend', () => {
         if (btn) btn.classList.remove('active');
     }
 }, { passive: true });
-

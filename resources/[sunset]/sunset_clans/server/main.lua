@@ -1061,7 +1061,7 @@ function RunMotdCommand(source, args)
     if msg == '' then
         local ok, err = showClanMotd(source)
         if not ok then
-            TriggerClientEvent('sunset:client:notify', source, err or 'Clan MOTD could not be loaded.', 'error', 6000)
+            TriggerClientEvent('sunset:client:notify', source, err or exports.sunset_core:TFor(source, 'clans.message.motd_load_failed'), 'error', 6000)
         end
         return true
     end
@@ -1069,7 +1069,7 @@ function RunMotdCommand(source, args)
     if dashboard then
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'clans.message.clan_motd_updated_8cc5ba'), 'success', 6000)
     else
-        TriggerClientEvent('sunset:client:notify', source, err or 'MOTD update failed. Officers can set it with /cmotd [message].', 'error', 7000)
+        TriggerClientEvent('sunset:client:notify', source, err or exports.sunset_core:TFor(source, 'clans.message.motd_update_failed'), 'error', 7000)
     end
     return true
 end

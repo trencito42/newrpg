@@ -453,6 +453,7 @@ CreateThread(function()
                 SetTextDropshadow(0, 0, 0, 0, 255)
                 SetTextOutline()
                 BeginTextCommandDisplayText('STRING')
+                -- i18n-ignore: developer fishing diagnostics overlay
                 AddTextComponentSubstringPlayerName(('[FISHDEBUG] ' .. line))
                 EndTextCommandDisplayText(0.015, 0.30 + (i * 0.022))
             end

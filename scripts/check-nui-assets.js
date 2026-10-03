@@ -76,6 +76,9 @@ for (const filePath of filesToScan) {
 
     let match;
     while ((match = cfxNuiPattern.exec(content)) !== null) {
+        // Runtime template paths are validated by their producing code and
+        // cannot name one concrete file during a static filesystem check.
+        if (match[0].includes('${')) continue;
         checkedUrls++;
         const resName = match[1] || match[2];
         let assetPath = match[3];

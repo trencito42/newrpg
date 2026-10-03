@@ -55,6 +55,7 @@ export const dynamic = "force-dynamic";
 export default async function StaffDashboardPage() {
   const user = await getCurrentUser();
   const lang = await getRequestLanguage();
+  const locale = lang;
   const dict = getDictionary(lang);
 
   // Authorization check: Admin > 0 or Helper > 0
@@ -209,7 +210,7 @@ export default async function StaffDashboardPage() {
           <div className="divide-y divide-surface-border/50 text-xs">
             {pendingUnbans.map((u) => (
               <div key={u.id} className="p-2.5 px-3">
-                <span className="font-mono text-[#F2EFE8] text-[11px]">Account #{u.account_id}</span>
+                <span className="font-mono text-[#F2EFE8] text-[11px]">{t(locale, "interface.account")}{u.account_id}</span>
                 <p className="text-[#B4AFA4] text-xs line-clamp-2 mt-0.5">{u.reason}</p>
               </div>
             ))}
@@ -232,10 +233,10 @@ export default async function StaffDashboardPage() {
             <table className="w-full text-left text-xs">
               <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                 <tr>
-                  <th className="py-2 px-3">Action</th>
-                  <th className="py-2 px-3">Target</th>
+                  <th className="py-2 px-3">{t(locale, "copy.app_clans_id_manage_clanmanageclient.action")}</th>
+                  <th className="py-2 px-3">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.target")}</th>
                   <th className="py-2 px-3">Admin</th>
-                  <th className="py-2 px-3">Reason</th>
+                  <th className="py-2 px-3">{t(locale, "staff.reason")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
@@ -263,7 +264,7 @@ export default async function StaffDashboardPage() {
               <div key={a.id} className="p-2.5 px-3 flex items-center justify-between text-[#B4AFA4]">
                 <div>
                   <span className="font-semibold text-[#F2EFE8]">{a.action}</span>
-                  <span className="text-[#8F8B83] ml-2">by {a.actor_name ? <PlayerIdentity {...identities.get(a.actor_name.toLowerCase())!} size="sm" clickable={false} /> : `Acc #${a.actor_account_id}`} on {a.target_entity} #{a.target_id || "-"}</span>
+                  <span className="text-[#8F8B83] ml-2">{t(locale, "interface.by")} {a.actor_name ? <PlayerIdentity {...identities.get(a.actor_name.toLowerCase())!} size="sm" clickable={false} /> : `Acc #${a.actor_account_id}`} {t(locale, "interface.on")} {a.target_entity} #{a.target_id || "-"}</span>
                   {a.reason && <p className="text-[11px] text-[#8F8B83] italic mt-0.5">"{a.reason}"</p>}
                 </div>
               </div>

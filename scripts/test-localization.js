@@ -56,3 +56,13 @@ window.SUNSET_I18N_DEBUG = false;
 listeners.get('window:message')?.({ data: { action: 'localeSet', data: { locale: 'en' } } });
 assert(window.I18n.getLocale() === 'en', 'standalone NUI locale message failed');
 console.log('NUI localization tests OK: locale validation, interpolation, live rerender, attributes, event, and fallback marker.');
+
+window.SUNSET_I18N_STRICT = true;
+let missingFailed = false, parameterFailed = false;
+try { window.I18n.t('does.not.exist'); } catch (error) { missingFailed = /locale=en key=does.not.exist/.test(error.message); }
+try { window.I18n.t('menu.profile.level'); } catch (error) { parameterFailed = /missing parameter/.test(error.message); }
+assert(missingFailed, 'strict mode must reject missing keys with context');
+assert(parameterFailed, 'strict mode must reject missing parameters');
+assert(window.I18n.t('menu.profile.level', { level: 7 }) === 'Level 7', 'strict valid call failed');
+window.SUNSET_I18N_STRICT = false;
+console.log('NUI strict localization tests OK.');

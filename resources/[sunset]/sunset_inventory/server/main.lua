@@ -50,6 +50,7 @@ local function inventoryView(items)
             count = row.count,
             slot = row.slot,
             metadata = row.metadata,
+            labelKey = def.labelKey,
             label = def.label or row.item,
             usable = def.usable == true,
             icon = def.icon,
@@ -431,10 +432,10 @@ function UseItem(source, item)
     local def = Sunset.Items[item]
     if not def then return false, { localeKey = 'inventory.message.this_item_is_no_longer_configured_close_and_reopen' } end
     if not HasItem(source, item, 1) then
-        return false, { localeKey = 'inventory.message.you_no_longer_have_value_close_and_reopen_the', formatArgs = { def.label or item } }
+        return false, { localeKey = 'inventory.message.you_no_longer_have_value_close_and_reopen_the', formatArgs = { Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)) } }
     end
     if not def.usable then
-        return false, { localeKey = 'inventory.message.value_cannot_be_used_directly_from_the_inventory', formatArgs = { def.label or item } }
+        return false, { localeKey = 'inventory.message.value_cannot_be_used_directly_from_the_inventory', formatArgs = { Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)) } }
     end
 
     if item == 'gas_can' then
@@ -465,7 +466,7 @@ function UseItem(source, item)
             end
         end
         if not targetWeaponItem then
-            return false, { localeKey = 'inventory.message.you_do_not_own_a_weapon_compatible_with_value', formatArgs = { def.label or item } }
+            return false, { localeKey = 'inventory.message.you_do_not_own_a_weapon_compatible_with_value', formatArgs = { Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)) } }
         end
 
         -- Consume exactly ONE box
@@ -500,11 +501,11 @@ function UseItem(source, item)
     if not char then return false, { localeKey = 'inventory.message.your_character_is_not_loaded_reconnect_and_try_again' } end
     if not def.hunger and not def.thirst and not def.stress and not def.heal then
         return false, { localeKey = 'inventory.message.value_does_not_have_a_usable_action_configured_yet_the_item_was_n', formatArgs = {
-            def.label or item } }
+            Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)) } }
     end
     if not RemoveItem(source, item, 1) then
         return false, { localeKey = 'inventory.message.could_not_consume_value_because_your_inventory_changed_reopen_it_', formatArgs = {
-            def.label or item } }
+            Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)) } }
     end
 
     if def.hunger then char.hunger = math.min(100, (char.hunger or 100) + def.hunger) end

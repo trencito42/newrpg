@@ -57,11 +57,11 @@ local function registerDebugCommands()
     end, false)
 
     TriggerEvent('chat:addSuggestion', '/testhack', 'Test the Watch Dogs Network Hacking Minigame', {
-        { name = 'difficulty/puzzle', help = 'easy | medium | hard | easy_01 | medium_02 | hard_01 etc.' },
-        { name = 'seed', help = 'optional numeric seed' }
+        { name = 'difficulty/puzzle', helpKey = "config.hacking.help.easy_medium_hard_easy_01_medium_02_hard_01_etc.9b1a2222", help = 'easy | medium | hard | easy_01 | medium_02 | hard_01 etc.' },
+        { name = 'seed', helpKey = "config.hacking.help.optional_numeric_seed.ac313aef", help = 'optional numeric seed' }
     })
     TriggerEvent('chat:addSuggestion', '/hack', 'Test the Watch Dogs Network Hacking Minigame', {
-        { name = 'difficulty/puzzle', help = 'easy | medium | hard' }
+        { name = 'difficulty/puzzle', helpKey = "config.hacking.help.easy_medium_hard.afb1b3a2", help = 'easy | medium | hard' }
     })
 end
 

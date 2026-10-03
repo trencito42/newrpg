@@ -500,8 +500,8 @@ RegisterCommand('outfits', function(_, args)
     notify(exports.sunset_core:Translate('clothing.message.usage_outfits_list_save_name_wear_nr_delete_nr'), 'info')
 end, false)
 TriggerEvent('chat:addSuggestion', '/outfits', 'Manage your saved outfits', {
-    { name = 'action', help = 'list / save / wear / delete' },
-    { name = 'name/nr', help = 'name for save, number for wear/delete' },
+    { name = 'action', helpKey = "config.clothing.help.list_save_wear_delete.183fe4ff", help = 'list / save / wear / delete' },
+    { name = 'name/nr', helpKey = "config.clothing.help.name_for_save_number_for_wear_delete.3b0a91be", help = 'name for save, number for wear/delete' },
 })
 
 -- [CLOTHING FIX B3] Guaranteed cleanup: death, jail and resource stop used to

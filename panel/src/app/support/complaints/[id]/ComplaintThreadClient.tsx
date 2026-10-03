@@ -455,7 +455,7 @@ export function ComplaintThreadClient({
               onClick={handleStaffSubmit}
               className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-semibold transition-colors disabled:opacity-50"
             >
-              {submittingAction ? "Processing..." : "Confirm Staff Action"}
+              {submittingAction ? t(locale, "interface.processing") : t(locale, "interface.confirm_staff_action")}
             </button>
           </div>
         </div>

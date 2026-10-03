@@ -1,8 +1,11 @@
+import { getViewerLocale } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuerySingle, dbExecute } from "@/lib/db";
 import { generateRandomToken, hashTokenSha256 } from "@/lib/crypto";
 import { sendPasswordResetEmail } from "@/lib/mail";
 import { RowDataPacket } from "mysql2";
+import { t } from "@/lib/i18n";
+
 
 interface AccountRow extends RowDataPacket {
   id: number;
@@ -11,13 +14,14 @@ interface AccountRow extends RowDataPacket {
 }
 
 export async function POST(request: NextRequest) {
+  const locale = await getViewerLocale();
   try {
     const body = await request.json();
     const identifier = String(body.identifier || "").trim();
 
     if (!identifier) {
       return NextResponse.json(
-        { error: "Te rugăm să introduci numele de utilizator sau emailul." },
+        { error: t(locale, "interface.enter_your_username_or_email_address") },
         { status: 400 }
       );
     }
@@ -65,12 +69,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       message:
-        "Dacă datele introduse corespund unui cont activ, a fost trimis un email cu linkul de resetare pe adresa asociată.",
+        t(locale, "interface.if_the_details_match_an_active_account_a_reset_link_has_been_sent_to_its_email_addres"),
     });
   } catch (error) {
     console.error("[forgot-password] API error:", error);
     return NextResponse.json(
-      { error: "A apărut o eroare la procesarea solicitării." },
+      { error: t(locale, "interface.could_not_process_your_request") },
       { status: 500 }
     );
   }

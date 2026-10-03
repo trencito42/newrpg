@@ -1,6 +1,6 @@
 SunsetMissions.RegisterMission('container_47', {
     contact  = 'hank',
-    label    = 'Container 47',
+    labelKey = "config.missions.label.container_47.efd05564", label    = 'Container 47',
     logo     = 'logo_container_47.webp',
     area     = 'Terminal Port',
     cooldown = 2400,
@@ -58,8 +58,8 @@ SunsetMissions.RegisterMission('container_47', {
     reinforcementCoords  = vector4(1150.0, -3020.0, 5.0, 90.0),
 
     exitPoints = {
-        { coords = vector3(1102.0, -3002.0, 5.0), label = 'Main Gate'    },
-        { coords = vector3(1282.0, -3080.0, 5.0), label = 'Dock Exit'    },
-        { coords = vector3(1170.0, -3120.0, 5.0), label = 'Canal Access' },
+        { coords = vector3(1102.0, -3002.0, 5.0), labelKey = "config.missions.label.main_gate.2a3dd562", label = 'Main Gate'    },
+        { coords = vector3(1282.0, -3080.0, 5.0), labelKey = "config.missions.label.dock_exit.867c1bfe", label = 'Dock Exit'    },
+        { coords = vector3(1170.0, -3120.0, 5.0), labelKey = "config.missions.label.canal_access.fa0187be", label = 'Canal Access' },
     },
 })

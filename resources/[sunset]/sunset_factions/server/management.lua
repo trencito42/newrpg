@@ -54,7 +54,7 @@ AddEventHandler('sunset:payday:processed', function(source)
     if newFp <= 0 then
         FactionManagement.setFP(char.id, 0)
         TriggerClientEvent('sunset:client:notify', source,
-            'Your faction punish (FP) expired. You can join a faction again.', 'success', 10000)
+            exports.sunset_core:TFor(source, 'factions.message.fp_expired'), 'success', 10000)
     else
         MySQL.update.await('UPDATE faction_punish SET fp = ? WHERE character_id = ?', { newFp, char.id })
         TriggerClientEvent('sunset:client:notify', source,
@@ -236,7 +236,7 @@ exports.sunset_core:RegisterCallback('sunset:factionResignHandle', function(sour
     if targetSource then
         TriggerClientEvent('sunset:client:notify', targetSource,
             withFp and ('Your resignation was accepted WITH faction punish (%d FP).'):format(FP_KICK)
-                or 'Your resignation was accepted. You left the faction cleanly.',
+                or exports.sunset_core:TFor(targetSource, 'factions.message.resignation_accepted_clean'),
             withFp and 'error' or 'info', 10000)
     end
     return true

@@ -176,7 +176,7 @@
                             <div class="ft-podium-rank">#${w.rank}</div>
                             <div class="ft-podium-name">${escapeHtml(w.name)}</div>
                             <div class="ft-podium-weight">${wKg} KG</div>
-                            <div class="ft-podium-fish">${w.fishCount || 0} fish</div>
+                            <div class="ft-podium-fish">${I18n.t('ui.fishing_tournament.fish_count', { count: w.fishCount || 0 })}</div>
                             ${w.rewardCash ? `<div class="ft-podium-reward">+$${I18n.number(w.rewardCash)}</div>` : ''}
                         `;
                         podiumEl.appendChild(card);

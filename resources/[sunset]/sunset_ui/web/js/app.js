@@ -552,7 +552,7 @@
             const fillEl = document.getElementById('progress-fill');
             if (!root || !fillEl) return;
 
-            if (labelEl) labelEl.textContent = label || 'In progress...';
+            if (labelEl) labelEl.textContent = label || I18n.t('ui.battlepass.in_progress');
             fillEl.style.transition = 'none';
             fillEl.style.width = '0%';
             root.classList.remove('hidden');

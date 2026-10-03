@@ -289,23 +289,23 @@ end)
 local function processPasswordChange(source, oldPassword, newPassword, confirmPassword)
     local player = exports.sunset_core:GetPlayer(source)
     if not player or not player.account_id then
-        return { success = false, message = 'Nu esti autentificat pe un cont valid!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.you_are_not_logged_in_to_a_valid_account') }
     end
 
     if type(oldPassword) ~= 'string' or oldPassword == '' then
-        return { success = false, message = 'Te rugam sa introduci parola actuala a contului!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.enter_your_current_account_password') }
     end
 
     if type(newPassword) ~= 'string' or newPassword == '' then
-        return { success = false, message = 'Te rugam sa introduci parola noua!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.enter_your_new_password') }
     end
 
     if newPassword ~= confirmPassword then
-        return { success = false, message = 'Parola noua si confirmarea nu coincid!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.the_new_password_and_confirmation_do_not_match') }
     end
 
     if #newPassword < 6 or #newPassword > 128 then
-        return { success = false, message = 'Parola noua trebuie sa aiba intre 6 si 128 de caractere!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.the_new_password_must_contain_between_6_and_128_characters') }
     end
 
     local account = MySQL.single.await(
@@ -314,7 +314,7 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
     )
 
     if not account then
-        return { success = false, message = 'Contul tau nu a fost gasit in baza de date!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.your_account_was_not_found') }
     end
 
     local modern = type(account.password_hash) == 'string' and account.password_hash:sub(1, 8) == '$scrypt$'
@@ -322,12 +322,12 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
         or Sunset.Password.Verify(oldPassword, account.password_salt, account.password_hash)
 
     if not valid then
-        return { success = false, message = 'Parola actuala introdusa este incorecta!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.your_current_password_is_incorrect') }
     end
 
     local newHash = exports.sunset_auth:HashPassword(newPassword)
     if not newHash then
-        return { success = false, message = 'Eroare la criptarea securizata a noii parole!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.could_not_securely_encrypt_the_new_password') }
     end
 
     MySQL.update.await('UPDATE accounts SET password_hash = ?, password_salt = ? WHERE id = ?', {
@@ -337,7 +337,7 @@ local function processPasswordChange(source, oldPassword, newPassword, confirmPa
     -- Invalidate existing quick tokens
     MySQL.update.await('DELETE FROM auth_quick_tokens WHERE account_id = ?', { account.id })
 
-    return { success = true, message = 'Parola contului tau a fost schimbata cu succes!' }
+    return { success = true, message = exports.sunset_core:TFor(source, 'auth.presentation.your_account_password_has_been_changed') }
 end
 
 exports.sunset_core:RegisterCallback('sunset:auth:changePassword', function(source, oldPassword, newPassword, confirmPassword)
@@ -347,7 +347,7 @@ end)
 exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', function(source, identifier)
     identifier = tostring(identifier or ''):match('^%s*(.-)%s*$')
     if identifier == '' then
-        return { success = false, message = 'Te rugam sa introduci username-ul sau emailul contului!' }
+        return { success = false, message = exports.sunset_core:TFor(source, 'auth.presentation.enter_your_account_username_or_email_address') }
     end
 
     local account = MySQL.single.await(
@@ -367,7 +367,7 @@ exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', functio
 
     return {
         success = true,
-        message = 'Daca datele introduse corespund unui cont activ, a fost trimis un email cu linkul de resetare pe adresa asociata.',
+        message = exports.sunset_core:TFor(source, 'auth.presentation.if_the_details_match_an_active_account_a_reset_link_has_been_sent_to_its_email_address'),
     }
 end)
 
@@ -389,7 +389,7 @@ RegisterCommand('lostpass', function(source, args)
     if source == 0 then return end
     local user = args[1]
     if not user or user == '' then
-        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /lostpass <username_sau_email>', 'info', 6000)
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'auth.presentation.usage_lostpass_username_or_email'), 'info', 6000)
         return
     end
 
@@ -403,14 +403,14 @@ RegisterCommand('lostpass', function(source, args)
         PerformHttpRequest('http://127.0.0.1:3000/api/auth/forgot-password', function() end, 'POST', postData, { ['Content-Type'] = 'application/json' })
     end
 
-    TriggerClientEvent('sunset:client:notify', source, 'Daca contul exista, a fost trimis un link de resetare pe email!', 'success', 7000)
+    TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'auth.presentation.if_the_account_exists_a_reset_link_has_been_sent_by_email'), 'success', 7000)
 end, false)
 
 RegisterCommand('forgotpass', function(source, args)
     if source == 0 then return end
     local user = args[1]
     if not user or user == '' then
-        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /forgotpass <username_sau_email>', 'info', 6000)
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'auth.presentation.usage_forgotpass_username_or_email'), 'info', 6000)
         return
     end
     ExecuteCommand(('lostpass %s'):format(user))

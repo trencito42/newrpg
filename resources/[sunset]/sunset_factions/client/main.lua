@@ -646,7 +646,7 @@ end)
 local function registerFactionChatSuggestions()
     TriggerEvent('chat:addSuggestion', '/duty', 'Toggle faction duty shift')
     TriggerEvent('chat:addSuggestion', '/fskins', 'Browse all available authentic real skins for your faction')
-    TriggerEvent('chat:addSuggestion', '/fskin', 'Equip a specific real faction skin', { { name = 'number or name', help = 'ex: 1, 2, swat, hway' } })
+    TriggerEvent('chat:addSuggestion', '/fskin', 'Equip a specific real faction skin', { { name = 'number or name', helpKey = "config.factions.help.ex_1_2_swat_hway.f07dab51", help = 'ex: 1, 2, swat, hway' } })
     TriggerEvent('chat:addSuggestion', '/faction', 'Open your faction dashboard, roster and weekly report')
     TriggerEvent('chat:addSuggestion', '/factions', 'Browse every server faction and application status')
     TriggerEvent('chat:addSuggestion', '/leavefaction', 'Leave your faction; keeps your civilian job')
@@ -656,8 +656,8 @@ local function registerFactionChatSuggestions()
     TriggerEvent('chat:addSuggestion', '/r', 'Faction radio (your department)', { { name = 'message' } })
     TriggerEvent('chat:addSuggestion', '/d', 'Department radio (LSPD, Sheriff, FIB, EMS, LSFD)', { { name = 'message' } })
     TriggerEvent('chat:addSuggestion', '/service', 'Request emergency/service dispatch', {
-        { name = 'type', help = 'taxi|medic|fire|mechanic' },
-        { name = 'message', help = 'optional details' },
+        { name = 'type', helpKey = "config.factions.help.taxi_medic_fire_mechanic.9584a05b", help = 'taxi|medic|fire|mechanic' },
+        { name = 'message', helpKey = "config.factions.help.optional_details.c74df6af", help = 'optional details' },
     })
     TriggerEvent('chat:addSuggestion', '/gov', 'Government announcement — everyone on the server sees it (on-duty LSPD/Sheriff/FIB/EMS/LSFD)', { { name = 'message' } })
     TriggerEvent('chat:addSuggestion', '/finvite', 'Leader: invite an accepted applicant nearby', { { name = 'id' } })
@@ -668,7 +668,7 @@ local function registerFactionChatSuggestions()
     TriggerEvent('chat:addSuggestion', '/fwarn', 'Faction warning', { { name = 'id' }, { name = 'reason' } })
     TriggerEvent('chat:addSuggestion', '/fw', 'Alias for /fwarn', { { name = 'id' }, { name = 'reason' } })
     TriggerEvent('chat:addSuggestion', '/fmembers', 'List online faction members')
-    TriggerEvent('chat:addSuggestion', '/fmotd', 'Read MOTD, or set it if you have permission', { { name = 'message', help = 'optional new MOTD' } })
+    TriggerEvent('chat:addSuggestion', '/fmotd', 'Read MOTD, or set it if you have permission', { { name = 'message', helpKey = "config.factions.help.optional_new_motd.9794e92e", help = 'optional new MOTD' } })
     TriggerEvent('chat:addSuggestion', '/fine', 'Issue fine (PD)', { { name = 'id' }, { name = 'amount' }, { name = 'reason' } })
     TriggerEvent('chat:addSuggestion', '/cuff', 'Cuff player (PD)', { { name = 'id' } })
     TriggerEvent('chat:addSuggestion', '/uncuff', 'Uncuff player (PD)', { { name = 'id' } })

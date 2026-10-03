@@ -883,10 +883,16 @@ CreateThread(function()
             for _, n in ipairs(unDelivered) do
                 local targetSrc = exports.sunset_core:GetSourceByAccountId(n.account_id)
                 if targetSrc and targetSrc > 0 then
-                    local title = n.title_ro or n.title_en or 'Notificare Panel'
-                    local msg = n.message_ro or n.message_en or ''
-                    
-                    TriggerClientEvent('sunset:client:notify', targetSrc, ('[Panel] %s: %s'):format(title, msg), 'info', 10000)
+                    local locale = exports.sunset_core:GetPlayerLocale(targetSrc)
+                    local title = locale == 'ro' and n.title_ro or n.title_en
+                    local msg = locale == 'ro' and n.message_ro or n.message_en
+                    title = title or (locale == 'ro' and n.title_en or n.title_ro)
+                        or exports.sunset_core:TFor(targetSrc, 'panel.notification.default_title')
+                    msg = msg or (locale == 'ro' and n.message_en or n.message_ro) or ''
+
+                    TriggerClientEvent('sunset:client:notify', targetSrc,
+                        exports.sunset_core:TFor(targetSrc, 'panel.notification.message', { title = title, message = msg }),
+                        'info', 10000)
                     TriggerClientEvent('chat:addMessage', targetSrc, {
                         color = { 215, 181, 88 },
                         multiline = true,

@@ -71,7 +71,7 @@ RegisterCommand('cmotd', function(_, args)
     if ok then exports.sunset_ui:Notify(exports.sunset_core:Translate('clans.message.clan_motd_updated'), 'success')
     else exports.sunset_ui:Notify(err or exports.sunset_core:Translate('clans.msg.motd_update_failed_officers_can_set'), 'error') end
 end, false)
-TriggerEvent('chat:addSuggestion', '/cmotd', 'Read clan MOTD, or set it if you are an officer', { { name = 'message', help = 'optional new MOTD' } })
+TriggerEvent('chat:addSuggestion', '/cmotd', 'Read clan MOTD, or set it if you are an officer', { { name = 'message', helpKey = "config.clans.help.optional_new_motd.ec77ea50", help = 'optional new MOTD' } })
 
 RegisterCommand('acceptclan', function()
     local data, err = Sunset.AwaitCallback('sunset:clanAcceptInvite')

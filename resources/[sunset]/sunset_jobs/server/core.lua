@@ -577,10 +577,13 @@ exports.sunset_core:RegisterCallback('sunset:jobs:getPanelData', function(source
             local cfg = Sunset.GetJobConfig(id)
             jobs[#jobs + 1] = {
                 id = id,
+                labelKey = def.labelKey,
                 label = def.label,
+                descriptionKey = def.descriptionKey,
                 description = def.description or '',
                 salary = def.grades and def.grades[0] and def.grades[0].salary or 0,
                 progress = progress[id],
+                helpKey = cfg and cfg.helpKey,
                 help = cfg and cfg.help or '',
             }
         end
@@ -870,7 +873,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trailerDestroyed', function(so
 
     session.trailerDestroyHandled = true
     TriggerClientEvent('sunset:client:notify', source,
-        'Trailer destroyed! Spawning a replacement — use /recovertrailer if it does not attach.', 'error', 8000)
+        exports.sunset_core:TFor(source, 'jobs.message.trailer_destroyed_replacement_attach'), 'error', 8000)
     return {
         respawn = true,
         truckNetId = session.vehicleNetId,
@@ -1014,7 +1017,7 @@ CreateThread(function()
                                 if remaining then
                                     session.trailerDestroyHandled = true
                                     TriggerClientEvent('sunset:client:notify', src,
-                                        'Trailer destroyed! Spawning a replacement — use /recovertrailer if needed.', 'error', 8000)
+                                        exports.sunset_core:TFor(src, 'jobs.message.trailer_destroyed_replacement'), 'error', 8000)
                                     TriggerClientEvent('sunset:jobs:trailerRespawn', src, {
                                         truckNetId = session.vehicleNetId,
                                         trailerModel = cfg.trailerModel,

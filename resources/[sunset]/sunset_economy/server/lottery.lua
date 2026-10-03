@@ -232,8 +232,8 @@ RegisterCommand('lottery', function(source, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/loto', 'Buy a ticket for the hourly lottery or view the jackpot', {
-    { name = 'number/info', help = 'Number (1-100) or "info"' }
+    { name = 'number/info', helpKey = "config.economy.help.number_1_100_or_info.2c795207", help = 'Number (1-100) or "info"' }
 })
 TriggerEvent('chat:addSuggestion', '/lottery', 'Alias for /loto', {
-    { name = 'number/info', help = 'Number (1-100) or "info"' }
+    { name = 'number/info', helpKey = "config.economy.help.number_1_100_or_info.2c795207", help = 'Number (1-100) or "info"' }
 })

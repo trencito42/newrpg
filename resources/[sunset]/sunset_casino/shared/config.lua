@@ -84,22 +84,22 @@ SunsetCasino.Config = {
         { label = '$25,000',       type = 'cash',   value = 25000 },
         { label = '$50,000',       type = 'cash',   value = 50000 },
         { label = '$100,000',      type = 'cash',   value = 100000 },
-        { label = '500 Chips',     type = 'chips',  value = 500 },
-        { label = '1000 Chips',    type = 'chips',  value = 1000 },
-        { label = '2500 Chips',    type = 'chips',  value = 2500 },
-        { label = 'Vehicle Discount', type = 'discount', value = 20 },
-        { label = 'Mystery Prize', type = 'mystery', value = 0 },
-        { label = 'Nothing',       type = 'none',   value = 0 },
+        { labelKey = "config.casino.label.500_chips.f58ac0ca", label = '500 Chips',     type = 'chips',  value = 500 },
+        { labelKey = "config.casino.label.1000_chips.c09fb290", label = '1000 Chips',    type = 'chips',  value = 1000 },
+        { labelKey = "config.casino.label.2500_chips.87069bac", label = '2500 Chips',    type = 'chips',  value = 2500 },
+        { labelKey = "config.casino.label.vehicle_discount.2781ed07", label = 'Vehicle Discount', type = 'discount', value = 20 },
+        { labelKey = "config.casino.label.mystery_prize.776c7935", label = 'Mystery Prize', type = 'mystery', value = 0 },
+        { labelKey = "config.casino.label.nothing.220bbd1d", label = 'Nothing',       type = 'none',   value = 0 },
         { label = '$2,500',        type = 'cash',   value = 2500 },
     },
 
     -- ── BAR DRINKS ──
     barDrinks = {
-        { id = 'beer',       label = 'Beer',        price = 50,  effect = 'thirst', value = 20 },
-        { id = 'wine',       label = 'Wine',        price = 100, effect = 'thirst', value = 25 },
-        { id = 'whiskey',    label = 'Whiskey',     price = 150, effect = 'thirst', value = 30 },
-        { id = 'cocktail',   label = 'Cocktail',    price = 200, effect = 'thirst', value = 35 },
-        { id = 'champagne',  label = 'Champagne',   price = 500, effect = 'thirst', value = 50 },
+        { id = 'beer',       labelKey = "config.casino.label.beer.042edc80", label = 'Beer',        price = 50,  effect = 'thirst', value = 20 },
+        { id = 'wine',       labelKey = "config.casino.label.wine.40d5ba7f", label = 'Wine',        price = 100, effect = 'thirst', value = 25 },
+        { id = 'whiskey',    labelKey = "config.casino.label.whiskey.9d9537fc", label = 'Whiskey',     price = 150, effect = 'thirst', value = 30 },
+        { id = 'cocktail',   labelKey = "config.casino.label.cocktail.f364c737", label = 'Cocktail',    price = 200, effect = 'thirst', value = 35 },
+        { id = 'champagne',  labelKey = "config.casino.label.champagne.47892af0", label = 'Champagne',   price = 500, effect = 'thirst', value = 50 },
     },
 
     -- ── LIMITS ──

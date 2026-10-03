@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentSession } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle, dbTransaction } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { isSameOriginWrite } from "@/lib/request-security";
+import { t } from "@/lib/i18n";
+
 
 const voteSchema = z.object({
   pollId: z.number().int().positive(),
@@ -25,6 +27,7 @@ interface CharCheckRow extends RowDataPacket {
 }
 
 export async function POST(req: NextRequest) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   const session = await getCurrentSession();
   if (!session) {
@@ -116,7 +119,7 @@ export async function POST(req: NextRequest) {
     }
     if (err.code === "ER_DUP_ENTRY") {
       return NextResponse.json(
-        { error: "already_voted", message: "You have already cast a vote in this poll." },
+        { error: "already_voted", message: t(locale, "interface.you_have_already_voted_in_this_poll") },
         { status: 409 }
       );
     }

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -62,7 +63,7 @@ export default async function StaffFactionsPage() {
       id: fId,
       label: config.label,
       type: config.type,
-      factionType: config.factionType,
+      factionType: t(locale, config.factionTypeKey),
       color: config.color,
       leader: leader[0] || null,
       memberCount: Number(membersCount[0]?.count || 0),

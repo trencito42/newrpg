@@ -629,7 +629,7 @@ export function ClanManageClient({
                 disabled={savingSettings}
                 className="w-full py-2 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-semibold rounded text-xs transition-colors"
               >
-                {savingSettings ? "Se salvează..." : "Salvează Setările"}
+                {savingSettings ? t(locale, "interface.saving") : t(locale, "interface.save_settings")}
               </button>
             </div>
           </div>

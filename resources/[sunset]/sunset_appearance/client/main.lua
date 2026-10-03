@@ -315,7 +315,7 @@ exports('RegisterTopCompatibility', function(gender, topDrawable, rule)
 end)
 
 RegisterCommand('relook', function()
-    exports.sunset_ui:Notify('Appearance editor has been replaced with the /skins system.', 'info')
+    exports.sunset_ui:Notify(exports.sunset_core:Translate('appearance.presentation.the_appearance_editor_has_been_replaced_with_skins'), 'info')
 end, false)
 
 -- [CLIENT_PERF_ENTITY_AUDIT] Restore camera/focus/ped state if stopped mid-editor.

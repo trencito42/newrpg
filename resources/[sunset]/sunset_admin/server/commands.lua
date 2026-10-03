@@ -255,19 +255,19 @@ local function medicInRange(source, target)
 end
 
 local StatDefinitions = {
-    cash = { scope = 'character', field = 'cash', min = 0, max = 2000000000, label = 'cash' },
-    bank = { scope = 'character', field = 'bank', min = 0, max = 2000000000, label = 'bank balance' },
-    level = { scope = 'character', field = 'level', min = 1, max = 1000, label = 'level' },
-    rp = { scope = 'character', field = 'respect_points', min = 0, max = 1000000, label = 'Respect Points' },
+    cash = { scope = 'character', field = 'cash', min = 0, max = 2000000000, labelKey = "config.admin.label.cash.e02072f7", label = 'cash' },
+    bank = { scope = 'character', field = 'bank', min = 0, max = 2000000000, labelKey = "config.admin.label.bank_balance.cdf0f5cc", label = 'bank balance' },
+    level = { scope = 'character', field = 'level', min = 1, max = 1000, labelKey = "config.admin.label.level.1b93a13d", label = 'level' },
+    rp = { scope = 'character', field = 'respect_points', min = 0, max = 1000000, labelKey = "config.admin.label.respect_points.e52f11a4", label = 'Respect Points' },
     respect = { alias = 'rp' },
-    paydays = { scope = 'character', field = 'paydays_received', min = 0, max = 1000000, label = 'paydays received' },
-    hunger = { scope = 'character', field = 'hunger', min = 0, max = 100, label = 'hunger' },
-    thirst = { scope = 'character', field = 'thirst', min = 0, max = 100, label = 'thirst' },
-    stress = { scope = 'character', field = 'stress', min = 0, max = 100, label = 'stress' },
-    playtime = { scope = 'player', field = 'playtime', min = 0, max = 10000000, label = 'playtime minutes' },
-    rob = { scope = 'rob_points', field = 'rob_points', min = 0, max = 1000000, label = 'Rob Points' },
+    paydays = { scope = 'character', field = 'paydays_received', min = 0, max = 1000000, labelKey = "config.admin.label.paydays_received.e154879f", label = 'paydays received' },
+    hunger = { scope = 'character', field = 'hunger', min = 0, max = 100, labelKey = "config.admin.label.hunger.93ddc2d1", label = 'hunger' },
+    thirst = { scope = 'character', field = 'thirst', min = 0, max = 100, labelKey = "config.admin.label.thirst.0e30f4be", label = 'thirst' },
+    stress = { scope = 'character', field = 'stress', min = 0, max = 100, labelKey = "config.admin.label.stress.3fc10044", label = 'stress' },
+    playtime = { scope = 'player', field = 'playtime', min = 0, max = 10000000, labelKey = "config.admin.label.playtime_minutes.1566c5e8", label = 'playtime minutes' },
+    rob = { scope = 'rob_points', field = 'rob_points', min = 0, max = 1000000, labelKey = "config.admin.label.rob_points.434ed57a", label = 'Rob Points' },
     robpoints = { alias = 'rob' },
-    premium = { scope = 'account', field = 'premium_points', min = 0, max = 2000000000, label = 'Blaze Points' },
+    premium = { scope = 'account', field = 'premium_points', min = 0, max = 2000000000, labelKey = "config.admin.label.blaze_points.f1b8b690", label = 'Blaze Points' },
     sunsetcoins = { alias = 'premium' },
 }
 

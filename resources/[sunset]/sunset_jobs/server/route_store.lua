@@ -256,7 +256,7 @@ function SunsetJobRoutes.LoadFallback()
         end
         garbageRoutes[1] = {
             id = 'legacy_south_ls',
-            label = 'South Los Santos Loop',
+            labelKey = "config.jobs.label.south_los_santos_loop.0ad5fe0f", label = 'South Los Santos Loop',
             bins = bins,
         }
     end
@@ -329,7 +329,7 @@ function SunsetJobRoutes.SaveJobRoutes(jobName, routesList)
             normalizedList[#normalizedList + 1] = norm
         end
     else
-        return false, 'Unsupported job name: ' .. tostring(jobName)
+        return false, { localeKey = 'jobs.message.unsupported_job_name', params = { job = tostring(jobName) } }
     end
 
     -- Update Cache

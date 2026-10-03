@@ -39,13 +39,15 @@
     "page": "Page",
     "of": "of",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "previous": "Previous",
+    "level_short": "Lvl"
   },
   "nav": {
     "home": "Home",
     "players": "Players",
     "factions": "Factions",
-    "turfs": "Turfs",
+    "turfs": "Territories",
     "staff": "Staff",
     "stats": "Statistics",
     "polls": "Polls",
@@ -72,11 +74,11 @@
   "home": {
     "badge": "Panel",
     "title": "{serverName}",
-    "subtitle": "",
+    "subtitle": "Welcome to the community.",
     "players_online": "Players Online",
     "registered_accounts": "Accounts",
     "active_factions": "Factions",
-    "controlled_turfs": "Turfs",
+    "controlled_turfs": "Territories",
     "featured_poll": "Poll",
     "poll_ends_in": "Ends in",
     "vote_now": "Vote",
@@ -127,11 +129,13 @@
     "reset_request_new": "Request a New Reset Link",
     "reset_error_missing_token": "Reset token is missing. Please open the full link received by email.",
     "reset_error_min_length": "The new password must contain at least 6 characters.",
-    "reset_error_mismatch": "The new password and confirmation do not match."
+    "reset_error_mismatch": "The new password and confirmation do not match.",
+    "not_logged_in": "Not logged in.",
+    "character_not_owned": "Character does not belong to this account."
   },
   "account": {
     "title": "Account",
-    "subtitle": "",
+    "subtitle": "Manage your account and characters.",
     "details": "Account Details",
     "username": "Username",
     "email": "Email",
@@ -151,7 +155,7 @@
   },
   "players": {
     "directory_title": "Players",
-    "directory_subtitle": "",
+    "directory_subtitle": "Discover the community.",
     "search_hint": "Search by player name...",
     "found_count": "{count} players found",
     "no_results": "No matching players found.",
@@ -159,7 +163,7 @@
     "general_info": "Overview",
     "statistics": "Statistics",
     "progression": "Progress",
-    "respect_points": "Respect",
+    "respect_points": "Respect points",
     "paydays": "Paydays",
     "hours_played": "Hours",
     "civilian_job": "Job",
@@ -175,11 +179,12 @@
     "skills": "Job Progress",
     "reputation": "Mission Contacts",
     "sanctions_history": "Warnings",
-    "no_sanctions": "No warnings."
+    "no_sanctions": "No warnings.",
+    "no_players_found": "No players found."
   },
   "factions": {
     "title": "Factions",
-    "subtitle": "",
+    "subtitle": "Explore factions and recruitment.",
     "leader": "Leader",
     "members": "Members",
     "duty_type": "Duty",
@@ -193,8 +198,8 @@
     "rank_name": "Rank"
   },
   "turfs": {
-    "title": "Turfs",
-    "subtitle": "",
+    "title": "Territories",
+    "subtitle": "Explore contested territories.",
     "controlled_by": "Controlled By",
     "unowned": "Unclaimed",
     "payout": "Payday Payout",
@@ -203,7 +208,7 @@
   },
   "polls": {
     "title": "Polls",
-    "subtitle": "",
+    "subtitle": "Have your say in community decisions.",
     "active_polls": "Active Polls",
     "closed_polls": "Closed Polls",
     "vote_button": "Submit Vote",
@@ -214,11 +219,15 @@
     "voting_success": "Your vote has been recorded.",
     "min_level": "Min Level: {level}",
     "min_hours": "Min Hours: {hours}h",
-    "total_votes": "{count} total votes"
+    "total_votes": "{count} total votes",
+    "metadata": {
+      "title": "Polls & mayoral elections • Racket RPG",
+      "description": "Vote on server decisions and choose the mayor of Los Santos."
+    }
   },
   "support": {
     "title": "Support",
-    "subtitle": "",
+    "subtitle": "Get help from the team.",
     "create_ticket": "New Ticket",
     "department": "Department",
     "subject": "Subject",
@@ -237,7 +246,7 @@
   },
   "staff": {
     "title": "Staff",
-    "subtitle": "",
+    "subtitle": "Meet the server team.",
     "admins": "Administrators",
     "helpers": "Helpers",
     "leaders": "Faction Leaders",
@@ -313,8 +322,6 @@
       "back_to_clan_page": "Back to clan page",
       "clan_recruitment_application": "Clan Recruitment Application",
       "answer_truthfully_to_convince_clan_leadership": "Answer truthfully to convince clan leadership.",
-      "text_8f8b83_hover_text_f2efe8": "text-[#8F8B83] hover:text-[#F2EFE8]",
-      "bg_surface_200_text_f2efe8_shadow_sm": "bg-surface-200 text-[#F2EFE8] shadow-sm",
       "why_do_you_want_to_join_this_clan_and_what_can_you_contribute": "Why do you want to join this clan and what can you contribute?",
       "describe_your_playstyle_experience_and_why_you_chose_this_clan": "Describe your playstyle, experience, and why you chose this clan...",
       "your_detailed_response": "Your detailed response...",
@@ -343,7 +350,7 @@
       "open_thread": "Open Thread",
       "player": "Player",
       "rank": "Rank",
-      "warns": "Warns",
+      "warns": "Warnings",
       "manage": "Manage",
       "actor": "Actor",
       "action": "Action",
@@ -399,7 +406,7 @@
       "resignations": "Resignations",
       "recruitment": "Recruitment",
       "pending_resignations": "Pending Resignations",
-      "fwarns": "FWarns",
+      "fwarns": "Faction warnings",
       "fp": "FP",
       "member": "Member",
       "no_resignation_requests_recorded": "No resignation requests recorded",
@@ -702,12 +709,10 @@
       "top_server_players": "Top Server Players",
       "most_wealthy_experienced_citizens": "Most wealthy & experienced citizens",
       "wealth": "Wealth",
+      "level_short": "LVL",
       "view_full_rankings_statistics": "View full rankings (Statistics)"
     },
-    "components_navigation_languagetoggle": {
-      "bg_brand_text_08080a": "bg-brand text-[#08080A]",
-      "text_8f8b83_hover_text_f2efe8": "text-[#8F8B83] hover:text-[#F2EFE8]"
-    },
+    "components_navigation_languagetoggle": {},
     "components_navigation_mobilenav": {
       "updates_news": "Updates & News"
     },
@@ -720,7 +725,7 @@
       "staff_panel": "Staff Panel",
       "staff_team": "Staff Team",
       "sanctions": "Sanctions",
-      "audit_log": "Audit Log"
+      "audit_log": "Audit log"
     },
     "components_staff_playeractions": {
       "the_server_executed_the_action": "The server executed the action.",
@@ -887,6 +892,70 @@
     "issued_2": "Issued",
     "add_at_least_2_candidates_for_the_election": "Add at least 2 candidates for the election.",
     "add_at_least_2_response_options": "Add at least 2 response options.",
+    "poll_bilingual_fields_required": "Complete the English and Romanian titles, matching descriptions, and every option in both languages.",
+    "unexpected_problem": "An unexpected problem occurred.",
+    "poll_title_ro": "Poll title — Romanian *",
+    "poll_title_en": "Poll title — English *",
+    "poll_title_en_placeholder": "For example: Los Santos Mayor Election",
+    "poll_description_ro": "Description — Romanian",
+    "poll_description_en": "Description — English",
+    "poll_description_en_placeholder": "Describe the purpose of the vote or instructions for players in English...",
+    "poll_option_ro": "Option {number} — RO",
+    "poll_option_en": "Option {number} — EN",
+    "creating_poll": "Creating...",
+    "launch_vote": "Launch Vote",
+    "level_number": "Level {level}",
+    "never": "Never",
+    "expired": "Expired",
+    "valid": "Valid",
+    "payday_count": "{count} paydays",
+    "permanent": "Permanent",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "default_garage": "Default garage",
+    "voting_active": "Voting Active",
+    "voting_closed": "Voting Closed",
+    "saving": "Saving...",
+    "save_settings": "Save Settings",
+    "no_reason_specified": "No reason specified",
+    "dissolving": "Dissolving...",
+    "dissolve_clan": "Dissolve Clan",
+    "processing": "Processing...",
+    "appoint_leader": "Appoint Leader",
+    "apply_change": "Apply Change",
+    "confirm_staff_action": "Confirm Staff Action",
+    "publishing": "Publishing...",
+    "deleting": "Deleting...",
+    "voting": "Voting...",
+    "submit_vote": "Submit Vote",
+    "execute_action_on_server": "Execute {action} on Server",
+    "clear_faction_penalty": "Clear FP",
+    "set_fp": "Set FP",
+    "author_active": "AUTHOR ACTIVE",
+    "no_access": "NO ACCESS",
+    "revoke_author": "Revoke Author Status",
+    "grant_author": "Grant Author Permission (Blogger)",
+    "license_driver": "Driver",
+    "license_pilot": "Pilot",
+    "license_boat": "Boat",
+    "license_weapon": "Weapon",
+    "license_hunting": "Hunting",
+    "license_other": "{type}",
+    "admin_level_short": "Admin Lvl {level}",
+    "helper_level_short": "Helper Lvl {level}",
+    "player": "Player",
+    "no_phone_number": "No phone number",
+    "rank_parenthetical": "(Rank {rank})",
+    "no_clan": "No Clan",
+    "auto_ban_parenthetical": "(Auto-ban)",
+    "no_licenses": "No licenses",
+    "in_garage": "In Garage",
+    "on_street": "On Street",
+    "submitting": "Submitting...",
+    "confirm_decision": "Confirm Decision",
+    "only_active_org_members_comment": "Only active members of this {organization} may participate in discussions.",
+    "faction_lower": "faction",
+    "clan_lower": "clan",
     "create_poll_mayoral_election": "Create poll / mayoral election",
     "configure_community_votes_find_candidates": "Configure community votes & find candidates",
     "mayoral_election": "🗳️ Mayoral election",
@@ -1127,6 +1196,166 @@
     "views": "views",
     "official_author": "OFFICIAL AUTHOR",
     "article_officially_published_by_the_racket_rpg_team_on": "Article officially published by the Racket RPG team on",
-    "view_player_profile": "View player profile →"
+    "view_player_profile": "View player profile →",
+    "no_results_found_for": "No results found for “",
+    "players": "Players (",
+    "factions": "Factions (",
+    "clans": "Clans (",
+    "news_updates": "News & updates (",
+    "view_all_detailed_results": "View all detailed results →",
+    "loading_player": "Loading player...",
+    "h_played": "h played",
+    "status": "Status:",
+    "view_profile": "View profile",
+    "a_network_error_occurred": "A network error occurred.",
+    "log_in_to_vote_in_this_poll": "Log in to vote in this poll.",
+    "log_in_2": "Log in",
+    "your_vote_has_been_recorded": "Your vote has been recorded!",
+    "requirements_level": "Requirements: level",
+    "bank_total": "Bank total",
+    "cash_total": "Cash total",
+    "workers": "workers •",
+    "tasks_3": "tasks",
+    "no_job_progress_recorded": "No job progress recorded.",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "active_ban": "Active ban",
+    "reason": "Reason:",
+    "expires_2": "Expires:",
+    "log_in_to_submit_an_unban_appeal": "Log in to submit an unban appeal.",
+    "verdict": "Verdict:",
+    "title_and_content_are_required": "Title and content are required.",
+    "publish_update_news": "Publish update / news",
+    "full_markdown_support_with_live_preview": "Full Markdown support with live preview",
+    "post_title": "Post title *",
+    "e_g_update_v2_5_new_garage_tuning_system": "e.g. Update v2.5 — New garage & tuning system",
+    "cover_image_optional_url": "Cover image (optional URL)",
+    "pin_to_top": "Pin to top",
+    "short_summary_feed_card_optional": "Short summary (feed card — optional)",
+    "a_short_description_for_the_news_feed_preview": "A short description for the news feed preview...",
+    "heading_3": "Heading 3",
+    "bold": "Bold",
+    "italic": "Italic",
+    "list_item": "List item",
+    "list": "• List",
+    "inline_code": "Inline code",
+    "code": "Code",
+    "quote": "Quote",
+    "link": "Link",
+    "editor": "Editor",
+    "preview": "Preview",
+    "write_something_in_the_editor_to_see_the_preview": "Write something in the editor to see the preview.",
+    "characters": "characters",
+    "are_you_sure_you_want_to_delete_this_update": "Are you sure you want to delete this update?",
+    "copy_link": "Copy link",
+    "copied": "Copied!",
+    "share": "Share",
+    "delete_post": "Delete post",
+    "enter_your_username_or_email_address": "Enter your username or email address.",
+    "if_the_details_match_an_active_account_a_reset_link_has_been_sent_to_its_email_addres": "If the details match an active account, a reset link has been sent to its email address.",
+    "could_not_process_your_request": "Could not process your request.",
+    "the_reset_token_is_missing_or_invalid": "The reset token is missing or invalid.",
+    "the_new_password_must_contain_at_least_6_characters": "The new password must contain at least 6 characters.",
+    "the_reset_link_is_invalid_or_expired_valid_for_30_minutes_request_a_new_one": "The reset link is invalid or expired (valid for 30 minutes). Request a new one.",
+    "could_not_securely_encrypt_your_password": "Could not securely encrypt your password.",
+    "password_reset_successfully_you_can_now_log_in_with_your_new_password": "Password reset successfully! You can now log in with your new password.",
+    "could_not_save_your_new_password": "Could not save your new password.",
+    "authentication_required": "Authentication required.",
+    "you_can_only_file_3_complaints_every_10_minutes": "You can only file 3 complaints every 10 minutes.",
+    "complaint_submitted_and_awaiting_staff_review": "Complaint submitted and awaiting staff review.",
+    "an_internal_error_occurred_try_again_later": "An internal error occurred. Try again later.",
+    "only_the_reporter_reported_player_and_authorized_staff_may_reply_to_this_complaint": "Only the reporter, reported player, and authorized staff may reply to this complaint.",
+    "this_complaint_is_closed_and_no_longer_accepts_replies": "This complaint is closed and no longer accepts replies.",
+    "a_clear_reason_or_verdict_is_required_to_accept_a_complaint": "A clear reason or verdict is required to accept a complaint.",
+    "a_reason_is_required_to_dismiss_a_complaint": "A reason is required to dismiss a complaint.",
+    "no_file_provided": "No file provided.",
+    "invalid_file_size": "Invalid file size.",
+    "invalid_upload_parameters": "Invalid upload parameters.",
+    "you_do_not_have_permission_to_comment_on_this_application": "You do not have permission to comment on this application.",
+    "this_application_is_closed": "This application is closed.",
+    "you_cannot_vote_on_your_own_application": "You cannot vote on your own application.",
+    "voting_is_closed_for_finalized_applications": "Voting is closed for finalized applications.",
+    "username_is_required": "Username is required.",
+    "player_not_found": "Player not found.",
+    "you_have_already_voted_in_this_poll": "You have already voted in this poll.",
+    "a_title_and_at_least_2_options_or_candidates_are_required": "A title and at least 2 options or candidates are required.",
+    "log_in_to_your_account_to_submit_an_appeal": "Log in to your account to submit an appeal.",
+    "provide_a_detailed_explanation_of_at_least_20_characters": "Provide a detailed explanation of at least 20 characters.",
+    "you_already_have_an_appeal_under_review_wait_for_the_staff_s_verdict": "You already have an appeal under review. Wait for the staff's verdict.",
+    "your_unban_appeal_has_been_submitted": "Your unban appeal has been submitted.",
+    "you_do_not_have_permission_to_publish_updates": "You do not have permission to publish updates.",
+    "the_title_must_contain_at_least_3_characters": "The title must contain at least 3 characters.",
+    "the_content_must_contain_at_least_10_characters": "The content must contain at least 10 characters.",
+    "update_not_found": "Update not found.",
+    "you_do_not_have_permission_to_edit_this_post": "You do not have permission to edit this post.",
+    "you_do_not_have_permission_to_delete_this_post": "You do not have permission to delete this post."
+  },
+  "updates": {
+    "category": {
+      "all": "All",
+      "update": "Update",
+      "patch-notes": "Patch notes",
+      "anunt": "Announcement",
+      "eveniment": "Event",
+      "ghid": "Guide"
+    },
+    "metadata": {
+      "title": "News & updates • Racket RPG",
+      "description": "Updates, patch notes and official Racket RPG announcements.",
+      "not_found": "Update not found • Racket RPG",
+      "details": "{title} — Read the official details on Racket RPG."
+    },
+    "editor": {
+      "placeholder": "Write your post using Markdown…"
+    }
+  },
+  "search": {
+    "suggested_players": "Suggested players",
+    "player_example": "e.g. trencito or Hardy"
+  },
+  "complaints": {
+    "deathmatch": "Deathmatch"
+  },
+  "faction_catalog": {
+    "police": {
+      "type": "Law Enforcement",
+      "description": "Los Santos Police Department — patrol, citations, and city-wide law enforcement."
+    },
+    "sheriff": {
+      "type": "Law Enforcement",
+      "description": "County sheriff department — robbery response, warrants, and high-risk pursuits."
+    },
+    "fib": {
+      "type": "Federal Investigation",
+      "description": "Federal Investigation Bureau — investigations, raids, and federal warrants."
+    },
+    "medic": {
+      "type": "Medical Rescue",
+      "description": "Emergency medical services — heal, revive, and stabilize patients at Pillbox."
+    },
+    "taxi": {
+      "type": "Public Transit",
+      "description": "City taxi service — passenger transportation across San Andreas via phone dispatch."
+    },
+    "mechanic": {
+      "type": "Automotive Service",
+      "description": "Vehicle repair shop — fix cars at HQ or on the road for other players."
+    },
+    "lsfd": {
+      "type": "Fire Rescue",
+      "description": "Fire and rescue — clock in, take the firetruk, answer vehicle fires."
+    },
+    "lssi": {
+      "type": "Education & Licensing",
+      "description": "Los Santos Safety Institute — pilot, boat, and firearm licensing instructors."
+    },
+    "sunset_cartel": {
+      "type": "Criminal Syndicate",
+      "description": "Organized crime — craft at the lab, move product, stay off the radar."
+    },
+    "night_syndicate": {
+      "type": "Criminal Syndicate",
+      "description": "Street syndicate — weapons bench, fencing stolen goods, crew operations."
+    }
   }
 }

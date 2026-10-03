@@ -912,7 +912,7 @@ end)
 
 registerPropertyCommand('ahouseedit',function(source,args)
     if source==0 or not exports.sunset_admin:IsAdmin(source,SunsetProperties.AdminLevel) then return message(source,exports.sunset_core:TFor(source, 'properties.msg.admin_level_3_is_required'),'error') end
-    local id,field=tonumber(args[1]),tostring(args[2] or ''):lower(); local fields={price='price',level='minimum_level',name='label',description='description',sale='for_sale',enabled='enabled'}
+    local id,field=tonumber(args[1]),tostring(args[2] or ''):lower(); local fields={price='price',level='minimum_level',name='label',descriptionKey = "config.properties.description.description.30581606", description='description',sale='for_sale',enabled='enabled'}
     if not id or not fields[field] then return message(source,exports.sunset_core:TFor(source, 'properties.msg.usage_ahouseedit_id_price_level_name'),'error') end
     local value=table.concat(args,' ',3); if field~='name' then value=tonumber(value) end
     if field=='name' or field=='description' then value=table.concat(args,' ',3) end

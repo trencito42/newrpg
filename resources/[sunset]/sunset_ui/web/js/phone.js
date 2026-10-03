@@ -521,7 +521,7 @@ const Phone = {
         const myCardName = $('#phone-my-card-name');
         const myCardPhone = $('#phone-my-card-phone');
         const myCardAvatar = $('#phone-my-card-avatar');
-        if (myCardName) myCardName.textContent = this.data?.myName || 'My Card';
+        if (myCardName) myCardName.textContent = this.data?.myName || I18n.t('ui.phone.my_card');
         if (myCardPhone) myCardPhone.textContent = this.data?.myPhoneNumber || '555-0000';
         if (myCardAvatar) {
             const myAvatar = this.data?.myAvatar || null;

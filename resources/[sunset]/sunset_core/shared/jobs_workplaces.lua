@@ -7,11 +7,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Fisherman',
         locationLabel = 'Paleto Waterfront',
         address = 'Procopio Drive, Paleto Bay',
-        description = 'Catch fresh fish along the northern coastline and pontoon, then sell your haul at local stores.',
+        descriptionKey = "config.core.description.catch_fresh_fish_along_the_northern_coastline_and_pontoon_then_s.9ba1254c", description = 'Catch fresh fish along the northern coastline and pontoon, then sell your haul at local stores.',
         npc = {
             id = 'workplace_fisherman',
             name = 'Billy Ray',
-            title = 'Master Angler',
+            titleKey = "config.core.title.master_angler.5ab7b51c", title = 'Master Angler',
             model = 'a_m_m_hillbilly_01',
             coords = vector4(-1593.23, 5207.74, 3.31, 25.49),
             scenario = 'WORLD_HUMAN_STAND_IMPATIENT',
@@ -20,11 +20,11 @@ Sunset.JobWorkplaces = {
             badge = 'FISHING WORKPLACE',
         },
         secondaryLocation = {
-            label = 'Bait & Tackle Shop',
+            labelKey = "config.core.label.bait_tackle_shop.6cc0543a", label = 'Bait & Tackle Shop',
             coords = vector3(-1602.11, 5203.87, 4.31),
         },
         guide = {
-            title = 'Fisherman Career Guide',
+            titleKey = "config.core.title.fisherman_career_guide.a203d6a9", title = 'Fisherman Career Guide',
             steps = {
                 '1. Buy bait and a fishing rod from Billy Ray or local 24/7 stores.',
                 '2. Head to the Paleto Bay waterfront or pontoon area.',
@@ -44,8 +44,8 @@ Sunset.JobWorkplaces = {
             guide = true,
             quitJob = true,
             special = {
-                { id = 'open_bait_shop', label = 'Bait & Tackle Shop', icon = 'ph-shopping-bag', group = 'EQUIPMENT' },
-                { id = 'sell_fish', label = 'Sell Fresh Catch', icon = 'ph-currency-dollar', group = 'EQUIPMENT' },
+                { id = 'open_bait_shop', labelKey = "config.core.label.bait_tackle_shop.6cc0543a", label = 'Bait & Tackle Shop', icon = 'ph-shopping-bag', group = 'EQUIPMENT' },
+                { id = 'sell_fish', labelKey = "config.core.label.sell_fresh_catch.59655569", label = 'Sell Fresh Catch', icon = 'ph-currency-dollar', group = 'EQUIPMENT' },
             }
         },
     },
@@ -55,11 +55,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Trucker',
         locationLabel = 'Port of Los Santos',
         address = 'Terminal Way, Port of LS',
-        description = 'Haul heavy industrial cargo and fuel tanker trailers across San Andreas highway networks.',
+        descriptionKey = "config.core.description.haul_heavy_industrial_cargo_and_fuel_tanker_trailers_across_san_.4d740459", description = 'Haul heavy industrial cargo and fuel tanker trailers across San Andreas highway networks.',
         npc = {
             id = 'workplace_trucker',
             name = 'Earl - Depot Dispatcher',
-            title = 'Freight Supervisor',
+            titleKey = "config.core.title.freight_supervisor.18d3075b", title = 'Freight Supervisor',
             model = 'g_m_y_strpunk_02',
             coords = vector4(1200.59, -3107.89, 6.03, 312.11),
             scenario = 'WORLD_HUMAN_CLIPBOARD',
@@ -68,11 +68,11 @@ Sunset.JobWorkplaces = {
             badge = 'TRUCKER DEPOT',
         },
         secondaryLocation = {
-            label = 'Route Laptop',
+            labelKey = "config.core.label.route_laptop.601266e2", label = 'Route Laptop',
             coords = vector4(1207.92, -3114.87, 5.54, 259.54),
         },
         guide = {
-            title = 'Trucker Career Guide',
+            titleKey = "config.core.title.trucker_career_guide.c9fa687d", title = 'Trucker Career Guide',
             steps = {
                 '1. Apply as a Trucker with Dispatcher Earl at the dock depot.',
                 '2. Use the Route Laptop inside the office to select a delivery contract.',
@@ -82,7 +82,7 @@ Sunset.JobWorkplaces = {
             }
         },
         requirements = {
-            minLevel = 5,
+            minLevel = 1,
             licenses = { 'driver' },
         },
         actions = {
@@ -92,7 +92,7 @@ Sunset.JobWorkplaces = {
             guide = true,
             quitJob = true,
             special = {
-                { id = 'open_laptop', label = 'Open Route Laptop', icon = 'ph-laptop', group = 'DISPATCH' },
+                { id = 'open_laptop', labelKey = "config.core.label.open_route_laptop.3a94a61e", label = 'Open Route Laptop', icon = 'ph-laptop', group = 'DISPATCH' },
             }
         },
     },
@@ -102,11 +102,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Garbage Collector',
         locationLabel = 'Davis Sanitation Yard',
         address = 'Innocence Blvd, Davis',
-        description = 'Collect waste routes across city neighborhoods and unload at the central compaction depot.',
+        descriptionKey = "config.core.description.collect_waste_routes_across_city_neighborhoods_and_unload_at_the.1d211277", description = 'Collect waste routes across city neighborhoods and unload at the central compaction depot.',
         npc = {
             id = 'workplace_garbage',
             name = 'Sal - Sanitation Foreman',
-            title = 'Sanitation Supervisor',
+            titleKey = "config.core.title.sanitation_supervisor.23d2afbb", title = 'Sanitation Supervisor',
             model = 's_m_y_garbage',
             coords = vector4(-321.70, -1545.94, 27.72, 270.0),
             scenario = 'WORLD_HUMAN_CLIPBOARD',
@@ -115,11 +115,11 @@ Sunset.JobWorkplaces = {
             badge = 'SANITATION DEPOT',
         },
         secondaryLocation = {
-            label = 'Compaction Unload Bay',
+            labelKey = "config.core.label.compaction_unload_bay.b1f08d0c", label = 'Compaction Unload Bay',
             coords = vector3(-350.45, -1560.22, 25.22),
         },
         guide = {
-            title = 'Garbage Collector Career Guide',
+            titleKey = "config.core.title.garbage_collector_career_guide.2eac0d64", title = 'Garbage Collector Career Guide',
             steps = {
                 '1. Apply with Foreman Sal at the Davis Sanitation Yard.',
                 '2. Start your route to dispatch a company Trashmaster truck.',
@@ -146,11 +146,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Courier',
         locationLabel = 'Post OP Warehouse',
         address = 'Elysian Fields Fwy, Terminal',
-        description = 'Load parcel crates at the distribution warehouse and make door-to-door deliveries.',
+        descriptionKey = "config.core.description.load_parcel_crates_at_the_distribution_warehouse_and_make_door_t.f342ecc8", description = 'Load parcel crates at the distribution warehouse and make door-to-door deliveries.',
         npc = {
             id = 'workplace_courier',
             name = 'Artie - Parcel Dispatcher',
-            title = 'Logistics Coordinator',
+            titleKey = "config.core.title.logistics_coordinator.ac54ab2b", title = 'Logistics Coordinator',
             model = 's_m_m_postal_01',
             coords = vector4(78.45, 112.22, 81.16, 160.0),
             scenario = 'WORLD_HUMAN_CLIPBOARD',
@@ -159,11 +159,11 @@ Sunset.JobWorkplaces = {
             badge = 'POST OP DEPOT',
         },
         secondaryLocation = {
-            label = 'Loading Dock',
+            labelKey = "config.core.label.loading_dock.9fc5d5be", label = 'Loading Dock',
             coords = vector4(112.48, 103.98, 81.15, 346.18),
         },
         guide = {
-            title = 'Courier Career Guide',
+            titleKey = "config.core.title.courier_career_guide.820f297a", title = 'Courier Career Guide',
             steps = {
                 '1. Apply with Dispatcher Artie at the Post OP warehouse.',
                 '2. Start your delivery run to spawn your delivery van.',
@@ -190,11 +190,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Hunter',
         locationLabel = 'Sandy Shores Hunting Lodge',
         address = 'Hunting Lodge, Sandy Shores, Blaine County',
-        description = 'Take on wildlife management contracts across Blaine County. Requires Character Level 10, a valid Firearm License and Hunting License.',
+        descriptionKey = "config.core.description.take_on_wildlife_management_contracts_across_blaine_county_requi.90d9f1b9", description = 'Take on wildlife management contracts across Blaine County. Requires a valid Firearm License and Hunting License.',
         npc = {
             id = 'mason_hunter',
             name = 'Mason',
-            title = 'Hunting Guide',
+            titleKey = "config.core.title.hunting_guide.a68de664", title = 'Hunting Guide',
             model = 's_m_m_highsec_01',
             coords = vector4(1838.0, 3673.0, 34.2, 290.0),
             scenario = 'WORLD_HUMAN_SMOKING',
@@ -203,9 +203,9 @@ Sunset.JobWorkplaces = {
             badge = 'HUNTING LODGE',
         },
         guide = {
-            title = 'Hunter Career Guide',
+            titleKey = "config.core.title.hunter_career_guide.14a0e353", title = 'Hunter Career Guide',
             steps = {
-                '1. Reach Level 10 and ensure you hold a valid Firearm License and Hunting License (from LSSI).',
+                '1. Ensure you hold a valid Firearm License and Hunting License (from LSSI).',
                 '2. Apply as Hunter with Mason at the Hunting Lodge.',
                 '3. Start a shift and choose a Hunting Contract from the board.',
                 '4. Travel to the assigned zone. No exact animal GPS — track them.',
@@ -215,7 +215,7 @@ Sunset.JobWorkplaces = {
             },
         },
         requirements = {
-            minLevel = 10,
+            minLevel = 1,
             licenses = { 'weapon', 'hunting' },
         },
         actions = {
@@ -225,9 +225,9 @@ Sunset.JobWorkplaces = {
             guide = true,
             quitJob = true,
             special = {
-                { id = 'contracts',    label = 'Hunting Contracts',  icon = 'ph-list-bullets' },
-                { id = 'equipment',    label = 'Equipment',           icon = 'ph-backpack'     },
-                { id = 'sell_harvest', label = 'Sell Harvest',        icon = 'ph-currency-dollar' },
+                { id = 'contracts',    labelKey = "config.core.label.hunting_contracts.af217773", label = 'Hunting Contracts',  icon = 'ph-list-bullets' },
+                { id = 'equipment',    labelKey = "config.core.label.equipment.f5ef6d98", label = 'Equipment',           icon = 'ph-backpack'     },
+                { id = 'sell_harvest', labelKey = "config.core.label.sell_harvest.5d4e9934", label = 'Sell Harvest',        icon = 'ph-currency-dollar' },
             },
         },
     },
@@ -237,11 +237,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Marine Salvage Diver',
         locationLabel = 'Vespucci Marine Salvage',
         address = 'Vespucci Canals Waterfront, South LS',
-        description = 'Recover submerged cargo, electronics, and artifacts from coastal wrecks.',
+        descriptionKey = "config.core.description.recover_submerged_cargo_electronics_and_artifacts_from_coastal_w.9515213e", description = 'Recover submerged cargo, electronics, and artifacts from coastal wrecks.',
         npc = {
             id = 'terry_diver',
             name = 'Terry',
-            title = 'Dive Contractor',
+            titleKey = "config.core.title.dive_contractor.1914fd15", title = 'Dive Contractor',
             model = 's_m_m_dockwork_01',
             coords = vector4(-812.0, -1282.0, 5.0, 270.0),
             scenario = 'WORLD_HUMAN_CLIPBOARD',
@@ -250,9 +250,9 @@ Sunset.JobWorkplaces = {
             badge = 'MARINE SALVAGE',
         },
         guide = {
-            title = 'Marine Salvage Career Guide',
+            titleKey = "config.core.title.marine_salvage_career_guide.dc2ef14b", title = 'Marine Salvage Career Guide',
             steps = {
-                '1. Reach Level 6 and apply as Diver with Terry at the Vespucci waterfront.',
+                '1. Apply as Diver with Terry at the Vespucci waterfront.',
                 '2. Rent Diving Gear (required before diving).',
                 '3. Start a shift and choose a Salvage Contract.',
                 '4. Travel to the search area — no exact marker, use your detector underwater.',
@@ -262,7 +262,7 @@ Sunset.JobWorkplaces = {
             },
         },
         requirements = {
-            minLevel = 6,
+            minLevel = 1,
             licenses = {},  -- No baseline license; boat license checked per-contract
         },
         actions = {
@@ -272,10 +272,10 @@ Sunset.JobWorkplaces = {
             guide = true,
             quitJob = true,
             special = {
-                { id = 'contracts',  label = 'Salvage Contracts',  icon = 'ph-anchor'       },
-                { id = 'rent_gear',  label = 'Rent Diving Gear',   icon = 'ph-waves'        },
-                { id = 'rent_boat',  label = 'Rent Work Boat',     icon = 'ph-boat'         },
-                { id = 'sell',       label = 'Sell Salvage',       icon = 'ph-currency-dollar' },
+                { id = 'contracts',  labelKey = "config.core.label.salvage_contracts.131a1c76", label = 'Salvage Contracts',  icon = 'ph-anchor'       },
+                { id = 'rent_gear',  labelKey = "config.core.label.rent_diving_gear.b8dcab39", label = 'Rent Diving Gear',   icon = 'ph-waves'        },
+                { id = 'rent_boat',  labelKey = "config.core.label.rent_work_boat.8ba14945", label = 'Rent Work Boat',     icon = 'ph-boat'         },
+                { id = 'sell',       labelKey = "config.core.label.sell_salvage.2c633509", label = 'Sell Salvage',       icon = 'ph-currency-dollar' },
             },
         },
     },
@@ -285,11 +285,11 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Bus Driver',
         locationLabel = 'Transit Terminal',
         address = 'Integrity Way / Pillbox Hill Transit Center',
-        description = 'Operate scheduled public bus lines across Los Santos. Pick up waiting passengers at bus stops, issue tickets, and earn passenger fares + transit bonuses.',
+        descriptionKey = "config.core.description.operate_scheduled_public_bus_lines_across_los_santos_pick_up_wai.79f65435", description = 'Operate scheduled public bus lines across Los Santos. Pick up waiting passengers at bus stops, issue tickets, and earn passenger fares + transit bonuses.',
         npc = {
             id = 'workplace_busdriver',
             name = 'Gus - Transit Dispatcher',
-            title = 'Operations Supervisor',
+            titleKey = "config.core.title.operations_supervisor.4aebba8c", title = 'Operations Supervisor',
             model = 's_m_m_cntrybar_01',
             coords = vector4(435.44, -646.28, 28.74, 124.73),
             scenario = 'WORLD_HUMAN_CLIPBOARD',
@@ -298,7 +298,7 @@ Sunset.JobWorkplaces = {
             badge = 'TRANSIT DEPOT',
         },
         guide = {
-            title = 'Bus Driver Career Guide',
+            titleKey = "config.core.title.bus_driver_career_guide.dc507668", title = 'Bus Driver Career Guide',
             steps = {
                 '1. Apply as a Bus Driver with Dispatcher Gus at the Transit Terminal.',
                 '2. Start your shift to dispatch an official LS Transit Bus.',
@@ -308,9 +308,8 @@ Sunset.JobWorkplaces = {
             }
         },
         requirements = {
-            minLevel = 4,
+            minLevel = 1,
             licenses = { 'driver' },
-            progressionGate = 'job.busdriver',
         },
         actions = {
             apply = true,

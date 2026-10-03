@@ -92,7 +92,7 @@ local function buildVehicleEcuInfo(props)
         stock = true,
         summary = 'Mapa ECU stock',
         chips = { 'STOCK' },
-        lines = { { label = 'ECU', value = 'Factory map' } },
+        lines = { { labelKey = "config.vehicles.label.ecu.52b88a75", label = 'ECU', value = 'Factory map' } },
         tune = nil,
     }
 end

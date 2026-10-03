@@ -108,7 +108,7 @@ const Missions = (() => {
         const cdVal = $('#offer-cooldown');
         const acceptBtn = $('#btn-accept');
         if (data.cooldown && data.cooldown > 0) {
-            if (cdVal) cdVal.textContent = fmtTime(data.cooldown) + ' remaining';
+            if (cdVal) cdVal.textContent = I18n.t('ui.missions.cooldown_remaining', { time: fmtTime(data.cooldown) });
             if (cdRow) cdRow.classList.remove('hidden');
             if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.style.opacity = '0.35'; }
         } else {

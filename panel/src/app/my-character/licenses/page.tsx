@@ -69,7 +69,7 @@ export default async function MyLicensesPage() {
                     <span className="font-semibold text-[#F2EFE8] capitalize">
                       {lic.type} {t(locale, "interface.license")}</span>
                     <span className={`font-medium ${isExpired ? "text-red-400" : "text-emerald-400"}`}>
-                      {isExpired ? "Expired" : "Valid"}
+                      {isExpired ? t(locale, "interface.expired") : t(locale, "interface.valid")}
                     </span>
                   </div>
 
@@ -77,7 +77,7 @@ export default async function MyLicensesPage() {
                     <div className="flex items-center justify-between">
                       <span>{t(locale, "interface.remaining")}</span>
                       <span className="font-mono text-[#B4AFA4]">
-                        {remainingPaydays !== null ? `${remainingPaydays} paydays` : "Permanent"}
+                        {remainingPaydays !== null ? t(locale, "interface.payday_count", { count: remainingPaydays }) : t(locale, "interface.permanent")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">

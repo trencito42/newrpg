@@ -1,9 +1,13 @@
+import { getViewerLocale } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import fs from "fs/promises";
 import path from "path";
+import { t } from "@/lib/i18n";
+
 
 export async function POST(req: NextRequest) {
+  const locale = await getViewerLocale();
   try {
     const mediaType = req.headers.get("x-media-type") || "player_avatar";
     const mediaHash = req.headers.get("x-media-hash") || "default";
@@ -14,12 +18,12 @@ export async function POST(req: NextRequest) {
     const file = formData.get("files[]") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: t(locale, "interface.no_file_provided") }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     if (buffer.length === 0 || buffer.length > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "Invalid file size" }, { status: 400 });
+      return NextResponse.json({ error: t(locale, "interface.invalid_file_size") }, { status: 400 });
     }
 
     // Token format: mediaType_accountId_timestamp
@@ -63,9 +67,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, url: previewUrl });
     }
 
-    return NextResponse.json({ error: "Invalid upload parameters" }, { status: 400 });
+    return NextResponse.json({ error: t(locale, "interface.invalid_upload_parameters") }, { status: 400 });
   } catch (err) {
     console.error("Media upload error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: t(locale, "interface.an_internal_error_occurred_try_again_later") }, { status: 500 });
   }
 }

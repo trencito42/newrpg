@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch Dogs Hacking Protocol</title>
+    <title data-i18n="interface.hacking_protocol"></title>
     <script>
         window.prompt = function() { return null; };
         window.alert = function() {};
@@ -31,16 +31,16 @@
             <div class="ctos-brand">
                 <div class="ctos-indicator">
                     <span class="live-dot"></span>
-                    <span class="sys-code" id="hud-sys-code">LIVE_SURVEILLANCE // 0x4F8E</span>
+                    <span class="sys-code" id="hud-sys-code"><span data-i18n="interface.live_surveillance_0x4f8e"></span></span>
                 </div>
-                <h1 class="ctos-title" id="hud-title">CTOS_NETWORK_GRID</h1>
-                <div class="ctos-subtitle" id="hud-subtitle">CIRCUIT_INTRUSION // ROUTE SOURCE TO TARGET</div>
+                <h1 class="ctos-title" id="hud-title"><span data-i18n="interface.ctos_network_grid"></span></h1>
+                <div class="ctos-subtitle" id="hud-subtitle"><span data-i18n="interface.circuit_intrusion_connect_source_to_target"></span></div>
             </div>
 
             <div class="ctos-meters">
                 <div class="meter-box time-meter">
                     <div class="meter-label">
-                        <span>TRACE_TIME</span>
+                        <span><span data-i18n="interface.trace_time"></span></span>
                         <strong id="hud-time">35.0s</strong>
                     </div>
                     <div class="meter-track">
@@ -50,8 +50,8 @@
 
                 <div class="meter-box signal-meter">
                     <div class="meter-label">
-                        <span>SIGNAL</span>
-                        <strong id="hud-signal">ONLINE</strong>
+                        <span><span data-i18n="interface.signal"></span></span>
+                        <strong id="hud-signal"><span data-i18n="interface.online"></span></strong>
                     </div>
                     <div class="signal-bars">
                         <span class="sig-bar active"></span>
@@ -84,21 +84,21 @@
             </svg>
 
             <!-- Glitching Win Message -->
-            <div id="success-message">SYSTEM OVERRIDE</div>
+            <div id="success-message"><span data-i18n="interface.system_override"></span></div>
         </div>
 
         <!-- Minimal ctOS Footer Controls & Objective Status -->
         <footer class="ctos-footer">
             <div class="ctos-status-line">
                 <span class="status-bracket">[</span>
-                <span id="hud-status" class="status-text">NETWORK TOPOLOGY MAPPED // ROTATE NODES TO ENERGIZE TARGET</span>
+                <span id="hud-status" class="status-text"><span data-i18n="interface.network_mapped_rotate_nodes_to_power_the_target"></span></span>
                 <span class="status-bracket">]</span>
             </div>
 
             <div class="ctos-hints">
-                <div class="hint-item"><kbd>L-CLICK</kbd> <span>ROTATE 90°</span></div>
-                <div class="hint-item"><kbd>R-CLICK</kbd> <span>ROTATE CCW</span></div>
-                <div class="hint-item" id="hint-cancel"><kbd>ESC</kbd> <span>CANCEL</span></div>
+                <div class="hint-item"><kbd><span data-i18n="interface.left_click"></span></kbd> <span><span data-i18n="interface.rotate_90"></span></span></div>
+                <div class="hint-item"><kbd><span data-i18n="interface.right_click"></span></kbd> <span><span data-i18n="interface.rotate_counterclockwise"></span></span></div>
+                <div class="hint-item" id="hint-cancel"><kbd>ESC</kbd> <span><span data-i18n="interface.cancel"></span></span></div>
             </div>
         </footer>
 
@@ -115,6 +115,8 @@
     </div>
 
     <!-- Scripts -->
+    <script src="nui://sunset_ui/web/js/i18n.generated.js"></script>
+    <script src="nui://sunset_ui/web/js/i18n.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/graph.js"></script>
     <script src="js/app.js"></script>

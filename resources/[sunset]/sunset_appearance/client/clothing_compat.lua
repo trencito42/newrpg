@@ -3,19 +3,19 @@ SunsetClothing = SunsetClothing or {}
 local PRICE_PER_ITEM = 50
 
 SunsetClothing.Categories = {
-    { id = 'hat', label = 'Hats', display = 'Hats / Caps', kind = 'prop', slot = 0, icon = 'ph-baseball-cap', camera = 'face' },
-    { id = 'mask', label = 'Masks', display = 'Masks', kind = 'component', slot = 1, icon = 'ph-mask-happy', camera = 'face' },
-    { id = 'glasses', label = 'Glasses', display = 'Glasses', kind = 'prop', slot = 1, icon = 'ph-sunglasses', camera = 'face' },
-    { id = 'ears', label = 'Earrings', display = 'Ears / Earrings', kind = 'prop', slot = 2, icon = 'ph-ear', camera = 'face' },
-    { id = 'accessory', label = 'Accessories', display = 'Chains / Accessories', kind = 'component', slot = 7, icon = 'ph-sketch-logo', camera = 'full' },
-    { id = 'top', label = 'Tops', display = 'Shirt / Jacket', kind = 'component', slot = 11, icon = 'ph-t-shirt', camera = 'full', syncTorso = true },
-    { id = 'undershirt', label = 'Undershirts', display = 'Undershirts', kind = 'component', slot = 8, icon = 'ph-shirt-folded', camera = 'full', compatFilter = true },
-    { id = 'vest', label = 'Vests', display = 'Vests / Body Armor', kind = 'component', slot = 9, icon = 'ph-shield-check', camera = 'full' },
-    { id = 'pants', label = 'Pants', display = 'Pants', kind = 'component', slot = 4, icon = 'ph-pants', camera = 'full' },
-    { id = 'shoes', label = 'Shoes', display = 'Footwear', kind = 'component', slot = 6, icon = 'ph-sneaker', camera = 'feet' },
-    { id = 'bag', label = 'Bags', display = 'Backpacks / Bags', kind = 'component', slot = 5, icon = 'ph-backpack', camera = 'full' },
-    { id = 'watch', label = 'Watches', display = 'Watches', kind = 'prop', slot = 6, icon = 'ph-watch', camera = 'full' },
-    { id = 'bracelet', label = 'Bracelets', display = 'Bracelets', kind = 'prop', slot = 7, icon = 'ph-circle-half', camera = 'full' },
+    { id = 'hat', labelKey = "config.appearance.label.hats.6cdd841f", label = 'Hats', display = 'Hats / Caps', kind = 'prop', slot = 0, icon = 'ph-baseball-cap', camera = 'face' },
+    { id = 'mask', labelKey = "config.appearance.label.masks.f029467e", label = 'Masks', display = 'Masks', kind = 'component', slot = 1, icon = 'ph-mask-happy', camera = 'face' },
+    { id = 'glasses', labelKey = "config.appearance.label.glasses.6dc2ed6d", label = 'Glasses', display = 'Glasses', kind = 'prop', slot = 1, icon = 'ph-sunglasses', camera = 'face' },
+    { id = 'ears', labelKey = "config.appearance.label.earrings.327df571", label = 'Earrings', display = 'Ears / Earrings', kind = 'prop', slot = 2, icon = 'ph-ear', camera = 'face' },
+    { id = 'accessory', labelKey = "config.appearance.label.accessories.a1785327", label = 'Accessories', display = 'Chains / Accessories', kind = 'component', slot = 7, icon = 'ph-sketch-logo', camera = 'full' },
+    { id = 'top', labelKey = "config.appearance.label.tops.42de6e4e", label = 'Tops', display = 'Shirt / Jacket', kind = 'component', slot = 11, icon = 'ph-t-shirt', camera = 'full', syncTorso = true },
+    { id = 'undershirt', labelKey = "config.appearance.label.undershirts.d95ab77c", label = 'Undershirts', display = 'Undershirts', kind = 'component', slot = 8, icon = 'ph-shirt-folded', camera = 'full', compatFilter = true },
+    { id = 'vest', labelKey = "config.appearance.label.vests.41d0ed0c", label = 'Vests', display = 'Vests / Body Armor', kind = 'component', slot = 9, icon = 'ph-shield-check', camera = 'full' },
+    { id = 'pants', labelKey = "config.appearance.label.pants.e8273327", label = 'Pants', display = 'Pants', kind = 'component', slot = 4, icon = 'ph-pants', camera = 'full' },
+    { id = 'shoes', labelKey = "config.appearance.label.shoes.28fb3716", label = 'Shoes', display = 'Footwear', kind = 'component', slot = 6, icon = 'ph-sneaker', camera = 'feet' },
+    { id = 'bag', labelKey = "config.appearance.label.bags.93f4ee38", label = 'Bags', display = 'Backpacks / Bags', kind = 'component', slot = 5, icon = 'ph-backpack', camera = 'full' },
+    { id = 'watch', labelKey = "config.appearance.label.watches.6a2039e5", label = 'Watches', display = 'Watches', kind = 'prop', slot = 6, icon = 'ph-watch', camera = 'full' },
+    { id = 'bracelet', labelKey = "config.appearance.label.bracelets.3be89fbd", label = 'Bracelets', display = 'Bracelets', kind = 'prop', slot = 7, icon = 'ph-circle-half', camera = 'full' },
 }
 
 local function categoryById(id)

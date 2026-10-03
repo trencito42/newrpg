@@ -5,8 +5,8 @@ export interface FactionConfig {
   id: string;
   label: string;
   type: "legal" | "illegal";
-  factionType: string;
-  description: string;
+  factionTypeKey: string;
+  descriptionKey: string;
   markerRgb: [number, number, number];
   color: string; // Contrast-safe web display color matching game marker
 }
@@ -16,8 +16,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "police",
     label: "LSPD",
     type: "legal",
-    factionType: "Law Enforcement",
-    description: "Los Santos Police Department — patrol, citations, and city-wide law enforcement.",
+    factionTypeKey: "faction_catalog.police.type",
+    descriptionKey: "faction_catalog.police.description",
     markerRgb: [0, 100, 200],
     color: "#3b82f6", // Blue
   },
@@ -25,8 +25,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "sheriff",
     label: "San Andreas Sheriff",
     type: "legal",
-    factionType: "Law Enforcement",
-    description: "County sheriff department — robbery response, warrants, and high-risk pursuits.",
+    factionTypeKey: "faction_catalog.sheriff.type",
+    descriptionKey: "faction_catalog.sheriff.description",
     markerRgb: [160, 110, 40],
     color: "#d97706", // Amber / Tan gold
   },
@@ -34,8 +34,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "fib",
     label: "FIB",
     type: "legal",
-    factionType: "Federal Investigation",
-    description: "Federal Investigation Bureau — investigations, raids, and federal warrants.",
+    factionTypeKey: "faction_catalog.fib.type",
+    descriptionKey: "faction_catalog.fib.description",
     markerRgb: [20, 20, 20],
     color: "#94a3b8", // Dark silver / federal slate
   },
@@ -43,8 +43,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "medic",
     label: "Pillbox EMS",
     type: "legal",
-    factionType: "Medical Rescue",
-    description: "Emergency medical services — heal, revive, and stabilize patients at Pillbox.",
+    factionTypeKey: "faction_catalog.medic.type",
+    descriptionKey: "faction_catalog.medic.description",
     markerRgb: [255, 50, 50],
     color: "#ef4444", // Red
   },
@@ -52,8 +52,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "taxi",
     label: "Downtown Cab Co.",
     type: "legal",
-    factionType: "Public Transit",
-    description: "City taxi service — passenger transportation across San Andreas via phone dispatch.",
+    factionTypeKey: "faction_catalog.taxi.type",
+    descriptionKey: "faction_catalog.taxi.description",
     markerRgb: [255, 200, 0],
     color: "#eab308", // Yellow
   },
@@ -61,8 +61,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "mechanic",
     label: "LS Customs",
     type: "legal",
-    factionType: "Automotive Service",
-    description: "Vehicle repair shop — fix cars at HQ or on the road for other players.",
+    factionTypeKey: "faction_catalog.mechanic.type",
+    descriptionKey: "faction_catalog.mechanic.description",
     markerRgb: [255, 140, 0],
     color: "#f97316", // Orange
   },
@@ -70,8 +70,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "lsfd",
     label: "LS Fire Department",
     type: "legal",
-    factionType: "Fire Rescue",
-    description: "Fire and rescue — clock in, take the firetruk, answer vehicle fires.",
+    factionTypeKey: "faction_catalog.lsfd.type",
+    descriptionKey: "faction_catalog.lsfd.description",
     markerRgb: [255, 80, 0],
     color: "#ea580c", // Red-orange
   },
@@ -79,8 +79,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "lssi",
     label: "LSSI — License & Safety",
     type: "legal",
-    factionType: "Education & Licensing",
-    description: "Los Santos Safety Institute — pilot, boat, and firearm licensing instructors.",
+    factionTypeKey: "faction_catalog.lssi.type",
+    descriptionKey: "faction_catalog.lssi.description",
     markerRgb: [50, 200, 80],
     color: "#22c55e", // Emerald green
   },
@@ -88,8 +88,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "sunset_cartel",
     label: "Sunset Cartel",
     type: "illegal",
-    factionType: "Criminal Syndicate",
-    description: "Organized crime — craft at the lab, move product, stay off the radar.",
+    factionTypeKey: "faction_catalog.sunset_cartel.type",
+    descriptionKey: "faction_catalog.sunset_cartel.description",
     markerRgb: [180, 0, 0],
     color: "#dc2626", // Crimson
   },
@@ -97,8 +97,8 @@ export const CANONICAL_FACTIONS: Record<string, FactionConfig> = {
     id: "night_syndicate",
     label: "Night Syndicate",
     type: "illegal",
-    factionType: "Criminal Syndicate",
-    description: "Street syndicate — weapons bench, fencing stolen goods, crew operations.",
+    factionTypeKey: "faction_catalog.night_syndicate.type",
+    descriptionKey: "faction_catalog.night_syndicate.description",
     markerRgb: [80, 0, 120],
     color: "#a855f7", // Violet / Purple
   },

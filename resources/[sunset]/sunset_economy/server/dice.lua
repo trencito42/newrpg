@@ -322,10 +322,10 @@ RegisterCommand('dice', function(source, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/barbut', 'Challenge a nearby player to a dice game', {
-    { name = 'id/accept/decline', help = 'Player ID or accept/decline' },
-    { name = 'amount', help = 'Bet amount (cash)' }
+    { name = 'id/accept/decline', helpKey = "config.economy.help.player_id_or_accept_decline.bafd5841", help = 'Player ID or accept/decline' },
+    { name = 'amount', helpKey = "config.economy.help.bet_amount_cash.9344dfad", help = 'Bet amount (cash)' }
 })
 TriggerEvent('chat:addSuggestion', '/dice', 'Alias for /barbut', {
-    { name = 'id/accept/decline', help = 'Player ID or accept/decline' },
-    { name = 'amount', help = 'Bet amount (cash)' }
+    { name = 'id/accept/decline', helpKey = "config.economy.help.player_id_or_accept_decline.bafd5841", help = 'Player ID or accept/decline' },
+    { name = 'amount', helpKey = "config.economy.help.bet_amount_cash.9344dfad", help = 'Bet amount (cash)' }
 })

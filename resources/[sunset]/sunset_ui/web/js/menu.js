@@ -434,7 +434,8 @@ const Menu = {
         const fuelCls = fuel < 15 ? 'bad' : (fuel < 35 ? 'warn' : 'ok');
         const insCls = insurancePts === 0 ? 'bad' : (insurancePts <= 2 ? 'warn' : 'ok');
         const locCls = status.isDestroyed ? 'bad' : (status.stored ? 'ok' : 'warn');
-        const locText = status.isDestroyed ? 'Confiscat / Dauna' : (status.stored ? 'In Garaj' : 'Pe Strada');
+        const locText = status.isDestroyed ? this.t('menu.vehicle.impounded_damaged')
+            : (status.stored ? this.t('menu.vehicle.in_garage') : this.t('menu.vehicle.on_street'));
 
         grid.innerHTML = `<div class="v-sidebar">
                 <div class="v-header">
@@ -486,29 +487,31 @@ const Menu = {
                         <div class="spec-card">
                             <div class="spec-card-head">
                                 <i class="ph-bold ph-gauge"></i>
-                                <span>${this.t('menu.vehicle.odometer')} & VECHIME</span>
+                                <span>${this.t('menu.vehicle.odometer_age')}</span>
                             </div>
                             <div class="spec-card-main">
                                 <div class="spec-odometer">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span></div>
-                                <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0 ? 'Achizitionat azi' : `Detinut de ${ownershipDays} ${ownershipDays === 1 ? 'zi' : 'zile'}`}</div>
+                                <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0
+                                    ? this.t('menu.vehicle.acquired_today')
+                                    : this.t('menu.vehicle.owned_days', { days: ownershipDays })}</div>
                             </div>
                         </div>
 
                         <div class="spec-card">
                             <div class="spec-card-head">
                                 <i class="ph-bold ph-shield-check"></i>
-                                <span>ASIGURARE CASCO</span>
+                                <span>${this.t('menu.vehicle.insurance')}</span>
                             </div>
                             <div class="spec-card-main">
-                                <div class="spec-insurance ${insCls}">${insurancePts}/5 <span class="spec-unit">Puncte</span></div>
-                                <div class="spec-sub"><i class="ph-bold ph-receipt"></i> Nivel ${selected.insuranceLevel || 1} · Dauna: ${formatMoney(claimCost)}</div>
+                                <div class="spec-insurance ${insCls}">${insurancePts}/5 <span class="spec-unit">${this.t('menu.vehicle.points')}</span></div>
+                                <div class="spec-sub"><i class="ph-bold ph-receipt"></i> ${this.t('menu.vehicle.insurance_level_claim', { level: selected.insuranceLevel || 1, amount: formatMoney(claimCost) })}</div>
                             </div>
                         </div>
 
                         <div class="spec-card">
                             <div class="spec-card-head">
                                 <i class="ph-bold ph-map-pin"></i>
-                                <span>LOCATIE & STARE</span>
+                                <span>${this.t('menu.vehicle.location_status')}</span>
                             </div>
                             <div class="spec-card-main">
                                 <div class="spec-loc truncate">${this.escape(status.label)}</div>
@@ -634,7 +637,7 @@ const Menu = {
             </div>
             <div class="menu-job-stats">
                 <div><span>${this.t('menu.job.rank')}</span><strong>${rankLine}</strong></div>
-                <div><span>${this.t('menu.job.salary')}</span><strong>${formatMoney(salaryLine)}/hr</strong></div>
+                <div><span>${this.t('menu.job.salary')}</span><strong>${this.t('common.per_hour', { amount: formatMoney(salaryLine) })}</strong></div>
                 <div><span>${this.t('menu.job.next_payday')}</span><strong>${data.payday || '—'}</strong></div>
                 <div><span>${this.t('menu.job.server_time')}</span><strong>${data.serverTime || '—'}</strong></div>
             </div>`;
@@ -696,7 +699,7 @@ const Menu = {
         $('#menu-id').textContent = String(Number(data.id) || 0);
         const jobLabel = $('#menu-job-label');
         if (jobLabel) {
-            jobLabel.textContent = data.factionLabel || data.job || window.I18n?.t('menu.profile.unemployed') || 'Unemployed';
+            jobLabel.textContent = data.factionLabel || data.job || I18n.t('menu.profile.unemployed');
         }
         const cidEl = $('#menu-cid');
         if (cidEl) cidEl.textContent = data.cid ? ('CID: ' + data.cid) : 'CID: —';
@@ -725,7 +728,7 @@ const Menu = {
         const xpMax = data.respectRequired || 4;
         const level = data.level || 1;
         $('#menu-xp-text').textContent = `${this.formatXp(xp)} / ${this.formatXp(xpMax)} RP`;
-        $('#menu-level').textContent = window.I18n?.t('menu.profile.level', { level }) || `Level ${level}`;
+        $('#menu-level').textContent = I18n.t('menu.profile.level', { level });
         const xpBar = $('#menu-xp-bar');
         if (xpBar) xpBar.style.width = `${Math.min(100, (xp / xpMax) * 100)}%`;
 
@@ -755,7 +758,7 @@ const Menu = {
         setBar('menu-stress-bar', stress);
 
         $('#menu-property-count').textContent = String(data.propertyCount ?? 0);
-        $('#menu-home-label').textContent = data.homeLabel || window.I18n?.t('common.none') || 'None';
+        $('#menu-home-label').textContent = data.homeLabel || I18n.t('common.none');
 
         this.renderProperties(data);
         this.renderVehicles(data);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import ts from 'typescript';
+import { scanLuaPresentation, scanJsPresentation } from './i18n-presentation.mjs';
 import lua from 'luaparse';
 import { parse as parseHTML } from 'parse5';
 
@@ -14,7 +15,7 @@ const issues = [];
 const fail = (file, key, message) => issues.push({ file, key, message });
 export function placeholders(value) {
     const named = [...value.matchAll(/\{([\w]+)\}/g)].map(m => m[1]).sort();
-    const printf = [...value.replace(/%%/g, '').matchAll(/%(?:\d+\$)?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?([cdeEfgGiouXxqs])/g)].map(m => m[0]);
+    const printf = [...value.replace(/%%/g, '').matchAll(/%(?:\d+\$)?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?([cdeEfgGiouXxqs])(?![A-Za-z])/g)].map(m => m[0]);
     return JSON.stringify({ named, printf });
 }
 export function walk(dir) {
@@ -84,7 +85,7 @@ function parity(label, pair) {
             if (!pair[lang].has(key.replace(/\.(one|other)$/, '.' + suffix))) fail(label, key, `missing plural ${lang}.${suffix}`);
         }
         const languageText = value => (value || '').replace(/\{\w+\}|%[-+ #0\d.]*[cdeEfgGiouXxqs]|~[A-Z_]+~/g, '');
-        if (en === ro && /\p{L}/u.test(languageText(en)) && !allowed.terms[en] && !/^\{\w+\}$/.test(languageText(en))) fail(label, key, `identical EN/RO: ${en}`);
+        if (en === ro && /\p{L}/u.test(languageText(en)) && !sharedTerm(en) && !/^\{\w+\}$/.test(languageText(en))) fail(label, key, `identical EN/RO: ${en}`);
         if (ro && /\b(?:your|please|loading|delete|purchase|vehicle|account)\b/i.test(languageText(ro))) fail(label, key, `probable English in RO: ${ro}`);
         if (en && /\b(?:jucător|mașină|salvează|șterge|cumpără|proprietate|caută|încarcă|eroare)\b/i.test(languageText(en))) fail(label, key, `probable Romanian in EN: ${en}`);
     }
@@ -96,7 +97,115 @@ function used(pair, file, key, params, plural = false) {
         else if (params !== null) for (const p of pair[lang].get(k).matchAll(/\{(\w+)\}/g)) if (!params.has(p[1])) fail(file, k, `missing parameter {${p[1]}}`);
     }
 }
-const visible = value => /\p{L}/u.test(value) && !allowed.terms[value.trim()];
+function sharedTerm(value) {
+    let rest = value.replace(/<[^>]*>|\{\w+\}/g, ' ');
+    for (const term of Object.keys(allowed.terms).sort((a, b) => b.length - a.length)) {
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        rest = rest.replace(new RegExp('(?<![\\p{L}])' + escaped + '(?![\\p{L}])', 'gu'), ' ');
+    }
+    return !/\p{L}/u.test(rest);
+}
+const visible = value => /\p{L}/u.test(value) && !sharedTerm(value);
+
+function splitSqlList(source) {
+    const parts = []; let start = 0, depth = 0, quote = '', escaped = false;
+    for (let i = 0; i < source.length; i++) {
+        const ch = source[i];
+        if (quote) {
+            if (escaped) escaped = false;
+            else if (ch === '\\') escaped = true;
+            else if (ch === quote && source[i + 1] === quote) i++;
+            else if (ch === quote) quote = '';
+        } else if (ch === "'" || ch === '"') quote = ch;
+        else if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if (ch === ',' && depth === 0) { parts.push(source.slice(start, i).trim()); start = i + 1; }
+    }
+    parts.push(source.slice(start).trim());
+    return parts;
+}
+
+function validateDatabaseContent() {
+    const sqlFiles = walk('sql').filter(file => file.endsWith('.sql'));
+    let bilingualSeeds = 0, bilingualColumns = 0;
+    for (const file of sqlFiles) {
+        const source = read(file);
+        const definitions = [...source.matchAll(/`([a-z0-9_]+)_(en|ro)`\s+(?:varchar\b[^,\n]*|text\b[^,\n]*)/gi)];
+        const declared = new Set(definitions.map(match => `${match[1]}_${match[2]}`));
+        for (const match of definitions) {
+            const other = `${match[1]}_${match[2] === 'en' ? 'ro' : 'en'}`;
+            if (!declared.has(other)) fail(file, match[0], `bilingual database column missing counterpart ${other}`);
+            else bilingualColumns++;
+        }
+
+        for (const insert of source.matchAll(/INSERT(?:\s+IGNORE)?\s+INTO\s+`?([a-z0-9_]+)`?\s*\(([^)]+)\)\s*VALUES\s*([\s\S]*?);/gi)) {
+            const columns = splitSqlList(insert[2]).map(value => value.replace(/[`\s]/g, ''));
+            const rowsSource = insert[3].trim();
+            for (const row of splitSqlList(rowsSource)) {
+                if (!row.startsWith('(') || !row.endsWith(')')) continue;
+                const values = splitSqlList(row.slice(1, -1));
+                for (let index = 0; index < columns.length; index++) {
+                    const match = columns[index].match(/^(.+)_en$/);
+                    if (!match) continue;
+                    const roIndex = columns.indexOf(`${match[1]}_ro`);
+                    if (roIndex < 0) { fail(file, insert[1], `seeded ${columns[index]} missing Romanian column`); continue; }
+                    const en = values[index]?.trim(), ro = values[roIndex]?.trim();
+                    const empty = value => !value || /^NULL$/i.test(value) || /^(['"])\1$/.test(value);
+                    if (empty(en) !== empty(ro)) fail(file, insert[1], `seed row must provide both ${match[1]}_en and ${match[1]}_ro`);
+                    else if (!empty(en)) bilingualSeeds++;
+                }
+            }
+        }
+    }
+    const pollApi = read('panel/src/app/api/staff/polls/route.ts');
+    if (!/!titleRo\s*\|\|\s*!titleEn/.test(pollApi) || !/hasInvalidOption/.test(pollApi)) {
+        fail('panel/src/app/api/staff/polls/route.ts', '', 'system-authored polls must require EN and RO fields');
+    }
+    console.log(`DATABASE SYSTEM CONTENT: ${bilingualColumns / 2} bilingual column pair(s), ${bilingualSeeds} bilingual seeded value pair(s).`);
+}
+
+function validatePresentationCatalogs() {
+    const catalogs = [
+        ['ITEMS', 'resources/[sunset]/sunset_core/shared/items.lua', 'Items'],
+        ['JOBS', 'resources/[sunset]/sunset_core/shared/jobs_civilian.lua', 'CivilianJobs'],
+    ];
+    for (const [label, file, member] of catalogs) {
+        const source = read(file);
+        const tree = lua.parse(source, { luaVersion: '5.3', ranges: true });
+        let table;
+        (function find(n) {
+            if (!n || typeof n !== 'object' || table) return;
+            if (n.type === 'AssignmentStatement') for (let i = 0; i < n.variables.length; i++) {
+                const variable = n.variables[i];
+                if (variable.type === 'MemberExpression' && variable.base?.name === 'Sunset'
+                    && variable.identifier?.name === member && n.init[i]?.type === 'TableConstructorExpression') table = n.init[i];
+            }
+            for (const value of Object.values(n)) if (Array.isArray(value)) value.forEach(find); else if (value && typeof value === 'object') find(value);
+        })(tree);
+        if (!table) { fail(file, '', `could not find Sunset.${member} catalog`); continue; }
+        let count = 0;
+        for (const entry of table.fields || []) {
+            if (entry.type !== 'TableKeyString' || entry.value?.type !== 'TableConstructorExpression') continue;
+            count++;
+            const names = new Set(entry.value.fields.filter(field => field.type === 'TableKeyString').map(field => field.key.name));
+            if (!names.has('label') || !names.has('labelKey')) fail(file, entry.key.name, `${label.toLowerCase()} entry requires label and labelKey`);
+        }
+        console.log(`${label}: ${count} catalog entries with semantic presentation keys.`);
+    }
+    for (const file of [
+        'resources/[sunset]/sunset_inventory/server/main.lua',
+        'resources/[sunset]/sunset_inventory/server/containers.lua',
+        'resources/[sunset]/sunset_inventory/server/trade.lua',
+        'resources/[sunset]/sunset_inventory/server/quickslots.lua',
+    ]) {
+        const lines = read(file).split('\n');
+        for (let i = 0; i < lines.length; i++) if (/label\s*=\s*def\.label/.test(lines[i])) {
+            const nearby = lines.slice(Math.max(0, i - 4), i + 2).join('\n');
+            if (!/labelKey\s*=\s*def\.labelKey/.test(nearby)) fail(file, i + 1, 'item payload drops labelKey before presentation');
+        }
+    }
+}
+
 export function scanPanel(file, source, pair, report = fail) {
     const sf = ast(file, source), lines = source.split('\n');
     const ignored = n => {
@@ -105,16 +214,38 @@ export function scanPanel(file, source, pair, report = fail) {
     };
     const hit = (n, why) => { if (!ignored(n)) report(file, sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1, `${why}: ${n.getText(sf).slice(0, 160)}`); };
     const literal = n => n && ts.isStringLiteralLike(n) && visible(n.text);
+    const visibleJsxExpression = n => {
+        let current = n;
+        while (current && !ts.isStatement(current)) {
+            if (ts.isCallExpression(current) && /^(?:t|I18n\.t)$/.test(current.expression.getText(sf))) return false;
+            if (ts.isJsxAttribute(current)) return /^(?:title|placeholder|aria-label|alt)$/.test(current.name.text);
+            if (ts.isJsxExpression(current)) {
+                const attribute = current.parent && ts.isJsxAttribute(current.parent) ? current.parent : null;
+                return !attribute || /^(?:title|placeholder|aria-label|alt)$/.test(attribute.name.text);
+            }
+            current = current.parent;
+        }
+        return false;
+    };
     visit(sf, n => {
         if (ts.isJsxText(n) && visible(n.text.trim())) hit(n, 'JSX visible text');
         if (ts.isJsxAttribute(n) && /^(title|placeholder|aria-label|alt)$/.test(n.name.text)) {
             if (literal(n.initializer) || ts.isJsxExpression(n.initializer || sf) && literal(n.initializer.expression)) hit(n, 'visible attribute');
         }
-        if (ts.isPropertyAssignment(n) && /^(label|description|title|placeholder|message|error)$/.test(n.name.text) && literal(n.initializer) && !(n.name.text === 'error' && /^[a-z]+(?:_[a-z]+)+$/.test(n.initializer.text))) hit(n, 'visible object literal');
+        if (ts.isPropertyAssignment(n) && /^(label|description|title|placeholder|message|error)$/.test(n.name.text) && literal(n.initializer) && !(n.name.text === 'error' && /^(?:unauthorized|forbidden|[a-z]+(?:_[a-z]+)+)$/.test(n.initializer.text))) hit(n, 'visible object literal');
         if (ts.isConditionalExpression(n) && /(?:locale|\bro\b|language)/i.test(n.condition.getText(sf)) && (literal(n.whenTrue) || literal(n.whenFalse))) {
             const mechanics = ts.isStringLiteralLike(n.whenTrue) && ts.isStringLiteralLike(n.whenFalse) && ['ro|en', 'ro-RO|en-US'].includes(n.whenTrue.text + '|' + n.whenFalse.text);
-            if (!mechanics) hit(n, 'visible locale ternary');
+            let parent = n.parent;
+            while (parent && !ts.isJsxAttribute(parent) && !ts.isStatement(parent)) parent = parent.parent;
+            const style = parent && ts.isJsxAttribute(parent) && ['className', 'style'].includes(parent.name.text);
+            if (!mechanics && !style) hit(n, 'visible locale ternary');
         }
+        if (ts.isConditionalExpression(n) && visibleJsxExpression(n) && (literal(n.whenTrue) || literal(n.whenFalse))) {
+            hit(n, 'visible JSX conditional literal');
+        }
+        if (ts.isBinaryExpression(n) && visibleJsxExpression(n)
+            && [ts.SyntaxKind.BarBarToken, ts.SyntaxKind.QuestionQuestionToken].includes(n.operatorToken.kind)
+            && literal(n.right)) hit(n, 'visible JSX fallback literal');
         if (ts.isCallExpression(n)) {
             const name = n.expression.getText(sf);
             if (/^(setError|setStatus|setMessage|alert|confirm|window\.confirm|toast(?:\.\w+)?)$/.test(name) && literal(n.arguments[0])) hit(n, 'visible message call');
@@ -151,11 +282,19 @@ export function main() {
     const panel = Object.fromEntries(['en', 'ro'].map(l => [l, jsonMap(`panel/src/locales/${l}.json`)]));
     const loadscreen = jsLocales('resources/[sunset]/sunset_loadscreen/script.js', 'LOADSCREEN_LOCALES');
     for (const [label, pair] of [['GAME LUA', game], ['NUI', nui], ['PANEL', panel], ['LOADSCREEN', loadscreen]]) parity(label, pair);
+    validateDatabaseContent();
+    validatePresentationCatalogs();
     for (const file of walk('panel/src')) if (/\.[jt]sx?$/.test(file) && !file.endsWith('/i18n.ts')) scanPanel(file, read(file), panel);
     for (const file of walk('resources/[sunset]')) {
+        const source = read(file);
+        // The test bridge speaks a machine-facing HTTP/RPC protocol. Its status
+        // and error payloads are API contracts, not presentation copy.
+        const machineProtocol = /\/sunset_(?:test_agent|testdriver)\//.test(file);
+        if (/\.lua$/.test(file) && !machineProtocol) scanLuaPresentation(file, source, visible, fail, (f, k) => used(game, f, k, null));
+        if (/\.js$/.test(file) && !/i18n(?:\.generated)?\.js$|sunset_loadscreen\//.test(file) && !/i18n-ignore-file:\s*\S.+/.test(source)) scanJsPresentation(file, source, visible, fail, (f, k, plural) => used(nui, f, k, null, plural));
         if (/\.html$/.test(file)) htmlScan(file, file.includes('sunset_loadscreen/') ? loadscreen : nui, file.includes('sunset_loadscreen/'));
         if (/\.(lua|js|html|css)$/.test(file)) for (const [i, line] of read(file).split('\n').entries()) {
-            if (/i18n-ignore(?:\s|:|$)/.test(line) && !/i18n-ignore:\s*\S.+/.test(line)) fail(file, i + 1, 'ignore annotation requires a reason');
+            if (/i18n-ignore(?:-file)?(?:\s|:|$)/.test(line) && !/i18n-ignore(?:-file)?:\s*\S.+/.test(line)) fail(file, i + 1, 'ignore annotation requires a reason');
         }
     }
     for (const script of ['check-locales.js', 'check-locale-usage.js', 'audit-localization.js']) {

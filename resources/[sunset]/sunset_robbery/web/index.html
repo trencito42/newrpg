@@ -59,11 +59,11 @@
             <!-- HEADER -->
             <div class="r-header">
                 <div class="h-left">
-                    <h1 class="h-title" id="ui-rob-title">PACIFIC STANDARD BANK</h1>
-                    <div class="h-subtitle" id="ui-rob-subtitle">Seif Principal / Acces Acordat</div>
+                    <h1 class="h-title" id="ui-rob-title" data-i18n-ignore="GTA bank proper name">PACIFIC STANDARD BANK</h1>
+                    <div class="h-subtitle" id="ui-rob-subtitle"><span data-i18n="interface.main_vault_access_granted"></span></div>
                 </div>
                 <div class="h-right">
-                    <div class="timer-label" id="ui-timer-label">Timp Pana La Alarma</div>
+                    <div class="timer-label" id="ui-timer-label"><span data-i18n="interface.time_until_alarm"></span></div>
                     <div class="timer-value" id="ui-timer">04:30</div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                 
                 <!-- STANGA: SELECTIE -->
                 <div class="loot-section">
-                    <div class="section-title">Selecteaza ce doresti sa bagi in rucsac</div>
+                    <div class="section-title"><span data-i18n="interface.select_what_to_put_in_your_backpack"></span></div>
                     
                     <div class="loot-grid" id="ui-loot-grid">
                         <!-- Generat din JS -->
@@ -84,7 +84,7 @@
                 <div class="status-section">
                     <div class="bag-info">
                         <div class="info-row">
-                            <div class="info-label">Valoare Estimata</div>
+                            <div class="info-label"><span data-i18n="interface.estimated_value"></span></div>
                             <div class="val-total" id="ui-total-val">$0</div>
                         </div>
                         
@@ -92,20 +92,18 @@
 
                         <div class="info-row">
                             <div class="wgt-header">
-                                <div class="info-label">Capacitate Rucsac</div>
+                                <div class="info-label"><span data-i18n="interface.backpack_capacity"></span></div>
                                 <div class="wgt-total"><span id="ui-total-wgt">0.0</span> / <span id="ui-max-wgt">12.0</span> KG</div>
                             </div>
                             <div class="wgt-bar-bg">
                                 <div class="wgt-bar-fill" id="ui-wgt-bar"></div>
                             </div>
-                            <div class="info-label" id="ui-wgt-warn" style="color: var(--status-bad); display: none; text-align: right; margin-top: 4px;">
-                                RUCSAC PREA PLIN!
-                            </div>
+                            <div class="info-label" id="ui-wgt-warn" style="color: var(--status-bad); display: none; text-align: right; margin-top: 4px;"><span data-i18n="interface.backpack_full"></span></div>
                         </div>
                     </div>
 
-                    <button class="btn-start" id="btn-confirm">Selecteaza prada</button>
-                    <button type="button" class="btn-leave-robbery" id="btn-leave-robbery">Inchide / Paraseste Seiful</button>
+                    <button class="btn-start" id="btn-confirm"><span data-i18n="interface.select_loot"></span></button>
+                    <button type="button" class="btn-leave-robbery" id="btn-leave-robbery"><span data-i18n="interface.close_leave_vault"></span></button>
                 </div>
 
             </div>

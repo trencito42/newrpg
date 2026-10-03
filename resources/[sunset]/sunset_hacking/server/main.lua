@@ -159,6 +159,6 @@ RegisterNetEvent('sunset:hacking:requestDebugHack', function(target, seedArg)
     if allowed then
         TriggerClientEvent('sunset:hacking:client:startDebugHack', src, target, seedArg)
     else
-        TriggerClientEvent('sunset:core:notify', src, 'Permission denied (Admin only).', 'error')
+        TriggerClientEvent('sunset:core:notify', src, exports.sunset_core:TFor(src, 'hacking.message.admin_only'), 'error')
     end
 end)

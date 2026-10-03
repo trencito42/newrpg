@@ -165,7 +165,7 @@ RegisterNetEvent('sunset:robbery:hackOpenUi', function(payload)
             local res = exports.sunset_hacking:StartHackingPuzzle({
                 difficulty = 'medium',
                 timeLimit = payload and payload.timeLimit or 35,
-                title = 'SECURITY_TERMINAL // FLEECA_BYPASS',
+                titleKey = "config.robbery.title.security_terminal_fleeca_bypass.56c24ccd", title = 'SECURITY_TERMINAL // FLEECA_BYPASS',
                 allowCancel = true
             })
             if res.success then

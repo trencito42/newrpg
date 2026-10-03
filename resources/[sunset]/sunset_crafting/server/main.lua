@@ -1,4 +1,5 @@
 exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, stationId)
+    local locale = exports.sunset_core:GetPlayerLocale(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it' } end
 
@@ -6,7 +7,8 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
     if not station then return nil, { localeKey = 'crafting.message.this_crafting_station_is_not_configured' } end
     local ped = GetPlayerPed(source)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - station.coords) > 4.0 then
-        return nil, { localeKey = 'crafting.message.stand_inside_the_marker_at_value_to_craft', formatArgs = { station.label or 'the crafting station' } }
+        return nil, { localeKey = 'crafting.message.stand_inside_the_marker_at_value_to_craft', formatArgs = {
+            Sunset.PresentationText(station, 'label', locale) or exports.sunset_core:TFor(source, 'crafting.label.station') } }
     end
 
     local factionId, grade = Sunset.GetCharacterFaction(char)
@@ -14,8 +16,8 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
     if station.access == 'faction' then
         if factionId ~= station.faction then
             return nil, { localeKey = 'crafting.message.value_is_available_only_to_value_members', formatArgs = {
-                station.label or 'This station',
-                Sunset.Factions[station.faction] and Sunset.Factions[station.faction].label or station.faction } }
+                Sunset.PresentationText(station, 'label', locale) or exports.sunset_core:TFor(source, 'crafting.label.station'),
+                Sunset.FactionLabel(station.faction, locale) } }
         end
         if (grade or 0) < (station.minGrade or 0) then
             return nil, { localeKey = 'crafting.message.faction_rank_value_is_required_at_this_station_your_rank_is_value', formatArgs = {
@@ -41,16 +43,19 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
         if recipe.station == stationId then
             local lockedReason
             if recipe.faction and factionId ~= recipe.faction then
-                lockedReason = 'Wrong faction'
+                lockedReason = exports.sunset_core:TFor(source, 'crafting.message.wrong_faction')
             elseif recipe.minGrade and (grade or 0) < recipe.minGrade then
-                lockedReason = ('Requires faction rank %d (yours: %d)'):format(recipe.minGrade, grade or 0)
+                lockedReason = exports.sunset_core:TFor(source, 'crafting.message.requires_rank', {
+                    required = recipe.minGrade, current = grade or 0,
+                })
             elseif recipe.illegal and not Sunset.HasFactionPerm(factionId, grade, 'craft_illegal') then
-                lockedReason = 'Your faction rank does not have illegal crafting permission'
+                lockedReason = exports.sunset_core:TFor(source, 'crafting.message.illegal_permission_missing')
             end
             local hasMaterials = true
             recipes[#recipes + 1] = {
                 id = recipeId,
-                label = recipe.label,
+                labelKey = recipe.labelKey,
+                label = Sunset.PresentationText(recipe, 'label', locale),
                 time = recipe.time,
                 inputs = recipe.inputs,
                 inputList = (function()
@@ -58,7 +63,8 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
                     for item, need in pairs(recipe.inputs) do
                         list[#list + 1] = {
                             item = item,
-                            label = (Sunset.Items[item] and Sunset.Items[item].label) or item,
+                            labelKey = Sunset.Items[item] and Sunset.Items[item].labelKey,
+                            label = Sunset.ItemLabel(item, locale),
                             count = need,
                             owned = owned[item] or 0,
                         }
@@ -68,7 +74,8 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
                     return list
                 end)(),
                 output = recipe.output,
-                outputLabel = (Sunset.Items[recipe.output.item] and Sunset.Items[recipe.output.item].label) or recipe.output.item,
+                outputLabelKey = Sunset.Items[recipe.output.item] and Sunset.Items[recipe.output.item].labelKey,
+                outputLabel = Sunset.ItemLabel(recipe.output.item, locale),
                 canCraft = not lockedReason and hasMaterials,
                 lockedReason = lockedReason,
             }
@@ -81,8 +88,9 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
 
     return {
         stationId = stationId,
-        stationLabel = station.label,
-        stationHint = 'Materials are taken from your inventory. Green counts are ready; red counts are missing.',
+        stationLabelKey = station.labelKey,
+        stationLabel = Sunset.PresentationText(station, 'label', locale),
+        stationHintKey = "config.crafting.stationHint.materials_are_taken_from_your_inventory_green_counts_are_ready_r.49d3cd76", stationHint = 'Materials are taken from your inventory. Green counts are ready; red counts are missing.',
         recipes = recipes,
     }
 end)
@@ -153,8 +161,10 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
         for item, need in pairs(recipe.inputs) do
             need = math.floor(tonumber(need) or 0)
             if need < 1 or (totals[item] or 0) < need then
-                failure = ('Missing %s: you have %d, but need %d.'):format(
-                    Sunset.Items[item] and Sunset.Items[item].label or item, totals[item] or 0, need)
+                failure = exports.sunset_core:TFor(source, 'crafting.message.missing_material', {
+                    item = Sunset.ItemLabel(item, exports.sunset_core:GetPlayerLocale(source)),
+                    have = totals[item] or 0, need = need,
+                })
                 error('missing_materials')
             end
             consumedWeight = consumedWeight + ((Sunset.Items[item] and tonumber(Sunset.Items[item].weight) or 0) * need)
@@ -162,7 +172,7 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
         local outCount = math.max(1, math.floor(tonumber(out.count) or 1))
         local finalWeight = currentWeight - consumedWeight + ((tonumber(outDef.weight) or 0) * outCount)
         if finalWeight > (tonumber(Sunset.Config.MaxWeight) or 30) then
-            failure = 'Your inventory is too heavy for the crafted output. Nothing was consumed.'
+            failure = exports.sunset_core:TFor(source, 'crafting.message.output_too_heavy')
             error('overweight')
         end
 
@@ -197,7 +207,7 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
                 if not used[slot] then freeSlot = slot break end
             end
             if not freeSlot then
-                failure = 'Your inventory has no free slot for the crafted output. Nothing was consumed.'
+                failure = exports.sunset_core:TFor(source, 'crafting.message.no_output_slot')
                 error('no_slot')
             end
             if not query.insert.await('INSERT INTO character_inventory (character_id, item, count, slot) VALUES (?, ?, ?, ?)', { char.id, out.item, outCount, freeSlot }) then error('output_failed') end

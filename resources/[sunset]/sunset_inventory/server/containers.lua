@@ -37,6 +37,7 @@ function SunsetContainers.GetItems(containerType, containerId)
             row.metadata = json.decode(row.metadata)
         end
         local def = Sunset.Items[row.item] or {}
+        row.labelKey = def.labelKey
         row.label = def.label or row.item
         row.icon = def.icon or 'backpack'
         row.weight = def.weight or 0

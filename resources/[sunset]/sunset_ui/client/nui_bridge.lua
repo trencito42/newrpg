@@ -600,7 +600,7 @@ end)
 RegisterNUICallback('changePasswordSubmit', function(data, cb)
     data = type(data) == 'table' and data or {}
     exports.sunset_core:TriggerCallback('sunset:auth:changePassword', function(res)
-        cb(res or { success = false, message = 'Eroare de comunicare cu serverul.' })
+        cb(res or { success = false, messageKey = "config.ui.message.could_not_communicate_with_the_server.9dff981b", message = 'Eroare de comunicare cu serverul.' })
     end, data.oldPassword, data.newPassword, data.confirmPassword)
 end)
 

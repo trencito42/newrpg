@@ -26,6 +26,7 @@ export const dynamic = "force-dynamic";
 export default async function UnbanPage() {
   const user = await getCurrentUser();
   const lang = await getRequestLanguage();
+  const locale = lang;
   const dict = getDictionary(lang);
 
   let activeBan: ActiveBanRecord | null = null;
@@ -59,11 +60,11 @@ export default async function UnbanPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "accepted":
-        return <span className="text-emerald-400 font-medium">Accepted</span>;
+        return <span className="text-emerald-400 font-medium">{t(locale, "interface.accepted")}</span>;
       case "rejected":
-        return <span className="text-red-400 font-medium">Rejected</span>;
+        return <span className="text-red-400 font-medium">{t(locale, "interface.rejected")}</span>;
       default:
-        return <span className="text-amber-400 font-medium">Pending</span>;
+        return <span className="text-amber-400 font-medium">{t(locale, "common.pending")}</span>;
     }
   };
 
@@ -80,11 +81,11 @@ export default async function UnbanPage() {
         <div className="lg:col-span-1 space-y-3">
           {activeBan && (
             <div className="p-3 bg-red-950/20 border border-red-900/40 text-xs rounded space-y-1">
-              <span className="font-semibold text-red-400 block">Active Ban</span>
-              <p className="text-[#F2EFE8]"><span className="text-[#8F8B83]">Reason:</span> {activeBan.reason}</p>
-              <p className="text-[#8F8B83]">By: {activeBan.banned_by}</p>
+              <span className="font-semibold text-red-400 block">{t(locale, "interface.active_ban")}</span>
+              <p className="text-[#F2EFE8]"><span className="text-[#8F8B83]">{t(locale, "interface.reason")}</span> {activeBan.reason}</p>
+              <p className="text-[#8F8B83]">{t(locale, "interface.by_2")} {activeBan.banned_by}</p>
               <p className="text-[#8F8B83]">
-                Expires: {activeBan.expires_at ? new Date(activeBan.expires_at).toLocaleDateString() : "Permanent"}
+                {t(locale, "interface.expires_2")} {activeBan.expires_at ? new Date(activeBan.expires_at).toLocaleDateString() : t(locale, "interface.permanent")}
               </p>
             </div>
           )}
@@ -98,13 +99,12 @@ export default async function UnbanPage() {
               <UnbanForm lang={lang} banId={activeBan?.id} />
             ) : (
               <div className="text-center py-4 text-[#8F8B83]">
-                <p className="mb-2">Log in to submit an unban appeal.</p>
+                <p className="mb-2">{t(locale, "interface.log_in_to_submit_an_unban_appeal")}</p>
                 <Link
                   href="/login"
                   className="inline-flex px-3 py-1 bg-[#D7B558] text-[#08080A] font-semibold rounded text-xs"
                 >
-                  Log In
-                </Link>
+                  {t(locale, "interface.log_in")}</Link>
               </div>
             )}
           </div>
@@ -131,7 +131,7 @@ export default async function UnbanPage() {
 
                 {req.staff_response && (
                   <div className="p-2.5 bg-surface-200 rounded border border-surface-border text-xs text-[#F2EFE8]">
-                    <span className="text-[#8F8B83] font-medium block">Verdict:</span>
+                    <span className="text-[#8F8B83] font-medium block">{t(locale, "interface.verdict")}</span>
                     <p>{req.staff_response}</p>
                   </div>
                 )}

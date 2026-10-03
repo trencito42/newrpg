@@ -14,7 +14,7 @@ end
 -- ── Missions / NPC Contacts ──────────────────────────────────
 
 register('missions', {
-    label = 'Mission Contacts',
+    labelKey = "config.devtools.label.mission_contacts.1fb5683a", label = 'Mission Contacts',
     jobName = nil,
 
     describe = function()
@@ -56,7 +56,7 @@ register('missions', {
 -- ── Job Workplaces & Supervisor NPCs ─────────────────────────
 
 register('workplaces', {
-    label = 'Job Workplaces',
+    labelKey = "config.devtools.label.job_workplaces.4df8eb35", label = 'Job Workplaces',
     jobName = nil,
 
     describe = function()
@@ -94,7 +94,7 @@ register('workplaces', {
             local c = wp.npc.coords
             return {
                 label    = ('[%s] %s'):format(wp.jobLabel or jobId, wp.npc.name or 'Supervisor'),
-                subtitle = wp.locationLabel or 'Workplace',
+                subtitle = wp.locationLabel or Sunset.T('devtools.label.workplace'),
                 model    = wp.npc.model,
                 coords   = vector3(c.x, c.y, c.z),
                 heading  = c.w or c.h or 0.0,
@@ -104,7 +104,7 @@ register('workplaces', {
             local c = wp.secondaryLocation.coords
             return {
                 label    = ('[%s] %s'):format(wp.jobLabel or jobId, wp.secondaryLocation.label or 'Secondary Location'),
-                subtitle = wp.locationLabel or 'Workplace',
+                subtitle = wp.locationLabel or Sunset.T('devtools.label.workplace'),
                 coords   = vector3(c.x, c.y, c.z),
                 heading  = c.w or c.h or 0.0,
             }
@@ -121,22 +121,22 @@ register('workplaces', {
 -- ── Trucker Route Adapter ────────────────────────────────────
 
 register('trucker', {
-    label = 'Trucker Routes',
+    labelKey = "config.devtools.label.trucker_routes.2825baee", label = 'Trucker Routes',
     jobName = 'trucker',
-    description = 'Trailer pickup bay, delivery entrance checkpoint, and oriented manual parking bay.',
+    descriptionKey = "config.devtools.description.trailer_pickup_bay_delivery_entrance_checkpoint_and_oriented_man.8519ca64", description = 'Trailer pickup bay, delivery entrance checkpoint, and oriented manual parking bay.',
     icon = 'truck',
 
     categories = {
-        { id = 'fuel', label = 'Fuel (Tanker)' },
-        { id = 'general', label = 'General Freight' },
-        { id = 'heavy', label = 'Heavy Equipment' },
+        { id = 'fuel', labelKey = "config.devtools.label.fuel_tanker.b539e66f", label = 'Fuel (Tanker)' },
+        { id = 'general', labelKey = "config.devtools.label.general_freight.c1c924b9", label = 'General Freight' },
+        { id = 'heavy', labelKey = "config.devtools.label.heavy_equipment.a0d5a714", label = 'Heavy Equipment' },
     },
 
     createDefault = function(id, label)
         id = id or ('route_' .. os.time())
         return {
             id = id,
-            label = label or 'New Trucker Route',
+            label = label or Sunset.T('devtools.label.new_trucker_route'),
             category = 'fuel',
             pay = 750,
             pickup = { x = 1234.3, y = -3104.2, z = 4.8, h = 3.5, w = 3.5 },
@@ -148,20 +148,20 @@ register('trucker', {
     validate = function(route)
         local results = {}
         if not route.id or route.id == '' then
-            table.insert(results, { status = 'FAIL', field = 'id', message = 'Route ID is required and must be unique.' })
+            table.insert(results, { status = 'FAIL', field = 'id', messageKey = "config.devtools.message.route_id_is_required_and_must_be_unique.7a0a62fe", message = 'Route ID is required and must be unique.' })
         else
             table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. route.id })
         end
 
         if not route.label or route.label == '' then
-            table.insert(results, { status = 'FAIL', field = 'label', message = 'Route label cannot be empty.' })
+            table.insert(results, { status = 'FAIL', field = 'label', messageKey = "config.devtools.message.route_label_cannot_be_empty.d30fb371", message = 'Route label cannot be empty.' })
         else
-            table.insert(results, { status = 'PASS', field = 'label', message = 'Label valid.' })
+            table.insert(results, { status = 'PASS', field = 'label', messageKey = "config.devtools.message.label_valid.a7f5f9e7", message = 'Label valid.' })
         end
 
         local pay = tonumber(route.pay)
         if not pay or pay <= 0 then
-            table.insert(results, { status = 'FAIL', field = 'pay', message = 'Base pay must be a positive number.' })
+            table.insert(results, { status = 'FAIL', field = 'pay', messageKey = "config.devtools.message.base_pay_must_be_a_positive_number.a8fb8bf8", message = 'Base pay must be a positive number.' })
         else
             table.insert(results, { status = 'PASS', field = 'pay', message = ('Base Pay: $%d'):format(pay) })
         end
@@ -169,11 +169,11 @@ register('trucker', {
         -- Coordinate checks
         local function checkPoint(pt, name)
             if not pt or type(pt) ~= 'table' or not pt.x or not pt.y or not pt.z then
-                table.insert(results, { status = 'FAIL', field = name, message = name .. ' coordinates are missing or invalid.' })
+                table.insert(results, { status = 'FAIL', field = name, message = Sunset.T('devtools.message.coordinates_missing', { point = name }) })
                 return nil
             end
             if math.abs(pt.x) > 10000 or math.abs(pt.y) > 10000 or math.abs(pt.z) > 2000 then
-                table.insert(results, { status = 'FAIL', field = name, message = name .. ' coordinates are out of map bounds.' })
+                table.insert(results, { status = 'FAIL', field = name, message = Sunset.T('devtools.message.coordinates_out_of_bounds', { point = name }) })
                 return nil
             end
             table.insert(results, { status = 'PASS', field = name, message = ('%s (%.1f, %.1f, %.1f)'):format(name, pt.x, pt.y, pt.z) })
@@ -235,16 +235,16 @@ register('trucker', {
 -- ── Garbage Route Adapter ────────────────────────────────────
 
 register('garbage', {
-    label = 'Garbage Routes',
+    labelKey = "config.devtools.label.garbage_routes.f6ce3966", label = 'Garbage Routes',
     jobName = 'garbage',
-    description = 'Ordered sequence of trash bin collection stops.',
+    descriptionKey = "config.devtools.description.ordered_sequence_of_trash_bin_collection_stops.5a6d7207", description = 'Ordered sequence of trash bin collection stops.',
     icon = 'trash',
 
     createDefault = function(id, label)
         id = id or ('garbage_route_' .. os.time())
         return {
             id = id,
-            label = label or 'New Garbage Route',
+            label = label or Sunset.T('devtools.label.new_garbage_route'),
             bins = {},
         }
     end,
@@ -252,20 +252,20 @@ register('garbage', {
     validate = function(route)
         local results = {}
         if not route.id or route.id == '' then
-            table.insert(results, { status = 'FAIL', field = 'id', message = 'Route ID is required and must be unique.' })
+            table.insert(results, { status = 'FAIL', field = 'id', messageKey = "config.devtools.message.route_id_is_required_and_must_be_unique.7a0a62fe", message = 'Route ID is required and must be unique.' })
         else
             table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. route.id })
         end
 
         if not route.label or route.label == '' then
-            table.insert(results, { status = 'FAIL', field = 'label', message = 'Route label cannot be empty.' })
+            table.insert(results, { status = 'FAIL', field = 'label', messageKey = "config.devtools.message.route_label_cannot_be_empty.d30fb371", message = 'Route label cannot be empty.' })
         else
-            table.insert(results, { status = 'PASS', field = 'label', message = 'Label valid.' })
+            table.insert(results, { status = 'PASS', field = 'label', messageKey = "config.devtools.message.label_valid.a7f5f9e7", message = 'Label valid.' })
         end
 
         local binCount = route.bins and #route.bins or 0
         if binCount == 0 then
-            table.insert(results, { status = 'FAIL', field = 'bins', message = 'Route must contain at least 1 trash bin.' })
+            table.insert(results, { status = 'FAIL', field = 'bins', messageKey = "config.devtools.message.route_must_contain_at_least_1_trash_bin.abda9e73", message = 'Route must contain at least 1 trash bin.' })
         elseif binCount < 8 then
             table.insert(results, { status = 'WARNING', field = 'bins', message = ('Route has %d bins (recommended is 8 to fill truck capacity).'):format(binCount) })
         else
@@ -305,16 +305,16 @@ register('garbage', {
 -- ── Hunting Zone Adapter ─────────────────────────────────────
 
 register('hunting', {
-    label = 'Hunting Zones',
+    labelKey = "config.devtools.label.hunting_zones.3a30cb2c", label = 'Hunting Zones',
     jobName = 'hunting',
-    description = 'Polygon hunting zone with ranked species and animal spawn points.',
+    descriptionKey = "config.devtools.description.polygon_hunting_zone_with_ranked_species_and_animal_spawn_points.5569fc4d", description = 'Polygon hunting zone with ranked species and animal spawn points.',
     icon = 'target',
 
     createDefault = function(id, label)
         id = id or ('hunting_zone_' .. os.time())
         return {
             id = id,
-            label = label or 'New Hunting Zone',
+            label = label or Sunset.T('devtools.label.new_hunting_zone'),
             minRank = 1,
             minZ = 0.0,
             maxZ = 300.0,
@@ -329,7 +329,7 @@ register('hunting', {
     validate = function(zone)
         local results = {}
         if not zone.id or zone.id == '' then
-            table.insert(results, { status = 'FAIL', field = 'id', message = 'Zone ID is required.' })
+            table.insert(results, { status = 'FAIL', field = 'id', messageKey = "config.devtools.message.zone_id_is_required.b53025a0", message = 'Zone ID is required.' })
         else
             table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. zone.id })
         end
@@ -346,7 +346,7 @@ register('hunting', {
         local spawnCount = zone.spawnPoints and #zone.spawnPoints or 0
         if spawnCount == 0 then
             table.insert(results, { status = 'FAIL', field = 'spawnPoints',
-                message = 'At least 1 spawn point required.' })
+                messageKey = "config.devtools.message.at_least_1_spawn_point_required.3fdc9e3c", message = 'At least 1 spawn point required.' })
         else
             table.insert(results, { status = 'PASS', field = 'spawnPoints',
                 message = ('%d spawn points.'):format(spawnCount) })
@@ -355,7 +355,7 @@ register('hunting', {
         local maxAlive = tonumber(zone.maxAlive) or 0
         if maxAlive < 1 or maxAlive > 12 then
             table.insert(results, { status = 'FAIL', field = 'maxAlive',
-                message = 'maxAlive must be 1–12.' })
+                messageKey = "config.devtools.message.maxalive_must_be_1_12.9db2f536", message = 'maxAlive must be 1–12.' })
         else
             table.insert(results, { status = 'PASS', field = 'maxAlive',
                 message = ('Max alive: %d.'):format(maxAlive) })
@@ -400,9 +400,9 @@ register('hunting', {
 -- Loot points are underwater — no ground-snap, snapMode = none.
 
 register('diving', {
-    label = 'Dive Sites',
+    labelKey = "config.devtools.label.dive_sites.ca202751", label = 'Dive Sites',
     jobName = 'diving',
-    description = 'Underwater salvage site: search zone + loot points (no ground-snap).',
+    descriptionKey = "config.devtools.description.underwater_salvage_site_search_zone_loot_points_no_ground_snap.aabe1821", description = 'Underwater salvage site: search zone + loot points (no ground-snap).',
     icon = 'waves',
     snapMode = 'none',  -- underwater: don't snap to ground
 
@@ -410,7 +410,7 @@ register('diving', {
         id = id or ('dive_site_' .. os.time())
         return {
             id = id,
-            label = label or 'New Dive Site',
+            label = label or Sunset.T('devtools.label.new_dive_site'),
             minRank = 1,
             requiresBoat = false,
             difficulty = 'easy',
@@ -426,7 +426,7 @@ register('diving', {
     validate = function(site)
         local results = {}
         if not site.id or site.id == '' then
-            table.insert(results, { status = 'FAIL', field = 'id', message = 'Site ID required.' })
+            table.insert(results, { status = 'FAIL', field = 'id', messageKey = "config.devtools.message.site_id_required.e5db69d8", message = 'Site ID required.' })
         else
             table.insert(results, { status = 'PASS', field = 'id', message = 'ID: ' .. site.id })
         end
@@ -434,7 +434,7 @@ register('diving', {
         local sz = site.searchZone
         if not sz or not sz.radius or sz.radius <= 0 then
             table.insert(results, { status = 'FAIL', field = 'searchZone',
-                message = 'searchZone radius must be > 0.' })
+                messageKey = "config.devtools.message.searchzone_radius_must_be_0.c6e44b27", message = 'searchZone radius must be > 0.' })
         else
             table.insert(results, { status = 'PASS', field = 'searchZone',
                 message = ('Search zone: radius %.0fm at z=%.1f.'):format(sz.radius, sz.z or 0) })
@@ -447,7 +447,7 @@ register('diving', {
                 message = ('Need at least %d loot points (required salvage), have %d.'):format(required, lpCount) })
         elseif lpCount < required + 1 then
             table.insert(results, { status = 'WARNING', field = 'lootPoints',
-                message = ('Recommend more loot points than requiredSalvage for randomness.') })
+                messageKey = "config.devtools.message.recommend_more_loot_points_than_requiredsalvage_for_randomness.ad77f951", message = ('Recommend more loot points than requiredSalvage for randomness.') })
         else
             table.insert(results, { status = 'PASS', field = 'lootPoints',
                 message = ('%d loot points (%d required).'):format(lpCount, required) })

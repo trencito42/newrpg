@@ -16,13 +16,13 @@ Config.ConnectUrl = 'fivem://connect/racket.cat'
 Config.Buttons = {
     {
         index = 0,
-        label = '🎮 Joacă pe Server',
-        url = 'https://racket.cat'
+        labelKey = "config.discord_rpc.label.play_on_the_server.44eecb88", label = '🎮 Joacă pe Server',
+        url = 'https://racket.cat' -- Note: Discord requires valid https:// protocol for buttons
     },
     {
         index = 1,
-        label = '💬 Comunitate Discord',
-        url = 'https://discord.gg/racket'
+        labelKey = "config.discord_rpc.label.panel_community.59301278", label = '🌐 Panel & Comunitate',
+        url = 'https://racket.cat'
     }
 }
 

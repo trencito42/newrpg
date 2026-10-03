@@ -1,3 +1,5 @@
+import { getViewerLocale } from "@/lib/auth";
+import { t } from "@/lib/i18n";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
@@ -6,6 +8,7 @@ import { RowDataPacket } from "mysql2";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 
 export async function GET(req: NextRequest) {
+  const locale = await getViewerLocale();
   const session = await getCurrentSession();
   if (!session || session.adminLevel < 1) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -60,7 +63,7 @@ export async function GET(req: NextRequest) {
       id: fId,
       label: config.label,
       type: config.type,
-      factionType: config.factionType,
+      factionType: t(locale, config.factionTypeKey),
       color: config.color,
       leader: leader[0] || null,
       memberCount: Number(membersCount[0]?.count || 0),

@@ -8,33 +8,33 @@ SunsetPass.PremiumCost = 250
 SunsetPass.Tiers = {
     {
         level = 1,
-        free = { type = 'cash', amount = 800, label = '$800 Cash', icon = 'cash' },
-        premium = { type = 'premium_points', amount = 15, label = '15 Blaze Points', icon = 'coins' },
+        free = { type = 'cash', amount = 800, labelKey = "config.pass.label.800_cash.3993c775", label = '$800 Cash', icon = 'cash' },
+        premium = { type = 'premium_points', amount = 15, labelKey = "config.pass.label.15_blaze_points.fd95c9a7", label = '15 Blaze Points', icon = 'coins' },
     },
     {
         level = 2,
-        free = { type = 'item', item = 'water', count = 5, label = 'Water x5', icon = 'water_bottle' },
-        premium = { type = 'item', item = 'lockpick', count = 2, label = 'Lockpick x2', icon = 'lockpick' },
+        free = { type = 'item', item = 'water', count = 5, labelKey = "config.pass.label.water_x5.8f969c63", label = 'Water x5', icon = 'water_bottle' },
+        premium = { type = 'item', item = 'lockpick', count = 2, labelKey = "config.pass.label.lockpick_x2.23b93a99", label = 'Lockpick x2', icon = 'lockpick' },
     },
     {
         level = 3,
-        free = { type = 'item', item = 'bread', count = 5, label = 'Bread x5', icon = 'bread' },
-        premium = { type = 'bank', amount = 4000, label = '$4,000 Bank', icon = 'bank' },
+        free = { type = 'item', item = 'bread', count = 5, labelKey = "config.pass.label.bread_x5.031e5b86", label = 'Bread x5', icon = 'bread' },
+        premium = { type = 'bank', amount = 4000, labelKey = "config.pass.label.4_000_bank.e5d73c72", label = '$4,000 Bank', icon = 'bank' },
     },
     {
         level = 4,
-        free = { type = 'item', item = 'bandage', count = 3, label = 'Bandage x3', icon = 'bandage' },
-        premium = { type = 'premium_points', amount = 35, label = '35 Blaze Points', icon = 'coins' },
+        free = { type = 'item', item = 'bandage', count = 3, labelKey = "config.pass.label.bandage_x3.501841ce", label = 'Bandage x3', icon = 'bandage' },
+        premium = { type = 'premium_points', amount = 35, labelKey = "config.pass.label.35_blaze_points.28847151", label = '35 Blaze Points', icon = 'coins' },
     },
     {
         level = 5,
-        free = { type = 'bank', amount = 3000, label = '$3,000 Bank', icon = 'bank' },
-        premium = { type = 'cash', amount = 6000, label = '$6,000 Cash', icon = 'cash' },
+        free = { type = 'bank', amount = 3000, labelKey = "config.pass.label.3_000_bank.3523cb90", label = '$3,000 Bank', icon = 'bank' },
+        premium = { type = 'cash', amount = 6000, labelKey = "config.pass.label.6_000_cash.83f784ee", label = '$6,000 Cash', icon = 'cash' },
     },
     {
         level = 6,
-        free = { type = 'premium_points', amount = 10, label = '10 Blaze Points', icon = 'coins' },
-        premium = { type = 'item', item = 'bandage', count = 5, label = 'Bandage x5', icon = 'bandage' },
+        free = { type = 'premium_points', amount = 10, labelKey = "config.pass.label.10_blaze_points.e0f0073d", label = '10 Blaze Points', icon = 'coins' },
+        premium = { type = 'item', item = 'bandage', count = 5, labelKey = "config.pass.label.bandage_x5.4f8ba126", label = 'Bandage x5', icon = 'bandage' },
     },
 }
 

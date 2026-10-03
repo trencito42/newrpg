@@ -404,7 +404,7 @@ CreateThread(function()
     Wait(2000)
     TriggerEvent('chat:addSuggestion', '/fskins', 'Show the skins and uniforms available for your faction')
     TriggerEvent('chat:addSuggestion', '/fskin', 'Equip a faction uniform or skin', {
-        { name = 'number or name', help = 'e.g.: 1, 2, swat, hway, doctor' }
+        { name = 'number or name', helpKey = "config.factions.help.e_g_1_2_swat_hway_doctor.7587fb92", help = 'e.g.: 1, 2, swat, hway, doctor' }
     })
 end)
 

@@ -135,22 +135,22 @@ local function updateBusHud(session, totalStops, currentStop, isReturn)
 
     if isReturn then
         JC.hud({
-            title = 'LS Transit — ' .. (session.label or 'Linia Verde'),
-            objective = 'Traseu completat! Returneaza autobuzul la depou.',
+            title = exports.sunset_core:Translate('jobs.presentation.ls_transit') .. (session.label or exports.sunset_core:Translate('jobs.presentation.green_line')),
+            objective = exports.sunset_core:Translate('jobs.presentation.route_complete_return_the_bus_to_the_depot'),
             progress = { current = totalStops, total = totalStops },
             earnings = session.totalEarned or 0,
             keyHints = {
-                { key = 'E', label = 'Parcare & Finalizare Tura' },
+                { key = 'E', label = exports.sunset_core:Translate('jobs.presentation.park_end_shift') },
             },
         })
     else
         JC.hud({
-            title = 'LS Transit — ' .. (session.label or 'Linia Verde'),
-            objective = ('Condu catre statia %d/%d'):format(stopIdx, totalStops),
+            title = exports.sunset_core:Translate('jobs.presentation.ls_transit') .. (session.label or exports.sunset_core:Translate('jobs.presentation.green_line')),
+            objective = (exports.sunset_core:Translate('jobs.presentation.drive_to_stop_d_d')):format(stopIdx, totalStops),
             progress = { current = stopIdx - 1, total = totalStops },
             earnings = session.totalEarned or 0,
             keyHints = {
-                { key = 'E', label = 'Imbarcare Pasageri' },
+                { key = 'E', label = exports.sunset_core:Translate('jobs.presentation.board_passengers') },
             },
         })
     end
@@ -159,13 +159,13 @@ end
 function Sunset.Jobs.StartBusDriver()
     local cfg = Sunset.GetJobConfig('busdriver')
     if not cfg then
-        JC.notify('Configuratia jobului de sofer de autobuz lipseste.', 'error')
+        JC.notify(exports.sunset_core:Translate('jobs.presentation.the_bus_driver_job_configuration_is_missing'), 'error')
         return
     end
 
     local data, err = Sunset.AwaitCallback('sunset:jobs:busdriver:start')
     if not data then
-        JC.notify(err or 'Nu s-a putut incepe tura de sofer de autobuz.', 'error')
+        JC.notify(err or exports.sunset_core:Translate('jobs.presentation.could_not_start_the_bus_driver_shift'), 'error')
         return
     end
 
@@ -180,7 +180,7 @@ function Sunset.Jobs.StartBusDriver()
     local bus = JC.spawnVehicle(busModel, spawnBay, true)
     if not bus then
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify('Nu s-a putut spawna autobuzul de serviciu.', 'error')
+        JC.notify(exports.sunset_core:Translate('jobs.presentation.could_not_spawn_the_service_bus'), 'error')
         return
     end
 
@@ -188,14 +188,14 @@ function Sunset.Jobs.StartBusDriver()
     if not ok then
         JC.deleteVehicles()
         Sunset.AwaitCallback('sunset:jobs:cancelWork')
-        JC.notify(regErr or 'Eroare la inregistrarea autobuzului de serviciu.', 'error')
+        JC.notify(regErr or exports.sunset_core:Translate('jobs.presentation.could_not_register_the_service_bus'), 'error')
         return
     end
 
     JC.monitorVehicles()
 
     -- Add Depot Blip
-    JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Autobaza LS Transit')
+    JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.presentation.ls_transit_bus_depot'))
 
     local stops = data.stops or {}
     local totalStops = #stops
@@ -204,19 +204,19 @@ function Sunset.Jobs.StartBusDriver()
     -- Setup first stop
     local firstStop = stops[1]
     local stopV3 = vector3(firstStop.coords.x, firstStop.coords.y, firstStop.coords.z)
-    JC.addBlip(stopV3, { sprite = 513, color = 46, scale = 0.85 }, firstStop.label or 'Oprirea 1')
+    JC.addBlip(stopV3, { sprite = 513, color = 46, scale = 0.85 }, firstStop.label or exports.sunset_core:Translate('jobs.presentation.stop_1'))
     JC.setWaypoint(stopV3)
     setBusCheckpoint(stopV3, 46, 204, 113)
     spawnWaitingPassengers(firstStop)
 
     JC.sessionData = {
-        label = data.label or 'Linia Verde',
+        label = data.label or exports.sunset_core:Translate('jobs.presentation.green_line'),
         totalEarned = 0,
         passengers = 0,
     }
     updateBusHud(JC.sessionData, totalStops, currentStopIdx, false)
 
-    JC.notify('Tura a inceput! Urmeaza traseul Liniei Verzi si opreste in fiecare statie.', 'info', 6000)
+    JC.notify(exports.sunset_core:Translate('jobs.presentation.your_shift_has_started_follow_the_green_line_route_and_stop_at_every_stop'), 'info', 6000)
 
     -- ── Active Shift Loop ─────────────────────────────────────────
     CreateThread(function()
@@ -253,8 +253,8 @@ function Sunset.Jobs.StartBusDriver()
                             if speed < 2.0 then
                                 -- Prompt to board passengers
                                 BeginTextCommandDisplayHelp("THREESTRINGS")
-                                AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
-                                AddTextComponentSubstringPlayerName("~g~Imbarcare Pasageri & Bilete~s~")
+                                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.presentation.press_input_context_to'))
+                                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.bus.board_passengers'))
                                 EndTextCommandDisplayHelp(0, false, false, -1)
 
                                 if IsControlJustPressed(0, 38) then
@@ -324,13 +324,13 @@ function Sunset.Jobs.StartBusDriver()
 
                                     local notifyMsg
                                     if isFinalStop then
-                                        notifyMsg = ('Capat de linie! Au coborat toti cei %d pasageri.'):format(alightingCount)
+                                        notifyMsg = (exports.sunset_core:Translate('jobs.presentation.end_of_the_line_all_d_passengers_have_left_the_bus')):format(alightingCount)
                                     elseif alightingCount > 0 and boardingCount > 0 then
-                                        notifyMsg = ('Flux calatori: %d au coborat, %d urca in autobuz...'):format(alightingCount, boardingCount)
+                                        notifyMsg = (exports.sunset_core:Translate('jobs.presentation.passengers_d_got_off_d_are_boarding')):format(alightingCount, boardingCount)
                                     elseif alightingCount > 0 then
-                                        notifyMsg = ('Au coborat %d pasageri in statie...'):format(alightingCount)
+                                        notifyMsg = (exports.sunset_core:Translate('jobs.presentation.d_passengers_got_off_at_this_stop')):format(alightingCount)
                                     else
-                                        notifyMsg = ('Imbarcare: urca %d pasageri noi...'):format(boardingCount)
+                                        notifyMsg = (exports.sunset_core:Translate('jobs.presentation.boarding_d_new_passengers_are_getting_on')):format(boardingCount)
                                     end
                                     exports.sunset_ui:Notify(notifyMsg, 'info', 3000)
 
@@ -371,7 +371,7 @@ function Sunset.Jobs.StartBusDriver()
                                         JC.sessionData.totalEarned = res.totalEarned
                                         JC.sessionData.passengers = res.passengersTotal
 
-                                        exports.sunset_ui:Notify(('Ai imbarcat %d pasageri! +$%d incasari bilete.'):format(res.passengers, res.earned), 'success', 5000)
+                                        exports.sunset_ui:Notify((exports.sunset_core:Translate('jobs.presentation.you_boarded_d_passengers_d_ticket_revenue')):format(res.passengers, res.earned), 'success', 5000)
 
                                         if res.isLastStop then
                                             isReturnStage = true
@@ -380,20 +380,20 @@ function Sunset.Jobs.StartBusDriver()
                                             JC.clearBlips()
 
                                             local returnV3 = vector3(cfg.depot.returnCoords.x, cfg.depot.returnCoords.y, cfg.depot.returnCoords.z)
-                                            JC.addBlip(returnV3, { sprite = 513, color = 46, scale = 0.9 }, 'Depou — Returnare Autobuz')
+                                            JC.addBlip(returnV3, { sprite = 513, color = 46, scale = 0.9 }, exports.sunset_core:Translate('jobs.presentation.depot_return_bus'))
                                             JC.setWaypoint(returnV3)
                                             setBusCheckpoint(returnV3, 215, 181, 88)
 
                                             updateBusHud(JC.sessionData, totalStops, totalStops, true)
-                                            JC.notify('Traseul a fost finalizat cu succes! Condu autobuzul inapoi la depou pentru bonus.', 'success', 7000)
+                                            JC.notify(exports.sunset_core:Translate('jobs.presentation.route_complete_return_the_bus_to_the_depot_for_a_bonus'), 'success', 7000)
                                         else
                                             currentStopIdx = res.nextStopIndex
                                             local nextStop = stops[currentStopIdx]
                                             local nextV3 = vector3(nextStop.coords.x, nextStop.coords.y, nextStop.coords.z)
                                             
                                             JC.clearBlips()
-                                            JC.addBlip(cfg.depot.coords, cfg.depot.blip, 'Autobaza LS Transit')
-                                            JC.addBlip(nextV3, { sprite = 513, color = 46, scale = 0.85 }, nextStop.label or ('Oprirea ' .. currentStopIdx))
+                                            JC.addBlip(cfg.depot.coords, cfg.depot.blip, exports.sunset_core:Translate('jobs.presentation.ls_transit_bus_depot'))
+                                            JC.addBlip(nextV3, { sprite = 513, color = 46, scale = 0.85 }, nextStop.label or (exports.sunset_core:Translate('jobs.presentation.stop') .. currentStopIdx))
                                             JC.setWaypoint(nextV3)
                                             setBusCheckpoint(nextV3, 46, 204, 113)
                                             spawnWaitingPassengers(nextStop)
@@ -401,7 +401,7 @@ function Sunset.Jobs.StartBusDriver()
                                             updateBusHud(JC.sessionData, totalStops, currentStopIdx, false)
                                         end
                                     else
-                                        JC.notify(res and res.err or 'Eroare la inregistrarea statiei.', 'error')
+                                        JC.notify(res and res.err or exports.sunset_core:Translate('jobs.presentation.could_not_register_the_stop'), 'error')
                                     end
 
                                     isBoardingActive = false
@@ -409,7 +409,7 @@ function Sunset.Jobs.StartBusDriver()
                             else
                                 -- Remind player to stop bus completely
                                 BeginTextCommandDisplayHelp("STRING")
-                                AddTextComponentSubstringPlayerName("~y~Opreste complet autobuzul in statie!~s~")
+                                AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.bus.stop_completely'))
                                 EndTextCommandDisplayHelp(0, false, false, -1)
                             end
                         end
@@ -434,8 +434,8 @@ function Sunset.Jobs.StartBusDriver()
 
                         if speed < 2.0 then
                             BeginTextCommandDisplayHelp("THREESTRINGS")
-                            AddTextComponentSubstringPlayerName("Apasa ~INPUT_CONTEXT~ pentru ")
-                            AddTextComponentSubstringPlayerName("~y~Parcare & Finalizare Traseu~s~")
+                            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.presentation.press_input_context_to'))
+                            AddTextComponentSubstringPlayerName(exports.sunset_core:Translate('jobs.bus.park_finish_route'))
                             EndTextCommandDisplayHelp(0, false, false, -1)
 
                             if IsControlJustPressed(0, 38) then
@@ -450,11 +450,11 @@ function Sunset.Jobs.StartBusDriver()
                                 JC.hudClear(true)
 
                                 if finRes and finRes.success then
-                                    exports.sunset_ui:Notify(('Felicitari! Ai finalizat tura pe Linia Verde.\nBonus traseu: +$%d\nTotal castigat: $%d (%d pasageri transportati)'):format(
+                                    exports.sunset_ui:Notify((exports.sunset_core:Translate('jobs.presentation.green_line_shift_complete_nroute_bonus_d_ntotal_earned_d_d_passengers_transported')):format(
                                         finRes.bonus, finRes.grandTotal, finRes.passengersTotal
                                     ), 'success', 9000)
                                 else
-                                    JC.notify(finRes and finRes.err or 'Eroare la finalizarea cursei.', 'error')
+                                    JC.notify(finRes and finRes.err or exports.sunset_core:Translate('jobs.presentation.could_not_finish_the_route'), 'error')
                                 end
                                 break
                             end

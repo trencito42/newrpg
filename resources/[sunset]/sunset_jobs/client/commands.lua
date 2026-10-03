@@ -160,7 +160,7 @@ end)
 -- player spawn trucks and had no references.
 TriggerEvent('chat:addSuggestion', '/jobs', 'Open jobs panel')
 TriggerEvent('chat:addSuggestion', '/work', 'Start your civilian job shift', {
-    { name = 'cancel', help = 'Cancel current shift' },
+    { name = 'cancel', helpKey = "config.jobs.help.cancel_current_shift.600fd5d4", help = 'Cancel current shift' },
 })
 TriggerEvent('chat:addSuggestion', '/jobhelp', 'Help for your current job')
 TriggerEvent('chat:addSuggestion', '/skills', 'Show job skill levels')

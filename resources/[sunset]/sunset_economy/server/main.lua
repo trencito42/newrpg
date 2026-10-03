@@ -438,7 +438,8 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
         end
     end
     if itemDef.weapon and exports.sunset_inventory:HasItem(source, itemName, 1) then
-        return nil, { localeKey = 'economy.message.you_already_own_value', formatArgs = { itemDef.label or itemName } }
+        return nil, { localeKey = 'economy.message.you_already_own_value', formatArgs = {
+            Sunset.ItemLabel(itemName, exports.sunset_core:GetPlayerLocale(source)) } }
     end
 
     -- Optional fisherman-skill gate (minFishLevel on shop item)

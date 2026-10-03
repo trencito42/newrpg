@@ -613,9 +613,9 @@ exports('RunServerCommand', RunServerCommand)
 local function buildChatChannels(source)
     local channels = {
         { id = 'all', label = t(source, 'chat.channel.local'), placeholder = t(source, 'chat.channel.local_hint') },
-        { id = 'ooc', label = 'OOC', placeholder = t(source, 'chat.channel.ooc_hint') },
-        { id = 'me', label = 'ME', placeholder = t(source, 'chat.channel.me_hint') },
-        { id = 'do', label = 'DO', placeholder = t(source, 'chat.channel.do_hint') },
+        { id = 'ooc', labelKey = "config.chat.label.ooc.794fe07c", label = 'OOC', placeholder = t(source, 'chat.channel.ooc_hint') },
+        { id = 'me', labelKey = "config.chat.label.me.03381a14", label = 'ME', placeholder = t(source, 'chat.channel.me_hint') },
+        { id = 'do', labelKey = "config.chat.label.do.1f093267", label = 'DO', placeholder = t(source, 'chat.channel.do_hint') },
     }
 
     local char = exports.sunset_core:GetCharacter(source)

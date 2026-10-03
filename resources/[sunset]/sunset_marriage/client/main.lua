@@ -67,7 +67,7 @@ end)
 
 CreateThread(function()
     Wait(1500)
-    TriggerEvent('chat:addSuggestion', '/propose', 'Propose marriage to a nearby player', { { name = 'id', help = 'Player server ID' } })
+    TriggerEvent('chat:addSuggestion', '/propose', 'Propose marriage to a nearby player', { { name = 'id', helpKey = "config.marriage.help.player_server_id.3ddbbd0a", help = 'Player server ID' } })
     TriggerEvent('chat:addSuggestion', '/divorce', 'File for divorce')
     TriggerEvent('chat:addSuggestion', '/marriage', 'Check your marriage status')
 end)

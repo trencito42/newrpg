@@ -72,7 +72,9 @@ local function buildJobCategory(char)
     end
 
     return {
-        title = 'Job (' .. (def.label or jobId) .. ')',
+        title = exports.sunset_core:TFor(source, 'help.title.job', {
+            job = Sunset.PresentationText(def, 'label', Sunset.GetPlayerLocale(source)) or jobId,
+        }),
         entries = entries,
     }
 end

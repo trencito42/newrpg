@@ -248,7 +248,7 @@ export function StaffFactionsClient({
                   disabled={loading || !targetUsername.trim()}
                   className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
-                  {loading ? "Se procesează..." : "Numește Lider"}
+                  {loading ? t(locale, "interface.processing") : t(locale, "interface.appoint_leader")}
                 </button>
               </div>
             </form>

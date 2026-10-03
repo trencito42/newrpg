@@ -847,7 +847,7 @@ CreateThread(function()
     TriggerEvent('chat:addSuggestion', '/gototurf', 'Teleport to a territory (admin)', { { name = 'id', help = '1-16' } })
     TriggerEvent('chat:addSuggestion', '/forceturf', 'Force-start a war (admin)', {
         { name = 'turfId', help = '1-16' },
-        { name = 'clanId', help = 'optional' },
+        { name = 'clanId', helpKey = "config.turfs.help.optional.523f6951", help = 'optional' },
     })
     TriggerEvent('chat:addSuggestion', '/stopwar', 'Stop the active war (admin)', { { name = 'turfId', help = '1-16' } })
     TriggerEvent('chat:addSuggestion', '/resetturfcd', 'Reset territory cooldown (admin)', { { name = 'id|all' } })

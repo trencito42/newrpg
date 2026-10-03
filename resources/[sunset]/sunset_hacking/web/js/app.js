@@ -314,7 +314,7 @@
                     setTimeout(() => { uNode.domElement.classList.remove('locked', 'unlocking'); }, 280);
                 }
             });
-            hudStatus.textContent = 'GATE DECRYPTED // DATA CHANNEL UNLOCKED';
+            hudStatus.textContent = I18n.t('interface.gate_decrypted_data_channel_unlocked');
         }
 
         // 3. Victory Check
@@ -332,7 +332,7 @@
         window.HackingAudio.play('target');
         setTimeout(() => { window.HackingAudio.play('success'); }, 180);
 
-        hudStatus.textContent = 'CIRCUIT COMPLETE // ACCESS GRANTED';
+        hudStatus.textContent = I18n.t('interface.circuit_complete_access_granted');
         hudStatus.style.color = '#00e5ff';
 
         setTimeout(() => {
@@ -400,7 +400,7 @@
         if (isWon) return;
         isWon = true;
         window.HackingAudio.play('timeout');
-        hudStatus.textContent = 'SECURITY OVERRIDE FAILED // TRACE EXCEEDED';
+        hudStatus.textContent = I18n.t('interface.security_override_failed_trace_exceeded');
         hudStatus.style.color = '#ef4444';
 
         setTimeout(() => {
@@ -436,7 +436,7 @@
         graph = new PuzzleGraph(data.puzzle);
 
         hudTitle.textContent = data.title || graph.title;
-        hudStatus.textContent = 'NETWORK TOPOLOGY MAPPED // ROUTE SOURCE TO TARGET';
+        hudStatus.textContent = I18n.t('interface.network_mapped_connect_source_to_target');
         hudStatus.style.color = '#e2e8f0';
 
         if (hintCancel) {

@@ -15,32 +15,32 @@ Sunset.Dispatch.States = {
 
 Sunset.Dispatch.ServiceTypes = {
     taxi = {
-        label = 'Taxi',
+        labelKey = "config.core.label.taxi.0398eec7", label = 'Taxi',
         factionTypes = { 'transport' },
         providerFactions = { 'taxi' },
     },
     medic = {
-        label = 'Medic',
+        labelKey = "config.core.label.medic.d68536a9", label = 'Medic',
         factionTypes = { 'ems' },
         providerFactions = { 'medic' },
     },
     fire = {
-        label = 'Fire Rescue',
+        labelKey = "config.core.label.fire_rescue.a14a2062", label = 'Fire Rescue',
         factionTypes = { 'fire_rescue' },
         providerFactions = { 'lsfd' },
     },
     mechanic = {
-        label = 'Mechanic',
+        labelKey = "config.core.label.mechanic.8717e5a1", label = 'Mechanic',
         factionTypes = { 'mechanic' },
         providerFactions = { 'mechanic' },
     },
     police_backup = {
-        label = 'Officer Backup',
+        labelKey = "config.core.label.officer_backup.a1b5edd4", label = 'Officer Backup',
         factionTypes = { 'law_enforcement', 'ems', 'fire_rescue' },
         providerFactions = { 'police', 'medic', 'lsfd' },
     },
     police = {
-        label = '112 Police Emergency',
+        labelKey = "config.core.label.112_police_emergency.c5385e3d", label = '112 Police Emergency',
         factionTypes = { 'law_enforcement' },
         providerFactions = { 'police', 'sheriff', 'fib' },
     },

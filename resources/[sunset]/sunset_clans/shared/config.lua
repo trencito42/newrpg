@@ -26,11 +26,11 @@ SunsetClans.SlotTiers = {
 }
 
 SunsetClans.TagStyles = {
-    brackets = { label = '[tag]name', order = 1 },
-    prefix_dot = { label = 'tag.name', order = 2 },
-    suffix_brackets = { label = 'name[tag]', order = 3 },
-    suffix_dot = { label = 'name.tag', order = 4 },
-    glued_prefix = { label = 'tagname', order = 5 },
-    glued_suffix = { label = 'nametag', order = 6 },
+    brackets = { labelKey = "config.clans.label.tag_name.1ba0b50e", label = '[tag]name', order = 1 },
+    prefix_dot = { labelKey = "config.clans.label.tag_name.35b168d3", label = 'tag.name', order = 2 },
+    suffix_brackets = { labelKey = "config.clans.label.name_tag.9e359e19", label = 'name[tag]', order = 3 },
+    suffix_dot = { labelKey = "config.clans.label.name_tag.52402e5b", label = 'name.tag', order = 4 },
+    glued_prefix = { labelKey = "config.clans.label.tagname.19a85606", label = 'tagname', order = 5 },
+    glued_suffix = { labelKey = "config.clans.label.nametag.ba22ebd6", label = 'nametag', order = 6 },
 }
 

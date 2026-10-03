@@ -40,7 +40,7 @@ const ShieldWidget = {
         const feed = Array.isArray(data.feed) ? data.feed : [];
         if (!feed.length) {
             this.body.innerHTML = `<div class="shield-widget__empty">
-                <i class="ph-bold ph-shield-check"></i> All quiet — ${Number(data.watching || 0)} watched, 0 suspect+
+                <i class="ph-bold ph-shield-check"></i> ${I18n.t('ui.helpdesk.all_quiet', { count: Number(data.watching || 0) })}
             </div>`;
             return;
         }
@@ -55,7 +55,7 @@ const ShieldWidget = {
             `;
             const sub = document.createElement('div');
             sub.className = 'shield-widget__det';
-            sub.textContent = `${row.top} · ${Number(row.ticks)} tick(s)`;
+            sub.textContent = I18n.t('ui.helpdesk.detector_ticks', { detector: row.top, count: Number(row.ticks) });
             div.appendChild(sub);
             this.body.appendChild(div);
         });
@@ -190,8 +190,8 @@ const Helpdesk = {
                 <div class="hd-roster__main">
                     <div class="hd-roster__name">${this.esc(p.name)} ${flags.join(' ')}</div>
                     <div class="hd-roster__sub">
-                        <span>${Number(p.ping)}ms</span>
-                        <span>HP ${Number(p.health)}</span>
+                        <span>${I18n.t('ui.helpdesk.ping_ms', { ping: Number(p.ping) })}</span>
+                        <span>${I18n.t('ui.helpdesk.health_hp', { health: Number(p.health) })}</span>
                         ${p.money ? `<span>$${I18n.number(Number(p.money.cash))} · $${I18n.number(Number(p.money.bank))}</span>` : ''}
                     </div>
                 </div>
@@ -284,9 +284,13 @@ const Helpdesk = {
             const el = document.createElement('div');
             el.className = `hd-tick${Number(t.severity) >= 3 ? ' sev3' : ''}`;
             el.innerHTML = `
-                <div class="hd-tick__top"><span class="hd-tick__det">${this.esc(t.detector)}</span><span>sev ${Number(t.severity)}</span><span style="margin-left:auto;opacity:0.6">${Number(t.ageSec || 0)}s ago</span></div>
+                <div class="hd-tick__top"><span class="hd-tick__det">${this.esc(t.detector)}</span><span>${I18n.t('ui.helpdesk.severity', { severity: Number(t.severity) })}</span><span style="margin-left:auto;opacity:0.6">${I18n.t('ui.helpdesk.seconds_ago', { seconds: Number(t.ageSec || 0) })}</span></div>
                 <div class="hd-tick__measured">${this.esc(t.measured)}</div>
-                <div class="hd-tick__ctx">war=${this.esc(ctx.in_war)} bucket=${this.esc(ctx.bucket)} session=${this.esc(ctx.session || '-')} duty=${this.esc(ctx.on_duty)} downed=${this.esc(ctx.downed)} admin=${this.esc(ctx.admin_action || '-')} ping=${this.esc(ctx.ping)}</div>
+                <div class="hd-tick__ctx">${I18n.t('ui.helpdesk.context', {
+                    war: this.esc(ctx.in_war), bucket: this.esc(ctx.bucket),
+                    session: this.esc(ctx.session || '-'), duty: this.esc(ctx.on_duty),
+                    downed: this.esc(ctx.downed), admin: this.esc(ctx.admin_action || '-'), ping: this.esc(ctx.ping),
+                })}</div>
             `;
             wrap.appendChild(el);
         });

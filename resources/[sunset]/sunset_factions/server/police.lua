@@ -470,7 +470,7 @@ local function bookingStatus(targetId)
         if distance <= radius then return true, point, distance end
     end
     if not nearest and Sunset.Police and Sunset.Police.pdJailPoint then
-        local point = { label = 'MRPD Booking — basement', coords = Sunset.Police.pdJailPoint }
+        local point = { labelKey = "config.factions.label.mrpd_booking_basement.48701a7d", label = 'MRPD Booking — basement', coords = Sunset.Police.pdJailPoint }
         return FactionCore.distBetween(targetPos, point.coords) <= radius, point,
             FactionCore.distBetween(targetPos, point.coords)
     end
@@ -839,7 +839,12 @@ exports.sunset_core:RegisterCallback('sunset:policeConfiscate', function(source,
         if Sunset.IsConfiscatableItem(row.item) then
             local count = row.count or 1
             if exports.sunset_inventory:RemoveItem(targetId, row.item, count) then
-                removed[#removed + 1] = { item = row.item, label = Sunset.Items[row.item] and Sunset.Items[row.item].label or row.item, count = count }
+                removed[#removed + 1] = {
+                    item = row.item,
+                    labelKey = Sunset.Items[row.item] and Sunset.Items[row.item].labelKey,
+                    label = Sunset.ItemLabel(row.item, exports.sunset_core:GetPlayerLocale(source)),
+                    count = count,
+                }
             end
         end
     end

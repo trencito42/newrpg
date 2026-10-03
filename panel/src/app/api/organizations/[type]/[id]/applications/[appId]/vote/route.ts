@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentSession } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import { getFactionAccess } from "@/lib/faction-access";
+import { t } from "@/lib/i18n";
+
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest, { params }: Context) {
 }
 
 export async function POST(req: NextRequest, { params }: Context) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) {
     return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   }
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // 2. Prevent applicant from voting on their own application
   if (app.account_id === session.accountId) {
     return NextResponse.json(
-      { error: "cannot_vote_on_own_application", message: "You cannot vote on your own application." },
+      { error: "cannot_vote_on_own_application", message: t(locale, "interface.you_cannot_vote_on_your_own_application") },
       { status: 403 }
     );
   }
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // 3. Check application status: must be pending (submitted or under_review)
   if (app.status !== "submitted" && app.status !== "under_review") {
     return NextResponse.json(
-      { error: "voting_closed", message: "Voting is closed for finalized applications." },
+      { error: "voting_closed", message: t(locale, "interface.voting_is_closed_for_finalized_applications") },
       { status: 400 }
     );
   }

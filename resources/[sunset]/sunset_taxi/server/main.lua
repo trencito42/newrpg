@@ -254,11 +254,11 @@ local function startMeter(ride)
                     if not ride.idleNotified then
                         ride.idleNotified = true
                         TriggerClientEvent('sunset:client:notify', ride.driverSource,
-                            'Meter paused — vehicle idle too long', 'warning')
+                            exports.sunset_core:TFor(ride.driverSource, 'taxi.message.meter_paused_idle_long'), 'warning')
                         local passengerSrc = findSourceByCharacterId(ride.passengerCharId)
                         if passengerSrc then
                             TriggerClientEvent('sunset:client:notify', passengerSrc,
-                                'Taxi meter paused — vehicle idle', 'info')
+                                exports.sunset_core:TFor(passengerSrc, 'taxi.message.meter_paused_idle'), 'info')
                         end
                     end
                 end
@@ -506,6 +506,7 @@ local function estimateRide(pickup, destination, destLabel)
     return {
         fare = fare,
         distanceKm = km,
+        labelKey = not destLabel and 'taxi.label.custom_destination' or nil,
         label = destLabel or 'Custom destination',
         destination = destination,
     }
@@ -899,7 +900,9 @@ AddEventHandler('sunset:dispatch:callAccepted', function(callId, callType, provi
         driverCharId = char.id,
         driverName = exports.sunset_core:GetPlayerDisplayName(providerSource),
         pickup = pickup,
-        destination = { x = pickup.x, y = pickup.y, z = pickup.z, label = call.description or 'Service call' },
+        destination = { x = pickup.x, y = pickup.y, z = pickup.z,
+            labelKey = not call.description and 'taxi.label.service_call' or nil,
+            label = call.description or 'Service call' },
         fare = Sunset.Taxi.minFare,
         distanceKm = 0,
         status = 'accepted',

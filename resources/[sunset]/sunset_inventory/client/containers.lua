@@ -105,9 +105,9 @@ RegisterCommand('portbagaj', function(_, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/trunk', 'Open or manage the vehicle trunk', {
-    { name = 'put/take', help = 'Optional operation: put or take' },
-    { name = 'obiect', help = 'Item name (e.g. water, repairkit)' },
-    { name = 'cantitate', help = 'Amount' }
+    { name = 'put/take', helpKey = "config.inventory.help.optional_operation_put_or_take.665d929f", help = 'Optional operation: put or take' },
+    { name = 'obiect', helpKey = "config.inventory.help.item_name_e_g_water_repairkit.56f3f6ad", help = 'Item name (e.g. water, repairkit)' },
+    { name = 'cantitate', helpKey = "config.inventory.help.amount.8255f6a7", help = 'Amount' }
 })
 TriggerEvent('chat:addSuggestion', '/portbagaj', 'Alias for /trunk')
 
@@ -167,8 +167,8 @@ RegisterCommand('torpedou', function(_, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/glovebox', 'Open or manage the vehicle glovebox', {
-    { name = 'put/take', help = 'Operation: put or take' },
-    { name = 'obiect', help = 'Item name' },
-    { name = 'cantitate', help = 'Amount' }
+    { name = 'put/take', helpKey = "config.inventory.help.operation_put_or_take.15195574", help = 'Operation: put or take' },
+    { name = 'obiect', helpKey = "config.inventory.help.item_name.1ab75876", help = 'Item name' },
+    { name = 'cantitate', helpKey = "config.inventory.help.amount.8255f6a7", help = 'Amount' }
 })
 TriggerEvent('chat:addSuggestion', '/torpedou', 'Alias for /glovebox')

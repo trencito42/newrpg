@@ -205,7 +205,7 @@ const BusinessPanels = {
         $('#business-admin-balance').textContent = this.formatMoney(selected.balance);
         $('#business-admin-owner').textContent = selected.ownerName
             ? `${selected.ownerName} (#${selected.ownerCharacterId})`
-            : 'No owner';
+            : I18n.t('ui.businesses.no_owner');
         $('#business-admin-type').textContent = this.typeLabel(selected.businessType);
         $('#business-admin-catalog').textContent = selected.catalogKey || '—';
         $('#business-admin-for-sale').checked = selected.forSale === true;
@@ -243,10 +243,10 @@ const BusinessPanels = {
                 <p>${I18n.t('ui.businesses.your_share', { percent: Number(row.profitPercent || 0) })}</p>
                 <div class="business-owner-card__actions">
                     <button type="button" class="premium-clan__btn premium-clan__btn--secondary" data-business-teleport="${row.id}">
-                        GO TO LOCATION
+                        ${I18n.t('ui.businesses.go_to_location')}
                     </button>
                     <button type="button" class="premium-clan__btn premium-clan__btn--primary" data-business-withdraw="${row.id}" ${balance > 0 ? '' : 'disabled'}>
-                        WITHDRAW TO BANK
+                        ${I18n.t('ui.businesses.withdraw_to_bank')}
                     </button>
                 </div>
             `;

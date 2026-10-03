@@ -106,24 +106,24 @@
                 const confirmPassword = els.confirmPass ? els.confirmPass.value.trim() : '';
 
                 if (!oldPassword) {
-                    showFeedback('Te rugam sa introduci parola curenta.', 'error');
+                    showFeedback(I18n.t('interface.enter_your_current_password_2'), 'error');
                     return;
                 }
 
                 if (!newPassword || newPassword.length < 6) {
-                    showFeedback('Parola noua trebuie sa aiba minim 6 caractere.', 'error');
+                    showFeedback(I18n.t('interface.the_new_password_must_contain_at_least_6_characters'), 'error');
                     return;
                 }
 
                 if (newPassword !== confirmPassword) {
-                    showFeedback('Parola noua si confirmarea nu coincid.', 'error');
+                    showFeedback(I18n.t('ui.change_password.mismatch'), 'error');
                     return;
                 }
 
                 if (els.submitBtn) {
                     els.submitBtn.disabled = true;
                     const btnText = els.submitBtn.querySelector('.cp-btn-text');
-                    if (btnText) btnText.textContent = 'Se proceseaza...';
+                    if (btnText) btnText.textContent = I18n.t('interface.processing');
                 }
 
                 try {
@@ -139,20 +139,20 @@
 
                     const res = await response.json();
                     if (res && res.success) {
-                        showFeedback(res.message || 'Parola a fost schimbata cu succes!', 'success');
+                        showFeedback(res.message || I18n.t('ui.change_password.success'), 'success');
                         setTimeout(() => {
                             closeModal();
                         }, 1800);
                     } else {
-                        showFeedback(res && res.message ? res.message : 'Eroare la schimbarea parolei.', 'error');
+                        showFeedback(res && res.message ? res.message : I18n.t('interface.could_not_change_the_password'), 'error');
                     }
                 } catch (err) {
-                    showFeedback('Eroare de conexiune la server.', 'error');
+                    showFeedback(I18n.t('ui.change_password.connection_error'), 'error');
                 } finally {
                     if (els.submitBtn) {
                         els.submitBtn.disabled = false;
                         const btnText = els.submitBtn.querySelector('.cp-btn-text');
-                        if (btnText) btnText.textContent = 'Salveaza Parola';
+                        if (btnText) btnText.textContent = I18n.t('interface.save_password');
                     }
                 }
             });

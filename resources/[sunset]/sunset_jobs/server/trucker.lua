@@ -494,7 +494,7 @@ RegisterCommand('aaddroute', function(source, args)
     local pay      = tonumber(args[2])
     if not pay or pay < 1 then
         TriggerClientEvent('sunset:client:notify', source,
-            'Usage: /aaddroute [categorie] [plata] [label]\nDupa asta vino la destinatie si fa /aaddroute delivery\nSau: /aaddroute [categorie] [plata] [dest_x] [dest_y] [dest_z] [label]',
+            exports.sunset_core:TFor(source, 'jobs.message.aaddroute_usage'),
             'error', 8000)
         return
     end

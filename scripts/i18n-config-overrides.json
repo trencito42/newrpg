@@ -1,0 +1,2521 @@
+{
+  "missions | trucker": { "ro": "missions | trucker" },
+  "hank | route1_pickup | ...": { "ro": "hank | route1_pickup | ..." },
+  "trucker": { "ro": "trucker" },
+  "trucker | missions": { "ro": "trucker | missions" },
+  "trucker | garbage | hunting | diving": { "ro": "trucker | garbage | hunting | diving" },
+  "Optional route ID": { "ro": "ID opțional al rutei" },
+  "Mission Contacts": { "ro": "Contacte pentru misiuni" },
+  "Job Workplaces": { "ro": "Locuri de muncă" },
+  "Trucker Routes": { "ro": "Rute de camionagiu" },
+  "Trailer pickup bay, delivery entrance checkpoint, and oriented manual parking bay.": { "ro": "Zonă de preluare a remorcii, punct de intrare la livrare și zonă orientată pentru parcare manuală." },
+  "Fuel (Tanker)": { "ro": "Combustibil (cisternă)" },
+  "General Freight": { "ro": "Marfă generală" },
+  "Heavy Equipment": { "ro": "Utilaje grele" },
+  "Route ID is required and must be unique.": { "ro": "ID-ul rutei este obligatoriu și trebuie să fie unic." },
+  "Route label cannot be empty.": { "ro": "Numele rutei nu poate fi gol." },
+  "Label valid.": { "ro": "Nume valid." },
+  "Base pay must be a positive number.": { "ro": "Plata de bază trebuie să fie un număr pozitiv." },
+  "Garbage Routes": { "ro": "Rute de salubritate" },
+  "Ordered sequence of trash bin collection stops.": { "ro": "Secvență ordonată de opriri pentru colectarea pubelelor." },
+  "Route must contain at least 1 trash bin.": { "ro": "Ruta trebuie să conțină cel puțin o pubelă." },
+  "Hunting Zones": { "ro": "Zone de vânătoare" },
+  "Polygon hunting zone with ranked species and animal spawn points.": { "ro": "Zonă poligonală de vânătoare cu specii clasificate și puncte de apariție a animalelor." },
+  "Zone ID is required.": { "ro": "ID-ul zonei este obligatoriu." },
+  "At least 1 spawn point required.": { "ro": "Este necesar cel puțin un punct de apariție." },
+  "maxAlive must be 1–12.": { "ro": "maxAlive trebuie să fie între 1 și 12." },
+  "Dive Sites": { "ro": "Locuri de scufundare" },
+  "Underwater salvage site: search zone + loot points (no ground-snap).": { "ro": "Loc de recuperare subacvatică: zonă de căutare și puncte de pradă (fără fixare pe sol)." },
+  "Site ID required.": { "ro": "ID-ul locului este obligatoriu." },
+  "searchZone radius must be > 0.": { "ro": "Raza searchZone trebuie să fie mai mare decât 0." },
+  "Recommend more loot points than requiredSalvage for randomness.": { "ro": "Se recomandă mai multe puncte de pradă decât requiredSalvage pentru selecție aleatorie." },
+  "Optional — output vector4 with heading": { "ro": "Opțional — afișează vector4 cu orientarea" },
+  "e.g. hq_medic, hospital — omit or use list": { "ro": "de ex. hq_medic, hospital — omite sau folosește list" },
+  "e.g. 2.5 — omit or use off/1 to reset": { "ro": "de ex. 2.5 — omite sau folosește off/1 pentru resetare" },
+  "LSSI — License & Safety": { "ro": "LSSI — Licențe și siguranță" },
+  "Los Santos Police Department — patrol, citations, and city-wide law enforcement.": { "ro": "Departamentul de Poliție Los Santos — patrulare, amenzi și aplicarea legii în întregul oraș." },
+  "County sheriff department — robbery response, warrants, and high-risk pursuits.": { "ro": "Departamentul șerifului — intervenții la jafuri, mandate și urmăriri cu risc ridicat." },
+  "Federal Investigation Bureau — investigations, raids, and federal warrants.": { "ro": "Biroul Federal de Investigații — anchete, raiduri și mandate federale." },
+  "Emergency medical services — heal, revive, and stabilize patients at Pillbox.": { "ro": "Servicii medicale de urgență — tratează, resuscitează și stabilizează pacienții la Pillbox." },
+  "City taxi service — pick up passengers via the Downtown Cab phone app or manual fares.": { "ro": "Serviciu de taxi urban — preia pasageri prin aplicația Downtown Cab sau curse directe." },
+  "Vehicle repair shop — fix cars at HQ or on the road for other players.": { "ro": "Atelier auto — repară vehicule la sediu sau pe teren pentru alți jucători." },
+  "Fire and rescue — clock in, take the firetruk, answer vehicle fires with the extinguisher. Revive at Engineer rank and above.": { "ro": "Pompieri și salvare — intră în tură, ia autospeciala și stinge incendiile auto. Poți resuscita de la gradul Inginer în sus." },
+  "Los Santos Safety Institute — pilot, boat, and firearm licensing instructors.": { "ro": "Institutul de Siguranță Los Santos — instructori pentru licențe de pilot, navigație și arme." },
+  "Organized crime — craft at the lab, move product, stay off the radar.": { "ro": "Crimă organizată — produce în laborator, transportă marfa și evită autoritățile." },
+  "Street syndicate — weapons bench, fencing stolen goods, crew operations.": { "ro": "Sindicat stradal — atelier de arme, valorificarea bunurilor furate și operațiuni de grup." },
+  "MRPD Booking — basement": { "ro": "Procesare MRPD — subsol" },
+  "Bolingbroke Reception — front processing gate": { "ro": "Recepție Bolingbroke — poarta principală de procesare" },
+  "🎮 Joacă pe Server": { "en": "🎮 Play on the Server", "ro": "🎮 Joacă pe server" },
+  "🌐 Panel & Comunitate": { "en": "🌐 Panel & Community", "ro": "🌐 Panel și comunitate" },
+  "Flight School — LSIA": { "ro": "Școala de aviație — LSIA" },
+  "Boat School — Marina": { "ro": "Școala de navigație — Marina" },
+  "LSSI Weapon Range — Sandy Shores": { "ro": "Poligonul LSSI — Sandy Shores" },
+  "LSSI Hunting Range — Blaine County": { "ro": "Poligonul de vânătoare LSSI — Blaine County" },
+  "Driving School — Theory": { "ro": "Școala de șoferi — teorie" },
+  "Flight School — Theory": { "ro": "Școala de aviație — teorie" },
+  "Boat School — Theory": { "ro": "Școala de navigație — teorie" },
+  "LSSI Hunting License — Theory": { "ro": "Licență de vânătoare LSSI — teorie" },
+  "Firearm Safety — Theory": { "ro": "Siguranța armelor — teorie" },
+  "Welcome to Driving School. Listen carefully — we will get you on the road safely.": { "ro": "Bun venit la școala de șoferi. Ascultă cu atenție — te vom pregăti să conduci în siguranță." },
+  "Buckle up — press K to fasten your seatbelt.": { "ro": "Pune-ți centura — apasă K pentru a o fixa." },
+  "Fence — Black Market": { "ro": "Intermediar — piața neagră" },
+  "Robbery — Vangelico": { "ro": "Jaf — Vangelico" },
+  "Bank — Fleeca Legion": { "ro": "Bancă — Fleeca Legion" },
+  "LS Customs — ECU Bay": { "ro": "LS Customs — zona ECU" },
+  "e.g. staging, event_spawn": {
+    "en": "e.g. staging, event_spawn",
+    "ro": "de exemplu, stadializare, event_spawn"
+  },
+  "Checkpoint name saved with /setcp": {
+    "en": "Checkpoint name saved with /setcp",
+    "ro": "Nume punct de control salvat cu /setcp"
+  },
+  "Omit or use list to show saved checkpoints": {
+    "en": "Omit or use list to show saved checkpoints",
+    "ro": "Omiteți sau utilizați lista pentru a afișa punctele de control salvate"
+  },
+  "Player server id, or X coordinate / vector3(...)": {
+    "en": "Player server id, or X coordinate / vector3(...)",
+    "ro": "ID server jucător sau coordonată X/ vector3(...)"
+  },
+  "Y coordinate (when using x y z)": {
+    "en": "Y coordinate (when using x y z)",
+    "ro": "Coordonata Y (când se utilizează x y z)"
+  },
+  "Z coordinate (when using x y z)": {
+    "en": "Z coordinate (when using x y z)",
+    "ro": "Coordonata Z (când se utilizează x y z)"
+  },
+  "cash": {
+    "en": "cash",
+    "ro": "numerar"
+  },
+  "bank balance": {
+    "en": "bank balance",
+    "ro": "sold bancar"
+  },
+  "level": {
+    "en": "level",
+    "ro": "nivel"
+  },
+  "Respect Points": {
+    "en": "Respect Points",
+    "ro": "Puncte de respect"
+  },
+  "paydays received": {
+    "en": "paydays received",
+    "ro": "zile de plată primite"
+  },
+  "hunger": {
+    "en": "hunger",
+    "ro": "foame"
+  },
+  "thirst": {
+    "en": "thirst",
+    "ro": "sete"
+  },
+  "stress": {
+    "en": "stress",
+    "ro": "stres"
+  },
+  "playtime minutes": {
+    "en": "playtime minutes",
+    "ro": "minute jucate"
+  },
+  "Rob Points": {
+    "en": "Rob Points",
+    "ro": "Puncte de jaf"
+  },
+  "Blaze Points": {
+    "en": "Blaze Points",
+    "ro": "Puncte Blaze"
+  },
+  "Hats": {
+    "en": "Hats",
+    "ro": "Pălării"
+  },
+  "Masks": {
+    "en": "Masks",
+    "ro": "Măști"
+  },
+  "Glasses": {
+    "en": "Glasses",
+    "ro": "Ochelari"
+  },
+  "Earrings": {
+    "en": "Earrings",
+    "ro": "Cercei"
+  },
+  "Accessories": {
+    "en": "Accessories",
+    "ro": "Accesorii"
+  },
+  "Tops": {
+    "en": "Tops",
+    "ro": "Bluze"
+  },
+  "Undershirts": {
+    "en": "Undershirts",
+    "ro": "Tricouri purtate dedesubt"
+  },
+  "Vests": {
+    "en": "Vests",
+    "ro": "Veste"
+  },
+  "Pants": {
+    "en": "Pants",
+    "ro": "Pantaloni"
+  },
+  "Shoes": {
+    "en": "Shoes",
+    "ro": "Încălțăminte"
+  },
+  "Bags": {
+    "en": "Bags",
+    "ro": "Genți"
+  },
+  "Watches": {
+    "en": "Watches",
+    "ro": "Ceasuri"
+  },
+  "Bracelets": {
+    "en": "Bracelets",
+    "ro": "Brățări"
+  },
+  "Te rugam sa introduci username-ul sau emailul contului.": {
+    "en": "Enter your account username or email address.",
+    "ro": "Introdu numele de utilizator sau adresa de email a contului."
+  },
+  "Samsar Dubios (Del Perro)": {
+    "en": "Shady Car Dealer (Del Perro)",
+    "ro": "Samsar dubios (Del Perro)"
+  },
+  "Samsar Dubios (Strawberry)": {
+    "en": "Shady Car Dealer (Strawberry)",
+    "ro": "Samsar dubios (Strawberry)"
+  },
+  "Samsar Dubios (Davis)": {
+    "en": "Shady Car Dealer (Davis)",
+    "ro": "Samsar dubios (Davis)"
+  },
+  "Samsar Dubios (El Burro)": {
+    "en": "Shady Car Dealer (El Burro)",
+    "ro": "Samsar dubios (El Burro)"
+  },
+  "Samsar Dubios (Docks)": {
+    "en": "Shady Car Dealer (Docks)",
+    "ro": "Samsar dubios (Docks)"
+  },
+  "Samsar Dubios (Sandy Shores)": {
+    "en": "Shady Car Dealer (Sandy Shores)",
+    "ro": "Samsar dubios (Sandy Shores)"
+  },
+  "Samsar Dubios (Paleto Bay)": {
+    "en": "Shady Car Dealer (Paleto Bay)",
+    "ro": "Samsar dubios (Paleto Bay)"
+  },
+  "Sistem Securitate Contact": {
+    "en": "Ignition Security System",
+    "ro": "Sistem de securitate al contactului"
+  },
+  "meters (default 60)": {
+    "en": "meters (default 60)",
+    "ro": "contoare (implicit 60)"
+  },
+  "500 Chips": {
+    "en": "500 Chips",
+    "ro": "500 de jetoane"
+  },
+  "1000 Chips": {
+    "en": "1000 Chips",
+    "ro": "1000 de jetoane"
+  },
+  "2500 Chips": {
+    "en": "2500 Chips",
+    "ro": "2500 jetoane"
+  },
+  "Vehicle Discount": {
+    "en": "Vehicle Discount",
+    "ro": "Reducere pentru vehicule"
+  },
+  "Mystery Prize": {
+    "en": "Mystery Prize",
+    "ro": "Premiul Misterului"
+  },
+  "Nothing": {
+    "en": "Nothing",
+    "ro": "Nimic"
+  },
+  "Wine": {
+    "en": "Wine",
+    "ro": "Vin"
+  },
+  "Cocktail": {
+    "en": "Cocktail",
+    "ro": "Cocktail"
+  },
+  "OOC": {
+    "en": "OOC",
+    "ro": "OOC"
+  },
+  "ME": {
+    "en": "ME",
+    "ro": "ME"
+  },
+  "DO": {
+    "en": "DO",
+    "ro": "DO"
+  },
+  "optional new MOTD": {
+    "en": "optional new MOTD",
+    "ro": "opțional nou MOTD"
+  },
+  "[tag]name": {
+    "en": "[tag]name",
+    "ro": "[tag]name"
+  },
+  "tag.name": {
+    "en": "tag.name",
+    "ro": "tag.name"
+  },
+  "name[tag]": {
+    "en": "name[tag]",
+    "ro": "name[tag]"
+  },
+  "name.tag": {
+    "en": "name.tag",
+    "ro": "name.tag"
+  },
+  "tagname": {
+    "en": "tagname",
+    "ro": "tagname"
+  },
+  "nametag": {
+    "en": "nametag",
+    "ro": "nametag"
+  },
+  "list / save / wear / delete": {
+    "en": "list / save / wear / delete",
+    "ro": "listă / salvare / uzură / ștergere"
+  },
+  "name for save, number for wear/delete": {
+    "en": "name for save, number for wear/delete",
+    "ro": "nume pentru salvare, număr pentru uzură/ștergere"
+  },
+  "Freelancer": {
+    "en": "Freelancer",
+    "ro": "Freelancer"
+  },
+  "Workbench": {
+    "en": "Workbench",
+    "ro": "Banc de lucru"
+  },
+  "LSPD Armory": {
+    "en": "LSPD Armory",
+    "ro": "Armurăria LSPD"
+  },
+  "EMS Supply Room": {
+    "en": "EMS Supply Room",
+    "ro": "Depozitul EMS"
+  },
+  "LS Customs Parts Bench": {
+    "en": "LS Customs Parts Bench",
+    "ro": "Bancul de piese LS Customs"
+  },
+  "Cartel Lab": {
+    "en": "Cartel Lab",
+    "ro": "Laboratorul cartelului"
+  },
+  "Syndicate Workshop": {
+    "en": "Syndicate Workshop",
+    "ro": "Atelierul sindicatului"
+  },
+  "LSPD Bandage Pack": {
+    "en": "LSPD Bandage Pack",
+    "ro": "Pachet de bandaje LSPD"
+  },
+  "Medical Bandage": {
+    "en": "Medical Bandage",
+    "ro": "Bandaj medical"
+  },
+  "Field Medkit": {
+    "en": "Field Medkit",
+    "ro": "Trusă medicală de teren"
+  },
+  "Shop Repair Kit": {
+    "en": "Shop Repair Kit",
+    "ro": "Trusă de reparații pentru atelier"
+  },
+  "Custom Lockpick": {
+    "en": "Custom Lockpick",
+    "ro": "Șperaclu personalizat"
+  },
+  "9mm Rounds": {
+    "en": "9mm Rounds",
+    "ro": "Cartușe de 9 mm"
+  },
+  "Taxi": {
+    "en": "Taxi",
+    "ro": "Taxi"
+  },
+  "Medic": {
+    "en": "Medic",
+    "ro": "Medic"
+  },
+  "Fire Rescue": {
+    "en": "Fire Rescue",
+    "ro": "Pompieri și salvare"
+  },
+  "Mechanic": {
+    "en": "Mechanic",
+    "ro": "Mecanic"
+  },
+  "Officer Backup": {
+    "en": "Officer Backup",
+    "ro": "Întăriri pentru polițist"
+  },
+  "112 Police Emergency": {
+    "en": "112 Police Emergency",
+    "ro": "Urgență poliție 112"
+  },
+  "Cadet": {
+    "en": "Cadet",
+    "ro": "Cadet"
+  },
+  "Officer I": {
+    "en": "Officer I",
+    "ro": "Agent I"
+  },
+  "Officer II": {
+    "en": "Officer II",
+    "ro": "Agent II"
+  },
+  "Sergeant": {
+    "en": "Sergeant",
+    "ro": "Sergent"
+  },
+  "Lieutenant": {
+    "en": "Lieutenant",
+    "ro": "Locotenent"
+  },
+  "Captain": {
+    "en": "Captain",
+    "ro": "Căpitan"
+  },
+  "Deputy Chief": {
+    "en": "Deputy Chief",
+    "ro": "Șef adjunct"
+  },
+  "Chief": {
+    "en": "Chief",
+    "ro": "Șef"
+  },
+  "Trainee": {
+    "en": "Trainee",
+    "ro": "Stagiar"
+  },
+  "EMT": {
+    "en": "EMT",
+    "ro": "Tehnician medical"
+  },
+  "Paramedic": {
+    "en": "Paramedic",
+    "ro": "Paramedic"
+  },
+  "Senior Paramedic": {
+    "en": "Senior Paramedic",
+    "ro": "Paramedic principal"
+  },
+  "Doctor": {
+    "en": "Doctor",
+    "ro": "Medic"
+  },
+  "Surgeon": {
+    "en": "Surgeon",
+    "ro": "Chirurg"
+  },
+  "Chief Medical": {
+    "en": "Chief Medical",
+    "ro": "Director medical"
+  },
+  "Probationary": {
+    "en": "Probationary",
+    "ro": "În perioada de probă"
+  },
+  "Firefighter": {
+    "en": "Firefighter",
+    "ro": "Pompier"
+  },
+  "Engineer": {
+    "en": "Engineer",
+    "ro": "Inginer"
+  },
+  "Senior Firefighter": {
+    "en": "Senior Firefighter",
+    "ro": "Pompier principal"
+  },
+  "Battalion Chief": {
+    "en": "Battalion Chief",
+    "ro": "Comandant de batalion"
+  },
+  "Fire Chief": {
+    "en": "Fire Chief",
+    "ro": "Șeful pompierilor"
+  },
+  "Trainee Instructor": {
+    "en": "Trainee Instructor",
+    "ro": "Instructor stagiar"
+  },
+  "Instructor": {
+    "en": "Instructor",
+    "ro": "Instructor"
+  },
+  "Senior Instructor": {
+    "en": "Senior Instructor",
+    "ro": "Instructor principal"
+  },
+  "Lead Instructor": {
+    "en": "Lead Instructor",
+    "ro": "Instructor coordonator"
+  },
+  "Chief Instructor": {
+    "en": "Chief Instructor",
+    "ro": "Instructor șef"
+  },
+  "Deputy Director": {
+    "en": "Deputy Director",
+    "ro": "Director adjunct"
+  },
+  "Director": {
+    "en": "Director",
+    "ro": "Director"
+  },
+  "LSPD": {
+    "en": "LSPD",
+    "ro": "LSPD"
+  },
+  "LSPD Patrol Officer": {
+    "en": "LSPD Patrol Officer",
+    "ro": "Ofițer de patrulare LSPD"
+  },
+  "Highway Patrol Officer": {
+    "en": "Highway Patrol Officer",
+    "ro": "Ofițer de patrulare pe autostradă"
+  },
+  "LSPD Senior / Sergeant": {
+    "en": "LSPD Senior / Sergeant",
+    "ro": "LSPD Senior / Sergent"
+  },
+  "SWAT Special Weapons & Tactics": {
+    "en": "SWAT Special Weapons & Tactics",
+    "ro": "Arme și tactici speciale SWAT"
+  },
+  "Command / Chief Executive": {
+    "en": "Command / Chief Executive",
+    "ro": "Comandant / Director executiv"
+  },
+  "San Andreas Sheriff": {
+    "en": "San Andreas Sheriff",
+    "ro": "Șeriful din San Andreas"
+  },
+  "Sheriff Patrol Deputy": {
+    "en": "Sheriff Patrol Deputy",
+    "ro": "Șerif adjunct de patrulă"
+  },
+  "County Highway Patrol": {
+    "en": "County Highway Patrol",
+    "ro": "Patrula Județeană de Autostră"
+  },
+  "Park & County Ranger": {
+    "en": "Park & County Ranger",
+    "ro": "Park & County Ranger"
+  },
+  "County Tactical Response / SWAT": {
+    "en": "County Tactical Response / SWAT",
+    "ro": "Răspuns tactic județean/ SWAT"
+  },
+  "High Sheriff Command": {
+    "en": "High Sheriff Command",
+    "ro": "Comandamentul Șerifului Suprem"
+  },
+  "FIB": {
+    "en": "FIB",
+    "ro": "FIB"
+  },
+  "FIB Security Agent": {
+    "en": "FIB Security Agent",
+    "ro": "Agent de securitate FIB"
+  },
+  "Special Agent Suit": {
+    "en": "Special Agent Suit",
+    "ro": "Costum de agent special"
+  },
+  "Black Ops Raid Specialist": {
+    "en": "Black Ops Raid Specialist",
+    "ro": "Specialist raid Black Ops"
+  },
+  "FIB Executive Director": {
+    "en": "FIB Executive Director",
+    "ro": "Director Executiv FIB"
+  },
+  "Pillbox EMS": {
+    "en": "Pillbox EMS",
+    "ro": "Pillbox EMS"
+  },
+  "Ambulance Paramedic": {
+    "en": "Ambulance Paramedic",
+    "ro": "Ambulanță Paramedic"
+  },
+  "Medical Examiner / Coroner": {
+    "en": "Medical Examiner / Coroner",
+    "ro": "Medic legist / Legist"
+  },
+  "Hospital Doctor / Surgeon": {
+    "en": "Hospital Doctor / Surgeon",
+    "ro": "Medic spital/ Chirurg"
+  },
+  "LS Fire Department": {
+    "en": "LS Fire Department",
+    "ro": "Departamentul de pompieri LS"
+  },
+  "Firefighter Bunker Gear": {
+    "en": "Firefighter Bunker Gear",
+    "ro": "Echipament buncăr de pompieri"
+  },
+  "Paramedic / First Responder": {
+    "en": "Paramedic / First Responder",
+    "ro": "Paramedic / Primul respondent"
+  },
+  "Battalion Fire Chief": {
+    "en": "Battalion Fire Chief",
+    "ro": "Șeful pompierilor din batalion"
+  },
+  "LS Customs": {
+    "en": "LS Customs",
+    "ro": "LS Customs"
+  },
+  "Apprentice Mechanic": {
+    "en": "Apprentice Mechanic",
+    "ro": "Mecanic ucenic"
+  },
+  "Customs Tuner Overalls": {
+    "en": "Customs Tuner Overalls",
+    "ro": "Salopetă tuner vamal"
+  },
+  "Master Autoshop Specialist": {
+    "en": "Master Autoshop Specialist",
+    "ro": "Specialist principal atelier auto"
+  },
+  "Legendary Street Tuner": {
+    "en": "Legendary Street Tuner",
+    "ro": "Tuner de stradă legendar"
+  },
+  "Benny Motorworks Boss": {
+    "en": "Benny Motorworks Boss",
+    "ro": "Benny Motorworks Șef"
+  },
+  "Downtown Cab Co.": {
+    "en": "Downtown Cab Co.",
+    "ro": "Downtown Cab Co."
+  },
+  "Classic City Cab Driver": {
+    "en": "Classic City Cab Driver",
+    "ro": "Șofer de taxi urban clasic"
+  },
+  "Airport / Tourist Chauffeur": {
+    "en": "Airport / Tourist Chauffeur",
+    "ro": "Șofer la aeroport / turist"
+  },
+  "VIP Luxury Chauffeur": {
+    "en": "VIP Luxury Chauffeur",
+    "ro": "Șofer VIP de lux"
+  },
+  "Company Director Suit": {
+    "en": "Company Director Suit",
+    "ro": "Costum de director al companiei"
+  },
+  "Driving Instructor Uniform": {
+    "en": "Driving Instructor Uniform",
+    "ro": "Uniformă instructor de conducere"
+  },
+  "State Safety Investigator": {
+    "en": "State Safety Investigator",
+    "ro": "Investigator de stat privind siguranța"
+  },
+  "State Commissioner Suit": {
+    "en": "State Commissioner Suit",
+    "ro": "Costum de comisar de stat"
+  },
+  "Sunset Cartel": {
+    "en": "Sunset Cartel",
+    "ro": "Cartelul apusului de soare"
+  },
+  "Cartel Sicario Tatuat": {
+    "en": "Tattooed Cartel Hitman",
+    "ro": "Sicario tatuat al cartelului"
+  },
+  "Soldat Cartel Tactic": {
+    "en": "Cartel Tactical Soldier",
+    "ro": "Soldat tactic al cartelului"
+  },
+  "Capo Cartel": {
+    "en": "Cartel Capo",
+    "ro": "Capo al cartelului"
+  },
+  "El Patr�n / Lider Suprem": {
+    "en": "El Patrón / Supreme Leader",
+    "ro": "El Patrón / Lider suprem"
+  },
+  "Night Syndicate": {
+    "en": "Night Syndicate",
+    "ro": "Sindicatul de noapte"
+  },
+  "Syndicate Street Enforcer": {
+    "en": "Syndicate Street Enforcer",
+    "ro": "Sindicate Street Enforcer"
+  },
+  "Syndicate Hitman": {
+    "en": "Syndicate Hitman",
+    "ro": "Sindicatul Hitman"
+  },
+  "Syndicate Underboss": {
+    "en": "Syndicate Underboss",
+    "ro": "Sindicatul Underboss"
+  },
+  "Syndicate Kingpin / Don": {
+    "en": "Syndicate Kingpin / Don",
+    "ro": "Sindicatul Kingpin / Don"
+  },
+  "MRPD Fleet Garage": {
+    "en": "MRPD Fleet Garage",
+    "ro": "Garaj cu flotă MRPD"
+  },
+  "Patrol Cruiser": {
+    "en": "Patrol Cruiser",
+    "ro": "Crucișător de patrulare"
+  },
+  "Buffalo Patrol": {
+    "en": "Buffalo Patrol",
+    "ro": "Patrula de bivoli"
+  },
+  "Interceptor": {
+    "en": "Interceptor",
+    "ro": "Interceptor"
+  },
+  "Police Bike": {
+    "en": "Police Bike",
+    "ro": "Bicicletă de poliție"
+  },
+  "Transport Van": {
+    "en": "Transport Van",
+    "ro": "Dubă de transport"
+  },
+  "Unmarked Cruiser": {
+    "en": "Unmarked Cruiser",
+    "ro": "Crucișător nemarcat"
+  },
+  "SWAT Bearcat": {
+    "en": "SWAT Bearcat",
+    "ro": "SWAT Bearcat"
+  },
+  "Air Support": {
+    "en": "Air Support",
+    "ro": "Asistență aeriană"
+  },
+  "Sheriff Fleet Garage": {
+    "en": "Sheriff Fleet Garage",
+    "ro": "Garajul Flotei Șerifului"
+  },
+  "Sheriff Cruiser": {
+    "en": "Sheriff Cruiser",
+    "ro": "Șerif Cruiser"
+  },
+  "Sheriff SUV": {
+    "en": "Sheriff SUV",
+    "ro": "Șerif SUV"
+  },
+  "County Interceptor": {
+    "en": "County Interceptor",
+    "ro": "Interceptor județean"
+  },
+  "Unmarked Unit": {
+    "en": "Unmarked Unit",
+    "ro": "Unitate nemarcată"
+  },
+  "Tactical Response": {
+    "en": "Tactical Response",
+    "ro": "Răspuns tactic"
+  },
+  "FIB Motor Pool": {
+    "en": "FIB Motor Pool",
+    "ro": "Piscină cu motor FIB"
+  },
+  "FIB Sedan": {
+    "en": "FIB Sedan",
+    "ro": "FIB Sedan"
+  },
+  "FIB SUV": {
+    "en": "FIB SUV",
+    "ro": "FIB SUV"
+  },
+  "Armored SUV": {
+    "en": "Armored SUV",
+    "ro": "SUV blindat"
+  },
+  "Executive Sedan": {
+    "en": "Executive Sedan",
+    "ro": "Sedan Executive"
+  },
+  "FIB Air Unit": {
+    "en": "FIB Air Unit",
+    "ro": "Unitate aer FIB"
+  },
+  "FIB Lift": {
+    "en": "FIB Lift",
+    "ro": "Lift FIB"
+  },
+  "EMS Ambulance Bay": {
+    "en": "EMS Ambulance Bay",
+    "ro": "EMS Ambulance Bay"
+  },
+  "Ambulance": {
+    "en": "Ambulance",
+    "ro": "Ambulanță"
+  },
+  "Ambulance Type II": {
+    "en": "Ambulance Type II",
+    "ro": "Ambulanță tip II"
+  },
+  "Lifeguard SUV": {
+    "en": "Lifeguard SUV",
+    "ro": "SUV salvamar"
+  },
+  "EMS Response Van": {
+    "en": "EMS Response Van",
+    "ro": "Furgonetă de răspuns EMS"
+  },
+  "Command Unit": {
+    "en": "Command Unit",
+    "ro": "Unitate de comandă"
+  },
+  "Air Ambulance": {
+    "en": "Air Ambulance",
+    "ro": "Ambulanță aeriană"
+  },
+  "Yellow Cab": {
+    "en": "Yellow Cab",
+    "ro": "Cabină galbenă"
+  },
+  "Classic Cab": {
+    "en": "Classic Cab",
+    "ro": "Cabină clasică"
+  },
+  "Dispatch Van": {
+    "en": "Dispatch Van",
+    "ro": "Furgonetă de expediere"
+  },
+  "Limousine": {
+    "en": "Limousine",
+    "ro": "Limuzină"
+  },
+  "City Shuttle": {
+    "en": "City Shuttle",
+    "ro": "City Shuttle"
+  },
+  "Tow Fleet": {
+    "en": "Tow Fleet",
+    "ro": "Flotă de remorcare"
+  },
+  "Tow Truck": {
+    "en": "Tow Truck",
+    "ro": "Camion de remorcare"
+  },
+  "Heavy Tow": {
+    "en": "Heavy Tow",
+    "ro": "Remorcare grea"
+  },
+  "Flatbed": {
+    "en": "Flatbed",
+    "ro": "Platformă"
+  },
+  "Service Truck": {
+    "en": "Service Truck",
+    "ro": "Stivuitor de service"
+  },
+  "Parts Van": {
+    "en": "Parts Van",
+    "ro": "Furgonetă piese"
+  },
+  "Recovery Rig": {
+    "en": "Recovery Rig",
+    "ro": "Rig de recuperare"
+  },
+  "Fire Station Garage": {
+    "en": "Fire Station Garage",
+    "ro": "Stație de pompieri Garaj"
+  },
+  "Fire Engine": {
+    "en": "Fire Engine",
+    "ro": "Pompier"
+  },
+  "Rescue Ambulance": {
+    "en": "Rescue Ambulance",
+    "ro": "Ambulanță de salvare"
+  },
+  "Brush Patrol": {
+    "en": "Brush Patrol",
+    "ro": "Patrulare cu perii"
+  },
+  "Crew Van": {
+    "en": "Crew Van",
+    "ro": "Furgonetă echipaj"
+  },
+  "Utility Truck": {
+    "en": "Utility Truck",
+    "ro": "Utilitar"
+  },
+  "LSSI Training Fleet": {
+    "en": "LSSI Training Fleet",
+    "ro": "Flota de instruire LSSI"
+  },
+  "Instructor Sedan": {
+    "en": "Instructor Sedan",
+    "ro": "Sedan instructor"
+  },
+  "Training Equipment Van": {
+    "en": "Training Equipment Van",
+    "ro": "Furgonetă echipament de instruire"
+  },
+  "Field Training SUV": {
+    "en": "Field Training SUV",
+    "ro": "Instruire pe teren SUV"
+  },
+  "Senior Instructor Sedan": {
+    "en": "Senior Instructor Sedan",
+    "ro": "Senior Instructor Sedan"
+  },
+  "Cartel Motor Pool": {
+    "en": "Cartel Motor Pool",
+    "ro": "Cartel Motor Pool"
+  },
+  "Cartel SUV": {
+    "en": "Cartel SUV",
+    "ro": "Cartel SUV"
+  },
+  "Scout Bike": {
+    "en": "Scout Bike",
+    "ro": "Bicicletă Scout"
+  },
+  "Cargo Van": {
+    "en": "Cargo Van",
+    "ro": "Autoutilitară de marfă"
+  },
+  "Executive SUV": {
+    "en": "Executive SUV",
+    "ro": "SUV executiv"
+  },
+  "Convoy Truck": {
+    "en": "Convoy Truck",
+    "ro": "Camion de convoi"
+  },
+  "Syndicate Garage": {
+    "en": "Syndicate Garage",
+    "ro": "Garaj sindicat"
+  },
+  "Street Sedan": {
+    "en": "Street Sedan",
+    "ro": "Sedan de stradă"
+  },
+  "Armored Kuruma": {
+    "en": "Armored Kuruma",
+    "ro": "Kuruma blindat"
+  },
+  "Pursuit Sedan": {
+    "en": "Pursuit Sedan",
+    "ro": "Urmărește sedanul"
+  },
+  "Fastback": {
+    "en": "Fastback",
+    "ro": "Fastback"
+  },
+  "Contraband Van": {
+    "en": "Contraband Van",
+    "ro": "Dubă de contrabandă"
+  },
+  "9mm Ammo": {
+    "en": "9mm Ammo",
+    "ro": "Muniție 9 mm"
+  },
+  "Burger": {
+    "en": "Burger",
+    "ro": "Burger"
+  },
+  "Sprunk": {
+    "en": "Sprunk",
+    "ro": "Sprunk"
+  },
+  "Plastic": {
+    "en": "Plastic",
+    "ro": "Plastic"
+  },
+  "Pistol": {
+    "en": "Pistol",
+    "ro": "Pistol"
+  },
+  "Standard Dive Tank": {
+    "en": "Standard Dive Tank",
+    "ro": "Rezervor de scufundare standard"
+  },
+  "Ammunation": {
+    "en": "Ammunation",
+    "ro": "Ammunation"
+  },
+  "24/7 - Legion Square": {
+    "en": "24/7 - Legion Square",
+    "ro": "24/7 - Piața Legiunii"
+  },
+  "24/7 - Strawberry": {
+    "en": "24/7 - Strawberry",
+    "ro": "24/7 - Căpșuni"
+  },
+  "24/7 - Little Seoul": {
+    "en": "24/7 - Little Seoul",
+    "ro": "24/7 - Micul Seul"
+  },
+  "24/7 - Mirror Park": {
+    "en": "24/7 - Mirror Park",
+    "ro": "24/7 - Mirror Park"
+  },
+  "24/7 - Vinewood Hills": {
+    "en": "24/7 - Vinewood Hills",
+    "ro": "24/7 - Vinewood Hills"
+  },
+  "24/7 - Rockford Hills": {
+    "en": "24/7 - Rockford Hills",
+    "ro": "24/7 - Rockford Hills"
+  },
+  "24/7 - Sandy Shores": {
+    "en": "24/7 - Sandy Shores",
+    "ro": "24/7 - Sandy Shores"
+  },
+  "24/7 - Paleto Bay": {
+    "en": "24/7 - Paleto Bay",
+    "ro": "24/7 - Paleto Bay"
+  },
+  "LTD Gasoline - Legion": {
+    "en": "LTD Gasoline - Legion",
+    "ro": "LTD Benzină - Legiune"
+  },
+  "Ron Gas - Grove St": {
+    "en": "Ron Gas - Grove St",
+    "ro": "Ron Gas - Grove St"
+  },
+  "Xero Gas - Mirror Park": {
+    "en": "Xero Gas - Mirror Park",
+    "ro": "Xero Gas - Mirror Park"
+  },
+  "LTD Gasoline - Vinewood": {
+    "en": "LTD Gasoline - Vinewood",
+    "ro": "LTD Benzină - Lemn de viță de vie"
+  },
+  "Ron Gas - Paleto": {
+    "en": "Ron Gas - Paleto",
+    "ro": "Ron Gas - Paleto"
+  },
+  "Xero Gas - Sandy Shores": {
+    "en": "Xero Gas - Sandy Shores",
+    "ro": "Xero Gas - Sandy Shores"
+  },
+  "LTD Gasoline - Route 68": {
+    "en": "LTD Gasoline - Route 68",
+    "ro": "LTD Benzină - Traseu 68"
+  },
+  "Ron Gas - Great Ocean": {
+    "en": "Ron Gas - Great Ocean",
+    "ro": "Ron Gas - Great Ocean"
+  },
+  "Xero Gas - LSIA": {
+    "en": "Xero Gas - LSIA",
+    "ro": "Xero Gas - LSIA"
+  },
+  "LTD Gasoline - Del Perro": {
+    "en": "LTD Gasoline - Del Perro",
+    "ro": "LTD Benzină - Del Perro"
+  },
+  "Haul cargo across San Andreas. Depot at the docks.": {
+    "en": "Haul cargo across San Andreas. Depot at the docks.",
+    "ro": "Transportă marfă prin San Andreas. Depozit la docuri."
+  },
+  "Collect bins on city routes and unload at the depot.": {
+    "en": "Collect bins on city routes and unload at the depot.",
+    "ro": "Colectați pubelele de pe rutele urbane și descărcați-le la depou."
+  },
+  "Collector": {
+    "en": "Collector",
+    "ro": "Colector"
+  },
+  "Pick up packages and deliver them on foot.": {
+    "en": "Pick up packages and deliver them on foot.",
+    "ro": "Ridicați pachetele și livrați-le pe jos."
+  },
+  "Runner": {
+    "en": "Runner",
+    "ro": "Rotor"
+  },
+  "Fish at coastal spots and sell your catch.": {
+    "en": "Fish at coastal spots and sell your catch.",
+    "ro": "Pescuiește în zonele de coastă și vinde-ți captura."
+  },
+  "Respond to /service mechanic calls and repair vehicles.": {
+    "en": "Respond to /service mechanic calls and repair vehicles.",
+    "ro": "Răspundeți la apelurile/apelurile mecanicilor de service și reparați vehiculele."
+  },
+  "Apprentice": {
+    "en": "Apprentice",
+    "ro": "Ucenic"
+  },
+  "Hunt wildlife under licensed contract. Requires Firearm and Hunting Licenses.": {
+    "en": "Hunt wildlife under licensed contract. Requires Firearm and Hunting Licenses.",
+    "ro": "Vânează animale sălbatice în baza unui contract de licență. Necesită licențe pentru arme de foc și vânătoare."
+  },
+  "Novice Hunter": {
+    "en": "Novice Hunter",
+    "ro": "Vânător de novici"
+  },
+  "Marine Salvage Diver": {
+    "en": "Marine Salvage Diver",
+    "ro": "Scafandru marin salvator"
+  },
+  "Dive and recover submerged cargo from wrecks across the coast.": {
+    "en": "Dive and recover submerged cargo from wrecks across the coast.",
+    "ro": "Scufundați-vă și recuperați încărcătura scufundată din epavele de pe coastă."
+  },
+  "Trainee Diver": {
+    "en": "Trainee Diver",
+    "ro": "Scafandru stagiar"
+  },
+  "Bus Driver": {
+    "en": "Bus Driver",
+    "ro": "Șofer de autobuz"
+  },
+  "Operate public transit bus routes across Los Santos and transport passengers.": {
+    "en": "Operate public transit bus routes across Los Santos and transport passengers.",
+    "ro": "Exploatează rutele de transport public cu autobuzul prin Los Santos și transportă pasageri."
+  },
+  "Transit Driver": {
+    "en": "Transit Driver",
+    "ro": "Șofer de transport public"
+  },
+  "Lockpicking": {
+    "en": "Lockpicking",
+    "ro": "Ridicare încuietoare"
+  },
+  "Skill for breaking into vehicles. Improves success rate when using a lockpick.": {
+    "en": "Skill for breaking into vehicles. Improves success rate when using a lockpick.",
+    "ro": "Abilitatea de a pătrunde în vehicule. Îmbunătățește rata de succes atunci când utilizați un dispozitiv de blocare."
+  },
+  "Novice": {
+    "en": "Novice",
+    "ro": "Novice"
+  },
+  "Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.": {
+    "en": "Go to the depot, spawn your rig, pick up cargo, deliver, then return the truck. Use /recovertrailer if your trailer detaches or is destroyed.",
+    "ro": "Mergeți la depozit, depuneți-vă echipamentul, ridicați încărcătura, livrați, apoi returnați camionul. Utilizați /recuperați remorca dacă remorca se desprinde sau este distrusă."
+  },
+  "Drive to bins, pick up trash (E), dump at the truck rear, then unload at the depot when full.": {
+    "en": "Drive to bins, pick up trash (E), dump at the truck rear, then unload at the depot when full.",
+    "ro": "Conduceți la pubele, ridicați gunoiul (E), aruncați-l în partea din spate a camionului, apoi descărcați-l la depozit atunci când este plin."
+  },
+  "Spawn your van, load all packages at the warehouse loading dock, then deliver them door-to-door without returning between stops.": {
+    "en": "Spawn your van, load all packages at the warehouse loading dock, then deliver them door-to-door without returning between stops.",
+    "ro": "Încarcă-ți furgoneta, încarcă toate pachetele la docul de încărcare al depozitului, apoi livrează-le din ușă în ușă fără a te întoarce între opriri."
+  },
+  "Davis Ave": {
+    "en": "Davis Ave",
+    "ro": "Davis Ave"
+  },
+  "Legion Square": {
+    "en": "Legion Square",
+    "ro": "Legion Square"
+  },
+  "Little Seoul": {
+    "en": "Little Seoul",
+    "ro": "Little Seoul"
+  },
+  "Pillbox Hill": {
+    "en": "Pillbox Hill",
+    "ro": "Pillbox Hill"
+  },
+  "Vespucci Canals": {
+    "en": "Vespucci Canals",
+    "ro": "Vespucci Canals"
+  },
+  "Strawberry": {
+    "en": "Strawberry",
+    "ro": "Strawberry"
+  },
+  "Rockford Hills": {
+    "en": "Rockford Hills",
+    "ro": "Rockford Hills"
+  },
+  "Fish in the Paleto Bay area near Billy Ray, then sell your catch at any 24/7 store.": {
+    "en": "Fish in the Paleto Bay area near Billy Ray, then sell your catch at any 24/7 store.",
+    "ro": "Pescuiește în zona Paleto Bay de lângă Billy Ray, apoi vinde-ți captura la orice magazin disponibil non-stop."
+  },
+  "Choose a hunting contract, travel to the zone, track and harvest wildlife. Requires Firearm and Hunting Licenses.": {
+    "en": "Choose a hunting contract, travel to the zone, track and harvest wildlife. Requires Firearm and Hunting Licenses.",
+    "ro": "Alegeți un contract de vânătoare, călătoriți în zonă, urmăriți și recoltați fauna sălbatică. Necesită licențe pentru arme de foc și vânătoare."
+  },
+  "Deer": {
+    "en": "Deer",
+    "ro": "Căprioară"
+  },
+  "Wild Boar": {
+    "en": "Wild Boar",
+    "ro": "Mistreț"
+  },
+  "Coyote": {
+    "en": "Coyote",
+    "ro": "Coiot"
+  },
+  "Tracker": {
+    "en": "Tracker",
+    "ro": "Tracker"
+  },
+  "Marksman": {
+    "en": "Marksman",
+    "ro": "Trăgător de elită"
+  },
+  "Guide": {
+    "en": "Guide",
+    "ro": "Ghid"
+  },
+  "Master Hunter": {
+    "en": "Master Hunter",
+    "ro": "Vânător maestru"
+  },
+  "Paleto Deer Control": {
+    "en": "Paleto Deer Control",
+    "ro": "Paleto Deer Control"
+  },
+  "Manage deer population in Paleto Forest.": {
+    "en": "Manage deer population in Paleto Forest.",
+    "ro": "Gestionați populația de căprioare din pădurea Paleto."
+  },
+  "Alamo Boar Control": {
+    "en": "Alamo Boar Control",
+    "ro": "Controlul porcilor Alamo"
+  },
+  "Control the wild boar numbers in the Alamo Sea hills.": {
+    "en": "Control the wild boar numbers in the Alamo Sea hills.",
+    "ro": "Controlează numărul de mistreți de pe dealurile Mării Alamo."
+  },
+  "Blaine Coyote Control": {
+    "en": "Blaine Coyote Control",
+    "ro": "Blaine Coyote Control"
+  },
+  "Reduce predator numbers in the Sandy Shores area.": {
+    "en": "Reduce predator numbers in the Sandy Shores area.",
+    "ro": "Reduceți numărul de prădători în zona Sandy Shores."
+  },
+  "Trophy Buck": {
+    "en": "Trophy Buck",
+    "ro": "Trophy Buck"
+  },
+  "Harvest one high-quality qualifying deer. Shot discipline matters.": {
+    "en": "Harvest one high-quality qualifying deer. Shot discipline matters.",
+    "ro": "Recoltați o căprioară calificată de înaltă calitate. Disciplina de aruncare contează."
+  },
+  "Pick a salvage contract, dive to the search area, use the detector to locate cargo, and return to sell.": {
+    "en": "Pick a salvage contract, dive to the search area, use the detector to locate cargo, and return to sell.",
+    "ro": "Alegeți un contract de salvare, scufundați-vă în zona de căutare, utilizați detectorul pentru a localiza încărcătura și reveniți la vânzare."
+  },
+  "Snorkeler": {
+    "en": "Snorkeler",
+    "ro": "Snorkeler"
+  },
+  "Open Water": {
+    "en": "Open Water",
+    "ro": "Apă deschisă"
+  },
+  "Advanced Diver": {
+    "en": "Advanced Diver",
+    "ro": "Scafandru avansat"
+  },
+  "Rescue Diver": {
+    "en": "Rescue Diver",
+    "ro": "Scafandru de salvare"
+  },
+  "Master Diver": {
+    "en": "Master Diver",
+    "ro": "Scafandru principal"
+  },
+  "Standard Tank": {
+    "en": "Standard Tank",
+    "ro": "Rezervor standard"
+  },
+  "Advanced Tank": {
+    "en": "Advanced Tank",
+    "ro": "Rezervor avansat"
+  },
+  "Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.": {
+    "en": "Go on duty to accept /service mechanic calls. Repair vehicles to earn pay.",
+    "ro": "Mergeți la datorie pentru a accepta /repara apelurile mecanicilor. Reparați vehicule pentru a câștiga bani."
+  },
+  "Drive your transit bus along the scheduled route, stop at bus stops [E] to board passengers, collect fares, and return to depot for the route bonus.": {
+    "en": "Drive your transit bus along the scheduled route, stop at bus stops [E] to board passengers, collect fares, and return to depot for the route bonus.",
+    "ro": "Condu autobuzul de transport public de-a lungul rutei programate, oprește la stațiile de autobuz [E] pentru a urca la bordul pasagerilor, a colecta tarifele și a reveni la depou pentru bonusul de rută."
+  },
+  "Linia Verde (Green Route Express)": {
+    "en": "Green Line Express",
+    "ro": "Linia Verde Expres"
+  },
+  "Oprirea 1: Transit Center West": {
+    "en": "Stop 1: Transit Center West",
+    "ro": "Stația 1: Transit Center West"
+  },
+  "Oprirea 2: Mirror Park Blvd": {
+    "en": "Stop 2: Mirror Park Blvd",
+    "ro": "Stația 2: Mirror Park Blvd"
+  },
+  "Oprirea 3: East Los Santos": {
+    "en": "Stop 3: East Los Santos",
+    "ro": "Stația 3: East Los Santos"
+  },
+  "Oprirea 4: Popular Street": {
+    "en": "Stop 4: Popular Street",
+    "ro": "Stația 4: Popular Street"
+  },
+  "Oprirea 5: Cypress Flats North": {
+    "en": "Stop 5: Cypress Flats North",
+    "ro": "Stația 5: Cypress Flats North"
+  },
+  "Oprirea 6: Port Boulevard": {
+    "en": "Stop 6: Port Boulevard",
+    "ro": "Stația 6: Port Boulevard"
+  },
+  "Catch fresh fish along the northern coastline and pontoon, then sell your haul at local stores.": {
+    "en": "Catch fresh fish along the northern coastline and pontoon, then sell your haul at local stores.",
+    "ro": "Prinde pește proaspăt de-a lungul coastei de nord și a pontonului, apoi vinde-l la magazinele locale."
+  },
+  "Master Angler": {
+    "en": "Master Angler",
+    "ro": "Maestru pescar"
+  },
+  "Bait & Tackle Shop": {
+    "en": "Bait & Tackle Shop",
+    "ro": "Magazin de momeli și accesorii"
+  },
+  "Fisherman Career Guide": {
+    "en": "Fisherman Career Guide",
+    "ro": "Ghid de carieră pentru pescari"
+  },
+  "Sell Fresh Catch": {
+    "en": "Sell Fresh Catch",
+    "ro": "Vinde Fresh Catch"
+  },
+  "Haul heavy industrial cargo and fuel tanker trailers across San Andreas highway networks.": {
+    "en": "Haul heavy industrial cargo and fuel tanker trailers across San Andreas highway networks.",
+    "ro": "Transportă remorci pentru încărcături industriale grele și cisterne de combustibil pe rețelele de autostrăzi din San Andreas."
+  },
+  "Freight Supervisor": {
+    "en": "Freight Supervisor",
+    "ro": "Supervizor de transport de marfă"
+  },
+  "Trucker Career Guide": {
+    "en": "Trucker Career Guide",
+    "ro": "Ghid de carieră pentru camionagii"
+  },
+  "Open Route Laptop": {
+    "en": "Open Route Laptop",
+    "ro": "Deschideți laptopul pentru traseu"
+  },
+  "Collect waste routes across city neighborhoods and unload at the central compaction depot.": {
+    "en": "Collect waste routes across city neighborhoods and unload at the central compaction depot.",
+    "ro": "Colectați deșeurile din cartierele orașului și descărcați-le la depozitul central de compactare."
+  },
+  "Sanitation Supervisor": {
+    "en": "Sanitation Supervisor",
+    "ro": "Supervizor salubritate"
+  },
+  "Compaction Unload Bay": {
+    "en": "Compaction Unload Bay",
+    "ro": "Celula de descărcare a compactării"
+  },
+  "Garbage Collector Career Guide": {
+    "en": "Garbage Collector Career Guide",
+    "ro": "Ghidul carierei colectorului de gunoi"
+  },
+  "Load parcel crates at the distribution warehouse and make door-to-door deliveries.": {
+    "en": "Load parcel crates at the distribution warehouse and make door-to-door deliveries.",
+    "ro": "Încărcați lăzile de colete la depozitul de distribuție și efectuați livrări din ușă în ușă."
+  },
+  "Logistics Coordinator": {
+    "en": "Logistics Coordinator",
+    "ro": "Coordonator logistică"
+  },
+  "Loading Dock": {
+    "en": "Loading Dock",
+    "ro": "Stație de încărcare"
+  },
+  "Courier Career Guide": {
+    "en": "Courier Career Guide",
+    "ro": "Ghid de carieră pentru curieri"
+  },
+  "Take on wildlife management contracts across Blaine County. Requires a valid Firearm License and Hunting License.": {
+    "en": "Take on wildlife management contracts across Blaine County. Requires a valid Firearm License and Hunting License.",
+    "ro": "Preluați contracte de gestionare a faunei sălbatice în comitatul Blaine. Necesită o licență valabilă pentru arme de foc și vânătoare."
+  },
+  "Hunting Guide": {
+    "en": "Hunting Guide",
+    "ro": "Ghid de vânătoare"
+  },
+  "Hunter Career Guide": {
+    "en": "Hunter Career Guide",
+    "ro": "Ghidul carierei de vânător"
+  },
+  "Hunting Contracts": {
+    "en": "Hunting Contracts",
+    "ro": "Contracte de vânătoare"
+  },
+  "Equipment": {
+    "en": "Equipment",
+    "ro": "Echipament"
+  },
+  "Sell Harvest": {
+    "en": "Sell Harvest",
+    "ro": "Vindeți recolta"
+  },
+  "Recover submerged cargo, electronics, and artifacts from coastal wrecks.": {
+    "en": "Recover submerged cargo, electronics, and artifacts from coastal wrecks.",
+    "ro": "Recuperează încărcătura scufundată, electronicele și artefactele din epavele de coastă."
+  },
+  "Dive Contractor": {
+    "en": "Dive Contractor",
+    "ro": "Contractant scufundări"
+  },
+  "Marine Salvage Career Guide": {
+    "en": "Marine Salvage Career Guide",
+    "ro": "Ghid de carieră pentru salvatorii marini"
+  },
+  "Salvage Contracts": {
+    "en": "Salvage Contracts",
+    "ro": "Contracte de avarie"
+  },
+  "Rent Diving Gear": {
+    "en": "Rent Diving Gear",
+    "ro": "Închiriază echipament de scufundare"
+  },
+  "Rent Work Boat": {
+    "en": "Rent Work Boat",
+    "ro": "Închiriază barca de lucru"
+  },
+  "Sell Salvage": {
+    "en": "Sell Salvage",
+    "ro": "Vinde produse recuperate"
+  },
+  "Operate scheduled public bus lines across Los Santos. Pick up waiting passengers at bus stops, issue tickets, and earn passenger fares + transit bonuses.": {
+    "en": "Operate scheduled public bus lines across Los Santos. Pick up waiting passengers at bus stops, issue tickets, and earn passenger fares + transit bonuses.",
+    "ro": "Administrează linii de autobuz publice programate în Los Santos. Preia pasagerii în așteptare din stațiile de autobuz, emite bilete și câștigă tarife pentru pasageri + bonusuri de tranzit."
+  },
+  "Operations Supervisor": {
+    "en": "Operations Supervisor",
+    "ro": "Supervizor operațiuni"
+  },
+  "Bus Driver Career Guide": {
+    "en": "Bus Driver Career Guide",
+    "ro": "Ghid de carieră pentru șoferii de autobuz"
+  },
+  "Illegal Parking": {
+    "en": "Illegal Parking",
+    "ro": "Parcare ilegală"
+  },
+  "Running Red Light": {
+    "en": "Running Red Light",
+    "ro": "Lumină roșie de rulare"
+  },
+  "No Insurance": {
+    "en": "No Insurance",
+    "ro": "Fără asigurare"
+  },
+  "Public Disturbance": {
+    "en": "Public Disturbance",
+    "ro": "Tulburări ale ordinii publice"
+  },
+  "Route 68 Sandy": {
+    "en": "Route 68 Sandy",
+    "ro": "Route 68 Sandy"
+  },
+  "Palomino Ave": {
+    "en": "Palomino Ave",
+    "ro": "Palomino Ave"
+  },
+  "Great Ocean Highway": {
+    "en": "Great Ocean Highway",
+    "ro": "Great Ocean Highway"
+  },
+  "Olympic Freeway": {
+    "en": "Olympic Freeway",
+    "ro": "Autostrada Olimpică"
+  },
+  "Materials are taken from your inventory. Green counts are ready; red counts are missing.": {
+    "en": "Materials are taken from your inventory. Green counts are ready; red counts are missing.",
+    "ro": "Materialele sunt preluate din inventarul dvs. Numărul de verde este gata; numărul de roșu lipsește."
+  },
+  "Premium Deluxe Motorsport": {
+    "en": "Premium Deluxe Motorsport",
+    "ro": "Premium Deluxe Motorsport"
+  },
+  "taxi | medic | fire | mechanic": {
+    "en": "taxi | medic | fire | mechanic",
+    "ro": "taxi | medic | pompieri | mecanic"
+  },
+  "optional details": {
+    "en": "optional details",
+    "ro": "detalii opționale"
+  },
+  "Call ID": {
+    "en": "Call ID",
+    "ro": "ID apel"
+  },
+  "Activitate Ilegala / Vanzare de Droguri": {
+    "en": "Illegal Activity / Drug Dealing",
+    "ro": "Activitate ilegală / Vânzare de droguri"
+  },
+  "Un cetatean raporteaza o tentativa suspecta de vanzare substante interzise.": {
+    "en": "A citizen reports a suspicious attempt to sell illegal substances.",
+    "ro": "Un cetățean raportează o tentativă suspectă de vânzare a substanțelor interzise."
+  },
+  "Paleto Bay Fields": {
+    "en": "Paleto Bay Fields",
+    "ro": "Paleto Bay Fields"
+  },
+  "Grapeseed Farm": {
+    "en": "Grapeseed Farm",
+    "ro": "Grapeseed Farm"
+  },
+  "Mount Chiliad Scraps": {
+    "en": "Mount Chiliad Scraps",
+    "ro": "Mount Chiliad Scraps"
+  },
+  "Sandy Shores Plantation": {
+    "en": "Sandy Shores Plantation",
+    "ro": "Sandy Shores Plantation"
+  },
+  "Paleto North Plantation": {
+    "en": "Paleto North Plantation",
+    "ro": "Paleto North Plantation"
+  },
+  "Underground Chemical Lab": {
+    "en": "Underground Chemical Lab",
+    "ro": "Laborator chimic subteran"
+  },
+  "Del Perro Secret Warehouse": {
+    "en": "Del Perro Secret Warehouse",
+    "ro": "Depozitul Secret Del Perro"
+  },
+  "Sandy Shores Meth Lab": {
+    "en": "Sandy Shores Meth Lab",
+    "ro": "Sandy Shores Meth Lab"
+  },
+  "Pachete Weed": {
+    "en": "Cannabis Packages",
+    "ro": "Pachete de canabis"
+  },
+  "Pudra Cocaina": {
+    "en": "Cocaine Powder",
+    "ro": "Pudră de cocaină"
+  },
+  "Cristale Meth": {
+    "en": "Meth Crystals",
+    "ro": "Cristale de metamfetamină"
+  },
+  "Weed": {
+    "en": "Weed",
+    "ro": "Buruiană"
+  },
+  "Cocaine": {
+    "en": "Cocaine",
+    "ro": "Cocaină"
+  },
+  "Meth": {
+    "en": "Meth",
+    "ro": "Metamfetamină"
+  },
+  "Player ID or accept/decline": {
+    "en": "Player ID or accept/decline",
+    "ro": "ID-ul jucătorului sau acceptă/refuză"
+  },
+  "Bet amount (cash)": {
+    "en": "Bet amount (cash)",
+    "ro": "Suma pariului (în numerar)"
+  },
+  "Number (1-100) or \"info\"": {
+    "en": "Number (1-100) or \"info\"",
+    "ro": "Număr (1-100) sau „info”"
+  },
+  "Wave": {
+    "en": "Wave",
+    "ro": "Undă"
+  },
+  "Sit": {
+    "en": "Sit",
+    "ro": "Șezi"
+  },
+  "Dance": {
+    "en": "Dance",
+    "ro": "Dans"
+  },
+  "Smoke": {
+    "en": "Smoke",
+    "ro": "Fum"
+  },
+  "Drink": {
+    "en": "Drink",
+    "ro": "Băutură"
+  },
+  "Lean": {
+    "en": "Lean",
+    "ro": "Înclinat"
+  },
+  "Push Up": {
+    "en": "Push Up",
+    "ro": "Flotare în sus"
+  },
+  "Taunt": {
+    "en": "Taunt",
+    "ro": "Batjocură"
+  },
+  "Surrender": {
+    "en": "Surrender",
+    "ro": "Renunțare"
+  },
+  "Car Meet": {
+    "en": "Car Meet",
+    "ro": "Întâlnire cu mașina"
+  },
+  "Race Night": {
+    "en": "Race Night",
+    "ro": "Noaptea cursei"
+  },
+  "Fishing Tournament": {
+    "en": "Fishing Tournament",
+    "ro": "Turneu de pescuit"
+  },
+  "e.g.: 1, 2, swat, hway, doctor": {
+    "en": "e.g.: 1, 2, swat, hway, doctor",
+    "ro": "de exemplu: 1, 2, SWAT, hway, doctor"
+  },
+  "ex: 1, 2, swat, hway": {
+    "en": "ex: 1, 2, swat, hway",
+    "ro": "de exemplu: 1, 2, SWAT, hway"
+  },
+  "taxi|medic|fire|mechanic": {
+    "en": "taxi|medic|fire|mechanic",
+    "ro": "taxi|medic|pompieri|mecanic"
+  },
+  "Server ID from /wanted or F10": {
+    "en": "Server ID from /wanted or F10",
+    "ro": "ID server de la /wanted sau F10"
+  },
+  "optional target ID": {
+    "en": "optional target ID",
+    "ro": "iD țintă opțional"
+  },
+  "optional, default driver": {
+    "en": "optional, default driver",
+    "ro": "opțional, driver implicit"
+  },
+  "20-250, default 90": {
+    "en": "20-250, default 90",
+    "ro": "20-250, implicit 90"
+  },
+  "Vehicle fire": {
+    "en": "Vehicle fire",
+    "ro": "Incendiu la mașină"
+  },
+  "1st Place": {
+    "en": "1st Place",
+    "ro": "Locul 1"
+  },
+  "2nd Place": {
+    "en": "2nd Place",
+    "ro": "Locul 2"
+  },
+  "3rd Place": {
+    "en": "3rd Place",
+    "ro": "Locul 3"
+  },
+  "Billy Ray": {
+    "en": "Billy Ray",
+    "ro": "Billy Ray"
+  },
+  "60% catch chance": {
+    "en": "60% catch chance",
+    "ro": "60% șansă de captură"
+  },
+  "Lure Bait": {
+    "en": "Lure Bait",
+    "ro": "Momeală"
+  },
+  "75% catch chance": {
+    "en": "75% catch chance",
+    "ro": "75% șansă de captură"
+  },
+  "90% catch chance": {
+    "en": "90% catch chance",
+    "ro": "90% șanse de captură"
+  },
+  "easy | medium | hard | easy_01 | medium_02 | hard_01 etc.": {
+    "en": "easy | medium | hard | easy_01 | medium_02 | hard_01 etc.",
+    "ro": "ușor | mediu | greu | ușor_01 | mediu_02 | greu_01 etc."
+  },
+  "optional numeric seed": {
+    "en": "optional numeric seed",
+    "ro": "sămânță numerică opțională"
+  },
+  "easy | medium | hard": {
+    "en": "easy | medium | hard",
+    "ro": "ușor | mediu | greu"
+  },
+  "SECURITY_GATE_01": {
+    "en": "SECURITY_GATE_01",
+    "ro": "SECURITY_GATE_01"
+  },
+  "TERMINAL_LINK_B": {
+    "en": "TERMINAL_LINK_B",
+    "ro": "TERMINAL_LINK_B"
+  },
+  "ROUTER_FIREWALL_03": {
+    "en": "ROUTER_FIREWALL_03",
+    "ro": "ROUTER_FIREWALL_03"
+  },
+  "SUBNET_MAINFRAME_04": {
+    "en": "SUBNET_MAINFRAME_04",
+    "ro": "SUBNET_MAINFRAME_04"
+  },
+  "ENCRYPTED_PROXY_NODE": {
+    "en": "ENCRYPTED_PROXY_NODE",
+    "ro": "ENCRYPTED_PROXY_NODE"
+  },
+  "RELAY_MATRIX_07": {
+    "en": "RELAY_MATRIX_07",
+    "ro": "RELAY_MATRIX_07"
+  },
+  "CTOS_CORE_MAINFRAME": {
+    "en": "CTOS_CORE_MAINFRAME",
+    "ro": "CTOS_CORE_MAINFRAME"
+  },
+  "QUANTUM_ENCRYPTION_LAYER": {
+    "en": "QUANTUM_ENCRYPTION_LAYER",
+    "ro": "QUANTUM_ENCRYPTION_LAYER"
+  },
+  "Driving without a license": {
+    "en": "Driving without a license",
+    "ro": "Conducerea fără permis"
+  },
+  "Reckless driving": {
+    "en": "Reckless driving",
+    "ro": "Conducere nechibzuită"
+  },
+  "Stolen vehicle": {
+    "en": "Stolen vehicle",
+    "ro": "Vehicul furat"
+  },
+  "Illegal modifications": {
+    "en": "Illegal modifications",
+    "ro": "Modificări ilegale"
+  },
+  "Evading police": {
+    "en": "Evading police",
+    "ro": "Evitarea poliției"
+  },
+  "Optional operation: put or take": {
+    "en": "Optional operation: put or take",
+    "ro": "Operare opțională: punere sau preluare"
+  },
+  "Item name (e.g. water, repairkit)": {
+    "en": "Item name (e.g. water, repairkit)",
+    "ro": "Denumirea articolului (de exemplu, apă, kit de reparații)"
+  },
+  "Operation: put or take": {
+    "en": "Operation: put or take",
+    "ro": "Funcționare: pune sau ia"
+  },
+  "Cancel current shift": {
+    "en": "Cancel current shift",
+    "ro": "Anulați tura curentă"
+  },
+  "Pilot License": {
+    "en": "Pilot License",
+    "ro": "Licență de pilot"
+  },
+  "Boat License": {
+    "en": "Boat License",
+    "ro": "Permis de ambarcațiune"
+  },
+  "Firearm License": {
+    "en": "Firearm License",
+    "ro": "Licență pentru arme de foc"
+  },
+  "Hunting License": {
+    "en": "Hunting License",
+    "ro": "Licență de vânătoare"
+  },
+  "Let's get on the road. Press 2 to start the engine.": {
+    "en": "Let's get on the road. Press 2 to start the engine.",
+    "ro": "Să pornim la drum. Apăsați 2 pentru a porni motorul."
+  },
+  "Press H to set your headlights for traffic.": {
+    "en": "Press H to set your headlights for traffic.",
+    "ro": "Apăsați H pentru a seta farurile pentru trafic."
+  },
+  "Exit through the DMV gate and follow the route markers.": {
+    "en": "Exit through the DMV gate and follow the route markers.",
+    "ro": "Ieșiți prin poarta DMV și urmați marcajele de traseu."
+  },
+  "Welcome to the Hunting License practical. Demonstrate safe, accurate wildlife shooting.": {
+    "en": "Welcome to the Hunting License practical. Demonstrate safe, accurate wildlife shooting.",
+    "ro": "Bine ați venit la practica licenței de vânătoare. Demonstrați fotografierea sigură și precisă a faunei sălbatice."
+  },
+  "Step to the firing position. Press E when you are ready to receive the test rifle and begin.": {
+    "en": "Step to the firing position. Press E when you are ready to receive the test rifle and begin.",
+    "ro": "Treceți în poziția de declanșare. Apăsați E când sunteți gata să primiți pușca de testare și începeți."
+  },
+  "Engage all DEER targets (orange markers). Do NOT shoot the PROTECTED animals (red markers). Return to the booth when done.": {
+    "en": "Engage all DEER targets (orange markers). Do NOT shoot the PROTECTED animals (red markers). Return to the booth when done.",
+    "ro": "Activați toate țintele CERBILOR (marcaje portocalii). NU împușcați animalele PROTEJATE (marcaje roșii). Întoarceți-vă la cabină când ați terminat."
+  },
+  "Welcome to the LSSI range. Treat every weapon as loaded and keep the muzzle downrange.": {
+    "en": "Welcome to the LSSI range. Treat every weapon as loaded and keep the muzzle downrange.",
+    "ro": "Bine ați venit în gama LSSI. Tratați fiecare armă ca fiind încărcată și mențineți gura țevii în raza inferioară."
+  },
+  "Step to the firing line. Press E when you are ready to receive your training pistol.": {
+    "en": "Step to the firing line. Press E when you are ready to receive your training pistol.",
+    "ro": "Treceți la linia de tragere. Apăsați E când sunteți gata să primiți pistolul de antrenament."
+  },
+  "Hit every marked target, then return to the booth to finish.": {
+    "en": "Hit every marked target, then return to the booth to finish.",
+    "ro": "Loviți fiecare țintă marcată, apoi reveniți la cabină pentru a termina."
+  },
+  "5x Bandages": {
+    "en": "5x Bandages",
+    "ro": "5x Bandaje"
+  },
+  "$5,000 Cash": {
+    "en": "$5,000 Cash",
+    "ro": "5.000 $ în numerar"
+  },
+  "1,000 Chips": {
+    "en": "1,000 Chips",
+    "ro": "1.000 de jetoane"
+  },
+  "$25,000 Cash": {
+    "en": "$25,000 Cash",
+    "ro": "25.000 $ în numerar"
+  },
+  "2x Repair Kits": {
+    "en": "2x Repair Kits",
+    "ro": "2x kituri de reparații"
+  },
+  "$10,000 Cash": {
+    "en": "$10,000 Cash",
+    "ro": "10.000 $ în numerar"
+  },
+  "2,500 Chips": {
+    "en": "2,500 Chips",
+    "ro": "2.500 de jetoane"
+  },
+  "$15,000 Cash": {
+    "en": "$15,000 Cash",
+    "ro": "15.000 $ în numerar"
+  },
+  "Duffel Bag": {
+    "en": "Duffel Bag",
+    "ro": "Geantă Duffel"
+  },
+  "5,000 Chips": {
+    "en": "5,000 Chips",
+    "ro": "5.000 de jetoane"
+  },
+  "$50,000 Cash": {
+    "en": "$50,000 Cash",
+    "ro": "50.000 $ în numerar"
+  },
+  "7,500 Chips": {
+    "en": "7,500 Chips",
+    "ro": "7.500 de jetoane"
+  },
+  "Radio": {
+    "en": "Radio",
+    "ro": "Radio"
+  },
+  "$20,000 Cash": {
+    "en": "$20,000 Cash",
+    "ro": "20.000 $ în numerar"
+  },
+  "10,000 Chips": {
+    "en": "10,000 Chips",
+    "ro": "10.000 de jetoane"
+  },
+  "$35,000 Cash": {
+    "en": "$35,000 Cash",
+    "ro": "35.000 $ în numerar"
+  },
+  "2x Heavy Armor": {
+    "en": "2x Heavy Armor",
+    "ro": "2x armură grea"
+  },
+  "Pegassi Tempesta (Jackpot Vehicle!)": {
+    "en": "Pegassi Tempesta (Jackpot Vehicle!)",
+    "ro": "Pegassi Tempesta (Vehicul cu pot!)"
+  },
+  "$100,000 GRAND PRIZE": {
+    "en": "$100,000 GRAND PRIZE",
+    "ro": "100.000 $ MARELE PREMIU"
+  },
+  "Player server ID": {
+    "en": "Player server ID",
+    "ro": "ID server jucător"
+  },
+  "Container 47": {
+    "en": "Container 47",
+    "ro": "Container 47"
+  },
+  "Main Gate": {
+    "en": "Main Gate",
+    "ro": "Poartă principală"
+  },
+  "Dock Exit": {
+    "en": "Dock Exit",
+    "ro": "Ieșire stație de andocare"
+  },
+  "Canal Access": {
+    "en": "Canal Access",
+    "ro": "Acces la canal"
+  },
+  "Hot Wheels": {
+    "en": "Hot Wheels",
+    "ro": "Hot Wheels"
+  },
+  "Dominator": {
+    "en": "Dominator",
+    "ro": "Dominator"
+  },
+  "Sultan": {
+    "en": "Sultan",
+    "ro": "Sultan"
+  },
+  "Jester": {
+    "en": "Jester",
+    "ro": "Jester"
+  },
+  "Elegy RH8": {
+    "en": "Elegy RH8",
+    "ro": "Elegy RH8"
+  },
+  "Comet": {
+    "en": "Comet",
+    "ro": "Comet"
+  },
+  "Hawick": {
+    "en": "Hawick",
+    "ro": "Hawick"
+  },
+  "Del Perro": {
+    "en": "Del Perro",
+    "ro": "Del Perro"
+  },
+  "Auto Connect": {
+    "en": "Auto Connect",
+    "ro": "Conectare automată"
+  },
+  "Dock Worker": {
+    "en": "Dock Worker",
+    "ro": "Lucrător la docuri"
+  },
+  "$800 Cash": {
+    "en": "$800 Cash",
+    "ro": "800 $ în numerar"
+  },
+  "15 Blaze Points": {
+    "en": "15 Blaze Points",
+    "ro": "15 puncte de aprindere"
+  },
+  "Water x5": {
+    "en": "Water x5",
+    "ro": "Apă x5"
+  },
+  "Lockpick x2": {
+    "en": "Lockpick x2",
+    "ro": "Selector x2"
+  },
+  "Bread x5": {
+    "en": "Bread x5",
+    "ro": "Pâine x5"
+  },
+  "$4,000 Bank": {
+    "en": "$4,000 Bank",
+    "ro": "$ 4,000 Bancă"
+  },
+  "Bandage x3": {
+    "en": "Bandage x3",
+    "ro": "Bandaj x3"
+  },
+  "35 Blaze Points": {
+    "en": "35 Blaze Points",
+    "ro": "35 de puncte de aprindere"
+  },
+  "$3,000 Bank": {
+    "en": "$3,000 Bank",
+    "ro": "3.000 $ Bancă"
+  },
+  "$6,000 Cash": {
+    "en": "$6,000 Cash",
+    "ro": "6.000 $ în numerar"
+  },
+  "10 Blaze Points": {
+    "en": "10 Blaze Points",
+    "ro": "10 puncte de aprindere"
+  },
+  "Bandage x5": {
+    "en": "Bandage x5",
+    "ro": "Bandaj x5"
+  },
+  "description": {
+    "en": "description",
+    "ro": "descriere"
+  },
+  "Standard Apartment": {
+    "en": "Standard Apartment",
+    "ro": "Apartament standard"
+  },
+  "Motel Room": {
+    "en": "Motel Room",
+    "ro": "Cameră de motel"
+  },
+  "Modern Apartment": {
+    "en": "Modern Apartment",
+    "ro": "Apartament modern"
+  },
+  "High-end Apartment": {
+    "en": "High-end Apartment",
+    "ro": "Apartament de lux"
+  },
+  "Executive Suite": {
+    "en": "Executive Suite",
+    "ro": "Suită Executive"
+  },
+  "Luxury Mansion": {
+    "en": "Luxury Mansion",
+    "ro": "Conac de lux"
+  },
+  "Vinewood Villa": {
+    "en": "Vinewood Villa",
+    "ro": "Vilă cu lemn de viță"
+  },
+  "Casino Penthouse": {
+    "en": "Casino Penthouse",
+    "ro": "Cazinou Penthouse"
+  },
+  "Stilt House": {
+    "en": "Stilt House",
+    "ro": "Casă pe picioroange"
+  },
+  "Low-end Apartment": {
+    "en": "Low-end Apartment",
+    "ro": "Apartament de lux"
+  },
+  "Small Apartment": {
+    "en": "Small Apartment",
+    "ro": "Apartament mic"
+  },
+  "Medium House": {
+    "en": "Medium House",
+    "ro": "Casă medie"
+  },
+  "Champion": {
+    "en": "Champion",
+    "ro": "Campion"
+  },
+  "Veteran": {
+    "en": "Veteran",
+    "ro": "Veteran"
+  },
+  "Participant": {
+    "en": "Participant",
+    "ro": "Participant"
+  },
+  "Downtown Sprint": {
+    "en": "Downtown Sprint",
+    "ro": "Downtown Sprint"
+  },
+  "Fast city circuit through South LS and Downtown": {
+    "en": "Fast city circuit through South LS and Downtown",
+    "ro": "Circuit rapid al orașului prin South LS și Downtown"
+  },
+  "Airport High-Speed": {
+    "en": "Airport High-Speed",
+    "ro": "Aeroport de mare viteză"
+  },
+  "High-speed loop around Los Santos International Airport": {
+    "en": "High-speed loop around Los Santos International Airport",
+    "ro": "Buclă de mare viteză în jurul Aeroportului Internațional Los Santos"
+  },
+  "Vinewood Boulevard": {
+    "en": "Vinewood Boulevard",
+    "ro": "Vinewood Boulevard"
+  },
+  "Sprint from docks through the heart of Vinewood and back": {
+    "en": "Sprint from docks through the heart of Vinewood and back",
+    "ro": "Sprint de la docuri prin inima Vinewood și înapoi"
+  },
+  "SECURITY_TERMINAL // FLEECA_BYPASS": {
+    "en": "SECURITY_TERMINAL // FLEECA_BYPASS",
+    "ro": "SECURITY_TERMINAL // FLEECA_BYPASS"
+  },
+  "Unknown suspect": {
+    "en": "Unknown suspect",
+    "ro": "Suspect necunoscut"
+  },
+  "Fence": {
+    "en": "Fence",
+    "ro": "Gard"
+  },
+  "Silver Watch": {
+    "en": "Silver Watch",
+    "ro": "Ceas argintiu"
+  },
+  "Luxury Watch": {
+    "en": "Luxury Watch",
+    "ro": "Ceas de lux"
+  },
+  "Gold Watch": {
+    "en": "Gold Watch",
+    "ro": "Ceas de aur"
+  },
+  "Diamond Watch": {
+    "en": "Diamond Watch",
+    "ro": "Diamond Watch"
+  },
+  "Collector Watch": {
+    "en": "Collector Watch",
+    "ro": "Ceas colecționar"
+  },
+  "Basic Bracelet": {
+    "en": "Basic Bracelet",
+    "ro": "Brățară de bază"
+  },
+  "Gold Chain": {
+    "en": "Gold Chain",
+    "ro": "Lanț de aur"
+  },
+  "Gold Bracelet": {
+    "en": "Gold Bracelet",
+    "ro": "Brățară de aur"
+  },
+  "Designer Jewelry": {
+    "en": "Designer Jewelry",
+    "ro": "Bijuterii de designer"
+  },
+  "Collector Piece": {
+    "en": "Collector Piece",
+    "ro": "Piesă colecționară"
+  },
+  "Banded Cash Stack": {
+    "en": "Banded Cash Stack",
+    "ro": "Stivă de numerar cu bandă"
+  },
+  "Small Gold Bullion": {
+    "en": "Small Gold Bullion",
+    "ro": "Lingouri mici de aur"
+  },
+  "Bearer Bonds": {
+    "en": "Bearer Bonds",
+    "ro": "Obligațiuni la purtător"
+  },
+  "Safety Deposit Box": {
+    "en": "Safety Deposit Box",
+    "ro": "Cutie de valori"
+  },
+  "Vangelico Luxury Watches": {
+    "en": "Vangelico Luxury Watches",
+    "ro": "Ceasuri de lux Vangelico"
+  },
+  "[E] Bypass security": {
+    "en": "[E] Bypass security",
+    "ro": "[E] Treceți de securitate"
+  },
+  "Luxury Watches": {
+    "en": "Luxury Watches",
+    "ro": "Ceasuri de lux"
+  },
+  "Display Watches": {
+    "en": "Display Watches",
+    "ro": "Afișează ceasurile"
+  },
+  "Diamond Jewelry": {
+    "en": "Diamond Jewelry",
+    "ro": "Bijuterii cu diamante"
+  },
+  "Designer Case": {
+    "en": "Designer Case",
+    "ro": "Cazul proiectantului"
+  },
+  "Gold Watches": {
+    "en": "Gold Watches",
+    "ro": "Ceasuri de aur"
+  },
+  "Gold Bracelets": {
+    "en": "Gold Bracelets",
+    "ro": "Brățări de aur"
+  },
+  "Fleeca Bank Legion": {
+    "en": "Fleeca Bank Legion",
+    "ro": "Fleeca Bank Legion"
+  },
+  "Safety Deposit Row A": {
+    "en": "Safety Deposit Row A",
+    "ro": "Garanție Rândul A"
+  },
+  "Cash Safe Compartment": {
+    "en": "Cash Safe Compartment",
+    "ro": "Compartiment de numerar în condiții de siguranță"
+  },
+  "Safety Deposit Row B": {
+    "en": "Safety Deposit Row B",
+    "ro": "Garanție Rândul B"
+  },
+  "Teller Vault Box": {
+    "en": "Teller Vault Box",
+    "ro": "Casetă seif casierie"
+  },
+  "Skater": {
+    "en": "Skater",
+    "ro": "Patinator"
+  },
+  "Business Man": {
+    "en": "Business Man",
+    "ro": "Om de afaceri"
+  },
+  "Hipster": {
+    "en": "Hipster",
+    "ro": "Hipster"
+  },
+  "Beach Dude": {
+    "en": "Beach Dude",
+    "ro": "Tipule cu plaja"
+  },
+  "Young Executive": {
+    "en": "Young Executive",
+    "ro": "Tânăr executiv"
+  },
+  "Tramp": {
+    "en": "Tramp",
+    "ro": "Vagabond"
+  },
+  "Street Hood": {
+    "en": "Street Hood",
+    "ro": "Capota străzii"
+  },
+  "Beach Girl": {
+    "en": "Beach Girl",
+    "ro": "Fată de plajă"
+  },
+  "Skater Girl": {
+    "en": "Skater Girl",
+    "ro": "Skater Girl"
+  },
+  "Hipster Girl": {
+    "en": "Hipster Girl",
+    "ro": "Hipster Girl"
+  },
+  "Business Woman": {
+    "en": "Business Woman",
+    "ro": "Femeie de afaceri"
+  },
+  "Michael De Santa": {
+    "en": "Michael De Santa",
+    "ro": "Michael De Santa"
+  },
+  "Franklin Clinton": {
+    "en": "Franklin Clinton",
+    "ro": "Franklin Clinton"
+  },
+  "Trevor Philips": {
+    "en": "Trevor Philips",
+    "ro": "Trevor Philips"
+  },
+  "Lamar Davis": {
+    "en": "Lamar Davis",
+    "ro": "Lamar Davis"
+  },
+  "Lester Crest": {
+    "en": "Lester Crest",
+    "ro": "Lester Crest"
+  },
+  "Dave Norton": {
+    "en": "Dave Norton",
+    "ro": "Dave Norton"
+  },
+  "Chef": {
+    "en": "Chef",
+    "ro": "Bucătar-șef"
+  },
+  "Security Guard": {
+    "en": "Security Guard",
+    "ro": "Agent de pază"
+  },
+  "Nurse": {
+    "en": "Nurse",
+    "ro": "Asistentă medicală"
+  },
+  "Bank Manager": {
+    "en": "Bank Manager",
+    "ro": "Manager Bancă"
+  },
+  "Cook": {
+    "en": "Cook",
+    "ro": "Bucătar"
+  },
+  "SWAT": {
+    "en": "SWAT",
+    "ro": "SWAT"
+  },
+  "Street Artist": {
+    "en": "Street Artist",
+    "ro": "Artist stradal"
+  },
+  "Pillbox Hospital": {
+    "en": "Pillbox Hospital",
+    "ro": "Pillbox Hospital"
+  },
+  "Mission Row PD": {
+    "en": "Mission Row PD",
+    "ro": "Mission Row PD"
+  },
+  "LSIA Airport": {
+    "en": "LSIA Airport",
+    "ro": "LSIA Airport"
+  },
+  "Sandy Shores": {
+    "en": "Sandy Shores",
+    "ro": "Sandy Shores"
+  },
+  "Paleto Bay": {
+    "en": "Paleto Bay",
+    "ro": "Paleto Bay"
+  },
+  "Vinewood Hills": {
+    "en": "Vinewood Hills",
+    "ro": "Vinewood Hills"
+  },
+  "Vespucci Beach": {
+    "en": "Vespucci Beach",
+    "ro": "Vespucci Beach"
+  },
+  "LS Docks": {
+    "en": "LS Docks",
+    "ro": "LS Docks"
+  },
+  "Diamond Casino": {
+    "en": "Diamond Casino",
+    "ro": "Diamond Casino"
+  },
+  "Grove Street": {
+    "en": "Grove Street",
+    "ro": "Grove Street"
+  },
+  "Mirror Park": {
+    "en": "Mirror Park",
+    "ro": "Mirror Park"
+  },
+  "Del Perro Pier": {
+    "en": "Del Perro Pier",
+    "ro": "Del Perro Pier"
+  },
+  "Chumash": {
+    "en": "Chumash",
+    "ro": "Chumash"
+  },
+  "Grapeseed": {
+    "en": "Grapeseed",
+    "ro": "Grapeseed"
+  },
+  "Harmony Tuning": {
+    "en": "Harmony Tuning",
+    "ro": "Harmony Tuning"
+  },
+  "Engine": {
+    "en": "Engine",
+    "ro": "Motor"
+  },
+  "Brakes": {
+    "en": "Brakes",
+    "ro": "Frâne"
+  },
+  "Transmission": {
+    "en": "Transmission",
+    "ro": "Transmisie"
+  },
+  "Suspension": {
+    "en": "Suspension",
+    "ro": "Suspendare"
+  },
+  "Silent (Civil)": {
+    "en": "Silent (Civil)",
+    "ro": "Silențios (civil)"
+  },
+  "Normal (Sport)": {
+    "en": "Normal (Sport)",
+    "ro": "Normal (Sport)"
+  },
+  "Aggressive (Race)": {
+    "en": "Aggressive (Race)",
+    "ro": "Agresiv (rasă)"
+  },
+  "Pop & Bang": {
+    "en": "Pop & Bang",
+    "ro": "Pop & Bang"
+  },
+  "Flammen": {
+    "en": "Flammen",
+    "ro": "Flammen"
+  },
+  "Diesel": {
+    "en": "Diesel",
+    "ro": "Motorină"
+  },
+  "Extra Loud": {
+    "en": "Extra Loud",
+    "ro": "Foarte tare"
+  },
+  "ECU": {
+    "en": "ECU",
+    "ro": "ECU"
+  },
+  "STAGE": {
+    "en": "STAGE",
+    "ro": "STAGE"
+  },
+  "POWER": {
+    "en": "POWER",
+    "ro": "PUTERE"
+  },
+  "TORQUE": {
+    "en": "TORQUE",
+    "ro": "CUPLU"
+  },
+  "EXHAUST": {
+    "en": "EXHAUST",
+    "ro": "EVACUARE"
+  },
+  "POP & BANG": {
+    "en": "POP & BANG",
+    "ro": "POP & BANG"
+  },
+  "FLAMES": {
+    "en": "FLAMES",
+    "ro": "FLĂCĂRI"
+  },
+  "FLAME COLOR": {
+    "en": "FLAME COLOR",
+    "ro": "CULOARE FLACĂRĂ"
+  },
+  "RPM POP": {
+    "en": "RPM POP",
+    "ro": "RPM POP"
+  },
+  "ANTI-LAG": {
+    "en": "ANTI-LAG",
+    "ro": "ANTI-LAG"
+  },
+  "NITROUS": {
+    "en": "NITROUS",
+    "ro": "AZOT"
+  },
+  "DRIFT": {
+    "en": "DRIFT",
+    "ro": "DEVIAȚIE"
+  },
+  "ENGINE": {
+    "en": "ENGINE",
+    "ro": "MOTOR"
+  },
+  "TURBO": {
+    "en": "TURBO",
+    "ro": "TURBO"
+  },
+  "TRANSMISSION": {
+    "en": "TRANSMISSION",
+    "ro": "TRANSMISIE"
+  },
+  "BRAKES": {
+    "en": "BRAKES",
+    "ro": "FRÂNE"
+  },
+  "SUSPENSION": {
+    "en": "SUSPENSION",
+    "ro": "SUSPENDARE"
+  },
+  "HUD ECU": {
+    "en": "HUD ECU",
+    "ro": "Hud ECU"
+  },
+  "DYNO": {
+    "en": "DYNO",
+    "ro": "DYNO"
+  },
+  "optional": {
+    "en": "optional",
+    "ro": "opțional"
+  },
+  "Assault Rifle": {
+    "en": "Assault Rifle",
+    "ro": "Pușcă de asalt"
+  },
+  "Heavy Pistol": {
+    "en": "Heavy Pistol",
+    "ro": "Pistol greu"
+  },
+  "Advanced Rifle": {
+    "en": "Advanced Rifle",
+    "ro": "Pușcă avansată"
+  },
+  "Heavy Sniper": {
+    "en": "Heavy Sniper",
+    "ro": "Lunetist greu"
+  },
+  "Eroare de comunicare cu serverul.": {
+    "en": "Could not communicate with the server.",
+    "ro": "Nu s-a putut comunica cu serverul."
+  },
+  "Tempesta Widebody": {
+    "en": "Tempesta Widebody",
+    "ro": "Tempesta Widebody"
+  },
+  "Sentinel RTS Track": {
+    "en": "Sentinel RTS Track",
+    "ro": "Sentinel RTS Track"
+  },
+  "Cypher GTS Spec": {
+    "en": "Cypher GTS Spec",
+    "ro": "Cypher GTS Spec"
+  },
+  "Schlagen STR AMG": {
+    "en": "Schlagen STR AMG",
+    "ro": "Schlagen STR AMG"
+  },
+  "Comet Cup Edition": {
+    "en": "Comet Cup Edition",
+    "ro": "Comet Cup Edition"
+  },
+  "Harx ST2 GT": {
+    "en": "Harx ST2 GT",
+    "ro": "Harx ST2 GT"
+  },
+  "Finish, clear points, or cancel": {
+    "en": "Finish, clear points, or cancel",
+    "ro": "Finalizează, golește punctele sau anulează"
+  }
+}

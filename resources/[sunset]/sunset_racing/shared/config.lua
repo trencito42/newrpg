@@ -35,9 +35,9 @@ SunsetRacing.Config = {
     pointsPlacement = { [1] = 15, [2] = 10, [3] = 5 },
     pointsSoloFinish = 5,
     raceNightRewards = {
-        { minPoints = 30, cash = 10000, xp = 300, label = 'Champion' },
-        { minPoints = 15, cash = 5000, xp = 150, label = 'Veteran' },
-        { minPoints = 5, cash = 2000, xp = 75, label = 'Participant' },
+        { minPoints = 30, cash = 10000, xp = 300, labelKey = "config.racing.label.champion.8b685970", label = 'Champion' },
+        { minPoints = 15, cash = 5000, xp = 150, labelKey = "config.racing.label.veteran.194352f3", label = 'Veteran' },
+        { minPoints = 5, cash = 2000, xp = 75, labelKey = "config.racing.label.participant.401d64bf", label = 'Participant' },
     },
 
     -- ── ROUTES ──
@@ -47,8 +47,8 @@ SunsetRacing.Config = {
     routes = {
         {
             id = 'downtown',
-            label = 'Downtown Sprint',
-            description = 'Fast city circuit through South LS and Downtown',
+            labelKey = "config.racing.label.downtown_sprint.1d7fcdd8", label = 'Downtown Sprint',
+            descriptionKey = "config.racing.description.fast_city_circuit_through_south_ls_and_downtown.5cce87cd", description = 'Fast city circuit through South LS and Downtown',
             start = vector3(-1060.00, -2580.00, 20.00),
             checkpoints = {
                 vector3(-1060.00, -2390.00, 14.00),  -- Dutch London St North
@@ -65,8 +65,8 @@ SunsetRacing.Config = {
         },
         {
             id = 'airport',
-            label = 'Airport High-Speed',
-            description = 'High-speed loop around Los Santos International Airport',
+            labelKey = "config.racing.label.airport_high_speed.cc59ba96", label = 'Airport High-Speed',
+            descriptionKey = "config.racing.description.high_speed_loop_around_los_santos_international_airport.3ea93bb2", description = 'High-speed loop around Los Santos International Airport',
             start = vector3(-1060.00, -2580.00, 20.00),
             checkpoints = {
                 vector3(-1080.00, -2650.00, 19.80),  -- Exit LS Customs towards Greenwich
@@ -82,8 +82,8 @@ SunsetRacing.Config = {
         },
         {
             id = 'vinewood',
-            label = 'Vinewood Boulevard',
-            description = 'Sprint from docks through the heart of Vinewood and back',
+            labelKey = "config.racing.label.vinewood_boulevard.7273b9fd", label = 'Vinewood Boulevard',
+            descriptionKey = "config.racing.description.sprint_from_docks_through_the_heart_of_vinewood_and_back.c91a18f9", description = 'Sprint from docks through the heart of Vinewood and back',
             start = vector3(-1060.00, -2580.00, 20.00),
             checkpoints = {
                 vector3(-1060.00, -2390.00, 14.00),  -- Dutch London North

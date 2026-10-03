@@ -33,7 +33,7 @@ function renderGrid() {
         : allSkins.filter(s => s.category === activeFilter);
 
     if (list.length === 0) {
-        grid.innerHTML = '<p class="no-skins">No skins in this category.</p>';
+        grid.innerHTML = `<p class="no-skins">${I18n.t('skinshop.no_category')}</p>`;
         return;
     }
 

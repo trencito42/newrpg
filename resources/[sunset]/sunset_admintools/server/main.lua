@@ -84,7 +84,7 @@ RegisterCommand('sweeporphans', function(source, args)
     TriggerClientEvent('sunset:admintools:sweep', -1, dryRun)
     if source ~= 0 then
         TriggerClientEvent('sunset:client:notify', source,
-            dryRun and 'Orphan sweep: DRY RUN (report only). Use /sweeporphans force to delete.' or 'Orphan sweep: FORCE delete running on all clients.',
+            exports.sunset_core:TFor(source, dryRun and 'admintools.message.orphan_sweep_dry_run' or 'admintools.message.orphan_sweep_force'),
             'info', 8000)
     end
 end, false)

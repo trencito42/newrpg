@@ -300,9 +300,9 @@ const Loot = {
                 <div class="loot-icon">${this.getIconHtml(item)}</div>
                 <div class="loot-name">${item.label || item.item}</div>
                 <div class="loot-details">
-                    <span>Timp Colectare: <span style="color: var(--brand-primary); font-weight: 700;">~${timeSec}</span></span>
-                    <span>Valoare: <span class="val-text">${money(item.baseValue || 0)}</span></span>
-                    <span>Greutate: <span class="wgt-text">${weight} KG</span></span>
+                    <span>${I18n.t('ui.robbery.collection_time')}: <span style="color: var(--brand-primary); font-weight: 700;">~${timeSec}</span></span>
+                    <span>${I18n.t('ui.robbery.value')}: <span class="val-text">${money(item.baseValue || 0)}</span></span>
+                    <span>${I18n.t('ui.robbery.weight')}: <span class="wgt-text">${weight} KG</span></span>
                 </div>
             `;
 
@@ -357,21 +357,21 @@ const Loot = {
             if (warnEl) warnEl.style.display = 'block';
             if (btn) {
                 btn.className = 'btn-start error';
-                btn.textContent = 'RUCSAC SUPRAINCARCAT';
+                btn.textContent = I18n.t('ui.robbery.bag_overloaded');
             }
         } else if (this.selectedUids.size > 0) {
             barFill?.classList.remove('overload');
             if (warnEl) warnEl.style.display = 'none';
             if (btn) {
                 btn.className = 'btn-start ready';
-                btn.textContent = `Incepe Colectarea (${this.selectedUids.size})`;
+                btn.textContent = I18n.t('ui.robbery.start_collection_count', { count: this.selectedUids.size });
             }
         } else {
             barFill?.classList.remove('overload');
             if (warnEl) warnEl.style.display = 'none';
             if (btn) {
                 btn.className = 'btn-start';
-                btn.textContent = 'Selecteaza prada';
+                btn.textContent = I18n.t('interface.select_loot');
             }
         }
     },

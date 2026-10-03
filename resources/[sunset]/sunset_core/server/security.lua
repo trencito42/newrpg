@@ -88,7 +88,7 @@ CreateThread(function()
                         end
 
                         TriggerClientEvent('sunset:client:notify', src,
-                            'Arma neautorizata confiscata automat de sistemul de securitate.', 'error', 8000)
+                            exports.sunset_core:TFor(src, 'security.message.unauthorized_weapon_confiscated'), 'error', 8000)
                     end
 
                     -- 2. Teleport / impossible velocity check

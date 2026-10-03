@@ -25,35 +25,35 @@ SunsetLicenses.InstructorPromotionRequirements = {
 
 SunsetLicenses.Types = {
     driver = {
-        label = 'Driving License',
+        labelKey = "config.licenses.label.driving_license.65011966", label = 'Driving License',
         short = 'Driver',
         facility = 'driving_school',
         instructorFaction = false,
         vehicleClasses = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 19, 20 },
     },
     pilot = {
-        label = 'Pilot License',
+        labelKey = "config.licenses.label.pilot_license.b6bad512", label = 'Pilot License',
         short = 'Pilot',
         facility = 'airport',
         instructorFaction = true,
         vehicleClasses = { 15, 16 },
     },
     boat = {
-        label = 'Boat License',
+        labelKey = "config.licenses.label.boat_license.0f59cfe9", label = 'Boat License',
         short = 'Boat',
         facility = 'marina',
         instructorFaction = true,
         vehicleClasses = { 14 },
     },
     weapon = {
-        label = 'Firearm License',
+        labelKey = "config.licenses.label.firearm_license.08798924", label = 'Firearm License',
         short = 'Weapon',
         facility = 'range',
         instructorFaction = true,
         vehicleClasses = {},
     },
     hunting = {
-        label = 'Hunting License',
+        labelKey = "config.licenses.label.hunting_license.ab95524c", label = 'Hunting License',
         short = 'Hunting',
         facility = 'hunting_range',
         instructorFaction = true,
@@ -65,14 +65,14 @@ SunsetLicenses.Types = {
 
 SunsetLicenses.Facilities = {
     driving_school = {
-        label = 'Driving School',
+        labelKey = "config.licenses.label.driving_school.2074d451", label = 'Driving School',
         blip = { sprite = 525, color = 5, scale = 0.85 },
         marker = vector3(240.12, -1379.35, 33.74),
         markerRadius = 2.5,
         license = 'driver',
     },
     airport = {
-        label = 'Flight School — LSIA',
+        labelKey = "config.licenses.label.flight_school_lsia.dfb070f1", label = 'Flight School — LSIA',
         blip = { sprite = 307, color = 2, scale = 0.9 },
         marker = vector3(-1037.2, -2737.8, 20.17),
         markerRadius = 3.0,
@@ -81,7 +81,7 @@ SunsetLicenses.Facilities = {
         testVehicle = 'maverick',
     },
     marina = {
-        label = 'Boat School — Marina',
+        labelKey = "config.licenses.label.boat_school_marina.5b45e9c1", label = 'Boat School — Marina',
         blip = { sprite = 410, color = 3, scale = 0.85 },
         marker = vector3(-794.5, -1510.2, 1.6),
         markerRadius = 3.0,
@@ -90,7 +90,7 @@ SunsetLicenses.Facilities = {
         testVehicle = 'dinghy',
     },
     range = {
-        label = 'LSSI Weapon Range — Sandy Shores',
+        labelKey = "config.licenses.label.lssi_weapon_range_sandy_shores.41f8afe5", label = 'LSSI Weapon Range — Sandy Shores',
         blip = { sprite = 313, color = 1, scale = 0.85 },
         marker = vector3(1690.5, 3748.8, 34.7),
         markerRadius = 2.5,
@@ -100,7 +100,7 @@ SunsetLicenses.Facilities = {
     -- in Blaine County, near the hunting contract zones. Both the exam booth marker and the
     -- range targets are in this area.
     hunting_range = {
-        label = 'LSSI Hunting Range — Blaine County',
+        labelKey = "config.licenses.label.lssi_hunting_range_blaine_county.e2a4dd95", label = 'LSSI Hunting Range — Blaine County',
         blip = { sprite = 153, color = 2, scale = 0.85 },
         marker = vector3(2569.0, 3465.0, 56.0),
         markerRadius = 3.0,
@@ -171,7 +171,7 @@ end
 
 SunsetLicenses.Theory = {
     driver = {
-        title = 'Driving School — Theory',
+        titleKey = "config.licenses.title.driving_school_theory.808cf389", title = 'Driving School — Theory',
         intro = 'Read each question carefully. You need 3/4 correct to pass. On the road: stop at reds, yield to pedestrians, and stay in your lane.',
         passScore = 3,
         questions = {
@@ -194,7 +194,7 @@ SunsetLicenses.Theory = {
         },
     },
     pilot = {
-        title = 'Flight School — Theory',
+        titleKey = "config.licenses.title.flight_school_theory.6e38e0ac", title = 'Flight School — Theory',
         intro = 'Aircraft are dangerous without training. Maintain altitude in checkpoints, avoid buildings, and land gently at LSIA with the engine off.',
         passScore = 3,
         questions = {
@@ -217,7 +217,7 @@ SunsetLicenses.Theory = {
         },
     },
     boat = {
-        title = 'Boat School — Theory',
+        titleKey = "config.licenses.title.boat_school_theory.a1871c64", title = 'Boat School — Theory',
         intro = 'On the water: wear a life jacket mindset, watch for swimmers, and complete all buoys before returning to the marina.',
         passScore = 3,
         questions = {
@@ -240,7 +240,7 @@ SunsetLicenses.Theory = {
         },
     },
     hunting = {
-        title = 'LSSI Hunting License — Theory',
+        titleKey = "config.licenses.title.lssi_hunting_license_theory.dd146763", title = 'LSSI Hunting License — Theory',
         intro = 'Wildlife management requires safe, ethical practice. You need 5/8 correct. Read each question carefully — several have real-world safety implications.',
         passScore = 5,
         questions = {
@@ -280,7 +280,7 @@ SunsetLicenses.Theory = {
     },
 
     weapon = {
-        title = 'Firearm Safety — Theory',
+        titleKey = "config.licenses.title.firearm_safety_theory.d7568e81", title = 'Firearm Safety — Theory',
         intro = 'Treat every gun as loaded. Keep the muzzle pointed in a safe direction and only fire at range targets during the practical.',
         passScore = 3,
         questions = {
@@ -326,23 +326,23 @@ SunsetLicenses.Practical = {
         maxCollisions = 3,
         briefing = {
             {
-                title = 'Driving School',
-                message = 'Welcome to Driving School. Listen carefully — we will get you on the road safely.',
+                titleKey = "config.licenses.title.driving_school.79f1f3ba", title = 'Driving School',
+                messageKey = "config.licenses.message.welcome_to_driving_school_listen_carefully_we_will_get_you_on_th.cc544aad", message = 'Welcome to Driving School. Listen carefully — we will get you on the road safely.',
             },
             {
-                message = "Let's get on the road. Press 2 to start the engine.",
+                messageKey = "config.licenses.message.let_s_get_on_the_road_press_2_to_start_the_engine.61fba62a", message = "Let's get on the road. Press 2 to start the engine.",
                 require = 'engine_on',
             },
             {
-                message = 'Buckle up — press K to fasten your seatbelt.',
+                messageKey = "config.licenses.message.buckle_up_press_k_to_fasten_your_seatbelt.64feda5c", message = 'Buckle up — press K to fasten your seatbelt.',
                 require = 'seatbelt',
             },
             {
-                message = 'Press H to set your headlights for traffic.',
+                messageKey = "config.licenses.message.press_h_to_set_your_headlights_for_traffic.1a532e41", message = 'Press H to set your headlights for traffic.',
                 require = 'lights',
             },
             {
-                message = 'Exit through the DMV gate and follow the route markers.',
+                messageKey = "config.licenses.message.exit_through_the_dmv_gate_and_follow_the_route_markers.825452f3", message = 'Exit through the DMV gate and follow the route markers.',
                 require = 'depart',
             },
         },
@@ -430,15 +430,15 @@ SunsetLicenses.Practical = {
         maxMistakes = 2,
         briefing = {
             {
-                title = 'LSSI Hunting Range',
-                message = 'Welcome to the Hunting License practical. Demonstrate safe, accurate wildlife shooting.',
+                titleKey = "config.licenses.title.lssi_hunting_range.41d3861c", title = 'LSSI Hunting Range',
+                messageKey = "config.licenses.message.welcome_to_the_hunting_license_practical_demonstrate_safe_accura.d2d76bdd", message = 'Welcome to the Hunting License practical. Demonstrate safe, accurate wildlife shooting.',
             },
             {
-                message = 'Step to the firing position. Press E when you are ready to receive the test rifle and begin.',
+                messageKey = "config.licenses.message.step_to_the_firing_position_press_e_when_you_are_ready_to_receiv.34744216", message = 'Step to the firing position. Press E when you are ready to receive the test rifle and begin.',
                 require = 'ready',
             },
             {
-                message = 'Engage all DEER targets (orange markers). Do NOT shoot the PROTECTED animals (red markers). Return to the booth when done.',
+                messageKey = "config.licenses.message.engage_all_deer_targets_orange_markers_do_not_shoot_the_protecte.6cdcc005", message = 'Engage all DEER targets (orange markers). Do NOT shoot the PROTECTED animals (red markers). Return to the booth when done.',
             },
         },
         -- Valid targets: deer silhouettes. Avoid targets: protected animal positions.
@@ -466,15 +466,15 @@ SunsetLicenses.Practical = {
         maxTimeSec = 300,
         briefing = {
             {
-                title = 'LSSI Firearms Range',
-                message = 'Welcome to the LSSI range. Treat every weapon as loaded and keep the muzzle downrange.',
+                titleKey = "config.licenses.title.lssi_firearms_range.8b897852", title = 'LSSI Firearms Range',
+                messageKey = "config.licenses.message.welcome_to_the_lssi_range_treat_every_weapon_as_loaded_and_keep_.c0833d9c", message = 'Welcome to the LSSI range. Treat every weapon as loaded and keep the muzzle downrange.',
             },
             {
-                message = 'Step to the firing line. Press E when you are ready to receive your training pistol.',
+                messageKey = "config.licenses.message.step_to_the_firing_line_press_e_when_you_are_ready_to_receive_yo.4446e6b1", message = 'Step to the firing line. Press E when you are ready to receive your training pistol.',
                 require = 'ready',
             },
             {
-                message = 'Hit every marked target, then return to the booth to finish.',
+                messageKey = "config.licenses.message.hit_every_marked_target_then_return_to_the_booth_to_finish.631c40e8", message = 'Hit every marked target, then return to the booth to finish.',
             },
         },
         targets = {

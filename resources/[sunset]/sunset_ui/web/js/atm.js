@@ -465,7 +465,7 @@
         handleKeypadInput(key) {
             this.sound.playBeep(1500);
 
-            if (key === 'CANCEL') {
+            if (key === I18n.t('interface.cancel')) {
                 if (this.currentMode === 'CUSTOM' || this.currentMode === 'WITHDRAW' || this.currentMode === 'DEPOSIT') {
                     this.switchPane('DASHBOARD');
                 } else {

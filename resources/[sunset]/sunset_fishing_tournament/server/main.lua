@@ -447,8 +447,7 @@ settleTournamentInner = function()
         TriggerClientEvent('sunset:client:notify', -1,
             ('Fishing Tournament Results: %s'):format(table.concat(parts, ' | ')), 'info', 12000)
     else
-        TriggerClientEvent('sunset:client:notify', -1,
-            'Fishing Tournament ended. No player caught enough fish to qualify.', 'info', 8000)
+        Sunset.BroadcastLocalized('fishing_tournament.message.no_qualifiers', nil, 'info', 8000)
     end
 
     TournamentData.state = 'INACTIVE'

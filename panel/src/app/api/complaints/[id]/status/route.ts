@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentSession } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle, dbExecute, dbTransaction } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import crypto from "crypto";
+import { t } from "@/lib/i18n";
+
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -20,6 +22,7 @@ const statusActionSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: Context) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) {
     return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   }
@@ -166,7 +169,7 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   if (action === "accept") {
     if (!reason || reason.trim().length < 3) {
-      return NextResponse.json({ error: "reason_required", message: "A clear reason/verdict is required to accept a complaint." }, { status: 400 });
+      return NextResponse.json({ error: "reason_required", message: t(locale, "interface.a_clear_reason_or_verdict_is_required_to_accept_a_complaint") }, { status: 400 });
     }
 
     const queueSanction = sanctionType && sanctionType !== "none";
@@ -265,7 +268,7 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   if (action === "dismiss") {
     if (!reason || reason.trim().length < 3) {
-      return NextResponse.json({ error: "reason_required", message: "A reason is required to dismiss a complaint." }, { status: 400 });
+      return NextResponse.json({ error: "reason_required", message: t(locale, "interface.a_reason_is_required_to_dismiss_a_complaint") }, { status: 400 });
     }
 
     await dbTransaction(async (conn) => {

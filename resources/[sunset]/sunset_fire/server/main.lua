@@ -58,7 +58,7 @@ local function spawnIncident()
     local inc = {
         id = incidentSeq,
         coords = { x = spawn.x, y = spawn.y, z = spawn.z, w = spawn.w },
-        label = 'Vehicle fire',
+        labelKey = "config.fire.label.vehicle_fire.dcc06576", label = 'Vehicle fire',
         fireHealth = Sunset.Fire.fireHealth or 100,
         maxHealth = Sunset.Fire.fireHealth or 100,
         status = 'active',

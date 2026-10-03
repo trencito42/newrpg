@@ -1,6 +1,6 @@
 Sunset.Dealership = {
     id = 'pdm',
-    label = 'Premium Deluxe Motorsport',
+    labelKey = "config.dealership.label.premium_deluxe_motorsport.862b988a", label = 'Premium Deluxe Motorsport',
     coords = vector3(-56.74, -1096.62, 26.42),
     interactionRadius = 4.0,
     serverRadius = 12.0,

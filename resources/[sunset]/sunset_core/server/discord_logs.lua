@@ -36,6 +36,7 @@ function Sunset.Discord.Send(channelType, title, description, colorName, fields)
     end
 
     local embed = {
+        -- i18n-ignore: internal Discord webhook fallback title
         title = title or 'SunsetMP Log',
         description = description or '',
         color = COLORS[colorName] or COLORS.cyan,

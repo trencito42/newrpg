@@ -6,13 +6,13 @@ local LOCKPICK_DIST     = 2.5
 local NPC_INTERACT_DIST = 3.5
 
 local CHOP_NPCS = {
-    { coords = vector4(-1631.47, -968.58, 7.78, 358.84),  label = 'Samsar Dubios (Del Perro)' },
-    { coords = vector4(42.66, -1400.39, 29.35, 219.85),   label = 'Samsar Dubios (Strawberry)' },
-    { coords = vector4(167.63, -1284.35, 29.50, 62.26),   label = 'Samsar Dubios (Davis)' },
-    { coords = vector4(1522.59, -2114.32, 76.68, 313.50), label = 'Samsar Dubios (El Burro)' },
-    { coords = vector4(835.6, -3001.4, 5.9, 270.0),       label = 'Samsar Dubios (Docks)' },
-    { coords = vector4(2341.0, 3125.0, 48.2, 180.0),      label = 'Samsar Dubios (Sandy Shores)' },
-    { coords = vector4(-219.0, 6382.0, 31.5, 45.0),       label = 'Samsar Dubios (Paleto Bay)' },
+    { coords = vector4(-1631.47, -968.58, 7.78, 358.84),  labelKey = "config.carjack.label.shady_car_dealer_del_perro.5961da67", label = 'Samsar Dubios (Del Perro)' },
+    { coords = vector4(42.66, -1400.39, 29.35, 219.85),   labelKey = "config.carjack.label.shady_car_dealer_strawberry.0e7bda0a", label = 'Samsar Dubios (Strawberry)' },
+    { coords = vector4(167.63, -1284.35, 29.50, 62.26),   labelKey = "config.carjack.label.shady_car_dealer_davis.9457a5dd", label = 'Samsar Dubios (Davis)' },
+    { coords = vector4(1522.59, -2114.32, 76.68, 313.50), labelKey = "config.carjack.label.shady_car_dealer_el_burro.31082685", label = 'Samsar Dubios (El Burro)' },
+    { coords = vector4(835.6, -3001.4, 5.9, 270.0),       labelKey = "config.carjack.label.shady_car_dealer_docks.b9ff7251", label = 'Samsar Dubios (Docks)' },
+    { coords = vector4(2341.0, 3125.0, 48.2, 180.0),      labelKey = "config.carjack.label.shady_car_dealer_sandy_shores.e82d0d3c", label = 'Samsar Dubios (Sandy Shores)' },
+    { coords = vector4(-219.0, 6382.0, 31.5, 45.0),       labelKey = "config.carjack.label.shady_car_dealer_paleto_bay.7013ddf5", label = 'Samsar Dubios (Paleto Bay)' },
 }
 
 local spawnedNpcs  = {}
@@ -208,8 +208,8 @@ AddEventHandler('sunset:nui:playerInteractionAction', function(data)
         end
 
         exports.sunset_ui:StartLockpick({
-            title = 'SPARGERE VEHICUL',
-            subtitle = 'Sistem Securitate Contact',
+            title = exports.sunset_core:Translate('carjack.presentation.vehicle_break_in'),
+            subtitleKey = "config.carjack.subtitle.ignition_security_system.834cf32a", subtitle = 'Sistem Securitate Contact',
             difficulty = 'medium'
         }, function(success)
             if success then

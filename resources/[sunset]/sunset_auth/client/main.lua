@@ -292,7 +292,7 @@ end)
 AddEventHandler('sunset:nui:authForgotPassword', function(data)
     local identifier = tostring(data and data.identifier or '')
     if identifier == '' then
-        authUiSend('authError', { message = 'Te rugam sa introduci username-ul sau emailul contului.' })
+        authUiSend('authError', { messageKey = "config.auth.message.enter_your_account_username_or_email_address.214f47da", message = 'Te rugam sa introduci username-ul sau emailul contului.' })
         return
     end
 
@@ -301,11 +301,11 @@ AddEventHandler('sunset:nui:authForgotPassword', function(data)
     authUiSend('authLoading', { loading = false })
 
     if res and res.success then
-        authUiSend('authSuccessNotice', { message = res.message or 'Un email de resetare a fost trimis pe adresa asociata contului.' })
-        uiNotify(res.message or 'Emailul de resetare a fost trimis!', 'success', 8000)
+        authUiSend('authSuccessNotice', { message = res.message or tr('auth.password_reset_email_sent') })
+        uiNotify(res.message or tr('auth.password_reset_email_sent_short'), 'success', 8000)
     else
-        authUiSend('authError', { message = res and res.message or 'Eroare la trimiterea emailului de resetare.' })
-        uiNotify(res and res.message or 'Eroare la trimiterea emailului.', 'error', 6000)
+        authUiSend('authError', { message = res and res.message or tr('auth.password_reset_email_failed') })
+        uiNotify(res and res.message or tr('auth.password_reset_email_failed_short'), 'error', 6000)
     end
 end)
 
@@ -467,4 +467,3 @@ end
 
 RegisterNetEvent('sunset:auth:openChangePassUI', openChangePasswordUI)
 exports('OpenChangePassword', openChangePasswordUI)
-

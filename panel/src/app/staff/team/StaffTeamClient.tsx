@@ -304,7 +304,7 @@ export function StaffTeamClient({
                   disabled={loading || reason.trim().length < 3}
                   className="px-4 py-1.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
                 >
-                  {loading ? "Se salvează..." : "Aplică Schimbarea"}
+                  {loading ? t(locale, "interface.saving") : t(locale, "interface.apply_change")}
                 </button>
               </div>
             </form>

@@ -87,17 +87,17 @@ end)
 CreateThread(function()
     Wait(1500)
     TriggerEvent('chat:addSuggestion', '/service', 'Request a service', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'message', help = 'optional details' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.aa0767eb", help = 'taxi | medic | fire | mechanic' },
+        { name = 'message', helpKey = "config.dispatch.help.optional_details.f060047f", help = 'optional details' },
     })
     TriggerEvent('chat:addSuggestion', '/servicecalls', 'List open service calls for your duty role')
     TriggerEvent('chat:addSuggestion', '/accept', 'Accept a service call', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'id', help = 'Call ID' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.aa0767eb", help = 'taxi | medic | fire | mechanic' },
+        { name = 'id', helpKey = "config.dispatch.help.call_id.6a27c220", help = 'Call ID' },
     })
     TriggerEvent('chat:addSuggestion', '/cancel', 'Cancel a service call', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'id', help = 'Call ID' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.aa0767eb", help = 'taxi | medic | fire | mechanic' },
+        { name = 'id', helpKey = "config.dispatch.help.call_id.6a27c220", help = 'Call ID' },
     })
 end)
 

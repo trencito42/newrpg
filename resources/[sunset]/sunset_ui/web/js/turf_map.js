@@ -404,7 +404,7 @@
                     textName.setAttribute('x', centerPt.x.toFixed(1));
                     textName.setAttribute('y', (centerPt.y - 4).toFixed(1));
                     textName.setAttribute('class', 'turf-label-text');
-                    textName.textContent = turf.name || `Turf #${turf.id}`;
+                    textName.textContent = turf.name || I18n.t('ui.turf.turf_number', { id: turf.id });
                     labelGroup.appendChild(textName);
 
                     const textTag = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -524,11 +524,11 @@
             const incomeEl = document.getElementById('tooltip-turf-income');
 
             if (idEl) idEl.textContent = `#${turf.id}`;
-            if (nameEl) nameEl.textContent = turf.name || `Turf #${turf.id}`;
+            if (nameEl) nameEl.textContent = turf.name || I18n.t('ui.turf.turf_number', { id: turf.id });
 
             const hasOwner = !!turf.ownerClanId;
             if (ownerEl) {
-                ownerEl.textContent = hasOwner ? `${turf.ownerName} [${turf.ownerTag || '--'}]` : 'Unowned (Neutral)';
+                ownerEl.textContent = hasOwner ? `${turf.ownerName} [${turf.ownerTag || '--'}]` : I18n.t('ui.turf.unowned_neutral');
                 ownerEl.style.color = hasOwner ? (turf.ownerColor || '#2ecc71') : '#8b949e';
             }
 
@@ -567,6 +567,7 @@
                     const c = turf.coords || { x: 0, y: 0, z: 0 };
                     const svgPt = worldToSvg(c.x, c.y);
                     const vertexCount = turf.polygon ? turf.polygon.length : 0;
+                    // i18n-ignore: developer turf geometry diagnostics
                     debugContent.innerHTML = `
                         <strong>Turf #${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(turf.id)}: ${((v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])))(turf.name)}</strong><br>
                         Vertices: ${vertexCount} points<br>

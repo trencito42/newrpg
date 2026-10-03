@@ -57,6 +57,7 @@ local function itemView(row, count)
         count = math.floor(tonumber(count) or tonumber(row.count) or 0),
         slot = tonumber(row.slot),
         metadata = row.metadata,
+        labelKey = def.labelKey,
         label = def.label or row.item,
         icon = def.icon,
     }
@@ -764,7 +765,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:tradeConfirm', function(s
                 trade.accepted[trade.a], trade.accepted[trade.b] = false, false
                 sendTradeState(trade)
                 for _, src in ipairs({ trade.a, trade.b }) do
-                    TriggerClientEvent('sunset:client:notify', src, completeErr or 'Trade failed to process.', 'error')
+                    TriggerClientEvent('sunset:client:notify', src, completeErr or exports.sunset_core:TFor(src, 'inventory.message.trade_process_failed'), 'error')
                 end
                 return
             end
@@ -872,6 +873,7 @@ exports.sunset_core:RegisterCallback('sunset:inventory:drop', function(source, d
     local drop = {
         id = nextDropId,
         item = row.item,
+        labelKey = Sunset.Items[row.item] and Sunset.Items[row.item].labelKey,
         label = (Sunset.Items[row.item] and Sunset.Items[row.item].label) or row.item,
         icon = Sunset.Items[row.item] and Sunset.Items[row.item].icon,
         count = count,

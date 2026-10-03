@@ -16,9 +16,9 @@ local FISH_LABELS = {
 }
 
 local BAIT_SHOP_ITEMS = {
-    { item = 'bait_worm',    label = 'Worm Bait',    price = 50,  description = '60% catch chance', icon = 'bait_worm'    },
-    { item = 'bait_lure',    label = 'Lure Bait',    price = 120, description = '75% catch chance', icon = 'bait_lure'    },
-    { item = 'bait_premium', label = 'Premium Bait', price = 250, description = '90% catch chance', icon = 'bait_premium' },
+    { item = 'bait_worm',    labelKey = "config.fishingshop.label.worm_bait.6c1614e2", label = 'Worm Bait',    price = 50,  descriptionKey = "config.fishingshop.description.60_catch_chance.50df4395", description = '60% catch chance', icon = 'bait_worm'    },
+    { item = 'bait_lure',    labelKey = "config.fishingshop.label.lure_bait.43069d93", label = 'Lure Bait',    price = 120, descriptionKey = "config.fishingshop.description.75_catch_chance.5ee403f9", description = '75% catch chance', icon = 'bait_lure'    },
+    { item = 'bait_premium', labelKey = "config.fishingshop.label.premium_bait.747c5528", label = 'Premium Bait', price = 250, descriptionKey = "config.fishingshop.description.90_catch_chance.c16725a1", description = '90% catch chance', icon = 'bait_premium' },
 }
 
 local BILLY_RAY_COORDS = vector3(-1593.23, 5207.74, 3.31)

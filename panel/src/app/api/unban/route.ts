@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSameOriginWrite } from "@/lib/request-security";
-import { getCurrentUser } from "@/lib/auth";
+import { getViewerLocale, getCurrentUser } from "@/lib/auth";
 import { queryOne, execute } from "@/lib/db";
 import { z } from "zod";
+import { t } from "@/lib/i18n";
+
 
 const unbanSchema = z.object({
   reason: z.string().trim().min(20).max(5000),
@@ -10,18 +12,19 @@ const unbanSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized. You must be logged into your account to submit an appeal." }, { status: 401 });
+      return NextResponse.json({ error: t(locale, "interface.log_in_to_your_account_to_submit_an_appeal") }, { status: 401 });
     }
 
     const body = await req.json();
     const result = unbanSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid appeal data. Please provide a detailed explanation of at least 20 characters.", details: result.error.flatten() },
+        { error: t(locale, "interface.provide_a_detailed_explanation_of_at_least_20_characters"), details: result.error.flatten() },
         { status: 400 }
       );
     }
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: "You already have a pending unban request under review by staff. Please wait for an official verdict." },
+        { error: t(locale, "interface.you_already_have_an_appeal_under_review_wait_for_the_staff_s_verdict") },
         { status: 400 }
       );
     }
@@ -60,10 +63,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       requestId: insertRes.insertId,
-      message: "Your unban appeal has been submitted successfully.",
+      message: t(locale, "interface.your_unban_appeal_has_been_submitted"),
     });
   } catch (error: any) {
     console.error("Error creating unban request:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: t(locale, "interface.an_internal_error_occurred_try_again_later") }, { status: 500 });
   }
 }

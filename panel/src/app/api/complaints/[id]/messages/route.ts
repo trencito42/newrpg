@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentSession } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuerySingle, dbExecute } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
+import { t } from "@/lib/i18n";
+
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -15,6 +17,7 @@ const messageSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: Context) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) {
     return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   }
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // Enforce server-side permissions: Only reporter, reported player, or authorized staff may reply
   if (!isReporter && !isAccused && !isStaff) {
     return NextResponse.json(
-      { error: "forbidden_not_involved", message: "Only the reporter, reported player, and authorized staff may reply to this complaint." },
+      { error: "forbidden_not_involved", message: t(locale, "interface.only_the_reporter_reported_player_and_authorized_staff_may_reply_to_this_complaint") },
       { status: 403 }
     );
   }
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   const isLocked = complaint.status === "action_taken" || complaint.status === "dismissed";
   if (isLocked && !isStaff) {
     return NextResponse.json(
-      { error: "complaint_locked", message: "This complaint is closed and no longer accepts replies." },
+      { error: "complaint_locked", message: t(locale, "interface.this_complaint_is_closed_and_no_longer_accepts_replies") },
       { status: 400 }
     );
   }

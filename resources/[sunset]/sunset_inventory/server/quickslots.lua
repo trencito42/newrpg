@@ -49,6 +49,7 @@ local function resolveBinding(binding, inv)
             kind = 'item',
             rowId = row.id,
             item = row.item,
+            labelKey = def.labelKey,
             label = def.label or row.item,
             icon = def.icon,
             count = row.count,
@@ -212,6 +213,7 @@ exports.sunset_core:RegisterCallback('sunset:hotbar:use', function(source, data)
                     action = 'equip_usable',
                     slot = slot,
                     item = resolved.item,
+                    labelKey = def.labelKey,
                     label = def.label or resolved.item,
                 }
             end

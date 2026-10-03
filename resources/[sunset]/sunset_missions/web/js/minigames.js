@@ -155,11 +155,11 @@ const LockpickGame = (() => {
         if (overlay) {
             overlay.style.display = 'flex';
             if (success) {
-                if (oTitle) { oTitle.innerText = "SUCCES"; oTitle.style.color = "#10b981"; }
-                if (oSub) oSub.innerText = "Contactul a fost deblocat.";
+                if (oTitle) { oTitle.innerText = I18n.t('interface.success'); oTitle.style.color = "#10b981"; }
+                if (oSub) oSub.innerText = I18n.t('interface.the_ignition_lock_has_been_unlocked');
             } else {
-                if (oTitle) { oTitle.innerText = "ESEC"; oTitle.style.color = "#ef4444"; }
-                if (oSub) oSub.innerText = "Speraclul s-a rupt.";
+                if (oTitle) { oTitle.innerText = I18n.t('interface.failed'); oTitle.style.color = "#ef4444"; }
+                if (oSub) oSub.innerText = I18n.t('interface.the_lockpick_broke');
             }
         }
 

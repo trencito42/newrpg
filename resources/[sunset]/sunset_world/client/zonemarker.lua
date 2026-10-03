@@ -160,5 +160,5 @@ RegisterCommand('zonemark', function(_, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/zonemark', 'Mark a delivery zone by placing corner points', {
-    { name = 'done/clear/cancel', help = 'Finish, clear points, or cancel' },
+    { name = 'done/clear/cancel', helpKey = "config.world.help.finish_clear_points_or_cancel.47c02e3f", help = 'Finish, clear points, or cancel' },
 })

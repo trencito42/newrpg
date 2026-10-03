@@ -1,6 +1,6 @@
 SunsetMissions.RegisterMission('vehicle_recovery', {
     contact  = 'rico',
-    label    = 'Hot Wheels',
+    labelKey = "config.missions.label.hot_wheels.44e001cb", label    = 'Hot Wheels',
     logo     = 'logo_hot_wheels.webp',
     area     = 'Rockford Hills',
     cooldown = 1800,
@@ -30,11 +30,11 @@ SunsetMissions.RegisterMission('vehicle_recovery', {
     },
 
     vehicles = {
-        { model = 'dominator',  label = 'Dominator'  },
-        { model = 'sultan',     label = 'Sultan'      },
-        { model = 'jester',     label = 'Jester'      },
-        { model = 'elegy2',     label = 'Elegy RH8'   },
-        { model = 'comet2',     label = 'Comet'       },
+        { model = 'dominator',  labelKey = "config.missions.label.dominator.54ce4a47", label = 'Dominator'  },
+        { model = 'sultan',     labelKey = "config.missions.label.sultan.9493f430", label = 'Sultan'      },
+        { model = 'jester',     labelKey = "config.missions.label.jester.ff7bac9d", label = 'Jester'      },
+        { model = 'elegy2',     labelKey = "config.missions.label.elegy_rh8.9b488d57", label = 'Elegy RH8'   },
+        { model = 'comet2',     labelKey = "config.missions.label.comet.e5d98603", label = 'Comet'       },
     },
 
     colors = {
@@ -47,17 +47,17 @@ SunsetMissions.RegisterMission('vehicle_recovery', {
 
     searchZones = {
         rockford = {
-            label  = 'Rockford Hills',
+            labelKey = "config.missions.label.rockford_hills.1b6d08a5", label  = 'Rockford Hills',
             center = vector3(340.0, -798.0, 29.0),
             radius = 350.0,
         },
         hawick = {
-            label  = 'Hawick',
+            labelKey = "config.missions.label.hawick.dd738f95", label  = 'Hawick',
             center = vector3(134.0, -1280.0, 29.0),
             radius = 300.0,
         },
         del_perro = {
-            label  = 'Del Perro',
+            labelKey = "config.missions.label.del_perro.c405d520", label  = 'Del Perro',
             center = vector3(-1695.0, -582.0, 34.0),
             radius = 300.0,
         },

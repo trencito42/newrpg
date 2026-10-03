@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentSession } from "@/lib/auth";
+import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import { getFactionAccess } from "@/lib/faction-access";
+import { t } from "@/lib/i18n";
+
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -36,6 +38,7 @@ export async function GET(req: NextRequest, { params }: Context) {
 }
 
 export async function POST(req: NextRequest, { params }: Context) {
+  const locale = await getViewerLocale();
   if (!isSameOriginWrite(req)) {
     return NextResponse.json({ error: "forbidden_origin" }, { status: 403 });
   }
@@ -130,7 +133,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // - Applicant (if application is still pending!)
   if (!isStaff && !isMember && !isApplicant) {
     return NextResponse.json(
-      { error: "forbidden", message: "You do not have permission to comment on this application." },
+      { error: "forbidden", message: t(locale, "interface.you_do_not_have_permission_to_comment_on_this_application") },
       { status: 403 }
     );
   }
@@ -138,7 +141,7 @@ export async function POST(req: NextRequest, { params }: Context) {
   // If application is finalized, only staff or leadership can reply
   if (isResolved && !isStaff && !isLeader && !isSubLeader) {
     return NextResponse.json(
-      { error: "thread_locked", message: "This application is closed." },
+      { error: "thread_locked", message: t(locale, "interface.this_application_is_closed") },
       { status: 400 }
     );
   }

@@ -89,16 +89,16 @@ exports('ExecutePlayerCommand', ExecutePlayerCommand)
 CreateThread(function()
     Wait(500)
     TriggerClientEvent('chat:addSuggestion', -1, '/service', 'Request a service', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'message', help = 'optional details' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.2d10fb25", help = 'taxi | medic | fire | mechanic' },
+        { name = 'message', helpKey = "config.dispatch.help.optional_details.125ceef2", help = 'optional details' },
     })
     TriggerClientEvent('chat:addSuggestion', -1, '/servicecalls', 'List open service calls for your duty role')
     TriggerClientEvent('chat:addSuggestion', -1, '/accept', 'Accept a service call', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'id', help = 'Call ID' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.2d10fb25", help = 'taxi | medic | fire | mechanic' },
+        { name = 'id', helpKey = "config.dispatch.help.call_id.3b2c364a", help = 'Call ID' },
     })
     TriggerClientEvent('chat:addSuggestion', -1, '/cancel', 'Cancel a service call', {
-        { name = 'type', help = 'taxi | medic | fire | mechanic' },
-        { name = 'id', help = 'Call ID' },
+        { name = 'type', helpKey = "config.dispatch.help.taxi_medic_fire_mechanic.2d10fb25", help = 'taxi | medic | fire | mechanic' },
+        { name = 'id', helpKey = "config.dispatch.help.call_id.3b2c364a", help = 'Call ID' },
     })
 end)

@@ -75,39 +75,15 @@ CreateThread(function()
 
         local myServerId = GetPlayerServerId(PlayerId())
         local char = getCharacterDetails()
-        local player = nil
-        if exports.sunset_core and exports.sunset_core.GetPlayer then
-            pcall(function() player = exports.sunset_core:GetPlayer() end)
-        end
 
-        if char and (char.firstname or char.name) then
-            local playerName = char.name or (('%s %s'):format(char.firstname or '', char.lastname or ''):gsub('^%s*(.-)%s*$', '%1'))
-            if playerName == '' and player and player.username then
-                playerName = player.username
-            end
-
-            local clanTag = ''
-            if char.metadata and char.metadata.clan_tag and char.metadata.clan_tag ~= '' then
-                clanTag = ('[%s] '):format(char.metadata.clan_tag)
-            elseif player and player.clan_tag and player.clan_tag ~= '' then
-                clanTag = ('[%s] '):format(player.clan_tag)
-            end
-
+        if char and char.firstname then
+            local playerName = ('%s %s'):format(char.firstname, char.lastname or ''):gsub('^%s*(.-)%s*$', '%1')
             local activity = getFactionOrJobText(char)
-            local presenceText = ('%s%s (ID %d) • %s • %d/%d On'):format(
-                clanTag,
-                playerName,
-                myServerId,
-                activity,
-                onlineCount,
-                maxClients
-            )
 
-            SetRichPresence(presenceText)
-        elseif player and player.username then
-            SetRichPresence(('%s (ID %d) • În Meniu • %d/%d Jucători'):format(player.username, myServerId, onlineCount, maxClients))
+            -- Line 1: Player Name & In-Game Server ID
+            SetRichPresence(('%s [ID: %d] • %d/%d Jucători'):format(playerName, myServerId, onlineCount, maxClients))
         else
-            SetRichPresence(('În Conectare • %d/%d Jucători • racket.cat'):format(onlineCount, maxClients))
+            SetRichPresence(('În Meniu • %d/%d Jucători • racket.cat'):format(onlineCount, maxClients))
         end
 
         Wait((Config.RefreshInterval or 15) * 1000)

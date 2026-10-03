@@ -42,7 +42,7 @@ const NODE_TYPES = {
 class PuzzleGraph {
     constructor(puzzleData) {
         this.id = puzzleData.id;
-        this.title = puzzleData.title || 'CTOS_NETWORK_GRID';
+        this.title = puzzleData.title || I18n.t('interface.ctos_network_grid');
         this.difficulty = puzzleData.difficulty || 'easy';
         this.viewBox = puzzleData.viewBox || { width: 1000, height: 650 };
         this.sourceId = puzzleData.source;

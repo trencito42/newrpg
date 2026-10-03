@@ -35,7 +35,7 @@ const Impound = {
             body.innerHTML = `
                 <div class="impound-empty">
                     <i class="ph-bold ph-car"></i>
-                    No impounded vehicles.<br>Your vehicles are safe!
+                    ${I18n.t('ui.impound.empty')}<br>${I18n.t('ui.impound.vehicles_safe')}
                 </div>
             `;
             return;

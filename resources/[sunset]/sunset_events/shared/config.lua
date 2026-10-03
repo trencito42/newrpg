@@ -7,9 +7,9 @@ SunsetEvents = SunsetEvents or {}
 SunsetEvents.Config = {
     -- Event schedule (hour = server hour, 0-23)
     schedule = {
-        { hour = 18, type = 'car_meet', label = 'Car Meet', duration = 3600 },
-        { hour = 20, type = 'race_night', label = 'Race Night', duration = 3600 },
-        { hour = 14, type = 'fishing_tournament', label = 'Fishing Tournament', duration = 3600 },
+        { hour = 18, type = 'car_meet', labelKey = "config.events.label.car_meet.693f36c2", label = 'Car Meet', duration = 3600 },
+        { hour = 20, type = 'race_night', labelKey = "config.events.label.race_night.cbefc1a5", label = 'Race Night', duration = 3600 },
+        { hour = 14, type = 'fishing_tournament', labelKey = "config.events.label.fishing_tournament.692f5702", label = 'Fishing Tournament', duration = 3600 },
     },
 
     -- Event locations

@@ -97,7 +97,7 @@ local function spawnAmmunationClerk()
             badgeClass = 'ammo',
             bodyClass = 'ammo',
             icon = 'ph-crosshair',
-            title = 'Marcus (Arme)',
+            title = exports.sunset_core:Translate('world.presentation.marcus_weapons'),
             desc = 'Interaction / Store',
             key = 'E',
         },

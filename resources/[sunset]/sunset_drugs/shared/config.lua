@@ -9,11 +9,11 @@ SunsetDrugs.Config = {
     -- ═══ STAGE 1: HARVEST HUD (Manufacture) ═══
     manufacture = {
         spots = {
-            { coords = vector3(2230.00, 5578.00, 53.00),  drug = 'weed', label = 'Paleto Bay Fields' },
-            { coords = vector3(2400.00, 4900.00, 42.00),  drug = 'weed', label = 'Grapeseed Farm' },
-            { coords = vector3(-1200.00, 4800.00, 220.00), drug = 'meth', label = 'Mount Chiliad Scraps' },
-            { coords = vector3(1800.00, 3700.00, 33.00),  drug = 'coke', label = 'Sandy Shores Plantation' },
-            { coords = vector3(-300.00, 6200.00, 31.00),  drug = 'coke', label = 'Paleto North Plantation' },
+            { coords = vector3(2230.00, 5578.00, 53.00),  drug = 'weed', labelKey = "config.drugs.label.paleto_bay_fields.ff51ff83", label = 'Paleto Bay Fields' },
+            { coords = vector3(2400.00, 4900.00, 42.00),  drug = 'weed', labelKey = "config.drugs.label.grapeseed_farm.73b6539e", label = 'Grapeseed Farm' },
+            { coords = vector3(-1200.00, 4800.00, 220.00), drug = 'meth', labelKey = "config.drugs.label.mount_chiliad_scraps.eecb7771", label = 'Mount Chiliad Scraps' },
+            { coords = vector3(1800.00, 3700.00, 33.00),  drug = 'coke', labelKey = "config.drugs.label.sandy_shores_plantation.c876d24d", label = 'Sandy Shores Plantation' },
+            { coords = vector3(-300.00, 6200.00, 31.00),  drug = 'coke', labelKey = "config.drugs.label.paleto_north_plantation.eef57282", label = 'Paleto North Plantation' },
         },
         spotRadius = 15.0,
         maxBagCapacity = 50,     -- Max raw items per harvest batch in UI
@@ -23,15 +23,15 @@ SunsetDrugs.Config = {
     -- ═══ STAGE 2: CLANDESTINE LAB PROCESSING ═══
     process = {
         labs = {
-            { coords = vector3(1089.00, -3100.00, -39.00), label = 'Underground Chemical Lab' },
-            { coords = vector3(-1170.00, -1580.00, 4.00),  label = 'Del Perro Secret Warehouse' },
-            { coords = vector3(1389.00, 3605.00, 38.90),   label = 'Sandy Shores Meth Lab' },
+            { coords = vector3(1089.00, -3100.00, -39.00), labelKey = "config.drugs.label.underground_chemical_lab.9f613158", label = 'Underground Chemical Lab' },
+            { coords = vector3(-1170.00, -1580.00, 4.00),  labelKey = "config.drugs.label.del_perro_secret_warehouse.7a0cae06", label = 'Del Perro Secret Warehouse' },
+            { coords = vector3(1389.00, 3605.00, 38.90),   labelKey = "config.drugs.label.sandy_shores_meth_lab.545960dd", label = 'Sandy Shores Meth Lab' },
         },
         labRadius = 5.0,
         minProcessDurationMs = 3500, -- Minimum elapsed time before accept
         recipes = {
             weed = {
-                label = 'Pachete Weed',
+                labelKey = "config.drugs.label.cannabis_packages.594bdb07", label = 'Pachete Weed',
                 rawItem = 'weed_leaf',
                 rawCount = 5,
                 secondaryItem = nil,
@@ -41,7 +41,7 @@ SunsetDrugs.Config = {
                 difficulty = 'easy',
             },
             coca = {
-                label = 'Pudra Cocaina',
+                labelKey = "config.drugs.label.cocaine_powder.9067a755", label = 'Pudra Cocaina',
                 rawItem = 'coke_leaf',
                 rawCount = 5,
                 secondaryItem = 'chemicals',
@@ -51,7 +51,7 @@ SunsetDrugs.Config = {
                 difficulty = 'medium',
             },
             meth = {
-                label = 'Cristale Meth',
+                labelKey = "config.drugs.label.meth_crystals.aee0c7c7", label = 'Cristale Meth',
                 rawItem = 'meth_chemical',
                 rawCount = 3,
                 secondaryItem = 'chemicals',
@@ -72,21 +72,21 @@ SunsetDrugs.Config = {
         drugs = {
             weed = {
                 item = 'weed_brick',
-                label = 'Pachete Weed',
+                labelKey = "config.drugs.label.cannabis_packages.594bdb07", label = 'Pachete Weed',
                 basePrice = 250,
                 minQty = 1,
                 maxQty = 5,
             },
             coca = {
                 item = 'coke_brick',
-                label = 'Pudra Cocaina',
+                labelKey = "config.drugs.label.cocaine_powder.9067a755", label = 'Pudra Cocaina',
                 basePrice = 800,
                 minQty = 1,
                 maxQty = 3,
             },
             meth = {
                 item = 'meth_bag',
-                label = 'Cristale Meth',
+                labelKey = "config.drugs.label.meth_crystals.aee0c7c7", label = 'Cristale Meth',
                 basePrice = 1200,
                 minQty = 1,
                 maxQty = 2,
@@ -143,7 +143,7 @@ SunsetDrugs.Config = {
         weed = {
             raw = 'weed_leaf',
             product = 'weed_brick',
-            label = 'Weed',
+            labelKey = "config.drugs.label.weed.021507c7", label = 'Weed',
             rawLabel = 'Weed Leaves',
             productLabel = 'Weed Brick',
             basePrice = 250,
@@ -151,7 +151,7 @@ SunsetDrugs.Config = {
         coke = {
             raw = 'coke_leaf',
             product = 'coke_brick',
-            label = 'Cocaine',
+            labelKey = "config.drugs.label.cocaine.7d71c885", label = 'Cocaine',
             rawLabel = 'Coca Leaves',
             productLabel = 'Cocaine Brick',
             basePrice = 800,
@@ -159,7 +159,7 @@ SunsetDrugs.Config = {
         meth = {
             raw = 'meth_chemical',
             product = 'meth_bag',
-            label = 'Meth',
+            labelKey = "config.drugs.label.meth.cfa2f4fd", label = 'Meth',
             rawLabel = 'Meth Chemicals',
             productLabel = 'Meth Bag',
             basePrice = 1200,

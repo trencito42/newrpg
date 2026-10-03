@@ -2,14 +2,14 @@ Sunset = Sunset or {}
 
 Sunset.CraftingStations = {
     public_bench = {
-        label = 'Workbench',
+        labelKey = "config.core.label.workbench.c21e0440", label = 'Workbench',
         coords = vector3(1087.35, -2003.25, 31.08),
         blip = { sprite = 566, color = 0, scale = 0.75 },
         marker = { 200, 200, 200 },
         access = 'public',
     },
     police_armory = {
-        label = 'LSPD Armory',
+        labelKey = "config.core.label.lspd_armory.0b15afb4", label = 'LSPD Armory',
         coords = vector3(452.35, -980.12, 30.69),
         marker = { 0, 100, 200 },
         access = 'faction',
@@ -18,7 +18,7 @@ Sunset.CraftingStations = {
         blip = false,
     },
     ems_supply = {
-        label = 'EMS Supply Room',
+        labelKey = "config.core.label.ems_supply_room.bd7fb526", label = 'EMS Supply Room',
         coords = vector3(296.0, -582.0, 43.28),
         marker = { 255, 50, 50 },
         access = 'faction',
@@ -26,7 +26,7 @@ Sunset.CraftingStations = {
         minGrade = 0,
     },
     mechanic_bench = {
-        label = 'LS Customs Parts Bench',
+        labelKey = "config.core.label.ls_customs_parts_bench.e8a3c814", label = 'LS Customs Parts Bench',
         coords = vector3(-339.80, -133.20, 39.01),
         marker = { 255, 140, 0 },
         access = 'faction',
@@ -34,7 +34,7 @@ Sunset.CraftingStations = {
         minGrade = 0,
     },
     cartel_lab = {
-        label = 'Cartel Lab',
+        labelKey = "config.core.label.cartel_lab.3fa5f493", label = 'Cartel Lab',
         coords = vector3(1396.2, 1138.5, 114.33),
         marker = { 180, 0, 0 },
         access = 'faction',
@@ -43,7 +43,7 @@ Sunset.CraftingStations = {
         illegal = true,
     },
     syndicate_bench = {
-        label = 'Syndicate Workshop',
+        labelKey = "config.core.label.syndicate_workshop.d4c51e3d", label = 'Syndicate Workshop',
         coords = vector3(-1518.5, 847.2, 181.59),
         marker = { 80, 0, 120 },
         access = 'faction',
@@ -55,28 +55,28 @@ Sunset.CraftingStations = {
 
 Sunset.CraftingRecipes = {
     bandage = {
-        label = 'Bandage',
+        labelKey = "config.core.label.bandage.238f3258", label = 'Bandage',
         station = 'public_bench',
         time = 4000,
         inputs = { cloth = 2 },
         output = { item = 'bandage', count = 1 },
     },
     lockpick = {
-        label = 'Lockpick',
+        labelKey = "config.core.label.lockpick.e1619081", label = 'Lockpick',
         station = 'public_bench',
         time = 6000,
         inputs = { metal_scrap = 2, plastic = 1 },
         output = { item = 'lockpick', count = 1 },
     },
     repairkit = {
-        label = 'Repair Kit',
+        labelKey = "config.core.label.repair_kit.52a0d218", label = 'Repair Kit',
         station = 'public_bench',
         time = 8000,
         inputs = { metal_scrap = 3, plastic = 2 },
         output = { item = 'repairkit', count = 1 },
     },
     police_bandage = {
-        label = 'LSPD Bandage Pack',
+        labelKey = "config.core.label.lspd_bandage_pack.56c3964e", label = 'LSPD Bandage Pack',
         station = 'police_armory',
         time = 3000,
         inputs = { cloth = 1 },
@@ -85,7 +85,7 @@ Sunset.CraftingRecipes = {
         minGrade = 0,
     },
     ems_bandage = {
-        label = 'Medical Bandage',
+        labelKey = "config.core.label.medical_bandage.6e9b0808", label = 'Medical Bandage',
         station = 'ems_supply',
         time = 2500,
         inputs = { cloth = 1 },
@@ -94,7 +94,7 @@ Sunset.CraftingRecipes = {
         minGrade = 0,
     },
     ems_medkit = {
-        label = 'Field Medkit',
+        labelKey = "config.core.label.field_medkit.1e1812e5", label = 'Field Medkit',
         station = 'ems_supply',
         time = 8000,
         inputs = { bandage = 2, cloth = 2, plastic = 1 },
@@ -103,7 +103,7 @@ Sunset.CraftingRecipes = {
         minGrade = 1,
     },
     mechanic_repairkit = {
-        label = 'Shop Repair Kit',
+        labelKey = "config.core.label.shop_repair_kit.4017c096", label = 'Shop Repair Kit',
         station = 'mechanic_bench',
         time = 7000,
         inputs = { metal_scrap = 3, plastic = 2 },
@@ -112,7 +112,7 @@ Sunset.CraftingRecipes = {
         minGrade = 0,
     },
     mechanic_lockpick = {
-        label = 'Custom Lockpick',
+        labelKey = "config.core.label.custom_lockpick.8daddb0a", label = 'Custom Lockpick',
         station = 'mechanic_bench',
         time = 5000,
         inputs = { metal_scrap = 2, plastic = 1 },
@@ -121,7 +121,7 @@ Sunset.CraftingRecipes = {
         minGrade = 1,
     },
     cartel_pouch = {
-        label = 'Sealed Pouch',
+        labelKey = "config.core.label.sealed_pouch.f497ee3c", label = 'Sealed Pouch',
         station = 'cartel_lab',
         time = 10000,
         inputs = { chemicals = 2, plastic = 1 },
@@ -131,7 +131,7 @@ Sunset.CraftingRecipes = {
         illegal = true,
     },
     syndicate_shiv = {
-        label = 'Shiv',
+        labelKey = "config.core.label.shiv.4455de78", label = 'Shiv',
         station = 'syndicate_bench',
         time = 7000,
         inputs = { metal_scrap = 2, cloth = 1 },
@@ -141,7 +141,7 @@ Sunset.CraftingRecipes = {
         illegal = true,
     },
     syndicate_ammo = {
-        label = '9mm Rounds',
+        labelKey = "config.core.label.9mm_rounds.0214309c", label = '9mm Rounds',
         station = 'syndicate_bench',
         time = 12000,
         inputs = { metal_scrap = 4, gunpowder = 2 },

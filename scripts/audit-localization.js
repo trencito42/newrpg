@@ -31,10 +31,10 @@ function scan(file) {
     const rel = path.relative(root, file);
     const ext = path.extname(file);
     const source = fs.readFileSync(file, 'utf8');
-    if (/i18n-ignore-file/.test(source)) return;
+    if (/i18n-ignore-file:\s*\S.+/.test(source)) return;
     const lines = source.split(/\r?\n/);
     lines.forEach((line, index) => {
-        if (intentional(line) || /^\s*(?:--|\/\/|\/\*|\*)/.test(line)) return;
+        if (intentional(line) || intentional(lines[index - 1] || '') || /^\s*(?:--|\/\/|\/\*|\*)/.test(line)) return;
         let reason = null;
         // Already-localized calls (Translate('key'), TFor(src, 'key'), Sunset.T('key'), tr('key')) are not literals.
         const luaLine = ext === '.lua'
@@ -47,8 +47,9 @@ function scan(file) {
             'showHint|ShowHelpNotification|DrawText|AddTextComponent(?:String|SubstringPlayerName)|chat:addSuggestion')) {
             reason = 'Lua visible call literal';
         }
-        if (ext === '.lua' && !/(?:labelKey|descriptionKey|titleKey|localeKey)\s*=/.test(line)
-            && /^\s*(?:label|description|title|help|prompt)\s*=\s*['"][A-Za-zĂÂÎȘȚăâîșț]/.test(line)) {
+        const configField = line.match(/^\s*(label|description|title|help|prompt)\s*=\s*['"][A-Za-zĂÂÎȘȚăâîșț]/)?.[1];
+        const nearby = lines.slice(Math.max(0, index - 3), index + 4).join('\n');
+        if (ext === '.lua' && configField && !new RegExp(configField + 'Key\\s*=').test(nearby)) {
             reason = 'Lua visible configuration literal';
         }
         if (ext === '.lua' && !/(?:TFor|NotifyFor)\s*\(/.test(line)

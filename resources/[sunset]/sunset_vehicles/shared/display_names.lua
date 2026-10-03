@@ -3,12 +3,12 @@ SunsetVehicleNames = SunsetVehicleNames or {}
 -- Explicit fallback for streamed vehicles when the database is not ready yet.
 -- The dealership catalog remains authoritative and may override these labels.
 SunsetVehicleNames.Addons = {
-    tempesta2 = { label = 'Tempesta Widebody', brand = 'Pegassi' },
-    sentinel_rts = { label = 'Sentinel RTS Track', brand = 'Ubermacht' },
-    d7cyp = { label = 'Cypher GTS Spec', brand = 'Ubermacht' },
-    schlagenstr = { label = 'Schlagen STR AMG', brand = 'Benefactor' },
-    cometcup = { label = 'Comet Cup Edition', brand = 'Pfister' },
-    h4rxst2 = { label = 'Harx ST2 GT', brand = 'Pfister' },
+    tempesta2 = { label = 'Tempesta Widebody', labelKey = "config.vehicles.label.tempesta_widebody.b746c1c5", brand = 'Pegassi' },
+    sentinel_rts = { label = 'Sentinel RTS Track', labelKey = "config.vehicles.label.sentinel_rts_track.edad8d59", brand = 'Ubermacht' },
+    d7cyp = { label = 'Cypher GTS Spec', labelKey = "config.vehicles.label.cypher_gts_spec.4db342da", brand = 'Ubermacht' },
+    schlagenstr = { label = 'Schlagen STR AMG', labelKey = "config.vehicles.label.schlagen_str_amg.3643f2b1", brand = 'Benefactor' },
+    cometcup = { label = 'Comet Cup Edition', labelKey = "config.vehicles.label.comet_cup_edition.f6cde51a", brand = 'Pfister' },
+    h4rxst2 = { label = 'Harx ST2 GT', labelKey = "config.vehicles.label.harx_st2_gt.be6294c7", brand = 'Pfister' },
 }
 
 function SunsetVehicleNames.Key(model)

@@ -252,7 +252,7 @@ function DevPlace.open(adapterKey, fieldKey)
 
     local adapter = SunsetDevTools.Adapters[adapterKey]
     if not adapter then
-        notify(exports.sunset_core:Translate('devtools.message.unknown_adapter') .. adapterKey .. '. Use /devplace with no args to list.', 'error')
+        notify(exports.sunset_core:Translate('devtools.message.unknown_adapter_usage', { adapter = adapterKey }), 'error')
         return
     end
 
@@ -260,7 +260,7 @@ function DevPlace.open(adapterKey, fieldKey)
         -- List fields for this adapter
         local fields = adapter.describe and adapter.describe() or {}
         if #fields == 0 then
-            notify(exports.sunset_core:Translate('devtools.message.adapter') .. adapterKey .. '" has no configurable fields.', 'info')
+            notify(exports.sunset_core:Translate('devtools.message.no_configurable_fields', { adapter = adapterKey }), 'info')
             return
         end
         local lines = { ('Adapter "%s" fields:'):format(adapterKey) }
@@ -279,7 +279,9 @@ function DevPlace.open(adapterKey, fieldKey)
 
     local data, err = adapter.load(fieldKey)
     if not data then
-        notify(exports.sunset_core:Translate('devtools.message.could_not_load') .. fieldKey .. '": ' .. (err or 'unknown error'), 'error')
+        notify(exports.sunset_core:Translate('devtools.message.load_failed', {
+            field = fieldKey, error = err or exports.sunset_core:Translate('common.unknown_error'),
+        }), 'error')
         return
     end
 

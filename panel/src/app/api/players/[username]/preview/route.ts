@@ -1,9 +1,12 @@
+import { getViewerLocale } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuerySingle } from "@/lib/db";
 import { CANONICAL_FACTIONS, getFactionColor, getFactionLabel } from "@/lib/factions";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { t } from "@/lib/i18n";
+
 
 const CLAN_RANKS: Record<number, string> = {
   1: "Recruit",
@@ -19,12 +22,13 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  const locale = await getViewerLocale();
   try {
     const { username } = await params;
     const cleanUsername = decodeURIComponent(username).trim();
 
     if (!cleanUsername) {
-      return NextResponse.json({ error: "Username is required" }, { status: 400 });
+      return NextResponse.json({ error: t(locale, "interface.username_is_required") }, { status: 400 });
     }
 
     const player = await dbQuerySingle<RowDataPacket>(
@@ -60,7 +64,7 @@ export async function GET(
     );
 
     if (!player) {
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+      return NextResponse.json({ error: t(locale, "interface.player_not_found") }, { status: 404 });
     }
 
     // Resolve derived role badges
@@ -84,13 +88,13 @@ export async function GET(
 
     if (player.is_faction_leader || player.faction_rank >= 7) {
       roles.push({
-        label: "FACTION LEADER",
+        label: t(locale, "interface.faction_leader"),
         type: "faction",
         color: getFactionColor(player.faction_id) || "#10b981",
       });
     } else if (player.faction_rank === 6) {
       roles.push({
-        label: "CO-LEADER",
+        label: t(locale, "interface.co_leader_2"),
         type: "faction",
         color: getFactionColor(player.faction_id) || "#10b981",
       });
@@ -98,13 +102,13 @@ export async function GET(
 
     if (player.is_clan_owner || player.clan_rank === 7) {
       roles.push({
-        label: "CLAN OWNER",
+        label: t(locale, "interface.clan_owner"),
         type: "clan",
         color: player.clan_tag_color || "#f59e0b",
       });
     } else if (player.clan_rank === 6) {
       roles.push({
-        label: "CLAN CO-LEADER",
+        label: t(locale, "interface.clan_co_leader"),
         type: "clan",
         color: player.clan_tag_color || "#f59e0b",
       });
@@ -159,6 +163,6 @@ export async function GET(
     return response;
   } catch (err) {
     console.error("Player preview error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: t(locale, "interface.an_internal_error_occurred_try_again_later") }, { status: 500 });
   }
 }

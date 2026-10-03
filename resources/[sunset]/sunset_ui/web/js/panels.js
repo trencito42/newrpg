@@ -851,7 +851,7 @@ const Panels = {
             dropBtn.classList.remove('is-danger');
         }
         const target = $('#inventory-trade-target');
-        if (target) target.textContent = data.target?.name || `PLAYER #${data.target?.id || '?'}`;
+        if (target) target.textContent = data.target?.name || I18n.t('ui.panels.player_number', { id: data.target?.id || '?' });
         const renderOffer = (selector, rows, cashAmount, removable) => {
             const zone = $(selector);
             if (!zone) return;
@@ -1151,7 +1151,7 @@ const Panels = {
             card.innerHTML = `
                 <div class="job-card__top">
                     <span class="job-card__name">${escHtml(job.label || job.id)}</span>
-                    <span class="job-card__pay">$${job.salary || 0}/hr</span>
+                    <span class="job-card__pay">${I18n.t('common.per_hour', { amount: `$${job.salary || 0}` })}</span>
                 </div>
                 <p class="job-card__desc">${job.description || I18n.t('ui.panels.no_description')}</p>
                 ${xpText ? `<span class="job-card__xp">${xpText}</span>` : ''}
@@ -1191,7 +1191,7 @@ const Panels = {
                 li.innerHTML = `
                     <div class="skill-row__head">
                         <span class="skill-row__name">${escHtml(skill.label || skill.id)}</span>
-                        <span class="skill-row__level">LEVEL ${skill.level || 1}</span>
+                        <span class="skill-row__level">${I18n.t('ui.panels.level_number', { level: skill.level || 1 })}</span>
                     </div>
                     <div class="skill-row__bar"><div class="skill-row__fill" style="width:${pct}%"></div></div>
                     <div class="skill-row__xp">${I18n.number(xp)} / ${I18n.number(xpTotal)} XP</div>`;
@@ -1256,7 +1256,7 @@ const Panels = {
         if (!listEl) return;
 
         const vehicles = data.vehicles || [];
-        if (countEl) countEl.innerText = `${vehicles.length} Vehicule`;
+        if (countEl) countEl.innerText = I18n.t('ui.panels.vehicle_count', { count: vehicles.length });
         listEl.innerHTML = '';
 
         let selectedId = null;
@@ -1320,26 +1320,26 @@ const Panels = {
 
             if (isDestroyed) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-bad)';
-                if (statText) statText.innerText = `Totalizata / Confiscat (${garageName})`;
+                if (statText) statText.innerText = I18n.t('ui.panels.impounded_at', { garage: garageName });
                 const claimCost = v.claimCost != null ? Number(v.claimCost) : 250;
                 const points = v.insurancePoints != null ? Number(v.insurancePoints) : 5;
                 if (points > 0) {
-                    addActionBtn(`Plateste Cautiune (${formatMoney(claimCost)})`, true, () => post('garageClaimInsurance', { vehicleId: v.id }));
+                    addActionBtn(I18n.t('ui.panels.pay_claim', { amount: formatMoney(claimCost) }), true, () => post('garageClaimInsurance', { vehicleId: v.id }));
                 } else {
                     const renewCost = v.renewCost != null ? Number(v.renewCost) : 750;
-                    addActionBtn(`Reinnoieste Asigurare (${formatMoney(renewCost)})`, true, () => post('garageRenewInsurance', { vehicleId: v.id }));
+                    addActionBtn(I18n.t('ui.panels.renew_insurance', { amount: formatMoney(renewCost) }), true, () => post('garageRenewInsurance', { vehicleId: v.id }));
                 }
             } else if (stored) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-ok)';
-                if (statText) statText.innerText = `In ${garageName}`;
-                addActionBtn('Scoate Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
+                if (statText) statText.innerText = I18n.t('ui.panels.in_garage', { garage: garageName });
+                addActionBtn(I18n.t('ui.panels.take_out_vehicle'), true, () => post('garageSpawn', { vehicleId: v.id }));
             } else if (inWorld) {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
-                if (statText) statText.innerText = 'Parcat afara';
-                addActionBtn('Seteaza GPS', true, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
+                if (statText) statText.innerText = I18n.t('interface.parked_outside');
+                addActionBtn(I18n.t('ui.panels.set_gps'), true, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
             } else {
                 if (statDot) statDot.style.backgroundColor = 'var(--status-warn)';
-                if (statText) statText.innerText = 'In afara garajului';
+                if (statText) statText.innerText = I18n.t('interface.outside_the_garage');
                 addActionBtn('Seteaza GPS', false, () => post('garageLocate', { plate: v.plate, vehicleId: v.id }));
                 addActionBtn('Recupereaza Vehicul', true, () => post('garageSpawn', { vehicleId: v.id }));
             }
@@ -1725,7 +1725,7 @@ const Panels = {
             identity.append(title, description);
             const pay = document.createElement('strong');
             pay.className = 'jobs-menu__pay';
-            pay.textContent = `$${I18n.number(Number(job.salary || 0))}/hr`;
+            pay.textContent = I18n.t('common.per_hour', { amount: `$${I18n.number(Number(job.salary || 0))}` });
             top.append(identity, pay);
 
             const meta = document.createElement('div');

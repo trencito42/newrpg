@@ -117,7 +117,7 @@ function DevRouteCreator.Open(adapterName, selectedRouteId)
 
     exports.sunset_core:TriggerCallback('sunset:devtools:getJobRoutes', function(routes, err)
         if not routes then
-            notify(err or 'Permission denied or routes unavailable', 'error')
+            notify(err or exports.sunset_core:Translate('devtools.message.routes_unavailable'), 'error')
             return
         end
 
@@ -164,7 +164,7 @@ function DevRouteCreator.SetRouteBlips(route, adapter)
             SetBlipColour(bp, 38)
             SetBlipScale(bp, 0.8)
             BeginTextCommandSetBlipName("STRING")
-            AddTextComponentString("[DEV] Trailer Pickup")
+            AddTextComponentString(exports.sunset_core:Translate('devtools.blip.trailer_pickup'))
             EndTextCommandSetBlipName(bp)
             previewBlips[#previewBlips + 1] = bp
         end
@@ -174,7 +174,7 @@ function DevRouteCreator.SetRouteBlips(route, adapter)
             SetBlipColour(bd, 2)
             SetBlipScale(bd, 0.9)
             BeginTextCommandSetBlipName("STRING")
-            AddTextComponentString("[DEV] Delivery Entrance")
+            AddTextComponentString(exports.sunset_core:Translate('devtools.blip.delivery_entrance'))
             EndTextCommandSetBlipName(bd)
             previewBlips[#previewBlips + 1] = bd
         end
@@ -184,7 +184,7 @@ function DevRouteCreator.SetRouteBlips(route, adapter)
             SetBlipColour(bb, 46)
             SetBlipScale(bb, 0.8)
             BeginTextCommandSetBlipName("STRING")
-            AddTextComponentString("[DEV] Parking Bay")
+            AddTextComponentString(exports.sunset_core:Translate('devtools.blip.parking_bay'))
             EndTextCommandSetBlipName(bb)
             previewBlips[#previewBlips + 1] = bb
         end
@@ -247,7 +247,7 @@ RegisterNUICallback('saveJobRoutes', function(data, cb)
             notify(('Saved %d %s routes to disk.'):format(#routes, adapter), 'success')
             cb({ ok = true })
         else
-            notify(err or 'Failed to save routes', 'error')
+            notify(err or exports.sunset_core:Translate('devtools.message.save_routes_failed'), 'error')
             cb({ ok = false, error = err })
         end
     end, adapter, routes)
@@ -261,7 +261,7 @@ RegisterNUICallback('reloadJobRoutes', function(_, cb)
                 cb({ ok = true, routes = { [currentAdapter] = routes or {} } })
             end, currentAdapter)
         else
-            notify(err or 'Failed to reload routes', 'error')
+            notify(err or exports.sunset_core:Translate('devtools.message.reload_routes_failed'), 'error')
             cb({ ok = false, error = err })
         end
     end)
@@ -554,8 +554,8 @@ RegisterCommand('devroute', function(src, args)
 end, false)
 
 TriggerEvent('chat:addSuggestion', '/devroutes', 'Visual Job Route Creator (Trucker, Garbage, Hunter, Diver)', {
-    { name = 'adapter', help = 'trucker | garbage | hunting | diving' },
-    { name = 'routeId', help = 'Optional route ID' },
+    { name = 'adapter', helpKey = "config.devtools.help.trucker_garbage_hunting_diving.bc82e440", help = 'trucker | garbage | hunting | diving' },
+    { name = 'routeId', helpKey = "config.devtools.help.optional_route_id.7ef79277", help = 'Optional route ID' },
 })
 
 AddEventHandler('onResourceStop', function(resName)

@@ -1,3 +1,4 @@
+-- i18n-ignore-file: machine-facing puzzle validation codes consumed by tests
 SunsetHacking = SunsetHacking or {}
 
 -- Cardinal Direction Indices: 0 = TOP/NORTH, 1 = RIGHT/EAST, 2 = BOTTOM/SOUTH, 3 = LEFT/WEST
@@ -206,7 +207,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['easy_01'] = {
         id = 'easy_01',
-        title = 'SECURITY_GATE_01',
+        titleKey = "config.hacking.title.security_gate_01.1775138a", title = 'SECURITY_GATE_01',
         difficulty = 'easy',
         viewBox = { width = 1000, height = 650 },
         source = 'node_source',
@@ -234,7 +235,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['easy_02'] = {
         id = 'easy_02',
-        title = 'TERMINAL_LINK_B',
+        titleKey = "config.hacking.title.terminal_link_b.9de48395", title = 'TERMINAL_LINK_B',
         difficulty = 'easy',
         viewBox = { width = 1000, height = 650 },
         source = 'src',
@@ -265,7 +266,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['easy_03'] = {
         id = 'easy_03',
-        title = 'ROUTER_FIREWALL_03',
+        titleKey = "config.hacking.title.router_firewall_03.e15bdafb", title = 'ROUTER_FIREWALL_03',
         difficulty = 'easy',
         viewBox = { width = 1000, height = 650 },
         source = 'src',
@@ -295,7 +296,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['medium_01'] = {
         id = 'medium_01',
-        title = 'SUBNET_MAINFRAME_04',
+        titleKey = "config.hacking.title.subnet_mainframe_04.37398d96", title = 'SUBNET_MAINFRAME_04',
         difficulty = 'medium',
         viewBox = { width = 1000, height = 650 },
         source = 'src',
@@ -334,7 +335,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['medium_02'] = {
         id = 'medium_02',
-        title = 'ENCRYPTED_PROXY_NODE',
+        titleKey = "config.hacking.title.encrypted_proxy_node.d61b16cf", title = 'ENCRYPTED_PROXY_NODE',
         difficulty = 'medium',
         viewBox = { width = 1000, height = 650 },
         source = 'src',
@@ -370,7 +371,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['medium_03'] = {
         id = 'medium_03',
-        title = 'RELAY_MATRIX_07',
+        titleKey = "config.hacking.title.relay_matrix_07.8ddca9ac", title = 'RELAY_MATRIX_07',
         difficulty = 'medium',
         viewBox = { width = 1000, height = 650 },
         source = 'src',
@@ -404,7 +405,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['hard_01'] = {
         id = 'hard_01',
-        title = 'CTOS_CORE_MAINFRAME',
+        titleKey = "config.hacking.title.ctos_core_mainframe.05dfd219", title = 'CTOS_CORE_MAINFRAME',
         difficulty = 'hard',
         viewBox = { width = 1050, height = 650 },
         source = 'src',
@@ -447,7 +448,7 @@ SunsetHacking.Puzzles = {
     -- =========================================================================
     ['hard_02'] = {
         id = 'hard_02',
-        title = 'QUANTUM_ENCRYPTION_LAYER',
+        titleKey = "config.hacking.title.quantum_encryption_layer.c58ba7c7", title = 'QUANTUM_ENCRYPTION_LAYER',
         difficulty = 'hard',
         viewBox = { width = 1050, height = 650 },
         source = 'src',

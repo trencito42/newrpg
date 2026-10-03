@@ -21,7 +21,7 @@ end
 local function nearestFishBuyer()
     local pos = GetEntityCoords(PlayerPedId())
     local best = {
-        label = 'Billy Ray',
+        labelKey = "config.fishingshop.label.billy_ray.d18d2b61", label = 'Billy Ray',
         coords = vector3(NPC_COORDS.x, NPC_COORDS.y, NPC_COORDS.z),
     }
     local bestDistance = #(pos - best.coords)
@@ -257,7 +257,7 @@ local function sendBillyRayPrompt()
         badgeClass = 'fishing',
         bodyClass = 'fishing',
         icon = 'ph-fish',
-        title = 'Billy Ray',
+        titleKey = "config.fishingshop.title.billy_ray.f5d7b42c", title = 'Billy Ray',
         desc = exports.sunset_core:Translate('fishingshop.npc.interaction_desc'),
         key = 'E',
     })

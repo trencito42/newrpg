@@ -61,7 +61,9 @@ CreateThread(function()
                     SetTextColour(242, 239, 232, 230)
                     SetTextEntry("STRING")
                     SetTextCentre(1)
-                    AddTextComponentString(("~g~[Recoltare] ~w~%s\n~s~Apasa ~y~[E]~s~ in zona verde pentru recoltare"):format(spot.label or 'Droguri'))
+                    AddTextComponentString(exports.sunset_core:Translate('drugs.prompt.harvest_zone', {
+                        item = spot.label or exports.sunset_core:Translate('drugs.label.drugs'),
+                    }))
                     DrawText(sX, sY)
                 end
 
@@ -164,7 +166,9 @@ CreateThread(function()
                     SetTextColour(242, 239, 232, 230)
                     SetTextEntry("STRING")
                     SetTextCentre(1)
-                    AddTextComponentString(("~y~[Laborator Clandestin]~s~\n%s\n~w~Apasa ~y~[E]~w~ pentru procesare"):format(lab.label or 'Laborator'))
+                    AddTextComponentString(exports.sunset_core:Translate('drugs.prompt.clandestine_lab', {
+                        lab = lab.label or exports.sunset_core:Translate('drugs.label.laboratory'),
+                    }))
                     DrawText(sX, sY)
                 end
 
@@ -192,7 +196,7 @@ function OpenClandestineLab(labIndex)
 
     local labData = Sunset.AwaitCallback('sunset:drugs:openLab', labIndex)
     if not labData or not labData.token then
-        Notify('Nu s-a putut deschide laboratorul clandestin.', 'error')
+        Notify(exports.sunset_core:Translate('drugs.message.lab_open_failed'), 'error')
         labOpen = false
         return
     end
@@ -288,7 +292,7 @@ CreateThread(function()
                     SetTextColour(242, 239, 232, 230)
                     SetTextEntry("STRING")
                     SetTextCentre(1)
-                    AddTextComponentString("~y~[E]~s~ Ofera Marfa")
+                    AddTextComponentString(exports.sunset_core:Translate('drugs.prompt.offer_goods'))
                     DrawText(screenX, screenY)
                 end
 
@@ -572,8 +576,8 @@ CreateThread(function()
                         badgeClass = 'npc',
                         bodyClass = 'npc',
                         icon = 'ph-package',
-                        title = nearbyDropoff.dealerLabel or 'Dealer',
-                        desc = nearbyDropoff.desc or 'Preluare Pachete & Droguri',
+                        title = nearbyDropoff.dealerLabel or exports.sunset_core:Translate('drugs.label.dealer'),
+                        desc = nearbyDropoff.desc or exports.sunset_core:Translate('drugs.label.package_pickup'),
                         key = 'E',
                     })
                 end)
@@ -629,6 +633,4 @@ function DoWholesaleDelivery(dropoff)
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
-
-
 

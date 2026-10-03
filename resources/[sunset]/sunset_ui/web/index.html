@@ -149,40 +149,40 @@
                     <i class="ph-bold ph-shield-check"></i>
                 </div>
                 <div class="changepass-header-text">
-                    <h2>Schimbare Parola Cont</h2>
-                    <p>Actualizeaza-ti parola de autentificare securizata</p>
+                    <h2><span data-i18n="interface.change_account_password"></span></h2>
+                    <p><span data-i18n="interface.update_your_account_password"></span></p>
                 </div>
-                <button type="button" class="changepass-close-btn" id="changepass-close" aria-label="Close">
+                <button type="button" class="changepass-close-btn" id="changepass-close" aria-label="" data-i18n-aria="interface.close">
                     <i class="ph-bold ph-x"></i>
                 </button>
             </div>
             <form id="changepass-form" class="changepass-form">
                 <div class="changepass-form-group">
-                    <label for="cp-old-pass"><i class="ph-bold ph-lock-key"></i> Parola Curenta</label>
+                    <label for="cp-old-pass"><i class="ph-bold ph-lock-key"></i><span data-i18n="interface.current_password"></span></label>
                     <div class="changepass-input-wrapper">
-                        <input type="password" id="cp-old-pass" placeholder="Introdu parola actuala..." autocomplete="current-password" required>
+                        <input type="password" id="cp-old-pass" placeholder="" data-i18n-placeholder="interface.enter_your_current_password" autocomplete="current-password" required>
                         <button type="button" class="cp-toggle-pass" data-target="cp-old-pass" tabindex="-1"><i class="ph-bold ph-eye"></i></button>
                     </div>
                 </div>
                 <div class="changepass-form-group">
-                    <label for="cp-new-pass"><i class="ph-bold ph-lock"></i> Parola Noua</label>
+                    <label for="cp-new-pass"><i class="ph-bold ph-lock"></i><span data-i18n="interface.new_password"></span></label>
                     <div class="changepass-input-wrapper">
-                        <input type="password" id="cp-new-pass" placeholder="Minim 6 caractere..." autocomplete="new-password" required>
+                        <input type="password" id="cp-new-pass" placeholder="" data-i18n-placeholder="interface.at_least_6_characters" autocomplete="new-password" required>
                         <button type="button" class="cp-toggle-pass" data-target="cp-new-pass" tabindex="-1"><i class="ph-bold ph-eye"></i></button>
                     </div>
                 </div>
                 <div class="changepass-form-group">
-                    <label for="cp-confirm-pass"><i class="ph-bold ph-check-circle"></i> Confirmare Parola Noua</label>
+                    <label for="cp-confirm-pass"><i class="ph-bold ph-check-circle"></i><span data-i18n="interface.confirm_new_password"></span></label>
                     <div class="changepass-input-wrapper">
-                        <input type="password" id="cp-confirm-pass" placeholder="Reintrodu parola noua..." autocomplete="new-password" required>
+                        <input type="password" id="cp-confirm-pass" placeholder="" data-i18n-placeholder="interface.enter_your_new_password_again" autocomplete="new-password" required>
                         <button type="button" class="cp-toggle-pass" data-target="cp-confirm-pass" tabindex="-1"><i class="ph-bold ph-eye"></i></button>
                     </div>
                 </div>
                 <div class="changepass-feedback hidden" id="cp-feedback"></div>
                 <div class="changepass-actions">
-                    <button type="button" class="changepass-btn changepass-btn--cancel" id="changepass-cancel">Anuleaza [ESC]</button>
+                    <button type="button" class="changepass-btn changepass-btn--cancel" id="changepass-cancel"><span data-i18n="interface.cancel_esc"></span></button>
                     <button type="submit" class="changepass-btn changepass-btn--submit" id="changepass-submit">
-                        <span class="cp-btn-text">Salveaza Parola</span>
+                        <span class="cp-btn-text"><span data-i18n="interface.save_password"></span></span>
                         <i class="ph-bold ph-arrow-right"></i>
                     </button>
                 </div>

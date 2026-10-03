@@ -1,7 +1,10 @@
+import { getViewerLocale } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuerySingle, dbExecute } from "@/lib/db";
 import { hashTokenSha256, hashScryptPassword } from "@/lib/crypto";
 import { RowDataPacket } from "mysql2";
+import { t } from "@/lib/i18n";
+
 
 interface ResetRow extends RowDataPacket {
   reset_id: number;
@@ -10,6 +13,7 @@ interface ResetRow extends RowDataPacket {
 }
 
 export async function POST(request: NextRequest) {
+  const locale = await getViewerLocale();
   try {
     const body = await request.json();
     const token = String(body.token || "").trim();
@@ -18,21 +22,21 @@ export async function POST(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Token-ul de resetare lipsește sau este invalid." },
+        { error: t(locale, "interface.the_reset_token_is_missing_or_invalid") },
         { status: 400 }
       );
     }
 
     if (!password || password.length < 6) {
       return NextResponse.json(
-        { error: "Parola nouă trebuie să aibă minim 6 caractere." },
+        { error: t(locale, "interface.the_new_password_must_contain_at_least_6_characters") },
         { status: 400 }
       );
     }
 
     if (password !== confirmPassword) {
       return NextResponse.json(
-        { error: "Parola nouă și confirmarea nu coincid." },
+        { error: t(locale, "auth.reset_error_mismatch") },
         { status: 400 }
       );
     }
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (!resetRecord) {
       return NextResponse.json(
-        { error: "Linkul de resetare este invalid sau a expirat (valabilitate 30 min). Te rugăm să soliciți altul." },
+        { error: t(locale, "interface.the_reset_link_is_invalid_or_expired_valid_for_30_minutes_request_a_new_one") },
         { status: 400 }
       );
     }
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
     const newHash = hashScryptPassword(password);
     if (!newHash) {
       return NextResponse.json(
-        { error: "Eroare la criptarea securizată a parolei." },
+        { error: t(locale, "interface.could_not_securely_encrypt_your_password") },
         { status: 500 }
       );
     }
@@ -89,12 +93,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: "Parola a fost resetată cu succes! Te poți conecta acum cu noua parolă.",
+      message: t(locale, "interface.password_reset_successfully_you_can_now_log_in_with_your_new_password"),
     });
   } catch (error) {
     console.error("[reset-password] API error:", error);
     return NextResponse.json(
-      { error: "A apărut o eroare la salvarea noii parole." },
+      { error: t(locale, "interface.could_not_save_your_new_password") },
       { status: 500 }
     );
   }

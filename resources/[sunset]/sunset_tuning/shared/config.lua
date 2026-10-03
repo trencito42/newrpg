@@ -8,11 +8,11 @@ SunsetTuning.FlashCost = 150
 -- GTA V performance slots. Level 0 means factory, positive levels map to the
 -- available mod index on that specific vehicle (and are clamped client-side).
 SunsetTuning.HardwareSlots = {
-    engine = { label = 'Engine', modType = 11, maxLevel = 4, unitCost = 1800 },
-    brakes = { label = 'Brakes', modType = 12, maxLevel = 3, unitCost = 1200 },
-    transmission = { label = 'Transmission', modType = 13, maxLevel = 3, unitCost = 1600 },
-    suspension = { label = 'Suspension', modType = 15, maxLevel = 4, unitCost = 1100 },
-    armor = { label = 'Armor', modType = 16, maxLevel = 5, unitCost = 1500 },
+    engine = { labelKey = "config.tuning.label.engine.292dd752", label = 'Engine', modType = 11, maxLevel = 4, unitCost = 1800 },
+    brakes = { labelKey = "config.tuning.label.brakes.0e790713", label = 'Brakes', modType = 12, maxLevel = 3, unitCost = 1200 },
+    transmission = { labelKey = "config.tuning.label.transmission.96e9bc6d", label = 'Transmission', modType = 13, maxLevel = 3, unitCost = 1600 },
+    suspension = { labelKey = "config.tuning.label.suspension.bfcc7c82", label = 'Suspension', modType = 15, maxLevel = 4, unitCost = 1100 },
+    armor = { labelKey = "config.tuning.label.armor.234ddac2", label = 'Armor', modType = 16, maxLevel = 5, unitCost = 1500 },
 }
 
 SunsetTuning.FeatureCosts = {
@@ -34,29 +34,29 @@ SunsetTuning.FeatureCosts = {
 }
 
 SunsetTuning.Stages = {
-    civil = { label = 'Silent (Civil)', power = 1.0, torque = 1.0, grip = 1.0, popIntensity = 0.35 },
-    sport = { label = 'Normal (Sport)', power = 1.06, torque = 1.05, grip = 1.0, popIntensity = 0.65 },
-    race = { label = 'Aggressive (Race)', power = 1.14, torque = 1.12, grip = 0.94, popIntensity = 1.0 },
+    civil = { labelKey = "config.tuning.label.silent_civil.a73aaaed", label = 'Silent (Civil)', power = 1.0, torque = 1.0, grip = 1.0, popIntensity = 0.35 },
+    sport = { labelKey = "config.tuning.label.normal_sport.81f14e09", label = 'Normal (Sport)', power = 1.06, torque = 1.05, grip = 1.0, popIntensity = 0.65 },
+    race = { labelKey = "config.tuning.label.aggressive_race.e6dd6da8", label = 'Aggressive (Race)', power = 1.14, torque = 1.12, grip = 0.94, popIntensity = 1.0 },
 }
 
 SunsetTuning.ExhaustModes = {
-    pop_bang = { label = 'Pop & Bang', flames = false, diesel = false },
-    flames = { label = 'Flammen', flames = true, diesel = false },
-    diesel = { label = 'Diesel', flames = false, diesel = true },
-    extra = { label = 'Extra Loud', flames = true, diesel = false },
+    pop_bang = { labelKey = "config.tuning.label.pop_bang.086e3a28", label = 'Pop & Bang', flames = false, diesel = false },
+    flames = { labelKey = "config.tuning.label.flammen.3bc3f849", label = 'Flammen', flames = true, diesel = false },
+    diesel = { labelKey = "config.tuning.label.diesel.b96687cc", label = 'Diesel', flames = false, diesel = true },
+    extra = { labelKey = "config.tuning.label.extra_loud.72137998", label = 'Extra Loud', flames = true, diesel = false },
 }
 
 SunsetTuning.Shops = {
     {
         id = 'lsc_main',
-        label = 'LS Customs — ECU Bay',
+        labelKey = "config.tuning.label.ls_customs_ecu_bay.85dcf63c", label = 'LS Customs — ECU Bay',
         coords = vector3(-337.52, -136.57, 39.01),
         dyno = vector4(-339.85, -142.35, 39.01, 68.0),
         blip = { sprite = 72, color = 47, scale = 0.85 },
     },
     {
         id = 'lsc_harmony',
-        label = 'Harmony Tuning',
+        labelKey = "config.tuning.label.harmony_tuning.b38ed5bf", label = 'Harmony Tuning',
         coords = vector3(1174.82, 2640.45, 37.75),
         dyno = vector4(1178.35, 2636.10, 37.75, 90.0),
         blip = { sprite = 72, color = 47, scale = 0.8 },
@@ -278,7 +278,7 @@ function SunsetTuning.BuildVehicleInfo(raw)
             summary = 'Mapa ECU stock',
             chips = { 'STOCK' },
             lines = {
-                { label = 'ECU', value = 'Factory map' },
+                { labelKey = "config.tuning.label.ecu.cb4ec03b", label = 'ECU', value = 'Factory map' },
             },
             tune = nil,
         }
@@ -304,28 +304,28 @@ function SunsetTuning.BuildVehicleInfo(raw)
     if tune.dyno.lastHp > 0 then chips[#chips + 1] = tune.dyno.lastHp .. ' HP' end
 
     local lines = {
-        { label = 'STAGE', value = stage.label },
-        { label = 'POWER', value = tune.power .. '%' },
-        { label = 'TORQUE', value = tune.torque .. '%' },
-        { label = 'EXHAUST', value = exhaust.label },
-        { label = 'POP & BANG', value = tune.pop.enabled and 'On' or 'Off' },
-        { label = 'FLAMES', value = tune.flames.enabled and 'On' or 'Off' },
-        { label = 'FLAME COLOR', value = ('RGB %d/%d/%d'):format(tune.flames.color.r, tune.flames.color.g, tune.flames.color.b) },
-        { label = 'RPM POP', value = tune.pop.rpmMax .. '%' },
-        { label = 'ANTI-LAG', value = tune.antiLag.enabled and ('On (' .. tune.antiLag.intensity .. '%)') or 'Off' },
-        { label = 'NITROUS', value = (tune.nitrous and tune.nitrous.installed) and (({ [1] = 'Stage 1 (Street)', [2] = 'Stage 2 (Sport)', [3] = 'Stage 3 (Race)' })[tune.nitrous.level] or 'Installed') or 'None' },
-        { label = 'DRIFT', value = tune.drift.enabled and ('On · grip ' .. tune.drift.grip .. '%') or 'Off' },
-        { label = 'ENGINE', value = ('Level %d/4'):format(tune.hardware.engine) },
-        { label = 'TURBO', value = tune.hardware.turbo and 'Installed' or 'Stock' },
-        { label = 'TRANSMISSION', value = ('Level %d/3'):format(tune.hardware.transmission) },
-        { label = 'BRAKES', value = ('Level %d/3'):format(tune.hardware.brakes) },
-        { label = 'SUSPENSION', value = ('Level %d/4'):format(tune.hardware.suspension) },
-        { label = 'HUD ECU', value = tune.hud.enabled and 'On' or 'Off' },
+        { labelKey = "config.tuning.label.stage.08540eb8", label = 'STAGE', value = stage.label },
+        { labelKey = "config.tuning.label.power.dcb4e944", label = 'POWER', value = tune.power .. '%' },
+        { labelKey = "config.tuning.label.torque.3de24e1e", label = 'TORQUE', value = tune.torque .. '%' },
+        { labelKey = "config.tuning.label.exhaust.5d812bec", label = 'EXHAUST', value = exhaust.label },
+        { labelKey = "config.tuning.label.pop_bang.2c458e32", label = 'POP & BANG', value = tune.pop.enabled and 'On' or 'Off' },
+        { labelKey = "config.tuning.label.flames.4fbae92b", label = 'FLAMES', value = tune.flames.enabled and 'On' or 'Off' },
+        { labelKey = "config.tuning.label.flame_color.e6e26af7", label = 'FLAME COLOR', value = ('RGB %d/%d/%d'):format(tune.flames.color.r, tune.flames.color.g, tune.flames.color.b) },
+        { labelKey = "config.tuning.label.rpm_pop.465b0e8f", label = 'RPM POP', value = tune.pop.rpmMax .. '%' },
+        { labelKey = "config.tuning.label.anti_lag.cca7f8d8", label = 'ANTI-LAG', value = tune.antiLag.enabled and ('On (' .. tune.antiLag.intensity .. '%)') or 'Off' },
+        { labelKey = "config.tuning.label.nitrous.efb92d4e", label = 'NITROUS', value = (tune.nitrous and tune.nitrous.installed) and (({ [1] = 'Stage 1 (Street)', [2] = 'Stage 2 (Sport)', [3] = 'Stage 3 (Race)' })[tune.nitrous.level] or 'Installed') or 'None' },
+        { labelKey = "config.tuning.label.drift.245a2fc4", label = 'DRIFT', value = tune.drift.enabled and ('On · grip ' .. tune.drift.grip .. '%') or 'Off' },
+        { labelKey = "config.tuning.label.engine.f1039ff1", label = 'ENGINE', value = ('Level %d/4'):format(tune.hardware.engine) },
+        { labelKey = "config.tuning.label.turbo.bf39f688", label = 'TURBO', value = tune.hardware.turbo and 'Installed' or 'Stock' },
+        { labelKey = "config.tuning.label.transmission.5b55fa43", label = 'TRANSMISSION', value = ('Level %d/3'):format(tune.hardware.transmission) },
+        { labelKey = "config.tuning.label.brakes.ff250cee", label = 'BRAKES', value = ('Level %d/3'):format(tune.hardware.brakes) },
+        { labelKey = "config.tuning.label.suspension.58a31826", label = 'SUSPENSION', value = ('Level %d/4'):format(tune.hardware.suspension) },
+        { labelKey = "config.tuning.label.hud_ecu.d2888692", label = 'HUD ECU', value = tune.hud.enabled and 'On' or 'Off' },
     }
 
     if tune.dyno.lastHp > 0 then
         lines[#lines + 1] = {
-            label = 'DYNO',
+            labelKey = "config.tuning.label.dyno.e02c221d", label = 'DYNO',
             value = tune.dyno.lastHp .. ' HP / ' .. tune.dyno.lastTorque .. ' Nm',
         }
     end
