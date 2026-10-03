@@ -301,7 +301,7 @@ AddEventHandler('sunset:nui:authForgotPassword', function(data)
     authUiSend('authLoading', { loading = false })
 
     if res and res.success then
-        authUiSend('authError', { message = res.message or 'Un email de resetare a fost trimis pe adresa asociata contului.' })
+        authUiSend('authSuccessNotice', { message = res.message or 'Un email de resetare a fost trimis pe adresa asociata contului.' })
         uiNotify(res.message or 'Emailul de resetare a fost trimis!', 'success', 8000)
     else
         authUiSend('authError', { message = res and res.message or 'Eroare la trimiterea emailului de resetare.' })

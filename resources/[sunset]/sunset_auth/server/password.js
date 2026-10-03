@@ -5,14 +5,24 @@ const crypto = require('crypto');
 const KEY_LENGTH = 32;
 const SCRYPT_OPTIONS = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 
-function hashPassword(password) {
+function hashPassword(...args) {
+  let password = args[0];
+  if (typeof password !== 'string' && typeof args[1] === 'string') {
+    password = args[1];
+  }
   if (typeof password !== 'string' || !password.length) return null;
   const salt = crypto.randomBytes(16);
   const derived = crypto.scryptSync(password, salt, KEY_LENGTH, SCRYPT_OPTIONS);
   return `$scrypt$${SCRYPT_OPTIONS.N}$${SCRYPT_OPTIONS.r}$${SCRYPT_OPTIONS.p}$${salt.toString('base64')}$${derived.toString('base64')}`;
 }
 
-function verifyPassword(password, encoded) {
+function verifyPassword(...args) {
+  let password = args[0];
+  let encoded = args[1];
+  if (typeof password !== 'string' && typeof args[1] === 'string') {
+    password = args[1];
+    encoded = args[2];
+  }
   if (typeof password !== 'string' || typeof encoded !== 'string') return false;
   const parts = encoded.split('$');
   if (parts.length !== 7 || parts[1] !== 'scrypt') return false;
@@ -35,7 +45,11 @@ function randomToken() {
   return crypto.randomBytes(32).toString('base64url');
 }
 
-function sha256(value) {
+function sha256(...args) {
+  let value = args[0];
+  if (typeof value !== 'string' && typeof value !== 'number' && args[1] !== undefined) {
+    value = args[1];
+  }
   return crypto.createHash('sha256').update(String(value || ''), 'utf8').digest('hex');
 }
 

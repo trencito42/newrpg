@@ -357,23 +357,12 @@ exports.sunset_core:RegisterCallback('sunset:auth:requestPasswordReset', functio
     )
 
     if account and account.email and string.find(account.email, '@') then
-        local rawToken = Sunset.Password.GenerateSalt(32) or tostring(GetGameTimer()) .. tostring(math.random(100000, 999999))
-        local tokenRow = MySQL.single.await('SELECT SHA2(?, 256) AS thash', { rawToken })
-        local tokenHash = tokenRow and tokenRow.thash or rawToken
-        local ip = GetPlayerEndpoint(source) or '127.0.0.1'
-
-        MySQL.insert.await([[
-            INSERT INTO account_password_resets (account_id, token_hash, email, ip_address, expires_at)
-            VALUES (?, ?, ?, ?, NOW() + INTERVAL 30 MINUTE)
-        ]], { account.id, tokenHash, account.email, ip })
-
-        -- Dispatch email via panel internal API
         local postData = json.encode({
             identifier = account.username,
         })
 
         PerformHttpRequest('http://127.0.0.1:3000/api/auth/forgot-password', function(statusCode, responseText)
-            -- Dispatch logged
+            -- Handled by panel mailer
         end, 'POST', postData, { ['Content-Type'] = 'application/json' })
     end
 

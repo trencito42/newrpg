@@ -213,7 +213,7 @@ body {
     color: var(--brand-primary);
 }
 
-/* ── Error Banner ─────────────────────────────────────────── */
+/* ── Error & Success Banners ───────────────────────────────── */
 .auth-error {
     margin-top: 14px;
     padding: 10px 14px;
@@ -223,6 +223,19 @@ body {
     font-weight: 600;
     animation: authShake 0.3s ease;
     width: 100%;
+}
+
+.auth-success {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-left: 2px solid #2ecc71;
+    color: #2ecc71;
+    background: rgba(46, 204, 113, 0.08);
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+    line-height: 1.5;
 }
 
 @keyframes authShake {

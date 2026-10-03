@@ -389,11 +389,29 @@ local spawnedDeliveryPeds = {}
 local deliveryBlips = {}
 local activeTooltipDealer = nil
 
+local function makeSafeBlip(coords, conf)
+    if Sunset and Sunset.CreateSafeBlip then
+        return Sunset.CreateSafeBlip(coords, conf)
+    elseif exports.sunset_core and exports.sunset_core.CreateSafeBlip then
+        return exports.sunset_core:CreateSafeBlip(coords, conf)
+    end
+    local b = AddBlipForCoord(coords.x, coords.y, coords.z)
+    if conf.sprite then SetBlipSprite(b, conf.sprite) end
+    if conf.color then SetBlipColour(b, conf.color) end
+    if conf.scale then SetBlipScale(b, conf.scale) end
+    if conf.name then
+        BeginTextCommandSetBlipName('STRING')
+        AddTextComponentSubstringPlayerName(conf.name)
+        EndTextCommandSetBlipName(b)
+    end
+    return b
+end
+
 -- ── Spawn Delivery Dealer NPCs & Create Blips ────────────────
 CreateThread(function()
     -- Initialize map blips immediately
     for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
-        local blip = Sunset.CreateSafeBlip(vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z), {
+        local blip = makeSafeBlip(vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z), {
             sprite = 514,
             color = 27,
             scale = 0.80,

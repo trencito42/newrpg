@@ -190,6 +190,7 @@ const AuthUI = {
     },
 
     showError(msg) {
+        this.hideSuccess();
         const el = $('#auth-error');
         if (!el) return;
         if (msg) {
@@ -203,7 +204,27 @@ const AuthUI = {
     },
 
     hideError() {
-        this.showError(null);
+        const el = $('#auth-error');
+        if (el) el.classList.add('hidden');
+    },
+
+    showSuccess(msg) {
+        this.hideError();
+        const el = $('#auth-success');
+        if (!el) return;
+        if (msg) {
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+        this.showLoading(false);
+        this.pendingSubmit = false;
+    },
+
+    hideSuccess() {
+        const el = $('#auth-success');
+        if (el) el.classList.add('hidden');
     },
 
     showLoading(show, label) {
@@ -326,6 +347,9 @@ window.addEventListener('message', (event) => {
             break;
         case 'authError':
             AuthUI.showError(payload.message || tr('auth.generic_error'));
+            break;
+        case 'authSuccessNotice':
+            AuthUI.showSuccess(payload.message || 'Succes');
             break;
         case 'authNeedsEmail':
             AuthUI.promptEmail(payload.username);
