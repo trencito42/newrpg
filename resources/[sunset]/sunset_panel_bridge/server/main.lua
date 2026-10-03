@@ -515,40 +515,31 @@ local function actionResult(row)
 
         if row.action == 'give_item' then
             local item = tostring(payload.item or ''):lower()
-            local count = math.max(1, tonumber(payload.count) or 1)
+            local count = math.floor(math.max(1, tonumber(payload.count) or 1))
             if item == '' then return false, 'invalid_item' end
-
-            if targetSrc then
-                exports.sunset_inventory:AddItem(targetSrc, item, count)
-                notifyTarget(targetSrc, ('Ai primit %dx %s de la Admin %s'):format(count, item, actorAccount.username), 'success')
-            else
-                MySQL.insert.await([[
-                    INSERT INTO character_inventory (character_id, item, count, slot)
-                    VALUES (?, ?, ?, (SELECT IFNULL(MAX(slot), 0) + 1 FROM character_inventory c2 WHERE c2.character_id = ?))
-                    ON DUPLICATE KEY UPDATE count = count + VALUES(count)
-                ]], { targetChar.id, item, count, targetChar.id })
-            end
+            local result = exports.sunset_inventory:ApplyOperation(targetSrc or 0, {
+                { type = 'add', item = item, count = count },
+            }, { characterId = targetChar.id, opId = ('panel:%s:give'):format(row.id) })
+            if not result or not result.ok then return false, result and result.error or 'inventory_error' end
+            if targetSrc then notifyTarget(targetSrc, ('Ai primit %dx %s de la Admin %s'):format(count, item, actorAccount.username), 'success') end
             return true, { item = item, count = count }
         end
 
         if row.action == 'remove_item' then
             local item = tostring(payload.item or ''):lower()
-            local count = math.max(1, tonumber(payload.count) or 1)
+            local count = math.floor(math.max(1, tonumber(payload.count) or 1))
             if item == '' then return false, 'invalid_item' end
-
-            if targetSrc then
-                exports.sunset_inventory:RemoveItem(targetSrc, item, count)
-                notifyTarget(targetSrc, ('Ti-au fost retrase %dx %s de catre Admin %s'):format(count, item, actorAccount.username), 'warning')
-            else
-                MySQL.update.await('UPDATE character_inventory SET count = GREATEST(0, count - ?) WHERE character_id = ? AND item = ?',
-                    { count, targetChar.id, item })
-                MySQL.update.await('DELETE FROM character_inventory WHERE character_id = ? AND count <= 0', { targetChar.id })
-            end
+            local result = exports.sunset_inventory:ApplyOperation(targetSrc or 0, {
+                { type = 'remove', item = item, count = count },
+            }, { characterId = targetChar.id, opId = ('panel:%s:remove'):format(row.id) })
+            if not result or not result.ok then return false, result and result.error or 'inventory_error' end
+            if targetSrc then notifyTarget(targetSrc, ('Ti-au fost retrase %dx %s de catre Admin %s'):format(count, item, actorAccount.username), 'warning') end
             return true, { item = item, count = count }
         end
 
         if row.action == 'clear_inventory' then
-            MySQL.update.await('DELETE FROM character_inventory WHERE character_id = ?', { targetChar.id })
+            local cleared, clearError = exports.sunset_inventory:ClearCharacterInventory(targetChar.id)
+            if not cleared then return false, clearError or 'inventory_error' end
             if targetSrc then
                 exports.sunset_inventory:ReloadInventory(targetSrc)
                 notifyTarget(targetSrc, 'Inventarul tau a fost golit de catre un administrator.', 'warning')

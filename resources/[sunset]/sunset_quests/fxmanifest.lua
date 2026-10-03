@@ -29,6 +29,8 @@ server_exports {
     'AddProgress',
     'CompleteObjective',
     'IsQuestComplete',
+    'CanAccess',
+    'CanAccessCharacter',
     'GetProgress',
     'ClaimReward',
 }

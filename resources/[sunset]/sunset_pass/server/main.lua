@@ -7,7 +7,7 @@ local function passAnnounce(source, title, body, kind)
     notify(source, body, kind, 5000)
     TriggerClientEvent('sunset:chat:message', source, {
         id = 0,
-        name = 'BLAZE PASS',
+        name = Sunset.Brand.PassName,
         passTitle = title,
         message = body,
         time = os.date('%H:%M:%S'),
@@ -69,12 +69,12 @@ local function chargePremiumPayment(source)
     local balance = refreshBlazePoints(source)
     local ok, err = exports.sunset_core:SpendBlazePoints(source, bpCost)
     if ok then return true, { method = 'blaze_points', amount = bpCost }, nil end
-    return false, nil, err or ('You need %d Blaze Points (you have %d).'):format(bpCost, balance)
+    return false, nil, err or ('You need %d %s (you have %d).'):format(bpCost, Sunset.Brand.CurrencyName, balance)
 end
 
 local function premiumCostLabel()
     local bpCost = math.floor(tonumber(SunsetPass.PremiumCost) or 0)
-    if bpCost > 0 then return ('%d BP'):format(bpCost) end
+    if bpCost > 0 then return ('%d RC'):format(bpCost) end
     return 'Unavailable'
 end
 

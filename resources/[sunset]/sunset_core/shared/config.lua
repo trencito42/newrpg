@@ -1,11 +1,12 @@
 Sunset = Sunset or {}
 
 Sunset.Brand = {
-    ServerName = 'blaze.mp',
-    DisplayName = 'Blaze MP',
-    CurrencyShort = 'BP',
-    CurrencyName = 'Blaze Points',
-    PassName = 'Blaze Pass',
+    ServerName = 'racket.cat',
+    DisplayName = 'Racket RPG',
+    CurrencyShort = 'RC',
+    CurrencyName = 'Racket Credits',
+    PassName = 'Racket Pass',
+    SecurityName = 'Racket Shield',
 }
 
 Sunset.Config = {

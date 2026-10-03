@@ -426,7 +426,7 @@ function SunsetJobs_AddJobXP(source, jobId, amount)
     SunsetJobs_AddJobProgress(source, jobId, amount, 0, 0)
 end
 
-function SunsetJobs_PayReward(source, jobId, amount, reason, countTask)
+function SunsetJobs_PayReward(source, jobId, amount, reason, countTask, jobXpOverride)
     local char = getChar(source)
     -- [JOBS AUDIT] reject NaN/inf/negative/absurd/float amounts; only whole dollars are paid.
     amount = tonumber(amount)
@@ -445,7 +445,10 @@ function SunsetJobs_PayReward(source, jobId, amount, reason, countTask)
     end
 
     -- Award job skill XP and progress in a single unified atomic pass
-    local jobXp = math.max(5, math.floor(amount / 10))
+    local jobXp = tonumber(jobXpOverride)
+    if not jobXp or jobXp < 0 or jobXp ~= math.floor(jobXp) then
+        jobXp = math.max(5, math.floor(amount / 10))
+    end
     local taskCount = countTask and 1 or 0
     local okProgress, progressErr = pcall(SunsetJobs_AddJobProgress, source, jobId, jobXp, taskCount, amount)
     if not okProgress then

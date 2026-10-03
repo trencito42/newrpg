@@ -15,7 +15,7 @@ shared_scripts {
     '@sunset_core/shared/police.lua',
 }
 
-dependencies { 'sunset_core', 'sunset_world', 'sunset_inventory', 'sunset_death', 'sunset_appearance' }
+dependencies { 'sunset_core', 'sunset_world', 'sunset_inventory', 'sunset_death', 'sunset_appearance', 'sunset_quests' }
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',

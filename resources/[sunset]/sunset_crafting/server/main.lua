@@ -96,13 +96,54 @@ exports.sunset_core:RegisterCallback('sunset:getCraftingMenu', function(source, 
 end)
 
 local CraftLocks = {}
+local PendingCrafts = {}
 
 AddEventHandler('playerDropped', function()
     CraftLocks[source] = nil
+    PendingCrafts[source] = nil
 end)
 
-exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, stationId, recipeId)
+exports.sunset_core:RegisterCallback('sunset:craftBegin', function(source, stationId, recipeId)
+    if PendingCrafts[source] then
+        return nil, { localeKey = 'crafting.message.your_previous_craft_is_still_being_processed_wait_a' }
+    end
+    local char = exports.sunset_core:GetCharacter(source)
+    local station = Sunset.CraftingStations[stationId]
+    local recipe = Sunset.CraftingRecipes[recipeId]
+    if not char then return nil, { localeKey = 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it' } end
+    if not station or not recipe or recipe.station ~= stationId then
+        return nil, { localeKey = 'crafting.msg.that_recipe_does_not_belong_to' }
+    end
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 or #(GetEntityCoords(ped) - station.coords) > 4.0 then
+        return nil, { localeKey = 'crafting.msg.you_moved_too_far_away_from', params = {
+            label = station.label or exports.sunset_core:TFor(source, 'crafting.word.the_crafting_station') } }
+    end
+    local duration = math.max(1000, math.floor(tonumber(recipe.time) or 5000))
+    local now = GetGameTimer()
+    local token = ('%d:%d:%d'):format(source, now, math.random(100000, 999999))
+    PendingCrafts[source] = {
+        token = token, characterId = tonumber(char.id), stationId = stationId, recipeId = recipeId,
+        readyAt = now + duration, expiresAt = now + duration + 30000,
+    }
+    return { token = token, duration = duration }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:craftCancel', function(source, token)
+    local pending = PendingCrafts[source]
+    if pending and pending.token == tostring(token or '') then PendingCrafts[source] = nil end
+    return true
+end)
+
+exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, stationId, recipeId, token)
     if CraftLocks[source] then return nil, { localeKey = 'crafting.message.your_previous_craft_is_still_being_processed_wait_a' } end
+    local pending = PendingCrafts[source]
+    PendingCrafts[source] = nil -- one shot: retries must perform the work again
+    local now = GetGameTimer()
+    if not pending or pending.token ~= tostring(token or '') or pending.stationId ~= stationId
+        or pending.recipeId ~= recipeId or now < pending.readyAt or now > pending.expiresAt then
+        return nil, { localeKey = 'crafting.message.crafting_session_invalid' }
+    end
     CraftLocks[source] = true
     local function done(result, err)
         CraftLocks[source] = nil
@@ -110,6 +151,9 @@ exports.sunset_core:RegisterCallback('sunset:craftItem', function(source, statio
     end
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return done(nil, exports.sunset_core:TFor(source, 'clans.message.your_character_is_not_loaded_reconnect_and_try_again')) end
+    if tonumber(char.id) ~= pending.characterId then
+        return done(nil, exports.sunset_core:TFor(source, 'crafting.message.crafting_session_invalid'))
+    end
 
     local station = Sunset.CraftingStations[stationId]
     local recipe = Sunset.CraftingRecipes[recipeId]

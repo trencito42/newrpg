@@ -143,11 +143,10 @@ exports.sunset_core:RegisterCallback('sunset:missions:vr:deliver', function(sour
         return nil, { localeKey = 'missions.message.not_at_delivery_location' }
     end
 
-    data = type(data) == 'table' and data or {}
     -- condition is read from the networked vehicle; the client value is ignored
     local cond = MSN_ReadVehicleCondition(veh)
-    -- escape bonus only if the server saw the PURSUIT stage (pursuers are client-side: residual, 10% bonus)
-    local escaped = data.escaped == true and s.visited and s.visited.PURSUIT == true
+    -- The server-observed stage history is the only authority for the escape bonus.
+    local escaped = s.visited and s.visited.PURSUIT == true
     local total, details = MSN_PayReward(source, s, cond, escaped)
     if s.rewardClaimed ~= true then s.busy = false end
     if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end
@@ -189,7 +188,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:updateAlert', function
     return s.data.alertLevel
 end)
 
-exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(source, data)
+exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(source)
     local s, err = MSN_RequireSession(source, 'container_47', { 'DELIVER' })
     if not s then return nil, err end
     if s.busy or s.rewardClaimed then return nil, { localeKey = 'missions.message.no_session' } end
@@ -202,7 +201,7 @@ exports.sunset_core:RegisterCallback('sunset:missions:c47:deliver', function(sou
     end
 
     local cond    = 100
-    local escaped = (s.data.alertLevel or 0) < 3
+    local escaped = s.visited and s.visited.ESCAPE == true
     local total, details = MSN_PayReward(source, s, cond, escaped)
     if s.rewardClaimed ~= true then s.busy = false end
     if not details or (total or 0) <= 0 then return nil, { localeKey = 'missions.message.not_at_delivery_location' } end

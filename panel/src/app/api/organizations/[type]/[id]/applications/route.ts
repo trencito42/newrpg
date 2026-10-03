@@ -6,6 +6,7 @@ import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import { getFactionAccess } from "@/lib/faction-access";
 import { factionIdSql } from "@/lib/faction-sql";
+import { getFactionApplicationAccess } from "@/lib/progression-access";
 
 interface Context {
   params: Promise<{ type: string; id: string }>;
@@ -142,6 +143,13 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   if (Number(character.level || 1) < effectiveMinLevel) {
     return NextResponse.json({ error: "level_too_low", minLevel: effectiveMinLevel }, { status: 400 });
+  }
+
+  if (type === "faction") {
+    const access = await getFactionApplicationAccess(Number(character.id));
+    if (!access.allowed) {
+      return NextResponse.json(access, { status: access.error === "character_not_found" ? 404 : 400 });
+    }
   }
 
   // Check active warns

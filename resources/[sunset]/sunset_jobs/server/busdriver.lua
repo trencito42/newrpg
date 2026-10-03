@@ -103,13 +103,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:boardPassengers', fu
     local stopPay = (cfg.payPerStop or 120) + (passengers * (cfg.payPerPassenger or 35))
     local stopXp = cfg.xpPerStop or 20
 
-    -- Add money to player
-    exports.sunset_core:AddMoney(source, 'cash', stopPay, 'busdriver_fare')
-    pcall(function()
-        if exports.sunset_jobs and exports.sunset_jobs.AddJobXP then
-            exports.sunset_jobs:AddJobXP(source, 'busdriver', stopXp)
-        end
-    end)
+    if not SunsetJobs_PayReward(source, 'busdriver', stopPay, 'busdriver_fare', false, stopXp) then
+        return { success = false, err = 'Plata opririi nu a putut fi procesata. Incearca din nou.' }
+    end
 
     -- Update session state
     session.data.passengersTransported = (session.data.passengersTransported or 0) + passengers
@@ -152,12 +148,9 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:finishRoute', functi
     local bonus = cfg.routeBonusPay or 450
     local xpBonus = cfg.xpPerRoute or 65
 
-    exports.sunset_core:AddMoney(source, 'cash', bonus, 'busdriver_route_bonus')
-    pcall(function()
-        if exports.sunset_jobs and exports.sunset_jobs.AddJobXP then
-            exports.sunset_jobs:AddJobXP(source, 'busdriver', xpBonus)
-        end
-    end)
+    if not SunsetJobs_PayReward(source, 'busdriver', bonus, 'busdriver_route_bonus', true, xpBonus) then
+        return { success = false, err = 'Bonusul rutei nu a putut fi procesat. Incearca din nou.' }
+    end
 
     local grandTotal = (session.data.totalEarned or 0) + bonus
     local passengersTotal = session.data.passengersTransported or 0

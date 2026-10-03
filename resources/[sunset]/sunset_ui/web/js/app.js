@@ -326,6 +326,7 @@
         emotesShow: 'panels',
         craftingShow: 'panels',
         fuelPumpShow: 'panels',
+        'openChangePassword': null,
     };
 
     // Compatibility aliases used by the Lua resources. The module split must

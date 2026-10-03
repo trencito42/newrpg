@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_luckywheel'
-description '1:1 GTA Online 3D Lucky Wheel for SunsetMP'
+description '3D Lucky Wheel for Racket RPG'
 version '1.0.0'
 
 shared_scripts {

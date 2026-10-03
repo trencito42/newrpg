@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'sunset_clans'
 author 'SunsetMP'
-description 'Player-created clans with tags, Blaze Points, and management UI'
+description 'Player-created clans with tags, Racket Credits, and management UI'
 version '1.0.0'
 
 shared_scripts {

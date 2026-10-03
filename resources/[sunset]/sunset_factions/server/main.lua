@@ -159,7 +159,7 @@ local function performFactionInvite(source, targetId)
     -- [FP SYSTEM] Block inviting faction-punished characters early, so the
     -- leader learns why instead of the invite failing silently on accept.
     if FactionManagement then
-        local fpOk, fpErr = FactionManagement.assertCanJoin(target.id)
+        local fpOk, fpErr = FactionManagement.assertCanJoin(target.id, targetId)
         if not fpOk then return nil, fpErr end
     end
     if FactionCore.distBetween(FactionCore.playerCoords(source), FactionCore.playerCoords(targetId)) > 10.0 then
@@ -211,7 +211,7 @@ local function performFactionAcceptInvite(source)
     if getFactionOf(char) then return nil, { localeKey = 'factions.message.you_are_already_a_member_of_a_faction' } end
     -- [FP SYSTEM] Faction-punished characters cannot join any faction.
     if FactionManagement then
-        local fpOk, fpErr = FactionManagement.assertCanJoin(char.id)
+        local fpOk, fpErr = FactionManagement.assertCanJoin(char.id, source)
         if not fpOk then return nil, fpErr end
     end
     local inviter = getChar(invite.inviterSource)

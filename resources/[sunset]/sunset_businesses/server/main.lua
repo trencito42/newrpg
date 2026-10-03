@@ -409,6 +409,8 @@ exports.sunset_core:RegisterCallback('sunset:buyBusiness', function(source, busi
         return nil, { localeKey = 'businesses.message.another_player_bought_this_business_first' }
     end
     exports.sunset_core:RefreshMoney(source)
+    TriggerEvent('sunset:quest:progress', char.id, 'business_purchased', 1, { businessId = tonumber(row.id) })
+    TriggerEvent('sunset:pass:addMission', source, 'business_owner', 1)
     return true, ('You bought %s for $%s.'):format(row.label, price)
 end)
 

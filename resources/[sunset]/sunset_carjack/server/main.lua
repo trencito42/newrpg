@@ -227,6 +227,10 @@ local function doChopSell(source, data)
 
     exports.sunset_core:AddMoney(source, 'cash', payout, 'carjack_sale')
     addLockpickXP(source, 50)
+    -- Chop shops are the controlled illicit source for ammunition components.
+    if math.random(100) <= 20 and exports.sunset_inventory:AddItem(source, 'gunpowder', 1) then
+        exports.sunset_inventory:ReloadInventory(source)
+    end
 
     -- [QUESTS 7-9] criminal chain: chop-shop sales drive quest progress.
     local okQ, charQ = pcall(function() return exports.sunset_core:GetCharacter(source) end)

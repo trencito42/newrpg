@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════
-#  SUNSETMP — FiveM RPG
+#  RACKET RPG — FiveM
 # ═══════════════════════════════════════════════════════════════
 
 endpoint_add_tcp "0.0.0.0:30120"
@@ -14,7 +14,7 @@ set racket_version "0.7.0-alpha"
 sv_hostname "Racket RPG v0.7.0-alpha"
 sets sv_projectName "Racket RPG"
 sets sv_projectDesc "Racket RPG — build your story."
-sets tags "rpg, sunsetmp, english"
+sets tags "rpg, racket, english, romanian"
 sets locale "en-US"
 
 sv_maxclients 48
@@ -99,7 +99,9 @@ ensure sunset_characters
 ensure sunset_spawn
 ensure sunset_player
 ensure sunset_economy
-ensure sunset_needs
+# Legacy survival drain is intentionally disabled for launch. Food/drink remain
+# inventory consumables; see docs/release/PRELAUNCH_AUDIT_2026-10-03.md.
+# ensure sunset_needs
 ensure sunset_vehicles
 ensure sunset_addon_vehicles
 ensure showcasecars
@@ -146,10 +148,11 @@ ensure sunset_missions
 ensure sunset_panel_bridge
 ensure sunset_profile_media
 ensure screenshot-basic
-add_ace group.admin racket.thumbs allow
-add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
-add_unsafe_child_process_permission racket_vehicle_thumbs
-ensure racket_vehicle_thumbs
+# Vehicle thumbnail generation invokes a local image processor and is dev-only.
+#@dev add_ace group.admin racket.thumbs allow
+#@dev add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
+#@dev add_unsafe_child_process_permission racket_vehicle_thumbs
+#@dev ensure racket_vehicle_thumbs
 
 ensure villa_island
 

@@ -8,6 +8,7 @@ local Cfg = SunsetDrugs.Config
 local inHarvestZone = false
 local currentHarvestSpot = nil
 local harvestSessionActive = false
+local lastHarvestSpot = nil
 
 local inLabZone = false
 local currentLabIndex = nil
@@ -19,6 +20,19 @@ local currentSalePed = nil
 -- Helper notify
 local function Notify(msg, kind)
     exports.sunset_ui:Notify(msg, kind or 'info')
+end
+
+local function requestHarvestSession(spotIndex)
+    local sessionData = Sunset.AwaitCallback('sunset:drugs:requestHarvestSession', spotIndex)
+    if not sessionData or not sessionData.token then return false end
+    harvestSessionActive = true
+    exports.sunset_ui:Send('showHarvest', {
+        type = sessionData.type,
+        amount = sessionData.amount,
+        maxAmount = sessionData.maxAmount,
+        token = sessionData.token,
+    })
+    return true
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -74,21 +88,14 @@ CreateThread(function()
             end
         end
 
-        if nearSpot and not inHarvestZone and not harvestSessionActive then
+        if not nearSpot then lastHarvestSpot = nil end
+
+        if nearSpot and nearIndex ~= lastHarvestSpot and not inHarvestZone and not harvestSessionActive then
+            lastHarvestSpot = nearIndex
             inHarvestZone = true
             currentHarvestSpot = nearIndex
 
-            -- Request server session
-            local sessionData = Sunset.AwaitCallback('sunset:drugs:requestHarvestSession', nearIndex)
-            if sessionData and sessionData.token then
-                harvestSessionActive = true
-                exports.sunset_ui:Send('showHarvest', {
-                    type = sessionData.type,
-                    amount = sessionData.amount,
-                    maxAmount = sessionData.maxAmount,
-                    token = sessionData.token,
-                })
-            else
+            if not requestHarvestSession(nearIndex) then
                 inHarvestZone = false
                 currentHarvestSpot = nil
             end
@@ -106,10 +113,14 @@ end)
 
 -- Dedicated E-key input loop for harvest minigame while walking/looking
 CreateThread(function()
+    local lastHarvestInputAt = 0
     while true do
         if inHarvestZone and harvestSessionActive then
             -- INPUT_CONTEXT (E key / control 38)
-            if IsControlJustPressed(0, 38) or IsDisabledControlJustPressed(0, 38) then
+            local now = GetGameTimer()
+            if (IsControlJustPressed(0, 38) or IsDisabledControlJustPressed(0, 38))
+                and now - lastHarvestInputAt >= 150 then
+                lastHarvestInputAt = now
                 exports.sunset_ui:Send('triggerHarvestHit', {})
             end
             Wait(0)
@@ -641,3 +652,17 @@ function DoWholesaleDelivery(dropoff)
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    harvestSessionActive = false
+    inHarvestZone = false
+    labOpen = false
+    saleActive = false
+    exports.sunset_ui:Send('hideHarvest', {})
+    exports.sunset_ui:SetFocus(false, false, false, 'drugs_lab')
+    exports.sunset_ui:SetFocus(false, false, false, 'drugs_sale')
+    for _, ped in pairs(spawnedDeliveryPeds or {}) do
+        if ped and DoesEntityExist(ped) then DeleteEntity(ped) end
+    end
+end)

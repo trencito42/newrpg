@@ -755,7 +755,7 @@ const Chat = {
     formatPassEventHtml(m) {
         const time = this.formatTime(m);
         const prefix = time ? `${this.escapeHtml(time)} ` : '';
-        const title = this.escapeHtml(String(m.passTitle || 'BLAZE PASS'));
+        const title = this.escapeHtml(String(m.passTitle || 'RACKET PASS'));
         const body = this.escapeHtml(String(m.message ?? ''));
         const icon = [
             '<svg class="chat-pass__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">',

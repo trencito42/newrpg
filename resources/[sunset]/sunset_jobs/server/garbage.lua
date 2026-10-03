@@ -157,6 +157,15 @@ exports.sunset_core:RegisterCallback('sunset:jobs:garbage:dumpBin', function(sou
         end
         SunsetJobs_AddJobXP(source, 'garbage', cfg.xpPerBin or 12)
 
+        -- Recycling is the renewable source for public crafting inputs. The
+        -- roll and item choice are server-owned and happen only after a valid dump.
+        if math.random(100) <= 35 then
+            local recycled = ({ 'plastic', 'cloth', 'metal_scrap', 'plastic' })[math.random(4)]
+            if exports.sunset_inventory:AddItem(source, recycled, 1) then
+                exports.sunset_inventory:ReloadInventory(source)
+            end
+        end
+
         if SunsetJobs_GetSession(source) ~= session then return session.data end
         if session.data.collected >= session.data.capacity then
             session.data.stage = 'return_unload'

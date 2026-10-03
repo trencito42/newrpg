@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_slots'
-description '5-Reel Sizzling Fruit Slot Machines for SunsetMP'
+description '5-Reel Sizzling Fruit Slot Machines for Racket RPG'
 author 'XeX / SunsetMP'
 
 ui_page 'html/ui.html'

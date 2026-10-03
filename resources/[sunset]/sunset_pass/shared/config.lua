@@ -9,7 +9,7 @@ SunsetPass.Tiers = {
     {
         level = 1,
         free = { type = 'cash', amount = 800, labelKey = "config.pass.label.800_cash.3993c775", label = '$800 Cash', icon = 'cash' },
-        premium = { type = 'premium_points', amount = 15, labelKey = "config.pass.label.15_blaze_points.fd95c9a7", label = '15 Blaze Points', icon = 'coins' },
+        premium = { type = 'premium_points', amount = 15, labelKey = "config.pass.label.15_blaze_points.fd95c9a7", label = '15 Racket Credits', icon = 'coins' },
     },
     {
         level = 2,
@@ -24,7 +24,7 @@ SunsetPass.Tiers = {
     {
         level = 4,
         free = { type = 'item', item = 'bandage', count = 3, labelKey = "config.pass.label.bandage_x3.501841ce", label = 'Bandage x3', icon = 'bandage' },
-        premium = { type = 'premium_points', amount = 35, labelKey = "config.pass.label.35_blaze_points.28847151", label = '35 Blaze Points', icon = 'coins' },
+        premium = { type = 'premium_points', amount = 35, labelKey = "config.pass.label.35_blaze_points.28847151", label = '35 Racket Credits', icon = 'coins' },
     },
     {
         level = 5,
@@ -33,7 +33,7 @@ SunsetPass.Tiers = {
     },
     {
         level = 6,
-        free = { type = 'premium_points', amount = 10, labelKey = "config.pass.label.10_blaze_points.e0f0073d", label = '10 Blaze Points', icon = 'coins' },
+        free = { type = 'premium_points', amount = 10, labelKey = "config.pass.label.10_blaze_points.e0f0073d", label = '10 Racket Credits', icon = 'coins' },
         premium = { type = 'item', item = 'bandage', count = 5, labelKey = "config.pass.label.bandage_x5.4f8ba126", label = 'Bandage x5', icon = 'bandage' },
     },
 }
@@ -94,5 +94,26 @@ SunsetPass.Missions = {
         xp = 350,
         icon = 'cash_stack',
     },
+    {
+        id = 'contract_missions',
+        type = 'weekly',
+        title = 'Contract Specialist',
+        titleKey = 'pass.mission.contract_missions.title',
+        descriptionKey = 'pass.mission.contract_missions.description',
+        description = 'Complete 3 contact missions.',
+        goal = 3,
+        xp = 650,
+        icon = 'backpack',
+    },
+    {
+        id = 'business_owner',
+        type = 'weekly',
+        title = 'Local Entrepreneur',
+        titleKey = 'pass.mission.business_owner.title',
+        descriptionKey = 'pass.mission.business_owner.description',
+        description = 'Purchase a player business.',
+        goal = 1,
+        xp = 500,
+        icon = 'cash_stack',
+    },
 }
-

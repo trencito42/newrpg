@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_casino'
-description 'The Diamond Casino — Blackjack, Slots, Roulette'
+description 'The Diamond Casino hub — entry, cashier and bar'
 version '1.0.0'
 
 shared_scripts {

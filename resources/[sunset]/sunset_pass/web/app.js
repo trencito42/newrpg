@@ -130,7 +130,7 @@ function updatePlayerStats(data) {
                     ✔️ ${tr('pass.premium_active', null, 'PREMIUM ACTIV')}
                 </div>`;
         } else {
-            const costLabel = data.premiumCostLabel || `${data.premiumCost || 250} BP`;
+            const costLabel = data.premiumCostLabel || `${data.premiumCost || 250} RC`;
             premiumBox.innerHTML = `
                 <button class="btn-upgrade" id="btn-upgrade" onclick="buyPremium()">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M2.5 2v6h13V2zM2.5 13v6h13v-6z"></path><path d="M18.5 2l3 6-3 6"></path></svg>

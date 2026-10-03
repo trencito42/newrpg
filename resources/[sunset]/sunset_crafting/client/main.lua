@@ -40,10 +40,14 @@ AddEventHandler('sunset:nui:craftingCraft', function(data)
     exports.sunset_ui:Send('craftingHide', {})
     exports.sunset_ui:SetFocus(false, false)
 
-    if not runCraftProgress(duration, label) then
+    local session, beginErr = Sunset.AwaitCallback('sunset:craftBegin', data.stationId, data.recipeId)
+    if not session then
+        exports.sunset_ui:Notify(beginErr or exports.sunset_core:Translate('crafting.msg.craft_failed'), 'error')
+    elseif not runCraftProgress(session.duration or duration, label) then
+        Sunset.AwaitCallback('sunset:craftCancel', session.token)
         exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.message.crafting_cancelled'), 'warning')
     else
-        local ok, err = Sunset.AwaitCallback('sunset:craftItem', data.stationId, data.recipeId)
+        local ok, err = Sunset.AwaitCallback('sunset:craftItem', data.stationId, data.recipeId, session.token)
         if ok then
             exports.sunset_ui:Notify(exports.sunset_core:Translate('crafting.msg.crafted_successfully', { label = tostring(label) }), 'success')
         else

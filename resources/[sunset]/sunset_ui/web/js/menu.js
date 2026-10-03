@@ -706,7 +706,7 @@ const Menu = {
         $('#menu-rank').textContent = data.rank || I18n.t('ui.menu.default_rank');
         $('#menu-cash').textContent = formatMoney(data.cash || 0);
         $('#menu-bank').textContent = formatMoney(data.bank || 0);
-        $('#menu-premium').textContent = `${this.formatXp(data.premium ?? 0)} BP`;
+        $('#menu-premium').textContent = `${this.formatXp(data.premium ?? 0)} ${I18n.t('menu.money.points')}`;
         $('#menu-playtime').textContent = data.playtime || '0H 0M';
         $('#menu-lastlogin').textContent = data.lastLogin || '—';
 

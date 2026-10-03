@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_carjack'
-description 'Illegal chop-shop / carjack job for SunsetMP'
+description 'Illegal chop-shop / carjack job for Racket RPG'
 version '1.0.1'
 
 dependencies {

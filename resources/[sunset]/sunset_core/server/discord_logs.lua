@@ -37,17 +37,17 @@ function Sunset.Discord.Send(channelType, title, description, colorName, fields)
 
     local embed = {
         -- i18n-ignore: internal Discord webhook fallback title
-        title = title or 'SunsetMP Log',
+        title = title or 'Racket RPG Log',
         description = description or '',
         color = COLORS[colorName] or COLORS.cyan,
         fields = fields or {},
         footer = {
-            text = 'SunsetMP Security & Audit Engine · ' .. os.date('%Y-%m-%d %H:%M:%S'),
+            text = 'Racket RPG Security & Audit Engine · ' .. os.date('%Y-%m-%d %H:%M:%S'),
         }
     }
 
     local payload = json.encode({
-        username = 'SunsetMP Audit Bot',
+        username = 'Racket RPG Audit Bot',
         avatar_url = 'https://i.imgur.com/8Q5Yv8O.png',
         embeds = { embed }
     })

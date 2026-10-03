@@ -267,7 +267,7 @@ local StatDefinitions = {
     playtime = { scope = 'player', field = 'playtime', min = 0, max = 10000000, labelKey = "config.admin.label.playtime_minutes.1566c5e8", label = 'playtime minutes' },
     rob = { scope = 'rob_points', field = 'rob_points', min = 0, max = 1000000, labelKey = "config.admin.label.rob_points.434ed57a", label = 'Rob Points' },
     robpoints = { alias = 'rob' },
-    premium = { scope = 'account', field = 'premium_points', min = 0, max = 2000000000, labelKey = "config.admin.label.blaze_points.f1b8b690", label = 'Blaze Points' },
+    premium = { scope = 'account', field = 'premium_points', min = 0, max = 2000000000, labelKey = "config.admin.label.blaze_points.f1b8b690", label = 'Racket Credits' },
     sunsetcoins = { alias = 'premium' },
 }
 
@@ -375,7 +375,7 @@ registerServerCommand('astats', function(source, args)
         return commandOutput(source, exports.sunset_core:TFor(source, 'admin.msg.that_player_has_not_selected_a'), 'error')
     end
     local name = exports.sunset_core:GetPlayerDisplayName(target)
-    local line = ('%s [ID %d/CID %d] | Level %d | RP %d | Rob %d | Paydays %d | Cash $%d | Bank $%d | BP %d | Playtime %dh %dm'):format(
+    local line = ('%s [ID %d/CID %d] | Level %d | RP %d | Rob %d | Paydays %d | Cash $%d | Bank $%d | RC %d | Playtime %dh %dm'):format(
         name, target, char.id, char.level or 1, char.respect_points or 0, exports.sunset_core:GetRobPoints(target), char.paydays_received or 0,
         char.cash or 0, char.bank or 0, player.premium_points or 0,
         math.floor((player.playtime or 0) / 60), (player.playtime or 0) % 60)

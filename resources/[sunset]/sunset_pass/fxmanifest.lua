@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'sunset_pass'
 author 'SunsetMP'
-description 'Blaze Pass — seasonal battle pass and missions'
+description 'Racket Pass — seasonal battle pass and missions'
 version '1.0.0'
 
 ui_page 'web/index.html'

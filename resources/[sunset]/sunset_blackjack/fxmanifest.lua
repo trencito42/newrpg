@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_blackjack'
-description 'Playable 3D Blackjack at Diamond Casino for SunsetMP, similar to GTA Online.'
+description 'Playable 3D Blackjack at Diamond Casino for Racket RPG.'
 author 'Xinerki / SunsetMP'
 
 shared_script 'coords.lua'

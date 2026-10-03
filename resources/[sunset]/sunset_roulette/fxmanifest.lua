@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'sunset_roulette'
-description '1:1 GTA Online 3D Diamond Casino Roulette for SunsetMP'
+description '3D Diamond Casino Roulette for Racket RPG'
 version '1.0.0'
 
 shared_scripts {

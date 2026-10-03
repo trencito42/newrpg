@@ -85,7 +85,7 @@ RegisterCommand('acheat', function(source, args)
         end
         return
     end
-    shieldLine(source, ('Blaze Shield — mode: %s | players with ticks: %d'):format(Cfg.Mode, #rows))
+    shieldLine(source, ('Racket Shield — mode: %s | players with ticks: %d'):format(Cfg.Mode, #rows))
     local shown = 0
     for _, r in ipairs(rows) do
         if shown >= 10 then
@@ -244,7 +244,7 @@ end)
 -- ── Boot banner ──
 CreateThread(function()
     Wait(500)
-    print('^5[sunset_anticheat]^7 Blaze Shield online — mode: ^3' .. tostring(Cfg.Mode) .. '^7 | auto-ban: ' ..
+    print('^5[sunset_anticheat]^7 Racket Shield online — mode: ^3' .. tostring(Cfg.Mode) .. '^7 | auto-ban: ' ..
         tostring(Cfg.AutoBanAnything) .. ' (must stay false) | detectors: speed, teleport, fly, damage, health, spam, heartbeat, weapon ledger, ammo, vehspawn, economy')
     if Cfg.AutoBanAnything then
         print('^1[sunset_anticheat]^7 FATAL: AutoBanAnything must NEVER be true (spec §1). Disabling resource.')

@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'sunset_anticheat'
 author 'SunsetMP'
-description 'Blaze Shield — evidence-gathering anticheat (no auto-bans; staff decide)'
+description 'Racket Shield — evidence-gathering anticheat (no auto-bans; staff decide)'
 version '0.1.0'
 
 shared_scripts {

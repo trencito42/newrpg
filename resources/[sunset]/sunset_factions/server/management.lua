@@ -87,13 +87,25 @@ end
 
 -- ── FP join gate (used by invite/accept flows) ─────────────────
 
-function FactionManagement.assertCanJoin(characterId)
+function FactionManagement.assertCanJoin(characterId, playerSource)
     local fp, reason = FactionManagement.getFP(characterId)
     if fp > 0 then
         return false, { localeKey = 'factions.err.fp_join_blocked', params = {
             fp = math.floor(tonumber(fp) or 0),
             reason = reason or { localeKey = 'factions.word.no_reason' },
         } }
+    end
+    if GetResourceState('sunset_quests') ~= 'started' then
+        return false, { localeKey = 'factions.err.progression_unavailable' }
+    end
+    local ok, allowed, reason, detail = pcall(function()
+        if playerSource then return exports.sunset_quests:CanAccess(playerSource, 'faction.apply') end
+        return exports.sunset_quests:CanAccessCharacter(characterId, 'faction.apply')
+    end)
+    if not ok or not allowed then
+        return false, { localeKey = reason == 'level_too_low'
+            and 'factions.err.level_10_required'
+            or 'factions.err.life_level10_quest_required', params = detail }
     end
     return true
 end

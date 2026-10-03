@@ -59,6 +59,8 @@ function MSN_PayReward(source, session, conditionPct, escaped)
 
     MSN_AddReputation(char.id, def.contact, 25)
     MSN_SetCooldown(char.id, session.mission)
+    TriggerEvent('sunset:quest:progress', char.id, 'mission_completed', 1, { missionId = session.mission, reward = total })
+    TriggerEvent('sunset:pass:addMission', source, 'contract_missions', 1)
     MSN_EndSession(source, 'complete', total, details)
     return total, details
 end

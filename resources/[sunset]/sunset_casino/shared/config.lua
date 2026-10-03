@@ -15,31 +15,6 @@ SunsetCasino.Config = {
     -- Exit marker (INSIDE the casino, verified interiorExit)
     exit = vector3(1089.63, 205.89, -49.00),
 
-    -- ── GAME TABLES (verified physical table positions in main pit) ──
-    blackjackTables = {
-        vector3(1129.40, 262.35, -51.04),
-        vector3(1143.80, 267.50, -51.84),
-        vector3(1146.50, 260.60, -51.84),
-        vector3(1131.80, 247.60, -51.04),
-        vector3(1145.20, 252.30, -51.84),
-    },
-    -- Actual vw_prop_casino_slot_01a entity positions
-    slotMachines = {
-        vector3(1114.12, 235.08, -50.84),
-        vector3(1105.05, 230.84, -50.84),
-        vector3(1120.85, 233.16, -50.84),
-        vector3(1108.94, 239.48, -50.84),
-        vector3(1135.13, 256.70, -52.04),
-    },
-    rouletteTables = {
-        vector3(1135.06, 242.50, -50.07),
-        vector3(1111.93, 201.87, -49.94),
-    },
-    rouletteTable = vector3(1135.06, 242.50, -50.07),
-
-    -- ── LUCKY WHEEL (physical prop & podium at 1111.05, 229.85) ──
-    luckyWheel = vector3(1111.05, 228.70, -49.85),
-
     -- ── CASHIER (cash ↔ chips) ──
     cashier = vector3(1116.03, 219.69, -49.44),
 
@@ -51,48 +26,6 @@ SunsetCasino.Config = {
     minChipExchange = 100,
     maxChipExchange = 100000,
 
-    -- ── BETTING ──
-    minBet = 100,
-    maxBet = 50000,
-
-    -- ── BLACKJACK ──
-    blackjackPayout = 1.5,
-    dealerStandsOn = 17,
-
-    -- ── SLOTS ──
-    slotsPayouts = {
-        [3] = 10,
-        [2] = 2,
-    },
-    slotsSymbols = { '🍒', '🍋', '🔔', '💎', '7️⃣', '🍇', '⭐', '🍀' },
-
-    -- ── ROULETTE ──
-    roulettePayouts = {
-        straight = 35,
-        red_black = 1,
-        odd_even = 1,
-        low_high = 1,
-        dozen = 2,
-        column = 2,
-    },
-
-    -- ── LUCKY WHEEL ──
-    luckyWheelCooldownMs = 3600000, -- 1 hour
-    luckyWheelPrizes = {
-        { label = '$5,000',        type = 'cash',   value = 5000 },
-        { label = '$10,000',       type = 'cash',   value = 10000 },
-        { label = '$25,000',       type = 'cash',   value = 25000 },
-        { label = '$50,000',       type = 'cash',   value = 50000 },
-        { label = '$100,000',      type = 'cash',   value = 100000 },
-        { labelKey = "config.casino.label.500_chips.f58ac0ca", label = '500 Chips',     type = 'chips',  value = 500 },
-        { labelKey = "config.casino.label.1000_chips.c09fb290", label = '1000 Chips',    type = 'chips',  value = 1000 },
-        { labelKey = "config.casino.label.2500_chips.87069bac", label = '2500 Chips',    type = 'chips',  value = 2500 },
-        { labelKey = "config.casino.label.vehicle_discount.2781ed07", label = 'Vehicle Discount', type = 'discount', value = 20 },
-        { labelKey = "config.casino.label.mystery_prize.776c7935", label = 'Mystery Prize', type = 'mystery', value = 0 },
-        { labelKey = "config.casino.label.nothing.220bbd1d", label = 'Nothing',       type = 'none',   value = 0 },
-        { label = '$2,500',        type = 'cash',   value = 2500 },
-    },
-
     -- ── BAR DRINKS ──
     barDrinks = {
         { id = 'beer',       labelKey = "config.casino.label.beer.042edc80", label = 'Beer',        price = 50,  effect = 'thirst', value = 20 },
@@ -102,8 +35,5 @@ SunsetCasino.Config = {
         { id = 'champagne',  labelKey = "config.casino.label.champagne.47892af0", label = 'Champagne',   price = 500, effect = 'thirst', value = 50 },
     },
 
-    -- ── LIMITS ──
-    gameCooldownMs = 3000,
-    dailyLossLimit = 500000,
     society = 'casino',
 }

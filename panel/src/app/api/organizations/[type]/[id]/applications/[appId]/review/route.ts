@@ -6,6 +6,7 @@ import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 import crypto from "crypto";
 import { getFactionAccess } from "@/lib/faction-access";
+import { getFactionApplicationAccess } from "@/lib/progression-access";
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -181,6 +182,15 @@ export async function POST(req: NextRequest, { params }: Context) {
 
   if (app.status === "accepted" || app.status === "rejected" || app.status === "withdrawn") {
     return NextResponse.json({ error: "application_already_resolved" }, { status: 400 });
+  }
+
+  // Leaders cannot use the panel action queue to bypass canonical faction progression.
+  // Admin level 3+ is the only explicit operational bypass.
+  if (type === "faction" && decision === "accepted_add_member" && session.adminLevel < 3) {
+    const access = await getFactionApplicationAccess(Number(app.character_id));
+    if (!access.allowed) {
+      return NextResponse.json(access, { status: access.error === "character_not_found" ? 404 : 400 });
+    }
   }
 
   const finalStatus = decision === "accepted_add_member" || decision === "accepted" ? "accepted" : (decision === "under_review" ? "under_review" : "rejected");

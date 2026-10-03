@@ -398,6 +398,20 @@ function ApplyOperation(source, ops, opts)
 end
 exports('ApplyOperation', ApplyOperation)
 
+-- Canonical administrative clear path for online or offline characters.
+-- Cross-domain tools must call this export instead of writing inventory tables.
+function ClearCharacterInventory(characterId)
+    characterId = tonumber(characterId)
+    if not characterId or characterId < 1 or characterId ~= math.floor(characterId) then return false, 'no_character' end
+    if not acquire(characterId) then return false, 'busy' end
+    local ok, changed = pcall(MySQL.update.await, 'DELETE FROM character_inventory WHERE character_id = ?', { characterId })
+    CharLocks[characterId] = nil
+    if not ok then return false, 'db_error' end
+    InventoryInternal.invalidate(characterId)
+    return true, tonumber(changed) or 0
+end
+exports('ClearCharacterInventory', ClearCharacterInventory)
+
 -- Offline-safe removal of robbery loot for a character (robbery fallback path).
 exports('RemoveStolenByRobbery', function(characterId, robberyId)
     characterId = tonumber(characterId)

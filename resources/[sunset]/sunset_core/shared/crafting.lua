@@ -98,7 +98,7 @@ Sunset.CraftingRecipes = {
         station = 'ems_supply',
         time = 8000,
         inputs = { bandage = 2, cloth = 2, plastic = 1 },
-        output = { item = 'repairkit', count = 1 },
+        output = { item = 'medkit', count = 1 },
         faction = 'medic',
         minGrade = 1,
     },
