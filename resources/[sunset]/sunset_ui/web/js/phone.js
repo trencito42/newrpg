@@ -1,1381 +1,1385 @@
-const Phone = {
-    data: null,
-    taxiData: null,
-    taxiEstimate: null,
-    screen: 'home',
-    chatTarget: null,
+(function () {
+    const PS = window.PhoneState;
+    const $ = (id) => document.getElementById(id);
+    const t = (key, params) => (window.I18n ? I18n.t(key, params) : key);
+    const money = (n) => (window.formatMoney ? formatMoney(n) : ('$' + Math.floor(Number(n) || 0)));
+    const SVG = {
+        back: '<svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>',
+        phone: '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+        messages: '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
+        bank: '<svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="8" rx="2"></rect><path d="M2 10L12 2l10 8"></path></svg>',
+        garage: '<svg viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2m14 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"></path></svg>',
+        market: '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+        jobs: '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+        map: '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+        faction: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+        apps: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+        taxi: '<svg viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path></svg>',
+        properties: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>',
+        clan: '<svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"></path></svg>',
+        news: '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>',
+        settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>',
+    };
 
-    escapeHtml(value) {
-        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-        }[char]));
-    },
+    function el(tag, className) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        return node;
+    }
+    function svg(name) {
+        const wrap = el('span', 'svg-wrap');
+        wrap.innerHTML = SVG[name] || '';
+        return wrap;
+    }
+    function text(value) { return document.createTextNode(PS.safeText(value)); }
+    function clear(node) { while (node && node.firstChild) node.removeChild(node.firstChild); }
+    function btn(className, label, onClick) {
+        const b = el('button', className);
+        b.type = 'button';
+        b.append(text(label));
+        b.addEventListener('click', onClick);
+        return b;
+    }
+    function field(placeholder, value) {
+        const wrap = el('label', 'field');
+        const input = el('input');
+        input.placeholder = placeholder;
+        input.value = value || '';
+        input.addEventListener('keydown', (e) => e.stopPropagation());
+        wrap.append(input);
+        return { wrap, input };
+    }
 
-    // [SEC2] Avatars are player-supplied: only ever allow a strict base64 image data URL
-    // in <img src> (prevents attribute breakout / script injection into other players' NUI).
-    safeAvatarSrc(value) {
-        const v = String(value ?? '');
-        return /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v) ? v : '';
-    },
+    const Phone = {
+        data: {},
+        stack: ['home'],
+        call: { state: 'IDLE' },
+        layout: null,
+        editing: false,
+        isOpen: false,
+        apps: {},
+        taxi: null,
+        taxiDest: null,
+        taxiEstimate: null,
+        token: 0,
+        busy: {},
+        garageFilter: 'all',
+        marketFilter: 'all',
+        factionTab: 'overview',
+        phoneTab: 'keypad',
+        dial: '',
+        thread: null,
+        suppressClick: false,
 
-    init() {
-        if (this._ready) return;
-        this._ready = true;
+        init() {
+            if (this._ready) return;
+            this._ready = true;
+            this.layout = PS.normalizeLayout(null);
+            const views = $('phone-views');
+            views.append(this.buildHome());
+            ['phone', 'messages', 'conversation', 'contacts', 'bank', 'transfer', 'garage', 'market', 'detail', 'taxi', 'jobs', 'map', 'faction', 'apps', 'properties', 'clan', 'news', 'settings'].forEach((id) => {
+                views.append(this.shell(id));
+            });
+            $('phone-home-bar').addEventListener('click', () => this.homeTap());
+            $('phone-island').addEventListener('click', () => {
+                if (this.call.state === 'ACTIVE' || this.call.state === 'OUTGOING_RINGING' || this.call.state === 'INCOMING_RINGING') this.renderCall(true);
+            });
+            views.addEventListener('wheel', (e) => e.stopPropagation());
+        },
 
-        this.setupHomeBar();
-        this.setupKeys();
+        shell(id) {
+            const view = el('div', 'view-container');
+            view.id = 'view-' + id;
+            const header = el('div', 'app-header');
+            const back = el('button', 'btn-icon');
+            back.type = 'button';
+            back.innerHTML = SVG.back;
+            back.addEventListener('click', () => this.back());
+            const title = el('div', 'app-title');
+            title.id = 'phone-title-' + id;
+            const slot = el('div');
+            slot.id = 'phone-slot-' + id;
+            header.append(back, title, slot);
+            const content = el('div', 'app-content');
+            content.id = 'phone-content-' + id;
+            view.append(header, content);
+            return view;
+        },
 
-        $$('[data-phone-app]').forEach((btn) => {
-            btn.addEventListener('click', () => this.openApp(btn.dataset.phoneApp));
-        });
-        $('#phone-back-messages')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.goHome();
-        });
-        $('#phone-back-contacts')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.goHome();
-        });
-        $('#phone-back-chat')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showView('messages');
-        });
-        $('#phone-bank-transfer-open')?.addEventListener('click', () => this.openBankTransfer());
-        $('#phone-bank-transfer-close')?.addEventListener('click', () => this.closeBankTransfer());
-        $('#phone-bank-transfer-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitBankTransfer();
-        });
-        $('#phone-back-settings')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.goHome();
-        });
-        $('#phone-back-taxi')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.goHome();
-        });
-        $('#phone-chat-send')?.addEventListener('click', () => this.sendMessage());
-        $('#phone-chat-input')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.sendMessage();
-        });
-        $('#phone-chat-input')?.addEventListener('input', (e) => {
-            const val = (e.target.value || '').trim();
-            const sendBtn = $('#phone-chat-send');
-            if (sendBtn) sendBtn.classList.toggle('has-text', val.length > 0);
-        });
-        $('#phone-chat-call-btn')?.addEventListener('click', () => {
-            const is112 = this.chatTarget?.isEmergency || this.chatTarget?.charId === -112 || String(this.chatTarget?.charId) === '-112' || this.chatTarget?.phone === '112';
-            if (is112) {
-                this.trigger112Emergency();
-            } else if (this.chatTarget?.phone) {
-                notify(I18n.t('phone.calling', { contact: this.chatTarget.name || this.chatTarget.phone }), 'info');
+        buildHome() {
+            const view = el('div', 'view-container active');
+            view.id = 'view-home';
+            const content = el('div', 'home-content');
+            content.id = 'phone-home';
+            const top = el('div', 'home-top');
+            const logo = el('div', 'home-logo');
+            logo.append(text('RACKET'));
+            const done = btn('edit-done', t('phone.ui.done'), () => this.exitEdit());
+            done.id = 'phone-edit-done';
+            top.append(logo, done);
+            const grid = el('div', 'app-grid');
+            grid.id = 'phone-grid';
+            const dock = el('div', 'dock');
+            dock.id = 'phone-dock';
+            content.append(top, grid, dock);
+            view.append(content);
+            return view;
+        },
+
+        show(payload) {
+            this.init();
+            this.data = payload || {};
+            this.layout = PS.normalizeLayout(payload && payload.layout);
+            this.isOpen = true;
+            this.renderHome();
+            const device = $('phone-device');
+            device.classList.remove('hidden');
+            device.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(() => device.classList.add('is-open'));
+            this.updateClock();
+            if (!this._clock) this._clock = setInterval(() => this.updateClock(), 15000);
+            const st = this.call && this.call.state;
+            if (st === 'INCOMING_RINGING' || st === 'OUTGOING_RINGING') this.renderCall(true);
+            else this.showView(this.stack[this.stack.length - 1] || 'home', false);
+        },
+
+        hide() {
+            this.isOpen = false;
+            this.editing = false;
+            const device = $('phone-device');
+            device.classList.remove('is-open');
+            device.setAttribute('aria-hidden', 'true');
+            setTimeout(() => { if (!this.isOpen) device.classList.add('hidden'); }, 420);
+            if (this._clock) { clearInterval(this._clock); this._clock = null; }
+        },
+
+        close() {
+            if (!this.isOpen) return;
+            if (this.editing) { this.exitEdit(); return; }
+            post('phoneClose', {});
+        },
+
+        update(payload) {
+            this.data = Object.assign({}, this.data || {}, payload || {});
+            if (this.current() === 'messages' || this.current() === 'conversation') this.renderMessages();
+            if (this.current() === 'contacts') this.renderContacts();
+            if (this.current() === 'bank') this.renderBank();
+            if (this.current() === 'phone') this.renderPhoneApp();
+            this.renderHome();
+        },
+
+        addMessage(msg) {
+            if (!msg) return;
+            this.data.messages = this.data.messages || [];
+            if (!this.data.messages.some((row) => row.id === msg.id)) this.data.messages.unshift(msg);
+            this.renderHome();
+            if (this.current() === 'messages' || this.current() === 'conversation') this.renderMessages();
+        },
+
+        updateTaxi(payload) {
+            this.taxi = payload || {};
+            if (this.current() === 'taxi') this.renderTaxi();
+        },
+        setTaxiEstimate(payload) {
+            this.taxiEstimate = payload || null;
+            if (this.current() === 'taxi') this.renderTaxi();
+        },
+        onTaxiPick(dest) {
+            if (!dest) return;
+            this.taxiDest = { id: dest.destinationId, label: dest.label, x: dest.x, y: dest.y };
+            if (this.current() === 'taxi') this.renderTaxi();
+        },
+
+        onActionResult(payload) {
+            payload = payload || {};
+            if (payload.op === 'send') {
+                this.busy.send = false;
+                this.toast(payload.ok ? t('phone.ui.sent') : (payload.error || t('phone.ui.failed_send')), payload.ok ? 'good' : 'bad');
+                if (!payload.ok && this._pendingBubble) this._pendingBubble.failed = true;
             }
-        });
-
-        // Messages UI event handlers
-        $('#phone-btn-new-msg')?.addEventListener('click', () => {
-            this.showView('contacts');
-        });
-        $('#phone-thread-search')?.addEventListener('input', () => {
-            this.renderThreads();
-        });
-
-        // Contacts UI event handlers
-        $('#phone-btn-add-contact')?.addEventListener('click', () => {
-            $('#phone-add-contact-modal')?.classList.remove('hidden');
-            const nameInput = $('#phone-new-name');
-            if (nameInput) {
-                nameInput.value = '';
-                nameInput.focus();
+            if (payload.op === 'transfer') {
+                this.busy.transfer = false;
+                this.toast(payload.ok ? t('phone.ui.transfer_ok') : (payload.error || t('phone.ui.action_failed')), payload.ok ? 'good' : 'bad');
+                if (payload.ok) this.back();
+                if (this.current() === 'transfer' || this.current() === 'bank') this.renderBank();
             }
-            if ($('#phone-new-phone')) $('#phone-new-phone').value = '';
-            if ($('#phone-new-avatar-preview')) $('#phone-new-avatar-preview').textContent = '+';
-        });
-        $('#phone-contact-cancel')?.addEventListener('click', () => {
-            this._pendingContactAdd = false;
-            $('#phone-add-contact-modal')?.classList.add('hidden');
-        });
-        $('#phone-contact-save')?.addEventListener('click', () => {
-            this.submitNewContact();
-        });
-        $('#phone-new-name')?.addEventListener('input', (e) => {
-            const val = (e.target.value || '').trim();
-            const prev = $('#phone-new-avatar-preview');
-            if (prev) prev.textContent = val ? val.charAt(0).toUpperCase() : '+';
-        });
-        $('#phone-new-phone')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.submitNewContact();
-        });
-        $('#phone-contact-search')?.addEventListener('input', () => {
-            this.renderContacts();
-        });
-        $('#phone-my-card')?.addEventListener('click', () => {
-            notify(I18n.t('ui.phone.your_number', { number: this.data?.myPhoneNumber || '555-0000' }), 'info');
-        });
-    },
+        },
 
-    setupKeys() {
-        if (this._keysBound) return;
-        this._keysBound = true;
-        window.addEventListener('keydown', (e) => {
-            const device = $('#phone-device');
-            if (!device?.classList.contains('is-open')) return;
-            const tag = (e.target && e.target.tagName) || '';
-            const typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable;
+        applyAppData(payload) {
+            if (!payload || payload.token !== this.token) return;
+            this.apps[payload.app] = payload.data || {};
+            const view = this.current();
+            if (payload.app === 'garage' && view === 'garage') this.renderGarage();
+            if (payload.app === 'market' && (view === 'market' || view === 'detail')) this.renderMarket();
+            if (payload.app === 'news' && view === 'news') this.renderNews();
+            if (payload.app === 'jobs' && view === 'jobs') this.renderJobs();
+            if (payload.app === 'map' && view === 'map') this.renderMap();
+            if (payload.app === 'faction' && view === 'faction') this.renderFaction();
+            if (payload.app === 'properties' && view === 'properties') this.renderProperties();
+            if (payload.app === 'clan' && view === 'clan') this.renderClan();
+            if (payload.app === 'taxi' && view === 'taxi') { this.taxi = payload.data || this.taxi; this.renderTaxi(); }
+        },
 
-            if (e.key === 'p' || e.key === 'P') {
-                if (!typing) {
+        setCall(payload) {
+            const next = PS.applyCall(this.call, payload || { state: 'IDLE' });
+            this.call = next;
+            if (next.runTimer) this.ensureCallTimer();
+            else this.stopCallTimer();
+            const island = $('phone-island');
+            if (next.state === 'ACTIVE') {
+                island.classList.add('call-active');
+                $('phone-island-name').textContent = this.peerLabel();
+                this.paintDuration();
+            } else island.classList.remove('call-active');
+            if (next.state === 'INCOMING_RINGING' || next.state === 'OUTGOING_RINGING' || next.state === 'ACTIVE' || PS.terminalState(next.state)) this.renderCall(true);
+            else this.renderCall(false);
+            if (PS.terminalState(next.state)) {
+                const id = next.callId;
+                setTimeout(() => {
+                    if (this.call.callId === id && PS.terminalState(this.call.state)) {
+                        this.call = { state: 'IDLE' };
+                        this.renderCall(false);
+                        $('phone-island').classList.remove('call-active');
+                    }
+                }, 1600);
+            }
+        },
+
+        ensureCallTimer() {
+            if (this._callTimer) return;
+            this._callTimer = setInterval(() => this.paintDuration(), 1000);
+        },
+        stopCallTimer() {
+            if (this._callTimer) clearInterval(this._callTimer);
+            this._callTimer = null;
+        },
+        paintDuration() {
+            if (this.call.state !== 'ACTIVE' || !this.call.localStart) return;
+            const secs = Math.max(0, Math.floor((Date.now() - this.call.localStart) / 1000));
+            const label = String(Math.floor(secs / 60)).padStart(2, '0') + ':' + String(secs % 60).padStart(2, '0');
+            const island = $('phone-island-time');
+            if (island) island.textContent = label;
+            const live = $('phone-call-duration');
+            if (live) live.textContent = label;
+        },
+
+        toast(message, kind) {
+            const node = $('phone-toast');
+            if (!node) return;
+            node.hidden = false;
+            node.className = 'phone-toast ' + (kind || '');
+            node.textContent = PS.safeText(message);
+            clearTimeout(this._toast);
+            this._toast = setTimeout(() => { node.hidden = true; }, 2600);
+        },
+
+        updateClock() {
+            const now = new Date();
+            const clock = $('phone-clock');
+            if (clock) clock.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        },
+
+        current() { return this.stack[this.stack.length - 1] || 'home'; },
+
+        showView(id, push) {
+            if (push !== false && this.current() !== id) this.stack.push(id);
+            if (push === false) {
+                const idx = this.stack.lastIndexOf(id);
+                if (idx === -1) this.stack = ['home', id].filter((v, i, arr) => i === 0 || v !== 'home' || arr.length === 1);
+            }
+            document.querySelectorAll('#phone-views .view-container').forEach((view) => {
+                view.classList.remove('active', 'bg-behind');
+                if (view.id === 'view-home') {
+                    if (id === 'home') view.classList.add('active');
+                    else view.classList.add('bg-behind');
+                } else if (view.id === 'view-' + id) view.classList.add('active');
+            });
+            this.renderCurrent();
+        },
+
+        openApp(id) {
+            if (this.editing) return;
+            if (!PS.KNOWN.has(id) && id !== 'contacts' && id !== 'conversation' && id !== 'transfer' && id !== 'detail') return;
+            if (this.apps[id]) delete this.apps[id];
+            this.showView(id, true);
+        },
+
+        back() {
+            if (this.editing) { this.exitEdit(); return; }
+            if (this._callOpen && (this.call.state === 'INCOMING_RINGING' || this.call.state === 'OUTGOING_RINGING')) return;
+            if (this.stack.length > 1) {
+                this.stack.pop();
+                this.showView(this.current(), false);
+            } else this.goHome();
+        },
+
+        goHome() {
+            this.stack = ['home'];
+            this.showView('home', false);
+        },
+
+        homeTap() {
+            if (this.editing) { this.exitEdit(); return; }
+            if (this.current() === 'home') this.close();
+            else this.goHome();
+        },
+
+        load(app) {
+            this.token += 1;
+            const token = this.token;
+            const content = $('phone-content-' + app);
+            if (content) {
+                clear(content);
+                const note = el('div', 'empty');
+                note.append(text(t('phone.ui.loading')));
+                content.append(note);
+            }
+            post('phoneAction', { op: 'load', app: app, token: token });
+        },
+
+        renderCurrent() {
+            const id = this.current();
+            const map = {
+                home: () => this.renderHome(),
+                phone: () => this.renderPhoneApp(),
+                messages: () => this.renderMessages(),
+                conversation: () => this.renderConversation(),
+                contacts: () => this.renderContacts(),
+                bank: () => this.renderBank(),
+                transfer: () => this.renderTransfer(),
+                garage: () => this.renderGarage(),
+                market: () => this.renderMarket(),
+                detail: () => this.renderDetail(),
+                taxi: () => this.renderTaxi(),
+                jobs: () => this.renderJobs(),
+                map: () => this.renderMap(),
+                faction: () => this.renderFaction(),
+                apps: () => this.renderApps(),
+                properties: () => this.renderProperties(),
+                clan: () => this.renderClan(),
+                news: () => this.renderNews(),
+                settings: () => this.renderSettings(),
+            };
+            if (map[id]) map[id]();
+            const needs = { garage: 'garage', market: 'market', taxi: 'taxi', jobs: 'jobs', map: 'map', faction: 'faction', properties: 'properties', clan: 'clan', news: 'news' };
+            if (needs[id] && !this.apps[needs[id]]) this.load(needs[id]);
+        },
+
+        title(id, key, icon) {
+            const node = $('phone-title-' + id);
+            if (!node) return;
+            clear(node);
+            if (icon) node.append(svg(icon));
+            node.append(text(t(key)));
+        },
+
+        iconButton(appId, badge) {
+            const wrap = el('button', 'app-icon-wrap');
+            wrap.type = 'button';
+            wrap.dataset.appid = appId;
+            const icon = el('div', 'app-icon icon-' + appId);
+            icon.append(svg(appId === 'messages' ? 'messages' : appId));
+            if (badge) {
+                const b = el('span', 'app-badge');
+                b.append(text(badge > 9 ? '9+' : String(badge)));
+                icon.append(b);
+            }
+            const label = el('span', 'app-label');
+            label.append(text(t('phone.ui.' + appId)));
+            wrap.append(icon, label);
+            return wrap;
+        },
+
+        bindIcon(node, appId, editable) {
+            let timer = null;
+            let long = false;
+            const cancel = () => { clearTimeout(timer); timer = null; };
+            if (editable) {
+                node.addEventListener('pointerdown', () => {
+                    long = false;
+                    timer = setTimeout(() => { long = true; this.suppressClick = true; this.enterEdit(); }, 560);
+                });
+                node.addEventListener('pointerup', cancel);
+                node.addEventListener('pointerleave', cancel);
+                node.addEventListener('pointermove', cancel);
+                node.draggable = false;
+                node.addEventListener('dragstart', (e) => {
+                    if (!this.editing) { e.preventDefault(); return; }
+                    e.dataTransfer.setData('text/plain', appId);
+                    node.classList.add('dragging');
+                });
+                node.addEventListener('dragend', () => node.classList.remove('dragging'));
+                node.addEventListener('dragover', (e) => { if (this.editing) e.preventDefault(); });
+                node.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    e.stopPropagation();
-                    post('phoneClose', {});
+                    const from = e.dataTransfer.getData('text/plain');
+                    this.reorder(from, appId);
+                });
+            }
+            node.addEventListener('click', (e) => {
+                if (this.editing || long || this.suppressClick) {
+                    e.preventDefault();
+                    this.suppressClick = false;
+                    long = false;
                     return;
                 }
-            }
+                this.openApp(appId);
+            });
+        },
 
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                this.goHomeOrClose();
-            }
-        });
-    },
+        unreadCount() {
+            const me = Number(this.data.myCharacterId);
+            return (this.data.messages || []).filter((m) => Number(m.receiver_character_id) === me && !m.read_at && Number(m.sender_character_id) !== me).length;
+        },
 
-    setupHomeBar() {
-        const zone = $('#phone-home-zone');
-        const bar = $('#phone-home-indicator');
-        if (!zone || zone._bound) return;
-        zone._bound = true;
+        renderHome() {
+            const grid = $('phone-grid');
+            const dock = $('phone-dock');
+            const home = $('phone-home');
+            if (!grid || !dock) return;
+            if (this.editing) home.classList.add('editing'); else home.classList.remove('editing');
+            const done = $('phone-edit-done');
+            if (done) done.textContent = t('phone.ui.done');
+            clear(grid);
+            clear(dock);
+            const unread = this.unreadCount();
+            (this.layout.grid || []).forEach((id) => {
+                const node = this.iconButton(id, id === 'messages' ? unread : 0);
+                if (this.editing) node.draggable = true;
+                this.bindIcon(node, id, true);
+                grid.append(node);
+            });
+            ['phone', 'messages', 'bank', 'map'].forEach((id) => {
+                const node = this.iconButton(id, id === 'messages' ? unread : 0);
+                this.bindIcon(node, id, false);
+                dock.append(node);
+            });
+        },
 
-        let startY = 0;
-        let dragging = false;
-        let moved = false;
+        enterEdit() {
+            this.editing = true;
+            this.renderHome();
+        },
+        exitEdit() {
+            this.editing = false;
+            this.renderHome();
+            post('phoneAction', { op: 'layout', grid: this.layout.grid });
+        },
+        reorder(from, to) {
+            if (!from || !to || from === to) return;
+            const grid = this.layout.grid.slice();
+            const a = grid.indexOf(from);
+            const b = grid.indexOf(to);
+            if (a < 0 || b < 0) return;
+            grid.splice(a, 1);
+            grid.splice(b, 0, from);
+            this.layout = PS.normalizeLayout({ grid: grid });
+            this.renderHome();
+            document.querySelectorAll('#phone-grid .app-icon-wrap').forEach((node) => { node.draggable = true; });
+        },
 
-        const finish = (endY) => {
-            const delta = startY - endY;
-            zone.classList.remove('is-dragging');
-            if (bar) bar.style.transform = '';
-            dragging = false;
+        peerLabel() {
+            const phone = this.call.peerPhone;
+            const contact = (this.data.contacts || []).find((c) => c.phone === phone);
+            return contact && contact.name ? contact.name : (this.call.peerName || t('phone.ui.unknown'));
+        },
 
-            if (delta > 30) {
-                post('phoneClose', {});
-            } else if (!moved) {
-                this.goHomeOrClose();
-            }
-            moved = false;
-        };
-
-        zone.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            zone.setPointerCapture(e.pointerId);
-            startY = e.clientY;
-            dragging = true;
-            moved = false;
-            zone.classList.add('is-dragging');
-        });
-
-        zone.addEventListener('pointermove', (e) => {
-            if (!dragging) return;
-            const delta = startY - e.clientY;
-            if (Math.abs(delta) > 4) moved = true;
-            if (delta > 0 && bar) {
-                bar.style.transform = `translateY(-${Math.min(delta * 0.45, 36)}px)`;
-            }
-        });
-
-        zone.addEventListener('pointerup', (e) => {
-            if (!dragging) return;
-            zone.releasePointerCapture(e.pointerId);
-            finish(e.clientY);
-        });
-
-        zone.addEventListener('pointercancel', (e) => {
-            if (!dragging) return;
-            finish(e.clientY);
-        });
-    },
-
-    formatMoney(n) {
-        return '$' + (Number(n) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    },
-
-    updateClock() {
-        const now = new Date();
-        const el = $('#phone-time');
-        if (el) el.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        this.updateHomeDate(now);
-    },
-
-    updateHomeDate(now = new Date()) {
-        const el = $('#phone-home-date');
-        if (!el) return;
-        el.textContent = I18n.date(now, { weekday: 'long', month: 'long', day: 'numeric' });
-    },
-
-    formatMsgTime(raw) {
-        if (!raw) return '';
-        const d = new Date(raw);
-        if (Number.isNaN(d.getTime())) return '';
-        const now = new Date();
-        const sameDay = d.toDateString() === now.toDateString();
-        if (sameDay) {
-            return I18n.time(d, { hour: 'numeric', minute: '2-digit' });
-        }
-        return I18n.date(d, { month: 'short', day: 'numeric' });
-    },
-
-    show(payload) {
-        this.init();
-        this.data = payload || {};
-        this.chatTarget = null;
-        this.screen = 'home';
-        this.updateClock();
-        if (!this._clockTimer) {
-            this._clockTimer = setInterval(() => this.updateClock(), 30000);
-        }
-        this.renderHome();
-        this.renderThreads();
-        this.renderContacts();
-        this.renderBank();
-        this.renderSettings();
-        this.showView('home');
-        const device = $('#phone-device');
-        device?.classList.remove('hidden');
-        requestAnimationFrame(() => device?.classList.add('is-open'));
-    },
-
-    hide() {
-        if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-        const device = $('#phone-device');
-        device?.classList.remove('is-open');
-        setTimeout(() => device?.classList.add('hidden'), 400);
-        this.chatTarget = null;
-        // [NUI PERF] stop the clock tick while the phone is hidden
-        if (this._clockTimer) {
-            clearInterval(this._clockTimer);
-            this._clockTimer = null;
-        }
-    },
-
-    update(payload) {
-        this.data = { ...(this.data || {}), ...(payload || {}) };
-        this.renderThreads();
-        this.renderContacts();
-        this.renderBank();
-        if (this._pendingContactAdd) {
-            this.finishContactAdd();
-        }
-        if (this.chatTarget) {
-            this.chatTarget.online = this.isContactOnline(this.chatTarget.charId);
-            const sub = $('#phone-chat-subtitle');
-            const phone = this.chatTarget.phone;
-            if (sub) {
-                if (this.chatTarget.isEmergency) {
-                    sub.textContent = I18n.t('dynamic.phone.imessage_dispatch_112');
-                } else if (phone) {
-                    sub.textContent = `${phone} · ${this.chatTarget.online ? 'iMessage' : I18n.t('ui.factions.offline')}`;
+        renderCall(open) {
+            this._callOpen = !!open && this.call.state && this.call.state !== 'IDLE';
+            const layer = $('phone-call-layer');
+            if (!layer) return;
+            if (!this._callOpen) { layer.hidden = true; clear(layer); return; }
+            layer.hidden = false;
+            clear(layer);
+            const initials = el('div', 'call-avatar');
+            const label = this.peerLabel();
+            initials.append(text(label.slice(0, 2).toUpperCase()));
+            const name = el('div', 'call-name');
+            name.append(text(label));
+            const sub = el('div', 'call-sub');
+            sub.append(text(this.call.peerPhone || ''));
+            const state = el('div', 'call-sub');
+            const stateKey = this.call.state === 'INCOMING_RINGING' ? 'phone.ui.incoming'
+                : (this.call.state === 'ACTIVE' ? 'phone.ui.active_call'
+                    : (PS.terminalState(this.call.state) ? ('phone.call.' + String(this.call.reason || this.call.state).toLowerCase()) : 'phone.ui.calling'));
+            const stateLabel = t(stateKey);
+            state.append(text(stateLabel === stateKey ? t('phone.ui.call') : stateLabel));
+            if (this.call.state === 'ACTIVE') {
+                const dur = el('div', 'call-name');
+                dur.id = 'phone-call-duration';
+                dur.append(text('00:00'));
+                layer.append(initials, name, sub, state, dur);
+                this.paintDuration();
+            } else layer.append(initials, name, sub, state);
+            const actions = el('div', 'call-actions');
+            if (!PS.terminalState(this.call.state)) {
+                if (this.call.state === 'INCOMING_RINGING') {
+                    actions.append(btn('btn-red', t('phone.ui.decline'), () => post('phoneAction', { op: 'decline' })));
+                    actions.append(btn('btn-green', t('phone.ui.accept'), () => post('phoneAction', { op: 'answer' })));
                 } else {
-                    sub.textContent = this.chatTarget.online ? 'iMessage' : I18n.t('ui.factions.offline');
+                    actions.append(btn('btn-red', t('phone.ui.hangup'), () => post('phoneAction', { op: 'hangup' })));
                 }
+                layer.append(actions);
             }
-            this.renderChat(this.chatTarget);
-        }
-    },
+        },
 
-    addMessage(msg) {
-        if (!this.data || !msg) return;
-        this.data.messages = this.data.messages || [];
-        const exists = this.data.messages.some((m) => m.id === msg.id);
-        if (!exists) {
-            this.data.messages.unshift(msg);
-        }
-        if (msg.sender_avatar && msg.sender_character_id) {
-            this.data.avatarsByChar = this.data.avatarsByChar || {};
-            this.data.avatarsByChar[msg.sender_character_id] = msg.sender_avatar;
-        }
-        this.renderThreads();
-        if (this.chatTarget) {
-            const isRelevant = Number(this.chatTarget.charId) === Number(msg.sender_character_id) || Number(this.chatTarget.charId) === Number(msg.receiver_character_id);
-            if (isRelevant) {
-                this.renderChat(this.chatTarget);
-            }
-        }
-    },
+        myId() { return Number(this.data.myCharacterId); },
 
-    goHome() {
-        this.chatTarget = null;
-        this.showView('home');
-    },
+        threads() {
+            const me = this.myId();
+            const map = new Map();
+            (this.data.messages || []).forEach((msg) => {
+                const sender = Number(msg.sender_character_id);
+                const receiver = Number(msg.receiver_character_id);
+                const peer = sender === me ? receiver : sender;
+                const key = String(peer);
+                const row = map.get(key) || { peer: peer, messages: [], unread: 0 };
+                row.messages.push(msg);
+                if (receiver === me && !msg.read_at) row.unread += 1;
+                map.set(key, row);
+            });
+            return Array.from(map.values()).map((row) => {
+                row.messages.sort((a, b) => Number(a.id) - Number(b.id));
+                const last = row.messages[row.messages.length - 1];
+                row.last = last;
+                row.name = this.nameForPeer(row.peer, last);
+                row.phone = this.phoneForPeer(row.peer);
+                return row;
+            }).sort((a, b) => Number(b.last.id) - Number(a.last.id));
+        },
 
-    goHomeOrClose() {
-        if (this.screen === 'home') {
-            post('phoneClose', {});
-        } else {
-            this.goHome();
-        }
-    },
+        nameForPeer(peer, msg) {
+            if (Number(peer) === 0) return t('phone.ui.dispatch');
+            const contact = (this.data.contacts || []).find((c) => Number(c.characterId) === Number(peer));
+            if (contact) return contact.name;
+            if (msg && Number(msg.sender_character_id) === Number(peer) && msg.sender_name) return msg.sender_name;
+            return t('phone.ui.unknown');
+        },
+        phoneForPeer(peer) {
+            const contact = (this.data.contacts || []).find((c) => Number(c.characterId) === Number(peer));
+            return contact ? contact.phone : '';
+        },
 
-    close() {
-        if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-        post('phoneClose', {});
-    },
+        renderPhoneApp() {
+            this.title('phone', 'phone.ui.phone', 'phone');
+            const content = $('phone-content-phone');
+            clear(content);
+            const tabs = el('div', 'pill-tabs');
+            ['keypad', 'recents', 'contacts'].forEach((tab) => {
+                const b = btn('pill-tab' + (this.phoneTab === tab ? ' active' : ''), t('phone.ui.' + tab), () => { this.phoneTab = tab; this.renderPhoneApp(); });
+                tabs.append(b);
+            });
+            content.append(tabs);
+            if (this.phoneTab === 'contacts') { this.renderContactsInto(content); return; }
+            if (this.phoneTab === 'recents') { this.renderRecents(content); return; }
+            const number = el('div', 'dial-number');
+            number.append(text(this.dial || t('phone.ui.number')));
+            const pad = el('div', 'pad');
+            ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach((d) => {
+                pad.append(btn('', d, () => { this.dial = (this.dial + d).slice(0, 16); this.renderPhoneApp(); }));
+            });
+            content.append(number, pad);
+            content.append(btn('btn-green', t('phone.ui.call'), () => this.startCall(this.dial)));
+            content.append(btn('btn-ghost', t('phone.ui.delete'), () => { this.dial = this.dial.slice(0, -1); this.renderPhoneApp(); }));
+        },
 
-    trigger112Emergency() {
-        if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-        // Lua closes the phone before opening 112. A second close races the
-        // new modal and can steal its cursor after it is already visible.
-        post('phoneTrigger112', {});
-    },
+        renderRecents(content) {
+            const rows = this.data.calls || [];
+            if (!rows.length) { content.append(this.empty(t('phone.ui.empty'))); return; }
+            rows.forEach((call) => {
+                const item = el('div', 'list-item');
+                const title = el('div', 'grow');
+                const name = el('div', 'item-title');
+                const contact = (this.data.contacts || []).find((c) => c.phone === call.peer_phone);
+                name.append(text(contact ? contact.name : (call.peer_name || t('phone.ui.unknown'))));
+                const sub = el('div', 'item-subtitle');
+                const dir = call.direction === 'out' ? t('phone.ui.calling') : (call.status === 'missed' ? t('phone.ui.missed') : t('phone.ui.incoming'));
+                sub.append(text((call.peer_phone || '') + ' · ' + dir));
+                title.append(name, sub);
+                item.append(title, btn('mini', t('phone.ui.call'), () => this.startCall(call.peer_phone)));
+                content.append(item);
+            });
+        },
 
-    openApp(app) {
-        if (app === 'emergency112') {
-            this.trigger112Emergency();
-            return;
-        }
-        if (app === 'taxi') {
-            this.showView('taxi');
-            this.taxiData = this.taxiData || null;
-            this.renderTaxi();
-            post('taxiRefresh', {});
-            return;
-        }
-        this.showView(app);
-    },
+        startCall(phone) {
+            const number = PS.safeText(phone).trim();
+            if (!number) { this.toast(t('phone.enter_number'), 'bad'); return; }
+            if (number === '112') { post('phoneTrigger112', {}); return; }
+            post('phoneAction', { op: 'call', phone: number });
+        },
 
-    showView(name) {
-        if (this.screen === 'taxi' && name !== 'taxi') {
-            if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-        }
-        this.screen = name;
-        $$('.phone-view').forEach((v) => v.classList.toggle('is-active', v.dataset.view === name));
-        const wp = $('#phone-wallpaper');
-        if (wp) wp.classList.toggle('phone-wallpaper--app', name !== 'home');
-        const island = $('.phone-dynamic-island');
-        if (island) island.style.width = name === 'home' ? '108px' : '96px';
-    },
+        renderMessages() {
+            this.title('messages', 'phone.ui.messages', 'messages');
+            const slot = $('phone-slot-messages');
+            clear(slot);
+            slot.append(btn('btn-icon', '', () => this.openApp('contacts')));
+            slot.lastChild.innerHTML = SVG.messages;
+            const content = $('phone-content-messages');
+            clear(content);
+            const search = field(t('phone.ui.search_messages'), this._msgQuery || '');
+            search.input.addEventListener('input', () => { this._msgQuery = search.input.value; this.renderThreadList(content, search.wrap); });
+            content.append(search.wrap);
+            this.renderThreadList(content, search.wrap);
+        },
 
-    renderHome() {
-        // wallpaper + dock already in HTML
-    },
+        renderThreadList(content, keep) {
+            Array.from(content.children).forEach((child) => { if (child !== keep) child.remove(); });
+            const q = (this._msgQuery || '').toLowerCase();
+            const rows = this.threads().filter((row) => !q || row.name.toLowerCase().indexOf(q) !== -1 || (row.last.message || '').toLowerCase().indexOf(q) !== -1);
+            if (!rows.length) content.append(this.empty(t('phone.ui.empty_messages')));
+            rows.forEach((row) => {
+                const item = el('button', 'list-item');
+                item.type = 'button';
+                item.style.width = '100%';
+                item.style.background = 'transparent';
+                item.style.border = '0';
+                item.style.color = 'inherit';
+                item.style.textAlign = 'left';
+                const av = el('div', 'avatar');
+                av.append(text(row.name.slice(0, 2).toUpperCase()));
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(row.name + (row.unread ? ' (' + row.unread + ')' : '')));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text(row.last.message || ''));
+                body.append(title, sub);
+                item.append(av, body);
+                item.addEventListener('click', () => { this.thread = row; this.openApp('conversation'); });
+                content.append(item);
+            });
+        },
 
-    getIosAvatarGradient(name) {
-        const palettes = [
-            ['#0a84ff', '#007aff'],
-            ['#5e5ce6', '#4845d2'],
-            ['#bf5af2', '#9933cc'],
-            ['#ff375f', '#d70035'],
-            ['#ff9f0a', '#ea580c'],
-            ['#30d158', '#16a34a'],
-            ['#64d2ff', '#0284c7'],
-            ['#8e8e93', '#636366'],
-        ];
-        let hash = 0;
-        const str = String(name || '');
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        const idx = Math.abs(hash) % palettes.length;
-        return `linear-gradient(135deg, ${palettes[idx][0]} 0%, ${palettes[idx][1]} 100%)`;
-    },
-
-    // [AVATAR] Returns avatar HTML: real image if available, gradient+initial fallback
-    avatarHtml(name, charId, isEmergency) {
-        const initial = (name || '?').charAt(0).toUpperCase();
-        const avatars = this.data?.avatarsByChar || {};
-        const avatar = charId ? avatars[charId] : null;
-        if (isEmergency) {
-            return `<div class="phone-thread__avatar phone-thread__avatar--emergency" style="background: linear-gradient(135deg, #ff3b30 0%, #d70015 100%);">🚨</div>`;
-        }
-        if (avatar) {
-            return `<div class="phone-thread__avatar"><img src="${this.safeAvatarSrc(avatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>`;
-        }
-        return `<div class="phone-thread__avatar" style="background: ${this.getIosAvatarGradient(name)};">${this.escapeHtml(initial)}</div>`;
-    },
-
-    buildThreads() {
-        const d = this.data || {};
-        const myId = d.myCharacterId;
-        const threads = new Map();
-
-        (d.messages || []).forEach((m) => {
-            const isMine = m.sender_character_id === myId;
-            const otherCharId = isMine ? m.receiver_character_id : m.sender_character_id;
-            const is112 = otherCharId === 0 || otherCharId === -112 || String(otherCharId) === '-112';
-            let otherName = isMine ? (m.receiver_name || I18n.t('common.player')) : (m.sender_name || I18n.t('common.player'));
-            if (is112) otherName = I18n.t('ui.phone.emergency_112');
-
-            const key = String(otherCharId);
-            const existing = threads.get(key) || {
-                charId: otherCharId,
-                name: otherName,
-                isEmergency: is112,
-                preview: '',
-                messages: [],
-                online: is112,
+        renderConversation() {
+            const row = this.thread;
+            this.title('conversation', 'phone.ui.messages', 'messages');
+            const title = $('phone-title-conversation');
+            clear(title);
+            title.append(text(row ? row.name : t('phone.ui.messages')));
+            const slot = $('phone-slot-conversation');
+            clear(slot);
+            if (row && Number(row.peer) > 0) slot.append(btn('btn-icon', '', () => this.startCall(row.phone)));
+            if (slot.lastChild) slot.lastChild.innerHTML = SVG.phone;
+            const content = $('phone-content-conversation');
+            clear(content);
+            if (!row) { content.append(this.empty(t('phone.ui.empty_messages'))); return; }
+            post('phoneAction', { op: 'read', characterId: row.peer });
+            (this.data.messages || []).forEach((msg) => {
+                if (Number(msg.receiver_character_id) === this.myId() && Number(msg.sender_character_id) === Number(row.peer)) msg.read_at = msg.read_at || new Date().toISOString();
+            });
+            const log = el('div', 'chat-log');
+            row.messages.forEach((msg) => {
+                const mine = Number(msg.sender_character_id) === this.myId();
+                const bubble = el('div', 'bubble ' + (mine ? 'out' : 'in'));
+                bubble.append(text(msg.message || ''));
+                const time = el('span', 'time');
+                time.append(text(msg.created_at || ''));
+                bubble.append(time);
+                log.append(bubble);
+            });
+            const compose = el('div', 'chat-compose');
+            const input = el('input');
+            input.maxLength = 256;
+            input.placeholder = t('phone.ui.type_message');
+            input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); });
+            const sendBtn = btn('mini', t('phone.ui.send'), () => send());
+            const send = () => {
+                const message = input.value.trim();
+                if (!message || this.busy.send) return;
+                this.busy.send = true;
+                sendBtn.disabled = true;
+                post('phoneSend', { targetCharacterId: row.peer, phone: row.phone, message: message });
+                input.value = '';
             };
-            if (!existing.preview) existing.preview = m.message;
-            existing.messages.push(m);
-            threads.set(key, existing);
-        });
+            compose.append(input, sendBtn);
+            content.append(log, compose);
+            content.scrollTop = content.scrollHeight;
+        },
 
-        (d.contacts || []).forEach((c) => {
-            const key = String(c.characterId);
-            if (!key || key === 'undefined') return;
-            if (!threads.has(key)) {
-                threads.set(key, {
-                    charId: c.characterId,
-                    name: this.contactLabel(c),
-                    isEmergency: false,
-                    preview: I18n.t('ui.phone.no_messages_yet'),
-                    messages: [],
-                    online: c.online === true,
-                });
-            } else {
-                const t = threads.get(key);
-                t.online = c.online === true;
-                t.name = this.contactLabel(c) || t.name;
+        renderContacts() {
+            this.title('contacts', 'phone.ui.contacts', 'faction');
+            const slot = $('phone-slot-contacts');
+            clear(slot);
+            slot.append(btn('mini', t('phone.ui.add_contact'), () => { this._adding = !this._adding; this.renderContacts(); }));
+            const content = $('phone-content-contacts');
+            clear(content);
+            this.renderContactsInto(content);
+        },
+
+        renderContactsInto(content) {
+            if (this._adding) {
+                const name = field(t('phone.ui.name'));
+                const phone = field(t('phone.ui.number'));
+                content.append(name.wrap, phone.wrap, btn('btn-gold', t('phone.ui.save'), () => {
+                    post('phoneAddContact', { name: name.input.value.trim(), phone: phone.input.value.trim() });
+                    this._adding = false;
+                }));
             }
-        });
+            const q = (this._contactQuery || '').toLowerCase();
+            const search = field(t('phone.ui.search'), this._contactQuery || '');
+            search.input.dataset.focus = '1';
+            search.input.addEventListener('input', () => {
+                const caret = search.input.selectionStart;
+                this._contactQuery = search.input.value;
+                if (this.current() === 'contacts') this.renderContacts(); else this.renderPhoneApp();
+                const next = document.querySelector('#phone-device input[data-focus="1"]');
+                if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
+            });
+            content.append(search.wrap);
+            const mine = el('div', 'panel');
+            mine.append(text((this.data.myName || t('phone.ui.you')) + ' · ' + (this.data.myPhoneNumber || '')));
+            content.append(mine);
+            const rows = (this.data.contacts || []).filter((c) => !q || (c.name || '').toLowerCase().indexOf(q) !== -1 || (c.phone || '').indexOf(q) !== -1);
+            if (!rows.length) content.append(this.empty(t('phone.ui.empty_contacts')));
+            rows.forEach((c) => {
+                const item = el('div', 'list-item');
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(c.name || t('phone.ui.unknown')));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text((c.phone || '') + ' · ' + (c.online ? t('phone.ui.online') : t('phone.ui.offline'))));
+                body.append(title, sub);
+                const actions = el('div', 'row-actions');
+                actions.append(btn('mini', t('phone.ui.call'), () => this.startCall(c.phone)));
+                actions.append(btn('mini', t('phone.ui.message'), () => {
+                    this.thread = { peer: Number(c.characterId), name: c.name, phone: c.phone, messages: this.messagesWith(c.characterId) };
+                    this.openApp('conversation');
+                }));
+                actions.append(btn('mini danger', t('phone.ui.delete'), () => post('phoneDeleteContact', { contactId: c.id })));
+                item.append(body, actions);
+                content.append(item);
+            });
+        },
 
-        return Array.from(threads.values()).sort((a, b) => {
-            const ta = a.messages[0]?.id || 0;
-            const tb = b.messages[0]?.id || 0;
-            return tb - ta;
-        });
-    },
+        messagesWith(characterId) {
+            const me = this.myId();
+            const peer = Number(characterId);
+            return (this.data.messages || []).filter((m) => {
+                const s = Number(m.sender_character_id);
+                const r = Number(m.receiver_character_id);
+                return (s === me && r === peer) || (r === me && s === peer);
+            });
+        },
 
-    isContactOnline(charId) {
-        const id = Number(charId);
-        if (!id || id <= 0) return false;
-        const contact = (this.data?.contacts || []).find((c) => Number(c.characterId) === id);
-        return contact ? contact.online === true : false;
-    },
+        reasonLabel(reason) {
+            const key = 'phone.ui.reason_' + String(reason || '');
+            const label = t(key);
+            return label === key ? PS.safeText(reason || '') : label;
+        },
 
-    contactLabel(contact) {
-        const name = String(contact?.name || '').trim();
-        if (name) return name;
-        if (contact?.phone) return String(contact.phone);
-        return I18n.t('ui.mdc.unknown');
-    },
-
-    renderThreads() {
-        const list = $('#phone-thread-list');
-        if (!list) return;
-        list.innerHTML = '';
-        let threads = this.buildThreads();
-
-        const query = ($('#phone-thread-search')?.value || '').trim().toLowerCase();
-        if (query) {
-            threads = threads.filter((t) =>
-                (t.name || '').toLowerCase().includes(query) ||
-                (t.preview || '').toLowerCase().includes(query)
-            );
-        }
-
-        if (!threads.length) {
-            list.innerHTML = `
-                <div class="phone-empty-state">
-                    <div class="phone-empty-state__icon">💬</div>
-                    <div class="phone-empty-state__title">${I18n.t('ui.phone.no_messages')}</div>
-                    <p class="phone-empty-state__desc">
-                        ${query ? I18n.t('ui.phone.no_conversations_match') : I18n.t('ui.phone.start_chat_hint')}
-                    </p>
-                </div>
-            `;
-            return;
-        }
-
-        threads.forEach((t) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `phone-thread ${t.isEmergency ? 'phone-thread--emergency' : ''}`;
-            const lastMsg = t.messages[0];
-            const timeStr = lastMsg ? this.formatMsgTime(lastMsg.created_at) : '';
-
-            btn.innerHTML = `
-                ${this.avatarHtml(t.name, t.charId, t.isEmergency)}
-                <div class="phone-thread__body">
-                    <div class="phone-thread__row">
-                        <span class="phone-thread__name">
-                            ${this.escapeHtml(t.name)}
-                            ${t.isEmergency ? '<span class="phone-contact-badge phone-contact-badge--emergency">SOS</span>' : ''}
-                        </span>
-                        ${timeStr ? `<span class="phone-thread__time">${this.escapeHtml(timeStr)}</span>` : ''}
-                    </div>
-                    <div class="phone-thread__preview">${this.escapeHtml(t.preview || '')}</div>
-                </div>
-                <span class="phone-thread__chevron">›</span>`;
-            btn.addEventListener('click', () => this.openChat({
-                name: t.name,
-                charId: t.charId,
-                isEmergency: t.isEmergency,
-                online: t.isEmergency ? true : this.isContactOnline(t.charId),
+        renderBank() {
+            this.title('bank', 'phone.ui.bank', 'bank');
+            const content = $('phone-content-bank');
+            clear(content);
+            const cash = Number(this.data.cash) || 0;
+            const bank = Number(this.data.bank) || 0;
+            const total = el('div', 'panel bank-balance');
+            total.append(el('div', 'bb-label'));
+            total.lastChild.append(text(t('phone.ui.total')));
+            const amount = el('div', 'bb-amount');
+            amount.append(text(money(cash + bank)));
+            total.append(amount);
+            const subs = el('div', 'sub-balances');
+            [['phone.ui.cash', cash], ['phone.ui.bank_balance', bank]].forEach(([key, value]) => {
+                const card = el('div', 'sub-bal-card');
+                const h = el('div', 'sbc-header');
+                h.append(text(t(key)));
+                const a = el('div', 'sbc-amount');
+                a.append(text(money(value)));
+                card.append(h, a);
+                subs.append(card);
+            });
+            content.append(total, subs);
+            const head = el('div', 'section-title');
+            head.append(text(t('phone.ui.transactions')));
+            content.append(head);
+            const txs = this.data.transactions || [];
+            if (!txs.length) content.append(this.empty(t('phone.ui.no_transactions')));
+            txs.forEach((tx) => {
+                const item = el('div', 'tx-item');
+                const body = el('div', 'grow');
+                const title = el('div', 'tx-title');
+                title.append(text(this.reasonLabel(tx.reason)));
+                const desc = el('div', 'tx-desc');
+                desc.append(text(tx.created_at || ''));
+                body.append(title, desc);
+                const amt = el('div', 'tx-amt ' + (tx.direction === 'in' ? 'pos' : 'neg'));
+                amt.append(text((tx.direction === 'in' ? '+' : '-') + money(tx.amount)));
+                item.append(body, amt);
+                content.append(item);
+            });
+            const footer = el('div', 'bank-footer');
+            footer.append(btn('btn-bank', t('phone.ui.transfer'), () => this.openApp('transfer')));
+            footer.append(btn('btn-gold', t('phone.ui.deposit'), () => {
+                this.toast(t('phone.ui.deposit_hint'), 'good');
+                post('phoneAction', { op: 'nearestAtm' });
             }));
-            list.appendChild(btn);
-        });
-    },
+            content.append(footer);
+        },
 
-    renderContacts() {
-        const list = $('#phone-contact-list');
-        if (!list) return;
-
-        // Update My Card with current player's profile and phone number
-        const myCardName = $('#phone-my-card-name');
-        const myCardPhone = $('#phone-my-card-phone');
-        const myCardAvatar = $('#phone-my-card-avatar');
-        if (myCardName) myCardName.textContent = this.data?.myName || I18n.t('ui.phone.my_card');
-        if (myCardPhone) myCardPhone.textContent = this.data?.myPhoneNumber || '555-0000';
-        if (myCardAvatar) {
-            const myAvatar = this.data?.myAvatar || null;
-            if (myAvatar) {
-                myCardAvatar.innerHTML = `<img src="${this.safeAvatarSrc(myAvatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                myCardAvatar.style.background = 'transparent';
-            } else {
-                myCardAvatar.textContent = (this.data?.myName || '?').charAt(0).toUpperCase();
-            }
-        }
-
-        list.innerHTML = '';
-        const rawContacts = this.data?.contacts || [];
-        const query = ($('#phone-contact-search')?.value || '').trim().toLowerCase();
-
-        // 112 Emergency contact matches search or shows by default
-        const emergencyMatches = !query ||
-            '112'.includes(query) ||
-            'urgente'.includes(query) ||
-            'urgente'.includes(query) ||
-            'politie'.includes(query) ||
-            'politie'.includes(query) ||
-            'medic'.includes(query) ||
-            'medici'.includes(query) ||
-            'salvare'.includes(query) ||
-            'sos'.includes(query) ||
-            'emergency'.includes(query) ||
-            'pompieri'.includes(query) ||
-            'dispecerat'.includes(query);
-
-        let contacts = rawContacts.slice();
-        if (query) {
-            contacts = contacts.filter((c) =>
-                (c.name || '').toLowerCase().includes(query) ||
-                (c.phone || '').toLowerCase().includes(query)
-            );
-        }
-
-        contacts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-        if (!emergencyMatches && !contacts.length) {
-            list.innerHTML = `
-                <div class="phone-empty-state">
-                    <div class="phone-empty-state__icon">👥</div>
-                    <div class="phone-empty-state__title">${I18n.t('common.no_results')}</div>
-                    <p class="phone-empty-state__desc">${I18n.t('ui.phone.no_contacts_match', { query: this.escapeHtml(query) })}</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Render 112 Emergency Services as a normal contact at the top of the contacts list
-        if (emergencyMatches) {
-            const emRow = document.createElement('div');
-            emRow.className = 'phone-contact-row phone-contact-row--emergency';
-            emRow.innerHTML = `
-                <button type="button" class="phone-contact-row__main" title="${I18n.t('ui.phone.call_112_emergency')}">
-                    <div class="phone-contact-row__avatar phone-contact-row__avatar--emergency">
-                        <svg viewBox="0 0 24 24" fill="white" class="phone-contact-row__sos-icon"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
-                        <span class="phone-contact-row__status-dot is-online"></span>
-                    </div>
-                    <div class="phone-contact-row__details">
-                        <div class="phone-contact-row__name">
-                            ${I18n.t('ui.phone.emergency_112')}
-                            <span class="phone-contact-badge phone-contact-badge--emergency">SOS</span>
-                        </div>
-                        <div class="phone-contact-row__meta">
-                            <span class="phone-contact-num">112</span>
-                            <span>·</span>
-                            <span class="phone-contact-desc">${I18n.t('ui.phone.emergency_services')}</span>
-                        </div>
-                    </div>
-                </button>
-                <div class="phone-contact-row__actions">
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="${I18n.t('ui.phone.call_112_dispatch')}">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.053 15.053 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.9c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.02z"/></svg>
-                    </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="${I18n.t('ui.phone.message_112')}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    </button>
-                </div>
-            `;
-
-            emRow.querySelector('.phone-contact-row__main').addEventListener('click', () => {
-                this.trigger112Emergency();
+        renderTransfer() {
+            this.title('transfer', 'phone.ui.transfer', 'bank');
+            const content = $('phone-content-transfer');
+            clear(content);
+            const id = field(t('phone.ui.player_id'));
+            const amount = field(t('phone.ui.amount'));
+            amount.input.inputMode = 'numeric';
+            content.append(id.wrap, amount.wrap);
+            (this.data.contacts || []).filter((c) => c.serverId).forEach((c) => {
+                content.append(btn('mini', (c.name || '') + ' #' + c.serverId, () => { id.input.value = String(c.serverId); }));
             });
-            emRow.querySelector('.phone-contact-act-btn--call').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.trigger112Emergency();
+            const go = btn('btn-gold', t('phone.ui.confirm'), () => {
+                const targetId = Number(id.input.value);
+                const value = Math.floor(Number(amount.input.value));
+                if (!targetId || !value || value < 1 || this.busy.transfer) return;
+                this.busy.transfer = true;
+                go.disabled = true;
+                post('phoneBankTransfer', { targetId: targetId, amount: value });
             });
-            emRow.querySelector('.phone-contact-act-btn--chat').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.openChat({
-                    name: '112 Emergency',
-                    charId: -112,
-                    phone: '112',
-                    isEmergency: true,
-                    online: true,
+            content.append(go);
+        },
+
+        vehicleStatus(vehicle, impounded) {
+            if (impounded) return 'impounded';
+            if (Number(vehicle.destroyed) === 1) return 'destroyed';
+            return Number(vehicle.stored) === 1 ? 'stored' : 'out';
+        },
+
+        renderGarage() {
+            this.title('garage', 'phone.ui.garage', 'garage');
+            const content = $('phone-content-garage');
+            clear(content);
+            const data = this.apps.garage;
+            if (!data) return;
+            const impoundIds = {};
+            (data.impound || []).forEach((row) => { impoundIds[Number(row.vehicleId)] = row; });
+            const vehicles = (data.vehicles || []).map((vehicle) => Object.assign({}, vehicle, { _status: this.vehicleStatus(vehicle, impoundIds[Number(vehicle.id)]) }));
+            const counts = { all: vehicles.length, stored: 0, out: 0, impounded: 0 };
+            vehicles.forEach((v) => { if (counts[v._status] !== undefined) counts[v._status] += 1; });
+            const tabs = el('div', 'pill-tabs');
+            ['all', 'stored', 'out', 'impounded'].forEach((key) => {
+                tabs.append(btn('pill-tab' + (this.garageFilter === key ? ' active' : ''), t('phone.ui.' + key) + ' ' + (counts[key] || 0), () => { this.garageFilter = key; this.renderGarage(); }));
+            });
+            content.append(tabs);
+            const list = vehicles.filter((v) => this.garageFilter === 'all' || v._status === this.garageFilter);
+            if (!list.length) content.append(this.empty(t('phone.ui.no_vehicles')));
+            list.forEach((vehicle) => {
+                const card = el('div', 'veh-card' + (this._openVeh === vehicle.id ? ' open' : ''));
+                const main = el('button', 'veh-main');
+                main.type = 'button';
+                main.style.cssText = 'width:100%;background:none;border:0;color:inherit;text-align:left;padding:0';
+                const model = String(vehicle.model || '').toLowerCase();
+                const img = el('img', 'veh-img');
+                img.alt = '';
+                img.src = 'https://docs.fivem.net/vehicles/' + encodeURIComponent(model) + '.webp';
+                img.addEventListener('error', () => {
+                    const fallback = el('div', 'mc-fallback');
+                    fallback.append(text((vehicle.displayName || model || '?').slice(0, 3).toUpperCase()));
+                    img.replaceWith(fallback);
                 });
+                const info = el('div', 'grow');
+                const name = el('div', 'veh-name');
+                name.append(text(vehicle.displayName || vehicle.label || vehicle.model || ''));
+                const status = el('div', 'item-subtitle');
+                const dot = el('span', 'dot ' + (vehicle._status === 'stored' ? 'stored' : vehicle._status === 'out' ? 'out' : 'impounded'));
+                status.append(dot, text(t('phone.ui.' + (vehicle._status === 'destroyed' ? 'destroyed' : vehicle._status)) + ' · ' + (vehicle.plate || '')));
+                const km = el('div', 'item-subtitle');
+                km.append(text(t('phone.ui.mileage') + ' ' + Math.floor(Number(vehicle.odometer) || 0) + ' km'));
+                info.append(name, status, km);
+                main.append(img, info);
+                main.addEventListener('click', () => { this._openVeh = this._openVeh === vehicle.id ? null : vehicle.id; this.renderGarage(); });
+                const actions = el('div', 'veh-actions');
+                actions.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', {
+                    op: 'garageGps',
+                    status: vehicle._status === 'destroyed' ? 'stored' : vehicle._status,
+                    garage: vehicle.garage,
+                    plate: vehicle.plate,
+                    vehicleId: vehicle.id,
+                    parkedX: vehicle.parked_x,
+                    parkedY: vehicle.parked_y,
+                })));
+                card.append(main, actions);
+                content.append(card);
             });
+        },
 
-            list.appendChild(emRow);
-        }
+        marketItems() {
+            const data = this.apps.market || {};
+            const items = [];
+            (data.properties || []).forEach((row) => items.push(Object.assign({ category: 'properties' }, row)));
+            (data.businesses || []).forEach((row) => items.push(Object.assign({ category: 'businesses' }, row)));
+            (data.ads || []).forEach((row) => items.push(Object.assign({ category: 'ads', price: null }, row)));
+            return items;
+        },
 
-        // Render regular contacts
-        contacts.forEach((c) => {
-            const row = document.createElement('div');
-            row.className = 'phone-contact-row';
-            const label = this.contactLabel(c);
-            const isOnline = c.online === true;
-            const phoneText = String(c.phone || '').trim();
-            // [AVATAR] Use real headshot if available, gradient fallback otherwise
-            const avatarImg = c.avatar || (this.data?.avatarsByChar || {})[c.characterId] || null;
-            const avatarContent = avatarImg
-                ? `<img src="${this.safeAvatarSrc(avatarImg)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-                : this.escapeHtml(label.charAt(0).toUpperCase());
-            const avatarStyle = avatarImg ? '' : ` style="background: ${this.getIosAvatarGradient(label)};"`;
-
-            row.innerHTML = `
-                <button type="button" class="phone-contact-row__main">
-                    <div class="phone-contact-row__avatar ${isOnline ? 'is-online' : ''}"${avatarStyle}>
-                        ${avatarContent}
-                        <span class="phone-contact-row__status-dot ${isOnline ? 'is-online' : ''}"></span>
-                    </div>
-                    <div class="phone-contact-row__details">
-                        <div class="phone-contact-row__name">${this.escapeHtml(label)}</div>
-                        <div class="phone-contact-row__meta">
-                            ${phoneText ? `<span class="phone-contact-num">${this.escapeHtml(phoneText)}</span>` : ''}
-                            <span class="${isOnline ? 'phone-contact-row__online-badge' : 'phone-contact-row__offline-badge'}">
-                                ${isOnline ? '● Online' : '○ Offline'}
-                            </span>
-                        </div>
-                    </div>
-                </button>
-                <div class="phone-contact-row__actions">
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--call" title="${I18n.t('ui.phone.call')}">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.053 15.053 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 3.9c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-.99-1.02z"/></svg>
-                    </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--chat" title="${I18n.t('ui.phone.send_imessage')}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    </button>
-                    <button type="button" class="phone-contact-act-btn phone-contact-act-btn--del" title="${I18n.t('ui.phone.delete_contact')}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    </button>
-                </div>
-            `;
-
-            row.querySelector('.phone-contact-row__main').addEventListener('click', () => {
-                this.openChat({
-                    name: label,
-                    charId: c.characterId,
-                    phone: c.phone,
-                    online: isOnline,
-                });
+        renderMarket() {
+            this.title('market', 'phone.ui.market_title', 'market');
+            const content = $('phone-content-market');
+            clear(content);
+            const data = this.apps.market;
+            if (!data) return;
+            const tabs = el('div', 'pill-tabs');
+            ['all', 'properties', 'businesses', 'ads'].forEach((key) => {
+                tabs.append(btn('pill-tab' + (this.marketFilter === key ? ' active' : ''), t(key === 'all' ? 'phone.ui.all' : 'phone.ui.' + key), () => { this.marketFilter = key; this.renderMarket(); }));
             });
-
-            row.querySelector('.phone-contact-act-btn--call').addEventListener('click', (e) => {
-                e.stopPropagation();
-                notify(I18n.t('ui.phone.calling', { name: label, number: phoneText || I18n.t('ui.phone.unknown_number') }), 'info');
+            const search = field(t('phone.ui.search'), this._marketQuery || '');
+            search.input.dataset.focus = '1';
+            search.input.addEventListener('input', () => {
+                const caret = search.input.selectionStart;
+                this._marketQuery = search.input.value;
+                this.renderMarket();
+                const next = document.querySelector('#view-market input[data-focus="1"]');
+                if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
             });
-
-            row.querySelector('.phone-contact-act-btn--chat').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.openChat({
-                    name: label,
-                    charId: c.characterId,
-                    phone: c.phone,
-                    online: isOnline,
-                });
-            });
-
-            row.querySelector('.phone-contact-act-btn--del').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteContact(c.id, label);
-            });
-
-            list.appendChild(row);
-        });
-    },
-
-    submitNewContact() {
-        const name = ($('#phone-new-name')?.value || '').trim();
-        const phone = ($('#phone-new-phone')?.value || '').trim();
-        if (!phone) {
-            notify(I18n.t('phone.enter_number'), 'error');
-            return;
-        }
-        this._pendingContactAdd = true;
-        post('phoneAddContact', { name, phone });
-    },
-
-    finishContactAdd() {
-        this._pendingContactAdd = false;
-        $('#phone-add-contact-modal')?.classList.add('hidden');
-        if ($('#phone-new-name')) $('#phone-new-name').value = '';
-        if ($('#phone-new-phone')) $('#phone-new-phone').value = '';
-        if ($('#phone-new-avatar-preview')) $('#phone-new-avatar-preview').textContent = '+';
-        this.showView('contacts');
-        this.renderContacts();
-    },
-
-    deleteContact(contactId, contactName) {
-        if (!contactId) return;
-        post('phoneDeleteContact', { contactId });
-    },
-
-    openChat(target) {
-        this.chatTarget = target;
-        const online = target.online !== undefined ? target.online : this.isContactOnline(target.charId);
-        const is112 = target.isEmergency || target.charId === -112 || String(target.charId) === '-112' || target.phone === '112';
-
-        const titleEl = $('#phone-chat-title');
-        if (titleEl) titleEl.textContent = target.name || target.phone || I18n.t('ui.phone.chat');
-
-        const sub = $('#phone-chat-subtitle');
-        if (sub) {
-            if (is112) {
-                sub.textContent = I18n.t('dynamic.phone.imessage_112_dispatch');
-            } else if (target.phone) {
-                sub.textContent = `${target.phone} · ${online ? 'iMessage' : I18n.t('ui.factions.offline')}`;
-            } else {
-                sub.textContent = online ? 'iMessage' : I18n.t('ui.factions.offline');
-            }
-        }
-
-        const navAvatar = $('#phone-chat-nav-avatar');
-        if (navAvatar) {
-            if (is112) {
-                navAvatar.textContent = '🚨';
-                navAvatar.style.background = 'linear-gradient(135deg, #ff3b30 0%, #d70015 100%)';
-                navAvatar.innerHTML = '🚨';
-            } else {
-                const avatarImg = (this.data?.avatarsByChar || {})[target.charId] || target.avatar || null;
-                if (avatarImg) {
-                    navAvatar.innerHTML = `<img src="${this.safeAvatarSrc(avatarImg)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    navAvatar.style.background = 'transparent';
-                } else {
-                    navAvatar.textContent = (target.name || '?').charAt(0).toUpperCase();
-                    navAvatar.style.background = this.getIosAvatarGradient(target.name);
+            content.append(tabs, search.wrap);
+            const hint = el('div', 'muted');
+            hint.style.marginBottom = '8px';
+            hint.append(text(t('phone.ui.ad_hint')));
+            content.append(hint);
+            const q = (this._marketQuery || '').toLowerCase();
+            const rows = this.marketItems().filter((row) => (this.marketFilter === 'all' || row.category === this.marketFilter) && (!q || String(row.title || '').toLowerCase().indexOf(q) !== -1));
+            if (!rows.length) content.append(this.empty(t('phone.ui.no_listings')));
+            rows.forEach((row) => {
+                const card = el('button', 'market-card');
+                card.type = 'button';
+                card.style.cssText = 'width:100%;color:inherit;text-align:left;border:0';
+                const fallback = el('div', 'mc-fallback');
+                fallback.append(text((row.category || '?').slice(0, 1).toUpperCase()));
+                const info = el('div', 'grow');
+                const title = el('div', 'mc-title');
+                title.append(text(row.title || ''));
+                const tag = el('div', 'muted');
+                tag.append(text(t('phone.ui.' + row.category)));
+                info.append(title, tag);
+                if (row.price != null) {
+                    const price = el('div', 'mc-price');
+                    price.append(text(money(row.price)));
+                    info.append(price);
                 }
+                card.append(fallback, info);
+                card.addEventListener('click', () => { this.detail = row; this.openApp('detail'); });
+                content.append(card);
+            });
+            if ((data.mine || []).length) {
+                const head = el('div', 'section-title');
+                head.append(text(t('phone.ui.my_ads')));
+                content.append(head);
+                data.mine.forEach((ad) => {
+                    const line = el('div', 'list-item');
+                    const body = el('div', 'grow');
+                    const title = el('div', 'item-title');
+                    title.append(text(ad.text || ''));
+                    const sub = el('div', 'item-subtitle');
+                    sub.append(text(t('phone.ui.' + (ad.status || 'pending'))));
+                    body.append(title, sub);
+                    line.append(body);
+                    content.append(line);
+                });
             }
-        }
+            const cnn = (data.pins || []).find((pin) => String(pin.id).indexOf('cnn_') === 0);
+            content.append(btn('btn-ghost', t('phone.ui.set_gps'), () => { if (cnn) post('phoneAction', { op: 'gps', x: cnn.x, y: cnn.y }); }));
+        },
 
-        const input = $('#phone-chat-input');
-        if (input) {
-            input.placeholder = is112 ? I18n.t('ui.phone.message_to_112') : 'iMessage';
-            input.value = '';
-        }
-        const sendBtn = $('#phone-chat-send');
-        if (sendBtn) sendBtn.classList.remove('has-text');
-
-        this.renderChat(target);
-        this.showView('chat');
-    },
-
-    renderChat(target) {
-        const wrap = $('#phone-chat-messages');
-        if (!wrap || !this.data) return;
-        wrap.innerHTML = '';
-        const myId = this.data.myCharacterId;
-        const is112 = target.isEmergency || target.charId === -112 || String(target.charId) === '-112' || target.phone === '112';
-
-        const msgs = (this.data.messages || []).filter((m) => {
-            if (is112) {
-                return m.sender_character_id === 0 || m.receiver_character_id === 0 || m.sender_character_id === -112 || m.receiver_character_id === -112;
+        renderDetail() {
+            this.title('detail', 'phone.ui.market_title', 'market');
+            const content = $('phone-content-detail');
+            clear(content);
+            const row = this.detail;
+            if (!row) { content.append(this.empty(t('phone.ui.no_listings'))); return; }
+            const title = el('div', 'item-title');
+            title.append(text(row.title || ''));
+            content.append(title);
+            if (row.price != null) {
+                const price = el('div', 'mc-price');
+                price.append(text(money(row.price)));
+                content.append(price);
             }
-            if (target.charId) {
-                return m.sender_character_id === target.charId || m.receiver_character_id === target.charId;
+            if (row.seller) {
+                const seller = el('div', 'muted');
+                seller.append(text(row.seller + (row.phone ? ' · ' + row.phone : '')));
+                content.append(seller);
             }
-            return false;
-        }).reverse();
+            if (row.x && row.y) content.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: row.x, y: row.y })));
+            if (row.phone) content.append(btn('btn-ghost', t('phone.ui.message'), () => {
+                this.thread = { peer: Number(row.characterId) || 0, name: row.seller || row.phone, phone: row.phone, messages: this.messagesWith(row.characterId) };
+                this.openApp('conversation');
+            }));
+        },
 
-        // Authentic iOS conversation header banner
-        const infoBanner = document.createElement('div');
-        infoBanner.className = 'phone-chat__info-banner';
-        infoBanner.innerHTML = is112
-            ? `<span>🚨 ${I18n.t('ui.phone.dispatch_banner')}</span>`
-            : '<span>' + I18n.t('ui.phone.imessage_with', { name: this.escapeHtml(target.name || I18n.t('ui.phone.contact')) }) + '</span>';
-        wrap.appendChild(infoBanner);
-
-        if (!msgs.length) {
-            const emptyEl = document.createElement('div');
-            emptyEl.className = 'phone-chat__empty';
-            emptyEl.innerHTML = is112
-                ? '<div class="phone-chat__empty-icon">🚨</div><p>' + I18n.t('ui.phone.dispatch_empty') + '</p>'
-                : '<div class="phone-chat__empty-icon">👋</div><p>' + I18n.t('ui.phone.say_hi', { name: this.escapeHtml(target.name || I18n.t('ui.phone.them')) }) + '</p>';
-            wrap.appendChild(emptyEl);
-            return;
-        }
-
-        msgs.forEach((m) => {
-            const mine = m.sender_character_id === myId;
-            const row = document.createElement('div');
-            row.className = `phone-bubble-wrap ${mine ? 'phone-bubble-wrap--out' : 'phone-bubble-wrap--in'}`;
-            const bubble = document.createElement('div');
-            bubble.className = `phone-bubble ${mine ? 'phone-bubble--out' : 'phone-bubble--in'}`;
-            bubble.textContent = m.message;
-            const timeEl = document.createElement('span');
-            timeEl.className = 'phone-bubble__time';
-            timeEl.textContent = (mine ? 'Delivered · ' : '') + this.formatMsgTime(m.created_at);
-            row.appendChild(bubble);
-            row.appendChild(timeEl);
-            wrap.appendChild(row);
-        });
-        wrap.scrollTop = wrap.scrollHeight;
-    },
-
-    sendMessage() {
-        const input = $('#phone-chat-input');
-        const message = (input?.value || '').trim();
-        if (!message) return;
-
-        const is112 = this.chatTarget?.isEmergency || this.chatTarget?.charId === -112 || String(this.chatTarget?.charId) === '-112' || this.chatTarget?.phone === '112';
-
-        if (!is112 && !this.chatTarget?.charId && !this.chatTarget?.phone) {
-            notify(I18n.t('phone.invalid_contact'), 'error');
-            return;
-        }
-
-        post('phoneSend', {
-            targetCharacterId: is112 ? -112 : (this.chatTarget.charId || 0),
-            phone: is112 ? '112' : (this.chatTarget.phone || null),
-            message,
-        });
-
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-        const sendBtn = $('#phone-chat-send');
-        if (sendBtn) sendBtn.classList.remove('has-text');
-    },
-
-    renderBank() {
-        const d = this.data || {};
-        $('#phone-bank-bank').textContent = this.formatMoney(d.bank);
-        $('#phone-bank-cash').textContent = this.formatMoney(d.cash);
-        this.renderBankTransactions(d.transactions || []);
-    },
-
-    bankReasonLabel(reason) {
-        const map = {
-            payday: I18n.t('ui.phone.tx_payday'),
-            shop: I18n.t('ui.phone.tx_shop'),
-            shop_refund: I18n.t('ui.phone.tx_shop_refund'),
-            atm_deposit: I18n.t('ui.phone.tx_atm_deposit'),
-            atm_withdraw: I18n.t('ui.phone.tx_atm_withdraw'),
-            bank_transfer_out: I18n.t('ui.phone.tx_transfer_out'),
-            bank_transfer_in: I18n.t('ui.phone.tx_transfer_in'),
-            buy_level: I18n.t('ui.phone.tx_buy_level'),
-        };
-        const key = String(reason || '').toLowerCase();
-        return map[key] || reason || I18n.t('ui.phone.tx_default');
-    },
-
-    formatTxDate(raw) {
-        if (!raw) return '—';
-        const d = new Date(raw);
-        if (Number.isNaN(d.getTime())) return String(raw);
-        const now = new Date();
-        const sameDay = d.toDateString() === now.toDateString();
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        const isYesterday = d.toDateString() === yesterday.toDateString();
-        const time = I18n.time(d, { hour: '2-digit', minute: '2-digit' });
-        if (sameDay) return I18n.t('ui.phone.today_time', { time });
-        if (isYesterday) return I18n.t('ui.phone.yesterday_time', { time });
-        return I18n.date(d, { day: 'numeric', month: 'short' }) + `, ${time}`;
-    },
-
-    renderBankTransactions(transactions) {
-        const list = $('#phone-bank-tx-list');
-        if (!list) return;
-        list.innerHTML = '';
-
-        const iconIn = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>';
-        const iconOut = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>';
-
-        (transactions || []).slice(0, 30).forEach((tx) => {
-            const isIncome = tx.direction === 'in';
-            const el = document.createElement('div');
-            el.className = 'phone-fleeca__tx-item';
-            el.innerHTML = `
-                <div class="phone-fleeca__tx-info">
-                    <div class="phone-fleeca__tx-icon ${isIncome ? 'is-in' : 'is-out'}">${isIncome ? iconIn : iconOut}</div>
-                    <div class="phone-fleeca__tx-details">
-                        <div class="phone-fleeca__tx-title">${this.escapeHtml(this.bankReasonLabel(tx.reason))}</div>
-                        <div class="phone-fleeca__tx-date">${this.escapeHtml(this.formatTxDate(tx.created_at))}</div>
-                    </div>
-                </div>
-                <div class="phone-fleeca__tx-amount ${isIncome ? 'is-in' : 'is-out'}">${isIncome ? '+' : '-'}${this.formatMoney(tx.amount)}</div>
-            `;
-            list.appendChild(el);
-        });
-
-        if (!list.children.length) {
-            list.innerHTML = `<p class="phone-fleeca__tx-empty">${I18n.t('ui.phone.no_transactions')}</p>`;
-        }
-    },
-
-    openBankTransfer() {
-        $('#phone-bank-transfer-modal')?.classList.add('is-open');
-    },
-
-    closeBankTransfer() {
-        $('#phone-bank-transfer-modal')?.classList.remove('is-open');
-        const form = $('#phone-bank-transfer-form');
-        if (form) form.reset();
-    },
-
-    showBankNotify(msg, isError = false) {
-        const el = $('#phone-bank-notify');
-        if (!el) return;
-        el.textContent = msg;
-        el.classList.toggle('is-error', isError);
-        el.classList.add('is-show');
-        setTimeout(() => el.classList.remove('is-show'), 3000);
-    },
-
-    submitBankTransfer() {
-        const targetId = Number($('#phone-bank-target-id')?.value);
-        const amount = Number($('#phone-bank-amount')?.value);
-        if (!targetId || targetId < 1) {
-            this.showBankNotify(I18n.t('ui.phone.invalid_player_id'), true);
-            return;
-        }
-        if (!amount || amount < 1) {
-            this.showBankNotify(I18n.t('ui.phone.invalid_amount'), true);
-            return;
-        }
-        if (amount > Number(this.data?.bank || 0)) {
-            this.showBankNotify(I18n.t('ui.phone.insufficient_funds'), true);
-            return;
-        }
-        post('phoneBankTransfer', { targetId, amount });
-        this.closeBankTransfer();
-    },
-
-    renderSettings() {
-        const d = this.data || {};
-        const name = d.myName || I18n.t('common.player');
-        $('#phone-settings-name').textContent = name;
-        $('#phone-settings-id').textContent = I18n.t('dynamic.phone.player_id_value0', { value0: d.myId || '—' });
-        const avatar = $('#phone-settings-avatar');
-        if (avatar) {
-            const myAvatar = d.myAvatar || null;
-            if (myAvatar) {
-                avatar.innerHTML = `<img src="${this.safeAvatarSrc(myAvatar)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                avatar.style.background = 'transparent';
-            } else {
-                avatar.textContent = name.charAt(0).toUpperCase();
-            }
-        }
-    },
-
-    updateTaxi(payload) {
-        if (payload === null || payload === undefined) {
-            if (this.screen === 'taxi') this.renderTaxi();
-            return;
-        }
-
-        const isDistancePatch = payload.driverDistanceKm !== undefined
-            || payload.passengerDistanceKm !== undefined
-            || payload.nearDestination !== undefined
-            || payload.driverStatusText !== undefined;
-
-        if (isDistancePatch && this.taxiData) {
-            Object.assign(this.taxiData, payload);
-            if (this.screen !== 'taxi') return;
-            if (this.taxiMode === 'map' && window.TaxiPhoneMap?.map) {
-                this.updateTaxiLiveFields();
+        renderTaxi() {
+            this.title('taxi', 'phone.ui.taxi', 'taxi');
+            const content = $('phone-content-taxi');
+            clear(content);
+            const data = this.taxi || this.apps.taxi;
+            if (!data) return;
+            if (data.isDriver && data.onDuty) {
+                content.append(btn('btn-ghost', t('phone.ui.available'), () => post('taxiSetAvailable', { available: data.driverAvailable === false })));
+                const offers = data.pendingOffers || [];
+                if (!offers.length) content.append(this.empty(t('phone.ui.no_offers')));
+                offers.forEach((ride) => {
+                    const card = el('div', 'panel');
+                    card.append(text((ride.passengerName || t('phone.ui.passenger')) + ' · ' + money(ride.fare || 0)));
+                    card.append(btn('btn-gold', t('phone.ui.accept_ride'), () => post('taxiAcceptRide', { rideId: ride.id })));
+                    content.append(card);
+                });
+                const active = data.activeRide;
+                if (active && active.isDriver) {
+                    const card = el('div', 'panel');
+                    card.append(text((active.status || '') + ' · ' + money(active.fare || active.meterFare || 0)));
+                    if (active.status === 'accepted') card.append(btn('btn-gold', t('phone.ui.pickup'), () => post('taxiPickup', {})));
+                    if (active.status === 'in_progress') card.append(btn('btn-gold', t('phone.ui.complete'), () => post('taxiComplete', {})));
+                    card.append(btn('btn-ghost', t('phone.ui.cancel_ride'), () => post('taxiCancelRide', {})));
+                    content.append(card);
+                }
                 return;
             }
-            this.updateTaxiLiveFields();
-            return;
-        }
-
-        this.taxiData = payload || this.taxiData;
-        if (this.screen !== 'taxi') return;
-        if (this.taxiMode === 'map' && window.TaxiPhoneMap?.map && this.taxiData) {
-            TaxiPhoneMap.update(this.taxiData?.playerPos, this.taxiDest);
-            return;
-        }
-        this.renderTaxi();
-    },
-
-    formatTaxiDistance(km) {
-        if (km === null || km === undefined) return '—';
-        const n = Number(km);
-        if (Number.isNaN(n)) return '—';
-        if (n < 1) return `${Math.round(n * 1000)} m`;
-        return `${n.toFixed(1)} km`;
-    },
-
-    updateTaxiLiveFields() {
-        const d = this.taxiData;
-        if (!d) return;
-
-        const ride = d.activeRide;
-        const needsCard = ride && (ride.status === 'accepted' || ride.status === 'in_progress');
-        const hasLiveEl = $('#phone-taxi-driver-dist') || $('#phone-taxi-passenger-dist');
-        if (needsCard && !hasLiveEl && this.screen === 'taxi') {
-            this.renderTaxi();
-            return;
-        }
-
-        const driverDist = $('#phone-taxi-driver-dist');
-        const passengerDist = $('#phone-taxi-passenger-dist');
-        const driverStatus = $('#phone-taxi-driver-status');
-        const passengerStatus = $('#phone-taxi-passenger-status');
-        const completeBtn = $('#phone-taxi-complete');
-
-        if (driverDist && d.driverDistanceKm !== undefined) {
-            driverDist.textContent = this.formatTaxiDistance(d.driverDistanceKm);
-        }
-        if (passengerDist && d.passengerDistanceKm !== undefined) {
-            passengerDist.textContent = this.formatTaxiDistance(d.passengerDistanceKm);
-        }
-        if (driverStatus && d.driverStatusText) {
-            driverStatus.textContent = d.driverStatusText;
-        }
-        if (passengerStatus && d.passengerStatusText) {
-            passengerStatus.textContent = d.passengerStatusText;
-        }
-        if (completeBtn) {
-            const canComplete = d.nearDestination === true;
-            completeBtn.disabled = !canComplete;
-            completeBtn.title = canComplete ? '' : I18n.t('ui.phone.drive_to_destination');
-        }
-    },
-
-    taxiDest: null,
-    taxiMode: 'map',
-    taxiSearch: '',
-
-    mountTaxiLeafletMap(d) {
-        const el = $('#phone-taxi-leaflet');
-        if (!el || !window.TaxiPhoneMap) return;
-        TaxiPhoneMap.mount(el, {
-            player: d?.playerPos,
-            destination: this.taxiDest,
-            onPick: (x, y) => post('taxiPickMap', { x, y }),
-        });
-    },
-
-    onTaxiPick(dest) {
-        if (!dest) return;
-        this.taxiDest = dest;
-        const labelEl = $('#phone-taxi-dest-label');
-        if (labelEl) labelEl.textContent = dest.label || I18n.t('ui.phone.selected_pin');
-        const requestBtn = $('#phone-taxi-request');
-        if (requestBtn) requestBtn.disabled = false;
-        if (window.TaxiPhoneMap?.map) TaxiPhoneMap.setDestination(dest.x, dest.y);
-        this.estimateTaxiDest();
-    },
-
-    estimateTaxiDest() {
-        if (!this.taxiDest) return;
-        if (this.taxiDest.destinationId) {
-            post('taxiEstimate', { destinationId: this.taxiDest.destinationId });
-        } else {
-            post('taxiEstimate', { destination: this.taxiDest });
-        }
-    },
-
-    requestTaxiDest() {
-        if (!this.taxiDest) return;
-        if (this.taxiDest.destinationId) {
-            post('taxiRequestRide', { destinationId: this.taxiDest.destinationId });
-        } else {
-            post('taxiRequestRide', { destination: this.taxiDest });
-        }
-    },
-
-    renderTaxiPassengerBooking(d) {
-        if (this.taxiMode === 'gps') this.taxiMode = 'map';
-        const mode = this.taxiMode || 'map';
-        const places = d.destinations || [];
-        const q = (this.taxiSearch || '').toLowerCase();
-        const filtered = places.filter((p) => !q || p.label.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
-
-        return `
-            <div class="phone-taxi-card">
-                <div class="phone-taxi-card__label">${I18n.t('ui.phone.where_to')}</div>
-                <div class="phone-taxi-modes phone-taxi-modes--two">
-                    <button type="button" class="phone-taxi-mode ${mode === 'map' ? 'is-active' : ''}" data-taxi-mode="map">${I18n.t('ui.phone.map')}</button>
-                    <button type="button" class="phone-taxi-mode ${mode === 'list' ? 'is-active' : ''}" data-taxi-mode="list">${I18n.t('ui.phone.places')}</button>
-                </div>
-
-                <div class="phone-taxi-panel ${mode === 'map' ? '' : 'hidden'}" data-panel="map">
-                    <p class="phone-taxi-hint">${I18n.t('ui.phone.map_hint')}</p>
-                    <div class="phone-taxi-map" id="phone-taxi-map">
-                        <div class="phone-taxi-map__leaflet" id="phone-taxi-leaflet"></div>
-                    </div>
-                </div>
-
-                <div class="phone-taxi-panel ${mode === 'list' ? '' : 'hidden'}" data-panel="list">
-                    <input type="search" class="phone-taxi-search" id="phone-taxi-search" placeholder="${I18n.t('ui.phone.search_places')}" value="${this.taxiSearch || ''}">
-                    <div class="phone-taxi-places" id="phone-taxi-places">
-                        ${filtered.slice(0, 40).map((p) => `
-                            <button type="button" class="phone-taxi-place" data-place-id="${p.id}">
-                                <span class="phone-taxi-place__name">${this.escapeHtml(p.label)}</span>
-                                <span class="phone-taxi-place__cat">${this.escapeHtml(p.category || '')}</span>
-                            </button>`).join('')}
-                        ${filtered.length > 40 ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.more_refine', { count: filtered.length - 40 })}</p>` : ''}
-                        ${!filtered.length ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.no_places')}</p>` : ''}
-                    </div>
-                </div>
-
-                <div class="phone-taxi-dest-summary">
-                    <span>${I18n.t('ui.phone.destination')}</span>
-                    <strong id="phone-taxi-dest-label">${this.escapeHtml(this.taxiDest?.label || I18n.t('ui.phone.not_selected'))}</strong>
-                </div>
-                <div class="phone-taxi-estimate">
-                    <div><span>${I18n.t('ui.phone.distance')}</span><strong id="phone-taxi-distance">—</strong></div>
-                    <div><span>${I18n.t('ui.phone.estimated_fare')}</span><strong id="phone-taxi-fare">—</strong></div>
-                </div>
-                <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-request" ${this.taxiDest ? '' : 'disabled'}>${I18n.t('ui.phone.request_cab')}</button>
-            </div>
-            <p class="phone-taxi-hint">${I18n.t('ui.phone.pickup_hint')}</p>`;
-    },
-
-    setTaxiEstimate(payload) {
-        this.taxiEstimate = payload;
-        const fareEl = $('#phone-taxi-fare');
-        const distEl = $('#phone-taxi-distance');
-        if (fareEl && payload) fareEl.textContent = this.formatMoney(payload.fare);
-        if (distEl && payload) distEl.textContent = `${(payload.distanceKm || 0).toFixed(1)} km`;
-    },
-
-    renderTaxi() {
-        const body = $('#phone-taxi-body');
-        const title = $('#phone-taxi-title');
-        if (!body) return;
-
-        const d = this.taxiData;
-        if (!d || !d.destinations) {
-            if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-            body.dataset.taxiView = 'empty';
-            body.innerHTML = `<p class="phone-empty">${this.escapeHtml(d?.error || I18n.t('ui.phone.loading_cab'))}</p>`;
-            if (title) title.textContent = I18n.t('dynamic.phone.downtown_cab');
-            return;
-        }
-
-        if (title) title.textContent = d.appName || I18n.t('dynamic.phone.downtown_cab');
-
-        const ride = d.activeRide;
-        const isDriver = d.isDriver && d.onDuty;
-        const targetView = isDriver ? 'driver' : (ride ? 'ride' : 'passenger');
-
-        // Fast path: if already in passenger mode and just updating estimate or destinations, don't recreate DOM!
-        if (body.dataset.taxiView === 'passenger' && targetView === 'passenger') {
-            if (window.TaxiPhoneMap?.map) {
-                TaxiPhoneMap.update(d.playerPos, this.taxiDest);
+            const from = el('div', 'field');
+            const fromInput = el('input');
+            fromInput.value = t('phone.ui.current_location');
+            fromInput.readOnly = true;
+            from.append(fromInput);
+            const search = field(t('phone.ui.where_to'), this._taxiQuery || '');
+            search.input.dataset.focus = '1';
+            search.input.addEventListener('input', () => {
+                const caret = search.input.selectionStart;
+                this._taxiQuery = search.input.value;
+                this.renderTaxi();
+                const next = document.querySelector('#view-taxi input[data-focus="1"]');
+                if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
+            });
+            content.append(from, search.wrap);
+            const q = (this._taxiQuery || '').toLowerCase();
+            (data.destinations || []).filter((d) => !q || String(d.label || '').toLowerCase().indexOf(q) !== -1 || (this.taxiDest && this.taxiDest.id === d.id)).slice(0, 12).forEach((dest) => {
+                const selected = this.taxiDest && this.taxiDest.id === dest.id;
+                content.append(btn('pill-tab' + (selected ? ' active' : ''), dest.label, () => {
+                    this.taxiDest = dest;
+                    post('taxiEstimate', { destinationId: dest.id });
+                    this.renderTaxi();
+                }));
+            });
+            const fare = el('div', 'panel');
+            fare.append(text(t('phone.ui.standard')));
+            const price = el('div', 'mc-price');
+            price.append(text(this.taxiEstimate ? money(this.taxiEstimate.fare) : '—'));
+            fare.append(price);
+            if (this.taxiEstimate && this.taxiEstimate.distanceKm != null) {
+                const dist = el('div', 'muted');
+                dist.append(text(t('phone.ui.distance') + ' ' + Number(this.taxiEstimate.distanceKm).toFixed(1) + ' km'));
+                fare.append(dist);
             }
-            if (this.taxiEstimate) this.setTaxiEstimate(this.taxiEstimate);
-            return;
-        }
-
-        body.dataset.taxiView = targetView;
-
-        let html = '';
-
-        if (isDriver) {
-            if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-            const stats = d.driverStats || {};
-            html += `<div class="phone-taxi-card">
-                <div class="phone-taxi-card__label">${I18n.t('ui.phone.driver_mode')}</div>
-                <div class="phone-taxi-toggle">
-                    <span>${I18n.t('ui.phone.available_for_rides')}</span>
-                    <button type="button" class="phone-taxi-switch ${d.driverAvailable ? 'is-on' : ''}" id="phone-taxi-available-toggle">${d.driverAvailable ? I18n.t('ui.phone.on_caps') : I18n.t('ui.phone.off_caps')}</button>
-                </div>
-                <div class="phone-taxi-estimate phone-taxi-estimate--stats">
-                    <div><span>${I18n.t('ui.phone.today')}</span><strong>${I18n.t('ui.phone.rides_count', { count: stats.todayRides || 0 })} · ${this.formatMoney(stats.todayEarnings || 0)}</strong></div>
-                    <div><span>${I18n.t('ui.phone.this_shift')}</span><strong>${I18n.t('ui.phone.rides_count', { count: stats.sessionRides || 0 })} · ${this.formatMoney(stats.sessionEarnings || 0)}</strong></div>
-                </div>
-                <p class="phone-taxi-hint">${I18n.t('ui.phone.driver_hint', { percent: d.pricing?.companyCut || 12 })}</p>
-            </div>`;
-
-            if (ride) {
-                html += this.renderActiveRideCard(ride, true);
+            content.append(fare);
+            const active = data.activeRide;
+            if (active && active.isPassenger) {
+                const card = el('div', 'panel');
+                card.append(text((active.driverName || t('phone.ui.driver')) + ' · ' + (active.status || '')));
+                card.append(btn('btn-ghost', t('phone.ui.cancel_ride'), () => post('taxiCancelRide', {})));
+                if (active.status === 'completed') {
+                    (data.tipOptions || []).forEach((amount) => card.append(btn('mini', t('phone.ui.tip') + ' ' + money(amount), () => post('taxiTip', { amount: amount }))));
+                }
+                content.append(card);
             } else {
-                const offers = d.pendingOffers || [];
-                if (offers.length) {
-                    html += `<div class="phone-taxi-section-title">${I18n.t('ui.phone.incoming_requests')}</div>`;
-                    offers.forEach((offer) => {
-                        html += `<div class="phone-taxi-offer">
-                            <div class="phone-taxi-offer__top">
-                                <strong>${this.escapeHtml(offer.passengerName || I18n.t('ui.phone.passenger'))}</strong>
-                                <span class="phone-taxi-fare">${this.formatMoney(offer.fare)}</span>
-                            </div>
-                            <div class="phone-taxi-offer__route">→ ${this.escapeHtml(offer.destination?.label || I18n.t('ui.phone.destination'))}</div>
-                            <div class="phone-taxi-offer__meta">${(offer.distanceKm || 0).toFixed(1)} km</div>
-                            <button type="button" class="phone-taxi-btn phone-taxi-btn--primary" data-taxi-accept="${offer.id}">${I18n.t('ui.phone.accept_ride')}</button>
-                        </div>`;
-                    });
-                } else {
-                    html += `<p class="phone-empty">${I18n.t('ui.phone.no_ride_requests')}</p>`;
-                }
+                const request = btn('btn-taxi', t('phone.ui.request_ride'), () => {
+                    if (!this.taxiDest) { this.toast(t('phone.ui.no_destination'), 'bad'); return; }
+                    request.disabled = true;
+                    post('taxiRequestRide', { destinationId: this.taxiDest.id });
+                });
+                content.append(request);
             }
-        } else if (ride) {
-            if (window.TaxiPhoneMap) TaxiPhoneMap.destroy();
-            html += this.renderActiveRideCard(ride, false);
-        } else {
-            html += this.renderTaxiPassengerBooking(d);
-        }
+        },
 
-        body.innerHTML = html;
-        this.bindTaxiEvents(d, ride, isDriver);
-        if (!isDriver && !ride) {
-            this.mountTaxiLeafletMap(d);
-        }
-        if (this.taxiEstimate) this.setTaxiEstimate(this.taxiEstimate);
-    },
-
-    updateTaxiPlacesList(d) {
-        const placesContainer = $('#phone-taxi-places');
-        if (!placesContainer) return;
-        const places = d?.destinations || [];
-        const q = (this.taxiSearch || '').toLowerCase().trim();
-        const filtered = places.filter((p) => !q || p.label.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
-
-        placesContainer.innerHTML = `
-            ${filtered.slice(0, 40).map((p) => `
-                <button type="button" class="phone-taxi-place" data-place-id="${p.id}">
-                    <span class="phone-taxi-place__name">${this.escapeHtml(p.label)}</span>
-                    <span class="phone-taxi-place__cat">${this.escapeHtml(p.category || '')}</span>
-                </button>`).join('')}
-            ${filtered.length > 40 ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.more_refine', { count: filtered.length - 40 })}</p>` : ''}
-            ${!filtered.length ? `<p class="phone-taxi-hint">${I18n.t('ui.phone.no_places')}</p>` : ''}
-        `;
-
-        placesContainer.querySelectorAll('[data-place-id]').forEach((btn) => {
-            btn.addEventListener('click', () => post('taxiPickPlace', { destinationId: btn.dataset.placeId }));
-        });
-    },
-
-    renderActiveRideCard(ride, isDriver) {
-        const d = this.taxiData || {};
-        const statusLabels = {
-            pending: I18n.t('ui.phone.ride_pending'),
-            accepted: isDriver ? I18n.t('ui.phone.ride_pickup') : (d.driverStatusText || I18n.t('ui.phone.ride_on_the_way')),
-            in_progress: I18n.t('ui.phone.ride_in_progress'),
-            completed: I18n.t('ui.phone.ride_completed'),
-            cancelled: I18n.t('ui.phone.ride_cancelled'),
-        };
-        let actions = '';
-        if (isDriver) {
-            if (ride.status === 'accepted') {
-                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-pickup">${I18n.t('ui.phone.passenger_picked_up')}</button>
-                           <button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">${I18n.t('ui.phone.cancel_ride')}</button>`;
-            } else if (ride.status === 'in_progress') {
-                const canComplete = d.nearDestination === true;
-                actions = `<button type="button" class="phone-taxi-btn phone-taxi-btn--primary" id="phone-taxi-complete" ${canComplete ? '' : 'disabled'} title="${canComplete ? '' : I18n.t('ui.phone.drive_to_destination')}">${I18n.t('ui.phone.complete_trip')}</button>`;
-            }
-        } else if (ride.status === 'pending' || ride.status === 'accepted') {
-            actions = `<button type="button" class="phone-taxi-btn" id="phone-taxi-cancel">${I18n.t('ui.phone.cancel_ride')}</button>`;
-        } else if (!isDriver && ride.status === 'in_progress') {
-            const tips = (this.taxiData?.tipOptions || [25, 50, 100]).map((amt) =>
-                `<button type="button" class="phone-taxi-btn phone-taxi-btn--tip" data-taxi-tip="${amt}">${I18n.t('ui.phone.tip_amount', { amount: amt })}</button>`
-            ).join('');
-            actions = `<div class="phone-taxi-tips"><span>${I18n.t('ui.phone.tip_driver')}</span><div class="phone-taxi-tip-row">${tips}</div></div>`;
-        }
-
-        let distanceRows = '';
-        if (!isDriver && (ride.status === 'accepted' || ride.status === 'in_progress')) {
-            distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
-                <span>${I18n.t('ui.phone.driver')}</span>
-                <strong id="phone-taxi-driver-status">${this.escapeHtml(d.driverStatusText || I18n.t('ui.phone.driver_en_route'))}</strong>
-            </div>
-            <div class="phone-taxi-row phone-taxi-row--live">
-                <span>${I18n.t('ui.phone.distance')}</span>
-                <strong id="phone-taxi-driver-dist">${this.formatTaxiDistance(d.driverDistanceKm)}</strong>
-            </div>`;
-        }
-        if (isDriver && ride.status === 'accepted') {
-            distanceRows += `<div class="phone-taxi-row phone-taxi-row--live">
-                <span>${I18n.t('ui.phone.passenger')}</span>
-                <strong id="phone-taxi-passenger-status">${this.escapeHtml(d.passengerStatusText || I18n.t('ui.phone.en_route_to_passenger'))}</strong>
-            </div>
-            <div class="phone-taxi-row phone-taxi-row--live">
-                <span>${I18n.t('ui.phone.distance')}</span>
-                <strong id="phone-taxi-passenger-dist">${this.formatTaxiDistance(d.passengerDistanceKm)}</strong>
-            </div>`;
-        }
-        if (isDriver && ride.status === 'in_progress' && !d.nearDestination) {
-            distanceRows += `<p class="phone-taxi-hint phone-taxi-hint--warn">${I18n.t('ui.phone.drive_to_complete')}</p>`;
-        }
-
-        return `<div class="phone-taxi-card phone-taxi-card--active">
-            <div class="phone-taxi-status phone-taxi-status--${this.escapeHtml(ride.status)}">${this.escapeHtml(statusLabels[ride.status] || ride.status)}</div>
-            <div class="phone-taxi-row"><span>${I18n.t('ui.phone.destination')}</span><strong>${this.escapeHtml(ride.destination?.label || '—')}</strong></div>
-            <div class="phone-taxi-row"><span>${I18n.t('ui.phone.fare')}</span><strong>${this.formatMoney(ride.fare)}</strong></div>
-            ${ride.driverName ? `<div class="phone-taxi-row"><span>${I18n.t('ui.phone.driver')}</span><strong>${ride.driverName}</strong></div>` : ''}
-            ${ride.passengerName && isDriver ? `<div class="phone-taxi-row"><span>${I18n.t('ui.phone.passenger')}</span><strong>${ride.passengerName}</strong></div>` : ''}
-            ${distanceRows}
-            ${actions}
-        </div>`;
-    },
-
-    bindTaxiEvents(d, ride, isDriver) {
-        $('#phone-taxi-available-toggle')?.addEventListener('click', () => {
-            const on = !d.driverAvailable;
-            post('taxiSetAvailable', { available: on });
-        });
-
-        $$('[data-taxi-accept]').forEach((btn) => {
-            btn.addEventListener('click', () => post('taxiAcceptRide', { rideId: Number(btn.dataset.taxiAccept) }));
-        });
-
-        $('#phone-taxi-cancel')?.addEventListener('click', () => post('taxiCancelRide', {}));
-        $('#phone-taxi-pickup')?.addEventListener('click', () => post('taxiPickup', {}));
-        $('#phone-taxi-complete')?.addEventListener('click', () => post('taxiComplete', {}));
-
-        $$('[data-taxi-tip]').forEach((btn) => {
-            btn.addEventListener('click', () => post('taxiTip', { amount: Number(btn.dataset.taxiTip) }));
-        });
-
-        $$('[data-taxi-mode]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const newMode = btn.dataset.taxiMode;
-                if (this.taxiMode === newMode) return;
-                this.taxiMode = newMode;
-
-                $$('[data-taxi-mode]').forEach((b) => b.classList.toggle('is-active', b.dataset.taxiMode === newMode));
-                const mapPanel = $('[data-panel="map"]');
-                const listPanel = $('[data-panel="list"]');
-                if (mapPanel) mapPanel.classList.toggle('hidden', newMode !== 'map');
-                if (listPanel) listPanel.classList.toggle('hidden', newMode !== 'list');
-
-                if (newMode === 'map') {
-                    if (window.TaxiPhoneMap?.map) {
-                        TaxiPhoneMap.invalidate();
-                    } else {
-                        this.mountTaxiLeafletMap(d);
-                    }
+        renderJobs() {
+            this.title('jobs', 'phone.ui.jobs', 'jobs');
+            const content = $('phone-content-jobs');
+            clear(content);
+            const data = this.apps.jobs;
+            if (!data) return;
+            const job = data.currentJob;
+            const card = el('div', 'panel');
+            const title = el('div', 'item-title');
+            title.append(text(job ? (job.label || job.id) : t('phone.ui.no_job')));
+            card.append(title);
+            if (job) {
+                const prog = (data.jobs || []).find((row) => row.id === job.id) || {};
+                const meta = el('div', 'muted');
+                meta.append(text(t('phone.ui.level') + ' ' + (prog.level || 1) + ' · ' + t('phone.ui.xp') + ' ' + (prog.xp || 0) + '/' + (prog.xpNext || 0)));
+                card.append(meta);
+                if (prog.salary) {
+                    const sal = el('div', 'muted');
+                    sal.append(text(t('phone.ui.salary') + ' ' + money(prog.salary)));
+                    card.append(sal);
                 }
+                const bar = el('div', 'progress');
+                const span = el('span');
+                const pct = prog.xpNext ? Math.max(0, Math.min(100, (Number(prog.xp) || 0) / Number(prog.xpNext) * 100)) : 0;
+                span.style.width = pct + '%';
+                bar.append(span);
+                card.append(bar);
+                const place = (data.workplaces || []).find((row) => row.id === job.id);
+                if (place && place.x) card.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: place.x, y: place.y })));
+            }
+            if (data.session) {
+                const shift = el('div', 'muted');
+                shift.append(text(t('phone.ui.shift') + ' · ' + (data.session.state || data.session.jobId || '')));
+                card.append(shift, btn('btn-ghost', t('phone.ui.end_shift'), () => post('phoneAction', { op: 'jobCancel', token: this.token })));
+            } else {
+                const hint = el('div', 'muted');
+                hint.append(text(t('phone.ui.job_remote_hint')));
+                card.append(hint);
+            }
+            content.append(card);
+        },
+
+        renderMap() {
+            this.title('map', 'phone.ui.map', 'map');
+            const content = $('phone-content-map');
+            clear(content);
+            const data = this.apps.map;
+            if (!data) return;
+            const search = field(t('phone.ui.search'), this._mapQuery || '');
+            search.input.dataset.focus = '1';
+            search.input.addEventListener('input', () => {
+                const caret = search.input.selectionStart;
+                this._mapQuery = search.input.value;
+                this.renderMap();
+                const next = document.querySelector('#view-map input[data-focus="1"]');
+                if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
             });
-        });
-
-        const search = $('#phone-taxi-search');
-        if (search) {
-            search.addEventListener('input', () => {
-                this.taxiSearch = search.value;
-                this.updateTaxiPlacesList(d);
+            content.append(search.wrap);
+            const cats = {};
+            (data.pins || []).forEach((pin) => { cats[pin.category || 'Other'] = true; });
+            const tabs = el('div', 'pill-tabs');
+            ['all'].concat(Object.keys(cats)).forEach((cat) => {
+                tabs.append(btn('pill-tab' + ((this._mapCat || 'all') === cat ? ' active' : ''), cat === 'all' ? t('phone.ui.all') : cat, () => { this._mapCat = cat; this.renderMap(); }));
             });
-        }
+            content.append(tabs);
+            const q = (this._mapQuery || '').toLowerCase();
+            (data.pins || []).filter((pin) => (this._mapCat || 'all') === 'all' || pin.category === this._mapCat).filter((pin) => !q || String(pin.label).toLowerCase().indexOf(q) !== -1).slice(0, 40).forEach((pin) => {
+                const item = el('div', 'list-item');
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(pin.label || ''));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text(pin.category || ''));
+                body.append(title, sub);
+                item.append(body, btn('mini', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: pin.x, y: pin.y })));
+                content.append(item);
+            });
+        },
 
-        $$('[data-place-id]').forEach((btn) => {
-            btn.addEventListener('click', () => post('taxiPickPlace', { destinationId: btn.dataset.placeId }));
-        });
+        renderFaction() {
+            this.title('faction', 'phone.ui.faction', 'faction');
+            const content = $('phone-content-faction');
+            clear(content);
+            const data = this.apps.faction;
+            if (!data) return;
+            const panel = data.panel;
+            if (!panel || !panel.isFaction) { content.append(this.empty(t('phone.ui.no_faction'))); return; }
+            const dash = data.dashboard || {};
+            const tabs = el('div', 'pill-tabs');
+            ['overview', 'members', 'announcements', 'vehicles'].forEach((tab) => {
+                tabs.append(btn('pill-tab' + (this.factionTab === tab ? ' active' : ''), t('phone.ui.' + tab), () => { this.factionTab = tab; this.renderFaction(); }));
+            });
+            content.append(tabs);
+            if (this.factionTab === 'members') return this.renderFactionMembers(content, dash);
+            if (this.factionTab === 'announcements') return this.renderFactionNews(content, dash);
+            if (this.factionTab === 'vehicles') return this.renderFactionVehicles(content, data.fleet);
+            const card = el('div', 'panel');
+            const name = el('div', 'item-title');
+            name.append(text(panel.label || ''));
+            const meta = el('div', 'muted');
+            const members = dash.members || [];
+            const online = members.filter((m) => m.online).length;
+            meta.append(text((panel.gradeLabel || '') + ' · ' + (panel.onDuty ? t('phone.ui.on_duty_short') : t('phone.ui.off_duty_short')) + ' · ' + online + '/' + members.length));
+            card.append(name, meta);
+            const fleet = data.fleet;
+            card.append(btn('btn-ghost', t('phone.ui.duty'), () => post('phoneAction', { op: 'duty', token: this.token })));
+            if (fleet && fleet.x) card.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: fleet.x, y: fleet.y })));
+            if (panel.job === 'taxi') card.append(btn('btn-ghost', t('phone.ui.taxi'), () => this.openApp('taxi')));
+            content.append(card);
+        },
 
-        $('#phone-taxi-request')?.addEventListener('click', () => this.requestTaxiDest());
-    },
-};
+        renderFactionMembers(content, dash) {
+            const perms = dash.permissions || {};
+            if (perms.invite) {
+                const input = field(t('phone.ui.invite_placeholder'));
+                content.append(input.wrap, btn('btn-gold', t('phone.ui.invite'), () => post('phoneAction', { op: 'factionInvite', serverId: Number(input.input.value), token: this.token })));
+            }
+            (dash.members || []).forEach((member) => {
+                const item = el('div', 'member-row');
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(member.name || ''));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text((member.gradeLabel || '') + ' · ' + (member.online ? t('phone.ui.online') : t('phone.ui.offline')) + (member.onDuty ? ' · ' + t('phone.ui.on_duty_short') : '')));
+                body.append(title, sub);
+                item.append(body);
+                if (perms.promote || perms.rankMembers) item.append(btn('mini', '+', () => post('phoneAction', { op: 'factionRank', characterId: member.characterId, delta: 1, token: this.token })));
+                if (perms.promote || perms.rankMembers) item.append(btn('mini', '-', () => post('phoneAction', { op: 'factionRank', characterId: member.characterId, delta: -1, token: this.token })));
+                if (perms.kickMembers || perms.uninvite) item.append(btn('mini danger', t('phone.ui.remove'), () => post('phoneAction', { op: 'factionKick', characterId: member.characterId, token: this.token })));
+                content.append(item);
+            });
+        },
 
-window.Phone = Phone;
+        renderFactionNews(content, dash) {
+            const card = el('div', 'panel');
+            card.append(text(dash.motd || t('phone.ui.empty')));
+            content.append(card);
+            const perms = dash.permissions || {};
+            if (perms.motd) {
+                const input = field(t('phone.ui.announce_placeholder'));
+                content.append(input.wrap, btn('btn-gold', t('phone.ui.post'), () => post('phoneAction', { op: 'factionMotd', message: input.input.value, token: this.token })));
+            }
+        },
+
+        renderFactionVehicles(content, fleet) {
+            const hint = el('div', 'muted');
+            hint.append(text(t('phone.ui.fleet_hint')));
+            content.append(hint);
+            if (fleet && fleet.x) content.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: fleet.x, y: fleet.y })));
+            (fleet && fleet.vehicles || []).forEach((vehicle) => {
+                const item = el('div', 'list-item');
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(vehicle.label || vehicle.model || ''));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text(vehicle.available ? t('phone.ui.at_depot') : t('phone.ui.rank_locked')));
+                body.append(title, sub);
+                item.append(body);
+                content.append(item);
+            });
+        },
+
+        renderApps() {
+            this.title('apps', 'phone.ui.apps_title', 'apps');
+            const content = $('phone-content-apps');
+            clear(content);
+            const grid = el('div', 'app-grid');
+            PS.MORE.forEach((id) => {
+                const node = this.iconButton(id, 0);
+                this.bindIcon(node, id, false);
+                grid.append(node);
+            });
+            content.append(grid);
+        },
+
+        renderProperties() {
+            this.title('properties', 'phone.ui.properties', 'properties');
+            const content = $('phone-content-properties');
+            clear(content);
+            const data = this.apps.properties;
+            if (!data) return;
+            const rows = [].concat((data.owned && data.owned.rows) || [], (data.rented && data.rented.rows) || []);
+            if (!rows.length) content.append(this.empty(t('phone.ui.no_properties')));
+            rows.forEach((row) => {
+                const card = el('div', 'panel');
+                const title = el('div', 'item-title');
+                title.append(text(row.label || ''));
+                const sub = el('div', 'muted');
+                const entry = row.entry || {};
+                sub.append(text((row.owned ? t('phone.ui.owned') : t('phone.ui.rented')) + ' · ' + (row.locked ? t('phone.ui.locked') : t('phone.ui.unlocked'))));
+                card.append(title, sub);
+                if (row.rentPrice) {
+                    const rent = el('div', 'muted');
+                    rent.append(text(t('phone.ui.rent') + ' ' + money(row.rentPrice)));
+                    card.append(rent);
+                }
+                if (entry.x) card.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: entry.x, y: entry.y })));
+                content.append(card);
+            });
+        },
+
+        renderClan() {
+            this.title('clan', 'phone.ui.clan', 'clan');
+            const content = $('phone-content-clan');
+            clear(content);
+            const data = this.apps.clan;
+            if (!data) return;
+            const dash = data.dashboard;
+            if (!dash || dash.inClan === false || !dash.name) { content.append(this.empty(t('phone.ui.no_clan'))); return; }
+            const card = el('div', 'panel');
+            const title = el('div', 'item-title');
+            title.append(text((dash.tag ? '[' + dash.tag + '] ' : '') + (dash.name || '')));
+            const meta = el('div', 'muted');
+            meta.append(text((dash.rankLabel || '') + ' · ' + t('phone.ui.members') + ' ' + (dash.memberCount || (dash.members || []).length) + ' · ' + t('phone.ui.turfs') + ' ' + (dash.turfs || 0)));
+            card.append(title, meta);
+            if (dash.motd) {
+                const motd = el('div', 'muted');
+                motd.append(text(dash.motd));
+                card.append(motd);
+            }
+            if (dash.status) {
+                const st = el('div', 'muted');
+                st.append(text(t('phone.ui.war') + ' · ' + dash.status));
+                card.append(st);
+            }
+            content.append(card);
+            const perms = dash.permissions || {};
+            if (perms.invite) {
+                const input = field(t('phone.ui.invite_placeholder'));
+                content.append(input.wrap, btn('btn-gold', t('phone.ui.invite'), () => post('phoneAction', { op: 'clanInvite', serverId: Number(input.input.value), token: this.token })));
+            }
+            (dash.members || []).forEach((member) => {
+                const item = el('div', 'member-row');
+                const body = el('div', 'grow');
+                const name = el('div', 'item-title');
+                name.append(text(member.name || member.characterName || ''));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text(member.rankLabel || member.rank || ''));
+                body.append(name, sub);
+                item.append(body);
+                if (perms.kick && member.characterId && Number(member.characterId) !== Number(dash.viewerCharacterId)) {
+                    item.append(btn('mini danger', t('phone.ui.remove'), () => post('phoneAction', { op: 'clanKick', characterId: member.characterId, token: this.token })));
+                }
+                content.append(item);
+            });
+        },
+
+        renderNews() {
+            this.title('news', 'phone.ui.news', 'news');
+            const content = $('phone-content-news');
+            clear(content);
+            const data = this.apps.news;
+            if (!data) return;
+            const ads = data.ads || [];
+            if (!ads.length) content.append(this.empty(t('phone.ui.news_empty')));
+            ads.forEach((ad) => {
+                const card = el('div', 'panel');
+                card.append(text(ad.title || ''));
+                const meta = el('div', 'muted');
+                meta.append(text((ad.seller || '') + (ad.phone ? ' · ' + ad.phone : '') + (ad.publishedAt ? ' · ' + ad.publishedAt : '')));
+                card.append(meta);
+                if (ad.phone) card.append(btn('btn-ghost', t('phone.ui.message'), () => {
+                    this.thread = { peer: Number(ad.characterId) || 0, name: ad.seller || ad.phone, phone: ad.phone, messages: this.messagesWith(ad.characterId) };
+                    this.openApp('conversation');
+                }));
+                content.append(card);
+            });
+        },
+
+        renderSettings() {
+            this.title('settings', 'phone.ui.settings', 'settings');
+            const content = $('phone-content-settings');
+            clear(content);
+            const card = el('div', 'panel');
+            [['phone.ui.name', this.data.myName], ['phone.ui.my_number', this.data.myPhoneNumber], ['phone.ui.server_id', this.data.myId]].forEach(([key, value]) => {
+                const line = el('div', 'list-item');
+                const body = el('div', 'grow');
+                const title = el('div', 'item-title');
+                title.append(text(t(key)));
+                const sub = el('div', 'item-subtitle');
+                sub.append(text(value || ''));
+                body.append(title, sub);
+                line.append(body);
+                card.append(line);
+            });
+            content.append(card);
+        },
+
+        empty(message) {
+            const node = el('div', 'empty');
+            node.append(text(message));
+            return node;
+        },
+    };
+
+    window.Phone = Phone;
+}());

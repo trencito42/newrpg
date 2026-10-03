@@ -347,7 +347,7 @@
         documentsHide: 'panels', craftingUpdate: 'panels', craftingHide: 'panels', emotesHide: 'panels',
         garageHide: 'garage', fleetGarageHide: 'garage', propertyManageRefresh: 'properties', menuPropertyUpdate: 'menu',
         clothingHide: 'wardrobe', weaponAmmoUpdate: 'inventory', emoteWheelShow: 'inventory', emoteWheelHide: 'inventory', emoteWheelRelease: 'inventory', emoteWheelSelect: 'inventory',
-        phoneCaptureAvatar: 'phone', taxiUpdate: 'phone', taxiEstimate: 'phone', taxiPickResult: 'phone',
+        phoneCaptureAvatar: 'phone', phoneAppData: 'phone', phoneActionResult: 'phone', taxiUpdate: 'phone', taxiEstimate: 'phone', taxiPickResult: 'phone',
         dealershipUpdate: 'dealership', appearanceUpdate: 'studio', appearanceSaving: 'studio', appearanceSaveFailed: 'studio',
         fishingShow: 'fishing', fishingUpdate: 'fishing', fishingHide: 'fishing',
         policeOrderShow: 'hud_core', policeOrderHide: 'hud_core', announcementShow: 'hud_core', announcementHide: 'hud_core',
@@ -937,6 +937,9 @@
                     }).catch(() => {});
                     return;
                 }
+                case 'phoneCallState': window.Phone?.setCall?.(payload); return;
+                case 'phoneAppData': window.Phone?.applyAppData?.(payload); return;
+                case 'phoneActionResult': window.Phone?.onActionResult?.(payload); return;
                 case 'taxiUpdate': window.Phone?.updateTaxi?.(payload); return;
                 case 'taxiEstimate': window.Phone?.setTaxiEstimate?.(payload); return;
                 case 'taxiPickResult': window.Phone?.onTaxiPick?.(payload); return;

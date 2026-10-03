@@ -1,0 +1,332 @@
+PhoneCalls = {
+    byId = {},
+    bySource = {},
+    nextId = 1,
+}
+
+local RING_MS = 30000
+
+local function formatPhone(raw)
+    if not raw then return nil end
+    local str = tostring(raw):gsub('%s+', '')
+    if str:match('^%d%d%d%-%d%d%d%d$') then return str end
+    local digits = str:gsub('%D', '')
+    if #digits == 7 and digits:sub(1, 3) == '555' then
+        return ('555-%s'):format(digits:sub(4))
+    elseif #digits > 0 and #digits <= 4 then
+        return ('555-%04d'):format(tonumber(digits) or 0)
+    end
+    return str
+end
+
+local function findCharacterByPhone(phoneQuery)
+    if not phoneQuery or phoneQuery == '' then return nil end
+    local normalized = formatPhone(phoneQuery)
+    local rawDigits = tostring(phoneQuery):gsub('%D', '')
+    local row = MySQL.single.await([[
+        SELECT id, firstname, lastname, phone_number
+        FROM characters
+        WHERE phone_number = ? OR phone_number = ?
+        LIMIT 1
+    ]], { tostring(phoneQuery), normalized })
+    if row then return row end
+    local charId = tonumber(tostring(normalized):match('^555%-(%d+)$')) or tonumber(rawDigits)
+    if charId and charId > 0 and #rawDigits <= 7 then
+        return MySQL.single.await([[
+            SELECT id, firstname, lastname, phone_number
+            FROM characters WHERE id = ? LIMIT 1
+        ]], { charId })
+    end
+    return nil
+end
+
+local function displayName(row)
+    if not row then return '' end
+    local name = (tostring(row.firstname or '') .. ' ' .. tostring(row.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+    return name
+end
+
+local function phoneOf(row, characterId)
+    if row and row.phone_number and tostring(row.phone_number) ~= '' then
+        return row.phone_number
+    end
+    return ('555-%04d'):format(tonumber(characterId) or 0)
+end
+
+local function push(src, payload)
+    src = tonumber(src)
+    if not src or not GetPlayerName(src) then return end
+    TriggerClientEvent('sunset:client:phoneCall', src, payload)
+end
+
+local function voiceSet(src, channel)
+    if GetResourceState('pma-voice') ~= 'started' then return end
+    pcall(function()
+        exports['pma-voice']:setPlayerCall(src, tonumber(channel) or 0)
+    end)
+end
+
+local function payloadFor(call, src, state, reason)
+    local role = (src == call.caller) and 'caller' or 'callee'
+    local peerName = role == 'caller' and call.calleeName or call.callerName
+    local peerPhone = role == 'caller' and call.calleePhone or call.callerPhone
+    local peerCharacterId = role == 'caller' and call.calleeCharacterId or call.callerCharacterId
+    return {
+        callId = call.id,
+        role = role,
+        state = state,
+        reason = reason,
+        peerName = peerName,
+        peerPhone = peerPhone,
+        peerCharacterId = peerCharacterId,
+        startedAt = call.answeredAt,
+        duration = call.duration or 0,
+    }
+end
+
+local function logCall(call, status)
+    pcall(function()
+        MySQL.insert.await([[
+            INSERT INTO phone_calls (caller_character_id, callee_character_id, status, duration_seconds)
+            VALUES (?, ?, ?, ?)
+        ]], {
+            call.callerCharacterId,
+            call.calleeCharacterId,
+            tostring(status):sub(1, 16),
+            tonumber(call.duration) or 0,
+        })
+    end)
+end
+
+function PhoneCalls.finish(call, status)
+    if not call or call.ended then return end
+    call.ended = true
+    call.duration = 0
+    if call.answeredAt then
+        call.duration = math.max(0, os.time() - call.answeredAt)
+    end
+    PhoneCalls.byId[call.id] = nil
+    if PhoneCalls.bySource[call.caller] == call.id then PhoneCalls.bySource[call.caller] = nil end
+    if PhoneCalls.bySource[call.callee] == call.id then PhoneCalls.bySource[call.callee] = nil end
+    voiceSet(call.caller, 0)
+    voiceSet(call.callee, 0)
+
+    local callerState, calleeState = 'ENDED', 'ENDED'
+    local reason = status
+    if status == 'busy' then
+        callerState = 'BUSY'
+    elseif status == 'unavailable' or status == 'invalid' then
+        callerState = status == 'invalid' and 'FAILED' or 'UNAVAILABLE'
+    elseif status == 'declined' then
+        callerState = 'DECLINED'
+        calleeState = 'ENDED'
+    elseif status == 'missed' then
+        callerState = 'FAILED'
+        calleeState = 'ENDED'
+        reason = 'no_answer'
+    elseif status == 'cancelled' then
+        callerState = 'ENDED'
+        calleeState = 'ENDED'
+    end
+
+    if call.caller then push(call.caller, payloadFor(call, call.caller, callerState, reason)) end
+    if call.callee and status ~= 'busy' and status ~= 'unavailable' and status ~= 'invalid' then
+        push(call.callee, payloadFor(call, call.callee, calleeState, reason))
+    end
+    if call.callerCharacterId and call.calleeCharacterId then
+        logCall(call, status)
+    end
+
+    if status == 'missed' and call.callee then
+        pcall(function()
+            exports.sunset_core:NotifyFor(call.callee, 'phone.call.missed', { name = call.callerName or call.callerPhone }, 'info', 5000)
+        end)
+    end
+end
+
+function PhoneCalls.endForSource(src, status)
+    src = tonumber(src)
+    local id = src and PhoneCalls.bySource[src]
+    local call = id and PhoneCalls.byId[id]
+    if not call then return end
+    local logged = status or 'disconnect'
+    if call.state == 'ringing' and src == call.callee then
+        logged = 'missed'
+    elseif call.state == 'ringing' and src == call.caller then
+        logged = 'cancelled'
+    elseif call.state ~= 'active' then
+        logged = logged or 'disconnect'
+    else
+        logged = 'answered'
+    end
+    PhoneCalls.finish(call, logged)
+end
+
+local function beginRing(call)
+    local id = call.id
+    CreateThread(function()
+        Wait(RING_MS)
+        local current = PhoneCalls.byId[id]
+        if current and not current.ended and current.state == 'ringing' then
+            PhoneCalls.finish(current, 'missed')
+        end
+    end)
+end
+
+exports.sunset_core:RegisterCallback('sunset:phoneCallStart', function(source, rawPhone)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
+    if not exports.sunset_core:RateLimit(source, 'phoneCallStart', 1200) then
+        return nil, { localeKey = 'phone.call.busy' }
+    end
+    if PhoneCalls.bySource[source] then
+        return nil, { localeKey = 'phone.call.in_call' }
+    end
+
+    rawPhone = tostring(rawPhone or ''):sub(1, 24)
+    if rawPhone == '112' then
+        return { ok = false, special = '112' }
+    end
+
+    local target = findCharacterByPhone(rawPhone)
+    if not target or not tonumber(target.id) then
+        return nil, { localeKey = 'phone.call.invalid_number' }
+    end
+    local targetId = tonumber(target.id)
+    if targetId == tonumber(char.id) then
+        return nil, { localeKey = 'phone.call.invalid_number' }
+    end
+
+    local targetSource = exports.sunset_core:GetSourceByCharacterId(targetId)
+    local callerPhone = char.phone_number
+    if not callerPhone or callerPhone == '' then
+        callerPhone = ('555-%04d'):format(tonumber(char.id) or 0)
+    end
+
+    if not targetSource or not GetPlayerName(targetSource) then
+        logCall({
+            callerCharacterId = tonumber(char.id),
+            calleeCharacterId = targetId,
+            duration = 0,
+        }, 'unavailable')
+        push(source, {
+            state = 'UNAVAILABLE',
+            reason = 'unavailable',
+            peerName = displayName(target),
+            peerPhone = phoneOf(target, targetId),
+            peerCharacterId = targetId,
+        })
+        return { ok = false, state = 'UNAVAILABLE' }
+    end
+
+    if PhoneCalls.bySource[targetSource] then
+        logCall({
+            callerCharacterId = tonumber(char.id),
+            calleeCharacterId = targetId,
+            duration = 0,
+        }, 'busy')
+        push(source, {
+            state = 'BUSY',
+            reason = 'busy',
+            peerName = displayName(target),
+            peerPhone = phoneOf(target, targetId),
+            peerCharacterId = targetId,
+        })
+        return { ok = false, state = 'BUSY' }
+    end
+
+    local id = PhoneCalls.nextId
+    PhoneCalls.nextId = id + 1
+    local call = {
+        id = id,
+        state = 'ringing',
+        caller = source,
+        callee = targetSource,
+        callerCharacterId = tonumber(char.id),
+        calleeCharacterId = targetId,
+        callerName = exports.sunset_core:GetPlayerBaseName(source),
+        calleeName = displayName(target),
+        callerPhone = callerPhone,
+        calleePhone = phoneOf(target, targetId),
+        channel = 100000 + id,
+    }
+    PhoneCalls.byId[id] = call
+    PhoneCalls.bySource[source] = id
+    PhoneCalls.bySource[targetSource] = id
+    push(source, payloadFor(call, source, 'OUTGOING_RINGING'))
+    push(targetSource, payloadFor(call, targetSource, 'INCOMING_RINGING'))
+    beginRing(call)
+    return { ok = true, callId = id, state = 'OUTGOING_RINGING' }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:phoneCallAnswer', function(source)
+    local id = PhoneCalls.bySource[source]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended or call.state ~= 'ringing' or call.callee ~= source then
+        return nil, { localeKey = 'phone.call.ended' }
+    end
+    call.state = 'active'
+    call.answeredAt = os.time()
+    voiceSet(call.caller, call.channel)
+    voiceSet(call.callee, call.channel)
+    push(call.caller, payloadFor(call, call.caller, 'ACTIVE'))
+    push(call.callee, payloadFor(call, call.callee, 'ACTIVE'))
+    return { ok = true, state = 'ACTIVE', callId = call.id }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:phoneCallDecline', function(source)
+    local id = PhoneCalls.bySource[source]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended then return { ok = true } end
+    if call.state == 'ringing' and call.callee == source then
+        PhoneCalls.finish(call, 'declined')
+        return { ok = true }
+    end
+    if call.caller == source and call.state == 'ringing' then
+        PhoneCalls.finish(call, 'cancelled')
+        return { ok = true }
+    end
+    PhoneCalls.finish(call, call.state == 'active' and 'answered' or 'cancelled')
+    return { ok = true }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:phoneCallHangup', function(source)
+    local id = PhoneCalls.bySource[source]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended then return { ok = true } end
+    if call.state == 'ringing' and call.caller == source then
+        PhoneCalls.finish(call, 'cancelled')
+    elseif call.state == 'ringing' and call.callee == source then
+        PhoneCalls.finish(call, 'declined')
+    else
+        PhoneCalls.finish(call, 'answered')
+    end
+    return { ok = true }
+end)
+
+RegisterNetEvent('sunset:phone:forceEnd', function()
+    local src = source
+    if not exports.sunset_core:RateLimit(src, 'phoneForceEnd', 800) then return end
+    PhoneCalls.endForSource(src, 'disconnect')
+end)
+
+AddEventHandler('playerDropped', function()
+    PhoneCalls.endForSource(source, 'disconnect')
+end)
+
+AddEventHandler('sunset:death:playerDowned', function(src)
+    PhoneCalls.endForSource(tonumber(src), 'unavailable')
+end)
+
+AddEventHandler('sunset:server:characterSelected', function(src)
+    PhoneCalls.endForSource(tonumber(src), 'disconnect')
+end)
+
+AddEventHandler('onResourceStop', function(res)
+    if res ~= GetCurrentResourceName() then return end
+    local pending = {}
+    for _, call in pairs(PhoneCalls.byId) do pending[#pending + 1] = call end
+    for i = 1, #pending do
+        PhoneCalls.finish(pending[i], 'disconnect')
+    end
+end)

@@ -108,6 +108,11 @@ local function openPhone()
         DisablePlayerFiring(PlayerId(), true)
         playPhoneSound('open')
         playPhoneAnim(true)
+        local layoutRaw = GetResourceKvpString('sunset_phone_layout')
+        if layoutRaw and layoutRaw ~= '' then
+            local okLayout, decoded = pcall(json.decode, layoutRaw)
+            if okLayout and type(decoded) == 'table' then data.layout = decoded end
+        end
         exports.sunset_ui:Send('phoneShow', data)
         exports.sunset_ui:SetFocus(true, true, false, 'phone')
     end)
@@ -209,9 +214,12 @@ AddEventHandler('sunset:nui:phoneSend', function(data)
             return
         end
         if not sent then
-            exports.sunset_ui:Notify(sendErr or exports.sunset_core:Translate('phone.msg.the_server_rejected_this_message_check'), 'error')
+            local message = sendErr or exports.sunset_core:Translate('phone.msg.the_server_rejected_this_message_check')
+            exports.sunset_ui:Notify(message, 'error')
+            exports.sunset_ui:Send('phoneActionResult', { op = 'send', ok = false, error = message })
             return
         end
+        exports.sunset_ui:Send('phoneActionResult', { op = 'send', ok = true })
         local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
         exports.sunset_ui:Send('phoneUpdate', refreshed)
     end)
@@ -252,8 +260,11 @@ AddEventHandler('sunset:nui:phoneBankTransfer', function(data)
         if res then
             exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.msg.transfer_of_sent_successfully', { amount = tostring(tonumber(data.amount) or 0) }), 'success')
             exports.sunset_ui:Send('phoneUpdate', res)
+            exports.sunset_ui:Send('phoneActionResult', { op = 'transfer', ok = true })
         else
-            exports.sunset_ui:Notify(err or exports.sunset_core:Translate('phone.msg.transfer_failed'), 'error')
+            local message = err or exports.sunset_core:Translate('phone.msg.transfer_failed')
+            exports.sunset_ui:Notify(message, 'error')
+            exports.sunset_ui:Send('phoneActionResult', { op = 'transfer', ok = false, error = message })
         end
     end)
 end)

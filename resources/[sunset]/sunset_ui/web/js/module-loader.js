@@ -59,7 +59,7 @@
         phone: {
             html: 'modules/phone/index.html',
             css: ['css/phone.css'],
-            js: ['js/phone-taxi-map.js', 'js/phone.js']
+            js: ['js/phone-state.js', 'js/phone.js']
         },
         mdc: {
             html: 'modules/mdc/index.html',

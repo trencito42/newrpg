@@ -142,7 +142,7 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     local messages = {}
     local ok, rows = pcall(function()
         return MySQL.query.await([[
-            SELECT m.id, m.message, m.created_at, m.sender_character_id, m.receiver_character_id,
+            SELECT m.id, m.message, m.created_at, m.read_at, m.sender_character_id, m.receiver_character_id,
                    sc.firstname AS sender_name, rc.firstname AS receiver_name
             FROM (
                 (SELECT id FROM phone_messages WHERE sender_character_id = ? ORDER BY id DESC LIMIT 60)
@@ -233,6 +233,26 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         contacts = contacts,
         onlineByChar = onlineByChar,
         avatarsByChar = avatarsByChar,
+        calls = (function()
+            local okCalls, rowsCalls = pcall(function()
+                return MySQL.query.await([[
+                    SELECT pc.id, pc.status, pc.duration_seconds, pc.created_at,
+                           CASE WHEN pc.caller_character_id = ? THEN 'out' ELSE 'in' END AS direction,
+                           CASE WHEN pc.caller_character_id = ? THEN pc.callee_character_id ELSE pc.caller_character_id END AS peer_character_id,
+                           CASE WHEN pc.caller_character_id = ? THEN kc.phone_number ELSE cc.phone_number END AS peer_phone,
+                           CASE WHEN pc.caller_character_id = ? THEN TRIM(CONCAT(COALESCE(kc.firstname,''),' ',COALESCE(kc.lastname,'')))
+                                ELSE TRIM(CONCAT(COALESCE(cc.firstname,''),' ',COALESCE(cc.lastname,''))) END AS peer_name
+                    FROM phone_calls pc
+                    LEFT JOIN characters cc ON cc.id = pc.caller_character_id
+                    LEFT JOIN characters kc ON kc.id = pc.callee_character_id
+                    WHERE pc.caller_character_id = ? OR pc.callee_character_id = ?
+                    ORDER BY pc.id DESC
+                    LIMIT 40
+                ]], { myCharId, myCharId, myCharId, myCharId, myCharId, myCharId })
+            end)
+            if okCalls and rowsCalls then return rowsCalls end
+            return {}
+        end)(),
     }
 end)
 
