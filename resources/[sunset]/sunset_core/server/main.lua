@@ -556,6 +556,7 @@ local function completeAuthenticationInner(source, accountId, username)
             -- [SEC-PERMIT] Clear spawn permit for the displaced session so
             -- it cannot be replayed after the source drops.
             clearSpawnPermit(otherSrc)
+            indexUnregisterPlayer(otherSrc, otherPlayer)
             Players[otherSrc] = nil
             Sessions[otherSrc] = nil
         end
@@ -577,35 +578,57 @@ local function completeAuthenticationInner(source, accountId, username)
 
     local license = session.license
     local t1 = SunsetBoot.IsDebug() and GetGameTimer() or 0
+    -- Account ownership is derived exclusively from the authenticated account.
+    -- A FiveM license is device/security metadata and may be shared by several
+    -- username/password accounts on the same installation.
     local player = MySQL.single.await('SELECT * FROM players WHERE account_id = ?', { accountId })
-
-    if not player then
-        player = MySQL.single.await('SELECT * FROM players WHERE license = ?', { license })
-        if player then
-            MySQL.update.await('UPDATE players SET account_id = ? WHERE id = ?', { accountId, player.id })
-            player.account_id = accountId
-        end
-    end
     if SunsetBoot.IsDebug() then
         print(('^5[BOOTV src=%d] DB auth.player %dms^7'):format(source, GetGameTimer() - t1))
     end
 
     if not player then
-        local insertId = MySQL.insert.await(
-            'INSERT INTO players (account_id, license, steam, discord, name) VALUES (?, ?, ?, ?, ?)',
-            {
-                accountId,
-                license,
-                Sunset.GetIdentifier(source, 'steam'),
-                Sunset.GetIdentifier(source, 'discord'),
-                username,
-            }
-        )
-        player = MySQL.single.await('SELECT * FROM players WHERE id = ?', { insertId })
+        local inserted, insertId = pcall(function()
+            return MySQL.insert.await(
+                'INSERT INTO players (account_id, license, steam, discord, name) VALUES (?, ?, ?, ?, ?)',
+                {
+                    accountId,
+                    license,
+                    Sunset.GetIdentifier(source, 'steam'),
+                    Sunset.GetIdentifier(source, 'discord'),
+                    username,
+                }
+            )
+        end)
+        -- The unique account_id index serializes two concurrent login attempts.
+        -- If another attempt created the profile first, load that same account's
+        -- row; never recover through a device identifier.
+        if inserted and insertId then
+            player = MySQL.single.await('SELECT * FROM players WHERE id = ? AND account_id = ?', { insertId, accountId })
+        else
+            player = MySQL.single.await('SELECT * FROM players WHERE account_id = ?', { accountId })
+        end
+        if not player then
+            Sunset.Warn(('Could not create account-owned player profile for account #%d'):format(accountId))
+            return false
+        end
     else
         MySQL.update.await('UPDATE players SET license = ?, name = ?, last_seen = NOW() WHERE id = ?', {
             license, username, player.id
         })
+    end
+
+    -- Keep a non-authoritative history of devices observed for this account.
+    -- Failure to record telemetry must never change or block account ownership.
+    local observed = pcall(function()
+        MySQL.prepare.await([[
+            INSERT INTO account_identifiers
+                (account_id, identifier_type, identifier_value, first_seen_at, last_seen_at)
+            VALUES (?, 'license', ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE last_seen_at = NOW()
+        ]], { accountId, license })
+    end)
+    if not observed then
+        Sunset.Warn(('Could not record device metadata for account #%d; authentication remains account-scoped'):format(accountId))
     end
 
     Players[source] = {
