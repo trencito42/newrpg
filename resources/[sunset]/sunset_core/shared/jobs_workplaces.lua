@@ -82,7 +82,7 @@ Sunset.JobWorkplaces = {
             }
         },
         requirements = {
-            minLevel = 1,
+            minLevel = 5,
             licenses = { 'driver' },
         },
         actions = {
@@ -190,7 +190,7 @@ Sunset.JobWorkplaces = {
         jobLabel = 'Hunter',
         locationLabel = 'Sandy Shores Hunting Lodge',
         address = 'Hunting Lodge, Sandy Shores, Blaine County',
-        description = 'Take on wildlife management contracts across Blaine County. Requires a valid Firearm License and Hunting License.',
+        description = 'Take on wildlife management contracts across Blaine County. Requires Character Level 10, a valid Firearm License and Hunting License.',
         npc = {
             id = 'mason_hunter',
             name = 'Mason',
@@ -205,7 +205,7 @@ Sunset.JobWorkplaces = {
         guide = {
             title = 'Hunter Career Guide',
             steps = {
-                '1. Ensure you hold a valid Firearm License and Hunting License (from LSSI).',
+                '1. Reach Level 10 and ensure you hold a valid Firearm License and Hunting License (from LSSI).',
                 '2. Apply as Hunter with Mason at the Hunting Lodge.',
                 '3. Start a shift and choose a Hunting Contract from the board.',
                 '4. Travel to the assigned zone. No exact animal GPS — track them.',
@@ -215,7 +215,7 @@ Sunset.JobWorkplaces = {
             },
         },
         requirements = {
-            minLevel = 1,
+            minLevel = 10,
             licenses = { 'weapon', 'hunting' },
         },
         actions = {
@@ -252,7 +252,7 @@ Sunset.JobWorkplaces = {
         guide = {
             title = 'Marine Salvage Career Guide',
             steps = {
-                '1. Apply as Diver with Terry at the Vespucci waterfront.',
+                '1. Reach Level 6 and apply as Diver with Terry at the Vespucci waterfront.',
                 '2. Rent Diving Gear (required before diving).',
                 '3. Start a shift and choose a Salvage Contract.',
                 '4. Travel to the search area — no exact marker, use your detector underwater.',
@@ -262,7 +262,7 @@ Sunset.JobWorkplaces = {
             },
         },
         requirements = {
-            minLevel = 1,
+            minLevel = 6,
             licenses = {},  -- No baseline license; boat license checked per-contract
         },
         actions = {

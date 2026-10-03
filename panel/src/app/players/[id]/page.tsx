@@ -12,6 +12,17 @@ import { GTAImage } from "@/components/ui/GTAImage";
 import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
 import { vehicleDisplayName } from "@/lib/vehicle-names";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { CustomBadge } from "@/components/ui/CustomBadge";
+
+interface AccountBadgeRow extends RowDataPacket {
+  id: number;
+  badge_key: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  bg_color: string | null;
+}
 
 interface CharacterProfileRow extends RowDataPacket {
   id: number;
@@ -95,6 +106,7 @@ export default async function PlayerProfilePage({
       is_faction_leader: number | null;
       admin_level: number;
       helper_level: number;
+      is_author: number;
       featured_vehicle_id: number | null;
       is_online: number;
     }
@@ -108,6 +120,7 @@ export default async function PlayerProfilePage({
        a.username AS account_username,
        a.admin_level,
        a.helper_level,
+       COALESCE(a.is_author, 0) AS is_author,
        cl.id AS clan_id,
        cl.name AS clan_name,
        cl.tag AS clan_tag,
@@ -159,6 +172,7 @@ export default async function PlayerProfilePage({
     skills,
     licenses,
     sanctionCountRow,
+    customBadges,
   ] = await Promise.all([
     canViewFinancials
       ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
@@ -201,6 +215,10 @@ export default async function PlayerProfilePage({
        WHERE action = 'warn' AND (target_character_id = ? OR target_account_id = ?)`,
       [characterId, char.account_id]
     ),
+    dbQuery<AccountBadgeRow>(
+      "SELECT id, badge_key, title, description, icon, color, bg_color FROM account_badges WHERE account_id = ? ORDER BY id ASC",
+      [char.account_id]
+    ),
   ]);
 
   const hasFaction = isFaction(char.faction_id);
@@ -209,12 +227,13 @@ export default async function PlayerProfilePage({
   const featuredVehicle = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
 
   // Derive role badges
-  const roleBadges: { label: string; color: string; tooltip: string; href?: string }[] = [];
+  const roleBadges: { label: string; color: string; tooltip: string; icon?: string; href?: string }[] = [];
   if (char.admin_level > 0) {
     roleBadges.push({
       label: `ADMIN ${char.admin_level}`,
       color: "#ef4444",
       tooltip: `Server Administrator · Level ${char.admin_level}`,
+      icon: "fa-shield-halved",
     });
   }
   if (char.helper_level > 0) {
@@ -222,35 +241,49 @@ export default async function PlayerProfilePage({
       label: `HELPER ${char.helper_level}`,
       color: "#3b82f6",
       tooltip: `Server Helper · Level ${char.helper_level}`,
+      icon: "fa-hand-holding-heart",
+    });
+  }
+  if (char.is_author > 0) {
+    roleBadges.push({
+      label: t(locale, "interface.author"),
+      color: "#c084fc",
+      tooltip: "Autor Oficial & Creator de Conținut (Acces Blog/Updates)",
+      icon: "fa-feather",
+      href: "/updates",
     });
   }
   if (char.is_faction_leader || char.job_grade >= 7) {
     roleBadges.push({
-      label: "FACTION LEADER",
+      label: t(locale, "interface.faction_leader"),
       color: "#10b981",
       tooltip: `Leader of ${factionLabel || "Faction"}`,
+      icon: "fa-shield",
       href: `/factions/${char.faction_id}`,
     });
   } else if (char.job_grade === 6) {
     roleBadges.push({
-      label: "SUB-LEADER",
+      label: t(locale, "interface.co_leader_2"),
       color: "#10b981",
       tooltip: `Sub-Leader of ${factionLabel || "Faction"}`,
+      icon: "fa-shield",
       href: `/factions/${char.faction_id}`,
     });
   }
   if (char.is_clan_owner || (char.clan_rank && char.clan_rank >= 7)) {
     roleBadges.push({
-      label: "CLAN OWNER",
+      label: t(locale, "interface.clan_owner"),
       color: char.clan_tag_color || "#f59e0b",
       tooltip: `Owner of [${char.clan_tag}] ${char.clan_name || "Clan"}`,
+      icon: "fa-flag",
       href: char.clan_id ? `/clans/${char.clan_id}` : undefined,
     });
   } else if (char.clan_rank === 6) {
     roleBadges.push({
-      label: "CLAN CO-LEADER",
+      label: t(locale, "interface.clan_co_leader"),
       color: char.clan_tag_color || "#f59e0b",
       tooltip: `Co-Leader of [${char.clan_tag}] ${char.clan_name || "Clan"}`,
+      icon: "fa-flag",
       href: char.clan_id ? `/clans/${char.clan_id}` : undefined,
     });
   }
@@ -266,18 +299,18 @@ export default async function PlayerProfilePage({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Staff Actions if Admin */}
       {session && session.adminLevel >= 1 && session.accountId !== char.account_id && (
         <PlayerActions accountId={char.account_id} characterId={char.id} adminLevel={session.adminLevel} locale={locale} />
       )}
 
       {/* Main Profile Header Card */}
-      <div className="p-4 sm:p-5 bg-[#0E0E10] border border-surface-border rounded">
+      <div className="p-4 sm:p-6 bg-[#0E0E10] rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           {/* Left: Avatar + Identity + Metadata */}
           <div className="flex items-start gap-4">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded bg-[#191719] border border-surface-border shrink-0 overflow-hidden flex items-center justify-center shadow-md">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-[#141416] shrink-0 overflow-hidden flex items-center justify-center">
               <GTAImage
                 src={getPedAvatarUrl(characterSkin)}
                 alt={char.account_username}
@@ -288,7 +321,7 @@ export default async function PlayerProfilePage({
 
             <div className="space-y-1.5 flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                   <PlayerIdentity
                     username={char.account_username}
                     factionId={char.faction_id}
@@ -302,9 +335,9 @@ export default async function PlayerProfilePage({
 
                 {/* Online Indicator */}
                 {Boolean(char.is_online) ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 rounded text-[11px] font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Online
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[11px] font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {t(locale, "interface.online")}
                   </span>
                 ) : (
                   <span className="text-xs text-[#8F8B83] font-mono">
@@ -313,47 +346,46 @@ export default async function PlayerProfilePage({
                 )}
               </div>
 
-              {/* Role Badges */}
-              {roleBadges.length > 0 && (
+              {/* Role & Custom Badges */}
+              {(roleBadges.length > 0 || customBadges.length > 0) && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   {roleBadges.map((b, idx) => (
-                    b.href ? (
-                      <Link
-                        key={idx}
-                        href={b.href}
-                        title={b.tooltip}
-                        style={{ borderColor: `${b.color}40`, color: b.color }}
-                        className="px-2 py-0.5 bg-[#191719] border rounded text-[10px] font-mono font-bold tracking-tight uppercase hover:opacity-80 transition-opacity"
-                      >
-                        {b.label}
-                      </Link>
-                    ) : (
-                      <span
-                        key={idx}
-                        title={b.tooltip}
-                        style={{ borderColor: `${b.color}40`, color: b.color }}
-                        className="px-2 py-0.5 bg-[#191719] border rounded text-[10px] font-mono font-bold tracking-tight uppercase"
-                      >
-                        {b.label}
-                      </span>
-                    )
+                    <CustomBadge
+                      key={`role-${idx}`}
+                      title={b.label}
+                      description={b.tooltip}
+                      color={b.color}
+                      icon={b.icon}
+                      href={b.href}
+                    />
+                  ))}
+
+                  {customBadges.map((cb) => (
+                    <CustomBadge
+                      key={`custom-${cb.id}`}
+                      title={cb.title}
+                      description={cb.description}
+                      icon={cb.icon}
+                      color={cb.color}
+                      bgColor={cb.bg_color}
+                    />
                   ))}
                 </div>
               )}
 
               {/* Sub-identity: Faction & Clan details */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#99958E] pt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#99958E] pt-0.5">
                 {hasFaction ? (
                   <span>
-                    Faction:{" "}
+                    {t(locale, "interface.faction")}{" "}
                     <Link href={`/factions/${char.faction_id}`} className="text-[#F2EFE8] font-medium hover:underline">
                       {factionLabel}
                     </Link>{" "}
-                    <span className="text-[#8F8B83]">(Rank {char.job_grade})</span>
+                    <span className="text-[#8F8B83]">({t(locale, "interface.rank")} {char.job_grade})</span>
                   </span>
                 ) : (
                   <span>
-                    Job: <span className="text-[#B4AFA4] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span>
+                    {t(locale, "interface.job_2")} <span className="text-[#B4AFA4] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span>
                   </span>
                 )}
 
@@ -361,7 +393,7 @@ export default async function PlayerProfilePage({
                   <>
                     <span>•</span>
                     <span>
-                      Clan:{" "}
+                      {t(locale, "interface.clan")}{" "}
                       <Link href={`/clans/${char.clan_id}`} style={{ color: char.clan_tag_color || "#f59e0b" }} className="font-semibold hover:underline">
                         [{char.clan_tag}] {char.clan_name}
                       </Link>
@@ -374,8 +406,8 @@ export default async function PlayerProfilePage({
 
           {/* Right: Featured Vehicle Preview */}
           {featuredVehicle && (
-            <div className="flex items-center gap-3 p-2.5 bg-[#101012] border border-surface-border rounded lg:max-w-xs w-full">
-              <div className="w-20 h-14 bg-[#1b1b1e] rounded overflow-hidden shrink-0 flex items-center justify-center border border-surface-border">
+            <div className="flex items-center gap-3 p-3 bg-[#121214] rounded-xl lg:max-w-xs w-full">
+              <div className="w-16 h-12 bg-[#18181B] rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                 <GTAImage
                   src={getVehiclePreviewUrl(featuredVehicle.model, featuredVehicle.preview_url)}
                   alt={vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}
@@ -384,7 +416,7 @@ export default async function PlayerProfilePage({
                 />
               </div>
               <div className="min-w-0 text-xs">
-                <span className="text-[10px] text-[#8F8B83] uppercase tracking-wider block font-semibold">Featured Vehicle</span>
+                <span className="text-[10px] text-[#8F8B83] uppercase tracking-wider block font-semibold">{t(locale, "interface.featured_vehicle")}</span>
                 <span className="font-bold text-[#F2EFE8] truncate block">{vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}</span>
                 <span className="font-mono text-[11px] text-[#99958E] block">{featuredVehicle.plate}</span>
               </div>
@@ -394,41 +426,41 @@ export default async function PlayerProfilePage({
       </div>
 
       {/* Horizontal Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[#8F8B83] block font-medium">Level</span>
-          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{char.level}</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "common.level")}</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{char.level}</span>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[#8F8B83] block font-medium">Played Time</span>
-          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{Math.floor(char.paydays_received || 0)} hours</span>
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.time_played")}</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{Math.floor(char.paydays_received || 0)} {t(locale, "interface.hours")}</span>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[#8F8B83] block font-medium">Respect Points</span>
-          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{formatNumber(char.respect_points, locale)} RP</span>
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.respect_points")}</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{formatNumber(char.respect_points, locale)} RP</span>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[#8F8B83] block font-medium">Warnings</span>
-          <span className="text-base font-bold text-[#F2EFE8] font-mono mt-0.5 block">{warningsCount} / 3</span>
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "players.sanctions_history")}</span>
+          <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{warningsCount} / 3</span>
         </div>
       </div>
 
       {/* Money (Only shown if character owner or staff) */}
       {balance && (
         <div>
-          <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider mb-2">
-            Money
+          <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider mb-2">
+            {t(locale, "nav.banking")}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
-              <span className="text-xs text-[#99958E]">Cash</span>
-              <span className="font-mono text-sm font-semibold text-[#F2EFE8]">{formatCurrency(balance.cash)}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="p-3.5 bg-[#0E0E10] rounded-xl flex items-center justify-between">
+              <span className="text-xs text-[#99958E]">{t(locale, "interface.cash")}</span>
+              <span className="font-mono text-sm font-semibold text-emerald-400">{formatCurrency(balance.cash)}</span>
             </div>
-            <div className="p-3 bg-surface-100 border border-surface-border rounded flex items-center justify-between">
-              <span className="text-xs text-[#99958E]">Bank</span>
+            <div className="p-3.5 bg-[#0E0E10] rounded-xl flex items-center justify-between">
+              <span className="text-xs text-[#99958E]">{t(locale, "interface.bank")}</span>
               <span className="font-mono text-sm font-semibold text-[#F2EFE8]">{formatCurrency(balance.bank)}</span>
             </div>
           </div>
@@ -436,20 +468,20 @@ export default async function PlayerProfilePage({
       )}
 
       {/* Main Sections: Vehicles, Properties, Jobs, Licenses */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Vehicles */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
-              Vehicles ({vehicles.length})
+            <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
+              {t(locale, "interface.vehicles_2")} ({vehicles.length})
             </h2>
           </div>
 
           {vehicles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {vehicles.map((v) => (
-                <div key={v.id} className="p-2.5 bg-[#0E0E10] border border-surface-border rounded flex gap-3 items-center">
-                  <div className="w-16 h-12 bg-[#191719] rounded overflow-hidden shrink-0 border border-surface-border flex items-center justify-center">
+                <div key={v.id} className="p-3 bg-[#0E0E10] rounded-xl flex gap-3 items-center">
+                  <div className="w-14 h-11 bg-[#141416] rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                     <GTAImage
                       src={getVehiclePreviewUrl(v.model, v.preview_url)}
                       alt={vehicleDisplayName(v.model, v.catalog_label)}
@@ -458,28 +490,28 @@ export default async function PlayerProfilePage({
                     />
                   </div>
                   <div className="min-w-0 flex-1 text-xs">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-1">
                       <span className="font-semibold text-[#F2EFE8] truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
                       {v.destroyed ? (
-                        <span className="text-[10px] text-red-400 font-mono">Destroyed</span>
+                        <span className="text-[10px] text-red-400 font-mono shrink-0">{t(locale, "interface.destroyed")}</span>
                       ) : v.stored ? (
-                        <span className="text-[10px] text-[#8F8B83] font-mono">Garage</span>
+                        <span className="text-[10px] text-[#8F8B83] font-mono shrink-0">{t(locale, "interface.garage")}</span>
                       ) : (
-                        <span className="text-[10px] text-emerald-400 font-mono">Active</span>
+                        <span className="text-[10px] text-emerald-400 font-mono shrink-0">{t(locale, "common.active")}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-[11px] text-[#99958E] mt-0.5 font-mono">
                       <span>{v.plate}</span>
                       <span>•</span>
-                      <span>Ins. Lvl {v.insurance_level || 1}</span>
+                      <span>{t(locale, "interface.insurance_level")} {v.insurance_level || 1}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-[#0E0E10]">
-              No vehicles registered.
+            <p className="text-xs text-[#8F8B83] p-4 rounded-xl bg-[#0E0E10]">
+              {t(locale, "interface.no_vehicles_registered")}
             </p>
           )}
         </div>
@@ -487,33 +519,33 @@ export default async function PlayerProfilePage({
         {/* Properties */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
-              Properties ({properties.length})
+            <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
+              {t(locale, "interface.properties")} ({properties.length})
             </h2>
           </div>
 
           {properties.length > 0 ? (
-            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+            <div className="rounded-xl bg-[#0E0E10] overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] bg-[#121214]">
                   <tr>
-                    <th className="py-2 px-3">Property</th>
-                    <th className="py-2 px-3 text-right">Type</th>
+                    <th className="py-2.5 px-3.5">{t(locale, "interface.property")}</th>
+                    <th className="py-2.5 px-3.5 text-right">{t(locale, "interface.type")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
+                <tbody className="divide-y divide-white/[0.04] text-[#B4AFA4]">
                   {properties.map((p) => (
                     <tr key={p.id}>
-                      <td className="py-2 px-3 font-medium text-[#F2EFE8]">{p.label}</td>
-                      <td className="py-2 px-3 text-right text-[#8F8B83] capitalize">{p.interior}</td>
+                      <td className="py-2.5 px-3.5 font-medium text-[#F2EFE8]">{p.label}</td>
+                      <td className="py-2.5 px-3.5 text-right text-[#8F8B83] capitalize">{p.interior}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
-              No properties.
+            <p className="text-xs text-[#8F8B83] p-4 rounded-xl bg-[#0E0E10]">
+              {t(locale, "interface.no_properties")}
             </p>
           )}
         </div>
@@ -521,35 +553,35 @@ export default async function PlayerProfilePage({
         {/* Job Progress */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
-              Job Progress
+            <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
+              {t(locale, "interface.job_progress")}
             </h2>
           </div>
 
           {skills.length > 0 ? (
-            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+            <div className="rounded-xl bg-[#0E0E10] overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] bg-[#121214]">
                   <tr>
-                    <th className="py-2 px-3">Job</th>
-                    <th className="py-2 px-3">Level</th>
-                    <th className="py-2 px-3 text-right">Tasks</th>
+                    <th className="py-2.5 px-3.5">{t(locale, "interface.job")}</th>
+                    <th className="py-2.5 px-3.5">{t(locale, "common.level")}</th>
+                    <th className="py-2.5 px-3.5 text-right">{t(locale, "interface.tasks_2")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
+                <tbody className="divide-y divide-white/[0.04] text-[#B4AFA4]">
                   {skills.map((s) => (
                     <tr key={s.job_id}>
-                      <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">{s.job_id.replace(/_/g, " ")}</td>
-                      <td className="py-2 px-3 font-mono text-[#F2EFE8]">Level {s.level}</td>
-                      <td className="py-2 px-3 text-right font-mono text-[#8F8B83]">{s.completed_tasks}</td>
+                      <td className="py-2.5 px-3.5 font-medium text-[#F2EFE8] capitalize">{s.job_id.replace(/_/g, " ")}</td>
+                      <td className="py-2.5 px-3.5 font-mono text-[#F2EFE8]">{t(locale, "common.level")} {s.level}</td>
+                      <td className="py-2.5 px-3.5 text-right font-mono text-[#8F8B83]">{s.completed_tasks}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
-              No job progress yet.
+            <p className="text-xs text-[#8F8B83] p-4 rounded-xl bg-[#0E0E10]">
+              {t(locale, "interface.no_job_progress_yet")}
             </p>
           )}
         </div>
@@ -557,33 +589,33 @@ export default async function PlayerProfilePage({
         {/* Licenses */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
-              Licenses
+            <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
+              {t(locale, "players.licenses")}
             </h2>
           </div>
 
           {licenses.length > 0 ? (
-            <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
+            <div className="rounded-xl bg-[#0E0E10] overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
+                <thead className="text-[11px] font-semibold text-[#8F8B83] bg-[#121214]">
                   <tr>
-                    <th className="py-2 px-3">License</th>
-                    <th className="py-2 px-3 text-right">Issued</th>
+                    <th className="py-2.5 px-3.5">{t(locale, "interface.license")}</th>
+                    <th className="py-2.5 px-3.5 text-right">{t(locale, "interface.issued_2")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">
+                <tbody className="divide-y divide-white/[0.04] text-[#B4AFA4]">
                   {licenses.map((l) => (
                     <tr key={l.type}>
-                      <td className="py-2 px-3 font-medium text-[#F2EFE8] capitalize">{l.type} License</td>
-                      <td className="py-2 px-3 text-right font-mono text-[11px] text-[#8F8B83]">{formatDate(l.issued_at, locale)}</td>
+                      <td className="py-2.5 px-3.5 font-medium text-[#F2EFE8] capitalize">{l.type} {t(locale, "interface.license")}</td>
+                      <td className="py-2.5 px-3.5 text-right font-mono text-[11px] text-[#8F8B83]">{formatDate(l.issued_at, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-xs text-[#8F8B83] p-3 border border-surface-border rounded bg-surface-100">
-              No licenses held.
+            <p className="text-xs text-[#8F8B83] p-4 rounded-xl bg-[#0E0E10]">
+              {t(locale, "interface.no_licenses_held")}
             </p>
           )}
         </div>

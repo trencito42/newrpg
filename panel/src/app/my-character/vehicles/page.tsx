@@ -61,8 +61,7 @@ export default async function MyVehiclesPage() {
         </div>
 
         <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
-          {vehicles.length} vehicles
-        </span>
+          {vehicles.length} {t(locale, "interface.vehicles")}</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -80,13 +79,13 @@ export default async function MyVehiclesPage() {
                       {veh.plate}
                     </span>
                     {isImpounded ? (
-                      <span className="text-amber-400 font-medium">Impounded</span>
+                      <span className="text-amber-400 font-medium">{t(locale, "interface.impounded")}</span>
                     ) : veh.destroyed ? (
-                      <span className="text-red-400 font-medium">Destroyed</span>
+                      <span className="text-red-400 font-medium">{t(locale, "interface.destroyed")}</span>
                     ) : veh.stored ? (
-                      <span className="text-[#8F8B83]">Garage</span>
+                      <span className="text-[#8F8B83]">{t(locale, "interface.garage")}</span>
                     ) : (
-                      <span className="text-emerald-400 font-medium">Active</span>
+                      <span className="text-emerald-400 font-medium">{t(locale, "common.active")}</span>
                     )}
                   </div>
 
@@ -104,7 +103,7 @@ export default async function MyVehiclesPage() {
                         {vehicleDisplayName(veh.model, veh.catalog_label)}
                       </h3>
                       <p className="text-xs text-[#99958E] mt-0.5 truncate">
-                        Garage: <span className="text-[#B4AFA4] capitalize">{veh.garage || "default"}</span>
+                        {t(locale, "interface.garage_2")} <span className="text-[#B4AFA4] capitalize">{veh.garage || "default"}</span>
                       </p>
                     </div>
                   </div>
@@ -112,15 +111,15 @@ export default async function MyVehiclesPage() {
 
                 <div className="mt-3 pt-2.5 border-t border-surface-border/60 grid grid-cols-3 gap-2 text-center text-xs text-[#8F8B83]">
                   <div>
-                    <span className="block text-[10px]">Fuel</span>
+                    <span className="block text-[10px]">{t(locale, "interface.fuel")}</span>
                     <span className="font-mono text-[#F2EFE8]">{veh.fuel}%</span>
                   </div>
                   <div>
-                    <span className="block text-[10px]">Engine</span>
+                    <span className="block text-[10px]">{t(locale, "interface.engine")}</span>
                     <span className="font-mono text-[#F2EFE8]">{Math.round(veh.engine / 10)}%</span>
                   </div>
                   <div>
-                    <span className="block text-[10px]">Body</span>
+                    <span className="block text-[10px]">{t(locale, "interface.body")}</span>
                     <span className="font-mono text-[#F2EFE8]">{Math.round(veh.body / 10)}%</span>
                   </div>
                 </div>
@@ -129,8 +128,7 @@ export default async function MyVehiclesPage() {
           })
         ) : (
           <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
-            No vehicles found.
-          </p>
+            {t(locale, "interface.no_vehicles_found")}</p>
         )}
       </div>
     </div>

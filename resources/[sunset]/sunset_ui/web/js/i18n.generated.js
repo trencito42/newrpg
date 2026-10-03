@@ -2247,7 +2247,11 @@ window.SunsetGeneratedLocales = Object.freeze({
     "label.sandy_shores_desert": "Sandy Shores Desert",
     "label.sunken_cargo_vespucci": "Sunken Cargo — Vespucci",
     "label.offshore_cargo_paleto": "Offshore Cargo — Paleto",
-    "label.aircraft_wreck_sandy_shores_coast": "Aircraft Wreck — Sandy Shores Coast"
+    "label.aircraft_wreck_sandy_shores_coast": "Aircraft Wreck — Sandy Shores Coast",
+    "ui.garage.personal_vehicles": "Personal vehicles",
+    "ui.garage.select_vehicle": "Select a vehicle",
+    "ui.garage.retrieve": "Retrieve vehicle",
+    "ui.garage.set_gps": "Set GPS"
   },
   "ro": {
     "dynamic.app.unsaved": "NESALVAT",
@@ -4496,6 +4500,10 @@ window.SunsetGeneratedLocales = Object.freeze({
     "label.sandy_shores_desert": "Desertul Sandy Shores",
     "label.sunken_cargo_vespucci": "Marfa scufundata — Vespucci",
     "label.offshore_cargo_paleto": "Marfa in larg — Paleto",
-    "label.aircraft_wreck_sandy_shores_coast": "Epava de avion — Coasta Sandy Shores"
+    "label.aircraft_wreck_sandy_shores_coast": "Epava de avion — Coasta Sandy Shores",
+    "ui.garage.personal_vehicles": "Vehicule personale",
+    "ui.garage.select_vehicle": "Selectează un vehicul",
+    "ui.garage.retrieve": "Scoate vehiculul",
+    "ui.garage.set_gps": "Setează GPS-ul"
   }
 });

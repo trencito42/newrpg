@@ -352,8 +352,8 @@
             'common.save': 'Salveaza', 'common.buy': 'Cumpara', 'common.sell': 'Vinde',
             'common.rent': 'Inchiriaza', 'common.enter': 'Intra', 'common.exit': 'Iesi',
             'common.lock': 'Incuie', 'common.unlock': 'Descuie', 'common.loading': 'Se incarca…',
-            'common.search': 'Cauta', 'common.no_results': 'Niciun rezultat', 'common.none': 'Niciuna',
-            'common.yes': 'Da', 'common.no': 'Nu', 'common.confirm': 'Confirma',
+            'common.search': 'Caută', 'common.no_results': 'Niciun rezultat', 'common.none': 'Niciuna',
+            'common.yes': 'Da', 'common.no': 'Nu', 'common.confirm': 'Confirmă',
             'common.ok': 'OK', 'common.player': 'Jucator', 'common.players': 'Jucatori',
             'common.vehicle': 'Vehicul', 'common.vehicles': 'Vehicule',
             'common.property': 'Proprietate', 'common.properties': 'Proprietati',
@@ -369,7 +369,7 @@
             'shell.emotes': 'Animatii', 'shell.select_one': 'Alege una',
             'shell.release_to_use': 'Elibereaza [X] pentru folosire', 'shell.player_actions': 'Actiuni jucator',
             'shell.hold': 'Tine apasat', 'shell.to_interact': 'pentru interactiune',
-            'menu.nav.label': 'Sectiunile meniului jucatorului', 'menu.tab.player': 'Jucator',
+            'menu.nav.label': 'Secțiunile meniului jucătorului', 'menu.tab.player': 'Jucator',
             'menu.close': 'Inchide meniul',
             'menu.tab.vehicle': 'Vehicul', 'menu.tab.job': 'Serviciu',
             'menu.tab.property': 'Proprietate', 'menu.tab.settings': 'Setari',
@@ -409,7 +409,7 @@
             'menu.property.browse': 'Vezi toate proprietatile',
             'menu.settings.title': 'Setari sistem',
             'menu.settings.lead': 'Preferintele interfetei — modificarile se aplica imediat.',
-            'menu.settings.language': 'Limba',
+            'menu.settings.language': 'Limbă',
             'menu.settings.language_hint': 'Modificarea se aplica imediat si se salveaza in cont.',
             'menu.settings.english': 'English', 'menu.settings.romanian': 'Romana',
             'menu.settings.chat': 'Chat', 'menu.settings.font_size': 'Marimea textului',
@@ -704,7 +704,15 @@
         Object.prototype.hasOwnProperty.call(params || {}, key) ? String(params[key]) : all);
 
     function t(key, params) {
-        const value = dictionaries[locale][key] ?? dictionaries.en[key];
+        const primary = dictionaries[locale][key];
+        if (window.SUNSET_I18N_STRICT) {
+            const context = `[I18n] locale=${locale} key=${key}`;
+            if (typeof primary !== 'string' || !primary.trim()) throw new Error(`${context}: missing translation`);
+            for (const match of primary.matchAll(/\{([a-zA-Z0-9_]+)\}/g)) {
+                if (params?.[match[1]] === undefined) throw new Error(`${context}: missing parameter {${match[1]}}`);
+            }
+        }
+        const value = primary ?? dictionaries.en[key];
         if (value === undefined) {
             if (!warned.has(key)) { warned.add(key); console.warn(`[I18n] Missing key: ${key}`); }
             // Players never see a raw key: debug builds keep the [?key] marker,
@@ -766,6 +774,7 @@
         const message = event.data || {};
         if (message.action !== 'localeSet') return;
         const payload = message.data || message.payload || {};
+        if (typeof payload.strict === 'boolean') window.SUNSET_I18N_STRICT = payload.strict;
         setLocale(payload.locale || message.locale);
     });
 

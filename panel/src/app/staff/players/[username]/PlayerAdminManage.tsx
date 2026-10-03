@@ -17,19 +17,34 @@ import {
   Package,
   Trash2,
   Lock,
-  Mail,
   Award,
   Layers,
   Sparkles,
+  Plus,
+  Tag,
 } from "lucide-react";
 import { CANONICAL_FACTIONS } from "@/lib/factions";
+import { CustomBadge } from "@/components/ui/CustomBadge";
+import { t, type Locale } from "@/lib/i18n";
+
+
+interface BadgeItem {
+  id: number;
+  badge_key: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  bg_color: string | null;
+}
 
 interface Props {
   player: any;
   sessionAdminLevel: number;
   sessionHelperLevel: number;
-  locale: string;
+  locale: Locale;
   sanctionsList?: any[];
+  badges?: BadgeItem[];
 }
 
 export function PlayerAdminManage({
@@ -38,15 +53,23 @@ export function PlayerAdminManage({
   sessionHelperLevel,
   locale,
   sanctionsList = [],
+  badges = [],
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"moderation" | "account" | "economy" | "faction_clan" | "inventory" | "sanctions">("moderation");
+  const [activeTab, setActiveTab] = useState<"moderation" | "account" | "economy" | "faction_clan" | "inventory" | "badges" | "sanctions">("moderation");
 
   // Moderation state
   const [modAction, setModAction] = useState<string>("warn");
   const [reason, setReason] = useState("");
   const [durationMin, setDurationMin] = useState<number>(30);
+
+  // Badges & Author state
+  const [newBadgeTitle, setNewBadgeTitle] = useState("");
+  const [newBadgeKey, setNewBadgeKey] = useState("");
+  const [newBadgeDesc, setNewBadgeDesc] = useState("");
+  const [newBadgeIcon, setNewBadgeIcon] = useState("fa-award");
+  const [newBadgeColor, setNewBadgeColor] = useState("#F59E0B");
 
   // Account state
   const [newEmail, setNewEmail] = useState(player.email || "");
@@ -137,7 +160,7 @@ export function PlayerAdminManage({
         className="px-3 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-semibold rounded text-xs transition-colors flex items-center gap-1.5 shadow-md"
       >
         <Shield className="w-3.5 h-3.5" />
-        <span>{locale === "ro" ? "Panou Control Staff" : "Manage Player"}</span>
+        <span>{t(locale, "copy.app_staff_players_username_playeradminmanage.manage_player")}</span>
       </button>
 
       {message && (
@@ -161,7 +184,7 @@ export function PlayerAdminManage({
               <div className="flex items-center gap-2.5">
                 <Shield className="w-4 h-4 text-[#D7B558]" />
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  {locale === "ro" ? "Centru de Control Administrativ:" : "Admin Action Center:"}
+                  {t(locale, "copy.app_staff_players_username_playeradminmanage.admin_action_center")}
                 </span>
                 <PlayerIdentity
                   username={player.username}
@@ -190,7 +213,7 @@ export function PlayerAdminManage({
                     : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                 }`}
               >
-                🛡️ {locale === "ro" ? "Sancțiuni" : "Moderation"}
+                🛡️ {t(locale, "copy.app_staff_players_username_playeradminmanage.moderation")}
               </button>
               <button
                 onClick={() => setActiveTab("economy")}
@@ -200,7 +223,7 @@ export function PlayerAdminManage({
                     : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                 }`}
               >
-                💵 {locale === "ro" ? "Economie & Stats" : "Economy & Stats"}
+                💵 {t(locale, "copy.app_staff_players_username_playeradminmanage.economy_stats")}
               </button>
               <button
                 onClick={() => setActiveTab("account")}
@@ -210,7 +233,7 @@ export function PlayerAdminManage({
                     : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                 }`}
               >
-                👤 {locale === "ro" ? "Cont & Securitate" : "Account & Security"}
+                👤 {t(locale, "copy.app_staff_players_username_playeradminmanage.account_security")}
               </button>
               <button
                 onClick={() => setActiveTab("faction_clan")}
@@ -220,7 +243,7 @@ export function PlayerAdminManage({
                     : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                 }`}
               >
-                🏢 {locale === "ro" ? "Facțiuni / Clan" : "Faction & Clan"}
+                🏢 {t(locale, "copy.app_staff_players_username_playeradminmanage.faction_clan")}
               </button>
               <button
                 onClick={() => setActiveTab("inventory")}
@@ -230,7 +253,17 @@ export function PlayerAdminManage({
                     : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                 }`}
               >
-                🎒 {locale === "ro" ? "Inventar" : "Inventory"}
+                🎒 {t(locale, "copy.app_staff_players_username_playeradminmanage.inventory")}
+              </button>
+              <button
+                onClick={() => setActiveTab("badges")}
+                className={`px-3 py-2 border-b-2 font-medium transition-colors ${
+                  activeTab === "badges"
+                    ? "border-[#D7B558] text-[#F2EFE8]"
+                    : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
+                }`}
+              >
+                🎖️ {t(locale, "copy.app_staff_players_username_playeradminmanage.badges_author")}
               </button>
               {sanctionsList.length > 0 && (
                 <button
@@ -241,7 +274,7 @@ export function PlayerAdminManage({
                       : "border-transparent text-[#8F8B83] hover:text-[#F2EFE8]"
                   }`}
                 >
-                  ⚖️ {locale === "ro" ? "Revocare" : "Revoke"}
+                  ⚖️ {t(locale, "copy.app_staff_players_username_playeradminmanage.revoke")}
                 </button>
               )}
             </div>
@@ -251,13 +284,13 @@ export function PlayerAdminManage({
               {/* Common Reason Input */}
               <div>
                 <label className="block text-[11px] text-[#8F8B83] mb-1 font-semibold">
-                  {locale === "ro" ? "Motiv Acțiune (Apare pe Server / AdmBot & Audit):" : "Action Reason (Broadcasts to AdmBot & Logs):"}
+                  {t(locale, "copy.app_staff_players_username_playeradminmanage.action_reason_broadcasts_to_admbot_logs")}
                 </label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder={locale === "ro" ? "Ex: Limbaj neadecvat / DM / Corectare sold..." : "Ex: Inappropriate behavior / DM..."}
+                  placeholder={t(locale, "copy.app_staff_players_username_playeradminmanage.ex_inappropriate_behavior_dm")}
                   className="w-full px-2.5 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8] focus:border-[#D7B558] focus:outline-none"
                 />
               </div>
@@ -277,8 +310,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <AlertTriangle className="w-3.5 h-3.5" />
-                        <span className="font-bold">Warn</span>
-                        <span className="text-[10px]">Avertisment</span>
+                        <span className="font-bold">{t(locale, "interface.warn")}</span>
+                        <span className="text-[10px]">{t(locale, "common.warning")}</span>
                       </button>
                     )}
                     {canKick && (
@@ -290,8 +323,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <AlertOctagon className="w-3.5 h-3.5" />
-                        <span className="font-bold">Kick</span>
-                        <span className="text-[10px]">Deconectare</span>
+                        <span className="font-bold">{t(locale, "interface.kick_2")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.disconnect")}</span>
                       </button>
                     )}
                     {canMute && (
@@ -303,8 +336,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <VolumeX className="w-3.5 h-3.5" />
-                        <span className="font-bold">Mute</span>
-                        <span className="text-[10px]">Tăcere Chat</span>
+                        <span className="font-bold">{t(locale, "interface.mute")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.chat_restriction")}</span>
                       </button>
                     )}
                     {canMute && (
@@ -316,8 +349,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
-                        <span className="font-bold">Unmute</span>
-                        <span className="text-[10px]">Scoate Mute</span>
+                        <span className="font-bold">{t(locale, "interface.unmute")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.remove_chat_restriction")}</span>
                       </button>
                     )}
                     {canJail && (
@@ -329,8 +362,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <Lock className="w-3.5 h-3.5" />
-                        <span className="font-bold">Admin Jail</span>
-                        <span className="text-[10px]">Închisoare</span>
+                        <span className="font-bold">{t(locale, "interface.admin_jail")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.jail")}</span>
                       </button>
                     )}
                     {canJail && (
@@ -342,8 +375,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
-                        <span className="font-bold">Unjail</span>
-                        <span className="text-[10px]">Eliberează</span>
+                        <span className="font-bold">{t(locale, "interface.release")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.release")}</span>
                       </button>
                     )}
                     {canBan && (
@@ -355,8 +388,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <Ban className="w-3.5 h-3.5" />
-                        <span className="font-bold">Ban</span>
-                        <span className="text-[10px]">Suspendare</span>
+                        <span className="font-bold">{t(locale, "interface.ban")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.suspension")}</span>
                       </button>
                     )}
                     {canUnban && (
@@ -368,8 +401,8 @@ export function PlayerAdminManage({
                         }`}
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
-                        <span className="font-bold">Unban</span>
-                        <span className="text-[10px]">Debanare</span>
+                        <span className="font-bold">{t(locale, "interface.unban")}</span>
+                        <span className="text-[10px]">{t(locale, "interface.unban_2")}</span>
                       </button>
                     )}
                   </div>
@@ -377,7 +410,7 @@ export function PlayerAdminManage({
                   {(modAction === "ban" || modAction === "mute" || modAction === "jail") && (
                     <div className="pt-2">
                       <label className="block text-[11px] text-[#8F8B83] mb-1 font-semibold">
-                        {locale === "ro" ? "Durată (Minute):" : "Duration (Minutes):"}
+                        {t(locale, "copy.app_staff_players_username_playeradminmanage.duration_minutes")}
                       </label>
                       <div className="flex items-center gap-2">
                         <input
@@ -408,22 +441,19 @@ export function PlayerAdminManage({
                             onClick={() => setDurationMin(1440)}
                             className="px-2 py-1 bg-[#1A1A1D] hover:bg-[#252529] rounded text-[10px] text-[#8F8B83]"
                           >
-                            1 zi
-                          </button>
+                            {t(locale, "interface.1_day")}</button>
                           <button
                             type="button"
                             onClick={() => setDurationMin(10080)}
                             className="px-2 py-1 bg-[#1A1A1D] hover:bg-[#252529] rounded text-[10px] text-[#8F8B83]"
                           >
-                            7 zile
-                          </button>
+                            {t(locale, "interface.7_days")}</button>
                           <button
                             type="button"
                             onClick={() => setDurationMin(43200)}
                             className="px-2 py-1 bg-[#1A1A1D] hover:bg-[#252529] rounded text-[10px] text-[#8F8B83]"
                           >
-                            Permanent (30z)
-                          </button>
+                            {t(locale, "interface.permanent_30d")}</button>
                         </div>
                       </div>
                     </div>
@@ -448,7 +478,7 @@ export function PlayerAdminManage({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Set Cash */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-emerald-400">💵 Setează Cash (Bani gheață)</label>
+                      <label className="block text-[11px] font-semibold text-emerald-400">{t(locale, "interface.set_cash")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -462,14 +492,13 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_cash", { amount: cashAmount })}
                           className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs"
                         >
-                          Salvează
-                        </button>
+                          {t(locale, "interface.save")}</button>
                       </div>
                     </div>
 
                     {/* Set Bank */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-emerald-300">💳 Setează Sold Bancar (Bank)</label>
+                      <label className="block text-[11px] font-semibold text-emerald-300">{t(locale, "interface.set_bank_balance")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -483,14 +512,13 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_bank", { amount: bankAmount })}
                           className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs"
                         >
-                          Salvează
-                        </button>
+                          {t(locale, "interface.save")}</button>
                       </div>
                     </div>
 
                     {/* Set Level */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-sky-400">⭐ Setează Nivel Caracter (Level)</label>
+                      <label className="block text-[11px] font-semibold text-sky-400">{t(locale, "interface.set_character_level")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -506,14 +534,13 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_level", { level: playerLevel })}
                           className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded text-xs"
                         >
-                          Salvează
-                        </button>
+                          {t(locale, "interface.save")}</button>
                       </div>
                     </div>
 
                     {/* Set Hours */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-amber-400">⏱️ Setează Ore Jucate (Paydays)</label>
+                      <label className="block text-[11px] font-semibold text-amber-400">{t(locale, "interface.set_hours_played_paydays")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -528,14 +555,13 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_hours", { hours: playerHours })}
                           className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs"
                         >
-                          Salvează
-                        </button>
+                          {t(locale, "interface.save")}</button>
                       </div>
                     </div>
 
                     {/* Reset FP */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-red-400">⚖️ Setează Puncte Faction Punish (FP)</label>
+                      <label className="block text-[11px] font-semibold text-red-400">{t(locale, "interface.set_faction_penalty_points_fp")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -567,7 +593,7 @@ export function PlayerAdminManage({
                   <div className="space-y-3">
                     {/* Change Email */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-[#F2EFE8]">📧 Modifică Adresa de Email a Contului</label>
+                      <label className="block text-[11px] font-semibold text-[#F2EFE8]">{t(locale, "interface.change_account_email_address")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="email"
@@ -581,19 +607,18 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_email", { email: newEmail })}
                           className="px-3 py-1 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs"
                         >
-                          Actualizează
-                        </button>
+                          {t(locale, "interface.update")}</button>
                       </div>
                     </div>
 
                     {/* Reset Password Directly */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-[#F2EFE8]">🔑 Setează Parolă Nouă pe Cont</label>
+                      <label className="block text-[11px] font-semibold text-[#F2EFE8]">{t(locale, "interface.set_a_new_account_password")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={newPassword}
-                          placeholder="Introdu parola nouă (minim 6 caractere)..."
+                          placeholder={t(locale, "interface.enter_a_new_password_at_least_6_characters")}
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="w-full px-2.5 py-1 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8]"
                         />
@@ -603,14 +628,13 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("reset_password", { password: newPassword })}
                           className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs disabled:opacity-50"
                         >
-                          Resetează
-                        </button>
+                          {t(locale, "common.reset")}</button>
                       </div>
                     </div>
 
                     {/* Set Premium Points */}
                     <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-1.5">
-                      <label className="block text-[11px] font-semibold text-amber-400">✨ Puncte Premium (PP)</label>
+                      <label className="block text-[11px] font-semibold text-amber-400">{t(locale, "interface.premium_points_pp")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -624,24 +648,23 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_premium_points", { points: premiumPoints })}
                           className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-[#08080A] font-bold rounded text-xs"
                         >
-                          Setează PP
-                        </button>
+                          {t(locale, "interface.set_pp")}</button>
                       </div>
                     </div>
 
                     {/* Staff Roles (Lvl 6) */}
                     {canManageStaff && (
                       <div className="p-2.5 bg-[#101012] border border-surface-border rounded space-y-2">
-                        <label className="block text-[11px] font-bold text-[#D7B558]">🛡️ Rol Staff (Admin / Helper)</label>
+                        <label className="block text-[11px] font-bold text-[#D7B558]">{t(locale, "interface.staff_role_admin_helper")}</label>
                         <div className="grid grid-cols-3 gap-2">
                           <select
                             value={staffRoleType}
                             onChange={(e) => setStaffRoleType(e.target.value as any)}
                             className="px-2.5 py-1 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8]"
                           >
-                            <option value="admin">Administrator</option>
+                            <option value="admin">{t(locale, "interface.administrator")}</option>
                             <option value="helper">Helper</option>
-                            <option value="remove">Elimină Rol Staff (Player)</option>
+                            <option value="remove">{t(locale, "interface.remove_staff_role_player")}</option>
                           </select>
                           {staffRoleType !== "remove" && (
                             <select
@@ -651,18 +674,18 @@ export function PlayerAdminManage({
                             >
                               {staffRoleType === "admin" ? (
                                 <>
-                                  <option value={1}>Admin Level 1</option>
-                                  <option value={2}>Admin Level 2</option>
-                                  <option value={3}>Admin Level 3</option>
-                                  <option value={4}>Admin Level 4</option>
-                                  <option value={5}>Admin Level 5</option>
-                                  <option value={6}>Admin Level 6 (Lead)</option>
+                                  <option value={1}>{t(locale, "interface.admin_level_1")}</option>
+                                  <option value={2}>{t(locale, "interface.admin_level_2")}</option>
+                                  <option value={3}>{t(locale, "interface.admin_level_3")}</option>
+                                  <option value={4}>{t(locale, "interface.admin_level_4")}</option>
+                                  <option value={5}>{t(locale, "interface.admin_level_5")}</option>
+                                  <option value={6}>{t(locale, "interface.admin_level_6_lead")}</option>
                                 </>
                               ) : (
                                 <>
-                                  <option value={1}>Helper Level 1</option>
-                                  <option value={2}>Helper Level 2</option>
-                                  <option value={3}>Helper Level 3</option>
+                                  <option value={1}>{t(locale, "interface.helper_level_1")}</option>
+                                  <option value={2}>{t(locale, "interface.helper_level_2")}</option>
+                                  <option value={3}>{t(locale, "interface.helper_level_3")}</option>
                                 </>
                               )}
                             </select>
@@ -682,8 +705,7 @@ export function PlayerAdminManage({
                             }
                             className="px-3 py-1 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs"
                           >
-                            Aplică Rol
-                          </button>
+                            {t(locale, "interface.apply_role")}</button>
                         </div>
                       </div>
                     )}
@@ -698,16 +720,16 @@ export function PlayerAdminManage({
                 <div className="space-y-3 bg-[#131315] p-3 rounded border border-surface-border">
                   {/* Faction Management */}
                   <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
-                    <span className="font-bold text-sky-400 block text-xs">🏢 Administrare Facțiune</span>
+                    <span className="font-bold text-sky-400 block text-xs">{t(locale, "interface.faction_management")}</span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">Alege Facțiunea</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.choose_faction")}</label>
                         <select
                           value={selectedFaction}
                           onChange={(e) => setSelectedFaction(e.target.value)}
                           className="w-full px-2 py-1 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8]"
                         >
-                          <option value="none">Civil (Fără facțiune)</option>
+                          <option value="none">{t(locale, "interface.civilian_no_faction")}</option>
                           {Object.entries(CANONICAL_FACTIONS).map(([key, f]) => (
                             <option key={key} value={key}>
                               {f.label}
@@ -716,7 +738,7 @@ export function PlayerAdminManage({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">Grad / Rank (0-7)</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.grade_rank_0_7")}</label>
                         <input
                           type="number"
                           min={0}
@@ -734,33 +756,30 @@ export function PlayerAdminManage({
                         onClick={() => handleExecute("set_faction", { factionId: selectedFaction === "none" ? null : selectedFaction, factionGrade })}
                         className="flex-1 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded text-xs"
                       >
-                        Setează Facțiune & Rank
-                      </button>
+                        {t(locale, "interface.set_faction_rank")}</button>
                       <button
                         type="button"
                         disabled={loading}
                         onClick={() => handleExecute("faction_warn", { factionId: player.faction_id })}
                         className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs"
                       >
-                        Faction Warn (FW)
-                      </button>
+                        {t(locale, "interface.faction_warning_fw")}</button>
                       <button
                         type="button"
                         disabled={loading}
                         onClick={() => handleExecute("faction_kick", { factionId: player.faction_id })}
                         className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs"
                       >
-                        Faction Kick
-                      </button>
+                        {t(locale, "interface.kick_from_faction")}</button>
                     </div>
                   </div>
 
                   {/* Clan Management */}
                   <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
-                    <span className="font-bold text-purple-400 block text-xs">🛡️ Administrare Clan</span>
+                    <span className="font-bold text-purple-400 block text-xs">{t(locale, "interface.clan_management")}</span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">ID Clan</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.clan_id")}</label>
                         <input
                           type="number"
                           min={1}
@@ -770,7 +789,7 @@ export function PlayerAdminManage({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">Rank în Clan (1-7)</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.clan_rank_1_7")}</label>
                         <input
                           type="number"
                           min={1}
@@ -788,24 +807,21 @@ export function PlayerAdminManage({
                         onClick={() => handleExecute("set_clan", { clanId, rank: clanRank })}
                         className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded text-xs"
                       >
-                        Setează Clan & Rank
-                      </button>
+                        {t(locale, "interface.set_clan_rank")}</button>
                       <button
                         type="button"
                         disabled={loading}
                         onClick={() => handleExecute("clan_warn", { clanId: player.clan_id || clanId })}
                         className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs"
                       >
-                        Clan Warn (CW)
-                      </button>
+                        {t(locale, "interface.clan_warning_cw")}</button>
                       <button
                         type="button"
                         disabled={loading}
                         onClick={() => handleExecute("clan_kick", { clanId: player.clan_id || clanId })}
                         className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs"
                       >
-                        Clan Kick
-                      </button>
+                        {t(locale, "interface.kick_from_clan")}</button>
                     </div>
                   </div>
                 </div>
@@ -817,10 +833,10 @@ export function PlayerAdminManage({
               {activeTab === "inventory" && (
                 <div className="space-y-3 bg-[#131315] p-3 rounded border border-surface-border">
                   <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
-                    <span className="font-bold text-amber-400 block text-xs">🎒 Modificare Iteme Inventar</span>
+                    <span className="font-bold text-amber-400 block text-xs">{t(locale, "interface.edit_inventory_items")}</span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">Cod Item (ex: lockpick, repairkit, bread, weed_brick)</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.item_id_e_g_lockpick_repairkit_bread_weed_brick")}</label>
                         <input
                           type="text"
                           value={invItem}
@@ -829,7 +845,7 @@ export function PlayerAdminManage({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">Cantitate</label>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5">{t(locale, "interface.quantity")}</label>
                         <input
                           type="number"
                           min={1}
@@ -846,7 +862,7 @@ export function PlayerAdminManage({
                         onClick={() => handleExecute("give_item", { item: invItem, count: invCount })}
                         className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs"
                       >
-                        Adaugă Item (+{invCount})
+                        {t(locale, "interface.add_item")}{invCount})
                       </button>
                       <button
                         type="button"
@@ -854,7 +870,7 @@ export function PlayerAdminManage({
                         onClick={() => handleExecute("remove_item", { item: invItem, count: invCount })}
                         className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs"
                       >
-                        Șterge Item (-{invCount})
+                        {t(locale, "interface.remove_item")}{invCount})
                       </button>
                       <button
                         type="button"
@@ -862,9 +878,238 @@ export function PlayerAdminManage({
                         onClick={() => handleExecute("clear_inventory")}
                         className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs"
                       >
-                        Golește Tot
-                      </button>
+                        {t(locale, "interface.clear_all")}</button>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─────────────────────────────────────────────────────────────
+                  TAB: BADGES & AUTHOR PERMISSION
+                  ───────────────────────────────────────────────────────────── */}
+              {activeTab === "badges" && (
+                <div className="space-y-4 bg-[#131315] p-3 rounded border border-surface-border">
+                  {/* 1. Author / Blogger Status */}
+                  <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#F2EFE8] block text-xs flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                          <span>{t(locale, "interface.author_status_blog_updates_access")}</span>
+                        </span>
+                        <span className="text-[11px] text-[#8F8B83] block">
+                          {t(locale, "interface.allow_the_player_to_publish_panel_updates_and_give_them_the_author_profile_badge")}</span>
+                      </div>
+                      <CustomBadge
+                        title={player.is_author ? "AUTOR ACTIV" : "FĂRĂ ACCES"}
+                        color={player.is_author ? "#A855F7" : "#8F8B83"}
+                        icon={player.is_author ? "fa-feather" : "fa-ban"}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleExecute("set_author", { isAuthor: !player.is_author })}
+                      className={`w-full py-2 font-bold rounded text-xs transition-colors shadow-sm ${
+                        player.is_author
+                          ? "bg-red-950/60 hover:bg-red-900/80 border border-red-800/60 text-red-300"
+                          : "bg-purple-600 hover:bg-purple-500 text-white"
+                      }`}
+                    >
+                      {player.is_author ? "Revocă Statutul de Autor" : "Acordă Permisiune de Autor (Blogger)"}
+                    </button>
+                  </div>
+
+                  {/* 2. Existing Badges */}
+                  <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
+                    <span className="font-bold text-amber-400 block text-xs">
+                      {t(locale, "interface.current_custom_badges")}{badges.length})
+                    </span>
+
+                    {badges.length === 0 ? (
+                      <p className="text-[11px] text-[#8F8B83] italic">{t(locale, "interface.the_player_has_no_custom_badges")}</p>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {badges.map((b) => (
+                          <div
+                            key={b.id}
+                            className="flex items-center justify-between p-2 bg-[#141416] border border-surface-border rounded"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <CustomBadge
+                                title={b.title}
+                                description={b.description}
+                                icon={b.icon}
+                                color={b.color}
+                                bgColor={b.bg_color}
+                              />
+                              {b.description && (
+                                <span className="text-[11px] text-[#8F8B83] truncate max-w-xs">{b.description}</span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={loading}
+                              onClick={() => handleExecute("remove_badge", { badgeId: b.id, badgeKey: b.badge_key })}
+                              className="px-2 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-400 rounded text-[10px] font-bold transition-colors"
+                            >
+                              {t(locale, "common.delete")}</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Assign New Custom Badge */}
+                  <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-3">
+                    <span className="font-bold text-[#F2EFE8] block text-xs flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5 text-brand" />
+                      <span>{t(locale, "interface.grant_a_custom_badge")}</span>
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5 font-semibold">{t(locale, "interface.badge_title_e_g_vip_gold_tester")}</label>
+                        <input
+                          type="text"
+                          value={newBadgeTitle}
+                          onChange={(e) => {
+                            setNewBadgeTitle(e.target.value);
+                            if (!newBadgeKey) {
+                              setNewBadgeKey(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "_"));
+                            }
+                          }}
+                          placeholder={t(locale, "interface.e_g_vip_platinum")}
+                          className="w-full px-2 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-[#8F8B83] mb-0.5 font-semibold">{t(locale, "interface.description_tooltip_optional")}</label>
+                        <input
+                          type="text"
+                          value={newBadgeDesc}
+                          onChange={(e) => setNewBadgeDesc(e.target.value)}
+                          placeholder={t(locale, "interface.e_g_active_donor_vip_player")}
+                          className="w-full px-2 py-1.5 bg-[#141416] border border-surface-border rounded text-xs text-[#F2EFE8]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Icon & Color Selection */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-[#8F8B83] mb-1 font-semibold">{t(locale, "interface.fontawesome_icon")}</label>
+                        <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                          {[
+                            { id: "fa-crown", label: "👑" },
+                            { id: "fa-star", label: "⭐" },
+                            { id: "fa-award", label: "🎖️" },
+                            { id: "fa-gem", label: "💎" },
+                            { id: "fa-shield-halved", label: "🛡️" },
+                            { id: "fa-bolt", label: "⚡" },
+                            { id: "fa-fire", label: "🔥" },
+                            { id: "fa-heart", label: "❤️" },
+                            { id: "fa-trophy", label: "🏆" },
+                            { id: "fa-feather", label: "🪶" },
+                            { id: "fa-circle-check", label: "✓" },
+                          ].map((ic) => (
+                            <button
+                              key={ic.id}
+                              type="button"
+                              onClick={() => setNewBadgeIcon(ic.id)}
+                              className={`px-1.5 py-0.5 rounded border text-[10px] transition-colors ${
+                                newBadgeIcon === ic.id
+                                  ? "border-brand bg-brand/20 text-brand"
+                                  : "border-surface-border bg-surface-200 text-[#8F8B83]"
+                              }`}
+                              title={ic.id}
+                            >
+                              {ic.label}
+                            </button>
+                          ))}
+                        </div>
+                        <input
+                          type="text"
+                          value={newBadgeIcon}
+                          onChange={(e) => setNewBadgeIcon(e.target.value)}
+                          placeholder="fa-crown"
+                          className="w-full px-2 py-1 bg-[#141416] border border-surface-border rounded text-xs font-mono text-[#F2EFE8]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-[#8F8B83] mb-1 font-semibold">{t(locale, "interface.badge_color")}</label>
+                        <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                          {[
+                            { hex: "#F59E0B", label: t(locale, "interface.amber") },
+                            { hex: "#EF4444", label: t(locale, "interface.red") },
+                            { hex: "#3B82F6", label: t(locale, "interface.blue") },
+                            { hex: "#10B981", label: t(locale, "interface.green") },
+                            { hex: "#A855F7", label: t(locale, "interface.purple") },
+                            { hex: "#EC4899", label: t(locale, "interface.pink") },
+                            { hex: "#06B6D4", label: t(locale, "interface.cyan") },
+                            { hex: "#F97316", label: t(locale, "interface.orange") },
+                          ].map((c) => (
+                            <button
+                              key={c.hex}
+                              type="button"
+                              onClick={() => setNewBadgeColor(c.hex)}
+                              style={{ backgroundColor: c.hex }}
+                              className={`w-5 h-5 rounded-full border transition-transform ${
+                                newBadgeColor === c.hex ? "scale-110 border-white ring-1 ring-white" : "border-black/40 opacity-80"
+                              }`}
+                              title={c.label}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={newBadgeColor}
+                            onChange={(e) => setNewBadgeColor(e.target.value)}
+                            className="w-7 h-7 bg-transparent border-0 cursor-pointer rounded"
+                          />
+                          <input
+                            type="text"
+                            value={newBadgeColor}
+                            onChange={(e) => setNewBadgeColor(e.target.value)}
+                            className="flex-1 px-2 py-1 bg-[#141416] border border-surface-border rounded text-xs font-mono text-[#F2EFE8]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Real-time Preview */}
+                    {newBadgeTitle.trim() && (
+                      <div className="p-2.5 bg-[#08080A] border border-surface-border rounded flex items-center justify-between">
+                        <span className="text-[10px] text-[#8F8B83]">{t(locale, "interface.live_preview")}</span>
+                        <CustomBadge
+                          title={newBadgeTitle}
+                          description={newBadgeDesc}
+                          icon={newBadgeIcon}
+                          color={newBadgeColor}
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={loading || !newBadgeTitle.trim()}
+                      onClick={() =>
+                        handleExecute("add_badge", {
+                          badgeTitle: newBadgeTitle.trim(),
+                          badgeKey: (newBadgeKey.trim() || newBadgeTitle.trim().toLowerCase().replace(/[^a-z0-9]/g, "_")),
+                          badgeDescription: newBadgeDesc.trim() || null,
+                          badgeIcon: newBadgeIcon.trim() || "fa-award",
+                          badgeColor: newBadgeColor.trim() || "#F59E0B",
+                        })
+                      }
+                      className="w-full py-2 bg-brand hover:bg-brand-300 disabled:opacity-50 text-[#08080A] font-extrabold uppercase rounded text-xs transition-all shadow-md"
+                    >
+                      {t(locale, "interface.grant_profile_badge")}</button>
                   </div>
                 </div>
               )}
@@ -874,7 +1119,7 @@ export function PlayerAdminManage({
                   ───────────────────────────────────────────────────────────── */}
               {activeTab === "sanctions" && (
                 <div className="space-y-3 bg-[#131315] p-3 rounded border border-surface-border">
-                  <span className="font-bold text-red-400 block text-xs">⚖️ Revocare & Ștergere Sancțiune din Cazier</span>
+                  <span className="font-bold text-red-400 block text-xs">{t(locale, "interface.revoke_delete_sanction_from_record")}</span>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {sanctionsList.map((s) => (
                       <div
@@ -890,7 +1135,7 @@ export function PlayerAdminManage({
                           <span className="font-bold font-mono text-[10px] text-red-400">#{s.id} [{s.action.toUpperCase()}]</span>
                           <span className="text-xs truncate max-w-xs">{s.reason}</span>
                         </div>
-                        <span className="text-[10px] text-[#8F8B83]">de {s.admin_name}</span>
+                        <span className="text-[10px] text-[#8F8B83]">{t(locale, "interface.by")} {s.admin_name}</span>
                       </div>
                     ))}
                   </div>
@@ -900,8 +1145,7 @@ export function PlayerAdminManage({
                     onClick={() => handleExecute("remove_sanction", { sanctionId: selectedSanctionId })}
                     className="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs disabled:opacity-50"
                   >
-                    Șterge Sancțiunea #{selectedSanctionId} din Cazier
-                  </button>
+                    {t(locale, "interface.delete_sanction")}{selectedSanctionId} {t(locale, "interface.from_record")}</button>
                 </div>
               )}
             </div>

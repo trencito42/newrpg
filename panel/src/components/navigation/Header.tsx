@@ -6,6 +6,8 @@ import { GlobalSearch } from "./GlobalSearch";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface HeaderProps {
@@ -29,10 +31,15 @@ export async function Header({ locale, session, identity }: HeaderProps) {
             <NotificationBell locale={locale} />
             <Link
               href={`/players/${encodeURIComponent(session.username)}`}
-              className="flex items-center space-x-2 text-xs text-[#F2EFE8] hover:text-[#F2EFE8] transition-colors"
+              className="flex items-center space-x-2 text-xs text-[#F2EFE8] hover:text-brand transition-colors group"
             >
-              <div className="w-7 h-7 rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs">
-                {session.username.charAt(0).toUpperCase()}
+              <div className="w-8 h-8 rounded-lg bg-surface-200 border border-surface-border overflow-hidden flex items-center justify-center shrink-0 group-hover:border-brand/50 transition-colors shadow-sm">
+                <GTAImage
+                  src={getPedAvatarUrl(identity?.skin)}
+                  alt={session.username}
+                  fallbackText={session.username.charAt(0).toUpperCase()}
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
               <span className="font-semibold text-xs hidden xl:inline">
                 <PlayerIdentity {...(identity || { username: session.username })} size="sm" clickable={false} />

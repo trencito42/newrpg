@@ -56,10 +56,14 @@ end)
 exports.sunset_core:RegisterCallback('sunset:carjack:onLockpickSuccess', function(source)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
+    local can, reason = exports.sunset_core:CanAccess(source, 'criminal.lockpicking')
+    if not can then return false, reason or { localeKey = 'core.gating.level_required', formatArgs = { 10 } } end
+
     local hasItem = exports.sunset_inventory:HasItem(source, 'lockpick', 1)
     if not hasItem then return false, { localeKey = 'carjack.message.you_need_a_lockpick' } end
     exports.sunset_inventory:RemoveItem(source, 'lockpick', 1)
     addLockpickXP(source, 35)
+    TriggerEvent('sunset:quest:progress', char.id, 'lockpick_practiced', 1)
     return true
 end)
 
@@ -74,6 +78,9 @@ end)
 exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(source)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
+    local can, reason = exports.sunset_core:CanAccess(source, 'criminal.lockpicking')
+    if not can then return false, reason or { localeKey = 'core.gating.level_required', formatArgs = { 10 } } end
+
     -- [SEC3] throttle: each call hit the DB (inventory + job_progress) and could be spammed
     if not exports.sunset_core:RateLimit(source, 'carjackLockpick', 2000) then
         return false, { localeKey = 'carjack.message.the_buyer_is_still_counting_the_last_cash_come' }
@@ -95,6 +102,7 @@ exports.sunset_core:RegisterCallback('sunset:carjack:tryLockpick', function(sour
 
     if success then
         addLockpickXP(source, 30)
+        TriggerEvent('sunset:quest:progress', char.id, 'lockpick_practiced', 1)
         return true
     else
         -- Small XP on fail so players still progress
@@ -154,6 +162,9 @@ local SellBusy = {}
 local function doChopSell(source, data)
     local char = getChar(source)
     if not char then return false, { localeKey = 'carjack.message.character_not_loaded' } end
+
+    local can, reason = exports.sunset_core:CanAccess(source, 'criminal.carjack')
+    if not can then return false, reason or { localeKey = 'core.gating.level_required', formatArgs = { 10 } } end
 
     local netId = tonumber(type(data) == 'table' and data.netId)
     if not netId then return false, { localeKey = 'carjack.message.invalid_vehicle_data' } end

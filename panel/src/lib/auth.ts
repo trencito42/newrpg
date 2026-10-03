@@ -16,6 +16,7 @@ interface SessionDbRow extends RowDataPacket {
   language: string;
   admin_level: number;
   helper_level: number;
+  is_author: number;
   selected_character_id: number | null;
   firstname: string | null;
   lastname: string | null;
@@ -41,6 +42,7 @@ export const getCurrentSession = cache(async (): Promise<UserSession | null> => 
        a.language,
        a.admin_level,
        a.helper_level,
+       COALESCE(a.is_author, 0) AS is_author,
        s.selected_character_id,
        c.firstname,
        c.lastname,
@@ -108,6 +110,7 @@ export const getCurrentSession = cache(async (): Promise<UserSession | null> => 
     language: lang,
     adminLevel: Number(row.admin_level) || 0,
     helperLevel: Number(row.helper_level) || 0,
+    isAuthor: Boolean(row.is_author),
     selectedCharacterId: selectedCharId ? Number(selectedCharId) : null,
     selectedCharacterName: selectedCharName,
   };

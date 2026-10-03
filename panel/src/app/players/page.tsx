@@ -5,6 +5,8 @@ import { t, formatNumber, formatDate } from "@/lib/i18n";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { RowDataPacket } from "mysql2";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 import { factionIdSql } from "@/lib/faction-sql";
 
@@ -17,6 +19,7 @@ interface PlayerListRow extends RowDataPacket {
   job: string;
   faction_id: string | null;
   last_played: string | null;
+  metadata: string | Record<string, any> | null;
   clan_tag: string | null;
   clan_tag_color: string | null;
   clan_tag_style: string | null;
@@ -64,6 +67,7 @@ export default async function PlayersDirectoryPage({
   const players = await dbQuery<PlayerListRow>(
     `SELECT 
        a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job,
+       c.metadata,
        ${factionIdSql()} AS faction_id, c.last_played,
        cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
      FROM accounts a
@@ -112,12 +116,12 @@ export default async function PlayersDirectoryPage({
           <table className="w-full text-left text-xs">
             <thead className="text-[11px] font-semibold text-[#8F8B83] bg-surface-200/50">
               <tr>
-                <th className="py-2.5 px-3">Player</th>
-                <th className="py-2.5 px-3">Level</th>
-                <th className="py-2.5 px-3">Faction</th>
-                <th className="py-2.5 px-3">Job</th>
-                <th className="py-2.5 px-3">Hours</th>
-                <th className="py-2.5 px-3 text-right">Last Seen</th>
+                <th className="py-2.5 px-3">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</th>
+                <th className="py-2.5 px-3">{t(locale, "common.level")}</th>
+                <th className="py-2.5 px-3">{t(locale, "players.faction")}</th>
+                <th className="py-2.5 px-3">{t(locale, "interface.job")}</th>
+                <th className="py-2.5 px-3">{t(locale, "players.hours_played")}</th>
+                <th className="py-2.5 px-3 text-right">{t(locale, "interface.last_seen")}</th>
               </tr>
             </thead>
             <tbody className="text-[#B4AFA4]">
@@ -127,19 +131,37 @@ export default async function PlayersDirectoryPage({
                   const factionLabel = hasFaction ? getFactionLabel(p.faction_id) : "-";
                   const civilianJob = p.job;
 
+                  let skin: string | null = null;
+                  if (p.metadata) {
+                    try {
+                      const meta = typeof p.metadata === "string" ? JSON.parse(p.metadata) : p.metadata;
+                      if (meta && meta.skin) skin = String(meta.skin);
+                    } catch {}
+                  }
+
                   return (
                     <tr
                       key={p.id}
                       className="hover:bg-surface-200/40 transition-colors"
                     >
                       <td className="py-2.5 px-3">
-                        <PlayerIdentity
-                          username={p.username}
-                          factionId={p.faction_id}
-                          clanTag={p.clan_tag}
-                          clanColor={p.clan_tag_color}
-                          clanTagStyle={p.clan_tag_style}
-                        />
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-surface-200 border border-surface-border overflow-hidden shrink-0 flex items-center justify-center">
+                            <GTAImage
+                              src={getPedAvatarUrl(skin)}
+                              alt={p.username}
+                              fallbackText={p.username.charAt(0).toUpperCase()}
+                              className="w-full h-full object-cover object-top"
+                            />
+                          </div>
+                          <PlayerIdentity
+                            username={p.username}
+                            factionId={p.faction_id}
+                            clanTag={p.clan_tag}
+                            clanColor={p.clan_tag_color}
+                            clanTagStyle={p.clan_tag_style}
+                          />
+                        </div>
                       </td>
                       <td className="py-2.5 px-3 font-mono font-medium text-[#F2EFE8]">
                         {p.level}

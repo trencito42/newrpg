@@ -223,12 +223,12 @@ end)
 local function syncLocaleToNui(locale)
     if GetResourceState('sunset_ui') == 'started' then
         pcall(function()
-            exports.sunset_ui:Send('localeSet', { locale = locale })
+            exports.sunset_ui:Send('localeSet', { locale = locale, strict = GetConvar('sunset_i18n_strict', '0') == '1' })
         end)
     end
     if GetResourceState('sunset_auth_ui') == 'started' then
         pcall(function()
-            exports.sunset_auth_ui:Send('localeSet', { locale = locale })
+            exports.sunset_auth_ui:Send('localeSet', { locale = locale, strict = GetConvar('sunset_i18n_strict', '0') == '1' })
         end)
     end
 end
@@ -342,3 +342,11 @@ end)
 exports('AwaitGameReady', Sunset.AwaitGameReady)
 exports('RequestModelSafe', Sunset.RequestModelSafe)
 exports('CreateSafeBlip', Sunset.CreateSafeBlip)
+exports('CanAccess', function(gateId)
+    local gate = Sunset.ProgressionGates and Sunset.ProgressionGates[gateId]
+    if not gate then return { allowed = true } end
+    local char = Sunset.Character
+    if not char then return { allowed = false, reason = 'Character not loaded.' } end
+    return Sunset.TriggerCallback('sunset:core:canAccess', gateId) or { allowed = false, reason = 'Access check failed.' }
+end)
+

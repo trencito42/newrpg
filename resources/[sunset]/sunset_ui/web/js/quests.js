@@ -11,6 +11,7 @@
     const QuestLog = {
         open: false,
         quests: [],
+        activeCategory: 'all',
 
         ensureDom() {
             if (document.getElementById('quest-shell')) return;
@@ -26,11 +27,28 @@
                         <button type="button" class="quest-shell__close" id="quest-shell-close">ESC</button>
                     </div>
                 </div>
+                <div class="quest-shell__tabs" id="quest-tabs">
+                    <button type="button" class="quest-shell__tab active" data-cat="all">Toate</button>
+                    <button type="button" class="quest-shell__tab" data-cat="main">Story</button>
+                    <button type="button" class="quest-shell__tab" data-cat="careers">Cariere</button>
+                    <button type="button" class="quest-shell__tab" data-cat="criminal">Criminal</button>
+                    <button type="button" class="quest-shell__tab" data-cat="social">Social</button>
+                    <button type="button" class="quest-shell__tab" data-cat="clans">Clanuri</button>
+                </div>
                 <div class="quest-shell__body" id="quest-body"></div>
                 <div class="quest-shell__hint">${I18n.t('quest.close_hint')}</div>
             `;
             document.body.appendChild(wrap);
             document.getElementById('quest-shell-close')?.addEventListener('click', () => post('questLogClose'));
+
+            wrap.querySelectorAll('.quest-shell__tab').forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    wrap.querySelectorAll('.quest-shell__tab').forEach((t) => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    this.activeCategory = tab.dataset.cat || 'all';
+                    this.render();
+                });
+            });
         },
 
         statusMeta(q) {
@@ -42,17 +60,22 @@
         render() {
             const body = document.getElementById('quest-body');
             if (!body) return;
-            const list = this.quests || [];
+            const allQuests = this.quests || [];
             const countEl = document.getElementById('quest-count');
-            const active = list.filter((q) => q.status !== 'claimed').length;
-            if (countEl) countEl.textContent = I18n.t(active === 1 ? 'quest.active_one' : 'quest.active_many', { count: active });
+            const activeCount = allQuests.filter((q) => q.status !== 'claimed').length;
+            if (countEl) countEl.textContent = I18n.t(activeCount === 1 ? 'quest.active_one' : 'quest.active_many', { count: activeCount });
+
+            let list = allQuests;
+            if (this.activeCategory && this.activeCategory !== 'all') {
+                list = allQuests.filter((q) => (q.category || 'main') === this.activeCategory);
+            }
 
             if (!list.length) {
                 body.innerHTML = `<div class="quest-shell__empty">${I18n.t('quest.empty')}</div>`;
                 return;
             }
 
-            body.innerHTML = list.map((q) => {
+            const cardsHtml = list.map((q) => {
                 const meta = this.statusMeta(q);
                 const pct = q.target > 0 ? Math.min(100, Math.floor(((q.progress || 0) / q.target) * 100)) : 0;
                 const r = q.reward || {};
@@ -67,7 +90,7 @@
                     ? `<button type="button" class="quest-card__claim" data-key="${esc(q.questKey)}"><i class="ph-bold ph-gift"></i> ${I18n.t('quest.claim')}</button>`
                     : '';
                 return `
-                    <div class="quest-card ${meta.cls}">
+                    <div class="quest-card ${meta.cls}" data-category="${esc(q.category || 'main')}">
                         <div class="quest-card__head">
                             <div>
                                 <div class="quest-card__chain">${esc(q.chainLabel || '')}</div>
@@ -81,6 +104,8 @@
                         <div class="quest-card__footer">${rewardHtml}${claimBtn}</div>
                     </div>`;
             }).join('');
+
+            body.innerHTML = cardsHtml;
 
             body.querySelectorAll('.quest-card__claim').forEach((btn) => {
                 btn.addEventListener('click', () => {

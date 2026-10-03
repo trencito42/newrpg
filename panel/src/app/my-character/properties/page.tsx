@@ -62,8 +62,7 @@ export default async function MyPropertiesPage() {
         </div>
 
         <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
-          {owned.length} owned
-        </span>
+          {owned.length} {t(locale, "interface.owned")}</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -93,11 +92,11 @@ export default async function MyPropertiesPage() {
 
               <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                 <div className="flex items-center justify-between">
-                  <span>Price:</span>
+                  <span>{t(locale, "interface.price")}</span>
                   <span className="font-mono text-[#F2EFE8]">{formatCurrency(prop.price)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Renters:</span>
+                  <span>{t(locale, "interface.renters")}</span>
                   <span className="font-mono text-[#B4AFA4]">{prop.renter_count} / {prop.max_renters}</span>
                 </div>
               </div>
@@ -105,22 +104,20 @@ export default async function MyPropertiesPage() {
           ))
         ) : (
           <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
-            No properties found.
-          </p>
+            {t(locale, "interface.no_properties_found")}</p>
         )}
       </div>
 
       {rented.length > 0 && (
         <div className="pt-3 border-t border-surface-border">
           <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider mb-2">
-            Rented Property
-          </h2>
+            {t(locale, "interface.rented_property")}</h2>
           <div className="p-3 bg-surface-100 border border-surface-border rounded max-w-sm text-xs space-y-1">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-[#F2EFE8]">{rented[0].label}</span>
-              <span className="font-mono text-[#F2EFE8]">{formatCurrency(rented[0].rent_price)} / payday</span>
+              <span className="font-mono text-[#F2EFE8]">{formatCurrency(rented[0].rent_price)} {t(locale, "interface.payday")}</span>
             </div>
-            <p className="text-[#8F8B83]">Since: {formatDate(rented[0].started_at, locale, false)}</p>
+            <p className="text-[#8F8B83]">{t(locale, "interface.since")} {formatDate(rented[0].started_at, locale, false)}</p>
           </div>
         </div>
       )}

@@ -1,0 +1,19 @@
+{
+  "terms": {
+    "Racket": "Server brand",
+    "Racket RPG": "Server brand",
+    "Los Santos": "GTA city proper noun",
+    "Discord": "Service brand",
+    "LSPD": "Faction acronym",
+    "EMS": "Faction acronym",
+    "FIB": "Faction acronym",
+    "GPS": "Navigation acronym",
+    "ID": "Identifier abbreviation",
+    "VIP": "Membership abbreviation",
+    "RP": "Roleplay abbreviation",
+    "MOTD": "Message of the day abbreviation",
+    "Admin": "Established staff title",
+    "Helper": "Established staff title",
+    "Staff": "Established staff title"
+  }
+}

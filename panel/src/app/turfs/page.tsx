@@ -42,13 +42,11 @@ export default async function TurfsPage() {
             {t(locale, "turfs.title")}
           </h1>
           <p className="text-xs text-[#99958E] mt-0.5">
-            18 contested territories across San Andreas.
-          </p>
+            {t(locale, "interface.18_contested_territories_across_san_andreas")}</p>
         </div>
 
         <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
-          {controlledCount} / {turfs.length} Controlled
-        </span>
+          {controlledCount} / {turfs.length} {t(locale, "interface.controlled")}</span>
       </div>
 
       {/* Grid of Turf Territories */}
@@ -63,11 +61,10 @@ export default async function TurfsPage() {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono text-[#8F8B83]">
-                    Turf #{turf.id}
+                    {t(locale, "interface.territory")}{turf.id}
                   </span>
                   <span className="font-mono text-xs text-[#F2EFE8]">
-                    {formatCurrency(turf.payout)} / hr
-                  </span>
+                    {formatCurrency(turf.payout)} {t(locale, "interface.hr")}</span>
                 </div>
                 <h3 className="text-sm font-semibold text-[#F2EFE8] mt-1">
                   {turf.name}
@@ -75,7 +72,7 @@ export default async function TurfsPage() {
               </div>
 
               <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#8F8B83]">
-                <span>Clan:</span>
+                <span>{t(locale, "interface.clan")}</span>
                 {isControlled ? (
                   <span
                     className="font-semibold"
@@ -84,7 +81,7 @@ export default async function TurfsPage() {
                     [{turf.clan_tag || turf.clan_name}]
                   </span>
                 ) : (
-                  <span className="text-[#8F8B83] italic">Unclaimed</span>
+                  <span className="text-[#8F8B83] italic">{t(locale, "interface.unclaimed")}</span>
                 )}
               </div>
             </div>

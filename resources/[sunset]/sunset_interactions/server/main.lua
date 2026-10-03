@@ -209,16 +209,19 @@ exports.sunset_core:RegisterCallback('sunset:interactionGiveCash', function(sour
     if now - (RequestRate[source] or 0) < 1500 then return nil, { localeKey = 'interactions.message.wait_a_moment_before_transferring_money_again' } end
     RequestRate[source] = now
 
-    if not exports.sunset_core:RemoveMoney(source, 'cash', amount, 'player_transfer') then
+    local giverName = exports.sunset_core:GetPlayerDisplayName(source)
+    local targetName = exports.sunset_core:GetPlayerDisplayName(pair.targetId)
+    local outReason = ('Transfer -> %s'):format(tostring(targetName)):sub(1, 64)
+    local inReason = ('Transfer <- %s'):format(tostring(giverName)):sub(1, 64)
+
+    if not exports.sunset_core:RemoveMoney(source, 'cash', amount, outReason) then
         return nil, { localeKey = 'interactions.message.you_need_value_cash_in_hand_for_this_transfer', formatArgs = { amount } }
     end
-    if not exports.sunset_core:AddMoney(pair.targetId, 'cash', amount, 'player_transfer') then
+    if not exports.sunset_core:AddMoney(pair.targetId, 'cash', amount, inReason) then
         exports.sunset_core:AddMoney(source, 'cash', amount, 'player_transfer_rollback')
         return nil, { localeKey = 'interactions.message.the_recipient_could_not_receive_the_money_your_cash' }
     end
 
-    local giverName = exports.sunset_core:GetPlayerDisplayName(source)
-    local targetName = exports.sunset_core:GetPlayerDisplayName(pair.targetId)
     notify(pair.targetId, exports.sunset_core:TFor(pair.targetId, 'interactions.msg.gave_you_cash', { giver_name = tostring(giverName), amount = tostring(amount) }), 'success', 6000)
     return { amount = amount, target = targetName }
 end)

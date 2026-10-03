@@ -12,6 +12,8 @@ const complaintSchema = z.object({
     "metagaming",
     "insults",
     "cheating",
+    "bug_abuse",
+    "scamming",
     "faction_abuse",
     "other",
   ]),
@@ -39,14 +41,18 @@ export async function POST(req: NextRequest) {
 
     const { accusedName, category, title, evidenceText } = result.data;
 
-    // Verify accused character exists in characters table using firstname and lastname
+    // Verify accused character exists in characters table using firstname, lastname or account username
     const accusedChar = await queryOne<{ id: number; firstname: string; lastname: string }>(
-      `SELECT id, firstname, lastname FROM characters
-       WHERE LOWER(firstname) = LOWER(?)
-          OR LOWER(CONCAT(firstname, '_', COALESCE(lastname, ''))) = LOWER(?)
-          OR LOWER(CONCAT(firstname, ' ', COALESCE(lastname, ''))) = LOWER(?)
+      `SELECT c.id, c.firstname, c.lastname FROM characters c
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
+       WHERE LOWER(c.firstname) = LOWER(?)
+          OR LOWER(CONCAT(c.firstname, '_', COALESCE(c.lastname, ''))) = LOWER(?)
+          OR LOWER(CONCAT(c.firstname, ' ', COALESCE(c.lastname, ''))) = LOWER(?)
+          OR LOWER(a.username) = LOWER(?)
+       ORDER BY c.id ASC
        LIMIT 1`,
-      [accusedName, accusedName, accusedName]
+      [accusedName, accusedName, accusedName, accusedName]
     );
 
     if (!accusedChar) {

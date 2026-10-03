@@ -67,19 +67,16 @@ export default async function MyMissionsPage() {
                     {rep.contact}
                   </span>
                   <span className="font-mono text-[#B4AFA4]">
-                    {rep.reputation} Rep
-                  </span>
+                    {rep.reputation} {t(locale, "interface.reputation")}</span>
                 </div>
                 <p className="text-xs text-[#8F8B83] mt-1">
-                  {rep.missions_completed} completed
-                </p>
+                  {rep.missions_completed} {t(locale, "interface.completed")}</p>
               </div>
             </div>
           ))
         ) : (
           <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-3 text-center">
-            No mission contacts yet.
-          </p>
+            {t(locale, "interface.no_mission_contacts_yet")}</p>
         )}
       </div>
 
@@ -87,17 +84,16 @@ export default async function MyMissionsPage() {
       {history.length > 0 && (
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
-            History
-          </div>
+            {t(locale, "interface.history")}</div>
 
           <div className="responsive-table-wrapper">
             <table className="w-full text-left text-xs">
               <thead className="text-[11px] font-semibold text-[#8F8B83] border-b border-surface-border bg-surface-200/50">
                 <tr>
-                  <th className="py-2 px-3">Mission</th>
-                  <th className="py-2 px-3">Result</th>
-                  <th className="py-2 px-3">Reward</th>
-                  <th className="py-2 px-3 text-right">Date</th>
+                  <th className="py-2 px-3">{t(locale, "interface.mission")}</th>
+                  <th className="py-2 px-3">{t(locale, "interface.result")}</th>
+                  <th className="py-2 px-3">{t(locale, "interface.reward")}</th>
+                  <th className="py-2 px-3 text-right">{t(locale, "common.date")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border/50 text-[#B4AFA4]">

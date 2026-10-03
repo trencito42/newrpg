@@ -1,6 +1,6 @@
 import { getCurrentUser, getRequestLanguage } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
-import { getDictionary } from "@/lib/i18n";
+import { t, getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 import UnbanForm from "./UnbanForm";
 
@@ -71,7 +71,7 @@ export default async function UnbanPage() {
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
         <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-          {lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}
+          {t(lang, "copy.app_staff_dashboard_page.unban_appeals")}
         </h1>
       </div>
 
@@ -91,7 +91,7 @@ export default async function UnbanPage() {
 
           <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 text-xs">
             <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
-              {lang === "ro" ? "Depune Cerere" : "Submit Appeal"}
+              {t(lang, "copy.app_support_unban_page.submit_appeal")}
             </h2>
 
             {user ? (
@@ -113,7 +113,7 @@ export default async function UnbanPage() {
         {/* Requests List */}
         <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#F2EFE8]">
-            <span>{lang === "ro" ? "Cererile Tale" : "Your Appeals"}</span>
+            <span>{t(lang, "copy.app_support_unban_page.your_appeals")}</span>
             <span className="font-mono text-[#8F8B83]">{userRequests.length}</span>
           </div>
 
@@ -144,7 +144,7 @@ export default async function UnbanPage() {
 
             {userRequests.length === 0 && (
               <div className="p-6 text-center text-[#8F8B83]">
-                {lang === "ro" ? "Nicio cerere de debanare." : "No unban appeals."}
+                {t(lang, "copy.app_staff_dashboard_page.no_unban_appeals")}
               </div>
             )}
           </div>

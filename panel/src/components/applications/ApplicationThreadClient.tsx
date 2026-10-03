@@ -21,6 +21,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t, type Locale } from "@/lib/i18n";
+
 
 export interface IdentityData {
   username: string;
@@ -106,7 +108,7 @@ interface Props {
   initialComments: ApplicationCommentItem[];
   identities: Record<string, IdentityData>;
   viewer: ApplicationViewerPermissions;
-  locale: string;
+  locale: Locale;
 }
 
 export function ApplicationThreadClient({
@@ -185,35 +187,35 @@ export function ApplicationThreadClient({
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Acceptată" : "Accepted"}
+            {t(locale, "applications.accepted")}
           </span>
         );
       case "rejected":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-red-950/60 text-red-400 border border-red-800/40">
             <XCircle className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Respinsă" : "Rejected"}
+            {t(locale, "applications.rejected")}
           </span>
         );
       case "under_review":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/40">
             <Clock className="w-3.5 h-3.5" />
-            {locale === "ro" ? "În Revizuire" : "Under Review"}
+            {t(locale, "applications.under_review")}
           </span>
         );
       case "withdrawn":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <MinusCircle className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Retrasă" : "Withdrawn"}
+            {t(locale, "applications.withdrawn")}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/40">
             <HelpCircle className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Trimisă" : "Submitted"}
+            {t(locale, "applications.submitted")}
           </span>
         );
     }
@@ -369,7 +371,7 @@ export function ApplicationThreadClient({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
-                {orgType === "faction" ? "Faction" : "Clan"} Application #{app.id}
+                {orgType === "faction" ? "Faction" : "Clan"} {t(locale, "interface.application")}{app.id}
               </h1>
               {getStatusBadge(app.status)}
             </div>
@@ -390,7 +392,7 @@ export function ApplicationThreadClient({
               className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              {locale === "ro" ? "Acceptă + Invită" : "Accept + Add Member"}
+              {t(locale, "copy.components_applications_applicationthreadclient.accept_add_member")}
             </button>
             <button
               onClick={() => {
@@ -400,7 +402,7 @@ export function ApplicationThreadClient({
               className="px-2.5 py-1 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-medium flex items-center gap-1.5 transition-colors"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              {locale === "ro" ? "Acceptă (Fără Invitație)" : "Accept Only"}
+              {t(locale, "copy.components_applications_applicationthreadclient.accept_only")}
             </button>
             <button
               onClick={() => {
@@ -410,7 +412,7 @@ export function ApplicationThreadClient({
               className="px-2.5 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <XCircle className="w-3.5 h-3.5" />
-              {locale === "ro" ? "Respinge" : "Reject"}
+              {t(locale, "applications.reject")}
             </button>
           </div>
         )}
@@ -422,14 +424,13 @@ export function ApplicationThreadClient({
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F2EFE8] flex items-center gap-1.5">
               <Gavel className="w-4 h-4 text-emerald-400" />
-              Leadership Decision: {decisionAction.replace(/_/g, " ").toUpperCase()}
+              {t(locale, "interface.leadership_decision")} {decisionAction.replace(/_/g, " ").toUpperCase()}
             </h3>
             <button
               onClick={() => setDecisionAction(null)}
               className="text-xs text-[#8F8B83] hover:text-[#F2EFE8]"
             >
-              Cancel
-            </button>
+              {t(locale, "common.cancel")}</button>
           </div>
 
           {decisionError && (
@@ -440,12 +441,12 @@ export function ApplicationThreadClient({
 
           <div>
             <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">
-              Decision Reason <span className="text-red-400">*</span>:
+              {t(locale, "interface.decision_reason")} <span className="text-red-400">*</span>:
             </label>
             <textarea
               value={decisionReason}
               onChange={(e) => setDecisionReason(e.target.value)}
-              placeholder="Provide a clear explanation for this decision..."
+              placeholder={t(locale, "interface.provide_a_clear_explanation_for_this_decision")}
               rows={2}
               className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444]"
             />
@@ -457,8 +458,7 @@ export function ApplicationThreadClient({
               onClick={() => setDecisionAction(null)}
               className="px-3 py-1 bg-[#1A191B] text-[#B4AFA4] rounded text-xs hover:text-[#F2EFE8]"
             >
-              Cancel
-            </button>
+              {t(locale, "common.cancel")}</button>
             <button
               type="button"
               disabled={submittingDecision}
@@ -478,7 +478,7 @@ export function ApplicationThreadClient({
           {/* Applicant Column */}
           <div className="space-y-1 pb-2 sm:pb-0 sm:pr-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Aplicant" : "Applicant"}
+              {t(locale, "copy.app_clans_id_applications_page.applicant")}
             </span>
             <PlayerIdentity {...getIdentity(app.applicant_username)} size="sm" />
           </div>
@@ -486,17 +486,16 @@ export function ApplicationThreadClient({
           {/* Level & Hours */}
           <div className="space-y-1 py-2 sm:py-0 sm:px-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Nivel & Ore" : "Level & Hours"}
+              {t(locale, "copy.components_applications_applicationthreadclient.level_hours")}
             </span>
             <span className="font-mono font-bold text-[#F2EFE8]">
-              Lvl {app.applicant_level || 1} • {app.applicant_hours || 0} hrs
-            </span>
+              {t(locale, "interface.lvl")} {app.applicant_level || 1} • {app.applicant_hours || 0} {t(locale, "interface.hrs")}</span>
           </div>
 
           {/* Current Faction / Clan */}
           <div className="space-y-1 py-2 sm:py-0 sm:px-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Facțiune Actuală" : "Current Faction"}
+              {t(locale, "copy.components_applications_applicationthreadclient.current_faction")}
             </span>
             <span className="text-[#E1DCCF] capitalize">
               {app.applicant_faction || "Civilian"}
@@ -506,7 +505,7 @@ export function ApplicationThreadClient({
           {/* Status & Applied Date */}
           <div className="space-y-1 pt-2 sm:pt-0 sm:pl-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Data Aplicării" : "Applied Date"}
+              {t(locale, "copy.components_applications_applicationthreadclient.applied_date")}
             </span>
             <span className="font-mono text-[#8F8B83]">
               {formatDate(app.created_at)}
@@ -517,7 +516,7 @@ export function ApplicationThreadClient({
         {/* QUESTIONS & ANSWERS LIST */}
         <div className="p-4 space-y-4 border-t border-surface-border">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#B4AFA4]">
-            {locale === "ro" ? "Întrebări & Răspunsuri Aplicație" : "Application Questions & Answers"}
+            {t(locale, "copy.components_applications_applicationthreadclient.application_questions_answers")}
           </h2>
 
           <div className="space-y-3">
@@ -534,7 +533,7 @@ export function ApplicationThreadClient({
 
             {questions.length === 0 && (
               <p className="text-xs text-[#8F8B83] italic">
-                {locale === "ro" ? "Nu există întrebări specifice pentru această aplicație." : "No specific application answers recorded."}
+                {t(locale, "copy.components_applications_applicationthreadclient.no_specific_application_answers_recorded")}
               </p>
             )}
           </div>
@@ -549,8 +548,8 @@ export function ApplicationThreadClient({
             )}>
               <span className="font-bold uppercase tracking-wider text-[11px] block">
                 {app.status === "accepted"
-                  ? (locale === "ro" ? "Decizie Conducere: ACCEPTAT" : "Leadership Decision: ACCEPTED")
-                  : (locale === "ro" ? "Decizie Conducere: RESPINS" : "Leadership Decision: REJECTED")}
+                  ? (t(locale, "copy.components_applications_applicationthreadclient.leadership_decision_accepted"))
+                  : (t(locale, "copy.components_applications_applicationthreadclient.leadership_decision_rejected"))}
               </span>
               <p className="text-[#F2EFE8] whitespace-pre-wrap">{app.review_reason}</p>
             </div>
@@ -563,12 +562,12 @@ export function ApplicationThreadClient({
         <div className="flex items-center justify-between">
           <span className="font-bold uppercase tracking-wider text-[#B4AFA4] flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-blue-400" />
-            {locale === "ro" ? "Vot Consultativ Membri" : "Member Advisory Voting"}
+            {t(locale, "copy.components_applications_applicationthreadclient.member_advisory_voting")}
           </span>
           <div className="flex items-center gap-3 font-mono font-bold text-xs">
-            <span className="text-emerald-400">PRO {proVotes.length}</span>
-            <span className="text-red-400">CONTRA {contraVotes.length}</span>
-            <span className="text-[#8F8B83]">NEUTRAL {neutralVotes.length}</span>
+            <span className="text-emerald-400">{t(locale, "interface.for")} {proVotes.length}</span>
+            <span className="text-red-400">{t(locale, "interface.against")} {contraVotes.length}</span>
+            <span className="text-[#8F8B83]">{t(locale, "interface.neutral")} {neutralVotes.length}</span>
           </div>
         </div>
 
@@ -576,7 +575,7 @@ export function ApplicationThreadClient({
         {viewer.canVote && !isResolved && (
           <div className="p-3 bg-[#101012] border border-surface-border rounded space-y-2">
             <span className="text-xs text-[#B4AFA4] block">
-              {locale === "ro" ? "Exprimă-ți votul de membru:" : "Cast your member advisory vote:"}
+              {t(locale, "copy.components_applications_applicationthreadclient.cast_your_member_advisory_vote")}
             </span>
 
             {voteError && (
@@ -598,8 +597,7 @@ export function ApplicationThreadClient({
                 )}
               >
                 <ThumbsUp className="w-3.5 h-3.5" />
-                [PRO]
-              </button>
+                {t(locale, "interface.for_2")}</button>
 
               <button
                 type="button"
@@ -613,8 +611,7 @@ export function ApplicationThreadClient({
                 )}
               >
                 <ThumbsDown className="w-3.5 h-3.5" />
-                [CONTRA]
-              </button>
+                {t(locale, "interface.against_2")}</button>
 
               <button
                 type="button"
@@ -628,8 +625,7 @@ export function ApplicationThreadClient({
                 )}
               >
                 <MinusCircle className="w-3.5 h-3.5" />
-                [NEUTRAL]
-              </button>
+                {t(locale, "interface.neutral_2")}</button>
             </div>
 
             <div className="pt-1">
@@ -637,7 +633,7 @@ export function ApplicationThreadClient({
                 type="text"
                 value={voteComment}
                 onChange={(e) => setVoteComment(e.target.value)}
-                placeholder={locale === "ro" ? "Opțional: motivul votului tău (scurt)..." : "Optional: short reason for your vote..."}
+                placeholder={t(locale, "copy.components_applications_applicationthreadclient.optional_short_reason_for_your_vote")}
                 maxLength={255}
                 className="w-full px-2.5 py-1 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none"
               />
@@ -650,7 +646,7 @@ export function ApplicationThreadClient({
           {/* PRO List */}
           <div className="p-2.5 bg-[#08080A] border border-emerald-900/30 rounded space-y-1.5">
             <span className="font-bold text-emerald-400 uppercase text-[11px] block">
-              PRO ({proVotes.length})
+              {t(locale, "interface.for_3")}{proVotes.length})
             </span>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {proVotes.map((v) => (
@@ -659,14 +655,14 @@ export function ApplicationThreadClient({
                   {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {proVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
+              {proVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">{t(locale, "interface.no_votes")}</span>}
             </div>
           </div>
 
           {/* CONTRA List */}
           <div className="p-2.5 bg-[#08080A] border border-red-900/30 rounded space-y-1.5">
             <span className="font-bold text-red-400 uppercase text-[11px] block">
-              CONTRA ({contraVotes.length})
+              {t(locale, "interface.against_3")}{contraVotes.length})
             </span>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {contraVotes.map((v) => (
@@ -675,14 +671,14 @@ export function ApplicationThreadClient({
                   {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {contraVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
+              {contraVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">{t(locale, "interface.no_votes")}</span>}
             </div>
           </div>
 
           {/* NEUTRAL List */}
           <div className="p-2.5 bg-[#08080A] border border-surface-border/60 rounded space-y-1.5">
             <span className="font-bold text-[#B4AFA4] uppercase text-[11px] block">
-              NEUTRAL ({neutralVotes.length})
+              {t(locale, "interface.neutral_3")}{neutralVotes.length})
             </span>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {neutralVotes.map((v) => (
@@ -691,7 +687,7 @@ export function ApplicationThreadClient({
                   {v.comment && <span className="text-[#B4AFA4] block text-[10px] pl-1">— {v.comment}</span>}
                 </div>
               ))}
-              {neutralVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">No votes</span>}
+              {neutralVotes.length === 0 && <span className="text-[11px] text-[#8F8B83] italic">{t(locale, "interface.no_votes")}</span>}
             </div>
           </div>
         </div>
@@ -701,12 +697,12 @@ export function ApplicationThreadClient({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-bold uppercase tracking-wider text-[#B4AFA4]">
-            {locale === "ro" ? "Discuție Membri" : "Member Discussion"} ({comments.length})
+            {t(locale, "copy.components_applications_applicationthreadclient.member_discussion")} ({comments.length})
           </span>
           {isResolved && (
             <span className="text-[11px] text-[#8F8B83] flex items-center gap-1">
               <Lock className="w-3 h-3" />
-              {locale === "ro" ? "Aplicație Finalizată" : "Application Resolved"}
+              {t(locale, "copy.components_applications_applicationthreadclient.application_resolved")}
             </span>
           )}
         </div>
@@ -715,7 +711,7 @@ export function ApplicationThreadClient({
         <div className="space-y-2">
           {comments.length === 0 ? (
             <div className="p-6 text-center text-xs text-[#8F8B83] border border-surface-border rounded bg-[#0E0E10]">
-              {locale === "ro" ? "Niciun comentariu în această aplicație." : "No comments in this application thread yet."}
+              {t(locale, "copy.components_applications_applicationthreadclient.no_comments_in_this_application_thread_yet")}
             </div>
           ) : (
             comments.map((c) => {
@@ -764,12 +760,12 @@ export function ApplicationThreadClient({
           <form onSubmit={handlePostComment} className="border border-surface-border rounded bg-[#0E0E10] p-3 space-y-2.5">
             <div className="flex items-center justify-between text-xs text-[#B4AFA4]">
               <span className="font-semibold">
-                {locale === "ro" ? "Adaugă un comentariu" : "Post a comment"}
+                {t(locale, "copy.components_applications_applicationthreadclient.post_a_comment")}
               </span>
               <span className="text-[11px] text-[#8F8B83]">
                 {viewer.isApplicant
-                  ? (locale === "ro" ? "Răspuns aplicant către conducere" : "Applicant reply to leadership")
-                  : (locale === "ro" ? "Comentariu membru organizație" : "Organization member comment")}
+                  ? (t(locale, "copy.components_applications_applicationthreadclient.applicant_reply_to_leadership"))
+                  : (t(locale, "copy.components_applications_applicationthreadclient.organization_member_comment"))}
               </span>
             </div>
 
@@ -784,8 +780,8 @@ export function ApplicationThreadClient({
               onChange={(e) => setCommentText(e.target.value)}
               placeholder={
                 viewer.isApplicant
-                  ? (locale === "ro" ? "Oferă detalii suplimentare sau clarificări..." : "Provide additional details or clarifications...")
-                  : (locale === "ro" ? "Scrie o opinie despre aplicant..." : "Write your opinion regarding the applicant...")
+                  ? (t(locale, "copy.components_applications_applicationthreadclient.provide_additional_details_or_clarifications"))
+                  : (t(locale, "copy.components_applications_applicationthreadclient.write_your_opinion_regarding_the_applicant"))
               }
               rows={3}
               required
@@ -799,20 +795,19 @@ export function ApplicationThreadClient({
                 className="px-4 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                {submittingComment ? (locale === "ro" ? "Se trimite..." : "Posting...") : (locale === "ro" ? "Trimite Comentariu" : "Submit Comment")}
+                {submittingComment ? (t(locale, "copy.app_support_complaints_id_complaintthreadclient.posting")) : (t(locale, "copy.components_applications_applicationthreadclient.submit_comment"))}
               </button>
             </div>
           </form>
         ) : (
           <div className="p-3 bg-[#0E0E10] border border-surface-border/60 rounded text-center text-xs text-[#8F8B83]">
             {isResolved ? (
-              <span>{locale === "ro" ? "Această aplicație a fost finalizată și este închisă." : "This application thread has been finalized and closed."}</span>
+              <span>{t(locale, "copy.components_applications_applicationthreadclient.this_application_thread_has_been_finalized_and_closed")}</span>
             ) : !viewer.isLoggedIn ? (
               <span>
-                {locale === "ro" ? "Trebuie să fii autentificat pentru a participa." : "You must be logged in to participate."}{" "}
+                {t(locale, "copy.components_applications_applicationthreadclient.you_must_be_logged_in_to_participate")}{" "}
                 <Link href="/login" className="text-[#F2EFE8] underline">
-                  Login
-                </Link>
+                  {t(locale, "interface.log_in")}</Link>
               </span>
             ) : (
               <span>

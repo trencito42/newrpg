@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { Flag, Users, Shield, Map, CheckCircle, XCircle, Settings, Award } from "lucide-react";
+import { t } from "@/lib/i18n";
+
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -117,7 +119,7 @@ export default async function ClanDetailPage({ params }: Context) {
                 {clan.name}
               </h1>
               <div className="flex items-center gap-2 text-xs text-[#8F8B83] mt-0.5">
-                <span>{locale === "ro" ? "Lider:" : "Leader:"}</span>
+                <span>{t(locale, "copy.app_clans_id_page.leader")}</span>
                 <PlayerIdentity
                   username={clan.owner_username}
                   factionId={clan.owner_faction_id}
@@ -137,7 +139,7 @@ export default async function ClanDetailPage({ params }: Context) {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
                 <Settings className="w-3.5 h-3.5 text-[#B4AFA4]" />
-                <span>{locale === "ro" ? "Panou Management" : "Clan Panel"}</span>
+                <span>{t(locale, "copy.app_clans_id_page.clan_panel")}</span>
               </Link>
             )}
 
@@ -146,7 +148,7 @@ export default async function ClanDetailPage({ params }: Context) {
                 href={`/clans/${clan.id}/apply`}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
-                {locale === "ro" ? "Aplică în clan" : "Apply to Clan"}
+                {t(locale, "copy.app_clans_id_page.apply_to_clan")}
               </Link>
             )}
           </div>
@@ -167,32 +169,32 @@ export default async function ClanDetailPage({ params }: Context) {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-surface-border text-xs">
           <div className="p-2 bg-[#101012] border border-surface-border rounded">
-            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Membri" : "Members"}</span>
+            <span className="text-[11px] text-[#8F8B83] block">{t(locale, "clans.members")}</span>
             <span className="font-mono font-bold text-[#F2EFE8] text-sm mt-0.5 block">
               {clan.member_count} / {clan.max_members}
             </span>
           </div>
 
           <div className="p-2 bg-[#101012] border border-surface-border rounded">
-            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Teritorii" : "Turfs"}</span>
+            <span className="text-[11px] text-[#8F8B83] block">{t(locale, "copy.app_clans_id_page.turfs")}</span>
             <span className="font-mono font-bold text-amber-400 text-sm mt-0.5 block">
               {clan.turfs_count}
             </span>
           </div>
 
           <div className="p-2 bg-[#101012] border border-surface-border rounded">
-            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Aplicații" : "Applications"}</span>
+            <span className="text-[11px] text-[#8F8B83] block">{t(locale, "applications.title")}</span>
             <span className="font-bold text-sm mt-0.5 block">
               {clan.applications_open ? (
-                <span className="text-emerald-400">{locale === "ro" ? "DESCHISE" : "OPEN"}</span>
+                <span className="text-emerald-400">{t(locale, "copy.app_clans_id_page.open")}</span>
               ) : (
-                <span className="text-[#8F8B83]">{locale === "ro" ? "ÎNCHISE" : "CLOSED"}</span>
+                <span className="text-[#8F8B83]">{t(locale, "copy.app_clans_id_page.closed")}</span>
               )}
             </span>
           </div>
 
           <div className="p-2 bg-[#101012] border border-surface-border rounded">
-            <span className="text-[11px] text-[#8F8B83] block">{locale === "ro" ? "Creat la" : "Created At"}</span>
+            <span className="text-[11px] text-[#8F8B83] block">{t(locale, "copy.app_clans_id_page.created_at")}</span>
             <span className="font-mono text-[#B4AFA4] text-xs mt-1 block">
               {new Date(clan.created_at).toLocaleDateString()}
             </span>
@@ -206,7 +208,7 @@ export default async function ClanDetailPage({ params }: Context) {
         <div className="lg:col-span-2 border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border flex items-center justify-between">
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Membri Clan" : "Clan Members"} ({members.length})
+              {t(locale, "copy.app_clans_id_page.clan_members")} ({members.length})
             </h2>
           </div>
 
@@ -215,11 +217,11 @@ export default async function ClanDetailPage({ params }: Context) {
               <thead>
                 <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">#</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Rang Clan" : "Clan Rank"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "Ore" : "Hours"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "Warns" : "Warns"}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_page.clan_rank")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "common.level")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "players.hours_played")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "copy.app_clans_id_manage_clanmanageclient.warns")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
@@ -242,8 +244,7 @@ export default async function ClanDetailPage({ params }: Context) {
                       </span>
                       {m.is_owner ? (
                         <span className="ml-1.5 text-[10px] text-amber-400 font-mono font-bold">
-                          [OWNER]
-                        </span>
+                          {t(locale, "interface.owner")}</span>
                       ) : null}
                     </td>
                     <td className="px-3 py-2 text-center font-mono">{m.level}</td>
@@ -266,30 +267,28 @@ export default async function ClanDetailPage({ params }: Context) {
         <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
           <div className="p-3 border-b border-surface-border">
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Teritorii Controlate" : "Controlled Turfs"} ({turfs.length})
+              {t(locale, "clans.turfs")} ({turfs.length})
             </h2>
           </div>
 
           <div className="p-3">
             {turfs.length === 0 ? (
               <div className="text-center py-6 text-xs text-[#8F8B83]">
-                {locale === "ro"
-                  ? "Acest clan nu controlează niciun teritoriu"
-                  : "This clan controls no territories"}
+                {t(locale, "copy.app_clans_id_page.this_clan_controls_no_territories")}
               </div>
             ) : (
               <div className="space-y-2">
-                {turfs.map((t) => (
+                {turfs.map((turf) => (
                   <div
-                    key={t.id}
+                    key={turf.id}
                     className="p-2.5 bg-[#101012] border border-surface-border rounded flex items-center justify-between text-xs"
                   >
                     <div>
-                      <span className="font-semibold text-[#F2EFE8] block">{t.name}</span>
-                      <span className="text-[11px] text-[#8F8B83] font-mono">{t.zone}</span>
+                      <span className="font-semibold text-[#F2EFE8] block">{turf.name}</span>
+                      <span className="text-[11px] text-[#8F8B83] font-mono">{turf.zone}</span>
                     </div>
                     <span className="px-2 py-0.5 bg-amber-950/40 text-amber-400 border border-amber-800/40 rounded text-[10px] font-mono">
-                      Turf #{t.id}
+                      {t(locale, "interface.territory")} #{turf.id}
                     </span>
                   </div>
                 ))}

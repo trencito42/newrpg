@@ -47,7 +47,7 @@ export default async function MyJobsPage() {
               <div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-mono text-[#F2EFE8] font-semibold">
-                    Level {skill.level}
+                    {t(locale, "common.level")} {skill.level}
                   </span>
                   <span className="font-mono text-[#F2EFE8]">
                     {formatCurrency(skill.total_earned)}
@@ -60,11 +60,11 @@ export default async function MyJobsPage() {
 
               <div className="mt-3 pt-2 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                 <div className="flex items-center justify-between">
-                  <span>Experience:</span>
+                  <span>{t(locale, "interface.experience")}</span>
                   <span className="font-mono text-[#B4AFA4]">{formatNumber(skill.xp, locale)} XP</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Tasks:</span>
+                  <span>{t(locale, "interface.tasks")}</span>
                   <span className="font-mono text-[#B4AFA4]">{formatNumber(skill.completed_tasks, locale)}</span>
                 </div>
               </div>
@@ -72,8 +72,7 @@ export default async function MyJobsPage() {
           ))
         ) : (
           <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
-            No job progress yet.
-          </p>
+            {t(locale, "interface.no_job_progress_yet")}</p>
         )}
       </div>
     </div>

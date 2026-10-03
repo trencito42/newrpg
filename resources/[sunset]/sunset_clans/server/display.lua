@@ -17,7 +17,7 @@ function ClanDisplay.getMembership(characterId)
     return MySQL.single.await([[
         SELECT cm.clan_id, cm.character_id, cm.rank, cm.warns, cm.joined_at,
                c.name, c.tag, c.tag_color, c.tag_style, c.description, c.motd,
-               c.owner_character_id, c.max_members, c.rank_labels
+               c.owner_character_id, c.max_members, c.rank_labels, c.expires_at, c.status
         FROM clan_members cm
         INNER JOIN clans c ON c.id = cm.clan_id
         WHERE cm.character_id = ?

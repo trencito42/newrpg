@@ -16,6 +16,8 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
+
 
 interface ComplaintRow extends RowDataPacket {
   id: number;
@@ -98,28 +100,28 @@ export default async function ComplaintsPage({
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
             <CheckCircle2 className="w-3 h-3" />
-            {lang === "ro" ? "Rezolvată" : "Action Taken"}
+            {t(lang, "copy.app_support_complaints_page.action_taken")}
           </span>
         );
       case "dismissed":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-red-950/60 text-red-400 border border-red-800/40">
             <XCircle className="w-3 h-3" />
-            {lang === "ro" ? "Respinsă" : "Dismissed"}
+            {t(lang, "copy.app_support_complaints_id_complaintthreadclient.dismissed")}
           </span>
         );
       case "under_review":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/40">
             <Clock className="w-3 h-3" />
-            {lang === "ro" ? "În Revizuire" : "Under Review"}
+            {t(lang, "applications.under_review")}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <HelpCircle className="w-3 h-3" />
-            {lang === "ro" ? "În Așteptare" : "Pending"}
+            {t(lang, "copy.app_clans_id_applications_page.pending")}
           </span>
         );
     }
@@ -132,12 +134,10 @@ export default async function ComplaintsPage({
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#F2EFE8]" />
-            {lang === "ro" ? "Reclamații Jucători" : "Player Complaints"}
+            {t(lang, "copy.app_support_complaints_page.player_complaints")}
           </h1>
           <p className="text-xs text-[#8F8B83]">
-            {lang === "ro"
-              ? "Raportează încălcările regulamentului serverului sau urmărește reclamațiile active."
-              : "Report rule violations or follow active complaint threads."}
+            {t(lang, "copy.app_support_complaints_page.report_rule_violations_or_follow_active_complaint_threads")}
           </p>
         </div>
 
@@ -149,15 +149,15 @@ export default async function ComplaintsPage({
             >
               <Plus className="w-3.5 h-3.5" />
               {showNew
-                ? (lang === "ro" ? "Ascunde Formular" : "Hide Form")
-                : (lang === "ro" ? "Reclamație Nouă" : "New Complaint")}
+                ? (t(lang, "copy.app_support_complaints_page.hide_form"))
+                : (t(lang, "copy.app_support_complaints_page.new_complaint"))}
             </Link>
           ) : (
             <Link
               href="/login"
               className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] text-[#F2EFE8] border border-surface-border font-semibold rounded text-xs"
             >
-              {lang === "ro" ? "Autentifică-te pentru a reclama" : "Log in to file complaint"}
+              {t(lang, "copy.app_support_complaints_page.log_in_to_file_complaint")}
             </Link>
           )}
         </div>
@@ -168,7 +168,7 @@ export default async function ComplaintsPage({
         <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-3">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#F2EFE8] flex items-center gap-1.5">
             <Plus className="w-4 h-4 text-emerald-400" />
-            {lang === "ro" ? "Depune o Reclamație Nouă" : "File a New Complaint"}
+            {t(lang, "copy.app_support_complaints_page.file_a_new_complaint")}
           </h2>
           <ComplaintForm lang={lang} />
         </div>
@@ -185,7 +185,7 @@ export default async function ComplaintsPage({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {lang === "ro" ? "Toate" : "All"}
+          {t(lang, "common.all")}
         </Link>
         <Link
           href="/support/complaints?filter=pending"
@@ -196,7 +196,7 @@ export default async function ComplaintsPage({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {lang === "ro" ? "În Așteptare" : "Pending"}
+          {t(lang, "copy.app_clans_id_applications_page.pending")}
         </Link>
         <Link
           href="/support/complaints?filter=under_review"
@@ -207,7 +207,7 @@ export default async function ComplaintsPage({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {lang === "ro" ? "În Revizuire" : "Under Review"}
+          {t(lang, "applications.under_review")}
         </Link>
         <Link
           href="/support/complaints?filter=resolved"
@@ -218,7 +218,7 @@ export default async function ComplaintsPage({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {lang === "ro" ? "Rezolvate" : "Resolved"}
+          {t(lang, "copy.app_support_complaints_page.resolved")}
         </Link>
       </div>
 
@@ -229,20 +229,20 @@ export default async function ComplaintsPage({
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2.5">ID</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Reclamat" : "Reported"}</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Reclamant" : "Reporter"}</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Motiv / Titlu" : "Reason / Title"}</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Status" : "Status"}</th>
-                <th className="px-3 py-2.5 text-center">{lang === "ro" ? "Răspunsuri" : "Replies"}</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Data Creării" : "Created"}</th>
-                <th className="px-3 py-2.5">{lang === "ro" ? "Ultimul Răspuns" : "Last Reply"}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_support_complaints_page.reported")}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_support_complaints_id_complaintthreadclient.reporter")}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_support_complaints_page.reason_title")}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_clans_id_applications_page.status")}</th>
+                <th className="px-3 py-2.5 text-center">{t(lang, "copy.app_clans_id_applications_page.replies")}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_support_complaints_page.created")}</th>
+                <th className="px-3 py-2.5">{t(lang, "copy.app_support_complaints_page.last_reply")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border/60">
               {complaints.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    {lang === "ro" ? "Nicio reclamație găsită." : "No complaints found."}
+                    {t(lang, "copy.app_support_complaints_page.no_complaints_found")}
                   </td>
                 </tr>
               ) : (

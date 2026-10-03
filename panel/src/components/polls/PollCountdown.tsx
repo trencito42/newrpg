@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
-import { Locale } from "@/lib/i18n";
+import { t, Locale } from "@/lib/i18n";
 
 export function PollCountdown({
   targetDate,
@@ -44,7 +44,7 @@ export function PollCountdown({
     return (
       <span className="inline-flex items-center space-x-1 text-xs font-mono text-red-400">
         <Clock className="w-3.5 h-3.5" />
-        <span>Closed</span>
+        <span>{t(locale, "common.closed")}</span>
       </span>
     );
   }

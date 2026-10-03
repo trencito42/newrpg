@@ -137,6 +137,15 @@ exports.sunset_core:RegisterCallback('sunset:dealership:purchase', function(sour
 
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return finish(nil, exports.sunset_core:TFor(source, 'crafting.message.your_character_is_not_loaded_reconnect_and_select_it')) end
+
+    -- [PROGRESSION GATE] Must hold a valid driver license to register and buy a car
+    if exports.sunset_core and exports.sunset_core.CanAccess then
+        local access = exports.sunset_core:CanAccess(source, 'dealership.purchase')
+        if access and access.allowed == false then
+            return finish(nil, access.reason or exports.sunset_core:TFor(source, 'dealership.msg.license_required'))
+        end
+    end
+
     local row = MySQL.single.await(
         'SELECT model, label, price, stock FROM dealership_vehicles WHERE model = ? AND available = 1',
         { model })

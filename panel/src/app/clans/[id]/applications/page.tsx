@@ -18,6 +18,8 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
+
 
 export const dynamic = "force-dynamic";
 
@@ -109,35 +111,35 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
             <CheckCircle2 className="w-3 h-3" />
-            {locale === "ro" ? "Acceptată" : "Accepted"}
+            {t(locale, "applications.accepted")}
           </span>
         );
       case "rejected":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-red-950/60 text-red-400 border border-red-800/40">
             <XCircle className="w-3 h-3" />
-            {locale === "ro" ? "Respinsă" : "Rejected"}
+            {t(locale, "applications.rejected")}
           </span>
         );
       case "under_review":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/40">
             <Clock className="w-3 h-3" />
-            {locale === "ro" ? "În Revizuire" : "Under Review"}
+            {t(locale, "applications.under_review")}
           </span>
         );
       case "withdrawn":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <MinusCircle className="w-3 h-3" />
-            {locale === "ro" ? "Retrasă" : "Withdrawn"}
+            {t(locale, "applications.withdrawn")}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/40">
             <HelpCircle className="w-3 h-3" />
-            {locale === "ro" ? "Trimisă" : "Submitted"}
+            {t(locale, "applications.submitted")}
           </span>
         );
     }
@@ -158,12 +160,10 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
             <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight flex items-center gap-2">
               <span style={{ color: clan.tag_color || "#f59e0b" }}>[{clan.tag}] {clan.name}</span>
               <span className="text-[#8F8B83] font-normal">—</span>
-              <span>{locale === "ro" ? "Aplicații Clan" : "Clan Applications"}</span>
+              <span>{t(locale, "copy.app_clans_id_applications_page.clan_applications")}</span>
             </h1>
             <p className="text-xs text-[#8F8B83]">
-              {locale === "ro"
-                ? "Discuții și voturi consultative ale membrilor clanului pentru noii recruți."
-                : "Recruitment threads and advisory votes from clan members."}
+              {t(locale, "copy.app_clans_id_applications_page.recruitment_threads_and_advisory_votes_from_clan_members")}
             </p>
           </div>
         </div>
@@ -175,11 +175,11 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
               className="px-3 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              {locale === "ro" ? "Aplică în Clan" : "Apply to Clan"}
+              {t(locale, "clans.apply")}
             </Link>
           ) : (
             <span className="px-3 py-1.5 bg-surface-100 border border-surface-border rounded text-xs text-[#8F8B83] font-medium">
-              {locale === "ro" ? "Recrutări Închise" : "Applications Closed"}
+              {t(locale, "copy.app_clans_id_applications_page.applications_closed")}
             </span>
           )}
         </div>
@@ -196,7 +196,7 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "În Așteptare" : "Pending"}
+          {t(locale, "copy.app_clans_id_applications_page.pending")}
         </Link>
         <Link
           href={`/clans/${clanId}/applications?tab=accepted`}
@@ -207,7 +207,7 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Acceptate" : "Accepted"}
+          {t(locale, "copy.app_clans_id_applications_page.accepted")}
         </Link>
         <Link
           href={`/clans/${clanId}/applications?tab=rejected`}
@@ -218,7 +218,7 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Respinse" : "Rejected"}
+          {t(locale, "copy.app_clans_id_applications_page.rejected")}
         </Link>
         <Link
           href={`/clans/${clanId}/applications?tab=withdrawn`}
@@ -229,7 +229,7 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Retrase" : "Withdrawn"}
+          {t(locale, "copy.app_clans_id_applications_page.withdrawn")}
         </Link>
       </div>
 
@@ -240,21 +240,21 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2.5">ID</th>
-                <th className="px-3 py-2.5">{locale === "ro" ? "Aplicant" : "Applicant"}</th>
-                <th className="px-3 py-2.5 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                <th className="px-3 py-2.5 text-center">{locale === "ro" ? "Ore" : "Hours"}</th>
-                <th className="px-3 py-2.5 text-center">PRO</th>
-                <th className="px-3 py-2.5 text-center">CONTRA</th>
-                <th className="px-3 py-2.5 text-center">{locale === "ro" ? "Răspunsuri" : "Replies"}</th>
-                <th className="px-3 py-2.5">{locale === "ro" ? "Status" : "Status"}</th>
-                <th className="px-3 py-2.5 text-right">{locale === "ro" ? "Data Trimiterii" : "Date"}</th>
+                <th className="px-3 py-2.5">{t(locale, "copy.app_clans_id_applications_page.applicant")}</th>
+                <th className="px-3 py-2.5 text-center">{t(locale, "common.level")}</th>
+                <th className="px-3 py-2.5 text-center">{t(locale, "players.hours_played")}</th>
+                <th className="px-3 py-2.5 text-center">{t(locale, "interface.for")}</th>
+                <th className="px-3 py-2.5 text-center">{t(locale, "interface.against")}</th>
+                <th className="px-3 py-2.5 text-center">{t(locale, "copy.app_clans_id_applications_page.replies")}</th>
+                <th className="px-3 py-2.5">{t(locale, "copy.app_clans_id_applications_page.status")}</th>
+                <th className="px-3 py-2.5 text-right">{t(locale, "copy.app_clans_id_applications_page.date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border/60">
               {applications.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    {locale === "ro" ? "Nicio aplicație înregistrată." : "No applications recorded."}
+                    {t(locale, "copy.app_clans_id_applications_page.no_applications_recorded")}
                   </td>
                 </tr>
               ) : (

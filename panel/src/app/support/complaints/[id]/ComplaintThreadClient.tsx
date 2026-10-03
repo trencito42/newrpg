@@ -18,6 +18,8 @@ import {
   Gavel,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t, type Locale } from "@/lib/i18n";
+
 
 interface IdentityData {
   username: string;
@@ -77,7 +79,7 @@ interface Props {
   initialMessages: MessageItem[];
   identities: Record<string, IdentityData>;
   viewer: ViewerData;
-  locale: string;
+  locale: Locale;
 }
 
 export function ComplaintThreadClient({
@@ -145,28 +147,28 @@ export function ComplaintThreadClient({
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Acțiune Luată" : "Action Taken"}
+            {t(locale, "copy.app_support_complaints_id_complaintthreadclient.action_taken")}
           </span>
         );
       case "dismissed":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-red-950/60 text-red-400 border border-red-800/40">
             <XCircle className="w-3.5 h-3.5" />
-            {locale === "ro" ? "Respinsă" : "Dismissed"}
+            {t(locale, "copy.app_support_complaints_id_complaintthreadclient.dismissed")}
           </span>
         );
       case "under_review":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/40">
             <Clock className="w-3.5 h-3.5" />
-            {locale === "ro" ? "În Revizuire" : "Under Review"}
+            {t(locale, "applications.under_review")}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-surface-100 text-[#B4AFA4] border border-surface-border">
             <HelpCircle className="w-3.5 h-3.5" />
-            {locale === "ro" ? "În Așteptare" : "Pending"}
+            {t(locale, "copy.app_clans_id_applications_page.pending")}
           </span>
         );
     }
@@ -275,7 +277,7 @@ export function ComplaintThreadClient({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
-                Complaint #{complaint.id}
+                {t(locale, "interface.complaint")}{complaint.id}
               </h1>
               {getStatusBadge(complaint.status)}
             </div>
@@ -297,7 +299,7 @@ export function ComplaintThreadClient({
                 className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <UserCheck className="w-3.5 h-3.5" />
-                {locale === "ro" ? "Preia Reclamația" : "Take Complaint"}
+                {t(locale, "copy.app_support_complaints_id_complaintthreadclient.take_complaint")}
               </button>
             )}
 
@@ -310,7 +312,7 @@ export function ComplaintThreadClient({
                   }}
                   className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] text-[#B4AFA4] hover:text-[#F2EFE8] border border-surface-border rounded text-xs font-medium transition-colors"
                 >
-                  {locale === "ro" ? "Cere Informații" : "Request Info"}
+                  {t(locale, "copy.app_support_complaints_id_complaintthreadclient.request_info")}
                 </button>
                 <button
                   onClick={() => {
@@ -321,7 +323,7 @@ export function ComplaintThreadClient({
                   className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <Gavel className="w-3.5 h-3.5" />
-                  {locale === "ro" ? "Acceptă Reclamația" : "Accept Complaint"}
+                  {t(locale, "copy.app_support_complaints_id_complaintthreadclient.accept_complaint")}
                 </button>
                 <button
                   onClick={() => {
@@ -331,7 +333,7 @@ export function ComplaintThreadClient({
                   className="px-2.5 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <XCircle className="w-3.5 h-3.5" />
-                  {locale === "ro" ? "Respinge" : "Dismiss"}
+                  {t(locale, "copy.app_support_complaints_id_complaintthreadclient.dismiss")}
                 </button>
               </>
             )}
@@ -345,14 +347,13 @@ export function ComplaintThreadClient({
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F2EFE8] flex items-center gap-1.5">
               <Shield className="w-4 h-4 text-amber-400" />
-              Staff Action: {staffAction.replace(/_/g, " ").toUpperCase()}
+              {t(locale, "interface.staff_action")} {staffAction.replace(/_/g, " ").toUpperCase()}
             </h3>
             <button
               onClick={() => setStaffAction(null)}
               className="text-xs text-[#8F8B83] hover:text-[#F2EFE8]"
             >
-              Cancel
-            </button>
+              {t(locale, "common.cancel")}</button>
           </div>
 
           {actionError && (
@@ -363,17 +364,16 @@ export function ComplaintThreadClient({
 
           {staffAction === "take" && (
             <p className="text-xs text-[#B4AFA4]">
-              Are you sure you want to assign Complaint #{complaint.id} to your staff account? This will mark it as Under Review.
-            </p>
+              {t(locale, "interface.are_you_sure_you_want_to_assign_complaint")}{complaint.id} {t(locale, "interface.to_your_staff_account_this_will_mark_it_as_under_review")}</p>
           )}
 
           {staffAction === "request_info" && (
             <div>
-              <label className="text-xs text-[#B4AFA4] block mb-1">Information / Clarification Request:</label>
+              <label className="text-xs text-[#B4AFA4] block mb-1">{t(locale, "interface.information_clarification_request")}</label>
               <textarea
                 value={staffReason}
                 onChange={(e) => setStaffReason(e.target.value)}
-                placeholder="Explain what additional evidence or clarification is needed..."
+                placeholder={t(locale, "interface.explain_what_additional_evidence_or_clarification_is_needed")}
                 rows={3}
                 className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444]"
               />
@@ -384,12 +384,12 @@ export function ComplaintThreadClient({
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">
-                  Verdict Reason <span className="text-red-400">*</span>:
+                  {t(locale, "interface.verdict_reason")} <span className="text-red-400">*</span>:
                 </label>
                 <textarea
                   value={staffReason}
                   onChange={(e) => setStaffReason(e.target.value)}
-                  placeholder="e.g. Deathmatch confirmed from supplied video evidence."
+                  placeholder={t(locale, "interface.e_g_deathmatch_confirmed_from_supplied_video_evidence")}
                   rows={2}
                   className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444]"
                 />
@@ -397,22 +397,22 @@ export function ComplaintThreadClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">FiveM action (queued):</label>
+                  <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">{t(locale, "interface.fivem_action_queued")}</label>
                   <select
                     value={sanctionType}
                     onChange={(e: any) => setSanctionType(e.target.value)}
                     className="w-full px-3 py-1.5 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   >
-                    <option value="none">No action</option>
-                    {viewer.adminLevel >= 1 && <option value="warn">Warn</option>}
-                    {viewer.adminLevel >= 1 && <option value="mute">Mute</option>}
-                    {viewer.adminLevel >= 2 && <option value="ban">Ban</option>}
+                    <option value="none">{t(locale, "interface.no_action")}</option>
+                    {viewer.adminLevel >= 1 && <option value="warn">{t(locale, "interface.warn")}</option>}
+                    {viewer.adminLevel >= 1 && <option value="mute">{t(locale, "interface.mute")}</option>}
+                    {viewer.adminLevel >= 2 && <option value="ban">{t(locale, "interface.ban")}</option>}
                   </select>
                 </div>
 
                 {(sanctionType === "mute" || sanctionType === "ban") && (
                   <div>
-                    <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">Duration (Minutes):</label>
+                    <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">{t(locale, "interface.duration_minutes")}</label>
                     <input
                       type="number"
                       value={sanctionDuration}
@@ -430,12 +430,12 @@ export function ComplaintThreadClient({
           {staffAction === "dismiss" && (
             <div>
               <label className="text-xs font-semibold text-[#B4AFA4] block mb-1">
-                Dismissal Reason <span className="text-red-400">*</span>:
+                {t(locale, "interface.dismissal_reason")} <span className="text-red-400">*</span>:
               </label>
               <textarea
                 value={staffReason}
                 onChange={(e) => setStaffReason(e.target.value)}
-                placeholder="e.g. Insufficient evidence provided or roleplay context was legitimate."
+                placeholder={t(locale, "interface.e_g_insufficient_evidence_provided_or_roleplay_context_was_legitimate")}
                 rows={2}
                 className="w-full px-3 py-2 bg-[#08080A] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#444]"
               />
@@ -448,8 +448,7 @@ export function ComplaintThreadClient({
               onClick={() => setStaffAction(null)}
               className="px-3 py-1 bg-[#1A191B] text-[#B4AFA4] rounded text-xs hover:text-[#F2EFE8]"
             >
-              Cancel
-            </button>
+              {t(locale, "common.cancel")}</button>
             <button
               type="button"
               disabled={submittingAction}
@@ -469,13 +468,13 @@ export function ComplaintThreadClient({
           {/* Reporter Column */}
           <div className="space-y-1.5 pb-2 md:pb-0 md:pr-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Reclamant" : "Reporter"}
+              {t(locale, "copy.app_support_complaints_id_complaintthreadclient.reporter")}
             </span>
             <div className="flex items-center gap-2">
               <PlayerIdentity {...getIdentity(complaint.accuser_username)} size="sm" />
               {complaint.accuser_level && (
                 <span className="font-mono text-[11px] text-[#8F8B83]">
-                  (Lvl {complaint.accuser_level})
+                  {t(locale, "interface.lvl_2")} {complaint.accuser_level})
                 </span>
               )}
             </div>
@@ -484,13 +483,13 @@ export function ComplaintThreadClient({
           {/* Reported Player Column */}
           <div className="space-y-1.5 py-2 md:py-0 md:px-3">
             <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider block">
-              {locale === "ro" ? "Jucător Reclamat" : "Reported Player"}
+              {t(locale, "copy.app_support_complaints_id_complaintthreadclient.reported_player")}
             </span>
             <div className="flex items-center gap-2">
               <PlayerIdentity {...getIdentity(complaint.accused_name)} size="sm" />
               {complaint.accused_level && (
                 <span className="font-mono text-[11px] text-[#8F8B83]">
-                  (Lvl {complaint.accused_level})
+                  {t(locale, "interface.lvl_2")} {complaint.accused_level})
                 </span>
               )}
             </div>
@@ -500,18 +499,18 @@ export function ComplaintThreadClient({
           <div className="space-y-1.5 pt-2 md:pt-0 md:pl-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-[#8F8B83] uppercase tracking-wider">
-                {locale === "ro" ? "Categorie" : "Category"}
+                {t(locale, "copy.app_support_complaints_complaintform.category")}
               </span>
               <span className="font-mono font-bold text-[#F2EFE8] uppercase">
                 {complaint.category.replace(/_/g, " ")}
               </span>
             </div>
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#8F8B83]">{locale === "ro" ? "Preluat de:" : "Handled by:"}</span>
+              <span className="text-[#8F8B83]">{t(locale, "copy.app_support_complaints_id_complaintthreadclient.handled_by")}</span>
               {complaint.handler_username ? (
                 <PlayerIdentity {...getIdentity(complaint.handler_username)} size="sm" />
               ) : (
-                <span className="text-[#8F8B83] italic">Unassigned</span>
+                <span className="text-[#8F8B83] italic">{t(locale, "interface.unassigned")}</span>
               )}
             </div>
           </div>
@@ -538,8 +537,8 @@ export function ComplaintThreadClient({
             )}>
               <span className="font-bold uppercase tracking-wider text-[11px] block">
                 {complaint.status === "action_taken"
-                  ? (locale === "ro" ? "Verdict: Reclamație Acceptată" : "Verdict: Complaint Accepted")
-                  : (locale === "ro" ? "Verdict: Reclamație Respinsă" : "Verdict: Complaint Dismissed")}
+                  ? (t(locale, "copy.app_support_complaints_id_complaintthreadclient.verdict_complaint_accepted"))
+                  : (t(locale, "copy.app_support_complaints_id_complaintthreadclient.verdict_complaint_dismissed"))}
               </span>
               <p className="text-[#F2EFE8] whitespace-pre-wrap">{complaint.verdict}</p>
             </div>
@@ -551,12 +550,12 @@ export function ComplaintThreadClient({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-bold uppercase tracking-wider text-[#B4AFA4]">
-            {locale === "ro" ? "Discuție Reclamație" : "Complaint Discussion"} ({messages.length})
+            {t(locale, "copy.app_support_complaints_id_complaintthreadclient.complaint_discussion")} ({messages.length})
           </span>
           {isClosed && (
             <span className="text-[11px] text-[#8F8B83] flex items-center gap-1">
               <Lock className="w-3 h-3" />
-              {locale === "ro" ? "Discuție Închisă" : "Thread Locked"}
+              {t(locale, "copy.app_support_complaints_id_complaintthreadclient.thread_locked")}
             </span>
           )}
         </div>
@@ -565,7 +564,7 @@ export function ComplaintThreadClient({
         <div className="space-y-2">
           {messages.length === 0 ? (
             <div className="p-6 text-center text-xs text-[#8F8B83] border border-surface-border rounded bg-[#0E0E10]">
-              {locale === "ro" ? "Niciun răspuns încă în această discuție." : "No replies yet in this thread."}
+              {t(locale, "copy.app_support_complaints_id_complaintthreadclient.no_replies_yet_in_this_thread")}
             </div>
           ) : (
             messages.map((m) => {
@@ -614,10 +613,10 @@ export function ComplaintThreadClient({
           <form onSubmit={handlePostReply} className="border border-surface-border rounded bg-[#0E0E10] p-3 space-y-2.5">
             <div className="flex items-center justify-between text-xs text-[#B4AFA4]">
               <span className="font-semibold">
-                {locale === "ro" ? "Scrie un răspuns" : "Post a reply"}
+                {t(locale, "copy.app_support_complaints_id_complaintthreadclient.post_a_reply")}
               </span>
               <span className="text-[11px] text-[#8F8B83]">
-                {locale === "ro" ? "Doar părțile implicate și staff-ul pot răspunde" : "Only involved parties & staff can reply"}
+                {t(locale, "copy.app_support_complaints_id_complaintthreadclient.only_involved_parties_staff_can_reply")}
               </span>
             </div>
 
@@ -631,9 +630,7 @@ export function ComplaintThreadClient({
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder={
-                locale === "ro"
-                  ? "Adaugă dovezi suplimentare, detalii sau răspunsul tău..."
-                  : "Provide additional evidence, details, or your response..."
+                t(locale, "copy.app_support_complaints_id_complaintthreadclient.provide_additional_evidence_details_or_your_response")
               }
               rows={3}
               required
@@ -647,26 +644,23 @@ export function ComplaintThreadClient({
                 className="px-4 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                {submittingReply ? (locale === "ro" ? "Se trimite..." : "Posting...") : (locale === "ro" ? "Trimite Răspuns" : "Submit Reply")}
+                {submittingReply ? (t(locale, "copy.app_support_complaints_id_complaintthreadclient.posting")) : (t(locale, "copy.app_support_complaints_id_complaintthreadclient.submit_reply"))}
               </button>
             </div>
           </form>
         ) : (
           <div className="p-3 bg-[#0E0E10] border border-surface-border/60 rounded text-center text-xs text-[#8F8B83]">
             {isClosed ? (
-              <span>{locale === "ro" ? "Această reclamație a fost finalizată și este închisă pentru răspunsuri." : "This complaint has been finalized and is locked for replies."}</span>
+              <span>{t(locale, "copy.app_support_complaints_id_complaintthreadclient.this_complaint_has_been_finalized_and_is_locked_for_replies")}</span>
             ) : !viewer.isLoggedIn ? (
               <span>
-                {locale === "ro" ? "Trebuie să fii autentificat pentru a răspunde." : "You must be logged in to reply."}{" "}
+                {t(locale, "copy.app_support_complaints_id_complaintthreadclient.you_must_be_logged_in_to_reply")}{" "}
                 <Link href="/login" className="text-[#F2EFE8] underline">
-                  Login
-                </Link>
+                  {t(locale, "interface.log_in")}</Link>
               </span>
             ) : (
               <span>
-                {locale === "ro"
-                  ? "Doar reclamantul, jucătorul reclamat și membrii staff au permisiunea de a răspunde."
-                  : "Only the reporter, reported player, and authorized staff members can reply."}
+                {t(locale, "copy.app_support_complaints_id_complaintthreadclient.only_the_reporter_reported_player_and_authorized_staff_members_can_reply")}
               </span>
             )}
           </div>

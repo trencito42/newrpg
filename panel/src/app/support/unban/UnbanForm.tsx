@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { t } from "@/lib/i18n";
+
 
 interface UnbanFormProps {
   lang: "ro" | "en";
@@ -33,7 +35,7 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || (lang === "ro" ? "Eroare la trimitere." : "Submission failed."));
+        throw new Error(data.error || (t(lang, "copy.app_support_complaints_complaintform.submission_failed")));
       }
 
       setSuccess(true);
@@ -50,7 +52,7 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
     return (
       <div className="p-3 bg-emerald-950/30 border border-emerald-900/40 text-emerald-400 text-xs rounded">
         <p className="font-semibold">
-          {lang === "ro" ? "Cerere înregistrată cu succes." : "Appeal submitted successfully."}
+          {t(lang, "copy.app_support_unban_unbanform.appeal_submitted_successfully")}
         </p>
       </div>
     );
@@ -66,12 +68,12 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
 
       <div>
         <label className="block text-[#8F8B83] mb-1">
-          {lang === "ro" ? "Explicație / Motiv" : "Explanation & Reason"}
+          {t(lang, "copy.app_support_unban_unbanform.explanation_reason")}
         </label>
         <textarea
           required
           rows={4}
-          placeholder={lang === "ro" ? "Explică motivele pentru care soliciți debanarea..." : "Explain why your ban should be reviewed..."}
+          placeholder={t(lang, "copy.app_support_unban_unbanform.explain_why_your_ban_should_be_reviewed")}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           className="w-full bg-surface-200 border border-surface-border rounded px-2.5 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none resize-none"
@@ -85,8 +87,8 @@ export default function UnbanForm({ lang, banId }: UnbanFormProps) {
         className="w-full"
       >
         {loading
-          ? (lang === "ro" ? "Se trimite..." : "Submitting...")
-          : (lang === "ro" ? "Trimite Cererea" : "Submit Appeal")}
+          ? (t(lang, "copy.app_clans_id_apply_page.submitting"))
+          : (t(lang, "support.submit_appeal"))}
       </Button>
     </form>
   );

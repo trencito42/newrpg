@@ -2,13 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2 } from "lucide-react";
-import { PlayerName } from "@/components/ui/PlayerName";
+import { Search, Loader2, User, Shield, Flag, Newspaper, ArrowRight } from "lucide-react";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 
-interface SearchResult {
+interface PlayerResult {
+  type: "player";
   id: number;
   slug: string;
   name: string;
+  characterName?: string | null;
+  skin?: string | null;
+  href: string;
   level: number;
   job: string;
   clanTag: string | null;
@@ -16,17 +22,32 @@ interface SearchResult {
   clanTagStyle: string | null;
 }
 
+interface GenericResult {
+  type: "faction" | "clan" | "update";
+  id: string | number;
+  href: string;
+  title: string;
+  subtitle: string;
+  color?: string;
+}
+
 export function GlobalSearch({ placeholder }: { placeholder: string }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [players, setPlayers] = useState<PlayerResult[]>([]);
+  const [factions, setFactions] = useState<GenericResult[]>([]);
+  const [clans, setClans] = useState<GenericResult[]>([]);
+  const [updates, setUpdates] = useState<GenericResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (query.trim().length < 2) {
-      setResults([]);
+      setPlayers([]);
+      setFactions([]);
+      setClans([]);
+      setUpdates([]);
       setOpen(false);
       return;
     }
@@ -37,15 +58,18 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
         if (res.ok) {
           const data = await res.json();
-          setResults(data.results || []);
+          setPlayers(data.results || []);
+          setFactions(data.factions || []);
+          setClans(data.clans || []);
+          setUpdates(data.updates || []);
           setOpen(true);
         }
       } catch {
-        setResults([]);
+        setPlayers([]);
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 200);
 
     return () => clearTimeout(timeout);
   }, [query]);
@@ -60,10 +84,10 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (res: SearchResult) => {
+  const handleNavigate = (href: string) => {
     setOpen(false);
     setQuery("");
-    router.push(`/players/${encodeURIComponent(res.slug || res.id)}`);
+    router.push(href);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -73,8 +97,10 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
     }
   };
 
+  const totalResults = players.length + factions.length + clans.length + updates.length;
+
   return (
-    <div className="relative w-full max-w-xs md:max-w-sm" ref={dropdownRef}>
+    <div className="relative w-full max-w-xs md:max-w-md" ref={dropdownRef}>
       <div className="relative flex items-center">
         <Search className="absolute left-2.5 w-3.5 h-3.5 text-[#8F8B83] pointer-events-none" />
         <input
@@ -84,37 +110,159 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-8 pr-7 py-1 text-xs bg-surface-100 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none focus:border-surface-borderLight transition-colors"
+          className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#0F0F12] border border-surface-border rounded-lg text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none focus:border-brand transition-colors shadow-inner"
         />
         {loading && (
-          <Loader2 className="absolute right-2.5 w-3.5 h-3.5 text-[#8F8B83] animate-spin" />
+          <Loader2 className="absolute right-2.5 w-3.5 h-3.5 text-brand animate-spin" />
         )}
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-surface-200 rounded-xl shadow-lg py-1 z-50 max-h-64 overflow-y-auto">
-          {results.length > 0 ? (
-            results.map((res) => (
-              <button
-                key={res.id}
-                onClick={() => handleSelect(res)}
-                className="w-full text-left px-3 py-1.5 hover:bg-surface-200 flex items-center justify-between text-xs transition-colors border-b border-surface-border/40 last:border-b-0"
-              >
-                <div className="min-w-0 pr-2">
-                  <PlayerName name={res.name} factionId={res.job}
-                    clanTag={res.clanTag} clanColor={res.clanColor} clanTagStyle={res.clanTagStyle}
-                    clickable={false} className="text-xs font-semibold block truncate" />
-                  <span className="text-[11px] text-[#8F8B83] block">{res.job}</span>
-                </div>
-                <span className="text-[11px] text-[#8F8B83] font-mono">
-                  L{res.level}
-                </span>
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-2 text-xs text-[#8F8B83] text-center">
-              No players found
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#111114] border border-surface-border rounded-xl shadow-2xl py-2 z-50 max-h-96 overflow-y-auto space-y-2 divide-y divide-surface-border/40">
+          {totalResults === 0 ? (
+            <div className="px-4 py-3 text-xs text-[#8F8B83] text-center">
+              Niciun rezultat găsit pentru „{query}”
             </div>
+          ) : (
+            <>
+              {/* Players Section */}
+              {players.length > 0 && (
+                <div className="space-y-0.5">
+                  <div className="px-3 py-1 text-[10px] font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
+                    <User className="w-3 h-3" />
+                    <span>Jucători ({players.length})</span>
+                  </div>
+
+                  {players.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => handleNavigate(p.href)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-surface-200/60 flex items-center justify-between text-xs transition-colors group"
+                    >
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-surface-200 border border-surface-border overflow-hidden shrink-0 flex items-center justify-center">
+                          <GTAImage
+                            src={getPedAvatarUrl(p.skin)}
+                            alt={p.name}
+                            fallbackText={p.name.charAt(0).toUpperCase()}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <PlayerIdentity
+                            username={p.name}
+                            factionId={p.job}
+                            clanTag={p.clanTag}
+                            clanColor={p.clanColor}
+                            clanTagStyle={p.clanTagStyle}
+                            clickable={false}
+                            size="sm"
+                          />
+                          {p.characterName && (
+                            <span className="text-[10px] text-[#8F8B83] block truncate">
+                              {p.characterName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <span className="text-[10px] text-brand font-mono font-bold bg-brand/10 px-1.5 py-0.5 rounded">
+                          L{p.level}
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-[#5A5751] group-hover:text-brand transition-colors" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Factions Section */}
+              {factions.length > 0 && (
+                <div className="pt-2 space-y-0.5">
+                  <div className="px-3 py-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Shield className="w-3 h-3" />
+                    <span>Facțiuni ({factions.length})</span>
+                  </div>
+
+                  {factions.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => handleNavigate(f.href)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-surface-200/60 flex items-center justify-between text-xs transition-colors"
+                    >
+                      <div>
+                        <span className="font-bold text-[#F2EFE8] block">{f.title}</span>
+                        <span className="text-[10px] text-[#8F8B83] block">{f.subtitle}</span>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-[#5A5751]" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Clans Section */}
+              {clans.length > 0 && (
+                <div className="pt-2 space-y-0.5">
+                  <div className="px-3 py-1 text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Flag className="w-3 h-3" />
+                    <span>Clanuri ({clans.length})</span>
+                  </div>
+
+                  {clans.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleNavigate(c.href)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-surface-200/60 flex items-center justify-between text-xs transition-colors"
+                    >
+                      <div>
+                        <span className="font-bold text-[#F2EFE8] block">{c.title}</span>
+                        <span className="text-[10px] text-[#8F8B83] block">{c.subtitle}</span>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-[#5A5751]" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Updates Section */}
+              {updates.length > 0 && (
+                <div className="pt-2 space-y-0.5">
+                  <div className="px-3 py-1 text-[10px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Newspaper className="w-3 h-3" />
+                    <span>Noutăți & Updates ({updates.length})</span>
+                  </div>
+
+                  {updates.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => handleNavigate(u.href)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-surface-200/60 flex items-center justify-between text-xs transition-colors"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <span className="font-bold text-[#F2EFE8] block truncate">{u.title}</span>
+                        <span className="text-[10px] text-[#8F8B83] block">{u.subtitle}</span>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-[#5A5751] shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Footer View All */}
+              <div className="p-2 pt-2 bg-surface-100/50 text-center">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    router.push(`/players?q=${encodeURIComponent(query.trim())}`);
+                  }}
+                  className="text-[11px] font-bold text-brand hover:underline"
+                >
+                  Vezi toate rezultatele detaliate →
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

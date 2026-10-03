@@ -508,6 +508,11 @@ exports.sunset_core:RegisterCallback('sunset:buyItem', function(source, shopId, 
         end
     end
 
+    -- [QUESTS] Emit canonical quest progress for store purchases
+    if char and char.id then
+        TriggerEvent('sunset:quest:progress', char.id, 'item_purchased', 1, { item = itemName, shopId = shopId })
+    end
+
     return true
 end)
 
@@ -543,6 +548,12 @@ exports.sunset_core:RegisterCallback('sunset:atmTransfer', function(source, acti
     else
         return nil, { localeKey = 'economy.message.invalid_action' }
     end
+
+    -- [QUESTS] Emit canonical quest progress for ATM banking usage
+    if char and char.id then
+        TriggerEvent('sunset:quest:progress', char.id, 'atm_used', 1)
+    end
+
     return { cash = char.cash, bank = char.bank }
 end)
 

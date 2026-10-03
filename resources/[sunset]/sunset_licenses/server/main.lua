@@ -377,10 +377,11 @@ function GrantLicense(source, licenseType, issuedByCharacterId)
         return false, { localeKey = 'licenses.message.the_license_could_not_be_saved_no_license_was' }
     end
     notify(source, exports.sunset_core:TFor(source, 'licenses.msg.issued_valid_until_payday', { label = tostring(SunsetLicenses.Types[licenseType].label), expires = math.floor(tonumber(expires) or 0) }), 'success')
-    TriggerClientEvent('sunset:licenses:refresh', source)
-    loadLicenseCache(source)
-    -- [QUESTS] driving chain: license acquisition progress.
+    -- [QUESTS] License acquisition progress
     TriggerEvent('sunset:quest:progress', cid, 'license_obtained', 1, { license = licenseType })
+    if licenseType == 'hunting' then
+        TriggerEvent('sunset:quest:progress', cid, 'hunting_range_passed', 1)
+    end
     return true
 end
 exports('GrantLicense', GrantLicense)

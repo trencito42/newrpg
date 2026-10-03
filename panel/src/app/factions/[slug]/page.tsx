@@ -99,17 +99,18 @@ export default async function FactionDetailPage({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Top back & title */}
-      <div>
+    <div className="space-y-4 sm:space-y-5">
+      {/* Top back & header */}
+      <div className="p-4 sm:p-6 bg-[#0E0E10] rounded-xl space-y-4">
         <Link
           href="/factions"
-          className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-2"
+          className="inline-flex items-center space-x-1.5 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Factions</span>
+          <span>{t(locale, "factions.title")}</span>
         </Link>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2.5">
               <span
@@ -117,37 +118,37 @@ export default async function FactionDetailPage({
                 style={{ backgroundColor: factionColor }}
               />
               <h1
-                className="text-xl font-bold tracking-tight"
+                className="text-xl sm:text-2xl font-bold tracking-tight"
                 style={{ color: factionColor }}
               >
                 {faction.label}
               </h1>
-              <span className="text-xs text-[#8F8B83] font-medium">
+              <span className="text-xs text-[#8F8B83] font-medium uppercase tracking-wider">
                 {faction.factionType}
               </span>
             </div>
-            <p className="text-xs text-[#99958E] mt-1">
+            <p className="text-xs sm:text-sm text-[#99958E] mt-1.5 max-w-2xl leading-relaxed">
               {faction.description}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {canManage && (
               <Link
                 href={`/factions/${slug}/manage`}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#18181B] hover:bg-[#202024] text-[#F2EFE8] font-medium rounded-lg text-xs transition-colors"
               >
                 <Settings className="w-3.5 h-3.5 text-[#B4AFA4]" />
-                <span>{locale === "ro" ? "Panou Lider" : "Faction Panel"}</span>
+                <span>{t(locale, "copy.app_factions_slug_page.faction_panel")}</span>
               </Link>
             )}
 
             {appsOpen && (
               <Link
                 href={`/factions/${slug}/apply`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg text-xs transition-colors"
               >
-                {locale === "ro" ? "Aplică în facțiune" : "Apply to Faction"}
+                {t(locale, "copy.app_factions_slug_page.apply_to_faction")}
               </Link>
             )}
           </div>
@@ -155,10 +156,10 @@ export default async function FactionDetailPage({
       </div>
 
       {/* Stats summary banner */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[11px] text-[#8F8B83] block">Leader</span>
-          <div className="mt-1">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "clans.leader")}</span>
+          <div className="mt-1.5">
             {leader ? (
               <PlayerIdentity
                 username={leader.leader_name}
@@ -169,35 +170,35 @@ export default async function FactionDetailPage({
                 size="sm"
               />
             ) : (
-              <span className="text-[#8F8B83] italic">Vacant</span>
+              <span className="text-[#8F8B83] italic">{t(locale, "interface.vacant")}</span>
             )}
           </div>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[11px] text-[#8F8B83] block">Type</span>
-          <span className="font-semibold text-[#F2EFE8] mt-1 block capitalize">
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.type")}</span>
+          <span className="font-semibold text-[#F2EFE8] mt-1.5 block capitalize text-sm">
             {faction.type}
           </span>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[11px] text-[#8F8B83] block">Active Members</span>
-          <span className="font-mono font-bold text-[#F2EFE8] mt-1 block">
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.active_members")}</span>
+          <span className="font-mono font-bold text-[#F2EFE8] mt-1.5 block text-base">
             {members.length}
           </span>
         </div>
 
-        <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-          <span className="text-[11px] text-[#8F8B83] block">Applications</span>
-          <span className="font-bold text-xs mt-1 block">
+        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+          <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "applications.title")}</span>
+          <span className="font-semibold text-xs mt-1.5 block">
             {appsOpen ? (
-              <span className="text-emerald-400 flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> OPEN
+              <span className="text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5" /> {t(locale, "interface.open")}
               </span>
             ) : (
-              <span className="text-[#8F8B83] flex items-center gap-1">
-                <XCircle className="w-3.5 h-3.5" /> CLOSED
+              <span className="text-[#8F8B83] flex items-center gap-1.5">
+                <XCircle className="w-3.5 h-3.5" /> {t(locale, "interface.closed")}
               </span>
             )}
           </span>
@@ -205,36 +206,36 @@ export default async function FactionDetailPage({
       </div>
 
       {/* Roster Table */}
-      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
-        <div className="p-3 border-b border-surface-border">
+      <div className="rounded-xl bg-[#0E0E10] overflow-hidden">
+        <div className="p-3.5 sm:p-4 bg-[#121214]">
           <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-            {locale === "ro" ? "Membri Activi" : "Faction Roster"} ({members.length})
+            {t(locale, "copy.app_factions_slug_page.faction_roster")} ({members.length})
           </h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
-                <th className="px-3 py-2">#</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                <th className="px-3 py-2 text-right">{locale === "ro" ? "Ultima Activitate" : "Last Active"}</th>
+              <tr className="bg-[#101012] text-[#8F8B83] font-semibold text-[11px]">
+                <th className="px-3.5 py-2.5">#</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")}</th>
+                <th className="px-3.5 py-2.5 text-center">{t(locale, "common.level")}</th>
+                <th className="px-3.5 py-2.5 text-right">{t(locale, "account.session_last_active")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border">
+            <tbody className="divide-y divide-white/[0.04]">
               {members.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    No members in this faction
+                    {t(locale, "interface.no_members_in_this_faction")}
                   </td>
                 </tr>
               ) : (
                 members.map((m, idx) => (
-                  <tr key={m.id} className="hover:bg-[#131315] transition-colors">
-                    <td className="px-3 py-2 font-mono text-[#8F8B83] text-[11px]">{idx + 1}</td>
-                    <td className="px-3 py-2">
+                  <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-3.5 py-2.5 font-mono text-[#8F8B83] text-[11px]">{idx + 1}</td>
+                    <td className="px-3.5 py-2.5">
                       <PlayerIdentity
                         username={m.username}
                         factionId={slug}
@@ -244,13 +245,13 @@ export default async function FactionDetailPage({
                         size="sm"
                       />
                     </td>
-                    <td className="px-3 py-2 font-mono font-medium text-[#F2EFE8]">
-                      Rank {m.job_grade}
-                      {m.job_grade >= 7 && <span className="ml-1.5 text-[10px] text-amber-400 font-bold">[LEADER]</span>}
-                      {m.job_grade === 6 && <span className="ml-1.5 text-[10px] text-blue-400 font-bold">[CO-LEADER]</span>}
+                    <td className="px-3.5 py-2.5 font-mono font-medium text-[#F2EFE8]">
+                      {t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")} {m.job_grade}
+                      {m.job_grade >= 7 && <span className="ml-1.5 text-[10px] text-amber-400 font-bold">{t(locale, "interface.leader")}</span>}
+                      {m.job_grade === 6 && <span className="ml-1.5 text-[10px] text-blue-400 font-bold">{t(locale, "interface.co_leader")}</span>}
                     </td>
-                    <td className="px-3 py-2 text-center font-mono">{m.level}</td>
-                    <td className="px-3 py-2 text-right font-mono text-[#8F8B83]">
+                    <td className="px-3.5 py-2.5 text-center font-mono text-[#F2EFE8]">{m.level}</td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-[#8F8B83] text-[11px]">
                       {m.last_played ? formatDate(m.last_played, locale) : "Never"}
                     </td>
                   </tr>

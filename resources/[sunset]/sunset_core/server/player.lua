@@ -399,8 +399,12 @@ function Sunset.TransferMoney(source, targetSource, account, amount, reason)
     end
     Sunset.RefreshMoney(source)
     Sunset.RefreshMoney(targetSource)
-    Sunset.LogMoneyTransaction(fromChar.id, account, 'out', amount, reason, fromChar[account])
-    Sunset.LogMoneyTransaction(toChar.id, account, 'in', amount, reason, toChar[account])
+    local fromName = Sunset.GetPlayerDisplayName(source)
+    local toName = Sunset.GetPlayerDisplayName(targetSource)
+    local outReason = ('Transfer -> %s'):format(tostring(toName)):sub(1, 64)
+    local inReason = ('Transfer <- %s'):format(tostring(fromName)):sub(1, 64)
+    Sunset.LogMoneyTransaction(fromChar.id, account, 'out', amount, outReason, fromChar[account])
+    Sunset.LogMoneyTransaction(toChar.id, account, 'in', amount, inReason, toChar[account])
     return true
 end
 
@@ -594,6 +598,10 @@ buyLevel = function(source)
     Sunset.LogMoneyTransaction(char.id, account, 'out', moneyCost, 'buy_level', char[account])
     TriggerClientEvent('sunset:client:updateMoney', source, char.cash, char.bank)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
+
+    -- [QUESTS] Emit canonical quest progress for level reached
+    TriggerEvent('sunset:quest:progress', char.id, 'level_reached', char.level, { level = char.level })
+
     BuyLevelLocks[source] = nil
     return true, ('Level purchased! You are now level %d. Paid %d RP and $%d; %d RP remain.'):format(char.level, rpCost, moneyCost, char.respect_points)
 end
@@ -814,3 +822,55 @@ exports('SetRobPoints', Sunset.SetRobPoints)
 exports('AddRobPoints', Sunset.AddRobPoints)
 exports('SetSpawnPreference', Sunset.SetSpawnPreference)
 exports('GetSpawnPosition', Sunset.GetSpawnPosition)
+
+function Sunset.CanAccess(source, gateId)
+    gateId = tostring(gateId or '')
+    local gate = Sunset.ProgressionGates and Sunset.ProgressionGates[gateId]
+    if not gate then return { allowed = true } end
+
+    local char = Sunset.GetCharacter(source)
+    if not char then
+        return { allowed = false, reason = 'No active character loaded.' }
+    end
+
+    -- 1. Licenses
+    local licensesMap = {}
+    if GetResourceState('sunset_licenses') == 'started' then
+        pcall(function()
+            local lics = exports.sunset_licenses:GetLicenses(source)
+            if type(lics) == 'table' then
+                for _, l in ipairs(lics) do
+                    if l.valid then licensesMap[l.license_type] = true end
+                end
+            end
+        end)
+    end
+
+    -- 2. Completed Quests
+    local completedQuestsMap = {}
+    if GetResourceState('sunset_quests') == 'started' then
+        pcall(function()
+            local prog = exports.sunset_quests:GetProgress(source)
+            if type(prog) == 'table' then
+                for _, q in ipairs(prog) do
+                    if q.status == 'complete' or q.status == 'claimed' then
+                        completedQuestsMap[q.questKey] = true
+                    end
+                end
+            end
+        end)
+    end
+
+    -- 3. Clan Data
+    local clanData = nil
+    if GetResourceState('sunset_clans') == 'started' then
+        pcall(function()
+            local mem = exports.sunset_clans:GetPlayerClan(source)
+            if mem then clanData = mem end
+        end)
+    end
+
+    return Sunset.EvaluateGate(gateId, char, licensesMap, completedQuestsMap, clanData)
+end
+exports('CanAccess', Sunset.CanAccess)
+

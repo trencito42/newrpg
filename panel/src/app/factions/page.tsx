@@ -58,8 +58,8 @@ export default async function FactionsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
+      <div className="pb-2">
+        <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "factions.title")}
         </h1>
       </div>
@@ -71,11 +71,11 @@ export default async function FactionsPage() {
             <Link
               key={f.id}
               href={`/factions/${f.id}`}
-              className="p-3.5 bg-surface-100 hover:bg-surface-200 border border-surface-border rounded transition-colors flex flex-col justify-between"
+              className="p-4 bg-[#0E0E10] hover:bg-[#141417] rounded-xl transition-colors flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2.5">
                     <span
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: factionColor }}
@@ -87,27 +87,27 @@ export default async function FactionsPage() {
                       {f.label}
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#8F8B83] font-medium">
+                  <span className="text-[11px] text-[#8F8B83] font-medium uppercase tracking-wider">
                     {f.factionType}
                   </span>
                 </div>
 
-                <p className="text-xs text-[#99958E] mt-1.5 line-clamp-2">
+                <p className="text-xs text-[#99958E] mt-2 line-clamp-2 leading-relaxed">
                   {f.description}
                 </p>
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#8F8B83]">
+              <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs text-[#8F8B83]">
                 <span>
-                  Leader:{" "}
+                  {t(locale, "copy.app_clans_id_page.leader")}{" "}
                   {f.leader ? (
                     <PlayerIdentity {...identities.get(f.leader.leader_name.toLowerCase())!} factionId={f.id} clickable={false} />
                   ) : (
-                    <span className="text-[#8F8B83] italic">Vacant</span>
+                    <span className="text-[#8F8B83] italic">{t(locale, "interface.vacant")}</span>
                   )}
                 </span>
-                <span className="font-mono text-[#B4AFA4]">
-                  {f.memberCount} members
+                <span className="font-mono text-[#B4AFA4] text-xs">
+                  {f.memberCount} {t(locale, "interface.members")}
                 </span>
               </div>
             </Link>

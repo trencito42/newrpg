@@ -837,6 +837,12 @@ exports.sunset_core:RegisterCallback('sunset:jobs:hunter:harvest', function(sour
     -- XP per harvest
     SunsetJobs_AddJobXP(source, 'hunter', cfg.xpPerHarvest or 30)
 
+    -- [QUESTS] Emit canonical quest progress for animal harvest
+    local char = exports.sunset_core:GetCharacter(source)
+    if char and char.id then
+        TriggerEvent('sunset:quest:progress', char.id, 'hunting_harvested', 1)
+    end
+
     -- Remove entity (cleanup)
     SetTimeout(5000, function()
         Animals[netId] = nil

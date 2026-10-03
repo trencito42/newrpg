@@ -107,20 +107,20 @@ export default async function TicketDetailPage({
         className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-1"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Tickets</span>
+        <span>{t(locale, "nav.tickets")}</span>
       </Link>
 
       <div className="border border-surface-border rounded bg-surface-100 p-4 space-y-4">
         <div className="pb-3 border-b border-surface-border">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-mono text-[#8F8B83]">Ticket #{ticket.id} • <span className="capitalize">{ticket.department}</span></span>
+            <span className="font-mono text-[#8F8B83]">{t(locale, "interface.ticket")}{ticket.id} • <span className="capitalize">{ticket.department}</span></span>
             <span className={`font-medium ${isOpen ? "text-emerald-400" : "text-[#8F8B83]"}`}>
               {ticket.status.replace(/_/g, " ")}
             </span>
           </div>
           <h1 className="text-base font-bold text-[#F2EFE8] mt-1">{ticket.subject}</h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            By <strong className="text-[#B4AFA4] font-normal">{ticket.author_name}</strong> on {formatDate(ticket.created_at, locale)}
+            {t(locale, "interface.by_3")} <strong className="text-[#B4AFA4] font-normal">{ticket.author_name}</strong> {t(locale, "interface.on")} {formatDate(ticket.created_at, locale)}
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export default async function TicketDetailPage({
               <div className="flex items-center justify-between text-[#8F8B83] pb-1 border-b border-surface-border/40">
                 <div className="flex items-center space-x-1.5">
                   <span className="font-semibold text-[#F2EFE8]">{msg.sender_name}</span>
-                  {msg.is_staff && <span className="text-[10px] text-amber-400 font-mono">(Staff)</span>}
+                  {msg.is_staff && <span className="text-[10px] text-amber-400 font-mono">{t(locale, "interface.staff")}</span>}
                 </div>
                 <span className="text-[11px] font-mono">{formatDate(msg.created_at, locale)}</span>
               </div>
@@ -156,20 +156,19 @@ export default async function TicketDetailPage({
               name="reply"
               required
               rows={3}
-              placeholder="Write a reply..."
+              placeholder={t(locale, "support.reply_placeholder")}
               className="w-full px-2.5 py-1.5 text-xs bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] focus:outline-none resize-none"
             />
             <div className="flex justify-end">
               <Button type="submit" size="sm">
                 <Send className="w-3 h-3 mr-1" />
-                <span>Send Reply</span>
+                <span>{t(locale, "interface.send_reply")}</span>
               </Button>
             </div>
           </form>
         ) : (
           <div className="p-3 bg-surface-200 rounded text-center text-xs text-[#8F8B83]">
-            This ticket is closed.
-          </div>
+            {t(locale, "interface.this_ticket_is_closed")}</div>
         )}
       </div>
     </div>

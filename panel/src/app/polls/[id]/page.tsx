@@ -3,9 +3,11 @@ import Link from "next/link";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Crown } from "lucide-react";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { PollVoteForm } from "@/components/polls/PollVoteForm";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
 
 interface PollRow extends RowDataPacket {
@@ -27,6 +29,7 @@ interface OptionRow extends RowDataPacket {
   id: number;
   label_en: string;
   label_ro: string;
+  metadata: string | Record<string, any> | null;
   votes_count: number;
 }
 
@@ -64,7 +67,7 @@ export default async function PollDetailPage({
   }
 
   const options = await dbQuery<OptionRow>(
-    `SELECT id, label_en, label_ro, votes_count
+    `SELECT id, label_en, label_ro, metadata, votes_count
      FROM panel_poll_options
      WHERE poll_id = ?
      ORDER BY sort_order ASC, id ASC`,
@@ -84,46 +87,68 @@ export default async function PollDetailPage({
   const isActive = poll.status === "active";
   const hasVoted = userVote !== null;
   const total = poll.total_votes > 0 ? poll.total_votes : 1;
+  const isMayor = title.toLowerCase().includes("primar") || title.toLowerCase().includes("mayor");
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="w-full space-y-4">
       <Link
         href="/polls"
-        className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-1"
+        className="inline-flex items-center space-x-1 text-xs font-bold text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-1"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Polls</span>
+        <span>{t(locale, "interface.back_to_polls")}</span>
       </Link>
 
-      <div className="border border-surface-border rounded bg-surface-100 p-4 space-y-4">
-        <div className="pb-3 border-b border-surface-border">
+      <div className="rounded-xl bg-[#0E0E10] p-6 space-y-6">
+        <div className="pb-4 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className={`font-semibold ${isActive ? "text-emerald-400" : "text-[#8F8B83]"}`}>
-              {isActive ? "Active Poll" : "Closed Poll"}
-            </span>
+            <div className="flex items-center space-x-2">
+              {isMayor && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/60 text-amber-400 border border-amber-800/40 uppercase tracking-wider flex items-center gap-1">
+                  <Crown className="w-3 h-3" />
+                  <span>{t(locale, "interface.mayoral_election_2")}</span>
+                </span>
+              )}
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                isActive ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" : "bg-surface-200 text-[#8F8B83] border-surface-border"
+              }`}>
+                {isActive ? "Votare Activă" : "Votare Încheiată"}
+              </span>
+            </div>
+
             {isActive ? (
               <PollCountdown targetDate={poll.ends_at} locale={locale} />
             ) : (
               <span className="text-[11px] text-[#8F8B83] font-mono">
-                Ended {formatDate(poll.ends_at, locale)}
+                {t(locale, "interface.ended")} {formatDate(poll.ends_at, locale)}
               </span>
             )}
           </div>
-          <h1 className="text-base font-bold text-[#F2EFE8] mt-1">{title}</h1>
+
+          <h1 className="text-xl font-black text-[#F2EFE8] tracking-tight">{title}</h1>
           {desc && (
-            <p className="text-xs text-[#99958E] mt-1">{desc}</p>
+            <p className="text-xs text-[#8F8B83] leading-relaxed">{desc}</p>
           )}
         </div>
 
         {/* Voting Form */}
         {isActive && !hasVoted ? (
-          <div className="p-3 rounded bg-surface-200 border border-surface-border">
+          <div className="p-4 rounded-xl bg-[#121214]">
             <PollVoteForm
               pollId={poll.id}
-              options={options.map((o) => ({
-                id: o.id,
-                label: locale === "ro" ? o.label_ro : o.label_en,
-              }))}
+              options={options.map((o) => {
+                let metaObj = null;
+                if (o.metadata) {
+                  try {
+                    metaObj = typeof o.metadata === "string" ? JSON.parse(o.metadata) : o.metadata;
+                  } catch {}
+                }
+                return {
+                  id: o.id,
+                  label: locale === "ro" ? o.label_ro : o.label_en,
+                  metadata: metaObj,
+                };
+              })}
               userVotedOptionId={null}
               isLoggedIn={session !== null}
               minLevel={poll.minimum_level}
@@ -132,47 +157,85 @@ export default async function PollDetailPage({
           </div>
         ) : (
           hasVoted && (
-            <div className="p-2.5 rounded bg-emerald-950/30 border border-emerald-900/40 text-emerald-400 text-xs flex items-center space-x-2">
-              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>You have voted in this poll.</span>
+            <div className="p-3.5 rounded-xl bg-emerald-950/40 text-emerald-400 text-xs flex items-center space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span className="font-semibold">{t(locale, "interface.your_vote_has_been_recorded_for_this_poll")}</span>
             </div>
           )
         )}
 
         {/* Results */}
-        <div className="space-y-2.5">
+        <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between text-xs text-[#8F8B83]">
-            <span className="font-semibold text-[#F2EFE8]">Results</span>
-            <span className="font-mono">{t(locale, "polls.total_votes", { count: poll.total_votes })}</span>
+            <span className="font-bold text-[#F2EFE8] uppercase tracking-wider text-[11px]">{t(locale, "interface.live_results")}</span>
+            <span className="font-mono font-medium">{poll.total_votes} {t(locale, "interface.votes_recorded")}</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {options.map((opt) => {
               const label = locale === "ro" ? opt.label_ro : opt.label_en;
               const pct = Math.round((opt.votes_count / total) * 100);
               const isSelected = userVote?.option_id === opt.id;
 
+              let candidate = null;
+              if (opt.metadata) {
+                try {
+                  const meta = typeof opt.metadata === "string" ? JSON.parse(opt.metadata) : opt.metadata;
+                  if (meta && (meta.type === "mayor_candidate" || meta.candidateUsername)) candidate = meta;
+                } catch {}
+              }
+
               return (
                 <div
                   key={opt.id}
-                  className={`p-2.5 rounded border text-xs space-y-1 ${
+                  className={`p-4 rounded-xl text-xs space-y-2.5 transition-all ${
                     isSelected
-                      ? "bg-surface-200 border-surface-borderLight text-[#F2EFE8]"
-                      : "bg-surface-100 border-surface-border text-[#B4AFA4]"
+                      ? "bg-brand/15 text-[#F2EFE8]"
+                      : "bg-[#121214] text-[#B4AFA4]"
                   }`}
                 >
                   <div className="flex items-center justify-between font-medium">
-                    <span>
-                      {label} {isSelected && <span className="text-[11px] text-emerald-400 ml-1.5">(Your Vote)</span>}
-                    </span>
-                    <span className="font-mono text-[#8F8B83]">
-                      {opt.votes_count} ({pct}%)
+                    <div className="flex items-center space-x-3 min-w-0">
+                      {candidate && (
+                        <div className="w-8 h-8 rounded-lg bg-[#18181b] overflow-hidden shrink-0 flex items-center justify-center">
+                          <GTAImage
+                            src={getPedAvatarUrl(candidate.candidateSkin)}
+                            alt={candidate.candidateName || label}
+                            fallbackText={(candidate.candidateName || label).charAt(0).toUpperCase()}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          {candidate && <Crown className="w-3.5 h-3.5 text-brand shrink-0" />}
+                          <span className="font-bold text-[#F2EFE8] truncate">
+                            {candidate?.candidateName ? `${candidate.candidateName} (${candidate.candidateUsername})` : label}
+                          </span>
+                          {isSelected && (
+                            <span className="text-[10px] text-emerald-400 font-bold ml-1.5 px-1.5 py-0.5 bg-emerald-950/60 rounded border border-emerald-800/40">
+                              {t(locale, "interface.your_vote")}</span>
+                          )}
+                        </div>
+                        {candidate?.slogan && (
+                          <span className="text-[11px] text-[#8F8B83] block truncate italic">
+                            „{candidate.slogan}”
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="font-mono font-bold text-[#F2EFE8] shrink-0 ml-2">
+                      {opt.votes_count} <span className="text-[#8F8B83] font-normal">({pct}%)</span>
                     </span>
                   </div>
 
-                  <div className="w-full bg-surface-300 rounded h-1.5 overflow-hidden">
+                  <div className="w-full bg-[#191719] rounded-full h-2 overflow-hidden border border-surface-border/40">
                     <div
-                      className="h-full bg-[#8F8B83] rounded transition-[width] duration-150"
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        isSelected ? "bg-brand" : "bg-gradient-to-r from-brand/60 to-brand"
+                      }`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

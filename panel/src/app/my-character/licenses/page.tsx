@@ -67,8 +67,7 @@ export default async function MyLicensesPage() {
                 <div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-[#F2EFE8] capitalize">
-                      {lic.type} License
-                    </span>
+                      {lic.type} {t(locale, "interface.license")}</span>
                     <span className={`font-medium ${isExpired ? "text-red-400" : "text-emerald-400"}`}>
                       {isExpired ? "Expired" : "Valid"}
                     </span>
@@ -76,13 +75,13 @@ export default async function MyLicensesPage() {
 
                   <div className="mt-3 pt-2.5 border-t border-surface-border/60 text-xs space-y-1 text-[#8F8B83]">
                     <div className="flex items-center justify-between">
-                      <span>Remaining:</span>
+                      <span>{t(locale, "interface.remaining")}</span>
                       <span className="font-mono text-[#B4AFA4]">
                         {remainingPaydays !== null ? `${remainingPaydays} paydays` : "Permanent"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Issued:</span>
+                      <span>{t(locale, "interface.issued")}</span>
                       <span className="font-mono text-[#B4AFA4]">{formatDate(lic.issued_at, locale, false)}</span>
                     </div>
                   </div>
@@ -92,8 +91,7 @@ export default async function MyLicensesPage() {
           })
         ) : (
           <p className="text-xs text-[#8F8B83] p-4 border border-surface-border rounded bg-surface-100 col-span-2 text-center">
-            No licenses held.
-          </p>
+            {t(locale, "interface.no_licenses_held")}</p>
         )}
       </div>
     </div>

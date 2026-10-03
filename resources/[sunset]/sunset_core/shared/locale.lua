@@ -12,6 +12,10 @@ local function validLocale(locale)
     return Sunset.ValidLocales[locale] and locale or nil
 end
 
+local function strictLocale()
+    return GetConvar('I18N_STRICT', '0') == '1' or GetConvar('sunset_i18n_strict', '0') == '1'
+end
+
 local function interpolate(template, params, locale)
     if type(params) ~= 'table' then return template end
     return (template:gsub('{([%w_]+)}', function(name)
@@ -64,7 +68,17 @@ function Sunset.Translate(locale, key, params, ...)
     key = tostring(key or '')
     local primary = Sunset.Locales[locale] or {}
     local fallback = Sunset.Locales.en or {}
-    local value = rawget(primary, key) or rawget(fallback, key)
+    local value = rawget(primary, key)
+    if strictLocale() then
+        local context = ('[locale] locale=%s key=%s resource=%s'):format(locale, key, GetCurrentResourceName())
+        if type(value) ~= 'string' or value == '' then error(context .. ' missing translation', 2) end
+        for name in value:gmatch('{([%w_]+)}') do
+            if type(params) ~= 'table' or params[name] == nil then
+                error(context .. ' missing parameter {' .. name .. '}', 2)
+            end
+        end
+    end
+    value = value or rawget(fallback, key)
     if type(value) ~= 'string' or value == '' then
         return missingKey(key)
     end

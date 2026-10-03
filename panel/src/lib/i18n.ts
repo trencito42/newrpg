@@ -18,40 +18,26 @@ export function t(
   key: string,
   params?: Record<string, string | number>
 ): string {
-  const dict = dictionaries[locale] || dictionaries.en;
-  const parts = key.split(".");
-  let current = dict;
-
-  for (const part of parts) {
-    if (current && typeof current === "object" && part in current) {
-      current = current[part];
-    } else {
-      // Fallback to English
-      let fallback = dictionaries.en;
-      for (const fPart of parts) {
-        if (fallback && typeof fallback === "object" && fPart in fallback) {
-          fallback = fallback[fPart];
-        } else {
-          return key;
-        }
-      }
-      current = fallback;
-      break;
-    }
+  const lookup = (language: Locale): unknown => key.split(".").reduce<unknown>((value, part) =>
+    value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, part)
+      ? (value as Record<string, unknown>)[part] : undefined, dictionaries[language]);
+  const primary = lookup(locale);
+  const strict = process.env.I18N_STRICT === "1" || process.env.NEXT_PUBLIC_I18N_STRICT === "1";
+  const context = `[i18n] locale=${locale} key=${key}`;
+  if (strict && (typeof primary !== "string" || !primary.trim())) {
+    throw new Error(`${context}: missing translation`);
   }
-
-  if (typeof current !== "string") {
-    return key;
+  const value = typeof primary === "string" && primary.trim() ? primary : lookup("en");
+  if (typeof value !== "string" || !value.trim()) {
+    console.error(`${context}: missing translation`);
+    const readable = key.split(".").pop()?.replace(/_/g, " ") || "";
+    return readable.charAt(0).toUpperCase() + readable.slice(1);
   }
-
-  if (params) {
-    return Object.entries(params).reduce(
-      (acc, [k, v]) => acc.replace(new RegExp(`\\{${k}\\}`, "g"), String(v)),
-      current
-    );
-  }
-
-  return current;
+  return value.replace(/\{(\w+)\}/g, (token, name: string) => {
+    if (params && Object.prototype.hasOwnProperty.call(params, name)) return String(params[name]);
+    if (strict) throw new Error(`${context}: missing parameter {${name}}`);
+    return token;
+  });
 }
 
 /**

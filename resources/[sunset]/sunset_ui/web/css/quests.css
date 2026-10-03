@@ -7,21 +7,23 @@
 :root {
     --q-theme-info: #00ffcc;
     --q-theme-job: #3b82f6;
+    --q-theme-crim: #ef4444;
+    --q-theme-clan: #f59e0b;
     --q-theme-success: #10b981;
     --q-theme-warning: #f59e0b;
-    --q-bg-glass: rgba(10, 10, 15, 0.94);
-    --q-border-glass: rgba(255, 255, 255, 0.1);
+    --q-bg-glass: rgba(10, 10, 15, 0.96);
+    --q-border-glass: rgba(255, 255, 255, 0.12);
 }
 
 .quest-shell {
-    position: absolute; top: 60px; left: 50%;
+    position: absolute; top: 50px; left: 50%;
     transform: translateX(-50%) translateY(-30px);
-    width: 460px; max-height: 70vh;
+    width: 520px; max-height: 78vh;
     z-index: 9100;
     display: flex; flex-direction: column;
     opacity: 0; pointer-events: none;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.65));
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.85));
 }
 .quest-shell.active {
     opacity: 1; pointer-events: all;
@@ -29,9 +31,10 @@
 }
 
 .quest-shell__header {
-    display: flex; justify-content: space-between; align-items: flex-end;
+    display: flex; justify-content: space-between; align-items: center;
     border-bottom: 3px solid var(--q-theme-info);
-    padding: 4px 6px 8px 6px;
+    padding: 8px 12px;
+    background: rgba(15, 15, 22, 0.98);
 }
 .quest-shell__title {
     font-size: 16px; font-weight: 900; font-style: italic;
@@ -51,29 +54,74 @@
 }
 .quest-shell__close:hover { background: #fff; color: #000; }
 
+/* Filter Tabs */
+.quest-shell__tabs {
+    display: flex; gap: 4px;
+    padding: 8px 12px;
+    background: rgba(18, 18, 26, 0.98);
+    border-bottom: 1px solid var(--q-border-glass);
+    overflow-x: auto;
+}
+.quest-shell__tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    font-family: inherit; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; padding: 5px 10px; border-radius: 4px; cursor: pointer;
+    white-space: nowrap; transition: 0.2s;
+}
+.quest-shell__tab:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.quest-shell__tab.active {
+    background: var(--q-theme-info);
+    border-color: var(--q-theme-info);
+    color: #000;
+    font-weight: 900;
+}
+
 .quest-shell__body {
     background: var(--q-bg-glass);
     border: 1px solid var(--q-border-glass); border-top: none;
     padding: 14px 16px;
     overflow-y: auto;
-    display: flex; flex-direction: column; gap: 10px;
+    display: flex; flex-direction: column; gap: 12px;
 }
 .quest-shell__body::-webkit-scrollbar { width: 4px; }
 .quest-shell__body::-webkit-scrollbar-thumb { background: rgba(0,255,204,0.35); border-radius: 2px; }
 
+/* Featured Hero Quest */
+.quest-hero {
+    background: linear-gradient(135deg, rgba(0, 255, 204, 0.12), rgba(0, 0, 0, 0.6));
+    border: 1px solid rgba(0, 255, 204, 0.35);
+    border-left: 4px solid var(--q-theme-info);
+    border-radius: 4px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.quest-hero__badge {
+    font-size: 9px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--q-theme-info); display: flex; align-items: center; gap: 5px;
+}
+
 .quest-card {
     background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-left: 3px solid var(--q-theme-info);
+    border-radius: 4px;
     padding: 12px 14px;
     display: flex; flex-direction: column; gap: 6px;
     transition: all 0.25s ease;
 }
+.quest-card[data-category="careers"] { border-left-color: var(--q-theme-job); }
+.quest-card[data-category="criminal"] { border-left-color: var(--q-theme-crim); }
+.quest-card[data-category="clans"] { border-left-color: var(--q-theme-clan); }
+.quest-card[data-category="social"] { border-left-color: #a855f7; }
+
 .quest-card.is-complete { border-left-color: var(--q-theme-warning); background: rgba(245, 158, 11, 0.08); }
-.quest-card.is-claimed { border-left-color: var(--q-theme-success); opacity: 0.6; }
+.quest-card.is-claimed { border-left-color: var(--q-theme-success); opacity: 0.55; }
 
 .quest-card__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .quest-card__name {
-    font-size: 14px; font-weight: 900; font-style: italic; color: #fff;
+    font-size: 13px; font-weight: 900; font-style: italic; color: #fff;
     text-transform: uppercase; letter-spacing: 0.5px;
 }
 .quest-card__badge {
@@ -84,12 +132,12 @@
 .quest-card.is-complete .quest-card__badge { background: rgba(245, 158, 11, 0.15); color: var(--q-theme-warning); }
 .quest-card.is-claimed .quest-card__badge { background: rgba(16, 185, 129, 0.15); color: var(--q-theme-success); }
 
-.quest-card__chain { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; }
-.quest-card__desc { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); line-height: 1.45; }
+.quest-card__chain { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; }
+.quest-card__desc { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); line-height: 1.4; }
 
 .quest-card__objective {
     display: flex; align-items: center; gap: 8px;
-    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.75);
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85);
     text-transform: uppercase; letter-spacing: 0.5px;
 }
 .quest-card__objective i { color: var(--q-theme-info); font-size: 14px; }
@@ -97,9 +145,10 @@
 .quest-card__progress { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
 .quest-card__progress-fill { height: 100%; background: var(--q-theme-info); transition: width 0.4s ease; }
 .quest-card.is-complete .quest-card__progress-fill { background: var(--q-theme-warning); }
+.quest-card.is-claimed .quest-card__progress-fill { background: var(--q-theme-success); }
 
-.quest-card__footer { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
-.quest-card__reward { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.45); display: flex; gap: 10px; }
+.quest-card__footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.quest-card__reward { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5); display: flex; gap: 10px; }
 .quest-card__reward b { color: #fff; font-weight: 900; }
 
 .quest-card__claim {
@@ -112,12 +161,13 @@
 .quest-card__claim:disabled { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: default; transform: none; }
 
 .quest-shell__empty {
-    padding: 22px 10px; text-align: center;
+    padding: 24px 10px; text-align: center;
     font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.4);
     text-transform: uppercase; letter-spacing: 1px;
 }
 
 .quest-shell__hint {
-    text-align: center; font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.25);
-    text-transform: uppercase; letter-spacing: 2px; padding: 8px 0 2px 0;
+    text-align: center; font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 2px; padding: 8px 0 4px 0;
+    background: rgba(10, 10, 15, 0.96);
 }

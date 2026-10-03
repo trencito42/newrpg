@@ -80,51 +80,50 @@ export default async function SupportTicketsPage() {
 
           <form action={createTicket} className="space-y-2.5">
             <div>
-              <label className="block text-[#8F8B83] mb-1">Department</label>
+              <label className="block text-[#8F8B83] mb-1">{t(locale, "support.department")}</label>
               <select
                 name="department"
                 className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] text-xs focus:outline-none"
               >
-                <option value="general">General Support</option>
-                <option value="account">Account & Security</option>
-                <option value="bug">Bug Report</option>
-                <option value="faction">Faction Inquiry</option>
-                <option value="staff">Staff Inquiry</option>
+                <option value="general">{t(locale, "interface.general_support")}</option>
+                <option value="account">{t(locale, "interface.account_security")}</option>
+                <option value="bug">{t(locale, "interface.bug_report")}</option>
+                <option value="faction">{t(locale, "interface.faction_inquiry")}</option>
+                <option value="staff">{t(locale, "interface.staff_inquiry")}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[#8F8B83] mb-1">Subject</label>
+              <label className="block text-[#8F8B83] mb-1">{t(locale, "support.subject")}</label>
               <input
                 type="text"
                 name="subject"
                 required
-                placeholder="Brief subject..."
+                placeholder={t(locale, "interface.brief_subject")}
                 className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-[#8F8B83] mb-1">Message</label>
+              <label className="block text-[#8F8B83] mb-1">{t(locale, "support.message")}</label>
               <textarea
                 name="message"
                 required
                 rows={3}
-                placeholder="Detailed message..."
+                placeholder={t(locale, "interface.detailed_message")}
                 className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none resize-none"
               />
             </div>
 
             <Button type="submit" size="sm" className="w-full mt-1">
-              Submit Ticket
-            </Button>
+              {t(locale, "interface.submit_ticket")}</Button>
           </form>
         </div>
 
         {/* Tickets List */}
         <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#F2EFE8]">
-            <span>Tickets</span>
+            <span>{t(locale, "nav.tickets")}</span>
             <span className="font-mono text-[#8F8B83]">{tickets.length}</span>
           </div>
 
@@ -155,7 +154,7 @@ export default async function SupportTicketsPage() {
               );
             })}
             {tickets.length === 0 && (
-              <div className="p-4 text-center text-[#8F8B83]">No open tickets.</div>
+              <div className="p-4 text-center text-[#8F8B83]">{t(locale, "interface.no_open_tickets")}</div>
             )}
           </div>
         </div>

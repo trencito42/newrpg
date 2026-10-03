@@ -6,7 +6,7 @@ local function syncStandaloneNuiLocale(locale)
         local ok, current = pcall(function() return exports.sunset_core:GetLocale() end)
         locale = ok and current or 'en'
     end
-    SendNUIMessage({ action = 'localeSet', data = { locale = locale } })
+    SendNUIMessage({ action = 'localeSet', data = { locale = locale, strict = GetConvar('sunset_i18n_strict', '0') == '1' } })
 end
 
 AddEventHandler('sunset:client:onLocaleChanged', syncStandaloneNuiLocale)

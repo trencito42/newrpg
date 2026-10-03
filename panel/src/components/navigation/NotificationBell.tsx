@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import Link from "next/link";
-import { Locale } from "@/lib/i18n";
+import { t, Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface NotificationItem {
@@ -64,7 +64,7 @@ export function NotificationBell({ locale }: { locale: Locale }) {
           if (!open && unreadCount > 0) markAllAsRead();
         }}
         className="relative p-1.5 text-[#B4AFA4] hover:text-[#F2EFE8] hover:bg-[#1A191B] rounded transition-colors"
-        title="Notifications"
+        title={t(locale, "copy.components_navigation_notificationbell.notifications")}
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
@@ -78,14 +78,14 @@ export function NotificationBell({ locale }: { locale: Locale }) {
           <div className="absolute right-0 mt-2 w-80 bg-[#101012] border border-surface-border rounded-md shadow-xl z-50 overflow-hidden">
             <div className="p-2.5 border-b border-surface-border flex items-center justify-between">
               <span className="text-xs font-semibold text-[#F2EFE8]">
-                {locale === "ro" ? "Notificări" : "Notifications"}
+                {t(locale, "copy.components_navigation_notificationbell.notifications")}
               </span>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
                   className="text-[11px] text-[#8F8B83] hover:text-[#B4AFA4]"
                 >
-                  {locale === "ro" ? "Marchează citite" : "Mark all read"}
+                  {t(locale, "copy.components_navigation_notificationbell.mark_all_read")}
                 </button>
               )}
             </div>
@@ -93,7 +93,7 @@ export function NotificationBell({ locale }: { locale: Locale }) {
             <div className="max-h-72 overflow-y-auto divide-y divide-surface-border">
               {notifications.length === 0 ? (
                 <div className="p-4 text-center text-xs text-[#8F8B83]">
-                  {locale === "ro" ? "Nu ai notificări noi" : "No new notifications"}
+                  {t(locale, "copy.components_navigation_notificationbell.no_new_notifications")}
                 </div>
               ) : (
                 notifications.map((n) => {

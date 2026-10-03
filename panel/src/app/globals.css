@@ -17,10 +17,10 @@
   --surface-1: #0e0e10;
   --surface-2: #131315;
   --surface-3: #1a191b;
-  --card: #101012;
-  --card-border: rgba(242, 239, 232, 0.06);
-  --border: rgba(242, 239, 232, 0.08);
-  --border-strong: rgba(242, 239, 232, 0.14);
+  --card: #0e0e10;
+  --card-border: transparent;
+  --border: transparent;
+  --border-strong: transparent;
   --muted: #131315;
   --muted-foreground: #a9a59c;
   --accent: #d7b558;
@@ -32,8 +32,18 @@
   *,
   ::before,
   ::after {
-    border-color: rgba(242, 239, 232, 0.08);
+    border-color: transparent;
   }
+}
+
+/* Eliminate hover lift / scale effects */
+.hover\:-translate-y-0\.5:hover,
+.hover\:-translate-y-1:hover,
+.hover\:scale-105:hover,
+.hover\:scale-\[1\.02\]:hover,
+.group:hover .group-hover\:scale-105,
+.group:hover .group-hover\:-translate-y-0\.5 {
+  transform: none !important;
 }
 
 * {

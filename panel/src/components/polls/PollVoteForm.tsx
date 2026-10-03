@@ -2,12 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Vote, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Vote, CheckCircle2, AlertCircle, Loader2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 
-interface Option {
+export interface PollOptionItem {
   id: number;
   label: string;
+  metadata?: {
+    type?: string;
+    candidateUsername?: string;
+    candidateName?: string;
+    candidateSkin?: string;
+    slogan?: string;
+  } | null;
 }
 
 export function PollVoteForm({
@@ -19,7 +28,7 @@ export function PollVoteForm({
   minHours,
 }: {
   pollId: number;
-  options: Option[];
+  options: PollOptionItem[];
   userVotedOptionId: number | null;
   isLoggedIn: boolean;
   minLevel: number;
@@ -50,7 +59,7 @@ export function PollVoteForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Failed to record vote.");
+        setError(data.message || "Votul nu a putut fi înregistrat.");
         setLoading(false);
         return;
       }
@@ -58,7 +67,7 @@ export function PollVoteForm({
       setSuccess(true);
       router.refresh();
     } catch {
-      setError("A network error occurred. Please try again.");
+      setError("A apărut o eroare de rețea.");
     } finally {
       setLoading(false);
     }
@@ -66,14 +75,14 @@ export function PollVoteForm({
 
   if (!isLoggedIn) {
     return (
-      <div className="p-3 rounded-lg bg-surface-100 border border-surface-border text-center text-xs text-text-secondary">
-        <p className="mb-2">Login to vote in this poll.</p>
+      <div className="p-4 rounded-xl bg-surface-100 border border-surface-border text-center text-xs text-[#8F8B83] space-y-2">
+        <p>Autentifică-te pentru a putea vota în acest sondaj.</p>
         <a
           href="/login"
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand text-[#08080A] font-bold rounded-md text-xs transition-colors hover:bg-brand-600"
+          className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand text-[#08080A] font-extrabold uppercase rounded-lg text-xs transition-colors hover:bg-brand-300"
         >
           <Vote className="w-3.5 h-3.5" />
-          <span>Login</span>
+          <span>Autentificare</span>
         </a>
       </div>
     );
@@ -81,58 +90,92 @@ export function PollVoteForm({
 
   if (success) {
     return (
-      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-2">
+      <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 text-xs flex items-center space-x-2.5">
         <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-        <span>Vote recorded.</span>
+        <span className="font-semibold">Votul tău a fost înregistrat cu succes!</span>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleVote} className="space-y-3">
+    <form onSubmit={handleVote} className="space-y-3.5">
       {error && (
-        <div className="p-2.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start space-x-2">
+        <div className="p-3 rounded-lg bg-red-950/40 border border-red-800/50 text-red-300 text-xs flex items-start space-x-2">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="space-y-1.5">
-        {options.map((opt) => (
-          <label
-            key={opt.id}
-            className={`flex items-center space-x-3 p-2.5 rounded-md border text-xs font-medium cursor-pointer transition-colors ${
-              selectedOption === opt.id
-                ? "bg-brand/10 border-brand text-[#F2EFE8]"
-                : "bg-surface-100 border-surface-border text-text-secondary hover:bg-surface-200"
-            }`}
-          >
-            <input
-              type="radio"
-              name="poll_option"
-              value={opt.id}
-              checked={selectedOption === opt.id}
-              onChange={() => setSelectedOption(opt.id)}
-              className="text-brand focus:ring-brand h-4 w-4 bg-surface-200 border-surface-border"
-            />
-            <span>{opt.label}</span>
-          </label>
-        ))}
+      <div className="space-y-2">
+        {options.map((opt) => {
+          const isSelected = selectedOption === opt.id;
+          const candidate = opt.metadata?.type === "mayor_candidate" || opt.metadata?.candidateUsername ? opt.metadata : null;
+
+          return (
+            <label
+              key={opt.id}
+              className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                isSelected
+                  ? "bg-brand/10 border-brand text-[#F2EFE8] shadow-md shadow-brand/5 ring-1 ring-brand"
+                  : "bg-surface-100 border-surface-border text-[#B4AFA4] hover:bg-surface-200/70 hover:border-surface-borderLight"
+              }`}
+            >
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <input
+                  type="radio"
+                  name="poll_option"
+                  value={opt.id}
+                  checked={isSelected}
+                  onChange={() => setSelectedOption(opt.id)}
+                  className="text-brand focus:ring-brand h-4 w-4 bg-surface-200 border-surface-border shrink-0"
+                />
+
+                {candidate && (
+                  <div className="w-10 h-10 rounded-lg bg-surface-200 border border-surface-border overflow-hidden shrink-0 flex items-center justify-center">
+                    <GTAImage
+                      src={getPedAvatarUrl(candidate.candidateSkin)}
+                      alt={candidate.candidateName || opt.label}
+                      fallbackText={(candidate.candidateName || opt.label).charAt(0).toUpperCase()}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center space-x-1.5">
+                    {candidate && <Crown className="w-3.5 h-3.5 text-brand shrink-0" />}
+                    <span className="font-bold text-[#F2EFE8] block truncate">
+                      {candidate?.candidateName ? `${candidate.candidateName} (${candidate.candidateUsername})` : opt.label}
+                    </span>
+                  </div>
+                  {candidate?.slogan && (
+                    <span className="text-[11px] text-[#8F8B83] block truncate italic mt-0.5">
+                      „{candidate.slogan}”
+                    </span>
+                  )}
+                </div>
+              </div>
+            </label>
+          );
+        })}
       </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-[11px] text-text-muted">
-          Min: Level {minLevel} • {minHours}h
+      <div className="flex items-center justify-between pt-2 border-t border-surface-border">
+        <span className="text-[11px] text-[#8F8B83] font-mono">
+          Cerințe: Nivel {minLevel} • {minHours}h
         </span>
-        <Button
+        <button
           type="submit"
           disabled={!selectedOption || loading}
-          loading={loading}
-          size="sm"
+          className="flex items-center space-x-1.5 px-5 py-2 bg-brand hover:bg-brand-300 disabled:opacity-50 text-[#08080A] font-extrabold uppercase rounded-lg text-xs transition-all shadow-md"
         >
-          <Vote className="w-3.5 h-3.5 mr-1.5" />
-          <span>Vote</span>
-        </Button>
+          {loading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Vote className="w-3.5 h-3.5" />
+          )}
+          <span>{loading ? "Se votează..." : "Trimite Votul"}</span>
+        </button>
       </div>
     </form>
   );

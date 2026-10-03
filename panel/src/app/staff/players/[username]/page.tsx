@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/i18n";
+import { t, formatDate } from "@/lib/i18n";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -56,6 +56,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
       a.email,
       a.admin_level,
       a.helper_level,
+      COALESCE(a.is_author, 0) as is_author,
       a.premium_points,
       a.language,
       a.created_at as account_created_at,
@@ -90,6 +91,20 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
   if (!player) notFound();
 
+  // Fetch custom badges
+  const badges = await dbQuery<{
+    id: number;
+    badge_key: string;
+    title: string;
+    description: string | null;
+    icon: string | null;
+    color: string | null;
+    bg_color: string | null;
+  } & RowDataPacket>(
+    "SELECT id, badge_key, title, description, icon, color, bg_color FROM account_badges WHERE account_id = ? ORDER BY id ASC",
+    [player.account_id]
+  );
+
   // 2. Fetch active bans
   const bans = await dbQuery<RowDataPacket>(
     `SELECT id, reason, banned_by, expires_at, created_at
@@ -110,7 +125,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
   // 4. Fetch faction punishment & warnings
   const factionPunish = await dbQuerySingle<RowDataPacket>(
-    `SELECT fp, reason, created_at FROM faction_punish WHERE character_id = ? LIMIT 1`,
+    `SELECT fp, reason, updated_at as created_at FROM faction_punish WHERE character_id = ? LIMIT 1`,
     [player.character_id || 0]
   );
   const factionWarnings = await dbQuery<RowDataPacket>(
@@ -126,7 +141,11 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
   // 6. Fetch vehicles
   const vehicles = await dbQuery<RowDataPacket>(
-    `SELECT id, model, plate, stored, insurance_level, impounded FROM vehicles WHERE character_id = ? ORDER BY id DESC LIMIT 20`,
+    `SELECT v.id, v.model, v.plate, v.stored, v.insurance_level, CASE WHEN iv.status = 'impounded' THEN 1 ELSE 0 END as impounded 
+     FROM vehicles v 
+     LEFT JOIN impounded_vehicles iv ON iv.vehicle_id = v.id AND iv.status = 'impounded' 
+     WHERE v.character_id = ? 
+     ORDER BY v.id DESC LIMIT 20`,
     [player.character_id || 0]
   );
 
@@ -161,7 +180,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
 
   // 11. Check online status
   const runtimeSnapshot = await dbQuerySingle<RowDataPacket>(
-    `SELECT p.id FROM players p WHERE p.account_id = ? AND p.last_active > NOW() - INTERVAL 5 MINUTE LIMIT 1`,
+    `SELECT p.id FROM players p WHERE p.account_id = ? AND p.last_seen > NOW() - INTERVAL 5 MINUTE LIMIT 1`,
     [player.account_id]
   );
   const isOnline = Boolean(runtimeSnapshot);
@@ -196,16 +215,14 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                 size="lg"
               />
               <span className="text-xs font-mono text-[#8F8B83]">
-                (Account #{player.account_id})
+                {t(locale, "interface.account_2")}{player.account_id})
               </span>
               {isOnline ? (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-500/30">
-                  ONLINE
-                </span>
+                  {t(locale, "interface.online_2")}</span>
               ) : (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1A1A1D] text-[#8F8B83] border border-surface-border">
-                  OFFLINE
-                </span>
+                  {t(locale, "interface.offline")}</span>
               )}
             </div>
             <p className="text-[11px] text-[#8F8B83] mt-0.5">
@@ -223,6 +240,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
           sessionHelperLevel={session.helperLevel}
           locale={locale}
           sanctionsList={sanctions}
+          badges={badges}
         />
       </div>
 
@@ -232,10 +250,10 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
           <Ban className="w-5 h-5 text-red-400 shrink-0" />
           <div>
             <span className="font-bold block text-red-200">
-              {locale === "ro" ? "JUCĂTORUL ARE BAN ACTIV!" : "PLAYER HAS AN ACTIVE BAN!"}
+              {t(locale, "copy.app_staff_players_username_page.player_has_an_active_ban")}
             </span>
             <span className="text-[11px]">
-              {bans[0]?.reason} — Expiră la: {formatDate(bans[0]?.expires_at, locale)}
+              {bans[0]?.reason} {t(locale, "interface.expires")} {formatDate(bans[0]?.expires_at, locale)}
             </span>
           </div>
         </div>
@@ -247,25 +265,25 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         <div className="p-3.5 bg-[#0E0E10] border border-surface-border rounded space-y-2 text-xs">
           <div className="flex items-center gap-2 text-[#8F8B83] font-semibold text-[11px] uppercase tracking-wider">
             <User className="w-3.5 h-3.5 text-[#D7B558]" />
-            <span>{locale === "ro" ? "Detalii Cont" : "Account Details"}</span>
+            <span>{t(locale, "account.details")}</span>
           </div>
           <div className="space-y-1.5 pt-1 text-[#F2EFE8]">
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Email:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.email")}</span>
               <span className="font-mono">{player.email || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Staff Rank:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.staff_rank")}</span>
               <span className="font-bold text-[#D7B558]">
                 {player.admin_level > 0 ? `Admin Lvl ${player.admin_level}` : player.helper_level > 0 ? `Helper Lvl ${player.helper_level}` : "Player"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Premium Points:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.premium_points")}</span>
               <span className="font-mono text-amber-400 font-bold">{player.premium_points || 0} PP</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Înregistrat:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.registered")}</span>
               <span className="font-mono text-[11px] text-[#8F8B83]">{formatDate(player.account_created_at, locale)}</span>
             </div>
           </div>
@@ -275,23 +293,23 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         <div className="p-3.5 bg-[#0E0E10] border border-surface-border rounded space-y-2 text-xs">
           <div className="flex items-center gap-2 text-[#8F8B83] font-semibold text-[11px] uppercase tracking-wider">
             <Coins className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{locale === "ro" ? "Economie & Timp" : "Economy & Playtime"}</span>
+            <span>{t(locale, "copy.app_staff_players_username_page.economy_playtime")}</span>
           </div>
           <div className="space-y-1.5 pt-1 text-[#F2EFE8]">
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Cash (Bani Gheață):</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.cash_2")}</span>
               <span className="font-mono font-bold text-emerald-400">${Number(player.cash || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Bank (Bancă):</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.bank_2")}</span>
               <span className="font-mono font-bold text-emerald-300">${Number(player.bank || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Nivel & Ore:</span>
-              <span className="font-mono">Lvl {player.level || 1} • {player.hours || 0} Ore</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.level_hours")}</span>
+              <span className="font-mono">{t(locale, "interface.lvl")} {player.level || 1} • {player.hours || 0} {t(locale, "players.hours_played")}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Telefon:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.phone")}</span>
               <span className="font-mono">{player.phone_number || "Fără număr"}</span>
             </div>
           </div>
@@ -301,29 +319,29 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         <div className="p-3.5 bg-[#0E0E10] border border-surface-border rounded space-y-2 text-xs">
           <div className="flex items-center gap-2 text-[#8F8B83] font-semibold text-[11px] uppercase tracking-wider">
             <Briefcase className="w-3.5 h-3.5 text-sky-400" />
-            <span>{locale === "ro" ? "Facțiune & Clan" : "Faction & Clan"}</span>
+            <span>{t(locale, "copy.app_staff_players_username_page.faction_clan")}</span>
           </div>
           <div className="space-y-1.5 pt-1 text-[#F2EFE8]">
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Facțiune:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.faction")}</span>
               <span className="font-semibold text-sky-300 truncate max-w-[140px]">
                 {factionName} {player.faction_rank ? `(Rank ${player.faction_rank})` : ""}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">FP (Punish):</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.fp_penalty")}</span>
               <span className={factionPunish?.fp ? "font-bold text-red-400" : "text-[#8F8B83]"}>
                 {factionPunish?.fp ? `${factionPunish.fp} FP` : "0 FP"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Clan:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.clan")}</span>
               <span className="font-semibold text-purple-300">
                 {player.clan_name ? `[${player.clan_tag}] ${player.clan_name} (R${player.clan_rank})` : "Fără Clan"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Clan Warns:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.clan_warnings")}</span>
               <span className="font-mono">{player.clan_warns || 0}/3</span>
             </div>
           </div>
@@ -333,28 +351,28 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         <div className="p-3.5 bg-[#0E0E10] border border-surface-border rounded space-y-2 text-xs">
           <div className="flex items-center gap-2 text-[#8F8B83] font-semibold text-[11px] uppercase tracking-wider">
             <Shield className="w-3.5 h-3.5 text-red-400" />
-            <span>{locale === "ro" ? "Cazier & Sancțiuni" : "Sanctions Record"}</span>
+            <span>{t(locale, "copy.app_staff_players_username_page.sanctions_record")}</span>
           </div>
           <div className="space-y-1.5 pt-1 text-[#F2EFE8]">
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Warn-uri Active:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.active_warnings")}</span>
               <span className={activeWarns >= 2 ? "font-bold text-red-400" : "font-mono"}>
                 {activeWarns}/3 {activeWarns >= 3 ? "(Auto-ban)" : ""}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Total Sancțiuni:</span>
-              <span className="font-mono">{sanctions.length} înregistrări</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.total_sanctions")}</span>
+              <span className="font-mono">{sanctions.length} {t(locale, "interface.records")}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Licențe:</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.licenses")}</span>
               <span className="font-mono text-[11px]">
                 {licenses.length > 0 ? licenses.map((l) => l.license_type).join(", ") : "Nicio licență"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#8F8B83]">Vehicule / Case:</span>
-              <span className="font-mono">{vehicles.length} Veh. • {properties.length} Prop.</span>
+              <span className="text-[#8F8B83]">{t(locale, "interface.vehicles_houses")}</span>
+              <span className="font-mono">{vehicles.length} {t(locale, "interface.vehicles_3")} {properties.length} {t(locale, "players.properties_owned")}</span>
             </div>
           </div>
         </div>
@@ -369,13 +387,13 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8]">
                 <Package className="w-4 h-4 text-[#D7B558]" />
-                <span>{locale === "ro" ? "Inventar Jucător" : "Player Inventory"}</span>
-                <span className="text-[10px] text-[#8F8B83]">({inventoryItems.length} iteme)</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.player_inventory")}</span>
+                <span className="text-[10px] text-[#8F8B83]">({inventoryItems.length} {t(locale, "interface.items")}</span>
               </div>
             </div>
             {inventoryItems.length === 0 ? (
               <div className="text-center py-6 text-xs text-[#8F8B83]">
-                {locale === "ro" ? "Inventarul este gol." : "Inventory is empty."}
+                {t(locale, "copy.app_staff_players_username_page.inventory_is_empty")}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -388,7 +406,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                       {inv.item}
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-[#8F8B83] mt-1 pt-1 border-t border-surface-border/50">
-                      <span>Slot #{inv.slot}</span>
+                      <span>{t(locale, "interface.slot")}{inv.slot}</span>
                       <span className="font-bold text-amber-400">x{inv.count}</span>
                     </div>
                   </div>
@@ -402,13 +420,13 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8]">
                 <Car className="w-4 h-4 text-emerald-400" />
-                <span>{locale === "ro" ? "Vehicule Deținute" : "Vehicles Owned"}</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.vehicles_owned")}</span>
                 <span className="text-[10px] text-[#8F8B83]">({vehicles.length})</span>
               </div>
             </div>
             {vehicles.length === 0 ? (
               <div className="text-center py-4 text-xs text-[#8F8B83]">
-                {locale === "ro" ? "Jucătorul nu deține niciun vehicul." : "Player owns no vehicles."}
+                {t(locale, "copy.app_staff_players_username_page.player_owns_no_vehicles")}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -419,16 +437,16 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                   >
                     <div>
                       <div className="font-bold text-[#F2EFE8]">{v.model}</div>
-                      <div className="text-[11px] font-mono text-[#8F8B83]">Plăcuță: {v.plate}</div>
+                      <div className="text-[11px] font-mono text-[#8F8B83]">{t(locale, "interface.plate")} {v.plate}</div>
                     </div>
                     <div className="text-right">
                       <span className={v.stored ? "text-emerald-400 text-[11px] font-semibold block" : "text-amber-400 text-[11px] font-semibold block"}>
                         {v.stored ? "În Garaj" : "Pe Stradă"}
                       </span>
                       {v.impounded ? (
-                        <span className="text-red-400 text-[10px] font-bold">CONFISCAT</span>
+                        <span className="text-red-400 text-[10px] font-bold">{t(locale, "interface.impounded_2")}</span>
                       ) : (
-                        <span className="text-[10px] text-[#8F8B83]">Asigurare Lvl {v.insurance_level || 1}</span>
+                        <span className="text-[10px] text-[#8F8B83]">{t(locale, "interface.insurance_level")} {v.insurance_level || 1}</span>
                       )}
                     </div>
                   </div>
@@ -443,10 +461,10 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="border border-surface-border rounded bg-[#0E0E10] p-3.5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8] pb-1.5 border-b border-surface-border">
                 <Home className="w-3.5 h-3.5 text-blue-400" />
-                <span>{locale === "ro" ? "Proprietăți / Case" : "Properties"} ({properties.length})</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.properties")} ({properties.length})</span>
               </div>
               {properties.length === 0 ? (
-                <div className="text-center py-3 text-xs text-[#8F8B83]">Nicio casă deținută.</div>
+                <div className="text-center py-3 text-xs text-[#8F8B83]">{t(locale, "interface.no_houses_owned")}</div>
               ) : (
                 <div className="space-y-1.5">
                   {properties.map((p) => (
@@ -463,10 +481,10 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="border border-surface-border rounded bg-[#0E0E10] p-3.5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8] pb-1.5 border-b border-surface-border">
                 <Briefcase className="w-3.5 h-3.5 text-amber-400" />
-                <span>{locale === "ro" ? "Afaceri (Bizz)" : "Businesses"} ({businesses.length})</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.businesses")} ({businesses.length})</span>
               </div>
               {businesses.length === 0 ? (
-                <div className="text-center py-3 text-xs text-[#8F8B83]">Nicio afacere deținută.</div>
+                <div className="text-center py-3 text-xs text-[#8F8B83]">{t(locale, "interface.no_businesses_owned")}</div>
               ) : (
                 <div className="space-y-1.5">
                   {businesses.map((b) => (
@@ -488,13 +506,13 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8]">
                 <Shield className="w-4 h-4 text-red-400" />
-                <span>{locale === "ro" ? "Istoric Sancțiuni & Cazier" : "Sanctions & History"}</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.sanctions_history")}</span>
                 <span className="text-[10px] text-[#8F8B83]">({sanctions.length})</span>
               </div>
             </div>
             {sanctions.length === 0 ? (
               <div className="text-center py-4 text-xs text-[#8F8B83]">
-                {locale === "ro" ? "Cazier curat — nicio sancțiune înregistrată." : "Clean record — no sanctions found."}
+                {t(locale, "copy.app_staff_players_username_page.clean_record_no_sanctions_found")}
               </div>
             ) : (
               <div className="divide-y divide-surface-border">
@@ -518,7 +536,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                         <span className="text-[#F2EFE8] font-medium">{s.reason}</span>
                       </div>
                       <div className="text-[11px] text-[#8F8B83]">
-                        Acordat de: <span className="text-[#F2EFE8]">{s.admin_name}</span>
+                        {t(locale, "interface.granted_by")} <span className="text-[#F2EFE8]">{s.admin_name}</span>
                         {s.duration_min ? ` • ${s.duration_min} min` : ""}
                       </div>
                     </div>
@@ -539,12 +557,12 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8]">
                 <History className="w-4 h-4 text-[#D7B558]" />
-                <span>{locale === "ro" ? "Audit Log Utilizator" : "User Audit Log"}</span>
+                <span>{t(locale, "copy.app_staff_players_username_page.user_audit_log")}</span>
               </div>
             </div>
             {auditLogs.length === 0 ? (
               <div className="text-center py-6 text-xs text-[#8F8B83]">
-                {locale === "ro" ? "Nicio acțiune înregistrată." : "No audit records found."}
+                {t(locale, "copy.app_staff_players_username_page.no_audit_records_found")}
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -555,7 +573,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
                       <span className="text-[10px] font-mono text-[#8F8B83]">{formatDate(a.created_at, locale)}</span>
                     </div>
                     <div className="text-[#8F8B83] text-[11px]">
-                      De către: <span className="text-[#F2EFE8] font-semibold">{a.actor_username || "SYSTEM"}</span>
+                      {t(locale, "interface.by_2")} <span className="text-[#F2EFE8] font-semibold">{a.actor_username || "SYSTEM"}</span>
                     </div>
                     {a.reason && <div className="text-[#F2EFE8] text-[11px]">{a.reason}</div>}
                   </div>

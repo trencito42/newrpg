@@ -1,6 +1,6 @@
 import { getCurrentUser, getRequestLanguage } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { getDictionary } from "@/lib/i18n";
+import { t, getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
@@ -65,16 +65,16 @@ export default async function StaffDashboardPage() {
           <Lock className="w-5 h-5" />
         </div>
         <h1 className="text-base font-bold text-[#F2EFE8]">
-          {lang === "ro" ? "Acces Restricționat" : "Access Restricted"}
+          {t(lang, "copy.app_staff_dashboard_page.access_restricted")}
         </h1>
         <p className="text-xs text-[#8F8B83]">
-          {lang === "ro" ? "Această pagină este rezervată membrilor staff." : "This page is reserved for staff members."}
+          {t(lang, "copy.app_staff_dashboard_page.this_page_is_reserved_for_staff_members")}
         </p>
         <Link
           href="/"
           className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded bg-[#D7B558] text-[#08080A] hover:bg-[#E3C572] transition-colors"
         >
-          {lang === "ro" ? "Înapoi" : "Return"}
+          {t(lang, "copy.app_staff_dashboard_page.return")}
         </Link>
       </div>
     );
@@ -136,7 +136,7 @@ export default async function StaffDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div className="flex items-center space-x-3">
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {lang === "ro" ? "Panel Staff" : "Staff Panel"}
+            {t(lang, "staff.dashboard_title")}
           </h1>
           <span className="font-mono text-xs text-[#B4AFA4] px-2 py-0.5 rounded bg-surface-200 border border-surface-border">
             {user.adminLevel > 0 ? `Admin ${user.adminLevel}` : `Helper ${user.helperLevel}`}
@@ -149,7 +149,7 @@ export default async function StaffDashboardPage() {
         {/* Tickets */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Tichete Deschise" : "Open Tickets"}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(lang, "copy.app_staff_dashboard_page.open_tickets")}</span>
             <span className="font-mono text-[#8F8B83]">{openTickets.length}</span>
           </div>
 
@@ -167,7 +167,7 @@ export default async function StaffDashboardPage() {
               </Link>
             ))}
             {openTickets.length === 0 && (
-              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Niciun tichet deschis." : "No open tickets."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{t(lang, "support.no_tickets")}</div>
             )}
           </div>
         </div>
@@ -175,7 +175,7 @@ export default async function StaffDashboardPage() {
         {/* Complaints */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Reclamații" : "Complaints"}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(lang, "nav.complaints")}</span>
             <span className="font-mono text-[#8F8B83]">{pendingComplaints.length}</span>
           </div>
 
@@ -194,7 +194,7 @@ export default async function StaffDashboardPage() {
               </Link>
             ))}
             {pendingComplaints.length === 0 && (
-              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio reclamație." : "No complaints."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{t(lang, "copy.app_staff_dashboard_page.no_complaints")}</div>
             )}
           </div>
         </div>
@@ -202,7 +202,7 @@ export default async function StaffDashboardPage() {
         {/* Unbans */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#F2EFE8]">{lang === "ro" ? "Cereri Debanare" : "Unban Appeals"}</span>
+            <span className="font-semibold text-[#F2EFE8]">{t(lang, "copy.app_staff_dashboard_page.unban_appeals")}</span>
             <span className="font-mono text-[#8F8B83]">{pendingUnbans.length}</span>
           </div>
 
@@ -214,7 +214,7 @@ export default async function StaffDashboardPage() {
               </div>
             ))}
             {pendingUnbans.length === 0 && (
-              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio cerere de debanare." : "No unban appeals."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{t(lang, "copy.app_staff_dashboard_page.no_unban_appeals")}</div>
             )}
           </div>
         </div>
@@ -225,7 +225,7 @@ export default async function StaffDashboardPage() {
         {/* Game Sanctions */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
-            {lang === "ro" ? "Sancțiuni Recente" : "Recent Sanctions"}
+            {t(lang, "home.recent_sanctions")}
           </div>
 
           <div className="responsive-table-wrapper">
@@ -255,7 +255,7 @@ export default async function StaffDashboardPage() {
         {/* Web Audit Log */}
         <div className="border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border text-xs font-semibold text-[#F2EFE8]">
-            {lang === "ro" ? "Jurnal Audit Panel" : "Panel Audit Log"}
+            {t(lang, "copy.app_staff_dashboard_page.panel_audit_log")}
           </div>
 
           <div className="divide-y divide-surface-border/50 text-xs">
@@ -269,7 +269,7 @@ export default async function StaffDashboardPage() {
               </div>
             ))}
             {auditLogs.length === 0 && (
-              <div className="p-4 text-center text-[#8F8B83]">{lang === "ro" ? "Nicio acțiune în audit." : "No audit entries."}</div>
+              <div className="p-4 text-center text-[#8F8B83]">{t(lang, "copy.app_staff_dashboard_page.no_audit_entries")}</div>
             )}
           </div>
         </div>

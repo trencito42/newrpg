@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/i18n";
+import { t, formatDate } from "@/lib/i18n";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -68,13 +68,11 @@ export default async function StaffAuditPage({ searchParams }: Props) {
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#D7B558]" />
             <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-              {locale === "ro" ? "Audit & Jurnal Administrativ" : "Administrative Audit & Activity Log"}
+              {t(locale, "copy.app_staff_audit_page.administrative_audit_activity_log")}
             </h1>
           </div>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Monitorizare în timp real a tuturor acțiunilor staff, comenzilor server și modificărilor de conturi"
-              : "Real-time monitoring of all staff domain actions, server executions, and player modifications"}
+            {t(locale, "copy.app_staff_audit_page.real_time_monitoring_of_all_staff_domain_actions_server_executions_and_play")}
           </p>
         </div>
 
@@ -87,7 +85,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
               type="text"
               name="search"
               defaultValue={search}
-              placeholder={locale === "ro" ? "Caută admin, jucător sau acțiune..." : "Search admin, player or action..."}
+              placeholder={t(locale, "copy.app_staff_audit_page.search_admin_player_or_action")}
               className="pl-8 pr-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] w-60 focus:border-[#D7B558] focus:outline-none"
             />
           </div>
@@ -95,7 +93,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
             type="submit"
             className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
-            {locale === "ro" ? "Filtrează" : "Filter"}
+            {t(locale, "copy.app_staff_audit_page.filter")}
           </button>
         </form>
       </div>
@@ -110,7 +108,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
               : "bg-[#101012] text-[#8F8B83] border-surface-border hover:text-[#F2EFE8]"
           }`}
         >
-          {locale === "ro" ? "Toate Acțiunile" : "All Actions"}
+          {t(locale, "copy.app_staff_audit_page.all_actions")}
         </Link>
         <Link
           href={`/staff/audit?category=moderation${search ? `&search=${encodeURIComponent(search)}` : ""}`}
@@ -121,7 +119,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
           }`}
         >
           <Ban className="w-3 h-3" />
-          <span>{locale === "ro" ? "Sancțiuni (Ban/Warn/Mute/Jail)" : "Moderation (Sanctions)"}</span>
+          <span>{t(locale, "copy.app_staff_audit_page.moderation_sanctions")}</span>
         </Link>
         <Link
           href={`/staff/audit?category=economy${search ? `&search=${encodeURIComponent(search)}` : ""}`}
@@ -132,7 +130,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
           }`}
         >
           <Coins className="w-3 h-3" />
-          <span>{locale === "ro" ? "Economie & Iteme" : "Economy & Inventory"}</span>
+          <span>{t(locale, "copy.app_staff_audit_page.economy_inventory")}</span>
         </Link>
         <Link
           href={`/staff/audit?category=factions${search ? `&search=${encodeURIComponent(search)}` : ""}`}
@@ -143,7 +141,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
           }`}
         >
           <Briefcase className="w-3 h-3" />
-          <span>{locale === "ro" ? "Facțiuni & Clanuri" : "Factions & Clans"}</span>
+          <span>{t(locale, "copy.app_staff_audit_page.factions_clans")}</span>
         </Link>
         <Link
           href={`/staff/audit?category=staff${search ? `&search=${encodeURIComponent(search)}` : ""}`}
@@ -154,7 +152,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
           }`}
         >
           <UserCheck className="w-3 h-3" />
-          <span>{locale === "ro" ? "Roluri Staff (Admin/Helper)" : "Staff Roles"}</span>
+          <span>{t(locale, "copy.app_staff_audit_page.staff_roles")}</span>
         </Link>
       </div>
 
@@ -165,18 +163,18 @@ export default async function StaffAuditPage({ searchParams }: Props) {
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3.5 py-2.5">ID</th>
-                <th className="px-3.5 py-2.5">{locale === "ro" ? "Actor Staff" : "Staff Actor"}</th>
-                <th className="px-3.5 py-2.5">{locale === "ro" ? "Acțiune Executată" : "Executed Action"}</th>
-                <th className="px-3.5 py-2.5">{locale === "ro" ? "Jucător Țintă" : "Target Player"}</th>
-                <th className="px-3.5 py-2.5">{locale === "ro" ? "Motiv & Parametri" : "Reason & Parameters"}</th>
-                <th className="px-3.5 py-2.5 text-right">{locale === "ro" ? "Data & Ora" : "Timestamp"}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_staff_audit_page.staff_actor")}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_staff_audit_page.executed_action")}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_staff_audit_page.target_player")}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "copy.app_staff_audit_page.reason_parameters")}</th>
+                <th className="px-3.5 py-2.5 text-right">{t(locale, "copy.app_staff_audit_page.timestamp")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
               {logs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-xs text-[#8F8B83]">
-                    {locale === "ro" ? "Nicio acțiune găsită conform filtrelor selectate." : "No audit records found."}
+                    {t(locale, "copy.app_staff_audit_page.no_audit_records_found")}
                   </td>
                 </tr>
               ) : (
@@ -199,7 +197,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                             <PlayerIdentity {...identities.get(l.actor_username.toLowerCase())!} size="sm" />
                           </Link>
                         ) : (
-                          <span className="text-[#8F8B83] font-mono font-semibold">SYSTEM / ADMBOT</span>
+                          <span className="text-[#8F8B83] font-mono font-semibold">{t(locale, "interface.system_admbot")}</span>
                         )}
                       </td>
                       <td className="px-3.5 py-3">
@@ -229,7 +227,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
                             <PlayerIdentity {...identities.get(l.target_username.toLowerCase())!} size="sm" />
                           </Link>
                         ) : l.target_id ? (
-                          <span className="font-mono text-[#8F8B83]">Account #{l.target_id}</span>
+                          <span className="font-mono text-[#8F8B83]">{t(locale, "interface.account")}{l.target_id}</span>
                         ) : (
                           <span className="text-[#8F8B83]">—</span>
                         )}

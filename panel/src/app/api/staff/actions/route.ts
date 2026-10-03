@@ -48,6 +48,9 @@ const requestSchema = z.object({
     "clan_warn",
     "clan_kick",
     "clan_dissolve",
+    "set_author",
+    "add_badge",
+    "remove_badge",
   ]),
   targetAccountId: z.number().int().positive().optional(),
   targetCharacterId: z.number().int().positive().optional(),
@@ -69,6 +72,14 @@ const requestSchema = z.object({
   clanId: z.number().int().positive().optional(),
   rank: z.number().int().min(1).max(7).optional(),
   fp: z.number().int().min(0).max(100).optional(),
+  isAuthor: z.boolean().optional(),
+  badgeKey: z.string().trim().min(1).max(64).optional(),
+  badgeTitle: z.string().trim().min(1).max(64).optional(),
+  badgeDescription: z.string().trim().max(255).optional(),
+  badgeIcon: z.string().trim().max(64).optional(),
+  badgeColor: z.string().trim().max(32).optional(),
+  badgeBgColor: z.string().trim().max(32).optional(),
+  badgeId: z.number().int().positive().optional(),
 });
 
 interface TargetAccountRow extends RowDataPacket {
@@ -128,9 +139,13 @@ export async function POST(req: NextRequest) {
     if (session.adminLevel >= 1 || (session.helperLevel >= 1 && input.action.startsWith("mute"))) {
       isAuthorized = true;
     }
-  } else if (input.action === "ban" || input.action === "jail" || input.action === "unjail" || input.action === "kick") {
-    if (session.adminLevel >= 2) isAuthorized = true;
-  } else if (input.action === "unban" || input.action === "set_faction") {
+  } else if (
+    input.action === "unban" ||
+    input.action === "set_faction" ||
+    input.action === "set_author" ||
+    input.action === "add_badge" ||
+    input.action === "remove_badge"
+  ) {
     if (session.adminLevel >= 3) isAuthorized = true;
   } else if (
     input.action === "set_clan" ||
@@ -234,7 +249,8 @@ export async function POST(req: NextRequest) {
 
   // Target account verification & hierarchy guard
   if (targetAccountId) {
-    if (targetAccountId === session.accountId && !input.action.includes("dissolve")) {
+    const isPunitive = ["warn", "ban", "mute", "kick", "jail"].includes(input.action);
+    if (targetAccountId === session.accountId && isPunitive && session.adminLevel < 6) {
       return NextResponse.json({ error: "self_target" }, { status: 400 });
     }
 
@@ -247,8 +263,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "target_account_not_found" }, { status: 404 });
     }
 
-    // Protect equal/higher staff if moderation action
+    // Protect equal/higher staff if punitive moderation action
     if (
+      isPunitive &&
       session.adminLevel > 0 &&
       session.adminLevel < 6 &&
       targetAccount.admin_level >= session.adminLevel
@@ -275,6 +292,14 @@ export async function POST(req: NextRequest) {
     clanId: input.clanId ?? null,
     rank: input.rank ?? null,
     fp: input.fp ?? null,
+    isAuthor: input.isAuthor ?? null,
+    badgeKey: input.badgeKey ?? null,
+    badgeTitle: input.badgeTitle ?? null,
+    badgeDescription: input.badgeDescription ?? null,
+    badgeIcon: input.badgeIcon ?? null,
+    badgeColor: input.badgeColor ?? null,
+    badgeBgColor: input.badgeBgColor ?? null,
+    badgeId: input.badgeId ?? null,
   });
 
   try {
@@ -284,6 +309,65 @@ export async function POST(req: NextRequest) {
         [session.accountId]
       );
       if (Number(recent[0]?.n) >= 30) throw new Error("rate_limited");
+
+      // Direct actions execution in DB
+      if (input.action === "set_author" && targetAccountId) {
+        const isAuthorVal = input.isAuthor ? 1 : 0;
+        await conn.execute("UPDATE accounts SET is_author = ? WHERE id = ?", [isAuthorVal, targetAccountId]);
+      } else if (input.action === "add_badge" && targetAccountId) {
+        const title = input.badgeTitle || "Badge";
+        const badgeKey = input.badgeKey || title.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const description = input.badgeDescription || null;
+        const icon = input.badgeIcon || "fa-award";
+        const color = input.badgeColor || "#F59E0B";
+        const bgColor = input.badgeBgColor || `${color}20`;
+        const assignedBy = session.username || "Staff";
+
+        await conn.execute(
+          `INSERT INTO account_badges (account_id, badge_key, title, description, icon, color, bg_color, assigned_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), icon = VALUES(icon), color = VALUES(color), bg_color = VALUES(bg_color), assigned_by = VALUES(assigned_by)`,
+          [targetAccountId, badgeKey, title, description, icon, color, bgColor, assignedBy]
+        );
+      } else if (input.action === "remove_badge") {
+        if (input.badgeId) {
+          await conn.execute("DELETE FROM account_badges WHERE id = ?", [input.badgeId]);
+        } else if (targetAccountId && input.badgeKey) {
+          await conn.execute("DELETE FROM account_badges WHERE account_id = ? AND badge_key = ?", [targetAccountId, input.badgeKey]);
+        }
+      } else if (input.action === "staff_set_admin" || input.action === "set_admin_level") {
+        if (targetAccountId && input.level !== undefined) {
+          await conn.execute("UPDATE accounts SET admin_level = ? WHERE id = ?", [input.level, targetAccountId]);
+        }
+      } else if (input.action === "staff_set_helper" || input.action === "set_helper_level") {
+        if (targetAccountId && input.level !== undefined) {
+          await conn.execute("UPDATE accounts SET helper_level = ? WHERE id = ?", [input.level, targetAccountId]);
+        }
+      } else if (input.action === "staff_remove_role" && targetAccountId) {
+        await conn.execute("UPDATE accounts SET admin_level = 0, helper_level = 0 WHERE id = ?", [targetAccountId]);
+      } else if (input.action === "set_premium_points" && targetAccountId && input.points !== undefined) {
+        await conn.execute("UPDATE accounts SET premium_points = ? WHERE id = ?", [input.points, targetAccountId]);
+      } else if (input.action === "set_email" && targetAccountId && input.email) {
+        await conn.execute("UPDATE accounts SET email = ? WHERE id = ?", [input.email, targetAccountId]);
+      } else if (input.action === "remove_sanction" && input.sanctionId) {
+        await conn.execute("DELETE FROM admin_sanctions WHERE id = ?", [input.sanctionId]);
+      } else if (input.action === "set_cash" && input.cash !== undefined) {
+        if (input.targetCharacterId) {
+          await conn.execute("UPDATE characters SET cash = ? WHERE id = ?", [input.cash, input.targetCharacterId]);
+        }
+      } else if (input.action === "set_bank" && input.bank !== undefined) {
+        if (input.targetCharacterId) {
+          await conn.execute("UPDATE characters SET bank = ? WHERE id = ?", [input.bank, input.targetCharacterId]);
+        }
+      } else if (input.action === "set_level" && input.level !== undefined) {
+        if (input.targetCharacterId) {
+          await conn.execute("UPDATE characters SET level = ? WHERE id = ?", [input.level, input.targetCharacterId]);
+        }
+      } else if (input.action === "set_hours" && input.hours !== undefined) {
+        if (input.targetCharacterId) {
+          await conn.execute("UPDATE characters SET paydays_received = ? WHERE id = ?", [input.hours, input.targetCharacterId]);
+        }
+      }
 
       const [insert] = await conn.execute<import("mysql2").ResultSetHeader>(
         `INSERT INTO panel_action_queue

@@ -179,6 +179,10 @@ exports.sunset_core:RegisterCallback('sunset:saveAppearance', function(source, a
     char.appearance = sanitized
     TriggerEvent('sunset:server:setActiveCharacter', source, char)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
+
+    -- [QUESTS] Emit canonical quest progress for clothing customization
+    TriggerEvent('sunset:quest:progress', char.id, 'clothing_customized', 1)
+
     return true
 end)
 

@@ -175,8 +175,7 @@ export async function POST(req: NextRequest, { params }: Context) {
       if (session.adminLevel < minimumLevel) {
         return NextResponse.json({ error: "forbidden_sanction" }, { status: 403 });
       }
-      if (!complaint.accused_account_id || !complaint.accused_character_id || !session.selectedCharacterId
-        || complaint.accused_account_id === session.accountId) {
+      if (!complaint.accused_account_id) {
         return NextResponse.json({ error: "invalid_sanction_target" }, { status: 400 });
       }
       if (sanctionType === "mute" && !sanctionDuration) {

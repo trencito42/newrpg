@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/i18n";
+import { t, formatDate } from "@/lib/i18n";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -67,12 +67,10 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Jurnal Sancțiuni Staff" : "Staff Sanctions Log"}
+            {t(locale, "copy.app_staff_sanctions_page.staff_sanctions_log")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Toate avertismentele, ban-urile, mute-urile și pedepsele aplicate de moderatori"
-              : "Complete moderation sanction history across warns, bans, mutes, and jails"}
+            {t(locale, "copy.app_staff_sanctions_page.complete_moderation_sanction_history_across_warns_bans_mutes_and_jails")}
           </p>
         </div>
 
@@ -83,26 +81,25 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
             defaultValue={action}
             className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
-            <option value="">Toate tipurile</option>
-            <option value="warn">Warn</option>
-            <option value="ban">Ban</option>
-            <option value="mute">Mute</option>
-            <option value="jail">Jail</option>
-            <option value="unban">Unban</option>
+            <option value="">{t(locale, "interface.all_types")}</option>
+            <option value="warn">{t(locale, "interface.warn")}</option>
+            <option value="ban">{t(locale, "interface.ban")}</option>
+            <option value="mute">{t(locale, "interface.mute")}</option>
+            <option value="jail">{t(locale, "interface.jail")}</option>
+            <option value="unban">{t(locale, "interface.unban")}</option>
           </select>
           <input
             type="text"
             name="search"
             defaultValue={search}
-            placeholder="Caută țintă / admin..."
+            placeholder={t(locale, "interface.search_target_admin")}
             className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
           />
           <button
             type="submit"
             className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
-            Filtrează
-          </button>
+            {t(locale, "copy.app_staff_audit_page.filter")}</button>
         </form>
       </div>
 
@@ -113,32 +110,31 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">Acțiune</th>
-                <th className="px-3 py-2">Jucător Sancționat</th>
-                <th className="px-3 py-2">Moderator / Admin</th>
-                <th className="px-3 py-2">Motiv & Durată</th>
-                <th className="px-3 py-2 text-right">Data</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.action")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.sanctioned_player")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.moderator_admin")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.reason_duration")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "copy.app_clans_id_manage_clanmanageclient.date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
               {sanctions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    Nicio sancțiune găsită
-                  </td>
+                    {t(locale, "interface.no_sanctions_found")}</td>
                 </tr>
               ) : (
                 sanctions.map((s) => (
                   <tr key={s.id} className="hover:bg-[#131315] transition-colors">
                     <td className="px-3 py-2.5 font-mono text-[#8F8B83]">#{s.id}</td>
                     <td className="px-3 py-2.5 font-mono font-bold uppercase text-[11px]">
-                      {s.action === "ban" && <span className="text-red-400">BAN</span>}
-                      {s.action === "warn" && <span className="text-amber-400">WARN</span>}
-                      {s.action === "mute" && <span className="text-blue-400">MUTE</span>}
-                      {s.action === "jail" && <span className="text-purple-400">JAIL</span>}
-                      {s.action === "unban" && <span className="text-emerald-400">UNBAN</span>}
-                      {s.action === "unjail" && <span className="text-emerald-400">UNJAIL</span>}
-                      {s.action === "unmute" && <span className="text-emerald-400">UNMUTE</span>}
+                      {s.action === "ban" && <span className="text-red-400">{t(locale, "interface.ban_2")}</span>}
+                      {s.action === "warn" && <span className="text-amber-400">{t(locale, "interface.warning")}</span>}
+                      {s.action === "mute" && <span className="text-blue-400">{t(locale, "interface.mute_2")}</span>}
+                      {s.action === "jail" && <span className="text-purple-400">{t(locale, "interface.jail_2")}</span>}
+                      {s.action === "unban" && <span className="text-emerald-400">{t(locale, "interface.unban_3")}</span>}
+                      {s.action === "unjail" && <span className="text-emerald-400">{t(locale, "interface.release_2")}</span>}
+                      {s.action === "unmute" && <span className="text-emerald-400">{t(locale, "interface.unmute_2")}</span>}
                     </td>
 
                     <td className="px-3 py-2.5">
@@ -167,7 +163,7 @@ export default async function StaffSanctionsPage({ searchParams }: Props) {
                       <span className="text-[#F2EFE8] block max-w-sm truncate">{s.reason}</span>
                       {s.duration_min && (
                         <span className="text-[10px] text-[#8F8B83] font-mono">
-                          Durată: {s.duration_min} min
+                          {t(locale, "interface.duration")} {s.duration_min} min
                         </span>
                       )}
                     </td>

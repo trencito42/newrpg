@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { Shield, CheckCircle, XCircle, AlertTriangle, UserCheck, ExternalLink } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
+
 
 interface Props {
   factions: any[];
   canAssignLeader: boolean;
-  locale: string;
+  locale: Locale;
 }
 
 export function StaffFactionsClient({
@@ -59,7 +61,7 @@ export function StaffFactionsClient({
 
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Lider numit cu succes!" : "Leader appointed successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_staff_factions_stafffactionsclient.leader_appointed_successfully") });
         setSelectedFaction(null);
         setTargetUsername("");
         setReason("");
@@ -80,12 +82,10 @@ export function StaffFactionsClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Management Facțiuni (Staff)" : "Staff Factions Oversight"}
+            {t(locale, "copy.app_staff_factions_stafffactionsclient.staff_factions_oversight")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Supervizare facțiuni, numire lideri și monitorizare aplicații/demisii"
-              : "Faction leadership assignment, application oversight, and resignation monitoring"}
+            {t(locale, "copy.app_staff_factions_stafffactionsclient.faction_leadership_assignment_application_oversight_and_resignation_monitor")}
           </p>
         </div>
       </div>
@@ -105,12 +105,12 @@ export function StaffFactionsClient({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
-                <th className="px-3 py-2">Facțiune</th>
-                <th className="px-3 py-2">Lider Actual</th>
-                <th className="px-3 py-2 text-center">Membri</th>
-                <th className="px-3 py-2 text-center">Aplicații</th>
-                <th className="px-3 py-2 text-center">Demisii</th>
-                <th className="px-3 py-2 text-right">Acțiuni</th>
+                <th className="px-3 py-2">{t(locale, "players.faction")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.current_leader")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "clans.members")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "applications.title")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "interface.resignations")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
@@ -140,7 +140,7 @@ export function StaffFactionsClient({
                         size="sm"
                       />
                     ) : (
-                      <span className="text-amber-400/80 italic">Fără Lider (Vacant)</span>
+                      <span className="text-amber-400/80 italic">{t(locale, "interface.no_leader_vacant")}</span>
                     )}
                   </td>
 
@@ -151,16 +151,16 @@ export function StaffFactionsClient({
                   <td className="px-3 py-2.5 text-center">
                     {f.applicationsOpen ? (
                       <span className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 rounded text-[10px] font-mono">
-                        OPEN ({f.pendingApplications})
+                        {t(locale, "interface.open_2")}{f.pendingApplications})
                       </span>
                     ) : (
-                      <span className="text-[#8F8B83] text-[10px] font-mono">CLOSED</span>
+                      <span className="text-[#8F8B83] text-[10px] font-mono">{t(locale, "interface.closed")}</span>
                     )}
                   </td>
 
                   <td className="px-3 py-2.5 text-center font-mono">
                     {f.pendingResignations > 0 ? (
-                      <span className="text-red-400 font-bold">{f.pendingResignations} cereri</span>
+                      <span className="text-red-400 font-bold">{f.pendingResignations} {t(locale, "interface.requests")}</span>
                     ) : (
                       <span className="text-[#8F8B83]">0</span>
                     )}
@@ -173,13 +173,13 @@ export function StaffFactionsClient({
                           onClick={() => setSelectedFaction(f)}
                           className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                         >
-                          {locale === "ro" ? "Numire Lider" : "Set Leader"}
+                          {t(locale, "copy.app_staff_factions_stafffactionsclient.set_leader")}
                         </button>
                       )}
                       <Link
                         href={`/factions/${f.id}`}
                         className="p-1 text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
-                        title="View Public Profile"
+                        title={t(locale, "interface.view_public_profile")}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Link>
@@ -199,7 +199,7 @@ export function StaffFactionsClient({
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Numire Lider pentru {selectedFaction.label}
+                  {t(locale, "interface.appoint_leader_for")} {selectedFaction.label}
                 </span>
               </div>
               <button
@@ -213,26 +213,25 @@ export function StaffFactionsClient({
             <form onSubmit={handleSetLeader} className="space-y-3 text-xs">
               <div>
                 <label className="block text-[11px] text-[#8F8B83] mb-1">
-                  Username Canonic Jucător
-                </label>
+                  {t(locale, "interface.player_s_account_username")}</label>
                 <input
                   type="text"
                   required
                   value={targetUsername}
                   onChange={(e) => setTargetUsername(e.target.value)}
-                  placeholder="Introdu username-ul exact..."
+                  placeholder={t(locale, "interface.enter_the_exact_username")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Numire</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.appointment_reason")}</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Introdu motivul administrativ..."
+                  placeholder={t(locale, "interface.enter_the_administrative_reason")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
@@ -243,8 +242,7 @@ export function StaffFactionsClient({
                   onClick={() => setSelectedFaction(null)}
                   className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
-                  Anulează
-                </button>
+                  {t(locale, "common.cancel")}</button>
                 <button
                   type="submit"
                   disabled={loading || !targetUsername.trim()}

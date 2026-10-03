@@ -272,6 +272,10 @@ RegisterCallback('sunset:setConnectionLocale', function(source, locale)
     return { locale = Sunset.GetPlayerLocale(source) }
 end)
 
+RegisterCallback('sunset:core:canAccess', function(source, gateId)
+    return Sunset.CanAccess(source, gateId)
+end)
+
 RegisterNetEvent('sunset:server:triggerCallback', function(name, requestId, ...)
     local source = source
 if type(name) ~= 'string' or #name > 80 or type(requestId) ~= 'number' then return end

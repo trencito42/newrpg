@@ -11,26 +11,32 @@ exports('IsAccountOnline', function(accountId)
     return src ~= nil and src > 0
 end)
 
-local function broadcastAdmBot(msg, msgType)
-    if not msg or msg == '' then return end
-    local color = { 215, 181, 88 } -- Gold
-    if msgType == 'error' or msgType == 'ban' or msgType == 'kick' then
-        color = { 239, 68, 68 } -- Red
-    elseif msgType == 'warn' or msgType == 'jail' or msgType == 'mute' then
-        color = { 245, 158, 11 } -- Amber/Orange
-    elseif msgType == 'success' or msgType == 'unban' or msgType == 'unjail' or msgType == 'unmute' then
-        color = { 16, 185, 129 } -- Green
+local function broadcastAdmBot(msgRo, msgEn, msgType)
+    if (not msgRo or msgRo == '') and (not msgEn or msgEn == '') then return end
+
+    local text = msgRo
+    if msgEn and msgEn ~= '' and msgEn ~= msgRo then
+        text = msgRo .. ' / ' .. msgEn
     end
 
     TriggerClientEvent('chat:addMessage', -1, {
-        color = color,
-        args = { 'AdmBot', msg }
+        color = { 239, 68, 68 },
+        multiline = true,
+        args = { '^1[AdmBot]', '^1' .. text .. '^7' }
     })
 end
 
-local function notifyTarget(targetSrc, msg, kind)
+local function notifyTarget(targetSrc, msgRo, msgEn, kind)
     if targetSrc and targetSrc > 0 then
-        TriggerClientEvent('sunset:client:notify', targetSrc, msg, kind or 'info', 10000)
+        local text = msgRo
+        if msgEn and msgEn ~= '' and msgEn ~= msgRo then
+            text = msgRo .. ' / ' .. msgEn
+        end
+        TriggerClientEvent('sunset:client:notify', targetSrc, text, kind or 'info', 10000)
+        TriggerClientEvent('chat:addMessage', targetSrc, {
+            color = { 215, 181, 88 },
+            args = { 'AdmBot', text }
+        })
     end
 end
 
@@ -179,9 +185,6 @@ local function actionResult(row)
             notifyTarget(targetSrc, ('Rolul tau staff a fost actualizat: Admin %d / Helper %d'):format(newAdminLevel, newHelperLevel), 'info')
         end
 
-        broadcastAdmBot(('Admin %s a actualizat rolul staff pentru %s (Admin %d / Helper %d)'):format(
-            actorAccount.username, targetAccount.username, newAdminLevel, newHelperLevel), 'info')
-
         return true, { admin_level = newAdminLevel, helper_level = newHelperLevel }
     end
 
@@ -250,7 +253,6 @@ local function actionResult(row)
             VALUES ('unban', ?, ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, license, actorAccount.id, actorAccount.username, row.reason })
 
-        broadcastAdmBot(('Admin %s a ridicat banul jucatorului %s.'):format(actorAccount.username, targetAccount.username), 'unban')
         return true, { removed = deleted }
     end
 
@@ -353,7 +355,6 @@ local function actionResult(row)
             VALUES ('unmute', ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason })
 
-        broadcastAdmBot(('Admin %s i-a ridicat sanctiunea de mute lui %s.'):format(actorAccount.username, targetAccount.username), 'unmute')
         if targetSrc then
             notifyTarget(targetSrc, 'Mute-ul tau a fost ridicat de un administrator.', 'success')
         end
@@ -392,7 +393,6 @@ local function actionResult(row)
             VALUES ('unjail', ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason })
 
-        broadcastAdmBot(('Admin %s l-a eliberat din inchisoare pe %s.'):format(actorAccount.username, targetAccount.username), 'unjail')
         if targetSrc then
             notifyTarget(targetSrc, 'Ai fost eliberat din inchisoare de catre un administrator.', 'success')
         end
@@ -626,12 +626,8 @@ local function actionResult(row)
                 VALUES (?, ?, 'panel_set_faction', ?, ?)
             ]], { factionId or 'none', actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
 
-            if factionId then
-                broadcastAdmBot(('Admin %s l-a setat pe %s in factiunea %s (Rank %d)'):format(
-                    actorAccount.username, targetAccount.username, factionId, grade), 'info')
-            else
-                broadcastAdmBot(('Admin %s l-a scos pe %s din factiune (Civil)'):format(
-                    actorAccount.username, targetAccount.username), 'info')
+            if targetSrc then
+                notifyTarget(targetSrc, factionId and ('Ai fost setat in factiunea %s (Rank %d)'):format(factionId, grade) or 'Ai fost scos din factiune.', 'info')
             end
             return true, { factionId = factionId, grade = grade }
         end
@@ -682,9 +678,10 @@ local function actionResult(row)
                 VALUES (?, ?, ?, ?, ?)
             ]], { factionId, actorCharId, row.action, targetChar.id, json.encode({ reason = row.reason, fp = fp }) })
 
-            broadcastAdmBot(('Admin %s l-a demis pe %s din factiunea %s%s. Motiv: %s'):format(
-                actorAccount.username, targetAccount.username, factionId, fp > 0 and (' cu ' .. fp .. ' FP') or '', row.reason), 'kick')
-
+            if targetSrc then
+                notifyTarget(targetSrc, ('Ai fost demis din factiunea %s%s. Motiv: %s'):format(
+                    factionId, fp > 0 and (' cu ' .. fp .. ' FP') or '', row.reason), 'error')
+            end
             return true, { kicked = true, fp = fp }
         end
 
@@ -809,9 +806,12 @@ local function consumeAction(row)
     if not ok then
         success, result = false, tostring(success)
     end
-    local status = success and 'completed' or 'failed'
-    local resultJson = success and json.encode(type(result) == 'table' and result or { ok = true }) or nil
-    local errorMessage = success and nil or tostring(result or 'unknown_error'):sub(1, 255)
+    local status = (success == true) and 'completed' or 'failed'
+    local resultJson = (success == true) and json.encode(type(result) == 'table' and result or { ok = true }) or nil
+    local errorMessage = nil
+    if success ~= true then
+        errorMessage = tostring(result or 'unknown_error'):sub(1, 255)
+    end
     MySQL.update.await([[
         UPDATE panel_action_queue SET status = ?, completed_at = NOW(), result_json = ?, error_message = ?
         WHERE id = ? AND status = 'processing'
@@ -865,6 +865,39 @@ exports('GetLiveServerStats', function()
 end)
 
 print('^2[sunset_panel_bridge]^7 Enhanced AdmBot bridge and action queue processor initialized.')
+
+-- Real-time in-game push for panel notifications
+CreateThread(function()
+    local interval = 2000
+    while true do
+        Wait(interval)
+        pcall(function()
+            local unDelivered = MySQL.query.await([[
+                SELECT id, account_id, type, title_en, title_ro, message_en, message_ro, link_url
+                FROM panel_notifications
+                WHERE delivered_ingame = 0
+                ORDER BY id ASC
+                LIMIT 10
+            ]]) or {}
+
+            for _, n in ipairs(unDelivered) do
+                local targetSrc = exports.sunset_core:GetSourceByAccountId(n.account_id)
+                if targetSrc and targetSrc > 0 then
+                    local title = n.title_ro or n.title_en or 'Notificare Panel'
+                    local msg = n.message_ro or n.message_en or ''
+                    
+                    TriggerClientEvent('sunset:client:notify', targetSrc, ('[Panel] %s: %s'):format(title, msg), 'info', 10000)
+                    TriggerClientEvent('chat:addMessage', targetSrc, {
+                        color = { 215, 181, 88 },
+                        multiline = true,
+                        args = { '^3[Panel]', ('^3%s: ^7%s'):format(title, msg) }
+                    })
+                end
+                MySQL.update.await('UPDATE panel_notifications SET delivered_ingame = 1 WHERE id = ?', { n.id })
+            end
+        end)
+    end
+end)
 
 CreateThread(function()
     local interval = math.max(5, GetConvarInt('panel_snapshot_seconds', 15)) * 1000

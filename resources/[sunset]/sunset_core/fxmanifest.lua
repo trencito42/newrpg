@@ -28,6 +28,7 @@ shared_scripts {
     'shared/utils.lua',
     'shared/items.lua',
     'shared/password.lua',
+    'shared/progression_gates.lua',
     'shared/help_registry.lua',
 }
 
@@ -67,6 +68,7 @@ exports {
     'SetLocale',
     'RecordMilestone',
     'RecordHitch',
+    'CanAccess',
 }
 
 server_exports {
@@ -121,4 +123,5 @@ server_exports {
     'CommandUsage',
     'OnlinePlayerIds',
     'CommandListKeys',
+    'CanAccess',
 }

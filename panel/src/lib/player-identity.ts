@@ -5,6 +5,8 @@ import { factionIdSql } from "./faction-sql";
 
 export interface ResolvedPlayerIdentity {
   username: string;
+  characterName?: string | null;
+  skin?: string | null;
   factionId: string | null;
   factionColor: string | null;
   clanId: number | null;
@@ -15,6 +17,9 @@ export interface ResolvedPlayerIdentity {
 
 interface IdentityDbRow extends RowDataPacket {
   username: string;
+  firstname: string | null;
+  lastname: string | null;
+  metadata: string | Record<string, any> | null;
   job: string | null;
   clan_id: number | null;
   clan_tag: string | null;
@@ -37,6 +42,9 @@ export async function resolvePlayerIdentities(
   const query = `
     SELECT 
       a.username,
+      c.firstname,
+      c.lastname,
+      c.metadata,
       ${factionIdSql()} AS job,
       cl.id as clan_id,
       cl.tag as clan_tag,
@@ -55,8 +63,21 @@ export async function resolvePlayerIdentities(
     for (const row of rows) {
       const factionId = row.job && CANONICAL_FACTIONS[row.job.toLowerCase()] ? row.job.toLowerCase() : null;
       const factionColor = getFactionColor(factionId);
+
+      let skin: string | null = null;
+      if (row.metadata) {
+        try {
+          const meta = typeof row.metadata === "string" ? JSON.parse(row.metadata) : row.metadata;
+          if (meta && meta.skin) skin = String(meta.skin);
+        } catch {}
+      }
+
+      const characterName = row.firstname ? `${row.firstname} ${row.lastname || ""}`.trim() : null;
+
       result.set(row.username.toLowerCase(), {
         username: row.username,
+        characterName,
+        skin,
         factionId,
         factionColor,
         clanId: row.clan_id ? Number(row.clan_id) : null,

@@ -38,6 +38,15 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className="dark">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
+      </head>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
         <PlayerPreviewProvider>
           {/* Mobile Navigation */}
@@ -49,11 +58,11 @@ export default async function RootLayout({
           />
 
           {/* Desktop Sidebar */}
-          <div className="hidden lg:flex flex-shrink-0">
-          <Sidebar
-            locale={locale}
-            session={viewerSession}
-            identity={viewerIdentity}
+          <div className="hidden lg:flex flex-shrink-0 sticky top-0 h-screen">
+            <Sidebar
+              locale={locale}
+              session={viewerSession}
+              identity={viewerIdentity}
               serverOnline={serverStatus.online}
               playerCount={serverStatus.playerCount}
             />
@@ -62,7 +71,7 @@ export default async function RootLayout({
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col min-w-0">
             <Header locale={locale} session={viewerSession} identity={viewerIdentity} />
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1560px] w-full mx-auto">
               {children}
             </main>
           </div>

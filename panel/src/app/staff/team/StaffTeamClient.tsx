@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { UserCheck, Shield, AlertTriangle, CheckCircle, Award, UserMinus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t, type Locale } from "@/lib/i18n";
+
 
 interface Props {
   staff: any[];
   sessionAdminLevel: number;
   currentAccountId: number;
-  locale: string;
+  locale: Locale;
 }
 
 export function StaffTeamClient({
@@ -55,7 +57,7 @@ export function StaffTeamClient({
 
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Rol actualizat cu succes!" : "Staff role updated successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_staff_team_staffteamclient.staff_role_updated_successfully") });
         setSelectedStaff(null);
         setReason("");
         router.refresh();
@@ -78,12 +80,12 @@ export function StaffTeamClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Echipa Administrativă" : "Staff Team Directory"}
+            {t(locale, "copy.app_staff_team_staffteamclient.staff_team_directory")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
             {canManageRoles
-              ? locale === "ro" ? "Administrare roluri Admins & Helpers (Doar Admin Level 6)" : "Management of Admins & Helpers (Admin Level 6 Only)"
-              : locale === "ro" ? "Ierarhia echipei de administrație a serverului" : "Hierarchy of the server staff team"}
+              ? t(locale, "copy.app_staff_team_staffteamclient.management_of_admins_helpers_admin_level_6_only")
+              : t(locale, "copy.app_staff_team_staffteamclient.hierarchy_of_the_server_staff_team")}
           </p>
         </div>
       </div>
@@ -108,7 +110,7 @@ export function StaffTeamClient({
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-red-400" />
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Administratori" : "Administrators"} ({admins.length})
+              {t(locale, "staff.admins")} ({admins.length})
             </h2>
           </div>
         </div>
@@ -118,10 +120,10 @@ export function StaffTeamClient({
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Membru Staff" : "Staff Member"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Grad Admin" : "Admin Level"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_staff_team_staffteamclient.staff_member")}</th>
+                <th className="px-3 py-2">{t(locale, "account.admin_level")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "common.level")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
@@ -140,7 +142,7 @@ export function StaffTeamClient({
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="px-2 py-0.5 bg-red-950/50 text-red-400 border border-red-800/40 rounded text-[10px] font-mono font-bold">
-                      Admin Level {adm.admin_level}
+                      {t(locale, "interface.admin_level")} {adm.admin_level}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-center font-mono">{adm.level || 1}</td>
@@ -154,7 +156,7 @@ export function StaffTeamClient({
                         }}
                         className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                       >
-                        {locale === "ro" ? "Modifică Grad" : "Change Role"}
+                        {t(locale, "copy.app_staff_team_staffteamclient.change_role")}
                       </button>
                     )}
                   </td>
@@ -171,7 +173,7 @@ export function StaffTeamClient({
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-blue-400" />
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Helperi" : "Helpers"} ({helpers.length})
+              {t(locale, "staff.helpers")} ({helpers.length})
             </h2>
           </div>
         </div>
@@ -181,10 +183,10 @@ export function StaffTeamClient({
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Membru Staff" : "Staff Member"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Grad Helper" : "Helper Level"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_staff_team_staffteamclient.staff_member")}</th>
+                <th className="px-3 py-2">{t(locale, "account.helper_level")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "common.level")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
@@ -203,7 +205,7 @@ export function StaffTeamClient({
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="px-2 py-0.5 bg-blue-950/50 text-blue-400 border border-blue-800/40 rounded text-[10px] font-mono font-bold">
-                      Helper Level {hlp.helper_level}
+                      {t(locale, "interface.helper_level")} {hlp.helper_level}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-center font-mono">{hlp.level || 1}</td>
@@ -217,7 +219,7 @@ export function StaffTeamClient({
                         }}
                         className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                       >
-                        {locale === "ro" ? "Modifică Grad" : "Change Role"}
+                        {t(locale, "copy.app_staff_team_staffteamclient.change_role")}
                       </button>
                     )}
                   </td>
@@ -235,8 +237,7 @@ export function StaffTeamClient({
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Modifică Rol Staff:
-                </span>
+                  {t(locale, "interface.edit_staff_role")}</span>
                 <PlayerIdentity username={selectedStaff.username} size="sm" />
               </div>
               <button
@@ -250,22 +251,22 @@ export function StaffTeamClient({
             <form onSubmit={handleUpdateRole} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] text-[#8F8B83] mb-1">Tip Rol</label>
+                  <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.role_type")}</label>
                   <select
                     value={roleType}
                     onChange={(e) => setRoleType(e.target.value as any)}
                     className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                   >
-                    <option value="admin">Administrator</option>
+                    <option value="admin">{t(locale, "interface.administrator")}</option>
                     <option value="helper">Helper</option>
-                    <option value="remove">Elimină din Staff</option>
+                    <option value="remove">{t(locale, "interface.remove_from_staff")}</option>
                   </select>
                 </div>
 
                 {roleType !== "remove" && (
                   <div>
                     <label className="block text-[11px] text-[#8F8B83] mb-1">
-                      Nivel ({roleType === "admin" ? "1-6" : "1-3"})
+                      {t(locale, "interface.level")}{roleType === "admin" ? "1-6" : "1-3"})
                     </label>
                     <input
                       type="number"
@@ -280,13 +281,13 @@ export function StaffTeamClient({
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Modificare</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.change_reason")}</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Introdu motivul promovării / retrogradării..."
+                  placeholder={t(locale, "interface.enter_the_reason_for_promotion_demotion")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
@@ -297,8 +298,7 @@ export function StaffTeamClient({
                   onClick={() => setSelectedStaff(null)}
                   className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
-                  Anulează
-                </button>
+                  {t(locale, "common.cancel")}</button>
                 <button
                   type="submit"
                   disabled={loading || reason.trim().length < 3}

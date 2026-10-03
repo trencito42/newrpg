@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { Flag, CheckCircle, XCircle, AlertTriangle, Trash2, ExternalLink } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
+
 
 interface Props {
   clans: any[];
   canManageClans: boolean;
   canDissolveClans: boolean;
-  locale: string;
+  locale: Locale;
 }
 
 export function StaffClansClient({
@@ -45,7 +47,7 @@ export function StaffClansClient({
 
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Clan dizolvat cu succes!" : "Clan dissolved successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_staff_clans_staffclansclient.clan_dissolved_successfully") });
         setSelectedClan(null);
         setReason("");
         router.refresh();
@@ -65,12 +67,10 @@ export function StaffClansClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Management Clanuri (Staff)" : "Staff Clans Oversight"}
+            {t(locale, "copy.app_staff_clans_staffclansclient.staff_clans_oversight")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Supervizare clanuri active, membri, avertismente și dizolvare administrativă"
-              : "Active clan oversight, member rosters, warnings, and administrative dissolution"}
+            {t(locale, "copy.app_staff_clans_staffclansclient.active_clan_oversight_member_rosters_warnings_and_administrative_dissolutio")}
           </p>
         </div>
       </div>
@@ -90,21 +90,20 @@ export function StaffClansClient({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
-                <th className="px-3 py-2">ID & Tag</th>
-                <th className="px-3 py-2">Nume Clan</th>
-                <th className="px-3 py-2">Lider / Deținător</th>
-                <th className="px-3 py-2 text-center">Membri</th>
-                <th className="px-3 py-2 text-center">Teritorii</th>
-                <th className="px-3 py-2 text-center">Aplicații</th>
-                <th className="px-3 py-2 text-right">Acțiuni</th>
+                <th className="px-3 py-2">{t(locale, "interface.id_tag")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.clan_name")}</th>
+                <th className="px-3 py-2">{t(locale, "interface.leader_owner")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "clans.members")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "interface.territories")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "applications.title")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
               {clans.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    Niciun clan înregistrat
-                  </td>
+                    {t(locale, "interface.no_clans_registered")}</td>
                 </tr>
               ) : (
                 clans.map((clan) => (
@@ -147,10 +146,10 @@ export function StaffClansClient({
                     <td className="px-3 py-2.5 text-center">
                       {clan.applications_open ? (
                         <span className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 rounded text-[10px] font-mono">
-                          OPEN ({clan.pending_applications})
+                          {t(locale, "interface.open_2")}{clan.pending_applications})
                         </span>
                       ) : (
-                        <span className="text-[#8F8B83] text-[10px] font-mono">CLOSED</span>
+                        <span className="text-[#8F8B83] text-[10px] font-mono">{t(locale, "interface.closed")}</span>
                       )}
                     </td>
 
@@ -161,13 +160,12 @@ export function StaffClansClient({
                             onClick={() => setSelectedClan(clan)}
                             className="px-2.5 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 rounded text-xs font-medium transition-colors"
                           >
-                            Dizolvă
-                          </button>
+                            {t(locale, "interface.dissolve")}</button>
                         )}
                         <Link
                           href={`/clans/${clan.id}`}
                           className="p-1 text-[#8F8B83] hover:text-[#F2EFE8] transition-colors"
-                          title="View Public Profile"
+                          title={t(locale, "interface.view_public_profile")}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
@@ -189,7 +187,7 @@ export function StaffClansClient({
               <div className="flex items-center gap-2 text-red-400">
                 <AlertTriangle className="w-4 h-4" />
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Dizolvare Administrativă: [{selectedClan.tag}] {selectedClan.name}
+                  {t(locale, "interface.administrative_dissolution")}{selectedClan.tag}] {selectedClan.name}
                 </span>
               </div>
               <button
@@ -201,18 +199,17 @@ export function StaffClansClient({
             </div>
 
             <p className="text-xs text-red-300">
-              Atenție! Această acțiune va șterge clanul și toți membrii acestuia din baza de date.
-            </p>
+              {t(locale, "interface.this_will_delete_the_clan_and_all_its_memberships_from_the_database")}</p>
 
             <form onSubmit={handleDissolve} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Dizolvare (Obligatoriu)</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.dissolution_reason_required")}</label>
                 <input
                   type="text"
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Introdu motivul dizolvării..."
+                  placeholder={t(locale, "interface.enter_the_dissolution_reason")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
@@ -223,8 +220,7 @@ export function StaffClansClient({
                   onClick={() => setSelectedClan(null)}
                   className="px-3 py-1.5 bg-[#101012] hover:bg-[#1A191B] border border-surface-border rounded text-xs text-[#B4AFA4]"
                 >
-                  Anulează
-                </button>
+                  {t(locale, "common.cancel")}</button>
                 <button
                   type="submit"
                   disabled={loading || reason.trim().length < 3}

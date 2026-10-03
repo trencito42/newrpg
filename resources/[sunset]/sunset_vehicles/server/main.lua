@@ -471,6 +471,9 @@ local function storeOwnedVehicle(source, netId, plate, props, fuelLevel, garageI
         DeleteEntity(vehicle)
     end
     TriggerClientEvent('sunset:client:cleanupOwnedVehicles', -1, { { plate = plate } })
+
+    -- [QUESTS] Emit canonical quest progress for garage vehicle parking
+    TriggerEvent('sunset:quest:progress', char.id, 'vehicle_stored', 1)
     local updatedVehicle = {
         id = owned.id,
         plate = plate,

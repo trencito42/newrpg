@@ -249,6 +249,7 @@ export interface UserSession {
   language: "en" | "ro";
   adminLevel: number;
   helperLevel: number;
+  isAuthor?: boolean;
   selectedCharacterId: number | null;
   selectedCharacterName: string | null;
 }
@@ -260,6 +261,7 @@ export type ViewerSessionDTO = Pick<UserSession,
   | "language"
   | "adminLevel"
   | "helperLevel"
+  | "isAuthor"
   | "selectedCharacterId"
   | "selectedCharacterName"
 >;

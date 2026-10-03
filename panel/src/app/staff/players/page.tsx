@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { Users, Search, Shield, AlertTriangle } from "lucide-react";
+import { t } from "@/lib/i18n";
+
 
 interface Props {
   searchParams: Promise<{ search?: string; page?: string }>;
@@ -70,12 +72,10 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Management Jucători" : "Player Management"}
+            {t(locale, "staff.player_management")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Căutare după username canonic, verificare conturi și aplicare sancțiuni"
-              : "Search by canonical username, account oversight, and moderation"}
+            {t(locale, "copy.app_staff_players_page.search_by_canonical_username_account_oversight_and_moderation")}
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
               type="text"
               name="search"
               defaultValue={search}
-              placeholder={locale === "ro" ? "Caută username..." : "Search username..."}
+              placeholder={t(locale, "copy.app_staff_players_page.search_username")}
               className="pl-8 pr-3 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
             />
           </div>
@@ -95,7 +95,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
             type="submit"
             className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
           >
-            {locale === "ro" ? "Caută" : "Search"}
+            {t(locale, "common.search")}
           </button>
         </form>
       </div>
@@ -107,19 +107,19 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
             <thead>
               <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                 <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Identitate Jucător" : "Player Identity"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel / Ore" : "Level / Hours"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Facțiune / Clan" : "Faction / Clan"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Rol Staff" : "Staff Role"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Status Moderare" : "Status"}</th>
-                <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_staff_players_page.player_identity")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "copy.app_staff_players_page.level_hours")}</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_staff_players_page.faction_clan")}</th>
+                <th className="px-3 py-2">{t(locale, "copy.app_staff_players_page.staff_role")}</th>
+                <th className="px-3 py-2 text-center">{t(locale, "copy.app_staff_players_page.status")}</th>
+                <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
               {players.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    {locale === "ro" ? "Niciun jucător găsit" : "No players found"}
+                    {t(locale, "copy.app_staff_players_page.no_players_found")}
                   </td>
                 </tr>
               ) : (
@@ -138,22 +138,22 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
                     </td>
 
                     <td className="px-3 py-2.5 text-center font-mono">
-                      <span className="text-[#F2EFE8] font-semibold">Lvl {p.level || 1}</span>
-                      <span className="text-[#8F8B83] ml-1.5 text-[11px]">({p.hours || 0}h)</span>
+                      <span className="text-[#F2EFE8] font-semibold">{t(locale, "interface.lvl")} {p.level || 1}</span>
+                      <span className="text-[#8F8B83] ml-1.5 text-[11px]">({p.hours || 0}{t(locale, "interface.h")}</span>
                     </td>
 
                     <td className="px-3 py-2.5">
                       <div className="text-[11px]">
                         {p.faction_id && p.faction_id !== "unemployed" ? (
                           <span className="text-[#F2EFE8] font-medium block">
-                            {p.faction_id} (R{p.faction_rank})
+                            {p.faction_id} {t(locale, "interface.r")}{p.faction_rank})
                           </span>
                         ) : (
-                          <span className="text-[#8F8B83] block">Civilian</span>
+                          <span className="text-[#8F8B83] block">{t(locale, "interface.civilian")}</span>
                         )}
                         {p.clan_tag && (
                           <span className="text-[10px] text-[#99958E] block">
-                            Clan: [{p.clan_tag}]
+                            {t(locale, "interface.clan_2")}{p.clan_tag}]
                           </span>
                         )}
                       </div>
@@ -169,21 +169,19 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
                           Helper {p.helper_level}
                         </span>
                       ) : (
-                        <span className="text-[#8F8B83] text-[11px]">Player</span>
+                        <span className="text-[#8F8B83] text-[11px]">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</span>
                       )}
                     </td>
 
                     <td className="px-3 py-2.5 text-center">
                       {p.is_banned > 0 ? (
                         <span className="px-2 py-0.5 bg-red-900/60 text-[#F2EFE8] rounded text-[10px] font-bold font-mono">
-                          BANNED
-                        </span>
+                          {t(locale, "interface.banned")}</span>
                       ) : p.active_warns > 0 ? (
                         <span className="px-2 py-0.5 bg-amber-950/40 text-amber-400 border border-amber-800/40 rounded text-[10px] font-mono">
-                          {p.active_warns}/3 Warns
-                        </span>
+                          {p.active_warns}{t(locale, "interface.3_warnings")}</span>
                       ) : (
-                        <span className="text-emerald-500 text-[11px]">Curat</span>
+                        <span className="text-emerald-500 text-[11px]">{t(locale, "interface.clean")}</span>
                       )}
                     </td>
 
@@ -192,7 +190,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
                         href={`/staff/players/${encodeURIComponent(p.username)}`}
                         className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                       >
-                        {locale === "ro" ? "Gestionează" : "Manage"}
+                        {t(locale, "copy.app_clans_id_manage_clanmanageclient.manage")}
                       </Link>
                     </td>
                   </tr>

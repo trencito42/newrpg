@@ -5,6 +5,8 @@ import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { Users, Flag, Shield, CheckCircle, XCircle } from "lucide-react";
 import { factionIdSql } from "@/lib/faction-sql";
+import { t } from "@/lib/i18n";
+
 
 interface ClanRow extends RowDataPacket {
   id: number;
@@ -55,17 +57,15 @@ export default async function ClansPage({
   const clans = await dbQuery<ClanRow>(sql, params);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
         <div>
-          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {locale === "ro" ? "Clanuri" : "Clans"}
+          <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">
+            {t(locale, "clans.title")}
           </h1>
           <p className="text-xs text-[#8F8B83] mt-0.5">
-            {locale === "ro"
-              ? "Organizații create de jucători, teritorii controlate și aplicații de recrutare"
-              : "Player-created organizations, controlled territories, and recruitment applications"}
+            {t(locale, "copy.app_clans_page.player_created_organizations_controlled_territories_and_recruitment_applica")}
           </p>
         </div>
 
@@ -75,43 +75,43 @@ export default async function ClansPage({
             type="text"
             name="search"
             defaultValue={search}
-            placeholder={locale === "ro" ? "Caută clan sau tag..." : "Search clan or tag..."}
-            className="px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
+            placeholder={t(locale, "copy.app_clans_page.search_clan_or_tag")}
+            className="px-3 py-1.5 bg-[#0E0E10] rounded-lg text-xs text-[#F2EFE8] placeholder:text-[#5A5852] focus:outline-none focus:ring-1 focus:ring-[#D7B558]"
           />
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
+            className="px-3.5 py-1.5 bg-[#18181B] hover:bg-[#222226] rounded-lg text-xs text-[#F2EFE8] font-medium transition-colors"
           >
-            {locale === "ro" ? "Caută" : "Search"}
+            {t(locale, "common.search")}
           </button>
         </form>
       </div>
 
       {/* Clans Table */}
-      <div className="border border-surface-border rounded bg-[#0E0E10] overflow-hidden">
+      <div className="rounded-xl bg-[#0E0E10] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
-                <th className="px-3 py-2">Tag & {locale === "ro" ? "Nume" : "Name"}</th>
-                <th className="px-3 py-2">{locale === "ro" ? "Lider" : "Leader"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Membri" : "Members"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Teritorii" : "Turfs"}</th>
-                <th className="px-3 py-2 text-center">{locale === "ro" ? "Aplicații" : "Applications"}</th>
-                <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+              <tr className="bg-[#121214] text-[#8F8B83] font-semibold text-[11px]">
+                <th className="px-3.5 py-2.5">{t(locale, "interface.tag")} {t(locale, "copy.app_clans_page.name")}</th>
+                <th className="px-3.5 py-2.5">{t(locale, "clans.leader")}</th>
+                <th className="px-3.5 py-2.5 text-center">{t(locale, "clans.members")}</th>
+                <th className="px-3.5 py-2.5 text-center">{t(locale, "copy.app_clans_id_page.turfs")}</th>
+                <th className="px-3.5 py-2.5 text-center">{t(locale, "applications.title")}</th>
+                <th className="px-3.5 py-2.5 text-right">{t(locale, "common.actions")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border">
+            <tbody className="divide-y divide-white/[0.04]">
               {clans.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                    {locale === "ro" ? "Nu a fost găsit niciun clan" : "No clans found"}
+                    {t(locale, "copy.app_clans_page.no_clans_found")}
                   </td>
                 </tr>
               ) : (
                 clans.map((clan) => (
-                  <tr key={clan.id} className="hover:bg-[#131315] transition-colors">
-                    <td className="px-3 py-2.5">
+                  <tr key={clan.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-3.5 py-3">
                       <div className="flex items-center gap-2">
                         <span
                           style={{ color: clan.tag_color || "#f59e0b" }}
@@ -133,7 +133,7 @@ export default async function ClansPage({
                       )}
                     </td>
 
-                    <td className="px-3 py-2.5">
+                    <td className="px-3.5 py-3">
                       <PlayerIdentity
                         username={clan.owner_username}
                         factionId={clan.owner_faction_id}
@@ -144,11 +144,11 @@ export default async function ClansPage({
                       />
                     </td>
 
-                    <td className="px-3 py-2.5 text-center font-mono">
+                    <td className="px-3.5 py-3 text-center font-mono text-[#F2EFE8]">
                       {clan.member_count} / {clan.max_members}
                     </td>
 
-                    <td className="px-3 py-2.5 text-center font-mono">
+                    <td className="px-3.5 py-3 text-center font-mono">
                       {clan.turfs_count > 0 ? (
                         <span className="text-amber-400 font-semibold">{clan.turfs_count}</span>
                       ) : (
@@ -156,35 +156,35 @@ export default async function ClansPage({
                       )}
                     </td>
 
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="px-3.5 py-3 text-center">
                       {clan.applications_open ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 rounded text-[10px] font-medium">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[10px] font-medium">
                           <CheckCircle className="w-3 h-3" />
-                          {locale === "ro" ? "DESCHISE" : "OPEN"}
+                          {t(locale, "copy.app_clans_id_page.open")}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-100 text-[#8F8B83] border border-surface-border rounded text-[10px] font-medium">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/[0.04] text-[#8F8B83] rounded text-[10px] font-medium">
                           <XCircle className="w-3 h-3" />
-                          {locale === "ro" ? "ÎNCHISE" : "CLOSED"}
+                          {t(locale, "copy.app_clans_id_page.closed")}
                         </span>
                       )}
                     </td>
 
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-3.5 py-3 text-right">
                       <div className="inline-flex items-center gap-2">
                         {clan.applications_open === 1 && (
                           <Link
                             href={`/clans/${clan.id}/apply`}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] font-medium rounded text-xs transition-colors"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg text-xs transition-colors"
                           >
-                            {locale === "ro" ? "Aplică" : "Apply"}
+                            {t(locale, "copy.app_clans_page.apply")}
                           </Link>
                         )}
                         <Link
                           href={`/clans/${clan.id}`}
-                          className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
+                          className="px-2.5 py-1 bg-[#18181B] hover:bg-[#202024] text-[#F2EFE8] font-medium rounded-lg text-xs transition-colors"
                         >
-                          {locale === "ro" ? "Detalii" : "View"}
+                          {t(locale, "copy.app_clans_page.view")}
                         </Link>
                       </div>
                     </td>

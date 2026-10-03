@@ -27,6 +27,7 @@ import {
   LogOut,
   Radio,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -64,6 +65,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
 
   const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
+    { href: "/updates", label: t(locale, "copy.components_navigation_mobilenav.updates_news"), icon: Sparkles },
     { href: "/players", label: t(locale, "nav.players"), icon: Users },
     { href: "/factions", label: t(locale, "nav.factions"), icon: Shield },
     { href: "/turfs", label: t(locale, "nav.turfs"), icon: Map },
@@ -100,12 +102,12 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
         <div className="flex items-center space-x-2.5">
           <button
             onClick={() => setOpen(!open)}
-            aria-label="Toggle navigation"
+            aria-label={t(locale, "interface.toggle_navigation")}
             className="p-2 rounded-lg bg-surface-200 text-[#B4AFA4] hover:text-[#F2EFE8]"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
-          <Link href="/" aria-label="Racket — Home" className="block">
+          <Link href="/" aria-label={t(locale, "interface.racket_home")} className="block">
             <img src="/logo-3.svg" alt="Racket" className="block h-auto w-[108px]" />
           </Link>
         </div>
@@ -141,7 +143,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2.5">
-              <Link href="/" aria-label="Racket — Home"><img src="/logo-3.svg" alt="Racket" className="block h-auto w-[138px]" /></Link>
+              <Link href="/" aria-label={t(locale, "interface.racket_home")}><img src="/logo-3.svg" alt="Racket" className="block h-auto w-[138px]" /></Link>
               <button
                 onClick={() => setOpen(false)}
                 className="p-1 text-[#8F8B83] hover:text-[#F2EFE8]"

@@ -21,6 +21,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t, type Locale } from "@/lib/i18n";
+
 
 interface Props {
   faction: any;
@@ -34,7 +36,7 @@ interface Props {
   identities: Record<string, ResolvedPlayerIdentity>;
   isLeader: boolean;
   isSubLeader: boolean;
-  locale: string;
+  locale: Locale;
 }
 
 export function FactionManageClient({
@@ -104,7 +106,7 @@ export function FactionManageClient({
         }),
       });
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Setări salvate cu succes!" : "Settings saved successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_clans_id_manage_clanmanageclient.settings_saved_successfully") });
         router.refresh();
       } else {
         const err = await res.json();
@@ -128,7 +130,7 @@ export function FactionManageClient({
         body: JSON.stringify({ decision, reason: reviewReason }),
       });
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Decizie înregistrată!" : "Decision recorded successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_clans_id_manage_clanmanageclient.decision_recorded_successfully") });
         setSelectedApp(null);
         setReviewReason("");
         router.refresh();
@@ -163,7 +165,7 @@ export function FactionManageClient({
         }),
       });
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Acțiune trimisă spre executare!" : "Action queued successfully!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_clans_id_manage_clanmanageclient.action_queued_successfully") });
         setActionMember(null);
         setActionReason("");
         router.refresh();
@@ -194,7 +196,7 @@ export function FactionManageClient({
         }),
       });
       if (res.ok) {
-        setMessage({ type: "success", text: locale === "ro" ? "Cerere de demisie procesată!" : "Resignation request processed!" });
+        setMessage({ type: "success", text: t(locale, "copy.app_factions_slug_manage_factionmanageclient.resignation_request_processed") });
         setSelectedResignation(null);
         setResignationReason("");
         router.refresh();
@@ -275,13 +277,13 @@ export function FactionManageClient({
                 className="w-3 h-3 rounded-full shrink-0"
               />
               <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
-                {faction.label} — {locale === "ro" ? "Panou Lider / Conducere" : "Leadership Panel"}
+                {faction.label} — {t(locale, "copy.app_factions_slug_manage_factionmanageclient.leadership_panel")}
               </h1>
             </div>
             <p className="text-[11px] text-[#8F8B83] mt-0.5">
               {isLeader
-                ? locale === "ro" ? "Acces complet Lider (Rang 7) — Setări, Recrutare & Gestiune Membri" : "Full Leader Access (Rank 7) — Settings, Recruitment & Member Management"
-                : locale === "ro" ? "Acces Sub-Lider (Rang 6) — Recrutare & Gestiune Membri" : "Sub-Leader Access (Rank 6) — Recruitment & Member Management"}
+                ? t(locale, "copy.app_factions_slug_manage_factionmanageclient.full_leader_access_rank_7_settings_recruitment_member_management")
+                : t(locale, "copy.app_factions_slug_manage_factionmanageclient.sub_leader_access_rank_6_recruitment_member_management")}
             </p>
           </div>
         </div>
@@ -312,7 +314,7 @@ export function FactionManageClient({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Prezentare" : "Overview"}
+          {t(locale, "players.general_info")}
         </button>
 
         <button
@@ -324,7 +326,7 @@ export function FactionManageClient({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Aplicații" : "Applications"}
+          {t(locale, "applications.title")}
           {initialApps.filter((a) => a.status === "submitted").length > 0 && (
             <span className="ml-1.5 px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
               {initialApps.filter((a) => a.status === "submitted").length}
@@ -341,7 +343,7 @@ export function FactionManageClient({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Membri" : "Members"} ({initialMembers.length})
+          {t(locale, "clans.members")} ({initialMembers.length})
         </button>
 
         <button
@@ -353,7 +355,7 @@ export function FactionManageClient({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Cereri Demisie" : "Resignations"}
+          {t(locale, "copy.app_factions_slug_manage_factionmanageclient.resignations")}
           {initialResignations.filter((r) => r.status === "pending").length > 0 && (
             <span className="ml-1.5 px-1.5 py-0.2 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-[10px] font-mono font-bold">
               {initialResignations.filter((r) => r.status === "pending").length}
@@ -370,7 +372,7 @@ export function FactionManageClient({
               : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
           )}
         >
-          {locale === "ro" ? "Istoric Audit" : "Audit History"}
+          {t(locale, "copy.app_clans_id_manage_clanmanageclient.audit_history")}
         </button>
 
         {isLeader && (
@@ -383,7 +385,7 @@ export function FactionManageClient({
                 : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
             )}
           >
-            {locale === "ro" ? "Setări Aplicații" : "Application Settings"}
+            {t(locale, "copy.app_clans_id_manage_clanmanageclient.application_settings")}
           </button>
         )}
       </div>
@@ -393,36 +395,36 @@ export function FactionManageClient({
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Status Recrutare" : "Recruitment"}</span>
+              <span className="text-xs text-[#8F8B83] block">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.recruitment")}</span>
               <span className="font-bold text-sm mt-1 block">
                 {appsOpen ? (
                   <span className="text-emerald-400 font-medium flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> {locale === "ro" ? "Deschise" : "Open"}
+                    <CheckCircle className="w-3.5 h-3.5" /> {t(locale, "copy.app_clans_id_manage_clanmanageclient.open")}
                   </span>
                 ) : (
                   <span className="text-[#8F8B83] font-medium flex items-center gap-1">
-                    <XCircle className="w-3.5 h-3.5" /> {locale === "ro" ? "Închise" : "Closed"}
+                    <XCircle className="w-3.5 h-3.5" /> {t(locale, "copy.app_clans_id_manage_clanmanageclient.closed")}
                   </span>
                 )}
               </span>
             </div>
 
             <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Membri Activi" : "Active Members"}</span>
+              <span className="text-xs text-[#8F8B83] block">{t(locale, "copy.app_clans_id_manage_clanmanageclient.active_members")}</span>
               <span className="font-bold text-sm text-[#F2EFE8] mt-1 font-mono block">
                 {initialMembers.length}
               </span>
             </div>
 
             <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Aplicații în Așteptare" : "Pending Applications"}</span>
+              <span className="text-xs text-[#8F8B83] block">{t(locale, "copy.app_clans_id_manage_clanmanageclient.pending_applications")}</span>
               <span className="font-bold text-sm text-amber-400 mt-1 font-mono block">
                 {initialApps.filter((a) => a.status === "submitted" || a.status === "under_review").length}
               </span>
             </div>
 
             <div className="p-3 bg-[#0E0E10] border border-surface-border rounded">
-              <span className="text-xs text-[#8F8B83] block">{locale === "ro" ? "Demisii în Așteptare" : "Pending Resignations"}</span>
+              <span className="text-xs text-[#8F8B83] block">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.pending_resignations")}</span>
               <span className="font-bold text-sm text-red-400 mt-1 font-mono block">
                 {initialResignations.filter((r) => r.status === "pending").length}
               </span>
@@ -439,18 +441,18 @@ export function FactionManageClient({
               <thead>
                 <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">ID</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Aplicant" : "Applicant"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Status" : "Status"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Data Trimiterii" : "Date"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Revizor" : "Reviewer"}</th>
-                  <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_applications_page.applicant")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_applications_page.status")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_applications_page.date")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.reviewer")}</th>
+                  <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
                 {initialApps.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                      {locale === "ro" ? "Nu există aplicații înregistrate" : "No applications recorded"}
+                      {t(locale, "copy.app_clans_id_manage_clanmanageclient.no_applications_recorded")}
                     </td>
                   </tr>
                 ) : (
@@ -489,7 +491,7 @@ export function FactionManageClient({
                           href={`/factions/${slug}/applications/${app.id}`}
                           className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                         >
-                          {locale === "ro" ? "Vezi Discuția" : "Open Thread"}
+                          {t(locale, "copy.app_clans_id_manage_clanmanageclient.open_thread")}
                         </Link>
                       </td>
                     </tr>
@@ -509,12 +511,12 @@ export function FactionManageClient({
               <thead>
                 <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">#</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Jucător" : "Player"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "Nivel" : "Level"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "FWarns" : "FWarns"}</th>
-                  <th className="px-3 py-2 text-center">{locale === "ro" ? "FP" : "FP"}</th>
-                  <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "common.level")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.fwarns")}</th>
+                  <th className="px-3 py-2 text-center">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.fp")}</th>
+                  <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
@@ -533,12 +535,11 @@ export function FactionManageClient({
                     </td>
                     <td className="px-3 py-2">
                       <span className="font-mono font-medium text-[#F2EFE8]">
-                        Rank {m.rank}
+                        {t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")} {m.rank}
                       </span>
                       {m.is_leader && (
                         <span className="ml-1.5 text-[10px] text-amber-400 font-mono font-bold">
-                          [LEADER]
-                        </span>
+                          {t(locale, "interface.leader")}</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center font-mono">{m.level}</td>
@@ -565,7 +566,7 @@ export function FactionManageClient({
                           }}
                           className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] transition-colors"
                         >
-                          {locale === "ro" ? "Gestionează" : "Manage"}
+                          {t(locale, "copy.app_clans_id_manage_clanmanageclient.manage")}
                         </button>
                       )}
                     </td>
@@ -585,19 +586,19 @@ export function FactionManageClient({
               <thead>
                 <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">ID</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Membru" : "Member"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Rang" : "Rank"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Motiv" : "Reason"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Status" : "Status"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Data" : "Date"}</th>
-                  <th className="px-3 py-2 text-right">{locale === "ro" ? "Acțiuni" : "Actions"}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.member")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")}</th>
+                  <th className="px-3 py-2">{t(locale, "staff.reason")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_applications_page.status")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.date")}</th>
+                  <th className="px-3 py-2 text-right">{t(locale, "common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
                 {initialResignations.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                      {locale === "ro" ? "Nu există cereri de demisie înregistrate" : "No resignation requests recorded"}
+                      {t(locale, "copy.app_factions_slug_manage_factionmanageclient.no_resignation_requests_recorded")}
                     </td>
                   </tr>
                 ) : (
@@ -607,7 +608,7 @@ export function FactionManageClient({
                       <td className="px-3 py-2.5">
                         <PlayerIdentity {...identityFor(r.member_username)} factionId={slug} size="sm" />
                       </td>
-                      <td className="px-3 py-2.5 font-mono">Rank {r.rank}</td>
+                      <td className="px-3 py-2.5 font-mono">{t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")} {r.rank}</td>
                       <td className="px-3 py-2.5 text-[#B4AFA4] max-w-xs truncate">{r.reason || "—"}</td>
                       <td className="px-3 py-2.5">
                         <span
@@ -631,7 +632,7 @@ export function FactionManageClient({
                             onClick={() => setSelectedResignation(r)}
                             className="px-2.5 py-1 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
                           >
-                            {locale === "ro" ? "Procesează" : "Process"}
+                            {t(locale, "copy.app_factions_slug_manage_factionmanageclient.process")}
                           </button>
                         )}
                       </td>
@@ -652,18 +653,18 @@ export function FactionManageClient({
               <thead>
                 <tr className="border-b border-surface-border bg-[#101012] text-[#8F8B83] font-semibold">
                   <th className="px-3 py-2">ID</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Actor" : "Actor"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Acțiune" : "Action"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Țintă" : "Target"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Detalii" : "Details"}</th>
-                  <th className="px-3 py-2">{locale === "ro" ? "Data" : "Date"}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.actor")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.action")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_factions_slug_manage_factionmanageclient.target")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.details")}</th>
+                  <th className="px-3 py-2">{t(locale, "copy.app_clans_id_manage_clanmanageclient.date")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
                 {auditLogs.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-xs text-[#8F8B83]">
-                      {locale === "ro" ? "Nu există log-uri de audit" : "No audit logs available"}
+                      {t(locale, "copy.app_clans_id_manage_clanmanageclient.no_audit_logs_available")}
                     </td>
                   </tr>
                 ) : (
@@ -674,7 +675,7 @@ export function FactionManageClient({
                         {log.actor_username ? (
                           <PlayerIdentity {...identityFor(log.actor_username)} size="sm" />
                         ) : (
-                          <span className="text-[#8F8B83]">SYSTEM</span>
+                          <span className="text-[#8F8B83]">{t(locale, "interface.system")}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 font-mono text-[#F2EFE8]">{log.action}</td>
@@ -705,7 +706,7 @@ export function FactionManageClient({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-4">
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Setări Aplicații Facțiune" : "Faction Application Criteria"}
+              {t(locale, "copy.app_factions_slug_manage_factionmanageclient.faction_application_criteria")}
             </h2>
 
             <div className="space-y-3">
@@ -717,14 +718,14 @@ export function FactionManageClient({
                   className="rounded bg-[#101012] border-surface-border text-emerald-500 focus:ring-0"
                 />
                 <span className="text-xs font-semibold text-[#F2EFE8]">
-                  {locale === "ro" ? "Aplicații Deschise Public" : "Recruitment Applications Open"}
+                  {t(locale, "copy.app_clans_id_manage_clanmanageclient.recruitment_applications_open")}
                 </span>
               </label>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <div>
                   <label className="block text-[11px] text-[#8F8B83] mb-1">
-                    {locale === "ro" ? "Nivel Minim" : "Minimum Level"}
+                    {t(locale, "applications.min_level")}
                   </label>
                   <input
                     type="number"
@@ -738,7 +739,7 @@ export function FactionManageClient({
 
                 <div>
                   <label className="block text-[11px] text-[#8F8B83] mb-1">
-                    {locale === "ro" ? "Ore Minime" : "Minimum Hours"}
+                    {t(locale, "applications.min_hours")}
                   </label>
                   <input
                     type="number"
@@ -752,7 +753,7 @@ export function FactionManageClient({
 
               <div>
                 <label className="block text-[11px] text-[#8F8B83] mb-1">
-                  {locale === "ro" ? "Avertismente Maxime Active" : "Max Active Warnings"}
+                  {t(locale, "copy.app_clans_id_manage_clanmanageclient.max_active_warnings")}
                 </label>
                 <input
                   type="number"
@@ -776,7 +777,7 @@ export function FactionManageClient({
 
           <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-4">
             <h2 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {locale === "ro" ? "Întrebări Formular Facțiune" : "Application Questions"}
+              {t(locale, "copy.app_factions_slug_manage_factionmanageclient.application_questions")}
             </h2>
 
             <div className="space-y-2">
@@ -803,7 +804,7 @@ export function FactionManageClient({
               <input
                 type="text"
                 required
-                placeholder="Întrebare în Română"
+                placeholder={t(locale, "interface.question_in_romanian")}
                 value={newLabelRo}
                 onChange={(e) => setNewLabelRo(e.target.value)}
                 className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
@@ -811,7 +812,7 @@ export function FactionManageClient({
               <input
                 type="text"
                 required
-                placeholder="Question in English"
+                placeholder={t(locale, "interface.question_in_english")}
                 value={newLabelEn}
                 onChange={(e) => setNewLabelEn(e.target.value)}
                 className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
@@ -821,8 +822,7 @@ export function FactionManageClient({
                 disabled={addingQ}
                 className="w-full py-1.5 bg-[#1A191B] hover:bg-[#27231B] border border-surface-border text-[#F2EFE8] font-medium rounded text-xs transition-colors"
               >
-                + Adaugă Întrebare
-              </button>
+                {t(locale, "interface.add_question")}</button>
             </form>
           </div>
         </div>
@@ -835,7 +835,7 @@ export function FactionManageClient({
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Revizuire Aplicație #{selectedApp.id}
+                  {t(locale, "interface.review_application")}{selectedApp.id}
                 </span>
                 <PlayerIdentity {...identityFor(selectedApp.applicant_username)} size="sm" />
               </div>
@@ -850,13 +850,12 @@ export function FactionManageClient({
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block text-[11px] text-[#8F8B83] mb-1">
-                  Motiv Decizie (Opțional pentru accept, recomandat la respingere)
-                </label>
+                  {t(locale, "interface.decision_reason_optional_when_accepting_recommended_when_rejecting")}</label>
                 <textarea
                   rows={3}
                   value={reviewReason}
                   onChange={(e) => setReviewReason(e.target.value)}
-                  placeholder="Introdu motivul deciziei..."
+                  placeholder={t(locale, "interface.enter_the_reason_for_your_decision")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
                 />
               </div>
@@ -868,22 +867,19 @@ export function FactionManageClient({
                 disabled={reviewing}
                 className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 rounded text-xs font-medium transition-colors"
               >
-                Respinge
-              </button>
+                {t(locale, "applications.reject")}</button>
               <button
                 onClick={() => handleReview("accepted")}
                 disabled={reviewing}
                 className="px-3 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] rounded text-xs font-medium transition-colors"
               >
-                Doar Acceptă
-              </button>
+                {t(locale, "interface.accept_only")}</button>
               <button
                 onClick={() => handleReview("accepted_add_member")}
                 disabled={reviewing}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-medium transition-colors"
               >
-                Acceptă & Adaugă în Facțiune
-              </button>
+                {t(locale, "interface.accept_add_to_faction")}</button>
             </div>
           </div>
         </div>
@@ -896,8 +892,7 @@ export function FactionManageClient({
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Gestionează Membru Facțiune:
-                </span>
+                  {t(locale, "interface.manage_faction_member")}</span>
                 <PlayerIdentity {...identityFor(actionMember.username)} factionId={slug} size="sm" />
               </div>
               <button
@@ -911,29 +906,28 @@ export function FactionManageClient({
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block text-[11px] text-[#8F8B83] mb-1">
-                  Rang Nou în Facțiune (1-6)
-                </label>
+                  {t(locale, "interface.new_faction_rank_1_6")}</label>
                 <select
                   value={memberRank}
                   onChange={(e) => setMemberRank(Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 >
-                  <option value={1}>Rank 1 (Recruit)</option>
-                  <option value={2}>Rank 2</option>
-                  <option value={3}>Rank 3</option>
-                  <option value={4}>Rank 4</option>
-                  <option value={5}>Rank 5</option>
-                  {isLeader && <option value={6}>Rank 6 (Sub-Leader)</option>}
+                  <option value={1}>{t(locale, "interface.rank_1_recruit")}</option>
+                  <option value={2}>{t(locale, "interface.rank_2")}</option>
+                  <option value={3}>{t(locale, "interface.rank_3")}</option>
+                  <option value={4}>{t(locale, "interface.rank_4")}</option>
+                  <option value={5}>{t(locale, "interface.rank_5")}</option>
+                  {isLeader && <option value={6}>{t(locale, "interface.rank_6_co_leader")}</option>}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#8F8B83] mb-1">Motiv Acțiune</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.action_reason")}</label>
                 <input
                   type="text"
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}
-                  placeholder="Motiv opțional..."
+                  placeholder={t(locale, "interface.optional_reason")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
@@ -944,8 +938,7 @@ export function FactionManageClient({
                   disabled={performingAction}
                   className="px-2.5 py-1.5 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/40 text-amber-300 rounded text-xs font-medium"
                 >
-                  Avertizează
-                </button>
+                  {t(locale, "interface.warn")}</button>
 
                 {isLeader && actionMember.faction_fp > 0 && (
                   <button
@@ -953,7 +946,7 @@ export function FactionManageClient({
                     disabled={performingAction}
                     className="px-2.5 py-1.5 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-800/40 text-blue-300 rounded text-xs font-medium"
                   >
-                    Iartă FP ({actionMember.faction_fp})
+                    {t(locale, "interface.clear_fp")}{actionMember.faction_fp})
                   </button>
                 )}
 
@@ -962,8 +955,7 @@ export function FactionManageClient({
                   disabled={performingAction}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-medium"
                 >
-                  Setează Rang
-                </button>
+                  {t(locale, "interface.set_rank")}</button>
               </div>
 
               <div className="pt-2 border-t border-surface-border flex items-center justify-between gap-2">
@@ -972,15 +964,13 @@ export function FactionManageClient({
                   disabled={performingAction}
                   className="flex-1 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] rounded text-xs font-medium"
                 >
-                  Exclude Curat (Fără FP)
-                </button>
+                  {t(locale, "interface.kick_without_fp")}</button>
                 <button
                   onClick={() => handleMemberAction("faction_kick_fp")}
                   disabled={performingAction}
                   className="flex-1 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 rounded text-xs font-medium"
                 >
-                  Exclude cu 10 FP
-                </button>
+                  {t(locale, "interface.kick_with_10_fp")}</button>
               </div>
             </div>
           </div>
@@ -994,7 +984,7 @@ export function FactionManageClient({
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#F2EFE8]">
-                  Procesează Demisie #{selectedResignation.id}
+                  {t(locale, "interface.process_resignation")}{selectedResignation.id}
                 </span>
                 <PlayerIdentity {...identityFor(selectedResignation.member_username)} factionId={slug} size="sm" />
               </div>
@@ -1008,17 +998,17 @@ export function FactionManageClient({
 
             <div className="space-y-3 text-xs">
               <div className="p-2.5 bg-[#101012] border border-surface-border rounded">
-                <span className="text-[11px] text-[#8F8B83] block">Motiv Aplicant:</span>
+                <span className="text-[11px] text-[#8F8B83] block">{t(locale, "interface.applicant_s_reason")}</span>
                 <p className="text-[#F2EFE8] mt-0.5">{selectedResignation.reason || "Fără motiv specificat"}</p>
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#8F8B83] mb-1">Notă / Motiv Răspuns</label>
+                <label className="block text-[11px] text-[#8F8B83] mb-1">{t(locale, "interface.note_response_reason")}</label>
                 <input
                   type="text"
                   value={resignationReason}
                   onChange={(e) => setResignationReason(e.target.value)}
-                  placeholder="Introdu un comentariu opțional..."
+                  placeholder={t(locale, "interface.enter_an_optional_comment")}
                   className="w-full px-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8]"
                 />
               </div>
@@ -1033,8 +1023,7 @@ export function FactionManageClient({
                 disabled={handlingResignation}
                 className="px-3 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] rounded text-xs font-medium"
               >
-                Respinge Demisia
-              </button>
+                {t(locale, "interface.reject_resignation")}</button>
               <button
                 onClick={() => {
                   setResignationAction("accept_fp");
@@ -1043,8 +1032,7 @@ export function FactionManageClient({
                 disabled={handlingResignation}
                 className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 rounded text-xs font-medium"
               >
-                Acceptă cu FP (10 FP)
-              </button>
+                {t(locale, "interface.accept_with_fp_10_fp")}</button>
               <button
                 onClick={() => {
                   setResignationAction("accept");
@@ -1053,8 +1041,7 @@ export function FactionManageClient({
                 disabled={handlingResignation}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-medium"
               >
-                Acceptă Curat
-              </button>
+                {t(locale, "interface.accept_without_fp")}</button>
             </div>
           </div>
         </div>

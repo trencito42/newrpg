@@ -1,14 +1,10 @@
 -- ============================================================
---  sunset_quests — canonical quest/progression service
---  DOMAIN_OWNERSHIP: owns character_quests. Other resources emit
---  gameplay events; this service advances quests and grants
---  rewards atomically through sunset_core (never writes money).
+--  sunset_quests — Canonical Quest & Progression Service
+--  RACKET RPG — Server-Authoritative Multi-Track Progression
 -- ============================================================
 
 -- In-memory active-quest cache per character: [charId] = { [questKey] = row }
 local Cache = {}
-
-local function decodeProgress(row) return row end
 
 local function loadCharacterQuests(charId)
     local rows = MySQL.query.await(
@@ -25,36 +21,45 @@ local function getQuestState(charId, questKey)
     return map[questKey]
 end
 
-local function chainUnlocked(charId, chain)
+local function chainUnlocked(charId, chain, charLevel)
+    charLevel = tonumber(charLevel) or 1
+
+    -- Level Gate
+    if chain.minCharacterLevel and charLevel < chain.minCharacterLevel then
+        return false
+    end
+
+    -- Required Chain Gate
     if not chain.requiresChain then return true end
     local req = Sunset.QuestChains[chain.requiresChain]
     if not req then return true end
-    -- required chain complete when all its quests are claimed/complete
+
     local map = Cache[charId] or loadCharacterQuests(charId)
     for _, q in ipairs(req.quests or {}) do
         local st = map[q.key]
-        if not st or st.status ~= 'claimed' then return false end
+        if not st or (st.status ~= 'claimed' and st.status ~= 'complete') then
+            return false
+        end
     end
     return true
 end
 
--- Start (activate) the next available quest in an unlocked, enabled chain.
-local function ensureActiveQuest(charId)
+-- Start (activate) the next available quest in all unlocked, enabled chains.
+local function ensureActiveQuests(charId, charLevel)
     local map = Cache[charId] or loadCharacterQuests(charId)
-    -- Build ordered list of enabled chains
     local chains = {}
     for key, chain in pairs(Sunset.QuestChains) do
         if chain.enabled then chains[#chains + 1] = { key = key, chain = chain } end
     end
     table.sort(chains, function(a, b) return (a.chain.order or 99) < (b.chain.order or 99) end)
 
+    local activatedCount = 0
     for _, entry in ipairs(chains) do
         local chain = entry.chain
-        if chainUnlocked(charId, chain) then
+        if chainUnlocked(charId, chain, charLevel) then
             for _, quest in ipairs(chain.quests or {}) do
                 local st = map[quest.key]
                 if not st then
-                    -- not started: activate it
                     local target = (quest.objectives and quest.objectives[1] and quest.objectives[1].target) or 1
                     MySQL.insert.await([[
                         INSERT INTO character_quests (character_id, quest_key, chain_key, stage, progress, target, status)
@@ -62,18 +67,94 @@ local function ensureActiveQuest(charId)
                     ]], { charId, quest.key, entry.key, target })
                     map[quest.key] = { quest_key = quest.key, chain_key = entry.key, stage = 0,
                         progress = 0, target = target, status = 'active' }
-                    return quest.key
+                    activatedCount = activatedCount + 1
+                    break -- only one active quest per chain at a time
                 elseif st.status == 'active' then
-                    return quest.key -- already in progress
+                    break -- already active in this chain
                 end
-                -- if claimed, continue to next quest in chain
             end
         end
     end
-    return nil
+    return activatedCount
 end
 
--- Public API ---------------------------------------------------
+-- ============================================================
+--  Idempotent Character Progression Reconciliation
+--  Prevents veteran players from being stuck behind tutorial quests.
+-- ============================================================
+local function reconcileExistingProgress(source, char)
+    if not char or not char.id then return end
+    local charId = tonumber(char.id)
+    local level = tonumber(char.level) or 1
+    local map = Cache[charId] or loadCharacterQuests(charId)
+
+    local function markCompleteIfSatisfied(questKey, chainKey, isSatisfied)
+        if not isSatisfied then return end
+        local st = map[questKey]
+        if not st then
+            local def = Sunset.QuestIndex[questKey]
+            local target = def and def.quest.objectives and def.quest.objectives[1] and def.quest.objectives[1].target or 1
+            MySQL.insert.await([[
+                INSERT INTO character_quests (character_id, quest_key, chain_key, stage, progress, target, status, completed_at, claimed_at)
+                VALUES (?, ?, ?, 0, ?, ?, 'claimed', NOW(), NOW())
+            ]], { charId, questKey, chainKey, target, target })
+            map[questKey] = { quest_key = questKey, chain_key = chainKey, stage = 0, progress = target, target = target, status = 'claimed' }
+        elseif st.status == 'active' then
+            st.progress = st.target
+            st.status = 'complete'
+            MySQL.update.await("UPDATE character_quests SET progress = target, status = 'complete', completed_at = NOW() WHERE character_id = ? AND quest_key = ?", { charId, questKey })
+        end
+    end
+
+    -- 1. Check Driver License
+    local hasDriverLicense = false
+    if GetResourceState('sunset_licenses') == 'started' then
+        local lics = exports.sunset_licenses:GetLicenses(source)
+        if type(lics) == 'table' then
+            for _, l in ipairs(lics) do
+                if l.valid and l.license_type == 'driver' then hasDriverLicense = true break end
+            end
+        end
+    end
+    if hasDriverLicense then
+        markCompleteIfSatisfied('onb_orientation', 'onboarding', true)
+        markCompleteIfSatisfied('onb_store_supplies', 'onboarding', true)
+        markCompleteIfSatisfied('onb_banking_atm', 'onboarding', true)
+        markCompleteIfSatisfied('onb_jobcenter', 'onboarding', true)
+        markCompleteIfSatisfied('drv_license', 'driving', true)
+    end
+
+    -- 2. Check Owned Vehicles
+    local hasVehicle = MySQL.scalar.await('SELECT 1 FROM vehicles WHERE character_id = ? LIMIT 1', { charId }) ~= nil
+    if hasVehicle then
+        markCompleteIfSatisfied('drv_first_car', 'first_car', true)
+        markCompleteIfSatisfied('drv_rental_drive', 'driving', true)
+    end
+
+    -- 3. Check Character Level
+    if level >= 10 then
+        markCompleteIfSatisfied('life_reach_level10', 'building_life', true)
+    end
+
+    -- 4. Check Clan Membership
+    local hasClan = false
+    if GetResourceState('sunset_clans') == 'started' then
+        local mem = exports.sunset_clans:GetPlayerClan(source)
+        if mem and mem.clan_id then hasClan = true end
+    end
+    if hasClan then
+        markCompleteIfSatisfied('cln_join', 'clan', true)
+    end
+
+    -- 5. Check Faction
+    if char.metadata and char.metadata.faction and char.metadata.faction ~= '' and char.metadata.faction ~= 'none' then
+        markCompleteIfSatisfied('fac_join', 'social', true)
+    end
+end
+
+-- ============================================================
+--  Public API
+-- ============================================================
 
 function StartQuest(source, questKey)
     local char = exports.sunset_core:GetCharacter(source)
@@ -81,14 +162,12 @@ function StartQuest(source, questKey)
     local def = Sunset.QuestIndex[questKey]
     if not def or not def.chain.enabled then return false, { localeKey = 'quests.message.unknown_quest' } end
     local existing = getQuestState(char.id, questKey)
-    if existing then return true end -- idempotent
-    ensureActiveQuest(char.id)
+    if existing then return true end
+    ensureActiveQuests(char.id, char.level)
     return true
 end
 exports('StartQuest', StartQuest)
 
--- Advance progress for an event type. Called by internal event wiring below
--- AND available to other resources via the AddProgress export.
 function AddProgress(source, eventType, amount, context)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return false end
@@ -102,8 +181,12 @@ function AddProgress(source, eventType, amount, context)
             local def = Sunset.QuestIndex[questKey]
             local obj = def and def.quest.objectives and def.quest.objectives[1]
             if obj and obj.type == eventType then
-                -- optional sub-filter (e.g. license type)
-                if (not obj.license or obj.license == context.license) then
+                -- Check matching parameters (e.g. license type, jobId)
+                local match = true
+                if obj.license and obj.license ~= context.license then match = false end
+                if obj.jobId and obj.jobId ~= context.jobId then match = false end
+
+                if match then
                     local newProgress = math.min(st.target, (st.progress or 0) + amount)
                     if newProgress ~= st.progress then
                         st.progress = newProgress
@@ -130,9 +213,7 @@ function AddProgress(source, eventType, amount, context)
     end
 
     if not advanced then
-        -- Make sure a quest is active so progress isn't silently dropped on
-        -- a freshly-loaded character whose first quest wasn't created yet.
-        ensureActiveQuest(char.id)
+        ensureActiveQuests(char.id, char.level)
     end
     return advanced
 end
@@ -155,14 +236,16 @@ function GetProgress(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return {} end
     local map = Cache[char.id] or loadCharacterQuests(char.id)
-    ensureActiveQuest(char.id)
+    ensureActiveQuests(char.id, char.level)
     map = Cache[char.id] or {}
     local out = {}
+
     for questKey, st in pairs(map) do
         local def = Sunset.QuestIndex[questKey]
         out[#out + 1] = {
             questKey = questKey,
             chainKey = st.chain_key,
+            category = def and def.category or 'main',
             chainLabel = def and exports.sunset_core:TFor(source, def.chain.labelKey) or st.chain_key,
             label = def and exports.sunset_core:TFor(source, def.quest.labelKey) or questKey,
             description = def and exports.sunset_core:TFor(source, def.quest.descriptionKey) or '',
@@ -174,6 +257,7 @@ function GetProgress(source)
             reward = def and def.quest.reward or nil,
         }
     end
+
     table.sort(out, function(a, b)
         if a.status == b.status then return a.questKey < b.questKey end
         local rank = { active = 1, complete = 2, claimed = 3 }
@@ -183,7 +267,6 @@ function GetProgress(source)
 end
 exports('GetProgress', GetProgress)
 
--- Claim reward atomically through core (INVARIANT M2: money via API + ledger).
 function ClaimReward(source, questKey)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return false, { localeKey = 'quests.message.no_character' } end
@@ -195,7 +278,7 @@ function ClaimReward(source, questKey)
     local def = Sunset.QuestIndex[questKey]
     local reward = def and def.quest.reward or {}
 
-    -- Mark claimed FIRST (guarded) so concurrent claims can't double-pay.
+    -- Guard against concurrent claims
     local changed = MySQL.update.await(
         "UPDATE character_quests SET status = 'claimed', claimed_at = NOW() WHERE character_id = ? AND quest_key = ? AND status = 'complete'",
         { char.id, questKey })
@@ -205,7 +288,6 @@ function ClaimReward(source, questKey)
     st.status = 'claimed'
 
     if reward.money and reward.money > 0 then
-        -- [JOBS AUDIT] the quest was marked claimed before the payout; a failed credit destroyed the reward. Roll back.
         if not exports.sunset_core:AddMoney(source, 'bank', reward.money, reward.reason or ('quest_' .. questKey)) then
             MySQL.update.await("UPDATE character_quests SET status = 'complete', claimed_at = NULL WHERE character_id = ? AND quest_key = ? AND status = 'claimed'", { char.id, questKey })
             st.status = 'complete'
@@ -219,8 +301,7 @@ function ClaimReward(source, questKey)
         pcall(function() exports.sunset_core:AddRespectPoints(source, reward.rp) end)
     end
 
-    -- Unlock the next quest in the chain / next chain.
-    ensureActiveQuest(char.id)
+    ensureActiveQuests(char.id, char.level)
     if def and def.quest.unlocksChain then
         local unlocked = Sunset.QuestChains[def.quest.unlocksChain]
         local label = unlocked and exports.sunset_core:TFor(source, unlocked.labelKey) or def.quest.unlocksChain
@@ -247,15 +328,13 @@ end)
 
 -- Lifecycle ----------------------------------------------------
 AddEventHandler('sunset:server:characterSelected', function(source, characterId)
-    local charId = tonumber(characterId)
-    if not charId then
-        local char = exports.sunset_core:GetCharacter(source)
-        charId = char and char.id
-    end
+    local char = exports.sunset_core:GetCharacter(source)
+    local charId = char and tonumber(char.id) or tonumber(characterId)
     if not charId then return end
-    Cache[charId] = nil -- force reload
+    Cache[charId] = nil
     loadCharacterQuests(charId)
-    ensureActiveQuest(charId)
+    reconcileExistingProgress(source, char)
+    ensureActiveQuests(charId, char and char.level or 1)
 end)
 
 AddEventHandler('playerDropped', function()
@@ -264,8 +343,7 @@ AddEventHandler('playerDropped', function()
 end)
 
 -- ============================================================
---  Event wiring: translate gameplay events into quest progress.
---  Each is guarded so a missing dependency never errors.
+--  Event Wiring Bridge
 -- ============================================================
 local function progressSource(src, eventType, amount, ctx)
     if not src or src == 0 then return end
@@ -273,18 +351,16 @@ local function progressSource(src, eventType, amount, ctx)
 end
 
 AddEventHandler('sunset:quest:progress', function(charId, eventType, amount, ctx)
-    -- charId-based emitter (systems that know charId but not source)
     charId = tonumber(charId)
     if not charId then return end
-    -- find online source for charId
     for _, pid in ipairs(GetPlayers()) do
         local s = tonumber(pid)
         local c = exports.sunset_core:GetCharacter(s)
-        if c and c.id == charId then
+        if c and tonumber(c.id) == charId then
             progressSource(s, eventType, amount, ctx)
             return
         end
     end
 end)
 
-print('^2[sunset_quests]^7 quest service online')
+print('^2[sunset_quests]^7 Racket RPG Canonical Progression Service Online')

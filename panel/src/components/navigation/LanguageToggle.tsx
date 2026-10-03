@@ -4,6 +4,8 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LOCALE_COOKIE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
+
 
 export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }) {
   const router = useRouter();
@@ -26,9 +28,7 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
         disabled={isPending}
         className={cn(
           "px-2 py-0.5 rounded-sm text-[10px] font-extrabold tracking-[0.04em] transition-colors",
-          currentLocale === "en"
-            ? "bg-brand text-[#08080A]"
-            : "text-[#8F8B83] hover:text-[#F2EFE8]"
+          t(currentLocale, "copy.components_navigation_languagetoggle.bg_brand_text_08080a")
         )}
       >
         EN
@@ -38,9 +38,7 @@ export function LanguageToggle({ currentLocale }: { currentLocale: "en" | "ro" }
         disabled={isPending}
         className={cn(
           "px-2 py-0.5 rounded-sm text-[10px] font-extrabold tracking-[0.04em] transition-colors",
-          currentLocale === "ro"
-            ? "bg-brand text-[#08080A]"
-            : "text-[#8F8B83] hover:text-[#F2EFE8]"
+          t(currentLocale, "copy.components_navigation_languagetoggle.text_8f8b83_hover_text_f2efe8")
         )}
       >
         RO

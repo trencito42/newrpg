@@ -164,22 +164,22 @@ export default async function AccountPage() {
             {characters.length > 0 ? (
               <div className="space-y-2 text-[#B4AFA4]">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#8F8B83]">Player</span>
+                  <span className="text-[#8F8B83]">{t(locale, "copy.app_clans_id_manage_clanmanageclient.player")}</span>
                   <PlayerName name={session.username} factionId={characters[0].faction_id}
                     clanTag={characters[0].clan_tag} clanColor={characters[0].clan_tag_color}
                     clanTagStyle={characters[0].clan_tag_style} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#8F8B83]">Level</span>
+                  <span className="text-[#8F8B83]">{t(locale, "common.level")}</span>
                   <span className="font-mono text-[#F2EFE8]">{characters[0].level}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#8F8B83]">Job</span>
+                  <span className="text-[#8F8B83]">{t(locale, "interface.job")}</span>
                   <span className="capitalize text-[#F2EFE8]">{characters[0].job?.replace(/_/g, " ") || "-"}</span>
                 </div>
               </div>
             ) : (
-              <p className="text-[#8F8B83]">No character profile linked.</p>
+              <p className="text-[#8F8B83]">{t(locale, "interface.no_character_profile_linked")}</p>
             )}
           </div>
 
@@ -188,28 +188,27 @@ export default async function AccountPage() {
               href={`/players/${encodeURIComponent(session.username)}`}
               className="inline-flex items-center justify-center w-full px-3 py-1.5 bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] font-semibold rounded text-xs transition-colors"
             >
-              View Public Profile
-            </Link>
+              {t(locale, "interface.view_public_profile")}</Link>
           </div>
         </div>
 
         {characters.length > 1 && (
           <div className="md:col-span-2 space-y-2 text-xs">
-            <h2 className="font-semibold text-[#F2EFE8]">{locale === "ro" ? "Personaje" : "Characters"}</h2>
+            <h2 className="font-semibold text-[#F2EFE8]">{t(locale, "account.characters")}</h2>
             <div className="divide-y divide-surface-border">
               {characters.map((character) => {
                 const name = `${character.firstname} ${character.lastname || ""}`.trim();
                 const selected = character.id === session.selectedCharacterId;
                 return (
                   <div key={character.id} className="flex items-center justify-between py-2 gap-3">
-                    <span className="text-[#F2EFE8]">{name} <span className="text-[#99958E]">· {locale === "ro" ? "Nivel" : "Level"} {character.level}</span></span>
+                    <span className="text-[#F2EFE8]">{name} <span className="text-[#99958E]">· {t(locale, "common.level")} {character.level}</span></span>
                     {selected ? (
-                      <span className="text-[#99958E]">{locale === "ro" ? "Activ" : "Active"}</span>
+                      <span className="text-[#99958E]">{t(locale, "common.active")}</span>
                     ) : (
                       <form action="/api/auth/switch-character" method="post">
                         <input type="hidden" name="characterId" value={character.id} />
-                        <button type="submit" aria-label={`${locale === "ro" ? "Selectează" : "Select"} ${name}`} className="text-[#F2EFE8] underline-offset-2 hover:underline">
-                          {locale === "ro" ? "Selectează" : "Select"}
+                        <button type="submit" aria-label={`${t(locale, "copy.app_account_page.select")} ${name}`} className="text-[#F2EFE8] underline-offset-2 hover:underline">
+                          {t(locale, "copy.app_account_page.select")}
                         </button>
                       </form>
                     )}
@@ -226,8 +225,7 @@ export default async function AccountPage() {
             <span>{t(locale, "account.active_sessions")}</span>
             <form action={revokeOtherSessions}>
               <Button size="sm" variant="destructive" type="submit">
-                Logout Others
-              </Button>
+                {t(locale, "interface.log_out_other_sessions")}</Button>
             </form>
           </div>
 
@@ -240,7 +238,7 @@ export default async function AccountPage() {
                 </div>
                 <div className="text-right">
                   {sess.is_current ? (
-                    <span className="text-emerald-400 font-medium text-[11px]">Current</span>
+                    <span className="text-emerald-400 font-medium text-[11px]">{t(locale, "interface.current")}</span>
                   ) : (
                     <span className="text-[#8F8B83] font-mono text-[11px]">{formatDate(sess.last_active_at, locale)}</span>
                   )}

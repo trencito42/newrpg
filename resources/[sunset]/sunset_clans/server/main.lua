@@ -273,7 +273,12 @@ local function dashboardPayload(source, row, cid)
         turfs = row and (tonumber(MySQL.scalar.await(
             'SELECT COUNT(*) FROM turfs WHERE owner_clan_id = ?', { row.clan_id })) or 0) or 0,
         memberCount = row and clanMemberCount(row.clan_id) or 0,
-        maxMembers = row and (row.max_members or SunsetClans.MaxMembers) or SunsetClans.MaxMembers,
+        maxMembers = row and (row.max_members or SunsetClans.BaseSlots or 10) or (SunsetClans.BaseSlots or 10),
+        expiresAt = row and row.expires_at or nil,
+        status = row and row.status or 'active',
+        slotTiers = SunsetClans.SlotTiers,
+        renewalCash = SunsetClans.RenewalCash or 250000,
+        renewalPP = SunsetClans.RenewalPP or 500,
         members = row and buildRoster(row.clan_id, labels) or {},
         leader = row and isLeader(row, cid) or false,
         officer = row and isOfficer(row, cid) or false,
@@ -295,6 +300,7 @@ local function dashboardPayload(source, row, cid)
             rankLabels = row and isLeader(row, cid) or false,
             warn = row and isOfficer(row, cid) or false,
             dissolve = row and isLeader(row, cid) or false,
+            store = row and isLeader(row, cid) or false,
             leave = row ~= nil,
         },
     }
@@ -539,9 +545,9 @@ ClanCreateImpl = function(source, payload)
     local clanId
     local insertOk, insertErr = pcall(function()
         clanId = MySQL.insert.await([[
-            INSERT INTO clans (name, tag, description, tag_color, tag_style, owner_character_id, max_members)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ]], { name, tag, description, tagColor, tagStyle, cid, SunsetClans.MaxMembers })
+            INSERT INTO clans (name, tag, description, tag_color, tag_style, owner_character_id, max_members, expires_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY), 'active')
+        ]], { name, tag, description, tagColor, tagStyle, cid, SunsetClans.BaseSlots or 10, SunsetClans.LifetimeDays or 30 })
     end)
     if not insertOk or not clanId then
         refundCoins()
@@ -862,6 +868,85 @@ local function handleClanManage(source, payload)
         print(('^2[sunset_clans]^7 dissolve ok src=%s cid=%s clan=%s members=%d'):format(
             tostring(source), tostring(cid), tostring(clanId), #members))
         return dashboardPayload(source, nil, cid)
+    end
+
+    if action == 'extendLifetime' then
+        if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
+        local currency = tostring(payload.currency or 'cash'):lower()
+        if currency == 'pp' or currency == 'points' then
+            local cost = SunsetClans.RenewalPP or 500
+            local paid, payErr = spendCoins(source, cost)
+            if not paid then return nil, payErr end
+        else
+            local cost = SunsetClans.RenewalCash or 250000
+            local money = exports.sunset_core:GetMoney(source, 'cash') or 0
+            if money < cost then
+                return nil, { localeKey = 'economy.message.not_enough_cash' }
+            end
+            local ok = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_extend_lifetime')
+            if not ok then return nil, { localeKey = 'economy.message.not_enough_cash' } end
+        end
+
+        local days = SunsetClans.LifetimeDays or 30
+        MySQL.update.await([[
+            UPDATE clans 
+            SET expires_at = DATE_ADD(GREATEST(COALESCE(expires_at, NOW()), NOW()), INTERVAL ? DAY),
+                status = 'active'
+            WHERE id = ?
+        ]], { days, row.clan_id })
+
+        safeAudit(row.clan_id, cid, 'extend_lifetime', { currency = currency, days = days })
+        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.extended_clan_lifetime', params = { days = days } })
+        TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'lifetime_extension' })
+        syncClanMembers(row.clan_id)
+        notify(source, ('Ai prelungit durata clanului cu %d zile!'):format(days), 'success')
+        return clanManageDashboard(source, cid)
+    end
+
+    if action == 'upgradeSlots' then
+        if not row or not isLeader(row, cid) then return nil, { localeKey = 'clans.message.only_the_clan_leader_can_change_clan_settings' } end
+        local targetSlots = tonumber(payload.targetSlots or payload.slots)
+        if not targetSlots then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
+        local currentMax = tonumber(row.max_members) or (SunsetClans.BaseSlots or 10)
+        if targetSlots <= currentMax then
+            return nil, { localeKey = 'clans.message.invalid_clan_action' }
+        end
+
+        local tierMeta
+        for _, t in ipairs(SunsetClans.SlotTiers or {}) do
+            if t.slots == targetSlots then
+                tierMeta = t
+                break
+            end
+        end
+        if not tierMeta then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
+
+        local currency = tostring(payload.currency or 'cash'):lower()
+        if currency == 'pp' or currency == 'points' then
+            local cost = tierMeta.pp or 0
+            if cost > 0 then
+                local paid, payErr = spendCoins(source, cost)
+                if not paid then return nil, payErr end
+            end
+        else
+            local cost = tierMeta.cash or 0
+            if cost > 0 then
+                local money = exports.sunset_core:GetMoney(source, 'cash') or 0
+                if money < cost then
+                    return nil, { localeKey = 'economy.message.not_enough_cash' }
+                end
+                local ok = exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_upgrade_slots')
+                if not ok then return nil, { localeKey = 'economy.message.not_enough_cash' } end
+            end
+        end
+
+        MySQL.update.await('UPDATE clans SET max_members = ? WHERE id = ?', { targetSlots, row.clan_id })
+        safeAudit(row.clan_id, cid, 'upgrade_slots', { targetSlots = targetSlots, currency = currency })
+        safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.upgraded_clan_slots', params = { slots = targetSlots } })
+        TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'slots_upgrade', targetSlots = targetSlots })
+        syncClanMembers(row.clan_id)
+        notify(source, ('Ai mărit capacitatea clanului la %d membri!'):format(targetSlots), 'success')
+        return clanManageDashboard(source, cid)
     end
 
     return nil, { localeKey = 'clans.message.unknown_clan_action' }
