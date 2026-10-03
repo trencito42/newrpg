@@ -141,6 +141,7 @@ Sunset.Shops = {
             { item = 'cigarette', price = 14 },
             { item = 'phone', price = 250, maxAmount = 1 },
             { item = 'gas_can', price = 55 },
+            { item = 'chemicals', price = 45 },
         },
     },
     ammunation = {
