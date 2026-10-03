@@ -596,3 +596,16 @@ end)
 RegisterNetEvent('sunset:ui:radarAlert', function(data)
     Send('radarAlertShow', data or {})
 end)
+
+RegisterNUICallback('changePasswordSubmit', function(data, cb)
+    data = type(data) == 'table' and data or {}
+    exports.sunset_core:TriggerCallback('sunset:auth:changePassword', function(res)
+        cb(res or { success = false, message = 'Eroare de comunicare cu serverul.' })
+    end, data.oldPassword, data.newPassword, data.confirmPassword)
+end)
+
+RegisterNUICallback('closeChangePassword', function(_, cb)
+    ReleaseFocusUnlessModal()
+    cb('ok')
+end)
+

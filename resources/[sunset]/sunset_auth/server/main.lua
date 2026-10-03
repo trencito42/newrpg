@@ -287,34 +287,26 @@ end)
 -- /changepass <oldPassword> <newPassword> <confirmPassword>
 -- ═══════════════════════════════════════════════════════════════
 RegisterCommand('changepass', function(source, args, raw)
-    if source == 0 then
-        print('[sunset_auth] /changepass cannot be run from server console.')
-        return
-    end
-
+local function processPasswordChange(source, oldPassword, newPassword, confirmPassword)
     local player = exports.sunset_core:GetPlayer(source)
     if not player or not player.account_id then
-        TriggerClientEvent('sunset:client:notify', source, 'Nu ești autentificat pe un cont valid!', 'error', 5000)
-        return
+        return { success = false, message = 'Nu ești autentificat pe un cont valid!' }
     end
 
-    local oldPassword = args[1]
-    local newPassword = args[2]
-    local confirmPassword = args[3]
+    if type(oldPassword) ~= 'string' or oldPassword == '' then
+        return { success = false, message = 'Te rugăm să introduci parola actuală a contului!' }
+    end
 
-    if not oldPassword or not newPassword or not confirmPassword then
-        TriggerClientEvent('sunset:client:notify', source, 'Folosire: /changepass <parola_veche> <parola_noua> <confirmare_parola_noua>', 'info', 7000)
-        return
+    if type(newPassword) ~= 'string' or newPassword == '' then
+        return { success = false, message = 'Te rugăm să introduci parola nouă!' }
     end
 
     if newPassword ~= confirmPassword then
-        TriggerClientEvent('sunset:client:notify', source, 'Parola nouă și confirmarea nu coincid!', 'error', 6000)
-        return
+        return { success = false, message = 'Parola nouă și confirmarea nu coincid!' }
     end
 
     if #newPassword < 6 or #newPassword > 128 then
-        TriggerClientEvent('sunset:client:notify', source, 'Parola nouă trebuie să aibă între 6 și 128 de caractere!', 'error', 6000)
-        return
+        return { success = false, message = 'Parola nouă trebuie să aibă între 6 și 128 de caractere!' }
     end
 
     local account = MySQL.single.await(
@@ -323,8 +315,7 @@ RegisterCommand('changepass', function(source, args, raw)
     )
 
     if not account then
-        TriggerClientEvent('sunset:client:notify', source, 'Contul tău nu a fost găsit în baza de date!', 'error', 5000)
-        return
+        return { success = false, message = 'Contul tău nu a fost găsit în baza de date!' }
     end
 
     local modern = type(account.password_hash) == 'string' and account.password_hash:sub(1, 8) == '$scrypt$'
@@ -332,14 +323,12 @@ RegisterCommand('changepass', function(source, args, raw)
         or Sunset.Password.Verify(oldPassword, account.password_salt, account.password_hash)
 
     if not valid then
-        TriggerClientEvent('sunset:client:notify', source, 'Parola veche introdusă este incorectă!', 'error', 6000)
-        return
+        return { success = false, message = 'Parola actuală introdusă este incorectă!' }
     end
 
     local newHash = exports.sunset_auth:HashPassword(newPassword)
     if not newHash then
-        TriggerClientEvent('sunset:client:notify', source, 'Eroare la criptarea noii parole!', 'error', 5000)
-        return
+        return { success = false, message = 'Eroare la criptarea securizată a noii parole!' }
     end
 
     MySQL.update.await('UPDATE accounts SET password_hash = ?, password_salt = ? WHERE id = ?', {
@@ -349,6 +338,25 @@ RegisterCommand('changepass', function(source, args, raw)
     -- Invalidate existing quick tokens
     MySQL.update.await('DELETE FROM auth_quick_tokens WHERE account_id = ?', { account.id })
 
-    TriggerClientEvent('sunset:client:notify', source, 'Parola contului tău a fost schimbată cu succes!', 'success', 6000)
+    return { success = true, message = 'Parola contului tău a fost schimbată cu succes!' }
+end
+
+exports.sunset_core:RegisterCallback('sunset:auth:changePassword', function(source, oldPassword, newPassword, confirmPassword)
+    return processPasswordChange(source, oldPassword, newPassword, confirmPassword)
+end)
+
+RegisterCommand('changepass', function(source, args)
+    if source == 0 then
+        print('[sunset_auth] /changepass cannot be run from server console.')
+        return
+    end
+
+    if #args >= 3 then
+        local res = processPasswordChange(source, args[1], args[2], args[3])
+        TriggerClientEvent('sunset:client:notify', source, res.message, res.success and 'success' or 'error', 6000)
+    else
+        TriggerClientEvent('sunset:auth:openChangePassUI', source)
+    end
 end, false)
+
 

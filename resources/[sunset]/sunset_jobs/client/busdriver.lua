@@ -260,19 +260,33 @@ function Sunset.Jobs.StartBusDriver()
                                 if IsControlJustPressed(0, 38) then
                                     isBoardingActive = true
                                     
+                                    -- Protect driver against being dragged out
+                                    SetPedCanBeDraggedOut(ped, false)
+                                    SetPedStayInVehicleWhenJacked(ped, true)
+                                    
                                     -- Open bus doors
                                     SetVehicleDoorOpen(bus, 0, false, false)
                                     SetVehicleDoorOpen(bus, 1, false, false)
                                     PlaySoundFrontend(-1, "Bus_Bell", "GTAO_Script_Sounds_Soundset", false)
 
-                                    -- Instruct waiting passengers to enter bus
+                                    -- Instruct waiting passengers to enter specific passenger seats (0 to max-1)
+                                    local maxSeats = math.max(1, GetVehicleMaxNumberOfPassengers(bus))
+                                    local seatAssignment = 0
+
                                     for _, p in ipairs(waitingPassengers) do
                                         if DoesEntityExist(p) then
                                             ClearPedTasksImmediately(p)
                                             FreezeEntityPosition(p, false)
                                             SetEntityInvincible(p, true)
                                             SetBlockingOfNonTemporaryEvents(p, false)
-                                            TaskEnterVehicle(p, bus, 7000, -2, 1.8, 1, 0)
+
+                                            while seatAssignment < maxSeats and not IsVehicleSeatFree(bus, seatAssignment) do
+                                                seatAssignment = seatAssignment + 1
+                                            end
+                                            local targetSeat = (seatAssignment < maxSeats) and seatAssignment or 0
+                                            seatAssignment = seatAssignment + 1
+
+                                            TaskEnterVehicle(p, bus, 8000, targetSeat, 1.8, 1, 0)
                                         end
                                     end
 

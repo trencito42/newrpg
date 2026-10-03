@@ -436,3 +436,14 @@ AddEventHandler('sunset:nui:authSavePortrait', function(data)
         bank = data and data.bank,
     })
 end)
+
+local function openChangePasswordUI()
+    if GetResourceState('sunset_ui') == 'started' then
+        exports.sunset_ui:Send('openChangePassword', { username = authenticatedUsername })
+        exports.sunset_ui:SetFocus(true, true)
+    end
+end
+
+RegisterNetEvent('sunset:auth:openChangePassUI', openChangePasswordUI)
+exports('OpenChangePassword', openChangePasswordUI)
+
