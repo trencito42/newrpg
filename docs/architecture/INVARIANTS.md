@@ -92,6 +92,18 @@ An invariant is a property that must hold at ALL times. Each has: enforcement me
 
 ## Automated verification hooks
 
+### 2026-10-03 release additions
+
+- **Identity:** account and character ownership resolve through `account_id`; a FiveM license may be shared by distinct accounts and is never an ownership key.
+- **Activity sessions:** hacking, robbery, drug harvest/process/sale, carjack, crafting and contact missions grant value only after a server-created, timed, one-shot state transition.
+- **Crafting:** the server issues the pending recipe token, enforces station/access/material/capacity checks and consumes the token before inventory mutation.
+- **Faction access:** `sunset_quests.CanAccess` is the in-game authority for faction entry. Panel submission and leader acceptance use the shared panel progression helper; only admin level 3+ may bypass it.
+- **Casino ownership:** `sunset_casino` owns hub/cashier/bar only. Blackjack, roulette, slots and lucky wheel callbacks belong exclusively to their dedicated resources and share the casino RNG module.
+- **Production config:** dev thumbnail tooling and its unsafe child-process permission stay disabled; `sunset_needs` stays disabled until the survival state has visible HUD feedback.
+
 - `scripts/audit-static.ps1`: manifest refs, dual-side commands, secret scan. **Run after every structural change.**
+- `scripts/test-auth-identity.js`: prevents license ownership fallback.
+- `scripts/test-critical-authority.js`: locks the critical server-authority boundaries.
+- `scripts/test-prelaunch-invariants.js`: locks progression, crafting, casino ownership, mission, brand and production-config decisions.
 - luaparse / node --check sweeps (temp harness documented in `docs/audit/AUDIT_STATE.md`).
 - Planned (`docs/testing/REGRESSION_MATRIX.md`): direct-DB-write detector outside whitelisted owners; callback registry completeness (JS fetch names vs bridge forwards); invariant SQL queries (negative balances, duplicate plates, orphan FKs) runnable against live DB.

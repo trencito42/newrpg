@@ -43,3 +43,4 @@ Each linked report has a specific checklist. Minimum smoke set before deploy:
 login -> spawn -> M menu -> /properties -> one Courier route (destroy van mid-route, verify no reward) ->
 one Trucker route -> casino blackjack/roulette bet -> death/respawn -> restart sunset_jobs and sunset_ui while
 a job is active (no stuck focus/HUD card/entities) -> EN/RO switch -> 1280x720 and 3440x1440 overflow check.
+> **HISTORICAL — DO NOT USE AS CURRENT IMPLEMENTATION SPEC.** This report predates the 2026-10-03 hardening pass. Use `PRELAUNCH_AUDIT_2026-10-03.md` for launch decisions.

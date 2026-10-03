@@ -60,3 +60,4 @@ The RPG is a playable MVP, not a feature-complete SA:MP-style RPG. Police, dispa
 4. Test Police backup, dispatch accept/complete, wanted/arrest/jail reconnect and early respawn rejection.
 5. Store a personally owned driven vehicle; reject a remote plate and confirm engine/body damage persists.
 6. Open M, inspect every tab and the Statistics action at 16:9 and a narrower resolution.
+> **HISTORICAL — DO NOT USE AS CURRENT IMPLEMENTATION SPEC.** This report is retained as audit history. The current release state is `docs/release/PRELAUNCH_AUDIT_2026-10-03.md`.

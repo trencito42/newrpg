@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Identity & characters | **sunset_core** (auth handshake in sunset_auth) | `GetPlayer`, `GetCharacter`, `CompleteAuthentication`, char CRUD callbacks | accounts, players, characters |
 | Money & ledger | **sunset_core** | `AddMoney`, `RemoveMoney`, `MoveMoney`, `TransferMoney`, `GetMoney`, `RefreshMoney`, `LogMoneyTransaction`, `GetMoneyHistory` | characters.cash/bank, money_transactions |
-| Premium currency | **sunset_core** | `AddBlazePoints`, `SpendBlazePoints`, `RefreshBlazePoints` | accounts.premium_points |
+| Premium currency (Racket Credits) | **sunset_core** | legacy-compatible `AddBlazePoints`, `SpendBlazePoints`, `RefreshBlazePoints` | accounts.premium_points |
 | Progression (XP/RP/level) | **sunset_core** | `AddXP`, `AddRespectPoints`, `buyLevel` callback, `SetPersistentStat` | characters.level/xp/respect_points, (payday_runs written by economy inside its txn) |
 | Inventory & item metadata | **sunset_inventory** | `AddItem`, `RemoveItem`, `HasItem`, `UseItem`, `SetItemMetadata`, `CountItem`, `GetInventory`, `ReloadInventory`, containers via callbacks | character_inventory, container_inventory |
 | Jobs & job progression | **sunset_jobs** | `HireCivilianJob`, job session callbacks, `SunsetJobs_PayReward` (internal), `ExecutePlayerCommand` | job_progress |
@@ -22,7 +22,9 @@
 | Licenses | **sunset_licenses** | `HasLicense`, `GrantLicense`, exam callbacks; hosts weaponDamageEvent gate | licenses, lssi_exam_reviews |
 | Dispatch & emergency calls | **sunset_dispatch** | `CreateCall`, `CancelCall`, `CompleteCall`, `GetPlayerActiveCall` (rehydrates from DB — reference implementation) | service_calls |
 | Death/downed state | **sunset_death** | `IsPlayerDowned`, `RevivePlayer`, `RespawnPlayer`, `ClearDownedForCustody`; events `sunset:death:playerDowned`, `sunset:death:recordAttacker` | (none — transient by design) |
-| Gameplay sessions | **per-system today; target: shared framework (see GAMEPLAY_SESSIONS.md)** | robbery = good reference; jobs/taxi/dice/turfs = ad-hoc | robbery none (in-mem), taxi_rides log |
+| Gameplay sessions | **per-system** | server-owned state/tokens in robbery, hacking, drugs, carjack, crafting, missions and casino games | transient unless the domain table is listed |
+| Casino hub | **sunset_casino** | cashier, bar, open/status | none |
+| Casino games | **sunset_blackjack**, **sunset_roulette**, **sunset_slots**, **sunset_luckywheel** | one callback owner per game; shared RNG module | game-specific transient/log state |
 | UI focus & modals | **sunset_ui** | `Show`, `Hide`, `Send`, `SetFocus(hasFocus, hasCursor, keepInput, owner)`, `GetFocusOwner`, `ReleaseFocusUnlessModal`, `Notify`, `ProgressBar`; bridge events `sunset:nui:*`, `sunset:nui:modalSuperseded` | (hud layout JSON via SaveResourceFile, admin-gated) |
 | Admin & permissions | **sunset_admin** | `IsAdmin(src, level)`, `GetAdminLevel`, ban enforcement at connect | admins, bans, admin_checkpoints, admin_stat_audit |
 | Chat & command routing | **sunset_chat** | `sunset:chat:runCommand` → router → `ExecutePlayerCommand` exports | — |
@@ -33,13 +35,11 @@
 
 ## Known ownership violations (remediation backlog)
 
-1. **carjack → job_progress** (`sunset_carjack/server/main.lua` getLockpickLevel/addLockpickXP): writes `job_progress` directly with its own level curve.
-   *Remediation:* add `exports.sunset_jobs:AddJobProgress(source, 'lockpicking', xp, tasks, earned)` (already exists for fisherman) and delete the local SQL. LOW risk, do in Phase 3 repairs.
-2. **Direct `characters.cash/bank` writes inside feature transactions** (trade, tuning, dealership, fisherman): pattern is ledger-consistent and atomic INSIDE each transaction, but bypasses the core cache until `RefreshMoney` is called (all 4 call sites do).
+1. **Direct `characters.cash/bank` writes inside feature transactions** (trade, tuning, dealership, fisherman): pattern is ledger-consistent and atomic INSIDE each transaction, but bypasses the core cache until `RefreshMoney` is called (all 4 call sites do).
    *Remediation:* extract `Sunset.Ledger.DebitInTxn(query, charId, account, amount, reason)` helper in core so the guard+ledger pattern is written once. Accepted interim state.
-3. **carjack reads dealership_vehicles for pricing**: read-only cross-domain lookup. Acceptable, but price logic should move to a shared config or dealership export. LOW.
-4. **factions duty flag writes `char.metadata.on_duty` cache only** (never persisted intentionally — duty is session state). OK as-is; documented so SaveCharacter doesn't "fix" it.
-5. **economy payday writes rob_points into metadata inside its txn** while core `SetRobPoints` uses JSON_SET: both are now DB-authoritative and SaveCharacter merges `rob_points` from DB before writing (P5-10 fix) — consistent. No action.
+2. **carjack reads dealership_vehicles for pricing**: read-only cross-domain lookup. Acceptable, but price logic should move to a shared config or dealership export. LOW.
+3. **factions duty flag writes `char.metadata.on_duty` cache only** (never persisted intentionally — duty is session state). OK as-is; documented so SaveCharacter doesn't "fix" it.
+4. **economy payday writes rob_points into metadata inside its txn** while core `SetRobPoints` uses JSON_SET: both are now DB-authoritative and SaveCharacter merges `rob_points` from DB before writing (P5-10 fix) — consistent. No action.
 
 ## Cross-domain event contracts (server-internal TriggerEvent)
 

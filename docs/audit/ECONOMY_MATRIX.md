@@ -66,3 +66,4 @@ This document maps all economic inputs (money sources) and economic drains (mone
 - **Negative Balances**: All deduction endpoints verify `currentBalance >= amount` before committing.
 - **Integer Safety**: Amounts are floored and bounded to `[1, 100,000,000]`, preventing integer overflows.
 - **Atomic Transactions**: All money operations use `ApplyMoneyOperation` with SQL `FOR UPDATE` row locks, eliminating double-spend and race conditions.
+> **HISTORICAL — DO NOT USE AS CURRENT IMPLEMENTATION SPEC.** Values and conclusions below predate the 2026-10-03 pre-launch audit. Use `docs/release/PRELAUNCH_AUDIT_2026-10-03.md` and `docs/release/ITEM_ECONOMY_MATRIX.md`.
