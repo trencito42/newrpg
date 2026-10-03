@@ -1610,6 +1610,22 @@ Sunset.Locales['en'] = {
     ['quests.entry.cln_war.label'] = 'Hold the Line',
     ['quests.entry.cln_war.description'] = 'Fight in a turf war and survive until the final scoreboard.',
     ['quests.entry.cln_war.objective'] = 'Fight in a turf war',
+
+    -- Quest UI panel strings
+    ['quests.panel.title'] = 'Quest Journal',
+    ['quests.panel.footer'] = 'RACKET RPG — QUEST JOURNAL',
+    ['quests.tab.all'] = 'ALL',
+    ['quests.tab.story'] = 'STORY',
+    ['quests.tab.careers'] = 'CAREERS',
+    ['quests.tab.criminal'] = 'CRIMINAL',
+    ['quests.tab.social'] = 'SOCIAL',
+    ['quests.tab.clans'] = 'CLANS',
+    ['quests.status.active'] = 'IN PROGRESS',
+    ['quests.status.complete'] = 'CLAIM REWARD',
+    ['quests.status.claimed'] = 'COMPLETED',
+    ['quests.btn.claim'] = 'CLAIM',
+    ['quests.empty.no_quests'] = 'No quests in this category',
+
     ['racing.message.a_race_is_already_in_progress'] = 'A race is already in progress.',
     ['racing.message.a_race_is_already_in_progress_wait_for_it'] = 'A race is already in progress. Wait for it to finish.',
     ['racing.message.could_not_load_race_status'] = 'Could not load race status.',

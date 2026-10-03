@@ -1,1 +1,526 @@
-<!-- Empty fragment -->
+<style>
+#quest-log {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    background: rgba(6, 6, 9, 0.72);
+}
+#quest-log.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+#quest-log.hidden { display: none !important; }
+
+.ql-panel {
+    width: 720px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(12, 12, 16, 0.97);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    transform: scale(0.97) translateY(12px);
+    transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+    overflow: hidden;
+}
+#quest-log.visible .ql-panel {
+    transform: scale(1) translateY(0);
+}
+
+/* HEADER */
+.ql-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 2px solid #d7b558;
+    background: rgba(215,181,88,0.04);
+    flex-shrink: 0;
+}
+.ql-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.ql-header-icon {
+    color: #d7b558;
+    width: 22px; height: 22px;
+}
+.ql-header-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ql-title {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #d7b558;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin: 0;
+    font-style: italic;
+}
+.ql-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ql-active-count {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    padding: 4px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.ql-esc-hint {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #0a0a0c;
+    background: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+.ql-esc-hint:hover { background: #e0e0e0; }
+
+/* TABS */
+.ql-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(0,0,0,0.25);
+    padding: 0 16px;
+    flex-shrink: 0;
+    overflow-x: auto;
+}
+.ql-tabs::-webkit-scrollbar { display: none; }
+.ql-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 14px 16px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ql-tab:hover { color: rgba(255,255,255,0.75); }
+.ql-tab.is-active { color: #d7b558; }
+.ql-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: #d7b558;
+    border-radius: 2px 2px 0 0;
+}
+
+/* LIST */
+.ql-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ql-list::-webkit-scrollbar { width: 4px; }
+.ql-list::-webkit-scrollbar-track { background: transparent; }
+.ql-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.ql-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+.ql-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 48px 24px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* QUEST CARD */
+.ql-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-left-width: 3px;
+    border-radius: 3px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: background 0.15s;
+}
+.ql-card:hover { background: rgba(255,255,255,0.04); }
+.ql-card[data-status="active"] { border-left-color: #d7b558; }
+.ql-card[data-status="complete"] { border-left-color: #4ade80; }
+.ql-card[data-status="claimed"] { border-left-color: rgba(255,255,255,0.15); opacity: 0.55; }
+
+.ql-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+.ql-card-info { flex: 1; min-width: 0; }
+.ql-card-chain {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 3px;
+}
+.ql-card-title {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ql-badge {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ql-badge--active { background: rgba(215,181,88,0.12); color: #d7b558; }
+.ql-badge--complete { background: rgba(74,222,128,0.12); color: #4ade80; }
+.ql-badge--claimed { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+
+.ql-desc {
+    font-family: 'Inter', 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* OBJECTIVE */
+.ql-objective {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.ql-obj-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    color: #d7b558;
+}
+.ql-card[data-status="complete"] .ql-obj-icon { color: #4ade80; }
+.ql-card[data-status="claimed"] .ql-obj-icon { color: rgba(255,255,255,0.3); }
+.ql-obj-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ql-obj-text {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 1;
+}
+.ql-obj-progress {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.6);
+    flex-shrink: 0;
+}
+
+/* PROGRESS BAR */
+.ql-progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.ql-progress-fill {
+    height: 100%;
+    background: #d7b558;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+.ql-card[data-status="complete"] .ql-progress-fill { background: #4ade80; }
+
+/* CARD BOTTOM */
+.ql-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.ql-rewards {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.ql-reward-item {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.7);
+}
+.ql-reward-item span {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    margin-left: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.ql-claim-btn {
+    background: #4ade80;
+    border: none;
+    color: #000;
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 7px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ql-claim-btn:hover { background: #22c55e; }
+.ql-claim-btn:active { transform: scale(0.97); }
+
+/* FOOTER */
+.ql-footer {
+    padding: 12px;
+    text-align: center;
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.2);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: rgba(0,0,0,0.3);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+</style>
+
+<div id="quest-log" class="hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="ql-panel">
+        <div class="ql-header">
+            <div class="ql-header-left">
+                <div class="ql-header-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <h1 class="ql-title" data-i18n="quests.panel.title">Quest Journal</h1>
+            </div>
+            <div class="ql-header-right">
+                <div class="ql-active-count" id="ql-active-count">0 ACTIVE</div>
+                <button type="button" class="ql-esc-hint" id="ql-close-btn" aria-label="Close">ESC</button>
+            </div>
+        </div>
+
+        <div class="ql-tabs" id="ql-tabs" role="tablist">
+            <button class="ql-tab is-active" data-filter="all" role="tab" aria-selected="true" data-i18n="quests.tab.all">ALL</button>
+            <button class="ql-tab" data-filter="main" role="tab" aria-selected="false" data-i18n="quests.tab.story">STORY</button>
+            <button class="ql-tab" data-filter="careers" role="tab" aria-selected="false" data-i18n="quests.tab.careers">CAREERS</button>
+            <button class="ql-tab" data-filter="criminal" role="tab" aria-selected="false" data-i18n="quests.tab.criminal">CRIMINAL</button>
+            <button class="ql-tab" data-filter="social" role="tab" aria-selected="false" data-i18n="quests.tab.social">SOCIAL</button>
+            <button class="ql-tab" data-filter="clans" role="tab" aria-selected="false" data-i18n="quests.tab.clans">CLANS</button>
+        </div>
+
+        <div class="ql-list" id="ql-list"></div>
+
+        <div class="ql-footer" data-i18n="quests.panel.footer">RACKET RPG — QUEST JOURNAL</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const el = document.getElementById('quest-log');
+    const listEl = document.getElementById('ql-list');
+    const tabsEl = document.getElementById('ql-tabs');
+    const countEl = document.getElementById('ql-active-count');
+    const closeBtn = document.getElementById('ql-close-btn');
+
+    let allQuests = [];
+    let activeFilter = 'all';
+    let renderToken = 0;
+
+    function esc(str) {
+        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatMoney(n) {
+        n = Math.floor(Number(n) || 0);
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function badgeFor(status) {
+        if (status === 'active')   return '<span class="ql-badge ql-badge--active" data-i18n="quests.status.active">IN PROGRESS</span>';
+        if (status === 'complete') return '<span class="ql-badge ql-badge--complete" data-i18n="quests.status.complete">CLAIM REWARD</span>';
+        if (status === 'claimed')  return '<span class="ql-badge ql-badge--claimed" data-i18n="quests.status.claimed">COMPLETED</span>';
+        return '';
+    }
+
+    function objIconSvg(status) {
+        if (status === 'claimed') {
+            return '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>';
+        }
+        return '<svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>';
+    }
+
+    function renderCard(q) {
+        const pct = q.target > 0 ? Math.min(100, Math.round((q.progress / q.target) * 100)) : 100;
+        const reward = q.reward || {};
+        let rewardHtml = '';
+        if (reward.money)  rewardHtml += `<div class="ql-reward-item">${esc(formatMoney(reward.money))}</div>`;
+        if (reward.xp)     rewardHtml += `<div class="ql-reward-item">${esc(reward.xp)}<span>XP</span></div>`;
+        if (reward.rp)     rewardHtml += `<div class="ql-reward-item">${esc(reward.rp)}<span>RP</span></div>`;
+
+        const claimBtn = q.status === 'complete'
+            ? `<button class="ql-claim-btn" data-quest-key="${esc(q.questKey)}" data-i18n="quests.btn.claim">CLAIM</button>`
+            : '';
+
+        return `<div class="ql-card" data-status="${esc(q.status)}" data-category="${esc(q.category)}">
+            <div class="ql-card-top">
+                <div class="ql-card-info">
+                    <div class="ql-card-chain">${esc(q.chainLabel)}</div>
+                    <h2 class="ql-card-title" title="${esc(q.label)}">${esc(q.label)}</h2>
+                </div>
+                ${badgeFor(q.status)}
+            </div>
+            ${q.description ? `<p class="ql-desc">${esc(q.description)}</p>` : ''}
+            <div class="ql-objective">
+                <div class="ql-obj-icon">${objIconSvg(q.status)}</div>
+                <span class="ql-obj-text">${esc(q.objectiveLabel || q.label)}</span>
+                <span class="ql-obj-progress">${esc(q.progress)} / ${esc(q.target)}</span>
+            </div>
+            ${q.status !== 'claimed' ? `<div class="ql-progress-track"><div class="ql-progress-fill" style="width:${pct}%"></div></div>` : ''}
+            <div class="ql-card-bottom">
+                <div class="ql-rewards">${rewardHtml}</div>
+                ${claimBtn}
+            </div>
+        </div>`;
+    }
+
+    function render() {
+        const filtered = activeFilter === 'all'
+            ? allQuests
+            : allQuests.filter(q => q.category === activeFilter);
+
+        const active = allQuests.filter(q => q.status === 'active').length;
+        countEl.textContent = active + ' ACTIVE';
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<div class="ql-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="quests.empty.no_quests">No quests in this category</span></div>';
+            if (window.i18nApply) window.i18nApply(listEl);
+            return;
+        }
+        listEl.innerHTML = filtered.map(renderCard).join('');
+        if (window.i18nApply) window.i18nApply(listEl);
+    }
+
+    function show(data) {
+        allQuests = Array.isArray(data.quests) ? data.quests : [];
+        renderToken = data.renderToken || 0;
+        activeFilter = 'all';
+        tabsEl.querySelectorAll('.ql-tab').forEach(btn => {
+            btn.classList.toggle('is-active', btn.dataset.filter === 'all');
+            btn.setAttribute('aria-selected', btn.dataset.filter === 'all' ? 'true' : 'false');
+        });
+        render();
+        el.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                el.classList.add('visible');
+                el.removeAttribute('aria-hidden');
+                // confirm to Lua that the panel rendered
+                if (window.post) window.post('questLogRendered', { renderToken: renderToken });
+            });
+        });
+    }
+
+    function hide() {
+        el.classList.remove('visible');
+        el.setAttribute('aria-hidden', 'true');
+        setTimeout(() => { el.classList.add('hidden'); }, 280);
+    }
+
+    // Tab filter
+    tabsEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.ql-tab');
+        if (!btn) return;
+        activeFilter = btn.dataset.filter;
+        tabsEl.querySelectorAll('.ql-tab').forEach(b => {
+            b.classList.toggle('is-active', b === btn);
+            b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        });
+        render();
+    });
+
+    // Claim reward
+    listEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.ql-claim-btn');
+        if (!btn) return;
+        const questKey = btn.dataset.questKey;
+        if (!questKey) return;
+        btn.disabled = true;
+        btn.textContent = '...';
+        if (window.post) window.post('questClaim', { questKey: questKey });
+    });
+
+    // Close
+    closeBtn.addEventListener('click', function() {
+        hide();
+        if (window.post) window.post('questLogClose', {});
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && el.classList.contains('visible')) {
+            hide();
+            if (window.post) window.post('questLogClose', {});
+        }
+    });
+
+    window.QuestLog = { show: show, hide: hide };
+})();
+</script>
