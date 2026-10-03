@@ -16,11 +16,26 @@ const requestSchema = z.object({
     "warn",
     "jail",
     "unjail",
+    "kick",
+    "set_cash",
+    "set_bank",
+    "set_level",
+    "set_hours",
+    "set_fp",
+    "set_premium_points",
+    "set_email",
+    "reset_password",
+    "give_item",
+    "remove_item",
+    "clear_inventory",
+    "remove_sanction",
     "set_faction",
     "set_clan",
     "staff_set_admin",
     "staff_set_helper",
     "staff_remove_role",
+    "set_admin_level",
+    "set_helper_level",
     "faction_set_member",
     "faction_set_rank",
     "faction_warn",
@@ -38,7 +53,17 @@ const requestSchema = z.object({
   targetCharacterId: z.number().int().positive().optional(),
   reason: z.string().trim().min(3).max(255),
   durationMin: z.number().int().min(1).max(43200).optional(),
-  level: z.number().int().min(0).max(6).optional(),
+  level: z.number().int().min(0).max(100).optional(),
+  amount: z.number().int().min(0).max(2000000000).optional(),
+  cash: z.number().int().min(0).max(2000000000).optional(),
+  bank: z.number().int().min(0).max(2000000000).optional(),
+  hours: z.number().int().min(0).max(100000).optional(),
+  points: z.number().int().min(0).max(1000000).optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(6).max(128).optional(),
+  item: z.string().min(1).max(64).optional(),
+  count: z.number().int().min(1).max(100000).optional(),
+  sanctionId: z.number().int().positive().optional(),
   factionId: z.string().regex(/^[a-z0-9_]{2,32}$/).nullable().optional(),
   factionGrade: z.number().int().min(0).max(20).optional(),
   clanId: z.number().int().positive().optional(),
@@ -92,7 +117,9 @@ export async function POST(req: NextRequest) {
   if (
     input.action === "staff_set_admin" ||
     input.action === "staff_set_helper" ||
-    input.action === "staff_remove_role"
+    input.action === "staff_remove_role" ||
+    input.action === "set_admin_level" ||
+    input.action === "set_helper_level"
   ) {
     if (session.adminLevel >= 6) isAuthorized = true;
   }
@@ -101,13 +128,30 @@ export async function POST(req: NextRequest) {
     if (session.adminLevel >= 1 || (session.helperLevel >= 1 && input.action.startsWith("mute"))) {
       isAuthorized = true;
     }
-  } else if (input.action === "ban" || input.action === "jail" || input.action === "unjail") {
+  } else if (input.action === "ban" || input.action === "jail" || input.action === "unjail" || input.action === "kick") {
     if (session.adminLevel >= 2) isAuthorized = true;
   } else if (input.action === "unban" || input.action === "set_faction") {
     if (session.adminLevel >= 3) isAuthorized = true;
-  } else if (input.action === "set_clan" || input.action === "faction_set_leader") {
+  } else if (
+    input.action === "set_clan" ||
+    input.action === "faction_set_leader" ||
+    input.action === "set_cash" ||
+    input.action === "set_bank" ||
+    input.action === "set_level" ||
+    input.action === "set_hours" ||
+    input.action === "set_fp" ||
+    input.action === "give_item" ||
+    input.action === "remove_item" ||
+    input.action === "clear_inventory"
+  ) {
     if (session.adminLevel >= 4) isAuthorized = true;
-  } else if (input.action === "clan_dissolve") {
+  } else if (
+    input.action === "clan_dissolve" ||
+    input.action === "set_premium_points" ||
+    input.action === "set_email" ||
+    input.action === "reset_password" ||
+    input.action === "remove_sanction"
+  ) {
     if (session.adminLevel >= 5) isAuthorized = true;
   }
   // Faction member management
@@ -115,7 +159,6 @@ export async function POST(req: NextRequest) {
     if (session.adminLevel >= 3) {
       isAuthorized = true;
     } else if (input.factionId) {
-      // Check if session user is leader or sub-leader
       const leaderRow = await getFactionAccess(session.accountId, input.factionId);
       if (leaderRow) {
         const grade = Number(leaderRow.job_grade) || 0;
@@ -217,6 +260,16 @@ export async function POST(req: NextRequest) {
   const payload = JSON.stringify({
     durationMin: input.durationMin || null,
     level: input.level !== undefined ? input.level : null,
+    amount: input.amount ?? input.cash ?? input.bank ?? null,
+    cash: input.cash ?? null,
+    bank: input.bank ?? null,
+    hours: input.hours ?? null,
+    points: input.points ?? null,
+    email: input.email ?? null,
+    password: input.password ?? null,
+    item: input.item ?? null,
+    count: input.count ?? null,
+    sanctionId: input.sanctionId ?? null,
     factionId: input.factionId ?? null,
     factionGrade: input.factionGrade ?? null,
     clanId: input.clanId ?? null,
@@ -230,7 +283,7 @@ export async function POST(req: NextRequest) {
         "SELECT COUNT(*) AS n FROM panel_action_queue WHERE actor_account_id = ? AND created_at > NOW() - INTERVAL 1 MINUTE",
         [session.accountId]
       );
-      if (Number(recent[0]?.n) >= 20) throw new Error("rate_limited");
+      if (Number(recent[0]?.n) >= 30) throw new Error("rate_limited");
 
       const [insert] = await conn.execute<import("mysql2").ResultSetHeader>(
         `INSERT INTO panel_action_queue
@@ -257,7 +310,7 @@ export async function POST(req: NextRequest) {
           `queue_${input.action}`,
           targetAccountId || 0,
           input.reason,
-          JSON.stringify({ requestId: input.requestId, queueId: insert.insertId }),
+          JSON.stringify({ requestId: input.requestId, queueId: insert.insertId, payload: JSON.parse(payload) }),
         ]
       );
 
@@ -285,51 +338,16 @@ export async function POST(req: NextRequest) {
           msgEn = `Your account has been banned. Reason: ${input.reason}`;
           msgRo = `Contul tău a fost suspendat. Motiv: ${input.reason}`;
           linkUrl = "/support/unban";
+        } else if (input.action === "kick") {
+          titleEn = "Kicked from Server";
+          titleRo = "Deconectat de pe Server (Kick)";
+          msgEn = `You were kicked from the server. Reason: ${input.reason}`;
+          msgRo = `Ai primit kick de pe server. Motiv: ${input.reason}`;
         } else if (input.action === "unban") {
           titleEn = "Account Unbanned";
           titleRo = "Cont Debanat";
           msgEn = "Your account ban has been lifted.";
           msgRo = "Suspendarea contului tău a fost revocată.";
-        } else if (input.action === "faction_set_rank" || input.action === "faction_set_member") {
-          titleEn = "Faction Rank Updated";
-          titleRo = "Grad Facțiune Modificat";
-          msgEn = `Your faction rank in ${input.factionId || "faction"} was updated to Rank ${input.factionGrade || 1}. Reason: ${input.reason}`;
-          msgRo = `Gradul tău în facțiunea ${input.factionId || "facțiune"} a fost setat la Rank ${input.factionGrade || 1}. Motiv: ${input.reason}`;
-          linkUrl = input.factionId ? `/factions/${input.factionId}` : null;
-        } else if (input.action === "faction_warn") {
-          titleEn = "Faction Warning (FW)";
-          titleRo = "Avertisment Facțiune (FW)";
-          msgEn = `You received a Faction Warning (FW) in ${input.factionId || "faction"}. Reason: ${input.reason}`;
-          msgRo = `Ai primit un Faction Warning (FW) în ${input.factionId || "facțiune"}. Motiv: ${input.reason}`;
-          linkUrl = input.factionId ? `/factions/${input.factionId}` : null;
-        } else if (input.action === "faction_kick" || input.action === "faction_kick_fp") {
-          titleEn = "Dismissed from Faction";
-          titleRo = "Demis din Facțiune";
-          msgEn = `You were dismissed from ${input.factionId || "faction"}${input.fp ? ` with ${input.fp} FP` : ""}. Reason: ${input.reason}`;
-          msgRo = `Ai fost demis din ${input.factionId || "facțiune"}${input.fp ? ` cu ${input.fp} FP` : ""}. Motiv: ${input.reason}`;
-        } else if (input.action === "clan_set_rank" || input.action === "clan_add_member") {
-          titleEn = "Clan Rank Updated";
-          titleRo = "Grad Clan Modificat";
-          msgEn = `Your clan rank was updated to Rank ${input.rank || 1}. Reason: ${input.reason}`;
-          msgRo = `Gradul tău în clan a fost modificat la Rank ${input.rank || 1}. Motiv: ${input.reason}`;
-          linkUrl = input.clanId ? `/clans/${input.clanId}` : null;
-        } else if (input.action === "clan_warn") {
-          titleEn = "Clan Warning (CW)";
-          titleRo = "Avertisment Clan (CW)";
-          msgEn = `You received a Clan Warning (CW). Reason: ${input.reason}`;
-          msgRo = `Ai primit un Clan Warning (CW). Motiv: ${input.reason}`;
-          linkUrl = input.clanId ? `/clans/${input.clanId}` : null;
-        } else if (input.action === "clan_kick") {
-          titleEn = "Dismissed from Clan";
-          titleRo = "Demis din Clan";
-          msgEn = `You were dismissed from the clan. Reason: ${input.reason}`;
-          msgRo = `Ai fost demis din clan. Motiv: ${input.reason}`;
-        } else if (input.action === "staff_set_admin" || input.action === "staff_set_helper") {
-          titleEn = "Staff Role Updated";
-          titleRo = "Rol Staff Modificat";
-          msgEn = `Your staff rank was updated to Level ${input.level || 1}. Reason: ${input.reason}`;
-          msgRo = `Rolul tău în echipa staff a fost actualizat la Level ${input.level || 1}. Motiv: ${input.reason}`;
-          linkUrl = "/staff/dashboard";
         }
 
         await conn.execute(

@@ -1,4 +1,8 @@
--- The panel reads this snapshot from MariaDB; no imaginary Lua HTTP listener.
+-- ═══════════════════════════════════════════════════════════════
+--  SUNSETMP — Panel Bridge Server (sunset_panel_bridge)
+--  Synchronizes web panel actions with live FiveM runtime.
+--  Emits authoritative AdmBot broadcasts and live in-game notifications.
+-- ═══════════════════════════════════════════════════════════════
 
 exports('IsAccountOnline', function(accountId)
     accountId = tonumber(accountId)
@@ -6,6 +10,29 @@ exports('IsAccountOnline', function(accountId)
     local src = exports.sunset_core:GetSourceByAccountId(accountId)
     return src ~= nil and src > 0
 end)
+
+local function broadcastAdmBot(msg, msgType)
+    if not msg or msg == '' then return end
+    local color = { 215, 181, 88 } -- Gold
+    if msgType == 'error' or msgType == 'ban' or msgType == 'kick' then
+        color = { 239, 68, 68 } -- Red
+    elseif msgType == 'warn' or msgType == 'jail' or msgType == 'mute' then
+        color = { 245, 158, 11 } -- Amber/Orange
+    elseif msgType == 'success' or msgType == 'unban' or msgType == 'unjail' or msgType == 'unmute' then
+        color = { 16, 185, 129 } -- Green
+    end
+
+    TriggerClientEvent('chat:addMessage', -1, {
+        color = color,
+        args = { 'AdmBot', msg }
+    })
+end
+
+local function notifyTarget(targetSrc, msg, kind)
+    if targetSrc and targetSrc > 0 then
+        TriggerClientEvent('sunset:client:notify', targetSrc, msg, kind or 'info', 10000)
+    end
+end
 
 local function getTargetLicense(accountId)
     return MySQL.scalar.await(
@@ -17,7 +44,8 @@ end
 local function getTargetCharacter(accountId, charId)
     if charId then
         return MySQL.single.await(
-            "SELECT c.id, c.player_id, JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
+            "SELECT c.id, c.player_id, c.cash, c.bank, c.level, c.paydays_received, " ..
+            "JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
             "CAST(JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction_grade')) AS UNSIGNED) AS faction_grade, " ..
             'c.firstname, c.lastname, p.account_id ' ..
             'FROM characters c JOIN players p ON p.id = c.player_id WHERE c.id = ? AND p.account_id = ? LIMIT 1',
@@ -25,7 +53,8 @@ local function getTargetCharacter(accountId, charId)
         )
     end
     return MySQL.single.await(
-        "SELECT c.id, c.player_id, JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
+        "SELECT c.id, c.player_id, c.cash, c.bank, c.level, c.paydays_received, " ..
+        "JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id, " ..
         "CAST(JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction_grade')) AS UNSIGNED) AS faction_grade, " ..
         'c.firstname, c.lastname, p.account_id ' ..
         'FROM characters c JOIN players p ON p.id = c.player_id WHERE p.account_id = ? ORDER BY c.id ASC LIMIT 1',
@@ -51,8 +80,6 @@ local function isLeaderOrSubleader(accountId, factionId)
     return (isLeader or isSubLeader), factionGrade, tonumber(char.id), isLeader
 end
 
--- [SEC3] bounded, finite integer minutes (negative/NaN/inf/huge durations used to create instantly-expired
--- bans or absurd mutes/jails). Returns nil when the value is absent, false when invalid.
 local function sanitizeMinutes(v, maxMin)
     if v == nil then return nil end
     v = tonumber(v)
@@ -89,7 +116,7 @@ local function actionResult(row)
     local targetAccount = nil
     if row.target_account_id then
         targetAccount = MySQL.single.await(
-            'SELECT id, username, admin_level, helper_level FROM accounts WHERE id = ? LIMIT 1',
+            'SELECT id, username, email, admin_level, helper_level, premium_points FROM accounts WHERE id = ? LIMIT 1',
             { tonumber(row.target_account_id) }
         )
         if not targetAccount then return false, 'target_account_not_found' end
@@ -103,10 +130,14 @@ local function actionResult(row)
     end
     if type(payload) ~= 'table' then payload = {} end
 
+    local targetSrc = targetAccount and exports.sunset_core:GetSourceByAccountId(targetAccount.id) or nil
+    if targetSrc and targetSrc <= 0 then targetSrc = nil end
+
     -- ═══════════════════════════════════════════════════════════════
-    -- 1. STAFF ROLES MANAGEMENT (Only Level 6 Admin / Hierarchy safe)
+    -- 1. STAFF ROLES MANAGEMENT (Only Level 6 Admin)
     -- ═══════════════════════════════════════════════════════════════
-    if row.action == 'staff_set_admin' or row.action == 'staff_set_helper' or row.action == 'staff_remove_role' then
+    if row.action == 'staff_set_admin' or row.action == 'staff_set_helper' or row.action == 'staff_remove_role'
+       or row.action == 'set_admin_level' or row.action == 'set_helper_level' then
         if actorAdminLevel < 6 then return false, 'permission_denied' end
         if not targetAccount then return false, 'invalid_target' end
         if targetAccount.id == actorAccount.id then return false, 'self_target' end
@@ -114,13 +145,13 @@ local function actionResult(row)
         local newAdminLevel = targetAccount.admin_level or 0
         local newHelperLevel = targetAccount.helper_level or 0
 
-        if row.action == 'staff_set_admin' then
-            local lvl = tonumber(payload.level) or 0
+        if row.action == 'staff_set_admin' or row.action == 'set_admin_level' then
+            local lvl = tonumber(payload.level or payload.admin_level) or 0
             if lvl < 0 or lvl > 6 then return false, 'invalid_level' end
             newAdminLevel = lvl
-            if lvl > 0 then newHelperLevel = 0 end -- Admin overrides helper
-        elseif row.action == 'staff_set_helper' then
-            local lvl = tonumber(payload.level) or 0
+            if lvl > 0 then newHelperLevel = 0 end
+        elseif row.action == 'staff_set_helper' or row.action == 'set_helper_level' then
+            local lvl = tonumber(payload.level or payload.helper_level) or 0
             if lvl < 0 or lvl > 3 then return false, 'invalid_level' end
             newHelperLevel = lvl
             if lvl > 0 then newAdminLevel = 0 end
@@ -129,7 +160,6 @@ local function actionResult(row)
             newHelperLevel = 0
         end
 
-        -- Hierarchy protection: ensure at least one level 6 admin remains
         if targetAccount.admin_level == 6 and newAdminLevel < 6 then
             local countLvl6 = MySQL.scalar.await('SELECT COUNT(*) FROM accounts WHERE admin_level = 6')
             if tonumber(countLvl6 or 0) <= 1 then return false, 'cannot_remove_last_admin_6' end
@@ -140,27 +170,31 @@ local function actionResult(row)
             { newAdminLevel, newHelperLevel, targetAccount.id }
         )
 
-        -- Live runtime sync if target is online
-        local targetSrc = exports.sunset_core:GetSourceByAccountId(targetAccount.id)
-        if targetSrc and targetSrc > 0 then
+        if targetSrc then
             local player = exports.sunset_core:GetPlayer(targetSrc)
             if player then
                 player.admin_level = newAdminLevel
                 player.helper_level = newHelperLevel
             end
-            TriggerClientEvent('sunset:client:notify', targetSrc,
-                ('Staff role updated: Admin %d / Helper %d'):format(newAdminLevel, newHelperLevel), 'info', 8000)
+            notifyTarget(targetSrc, ('Rolul tau staff a fost actualizat: Admin %d / Helper %d'):format(newAdminLevel, newHelperLevel), 'info')
         end
+
+        broadcastAdmBot(('Admin %s a actualizat rolul staff pentru %s (Admin %d / Helper %d)'):format(
+            actorAccount.username, targetAccount.username, newAdminLevel, newHelperLevel), 'info')
+
         return true, { admin_level = newAdminLevel, helper_level = newHelperLevel }
     end
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 2. MODERATION (Warn, Ban, Unban, Mute, Unmute, Jail, Unjail)
+    -- 2. MODERATION (Warn, Ban, Unban, Mute, Unmute, Jail, Unjail, Kick)
     -- ═══════════════════════════════════════════════════════════════
     local modReq = {
         warn = 1, mute = 1, unmute = 1,
-        ban = 2, jail = 2, unjail = 2,
-        unban = 3, set_faction = 3, set_clan = 4
+        ban = 2, jail = 2, unjail = 2, kick = 2,
+        unban = 3, set_faction = 3, set_clan = 4,
+        set_cash = 4, set_bank = 4, set_level = 4, set_hours = 4, set_fp = 4,
+        give_item = 4, remove_item = 4, clear_inventory = 4,
+        set_premium_points = 5, set_email = 5, reset_password = 5, remove_sanction = 5
     }
     local reqLvl = modReq[row.action]
     if reqLvl then
@@ -168,26 +202,25 @@ local function actionResult(row)
         local hasHelperMute = (row.action == 'mute' or row.action == 'unmute') and actorHelperLevel >= 1
         if not hasAdmin and not hasHelperMute then return false, 'permission_denied' end
 
-        if targetAccount and targetAccount.id == actorAccount.id then return false, 'self_target' end
+        if targetAccount and targetAccount.id == actorAccount.id and not row.action:match('dissolve') then
+            return false, 'self_target'
+        end
         if targetAccount and tonumber(targetAccount.admin_level or 0) >= actorAdminLevel and actorAdminLevel < 6 then
             return false, 'target_staff_level_protected'
         end
     end
 
-    local targetSrc = targetAccount and exports.sunset_core:GetSourceByAccountId(targetAccount.id) or nil
-    if targetSrc and targetSrc <= 0 then targetSrc = nil end
-
     if row.action == 'ban' then
         if not targetAccount then return false, 'invalid_target' end
         local license = getTargetLicense(targetAccount.id)
         if not license then return false, 'license_not_found' end
-        local durationMin = sanitizeMinutes(payload.durationMin) -- [SEC3]
+        local durationMin = sanitizeMinutes(payload.durationMin) or 43200
         if durationMin == false then return false, 'invalid_duration' end
 
         MySQL.insert.await([[
             INSERT INTO bans (license, reason, banned_by, expires_at)
             VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))
-        ]], { license, row.reason, actorAccount.username, durationMin or 43200 })
+        ]], { license, row.reason, actorAccount.username, durationMin })
 
         MySQL.insert.await([[
             INSERT INTO admin_sanctions
@@ -195,8 +228,13 @@ local function actionResult(row)
             VALUES ('ban', ?, ?, ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, license, actorAccount.id, actorAccount.username, row.reason, durationMin })
 
+        local durationDays = math.ceil(durationMin / 1440)
+        local durText = durationMin >= 43200 and 'Permanent' or (durationDays .. ' zile')
+        broadcastAdmBot(('Admin %s l-a banat pe %s (%s). Motiv: %s'):format(
+            actorAccount.username, targetAccount.username, durText, row.reason), 'ban')
+
         if targetSrc then
-            DropPlayer(targetSrc, exports.sunset_core:TFor(targetSrc, 'panel_bridge.msg.sunset_rpg_banned_by', { username = tostring(actorAccount.username), reason = tostring(row.reason) }))
+            DropPlayer(targetSrc, ('[BAN] Ai fost banat de %s (%s). Motiv: %s'):format(actorAccount.username, durText, row.reason))
         end
         return true, { durationMin = durationMin }
     end
@@ -211,6 +249,8 @@ local function actionResult(row)
               (action, target_account_id, target_name, target_license, admin_account_id, admin_name, reason)
             VALUES ('unban', ?, ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, license, actorAccount.id, actorAccount.username, row.reason })
+
+        broadcastAdmBot(('Admin %s a ridicat banul jucatorului %s.'):format(actorAccount.username, targetAccount.username), 'unban')
         return true, { removed = deleted }
     end
 
@@ -236,28 +276,50 @@ local function actionResult(row)
             MySQL.insert.await([[
                 INSERT INTO bans (license, reason, banned_by, expires_at)
                 VALUES (?, ?, 'SYSTEM (3 Warns)', DATE_ADD(NOW(), INTERVAL 1440 MINUTE))
-            ]], { license or ('account:' .. targetAccount.id), 'Auto-ban: 3 active warnings (' .. row.reason .. ')' })
+            ]], { license or ('account:' .. targetAccount.id), 'Auto-ban: 3 avertismente active (' .. row.reason .. ')' })
             
             MySQL.insert.await([[
                 INSERT INTO admin_sanctions
                   (action, target_account_id, target_name, target_license, admin_account_id, admin_name, reason, duration_min)
-                VALUES ('ban', ?, ?, ?, ?, 'SYSTEM', 'Auto-ban: 3 active warnings', 1440)
+                VALUES ('ban', ?, ?, ?, ?, 'SYSTEM', 'Auto-ban: 3 avertismente active', 1440)
             ]], { targetAccount.id, targetAccount.username, license, actorAccount.id })
 
+            broadcastAdmBot(('Admin %s i-a acordat un avertisment (Warn) lui %s [3/3]. Jucatorul a primit Auto-Ban 24h.'):format(
+                actorAccount.username, targetAccount.username), 'ban')
+
             if targetSrc then
-                DropPlayer(targetSrc, exports.sunset_core:TFor(targetSrc, 'panel_bridge.msg.sunset_rpg_auto_banned_24h_for', { reason = tostring(row.reason) }))
+                DropPlayer(targetSrc, '[AUTO-BAN] Ai acumulat 3 avertismente (Warn). Contul tau este suspendat 24h.')
             end
-        elseif targetSrc then
-            TriggerClientEvent('sunset:client:notify', targetSrc,
-                ('Warning from %s: %s (Active: %d/3)'):format(actorAccount.username, row.reason, activeWarns), 'warning', 10000)
+        else
+            broadcastAdmBot(('Admin %s i-a acordat un avertisment (Warn) lui %s. Motiv: %s [%d/3]'):format(
+                actorAccount.username, targetAccount.username, row.reason, activeWarns), 'warn')
+
+            if targetSrc then
+                notifyTarget(targetSrc, ('Ai primit un Warn de la %s: %s [%d/3]'):format(actorAccount.username, row.reason, activeWarns), 'warning')
+            end
         end
         return true, { warns = activeWarns, autoBanned = autoBanned }
     end
 
+    if row.action == 'kick' then
+        if not targetAccount then return false, 'invalid_target' end
+        MySQL.insert.await([[
+            INSERT INTO admin_sanctions
+              (action, target_account_id, target_name, admin_account_id, admin_name, reason)
+            VALUES ('kick', ?, ?, ?, ?, ?)
+        ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason })
+
+        broadcastAdmBot(('Admin %s l-a dat afara (Kick) pe %s. Motiv: %s'):format(
+            actorAccount.username, targetAccount.username, row.reason), 'kick')
+
+        if targetSrc then
+            DropPlayer(targetSrc, ('[KICK] Ai fost deconectat de %s. Motiv: %s'):format(actorAccount.username, row.reason))
+        end
+        return true, { kicked = true }
+    end
+
     if row.action == 'mute' then
-        local durationMin = sanitizeMinutes(payload.durationMin, 43200) -- [SEC3]
-        if durationMin == false then return false, 'invalid_duration' end
-        durationMin = durationMin or 10
+        local durationMin = sanitizeMinutes(payload.durationMin, 43200) or 10
         if not targetAccount then return false, 'invalid_target' end
         if targetSrc and GetResourceState('sunset_admin') == 'started' then
             local handler = SunsetAdmin and SunsetAdmin.ServerHandlers and SunsetAdmin.ServerHandlers.mute
@@ -270,11 +332,18 @@ local function actionResult(row)
               (action, target_account_id, target_name, admin_account_id, admin_name, reason, duration_min)
             VALUES ('mute', ?, ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason, durationMin })
+
+        broadcastAdmBot(('Admin %s i-a dat mute lui %s pentru %d minute. Motiv: %s'):format(
+            actorAccount.username, targetAccount.username, durationMin, row.reason), 'mute')
+
+        if targetSrc then
+            notifyTarget(targetSrc, ('Ai primit Mute pentru %d min de la %s. Motiv: %s'):format(durationMin, actorAccount.username, row.reason), 'error')
+        end
         return true, { durationMin = durationMin }
     end
 
     if row.action == 'unmute' then
-        if not targetAccount then return false, 'invalid_target' end -- [SEC3]
+        if not targetAccount then return false, 'invalid_target' end
         if targetSrc and GetResourceState('sunset_admin') == 'started' then
             pcall(function() exports.sunset_admin:Unmute(targetSrc) end)
         end
@@ -283,13 +352,16 @@ local function actionResult(row)
               (action, target_account_id, target_name, admin_account_id, admin_name, reason)
             VALUES ('unmute', ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason })
+
+        broadcastAdmBot(('Admin %s i-a ridicat sanctiunea de mute lui %s.'):format(actorAccount.username, targetAccount.username), 'unmute')
+        if targetSrc then
+            notifyTarget(targetSrc, 'Mute-ul tau a fost ridicat de un administrator.', 'success')
+        end
         return true, { ok = true }
     end
 
     if row.action == 'jail' then
-        local minutes = sanitizeMinutes(payload.durationMin, 10080) -- [SEC3]
-        if minutes == false then return false, 'invalid_duration' end
-        minutes = minutes or 30
+        local minutes = sanitizeMinutes(payload.durationMin, 10080) or 30
         if not targetAccount then return false, 'invalid_target' end
         if targetSrc and GetResourceState('sunset_factions') == 'started' then
             pcall(function() exports.sunset_factions:AdminJail(targetSrc, minutes, row.reason) end)
@@ -299,11 +371,18 @@ local function actionResult(row)
               (action, target_account_id, target_name, admin_account_id, admin_name, reason, duration_min)
             VALUES ('jail', ?, ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason, minutes })
+
+        broadcastAdmBot(('Admin %s l-a trimis la inchisoare (Jail) pe %s pentru %d minute. Motiv: %s'):format(
+            actorAccount.username, targetAccount.username, minutes, row.reason), 'jail')
+
+        if targetSrc then
+            notifyTarget(targetSrc, ('Ai fost trimis la inchisoare (%d min) de %s. Motiv: %s'):format(minutes, actorAccount.username, row.reason), 'error')
+        end
         return true, { minutes = minutes }
     end
 
     if row.action == 'unjail' then
-        if not targetAccount then return false, 'invalid_target' end -- [SEC3]
+        if not targetAccount then return false, 'invalid_target' end
         if targetSrc and GetResourceState('sunset_factions') == 'started' then
             pcall(function() exports.sunset_factions:AdminUnjail(targetSrc) end)
         end
@@ -312,15 +391,187 @@ local function actionResult(row)
               (action, target_account_id, target_name, admin_account_id, admin_name, reason)
             VALUES ('unjail', ?, ?, ?, ?, ?)
         ]], { targetAccount.id, targetAccount.username, actorAccount.id, actorAccount.username, row.reason })
+
+        broadcastAdmBot(('Admin %s l-a eliberat din inchisoare pe %s.'):format(actorAccount.username, targetAccount.username), 'unjail')
+        if targetSrc then
+            notifyTarget(targetSrc, 'Ai fost eliberat din inchisoare de catre un administrator.', 'success')
+        end
         return true, { ok = true }
     end
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 3. FACTIONS MANAGEMENT
+    -- 3. ECONOMY & CHARACTER MODIFICATIONS (Cash, Bank, Level, Hours, FP)
+    -- ═══════════════════════════════════════════════════════════════
+    if row.action == 'set_cash' or row.action == 'set_bank' or row.action == 'set_level'
+       or row.action == 'set_hours' or row.action == 'set_fp' or row.action == 'set_premium_points'
+       or row.action == 'set_email' or row.action == 'reset_password' then
+        if not targetAccount then return false, 'invalid_target' end
+        local targetChar = getTargetCharacter(targetAccount.id, row.target_character_id)
+
+        if row.action == 'set_cash' then
+            local amount = math.max(0, tonumber(payload.amount or payload.cash) or 0)
+            if targetChar then
+                MySQL.update.await('UPDATE characters SET cash = ? WHERE id = ?', { amount, targetChar.id })
+                if targetSrc then
+                    exports.sunset_core:SetMoney(targetSrc, 'cash', amount, 'admin_panel')
+                    notifyTarget(targetSrc, ('Balanta cash a fost setata la $%s de catre Admin %s'):format(tostring(amount), actorAccount.username), 'info')
+                end
+            end
+            return true, { cash = amount }
+        end
+
+        if row.action == 'set_bank' then
+            local amount = math.max(0, tonumber(payload.amount or payload.bank) or 0)
+            if targetChar then
+                MySQL.update.await('UPDATE characters SET bank = ? WHERE id = ?', { amount, targetChar.id })
+                if targetSrc then
+                    exports.sunset_core:SetMoney(targetSrc, 'bank', amount, 'admin_panel')
+                    notifyTarget(targetSrc, ('Balanta bancara a fost setata la $%s de catre Admin %s'):format(tostring(amount), actorAccount.username), 'info')
+                end
+            end
+            return true, { bank = amount }
+        end
+
+        if row.action == 'set_level' then
+            local lvl = math.max(1, math.min(100, tonumber(payload.level) or 1))
+            if targetChar then
+                MySQL.update.await('UPDATE characters SET level = ? WHERE id = ?', { lvl, targetChar.id })
+                if targetSrc then
+                    local p = exports.sunset_core:GetPlayer(targetSrc)
+                    if p and p.character then p.character.level = lvl end
+                    notifyTarget(targetSrc, ('Nivelul tau a fost setat la %d de catre Admin %s'):format(lvl, actorAccount.username), 'info')
+                end
+            end
+            return true, { level = lvl }
+        end
+
+        if row.action == 'set_hours' then
+            local hours = math.max(0, tonumber(payload.hours or payload.paydays) or 0)
+            if targetChar then
+                MySQL.update.await('UPDATE characters SET paydays_received = ? WHERE id = ?', { hours, targetChar.id })
+                if targetSrc then
+                    local p = exports.sunset_core:GetPlayer(targetSrc)
+                    if p and p.character then p.character.paydays_received = hours end
+                    notifyTarget(targetSrc, ('Orele tale au fost actualizate la %d de catre Admin %s'):format(hours, actorAccount.username), 'info')
+                end
+            end
+            return true, { hours = hours }
+        end
+
+        if row.action == 'set_fp' then
+            local fp = math.max(0, math.min(100, tonumber(payload.fp) or 0))
+            if targetChar then
+                if fp > 0 then
+                    MySQL.update.await([[
+                        INSERT INTO faction_punish (character_id, fp, reason, set_by_character_id)
+                        VALUES (?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE fp = VALUES(fp), reason = VALUES(reason)
+                    ]], { targetChar.id, fp, row.reason or 'Admin panel update', actorAccount.id })
+                else
+                    MySQL.update.await('DELETE FROM faction_punish WHERE character_id = ?', { targetChar.id })
+                end
+                if targetSrc then
+                    notifyTarget(targetSrc, ('Punctele tale FP au fost setate la %d FP.'):format(fp), 'info')
+                end
+            end
+            return true, { fp = fp }
+        end
+
+        if row.action == 'set_premium_points' then
+            local pts = math.max(0, tonumber(payload.points or payload.premium_points) or 0)
+            MySQL.update.await('UPDATE accounts SET premium_points = ? WHERE id = ?', { pts, targetAccount.id })
+            if targetSrc then
+                notifyTarget(targetSrc, ('Punctele tale Premium au fost actualizate: %d PP'):format(pts), 'info')
+            end
+            return true, { premium_points = pts }
+        end
+
+        if row.action == 'set_email' then
+            local newEmail = tostring(payload.email or ''):lower():match('^%s*(.-)%s*$')
+            if not newEmail or not newEmail:match('^[%w%.%+%-]+@[%w%-]+%.[%a%.]+$') then
+                return false, 'invalid_email'
+            end
+            MySQL.update.await('UPDATE accounts SET email = ? WHERE id = ?', { newEmail, targetAccount.id })
+            return true, { email = newEmail }
+        end
+
+        if row.action == 'reset_password' then
+            local newPass = tostring(payload.password or '')
+            if #newPass < 6 then return false, 'password_too_short' end
+            local hash = exports.sunset_auth:HashPassword(newPass)
+            if not hash then return false, 'hash_failed' end
+            MySQL.update.await('UPDATE accounts SET password_hash = ?, password_salt = ? WHERE id = ?', { hash, '', targetAccount.id })
+            return true, { ok = true }
+        end
+    end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- 4. INVENTORY MANAGEMENT (Give, Remove, Clear)
+    -- ═══════════════════════════════════════════════════════════════
+    if row.action == 'give_item' or row.action == 'remove_item' or row.action == 'clear_inventory' then
+        if not targetAccount then return false, 'invalid_target' end
+        local targetChar = getTargetCharacter(targetAccount.id, row.target_character_id)
+        if not targetChar then return false, 'invalid_character' end
+
+        if row.action == 'give_item' then
+            local item = tostring(payload.item or ''):lower()
+            local count = math.max(1, tonumber(payload.count) or 1)
+            if item == '' then return false, 'invalid_item' end
+
+            if targetSrc then
+                exports.sunset_inventory:AddItem(targetSrc, item, count)
+                notifyTarget(targetSrc, ('Ai primit %dx %s de la Admin %s'):format(count, item, actorAccount.username), 'success')
+            else
+                MySQL.insert.await([[
+                    INSERT INTO character_inventory (character_id, item, count, slot)
+                    VALUES (?, ?, ?, (SELECT IFNULL(MAX(slot), 0) + 1 FROM character_inventory c2 WHERE c2.character_id = ?))
+                    ON DUPLICATE KEY UPDATE count = count + VALUES(count)
+                ]], { targetChar.id, item, count, targetChar.id })
+            end
+            return true, { item = item, count = count }
+        end
+
+        if row.action == 'remove_item' then
+            local item = tostring(payload.item or ''):lower()
+            local count = math.max(1, tonumber(payload.count) or 1)
+            if item == '' then return false, 'invalid_item' end
+
+            if targetSrc then
+                exports.sunset_inventory:RemoveItem(targetSrc, item, count)
+                notifyTarget(targetSrc, ('Ti-au fost retrase %dx %s de catre Admin %s'):format(count, item, actorAccount.username), 'warning')
+            else
+                MySQL.update.await('UPDATE character_inventory SET count = GREATEST(0, count - ?) WHERE character_id = ? AND item = ?',
+                    { count, targetChar.id, item })
+                MySQL.update.await('DELETE FROM character_inventory WHERE character_id = ? AND count <= 0', { targetChar.id })
+            end
+            return true, { item = item, count = count }
+        end
+
+        if row.action == 'clear_inventory' then
+            MySQL.update.await('DELETE FROM character_inventory WHERE character_id = ?', { targetChar.id })
+            if targetSrc then
+                exports.sunset_inventory:ReloadInventory(targetSrc)
+                notifyTarget(targetSrc, 'Inventarul tau a fost golit de catre un administrator.', 'warning')
+            end
+            return true, { cleared = true }
+        end
+    end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- 5. SANCTION REMOVAL (Revoke Ban / Delete Sanction Row)
+    -- ═══════════════════════════════════════════════════════════════
+    if row.action == 'remove_sanction' then
+        local sanctionId = tonumber(payload.sanctionId or payload.id)
+        if not sanctionId then return false, 'invalid_sanction_id' end
+        MySQL.update.await('DELETE FROM admin_sanctions WHERE id = ?', { sanctionId })
+        return true, { removedSanctionId = sanctionId }
+    end
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- 6. FACTIONS MANAGEMENT
     -- ═══════════════════════════════════════════════════════════════
     if row.action:match('^faction_') or row.action == 'set_faction' then
         local factionId = payload.factionId
-        -- [SEC3] validate ids/grade: string charset, integer grade 0..10
         if factionId ~= nil and (type(factionId) ~= 'string' or #factionId > 32 or not factionId:match('^[%w_]*$')) then
             return false, 'invalid_faction'
         end
@@ -337,9 +588,7 @@ local function actionResult(row)
             hasPerm, actorGrade, actorCharId, actorIsLeader = isLeaderOrSubleader(actorAccount.id, factionId)
         end
         if not hasPerm then return false, 'faction_permission_denied' end
-        -- [SEC3] non-admin faction managers: only act on their own members (or unemployed for recruitment),
-        -- and never grant a grade at/above their own (leaders cap at 6). Previously a leader of faction A could
-        -- kick/warn anyone by naming factionId=A.
+
         if actorAdminLevel < 3 then
             local tj = targetChar.faction_id
             local own = tj == factionId
@@ -376,6 +625,14 @@ local function actionResult(row)
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
                 VALUES (?, ?, 'panel_set_faction', ?, ?)
             ]], { factionId or 'none', actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
+
+            if factionId then
+                broadcastAdmBot(('Admin %s l-a setat pe %s in factiunea %s (Rank %d)'):format(
+                    actorAccount.username, targetAccount.username, factionId, grade), 'info')
+            else
+                broadcastAdmBot(('Admin %s l-a scos pe %s din factiune (Civil)'):format(
+                    actorAccount.username, targetAccount.username), 'info')
+            end
             return true, { factionId = factionId, grade = grade }
         end
 
@@ -400,6 +657,9 @@ local function actionResult(row)
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
                 VALUES (?, ?, 'panel_warn', ?, ?)
             ]], { factionId, actorCharId, targetChar.id, json.encode({ reason = row.reason }) })
+            if targetSrc then
+                notifyTarget(targetSrc, ('Ai primit un Faction Warning (FW) in %s: %s'):format(factionId, row.reason), 'warning')
+            end
             return true, { ok = true }
         end
 
@@ -421,6 +681,10 @@ local function actionResult(row)
                 INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
                 VALUES (?, ?, ?, ?, ?)
             ]], { factionId, actorCharId, row.action, targetChar.id, json.encode({ reason = row.reason, fp = fp }) })
+
+            broadcastAdmBot(('Admin %s l-a demis pe %s din factiunea %s%s. Motiv: %s'):format(
+                actorAccount.username, targetAccount.username, factionId, fp > 0 and (' cu ' .. fp .. ' FP') or '', row.reason), 'kick')
+
             return true, { kicked = true, fp = fp }
         end
 
@@ -450,16 +714,19 @@ local function actionResult(row)
                 ON DUPLICATE KEY UPDATE joined_at = IF(faction_id = VALUES(faction_id), joined_at, NOW()),
                     faction_id = VALUES(faction_id)
             ]], { targetChar.id, factionId })
+
+            broadcastAdmBot(('Admin %s l-a numit pe %s ca Lider al factiunii %s!'):format(
+                actorAccount.username, targetAccount.username, factionId), 'success')
             return true, { leader_char_id = targetChar.id }
         end
     end
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 4. CLANS MANAGEMENT
+    -- 7. CLANS MANAGEMENT
     -- ═══════════════════════════════════════════════════════════════
     if row.action:match('^clan_') or row.action == 'set_clan' then
         local clanId = tonumber(payload.clanId)
-        if payload.clanId ~= nil and (not clanId or clanId ~= clanId or clanId < 1 or clanId % 1 ~= 0) then return false, 'invalid_clan' end -- [SEC3]
+        if payload.clanId ~= nil and (not clanId or clanId ~= clanId or clanId < 1 or clanId % 1 ~= 0) then return false, 'invalid_clan' end
         local targetChar = getTargetCharacter(row.target_account_id, row.target_character_id)
         if not targetChar and row.action ~= 'clan_dissolve' then return false, 'invalid_target_character' end
 
@@ -470,7 +737,7 @@ local function actionResult(row)
             hasPerm, actorRank, actorCharId = isClanManager(actorAccount.id, clanId)
         end
         if not hasPerm then return false, 'clan_permission_denied' end
-        -- [SEC3] non-admin clan managers may not poach members of other clans or grant ranks >= their own
+
         if actorAdminLevel < 4 and targetChar and (row.action == 'set_clan' or row.action == 'clan_add_member' or row.action == 'clan_set_rank') then
             local curClan = MySQL.scalar.await('SELECT clan_id FROM clan_members WHERE character_id = ? LIMIT 1', { targetChar.id })
             if curClan and tonumber(curClan) ~= clanId then return false, 'target_in_other_clan' end
@@ -597,7 +864,7 @@ exports('GetLiveServerStats', function()
     }
 end)
 
-print('^2[sunset_panel_bridge]^7 Resource initialized.')
+print('^2[sunset_panel_bridge]^7 Enhanced AdmBot bridge and action queue processor initialized.')
 
 CreateThread(function()
     local interval = math.max(5, GetConvarInt('panel_snapshot_seconds', 15)) * 1000
