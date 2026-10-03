@@ -30,8 +30,16 @@ exports.sunset_core:RegisterCallback('sunset:jobs:busdriver:start', function(sou
 
     local stopsData = {}
     for i, s in ipairs(route.stops) do
+        local pCoords = nil
+        if s.passengerCoords then
+            pCoords = {}
+            for _, pc in ipairs(s.passengerCoords) do
+                pCoords[#pCoords + 1] = { x = pc.x, y = pc.y, z = pc.z, w = pc.w or 0.0 }
+            end
+        end
         stopsData[#stopsData + 1] = {
             coords = { x = s.coords.x, y = s.coords.y, z = s.coords.z, w = s.coords.w or 0.0 },
+            passengerCoords = pCoords,
             label  = s.label or ('Oprirea ' .. i),
         }
     end

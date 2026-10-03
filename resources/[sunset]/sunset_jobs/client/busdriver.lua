@@ -44,38 +44,64 @@ local function cleanupWaitingPassengers()
     waitingPassengers = {}
 end
 
-local function spawnWaitingPassengers(stopCoords)
+local function spawnWaitingPassengers(stop)
     cleanupWaitingPassengers()
-    if not stopCoords then return end
+    if not stop then return end
 
-    local count = math.random(1, 3)
-    local baseHeading = stopCoords.w or 0.0
+    local passengerCoordsList = stop.passengerCoords
+    local stopCoords = stop.coords or stop
 
-    for i = 1, count do
-        local modelName = PASSENGER_MODELS[math.random(#PASSENGER_MODELS)]
-        local ok, model = Sunset.RequestModelSafe(modelName, 3000)
-        if ok then
-            -- Offset slightly along pavement / stop
-            local angle = math.rad(baseHeading + (i * 45))
-            local offsetX = math.cos(angle) * (1.2 + (i * 0.8))
-            local offsetY = math.sin(angle) * (1.2 + (i * 0.8))
-
-            local pX = stopCoords.x + offsetX
-            local pY = stopCoords.y + offsetY
-            local pZ = stopCoords.z
-
-            local ped = CreatePed(4, model, pX, pY, pZ - 1.0, (baseHeading + 180.0) % 360.0, false, true)
-            if ped and ped ~= 0 and DoesEntityExist(ped) then
-                SetEntityAsMissionEntity(ped, true, true)
-                FreezeEntityPosition(ped, true)
-                SetEntityInvincible(ped, true)
-                SetBlockingOfNonTemporaryEvents(ped, true)
-                
-                local scenarios = { 'WORLD_HUMAN_STAND_MOBILE', 'WORLD_HUMAN_WAITING_IMPATIENT', 'WORLD_HUMAN_SMOKING' }
-                TaskStartScenarioInPlace(ped, scenarios[math.random(#scenarios)], 0, true)
-                table.insert(waitingPassengers, ped)
+    if passengerCoordsList and #passengerCoordsList > 0 then
+        for _, pCoord in ipairs(passengerCoordsList) do
+            local modelName = PASSENGER_MODELS[math.random(#PASSENGER_MODELS)]
+            local ok, model = Sunset.RequestModelSafe(modelName, 3000)
+            if ok then
+                local pZ = pCoord.z
+                local heading = pCoord.w or (pCoord.heading or 0.0)
+                local ped = CreatePed(4, model, pCoord.x, pCoord.y, pZ - 1.0, heading, false, true)
+                if ped and ped ~= 0 and DoesEntityExist(ped) then
+                    SetEntityAsMissionEntity(ped, true, true)
+                    FreezeEntityPosition(ped, true)
+                    SetEntityInvincible(ped, true)
+                    SetBlockingOfNonTemporaryEvents(ped, true)
+                    
+                    local scenarios = { 'WORLD_HUMAN_STAND_MOBILE', 'WORLD_HUMAN_WAITING_IMPATIENT', 'WORLD_HUMAN_SMOKING', 'WORLD_HUMAN_HANG_OUT_STREET' }
+                    TaskStartScenarioInPlace(ped, scenarios[math.random(#scenarios)], 0, true)
+                    table.insert(waitingPassengers, ped)
+                end
+                SetModelAsNoLongerNeeded(model)
             end
-            SetModelAsNoLongerNeeded(model)
+        end
+    else
+        local count = math.random(1, 3)
+        local baseHeading = stopCoords.w or 0.0
+
+        for i = 1, count do
+            local modelName = PASSENGER_MODELS[math.random(#PASSENGER_MODELS)]
+            local ok, model = Sunset.RequestModelSafe(modelName, 3000)
+            if ok then
+                -- Offset onto the right sidewalk
+                local angle = math.rad(baseHeading + 90.0)
+                local offsetX = math.cos(angle) * (2.8 + (i * 0.8))
+                local offsetY = math.sin(angle) * (2.8 + (i * 0.8))
+
+                local pX = stopCoords.x + offsetX
+                local pY = stopCoords.y + offsetY
+                local pZ = stopCoords.z
+
+                local ped = CreatePed(4, model, pX, pY, pZ - 1.0, (baseHeading + 180.0) % 360.0, false, true)
+                if ped and ped ~= 0 and DoesEntityExist(ped) then
+                    SetEntityAsMissionEntity(ped, true, true)
+                    FreezeEntityPosition(ped, true)
+                    SetEntityInvincible(ped, true)
+                    SetBlockingOfNonTemporaryEvents(ped, true)
+                    
+                    local scenarios = { 'WORLD_HUMAN_STAND_MOBILE', 'WORLD_HUMAN_WAITING_IMPATIENT', 'WORLD_HUMAN_SMOKING' }
+                    TaskStartScenarioInPlace(ped, scenarios[math.random(#scenarios)], 0, true)
+                    table.insert(waitingPassengers, ped)
+                end
+                SetModelAsNoLongerNeeded(model)
+            end
         end
     end
 end
@@ -169,7 +195,7 @@ function Sunset.Jobs.StartBusDriver()
     JC.addBlip(stopV3, { sprite = 513, color = 46, scale = 0.85 }, firstStop.label or 'Oprirea 1')
     JC.setWaypoint(stopV3)
     setBusCheckpoint(stopV3, 46, 204, 113)
-    spawnWaitingPassengers(firstStop.coords)
+    spawnWaitingPassengers(firstStop)
 
     JC.sessionData = {
         label = data.label or 'Linia Verde',
@@ -272,7 +298,7 @@ function Sunset.Jobs.StartBusDriver()
                                             JC.addBlip(nextV3, { sprite = 513, color = 46, scale = 0.85 }, nextStop.label or ('Oprirea ' .. currentStopIdx))
                                             JC.setWaypoint(nextV3)
                                             setBusCheckpoint(nextV3, 46, 204, 113)
-                                            spawnWaitingPassengers(nextStop.coords)
+                                            spawnWaitingPassengers(nextStop)
 
                                             updateBusHud(JC.sessionData, totalStops, currentStopIdx, false)
                                         end

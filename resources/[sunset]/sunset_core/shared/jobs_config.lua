@@ -438,16 +438,59 @@ Sunset.JobsConfig = {
                 id = 'green_route',
                 label = 'Linia Verde (Green Route Express)',
                 stops = {
-                    { coords = vector4(306.71, -766.26, 28.79, 162.78), label = 'Oprirea 1: Transit Center West' },
-                    { coords = vector4(785.89, -776.10, 25.91, 3.63), label = 'Oprirea 2: Mirror Park Blvd' },
-                    { coords = vector4(770.40, -941.32, 25.17, 188.14), label = 'Oprirea 3: East Los Santos' },
-                    { coords = vector4(787.35, -1369.32, 26.03, 182.59), label = 'Oprirea 4: Popular Street' },
-                    { coords = vector4(808.11, -1352.63, 25.80, 1.31), label = 'Oprirea 5: Cypress Flats North' },
-                    { coords = vector4(824.75, -1639.46, 29.80, 175.04), label = 'Oprirea 6: Port Boulevard' },
+                    {
+                        coords = vector4(306.71, -766.26, 28.79, 162.78),
+                        label = 'Oprirea 1: Transit Center West',
+                        passengerCoords = {
+                            vector4(304.07, -766.32, 29.31, 239.64),
+                            vector4(305.14, -763.82, 29.31, 272.49),
+                        },
+                    },
+                    {
+                        coords = vector4(785.89, -776.10, 25.91, 3.63),
+                        label = 'Oprirea 2: Mirror Park Blvd',
+                        passengerCoords = {
+                            vector4(788.65, -776.10, 26.25, 270.0),
+                            vector4(788.75, -778.50, 26.25, 270.0),
+                        },
+                    },
+                    {
+                        coords = vector4(770.40, -941.32, 25.17, 188.14),
+                        label = 'Oprirea 3: East Los Santos',
+                        passengerCoords = {
+                            vector4(767.15, -941.32, 25.55, 90.0),
+                            vector4(767.25, -943.60, 25.55, 90.0),
+                        },
+                    },
+                    {
+                        coords = vector4(787.35, -1369.32, 26.03, 182.59),
+                        label = 'Oprirea 4: Popular Street',
+                        passengerCoords = {
+                            vector4(784.15, -1369.32, 26.45, 90.0),
+                            vector4(784.25, -1371.80, 26.45, 90.0),
+                        },
+                    },
+                    {
+                        coords = vector4(808.11, -1352.63, 25.80, 1.31),
+                        label = 'Oprirea 5: Cypress Flats North',
+                        passengerCoords = {
+                            vector4(811.35, -1352.63, 26.25, 270.0),
+                            vector4(811.45, -1355.00, 26.25, 270.0),
+                        },
+                    },
+                    {
+                        coords = vector4(824.75, -1639.46, 29.80, 175.04),
+                        label = 'Oprirea 6: Port Boulevard',
+                        passengerCoords = {
+                            vector4(821.45, -1639.46, 30.25, 90.0),
+                            vector4(821.55, -1642.00, 30.25, 90.0),
+                        },
+                    },
                 },
                 returnDepot = vector4(463.21, -606.43, 28.49, 214.23),
             },
         },
+
     },
 }
 
