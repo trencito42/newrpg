@@ -1,4 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import path from "path";
+import fs from "fs";
 
 const SMTP_CONFIG = {
   host: process.env.SMTP_HOST || "mail.xodo.ro",
@@ -34,7 +36,7 @@ export interface SendPasswordResetOptions {
 }
 
 /**
- * Sends a high-security, branded password reset email.
+ * Sends a high-security, branded password reset email matching the Racket Panel design.
  */
 export async function sendPasswordResetEmail({
   to,
@@ -45,180 +47,117 @@ export async function sendPasswordResetEmail({
   const mailer = getTransporter();
 
   const brandName = "RACKET RPG";
-  const brandDomain = "racket.cat";
+  const webLogoUrl = "https://rpg.blipmade.com/logo-email.png";
+
+  // Check if local logo exists for CID inline attachment
+  const logoPath = path.join(process.cwd(), "public", "logo-email.png");
+  const hasLocalLogo = fs.existsSync(logoPath);
+
+  const logoSrc = hasLocalLogo ? "cid:racketlogo" : webLogoUrl;
 
   const htmlContent = `
-<!DOCTYPE html>
-<html lang="ro">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ro">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resetare Parolă Cont — ${brandName}</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #07090e;
-      color: #f1f5f9;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    .wrapper {
-      width: 100%;
-      background-color: #07090e;
-      padding: 40px 15px;
-      box-sizing: border-box;
-    }
-    .container {
-      max-width: 540px;
-      margin: 0 auto;
-      background: #111625;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    }
-    .header-bar {
-      height: 4px;
-      background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
-    }
-    .header {
-      padding: 32px 36px 20px;
-      text-align: center;
-      background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-    }
-    .logo-badge {
-      display: inline-block;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      background: rgba(99, 102, 241, 0.12);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #a5b4fc;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 800;
-      color: #ffffff;
-      margin: 0 0 6px;
-      letter-spacing: -0.5px;
-    }
-    .subtitle {
-      font-size: 13px;
-      color: #94a3b8;
-      margin: 0;
-    }
-    .content {
-      padding: 24px 36px 36px;
-      line-height: 1.6;
-    }
-    .greeting {
-      font-size: 16px;
-      color: #f8fafc;
-      margin-bottom: 16px;
-    }
-    .greeting strong {
-      color: #818cf8;
-    }
-    .text {
-      font-size: 14px;
-      color: #cbd5e1;
-      margin: 0 0 24px;
-    }
-    .btn-container {
-      text-align: center;
-      margin: 32px 0;
-    }
-    .btn {
-      display: inline-block;
-      padding: 14px 32px;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: #ffffff !important;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 700;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-      letter-spacing: 0.2px;
-    }
-    .info-card {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 24px;
-      font-size: 12px;
-      color: #94a3b8;
-    }
-    .info-card strong {
-      color: #e2e8f0;
-    }
-    .fallback-url {
-      font-size: 11px;
-      color: #64748b;
-      word-break: break-all;
-      margin-top: 16px;
-    }
-    .fallback-url a {
-      color: #818cf8;
-      text-decoration: none;
-    }
-    .footer {
-      padding: 24px 36px;
-      background: #0d111d;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-    }
-    .footer-brand {
-      font-weight: 700;
-      color: #94a3b8;
-      margin-bottom: 4px;
-    }
+  <style type="text/css">
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #08080a; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="container">
-      <div class="header-bar"></div>
-      <div class="header">
-        <div class="logo-badge">Security Service</div>
-        <h1 class="title">${brandName}</h1>
-        <p class="subtitle">Cerere de resetare a parolei de autentificare</p>
-      </div>
-      <div class="content">
-        <div class="greeting">Salut, <strong>${username}</strong>,</div>
-        <p class="text">
-          Am primit o solicitare de resetare a parolei pentru contul tău de pe serverul <strong>${brandName}</strong>.
-          Apasă pe butonul de mai jos pentru a alege o nouă parolă securizată:
-        </p>
+<body style="margin:0; padding:0; background-color:#08080a; font-family:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#08080a; padding:40px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:540px; background-color:#101012; border:1px solid #232220; border-radius:14px; overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,0.85);">
+          
+          <!-- Top Accent Gold Line -->
+          <tr>
+            <td style="height:3px; background:linear-gradient(90deg, #d7b558 0%, #e2bc61 50%, #f6f2eb 100%); line-height:3px; font-size:1px;">&nbsp;</td>
+          </tr>
 
-        <div class="btn-container">
-          <a href="${resetUrl}" class="btn" target="_blank">Resetează Parola Contului</a>
-        </div>
+          <!-- Header with Logo -->
+          <tr>
+            <td align="center" style="padding:36px 32px 24px; background-color:#0e0e10; border-bottom:1px solid #1a191b;">
+              <a href="https://rpg.blipmade.com" target="_blank" style="text-decoration:none; display:inline-block;">
+                <img src="${logoSrc}" alt="${brandName}" width="180" height="40" style="display:block; width:180px; max-width:180px; height:auto; margin:0 auto 16px; border:0;" />
+              </a>
+              <div style="display:inline-block; padding:4px 12px; background-color:rgba(215, 181, 88, 0.12); border:1px solid rgba(215, 181, 88, 0.28); border-radius:6px; color:#d7b558; font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;">
+                Securitate Cont
+              </div>
+              <div style="margin-top:10px; font-size:12px; font-weight:600; color:#a9a59c; letter-spacing:0.05em; text-transform:uppercase;">
+                Cerere Resetare Parolă
+              </div>
+            </td>
+          </tr>
 
-        <div class="info-card">
-          ⏱️ <strong>Valabilitate:</strong> Acest link expiră în <strong>30 de minute</strong>.<br>
-          ${ipAddress ? `🌐 <strong>IP Solicitant:</strong> ${ipAddress}<br>` : ""}
-          🔒 Dacă nu ai inițiat tu această solicitare, poți ignora acest mesaj în siguranță — parola ta rămâne neschimbată.
-        </div>
+          <!-- Body Content -->
+          <tr>
+            <td style="padding:32px 32px 28px; background-color:#101012; color:#f2efe8; font-size:14px; line-height:1.6;">
+              <div style="font-size:16px; font-weight:700; color:#f2efe8; margin-bottom:12px;">
+                Salut, <span style="color:#d7b558;">${username}</span>
+              </div>
+              
+              <p style="margin:0 0 20px; font-size:13px; color:#b4afa4; line-height:1.65;">
+                A fost inițiată o cerere de resetare a parolei pentru contul tău de pe platforma 
+                <strong style="color:#f2efe8;">${brandName}</strong>. 
+                Pentru a configura o parolă nouă securizată, apasă pe butonul de mai jos:
+              </p>
 
-        <div class="fallback-url">
-          Dacă butonul nu funcționează, copiază și deschide linkul în browser:<br>
-          <a href="${resetUrl}">${resetUrl}</a>
-        </div>
-      </div>
-      <div class="footer">
-        <div class="footer-brand">${brandName} &bull; ${brandDomain}</div>
-        <div>Acesta este un email automat de securitate trimis de la serverul oficial.</div>
-      </div>
-    </div>
-  </div>
+              <!-- CTA Button -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:28px 0;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center" style="border-radius:10px; background-color:#d7b558;">
+                          <a href="${resetUrl}" target="_blank" style="display:inline-block; padding:13px 36px; font-family:'Montserrat', sans-serif; font-size:12px; font-weight:900; color:#08080a !important; text-decoration:none; text-transform:uppercase; letter-spacing:0.08em; border-radius:10px;">
+                            Resetează Parola
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Info Box -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:20px 0; background-color:#131315; border:1px solid rgba(242, 239, 232, 0.07); border-radius:10px;">
+                <tr>
+                  <td style="padding:14px 16px; font-size:12px; color:#a9a59c; line-height:1.6;">
+                    <div style="margin-bottom:6px;"><strong style="color:#d7b558;">⏱️ Expirare:</strong> Linkul este valabil timp de <strong style="color:#f2efe8;">30 de minute</strong>.</div>
+                    ${ipAddress ? `<div style="margin-bottom:6px;"><strong style="color:#d7b558;">🌐 IP Solicitant:</strong> <span style="color:#f2efe8; font-family:monospace;">${ipAddress}</span></div>` : ""}
+                    <div><strong style="color:#d7b558;">🔒 Notă de securitate:</strong> Dacă nu ai solicitat tu această resetare, poți ignora acest email în siguranță. Parola ta actuală rămâne neschimbată.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback Link -->
+              <div style="font-size:11px; color:#78746c; margin-top:20px; line-height:1.5; word-break:break-all;">
+                Dacă butonul nu funcționează, copiază și deschide linkul de mai jos în browser:<br />
+                <a href="${resetUrl}" style="color:#d7b558; text-decoration:underline;">${resetUrl}</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:22px 32px; background-color:#08080a; border-top:1px solid #1a191b; font-size:11px; color:#68645e; line-height:1.6;">
+              <strong style="color:#8f8b83; text-transform:uppercase; letter-spacing:0.05em;">${brandName} &bull; Panel &amp; RPG Server</strong><br />
+              <a href="https://rpg.blipmade.com" style="color:#d7b558; text-decoration:none;">rpg.blipmade.com</a><br />
+              Acest mesaj a fost expediat automat de sistemul de autentificare Racket.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `.trim();
@@ -226,15 +165,25 @@ export async function sendPasswordResetEmail({
   const textContent = `
 Salut ${username},
 
-Am primit o solicitare de resetare a parolei pentru contul tău ${brandName}.
-Pentru a-ți reseta parola, accesează următorul link în browser (valabil 30 de minute):
+A fost înregistrată o solicitare de resetare a parolei pentru contul tău ${brandName}.
+Pentru a alege o nouă parolă, deschide linkul de mai jos în browser (valabil 30 de minute):
 
 ${resetUrl}
 
-Dacă nu ai cerut tu această resetare, ignoră acest email.
+Dacă nu ai cerut tu această resetare, ignoră acest email. Parola ta rămâne neschimbată.
 
-— Echipa ${brandName} (${brandDomain})
+— Echipa ${brandName} (rpg.blipmade.com)
   `.trim();
+
+  const attachments = hasLocalLogo
+    ? [
+        {
+          filename: "logo.png",
+          path: logoPath,
+          cid: "racketlogo",
+        },
+      ]
+    : [];
 
   try {
     await mailer.sendMail({
@@ -243,6 +192,7 @@ Dacă nu ai cerut tu această resetare, ignoră acest email.
       subject: `[${brandName}] Resetare Parolă Cont — ${username}`,
       text: textContent,
       html: htmlContent,
+      attachments,
     });
     return true;
   } catch (error) {
