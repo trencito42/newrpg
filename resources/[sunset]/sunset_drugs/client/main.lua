@@ -387,6 +387,7 @@ AddEventHandler('sunset:nui:closeSaleUI', function(data) onCloseSaleUI(data, fun
 
 local spawnedDeliveryPeds = {}
 local deliveryBlips = {}
+local activeTooltipDealer = nil
 
 -- ── Spawn Delivery Dealer NPCs & Create Blips ────────────────
 CreateThread(function()
@@ -413,7 +414,7 @@ CreateThread(function()
 
             if dist < 85.0 then
                 if not spawnedDeliveryPeds[dropoff.id] or not DoesEntityExist(spawnedDeliveryPeds[dropoff.id]) then
-                    local modelHash = joaat(dropoff.pedModel or 'g_m_y_famca_02')
+                    local modelHash = joaat(dropoff.pedModel or 'a_m_m_tramp_01')
                     RequestModel(modelHash)
                     local timeout = GetGameTimer() + 3000
                     while not HasModelLoaded(modelHash) and GetGameTimer() < timeout do
@@ -451,49 +452,64 @@ CreateThread(function()
     end
 end)
 
--- ── Proximity Interaction Loop ───────────────────────────────
+-- ── Proximity Interaction Loop (24/7 Tooltip Design) ─────────
 CreateThread(function()
     while true do
-        local sleep = 500
+        local sleep = 400
         local ped = PlayerPedId()
         local coords = GetEntityCoords(ped)
 
         if not saleActive and not labOpen and not IsPedInAnyVehicle(ped, true) then
+            local nearbyDropoff = nil
+            local nearbyPed = nil
+            local minDistance = 999.0
+
             for _, dropoff in ipairs((Cfg.delivery and Cfg.delivery.dropoffs) or {}) do
                 local dCoords = vector3(dropoff.coords.x, dropoff.coords.y, dropoff.coords.z)
                 local dist = #(coords - dCoords)
-
-                if dist < ((Cfg.delivery and Cfg.delivery.interactionRadius) or 2.5) + 4.0 then
-                    sleep = 0
-
-                    -- Floating 3D Text
-                    local onScreen, screenX, screenY = World3dToScreen2d(dCoords.x, dCoords.y, dCoords.z + 1.05)
-                    if onScreen then
-                        SetTextScale(0.32, 0.32)
-                        SetTextFont(4)
-                        SetTextProportional(1)
-                        SetTextColour(215, 181, 88, 255)
-                        SetTextCentre(1)
-                        SetTextEntry("STRING")
-                        AddTextComponentString(("~y~[%s]~s~ %s"):format(dropoff.rankBadge or 'Livrare', dropoff.dealerLabel or 'Dealer'))
-                        DrawText(screenX, screenY - 0.025)
-
-                        SetTextScale(0.28, 0.28)
-                        SetTextColour(255, 255, 255, 220)
-                        SetTextCentre(1)
-                        SetTextEntry("STRING")
-                        AddTextComponentString("Apasă ~g~[E]~s~ pentru Ofertă Livrare En-gros")
-                        DrawText(screenX, screenY)
-                    end
-
-                    -- Input check
-                    if dist <= ((Cfg.delivery and Cfg.delivery.interactionRadius) or 2.5) then
-                        if IsControlJustReleased(0, 38) then
-                            DoWholesaleDelivery(dropoff)
-                        end
-                    end
-                    break
+                if dist < minDistance then
+                    minDistance = dist
+                    nearbyDropoff = dropoff
+                    nearbyPed = spawnedDeliveryPeds[dropoff.id]
                 end
+            end
+
+            if nearbyDropoff and minDistance < 5.0 and nearbyPed and DoesEntityExist(nearbyPed) then
+                sleep = 0
+                activeTooltipDealer = nearbyDropoff.id
+
+                -- 24/7 Style Floating Tooltip Badge
+                pcall(function()
+                    exports.sunset_world:NpcShowTooltip('drug_dealer_' .. nearbyDropoff.id, nearbyPed, {
+                        badge = nearbyDropoff.rankBadge or 'LIVRARE',
+                        badgeClass = 'npc',
+                        bodyClass = 'npc',
+                        icon = 'ph-package',
+                        title = nearbyDropoff.dealerLabel or 'Dealer',
+                        desc = nearbyDropoff.desc or 'Preluare Pachete & Droguri',
+                        key = 'E',
+                    })
+                end)
+
+                if minDistance <= ((Cfg.delivery and Cfg.delivery.interactionRadius) or 3.0) then
+                    if IsControlJustReleased(0, 38) then
+                        DoWholesaleDelivery(nearbyDropoff)
+                    end
+                end
+            else
+                if activeTooltipDealer then
+                    pcall(function()
+                        exports.sunset_world:NpcHideTooltip('drug_dealer_' .. activeTooltipDealer)
+                    end)
+                    activeTooltipDealer = nil
+                end
+            end
+        else
+            if activeTooltipDealer then
+                pcall(function()
+                    exports.sunset_world:NpcHideTooltip('drug_dealer_' .. activeTooltipDealer)
+                end)
+                activeTooltipDealer = nil
             end
         end
 
@@ -506,7 +522,10 @@ function DoWholesaleDelivery(dropoff)
 
     local offer, err = Sunset.AwaitCallback('sunset:drugs:requestDeliveryOffer', dropoff.id)
     if not offer or not offer.token then
-        Notify(err or 'Contactul nu este interesat în acest moment!', 'error')
+        local msg = (type(err) == 'table' and (err.err or err.localeKey or err.message))
+                 or (type(err) == 'string' and err)
+                 or 'Nu ai niciun pachet de droguri procesate în inventar! (Pachete Weed, Pudră Cocaină, Cristale Meth)'
+        Notify(msg, 'error', 6000)
         return
     end
 
@@ -523,5 +542,6 @@ function DoWholesaleDelivery(dropoff)
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end
+
 
 
