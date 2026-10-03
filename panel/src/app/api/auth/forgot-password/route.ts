@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
       const origin =
         process.env.PANEL_PUBLIC_ORIGIN ||
-        `${request.headers.get("x-forwarded-proto") || "https"}://${request.headers.get("x-forwarded-host") || request.headers.get("host") || "rpg.blipmade.com"}`;
+        `${request.headers.get("x-forwarded-proto") || "https"}://${request.headers.get("x-forwarded-host") || request.headers.get("host") || "rpg.racket.cat"}`;
       const resetUrl = `${origin.replace(/\/+$/, "")}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
       // Send email asynchronously
