@@ -211,6 +211,44 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             if encoded and #encoded < 4000 then
                 SetResourceKvp('sunset_phone_layout', encoded)
             end
+            Sunset.AwaitCallback('sunset:phoneSaveLayout', data.grid)
+            return
+        end
+        if op == 'settings' then
+            Sunset.AwaitCallback('sunset:phoneSaveSettings', {
+                ringtone = data.ringtone ~= false,
+                notifySound = data.notifySound ~= false,
+                compactNotes = data.compactNotes == true,
+            })
+            return
+        end
+        if op == 'marketBuy' then
+            local res, err = Sunset.AwaitCallback('sunset:phoneMarketBuy', tonumber(data.listingId))
+            notify(res and exports.sunset_core:Translate('phone.ui.buy') or (err or 'error'), res and 'success' or 'error')
+            if res then loadApp('market', token) end
+            return
+        end
+        if op == 'marketCancel' then
+            Sunset.AwaitCallback('sunset:phoneMarketCancel', tonumber(data.listingId))
+            loadApp('market', token)
+            return
+        end
+        if op == 'marketListVehicle' then
+            Sunset.AwaitCallback('sunset:phoneMarketListVehicle', tonumber(data.vehicleId), tonumber(data.price))
+            loadApp('market', token)
+            return
+        end
+        if op == 'marketListItem' then
+            Sunset.AwaitCallback('sunset:phoneMarketListItem', tostring(data.item or ''), tonumber(data.quantity), tonumber(data.price))
+            loadApp('market', token)
+            return
+        end
+        if op == 'propertiesMore' then
+            local page = math.max(1, tonumber(data.page) or 1)
+            local filter = data.filter == 'rented' and 'rented' or 'owned'
+            local size = filter == 'owned' and 30 or 20
+            local more = Sunset.AwaitCallback('sunset:getPropertiesPage', { page = page, pageSize = size, filter = filter, sort = 'name' })
+            sendApp('properties', { more = more, filter = filter, page = page }, token)
             return
         end
 

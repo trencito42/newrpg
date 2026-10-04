@@ -42,8 +42,7 @@ end
 
 local function displayName(row)
     if not row then return '' end
-    local name = (tostring(row.firstname or '') .. ' ' .. tostring(row.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
-    return name
+    return exports.sunset_core:FormatPublicName(row.firstname, row.lastname)
 end
 
 local function phoneOf(row, characterId)

@@ -1283,6 +1283,11 @@ function TransferVehicleOwnership(vehicleId, fromCharId, toCharId)
         { vehicleId, fromCharId }
     )
     if not row then return false, { localeKey = 'vehicles.message.seller_no_longer_owns_this_vehicle' } end
+    if GetResourceState('sunset_phone') == 'started' then
+        local listed = false
+        pcall(function() listed = exports.sunset_phone:MarketVehicleListed(vehicleId) end)
+        if listed then return false, { localeKey = 'vehicles.message.vehicle_transfer_failed' } end
+    end
     if row.destroyed == 1 or row.destroyed == true or row.destroyed == '1' then
         return false, { localeKey = 'vehicles.message.destroyed_vehicles_cannot_be_traded' }
     end

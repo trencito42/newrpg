@@ -9,6 +9,10 @@ Sunset.Dealership = {
     testDriveSpawn = vector4(-11.88, -1080.55, 26.67, 70.0),
     testDriveReturn = vector4(-56.74, -1096.62, 26.42, 30.0),
     testDriveSeconds = 60,
+    -- Paid starter borrow at this lot. Quest `vehicle_rented` fires only after the vehicle exists.
+    rentalCash = 500,
+    rentalSeconds = 600,
+    rentalMaxPrice = 40000,
     purchaseGarage = 'legion',
     blip = { sprite = 225, color = 5, scale = 0.8 },
 }

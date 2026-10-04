@@ -84,10 +84,45 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
         LIMIT 15
     ]], { tonumber(char.id) }) or {}
 
+    local listings = {}
+    local okList, listRows = pcall(function()
+        return MySQL.query.await([[
+            SELECT l.id, l.listing_type, l.asset_id, l.quantity, l.asking_price, l.seller_character_id,
+                   c.firstname, c.lastname, c.phone_number, v.model, v.plate, p.label AS property_label
+            FROM phone_market_listings l
+            JOIN characters c ON c.id = l.seller_character_id
+            LEFT JOIN vehicles v ON l.listing_type = 'vehicle' AND v.id = CAST(l.asset_id AS UNSIGNED)
+            LEFT JOIN properties p ON l.listing_type = 'property' AND p.id = CAST(l.asset_id AS UNSIGNED)
+            WHERE l.status = 'active' AND (l.expires_at IS NULL OR l.expires_at > CURRENT_TIMESTAMP)
+            ORDER BY l.id DESC
+            LIMIT 40
+        ]])
+    end)
+    if okList and listRows then
+        for _, row in ipairs(listRows) do
+            local title = row.property_label or row.asset_id
+            if row.listing_type == 'vehicle' then title = (row.model or 'vehicle') .. ' ' .. (row.plate or '') end
+            listings[#listings + 1] = {
+                id = tonumber(row.id),
+                listingId = tonumber(row.id),
+                category = row.listing_type == 'vehicle' and 'vehicles' or row.listing_type == 'item' and 'items' or 'player_properties',
+                title = title,
+                price = tonumber(row.asking_price) or 0,
+                quantity = tonumber(row.quantity) or 1,
+                seller = exports.sunset_core:FormatPublicName(row.firstname, row.lastname),
+                phone = row.phone_number,
+                characterId = tonumber(row.seller_character_id),
+                kind = 'player',
+                model = row.model,
+            }
+        end
+    end
+
     return {
         properties = properties,
         businesses = businesses,
         ads = ads,
+        listings = listings,
         mine = mine,
     }
 end)

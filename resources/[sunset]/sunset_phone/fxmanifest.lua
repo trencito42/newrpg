@@ -8,6 +8,8 @@ version '1.0.0'
 
 dependencies { 'sunset_core' }
 
+server_exports { 'MarketVehicleListed' }
+
 client_scripts {
     '@sunset_core/client/callbacks.lua',
     '@sunset_core/shared/jobs_workplaces.lua',
@@ -20,6 +22,7 @@ client_scripts {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/calls.lua',
+    'server/market.lua',
     'server/apps.lua',
     'server/main.lua',
 }

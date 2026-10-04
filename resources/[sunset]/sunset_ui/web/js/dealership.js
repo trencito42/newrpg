@@ -199,6 +199,8 @@
             testBtn.disabled = state.admin || !enabled || !vehicle;
             testBtn.textContent = I18n.t('dynamic.dealership.test_drive_value0_s', { value0: state.testDriveSeconds || 60 });
         }
+        const rentBtn = $('#dl-btn-rent');
+        if (rentBtn) rentBtn.disabled = !!state.admin;
         buyComplete = false;
         stopBuy(true);
     };
@@ -273,6 +275,10 @@
             const vehicle = getSelected();
             if (!vehicle || state.admin) return;
             post('dealershipTestDrive', { model: vehicle.model });
+        });
+        $('#dl-btn-rent')?.addEventListener('click', () => {
+            if (state.admin) return;
+            post('dealershipRent', {});
         });
         document.addEventListener('keydown', (e) => {
             const root = $('#dealership');

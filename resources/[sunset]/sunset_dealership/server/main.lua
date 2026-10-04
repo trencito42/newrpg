@@ -114,6 +114,68 @@ exports.sunset_core:RegisterCallback('sunset:dealership:testDrive', function(sou
     }
 end)
 
+local RentBusy = {}
+
+exports.sunset_core:RegisterCallback('sunset:dealership:rentVehicle', function(source)
+    if RentBusy[source] then
+        return nil, { localeKey = 'dealership.message.rental_already_in_progress' }
+    end
+    if not nearDealership(source) then
+        return nil, { localeKey = 'dealership.message.start_test_drives_from_the_dealership_marker' }
+    end
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char then return nil, { localeKey = 'dealership.message.invalid_vehicle_selection_reopen_the_dealership' } end
+    RentBusy[source] = true
+    local function finish(result, err)
+        RentBusy[source] = nil
+        return result, err
+    end
+
+    local cap = tonumber(Sunset.Dealership.rentalMaxPrice) or 40000
+    local row = MySQL.single.await([[
+        SELECT model, label, price FROM dealership_vehicles
+        WHERE available = 1 AND stock > 0 AND price > 0 AND price <= ?
+        ORDER BY price ASC, id ASC
+        LIMIT 1
+    ]], { cap })
+    if not row then return finish(nil, { localeKey = 'dealership.message.no_rental_vehicle' }) end
+
+    local price = math.floor(tonumber(Sunset.Dealership.rentalCash) or 500)
+    if price < 1 then return finish(nil, { localeKey = 'dealership.message.no_rental_vehicle' }) end
+    if not exports.sunset_core:RemoveMoney(source, 'cash', price, 'vehicle_rental') then
+        return finish(nil, { localeKey = 'dealership.message.rental_payment_failed' })
+    end
+
+    if TestDrives[source] and DoesEntityExist(TestDrives[source]) then DeleteEntity(TestDrives[source]) end
+    local s = Sunset.Dealership.testDriveSpawn
+    if GetResourceState('sunset_anticheat') == 'started' then
+        pcall(function() exports.sunset_anticheat:MarkLegit(source, 'vehicle_spawn', 15) end)
+    end
+    local vehicle = CreateVehicle(joaat(row.model), s.x, s.y, s.z, s.w or 0.0, true, true)
+    if not vehicle or vehicle == 0 then
+        exports.sunset_core:AddMoney(source, 'cash', price, 'vehicle_rental_refund')
+        exports.sunset_core:RefreshMoney(source)
+        return finish(nil, { localeKey = 'dealership.message.the_test_drive_vehicle_could_not_be_created_try' })
+    end
+    Entity(vehicle).state:set('sunsetProtectedVehicle', true, true)
+    TestDrives[source] = vehicle
+    local netId = NetworkGetNetworkIdFromEntity(vehicle)
+    SetTimeout(((Sunset.Dealership.rentalSeconds or 600) + 15) * 1000, function()
+        if TestDrives[source] == vehicle then TestDrives[source] = nil end
+        if DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
+    end)
+    -- Once per successful handoff. AddProgress ignores the event when the quest is not active.
+    TriggerEvent('sunset:quest:progress', char.id, 'vehicle_rented', 1, { model = row.model })
+    return finish({
+        model = row.model,
+        label = row.label,
+        seconds = Sunset.Dealership.rentalSeconds or 600,
+        netId = netId,
+        price = price,
+        returnPoint = Sunset.Dealership.testDriveReturn,
+    })
+end)
+
 RegisterNetEvent('sunset:dealership:endTestDrive', function(netId)
     local source = source
     local vehicle = TestDrives[source]

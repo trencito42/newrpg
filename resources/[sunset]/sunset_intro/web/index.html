@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Racket RPG — Prezentare Server</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,700;0,800;0,900;1,900&display=swap');
+
+        :root {
+            --gold:    #D7B558;
+            --gold-2:  #e3c162;
+            --cream:   #F2EFE8;
+            --dark:    #06060a;
+            --panel:   rgba(8, 8, 12, 0.96);
+            --border:  rgba(242, 239, 232, 0.12);
+            --muted:   rgba(242, 239, 232, 0.50);
+            --green:   #10b981;
+            --red:     #c4554d;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background: transparent;
+            overflow: hidden;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── WRAPPER ──────────────────────────────────────── */
+        #pres-wrap {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 200;
+        }
+        #pres-wrap::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: rgba(6, 6, 10, 0.82);
+            z-index: -1;
+        }
+        #pres-wrap.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ── CARD ─────────────────────────────────────────── */
+        .pres-card {
+            width: 940px;
+            height: 540px;
+            display: flex;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+            transform: scale(0.96) translateY(16px);
+            transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #pres-wrap.visible .pres-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* ── LEFT VISUAL PANEL ────────────────────────────── */
+        .pres-visual {
+            width: 38%;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #050508;
+            border-right: 1px solid var(--border);
+        }
+        .pres-visual-img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            filter: grayscale(30%) contrast(1.15);
+        }
+        .pres-visual-img.loaded { opacity: 0.45; }
+        .pres-visual-grad {
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(215,181,88,0.08) 0%,
+                transparent 60%
+            ),
+            linear-gradient(to right, rgba(6,6,10,0.05) 0%, rgba(6,6,10,0.85) 100%);
+        }
+        .pres-visual-accent {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(to right, var(--gold), transparent);
+        }
+        .pres-logo {
+            position: absolute;
+            top: 28px; left: 28px;
+        }
+        .pres-logo img, .pres-logo svg {
+            width: 44px; height: 44px;
+        }
+        .pres-slide-num {
+            position: absolute;
+            bottom: 28px; left: 28px;
+            font-size: 11px; font-weight: 800;
+            color: var(--gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* icon overlay in visual */
+        .pres-visual-icon {
+            position: absolute;
+            bottom: 50%; right: -20px;
+            transform: translateY(50%);
+            width: 80px; height: 80px;
+            background: rgba(215,181,88,0.07);
+            border: 1px solid rgba(215,181,88,0.18);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold); opacity: 0.6;
+        }
+        .pres-visual-icon svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* ── RIGHT CONTENT ────────────────────────────────── */
+        .pres-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 42px 32px;
+            overflow: hidden;
+        }
+
+        .pres-tag {
+            font-size: 10px; font-weight: 800;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 8px;
+            opacity: 0.85;
+        }
+
+        .pres-title {
+            font-size: 30px; font-weight: 900;
+            color: var(--cream);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.05;
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+
+        .pres-desc {
+            font-size: 12.5px; font-weight: 500;
+            color: var(--muted);
+            line-height: 1.65;
+            margin-bottom: 22px;
+            max-width: 440px;
+        }
+
+        /* feature list */
+        .pres-features {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .pres-feat {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 11.5px; font-weight: 700;
+            color: rgba(242,239,232,0.85);
+            line-height: 1.4;
+        }
+        .pres-feat-dot {
+            width: 5px; height: 5px;
+            background: var(--gold);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        /* rule list (for rules slide) */
+        .pres-rule {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 9px 12px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 4px;
+            font-size: 11px; font-weight: 700;
+            color: rgba(242,239,232,0.80);
+        }
+        .pres-rule-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .pres-rule.is-bad .pres-rule-icon { color: var(--red); }
+        .pres-rule.is-good .pres-rule-icon { color: var(--green); }
+
+        /* ── FOOTER / NAV ─────────────────────────────────── */
+        .pres-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            margin-top: 16px;
+        }
+
+        .pres-dots {
+            display: flex; gap: 6px; align-items: center;
+        }
+        .pres-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .pres-dot.is-active {
+            background: var(--gold);
+            width: 18px; border-radius: 3px;
+        }
+
+        .pres-skip-hint {
+            font-size: 9.5px; font-weight: 800;
+            color: rgba(255,255,255,0.25);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            cursor: pointer; transition: color 0.2s;
+        }
+        .pres-skip-hint:hover { color: rgba(255,255,255,0.50); }
+
+        .pres-btns { display: flex; gap: 10px; }
+
+        .pres-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 9px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px;
+            border-radius: 4px; cursor: pointer;
+            transition: all 0.18s;
+        }
+        .pres-btn:hover:not(:disabled) {
+            color: var(--cream);
+            background: rgba(255,255,255,0.05);
+        }
+        .pres-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+        .pres-btn--primary {
+            background: var(--gold); color: #06060a;
+            border-color: var(--gold);
+        }
+        .pres-btn--primary:hover:not(:disabled) {
+            background: var(--gold-2);
+            color: #06060a;
+        }
+
+        /* content animation */
+        .pres-content-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .pres-content-body.fading {
+            opacity: 0;
+            transform: translateX(-12px);
+        }
+
+        /* dev */
+        #dev-bar {
+            position: fixed; bottom: 16px; left: 16px;
+            display: flex; gap: 8px; z-index: 9999;
+        }
+        .dev-btn {
+            background: #08080c; border: 1px solid var(--gold);
+            color: var(--gold); padding: 7px 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px; font-weight: 800;
+            text-transform: uppercase; border-radius: 4px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="pres-wrap">
+    <div class="pres-card">
+        <!-- LEFT -->
+        <div class="pres-visual" id="pres-visual">
+            <img class="pres-visual-img" id="pres-img" src="" alt="">
+            <div class="pres-visual-grad"></div>
+            <div class="pres-visual-accent"></div>
+            <div class="pres-logo" id="pres-logo">
+                <!-- logo-3.svg inline placeholder — replaced by JS if SVG loaded -->
+                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="20,4 4,13 20,22 36,13" fill="#D7B558"/>
+                    <polyline points="4,27 20,36 36,27" fill="none" stroke="#D7B558" stroke-width="2"/>
+                    <polyline points="4,20 20,29 36,20" fill="none" stroke="#D7B558" stroke-width="2" opacity="0.5"/>
+                </svg>
+            </div>
+            <div class="pres-visual-icon" id="pres-visual-icon"></div>
+            <div class="pres-slide-num" id="pres-slide-num">01 / 07</div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="pres-content">
+            <div class="pres-content-body" id="pres-body">
+                <div class="pres-tag" id="pres-tag"></div>
+                <h1 class="pres-title" id="pres-title"></h1>
+                <p class="pres-desc" id="pres-desc"></p>
+                <div class="pres-features" id="pres-features"></div>
+            </div>
+
+            <div class="pres-footer">
+                <div class="pres-dots" id="pres-dots"></div>
+                <span class="pres-skip-hint" id="pres-skip" onclick="finishPresentation()">Sari peste →</span>
+                <div class="pres-btns">
+                    <button class="pres-btn" id="pres-prev" onclick="prevSlide()">Înapoi</button>
+                    <button class="pres-btn pres-btn--primary" id="pres-next" onclick="nextSlide()">Următor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+'use strict';
+
+// ─── SLIDES DATA ────────────────────────────────────────────────────────────
+const SLIDES = [
+    {
+        tag: 'Bun venit',
+        title: 'Racket Roleplay',
+        desc: 'Intri într-un univers de roleplay serios, construit de la zero pe framework-ul Sunset. Fiecare acțiune are consecințe — economice, sociale și criminale. Citește cu atenție ce urmează.',
+        image: 'https://images.unsplash.com/photo-1605806616949-1e87b487bc2a?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+        items: [
+            'Server 100% custom — framework Sunset, fără FiveM store',
+            'Economie strictă: banii au valoare reală, nu se dau gratis',
+            'Interfețe curate, minimale, fără lag — 60+ FPS constant',
+            'Suport activ, updates frecvente, comunitate serioasă',
+        ],
+    },
+    {
+        tag: 'Primii pași',
+        title: 'Creează-ți Personajul',
+        desc: 'Fiecare jucător începe cu un personaj nou, fără bani, fără mașină, fără nimic. Misiunile de onboarding te ghidează pas cu pas prin tot ce trebuie să știi.',
+        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>`,
+        items: [
+            '/quests — jurnalul de quests, ghidul tău de progresie',
+            'Apariție completă: față, haine, tatuaje, stil propriu',
+            'Înregistrare la primărie → buletin → identitate legală',
+            'Quest tutorial: ATM, magazin, job center — recompense incluse',
+        ],
+    },
+    {
+        tag: 'Economie & Joburi',
+        title: 'Muncă Sau Infracțiune',
+        desc: 'Economia e gândită să fie provocatoare. Banii se câștigă greu, se cheltuie ușor. Alege-ți calea: joburi legale stabile sau lumea interlopă cu riscuri mari și câștiguri pe măsură.',
+        image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        items: [
+            'Joburi legale: Taximetrist, Camionagiu, Mecanic, Pescar, Curier',
+            'Afaceri deținute de jucători — cumpără și gestionează-le',
+            'Piață de tranzacționare jucător-jucător, ATM-uri, bancă',
+            'Economie cu inflație organică — prețuri influențate de comunitate',
+        ],
+    },
+    {
+        tag: 'Carieră oficială',
+        title: 'Facțiuni Oficiale',
+        desc: 'Faci parte din forțele de ordine sau EMS? Cariera ta oficială vine cu uniforme, sediu, echipament și responsabilități clare față de comunitate.',
+        image: 'https://images.unsplash.com/photo-1555627040-023a1a3ea3cc?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        items: [
+            'LSPD — poliție cu MDC, fișe de arest, amenzi, rapoarte',
+            'EMS — urgențe medicale, resuscitare, transport spital',
+            'Recrutare in-game prin aplicații, probă și interviu RP',
+            'Rank system, promovări și sancțiuni bazate pe activitate',
+        ],
+    },
+    {
+        tag: 'Lumea interlopă',
+        title: 'Clanuri & Teritorii',
+        desc: 'Clanurile controlează zonele orașului. Trafic de droguri, lockpicking, carjack, jafuri — totul are un sistem dedicat, cu riscuri și consecințe reale.',
+        image: 'https://images.unsplash.com/photo-1508614999368-9260051292e5?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+        items: [
+            'Turfs — zone controlabile pe hartă, war system activ',
+            'Droguri: cultivare → procesare → distribuție, risc de arest',
+            'Lockpick, carjack la casinoatic — sisteme custom anti-grief',
+            'Nivel minim 10 pentru acces la activități criminale',
+        ],
+    },
+    {
+        tag: 'Racket Shop',
+        title: 'Racket Coins',
+        desc: 'Racket Coins (RC) sunt moneda premium a serverului. Se obțin prin suport sau events, și permit achiziții cosmetice — nu pay-to-win.',
+        image: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
+        items: [
+            '/shop — deschide magazinul în orice moment',
+            'Skin-uri exclusve, redenumire personaj/clan, upgrade vizual',
+            'Fără avantaj competitiv — cosmetic only, 100%',
+            'RC se obțin și din events și recompense de server speciale',
+        ],
+    },
+    {
+        tag: 'Reguli de bază',
+        title: 'Respectă Comunitatea',
+        desc: 'Serverul funcționează pe principii clare. Nerespectarea lor duce la ban permanent, fără drept de apel pentru abateri grave.',
+        image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=800&auto=format&fit=crop',
+        icon: `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+        rules: true,
+        items: [
+            { bad: true,  text: 'RDM / VDM — omori fără motiv RP valid' },
+            { bad: true,  text: 'OOC în chat, metagaming, exploituri intenționate' },
+            { bad: true,  text: 'Grief — sabotezi experiența altora fără scop RP' },
+            { bad: false, text: 'Menține personajul In-Character în orice situație' },
+            { bad: false, text: 'Folosește /report pentru probleme, nu OOC chat' },
+        ],
+    },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let current = 0;
+const wrap  = document.getElementById('pres-wrap');
+const body  = document.getElementById('pres-body');
+const tagEl = document.getElementById('pres-tag');
+const titleEl = document.getElementById('pres-title');
+const descEl  = document.getElementById('pres-desc');
+const featsEl = document.getElementById('pres-features');
+const imgEl   = document.getElementById('pres-img');
+const iconEl  = document.getElementById('pres-visual-icon');
+const numEl   = document.getElementById('pres-slide-num');
+const dotsEl  = document.getElementById('pres-dots');
+const prevBtn = document.getElementById('pres-prev');
+const nextBtn = document.getElementById('pres-next');
+const skipEl  = document.getElementById('pres-skip');
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function buildDots() {
+    dotsEl.innerHTML = '';
+    SLIDES.forEach((_, i) => {
+        const d = document.createElement('span');
+        d.className = 'pres-dot' + (i === current ? ' is-active' : '');
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+    });
+}
+
+function renderSlide(idx, animate) {
+    const s = SLIDES[idx];
+    if (!s) return;
+
+    const doRender = () => {
+        tagEl.textContent   = s.tag;
+        titleEl.textContent = s.title;
+        descEl.textContent  = s.desc;
+
+        // image
+        imgEl.classList.remove('loaded');
+        if (s.image) {
+            const tmp = new Image();
+            tmp.onload = () => { imgEl.src = s.image; imgEl.classList.add('loaded'); };
+            tmp.src = s.image;
+        }
+
+        // icon
+        iconEl.innerHTML = s.icon || '';
+
+        // slide number
+        numEl.textContent = String(idx + 1).padStart(2, '0') + ' / ' + String(SLIDES.length).padStart(2, '0');
+
+        // features / rules
+        featsEl.innerHTML = '';
+        if (s.rules && Array.isArray(s.items)) {
+            s.items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'pres-rule ' + (item.bad ? 'is-bad' : 'is-good');
+                div.innerHTML = `<span class="pres-rule-icon">${item.bad ? '✕' : '✓'}</span><span>${item.text}</span>`;
+                featsEl.appendChild(div);
+            });
+        } else if (Array.isArray(s.items)) {
+            s.items.forEach(text => {
+                const div = document.createElement('div');
+                div.className = 'pres-feat';
+                div.innerHTML = `<span class="pres-feat-dot"></span><span>${text}</span>`;
+                featsEl.appendChild(div);
+            });
+        }
+
+        prevBtn.disabled = idx === 0;
+        nextBtn.textContent = idx === SLIDES.length - 1 ? 'Începe Jocul' : 'Următor';
+        skipEl.style.display = idx === SLIDES.length - 1 ? 'none' : '';
+
+        buildDots();
+
+        if (animate) {
+            body.classList.remove('fading');
+        }
+    };
+
+    if (animate) {
+        body.classList.add('fading');
+        setTimeout(doRender, 200);
+    } else {
+        doRender();
+    }
+}
+
+function goTo(idx) {
+    if (idx < 0 || idx >= SLIDES.length || idx === current) return;
+    current = idx;
+    renderSlide(current, true);
+}
+
+function nextSlide() {
+    if (current < SLIDES.length - 1) {
+        goTo(current + 1);
+    } else {
+        finishPresentation();
+    }
+}
+
+function prevSlide() { goTo(current - 1); }
+
+// ─── OPEN / CLOSE ────────────────────────────────────────────────────────────
+function openPresentation() {
+    current = 0;
+    renderSlide(0, false);
+    wrap.classList.add('visible');
+}
+
+function closePresentation() {
+    wrap.classList.remove('visible');
+}
+
+function finishPresentation() {
+    closePresentation();
+    // FiveM NUI callback
+    if (typeof fetch !== 'undefined' && window.GetParentResourceName) {
+        fetch('https://' + GetParentResourceName() + '/finishPresentation', { method: 'POST', body: '{}' });
+    }
+    console.log('[PRES] Prezentare finalizata.');
+}
+
+// ─── NUI BRIDGE ──────────────────────────────────────────────────────────────
+window.addEventListener('message', function(ev) {
+    const d = ev.data;
+    if (!d) return;
+    if (d.action === 'openPresentation')  openPresentation();
+    if (d.action === 'closePresentation') closePresentation();
+});
+
+// keyboard nav
+document.addEventListener('keydown', function(e) {
+    if (!wrap.classList.contains('visible')) return;
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft')  prevSlide();
+    if (e.key === 'Escape')     finishPresentation();
+});
+</script>
+</body>
+</html>

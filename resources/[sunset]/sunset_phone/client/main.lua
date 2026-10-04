@@ -108,10 +108,17 @@ local function openPhone()
         DisablePlayerFiring(PlayerId(), true)
         playPhoneSound('open')
         playPhoneAnim(true)
-        local layoutRaw = GetResourceKvpString('sunset_phone_layout')
-        if layoutRaw and layoutRaw ~= '' then
-            local okLayout, decoded = pcall(json.decode, layoutRaw)
-            if okLayout and type(decoded) == 'table' then data.layout = decoded end
+        if data.prefs and data.prefs.layout then
+            data.layout = data.prefs.layout
+        else
+            local layoutRaw = GetResourceKvpString('sunset_phone_layout')
+            if layoutRaw and layoutRaw ~= '' then
+                local okLayout, decoded = pcall(json.decode, layoutRaw)
+                if okLayout and type(decoded) == 'table' then
+                    data.layout = decoded
+                    Sunset.AwaitCallback('sunset:phoneSaveLayout', decoded.grid)
+                end
+            end
         end
         exports.sunset_ui:Send('phoneShow', data)
         exports.sunset_ui:SetFocus(true, true, false, 'phone')

@@ -216,6 +216,16 @@
             if (payload.app === 'jobs' && view === 'jobs') this.renderJobs();
             if (payload.app === 'map' && view === 'map') this.renderMap();
             if (payload.app === 'faction' && view === 'faction') this.renderFaction();
+            if (payload.app === 'properties' && payload.data && payload.data.more) {
+                const prev = this.apps.properties || {};
+                const filter = payload.data.filter === 'rented' ? 'rented' : 'owned';
+                const bucket = prev[filter] || { rows: [] };
+                const extra = (payload.data.more && payload.data.more.rows) || [];
+                bucket.rows = (bucket.rows || []).concat(extra);
+                bucket.page = payload.data.page;
+                prev[filter] = bucket;
+                this.apps.properties = prev;
+            }
             if (payload.app === 'properties' && view === 'properties') this.renderProperties();
             if (payload.app === 'clan' && view === 'clan') this.renderClan();
             if (payload.app === 'taxi' && view === 'taxi') { this.taxi = payload.data || this.taxi; this.renderTaxi(); }
@@ -448,14 +458,16 @@
             clear(grid);
             clear(dock);
             const unread = this.unreadCount();
+            const missed = Number(this.data.missedCalls) || 0;
+            const badgeFor = (id) => id === 'messages' ? unread : (id === 'phone' ? missed : 0);
             (this.layout.grid || []).forEach((id) => {
-                const node = this.iconButton(id, id === 'messages' ? unread : 0);
+                const node = this.iconButton(id, badgeFor(id));
                 if (this.editing) node.draggable = true;
                 this.bindIcon(node, id, true);
                 grid.append(node);
             });
             ['phone', 'messages', 'bank', 'map'].forEach((id) => {
-                const node = this.iconButton(id, id === 'messages' ? unread : 0);
+                const node = this.iconButton(id, badgeFor(id));
                 this.bindIcon(node, id, false);
                 dock.append(node);
             });
@@ -766,6 +778,10 @@
                     this.thread = { peer: Number(c.characterId), name: c.name, phone: c.phone, messages: this.messagesWith(c.characterId) };
                     this.openApp('conversation');
                 }));
+                actions.append(btn('mini', t('phone.ui.edit'), () => {
+                    const next = window.prompt(t('phone.ui.name'), c.name || '');
+                    if (next && next.trim()) post('phoneEditContact', { contactId: c.id, name: next.trim().slice(0, 48) });
+                }));
                 actions.append(btn('mini danger', t('phone.ui.delete'), () => post('phoneDeleteContact', { contactId: c.id })));
                 item.append(body, actions);
                 content.append(item);
@@ -894,6 +910,16 @@
                 img.alt = '';
                 img.src = 'assets/vehicles/' + encodeURIComponent(model) + '.webp';
                 img.addEventListener('error', () => {
+                    if (!img.dataset.png) {
+                        img.dataset.png = '1';
+                        img.src = 'assets/vehicles/' + encodeURIComponent(model) + '.png';
+                        return;
+                    }
+                    if (!img.dataset.svg) {
+                        img.dataset.svg = '1';
+                        img.src = 'assets/vehicles/fallback.svg';
+                        return;
+                    }
                     const fallback = el('div', 'mc-fallback');
                     fallback.append(text((vehicle.displayName || model || '?').slice(0, 3).toUpperCase()));
                     img.replaceWith(fallback);
@@ -927,7 +953,8 @@
         marketItems() {
             const data = this.apps.market || {};
             const items = [];
-            (data.properties || []).forEach((row) => items.push(Object.assign({ category: 'properties' }, row)));
+            (data.listings || []).forEach((row) => items.push(row));
+            (data.properties || []).forEach((row) => items.push(Object.assign({ category: 'properties', kind: 'server' }, row)));
             (data.businesses || []).forEach((row) => items.push(Object.assign({ category: 'businesses' }, row)));
             (data.ads || []).forEach((row) => items.push(Object.assign({ category: 'ads', price: null }, row)));
             return items;
@@ -940,7 +967,7 @@
             const data = this.apps.market;
             if (!data) return;
             const tabs = el('div', 'pill-tabs');
-            ['all', 'properties', 'businesses', 'ads'].forEach((key) => {
+            ['all', 'vehicles', 'items', 'properties', 'player_properties', 'businesses', 'ads'].forEach((key) => {
                 tabs.append(btn('pill-tab' + (this.marketFilter === key ? ' active' : ''), t(key === 'all' ? 'phone.ui.all' : 'phone.ui.' + key), () => { this.marketFilter = key; this.renderMarket(); }));
             });
             const search = field(t('phone.ui.search'), this._marketQuery || '');
@@ -953,6 +980,16 @@
                 if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
             });
             content.append(tabs, search.wrap);
+            const listVeh = field(t('phone.ui.list_vehicle'));
+            const listPrice = field(t('phone.ui.price'));
+            content.append(listVeh.wrap, listPrice.wrap, btn('btn-ghost', t('phone.ui.list_vehicle'), () => {
+                post('phoneAction', { op: 'marketListVehicle', vehicleId: listVeh.input.value, price: listPrice.input.value, token: this.token });
+            }));
+            const listItem = field(t('phone.ui.list_item'));
+            const listQty = field(t('phone.ui.qty'));
+            content.append(listItem.wrap, listQty.wrap, btn('btn-ghost', t('phone.ui.list_item'), () => {
+                post('phoneAction', { op: 'marketListItem', item: listItem.input.value, quantity: listQty.input.value, price: listPrice.input.value, token: this.token });
+            }));
             const hint = el('div', 'muted');
             hint.style.marginBottom = '8px';
             hint.append(text(t('phone.ui.ad_hint')));
@@ -1021,6 +1058,11 @@
                 content.append(seller);
             }
             if (row.x && row.y) content.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: row.x, y: row.y })));
+            if (row.listingId && row.kind === 'player' && Number(row.characterId) === Number(this.data.myCharacterId)) {
+                content.append(btn('btn-ghost', t('phone.ui.cancel_listing'), () => post('phoneAction', { op: 'marketCancel', listingId: row.listingId, token: this.token })));
+            } else if (row.listingId && row.kind === 'player') {
+                content.append(btn('btn-gold', t('phone.ui.buy'), () => post('phoneAction', { op: 'marketBuy', listingId: row.listingId, token: this.token })));
+            }
             if (row.phone) content.append(btn('btn-ghost', t('phone.ui.message'), () => {
                 this.thread = { peer: Number(row.characterId) || 0, name: row.seller || row.phone, phone: row.phone, messages: this.messagesWith(row.characterId) };
                 this.openApp('conversation');
@@ -1307,6 +1349,14 @@
                 if (entry.x) card.append(btn('btn-gold', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: entry.x, y: entry.y })));
                 content.append(card);
             });
+            const owned = data.owned || {};
+            const rented = data.rented || {};
+            if ((owned.rows || []).length >= 30) {
+                content.append(btn('btn-ghost', t('phone.ui.load_more'), () => post('phoneAction', { op: 'propertiesMore', filter: 'owned', page: (owned.page || 1) + 1, token: this.token })));
+            }
+            if ((rented.rows || []).length >= 20) {
+                content.append(btn('btn-ghost', t('phone.ui.load_more'), () => post('phoneAction', { op: 'propertiesMore', filter: 'rented', page: (rented.page || 1) + 1, token: this.token })));
+            }
         },
 
         renderClan() {
@@ -1413,6 +1463,18 @@
                 card.append(line);
             });
             content.append(card);
+            const prefs = this.data.prefs || { ringtone: true, notifySound: true, compactNotes: false };
+            const toggles = el('div', 'panel');
+            [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true], ['compactNotes', 'phone.ui.compact_notes', false]].forEach(([key, label, defaultOn]) => {
+                const current = prefs[key] == null ? defaultOn : !!prefs[key];
+                toggles.append(btn('mini', t(label) + ': ' + (current ? 'on' : 'off'), () => {
+                    prefs[key] = !current;
+                    this.data.prefs = prefs;
+                    post('phoneAction', { op: 'settings', ringtone: prefs.ringtone !== false, notifySound: prefs.notifySound !== false, compactNotes: !!prefs.compactNotes });
+                    this.renderSettings();
+                }));
+            });
+            content.append(toggles);
         },
 
         empty(message) {

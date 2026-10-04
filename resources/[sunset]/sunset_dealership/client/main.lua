@@ -197,50 +197,60 @@ local function endTestDrive(message)
     notify(message or exports.sunset_core:Translate('dealership.msg.test_drive_finished_you_have_been'), 'info', 6000)
 end
 
+local function handVehicle(drive, err, rented)
+    if not drive then return notify(err or exports.sunset_core:Translate('dealership.msg.test_drive_is_not_available'), 'error') end
+    local hash, modelErr = loadVehicleModel(drive.model)
+    if not hash then return notify(modelErr, 'error') end
+    closeDealer()
+    local deadline = GetGameTimer() + 7000
+    testVehicle = 0
+    while testVehicle == 0 and GetGameTimer() < deadline do
+        testVehicle = NetworkGetEntityFromNetworkId(tonumber(drive.netId) or 0)
+        if testVehicle == 0 then Wait(100) end
+    end
+    SetModelAsNoLongerNeeded(hash)
+    if testVehicle == 0 or not DoesEntityExist(testVehicle) then
+        local s = Sunset.Dealership.testDriveSpawn
+        TriggerServerEvent('sunset:anticheat:markLegitLocal', 'vehicle_spawn', 15)
+        testVehicle = CreateVehicle(hash, s.x, s.y, s.z, s.w or 0.0, true, false)
+    end
+    if testVehicle == 0 or not DoesEntityExist(testVehicle) then
+        TriggerServerEvent('sunset:dealership:endTestDrive', drive.netId)
+        return notify(exports.sunset_core:Translate('dealership.message.the_test_drive_vehicle_did_not_stream_in_try'), 'error')
+    end
+    SetEntityAsMissionEntity(testVehicle, true, true)
+    SetVehicleNumberPlateText(testVehicle, rented and 'RENTAL' or 'TESTDRIV')
+    SetVehicleDirtLevel(testVehicle, 0.0)
+    SetVehicleFuelLevel(testVehicle, GetVehicleHandlingFloat(testVehicle, 'CHandlingData', 'fPetrolTankVolume'))
+    TaskWarpPedIntoVehicle(PlayerPedId(), testVehicle, -1)
+    TriggerEvent('sunset:vehicles:setEngineState', testVehicle, true)
+    testDriveActive = true
+    local seconds = math.max(15, tonumber(drive.seconds) or 60)
+    for remaining = seconds, 1, -1 do
+        if not testDriveActive or testVehicle == 0 or not DoesEntityExist(testVehicle) then break end
+        TriggerEvent('sunset:ui:jobObjective', {
+            title = exports.sunset_core:Translate(rented and 'dealership.msg.rental_started' or 'dealership.testdrive.title', { vehicle = exports.sunset_vehicles:GetVehicleDisplayName(drive.model) }),
+            subtitle = exports.sunset_core:Translate('dealership.testdrive.subtitle', { seconds = remaining }),
+            progress = math.floor(((seconds - remaining) / seconds) * 100),
+        })
+        Wait(1000)
+    end
+    if testDriveActive then endTestDrive() end
+end
+
 AddEventHandler('sunset:nui:dealershipTestDrive', function(data)
     if not dealerOpen or adminMode or not data or not data.model then return end
     CreateThread(function()
         local drive, err = Sunset.AwaitCallback('sunset:dealership:testDrive', data.model)
-        if not drive then return notify(err or exports.sunset_core:Translate('dealership.msg.test_drive_is_not_available'), 'error') end
-        local hash, modelErr = loadVehicleModel(drive.model)
-        if not hash then return notify(modelErr, 'error') end
-        closeDealer()
-        local deadline = GetGameTimer() + 7000
-        testVehicle = 0
-        while testVehicle == 0 and GetGameTimer() < deadline do
-            testVehicle = NetworkGetEntityFromNetworkId(tonumber(drive.netId) or 0)
-            if testVehicle == 0 then Wait(100) end
-        end
-        SetModelAsNoLongerNeeded(hash)
-        if testVehicle == 0 or not DoesEntityExist(testVehicle) then
-            local s = Sunset.Dealership.testDriveSpawn
-            -- [ANTICHEAT] whitelist fallback test-drive spawn
-            TriggerServerEvent('sunset:anticheat:markLegitLocal', 'vehicle_spawn', 15)
-            testVehicle = CreateVehicle(hash, s.x, s.y, s.z, s.w or 0.0, true, false)
-        end
-        if testVehicle == 0 or not DoesEntityExist(testVehicle) then
-            TriggerServerEvent('sunset:dealership:endTestDrive', drive.netId)
-            return notify(exports.sunset_core:Translate('dealership.message.the_test_drive_vehicle_did_not_stream_in_try'), 'error')
-        end
-        SetEntityAsMissionEntity(testVehicle, true, true)
-        SetVehicleNumberPlateText(testVehicle, 'TESTDRIV')
-        SetVehicleDirtLevel(testVehicle, 0.0)
-        SetVehicleFuelLevel(testVehicle, GetVehicleHandlingFloat(testVehicle, 'CHandlingData', 'fPetrolTankVolume'))
-        TaskWarpPedIntoVehicle(PlayerPedId(), testVehicle, -1)
-        TriggerEvent('sunset:vehicles:setEngineState', testVehicle, true)
-        testDriveActive = true
+        handVehicle(drive, err, false)
+    end)
+end)
 
-        local seconds = math.max(15, tonumber(drive.seconds) or 60)
-        for remaining = seconds, 1, -1 do
-            if not testDriveActive or testVehicle == 0 or not DoesEntityExist(testVehicle) then break end
-            TriggerEvent('sunset:ui:jobObjective', {
-                title = exports.sunset_core:Translate('dealership.testdrive.title', { vehicle = exports.sunset_vehicles:GetVehicleDisplayName(drive.model) }),
-                subtitle = exports.sunset_core:Translate('dealership.testdrive.subtitle', { seconds = remaining }),
-                progress = math.floor(((seconds - remaining) / seconds) * 100),
-            })
-            Wait(1000)
-        end
-        if testDriveActive then endTestDrive() end
+AddEventHandler('sunset:nui:dealershipRent', function()
+    if not dealerOpen or adminMode then return end
+    CreateThread(function()
+        local drive, err = Sunset.AwaitCallback('sunset:dealership:rentVehicle')
+        handVehicle(drive, err, true)
     end)
 end)
 

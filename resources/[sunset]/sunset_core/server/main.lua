@@ -715,12 +715,19 @@ function GetCharacter(source)
 end
 exports('GetCharacter', GetCharacter)
 
+function FormatPublicName(first, last)
+    first = tostring(first or ''):gsub('^%s+', ''):gsub('%s+$', '')
+    last = tostring(last or ''):gsub('^%s+', ''):gsub('%s+$', '')
+    if last == '' then return first end
+    return (first .. ' ' .. last):gsub('%s+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+end
+exports('FormatPublicName', FormatPublicName)
+
 function GetPlayerBaseName(source)
     local char = GetCharacter(source)
     local base
     if char then
-        local full = ((char.firstname or '') .. (char.lastname and char.lastname ~= '' and (' ' .. char.lastname) or ''))
-            :gsub('^%s+', ''):gsub('%s+$', '')
+        local full = FormatPublicName(char.firstname, char.lastname)
         if full ~= '' then base = full end
     end
     if not base then

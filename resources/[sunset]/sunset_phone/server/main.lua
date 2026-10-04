@@ -226,6 +226,33 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         messages = messages,
         contacts = contacts,
         onlineByChar = onlineByChar,
+        prefs = (function()
+            local ok, row = pcall(function()
+                return MySQL.single.await('SELECT ringtone, notify_sound, compact_notes, layout FROM phone_character_prefs WHERE character_id = ?', { myCharId })
+            end)
+            if not ok or not row then return { ringtone = 1, notifySound = 1, compactNotes = 0 } end
+            local layout = nil
+            if row.layout and row.layout ~= '' then
+                local decodedOk, decoded = pcall(json.decode, row.layout)
+                if decodedOk and type(decoded) == 'table' then layout = decoded end
+            end
+            return {
+                ringtone = tonumber(row.ringtone) ~= 0,
+                notifySound = tonumber(row.notify_sound) ~= 0,
+                compactNotes = tonumber(row.compact_notes) == 1,
+                layout = layout,
+            }
+        end)(),
+        missedCalls = (function()
+            local ok, n = pcall(function()
+                return MySQL.scalar.await([[
+                    SELECT COUNT(*) FROM phone_calls
+                    WHERE callee_character_id = ? AND status = 'missed'
+                      AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
+                ]], { myCharId })
+            end)
+            return ok and tonumber(n) or 0
+        end)(),
         calls = (function()
             local okCalls, rowsCalls = pcall(function()
                 return MySQL.query.await([[
@@ -276,12 +303,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneAddContact', function(source, 
 
     if not name or name == '' then
         if matchedChar then
-            local first = tostring(matchedChar.firstname or ''):match('^%s*(.-)%s*$') or ''
-            local last = tostring(matchedChar.lastname or ''):match('^%s*(.-)%s*$') or ''
-            name = first
-            if last ~= '' then
-                name = first ~= '' and (first .. ' ' .. last) or last
-            end
+            name = exports.sunset_core:FormatPublicName(matchedChar.firstname, matchedChar.lastname)
             if name == '' then name = 'Contact ' .. formatted end
         else
             name = 'Contact ' .. formatted

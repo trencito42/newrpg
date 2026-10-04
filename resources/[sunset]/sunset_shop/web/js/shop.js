@@ -287,11 +287,11 @@
     function openUseNow(kind) {
         show($('#shop-result'), false);
         if (kind === 'name_change') {
-            $('#shop-rename-first').value = '';
-            $('#shop-rename-last').value = '';
+            const nick = $('#shop-rename-nick');
+            if (nick) nick.value = '';
             setModalState('#shop-rename-state', null);
             show($('#shop-rename'), true);
-            $('#shop-rename-first').focus();
+            if (nick) nick.focus();
         } else if (kind === 'clan_name_change') {
             $('#shop-clanname-field').value = '';
             setModalState('#shop-clanname-state', null);

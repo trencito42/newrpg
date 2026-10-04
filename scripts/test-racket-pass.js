@@ -122,7 +122,37 @@ function walk(dir) {
 }
 walk(path.join(root, 'resources/[sunset]'));
 const missing = Object.keys(questHits).filter((t) => !wired.has(t));
-check(missing.length === 0 || missing.every((t) => t === 'vehicle_rented'), 'onboarding events are wired (' + (missing.join(', ') || 'all') + ')');
+check(missing.length === 0, 'onboarding events are wired (' + (missing.join(', ') || 'all') + ')');
+
+const dealer = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_dealership/server/main.lua'), 'utf8');
+const rentAt = dealer.indexOf("TriggerEvent('sunset:quest:progress', char.id, 'vehicle_rented'");
+const spawnFail = dealer.indexOf('vehicle_rental_refund');
+check(rentAt > 0 && spawnFail > 0 && spawnFail < rentAt, 'vehicle_rented fires only after a paid spawn succeeds');
+check(dealer.includes('RentBusy[source]'), 'rental callback rejects a second in-flight request');
+const quests = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_quests/server/main.lua'), 'utf8');
+check(quests.includes("st.status == 'active'"), 'quest progress does not rerun a completed objective');
+check(/claimed/.test(quests), 'claimed quests stay claimed');
+
+const market = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_phone/server/market.lua'), 'utf8');
+check(market.includes("SET status = 'sold'") && market.includes('TransferVehicleOwnership'), 'vehicle buy locks the listing then transfers ownership');
+function claimListing(state) {
+    if (state.status !== 'active') return false;
+    state.status = 'sold';
+    return true;
+}
+const race = { status: 'active' };
+check(claimListing(race) === true && claimListing(race) === false, 'a second buyer cannot claim a sold listing');
+check(market.includes('RemoveItem') && market.includes("'item'"), 'item listings escrow inventory');
+check(market.includes('owner_character_id'), 'property listings move canonical ownership');
+check(fs.existsSync(path.join(root, 'sql/84-phone-market.sql')), 'marketplace migration exists');
+check(fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_phone/server/apps.lua'), 'utf8').includes('name:sub(1, 48)') || fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_phone/server/apps.lua'), 'utf8').includes(':sub(1, 48)'), 'contact edit caps name length');
+const phoneJs = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_ui/web/js/phone.js'), 'utf8');
+check(phoneJs.includes('phone.ui.edit') && phoneJs.includes('propertiesMore') && phoneJs.includes('fallback.svg'), 'phone edit, property pages, and thumbnail fallback are wired');
+check(fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_core/server/main.lua'), 'utf8').includes('function FormatPublicName'), 'public nickname helper exists');
+check(market.includes('#encoded > 512'), 'phone layout payload is length-capped');
+check(!/SELECT[\s\S]{0,80}FROM turf_points/i.test(turfServer), 'runtime turf geometry does not read turf_points');
+check(fs.existsSync(path.join(root, 'resources/[sunset]/sunset_ui/web/assets/vehicles/fallback.svg')), 'thumbnail fallback file exists');
+check(!/docs\.fivem\.net/.test(phoneJs), 'phone images do not use the FiveM CDN');
 
 console.log(failed ? ('\n' + failed + ' failed') : '\nall passed');
 process.exit(failed ? 1 : 0);
