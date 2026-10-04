@@ -54,8 +54,8 @@ html, body {
 .shop-bg__overlay {
     position: absolute;
     inset: 0;
-    /* Letterbox bars stay solid. The middle stays readable at 0.2, then darkens toward the edges. */
-    background: radial-gradient(ellipse 80% 75% at 50% 50%, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.20) 55%, rgba(0,0,0,0.55) 100%);
+    /* Solid shop field between the black letterbox bars. */
+    background: #050507;
 }
 
 .shop-bg__layer {
