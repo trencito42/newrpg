@@ -11,6 +11,7 @@ shared_scripts {
     '@sunset_core/shared/items.lua',
     'shared/vehicle_config.lua',
     'shared/display_names.lua',
+    'shared/addon_pack_names.lua',
 }
 
 client_scripts {
