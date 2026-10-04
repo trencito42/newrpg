@@ -164,10 +164,13 @@ local function loadApp(app, token)
         local impound = Sunset.AwaitCallback('sunset:impound:list') or {}
         local pins = destinationPins()
         sendApp('garage', { vehicles = vehicles, impound = impound, pins = pins }, token)
-    elseif app == 'market' or app == 'news' then
+    elseif app == 'market' then
         local data = Sunset.AwaitCallback('sunset:phoneMarketplace') or { properties = {}, businesses = {}, ads = {}, mine = {} }
         data.pins = destinationPins()
         sendApp(app, data, token)
+    elseif app == 'news' then
+        local data = Sunset.AwaitCallback('sunset:phoneGetUpdates') or { updates = {} }
+        sendApp('news', data, token)
     elseif app == 'jobs' then
         local panel = Sunset.AwaitCallback('sunset:jobs:getPanelData') or {}
         local workplaces = {}
@@ -397,6 +400,27 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             local size = filter == 'owned' and 30 or 20
             local more = Sunset.AwaitCallback('sunset:getPropertiesPage', { page = page, pageSize = size, filter = filter, sort = 'name' })
             sendApp('properties', { more = more, filter = filter, page = page }, token)
+            return
+        end
+
+        if op == 'reactUpdate' then
+            local res = Sunset.AwaitCallback('sunset:phoneReactUpdate', tonumber(data.updateId), tostring(data.reaction or ''))
+            if type(res) == 'table' and res.ok ~= false then
+                exports.sunset_ui:Send('phoneActionResult', {
+                    op           = 'reactUpdate',
+                    ok           = true,
+                    updateId     = data.updateId,
+                    likesCount   = res.likes_count,
+                    dislikesCount = res.dislikes_count,
+                    myReaction   = res.my_reaction,
+                })
+            else
+                exports.sunset_ui:Send('phoneActionResult', {
+                    op       = 'reactUpdate',
+                    ok       = false,
+                    updateId = data.updateId,
+                })
+            end
             return
         end
 

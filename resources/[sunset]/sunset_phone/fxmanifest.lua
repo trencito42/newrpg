@@ -28,5 +28,6 @@ server_scripts {
     'server/market.lua',
     'server/media.lua',
     'server/apps.lua',
+    'server/updates.lua',
     'server/main.lua',
 }

@@ -306,6 +306,27 @@
                     if (this.current() === 'bank') this.renderBank();
                 } else if (this.current() === 'transfer') this.renderTransfer();
             }
+            if (payload.op === 'reactUpdate') {
+                if (!this._newsReactions) this._newsReactions = {};
+                const id = payload.updateId;
+                if (id) {
+                    this._newsReactions[id] = {
+                        likesCount:    payload.ok ? payload.likesCount    : (this._newsReactions[id]?.likesCount    ?? 0),
+                        dislikesCount: payload.ok ? payload.dislikesCount : (this._newsReactions[id]?.dislikesCount ?? 0),
+                        myReaction:    payload.ok ? payload.myReaction    : (this._newsReactions[id]?.myReaction    ?? null),
+                    };
+                    // Update buttons in-place if news tab is open
+                    if (this.current() === 'news') {
+                        const rx = this._newsReactions[id];
+                        document.querySelectorAll('[data-rx-id="' + id + '"]').forEach((btn) => {
+                            const type = btn.dataset.rxType;
+                            const count = type === 'like' ? rx.likesCount : rx.dislikesCount;
+                            btn.textContent = (type === 'like' ? '👍 ' : '👎 ') + count;
+                            btn.classList.toggle('rx-active', rx.myReaction === type);
+                        });
+                    }
+                }
+            }
         },
 
         applyAppData(payload) {
@@ -2134,39 +2155,87 @@
             const page = this.beginPage(content);
             const scroll = el('div', 'phone-app-scroll');
             page.append(scroll);
-            const ads = data.ads || [];
-            if (!ads.length) scroll.append(this.empty(t('phone.ui.news_empty')));
-            ads.forEach((ad) => {
-                const card = el('div', 'panel');
-                const title = el('div');
-                if (window.AssetPublic?.renderRichText) {
-                    window.AssetPublic.renderRichText(title, {
-                        text: ad.title || '',
-                        attachment: ad.attachment,
-                        attachmentIndex: ad.attachmentIndex,
-                        onOpen: (asset, chip) => window.AssetPreview?.open?.(asset, chip),
-                    });
-                } else {
-                    title.append(text(ad.title || ''));
+            const updates = data.updates || [];
+            if (!updates.length) { scroll.append(this.empty(t('phone.ui.news_empty'))); return; }
+
+            if (!this._newsReactions) this._newsReactions = {};
+            const reactions = this._newsReactions;
+            const self = this;
+
+            function mdToHtml(src) {
+                if (!src) return '';
+                return src
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>')
+                    .replace(/^- (.+)$/gm, '• $1')
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n/g, '<br>');
+            }
+
+            updates.forEach((item) => {
+                const card = el('div', 'panel news-update-card');
+
+                const meta = el('div', 'news-update-meta');
+                const catEl = el('span', 'news-cat news-cat-' + (item.category || 'update').replace(/[^a-z0-9]/gi, '-').toLowerCase());
+                catEl.append(text(item.category || 'update'));
+                const dateEl = el('span', 'muted');
+                if (item.created_at) {
+                    try { dateEl.append(text(new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }))); }
+                    catch (_) { dateEl.append(text(item.created_at.slice(0, 10))); }
                 }
-                card.append(title);
-                const meta = el('div', 'muted');
-                meta.append(text((ad.seller || '') + (ad.phone ? ' · ' + ad.phone : '') + (ad.publishedAt ? ' · ' + ad.publishedAt : '')));
+                meta.append(catEl, dateEl);
                 card.append(meta);
-                if (ad.phone) card.append(btn('btn-ghost', t('phone.ui.message'), () => this.openConversation({
-                    characterId: ad.characterId, phone: ad.phone, displayName: ad.seller,
-                })));
-                const asset = window.AssetPublic?.sanitize?.(ad.attachment);
-                if (asset) {
-                    const banner = window.AssetPublic.listingBanner(asset.listingStatus);
-                    if (asset.listingId && banner === 'active') {
-                        card.append(btn('btn-gold', t('asset.view_market'), () => this.focusListing({ listingId: asset.listingId })));
-                    } else if (asset.listingId) {
-                        const note = el('div', 'muted');
-                        note.append(text(banner === 'sold' ? t('asset.listing_sold') : t('asset.listing_expired')));
-                        card.append(note);
-                    }
+
+                const titleEl = el('div', 'news-update-title');
+                titleEl.append(text(item.title || ''));
+                card.append(titleEl);
+
+                if (item.summary) {
+                    const sumEl = el('div', 'news-update-summary');
+                    sumEl.append(text(item.summary));
+                    card.append(sumEl);
                 }
+
+                // Expandable full content
+                const bodyEl = el('div', 'news-update-body hidden');
+                bodyEl.innerHTML = mdToHtml(item.content || '');
+                card.append(bodyEl);
+                if (item.content && item.summary !== item.content) {
+                    const readMoreBtn = btn('btn-ghost news-update-readmore', t('phone.ui.news_read_more'), () => {
+                        const isHidden = bodyEl.classList.contains('hidden');
+                        bodyEl.classList.toggle('hidden', !isHidden);
+                        readMoreBtn.textContent = isHidden ? t('phone.ui.news_read_less') : t('phone.ui.news_read_more');
+                    });
+                    card.append(readMoreBtn);
+                }
+
+                // Reactions
+                const rx = reactions[item.id] || {};
+                const likesCount = rx.likesCount ?? item.likes_count ?? 0;
+                const dislikesCount = rx.dislikesCount ?? item.dislikes_count ?? 0;
+                const myRx = rx.myReaction !== undefined ? rx.myReaction : (item.my_reaction ?? null);
+
+                const rxRow = el('div', 'news-update-rx');
+                const likeBtn = btn('btn-ghost news-rx-btn' + (myRx === 'like' ? ' rx-active' : ''), '👍 ' + likesCount, () => {
+                    post('phoneAction', { op: 'reactUpdate', updateId: item.id, reaction: 'like', token: self.token });
+                });
+                likeBtn.dataset.rxId = item.id;
+                likeBtn.dataset.rxType = 'like';
+                const dislikeBtn = btn('btn-ghost news-rx-btn' + (myRx === 'dislike' ? ' rx-active' : ''), '👎 ' + dislikesCount, () => {
+                    post('phoneAction', { op: 'reactUpdate', updateId: item.id, reaction: 'dislike', token: self.token });
+                });
+                dislikeBtn.dataset.rxId = item.id;
+                dislikeBtn.dataset.rxType = 'dislike';
+
+                rxRow.append(likeBtn, dislikeBtn);
+                card.append(rxRow);
+
+                const authorEl = el('div', 'muted news-update-author');
+                authorEl.append(text('— ' + (item.author_name || '')));
+                card.append(authorEl);
+
                 scroll.append(card);
             });
         },

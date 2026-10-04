@@ -16,6 +16,8 @@ import {
   Tag,
   Clock,
   Flame,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { PostUpdateModal } from "./PostUpdateModal";
 import { t, formatDate } from "@/lib/i18n";
@@ -34,6 +36,9 @@ export interface UpdateItem {
   author_skin?: string | null;
   is_pinned: number;
   views_count: number;
+  likes_count: number;
+  dislikes_count: number;
+  my_reaction?: string | null;
   created_at: string;
 }
 
@@ -41,7 +46,78 @@ interface UpdatesClientFeedProps {
   initialUpdates: UpdateItem[];
   canPost: boolean;
   isAdmin: boolean;
+  isLoggedIn: boolean;
   locale: "en" | "ro";
+}
+
+interface ReactionState {
+  likes_count: number;
+  dislikes_count: number;
+  my_reaction: string | null;
+}
+
+function ReactionBar({ item, isLoggedIn }: { item: UpdateItem; isLoggedIn: boolean }) {
+  const [rx, setRx] = useState<ReactionState>({
+    likes_count: item.likes_count ?? 0,
+    dislikes_count: item.dislikes_count ?? 0,
+    my_reaction: item.my_reaction ?? null,
+  });
+  const [loading, setLoading] = useState(false);
+
+  const react = async (reaction: "like" | "dislike") => {
+    if (loading || !isLoggedIn) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/updates/${item.slug}/react`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRx({ likes_count: data.likes_count, dislikes_count: data.dislikes_count, my_reaction: data.my_reaction });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const total = rx.likes_count + rx.dislikes_count;
+  const likeRatio = total > 0 ? Math.round((rx.likes_count / total) * 100) : null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => react("like")}
+        disabled={loading || !isLoggedIn}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+          rx.my_reaction === "like"
+            ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+            : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-transparent hover:border-emerald-800/40 disabled:opacity-40"
+        }`}
+        title={isLoggedIn ? undefined : "Log in to react"}
+      >
+        <ThumbsUp className="w-3 h-3" />
+        <span>{rx.likes_count}</span>
+      </button>
+      <button
+        onClick={() => react("dislike")}
+        disabled={loading || !isLoggedIn}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+          rx.my_reaction === "dislike"
+            ? "bg-red-950/60 text-red-400 border border-red-800/40"
+            : "bg-[#141417] text-[#8F8B83] hover:text-red-400 border border-transparent hover:border-red-800/40 disabled:opacity-40"
+        }`}
+        title={isLoggedIn ? undefined : "Log in to react"}
+      >
+        <ThumbsDown className="w-3 h-3" />
+        <span>{rx.dislikes_count}</span>
+      </button>
+      {likeRatio !== null && (
+        <span className="text-[10px] text-[#8F8B83] font-mono">{likeRatio}% positive</span>
+      )}
+    </div>
+  );
 }
 
 const CATEGORY_TABS = [
@@ -73,6 +149,7 @@ export function UpdatesClientFeed({
   initialUpdates,
   canPost,
   isAdmin,
+  isLoggedIn,
   locale,
 }: UpdatesClientFeedProps) {
   const router = useRouter();
@@ -226,6 +303,7 @@ export function UpdatesClientFeed({
                     </div>
 
                     <div className="flex items-center space-x-3">
+                      <ReactionBar item={item} isLoggedIn={isLoggedIn} />
                       <span className="flex items-center space-x-1">
                         <Eye className="w-3 h-3" />
                         <span>{item.views_count}</span>
@@ -310,30 +388,32 @@ export function UpdatesClientFeed({
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-surface-border/60 text-[11px] text-[#8F8B83]">
-                    <div className="flex items-center space-x-2 font-medium text-[#B4AFA4]">
-                      <div className="w-5 h-5 rounded-full bg-[#1A1A1E] overflow-hidden flex items-center justify-center shrink-0">
-                        {avatarUrl ? (
-                          <GTAImage
-                            src={avatarUrl}
-                            alt={item.author_name}
-                            width={20}
-                            height={20}
-                            className="w-full h-full object-cover object-top"
-                          />
-                        ) : (
-                          <User className="w-3 h-3 text-[#D7B558]" />
-                        )}
+                  <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-surface-border/60 text-[11px] text-[#8F8B83]">
+                    <ReactionBar item={item} isLoggedIn={isLoggedIn} />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 font-medium text-[#B4AFA4]">
+                        <div className="w-5 h-5 rounded-full bg-[#1A1A1E] overflow-hidden flex items-center justify-center shrink-0">
+                          {avatarUrl ? (
+                            <GTAImage
+                              src={avatarUrl}
+                              alt={item.author_name}
+                              width={20}
+                              height={20}
+                              className="w-full h-full object-cover object-top"
+                            />
+                          ) : (
+                            <User className="w-3 h-3 text-[#D7B558]" />
+                          )}
+                        </div>
+                        <span className="font-semibold">{item.author_name}</span>
                       </div>
-                      <span className="font-semibold">{item.author_name}</span>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <span className="flex items-center space-x-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{item.views_count}</span>
-                      </span>
-                      <ArrowRight className="w-3 h-3 text-[#D7B558] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center space-x-2">
+                        <span className="flex items-center space-x-1">
+                          <Eye className="w-3 h-3" />
+                          <span>{item.views_count}</span>
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-[#D7B558] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
                   </div>
                 </Link>

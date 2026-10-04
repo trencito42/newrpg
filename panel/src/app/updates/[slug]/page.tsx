@@ -5,6 +5,7 @@ import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuerySingle, dbExecute } from "@/lib/db";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { UpdateArticleActions } from "./UpdateArticleActions";
+import { ArticleReactions } from "./ArticleReactions";
 import { t, formatDate } from "@/lib/i18n";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
@@ -26,6 +27,9 @@ interface UpdateDbRow extends RowDataPacket {
   author_name: string;
   is_pinned: number;
   views_count: number;
+  likes_count: number;
+  dislikes_count: number;
+  my_reaction: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -126,12 +130,19 @@ export default async function UpdateArticlePage({
     getViewerLocale(),
   ]);
 
+  const accountId = session?.accountId ?? null;
+
   const update = await dbQuerySingle<UpdateDbRow>(
-    `SELECT id, slug, title, summary, content, category, cover_image, author_account_id, author_name, is_pinned, views_count, created_at, updated_at
-     FROM panel_updates
-     WHERE slug = ?
+    `SELECT u.id, u.slug, u.title, u.summary, u.content, u.category, u.cover_image, u.author_account_id, u.author_name, u.is_pinned, u.views_count, u.created_at, u.updated_at,
+            COALESCE(SUM(r.reaction = 'like'),    0) AS likes_count,
+            COALESCE(SUM(r.reaction = 'dislike'), 0) AS dislikes_count,
+            MAX(CASE WHEN r.reactor_type = 'account' AND r.reactor_id = ? THEN r.reaction END) AS my_reaction
+     FROM panel_updates u
+     LEFT JOIN panel_update_reactions r ON r.update_id = u.id
+     WHERE u.slug = ?
+     GROUP BY u.id
      LIMIT 1`,
-    [decodedSlug]
+    [accountId, decodedSlug]
   );
 
   if (!update) {
@@ -303,6 +314,17 @@ export default async function UpdateArticlePage({
         {/* Markdown Content */}
         <div className="pt-2">
           <MarkdownRenderer content={update.content} />
+        </div>
+
+        {/* Reactions */}
+        <div className="pt-4 border-t border-surface-border/40">
+          <ArticleReactions
+            slug={update.slug}
+            initialLikes={Number(update.likes_count ?? 0)}
+            initialDislikes={Number(update.dislikes_count ?? 0)}
+            initialMyReaction={update.my_reaction ?? null}
+            isLoggedIn={Boolean(session)}
+          />
         </div>
 
         {/* Author Meta Box at Article Footer */}
