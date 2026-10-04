@@ -11,6 +11,7 @@ const meta = read('resources/[sunset]/sunset_addon_vehicles/vehicles.meta');
 const seed = read('sql/53-addon-vehicles.sql');
 const fallback = read('resources/[sunset]/sunset_vehicles/shared/display_names.lua');
 const packFallback = read('resources/[sunset]/sunset_vehicles/shared/addon_pack_names.lua');
+const panelFallback = read('panel/src/lib/vehicle-names.ts');
 const discovered = JSON.parse(read('scripts/discovered_addon_vehicles.json'));
 const models = [...meta.matchAll(/<modelName>([^<]+)<\/modelName>/g)].map((match) => match[1]);
 const expected = new Map([
@@ -27,6 +28,7 @@ for (const model of models) {
     assert(label, `MISSING LABEL: first-party streamed addon ${model}`);
     assert(seed.includes(`'${model}', '${label}'`), `catalog seed missing ${model} -> ${label}`);
     assert(fallback.includes(`${model.toLowerCase()} = { label = '${label}'`), `shared fallback missing ${model}`);
+    assert(panelFallback.includes(`${model.toLowerCase()}|${label}`), `panel fallback missing ${model} -> ${label}`);
 }
 
 const baseEntries = new Map(
@@ -47,6 +49,7 @@ for (const vehicle of discovered) {
     const label = baseEntries.get(key) || packEntries.get(key);
     assert(label, `MISSING LABEL: discovered addon ${key}`);
     assert(!['NULL', 'CARNOTFOUND', 'UNDEFINED', 'NIL'].includes(label.toUpperCase()), `invalid display label for ${key}`);
+    assert(panelFallback.includes(`${key}|${label}`), `panel display-name fallback out of sync for ${key} -> ${label}`);
 
     if (key.startsWith('tol')) {
         assert(label.toLowerCase() !== key, `TOL addon still exposes technical name ${key}`);
@@ -71,11 +74,15 @@ for (const file of playerVisible) {
     assert(!/alt=\{(?:v|veh|featuredVehicle)\.model\}/.test(code), `raw model JSX alt in ${file}`);
 }
 const clientResolver = read('resources/[sunset]/sunset_vehicles/client/display_names.lua');
+const sqlSync = read('resources/[sunset]/sunset_vehicles/server/display_name_sync.lua');
+const sqlMigration = read('sql/91-vehicle-display-names.sql');
 assert(clientResolver.includes('registerAddonNativeLabels'), 'addon labels must be registered with GTA native text labels');
 assert(clientResolver.includes('AddTextEntry(model, metadata.label)'), 'raw addon gameName keys must be overridden');
+assert(sqlMigration.includes('CREATE TABLE IF NOT EXISTS `vehicle_display_names`'), 'presentation-only SQL catalog migration is required');
+assert(sqlSync.includes('INSERT INTO vehicle_display_names'), 'Lua catalog must sync to SQL for external consumers');
 assert(read('resources/[sunset]/sunset_vehicles/server/main.lua').includes('row.displayName = getVehicleDisplayName(row.model)'), 'owned vehicle DTO requires displayName');
 assert(read('resources/[sunset]/sunset_vehicles/server/main.lua').includes('displayName   = displayModel'), 'entry DTO requires display label');
 assert(read('resources/[sunset]/sunset_vehicles/client/main.lua').includes('model = info.displayName or exports.sunset_vehicles:GetVehicleDisplayName(info.model)'), 'entry chat must use friendly displayName');
 assert(read('resources/[sunset]/sunset_carjack/client/main.lua').includes('exports.sunset_vehicles:GetVehicleDisplayName(veh)'), 'carjack interaction must use friendly displayName');
 assert(read('resources/[sunset]/sunset_hud/client/main.lua').includes('tostring(data.vehicleName)'), 'HUD change detection must include the vehicle name');
-console.log(`Vehicle names: ${discoveredModels.size} discovered addons labeled; key player-facing surfaces avoid direct model interpolation.`);
+console.log(`Vehicle names: ${discoveredModels.size} discovered addons labeled consistently in game and panel.`);
