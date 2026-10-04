@@ -18,17 +18,68 @@ local function catalog()
     return bundle.entries or {}
 end
 
+local function isTechnicalLabel(value, technicalName)
+    if not SunsetVehicleNames.Valid(value) then return true end
+    local clean = value:match('^%s*(.-)%s*$')
+    if technicalName and technicalName ~= '' and clean:lower() == technicalName:lower() then return true end
+    if clean:match('^[A-Z0-9_]+$') and clean:find('_', 1, true) then return true end
+    return false
+end
+
 local function gtaName(hash, technicalName)
     if not hash or hash == 0 then return nil end
     local gameName = GetDisplayNameFromVehicleModel(hash)
     if not SunsetVehicleNames.Valid(gameName) then return nil end
+
     local label = GetLabelText(gameName)
-    if not SunsetVehicleNames.Valid(label) then return nil end
-    if technicalName and label:lower() == technicalName:lower() then return nil end
-    if label:lower() == gameName:lower() and gameName:lower() == tostring(technicalName or ''):lower() then return nil end
-    if label:match('^[A-Z0-9_]+$') and (label:find('_') or label:find('%d')) then return nil end
-    return label
+    if SunsetVehicleNames.Valid(label) and not isTechnicalLabel(label, technicalName) then
+        return label
+    end
+
+    -- Third-party packs often put a human-readable literal in <gameName>
+    -- without shipping a matching GXT/text entry. Use that literal only when
+    -- it is clearly different from the technical spawn/model id.
+    if not isTechnicalLabel(gameName, technicalName) then
+        return gameName
+    end
+
+    return nil
 end
+
+local function registerAddonNativeLabels()
+    for model, metadata in pairs(SunsetVehicleNames.Addons or {}) do
+        if metadata and SunsetVehicleNames.Valid(metadata.label) then
+            -- Covers packs whose <gameName> is literally the spawn code.
+            AddTextEntry(model, metadata.label)
+
+            -- Covers packs whose <gameName> is a separate unregistered label.
+            local gameName = GetDisplayNameFromVehicleModel(joaat(model))
+            if SunsetVehicleNames.Valid(gameName) then
+                AddTextEntry(gameName, metadata.label)
+            end
+        end
+    end
+end
+
+local function scheduleAddonNativeLabels()
+    SetTimeout(250, registerAddonNativeLabels)
+end
+
+CreateThread(function()
+    -- Let streamed vehicle metas register first, then make our curated labels
+    -- authoritative over raw pack entries such as `tolm5cs22 -> tolm5cs22`.
+    Wait(1000)
+    registerAddonNativeLabels()
+end)
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == GetCurrentResourceName()
+        or resourceName == 'pitd_tol_car_pack_a'
+        or resourceName == 'showcasecars'
+        or resourceName == 'showcasecars2' then
+        scheduleAddonNativeLabels()
+    end
+end)
 
 local function displayName(modelOrVehicle)
     local model, hash, fleetLabel
