@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const postId = parseInt(id);
-  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
 
   interface PostRow extends RowDataPacket { id: number; character_id: number; }
   const post = await dbQuerySingle<PostRow>(

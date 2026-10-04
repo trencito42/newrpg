@@ -59,9 +59,9 @@ export default async function GalleryPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-[#F2EFE8]">{t(locale, "nav.gallery")}</h1>
-        <p className="text-sm text-[#8F8B83] mt-1">{items.length} photos</p>
+        <p className="text-sm text-[#8F8B83] mt-1">{items.length} {t(locale, "feed.photo_count_label")}</p>
       </div>
-      <GalleryClient items={items} isLoggedIn={!!session} />
+      <GalleryClient items={items} isLoggedIn={!!session} locale={locale} />
     </div>
   );
 }

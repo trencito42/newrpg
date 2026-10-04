@@ -7,7 +7,7 @@ import { RowDataPacket } from "mysql2";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const postId = parseInt(id);
-  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
 
   const session = await getCurrentSession();
   const charId = session?.selectedCharacterId ?? 0;
@@ -66,7 +66,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params;
   const postId = parseInt(id);
-  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
 
   interface PostRow extends RowDataPacket { id: number; character_id: number; }
   const post = await dbQuerySingle<PostRow>(

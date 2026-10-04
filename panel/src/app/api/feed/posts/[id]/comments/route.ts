@@ -9,7 +9,7 @@ const MAX_COMMENT = 400;
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const postId = parseInt(id);
-  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
 
   const beforeId = req.nextUrl.searchParams.get("before_id") ? parseInt(req.nextUrl.searchParams.get("before_id")!) : null;
   const limit = 30;
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const postId = parseInt(id);
-  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  if (!Number.isFinite(postId)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
 
   interface PostRow extends RowDataPacket { id: number; character_id: number; }
   const post = await dbQuerySingle<PostRow>(

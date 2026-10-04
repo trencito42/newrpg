@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Heart, MessageCircle, Image, Trash2, Send, ChevronDown } from "lucide-react";
-import { Locale } from "@/lib/i18n";
+import { useState } from "react";
+import { Heart, MessageCircle, ImagePlus, Trash2, Send, ChevronDown, X, Check } from "lucide-react";
+import { Locale, t } from "@/lib/i18n";
 import { FeedPost } from "./page";
 
 interface FeedClientProps {
@@ -43,10 +43,11 @@ interface PostCardProps {
   post: FeedPost;
   viewerCharId: number | null;
   isLoggedIn: boolean;
+  locale: Locale;
   onDeleted: (id: number) => void;
 }
 
-function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) {
+function PostCard({ post, viewerCharId, isLoggedIn, locale, onDeleted }: PostCardProps) {
   const [likes, setLikes] = useState(Number(post.likes_count));
   const [liked, setLiked] = useState(!!Number(post.liked_by_viewer));
   const [commentCount, setCommentCount] = useState(Number(post.comments_count));
@@ -123,7 +124,7 @@ function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) 
   };
 
   const deletePost = async () => {
-    if (!confirm("Delete this post?")) return;
+    if (!confirm(t(locale, "feed.delete_confirm"))) return;
     try {
       const res = await fetch(`/api/feed/posts/${post.id}`, { method: "DELETE" });
       if (res.ok) onDeleted(post.id);
@@ -139,14 +140,14 @@ function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) 
           <span className="text-sm font-semibold text-[#F2EFE8]">{authorName}</span>
           <span className="text-[11px] text-[#8F8B83] ml-2">{relTime(post.created_at)}</span>
           {post.updated_at && post.updated_at !== post.created_at && (
-            <span className="text-[10px] text-[#8F8B83] ml-1 opacity-60">· edited</span>
+            <span className="text-[10px] text-[#8F8B83] ml-1 opacity-60">{t(locale, "feed.edited")}</span>
           )}
         </div>
         {isOwn && (
           <button
             onClick={deletePost}
             className="text-[#8F8B83] hover:text-red-400 transition-colors p-1"
-            title="Delete post"
+            title={t(locale, "feed.delete_title")}
           >
             <Trash2 size={14} />
           </button>
@@ -203,7 +204,7 @@ function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) 
       {/* Comments */}
       {expanded && (
         <div className="mt-4 pl-3 border-l border-[rgba(255,255,255,0.07)]">
-          {loadingComments && <p className="text-xs text-[#8F8B83]">Loading...</p>}
+          {loadingComments && <p className="text-xs text-[#8F8B83]">{t(locale, "feed.loading_comments")}</p>}
           {comments.map((c) => (
             <div
               key={c.id}
@@ -228,7 +229,7 @@ function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) 
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendComment())}
-                placeholder="Add a comment..."
+                placeholder={t(locale, "feed.add_comment_placeholder")}
                 maxLength={400}
                 className="flex-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-full px-3 py-1.5 text-xs text-[#F2EFE8] placeholder-[#8F8B83] outline-none focus:border-[rgba(215,181,88,0.4)]"
               />
@@ -246,25 +247,120 @@ function PostCard({ post, viewerCharId, isLoggedIn, onDeleted }: PostCardProps) 
   );
 }
 
-function Composer({ viewerCharName, onPosted }: { viewerCharName: string | null; onPosted: (p: FeedPost) => void }) {
+interface GalleryPhoto {
+  media_id: number;
+  url: string;
+  thumbnail_url: string | null;
+}
+
+function GalleryPicker({
+  locale,
+  onSelect,
+  onClose,
+}: {
+  locale: Locale;
+  onSelect: (photo: GalleryPhoto) => void;
+  onClose: () => void;
+}) {
+  const [photos, setPhotos] = useState<GalleryPhoto[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    if (photos !== null || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/feed/gallery");
+      if (res.ok) {
+        const data = await res.json();
+        setPhotos(data.photos || []);
+      } else {
+        setPhotos([]);
+      }
+    } catch {
+      setPhotos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load immediately on mount
+  if (photos === null && !loading) load();
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-[#0e0e10] border border-[rgba(255,255,255,0.1)] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.08)]">
+          <span className="text-sm font-bold text-[#F2EFE8]">{t(locale, "feed.choose_gallery")}</span>
+          <button onClick={onClose} className="text-[#8F8B83] hover:text-[#D4CFC8]">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="overflow-y-auto p-3 flex-1">
+          {loading && (
+            <p className="text-xs text-[#8F8B83] text-center py-8">{t(locale, "feed.loading_gallery")}</p>
+          )}
+          {photos !== null && photos.length === 0 && (
+            <p className="text-xs text-[#8F8B83] text-center py-8">
+              {t(locale, "feed.no_gallery_photos")}
+            </p>
+          )}
+          {photos && photos.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {photos.map((p) => (
+                <button
+                  key={p.media_id}
+                  onClick={() => onSelect(p)}
+                  className="aspect-square overflow-hidden rounded-lg bg-[rgba(255,255,255,0.04)] hover:ring-2 hover:ring-[#d7b558] transition-all"
+                >
+                  <img
+                    src={p.thumbnail_url ?? p.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Composer({ locale, viewerCharName, onPosted }: { locale: Locale; viewerCharName: string | null; onPosted: (p: FeedPost) => void }) {
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
+  const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const reset = () => {
+    setOpen(false);
+    setBody("");
+    setSelectedPhoto(null);
+    setShowPicker(false);
+  };
 
   const submit = async () => {
     const text = body.trim();
-    if (!text || sending) return;
+    if (!text && !selectedPhoto) return;
+    if (sending) return;
     setSending(true);
     try {
       const res = await fetch("/api/feed/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: text }),
+        body: JSON.stringify({
+          body: text || null,
+          media_id: selectedPhoto?.media_id ?? null,
+        }),
       });
       if (res.ok) {
-        setBody("");
-        setOpen(false);
-        // Reload feed from top
+        reset();
         window.location.reload();
       }
     } finally {
@@ -278,41 +374,81 @@ function Composer({ viewerCharName, onPosted }: { viewerCharName: string | null;
         onClick={() => setOpen(true)}
         className="w-full text-left bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)] border border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-3 text-sm text-[#8F8B83] transition-colors mb-6"
       >
-        What&apos;s happening?
+        {t(locale, "feed.whats_happening")}
       </button>
     );
   }
 
   return (
-    <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 mb-6">
-      <textarea
-        autoFocus
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="What's happening?"
-        maxLength={500}
-        rows={3}
-        className="w-full bg-transparent text-sm text-[#F2EFE8] placeholder-[#8F8B83] outline-none resize-none"
-      />
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[rgba(255,255,255,0.07)]">
-        <span className="text-xs text-[#8F8B83]">{body.length}/500</span>
-        <div className="flex gap-2">
+    <>
+      <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 mb-6">
+        <textarea
+          autoFocus
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={t(locale, "feed.whats_happening")}
+          maxLength={500}
+          rows={3}
+          className="w-full bg-transparent text-sm text-[#F2EFE8] placeholder-[#8F8B83] outline-none resize-none"
+        />
+
+        {/* Selected photo preview */}
+        {selectedPhoto && (
+          <div className="relative mt-2 w-fit">
+            <img
+              src={selectedPhoto.thumbnail_url ?? selectedPhoto.url}
+              alt=""
+              className="h-24 w-auto rounded-lg object-cover border border-[rgba(255,255,255,0.12)]"
+            />
+            <button
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-[#1a1a1e] border border-[rgba(255,255,255,0.2)] rounded-full flex items-center justify-center text-[#8F8B83] hover:text-[#F2EFE8]"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[rgba(255,255,255,0.07)]">
           <button
-            onClick={() => { setOpen(false); setBody(""); }}
-            className="px-3 py-1.5 text-xs text-[#8F8B83] hover:text-[#D4CFC8] transition-colors"
+            onClick={() => setShowPicker(true)}
+            className="flex items-center gap-1.5 text-xs text-[#8F8B83] hover:text-[#d7b558] transition-colors"
+            title={t(locale, "feed.add_photo_title")}
           >
-            Cancel
+            <ImagePlus size={15} />
+            {selectedPhoto ? t(locale, "feed.change_photo") : t(locale, "feed.add_photo")}
           </button>
-          <button
-            onClick={submit}
-            disabled={!body.trim() || sending}
-            className="px-4 py-1.5 text-xs bg-[#d7b558] text-black font-semibold rounded-lg disabled:opacity-40 hover:bg-[#e9ca6f] transition-colors"
-          >
-            {sending ? "Posting..." : "Post"}
-          </button>
+
+          <div className="flex gap-2 items-center">
+            <span className="text-xs text-[#8F8B83]">{body.length}/500</span>
+            <button
+              onClick={reset}
+              className="px-3 py-1.5 text-xs text-[#8F8B83] hover:text-[#D4CFC8] transition-colors"
+            >
+              {t(locale, "feed.cancel")}
+            </button>
+            <button
+              onClick={submit}
+              disabled={(!body.trim() && !selectedPhoto) || sending}
+              className="px-4 py-1.5 text-xs bg-[#d7b558] text-black font-semibold rounded-lg disabled:opacity-40 hover:bg-[#e9ca6f] transition-colors"
+            >
+              {sending ? t(locale, "feed.posting") : t(locale, "feed.post")}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showPicker && (
+        <GalleryPicker
+          locale={locale}
+          onSelect={(p) => {
+            setSelectedPhoto(p);
+            setShowPicker(false);
+          }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -369,26 +505,26 @@ export function FeedClient({
     <div>
       {/* Tabs */}
       <div className="flex gap-1 mb-5 bg-[rgba(255,255,255,0.04)] rounded-lg p-1 w-fit">
-        {(["contacts", "global"] as const).map((t) => (
+        {(["contacts", "global"] as const).map((tabId) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${tab === t ? "bg-[rgba(215,181,88,0.2)] text-[#d7b558]" : "text-[#8F8B83] hover:text-[#D4CFC8]"}`}
+            key={tabId}
+            onClick={() => setTab(tabId)}
+            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${tab === tabId ? "bg-[rgba(215,181,88,0.2)] text-[#d7b558]" : "text-[#8F8B83] hover:text-[#D4CFC8]"}`}
           >
-            {t === "contacts" ? "Contacts" : "Global"}
+            {tabId === "contacts" ? t(locale, "feed.tab_contacts") : t(locale, "feed.tab_global")}
           </button>
         ))}
       </div>
 
       {/* Composer */}
       {isLoggedIn && (
-        <Composer viewerCharName={viewerCharName} onPosted={() => {}} />
+        <Composer locale={locale} viewerCharName={viewerCharName} onPosted={() => {}} />
       )}
 
       {/* Feed */}
       {posts.length === 0 ? (
         <p className="text-sm text-[#8F8B83] text-center py-12">
-          {tab === "contacts" ? "No posts from your contacts yet." : "No posts yet."}
+          {tab === "contacts" ? t(locale, "feed.no_posts_contacts") : t(locale, "feed.no_posts_global")}
         </p>
       ) : (
         posts.map((p) => (
@@ -397,6 +533,7 @@ export function FeedClient({
             post={p}
             viewerCharId={viewerCharId}
             isLoggedIn={isLoggedIn}
+            locale={locale}
             onDeleted={handleDeleted}
           />
         ))
@@ -410,7 +547,7 @@ export function FeedClient({
             className="flex items-center gap-1.5 mx-auto text-xs text-[#8F8B83] hover:text-[#D4CFC8] disabled:opacity-40 transition-colors"
           >
             <ChevronDown size={14} />
-            {loadingMore ? "Loading..." : "Load more"}
+            {loadingMore ? t(locale, "feed.loading") : t(locale, "feed.load_more")}
           </button>
         </div>
       )}

@@ -1359,5 +1359,33 @@
       "type": "Criminal Syndicate",
       "description": "Street syndicate — weapons bench, fencing stolen goods, crew operations."
     }
+  },
+  "feed": {
+    "delete_confirm": "Delete this post?",
+    "delete_title": "Delete post",
+    "edited": "· edited",
+    "choose_gallery": "Choose from Gallery",
+    "loading_gallery": "Loading gallery...",
+    "no_gallery_photos": "No photos yet — take some in-game first.",
+    "add_photo": "Add photo",
+    "add_photo_title": "Add photo from Gallery",
+    "change_photo": "Change photo",
+    "loading_comments": "Loading...",
+    "add_comment_placeholder": "Add a comment...",
+    "whats_happening": "What's happening?",
+    "cancel": "Cancel",
+    "posting": "Posting...",
+    "post": "Post",
+    "no_posts_contacts": "No posts from your contacts yet.",
+    "no_posts_global": "No posts yet.",
+    "tab_contacts": "Contacts",
+    "tab_global": "Global",
+    "load_more": "Load more",
+    "loading": "Loading...",
+    "post_to_feed": "Post to Feed",
+    "add_caption_placeholder": "Add a caption...",
+    "posted_redirect": "Posted! Redirecting to Feed...",
+    "no_gallery_items": "No photos in your Gallery yet. Take some in-game!",
+    "photo_count_label": "photos"
   }
 }

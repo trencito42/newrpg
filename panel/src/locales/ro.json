@@ -1359,5 +1359,33 @@
       "type": "Organizație criminală",
       "description": "Organizație de stradă — atelier de arme, valorificarea bunurilor furate și operațiuni de grup."
     }
+  },
+  "feed": {
+    "delete_confirm": "Ștergi această postare?",
+    "delete_title": "Șterge postarea",
+    "edited": "· editat",
+    "choose_gallery": "Alege din Galerie",
+    "loading_gallery": "Se încarcă galeria...",
+    "no_gallery_photos": "Nicio poză încă — fotografiază ceva în joc.",
+    "add_photo": "Adaugă poză",
+    "add_photo_title": "Adaugă poză din Galerie",
+    "change_photo": "Schimbă poza",
+    "loading_comments": "Se încarcă...",
+    "add_comment_placeholder": "Adaugă un comentariu...",
+    "whats_happening": "Ce se întâmplă?",
+    "cancel": "Anulează",
+    "posting": "Se postează...",
+    "post": "Postează",
+    "no_posts_contacts": "Niciun post de la contactele tale.",
+    "no_posts_global": "Nicio postare încă.",
+    "tab_contacts": "Contacte",
+    "tab_global": "Global",
+    "load_more": "Încarcă mai mult",
+    "loading": "Se încarcă...",
+    "post_to_feed": "Postează în Feed",
+    "add_caption_placeholder": "Adaugă o legendă...",
+    "posted_redirect": "Postat! Redirecționare spre Feed...",
+    "no_gallery_items": "Nicio poză în Galeria ta. Fă poze în joc!",
+    "photo_count_label": "poze"
   }
 }
