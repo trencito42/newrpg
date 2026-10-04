@@ -5069,6 +5069,7 @@ Sunset.Locales['ro'] = {
     ["clans.err.clan_is_expired"] = "Acest clan a expirat. Contactează staff-ul pentru restaurare.",
     ["clans.msg.extended_clan_lifetime"] = "a prelungit durata clanului cu {days} zile",
     ["clans.notify.lifetime_extended"] = "Durata clanului a fost prelungită cu {days} zile.",
+    ["clans.notify.lifetime_extended_until"] = "Durata clanului a fost prelungită cu {days} zile. Nouă expirare: {date}.",
     ["clans.msg.upgraded_clan_slots"] = "a crescut capacitatea clanului la {slots} membri",
     ["clans.notify.slots_upgraded"] = "Capacitatea clanului a crescut la {slots} membri.",
     ["clans.message.clan_purchase_in_progress"] = "O achiziție pentru clan este deja în curs.",

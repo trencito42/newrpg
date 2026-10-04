@@ -163,6 +163,7 @@ function ClanShopOps.apply(source, action, params)
     if h.audit then h.audit(clanId, cid, 'shop_' .. action, { orderId = orderId, value = value, previous = { name = row.name, tag = row.tag, color = row.tag_color, slots = row.max_members, status = row.status } }) end
     if h.broadcast then h.broadcast(clanId, source, { localeKey = BROADCAST_KEYS[action], params = { value = tostring(value.name or value.tag or value.color or value.slots or value.days or '') } }) end
     if h.syncMembers then h.syncMembers(clanId) end
+    if h.refresh then h.refresh(clanId, source, action, value) end
     if action == 'slots' or action == 'renew' then
         TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = action == 'slots' and 'slots_upgrade' or 'lifetime_extension', orderId = orderId })
     end

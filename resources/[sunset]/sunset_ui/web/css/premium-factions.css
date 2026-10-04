@@ -371,6 +371,33 @@
 .premium-faction__stat-value span { color: var(--pf-accent); }
 .premium-clan__stat-value span { color: var(--pf-accent-orange); }
 
+#clan-lifetime-stat .premium-clan__stat-value {
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.premium-clan__stat-sub {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pf-text-muted);
+}
+
+.premium-clan__stat.is-warning {
+    border-color: rgba(255, 176, 32, 0.55);
+}
+
+.premium-clan__stat.is-warning .premium-clan__stat-value {
+    color: #ffb020;
+}
+
+.premium-clan__stat.is-expired {
+    border-color: rgba(255, 90, 90, 0.55);
+}
+
+.premium-clan__stat.is-expired .premium-clan__stat-value {
+    color: #ff5a5a;
+}
+
 /* MOTD Card */
 .premium-faction__motd,
 .premium-clan__motd {

@@ -74,7 +74,7 @@
         clans: {
             html: 'modules/clans/index.html',
             css: ['css/clans.css', 'css/clanwar.css', 'css/premium-factions.css'],
-            js: ['js/clans.js', 'js/clanwar.js']
+            js: ['js/clan-lifetime.js', 'js/clans.js', 'js/clanwar.js']
         },
         businesses: {
             html: 'modules/businesses/index.html',

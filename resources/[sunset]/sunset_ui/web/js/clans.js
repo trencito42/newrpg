@@ -59,6 +59,10 @@ const ClanPanels = {
             });
         }
 
+        window.addEventListener('sunset:localeChanged', () => {
+            if (this.dashboard?.inClan) this.renderLifetime(this.dashboard);
+        });
+
         // ESC Key Handling
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
@@ -185,6 +189,25 @@ const ClanPanels = {
         this.paintPreview(preview, tag, I18n.t('ui.clans.your_name_sample'), style, color);
     },
 
+    renderLifetime(payload = {}) {
+        const card = $('#clan-lifetime-stat');
+        const remaining = $('#clan-lifetime-remaining');
+        const expires = $('#clan-lifetime-expires');
+        if (!card || !remaining) return;
+        const view = window.ClanLifetime?.view?.(payload, I18n.getLocale(), (key, params) => I18n.t(key, params))
+            || { state: 'ok', primary: '—', expires: '' };
+        remaining.textContent = view.primary || '—';
+        if (expires) expires.textContent = view.expires || '';
+        card.classList.toggle('is-warning', view.state === 'warning');
+        card.classList.toggle('is-expired', view.state === 'expired');
+    },
+
+    applyLifetime(payload = {}) {
+        if (!payload || !payload.inClan) return;
+        this.dashboard = Object.assign({}, this.dashboard || {}, payload);
+        this.renderLifetime(this.dashboard);
+    },
+
     /* --- DASHBOARD DISPLAY --- */
     showDashboard(payload = {}) {
         this.init();
@@ -241,6 +264,7 @@ const ClanPanels = {
 
             const styleLabel = $('#clan-tag-style-label');
             if (styleLabel) styleLabel.textContent = this.tagStyleLabel(payload.tagStyle);
+            this.renderLifetime(payload);
 
             const motdEl = $('#clan-motd');
             if (motdEl) motdEl.textContent = payload.motd || I18n.t('ui.clans.no_motd_posted_officers_use_cmotd');

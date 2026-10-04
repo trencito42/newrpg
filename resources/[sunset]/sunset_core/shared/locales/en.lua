@@ -5126,6 +5126,7 @@ Sunset.Locales['en'] = {
     ["clans.err.clan_is_expired"] = "This clan has expired. Contact staff to restore it.",
     ["clans.msg.extended_clan_lifetime"] = "extended the clan lifetime by {days} days",
     ["clans.notify.lifetime_extended"] = "Clan lifetime extended by {days} days.",
+    ["clans.notify.lifetime_extended_until"] = "Clan lifetime extended by {days} days. New expiry: {date}.",
     ["clans.msg.upgraded_clan_slots"] = "raised the clan capacity to {slots} members",
     ["clans.notify.slots_upgraded"] = "Clan capacity raised to {slots} members.",
     ["clans.message.clan_purchase_in_progress"] = "A clan purchase is already being processed.",

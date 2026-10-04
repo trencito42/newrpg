@@ -132,12 +132,19 @@ function Sunset.LocalizePresentation(value, locale, seen)
         'outputLabel', 'inputLabel', 'itemLabel', 'jobLabel', 'factionLabel', 'locationLabel', 'dealerLabel' }) do
         local localeKey = rawget(value, field .. 'Key')
         if type(localeKey) == 'string' and localeKey ~= '' then
-            local positional = rawget(value, field .. 'Args') or rawget(value, 'formatArgs')
-            local named = rawget(value, 'params')
-            if type(positional) == 'table' then
-                result[field] = Sunset.Translate(locale, localeKey, table.unpack(positional))
-            elseif type(named) == 'table' then
+            -- Chat and clan/faction actions send `messageKey` + `messageParams`.
+            -- Reading only `params` / `formatArgs` re-translated those lines with
+            -- no arguments, so placeholders such as {value} reached the player.
+            local named = rawget(value, field .. 'Params')
+            if type(named) ~= 'table' then named = rawget(value, 'params') end
+            local positional = rawget(value, field .. 'Args')
+            if type(positional) ~= 'table' and type(named) ~= 'table' then
+                positional = rawget(value, 'formatArgs')
+            end
+            if type(named) == 'table' then
                 result[field] = Sunset.Translate(locale, localeKey, named)
+            elseif type(positional) == 'table' then
+                result[field] = Sunset.Translate(locale, localeKey, table.unpack(positional))
             else
                 result[field] = Sunset.Translate(locale, localeKey)
             end

@@ -24,6 +24,11 @@ TriggerEvent('chat:addSuggestion', '/group', 'Same as /clan — clan unit panel'
 RegisterCommand('clans', openClanDirectory, false)
 TriggerEvent('chat:addSuggestion', '/clans', 'Browse all server clans')
 
+RegisterNetEvent('sunset:clans:dashboardRefresh', function(data)
+    if type(data) ~= 'table' then return end
+    exports.sunset_ui:Send('clanUpdate', data)
+end)
+
 RegisterNetEvent('sunset:clans:openDashboard', openClanPanel)
 RegisterNetEvent('sunset:clans:openDirectory', openClanDirectory)
 

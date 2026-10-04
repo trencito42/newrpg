@@ -17,7 +17,13 @@ function ClanDisplay.getMembership(characterId)
     return MySQL.single.await([[
         SELECT cm.clan_id, cm.character_id, cm.rank, cm.warns, cm.joined_at,
                c.name, c.tag, c.tag_color, c.tag_style, c.description, c.motd,
-               c.owner_character_id, c.max_members, c.rank_labels, c.expires_at, c.status
+               c.owner_character_id, c.max_members, c.rank_labels, c.expires_at, c.status,
+               UNIX_TIMESTAMP(c.expires_at) AS expires_unix,
+               YEAR(c.expires_at) AS expires_year,
+               MONTH(c.expires_at) AS expires_month,
+               DAY(c.expires_at) AS expires_day,
+               TIMESTAMPDIFF(DAY, NOW(), c.expires_at) AS expires_in_days,
+               TIMESTAMPDIFF(SECOND, NOW(), c.expires_at) AS expires_in_seconds
         FROM clan_members cm
         INNER JOIN clans c ON c.id = cm.clan_id
         WHERE cm.character_id = ?
@@ -153,6 +159,42 @@ AddEventHandler('onResourceStart', function(resourceName)
         ClanDisplay.sync(tonumber(id))
     end
 end)
+
+-- Calendar parts come from MySQL (same clock as expires_at). Remaining time is
+-- derived here and never stored. Month names match the /clan NUI formatter.
+local CLAN_MONTHS = {
+    en = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' },
+    ro = { 'ian.', 'feb.', 'mar.', 'apr.', 'mai', 'iun.', 'iul.', 'aug.', 'sept.', 'oct.', 'nov.', 'dec.' },
+}
+
+function ClanDisplay.lifetimeFields(row)
+    if type(row) ~= 'table' then return nil end
+    local unix = tonumber(row.expires_unix)
+    local days = tonumber(row.expires_in_days)
+    local seconds = tonumber(row.expires_in_seconds)
+    local year = tonumber(row.expires_year)
+    local month = tonumber(row.expires_month)
+    local day = tonumber(row.expires_day)
+    if not unix and not year then return nil end
+    return {
+        expiresAt = unix,
+        remainingDays = days,
+        expiresInSeconds = seconds,
+        expiresYear = year,
+        expiresMonth = month,
+        expiresDay = day,
+    }
+end
+
+function ClanDisplay.formatExpiryDate(row, locale)
+    local fields = ClanDisplay.lifetimeFields(row) or row
+    local year = tonumber(fields and (fields.expiresYear or fields.expires_year))
+    local month = tonumber(fields and (fields.expiresMonth or fields.expires_month))
+    local day = tonumber(fields and (fields.expiresDay or fields.expires_day))
+    if not year or not month or not day then return '' end
+    local names = CLAN_MONTHS[locale == 'ro' and 'ro' or 'en']
+    return ('%d %s %d'):format(day, names[month] or tostring(month), year)
+end
 
 function GetConnectMotd(source, char)
     local cid = char and tonumber(char.id) or nil

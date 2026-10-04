@@ -899,6 +899,7 @@
                 case 'factionDirectoryDetail': window.FactionPanels?.showDirectoryDetail?.(payload); return;
                 case 'factionPanelHide': case 'factionPanelsHide': window.FactionPanels?.hide?.(); return;
                 case 'clanPanelShow': window.ClanPanels?.showDashboard?.(payload); return;
+                case 'clanUpdate': window.ClanPanels?.applyLifetime?.(payload); return;
                 case 'clanDirectoryShow': window.ClanPanels?.showDirectory?.(payload); return;
                 case 'clanBrowseInline': window.ClanPanels?.showBrowseInline?.(payload); return;
                 case 'clanProfileShow': window.ClanPanels?.showClanProfile?.(payload); return;

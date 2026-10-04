@@ -255,6 +255,8 @@ local function dashboardPayload(source, row, cid)
 
     local labels = row and clanRankLabels(row) or SunsetClans.defaultRankLabels()
     local rank = row and memberRank(row) or nil
+    -- Derived from clans.expires_at. remainingDays is not stored.
+    local lifetime = row and ClanDisplay.lifetimeFields(row) or nil
 
     return {
         inClan = row ~= nil,
@@ -271,7 +273,12 @@ local function dashboardPayload(source, row, cid)
             'SELECT COUNT(*) FROM turfs WHERE owner_clan_id = ?', { row.clan_id })) or 0) or 0,
         memberCount = row and clanMemberCount(row.clan_id) or 0,
         maxMembers = row and (row.max_members or SunsetClans.BaseSlots or 10) or (SunsetClans.BaseSlots or 10),
-        expiresAt = row and row.expires_at or nil,
+        expiresAt = lifetime and lifetime.expiresAt or nil,
+        remainingDays = lifetime and lifetime.remainingDays or nil,
+        expiresInSeconds = lifetime and lifetime.expiresInSeconds or nil,
+        expiresYear = lifetime and lifetime.expiresYear or nil,
+        expiresMonth = lifetime and lifetime.expiresMonth or nil,
+        expiresDay = lifetime and lifetime.expiresDay or nil,
         status = row and row.status or 'active',
         slotTiers = shopSlotTiers(),
         renewalCash = SunsetClans.RenewalCash or 250000,
@@ -664,6 +671,32 @@ local function refundCash(source, amount, reason)
     return ok
 end
 
+local function notifyLifetimeExtended(source, days)
+    local char = exports.sunset_core:GetCharacter(source)
+    local ownerId = char and tonumber(char.id)
+    local row = ownerId and ClanDisplay.getMembership(ownerId)
+    local locale = exports.sunset_core:GetPlayerLocale(source)
+    local date = ClanDisplay.formatExpiryDate(row, locale)
+    local key = date ~= '' and 'clans.notify.lifetime_extended_until' or 'clans.notify.lifetime_extended'
+    local params = { days = days }
+    if date ~= '' then params.date = date end
+    notify(source, exports.sunset_core:TFor(source, key, params), 'success')
+end
+
+local function pushClanDashboards(clanId)
+    local members = ClanDisplay.getOnlineClanMembers(clanId)
+    for _, src in ipairs(members) do
+        local memberId = charId(src)
+        if memberId then
+            local member = ClanDisplay.getMembership(memberId)
+            local ok, dashboard = pcall(dashboardPayload, src, member, memberId)
+            if ok and type(dashboard) == 'table' then
+                TriggerClientEvent('sunset:clans:dashboardRefresh', src, dashboard)
+            end
+        end
+    end
+end
+
 local function extendLifetimeLocked(source, row, cid, payload)
     local days = SunsetClans.LifetimeDays or 30
     local currency = tostring(payload.currency or 'cash'):lower()
@@ -699,8 +732,11 @@ local function extendLifetimeLocked(source, row, cid, payload)
     safeBroadcast(row.clan_id, source, { localeKey = 'clans.msg.extended_clan_lifetime', params = { days = days } })
     TriggerEvent('sunset:quest:progress', cid, 'clan_store_bought', 1, { item = 'lifetime_extension' })
     safeSyncMembers(row.clan_id)
-    notify(source, exports.sunset_core:TFor(source, 'clans.notify.lifetime_extended', { days = days }), 'success')
-    return clanManageDashboard(source, cid)
+    notifyLifetimeExtended(source, days)
+    pushClanDashboards(row.clan_id)
+    local dashboard = clanManageDashboard(source, cid)
+    if type(dashboard) == 'table' then dashboard.extendedDays = days end
+    return dashboard
 end
 
 local function upgradeSlotsLocked(source, row, cid, payload)
@@ -754,6 +790,13 @@ ClanShopHooks = {
     audit = safeAudit,
     broadcast = safeBroadcast,
     syncMembers = safeSyncMembers,
+    refresh = function(clanId, actorSource, action, value)
+        if action == 'renew' and actorSource then
+            local days = type(value) == 'table' and tonumber(value.days) or 0
+            notifyLifetimeExtended(actorSource, days)
+        end
+        pushClanDashboards(clanId)
+    end,
 }
 
 AddEventHandler('playerDropped', function()
