@@ -3,7 +3,7 @@ import crypto from "crypto";
 export const PHONE_MAX_BYTES = 3 * 1024 * 1024; // 3 MiB — WebP@0.78 captures are well under this; nginx must have client_max_body_size >= 10M
 export const OTHER_MAX_BYTES = 5 * 1024 * 1024;
 
-const ORIGIN = "https://racket.cat/media";
+const ORIGIN = "https://racket.cat/api/media";
 
 export type UploadKind = "phone_photo" | "player_avatar" | "vehicle_preview";
 
