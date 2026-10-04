@@ -306,7 +306,7 @@ function ClaimReward(source, questKey)
         pcall(function() exports.sunset_core:AddXP(source, reward.xp) end)
     end
     if reward.rp and reward.rp > 0 then
-        pcall(function() exports.sunset_core:AddRespectPoints(source, reward.rp) end)
+        pcall(function() exports.sunset_core:GrantRespect(source, reward.rp) end)
     end
 
     ensureActiveQuests(char.id, char.level)

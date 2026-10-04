@@ -24,7 +24,13 @@ Sunset.Config = {
     TaxRate = 0.08, -- 8% on bank payday deposits
     RespectPerPayday = 1,
     LevelRespectMultiplier = 4, -- level 1->2 costs 4 RP, 2->3 costs 8 RP
-    LevelPriceBase = 3000, -- level 1->2 costs $3,000, then scales with level
+    -- Money to buy the next level is currentLevel * this. 1000 keeps level 10
+    -- ($45,000 total from 1) inside the same window as the RP from real shifts.
+    LevelPriceBase = 1000,
+    -- Completed civilian shifts grant this much respect. Payday stays +1.
+    ShiftRespect = 2,
+    JobRankRespect = 4,
+    MarketFeePercent = 5,
 
     -- Survival
     HungerDrain = 0.8,  -- per minute

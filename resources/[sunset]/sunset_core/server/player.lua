@@ -595,6 +595,21 @@ function Sunset.AddXP(source, amount)
     return true
 end
 
+-- Gameplay respect. Does not increment paydays_received (that column is payday-only).
+function Sunset.GrantRespect(source, amount)
+    local char = Sunset.GetCharacter(source)
+    amount = math.floor(tonumber(amount) or 0)
+    if not char or amount < 1 or amount > 25 then return false end
+    local changed = MySQL.update.await(
+        'UPDATE characters SET respect_points = respect_points + ? WHERE id = ?',
+        { amount, char.id })
+    if not changed or changed < 1 then return false end
+    char.respect_points = (tonumber(char.respect_points) or 0) + amount
+    TriggerClientEvent('sunset:client:updateCharacter', source, char)
+    return true
+end
+exports('GrantRespect', Sunset.GrantRespect)
+
 function Sunset.AddRespectPoints(source, amount)
     local char = Sunset.GetCharacter(source)
     amount = sanitizeMoneyAmount(amount)
@@ -661,9 +676,13 @@ buyLevel = function(source)
 
     -- [QUESTS] Emit canonical quest progress for level reached
     TriggerEvent('sunset:quest:progress', char.id, 'level_reached', 1, { level = char.level })
-    if tonumber(char.level) == 10 then
-        TriggerClientEvent('sunset:client:notify', source,
-            exports.sunset_core:TFor(source, 'core.message.level10_unlocked'), 'success', 12000)
+    local milestone = ({
+        [10] = 'core.message.level10_unlocked',
+        [12] = 'core.message.level12_unlocked',
+        [15] = 'core.message.level15_unlocked',
+    })[tonumber(char.level)]
+    if milestone then
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, milestone), 'success', 12000)
     end
 
     BuyLevelLocks[source] = nil

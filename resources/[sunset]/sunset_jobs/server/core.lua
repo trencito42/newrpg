@@ -125,6 +125,8 @@ function SunsetJobs_ClearSession(source, finalState, reason, options)
         local char = getChar(source)
         if char and char.id then
             TriggerEvent('sunset:quest:progress', char.id, 'job_shift_completed', 1, { jobId = session.jobId })
+            local respect = tonumber(Sunset.Config and Sunset.Config.ShiftRespect) or 2
+            pcall(function() exports.sunset_core:GrantRespect(source, respect) end)
         end
     end
     return true
@@ -388,6 +390,8 @@ local function addJobProgressUnlocked(source, jobId, xpDelta, taskDelta, earnedD
             'success', 5000)
         -- [QUESTS 7-9] advanced chain: skill level-ups drive the quest progress.
         TriggerEvent('sunset:quest:progress', char.id, 'job_level_up', 1, { jobId = jobId, level = level })
+        local rankRespect = tonumber(Sunset.Config and Sunset.Config.JobRankRespect) or 4
+        pcall(function() exports.sunset_core:GrantRespect(source, rankRespect) end)
     end
 
     if row then

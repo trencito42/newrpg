@@ -107,6 +107,7 @@ server_exports {
     'SetFactionByCharacterId',
     'AddXP',
     'AddRespectPoints',
+    'GrantRespect',
     'GetRobPoints',
     'IsIncapacitated',
     'SetRobPoints',
