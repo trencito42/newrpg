@@ -660,7 +660,11 @@ buyLevel = function(source)
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
 
     -- [QUESTS] Emit canonical quest progress for level reached
-    TriggerEvent('sunset:quest:progress', char.id, 'level_reached', char.level, { level = char.level })
+    TriggerEvent('sunset:quest:progress', char.id, 'level_reached', 1, { level = char.level })
+    if tonumber(char.level) == 10 then
+        TriggerClientEvent('sunset:client:notify', source,
+            exports.sunset_core:TFor(source, 'core.message.level10_unlocked'), 'success', 12000)
+    end
 
     BuyLevelLocks[source] = nil
     return true, ('Level purchased! You are now level %d. Paid %d RP and $%d; %d RP remain.'):format(char.level, rpCost, moneyCost, char.respect_points)

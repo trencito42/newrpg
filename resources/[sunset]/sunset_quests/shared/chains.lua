@@ -54,7 +54,7 @@ Sunset.QuestChains = {
                 labelKey = 'quests.entry.onb_jobcenter.label',
                 descriptionKey = 'quests.entry.onb_jobcenter.description',
                 objectives = {
-                    { type = 'job_hired', target = 1, labelKey = 'quests.entry.onb_jobcenter.objective' },
+                    { type = 'job_hired', target = 1, jobId = 'fisherman', labelKey = 'quests.entry.onb_jobcenter.objective' },
                 },
                 reward = { money = 300, xp = 40, rp = 2, reason = 'quest_jobcenter' },
                 unlocksChain = 'driving',
@@ -120,7 +120,9 @@ Sunset.QuestChains = {
                 objectives = {
                     { type = 'job_shift_completed', target = 3, labelKey = 'quests.entry.fj_dedication.objective' },
                 },
-                reward = { money = 1000, xp = 100, rp = 4, reason = 'quest_dedication' },
+                -- Bridges four early shifts to the cheapest dealership car (Blista, $16,500)
+                -- after license, rental, and the earlier story payouts.
+                reward = { money = 12000, xp = 100, rp = 4, reason = 'quest_dedication' },
                 unlocksChain = 'first_car',
             },
         },

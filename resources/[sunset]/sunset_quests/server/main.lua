@@ -187,7 +187,15 @@ function AddProgress(source, eventType, amount, context)
                 if obj.jobId and obj.jobId ~= context.jobId then match = false end
 
                 if match then
-                    local newProgress = math.min(st.target, (st.progress or 0) + amount)
+                    -- level_reached is a high-water mark (the character's level), not an
+                    -- increment. Adding the level number completed "reach level 10" at level 5.
+                    local newProgress
+                    if eventType == 'level_reached' then
+                        local reached = math.floor(tonumber(context.level) or amount)
+                        newProgress = math.min(st.target, math.max(st.progress or 0, reached))
+                    else
+                        newProgress = math.min(st.target, (st.progress or 0) + amount)
+                    end
                     if newProgress ~= st.progress then
                         st.progress = newProgress
                         advanced = true

@@ -1025,7 +1025,8 @@ function Sunset._createCharacterInner(source, player, data)
         return value:sub(1, 1):upper() .. value:sub(2):lower()
     end
     data.firstname = validNamePart(data.firstname) or validNamePart(player.name) or 'Player'
-    data.lastname = validNamePart(data.lastname) or ''
+    -- Public identity is one nickname. The legacy lastname column stays empty.
+    data.lastname = ''
     data.dateofbirth = type(data.dateofbirth) == 'string' and data.dateofbirth or '1990-01-01'
     local year, month, day = data.dateofbirth:match('^(%d%d%d%d)%-(%d%d)%-(%d%d)$')
     year, month, day = tonumber(year), tonumber(month), tonumber(day)

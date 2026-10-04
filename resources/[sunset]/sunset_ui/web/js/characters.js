@@ -72,12 +72,8 @@ const Characters = {
         if (suggested) {
             const parts = suggested.split(/[\s_]+/);
             $('#firstname').value = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-            $('#lastname').value = parts[1]
-                ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
-                : I18n.t('common.player');
         } else {
             $('#firstname').value = '';
-            $('#lastname').value = '';
         }
 
         const backBtn = $('#btn-back-select');
@@ -117,13 +113,13 @@ const Characters = {
     submit() {
         const data = {
             firstname: $('#firstname').value.trim(),
-            lastname: $('#lastname').value.trim(),
+            lastname: '',
             dateofbirth: $('#dateofbirth').value,
             nationality: $('#nationality').value,
             gender: this.selectedGender,
         };
 
-        if (!data.firstname || !data.lastname || !data.dateofbirth) {
+        if (!data.firstname || !data.dateofbirth) {
             notify(I18n.t('characters.fill_all_fields'), 'error');
             return;
         }
