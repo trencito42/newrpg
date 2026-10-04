@@ -7,6 +7,7 @@
     "auth:check": "node scripts/test-auth-identity.js",
     "authority:check": "node scripts/test-critical-authority.js",
     "prelaunch:check": "node scripts/test-prelaunch-invariants.js",
+    "launch:check": "node --test scripts/test-launch-invariants.js",
     "shop:check": "node scripts/test-shop.js",
     "vehicle-thumbs:check": "node scripts/check-vehicle-thumbs.js",
     "progression:check": "node scripts/test-progression.js",

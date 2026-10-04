@@ -1,0 +1,26 @@
+name: static checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Lua syntax
+        run: node scripts/check-lua-syntax.js
+      - name: Launch invariants
+        run: node --test scripts/test-launch-invariants.js
+      - name: NUI bridge
+        run: node scripts/check-nui-bridge.js
+      - name: Shop settlement
+        run: node scripts/test-shop.js
+      - name: Progression invariants
+        run: node scripts/test-progression.js
