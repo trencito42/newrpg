@@ -6,12 +6,12 @@ endpoint_add_tcp "0.0.0.0:30120"
 endpoint_add_udp "0.0.0.0:30120"
 
 # ── Authoritative version: change ONE value here ─────────────────────────────
-set racket_version "0.7.0-alpha"
+set racket_version "0.8.0-alpha"
 
 # sv_hostname is set dynamically at startup from racket_version (see sunset_core).
 # The static fallback below is overridden immediately; it exists only so FiveM
 # has something to display before the first resource finishes loading.
-sv_hostname "Racket RPG v0.7.0-alpha"
+sv_hostname "Racket RPG v0.8.0-alpha"
 sets sv_projectName "Racket RPG"
 sets sv_projectDesc "Racket RPG — build your story."
 sets tags "rpg, racket, english, romanian"
