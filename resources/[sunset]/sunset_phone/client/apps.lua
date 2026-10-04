@@ -221,15 +221,19 @@ end)
 RegisterNetEvent('sunset:client:phoneCall', function(payload)
     payload = payload or {}
     callSnapshot = payload
+    PhoneCallSnapshot = payload
+    local live = payload.state == 'INCOMING_RINGING' or payload.state == 'OUTGOING_RINGING' or payload.state == 'ACTIVE'
+    if live and PhoneCancelPresentationClose then PhoneCancelPresentationClose() end
     if payload.state == 'INCOMING_RINGING' then
         startRing()
         if not exports.sunset_phone:IsOpen() then
             notify(exports.sunset_core:Translate('phone.call.incoming_from', { name = payload.peerName or payload.peerPhone or '' }), 'info')
-            exports.sunset_phone:Open()
+            if PhoneOpenForCall then PhoneOpenForCall() else exports.sunset_phone:Open() end
         end
     else
         stopRing()
     end
+    if not live and PhoneSchedulePresentationClose then PhoneSchedulePresentationClose() end
     exports.sunset_ui:Send('phoneCallState', payload)
     if payload.state == 'UNAVAILABLE' or payload.state == 'BUSY' or payload.state == 'FAILED' or payload.state == 'DECLINED' then
         local key = 'phone.call.' .. string.lower(payload.reason or payload.state)
@@ -247,6 +251,10 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         local op = tostring(data.op or '')
         local token = data.token
 
+        if op == 'peek' then
+            if PhoneSetPresentation then PhoneSetPresentation('peek') end
+            return
+        end
         if op == 'cameraStart' then
             TriggerEvent('sunset:phone:cameraStart', data)
             return
@@ -613,4 +621,5 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     stopRing()
     callSnapshot = nil
+    PhoneCallSnapshot = { state = 'IDLE' }
 end)

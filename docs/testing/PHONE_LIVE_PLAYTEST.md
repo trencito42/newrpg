@@ -64,3 +64,25 @@ Static checks do not prove these. Run them in FiveM after deploy. Mark each LIVE
 | No base64 payload | NUI and MySQL store URLs only | `phone_messages` has no data URL | A screenshot blob in the message or gallery row |
 
 Do not mark a row live-verified from this document alone.
+
+## Call presentation
+
+P during a live call lowers the phone. It does not end the call.
+
+- [ ] Incoming call auto-opens full phone
+- [ ] P during ringing lowers phone
+- [ ] Ringing continues while lowered
+- [ ] P restores incoming call screen
+- [ ] Answer call
+- [ ] Active call timer works
+- [ ] P during active call lowers phone
+- [ ] Gameplay works while call phone is lowered
+- [ ] Call audio remains connected
+- [ ] P restores full active call UI
+- [ ] Ending remote call while lowered closes peek
+- [ ] Outgoing ringing can be lowered
+- [ ] Receiver answering while lowered keeps it lowered
+- [ ] Dynamic Island timer remains accurate
+- [ ] Phone call survives entering vehicle
+- [ ] No focus steal while lowered
+- [ ] No stuck phone after death/jail/restart

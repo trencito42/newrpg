@@ -37,6 +37,11 @@
     opacity: 1;
 }
 
+.phone-device.is-open.is-peek {
+    transform: translateY(60%);
+    pointer-events: none;
+}
+
 .phone-device.hidden { visibility: hidden; }
 .phone-device.is-open.hidden { visibility: visible; }
 
@@ -106,7 +111,12 @@
     box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
 }
 .di-call-info { display: none; align-items: center; gap: 8px; width: 100%; padding: 0 10px; }
-.dynamic-island.call-active .di-call-info { display: flex; }
+.dynamic-island.call-live {
+    width: 180px;
+    height: 35px;
+}
+.dynamic-island.call-active .di-call-info,
+.dynamic-island.call-live .di-call-info { display: flex; }
 .di-wave { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
 .di-wave i { display: block; width: 3px; height: 4px; background: var(--accent-green); border-radius: 2px; animation: phone-wave 1s infinite ease-in-out; }
 .di-wave i:nth-child(2) { animation-delay: 0.2s; }
@@ -355,6 +365,7 @@
 .call-name { font-size: 18px; font-weight: 700; text-align: center; }
 .call-sub { font-size: 12px; color: var(--text-muted); }
 .call-actions { display: flex; gap: 12px; width: 100%; margin-top: 18px; }
+.call-actions .call-end { flex: 1; min-height: 52px; font-size: 15px; }
 .progress { height: 6px; background: #111; border-radius: 6px; overflow: hidden; margin-top: 6px; }
 .progress span { display: block; height: 100%; background: var(--accent-gold); }
 .empty { color: var(--text-muted); font-size: 12px; text-align: center; padding: 24px 8px; }

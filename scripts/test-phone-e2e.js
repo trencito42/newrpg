@@ -160,6 +160,47 @@ test('phone apps keep inline layout and the data the backend already sends', () 
     }
 });
 
+test('P peeks a live call and never ends it', () => {
+    const phoneState = require(path.join(root, 'resources/[sunset]/sunset_ui/web/js/phone-state.js'));
+    const phoneCss = read('resources/[sunset]/sunset_ui/web/css/phone.css');
+    const appJs = read('resources/[sunset]/sunset_ui/web/js/app.js');
+    const cases = [
+        ['closed', 'IDLE', 'full'],
+        ['full', 'IDLE', 'closed'],
+        ['full', 'INCOMING_RINGING', 'peek'],
+        ['peek', 'INCOMING_RINGING', 'full'],
+        ['full', 'OUTGOING_RINGING', 'peek'],
+        ['full', 'ACTIVE', 'peek'],
+        ['peek', 'ACTIVE', 'full'],
+    ];
+    for (const [presentation, callState, expected] of cases) {
+        assert.equal(phoneState.nextPresentation(presentation, callState, 'toggle'), expected);
+    }
+    assert.equal(phoneState.nextPresentation('peek', 'ENDED', 'terminal'), 'closed');
+    const call = phoneState.applyCall({ state: 'ACTIVE', callId: 3, peerName: 'Sarah', localStart: 10 }, { state: 'ACTIVE', callId: 3, peerName: 'Sarah' });
+    assert.equal(phoneState.nextPresentation('peek', call.state, 'toggle'), 'full');
+    assert.equal(call.state, 'ACTIVE');
+    assert.equal(call.callId, 3);
+    assert.equal(call.runTimer, true);
+    assert.match(phoneCss, /\.phone-device\.is-open\.is-peek\s*\{[^}]*translateY\(60%\)/);
+    assert.match(phoneCss, /\.phone-hardware\s*\{[^}]*scale\(var\(--s\)\)/);
+    assert.match(phoneJs, /setPresentation/);
+    assert.match(phoneJs, /PS\.callIsLive\(st\)/);
+    assert.doesNotMatch(phoneJs.slice(phoneJs.indexOf('setPresentation(payload)'), phoneJs.indexOf('setPresentation(payload)') + 700), /call-active/);
+    assert.match(appJs, /phonePresentation/);
+    assert.match(phoneClient, /function callIsLive/);
+    assert.match(phoneClient, /setPresentation\('peek'\)/);
+    assert.match(phoneClient, /phonePresentation == 'full'/);
+    assert.match(phoneClient, /exports\('IsPhoneInteractive'/);
+    assert.match(phoneClient, /exports\('IsPhonePeeked'/);
+    const firingAt = phoneClient.lastIndexOf('DisablePlayerFiring');
+    assert.match(phoneClient.slice(Math.max(0, firingAt - 900), firingAt), /phonePresentation == 'full'/);
+    assert.match(phoneApps, /PhoneOpenForCall/);
+    assert.match(phoneApps, /PhoneSchedulePresentationClose/);
+    assert.match(phoneApps, /op == 'peek'/);
+    assert.match(bridge, /IsPhoneInteractive/);
+});
+
 test('locale keys used by the phone pass exist in English and Romanian', () => {
     for (const key of [
         'phone.message.request_timed_out',

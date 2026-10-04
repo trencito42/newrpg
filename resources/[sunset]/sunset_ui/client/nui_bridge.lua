@@ -548,7 +548,7 @@ local function release112Focus()
     local phoneStillOpen = false
     if GetResourceState('sunset_phone') == 'started' then
         local ok, result = pcall(function()
-            return exports.sunset_phone:IsPhoneOpen()
+            return exports.sunset_phone:IsPhoneInteractive()
         end)
         phoneStillOpen = ok and result == true
     end

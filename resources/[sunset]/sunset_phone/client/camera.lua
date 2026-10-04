@@ -92,7 +92,7 @@ local function stopCamera(silent)
     destroyCam()
     stopAnim()
     exports.sunset_ui:Send('phoneCamera', { open = false })
-    if not silent and exports.sunset_phone:IsPhoneOpen() then
+    if not silent and exports.sunset_phone:IsPhoneInteractive() then
         exports.sunset_ui:SetFocus(true, true, false, 'phone')
     end
 end

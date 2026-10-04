@@ -1,5 +1,9 @@
 local phoneOpen = false
 local phoneOpening = false
+local phonePresentation = 'closed'
+local phoneOpenedForCall = false
+local presentationCloseToken = 0
+PhoneCallSnapshot = { state = 'IDLE' }
 local phoneProp = nil
 local lastToggleAt = 0
 local PHONE_MODEL = `prop_amb_phone`
@@ -107,6 +111,7 @@ local function openPhone()
 
         phoneOpen = true
         phoneOpening = false
+        phonePresentation = 'full'
         DisablePlayerFiring(PlayerId(), true)
         playPhoneSound('open')
         playPhoneAnim(true)
@@ -128,6 +133,7 @@ local function openPhone()
             focusListing = nil
         end
         exports.sunset_ui:Send('phoneShow', data)
+        exports.sunset_ui:Send('phonePresentation', { mode = 'full' })
         exports.sunset_ui:SetFocus(true, true, false, 'phone')
     end)
 end
@@ -137,6 +143,8 @@ local function closePhone()
     local shouldAnimate = phoneOpen or (phoneProp and DoesEntityExist(phoneProp))
     phoneOpen = false
     phoneOpening = false
+    phonePresentation = 'closed'
+    phoneOpenedForCall = false
     if shouldAnimate then
         playPhoneSound('close')
         CreateThread(function()
@@ -146,7 +154,72 @@ local function closePhone()
         removePhoneProp()
     end
     exports.sunset_ui:SetFocus(false, false, false, 'phone')
+    exports.sunset_ui:Send('phonePresentation', { mode = 'closed' })
     exports.sunset_ui:Send('phoneHide', {})
+end
+
+local function callIsLive()
+    local state = PhoneCallSnapshot and PhoneCallSnapshot.state
+    return state == 'INCOMING_RINGING' or state == 'OUTGOING_RINGING' or state == 'ACTIVE'
+end
+
+local function playPeekAnim()
+    local ped = PlayerPedId()
+    StopAnimTask(ped, 'cellphone@', 'cellphone_text_read_base', 1.0)
+    if PhoneCallSnapshot and PhoneCallSnapshot.state == 'ACTIVE' and loadAnimDict('cellphone@') then
+        TaskPlayAnim(ped, 'cellphone@', 'cellphone_call_listen_base', 3.0, 3.0, -1, 49, 0, false, false, false)
+    end
+end
+
+local function setPresentation(mode)
+    if mode == 'closed' then
+        closePhone()
+        return
+    end
+    if phonePresentation == 'closed' then
+        openPhone()
+        return
+    end
+    if mode == 'peek' then
+        TriggerEvent('sunset:phone:cameraStop')
+        phonePresentation = 'peek'
+        phoneOpen = true
+        exports.sunset_ui:SetFocus(false, false, false, 'phone')
+        exports.sunset_ui:Send('phonePresentation', { mode = 'peek' })
+        playPeekAnim()
+        return
+    end
+    phonePresentation = 'full'
+    phoneOpen = true
+    exports.sunset_ui:SetFocus(true, true, false, 'phone')
+    exports.sunset_ui:Send('phonePresentation', { mode = 'full' })
+end
+
+function PhoneSetPresentation(mode)
+    setPresentation(mode)
+end
+
+function PhoneSchedulePresentationClose()
+    presentationCloseToken = presentationCloseToken + 1
+    local token = presentationCloseToken
+    local shouldClose = phonePresentation == 'peek' or phoneOpenedForCall
+    if not shouldClose then return end
+    CreateThread(function()
+        Wait(1700)
+        if token ~= presentationCloseToken then return end
+        if callIsLive() then return end
+        if phonePresentation ~= 'closed' then closePhone() end
+    end)
+end
+
+function PhoneCancelPresentationClose()
+    presentationCloseToken = presentationCloseToken + 1
+end
+
+function PhoneOpenForCall()
+    if phonePresentation ~= 'closed' then return end
+    phoneOpenedForCall = true
+    openPhone()
 end
 
 local function togglePhone()
@@ -154,10 +227,25 @@ local function togglePhone()
     if now - lastToggleAt < TOGGLE_COOLDOWN_MS then return end
     lastToggleAt = now
 
-    if phoneOpen then
-        closePhone()
-    else
-        openPhone()
+    local cameraOn = false
+    pcall(function() cameraOn = exports.sunset_phone:IsCameraActive() == true end)
+    if cameraOn then
+        TriggerEvent('sunset:phone:cameraStop')
+        if not callIsLive() then
+            closePhone()
+            return
+        end
+    end
+
+    if not callIsLive() then
+        if phonePresentation == 'closed' then openPhone() else closePhone() end
+        return
+    end
+
+    if phonePresentation == 'full' then
+        setPresentation('peek')
+    elseif phonePresentation == 'peek' or phonePresentation == 'closed' then
+        setPresentation('full')
     end
 end
 
@@ -217,12 +305,18 @@ RegisterKeyMapping('phone', 'Open phone', 'keyboard', 'P')
 exports('IsPhoneOpen', function()
     return phoneOpen == true
 end)
+exports('IsPhoneInteractive', function()
+    return phonePresentation == 'full'
+end)
+exports('IsPhonePeeked', function()
+    return phonePresentation == 'peek'
+end)
 
 CreateThread(function()
     while true do
-        if phoneOpen and IsPauseMenuActive() then
+        if phonePresentation == 'full' and IsPauseMenuActive() then
             SetPauseMenuActive(false)
-        elseif phoneOpen and not IsNuiFocused()
+        elseif phonePresentation == 'full' and not IsNuiFocused()
             and exports.sunset_ui:GetFocusOwner() == 'phone' then
             -- A late close acknowledgement from another NUI modal must not
             -- leave the visible phone without its cursor or keyboard focus.
@@ -254,6 +348,10 @@ CreateThread(function()
 end)
 
 AddEventHandler('sunset:nui:phoneClose', function()
+    if callIsLive() then
+        setPresentation('peek')
+        return
+    end
     closePhone()
 end)
 
@@ -403,7 +501,7 @@ end)
 
 CreateThread(function()
     while true do
-        if phoneOpen then
+        if phonePresentation == 'full' then
             DisableControlAction(0, 24, true)  -- attack
             DisableControlAction(0, 25, true)  -- aim
             DisableControlAction(0, 47, true)  -- weapon
@@ -424,9 +522,10 @@ CreateThread(function()
             end
             local cameraOn = false
             pcall(function() cameraOn = exports.sunset_phone:IsCameraActive() == true end)
-            if not cameraOn and not IsEntityPlayingAnim(ped, 'cellphone@', 'cellphone_text_read_base', 3) then
+            local anim = (PhoneCallSnapshot and PhoneCallSnapshot.state == 'ACTIVE') and 'cellphone_call_listen_base' or 'cellphone_text_read_base'
+            if not cameraOn and not IsEntityPlayingAnim(ped, 'cellphone@', anim, 3) then
                 if loadAnimDict('cellphone@') then
-                    TaskPlayAnim(ped, 'cellphone@', 'cellphone_text_read_base', 3.0, 3.0, -1, 49, 0, false, false, false)
+                    TaskPlayAnim(ped, 'cellphone@', anim, 3.0, 3.0, -1, 49, 0, false, false, false)
                 end
             end
             Wait(0)
@@ -443,6 +542,7 @@ AddEventHandler('onResourceStop', function(res)
     if phoneOpen or phoneOpening then
         phoneOpen = false
         phoneOpening = false
+        phonePresentation = 'closed'
         pcall(function()
             ClearPedTasks(PlayerPedId())
             exports.sunset_ui:Send('phoneHide', {})

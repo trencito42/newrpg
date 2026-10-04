@@ -31,6 +31,26 @@
         return false;
     }
 
+    function callIsLive(state) {
+        return state === 'INCOMING_RINGING' || state === 'OUTGOING_RINGING' || state === 'ACTIVE';
+    }
+
+    // Presentation is closed, full, or peek. It never changes the call.
+    function nextPresentation(presentation, callState, intent) {
+        const current = presentation === 'full' || presentation === 'peek' ? presentation : 'closed';
+        if (intent === 'forceClose') return 'closed';
+        if (intent === 'terminal') return current === 'peek' ? 'closed' : current;
+        if (!callIsLive(callState)) {
+            if (intent === 'toggle') return current === 'closed' ? 'full' : 'closed';
+            if (intent === 'open') return 'full';
+            return current;
+        }
+        if (intent === 'toggle' || intent === 'open') {
+            return current === 'full' ? 'peek' : 'full';
+        }
+        return current;
+    }
+
     function terminalState(state) {
         return state === 'ENDED' || state === 'FAILED' || state === 'BUSY' || state === 'DECLINED' || state === 'UNAVAILABLE';
     }
@@ -66,6 +86,8 @@
         shouldRunTimer: shouldRunTimer,
         shouldConnectVoice: shouldConnectVoice,
         shouldAutoLower: shouldAutoLower,
+        callIsLive: callIsLive,
+        nextPresentation: nextPresentation,
         terminalState: terminalState,
         applyCall: applyCall,
         safeText: safeText,

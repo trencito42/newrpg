@@ -141,8 +141,10 @@
             device.setAttribute('aria-hidden', 'false');
             requestAnimationFrame(() => device.classList.add('is-open'));
             this.updateClock();
+            this.presentation = 'full';
+            device.classList.remove('is-peek');
             const st = this.call && this.call.state;
-            if (st === 'INCOMING_RINGING' || st === 'OUTGOING_RINGING') this.renderCall(true);
+            if (PS.callIsLive(st)) this.renderCall(true);
             else this.showView(this.stack[this.stack.length - 1] || 'home', false);
             if (payload && payload.openListingId) this.focusListing({ listingId: payload.openListingId });
         },
@@ -179,7 +181,8 @@
             this.isOpen = false;
             this.editing = false;
             const device = $('phone-device');
-            device.classList.remove('is-open');
+            device.classList.remove('is-open', 'is-peek');
+            this.presentation = 'closed';
             device.setAttribute('aria-hidden', 'true');
             setTimeout(() => { if (!this.isOpen) device.classList.add('hidden'); }, 420);
             this._compose = '';
@@ -194,7 +197,28 @@
                 return;
             }
             if (this.editing) { this.exitEdit(); return; }
+            if (PS.callIsLive(this.call && this.call.state) && this.presentation !== 'peek') {
+                post('phoneAction', { op: 'peek' });
+                return;
+            }
             post('phoneClose', {});
+        },
+
+        setPresentation(payload) {
+            const mode = payload && payload.mode;
+            const device = $('phone-device');
+            if (!device) return;
+            if (mode === 'closed') {
+                this.hide();
+                return;
+            }
+            this.presentation = mode === 'peek' ? 'peek' : 'full';
+            this.isOpen = true;
+            device.classList.remove('hidden');
+            device.classList.add('is-open');
+            device.classList.toggle('is-peek', this.presentation === 'peek');
+            device.setAttribute('aria-hidden', 'false');
+            if (this.presentation === 'full' && PS.callIsLive(this.call && this.call.state)) this.renderCall(true);
         },
 
         update(payload) {
@@ -332,11 +356,20 @@
             if (next.runTimer) this.ensureCallTimer();
             else this.stopCallTimer();
             const island = $('phone-island');
-            if (next.state === 'ACTIVE') {
-                island.classList.add('call-active');
+            const active = next.state === 'ACTIVE';
+            const ringing = next.state === 'INCOMING_RINGING' || next.state === 'OUTGOING_RINGING';
+            island.classList.toggle('call-active', active);
+            island.classList.toggle('call-live', active || ringing);
+            if (active || ringing) {
                 $('phone-island-name').textContent = this.peerLabel();
-                this.paintDuration();
-            } else island.classList.remove('call-active');
+                if (active) this.paintDuration();
+                else {
+                    const timer = $('phone-island-time');
+                    if (timer) timer.textContent = '';
+                }
+            } else {
+                island.classList.remove('call-active', 'call-live');
+            }
             if (next.state === 'INCOMING_RINGING' || next.state === 'OUTGOING_RINGING' || next.state === 'ACTIVE' || PS.terminalState(next.state)) this.renderCall(true);
             else this.renderCall(false);
             if (PS.terminalState(next.state)) {
@@ -345,7 +378,7 @@
                     if (this.call.callId === id && PS.terminalState(this.call.state)) {
                         this.call = { state: 'IDLE' };
                         this.renderCall(false);
-                        $('phone-island').classList.remove('call-active');
+                        $('phone-island').classList.remove('call-active', 'call-live');
                     }
                 }, 1600);
             }
@@ -437,6 +470,11 @@
             this.phoneTab = 'keypad';
             this.dial = '';
             this.call = { state: 'IDLE' };
+            this.stopCallTimer();
+            const island = $('phone-island');
+            if (island) island.classList.remove('call-active', 'call-live');
+            this.renderCall(false);
+            this.hide();
             this.gameClock = null;
             const toast = $('phone-toast');
             if (toast) toast.hidden = true;
@@ -483,6 +521,10 @@
 
         homeTap() {
             if (this.editing) { this.exitEdit(); return; }
+            if (PS.callIsLive(this.call && this.call.state)) {
+                if (this._callOpen && this.call.state === 'ACTIVE') this.renderCall(false);
+                return;
+            }
             if (this.current() === 'home') this.close();
             else this.goHome();
         },
@@ -689,7 +731,7 @@
                     actions.append(btn('btn-red', t('phone.ui.decline'), () => post('phoneAction', { op: 'decline' })));
                     actions.append(btn('btn-green', t('phone.ui.accept'), () => post('phoneAction', { op: 'answer' })));
                 } else {
-                    actions.append(btn('btn-red', t('phone.ui.hangup'), () => post('phoneAction', { op: 'hangup' })));
+                    actions.append(btn('btn-red call-end', t('phone.ui.hangup'), () => post('phoneAction', { op: 'hangup' })));
                 }
                 layer.append(actions);
             }

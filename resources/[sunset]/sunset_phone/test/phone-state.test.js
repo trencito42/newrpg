@@ -19,6 +19,30 @@ assert.strictEqual(state.shouldConnectVoice('INCOMING_RINGING'), false);
 assert.strictEqual(state.shouldAutoLower('INCOMING_RINGING'), false);
 assert.strictEqual(state.shouldAutoLower('ACTIVE'), false);
 
+assert.strictEqual(state.callIsLive('IDLE'), false);
+assert.strictEqual(state.callIsLive('ENDED'), false);
+assert.strictEqual(state.callIsLive('INCOMING_RINGING'), true);
+assert.strictEqual(state.callIsLive('OUTGOING_RINGING'), true);
+assert.strictEqual(state.callIsLive('ACTIVE'), true);
+
+assert.strictEqual(state.nextPresentation('closed', 'IDLE', 'toggle'), 'full');
+assert.strictEqual(state.nextPresentation('full', 'IDLE', 'toggle'), 'closed');
+assert.strictEqual(state.nextPresentation('full', 'INCOMING_RINGING', 'toggle'), 'peek');
+assert.strictEqual(state.nextPresentation('peek', 'INCOMING_RINGING', 'toggle'), 'full');
+assert.strictEqual(state.nextPresentation('full', 'OUTGOING_RINGING', 'toggle'), 'peek');
+assert.strictEqual(state.nextPresentation('peek', 'OUTGOING_RINGING', 'toggle'), 'full');
+assert.strictEqual(state.nextPresentation('full', 'ACTIVE', 'toggle'), 'peek');
+assert.strictEqual(state.nextPresentation('peek', 'ACTIVE', 'toggle'), 'full');
+assert.strictEqual(state.nextPresentation('closed', 'ACTIVE', 'toggle'), 'full');
+assert.strictEqual(state.nextPresentation('peek', 'ENDED', 'terminal'), 'closed');
+assert.strictEqual(state.nextPresentation('full', 'ENDED', 'terminal'), 'full');
+assert.strictEqual(state.nextPresentation('peek', 'ACTIVE', 'forceClose'), 'closed');
+
+const liveCall = { state: 'ACTIVE', callId: 9, peerName: 'Sarah' };
+assert.strictEqual(state.nextPresentation('full', liveCall.state, 'toggle'), 'peek');
+assert.strictEqual(liveCall.state, 'ACTIVE');
+assert.strictEqual(liveCall.callId, 9);
+
 const ringing = state.applyCall({ state: 'IDLE' }, { state: 'OUTGOING_RINGING', callId: 4, peerName: 'Ada', peerPhone: '555-0002' });
 assert.strictEqual(ringing.runTimer, false);
 assert.strictEqual(ringing.connectVoice, false);

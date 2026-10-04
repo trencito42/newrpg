@@ -165,6 +165,7 @@
         phoneUpdate: 'phone',
         phoneIncomingCall: 'phone',
         phoneCallState: 'phone',
+        phonePresentation: 'phone',
         phoneMessage: 'phone',
         marketPromotePrompt: 'phone',
         phoneFocusListing: 'phone',
@@ -946,6 +947,7 @@
                 case 'phoneClock': window.Phone?.setClock?.(payload); return;
                 case 'phoneReset': window.Phone?.resetCharacter?.(); return;
                 case 'phoneCallState': window.Phone?.setCall?.(payload); return;
+                case 'phonePresentation': window.Phone?.setPresentation?.(payload); return;
                 case 'phoneAppData': window.Phone?.applyAppData?.(payload); return;
                 case 'phoneCamera': window.Phone?.setCamera?.(payload); return;
                 case 'phoneCameraResult': window.Phone?.onCameraResult?.(payload); return;
