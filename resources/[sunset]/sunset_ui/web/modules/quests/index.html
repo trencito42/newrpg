@@ -452,11 +452,11 @@
 
         if (filtered.length === 0) {
             listEl.innerHTML = '<div class="ql-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="quests.empty.no_quests">No quests in this category</span></div>';
-            if (window.i18nApply) window.i18nApply(listEl);
+            if (window.I18n) window.I18n.translateTree(listEl);
             return;
         }
         listEl.innerHTML = filtered.map(renderCard).join('');
-        if (window.i18nApply) window.i18nApply(listEl);
+        if (window.I18n) window.I18n.translateTree(listEl);
     }
 
     function show(data) {

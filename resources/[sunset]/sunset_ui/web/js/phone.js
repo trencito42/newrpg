@@ -1010,9 +1010,13 @@
         },
 
         reasonLabel(reason) {
-            const key = 'phone.ui.reason_' + String(reason || '');
-            const label = t(key);
-            return label === key ? PS.safeText(reason || '') : label;
+            if (window.PhoneReasons) {
+                return window.PhoneReasons.display(reason, {
+                    has: (key) => !!(window.I18n && typeof window.I18n.has === 'function' && window.I18n.has(key)),
+                    t,
+                });
+            }
+            return PS.safeText(String(reason || ''));
         },
 
         renderBank() {

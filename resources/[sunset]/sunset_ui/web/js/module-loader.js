@@ -59,7 +59,7 @@
         phone: {
             html: 'modules/phone/index.html',
             css: ['css/phone.css'],
-            js: ['js/clan-lifetime.js', 'js/phone-state.js', 'js/phone.js']
+            js: ['js/clan-lifetime.js', 'js/phone-state.js', 'js/phone-reasons.js', 'js/phone.js']
         },
         mdc: {
             html: 'modules/mdc/index.html',

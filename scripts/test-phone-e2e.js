@@ -84,6 +84,51 @@ test('closed phone does not poll every frame', () => {
     assert.match(phoneClient, /RegisterKeyMapping\('phone'/);
 });
 
+test('bank reasons use canonical ids and never invent missing i18n keys', () => {
+    const reasons = require(path.join(root, 'resources/[sunset]/sunset_ui/web/js/phone-reasons.js'));
+    const i18n = read('resources/[sunset]/sunset_ui/web/js/i18n.js');
+    const quests = read('resources/[sunset]/sunset_ui/web/modules/quests/index.html');
+    assert.equal(reasons.canonical('CNN Ad Submission'), 'cnn_ad_submission');
+    assert.equal(reasons.canonical('refund:vehicle_insurance_claim'), 'refund_vehicle_insurance_claim');
+    assert.equal(reasons.canonical('hospital'), 'hospital');
+
+    const calls = [];
+    const known = reasons.display('CNN Ad Submission', {
+        has: (key) => key === 'phone.ui.reason_cnn_ad_submission',
+        t: (key) => { calls.push(key); return 'CNN ad'; },
+    });
+    assert.equal(known, 'CNN ad');
+    assert.deepEqual(calls, ['phone.ui.reason_cnn_ad_submission']);
+
+    const warned = [];
+    const unknown = reasons.display('Hello <b>legacy</b>', {
+        has: () => false,
+        t: (key) => { warned.push(key); return key; },
+    });
+    assert.equal(unknown, 'Hello legacy');
+    assert.deepEqual(warned, []);
+
+    const prefixed = reasons.display('quest_future_chain', {
+        has: (key) => key === 'phone.ui.reason_quest',
+        t: (key) => key,
+    });
+    assert.equal(prefixed, 'phone.ui.reason_quest');
+
+    for (const id of reasons.CANONICAL_IDS) {
+        const key = `'phone.ui.reason_${id}'`;
+        const hits = i18n.split(key).length - 1;
+        assert.equal(hits, 2, `${key} must exist in English and Romanian`);
+    }
+    for (const attr of quests.matchAll(/data-i18n(?:-[a-z]+)?="([^"]+)"/g)) {
+        const key = attr[1];
+        const hits = i18n.split(`'${key}'`).length - 1;
+        assert.equal(hits, 2, `${key} must exist in English and Romanian`);
+    }
+    assert.match(phoneJs, /PhoneReasons\.display/);
+    assert.doesNotMatch(phoneJs, /phone\.ui\.reason_' \+/);
+    assert.match(i18n, /function has\(key\)/);
+});
+
 test('locale keys used by the phone pass exist in English and Romanian', () => {
     for (const key of [
         'phone.message.request_timed_out',
