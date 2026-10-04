@@ -203,17 +203,27 @@
     display: flex; align-items: center; justify-content: center;
     position: relative;
 }
+.app-icon svg, .svg-wrap svg, .app-title svg {
+    fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
 .app-icon svg, .svg-wrap svg { width: 28px; height: 28px; }
-.app-label { font-size: 10px; font-weight: 500; }
+.app-title svg { width: 18px; height: 18px; }
+.app-label { font-size: 11px; font-weight: 600; }
 .app-badge {
     position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px;
     border-radius: 8px; background: var(--accent-red); color: #fff; font-size: 9px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; padding: 0 4px;
 }
-.icon-phone svg, .icon-messages svg { fill: var(--accent-green); }
-.icon-bank svg, .icon-market svg, .icon-jobs svg, .icon-taxi svg { fill: var(--accent-gold); }
-.icon-map svg { fill: var(--accent-blue); }
-.icon-garage svg, .icon-faction svg, .icon-apps svg, .icon-settings svg, .icon-properties svg, .icon-clan svg, .icon-news svg { fill: #fff; stroke: none; }
+.icon-phone, .icon-messages { color: var(--accent-green); }
+.icon-phone svg, .icon-messages svg, .icon-clan svg { fill: currentColor; stroke: none; }
+.icon-bank, .icon-market, .icon-jobs, .icon-taxi, .icon-settings { color: var(--accent-gold); }
+.icon-map { color: var(--accent-blue); }
+.icon-garage, .icon-faction, .icon-apps, .icon-properties, .icon-news, .icon-quests { color: #fff; }
+.phone-switch { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.phone-switch i { width: 36px; height: 20px; border-radius: 10px; background: #333; position: relative; flex: 0 0 auto; }
+.phone-switch i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #888; }
+.phone-switch.on i { background: #3d6b45; }
+.phone-switch.on i::after { left: 18px; background: #d7c27a; }
 .dock {
     margin-top: auto;
     margin-bottom: 18px;
@@ -233,7 +243,7 @@
     gap: 8px;
 }
 .app-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
-.app-title svg { width: 18px; height: 18px; fill: var(--accent-gold); }
+.app-title { color: var(--accent-gold); }
 .btn-icon, .btn-text {
     background: none; border: 0; color: #fff; cursor: pointer; padding: 6px;
     display: flex; align-items: center; justify-content: center;

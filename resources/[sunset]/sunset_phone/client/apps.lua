@@ -3,6 +3,15 @@ local ringToken = 0
 
 local function notify(message, kind)
     if not message or message == '' then return end
+    if exports.sunset_phone:IsOpen() then
+        exports.sunset_ui:Send('phoneActionResult', {
+            op = 'app',
+            ok = kind ~= 'error',
+            error = kind == 'error' and message or nil,
+            message = kind ~= 'error' and message or nil,
+        })
+        return
+    end
     exports.sunset_ui:Notify(message, kind or 'info')
 end
 
@@ -16,10 +25,13 @@ end
 
 local function startRing()
     stopRing()
+    if PhonePrefs and PhonePrefs.ringtone == false then return end
     local token = ringToken
     CreateThread(function()
         while token == ringToken and callSnapshot and callSnapshot.state == 'INCOMING_RINGING' do
-            PlaySoundFrontend(-1, 'Remote_Ring', 'Phone_SoundSet_Michael', true)
+            if not PhonePrefs or PhonePrefs.ringtone ~= false then
+                PlaySoundFrontend(-1, 'Remote_Ring', 'Phone_SoundSet_Michael', true)
+            end
             Wait(2800)
         end
     end)
@@ -227,11 +239,16 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             return
         end
         if op == 'settings' then
-            Sunset.AwaitCallback('sunset:phoneSaveSettings', {
+            local res, err = Sunset.AwaitCallback('sunset:phoneSaveSettings', {
                 ringtone = data.ringtone ~= false,
                 notifySound = data.notifySound ~= false,
-                compactNotes = data.compactNotes == true,
             })
+            if type(res) == 'table' and res.ok then
+                SetPhonePrefs(res)
+                exports.sunset_ui:Send('phoneActionResult', { op = 'settings', ok = true, prefs = res })
+            else
+                PhoneFeedback(PhoneExplain(err, 'phone.message.settings_failed'), 'error', 'settings', false)
+            end
             return
         end
         if op == 'marketBuy' then
@@ -279,7 +296,22 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             return
         end
         if op == 'buyLevel' then
-            Sunset.AwaitCallback('sunset:buyLevel')
+            local ok, err = Sunset.AwaitCallback('sunset:buyLevel')
+            if ok then
+                local refreshed = Sunset.AwaitCallback('sunset:getPhoneData') or {}
+                if refreshed.prefs then SetPhonePrefs(refreshed.prefs) end
+                exports.sunset_ui:Send('phoneUpdate', refreshed)
+                PhoneFeedback(exports.sunset_core:Translate('phone.ui.level_bought', { level = tostring(refreshed.level or '') }), 'success', 'level', true)
+            else
+                PhoneFeedback(PhoneExplain(err, 'phone.ui.action_failed'), 'error', 'level', false)
+            end
+            return
+        end
+        if op == 'markCallsSeen' then
+            local res = Sunset.AwaitCallback('sunset:phoneMarkCallsSeen', tonumber(data.callId))
+            if type(res) == 'table' and res.ok then
+                exports.sunset_ui:Send('phoneActionResult', { op = 'callsSeen', ok = true })
+            end
             return
         end
         if op == 'propertiesMore' then

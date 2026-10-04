@@ -168,6 +168,8 @@
         phoneMessage: 'phone',
         marketPromotePrompt: 'phone',
         phoneFocusListing: 'phone',
+        phoneClock: 'phone',
+        phoneReset: 'phone',
 
         // MDC Tablet
         mdcShow: 'mdc',
@@ -352,7 +354,7 @@
         documentsHide: 'panels', craftingUpdate: 'panels', craftingHide: 'panels', emotesHide: 'panels',
         garageHide: 'garage', fleetGarageHide: 'garage', propertyManageRefresh: 'properties', menuPropertyUpdate: 'menu',
         clothingHide: 'wardrobe', weaponAmmoUpdate: 'inventory', emoteWheelShow: 'inventory', emoteWheelHide: 'inventory', emoteWheelRelease: 'inventory', emoteWheelSelect: 'inventory',
-        phoneCaptureAvatar: 'phone', phoneAppData: 'phone', phoneActionResult: 'phone', taxiUpdate: 'phone', taxiEstimate: 'phone', taxiPickResult: 'phone',
+        phoneAppData: 'phone', phoneActionResult: 'phone', taxiUpdate: 'phone', taxiEstimate: 'phone', taxiPickResult: 'phone',
         dealershipUpdate: 'dealership', appearanceUpdate: 'studio', appearanceSaving: 'studio', appearanceSaveFailed: 'studio',
         fishingShow: 'fishing', fishingUpdate: 'fishing', fishingHide: 'fishing',
         policeOrderShow: 'hud_core', policeOrderHide: 'hud_core', announcementShow: 'hud_core', announcementHide: 'hud_core',
@@ -941,15 +943,8 @@
                 case 'hotbarShow': window.HotbarUI?.show?.(payload); return;
                 case 'hotbarHide': window.HotbarUI?.hide?.(); return;
 
-                case 'phoneCaptureAvatar': {
-                    if (!payload.txd || !payload.characterId) return;
-                    fetch(`https://nui-img/${payload.txd}/${payload.txd}`).then((response) => response.blob()).then((blob) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => post('phoneAvatarCaptured', { characterId: payload.characterId, avatar: reader.result });
-                        reader.readAsDataURL(blob);
-                    }).catch(() => {});
-                    return;
-                }
+                case 'phoneClock': window.Phone?.setClock?.(payload); return;
+                case 'phoneReset': window.Phone?.resetCharacter?.(); return;
                 case 'phoneCallState': window.Phone?.setCall?.(payload); return;
                 case 'phoneAppData': window.Phone?.applyAppData?.(payload); return;
                 case 'phoneActionResult': window.Phone?.onActionResult?.(payload); return;

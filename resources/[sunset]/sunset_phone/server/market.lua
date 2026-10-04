@@ -458,7 +458,7 @@ end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneSaveSettings', function(source, prefs)
     local char = charOf(source)
-    if not char or type(prefs) ~= 'table' then return nil, { localeKey = 'phone.message.invalid_contact_id' } end
+    if not char or type(prefs) ~= 'table' then return nil, { localeKey = 'phone.message.settings_failed' } end
     local ring = prefs.ringtone == false and 0 or 1
     local sound = prefs.notifySound == false and 0 or 1
     local compact = prefs.compactNotes == true and 1 or 0

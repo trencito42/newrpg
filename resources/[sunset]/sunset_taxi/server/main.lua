@@ -383,6 +383,7 @@ local function buildAppData(source)
             id = dest.id,
             label = dest.label,
             category = dest.category,
+            popular = dest.category == 'Popular',
             x = c.x,
             y = c.y,
         }
@@ -412,6 +413,14 @@ local function buildAppData(source)
             companyCut = math.floor((Sunset.Taxi.companyCut or 0.12) * 100),
         },
         tipOptions = Sunset.Taxi.tipOptions or { 25, 50, 100 },
+        driversOnline = (function()
+            local n = 0
+            for _, id in ipairs(GetPlayers()) do
+                local src = tonumber(id)
+                if isTaxiDriver(src) and DriverAvailable[src] ~= false then n = n + 1 end
+            end
+            return n
+        end)(),
     }
 
     if Sunset.GetCharacterFaction(char) == Sunset.Taxi.factionId then

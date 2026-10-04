@@ -61,73 +61,6 @@ local function findCharacterByPhone(phoneQuery)
     return nil
 end
 
-local AvatarCache = {}
--- [PERF] Prune stale avatar cache entries (base64 blobs) so it cannot grow forever.
-CreateThread(function()
-    while true do
-        Wait(600000)
-        local cutoff = os.time() - 1800
-        for cid, entry in pairs(AvatarCache) do
-            if (entry.cachedAt or 0) < cutoff then AvatarCache[cid] = nil end
-        end
-    end
-end)
-local AVATAR_CACHE_TTL = 300
-
-local function getAvatarsForCharacterIds(cids)
-    local result = {}
-    local missing = {}
-    local now = os.time()
-
-    for _, id in ipairs(cids) do
-        id = tonumber(id)
-        if id and id > 0 then
-            local cached = AvatarCache[id]
-            if cached and (now - cached.cachedAt) < AVATAR_CACHE_TTL then
-                if cached.avatar then
-                    result[id] = cached.avatar
-                end
-            else
-                missing[#missing + 1] = id
-            end
-        end
-    end
-
-    if #missing > 0 then
-        local uniqueMissing = {}
-        local seen = {}
-        for _, id in ipairs(missing) do
-            if not seen[id] then
-                seen[id] = true
-                uniqueMissing[#uniqueMissing + 1] = id
-            end
-        end
-
-        local placeholders = {}
-        for i = 1, #uniqueMissing do placeholders[i] = '?' end
-        local sql = ('SELECT id, avatar FROM characters WHERE id IN (%s) AND avatar IS NOT NULL AND avatar != \'\'')
-            :format(table.concat(placeholders, ','))
-
-        local rows = MySQL.query.await(sql, uniqueMissing) or {}
-        local foundIds = {}
-        for _, r in ipairs(rows) do
-            local cid = tonumber(r.id)
-            if cid then
-                AvatarCache[cid] = { avatar = r.avatar, cachedAt = now }
-                result[cid] = r.avatar
-                foundIds[cid] = true
-            end
-        end
-        for _, id in ipairs(uniqueMissing) do
-            if not foundIds[id] then
-                AvatarCache[id] = { avatar = nil, cachedAt = now }
-            end
-        end
-    end
-
-    return result
-end
-
 local function findSourceByCharacterId(characterId)
     return exports.sunset_core:GetSourceByCharacterId(characterId)
 end
@@ -218,7 +151,9 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     return {
         myId = source,
         myCharacterId = myCharId,
-        myName = exports.sunset_core:GetPlayerDisplayName(source),
+        myName = exports.sunset_core:GetPlayerBaseName(source),
+        levelCostRp = math.max(1, tonumber(char.level) or 1) * 4,
+        levelCostMoney = math.max(1, tonumber(char.level) or 1) * 1000,
         myPhoneNumber = myPhone,
         cash = char.cash or 0,
         bank = char.bank or 0,
@@ -246,12 +181,18 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
             }
         end)(),
         missedCalls = (function()
+            local seenId = 0
+            pcall(function()
+                seenId = tonumber(MySQL.scalar.await(
+                    'SELECT calls_seen_id FROM phone_character_prefs WHERE character_id = ?',
+                    { myCharId }
+                )) or 0
+            end)
             local ok, n = pcall(function()
                 return MySQL.scalar.await([[
                     SELECT COUNT(*) FROM phone_calls
-                    WHERE callee_character_id = ? AND status = 'missed'
-                      AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
-                ]], { myCharId })
+                    WHERE callee_character_id = ? AND status = 'missed' AND id > ?
+                ]], { myCharId, seenId })
             end)
             return ok and tonumber(n) or 0
         end)(),
@@ -381,13 +322,14 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         end
     end
 
-    message = tostring(message or ''):sub(1, 256)
+    message = tostring(message or ''):gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 256)
     if targetPhoneNumber ~= nil then targetPhoneNumber = tostring(targetPhoneNumber):sub(1, 24) end -- [SEC3]
-    if not targetCharacterId or message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
+    if message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
+    if not targetCharacterId then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
     -- [SEC2] SMS/112 spam throttle (112 creates a dispatch call for police/EMS)
     local isEmergencyTarget = targetCharacterId == -112 or tostring(targetPhoneNumber) == '112'
     if not exports.sunset_core:RateLimit(source, isEmergencyTarget and 'phone112' or 'phoneSend', isEmergencyTarget and 15000 or 700) then
-        return nil, { localeKey = 'phone.message.invalid_recipient_or_message' }
+        return nil, { localeKey = 'error.too_many_requests' }
     end
 
     -- Handle 112 Emergency dispatch messaging
@@ -462,49 +404,20 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     end
     TriggerClientEvent('sunset:client:phoneNewMessage', source, msgPayload)
 
-    return true
+    return { ok = true, message = msgPayload }
 end)
 
--- ═══ AVATAR (persistent ped headshot) ═══
-
-exports.sunset_core:RegisterCallback('sunset:phoneHasAvatar', function(source, characterId)
-    characterId = tonumber(characterId)
-    if not characterId then return false end
-    if AvatarCache[characterId] and AvatarCache[characterId].avatar then return true end
-    local row = MySQL.scalar.await('SELECT avatar FROM characters WHERE id = ? LIMIT 1', { characterId })
-    return row ~= nil and tostring(row) ~= ''
-end)
-
-exports.sunset_core:RegisterCallback('sunset:phoneSaveAvatar', function(source, characterId, base64)
-    characterId = tonumber(characterId)
-    if not characterId then return nil, { localeKey = 'phone.message.invalid_character' } end
-    base64 = tostring(base64 or '')
-    if #base64 < 100 or #base64 > 500000 then return nil, { localeKey = 'phone.message.invalid_avatar_data' } end
-    -- [SEC2] Avatar is later interpolated into other players' NUI (<img src>). Only
-    -- accept a base64 payload, optionally prefixed by a data:image/<png|jpeg|webp|gif>;base64, header.
-    do
-        local body = base64:match('^data:image/[a-z]+;base64,(.+)$')
-        if body then
-            local mime = base64:match('^data:image/([a-z]+);base64,')
-            if mime ~= 'png' and mime ~= 'jpeg' and mime ~= 'jpg' and mime ~= 'webp' and mime ~= 'gif' then
-                return nil, { localeKey = 'phone.message.invalid_avatar_data' }
-            end
-        else
-            body = base64
-        end
-        if body:find('[^A-Za-z0-9+/=]') then
-            return nil, { localeKey = 'phone.message.invalid_avatar_data' }
-        end
-    end
-    if not exports.sunset_core:RateLimit(source, 'phoneAvatar', 5000) then return nil, { localeKey = 'phone.message.invalid_avatar_data' } end
-
-    -- Only allow saving your own avatar
+exports.sunset_core:RegisterCallback('sunset:phoneMarkCallsSeen', function(source, callId)
     local char = exports.sunset_core:GetCharacter(source)
-    if not char or tonumber(char.id) ~= characterId then
-        return nil, { localeKey = 'phone.message.you_can_only_save_your_own_avatar' }
-    end
-
-    MySQL.update.await('UPDATE characters SET avatar = ? WHERE id = ?', { base64, characterId })
-    AvatarCache[characterId] = { avatar = base64, cachedAt = os.time() }
-    return true
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
+    callId = tonumber(callId) or 0
+    if callId < 1 then return { ok = true } end
+    local ok = pcall(function()
+        MySQL.update.await([[
+            INSERT INTO phone_character_prefs (character_id, calls_seen_id) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE calls_seen_id = GREATEST(COALESCE(calls_seen_id, 0), VALUES(calls_seen_id))
+        ]], { tonumber(char.id), callId })
+    end)
+    if not ok then return nil, { localeKey = 'error.server_action_failed' } end
+    return { ok = true, callsSeenId = callId }
 end)

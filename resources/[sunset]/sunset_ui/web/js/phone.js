@@ -138,7 +138,6 @@
             device.setAttribute('aria-hidden', 'false');
             requestAnimationFrame(() => device.classList.add('is-open'));
             this.updateClock();
-            if (!this._clock) this._clock = setInterval(() => this.updateClock(), 15000);
             const st = this.call && this.call.state;
             if (st === 'INCOMING_RINGING' || st === 'OUTGOING_RINGING') this.renderCall(true);
             else this.showView(this.stack[this.stack.length - 1] || 'home', false);
@@ -180,7 +179,7 @@
             device.classList.remove('is-open');
             device.setAttribute('aria-hidden', 'true');
             setTimeout(() => { if (!this.isOpen) device.classList.add('hidden'); }, 420);
-            if (this._clock) { clearInterval(this._clock); this._clock = null; }
+            this._compose = '';
         },
 
         close() {
@@ -191,7 +190,8 @@
 
         update(payload) {
             this.data = Object.assign({}, this.data || {}, payload || {});
-            if (this.current() === 'messages' || this.current() === 'conversation') this.renderMessages();
+            if (this.current() === 'messages') this.renderMessages();
+            if (this.current() === 'conversation') this.renderConversation();
             if (this.current() === 'contacts') this.renderContacts();
             if (this.current() === 'bank') this.renderBank();
             if (this.current() === 'phone') this.renderPhoneApp();
@@ -203,7 +203,8 @@
             this.data.messages = this.data.messages || [];
             if (!this.data.messages.some((row) => row.id === msg.id)) this.data.messages.unshift(msg);
             this.renderHome();
-            if (this.current() === 'messages' || this.current() === 'conversation') this.renderMessages();
+            if (this.current() === 'messages') this.renderMessages();
+            if (this.current() === 'conversation') this.renderConversation();
         },
 
         updateTaxi(payload) {
@@ -216,7 +217,15 @@
         },
         onTaxiPick(dest) {
             if (!dest) return;
-            this.taxiDest = { id: dest.destinationId, label: dest.label, x: dest.x, y: dest.y };
+            this.taxiDest = {
+                id: dest.destinationId || (dest.waypoint ? 'waypoint' : undefined),
+                label: dest.label,
+                x: dest.x,
+                y: dest.y,
+                z: dest.z,
+                waypoint: !!dest.waypoint,
+            };
+            if (dest.waypoint) post('taxiEstimate', { destination: { x: dest.x, y: dest.y, z: dest.z, label: dest.label } });
             if (this.current() === 'taxi') this.renderTaxi();
         },
 
@@ -224,14 +233,44 @@
             payload = payload || {};
             if (payload.op === 'send') {
                 this.busy.send = false;
+                const pending = this._pendingBubble;
+                if (payload.ok) {
+                    this._pendingBubble = null;
+                    if (payload.message) this.addMessage(payload.message);
+                    this._compose = '';
+                } else if (pending && (!payload.localId || pending.localId === payload.localId)) {
+                    pending.failed = true;
+                    this._compose = pending.message || this._compose;
+                }
                 this.toast(payload.ok ? t('phone.ui.sent') : (payload.error || t('phone.ui.failed_send')), payload.ok ? 'good' : 'bad');
-                if (!payload.ok && this._pendingBubble) this._pendingBubble.failed = true;
+                if (this.current() === 'conversation') this.renderConversation();
+            }
+            if (payload.op === 'settings') {
+                this.busy.settings = false;
+                if (payload.ok && payload.prefs) this.data.prefs = Object.assign({}, this.data.prefs || {}, payload.prefs);
+                else if (this._settingsSnapshot) this.data.prefs = this._settingsSnapshot;
+                this._settingsSnapshot = null;
+                if (!payload.ok) this.toast(payload.error || t('phone.ui.action_failed'), 'bad');
+                if (this.current() === 'settings') this.renderSettings();
+            }
+            if (payload.op === 'level') {
+                this.busy.level = false;
+                this.toast(payload.ok ? (payload.message || t('phone.ui.sent')) : (payload.error || t('phone.ui.action_failed')), payload.ok ? 'good' : 'bad');
+                if (this.current() === 'settings') this.renderSettings();
+            }
+            if (payload.op === 'taxi' || payload.op === 'app' || payload.op === 'contact') {
+                this.busy.taxi = false;
+                if (payload.message || payload.error) this.toast(payload.ok ? payload.message : payload.error, payload.ok ? 'good' : 'bad');
+                if (payload.op === 'taxi' && this.current() === 'taxi') this.renderTaxi();
             }
             if (payload.op === 'transfer') {
                 this.busy.transfer = false;
                 this.toast(payload.ok ? t('phone.ui.transfer_ok') : (payload.error || t('phone.ui.action_failed')), payload.ok ? 'good' : 'bad');
-                if (payload.ok) this.back();
-                if (this.current() === 'transfer' || this.current() === 'bank') this.renderBank();
+                if (payload.ok) {
+                    this._transferDraft = null;
+                    this.back();
+                    if (this.current() === 'bank') this.renderBank();
+                } else if (this.current() === 'transfer') this.renderTransfer();
             }
         },
 
@@ -321,10 +360,52 @@
             this._toast = setTimeout(() => { node.hidden = true; }, 2600);
         },
 
+        setClock(payload) {
+            const hours = Number(payload && payload.hours);
+            const minutes = Number(payload && payload.minutes);
+            if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return;
+            this.gameClock = { hours: hours, minutes: minutes };
+            this.updateClock();
+        },
+
+        clockLabel(value) {
+            const raw = PS.safeText(value);
+            const match = raw.match(/(\d{2}):(\d{2})/);
+            return match ? (match[1] + ':' + match[2]) : raw;
+        },
+
         updateClock() {
-            const now = new Date();
             const clock = $('phone-clock');
-            if (clock) clock.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            if (!clock || !this.gameClock) return;
+            clock.textContent = String(this.gameClock.hours).padStart(2, '0') + ':' + String(this.gameClock.minutes).padStart(2, '0');
+        },
+
+        resetCharacter() {
+            this.data = {};
+            this.stack = ['home'];
+            this.thread = null;
+            this.apps = {};
+            this.taxi = null;
+            this.taxiDest = null;
+            this.taxiEstimate = null;
+            this._taxiQuery = '';
+            this._msgQuery = '';
+            this._contactQuery = '';
+            this._mapQuery = '';
+            this._compose = '';
+            this._pendingBubble = null;
+            this._editContact = null;
+            this._adding = false;
+            this.busy = {};
+            this.garageFilter = 'all';
+            this.marketFilter = 'all';
+            this.factionTab = 'overview';
+            this.phoneTab = 'keypad';
+            this.dial = '';
+            this.call = { state: 'IDLE' };
+            this.gameClock = null;
+            const toast = $('phone-toast');
+            if (toast) toast.hidden = true;
         },
 
         current() { return this.stack[this.stack.length - 1] || 'home'; },
@@ -619,13 +700,39 @@
             });
             return { name, phone };
         },
+        labelFor(peer) {
+            peer = peer || {};
+            const id = Number(peer.characterId);
+            if (id === 0 || peer.phone === '112') return t('phone.ui.dispatch');
+            const contact = (this.data.contacts || []).find((c) => (id > 0 && Number(c.characterId) === id) || (peer.phone && c.phone === peer.phone));
+            if (contact && contact.name) return contact.name;
+            const rec = id > 0 ? this.peerRecord(id) : { name: '', phone: '' };
+            if (rec.name) return rec.name;
+            if (peer.displayName && peer.displayName !== peer.phone) return peer.displayName;
+            return peer.phone || rec.phone || t('phone.ui.unknown');
+        },
+
+        openConversation(peer) {
+            peer = peer || {};
+            const characterId = Number(peer.characterId) || 0;
+            const phone = PS.safeText(peer.phone || '');
+            this.thread = {
+                peer: characterId,
+                phone: phone,
+                name: this.labelFor({ characterId: characterId, phone: phone, displayName: peer.displayName }),
+                messages: characterId > 0 ? this.messagesWith(characterId) : [],
+            };
+            this._compose = '';
+            this._pendingBubble = null;
+            this.openApp('conversation');
+        },
+
         nameForPeer(peer, msg) {
-            if (Number(peer) === 0) return t('phone.ui.dispatch');
-            const found = this.peerRecord(peer);
-            if (found.name) return found.name;
-            if (msg && Number(msg.sender_character_id) === Number(peer) && msg.sender_name) return msg.sender_name;
-            if (found.phone) return found.phone;
-            return t('phone.ui.unknown');
+            return this.labelFor({
+                characterId: peer,
+                phone: this.phoneForPeer(peer),
+                displayName: msg && Number(msg.sender_character_id) === Number(peer) ? msg.sender_name : '',
+            });
         },
         phoneForPeer(peer) {
             return this.peerRecord(peer).phone || '';
@@ -656,13 +763,21 @@
 
         renderRecents(content) {
             const rows = this.data.calls || [];
+            const missed = rows.filter((call) => call.status === 'missed');
+            const newest = missed.reduce((max, call) => Math.max(max, Number(call.id) || 0), 0);
+            if (newest && newest !== this._callsSeen) {
+                this._callsSeen = newest;
+                this.data.missedCalls = 0;
+                post('phoneAction', { op: 'markCallsSeen', callId: newest });
+                this.renderHome();
+            }
             if (!rows.length) { content.append(this.empty(t('phone.ui.empty'))); return; }
             rows.forEach((call) => {
                 const item = el('div', 'list-item');
                 const title = el('div', 'grow');
                 const name = el('div', 'item-title');
                 const contact = (this.data.contacts || []).find((c) => c.phone === call.peer_phone);
-                name.append(text(contact ? contact.name : (call.peer_name || t('phone.ui.unknown'))));
+                name.append(text(contact ? contact.name : (call.peer_name || call.peer_phone || t('phone.ui.unknown'))));
                 const sub = el('div', 'item-subtitle');
                 const dir = call.direction === 'out' ? t('phone.ui.calling') : (call.status === 'missed' ? t('phone.ui.missed') : t('phone.ui.incoming'));
                 sub.append(text((call.peer_phone || '') + ' · ' + dir));
@@ -715,7 +830,7 @@
                 sub.append(text(row.last.message || ''));
                 body.append(title, sub);
                 item.append(av, body);
-                item.addEventListener('click', () => { this.thread = row; this.openApp('conversation'); });
+                item.addEventListener('click', () => this.openConversation({ characterId: row.peer, phone: row.phone, displayName: row.name }));
                 content.append(item);
             });
         },
@@ -735,7 +850,7 @@
             if (!row) { content.append(this.empty(t('phone.ui.empty_messages'))); return; }
             post('phoneAction', { op: 'read', characterId: row.peer });
             (this.data.messages || []).forEach((msg) => {
-                if (Number(msg.receiver_character_id) === this.myId() && Number(msg.sender_character_id) === Number(row.peer)) msg.read_at = msg.read_at || new Date().toISOString();
+                if (Number(msg.receiver_character_id) === this.myId() && Number(msg.sender_character_id) === Number(row.peer)) msg.read_at = msg.read_at || 'read';
             });
             const log = el('div', 'chat-log');
             row.messages.forEach((msg) => {
@@ -743,25 +858,74 @@
                 const bubble = el('div', 'bubble ' + (mine ? 'out' : 'in'));
                 bubble.append(text(msg.message || ''));
                 const time = el('span', 'time');
-                time.append(text(msg.created_at || ''));
+                time.append(text(this.clockLabel(msg.created_at)));
                 bubble.append(time);
                 log.append(bubble);
             });
+            if (this._pendingBubble && Number(this._pendingBubble.peer) === Number(row.peer)) {
+                const pending = this._pendingBubble;
+                const bubble = el('div', 'bubble out');
+                bubble.append(text(pending.message || ''));
+                const time = el('span', 'time');
+                if (pending.failed) {
+                    const retry = btn('mini', t('phone.ui.retry'), () => {
+                        pending.failed = false;
+                        this.busy.send = true;
+                        post('phoneSend', {
+                            targetCharacterId: pending.targetCharacterId,
+                            phone: pending.phone,
+                            message: pending.message,
+                            localId: pending.localId,
+                        });
+                        this.renderConversation();
+                    });
+                    time.append(text(t('phone.ui.not_sent') + ' '));
+                    bubble.append(time, retry);
+                } else {
+                    time.append(text(t('phone.ui.send')));
+                    bubble.append(time);
+                }
+                log.append(bubble);
+            }
             const compose = el('div', 'chat-compose');
             const input = el('input');
             input.maxLength = 256;
             input.placeholder = t('phone.ui.type_message');
-            input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') send(); });
+            input.value = this._compose || '';
+            const counter = el('span', 'time');
+            const paintCount = () => { counter.textContent = input.value.length + '/256'; };
+            input.addEventListener('input', () => { this._compose = input.value; paintCount(); });
+            input.addEventListener('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+            });
             const sendBtn = btn('mini', t('phone.ui.send'), () => send());
             const send = () => {
                 const message = input.value.trim();
                 if (!message || this.busy.send) return;
+                const localId = 'p' + Date.now();
+                const target = (row.phone === '112' || Number(row.peer) === 0) ? -112 : row.peer;
                 this.busy.send = true;
-                sendBtn.disabled = true;
-                post('phoneSend', { targetCharacterId: row.peer, phone: row.phone, message: message });
+                this._pendingBubble = {
+                    localId: localId,
+                    peer: row.peer,
+                    targetCharacterId: target,
+                    phone: row.phone === '112' || Number(row.peer) === 0 ? '112' : row.phone,
+                    message: message,
+                    failed: false,
+                };
+                this._compose = '';
                 input.value = '';
+                post('phoneSend', {
+                    targetCharacterId: this._pendingBubble.targetCharacterId,
+                    phone: this._pendingBubble.phone,
+                    message: message,
+                    localId: localId,
+                });
+                this.renderConversation();
             };
-            compose.append(input, sendBtn);
+            paintCount();
+            compose.append(input, counter, sendBtn);
             content.append(log, compose);
             content.scrollTop = content.scrollHeight;
         },
@@ -777,13 +941,29 @@
         },
 
         renderContactsInto(content) {
+            if (this._editContact) {
+                const editing = this._editContact;
+                const name = field(t('phone.ui.name'), editing.name || '');
+                name.input.maxLength = 48;
+                content.append(name.wrap);
+                content.append(btn('btn-gold', t('phone.ui.save'), () => {
+                    const next = name.input.value.trim().slice(0, 48);
+                    if (!next) return;
+                    post('phoneAction', { op: 'editContact', contactId: editing.id, name: next });
+                    this._editContact = null;
+                }));
+                content.append(btn('btn-ghost', t('phone.ui.cancel'), () => { this._editContact = null; this.renderContacts(); }));
+            }
             if (this._adding) {
                 const name = field(t('phone.ui.name'));
                 const phone = field(t('phone.ui.number'));
+                name.input.maxLength = 48;
+                phone.input.maxLength = 16;
                 content.append(name.wrap, phone.wrap, btn('btn-gold', t('phone.ui.save'), () => {
                     post('phoneAddContact', { name: name.input.value.trim(), phone: phone.input.value.trim() });
                     this._adding = false;
                 }));
+                content.append(btn('btn-ghost', t('phone.ui.cancel'), () => { this._adding = false; this.renderContacts(); }));
             }
             const q = (this._contactQuery || '').toLowerCase();
             const search = field(t('phone.ui.search'), this._contactQuery || '');
@@ -811,14 +991,8 @@
                 body.append(title, sub);
                 const actions = el('div', 'row-actions');
                 actions.append(btn('mini', t('phone.ui.call'), () => this.startCall(c.phone)));
-                actions.append(btn('mini', t('phone.ui.message'), () => {
-                    this.thread = { peer: Number(c.characterId), name: c.name, phone: c.phone, messages: this.messagesWith(c.characterId) };
-                    this.openApp('conversation');
-                }));
-                actions.append(btn('mini', t('phone.ui.edit'), () => {
-                    const next = window.prompt(t('phone.ui.name'), c.name || '');
-                    if (next && next.trim()) post('phoneAction', { op: 'editContact', contactId: c.id, name: next.trim().slice(0, 48) });
-                }));
+                actions.append(btn('mini', t('phone.ui.message'), () => this.openConversation({ characterId: c.characterId, phone: c.phone, displayName: c.name })));
+                actions.append(btn('mini', t('phone.ui.edit'), () => { this._editContact = c; this._adding = false; this.renderContacts(); }));
                 actions.append(btn('mini danger', t('phone.ui.delete'), () => post('phoneDeleteContact', { contactId: c.id })));
                 item.append(body, actions);
                 content.append(item);
@@ -895,9 +1069,13 @@
             this.title('transfer', 'phone.ui.transfer', 'bank');
             const content = $('phone-content-transfer');
             clear(content);
-            const id = field(t('phone.ui.player_id'));
-            const amount = field(t('phone.ui.amount'));
+            const draft = this._transferDraft || {};
+            const id = field(t('phone.ui.server_id'), draft.id || '');
+            const amount = field(t('phone.ui.amount'), draft.amount || '');
             amount.input.inputMode = 'numeric';
+            const keep = () => { this._transferDraft = { id: id.input.value, amount: amount.input.value }; };
+            id.input.addEventListener('input', keep);
+            amount.input.addEventListener('input', keep);
             content.append(id.wrap, amount.wrap);
             (this.data.contacts || []).filter((c) => c.serverId).forEach((c) => {
                 content.append(btn('mini', (c.name || '') + ' #' + c.serverId, () => { id.input.value = String(c.serverId); }));
@@ -924,7 +1102,7 @@
             const content = $('phone-content-garage');
             clear(content);
             const data = this.apps.garage;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const impoundIds = {};
             (data.impound || []).forEach((row) => { impoundIds[Number(row.vehicleId)] = row; });
             const vehicles = (data.vehicles || []).map((vehicle) => Object.assign({}, vehicle, { _status: this.vehicleStatus(vehicle, impoundIds[Number(vehicle.id)]) }));
@@ -1002,7 +1180,7 @@
             const content = $('phone-content-market');
             clear(content);
             const data = this.apps.market;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const tabs = el('div', 'pill-tabs');
             ['all', 'vehicles', 'items', 'properties', 'player_properties', 'businesses', 'ads'].forEach((key) => {
                 tabs.append(btn('pill-tab' + (this.marketFilter === key ? ' active' : ''), t(key === 'all' ? 'phone.ui.all' : 'phone.ui.' + key), () => { this.marketFilter = key; this.renderMarket(); }));
@@ -1175,10 +1353,9 @@
             } else if (row.listingId && row.kind === 'player') {
                 content.append(btn('btn-gold', t('phone.ui.buy'), () => post('phoneAction', { op: 'marketBuy', listingId: row.listingId, token: this.token })));
             }
-            if (row.phone) content.append(btn('btn-ghost', t('phone.ui.message'), () => {
-                this.thread = { peer: Number(row.characterId) || 0, name: row.seller || row.phone, phone: row.phone, messages: this.messagesWith(row.characterId) };
-                this.openApp('conversation');
-            }));
+            if (row.phone) content.append(btn('btn-ghost', t('phone.ui.message'), () => this.openConversation({
+                characterId: row.characterId, phone: row.phone, displayName: row.seller,
+            })));
         },
 
         renderTaxi() {
@@ -1186,7 +1363,7 @@
             const content = $('phone-content-taxi');
             clear(content);
             const data = this.taxi || this.apps.taxi;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             if (data.isDriver && data.onDuty) {
                 content.append(btn('btn-ghost', t('phone.ui.available'), () => post('taxiSetAvailable', { available: data.driverAvailable === false })));
                 const offers = data.pendingOffers || [];
@@ -1208,11 +1385,14 @@
                 }
                 return;
             }
-            const from = el('div', 'field');
-            const fromInput = el('input');
-            fromInput.value = t('phone.ui.current_location');
-            fromInput.readOnly = true;
-            from.append(fromInput);
+            const from = el('div', 'panel');
+            const pickupTitle = el('div', 'item-title');
+            pickupTitle.append(text(t('phone.ui.pickup')));
+            const pickupSub = el('div', 'item-subtitle');
+            pickupSub.append(text(data.pickupStreet || t('phone.ui.current_location')));
+            const pickupArea = el('div', 'muted');
+            pickupArea.append(text(data.pickupArea || ''));
+            from.append(pickupTitle, pickupSub, pickupArea);
             const search = field(t('phone.ui.where_to'), this._taxiQuery || '');
             search.input.dataset.focus = '1';
             search.input.addEventListener('input', () => {
@@ -1223,8 +1403,28 @@
                 if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
             });
             content.append(from, search.wrap);
+            content.append(btn('btn-ghost', t('phone.ui.use_waypoint'), () => post('taxiUseWaypoint', {})));
+            if (Number(data.driversOnline) === 0) {
+                const none = el('div', 'muted');
+                none.append(text(t('phone.ui.no_drivers')));
+                content.append(none);
+            }
             const q = (this._taxiQuery || '').toLowerCase();
-            (data.destinations || []).filter((d) => !q || String(d.label || '').toLowerCase().indexOf(q) !== -1 || (this.taxiDest && this.taxiDest.id === d.id)).slice(0, 12).forEach((dest) => {
+            const catalog = data.destinations || [];
+            const ranked = catalog.filter((d) => {
+                if (!q) return d.popular === true;
+                const label = String(d.label || '').toLowerCase();
+                return label.indexOf(q) !== -1;
+            }).sort((a, b) => {
+                const al = String(a.label || '').toLowerCase();
+                const bl = String(b.label || '').toLowerCase();
+                const as = al.indexOf(q) === 0 ? 0 : 1;
+                const bs = bl.indexOf(q) === 0 ? 0 : 1;
+                if (as !== bs) return as - bs;
+                if (!!b.popular !== !!a.popular) return a.popular ? -1 : 1;
+                return al < bl ? -1 : 1;
+            }).slice(0, q ? 8 : 6);
+            ranked.forEach((dest) => {
                 const selected = this.taxiDest && this.taxiDest.id === dest.id;
                 content.append(btn('pill-tab' + (selected ? ' active' : ''), dest.label, () => {
                     this.taxiDest = dest;
@@ -1254,10 +1454,16 @@
                 content.append(card);
             } else {
                 const request = btn('btn-taxi', t('phone.ui.request_ride'), () => {
-                    if (!this.taxiDest) { this.toast(t('phone.ui.no_destination'), 'bad'); return; }
+                    if (!this.taxiDest || this.busy.taxi) return;
+                    this.busy.taxi = true;
                     request.disabled = true;
-                    post('taxiRequestRide', { destinationId: this.taxiDest.id });
+                    if (this.taxiDest.waypoint) {
+                        post('taxiRequestRide', { destination: { x: this.taxiDest.x, y: this.taxiDest.y, z: this.taxiDest.z, label: this.taxiDest.label } });
+                    } else {
+                        post('taxiRequestRide', { destinationId: this.taxiDest.id });
+                    }
                 });
+                request.disabled = !this.taxiDest;
                 content.append(request);
             }
         },
@@ -1267,7 +1473,7 @@
             const content = $('phone-content-jobs');
             clear(content);
             const data = this.apps.jobs;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const job = data.currentJob;
             const card = el('div', 'panel');
             const title = el('div', 'item-title');
@@ -1309,7 +1515,7 @@
             const content = $('phone-content-map');
             clear(content);
             const data = this.apps.map;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const search = field(t('phone.ui.search'), this._mapQuery || '');
             search.input.dataset.focus = '1';
             search.input.addEventListener('input', () => {
@@ -1346,7 +1552,7 @@
             const content = $('phone-content-faction');
             clear(content);
             const data = this.apps.faction;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const panel = data.panel;
             if (!panel || !panel.isFaction) { content.append(this.empty(t('phone.ui.no_faction'))); return; }
             const dash = data.dashboard || {};
@@ -1442,7 +1648,7 @@
             const content = $('phone-content-properties');
             clear(content);
             const data = this.apps.properties;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const rows = [].concat((data.owned && data.owned.rows) || [], (data.rented && data.rented.rows) || []);
             if (!rows.length) content.append(this.empty(t('phone.ui.no_properties')));
             rows.forEach((row) => {
@@ -1476,7 +1682,7 @@
             const content = $('phone-content-clan');
             clear(content);
             const data = this.apps.clan;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const dash = data.dashboard;
             if (!dash || dash.inClan === false || !dash.name) { content.append(this.empty(t('phone.ui.no_clan'))); return; }
             const card = el('div', 'panel');
@@ -1541,7 +1747,7 @@
             const content = $('phone-content-news');
             clear(content);
             const data = this.apps.news;
-            if (!data) return;
+            if (!data || data.error) { content.append(this.empty(data && data.error ? data.error : t('phone.ui.loading'))); return; }
             const ads = data.ads || [];
             if (!ads.length) content.append(this.empty(t('phone.ui.news_empty')));
             ads.forEach((ad) => {
@@ -1550,10 +1756,9 @@
                 const meta = el('div', 'muted');
                 meta.append(text((ad.seller || '') + (ad.phone ? ' · ' + ad.phone : '') + (ad.publishedAt ? ' · ' + ad.publishedAt : '')));
                 card.append(meta);
-                if (ad.phone) card.append(btn('btn-ghost', t('phone.ui.message'), () => {
-                    this.thread = { peer: Number(ad.characterId) || 0, name: ad.seller || ad.phone, phone: ad.phone, messages: this.messagesWith(ad.characterId) };
-                    this.openApp('conversation');
-                }));
+                if (ad.phone) card.append(btn('btn-ghost', t('phone.ui.message'), () => this.openConversation({
+                    characterId: ad.characterId, phone: ad.phone, displayName: ad.seller,
+                })));
                 const asset = window.AssetPublic?.sanitize?.(ad.attachment);
                 if (asset) {
                     const chip = btn('btn-ghost', window.AssetPublic.chipText(asset), () => window.AssetPreview?.open?.(asset));
@@ -1575,14 +1780,17 @@
             this.title('settings', 'phone.ui.settings', 'settings');
             const content = $('phone-content-settings');
             clear(content);
+            const accountHead = el('div', 'item-title');
+            accountHead.append(text(t('phone.ui.account')));
             const card = el('div', 'panel');
+            card.append(accountHead);
             [['phone.ui.name', this.data.myName], ['phone.ui.my_number', this.data.myPhoneNumber], ['phone.ui.server_id', this.data.myId]].forEach(([key, value]) => {
                 const line = el('div', 'list-item');
                 const body = el('div', 'grow');
                 const title = el('div', 'item-title');
                 title.append(text(t(key)));
                 const sub = el('div', 'item-subtitle');
-                sub.append(text(value || ''));
+                sub.append(text(value == null ? '' : String(value)));
                 body.append(title, sub);
                 line.append(body);
                 card.append(line);
@@ -1590,25 +1798,51 @@
             content.append(card);
             const level = Number(this.data.level) || 1;
             const respect = Number(this.data.respect) || 0;
-            const needRp = level * 4;
-            const needMoney = level * 1000;
+            const needRp = Number(this.data.levelCostRp) || (level * 4);
+            const needMoney = Number(this.data.levelCostMoney) || (level * 1000);
+            const purse = Math.max(Number(this.data.bank) || 0, Number(this.data.cash) || 0);
+            const canBuy = respect >= needRp && purse >= needMoney && !this.busy.level;
+            const progHead = el('div', 'item-title');
+            progHead.append(text(t('phone.ui.progression')));
             const prog = el('div', 'panel');
-            prog.append(text('Lv ' + level + ' · ' + respect + ' RP'));
+            prog.append(progHead);
+            prog.append(text(t('phone.ui.level') + ' ' + level + ' · ' + respect + ' RP'));
             const next = el('div', 'muted');
-            next.append(text('Next: ' + needRp + ' RP · $' + needMoney));
-            prog.append(next);
-            prog.append(btn('btn-gold', '/buylevel', () => post('phoneAction', { op: 'buyLevel' })));
+            next.append(text(t('phone.ui.next_level') + ' ' + (level + 1)));
+            const rpLine = el('div', 'muted');
+            rpLine.append(text('RP ' + respect + ' / ' + needRp));
+            const moneyLine = el('div', 'muted');
+            moneyLine.append(text(money(purse) + ' / ' + money(needMoney)));
+            prog.append(next, rpLine, moneyLine);
+            const buy = btn('btn-gold', t('phone.ui.buy_level', { level: level + 1 }), () => {
+                if (!canBuy) return;
+                this.busy.level = true;
+                buy.disabled = true;
+                post('phoneAction', { op: 'buyLevel' });
+                this.renderSettings();
+            });
+            buy.disabled = !canBuy;
+            prog.append(buy);
             content.append(prog);
-            const prefs = this.data.prefs || { ringtone: true, notifySound: true, compactNotes: false };
+            const phoneHead = el('div', 'item-title');
+            phoneHead.append(text(t('phone.ui.phone')));
             const toggles = el('div', 'panel');
-            [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true], ['compactNotes', 'phone.ui.compact_notes', false]].forEach(([key, label, defaultOn]) => {
+            toggles.append(phoneHead);
+            const prefs = this.data.prefs || { ringtone: true, notifySound: true };
+            [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true]].forEach(([key, label, defaultOn]) => {
                 const current = prefs[key] == null ? defaultOn : !!prefs[key];
-                toggles.append(btn('mini', t(label) + ': ' + (current ? 'on' : 'off'), () => {
+                const row = btn('phone-switch' + (current ? ' on' : ''), t(label), () => {
+                    if (this.busy.settings) return;
+                    this._settingsSnapshot = Object.assign({}, prefs);
                     prefs[key] = !current;
                     this.data.prefs = prefs;
-                    post('phoneAction', { op: 'settings', ringtone: prefs.ringtone !== false, notifySound: prefs.notifySound !== false, compactNotes: !!prefs.compactNotes });
+                    this.busy.settings = true;
+                    post('phoneAction', { op: 'settings', ringtone: prefs.ringtone !== false, notifySound: prefs.notifySound !== false });
                     this.renderSettings();
-                }));
+                });
+                const knob = el('i');
+                row.append(knob);
+                toggles.append(row);
             });
             content.append(toggles);
         },

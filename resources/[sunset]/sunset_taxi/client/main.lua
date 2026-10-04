@@ -69,7 +69,22 @@ local function streetLabel(x, y, z)
         return street .. ' / ' .. crossing
     end
     if street ~= '' then return street end
-    return ('Map pin (%.0f, %.0f)'):format(x, y)
+    local zone = GetNameOfZone(x + 0.0, y + 0.0, z + 0.0)
+    local area = GetLabelText(zone)
+    if not area or area == '' or area == 'NULL' then area = zone end
+    if area and area ~= '' then return area end
+    return 'Map waypoint'
+end
+
+local function pickupContext()
+    local coords = GetEntityCoords(PlayerPedId())
+    local zone = GetNameOfZone(coords.x, coords.y, coords.z)
+    local area = GetLabelText(zone)
+    if not area or area == '' or area == 'NULL' then area = zone end
+    return {
+        street = streetLabel(coords.x, coords.y, coords.z),
+        area = area or '',
+    }
 end
 
 local function resolveDestination(px, py)
@@ -103,6 +118,9 @@ local function refreshPhoneTaxi()
         local data, err = Sunset.AwaitCallback('sunset:getTaxiAppData')
         if data then
             data.playerPos = clientPlayerPos()
+            local pickup = pickupContext()
+            data.pickupStreet = pickup.street
+            data.pickupArea = pickup.area
             lastTaxiAppData = data
             if data.activeRide then
                 activeRide = data.activeRide
@@ -194,11 +212,40 @@ AddEventHandler('sunset:nui:taxiRequestRide', function(data)
             ride, err = Sunset.AwaitCallback('sunset:taxiRequestRide', data.destinationId, getPickupCoords())
         end
         if not ride then
-            notify(err or exports.sunset_core:Translate('taxi.msg.could_not_request_ride'), 'error')
+            local message = err or exports.sunset_core:Translate('taxi.msg.could_not_request_ride')
+            if exports.sunset_phone:IsOpen() then
+                exports.sunset_ui:Send('phoneActionResult', { op = 'taxi', ok = false, error = message })
+            else
+                notify(message, 'error')
+            end
             return
+        end
+        if exports.sunset_phone:IsOpen() then
+            exports.sunset_ui:Send('phoneActionResult', { op = 'taxi', ok = true })
         end
         refreshPhoneTaxi()
     end)
+end)
+
+AddEventHandler('sunset:nui:taxiUseWaypoint', function()
+    local blip = GetFirstBlipInfoId(8)
+    if not blip or blip == 0 or not DoesBlipExist(blip) then
+        exports.sunset_ui:Send('phoneActionResult', {
+            op = 'taxi',
+            ok = false,
+            error = exports.sunset_core:Translate('taxi.message.no_waypoint'),
+        })
+        return
+    end
+    local c = GetBlipInfoIdCoord(blip)
+    local z = groundZ(c.x, c.y)
+    exports.sunset_ui:Send('taxiPickResult', {
+        x = c.x,
+        y = c.y,
+        z = z,
+        label = streetLabel(c.x, c.y, z),
+        waypoint = true,
+    })
 end)
 
 AddEventHandler('sunset:nui:taxiPickMap', function(data)
