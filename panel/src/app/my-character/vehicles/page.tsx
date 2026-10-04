@@ -39,12 +39,13 @@ export default async function MyVehiclesPage() {
 
   const vehicles = await dbQuery<VehicleRow>(
     `SELECT v.*,
-            vm.preview_url, dv.label AS catalog_label,
+            vm.preview_url, COALESCE(dv.label, vdn.label) AS catalog_label,
             iv.id AS impound_id, iv.reason AS impound_reason,
             iv.fee AS impound_fee, iv.status AS impound_status
      FROM vehicles v
      LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
      LEFT JOIN dealership_vehicles dv ON LOWER(dv.model) = LOWER(v.model)
+     LEFT JOIN vehicle_display_names vdn ON LOWER(vdn.model) = LOWER(v.model)
      LEFT JOIN impounded_vehicles iv ON iv.vehicle_id = v.id AND iv.status = 'impounded'
      WHERE v.character_id = ?
      ORDER BY v.id DESC`,
