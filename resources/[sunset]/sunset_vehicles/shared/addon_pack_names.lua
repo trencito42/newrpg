@@ -147,7 +147,7 @@ tole36prb|Sentinel Classic RS|Ubermacht
 tole36v|Sentinel Classic Safari|Ubermacht
 tole6314|Zion V10|Ubermacht
 tolevo9|Kuruma IX|Karin
-tolexor|Exor|
+tolexor|Vigero ZX|Declasse
 tolf360|Turismo 360|Grotti
 tolf8spider|Furia Spider|Grotti
 tolfxxk|Turismo XX|Grotti
