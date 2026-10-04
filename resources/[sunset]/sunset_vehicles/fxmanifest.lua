@@ -23,7 +23,6 @@ client_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/display_name_sync.lua',
     'server/main.lua',
 }
 
