@@ -47,4 +47,5 @@ server_exports {
     'ShopCheckClanProduct',
     'ShopApplyClanProduct',
     'GetShopClanContext',
+    'GetPlayerClan',
 }

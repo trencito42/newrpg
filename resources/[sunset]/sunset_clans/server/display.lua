@@ -145,6 +145,31 @@ function GetPlayerBaseName(source)
 end
 exports('GetPlayerBaseName', GetPlayerBaseName)
 
+-- Server-authoritative membership for progression gates and quests.
+-- isExpired is true only after the lifecycle ticker marks the clan expired.
+-- Grace still has a clan_id so callers can explain the real status themselves.
+function GetPlayerClan(source)
+    source = tonumber(source)
+    if not source then return nil end
+    local cid = charId(source)
+    if not cid then return nil end
+    local row = membershipCache[source]
+    if not row or tonumber(row.character_id) ~= cid then
+        row = ClanDisplay.getMembership(cid)
+    end
+    if not row or not row.clan_id then return nil end
+    local status = tostring(row.status or 'active')
+    return {
+        clan_id = tonumber(row.clan_id),
+        rank = tonumber(row.rank) or 0,
+        name = row.name,
+        tag = row.tag,
+        status = status,
+        isExpired = status == 'expired',
+    }
+end
+exports('GetPlayerClan', GetPlayerClan)
+
 AddEventHandler('sunset:server:characterSelected', function(source)
     ClanDisplay.sync(source)
 end)
