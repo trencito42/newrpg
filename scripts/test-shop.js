@@ -272,7 +272,7 @@ group('catalog');
     check(Array.isArray(problems) ? problems.length === 0 : Object.keys(problems || {}).length === 0, 'ShopValidateCatalog reports no problems');
     const expected = {
         char_name_change: 500, clan_name_change: 300, clan_tag_change: 200, clan_color_change: 150,
-        clan_slots_15: 500, clan_slots_20: 1000, clan_slots_25: 2000,
+        clan_slots_50: 2500, clan_slots_75: 5000,
         clan_renew_7: 100, clan_renew_30: 350, clan_renew_90: 900,
         cash_pack_s: 100, cash_pack_m: 250, cash_pack_l: 500,
     };
@@ -413,7 +413,7 @@ group('character');
 {
     const env = createShopEnv();
     const { state } = env;
-    let r = env.call('ShopConsumeNameChange', 1, { firstname: 'John', lastname: 'Smith' });
+    let r = env.call('ShopConsumeNameChange', 1, { nickname: 'trencito' });
     check(!r.result && r.key === 'shop.name_change.no_entitlement', 'rename without entitlement is rejected');
     check(state.renames.length === 0, 'no rename happens without entitlement');
 
@@ -421,36 +421,34 @@ group('character');
     check(r.result && r.js.useNow === 'name_change' && state.balances.get(1) === 9500, 'name change purchase debits 500 RC and offers Use Now');
     check(state.entitlements.length === 1 && state.entitlements[0].character_id === 101 && state.entitlements[0].type === 'char_name_change',
         'purchase grants one entitlement bound to the buying character');
-    r = env.call('ShopConsumeNameChange', 2, { firstname: 'John', lastname: 'Smith' });
+    r = env.call('ShopConsumeNameChange', 2, { nickname: 'trencito' });
     check(!r.result && r.key === 'shop.name_change.no_entitlement', "another character cannot use someone else's entitlement");
 
-    const invalid = [
-        [' John', 'Smith'], ['John ', 'Smith'], ['J', 'Smith'], ['John3', 'Smith'], ['John  Paul', 'Smith'],
-        ['A'.repeat(33), 'Smith'], ['-John', 'Smith'], ['John-', 'Smith'], ['', 'Smith'], ['John', undefined],
-        ['Jo--hn', 'Smith'], ['John<b>', 'Smith'], ['John\nSmith', 'Doe'],
-    ];
+    const invalid = ['ab', '1abc', 'John  Paul', 'A'.repeat(25), '-john', 'jo<hn', '', 'John Smith!', 'Mary-Jane'];
     let allRejected = true;
-    for (const [first, last] of invalid) {
-        r = env.call('ShopConsumeNameChange', 1, { firstname: first, lastname: last });
-        if (r.result || r.key !== 'shop.name_change.invalid') { allRejected = false; console.error('    accepted:', JSON.stringify([first, last])); }
+    for (const nickname of invalid) {
+        r = env.call('ShopConsumeNameChange', 1, { nickname });
+        if (r.result || r.key !== 'shop.name_change.invalid') { allRejected = false; console.error('    accepted:', JSON.stringify(nickname)); }
     }
-    check(allRejected, `invalid names rejected (${invalid.length} cases)`);
+    r = env.call('ShopConsumeNameChange', 1, { firstname: 'John', lastname: 'Smith' });
+    if (r.result || r.key !== 'shop.name_change.invalid') allRejected = false;
+    check(allRejected, `invalid nicknames rejected (${invalid.length + 1} cases)`);
     check(state.entitlements[0].consumed === false, 'invalid names do not consume the entitlement');
 
     state.failRename = true;
-    r = env.call('ShopConsumeNameChange', 1, { firstname: 'John', lastname: 'Smith' });
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'trencito' });
     state.failRename = false;
     check(!r.result && state.entitlements[0].consumed === false, 'failed rename restores the entitlement');
 
-    r = env.call('ShopConsumeNameChange', 1, { firstname: 'Mary-Jane', lastname: 'Van Dyke' });
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'trencito' });
     check(r.result && r.js.ok === true, 'valid rename succeeds');
-    check(state.renames.length === 1 && state.renames[0].first === 'Mary-Jane' && state.renames[0].last === 'Van Dyke', 'core rename receives validated names');
+    check(state.renames.length === 1 && state.renames[0].first === 'trencito' && state.renames[0].last === '', 'core rename receives one nickname');
     check(state.entitlements[0].consumed === true, 'successful rename consumes the entitlement');
     const auditRow = state.audit.find((a) => a.event === 'char_name_change');
-    check(auditRow && auditRow.data.oldName === 'Old Name' && auditRow.data.newName === 'Mary-Jane Van Dyke'
+    check(auditRow && auditRow.data.oldName === 'Old Name' && auditRow.data.newName === 'trencito'
         && auditRow.data.characterId === 101 && auditRow.data.accountId === 11 && auditRow.data.orderId === state.entitlements[0].order_id,
         'rename audit records old/new name, character, account and order');
-    r = env.call('ShopConsumeNameChange', 1, { firstname: 'Again', lastname: 'Name' });
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'again' });
     check(!r.result && r.key === 'shop.name_change.no_entitlement', 'an entitlement can only be used once');
 }
 
@@ -460,8 +458,8 @@ group('clans');
     const env = createShopEnv({
         clan: {
             clans: [
-                { id: 1, name: 'Night Owls', tag: 'OWL', tag_color: '#FF8C00', owner: 101, max_members: 10, status: 'active', expires: 5 },
-                { id: 2, name: 'Grace Gang', tag: 'GRC', tag_color: '#FFFFFF', owner: 103, max_members: 10, status: 'grace', expires: -3 },
+                { id: 1, name: 'Night Owls', tag: 'OWL', tag_color: '#FF8C00', owner: 101, max_members: 25, status: 'active', expires: 5 },
+                { id: 2, name: 'Grace Gang', tag: 'GRC', tag_color: '#FFFFFF', owner: 103, max_members: 25, status: 'grace', expires: -3 },
             ],
             members: [
                 { cid: 101, clan_id: 1, rank: 7 },
@@ -479,37 +477,41 @@ group('clans');
     check(state.balances.get(2) === 10000 && state.orders.length === 0, 'non-leader rejection charges nothing and creates no order');
     state.contexts.set(4, { accountId: 14, characterId: 104 });
     state.balances.set(4, 10000);
-    r = env.purchase(4, 'clan_slots_15', env.rid());
+    r = env.purchase(4, 'clan_slots_50', env.rid());
     check(!r.result && r.key === 'clans.message.you_are_not_in_a_clan', 'player without a clan cannot buy clan products');
 
-    // Slots
-    r = env.purchase(1, 'clan_slots_15', env.rid());
-    check(r.result && clanDb.clans.get(1).max_members === 15 && state.balances.get(1) === 9500, 'slot upgrade to 15 applied for 500 RC');
-    r = env.purchase(1, 'clan_slots_15', env.rid());
-    check(!r.result && r.key === 'shop.purchase.already_owned' && state.balances.get(1) === 9500, 'buying the current tier again is rejected before charging');
-    r = env.purchase(1, 'clan_slots_25', env.rid());
-    check(r.result && clanDb.clans.get(1).max_members === 25 && state.balances.get(1) === 7500, 'tier above current can be bought (15 → 25)');
-    r = env.purchase(1, 'clan_slots_20', env.rid());
-    check(!r.result && r.key === 'shop.purchase.already_owned' && clanDb.clans.get(1).max_members === 25, 'lower tier never downgrades capacity');
+    // Slots: 25 base, then 50, then 75. Skipping 50 is rejected.
+    const balSkip = state.balances.get(1);
+    r = env.purchase(1, 'clan_slots_75', env.rid());
+    check(!r.result && r.key === 'clans.message.clan_slot_upgrade_must_be_sequential' && state.balances.get(1) === balSkip && clanDb.clans.get(1).max_members === 25,
+        '25 cannot jump to 75 and is not charged');
+    r = env.purchase(1, 'clan_slots_50', env.rid());
+    check(r.result && clanDb.clans.get(1).max_members === 50 && state.balances.get(1) === balSkip - 2500, 'slot upgrade 25 to 50 applied for 2500 RC');
+    r = env.purchase(1, 'clan_slots_50', env.rid());
+    check(!r.result && r.key === 'shop.purchase.already_owned' && state.balances.get(1) === balSkip - 2500, 'buying the current tier again is rejected before charging');
+    r = env.purchase(1, 'clan_slots_75', env.rid());
+    check(r.result && clanDb.clans.get(1).max_members === 75 && state.balances.get(1) === balSkip - 7500, 'slot upgrade 50 to 75 applied for 5000 RC');
+    r = env.purchase(1, 'clan_slots_50', env.rid());
+    check(!r.result && r.key === 'shop.purchase.already_owned' && clanDb.clans.get(1).max_members === 75, 'lower tier never downgrades capacity');
 
     // Concurrent upgrade: stale membership read, DB already raised by a parallel upgrade.
-    clanDb.clans.get(1).max_members = 10;
+    clanDb.clans.get(1).max_members = 25;
     clanDb.staleRow = null;
     let reentrant = null;
     const origApply = env.vm.getGlobal('ShopServices').get('clanApply');
     env.vm.getGlobal('ShopServices').set('clanApply', (...args) => {
         env.advance();
-        reentrant = env.purchaseRaw(1, 'clan_slots_20', env.rid());
-        clanDb.staleRow = { max_members: 10 };
-        clanDb.clans.get(1).max_members = 20; // parallel path upgraded first
+        reentrant = env.purchaseRaw(1, 'clan_slots_75', env.rid());
+        clanDb.staleRow = { max_members: 25 };
+        clanDb.clans.get(1).max_members = 50; // parallel path upgraded first
         return origApply(...args);
     });
     const balBeforeRace = state.balances.get(1);
-    r = env.purchase(1, 'clan_slots_15', env.rid());
+    r = env.purchase(1, 'clan_slots_50', env.rid());
     env.vm.getGlobal('ShopServices').set('clanApply', origApply);
     clanDb.staleRow = null;
     check(reentrant && reentrant.key === 'shop.purchase.in_progress', 'concurrent clan upgrade by the same player is locked out');
-    check(!r.result && clanDb.clans.get(1).max_members === 20 && state.balances.get(1) === balBeforeRace,
+    check(!r.result && clanDb.clans.get(1).max_members === 50 && state.balances.get(1) === balBeforeRace,
         'guarded UPDATE (max_members < target) prevents a stale upgrade and the RC is refunded');
     check(state.orders[state.orders.length - 1].status === 'refunded', 'stale clan upgrade is recorded as refunded');
 
@@ -582,6 +584,10 @@ group('clan lifecycle (static)');
     check(/WHERE id = \? AND status IN \('active', 'grace'\)/.test(clans), 'panel renewal never touches expired clans');
     check(/exports\.sunset_shop:PurchaseProduct\(source, productId, requestId/.test(clans), 'RC panel purchases settle through sunset_shop (shop_orders ledger)');
     check(!/RenewalPP|pp = \d+/.test(config), 'no RC prices remain in sunset_clans config (single source: products.lua)');
+    check(/BaseSlots = 25/.test(config) && /MaxMembers = 75/.test(config), 'base capacity is 25 and the normal maximum is 75');
+    check(/sunset:clans:expired/.test(clans), 'fully expired clans emit sunset:clans:expired');
+    const cap = read(path.join(root, 'sql/81-clan-capacity.sql'));
+    check(/SET max_members = 25/.test(cap) && /WHERE max_members < 25/.test(cap) && /DEFAULT 25/.test(cap), '81 migration only raises caps below 25 and sets the default');
     check(/clans\.message\.tag_color_changes_in_shop/.test(clans), 'free settings path no longer changes tag/color (paid products)');
     check(!/setPremiumPoints\(source, balanceBefore\)/.test(clans), 'clan creation refund no longer restores a stale balance snapshot');
 

@@ -125,6 +125,56 @@ AddEventHandler('sunset:jobs:stateChanged', function(state, data)
     updateShiftHud()
 end)
 
+local function pointInZone(x, y, poly)
+    if type(poly) ~= 'table' or #poly < 3 then return true end
+    local inside = false
+    local j = #poly
+    for i = 1, #poly do
+        local xi, yi = tonumber(poly[i].x) or 0.0, tonumber(poly[i].y) or 0.0
+        local xj, yj = tonumber(poly[j].x) or 0.0, tonumber(poly[j].y) or 0.0
+        if ((yi > y) ~= (yj > y)) and (x < (xj - xi) * (y - yi) / ((yj - yi) ~= 0 and (yj - yi) or 1.0) + xi) then
+            inside = not inside
+        end
+        j = i
+    end
+    return inside
+end
+
+local function spawnGroundOk(pt, zone)
+    local x, y, z = tonumber(pt.x), tonumber(pt.y), tonumber(pt.z)
+    if not x or not y or not z then return false end
+    if zone and zone.polygon and not pointInZone(x, y, zone.polygon) then return false end
+    local found, groundZ = GetGroundZFor_3dCoord(x, y, z + 50.0, false)
+    if not found then return false end
+    local water = GetWaterHeight(x, y, groundZ + 2.0)
+    if water then return false end
+    if IsPointOnRoad(x, y, groundZ, 0) then return false end
+    local me = GetEntityCoords(PlayerPedId())
+    if #(me - vector3(x, y, groundZ)) < 12.0 then return false end
+    return true, groundZ
+end
+
+CreateThread(function()
+    while true do
+        Wait(8000)
+        for netId, info in pairs(ManagedAnimals) do
+            local ped = info.ped
+            if not ped or not DoesEntityExist(ped) then
+                ManagedAnimals[netId] = nil
+            elseif info.home and not IsEntityDead(ped) then
+                local coords = GetEntityCoords(ped)
+                local leftZone = info.poly and not pointInZone(coords.x, coords.y, info.poly)
+                local far = #(coords - info.home) > 48.0
+                local onRoad = IsPointOnRoad(coords.x, coords.y, coords.z, ped)
+                if leftZone or far or onRoad then
+                    ClearPedTasks(ped)
+                    TaskGoStraightToCoord(ped, info.home.x, info.home.y, info.home.z, 1.15, 12000, 0.0, 0.4)
+                end
+            end
+        end
+    end
+end)
+
 -- ── Animal Spawn Request (from server) ───────────────────────
 RegisterNetEvent('sunset:hunting:spawnAnimals', function(zoneId, zone, needed, speciesCfg)
     refreshCfg()
@@ -148,27 +198,31 @@ RegisterNetEvent('sunset:hunting:spawnAnimals', function(zoneId, zone, needed, s
         if spCfg then
             local okModel, model = Sunset.RequestModelSafe(spCfg.model, 4000)
             if okModel and model then
-                -- Adjust Z to ground
-                local groundZ = pt.z
-                local ok, gz = GetGroundZFor_3dCoord(pt.x, pt.y, pt.z + 2.0, false)
-                if ok then groundZ = gz end
-
-                local ped = CreatePed(28, model, pt.x, pt.y, groundZ - 1.0, pt.h or 0.0, true, true)
+                local okGround, groundZ = spawnGroundOk(pt, zone)
+                if okGround then
+                local ped = CreatePed(28, model, pt.x, pt.y, groundZ, pt.h or 0.0, true, true)
                 if DoesEntityExist(ped) then
                     SetEntityAsMissionEntity(ped, true, true)
                     SetPedFleeAttributes(ped, 0, false)
                     SetBlockingOfNonTemporaryEvents(ped, false)
-                    TaskWanderInArea(ped, pt.x, pt.y, groundZ, 30.0, 10.0, 10.0)
+                    TaskWanderInArea(ped, pt.x, pt.y, groundZ, 18.0, 8.0, 8.0)
 
                     local netId = PedToNet(ped)
                     local weight = spCfg.weightMin + math.random() * (spCfg.weightMax - spCfg.weightMin)
-                    ManagedAnimals[netId] = { ped = ped, species = species, alive = true }
+                    ManagedAnimals[netId] = {
+                        ped = ped,
+                        species = species,
+                        alive = true,
+                        home = vector3(pt.x, pt.y, groundZ),
+                        poly = zone and zone.polygon or nil,
+                    }
 
                     -- Register with server
                     TriggerServerEvent('sunset:hunting:registerAnimal', netId, species, zoneId, weight)
                     spawned = spawned + 1
 
                     SetModelAsNoLongerNeeded(model)
+                end
                 end
             end
         end

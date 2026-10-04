@@ -136,11 +136,9 @@
     <!-- ── Character rename modal ────────────────────────── -->
     <div class="shop-modal hidden" id="shop-rename">
         <form class="shop-modal__card" id="shop-rename-form" autocomplete="off">
-            <h3 data-i18n="shop.name_change.prompt">Enter your new name</h3>
-            <label for="shop-rename-first" data-i18n="shop.name_change.firstname">First Name</label>
-            <input type="text" id="shop-rename-first" maxlength="32" spellcheck="false">
-            <label for="shop-rename-last" data-i18n="shop.name_change.lastname">Last Name</label>
-            <input type="text" id="shop-rename-last" maxlength="32" spellcheck="false">
+            <h3 data-i18n="shop.name_change.prompt">Change Name</h3>
+            <label for="shop-rename-nick" data-i18n="shop.name_change.username">New Username</label>
+            <input type="text" id="shop-rename-nick" maxlength="24" spellcheck="false" autocomplete="off">
             <div class="shop-modal__state hidden" id="shop-rename-state"></div>
             <div class="shop-modal__actions">
                 <button type="button" class="shop-btn shop-btn--ghost" id="shop-rename-cancel" data-i18n="shop.confirm.cancel">Cancel</button>

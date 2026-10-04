@@ -143,7 +143,9 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     local ok, rows = pcall(function()
         return MySQL.query.await([[
             SELECT m.id, m.message, m.created_at, m.read_at, m.sender_character_id, m.receiver_character_id,
-                   sc.firstname AS sender_name, rc.firstname AS receiver_name
+                   TRIM(CONCAT(COALESCE(sc.firstname,''), ' ', COALESCE(sc.lastname,''))) AS sender_name,
+                   TRIM(CONCAT(COALESCE(rc.firstname,''), ' ', COALESCE(rc.lastname,''))) AS receiver_name,
+                   sc.phone_number AS sender_phone, rc.phone_number AS receiver_phone
             FROM (
                 (SELECT id FROM phone_messages WHERE sender_character_id = ? ORDER BY id DESC LIMIT 60)
                 UNION
@@ -200,8 +202,7 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         if msg.receiver_character_id then neededAvatarIds[#neededAvatarIds + 1] = tonumber(msg.receiver_character_id) end
     end
 
-    -- Demand-driven avatar fetching (only for contacts & active message participants)
-    local avatarsByChar = getAvatarsForCharacterIds(neededAvatarIds)
+    -- The phone UI draws initials, not stored avatar images. Do not ship base64 blobs.
 
     -- [SEC3] only expose the online map (character id -> server id) for the characters this
     -- phone actually shows (self, contacts, message participants), not for every online player.
@@ -214,25 +215,17 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         onlineByChar = filtered
     end
 
-    for _, contact in ipairs(contacts) do
-        if contact.characterId and avatarsByChar[contact.characterId] then
-            contact.avatar = avatarsByChar[contact.characterId]
-        end
-    end
-
     return {
         myId = source,
         myCharacterId = myCharId,
         myName = exports.sunset_core:GetPlayerDisplayName(source),
         myPhoneNumber = myPhone,
-        myAvatar = avatarsByChar[myCharId] or nil,
         cash = char.cash or 0,
         bank = char.bank or 0,
         transactions = exports.sunset_core:GetMoneyHistory(myCharId, 30),
         messages = messages,
         contacts = contacts,
         onlineByChar = onlineByChar,
-        avatarsByChar = avatarsByChar,
         calls = (function()
             local okCalls, rowsCalls = pcall(function()
                 return MySQL.query.await([[
@@ -392,7 +385,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
 
         -- Character id 0 is reserved for system messages. The columns are
         -- UNSIGNED, so the former -112 sentinel could never be persisted.
-        local reply = 'Dispecerat 112: Mesaj receptionat. Apel #' .. tostring(dispatchResult.callId) .. ' a fost transmis echipajelor.'
+        local reply = exports.sunset_core:TFor(source, 'phone.msg.dispatch_ack', { id = tostring(dispatchResult.callId or '') })
         local historyOk, historyErr = pcall(function()
             MySQL.insert.await(
                 'INSERT INTO phone_messages (sender_character_id, receiver_character_id, message) VALUES (?, ?, ?)',
@@ -421,15 +414,14 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         { tonumber(char.id), targetCharacterId, message }
     )
 
-    local senderAvatar = AvatarCache[tonumber(char.id)] and AvatarCache[tonumber(char.id)].avatar or nil
     local msgPayload = {
         id = msgId,
         sender_character_id = tonumber(char.id),
         receiver_character_id = targetCharacterId,
         message = message,
         created_at = os.date('!%Y-%m-%dT%H:%M:%SZ'),
-        sender_name = char.firstname or 'Unknown',
-        sender_avatar = senderAvatar,
+        sender_name = exports.sunset_core:GetPlayerBaseName(source),
+        sender_phone = getCharacterPhoneNumber(char),
     }
 
     local targetSource = findSourceByCharacterId(targetCharacterId)

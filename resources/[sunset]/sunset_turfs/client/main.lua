@@ -109,17 +109,14 @@ local function refreshBlips()
     for id, t in pairs(LocalTurfs) do
         if not t.coords or not t.coords.x or not t.coords.y or not t.coords.z then goto continue end
         local atWar = turfAtWar(id)
-        local radius = tonumber(t.radius) or 110.0
-        local okRadius, zoneBlip = pcall(AddBlipForRadius, tonumber(t.coords.x) + 0.0, tonumber(t.coords.y) + 0.0, tonumber(t.coords.z) + 0.0, radius + 0.0)
+        -- Center marker only. The circular radius blip is not the attack polygon;
+        -- the Turf Map (/turfs) draws the authoritative vertices.
         local centerBlip = exports.sunset_core:CreateSafeBlip(t.coords, {
             sprite = 84,
             scale = 0.7,
             shortRange = false
         })
-        if okRadius and DoesBlipExist(zoneBlip) then
-            TurfBlips[id] = { area = zoneBlip, center = centerBlip }
-            applyTurfBlipStyle(t, TurfBlips[id], atWar)
-        elseif centerBlip then
+        if centerBlip then
             TurfBlips[id] = { center = centerBlip }
             applyTurfBlipStyle(t, TurfBlips[id], atWar)
         end

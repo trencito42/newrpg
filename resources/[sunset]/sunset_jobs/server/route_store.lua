@@ -62,6 +62,7 @@ local function normalizeTruckerRoute(raw, index)
         label      = tostring(raw.label or ('Trucker Route ' .. id)):sub(1, 100),
         category   = tostring(raw.category or 'fuel'):sub(1, 50),
         pay        = math.max(50, math.min(100000, math.floor(tonumber(raw.pay) or 500))),
+        minRank    = math.max(1, math.min(5, math.floor(tonumber(raw.minRank) or 1))),
         pickup     = { x = pickupV4.x, y = pickupV4.y, z = pickupV4.z, h = pickupV4.w, w = pickupV4.w },
         delivery   = { x = delivV4.x, y = delivV4.y, z = delivV4.z, h = delivV4.w, w = delivV4.w },
         parkingBay = { x = bayV4.x, y = bayV4.y, z = bayV4.z, h = bayV4.w, w = bayV4.w },

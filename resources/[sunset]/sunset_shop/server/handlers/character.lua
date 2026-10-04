@@ -36,7 +36,8 @@ ShopHandlers.character = {
 }
 
 -- Consumes one rename entitlement and renames the active character.
--- data = { firstname, lastname }. Returns { ok, firstname, lastname } or nil, err.
+-- data = { nickname }. The public name is stored in characters.firstname;
+-- lastname is cleared. accounts.username is not touched.
 function ShopConsumeNameChange(source, data)
     if type(data) ~= 'table' then return nil, { localeKey = 'shop.name_change.invalid' } end
     local ctx = ShopServices.getContext(source)
@@ -44,8 +45,9 @@ function ShopConsumeNameChange(source, data)
         return nil, { localeKey = 'shop.purchase.not_loaded' }
     end
 
-    local firstname, lastname = ShopValidation.characterName(data.firstname, data.lastname)
-    if not firstname then return nil, { localeKey = 'shop.name_change.invalid' } end
+    local nickname = ShopValidation.nickname(data.nickname or data.username)
+    if not nickname then return nil, { localeKey = 'shop.name_change.invalid' } end
+    local firstname, lastname = nickname, ''
 
     local entitlement = ShopStore.findOpenEntitlement({
         accountId = ctx.accountId,
@@ -74,8 +76,8 @@ function ShopConsumeNameChange(source, data)
         characterId = ctx.characterId,
         orderId = tonumber(entitlement.order_id),
         oldName = oldName,
-        newName = firstname .. ' ' .. lastname,
+        newName = nickname,
         entitlementId = entitlement.id,
     })
-    return { ok = true, firstname = firstname, lastname = lastname }
+    return { ok = true, nickname = nickname, firstname = nickname, lastname = '' }
 end

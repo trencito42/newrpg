@@ -107,7 +107,7 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRank', function(sou
     return { level = level, xp = xp, xpNext = xpNext, bonusPct = math.floor(bonus * 100) }
 end)
 
--- Returns all routes (no locking — all available; rank only affects pay bonus).
+-- Job rank unlocks longer routes. Character level only controls hiring.
 exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRoutes', function(source)
     local routesList = SunsetJobRoutes.GetRoutes('trucker')
     if not routesList or #routesList == 0 then
@@ -118,17 +118,20 @@ exports.sunset_core:RegisterCallback('sunset:jobs:trucker:getRoutes', function(s
     local bonus = TRUCKER_RANK_BONUS[level] or 0
     local routes = {}
     for i, route in ipairs(routesList) do
-        local basePay = tonumber(route.pay) or 500
-        local effectivePay = math.floor(basePay * (1 + bonus))
-        routes[#routes + 1] = {
-            id         = route.id or ('route_' .. i),
-            index      = i,
-            label      = route.label or (exports.sunset_core:TFor(source, 'jobs.ui.route', { index = tostring(i) })),
-            category   = route.category or 'general',
-            basePay    = basePay,
-            pay        = effectivePay,   -- pay with rank bonus already applied
-            bonusPct   = math.floor(bonus * 100),
-        }
+        if (tonumber(route.minRank) or 1) <= level then
+            local basePay = tonumber(route.pay) or 500
+            local effectivePay = math.floor(basePay * (1 + bonus))
+            routes[#routes + 1] = {
+                id         = route.id or ('route_' .. i),
+                index      = i,
+                label      = route.label or (exports.sunset_core:TFor(source, 'jobs.ui.route', { index = tostring(i) })),
+                category   = route.category or 'general',
+                basePay    = basePay,
+                pay        = effectivePay,
+                bonusPct   = math.floor(bonus * 100),
+                minRank    = tonumber(route.minRank) or 1,
+            }
+        end
     end
     return routes
 end)
@@ -216,6 +219,10 @@ local function handleTruckerStart(source, selectedRouteParam)
         end
     end
     if not route then return nil, { localeKey = 'jobs.message.selected_route_does_not_exist' } end
+    local truckerLevel = SunsetJobs_GetJobLevel(source, 'trucker')
+    if (tonumber(route.minRank) or 1) > truckerLevel then
+        return nil, { localeKey = 'jobs.message.selected_route_does_not_exist' }
+    end
 
     -- Pick truck model for this route's category
     local catTrucks    = cfg.categoryTrucks or {}

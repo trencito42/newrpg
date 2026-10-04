@@ -44,7 +44,7 @@ local function getPlayerClan(src)
     end
 
     local row = MySQL.single.await([[
-        SELECT cm.clan_id, cm.rank, c.name, c.tag, c.tag_color
+        SELECT cm.clan_id, cm.rank, c.name, c.tag, c.tag_color, c.status
         FROM clan_members cm
         JOIN clans c ON c.id = cm.clan_id
         WHERE cm.character_id = ?
@@ -82,12 +82,20 @@ local function loadTurfsFromDb()
 
         local center = vector3(tonumber(r.x) or 0.0, tonumber(r.y) or 0.0, tonumber(r.z) or 0.0)
         local radius = tonumber(r.radius) or 110.0
+        if not polygon or #polygon < 3 then
+            print(('^1[sunset_turfs]^7 CRITICAL turf #%s (%s) has no valid polygon (>= 3 vertices). It cannot be attacked.'):format(tostring(r.id), tostring(r.name)))
+        end
         if polygon and (#polygon >= 3) then
             if center.x == 0.0 and center.y == 0.0 then
-                center = SunsetTurfs.ComputePolygonCenter(polygon)
+                local cx, cy = SunsetTurfs.ComputePolygonCenter(polygon)
+                center = vector3(cx, cy, tonumber(r.z) or 0.0)
             end
             if not r.radius or radius <= 0.0 then
-                radius = SunsetTurfs.ComputePolygonRadius(polygon, center)
+                radius = SunsetTurfs.ComputePolygonRadius(polygon, center.x, center.y)
+            end
+            local cx, cy = center.x, center.y
+            if not SunsetTurfs.IsPointInPolygon(cx, cy, center.z, polygon, tonumber(r.min_z), tonumber(r.max_z)) then
+                print(('^3[sunset_turfs]^7 turf #%s (%s) centroid is outside its polygon or Z band'):format(tostring(r.id), tostring(r.name)))
             end
         end
 
@@ -512,6 +520,11 @@ local function runAttackTurf(source)
         end
     end
 
+    if pClan.status and pClan.status ~= 'active' then
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'clans.err.clan_is_expired'), 'error')
+        return
+    end
+
     if not canDeclareTurfAttack(pClan.rank) then
         TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'turfs.message.only_clan_officers_and_leaders_rank_5_can_declare'), 'error')
         return
@@ -688,6 +701,43 @@ RegisterCommand('atac', function(source)
     runAttackTurf(source)
 end, false)
 
+-- Dev/admin only. Prints polygon containment at the player's feet. Not shown to players.
+RegisterCommand('turfdebug', function(source)
+    if source == 0 then return end
+    local allowed = false
+    if GetResourceState('sunset_admin') == 'started' then
+        local ok, isAdmin = pcall(function() return exports.sunset_admin:IsAdmin(source, 1) end)
+        allowed = ok and isAdmin == true
+    end
+    if not allowed then return end
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 then return end
+    local coords = GetEntityCoords(ped)
+    local turf = findTurfAtCoords(coords)
+    local nearest, nearestDist = nil, 1e12
+    for _, t in pairs(Turfs) do
+        local dist = #(coords - t.coords)
+        if dist < nearestDist then nearest, nearestDist = t, dist end
+    end
+    local insidePoly = false
+    if nearest and nearest.polygon then
+        insidePoly = SunsetTurfs.IsPointInPolygon(coords, nearest.polygon) == true
+    end
+    local line = ('turfdebug pos=%.1f,%.1f,%.1f inside=%s nearest=#%s %s (%.0fm) poly=%s z=%s-%s verts=%s'):format(
+        coords.x, coords.y, coords.z,
+        turf and ('#' .. tostring(turf.id) .. ' ' .. tostring(turf.name)) or 'none',
+        nearest and tostring(nearest.id) or '?',
+        nearest and tostring(nearest.name) or '?',
+        nearestDist,
+        tostring(insidePoly),
+        nearest and tostring(nearest.minZ) or '?',
+        nearest and tostring(nearest.maxZ) or '?',
+        nearest and nearest.polygon and tostring(#nearest.polygon) or '0'
+    )
+    print('[sunset_turfs] ' .. line)
+    TriggerClientEvent('sunset:client:notify', source, line, 'info', 12000)
+end, false)
+
 -- ═══════════════════════════════════════════════════════════════
 --  [INTERVENTION] A third clan (leader, rank 5+) can claim an
 --  UNOWNED turf that is currently being captured (/intervene).
@@ -798,13 +848,13 @@ RegisterCommand('intervene', function(source)
 end, false)
 
 -- Kill hook inside turf wars
--- [AUDIT P6-12] A dissolved clan must lose its turfs and any wars it is in.
-AddEventHandler('sunset:clans:dissolved', function(clanId)
+-- [AUDIT P6-12] A dissolved or fully expired clan loses its turfs and any wars it is in.
+-- Grace keeps ownership but cannot attack or collect income (see runAttackTurf / payday).
+local function releaseClanTurfs(clanId)
     clanId = tonumber(clanId)
     if not clanId then return end
     for turfId, war in pairs(ActiveWars) do
         if tonumber(war.attackerClanId) == clanId or tonumber(war.defenderClanId) == clanId then
-            -- No ownership change: simply abort the war (both parties gone/invalid).
             ActiveWars[turfId] = nil
             TurfCooldowns[turfId] = os.time() + SunsetTurfs.TurfCooldownSec
             TriggerClientEvent('sunset:turfs:warEnd', -1, {
@@ -826,6 +876,14 @@ AddEventHandler('sunset:clans:dissolved', function(clanId)
         end
     end
     syncTurfsToClient(-1)
+end
+
+AddEventHandler('sunset:clans:dissolved', function(clanId)
+    releaseClanTurfs(clanId)
+end)
+
+AddEventHandler('sunset:clans:expired', function(clanId)
+    releaseClanTurfs(clanId)
 end)
 
 -- [WAR KILL FIX] recordAttacker fires on EVERY weapon hit, not on kills —
@@ -1121,6 +1179,8 @@ end)
 AddEventHandler('sunset:payday:processed', function(source)
     local pClan = getPlayerClan(source)
     if not pClan or (tonumber(pClan.rank) or 0) < 5 then return end -- Leader processes once
+    -- Grace and expired clans keep no turf income. Expired ownership is released separately.
+    if pClan.status and pClan.status ~= 'active' then return end
 
     local count = 0
     local totalPayout = 0

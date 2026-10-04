@@ -6,6 +6,7 @@
       "label": "Depot → West Eclipse Gas Station",
       "category": "fuel",
       "pay": 650,
+      "minRank": 1,
       "pickup": {
         "x": 1234.3,
         "y": -3104.2,
@@ -30,6 +31,7 @@
       "label": "Depot → Sandy Shores Gas Station",
       "category": "fuel",
       "pay": 700,
+      "minRank": 1,
       "pickup": {
         "x": 1219.3,
         "y": -3104.1,
@@ -54,6 +56,7 @@
       "label": "Depot → Paleto Bay Gas Station",
       "category": "fuel",
       "pay": 750,
+      "minRank": 2,
       "pickup": {
         "x": 1178.8,
         "y": -3135.6,
@@ -78,6 +81,7 @@
       "label": "Depot → Sandy Shores Refinery",
       "category": "fuel",
       "pay": 800,
+      "minRank": 3,
       "pickup": {
         "x": 1178.8,
         "y": -3148.8,
@@ -102,6 +106,7 @@
       "label": "Depot → Grapeseed Gas Station",
       "category": "fuel",
       "pay": 900,
+      "minRank": 4,
       "pickup": {
         "x": 1178.8,
         "y": -3155.9,

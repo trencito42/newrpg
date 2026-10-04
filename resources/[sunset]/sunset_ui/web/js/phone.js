@@ -19,6 +19,7 @@
         clan: '<svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"></path></svg>',
         news: '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>',
         settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>',
+        quests: '<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
     };
 
     function el(tag, className) {
@@ -423,6 +424,10 @@
                     long = false;
                     return;
                 }
+                if (appId === 'quests') {
+                    post('phoneAction', { op: 'openQuests' });
+                    return;
+                }
                 this.openApp(appId);
             });
         },
@@ -548,16 +553,33 @@
             }).sort((a, b) => Number(b.last.id) - Number(a.last.id));
         },
 
+        peerRecord(peer) {
+            const id = Number(peer);
+            const contact = (this.data.contacts || []).find((c) => Number(c.characterId) === id);
+            let phone = contact && contact.phone ? String(contact.phone) : '';
+            let name = contact && contact.name ? String(contact.name) : '';
+            (this.data.messages || []).forEach((msg) => {
+                if (Number(msg.sender_character_id) === id) {
+                    if (!name && msg.sender_name) name = String(msg.sender_name);
+                    if (!phone && msg.sender_phone) phone = String(msg.sender_phone);
+                }
+                if (Number(msg.receiver_character_id) === id) {
+                    if (!name && msg.receiver_name) name = String(msg.receiver_name);
+                    if (!phone && msg.receiver_phone) phone = String(msg.receiver_phone);
+                }
+            });
+            return { name, phone };
+        },
         nameForPeer(peer, msg) {
             if (Number(peer) === 0) return t('phone.ui.dispatch');
-            const contact = (this.data.contacts || []).find((c) => Number(c.characterId) === Number(peer));
-            if (contact) return contact.name;
+            const found = this.peerRecord(peer);
+            if (found.name) return found.name;
             if (msg && Number(msg.sender_character_id) === Number(peer) && msg.sender_name) return msg.sender_name;
+            if (found.phone) return found.phone;
             return t('phone.ui.unknown');
         },
         phoneForPeer(peer) {
-            const contact = (this.data.contacts || []).find((c) => Number(c.characterId) === Number(peer));
-            return contact ? contact.phone : '';
+            return this.peerRecord(peer).phone || '';
         },
 
         renderPhoneApp() {
@@ -870,7 +892,7 @@
                 const model = String(vehicle.model || '').toLowerCase();
                 const img = el('img', 'veh-img');
                 img.alt = '';
-                img.src = 'https://docs.fivem.net/vehicles/' + encodeURIComponent(model) + '.webp';
+                img.src = 'assets/vehicles/' + encodeURIComponent(model) + '.webp';
                 img.addEventListener('error', () => {
                     const fallback = el('div', 'mc-fallback');
                     fallback.append(text((vehicle.displayName || model || '?').slice(0, 3).toUpperCase()));
@@ -1241,7 +1263,7 @@
                 const title = el('div', 'item-title');
                 title.append(text(vehicle.label || vehicle.model || ''));
                 const sub = el('div', 'item-subtitle');
-                sub.append(text(vehicle.available ? t('phone.ui.at_depot') : t('phone.ui.rank_locked')));
+                sub.append(text(vehicle.available ? t('phone.ui.unlocked') : t('phone.ui.rank_locked')));
                 body.append(title, sub);
                 item.append(body);
                 content.append(item);
@@ -1306,13 +1328,23 @@
                 motd.append(text(dash.motd));
                 card.append(motd);
             }
-            if (dash.status) {
-                const st = el('div', 'muted');
-                st.append(text(t('phone.ui.war') + ' · ' + dash.status));
-                card.append(st);
+            const life = window.ClanLifetime?.view?.(dash, I18n.getLocale(), (key, params) => I18n.t(key, params));
+            if (life && life.primary && life.primary !== '—') {
+                const lifeLine = el('div', 'muted' + (life.state === 'warning' ? ' is-warn' : '') + (life.state === 'expired' ? ' is-expired' : ''));
+                lifeLine.append(text(t('ui.clans.lifetime') + ' · ' + life.primary + (life.expires ? ' · ' + life.expires : '')));
+                card.append(lifeLine);
             }
+            const statusKey = dash.status === 'expired' ? 'ui.clans.expired'
+                : dash.status === 'grace' ? 'ui.clans.grace'
+                : 'phone.ui.status_active';
+            const st = el('div', 'muted');
+            st.append(text(t('phone.ui.status') + ' · ' + t(statusKey)));
+            card.append(st);
             content.append(card);
             const perms = dash.permissions || {};
+            if (perms.store) {
+                content.append(btn('btn-gold', t('phone.ui.clan_store'), () => post('phoneAction', { op: 'openClanShop' })));
+            }
             if (perms.invite) {
                 const input = field(t('phone.ui.invite_placeholder'));
                 content.append(input.wrap, btn('btn-gold', t('phone.ui.invite'), () => post('phoneAction', { op: 'clanInvite', serverId: Number(input.input.value), token: this.token })));
@@ -1323,11 +1355,20 @@
                 const name = el('div', 'item-title');
                 name.append(text(member.name || member.characterName || ''));
                 const sub = el('div', 'item-subtitle');
-                sub.append(text(member.rankLabel || member.rank || ''));
+                const presence = member.online ? t('phone.ui.online') : t('phone.ui.offline');
+                const warns = Number(member.warns) > 0 ? (' · ' + t('phone.ui.warnings') + ' ' + member.warns) : '';
+                sub.append(text((member.rankLabel || member.rank || '') + ' · ' + presence + warns));
                 body.append(name, sub);
                 item.append(body);
-                if (perms.kick && member.characterId && Number(member.characterId) !== Number(dash.viewerCharacterId)) {
-                    item.append(btn('mini danger', t('phone.ui.remove'), () => post('phoneAction', { op: 'clanKick', characterId: member.characterId, token: this.token })));
+                const self = Number(member.characterId) === Number(dash.viewerCharacterId);
+                if (!self && member.characterId) {
+                    if (perms.promote) {
+                        item.append(btn('mini', '+', () => post('phoneAction', { op: 'clanRank', characterId: member.characterId, delta: 1, token: this.token })));
+                        item.append(btn('mini', '-', () => post('phoneAction', { op: 'clanRank', characterId: member.characterId, delta: -1, token: this.token })));
+                    }
+                    if (perms.kick) {
+                        item.append(btn('mini danger', t('phone.ui.remove'), () => post('phoneAction', { op: 'clanKick', characterId: member.characterId, token: this.token })));
+                    }
                 }
                 content.append(item);
             });

@@ -90,11 +90,18 @@ local function validateAction(row, action, params)
         if color == tostring(row.tag_color or ''):upper() then return nil, err('shop.clan.same_value') end
         return { color = color }
     elseif action == 'slots' then
+        if row.status ~= 'active' then return nil, err('clans.err.clan_is_expired') end
         local slots = tonumber(params.slots)
-        if not slots or not validTier(slots) then return nil, err('clans.message.invalid_clan_action') end
-        local current = tonumber(row.max_members) or (SunsetClans.BaseSlots or 10)
+        if not slots or not validTier(slots) or slots <= (SunsetClans.BaseSlots or 25) then
+            return nil, err('clans.message.invalid_clan_action')
+        end
+        local current = tonumber(row.max_members) or (SunsetClans.BaseSlots or 25)
         if current >= slots then return nil, err('shop.purchase.already_owned') end
-        return { slots = slots }
+        local nextTier = SunsetClans.nextSlotTier(current)
+        if not nextTier or nextTier.slots ~= slots then
+            return nil, err('clans.message.clan_slot_upgrade_must_be_sequential')
+        end
+        return { slots = slots, floor = SunsetClans.slotFloor(slots) }
     elseif action == 'renew' then
         local days = math.floor(tonumber(params.days) or 0)
         if days <= 0 or days > 365 then return nil, err('clans.message.invalid_clan_action') end
@@ -141,7 +148,7 @@ function ClanShopOps.apply(source, action, params)
         changed = mutate('UPDATE clans SET tag_color = ? WHERE id = ?', { value.color, clanId })
         result.color = value.color
     elseif action == 'slots' then
-        changed = mutate('UPDATE clans SET max_members = ? WHERE id = ? AND max_members < ?', { value.slots, clanId, value.slots })
+        changed = mutate('UPDATE clans SET max_members = ? WHERE id = ? AND max_members < ? AND max_members >= ? AND status = \'active\'', { value.slots, clanId, value.slots, value.floor or SunsetClans.BaseSlots or 25 })
         if changed ~= 1 then return nil, err('shop.purchase.already_owned') end
         result.slots = value.slots
     elseif action == 'renew' then

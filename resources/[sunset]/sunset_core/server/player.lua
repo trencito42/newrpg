@@ -214,14 +214,41 @@ local function validRenamePart(value)
     return value
 end
 
+local function validNickname(value)
+    if type(value) ~= 'string' then return nil end
+    value = (value:gsub('^%s+', ''):gsub('%s+$', ''))
+    if #value < 3 or #value > 24 then return nil end
+    if not value:match('^%a[%w ]*$') then return nil end
+    if value:find('  ', 1, true) then return nil end
+    return value
+end
+
 function Sunset.RenameCharacter(source, firstname, lastname)
     local player = Sunset.GetPlayer(source)
     local char = player and player.character
     if not char then return false, { localeKey = 'core.message.character_data_is_unavailable' } end
-    firstname, lastname = validRenamePart(firstname), validRenamePart(lastname)
-    if not firstname or not lastname then return false, { localeKey = 'shop.name_change.invalid' } end
+    -- Public gameplay identity is one nickname. An empty last name is the
+    -- current writer. A legacy two-part payload is still accepted.
+    if lastname == nil or lastname == '' then
+        firstname = validNickname(firstname)
+        lastname = ''
+        if not firstname then return false, { localeKey = 'shop.name_change.invalid' } end
+    else
+        firstname, lastname = validRenamePart(firstname), validRenamePart(lastname)
+        if not firstname or not lastname then return false, { localeKey = 'shop.name_change.invalid' } end
+    end
 
     local oldName = ((char.firstname or '') .. ' ' .. (char.lastname or '')):gsub('^%s+', ''):gsub('%s+$', '')
+    local newName = lastname ~= '' and (firstname .. ' ' .. lastname) or firstname
+    if oldName:lower() == newName:lower() then
+        return false, { localeKey = 'shop.name_change.same' }
+    end
+    local taken = MySQL.scalar.await([[
+        SELECT id FROM characters
+        WHERE id <> ? AND LOWER(TRIM(CONCAT(firstname, ' ', IFNULL(lastname, '')))) = LOWER(?)
+        LIMIT 1
+    ]], { char.id, newName })
+    if taken then return false, { localeKey = 'shop.name_change.taken' } end
     local changed = MySQL.update.await(
         'UPDATE characters SET firstname = ?, lastname = ? WHERE id = ? AND player_id = ?',
         { firstname, lastname, char.id, player.id }
@@ -231,7 +258,7 @@ function Sunset.RenameCharacter(source, firstname, lastname)
     char.firstname, char.lastname = firstname, lastname
     TriggerClientEvent('sunset:client:updateCharacter', source, char)
     Player(source).state:set('sunsetDisplayName', GetPlayerDisplayName(source), true)
-    TriggerEvent('sunset:server:characterRenamed', source, char.id, oldName, firstname .. ' ' .. lastname)
+    TriggerEvent('sunset:server:characterRenamed', source, char.id, oldName, newName)
     return true, nil, oldName
 end
 

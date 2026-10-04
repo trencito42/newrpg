@@ -32,9 +32,9 @@ Sunset.ProgressionGates = {
     },
     ['job.trucker'] = {
         label = 'Commercial Trucker Job',
-        minLevel = 5,
+        minLevel = 1,
         licenses = { 'driver' },
-        description = 'Requires Character Level 5 and a valid Driver License for heavy freight hauling.',
+        description = 'Character Level 1 with a Driver License. Longer routes unlock through Trucker job level, not character level.',
     },
     ['job.diver'] = {
         label = 'Salvage Diver Job',

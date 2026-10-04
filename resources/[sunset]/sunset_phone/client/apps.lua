@@ -243,10 +243,12 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             if found then
                 local coords = GetEntityCoords(found)
                 waypoint(coords.x, coords.y)
+                notify(exports.sunset_core:Translate('phone.ui.location_exact'), 'success')
                 return
             end
             if data.parkedX and data.parkedY then
                 waypoint(data.parkedX, data.parkedY)
+                notify(exports.sunset_core:Translate('phone.ui.location_last_known'), 'info')
                 return
             end
             notify(exports.sunset_core:Translate('phone.ui.location_unavailable'), 'error')
@@ -351,6 +353,24 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         if op == 'clanInvite' then
             local res, err = Sunset.AwaitCallback('sunset:clanManage', { action = 'invite', targetId = tonumber(data.serverId) })
             notify(res and exports.sunset_core:Translate('phone.ui.invite_sent') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
+            if res then loadApp('clan', token) end
+            return
+        end
+
+        if op == 'openQuests' then
+            ExecuteCommand('quests')
+            return
+        end
+
+        if op == 'openClanShop' then
+            TriggerEvent('sunset:shop:open')
+            return
+        end
+
+        if op == 'clanRank' then
+            local action = (tonumber(data.delta) or 0) > 0 and 'rankUp' or 'rankDown'
+            local res, err = Sunset.AwaitCallback('sunset:clanManage', { action = action, targetCharacterId = tonumber(data.characterId) })
+            notify(res and exports.sunset_core:Translate('phone.ui.rank_updated') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
             if res then loadApp('clan', token) end
             return
         end

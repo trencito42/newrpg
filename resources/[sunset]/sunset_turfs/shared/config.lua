@@ -68,6 +68,16 @@ SunsetTurfs.FreeTurfBlipColour = 27
 --- @param maxZ number|nil Maximum Z
 --- @return boolean
 function SunsetTurfs.IsPointInPolygon(px, py, pz, poly, minZ, maxZ)
+    -- Callers pass (coords, polygon). The older scalar signature is (px, py, pz, poly).
+    -- Treating the vector as px and the polygon as py made every polygon test fail,
+    -- so /attackturf rejected players who were standing inside the territory.
+    if (type(px) == 'vector3' or (type(px) == 'table' and px.x and px.y)) and type(py) == 'table' then
+        poly = py
+        pz = px.z
+        py = px.y
+        px = px.x
+        minZ, maxZ = nil, nil
+    end
     if not poly or type(poly) ~= 'table' or #poly < 3 then return false end
     if pz and minZ and pz < (minZ - 2.0) then return false end
     if pz and maxZ and pz > (maxZ + 5.0) then return false end

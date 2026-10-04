@@ -1392,7 +1392,7 @@ const Panels = {
 
         const vehicleImage = (model) => {
             const m = (model || 'sultan').toLowerCase().replace(/[^a-z0-9_]/g, '');
-            return `https://docs.fivem.net/vehicles/${m}.webp`;
+            return `assets/vehicles/${m}.webp`;
         };
 
         (data.vehicles || []).forEach((v) => {

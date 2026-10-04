@@ -28,6 +28,17 @@ function ShopValidation.characterNamePart(value)
     return value
 end
 
+-- One public nickname. Gameplay identity is not a first name plus a last name.
+-- 3-24 characters, starts with a letter, letters/digits and single spaces.
+function ShopValidation.nickname(value)
+    if type(value) ~= 'string' then return nil end
+    value = trim(value)
+    if #value < 3 or #value > 24 then return nil end
+    if not value:match('^%a[%w ]*$') then return nil end
+    if value:find('  ', 1, true) or value:match('%s$') then return nil end
+    return value
+end
+
 -- Validates a full rename request. Returns firstname, lastname or nil.
 function ShopValidation.characterName(firstname, lastname)
     local first = ShopValidation.characterNamePart(firstname)

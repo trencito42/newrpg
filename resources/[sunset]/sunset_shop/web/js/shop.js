@@ -300,25 +300,23 @@
         }
     }
 
-    const NAME_PART = /^[A-Za-z][A-Za-z -]*[A-Za-z]$/;
-    function validNamePart(value) {
-        return typeof value === 'string' && value.length >= 2 && value.length <= 32
-            && NAME_PART.test(value) && !/(\s\s|--|\s-|-\s)/.test(value);
+    function validNickname(value) {
+        const name = String(value || '').trim();
+        return name.length >= 3 && name.length <= 24 && /^[A-Za-z][A-Za-z0-9 ]*$/.test(name) && !/  /.test(name);
     }
 
     async function submitRename(event) {
         event.preventDefault();
         if (state.busy) return;
-        const firstname = $('#shop-rename-first').value;
-        const lastname = $('#shop-rename-last').value;
-        if (!validNamePart(firstname) || !validNamePart(lastname)) {
+        const nickname = ($('#shop-rename-nick').value || '').trim();
+        if (!validNickname(nickname)) {
             setModalState('#shop-rename-state', t('shop.name_change.invalid'), 'error');
             return;
         }
         state.busy = true;
         $('#shop-rename-submit').disabled = true;
         setModalState('#shop-rename-state', t('shop.ui.processing'), 'loading');
-        const response = await post('shopUseNameChange', { firstname, lastname });
+        const response = await post('shopUseNameChange', { nickname });
         state.busy = false;
         $('#shop-rename-submit').disabled = false;
         if (!response || !response.ok) {

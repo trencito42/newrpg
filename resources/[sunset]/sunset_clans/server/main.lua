@@ -57,8 +57,12 @@ end
 
 local function shopSlotTiers()
     local out = {}
-    for i, tier in ipairs(SunsetClans.SlotTiers or {}) do
-        out[i] = { slots = tier.slots, cash = tier.cash, pp = shopPrice(('clan_slots_%d'):format(tier.slots)) }
+    local base = SunsetClans.BaseSlots or 25
+    for _, tier in ipairs(SunsetClans.SlotTiers or {}) do
+        local slots = tonumber(tier.slots) or 0
+        if slots > base then
+            out[#out + 1] = { slots = slots, cash = tier.cash, pp = shopPrice(('clan_slots_%d'):format(slots)) }
+        end
     end
     return out
 end
@@ -282,6 +286,17 @@ local function dashboardPayload(source, row, cid)
         status = row and row.status or 'active',
         slotTiers = shopSlotTiers(),
         renewalCash = SunsetClans.RenewalCash or 250000,
+        renewalTiers = (function()
+            local tiers = {}
+            for _, tier in ipairs(SunsetClans.RenewalTiers or {}) do
+                tiers[#tiers + 1] = {
+                    days = tier.days,
+                    cash = tier.cash,
+                    pp = shopPrice(('clan_renew_%d'):format(tier.days)),
+                }
+            end
+            return tiers
+        end)(),
         renewalPP = shopPrice(('clan_renew_%d'):format(SunsetClans.LifetimeDays or 30)),
         members = row and buildRoster(row.clan_id, labels) or {},
         leader = row and isLeader(row, cid) or false,
@@ -698,7 +713,9 @@ local function pushClanDashboards(clanId)
 end
 
 local function extendLifetimeLocked(source, row, cid, payload)
-    local days = SunsetClans.LifetimeDays or 30
+    local days = math.floor(tonumber(payload.days) or SunsetClans.LifetimeDays or 30)
+    local renewal = SunsetClans.renewalTier(days)
+    if not renewal then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
     local currency = tostring(payload.currency or 'cash'):lower()
     if row.status == 'expired' then
         return nil, { localeKey = 'clans.err.clan_is_expired' }
@@ -710,7 +727,7 @@ local function extendLifetimeLocked(source, row, cid, payload)
         return clanManageDashboard(source, cid)
     end
 
-    local cost = math.floor(tonumber(SunsetClans.RenewalCash) or 250000)
+    local cost = math.floor(tonumber(renewal.cash) or 0)
     if not exports.sunset_core:RemoveMoney(source, 'cash', cost, 'clan_extend_lifetime') then
         return nil, { localeKey = 'economy.message.not_enough_cash' }
     end
@@ -740,17 +757,18 @@ local function extendLifetimeLocked(source, row, cid, payload)
 end
 
 local function upgradeSlotsLocked(source, row, cid, payload)
+    if row.status ~= 'active' then return nil, { localeKey = 'clans.err.clan_is_expired' } end
     local targetSlots = tonumber(payload.targetSlots or payload.slots)
     if not targetSlots then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
-    local currentMax = tonumber(row.max_members) or (SunsetClans.BaseSlots or 10)
+    local currentMax = tonumber(row.max_members) or (SunsetClans.BaseSlots or 25)
     if targetSlots <= currentMax then
         return nil, { localeKey = 'shop.purchase.already_owned' }
     end
-    local tierMeta
-    for _, t in ipairs(SunsetClans.SlotTiers or {}) do
-        if t.slots == targetSlots then tierMeta = t break end
+    local nextTier = SunsetClans.nextSlotTier(currentMax)
+    if not nextTier or nextTier.slots ~= targetSlots then
+        return nil, { localeKey = 'clans.message.clan_slot_upgrade_must_be_sequential' }
     end
-    if not tierMeta then return nil, { localeKey = 'clans.message.invalid_clan_action' } end
+    local tierMeta = nextTier
 
     local currency = tostring(payload.currency or 'cash'):lower()
     if currency == 'pp' or currency == 'points' or currency == 'rc' then
@@ -767,8 +785,8 @@ local function upgradeSlotsLocked(source, row, cid, payload)
     -- tier makes this affect 0 rows and the payment is refunded.
     local okDb, changed = pcall(function()
         return MySQL.update.await(
-            'UPDATE clans SET max_members = ? WHERE id = ? AND max_members < ?',
-            { targetSlots, row.clan_id, targetSlots }
+            'UPDATE clans SET max_members = ? WHERE id = ? AND max_members < ? AND max_members >= ? AND status = \'active\'',
+            { targetSlots, row.clan_id, targetSlots, SunsetClans.slotFloor(targetSlots) }
         )
     end)
     if not okDb or tonumber(changed) ~= 1 then
@@ -1221,12 +1239,20 @@ CreateThread(function()
                 WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()
             ]])
 
-            -- 2. Grace clans whose expires_at + INTERVAL GracePeriodDays DAY < NOW() -> expired
+            -- 2. Grace clans whose expires_at + INTERVAL GracePeriodDays DAY < NOW() -> expired.
+            -- Fully expired clans lose turf ownership via sunset_turfs (not a clans-table write).
+            local lapsing = MySQL.query.await([[
+                SELECT id FROM clans
+                WHERE status = 'grace' AND expires_at IS NOT NULL AND DATE_ADD(expires_at, INTERVAL ? DAY) < NOW()
+            ]], { graceDays }) or {}
             MySQL.update.await([[
                 UPDATE clans
                 SET status = 'expired'
                 WHERE status = 'grace' AND expires_at IS NOT NULL AND DATE_ADD(expires_at, INTERVAL ? DAY) < NOW()
             ]], { graceDays })
+            for _, clan in ipairs(lapsing) do
+                TriggerEvent('sunset:clans:expired', tonumber(clan.id))
+            end
         end)
     end
 end)
