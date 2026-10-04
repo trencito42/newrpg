@@ -171,6 +171,15 @@ local function loadApp(app, token)
     elseif app == 'news' then
         local data = Sunset.AwaitCallback('sunset:phoneGetUpdates') or { updates = {} }
         sendApp('news', data, token)
+    elseif app == 'feed' then
+        local char = exports.sunset_core:GetCharacter()
+        local feedTab = 'global'  -- default; client passes preferred tab
+        local feedData = Sunset.AwaitCallback('social:getFeed', { feed = feedTab, limit = 20 }) or {}
+        local contactsData = Sunset.AwaitCallback('social:getFeed', { feed = 'contacts', limit = 20 }) or {}
+        sendApp('feed', {
+            global   = { posts = feedData.posts or {}, nextCursor = feedData.nextCursor },
+            contacts = { posts = contactsData.posts or {}, nextCursor = contactsData.nextCursor },
+        }, token)
     elseif app == 'jobs' then
         local panel = Sunset.AwaitCallback('sunset:jobs:getPanelData') or {}
         local workplaces = {}
@@ -421,6 +430,87 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
                     updateId = data.updateId,
                 })
             end
+            return
+        end
+
+        -- ========== SOCIAL FEED OPS ==========
+        if op == 'feedLike' then
+            local res = Sunset.AwaitCallback('social:likePost', tonumber(data.postId))
+            exports.sunset_ui:Send('phoneActionResult', {
+                op = 'feedLike', ok = type(res) == 'table' and res.ok ~= false,
+                postId = data.postId,
+                likesCount = type(res) == 'table' and res.likesCount or nil,
+                likedByViewer = true,
+            })
+            return
+        end
+
+        if op == 'feedUnlike' then
+            local res = Sunset.AwaitCallback('social:unlikePost', tonumber(data.postId))
+            exports.sunset_ui:Send('phoneActionResult', {
+                op = 'feedLike', ok = type(res) == 'table' and res.ok ~= false,
+                postId = data.postId,
+                likesCount = type(res) == 'table' and res.likesCount or nil,
+                likedByViewer = false,
+            })
+            return
+        end
+
+        if op == 'feedGetPost' then
+            local res = Sunset.AwaitCallback('social:getPost', tonumber(data.postId)) or {}
+            sendApp('feed-post', res, token)
+            return
+        end
+
+        if op == 'feedComment' then
+            local res = Sunset.AwaitCallback('social:addComment', tonumber(data.postId), tostring(data.body or ''), tonumber(data.parentCommentId))
+            if type(res) == 'table' and res.ok then
+                exports.sunset_ui:Send('phoneActionResult', {
+                    op = 'feedComment', ok = true,
+                    postId = data.postId,
+                    comment = res.comment,
+                    commentsCount = res.commentsCount,
+                })
+            else
+                exports.sunset_ui:Send('phoneActionResult', { op = 'feedComment', ok = false, postId = data.postId })
+            end
+            return
+        end
+
+        if op == 'feedCreatePost' then
+            local res = Sunset.AwaitCallback('social:createPost', tostring(data.body or ''), tonumber(data.mediaId))
+            if type(res) == 'table' and res.ok then
+                notify(exports.sunset_core:Translate('phone.ui.feed_post_published'), 'success')
+                -- Reload feed
+                local feedData    = Sunset.AwaitCallback('social:getFeed', { feed = 'global',   limit = 20 }) or {}
+                local contactData = Sunset.AwaitCallback('social:getFeed', { feed = 'contacts', limit = 20 }) or {}
+                sendApp('feed', {
+                    global   = { posts = feedData.posts or {},    nextCursor = feedData.nextCursor },
+                    contacts = { posts = contactData.posts or {}, nextCursor = contactData.nextCursor },
+                }, token)
+            else
+                notify(exports.sunset_core:Translate('phone.ui.action_failed'), 'error')
+            end
+            return
+        end
+
+        if op == 'feedDeletePost' then
+            local res = Sunset.AwaitCallback('social:deletePost', tonumber(data.postId))
+            exports.sunset_ui:Send('phoneActionResult', { op = 'feedDeletePost', ok = type(res) == 'table' and res.ok ~= false })
+            return
+        end
+
+        if op == 'feedLoadMore' then
+            local tab = tostring(data.tab or 'global')
+            if tab ~= 'contacts' and tab ~= 'global' then tab = 'global' end
+            local res = Sunset.AwaitCallback('social:getFeed', { feed = tab, beforeId = tonumber(data.beforeId), limit = 20 }) or {}
+            sendApp('feed', { tab = tab, posts = res.posts or {}, nextCursor = res.nextCursor, append = true }, token)
+            return
+        end
+
+        if op == 'feedGetProfile' then
+            local res = Sunset.AwaitCallback('social:getProfile', tonumber(data.characterId)) or {}
+            sendApp('feed-profile', res, token)
             return
         end
 

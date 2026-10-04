@@ -22,6 +22,7 @@
         quests: '<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
         camera: '<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>',
         gallery: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>',
+        feed: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M20 21a8 8 0 1 0-16 0"></path><path d="M12 17v4M9 19h6"></path></svg>',
     };
 
     function el(tag, className) {
@@ -80,7 +81,7 @@
             this.layout = PS.normalizeLayout(null);
             const views = $('phone-views');
             views.append(this.buildHome());
-            ['phone', 'messages', 'conversation', 'contacts', 'bank', 'transfer', 'garage', 'market', 'detail', 'taxi', 'jobs', 'map', 'faction', 'apps', 'properties', 'clan', 'news', 'settings', 'camera', 'gallery'].forEach((id) => {
+            ['phone', 'messages', 'conversation', 'contacts', 'bank', 'transfer', 'garage', 'market', 'detail', 'taxi', 'jobs', 'map', 'faction', 'apps', 'properties', 'clan', 'news', 'feed', 'feed-post', 'feed-profile', 'settings', 'camera', 'gallery'].forEach((id) => {
                 views.append(this.shell(id));
             });
             $('phone-home-bar').addEventListener('click', () => this.homeTap());
@@ -180,6 +181,7 @@
         hide() {
             this.isOpen = false;
             this.editing = false;
+            if (this._feedPollTimer) { clearTimeout(this._feedPollTimer); this._feedPollTimer = null; }
             const device = $('phone-device');
             device.classList.remove('is-open', 'is-peek');
             this.presentation = 'closed';
@@ -315,7 +317,6 @@
                         dislikesCount: payload.ok ? payload.dislikesCount : (this._newsReactions[id]?.dislikesCount ?? 0),
                         myReaction:    payload.ok ? payload.myReaction    : (this._newsReactions[id]?.myReaction    ?? null),
                     };
-                    // Update buttons in-place if news tab is open
                     if (this.current() === 'news') {
                         const rx = this._newsReactions[id];
                         document.querySelectorAll('[data-rx-id="' + id + '"]').forEach((btn) => {
@@ -325,6 +326,36 @@
                             btn.classList.toggle('rx-active', rx.myReaction === type);
                         });
                     }
+                }
+            }
+            if (payload.op === 'feedLike') {
+                const postId = String(payload.postId);
+                if (!this._feedLikes) this._feedLikes = {};
+                this._feedLikes[postId] = {
+                    likesCount: payload.ok ? (payload.likesCount ?? 0) : (this._feedLikes[postId]?.likesCount ?? 0),
+                    likedByViewer: payload.ok ? !!payload.likedByViewer : (this._feedLikes[postId]?.likedByViewer ?? false),
+                };
+                document.querySelectorAll('[data-feed-like="' + postId + '"]').forEach((btn) => {
+                    btn.classList.toggle('feed-liked', this._feedLikes[postId].likedByViewer);
+                    const countEl = btn.querySelector('.feed-like-count');
+                    if (countEl) countEl.textContent = this._feedLikes[postId].likesCount;
+                });
+            }
+            if (payload.op === 'feedComment') {
+                if (payload.ok && payload.comment && this.current() === 'feed-post') {
+                    this._appendFeedComment(payload.comment);
+                }
+                if (payload.ok && payload.commentsCount !== undefined) {
+                    document.querySelectorAll('[data-feed-cmcount="' + payload.postId + '"]').forEach((el) => {
+                        el.textContent = payload.commentsCount;
+                    });
+                }
+            }
+            if (payload.op === 'feedDeletePost') {
+                if (payload.ok) {
+                    const v = this.current();
+                    if (v === 'feed-post') this.back();
+                    else if (v === 'feed') this.renderFeed();
                 }
             }
         },
@@ -369,6 +400,30 @@
             }
             if (payload.app === 'clan' && view === 'clan') this.renderClan();
             if (payload.app === 'taxi' && view === 'taxi') { this.taxi = payload.data || this.taxi; this.renderTaxi(); }
+            if (payload.app === 'feed') {
+                if (payload.data && payload.data.append) {
+                    const prev = this.apps.feed || {};
+                    const tab = payload.data.tab || 'global';
+                    prev[tab] = prev[tab] || { posts: [] };
+                    prev[tab].posts = (prev[tab].posts || []).concat(payload.data.posts || []);
+                    prev[tab].nextCursor = payload.data.nextCursor;
+                    this.apps.feed = prev;
+                } else {
+                    this.apps.feed = payload.data || {};
+                }
+                if (view === 'feed') this.renderFeed();
+                return;
+            }
+            if (payload.app === 'feed-post') {
+                this.apps['feed-post'] = payload.data || {};
+                if (view === 'feed-post') this.renderFeedPost();
+                return;
+            }
+            if (payload.app === 'feed-profile') {
+                this.apps['feed-profile'] = payload.data || {};
+                if (view === 'feed-profile') this.renderFeedProfile();
+                return;
+            }
         },
 
         setCall(payload) {
@@ -472,6 +527,7 @@
             this._marketSell = false;
             this._draftAttachment = null;
             this._galleryPick = false;
+            this._feedPhotoPick = false;
             this._keepDraft = false;
             this._sharePick = false;
             this._cameraReturn = null;
@@ -585,6 +641,9 @@
                 properties: () => this.renderProperties(),
                 clan: () => this.renderClan(),
                 news: () => this.renderNews(),
+                feed: () => this.renderFeed(),
+                'feed-post': () => this.renderFeedPost(),
+                'feed-profile': () => this.renderFeedProfile(),
                 settings: () => this.renderSettings(),
                 camera: () => this.renderCamera(),
                 gallery: () => this.renderGallery(),
@@ -592,6 +651,7 @@
             if (map[id]) map[id]();
             const needs = { garage: 'garage', market: 'market', taxi: 'taxi', jobs: 'jobs', map: 'map', faction: 'faction', properties: 'properties', clan: 'clan', news: 'news' };
             if (needs[id] && !this.apps[needs[id]]) this.load(needs[id]);
+            if (id === 'feed' && !this.apps.feed) this.load('feed');
         },
 
         title(id, key, icon) {
@@ -2240,6 +2300,380 @@
             });
         },
 
+        // ===================== SOCIAL FEED =====================
+
+        _feedRelTime(raw) {
+            if (!raw) return '';
+            try {
+                const d = new Date(raw);
+                const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+                if (diff < 60) return diff + 's';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+                if (diff < 604800) return Math.floor(diff / 86400) + 'd';
+                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            } catch (_) { return ''; }
+        },
+
+        _buildFeedCard(post, clickable) {
+            const self = this;
+            if (!this._feedLikes) this._feedLikes = {};
+            const postId = String(post.id);
+            const likeState = this._feedLikes[postId] || { likesCount: Number(post.likes_count) || 0, likedByViewer: !!Number(post.liked_by_viewer) };
+            this._feedLikes[postId] = likeState;
+
+            const card = el('div', 'feed-card');
+            card.dataset.feedPostId = postId;
+
+            // Header
+            const header = el('div', 'feed-card-header');
+            const avatar = el('div', 'feed-avatar');
+            const initials = ((post.firstname || '?')[0] + (post.lastname || '?')[0]).toUpperCase();
+            avatar.append(text(initials));
+            const authorWrap = el('div', 'feed-author-wrap');
+            const authorName = el('div', 'feed-author-name');
+            authorName.append(text((post.firstname || '') + ' ' + (post.lastname || '')));
+            authorName.addEventListener('click', () => {
+                post.character_id && self.openFeedProfile(post.character_id);
+            });
+            const ts = el('span', 'feed-ts');
+            ts.append(text(this._feedRelTime(post.created_at)));
+            if (post.updated_at && post.updated_at !== post.created_at) {
+                const edited = el('span', 'feed-edited');
+                edited.append(text(' · ' + t('phone.ui.feed_edited')));
+                ts.append(edited);
+            }
+            authorWrap.append(authorName, ts);
+            header.append(avatar, authorWrap);
+
+            // Own post: delete
+            if (Number(post.character_id) === Number(this.data && this.data.myCharId)) {
+                const del = btn('feed-del-btn', '×', () => {
+                    post('phoneAction', { op: 'feedDeletePost', postId: post.id, token: self.token });
+                });
+                header.append(del);
+            }
+            card.append(header);
+
+            // Body text
+            if (post.body) {
+                const body = el('div', 'feed-body');
+                body.append(text(post.body));
+                card.append(body);
+            }
+
+            // Photo
+            if (post.media_url) {
+                const img = document.createElement('img');
+                img.src = post.media_url;
+                img.className = 'feed-photo';
+                img.loading = 'lazy';
+                img.addEventListener('click', () => {
+                    if (window.Phone && Phone.openMediaViewer) Phone.openMediaViewer(post.media_url);
+                });
+                card.append(img);
+            }
+
+            // Actions row
+            const actions = el('div', 'feed-actions');
+
+            const likeBtn = el('button', 'feed-action-btn' + (likeState.likedByViewer ? ' feed-liked' : ''));
+            likeBtn.dataset.feedLike = postId;
+            const heartSvg = el('span', 'feed-heart');
+            heartSvg.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
+            const likeCount = el('span', 'feed-like-count');
+            likeCount.append(text(String(likeState.likesCount)));
+            likeBtn.append(heartSvg, likeCount);
+            likeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isLiked = likeBtn.classList.contains('feed-liked');
+                post('phoneAction', { op: isLiked ? 'feedUnlike' : 'feedLike', postId: post.id, token: self.token });
+                likeBtn.classList.toggle('feed-liked', !isLiked);
+                const cur = parseInt(likeCount.textContent) || 0;
+                likeCount.textContent = String(isLiked ? Math.max(0, cur - 1) : cur + 1);
+            });
+
+            const cmBtn = el('button', 'feed-action-btn');
+            const cmSvg = el('span');
+            cmSvg.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+            const cmCount = el('span', 'feed-like-count');
+            cmCount.dataset.feedCmcount = postId;
+            cmCount.append(text(String(Number(post.comments_count) || 0)));
+            cmBtn.append(cmSvg, cmCount);
+            cmBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                self.openFeedPost(post.id);
+            });
+
+            actions.append(likeBtn, cmBtn);
+            card.append(actions);
+
+            if (clickable) {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', () => self.openFeedPost(post.id));
+            }
+
+            return card;
+        },
+
+        openFeedPost(postId) {
+            delete this.apps['feed-post'];
+            this.openApp('feed-post');
+            post('phoneAction', { op: 'feedGetPost', postId: postId, token: this.token });
+        },
+
+        openFeedProfile(characterId) {
+            delete this.apps['feed-profile'];
+            this.openApp('feed-profile');
+            post('phoneAction', { op: 'feedGetProfile', characterId: characterId, token: this.token });
+        },
+
+        _appendFeedComment(comment) {
+            const list = document.getElementById('feed-comment-list');
+            if (!list) return;
+            const item = this._buildCommentItem(comment);
+            list.append(item);
+        },
+
+        _buildCommentItem(comment) {
+            const wrap = el('div', 'feed-comment' + (comment.parent_comment_id ? ' feed-comment-reply' : ''));
+            const initials = ((comment.firstname || '?')[0] + (comment.lastname || '?')[0]).toUpperCase();
+            const av = el('div', 'feed-cm-avatar');
+            av.append(text(initials));
+            const body = el('div', 'feed-cm-body');
+            const name = el('span', 'feed-cm-name');
+            name.append(text((comment.firstname || '') + ' ' + (comment.lastname || '')));
+            const ts = el('span', 'feed-ts');
+            ts.append(text(' · ' + this._feedRelTime(comment.created_at)));
+            const txt = el('div', 'feed-cm-text');
+            txt.append(text(comment.body || ''));
+            body.append(name, ts, txt);
+            wrap.append(av, body);
+            return wrap;
+        },
+
+        renderFeed() {
+            const self = this;
+            this.title('feed', 'phone.ui.feed', 'feed');
+            const content = $('phone-content-feed');
+            if (!content) return;
+            clear(content);
+
+            const data = this.apps.feed;
+
+            // Tabs
+            if (!this._feedTab) this._feedTab = 'contacts';
+            const nav = el('div', 'pill-tabs');
+            ['contacts', 'global'].forEach((tab) => {
+                nav.append(btn('pill-tab' + (this._feedTab === tab ? ' active' : ''), t('phone.ui.feed_' + tab), () => {
+                    self._feedTab = tab;
+                    if (!self.apps.feed || !self.apps.feed[tab]) self.load('feed');
+                    else self.renderFeed();
+                }));
+            });
+
+            // Compose button
+            const composeRow = el('div', 'feed-compose-row');
+            const composeTrigger = btn('feed-compose-btn', t('phone.ui.feed_whats_happening'), () => self._openFeedComposer());
+            composeRow.append(composeTrigger);
+
+            const page = this.beginPage(content);
+            page.append(nav, composeRow);
+
+            if (!data) {
+                const loader = el('div', 'phone-loader');
+                loader.append(text(t('phone.ui.loading')));
+                page.append(loader);
+                this.load('feed');
+                return;
+            }
+
+            const tabData = data[this._feedTab] || {};
+            const posts = tabData.posts || [];
+
+            if (data.error) {
+                const err = el('div', 'phone-empty-state');
+                err.append(text(t('phone.ui.feed_error')));
+                err.append(btn('btn-gold', t('phone.ui.retry'), () => { delete self.apps.feed; self.renderFeed(); }));
+                page.append(err);
+                return;
+            }
+
+            const scroll = el('div', 'phone-app-scroll feed-scroll');
+
+            if (!posts.length) {
+                const empty = this.empty(
+                    this._feedTab === 'contacts'
+                        ? t('phone.ui.feed_empty_contacts')
+                        : t('phone.ui.feed_empty_global')
+                );
+                if (this._feedTab === 'contacts') {
+                    empty.append(btn('btn-ghost', t('phone.ui.open_contacts'), () => self.openApp('contacts')));
+                }
+                scroll.append(empty);
+            } else {
+                posts.forEach((p) => scroll.append(this._buildFeedCard(p, true)));
+                if (tabData.nextCursor) {
+                    scroll.append(btn('btn-ghost', t('phone.ui.load_more'), () => {
+                        post('phoneAction', { op: 'feedLoadMore', tab: self._feedTab, beforeId: tabData.nextCursor, token: self.token });
+                    }));
+                }
+            }
+
+            // Poll every 12 seconds while feed is open
+            if (this._feedPollTimer) clearTimeout(this._feedPollTimer);
+            this._feedPollTimer = setTimeout(function poll() {
+                if (self.current() !== 'feed') return;
+                self.load('feed');
+                self._feedPollTimer = setTimeout(poll, 12000);
+            }, 12000);
+
+            page.append(scroll);
+        },
+
+        renderFeedPost() {
+            const self = this;
+            this.title('feed-post', 'phone.ui.feed', 'feed');
+            const content = $('phone-content-feed-post');
+            if (!content) return;
+            clear(content);
+
+            const data = this.apps['feed-post'];
+
+            if (!data || !data.post) {
+                const loader = el('div', 'phone-loader');
+                loader.append(text(t('phone.ui.loading')));
+                content.append(loader);
+                return;
+            }
+
+            const page = this.beginPage(content);
+            const scroll = el('div', 'phone-app-scroll');
+
+            // Post card
+            scroll.append(this._buildFeedCard(data.post, false));
+
+            // Comment list
+            const cmSection = el('div', 'feed-comments-section');
+            const cmHead = el('div', 'feed-comments-head');
+            cmHead.append(text(t('phone.ui.feed_comments')));
+            cmSection.append(cmHead);
+
+            const cmList = el('div', 'feed-comment-list');
+            cmList.id = 'feed-comment-list';
+            const comments = data.comments || [];
+            if (!comments.length) {
+                const none = el('div', 'muted feed-no-comments');
+                none.append(text(t('phone.ui.feed_no_comments')));
+                cmList.append(none);
+            } else {
+                comments.forEach((c) => cmList.append(this._buildCommentItem(c)));
+            }
+            cmSection.append(cmList);
+
+            // Composer
+            const cmComposer = el('div', 'feed-cm-composer');
+            const cmInput = el('textarea', 'feed-cm-input');
+            cmInput.placeholder = t('phone.ui.feed_add_comment');
+            cmInput.maxLength = 400;
+            const cmSend = btn('btn-gold feed-cm-send', t('phone.ui.feed_send'), () => {
+                const body = cmInput.value.trim();
+                if (!body) return;
+                cmInput.value = '';
+                post('phoneAction', { op: 'feedComment', postId: data.post.id, body: body, token: self.token });
+            });
+            cmComposer.append(cmInput, cmSend);
+            cmSection.append(cmComposer);
+
+            scroll.append(cmSection);
+            page.append(scroll);
+        },
+
+        renderFeedProfile() {
+            const self = this;
+            this.title('feed-profile', 'phone.ui.feed', 'feed');
+            const content = $('phone-content-feed-profile');
+            if (!content) return;
+            clear(content);
+
+            const data = this.apps['feed-profile'];
+
+            if (!data || !data.profile) {
+                const loader = el('div', 'phone-loader');
+                loader.append(text(t('phone.ui.loading')));
+                content.append(loader);
+                return;
+            }
+
+            const page = this.beginPage(content);
+            const scroll = el('div', 'phone-app-scroll');
+
+            const profileCard = el('div', 'feed-profile-card');
+            const av = el('div', 'feed-profile-avatar');
+            const initials = ((data.profile.name || '?? ').split(' ').map((w) => w[0] || '').join('')).toUpperCase().slice(0, 2);
+            av.append(text(initials));
+            const info = el('div', 'feed-profile-info');
+            const name = el('div', 'feed-profile-name');
+            name.append(text(data.profile.name || ''));
+            const posts = el('div', 'feed-profile-sub');
+            posts.append(text(String(data.profile.postCount || 0) + ' ' + t('phone.ui.feed_posts')));
+            info.append(name, posts);
+            profileCard.append(av, info);
+            scroll.append(profileCard);
+
+            (data.posts || []).forEach((p) => scroll.append(this._buildFeedCard(p, true)));
+
+            page.append(scroll);
+        },
+
+        _openFeedComposer() {
+            const self = this;
+            const content = $('phone-content-feed');
+            if (!content) return;
+
+            const overlay = el('div', 'feed-composer-overlay');
+            const box = el('div', 'feed-composer-box');
+
+            const head = el('div', 'feed-composer-head');
+            const title = el('span', 'feed-composer-title');
+            title.append(text(t('phone.ui.feed_create_post')));
+            const close = btn('feed-composer-close', '×', () => overlay.remove());
+            head.append(title, close);
+
+            const textarea = el('textarea', 'feed-composer-text');
+            textarea.placeholder = t('phone.ui.feed_whats_happening');
+            textarea.maxLength = 500;
+
+            // Photo picker
+            let selectedMediaId = null;
+            const photoRow = el('div', 'feed-composer-photo-row');
+            const addPhotoBtn = btn('btn-ghost', t('phone.ui.feed_add_photo'), () => {
+                // Open gallery in picker mode
+                self._galleryPick = false;
+                self._feedPhotoPick = true;
+                self.openApp('gallery');
+                overlay.remove();
+            });
+            photoRow.append(addPhotoBtn);
+
+            const photoPreview = el('div', 'feed-composer-preview');
+            photoPreview.id = 'feed-composer-preview';
+
+            const postBtn = btn('btn-gold', t('phone.ui.feed_post'), () => {
+                const body = textarea.value.trim();
+                const mediaId = self._pendingFeedMediaId || null;
+                if (!body && !mediaId) return;
+                overlay.remove();
+                self._pendingFeedMediaId = null;
+                post('phoneAction', { op: 'feedCreatePost', body: body, mediaId: mediaId, token: self.token });
+            });
+
+            box.append(head, textarea, photoRow, photoPreview, postBtn);
+            overlay.append(box);
+            content.append(overlay);
+            textarea.focus();
+        },
+
         renderSettings() {
             this.title('settings', 'phone.ui.settings', 'settings');
             const content = $('phone-content-settings');
@@ -2485,6 +2919,24 @@
                         this._keepDraft = true;
                         if (this.thread) this.showView('conversation', false);
                         else this.back();
+                        return;
+                    }
+                    if (this._feedPhotoPick) {
+                        this._feedPhotoPick = false;
+                        this._pendingFeedMediaId = photo.id || photo.mediaId;
+                        this.back();
+                        // Re-open composer with photo pre-selected
+                        setTimeout(() => {
+                            this._openFeedComposer();
+                            const preview = document.getElementById('feed-composer-preview');
+                            if (preview && photo.url) {
+                                preview.innerHTML = '';
+                                const img = document.createElement('img');
+                                img.src = photo.url;
+                                img.className = 'feed-composer-preview-img';
+                                preview.append(img);
+                            }
+                        }, 100);
                         return;
                     }
                     this.openPhotoViewer(photo);

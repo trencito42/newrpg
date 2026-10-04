@@ -69,7 +69,9 @@
     "staff_dashboard": "Admin Panel",
     "login": "Login",
     "logout": "Logout",
-    "select_character": "Select Character"
+    "select_character": "Select Character",
+    "feed": "Feed",
+    "gallery": "Gallery"
   },
   "home": {
     "badge": "Panel",

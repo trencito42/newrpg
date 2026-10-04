@@ -30,6 +30,8 @@ import {
   History,
   AlertOctagon,
   Sparkles,
+  Rss,
+  ImageIcon,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -55,6 +57,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
 
   const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
+    { href: "/feed", label: t(locale, "nav.feed"), icon: Rss },
     { href: "/updates", label: t(locale, "copy.components_navigation_mobilenav.updates_news"), icon: Sparkles },
     { href: "/players", label: t(locale, "nav.players"), icon: Users },
     { href: "/factions", label: t(locale, "nav.factions"), icon: Shield },
@@ -72,6 +75,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
     ? [
         { href: profileHref, label: t(locale, "nav.profile"), icon: User },
         { href: "/my-character/vehicles", label: t(locale, "nav.vehicles"), icon: Car },
+        { href: "/my-character/gallery", label: t(locale, "nav.gallery"), icon: ImageIcon },
         { href: "/my-character/properties", label: t(locale, "nav.properties"), icon: HomeIcon },
         { href: "/my-character/banking", label: t(locale, "nav.banking"), icon: CreditCard },
         { href: "/my-character/jobs", label: t(locale, "nav.jobs"), icon: Briefcase },

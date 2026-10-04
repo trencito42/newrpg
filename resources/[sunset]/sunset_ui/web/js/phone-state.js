@@ -1,6 +1,6 @@
 (function (root) {
     const HOME = ['phone', 'messages', 'bank', 'garage', 'market', 'jobs', 'map', 'faction', 'apps', 'camera'];
-    const MORE = ['gallery', 'taxi', 'properties', 'clan', 'news', 'quests', 'settings'];
+    const MORE = ['gallery', 'taxi', 'properties', 'clan', 'news', 'feed', 'quests', 'settings'];
     const KNOWN = new Set(HOME.concat(MORE));
 
     function normalizeLayout(saved) {

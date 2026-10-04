@@ -69,7 +69,9 @@
     "staff_dashboard": "Panel Staff",
     "login": "Autentificare",
     "logout": "Deconectare",
-    "select_character": "Alege Personaj"
+    "select_character": "Alege Personaj",
+    "feed": "Feed",
+    "gallery": "Galerie"
   },
   "home": {
     "badge": "Panou",
