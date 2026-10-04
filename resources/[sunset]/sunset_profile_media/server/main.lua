@@ -1,16 +1,76 @@
 local UploadTokens = {}
+local TokenCooldown = {}
+
+math.randomseed((os.time() % 2147483646) + 1)
+
+local ALLOWED_MEDIA = {
+    player_avatar = true,
+    vehicle_preview = true,
+    phone_photo = true,
+}
+
+local function randomToken()
+    local alphabet = '0123456789abcdef'
+    local parts = {}
+    for i = 1, 48 do
+        local index = math.random(1, #alphabet)
+        parts[i] = alphabet:sub(index, index)
+    end
+    return table.concat(parts)
+end
 
 local function generateUploadToken(accountId, characterId, mediaType, entityId)
-    local token = ('%s_%s_%s'):format(mediaType, accountId, os.time())
+    mediaType = tostring(mediaType or '')
+    if not ALLOWED_MEDIA[mediaType] then return nil end
+    local token = randomToken()
+    local ttl = (Config.PhoneMedia and Config.PhoneMedia.TokenTtlSec) or 90
     UploadTokens[token] = {
         accountId = accountId,
         characterId = characterId,
         mediaType = mediaType,
         entityId = entityId,
-        expires = os.time() + 300
+        expires = os.time() + ttl,
     }
     return token
 end
+
+local function IssueUploadToken(source, mediaType)
+    local player = exports.sunset_core:GetPlayer(source)
+    local char = exports.sunset_core:GetCharacter(source)
+    if not player or not char then return nil, 'no_character' end
+    mediaType = tostring(mediaType or '')
+    if not ALLOWED_MEDIA[mediaType] then return nil, 'media_type' end
+    local waitMs = (Config.PhoneMedia and Config.PhoneMedia.CaptureCooldownMs) or 1500
+    local now = GetGameTimer()
+    local key = tostring(source) .. ':' .. mediaType
+    if TokenCooldown[key] and now - TokenCooldown[key] < waitMs then
+        return nil, 'cooldown'
+    end
+    TokenCooldown[key] = now
+    local token = generateUploadToken(tonumber(player.account_id), tonumber(char.id), mediaType, tonumber(char.id))
+    if not token then return nil, 'token' end
+    return {
+        token = token,
+        uploadUrl = Config.UploadEndpoint,
+        mediaType = mediaType,
+        expires = UploadTokens[token].expires,
+    }
+end
+
+local function ConsumeUploadToken(source, token, mediaType)
+    token = tostring(token or '')
+    local row = UploadTokens[token]
+    UploadTokens[token] = nil
+    if not row then return nil, 'missing' end
+    if row.expires < os.time() then return nil, 'expired' end
+    if mediaType and row.mediaType ~= mediaType then return nil, 'media_type' end
+    local char = exports.sunset_core:GetCharacter(source)
+    if not char or tonumber(char.id) ~= tonumber(row.characterId) then return nil, 'character' end
+    return row
+end
+
+exports('IssueUploadToken', IssueUploadToken)
+exports('ConsumeUploadToken', ConsumeUploadToken)
 
 local function computeHash(dataStr)
     return ('%08x'):format(#tostring(dataStr)) .. tostring(dataStr):sub(1, 24)

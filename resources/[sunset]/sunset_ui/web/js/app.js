@@ -947,6 +947,8 @@
                 case 'phoneReset': window.Phone?.resetCharacter?.(); return;
                 case 'phoneCallState': window.Phone?.setCall?.(payload); return;
                 case 'phoneAppData': window.Phone?.applyAppData?.(payload); return;
+                case 'phoneCamera': window.Phone?.setCamera?.(payload); return;
+                case 'phoneCameraResult': window.Phone?.onCameraResult?.(payload); return;
                 case 'phoneActionResult': window.Phone?.onActionResult?.(payload); return;
                 case 'taxiUpdate': window.Phone?.updateTaxi?.(payload); return;
                 case 'taxiEstimate': window.Phone?.setTaxiEstimate?.(payload); return;

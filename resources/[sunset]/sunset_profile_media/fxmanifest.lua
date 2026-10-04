@@ -15,6 +15,8 @@ client_scripts {
     'client/main.lua'
 }
 
+server_exports { 'IssueUploadToken', 'ConsumeUploadToken', 'RequestAvatarCapture', 'RequestVehicleCapture' }
+
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua'

@@ -133,6 +133,7 @@ local function openPhone()
 end
 
 local function closePhone()
+    TriggerEvent('sunset:phone:cameraStop')
     local shouldAnimate = phoneOpen or (phoneProp and DoesEntityExist(phoneProp))
     phoneOpen = false
     phoneOpening = false
@@ -280,7 +281,34 @@ AddEventHandler('sunset:nui:phoneSend', function(data)
 
         -- AwaitCallback yields. Wrapping it in pcall drops the error return,
         -- so every real rejection collapsed into the generic "server rejected" line.
-        local sent, sendErr = Sunset.AwaitCallback('sunset:phoneSend', tonumber(data.targetCharacterId), data.message, data.phone, location)
+        local attachment = type(data.attachment) == 'table' and data.attachment or nil
+        if attachment and attachment.type == 'location' then
+            if attachment.mode == 'waypoint' then
+                local blip = GetFirstBlipInfoId(8)
+                if blip == 0 or not DoesBlipExist(blip) then
+                    PhoneFeedback(exports.sunset_core:Translate('taxi.message.no_waypoint'), 'error', 'send', false, { localId = data.localId })
+                    return
+                end
+                local coords = GetBlipInfoIdCoord(blip)
+                attachment.x, attachment.y = coords.x, coords.y
+            end
+            local coords = attachment.mode == 'waypoint' and vector3(attachment.x, attachment.y, 0.0) or GetEntityCoords(PlayerPedId())
+            local streetHash, crossingHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+            local street = GetStreetNameFromHashKey(streetHash)
+            if crossingHash and crossingHash ~= 0 then
+                local crossing = GetStreetNameFromHashKey(crossingHash)
+                if crossing and crossing ~= '' then street = street .. ' / ' .. crossing end
+            end
+            local zone = GetNameOfZone(coords.x, coords.y, coords.z)
+            local area = GetLabelText(zone)
+            if not area or area == '' or area == 'NULL' then area = zone end
+            attachment.street = street
+            attachment.zone = area
+            attachment.url = nil
+        elseif attachment and attachment.type == 'photo' then
+            attachment = { type = 'photo', mediaId = tonumber(attachment.mediaId) }
+        end
+        local sent, sendErr = Sunset.AwaitCallback('sunset:phoneSend', tonumber(data.targetCharacterId), data.message, data.phone, location, attachment)
         if type(sent) ~= 'table' or sent.ok ~= true then
             PhoneFeedback(PhoneExplain(sendErr, 'phone.message.invalid_recipient_or_message'), 'error', 'send', false, {
                 localId = data.localId,
@@ -394,7 +422,9 @@ CreateThread(function()
             if not phoneProp or not DoesEntityExist(phoneProp) then
                 attachPhoneProp(ped)
             end
-            if not IsEntityPlayingAnim(ped, 'cellphone@', 'cellphone_text_read_base', 3) then
+            local cameraOn = false
+            pcall(function() cameraOn = exports.sunset_phone:IsCameraActive() == true end)
+            if not cameraOn and not IsEntityPlayingAnim(ped, 'cellphone@', 'cellphone_text_read_base', 3) then
                 if loadAnimDict('cellphone@') then
                     TaskPlayAnim(ped, 'cellphone@', 'cellphone_text_read_base', 3.0, 3.0, -1, 49, 0, false, false, false)
                 end

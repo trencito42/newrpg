@@ -76,6 +76,8 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     local ok, rows = pcall(function()
         return MySQL.query.await([[
             SELECT m.id, m.message, m.created_at, m.read_at, m.sender_character_id, m.receiver_character_id,
+                   m.attachment_type, m.attachment_id, m.attachment_snapshot,
+                   pm.url AS media_url, pm.thumbnail_url AS media_thumb,
                    TRIM(CONCAT(COALESCE(sc.firstname,''), ' ', COALESCE(sc.lastname,''))) AS sender_name,
                    TRIM(CONCAT(COALESCE(rc.firstname,''), ' ', COALESCE(rc.lastname,''))) AS receiver_name,
                    sc.phone_number AS sender_phone, rc.phone_number AS receiver_phone
@@ -85,12 +87,24 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
                 (SELECT id FROM phone_messages WHERE receiver_character_id = ? ORDER BY id DESC LIMIT 60)
             ) ids
             JOIN phone_messages m ON m.id = ids.id
+            LEFT JOIN phone_media pm ON m.attachment_type = 'photo' AND pm.id = m.attachment_id
             LEFT JOIN characters sc ON sc.id = m.sender_character_id
             LEFT JOIN characters rc ON rc.id = m.receiver_character_id
             ORDER BY m.id DESC LIMIT 60
         ]], { myCharId, myCharId })
     end)
     if ok and rows then
+        for _, row in ipairs(rows) do
+            if row.attachment_type == 'photo' then
+                row.attachment = PhonePublicAttachment(row)
+                if row.attachment then row.attachment.type = 'photo' end
+            elseif row.attachment_type == 'location' then
+                row.attachment = PhonePublicAttachment(row)
+            end
+            row.media_url = nil
+            row.media_thumb = nil
+            row.attachment_snapshot = nil
+        end
         messages = rows
     end
 
@@ -310,7 +324,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneDeleteContact', function(sourc
     return { ok = true }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, targetCharacterId, message, targetPhoneNumber, location)
+exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, targetCharacterId, message, targetPhoneNumber, location, attachment)
     local char = exports.sunset_core:GetCharacter(source)
     if not char then return nil, { localeKey = 'phone.message.no_character' } end
 
@@ -324,7 +338,13 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
 
     message = tostring(message or ''):gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 256)
     if targetPhoneNumber ~= nil then targetPhoneNumber = tostring(targetPhoneNumber):sub(1, 24) end -- [SEC3]
-    if message == '' then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
+    local resolvedAttachment = nil
+    if type(attachment) == 'table' and (attachment.type == 'photo' or attachment.type == 'location') then
+        local resolved, attachErr = PhoneResolveAttachment(source, tonumber(char.id), attachment)
+        if not resolved then return nil, attachErr or { localeKey = 'phone.message.photo_upload_failed' } end
+        resolvedAttachment = resolved
+    end
+    if message == '' and not resolvedAttachment then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
     if not targetCharacterId then return nil, { localeKey = 'phone.message.invalid_recipient_or_message' } end
     -- [SEC2] SMS/112 spam throttle (112 creates a dispatch call for police/EMS)
     local isEmergencyTarget = targetCharacterId == -112 or tostring(targetPhoneNumber) == '112'
@@ -375,10 +395,22 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     local exists = MySQL.scalar.await('SELECT id FROM characters WHERE id = ?', { targetCharacterId })
     if not exists then return nil, { localeKey = 'phone.message.player_character_not_found' } end
 
-    local msgId = MySQL.insert.await(
-        'INSERT INTO phone_messages (sender_character_id, receiver_character_id, message) VALUES (?, ?, ?)',
-        { tonumber(char.id), targetCharacterId, message }
-    )
+    local msgId
+    if resolvedAttachment then
+        msgId = MySQL.insert.await([[
+            INSERT INTO phone_messages
+                (sender_character_id, receiver_character_id, message, attachment_type, attachment_id, attachment_snapshot)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ]], {
+            tonumber(char.id), targetCharacterId, message,
+            resolvedAttachment.type, resolvedAttachment.id, resolvedAttachment.snapshot,
+        })
+    else
+        msgId = MySQL.insert.await(
+            'INSERT INTO phone_messages (sender_character_id, receiver_character_id, message) VALUES (?, ?, ?)',
+            { tonumber(char.id), targetCharacterId, message }
+        )
+    end
 
     local msgPayload = {
         id = msgId,
@@ -388,6 +420,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         created_at = os.date('!%Y-%m-%dT%H:%M:%SZ'),
         sender_name = exports.sunset_core:GetPlayerBaseName(source),
         sender_phone = getCharacterPhoneNumber(char),
+        attachment = resolvedAttachment and resolvedAttachment.public or nil,
     }
 
     local targetSource = findSourceByCharacterId(targetCharacterId)

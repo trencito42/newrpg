@@ -195,7 +195,7 @@
 }
 .home-content.editing .edit-done { display: block; }
 .home-content.editing .home-logo { opacity: 0; }
-.app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 10px; padding: 28px 6px 0; }
+.app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 10px; padding: 28px 6px 0; flex: 1; min-height: 0; overflow-y: auto; }
 .app-icon-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; position: relative; background: none; border: 0; color: inherit; padding: 0; }
 .app-icon-wrap:active { transform: scale(0.94); }
 .home-content.editing .app-icon-wrap { animation: phone-jiggle 0.28s infinite alternate; }
@@ -362,3 +362,21 @@
 .mini.danger { color: #fecaca; }
 .stack { display: flex; flex-direction: column; gap: 6px; }
 .grow { flex: 1; min-width: 0; }
+.phone-device.is-camera { inset: 0; width: 100%; height: 100%; right: 0; bottom: 0; transform: none; opacity: 1; background: transparent; }
+.phone-device.is-camera .phone-hardware { opacity: 0; pointer-events: none; }
+.phone-camera-hud { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; justify-content: flex-end; }
+.phone-camera-hud[hidden] { display: none; }
+.phone-camera-stage { flex: 1; }
+.phone-camera-bar { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 18px 18px 28px; }
+.phone-shutter { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #fff; background: transparent; padding: 4px; cursor: pointer; }
+.phone-shutter::after { content: ''; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
+.phone-camera-side, .phone-camera-roll { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.45); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.phone-camera-hud.is-capturing .phone-camera-bar { visibility: hidden; }
+.phone-photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.phone-photo-grid button { border: 0; padding: 0; background: #111; aspect-ratio: 1; cursor: pointer; overflow: hidden; }
+.phone-photo-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.phone-share-sheet { position: absolute; left: 10px; right: 10px; bottom: 22px; z-index: 30; background: #161618; border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.msg-photo { display: block; width: 100%; max-width: 180px; max-height: 180px; object-fit: cover; border-radius: 10px; border: 0; padding: 0; background: #111; cursor: pointer; }
+.msg-location { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px; margin-top: 6px; }
+.composer-attach { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.composer-attach img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; }

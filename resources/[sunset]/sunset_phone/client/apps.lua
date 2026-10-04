@@ -247,6 +247,39 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         local op = tostring(data.op or '')
         local token = data.token
 
+        if op == 'cameraStart' then
+            TriggerEvent('sunset:phone:cameraStart', data)
+            return
+        end
+        if op == 'cameraClose' or op == 'cameraFlip' or op == 'cameraLook' or op == 'cameraZoom' or op == 'cameraShutter' then
+            local map = { cameraClose = 'close', cameraFlip = 'flip', cameraLook = 'look', cameraZoom = 'zoom', cameraShutter = 'shutter' }
+            TriggerEvent('sunset:phone:cameraControl', { op = map[op], dx = data.dx, dy = data.dy, delta = data.delta })
+            return
+        end
+        if op == 'gallery' then
+            local res, err = Sunset.AwaitCallback('sunset:phoneGallery', tonumber(data.cursor) or 0)
+            if type(res) == 'table' then
+                sendApp('gallery', { photos = res.photos or {}, nextCursor = res.nextCursor, append = data.cursor and true or false }, token)
+            else
+                sendApp('gallery', { error = PhoneExplain(err, 'phone.message.photo_upload_failed') }, token)
+            end
+            return
+        end
+        if op == 'galleryDelete' then
+            local res, err = Sunset.AwaitCallback('sunset:phoneGalleryDelete', tonumber(data.mediaId))
+            notify(res and exports.sunset_core:Translate('phone.ui.photo_deleted') or PhoneExplain(err, 'phone.message.photo_upload_failed'), res and 'success' or 'error')
+            if res then
+                local again = Sunset.AwaitCallback('sunset:phoneGallery', 0)
+                sendApp('gallery', { photos = again and again.photos or {}, nextCursor = again and again.nextCursor }, token)
+            end
+            return
+        end
+        if op == 'gallerySave' then
+            local res, err = Sunset.AwaitCallback('sunset:phoneGallerySave', tonumber(data.mediaId))
+            notify(res and exports.sunset_core:Translate('phone.ui.photo_saved') or PhoneExplain(err, 'phone.message.photo_upload_failed'), res and 'success' or 'error')
+            return
+        end
+
         if op == 'load' then
             local ok, err = pcall(function()
                 loadApp(tostring(data.app or ''), token)

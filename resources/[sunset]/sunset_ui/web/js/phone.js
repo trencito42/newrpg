@@ -20,6 +20,8 @@
         news: '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>',
         settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>',
         quests: '<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
+        camera: '<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>',
+        gallery: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>',
     };
 
     function el(tag, className) {
@@ -78,7 +80,7 @@
             this.layout = PS.normalizeLayout(null);
             const views = $('phone-views');
             views.append(this.buildHome());
-            ['phone', 'messages', 'conversation', 'contacts', 'bank', 'transfer', 'garage', 'market', 'detail', 'taxi', 'jobs', 'map', 'faction', 'apps', 'properties', 'clan', 'news', 'settings'].forEach((id) => {
+            ['phone', 'messages', 'conversation', 'contacts', 'bank', 'transfer', 'garage', 'market', 'detail', 'taxi', 'jobs', 'map', 'faction', 'apps', 'properties', 'clan', 'news', 'settings', 'camera', 'gallery'].forEach((id) => {
                 views.append(this.shell(id));
             });
             $('phone-home-bar').addEventListener('click', () => this.homeTap());
@@ -86,6 +88,7 @@
                 if (this.call.state === 'ACTIVE' || this.call.state === 'OUTGOING_RINGING' || this.call.state === 'INCOMING_RINGING') this.renderCall(true);
             });
             views.addEventListener('wheel', (e) => e.stopPropagation());
+            this.bindCameraHud();
         },
 
         shell(id) {
@@ -184,6 +187,12 @@
 
         close() {
             if (!this.isOpen) return;
+            if (document.getElementById('phone-photo-viewer')) { document.getElementById('phone-photo-viewer').remove(); return; }
+            if (document.getElementById('phone-share-sheet')) { document.getElementById('phone-share-sheet').remove(); return; }
+            if ($('phone-device')?.classList.contains('is-camera')) {
+                post('phoneAction', { op: 'cameraClose' });
+                return;
+            }
             if (this.editing) { this.exitEdit(); return; }
             post('phoneClose', {});
         },
@@ -231,6 +240,7 @@
 
         onActionResult(payload) {
             payload = payload || {};
+            if (payload.op === 'camera' && !payload.ok) this.toast(payload.error || t('phone.ui.photo_upload_failed'), 'bad');
             if (payload.op === 'send') {
                 this.busy.send = false;
                 const pending = this._pendingBubble;
@@ -303,6 +313,15 @@
                 this.apps.properties = prev;
             }
             if (payload.app === 'properties' && view === 'properties') this.renderProperties();
+            if (payload.app === 'gallery') {
+                const prev = payload.data && payload.data.append ? (this.apps.gallery || { photos: [] }) : { photos: [] };
+                prev.photos = (prev.photos || []).concat((payload.data && payload.data.photos) || []);
+                prev.nextCursor = payload.data && payload.data.nextCursor;
+                prev.error = payload.data && payload.data.error;
+                this.apps.gallery = prev;
+                if (view === 'gallery') this.renderGallery();
+                return;
+            }
             if (payload.app === 'clan' && view === 'clan') this.renderClan();
             if (payload.app === 'taxi' && view === 'taxi') { this.taxi = payload.data || this.taxi; this.renderTaxi(); }
         },
@@ -397,6 +416,16 @@
             this.clanTab = 'overview';
             this._factionMember = null;
             this._marketSell = false;
+            this._draftAttachment = null;
+            this._galleryPick = false;
+            this._keepDraft = false;
+            this._sharePick = false;
+            this._cameraReturn = null;
+            this._lastPhoto = null;
+            const device = $('phone-device');
+            if (device) device.classList.remove('is-camera');
+            const hud = $('phone-camera-hud');
+            if (hud) hud.hidden = true;
             this._compose = '';
             this._pendingBubble = null;
             this._editContact = null;
@@ -494,6 +523,8 @@
                 clan: () => this.renderClan(),
                 news: () => this.renderNews(),
                 settings: () => this.renderSettings(),
+                camera: () => this.renderCamera(),
+                gallery: () => this.renderGallery(),
             };
             if (map[id]) map[id]();
             const needs = { garage: 'garage', market: 'market', taxi: 'taxi', jobs: 'jobs', map: 'map', faction: 'faction', properties: 'properties', clan: 'clan', news: 'news' };
@@ -683,6 +714,7 @@
                 row.messages.sort((a, b) => Number(a.id) - Number(b.id));
                 const last = row.messages[row.messages.length - 1];
                 row.last = last;
+                row.preview = last.message || (last.attachment && last.attachment.type === 'location' ? t('phone.ui.location') : last.attachment ? t('phone.ui.photo') : '');
                 row.name = this.nameForPeer(row.peer, last);
                 row.phone = this.phoneForPeer(row.peer);
                 return row;
@@ -719,6 +751,7 @@
         },
 
         openConversation(peer) {
+            if (this._sharePick) { this._keepDraft = true; this._sharePick = false; }
             peer = peer || {};
             const characterId = Number(peer.characterId) || 0;
             const phone = PS.safeText(peer.phone || '');
@@ -728,6 +761,8 @@
                 name: this.labelFor({ characterId: characterId, phone: phone, displayName: peer.displayName }),
                 messages: characterId > 0 ? this.messagesWith(characterId) : [],
             };
+            if (!this._keepDraft) this._draftAttachment = null;
+            this._keepDraft = false;
             this._compose = '';
             this._pendingBubble = null;
             this.openApp('conversation');
@@ -844,7 +879,7 @@
         renderThreadList(content) {
             clear(content);
             const q = this.fold(this._msgQuery || '');
-            const rows = this.threads().filter((row) => !q || this.fold(row.name).indexOf(q) !== -1 || this.fold(row.last && row.last.message).indexOf(q) !== -1);
+            const rows = this.threads().filter((row) => !q || this.fold(row.name).indexOf(q) !== -1 || this.fold(row.preview).indexOf(q) !== -1);
             if (!rows.length) {
                 const box = el('div', 'phone-empty-state');
                 box.append(text(t('phone.ui.empty_messages')));
@@ -861,7 +896,7 @@
                 const title = el('div', 'item-title');
                 title.append(text(row.name));
                 const sub = el('div', 'item-subtitle');
-                sub.append(text(row.last.message || ''));
+                sub.append(text(row.preview || ''));
                 body.append(title, sub);
                 item.append(av, body);
                 if (row.unread) {
@@ -896,7 +931,8 @@
             row.messages.forEach((msg) => {
                 const mine = Number(msg.sender_character_id) === this.myId();
                 const bubble = el('div', 'bubble ' + (mine ? 'out' : 'in'));
-                bubble.append(text(msg.message || ''));
+                if (msg.message) bubble.append(text(msg.message));
+                this.appendMessageAttachment(bubble, msg.attachment);
                 const time = el('span', 'time');
                 time.append(text(this.clockLabel(msg.created_at)));
                 bubble.append(time);
@@ -905,7 +941,8 @@
             if (this._pendingBubble && Number(this._pendingBubble.peer) === Number(row.peer)) {
                 const pending = this._pendingBubble;
                 const bubble = el('div', 'bubble out');
-                bubble.append(text(pending.message || ''));
+                if (pending.message) bubble.append(text(pending.message));
+                this.appendMessageAttachment(bubble, pending.attachment);
                 const time = el('span', 'time');
                 if (pending.failed) {
                     const retry = btn('mini', t('phone.ui.retry'), () => {
@@ -916,6 +953,7 @@
                             phone: pending.phone,
                             message: pending.message,
                             localId: pending.localId,
+                            attachment: this.attachmentPayload(pending.attachment),
                         });
                         this.renderConversation();
                     });
@@ -942,7 +980,8 @@
             const sendBtn = btn('mini', t('phone.ui.send'), () => send());
             const send = () => {
                 const message = input.value.trim();
-                if (!message || this.busy.send) return;
+                const draft = this._draftAttachment;
+                if ((!message && !draft) || this.busy.send) return;
                 const localId = 'p' + Date.now();
                 const target = (row.phone === '112' || Number(row.peer) === 0) ? -112 : row.peer;
                 this.busy.send = true;
@@ -952,8 +991,10 @@
                     targetCharacterId: target,
                     phone: row.phone === '112' || Number(row.peer) === 0 ? '112' : row.phone,
                     message: message,
+                    attachment: draft,
                     failed: false,
                 };
+                this._draftAttachment = null;
                 this._compose = '';
                 input.value = '';
                 post('phoneSend', {
@@ -961,12 +1002,15 @@
                     phone: this._pendingBubble.phone,
                     message: message,
                     localId: localId,
+                    attachment: this.attachmentPayload(this._pendingBubble.attachment),
                 });
                 this.renderConversation();
             };
             paintCount();
-            compose.append(input, counter, sendBtn);
+            const plus = btn('mini', '+', () => this.openShareSheet(foot));
+            compose.append(plus, input, counter, sendBtn);
             const foot = el('div', 'phone-app-footer');
+            if (this._draftAttachment) foot.append(this.draftChip());
             foot.append(compose);
             page.append(log, foot);
             log.scrollTop = log.scrollHeight;
@@ -2126,6 +2170,259 @@
                 toggles.append(row);
             });
             scroll.append(toggles);
+        },
+
+        safeMediaUrl(url) {
+            const value = String(url || '');
+            if (/^https:\/\/racket\.cat\/media\//.test(value) || /^https:\/\/racket\.cat\/api\/media\//.test(value)) return value;
+            return '';
+        },
+
+        attachmentPayload(draft) {
+            if (!draft) return null;
+            if (draft.type === 'photo') return { type: 'photo', mediaId: draft.mediaId || draft.id };
+            if (draft.type === 'location') return { type: 'location', mode: draft.mode || 'current' };
+            return null;
+        },
+
+        appendMessageAttachment(bubble, attachment) {
+            if (!attachment) return;
+            if (attachment.type === 'photo') {
+                const url = this.safeMediaUrl(attachment.thumbnailUrl || attachment.url);
+                if (!url) return;
+                const button = el('button', 'msg-photo');
+                button.type = 'button';
+                const image = document.createElement('img');
+                image.alt = '';
+                image.src = url;
+                button.append(image);
+                button.addEventListener('click', () => this.openPhotoViewer(attachment));
+                bubble.append(button);
+            } else if (attachment.type === 'location') {
+                const card = el('div', 'msg-location');
+                const title = el('div', 'item-title');
+                title.append(text(attachment.label || t('phone.ui.location')));
+                const sub = el('div', 'muted');
+                sub.append(text(attachment.area || ''));
+                card.append(title, sub, btn('mini', t('phone.ui.set_gps'), () => post('phoneAction', { op: 'gps', x: attachment.x, y: attachment.y })));
+                bubble.append(card);
+            }
+        },
+
+        draftChip() {
+            const draft = this._draftAttachment;
+            const row = el('div', 'composer-attach');
+            if (draft && draft.type === 'photo') {
+                const url = this.safeMediaUrl(draft.thumbnailUrl || draft.url);
+                if (url) {
+                    const image = document.createElement('img');
+                    image.alt = '';
+                    image.src = url;
+                    row.append(image);
+                }
+                row.append(text(t('phone.ui.photo')));
+            } else if (draft && draft.type === 'location') {
+                row.append(text(t('phone.ui.location')));
+            }
+            row.append(btn('mini', '×', () => { this._draftAttachment = null; this.renderConversation(); }));
+            return row;
+        },
+
+        openShareSheet(foot) {
+            document.getElementById('phone-share-sheet')?.remove();
+            const sheet = el('div', 'phone-share-sheet');
+            sheet.id = 'phone-share-sheet';
+            sheet.append(btn('btn-ghost', t('phone.ui.camera'), () => {
+                sheet.remove();
+                this._cameraReturn = 'conversation';
+                post('phoneAction', { op: 'cameraStart', returnTo: 'conversation' });
+            }));
+            sheet.append(btn('btn-ghost', t('phone.ui.photo'), () => {
+                sheet.remove();
+                this._galleryPick = true;
+                this._keepDraft = true;
+                this.openApp('gallery');
+            }));
+            sheet.append(btn('btn-ghost', t('phone.ui.current_location'), () => {
+                sheet.remove();
+                this._draftAttachment = { type: 'location', mode: 'current' };
+                this.renderConversation();
+            }));
+            sheet.append(btn('btn-ghost', t('phone.ui.map_waypoint'), () => {
+                sheet.remove();
+                this._draftAttachment = { type: 'location', mode: 'waypoint' };
+                this.renderConversation();
+            }));
+            sheet.append(btn('btn-ghost', t('phone.ui.cancel'), () => sheet.remove()));
+            foot.append(sheet);
+        },
+
+        openPhotoViewer(photo) {
+            document.getElementById('phone-photo-viewer')?.remove();
+            const url = this.safeMediaUrl(photo && (photo.url || photo.thumbnailUrl));
+            if (!url) return;
+            const layer = el('div', 'phone-share-sheet');
+            layer.id = 'phone-photo-viewer';
+            const image = document.createElement('img');
+            image.alt = '';
+            image.src = this.safeMediaUrl(photo.url) || url;
+            image.style.width = '100%';
+            image.style.borderRadius = '10px';
+            layer.append(image);
+            if (photo.createdAt) {
+                const when = el('div', 'muted');
+                when.append(text(String(photo.createdAt)));
+                layer.append(when);
+            }
+            layer.append(btn('btn-ghost', t('phone.ui.save_to_gallery'), () => post('phoneAction', { op: 'gallerySave', mediaId: photo.id || photo.mediaId })));
+            layer.append(btn('btn-ghost', t('phone.ui.share'), () => {
+                layer.remove();
+                this._draftAttachment = { type: 'photo', mediaId: photo.id || photo.mediaId, url: photo.url, thumbnailUrl: photo.thumbnailUrl };
+                this._sharePick = true;
+                this.openApp('contacts');
+            }));
+            layer.append(btn('btn-ghost', t('phone.ui.delete'), () => {
+                post('phoneAction', { op: 'galleryDelete', mediaId: photo.id || photo.mediaId, token: this.token });
+                layer.remove();
+            }));
+            layer.append(btn('btn-gold', t('phone.ui.close'), () => layer.remove()));
+            $('phone-device')?.append(layer);
+        },
+
+        renderCamera() {
+            this.title('camera', 'phone.ui.camera', 'camera');
+            const content = $('phone-content-camera');
+            const page = this.beginPage(content);
+            page.append(btn('btn-gold', t('phone.ui.take_photo'), () => {
+                this._cameraReturn = null;
+                post('phoneAction', { op: 'cameraStart' });
+            }));
+        },
+
+        renderGallery() {
+            this.title('gallery', 'phone.ui.gallery', 'gallery');
+            const content = $('phone-content-gallery');
+            const data = this.apps.gallery;
+            if (!data) {
+                this.token += 1;
+                const page = this.beginPage(content);
+                for (let i = 0; i < 3; i++) page.append(el('div', 'phone-skel'));
+                post('phoneAction', { op: 'gallery', token: this.token });
+                return;
+            }
+            if (data.error) {
+                const page = this.beginPage(content);
+                const box = el('div', 'phone-empty-state');
+                box.append(text(data.error));
+                box.append(btn('btn-gold', t('phone.ui.retry'), () => { delete this.apps.gallery; this.renderGallery(); }));
+                page.append(box);
+                return;
+            }
+            const page = this.beginPage(content);
+            const scroll = el('div', 'phone-app-scroll');
+            const photos = data.photos || [];
+            if (!photos.length) scroll.append(this.empty(t('phone.ui.gallery_empty')));
+            const grid = el('div', 'phone-photo-grid');
+            photos.forEach((photo) => {
+                const url = this.safeMediaUrl(photo.thumbnailUrl || photo.url);
+                if (!url) return;
+                const cell = el('button');
+                cell.type = 'button';
+                const image = document.createElement('img');
+                image.alt = '';
+                image.src = url;
+                cell.append(image);
+                cell.addEventListener('click', () => {
+                    if (this._galleryPick) {
+                        this._galleryPick = false;
+                        this._draftAttachment = { type: 'photo', mediaId: photo.id, url: photo.url, thumbnailUrl: photo.thumbnailUrl };
+                        this._keepDraft = true;
+                        if (this.thread) this.showView('conversation', false);
+                        else this.back();
+                        return;
+                    }
+                    this.openPhotoViewer(photo);
+                });
+                grid.append(cell);
+            });
+            scroll.append(grid);
+            if (data.nextCursor) {
+                scroll.append(btn('btn-ghost', t('phone.ui.load_more'), () => {
+                    post('phoneAction', { op: 'gallery', cursor: data.nextCursor, token: this.token });
+                }));
+            }
+            page.append(scroll);
+        },
+
+        bindCameraHud() {
+            if (this._cameraHud) return;
+            this._cameraHud = true;
+            const stage = $('phone-camera-stage');
+            const shutter = $('phone-camera-shutter');
+            const flip = $('phone-camera-flip');
+            const close = $('phone-camera-close');
+            const roll = $('phone-camera-roll');
+            if (stage) {
+                stage.addEventListener('mousemove', (event) => {
+                    if (!$('phone-device')?.classList.contains('is-camera')) return;
+                    if (!this._lookOrigin) this._lookOrigin = { x: event.clientX, y: event.clientY };
+                    const dx = event.clientX - this._lookOrigin.x;
+                    const dy = event.clientY - this._lookOrigin.y;
+                    this._lookOrigin = { x: event.clientX, y: event.clientY };
+                    if (!dx && !dy) return;
+                    post('phoneAction', { op: 'cameraLook', dx: dx, dy: dy });
+                });
+                stage.addEventListener('wheel', (event) => {
+                    if (!$('phone-device')?.classList.contains('is-camera')) return;
+                    event.preventDefault();
+                    post('phoneAction', { op: 'cameraZoom', delta: event.deltaY > 0 ? 0.08 : -0.08 });
+                }, { passive: false });
+            }
+            shutter?.addEventListener('click', () => post('phoneAction', { op: 'cameraShutter' }));
+            flip?.addEventListener('click', () => post('phoneAction', { op: 'cameraFlip' }));
+            close?.addEventListener('click', () => post('phoneAction', { op: 'cameraClose' }));
+            roll?.addEventListener('click', () => {
+                post('phoneAction', { op: 'cameraClose' });
+                this.openApp('gallery');
+            });
+        },
+
+        setCamera(payload) {
+            const device = $('phone-device');
+            const hud = $('phone-camera-hud');
+            if (!device || !hud) return;
+            if (!payload || payload.open === false) {
+                device.classList.remove('is-camera');
+                hud.hidden = true;
+                hud.classList.remove('is-capturing');
+                return;
+            }
+            device.classList.add('is-open');
+            device.classList.add('is-camera');
+            hud.hidden = false;
+            hud.classList.toggle('is-capturing', payload.chrome === false);
+            const flip = $('phone-camera-flip');
+            const close = $('phone-camera-close');
+            if (flip) flip.textContent = payload.mode === 'selfie' ? t('phone.ui.rear_camera') : t('phone.ui.front_camera');
+            if (close) close.textContent = '×';
+            const roll = $('phone-camera-roll');
+            if (roll && this._lastPhoto) {
+                const url = this.safeMediaUrl(this._lastPhoto.thumbnailUrl || this._lastPhoto.url);
+                roll.style.backgroundImage = url ? 'url("' + url + '")' : '';
+                roll.style.backgroundSize = 'cover';
+            }
+        },
+
+        onCameraResult(payload) {
+            const media = payload && payload.media;
+            if (!media || !media.id) return;
+            this._lastPhoto = media;
+            if (payload.returnTo === 'conversation') {
+                this._draftAttachment = { type: 'photo', mediaId: media.id, url: media.url, thumbnailUrl: media.thumbnailUrl };
+                this._keepDraft = true;
+                if (this.thread) this.showView('conversation', false);
+            }
+            delete this.apps.gallery;
         },
 
         empty(message) {
