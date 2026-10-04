@@ -84,7 +84,8 @@ const Menu = {
         const level = Number(data?.level || 1);
         const rp = Number(data?.respectPoints || 0);
         const rpNeed = Number(data?.respectRequired || 4);
-        const price = Number(data?.levelPrice || 2500);
+        const parsedPrice = Number(data?.levelPrice);
+        const price = Number.isFinite(parsedPrice) ? parsedPrice : 1000;
         const money = Number(data?.cash || 0) + Number(data?.bank || 0);
         const canBuy = rp >= rpNeed && money >= price;
         let reason = '';

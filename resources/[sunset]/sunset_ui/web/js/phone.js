@@ -788,7 +788,7 @@
                 }));
                 actions.append(btn('mini', t('phone.ui.edit'), () => {
                     const next = window.prompt(t('phone.ui.name'), c.name || '');
-                    if (next && next.trim()) post('phoneEditContact', { contactId: c.id, name: next.trim().slice(0, 48) });
+                    if (next && next.trim()) post('phoneAction', { op: 'editContact', contactId: c.id, name: next.trim().slice(0, 48) });
                 }));
                 actions.append(btn('mini danger', t('phone.ui.delete'), () => post('phoneDeleteContact', { contactId: c.id })));
                 item.append(body, actions);
