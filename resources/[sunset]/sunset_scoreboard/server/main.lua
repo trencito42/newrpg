@@ -98,6 +98,11 @@ local function buildScoreboardSnapshot()
     }
 end
 
+AddEventHandler('sunset:server:characterRenamed', function()
+    CachedScoreboard = nil
+    LastScoreboardBuild = 0
+end)
+
 exports.sunset_core:RegisterCallback('sunset:getScoreboard', function(source)
     local now = GetGameTimer()
     if not CachedScoreboard or (now - LastScoreboardBuild) >= SCOREBOARD_CACHE_TTL_MS then

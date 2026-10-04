@@ -218,9 +218,21 @@ local function validNickname(value)
     if type(value) ~= 'string' then return nil end
     value = (value:gsub('^%s+', ''):gsub('%s+$', ''))
     if #value < 3 or #value > 24 then return nil end
-    if not value:match('^%a[%w ]*$') then return nil end
+    if not value:match('^%a[%a%d ]*$') then return nil end
     if value:find('  ', 1, true) then return nil end
     return value
+end
+
+local function refreshRenamedCharacter(source, char, newName, oldName)
+    TriggerClientEvent('sunset:client:updateCharacter', source, char)
+    local state = Player(source).state
+    state:set('sunsetName', newName, true)
+    state:set('sunsetDisplayName', newName, true)
+    if GetResourceState('sunset_clans') == 'started' then
+        exports.sunset_clans:SyncPlayerClan(source)
+    end
+    TriggerEvent('sunset:server:characterRenamed', source, char.id, oldName, newName)
+    TriggerClientEvent('sunset:client:characterRenamed', source, newName)
 end
 
 function Sunset.RenameCharacter(source, firstname, lastname)
@@ -253,12 +265,15 @@ function Sunset.RenameCharacter(source, firstname, lastname)
         'UPDATE characters SET firstname = ?, lastname = ? WHERE id = ? AND player_id = ?',
         { firstname, lastname, char.id, player.id }
     )
-    if not changed or changed < 1 then return false, { localeKey = 'shop.name_change.failed' } end
+    if not changed or changed < 1 then return false, { localeKey = 'shop.name_change.database' } end
 
+    -- The row is committed. Cache is updated before any event so a later
+    -- refresh error cannot be mistaken for a failed rename.
     char.firstname, char.lastname = firstname, lastname
-    TriggerClientEvent('sunset:client:updateCharacter', source, char)
-    Player(source).state:set('sunsetDisplayName', GetPlayerDisplayName(source), true)
-    TriggerEvent('sunset:server:characterRenamed', source, char.id, oldName, newName)
+    local refreshed, refreshErr = pcall(refreshRenamedCharacter, source, char, newName, oldName)
+    if not refreshed then
+        print(('^1[racket.cat]^7 Rename refresh failed for character %s: %s'):format(tostring(char.id), tostring(refreshErr)))
+    end
     return true, nil, oldName
 end
 

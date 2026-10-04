@@ -34,8 +34,9 @@ function ShopValidation.nickname(value)
     if type(value) ~= 'string' then return nil end
     value = trim(value)
     if #value < 3 or #value > 24 then return nil end
-    if not value:match('^%a[%w ]*$') then return nil end
-    if value:find('  ', 1, true) or value:match('%s$') then return nil end
+    -- Letters and digits only. %w would also allow underscore, which the shop UI rejects.
+    if not value:match('^%a[%a%d ]*$') then return nil end
+    if value:find('  ', 1, true) then return nil end
     return value
 end
 

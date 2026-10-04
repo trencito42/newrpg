@@ -171,6 +171,21 @@ ShopServices = {
         return exports.sunset_core:RenameCharacter(source, firstname, lastname)
     end,
 
+    publicName = function(source)
+        local char = exports.sunset_core:GetCharacter(source)
+        if not char then return nil end
+        return exports.sunset_core:FormatPublicName(char.firstname, char.lastname)
+    end,
+
+    nicknameTaken = function(nickname, characterId)
+        local taken = MySQL.scalar.await([[
+            SELECT id FROM characters
+            WHERE id <> ? AND LOWER(TRIM(CONCAT(firstname, ' ', IFNULL(lastname, '')))) = LOWER(?)
+            LIMIT 1
+        ]], { characterId, nickname })
+        return taken ~= nil
+    end,
+
     creditBank = function(source, amount, reason)
         return exports.sunset_core:AddMoney(source, 'bank', amount, reason) == true
     end,

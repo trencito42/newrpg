@@ -302,6 +302,10 @@ RegisterNetEvent('sunset:client:phoneMessage', function()
     refreshPhoneSoon()
 end)
 
+RegisterNetEvent('sunset:client:characterRenamed', function()
+    refreshPhoneSoon()
+end)
+
 CreateThread(function()
     while true do
         if phoneOpen then

@@ -61,6 +61,11 @@ function createShopEnv(opts = {}) {
         throwCredit: false,
         failRefund: false,
         failRename: false,
+        failRenameKey: null,
+        throwAfterCommit: false,
+        publicName: undefined,
+        taken: new Set(),
+        oldName: 'Old Name',
         onCredit: null,
     };
 
@@ -97,10 +102,14 @@ function createShopEnv(opts = {}) {
     const services = {
         getContext: luaFn((src) => state.contexts.get(src)),
         renameCharacter: luaFn((src, first, last) => {
-            if (state.failRename) return multi(false, { localeKey: 'shop.name_change.failed' });
+            if (state.failRename) return multi(false, { localeKey: state.failRenameKey || 'shop.name_change.database' });
+            state.publicName = first;
             state.renames.push({ src, first, last });
-            return multi(true, undefined, 'Old Name');
+            if (state.throwAfterCommit) throw new Error('refresh failed');
+            return multi(true, undefined, state.oldName || 'Old Name');
         }),
+        publicName: luaFn(() => state.publicName),
+        nicknameTaken: luaFn((nick) => !!(state.taken && state.taken.has(String(nick).toLowerCase()))),
         creditBank: luaFn((src, amount) => {
             if (state.onCredit) state.onCredit(src, amount);
             if (state.throwCredit) throw new Error('bank db down');
@@ -424,7 +433,7 @@ group('character');
     r = env.call('ShopConsumeNameChange', 2, { nickname: 'trencito' });
     check(!r.result && r.key === 'shop.name_change.no_entitlement', "another character cannot use someone else's entitlement");
 
-    const invalid = ['ab', '1abc', 'John  Paul', 'A'.repeat(25), '-john', 'jo<hn', '', 'John Smith!', 'Mary-Jane'];
+    const invalid = ['ab', '1abc', 'John  Paul', 'A'.repeat(25), '-john', 'jo<hn', '', 'John Smith!', 'Mary-Jane', 'ren_k'];
     let allRejected = true;
     for (const nickname of invalid) {
         r = env.call('ShopConsumeNameChange', 1, { nickname });
@@ -435,17 +444,37 @@ group('character');
     check(allRejected, `invalid nicknames rejected (${invalid.length + 1} cases)`);
     check(state.entitlements[0].consumed === false, 'invalid names do not consume the entitlement');
 
+    state.publicName = 'Renk';
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'renk' });
+    state.publicName = undefined;
+    check(!r.result && r.key === 'shop.name_change.same', 'same nickname is rejected before the entitlement is spent');
+    check(state.entitlements[0].consumed === false && state.renames.length === 0, 'same nickname does not call the rename writer');
+
+    state.taken.add('renk');
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'Renk' });
+    state.taken.delete('renk');
+    check(!r.result && r.key === 'shop.name_change.taken', 'duplicate nickname is rejected');
+    check(state.entitlements[0].consumed === false, 'duplicate nickname does not consume the entitlement');
+
     state.failRename = true;
     r = env.call('ShopConsumeNameChange', 1, { nickname: 'trencito' });
     state.failRename = false;
-    check(!r.result && state.entitlements[0].consumed === false, 'failed rename restores the entitlement');
+    check(!r.result && r.key === 'shop.name_change.database' && state.entitlements[0].consumed === false, 'database failure restores the entitlement and keeps its own message');
 
-    r = env.call('ShopConsumeNameChange', 1, { nickname: 'trencito' });
-    check(r.result && r.js.ok === true, 'valid rename succeeds');
-    check(state.renames.length === 1 && state.renames[0].first === 'trencito' && state.renames[0].last === '', 'core rename receives one nickname');
-    check(state.entitlements[0].consumed === true, 'successful rename consumes the entitlement');
+    r = env.call('ShopConsumeNameChange', 1, { nickname: '  renk  ' });
+    check(r.result && r.js.nickname === 'renk' && r.js.firstname === 'renk' && r.js.lastname === '', 'JS payload { nickname: renk } renames firstname and clears lastname');
+    check(state.renames.length === 1 && state.renames[0].first === 'renk' && state.renames[0].last === '', 'server receives the trimmed nickname');
+    check(state.entitlements[0].consumed === true, 'successful rename consumes the entitlement exactly once');
+    const second = env.call('ShopConsumeNameChange', 1, { nickname: 'renk2' });
+    check(!second.result && second.key === 'shop.name_change.no_entitlement' && state.renames.length === 1, 'double click cannot rename twice');
+
+    state.entitlements[0].consumed = false;
+    state.throwAfterCommit = true;
+    r = env.call('ShopConsumeNameChange', 1, { nickname: 'after' });
+    state.throwAfterCommit = false;
+    check(r.result && r.js.ok === true && state.entitlements[0].consumed === true, 'a refresh failure after the database write does not restore the entitlement');
     const auditRow = state.audit.find((a) => a.event === 'char_name_change');
-    check(auditRow && auditRow.data.oldName === 'Old Name' && auditRow.data.newName === 'trencito'
+    check(auditRow && auditRow.data.oldName === 'Old Name' && auditRow.data.newName === 'renk'
         && auditRow.data.characterId === 101 && auditRow.data.accountId === 11 && auditRow.data.orderId === state.entitlements[0].order_id,
         'rename audit records old/new name, character, account and order');
     r = env.call('ShopConsumeNameChange', 1, { nickname: 'again' });
@@ -613,6 +642,17 @@ group('server boundary (static)');
     check(/function GetRacketCredits\(source\)/.test(main) && /RefreshBlazePoints/.test(main), 'GetRacketCredits reads the authoritative balance');
     check(!/print\([^)]*err\)[^\n]*TriggerClientEvent/.test(main), 'SQL errors are not forwarded to clients');
     const client = read(res('sunset_shop/client/main.lua'));
+    const nameCb = client.slice(client.indexOf("RegisterNUICallback('shopUseNameChange'"), client.indexOf("RegisterNUICallback('shopUseClanNameChange'"));
+    check(nameCb.includes('nickname = data.nickname') && !nameCb.includes('data.firstname') && !nameCb.includes('data.lastname'),
+        'shopUseNameChange forwards { nickname } and drops the legacy firstname/lastname payload');
+    const shopJs = read(res('sunset_shop/web/js/shop.js'));
+    check(shopJs.includes("post('shopUseNameChange', { nickname })"), 'shop page sends { nickname }');
+    const renameFn = read(res('sunset_core/server/player.lua'));
+    const renameBody = renameFn.slice(renameFn.indexOf('function Sunset.RenameCharacter'), renameFn.indexOf('function Sunset.SetHomeProperty'));
+    check(renameBody.includes('UPDATE characters SET firstname') && renameBody.includes('pcall(refreshRenamedCharacter') && !/UPDATE\s+accounts/i.test(renameBody),
+        'rename writes characters.firstname, refreshes after commit, and does not touch accounts');
+    check(read(res('sunset_scoreboard/server/main.lua')).includes("AddEventHandler('sunset:server:characterRenamed'"), 'scoreboard drops its cache when a character is renamed');
+    check(read(res('sunset_phone/client/main.lua')).includes("RegisterNetEvent('sunset:client:characterRenamed'"), 'phone refreshes after a rename');
     for (const n of ['shopOpen', 'shopClose', 'shopPurchase', 'shopGetHistory']) check(client.includes(`RegisterNUICallback('${n}'`), `NUI callback ${n} registered`);
     check(/RegisterCommand\('shop'/.test(client) && /AddEventHandler\('sunset:shop:open'/.test(client), '/shop command and sunset:shop:open event open the shop');
     check(/ClaimFocus\(FOCUS_OWNER\)/.test(client) && /ReleaseFocus\(FOCUS_OWNER\)/.test(client), 'focus claimed/released through the sunset_ui manager');

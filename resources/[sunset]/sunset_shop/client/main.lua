@@ -124,8 +124,7 @@ end)
 RegisterNUICallback('shopUseNameChange', function(data, cb)
     data = type(data) == 'table' and data or {}
     local result, err = Sunset.AwaitCallback('sunset:shop:consumeNameChange', {
-        firstname = data.firstname,
-        lastname = data.lastname,
+        nickname = data.nickname,
     })
     if not result then
         cb({ ok = false, error = errorText(err, 'shop.name_change.failed') })

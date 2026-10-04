@@ -47,7 +47,17 @@ function ShopConsumeNameChange(source, data)
 
     local nickname = ShopValidation.nickname(data.nickname or data.username)
     if not nickname then return nil, { localeKey = 'shop.name_change.invalid' } end
-    local firstname, lastname = nickname, ''
+
+    if type(ShopServices.publicName) == 'function' then
+        local okName, current = pcall(ShopServices.publicName, source)
+        if okName and type(current) == 'string' and current ~= '' and current:lower() == nickname:lower() then
+            return nil, { localeKey = 'shop.name_change.same' }
+        end
+    end
+    if type(ShopServices.nicknameTaken) == 'function' then
+        local okTaken, taken = pcall(ShopServices.nicknameTaken, nickname, ctx.characterId)
+        if okTaken and taken then return nil, { localeKey = 'shop.name_change.taken' } end
+    end
 
     local entitlement = ShopStore.findOpenEntitlement({
         accountId = ctx.accountId,
@@ -62,22 +72,36 @@ function ShopConsumeNameChange(source, data)
         return nil, { localeKey = 'shop.name_change.no_entitlement' }
     end
 
-    local okRename, renamed, renameErr, oldName = pcall(ShopServices.renameCharacter, source, firstname, lastname)
-    if not okRename or not renamed then
-        -- Give the entitlement back: the player keeps what they paid for.
-        ShopStore.restoreEntitlement(entitlement.id)
-        if not okRename then return nil, { localeKey = 'shop.name_change.failed' } end
-        if type(renameErr) == 'table' and renameErr.localeKey then return nil, renameErr end
-        return nil, { localeKey = 'shop.name_change.failed' }
+    local function finish(oldName)
+        ShopStore.audit('char_name_change', {
+            accountId = ctx.accountId,
+            characterId = ctx.characterId,
+            orderId = tonumber(entitlement.order_id),
+            oldName = oldName,
+            newName = nickname,
+            entitlementId = entitlement.id,
+        })
+        return { ok = true, nickname = nickname, firstname = nickname, lastname = '' }
     end
 
-    ShopStore.audit('char_name_change', {
-        accountId = ctx.accountId,
-        characterId = ctx.characterId,
-        orderId = tonumber(entitlement.order_id),
-        oldName = oldName,
-        newName = nickname,
-        entitlementId = entitlement.id,
-    })
-    return { ok = true, nickname = nickname, firstname = nickname, lastname = '' }
+    -- A refresh that throws after the row is written must not look like a
+    -- failed rename. publicName reads the character cache, which is updated
+    -- only after the database UPDATE succeeds.
+    local function nameAlreadyStored()
+        if type(ShopServices.publicName) ~= 'function' then return false end
+        local okName, current = pcall(ShopServices.publicName, source)
+        return okName and type(current) == 'string' and current:lower() == nickname:lower()
+    end
+
+    local okRename, renamed, renameErr, oldName = pcall(ShopServices.renameCharacter, source, nickname, '')
+    if okRename and renamed then
+        return finish(oldName)
+    end
+    if not okRename and nameAlreadyStored() then
+        return finish(nil)
+    end
+
+    ShopStore.restoreEntitlement(entitlement.id)
+    if okRename and type(renameErr) == 'table' and renameErr.localeKey then return nil, renameErr end
+    return nil, { localeKey = 'shop.name_change.failed' }
 end
