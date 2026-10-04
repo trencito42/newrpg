@@ -27,6 +27,11 @@
     opacity: 1;
 }
 
+.world-tooltip-3d .wt-scale {
+    transform: scale(var(--ui-scale, 1));
+    transform-origin: center bottom;
+}
+
 .world-tooltip-3d .wt-badge {
     align-self: flex-start;
     background: var(--wt-accent, #00ffcc);

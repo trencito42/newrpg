@@ -19,7 +19,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) translateY(-20px);
+    transform: translate(-50%, -50%) translateY(-20px) scale(min(var(--ui-scale, 1), (100vw - 48px) / 500, (100vh * 0.8) / 640));
     width: 500px;
     max-height: 70vh;
     z-index: 9000;
@@ -36,7 +36,7 @@
 
 .scoreboard-forza.is-active {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(0);
+    transform: translate(-50%, -50%) translateY(0) scale(min(var(--ui-scale, 1), (100vw - 48px) / 500, (100vh * 0.8) / 640));
     pointer-events: auto;
 }
 

@@ -30,11 +30,14 @@
     position: relative;
     width: 100%;
     height: 100%;
+    overflow: hidden;
     padding: clamp(24px, 4.6vh, 50px) clamp(28px, 4.2vw, 80px);
 }
 #menu .menu-body {
-    width: 100%;
-    height: 100%;
+    width: calc(100% / var(--ui-scale, 1));
+    height: calc(100% / var(--ui-scale, 1));
+    transform: scale(var(--ui-scale, 1));
+    transform-origin: top left;
     display: flex;
     justify-content: space-between;
     gap: clamp(40px, 7vw, 140px);

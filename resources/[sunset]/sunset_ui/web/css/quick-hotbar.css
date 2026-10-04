@@ -7,12 +7,13 @@
 .hotbar-container {
     position: fixed;
     left: 50%;
-    bottom: 52px;
+    bottom: calc(52px * var(--ui-scale, 1));
+    transform-origin: center bottom;
     z-index: 120;
     display: flex;
     gap: 14px;
     padding: 0 6px;
-    transform: translateX(-50%) ;
+    transform: translateX(-50%) scale(var(--ui-scale, 1));
     filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.8));
     pointer-events: none;
     opacity: 0;
@@ -21,11 +22,11 @@
 
 .hotbar-container.is-visible {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(var(--ui-scale, 1));
 }
 
 .hotbar-container:not(.is-visible) {
-    transform: translateX(-50%) translateY(12px);
+    transform: translateX(-50%) translateY(12px) scale(var(--ui-scale, 1));
 }
 
 body.in-vehicle #hotbar-hud {

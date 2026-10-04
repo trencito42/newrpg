@@ -3,9 +3,10 @@
 /* ── Trade invite notification ── */
 .trade-notif-wrapper {
     position: fixed;
-    bottom: 100px;
+    bottom: calc(100px * var(--ui-scale, 1));
     left: 50%;
-    transform: translateX(-50%) ;
+    transform: translateX(-50%) scale(var(--ui-scale, 1));
+    transform-origin: center bottom;
     z-index: 9999;
     display: flex;
     flex-direction: column;

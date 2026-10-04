@@ -15,6 +15,7 @@
 .inventory-forza {
     position: fixed;
     inset: 0;
+    overflow: hidden;
     z-index: 11500;
     font-family: 'Montserrat', sans-serif;
     pointer-events: auto;
@@ -37,8 +38,8 @@
 .inventory-forza-wrapper {
     width: 1100px;
     height: 650px;
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 32px);
+    max-width: none;
+    max-height: none;
     background: var(--bg-panel);
     border: 1px solid var(--border-faint);
     border-radius: 4px;
@@ -48,13 +49,13 @@
     position: relative;
     z-index: 10;
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(calc(0.98 * min(var(--ui-scale, 1), (100vw - 48px) / 1100, (100vh - 48px) / 650)));
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .inventory-forza:not(.hidden) .inventory-forza-wrapper {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(min(var(--ui-scale, 1), (100vw - 48px) / 1100, (100vh - 48px) / 650));
 }
 
 /* --- STANGA: INVENTAR + TRASH --- */

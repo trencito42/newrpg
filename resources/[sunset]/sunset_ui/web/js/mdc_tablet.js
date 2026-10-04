@@ -45,7 +45,12 @@
         fitScale() {
             const tablet = document.querySelector('.mdc-tablet');
             if (!tablet) return;
-            const s = Math.max(0.4, Math.min(1.15, (window.innerWidth * 0.96) / 1240, (window.innerHeight * 0.94) / 780));
+            const ui = window.ResolutionScale
+                ? window.ResolutionScale.finalScale(window.innerWidth, window.innerHeight)
+                : 1;
+            const fitW = (window.innerWidth * 0.96) / 1240;
+            const fitH = (window.innerHeight * 0.94) / 780;
+            const s = Math.max(0.4, Math.min(ui, fitW, fitH));
             tablet.style.setProperty('--mdc-scale', s.toFixed(3));
         },
 

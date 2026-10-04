@@ -33,9 +33,11 @@ body.chat-ui-open * {
 
 .chat {
     position: fixed;
-    top: 10px;
-    left: 10px;
-    width: min(500px, 42vw);
+    top: calc(10px * var(--ui-scale, 1));
+    left: calc(10px * var(--ui-scale, 1));
+    width: min(500px, calc(42vw / var(--ui-scale, 1)));
+    transform: scale(var(--ui-scale, 1));
+    transform-origin: top left;
     z-index: 40;
     pointer-events: none;
     font-family: 'Inter', sans-serif;

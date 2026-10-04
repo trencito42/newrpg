@@ -29,7 +29,7 @@ const HudEditor = {
 
     panelTransform(id, x, y) {
         const skew = (id === 'tr' || id === 'bl') ? 'skewX(-5deg) ' : '';
-        return `${skew}translate(${x}px, ${y}px)`;
+        return `scale(var(--ui-scale, 1)) ${skew}translate(${x}px, ${y}px)`;
     },
 
     apply(layout) {

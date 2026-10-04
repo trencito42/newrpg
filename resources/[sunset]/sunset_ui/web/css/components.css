@@ -173,12 +173,14 @@
 .notifications,
 .notifications-container {
     position: fixed;
-    top: 250px;
-    right: 36px;
+    top: calc(250px * var(--ui-scale, 1));
+    right: calc(36px * var(--ui-scale, 1));
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: min(390px, 34vw);
+    width: min(390px, calc(34vw / var(--ui-scale, 1)));
+    transform: scale(var(--ui-scale, 1));
+    transform-origin: top right;
     pointer-events: none;
     z-index: 9999;
 }
@@ -285,7 +287,8 @@
     position: fixed;
     bottom: 15%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(var(--ui-scale, 1));
+    transform-origin: center center;
     z-index: 100;
     width: 320px;
     text-align: center;

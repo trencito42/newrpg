@@ -4,7 +4,9 @@
     --phone-space-3: 10px;
     --phone-space-4: 14px;
     --phone-space-5: 18px;
-    --s: min(1, (100vh - 36px) / 720);
+    --phone-target-scale: var(--ui-scale, 1);
+    --phone-fit-scale: calc((100vh - 36px) / 720);
+    --s: min(var(--phone-target-scale), var(--phone-fit-scale));
     --bg-dark: #0a0a0c;
     --bg-panel: #161618;
     --bg-panel-hover: #1e1e22;
@@ -15,8 +17,8 @@
     --accent-blue: #3b82f6;
     --accent-yellow: #facc15;
     position: fixed;
-    right: 24px;
-    bottom: 20px;
+    right: calc(24px * var(--ui-scale, 1));
+    bottom: calc(20px * var(--ui-scale, 1));
     width: calc(340px * var(--s));
     height: calc(720px * var(--s));
     z-index: 90;
@@ -367,7 +369,7 @@
 .phone-camera-hud { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; justify-content: flex-end; }
 .phone-camera-hud[hidden] { display: none; }
 .phone-camera-stage { flex: 1; }
-.phone-camera-bar { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 18px 18px 28px; }
+.phone-camera-bar { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 18px 18px 28px; transform: scale(var(--ui-scale, 1)); transform-origin: center bottom; }
 .phone-shutter { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #fff; background: transparent; padding: 4px; cursor: pointer; }
 .phone-shutter::after { content: ''; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
 .phone-camera-side, .phone-camera-roll { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.45); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }

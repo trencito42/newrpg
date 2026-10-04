@@ -48,13 +48,17 @@ html, body {
 
 .ui-layer {
     position: absolute;
-    inset: 0;
+    left: 0;
+    top: 0;
     z-index: 10;
+    width: calc(100% / var(--ui-scale, 1));
+    height: calc(100% / var(--ui-scale, 1));
     padding: 80px 100px;
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    transform: skewX(-5deg);
+    transform: scale(var(--ui-scale, 1)) skewX(-5deg);
+    transform-origin: top left;
     pointer-events: none;
 }
 

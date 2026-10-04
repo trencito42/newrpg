@@ -42,12 +42,12 @@ body, html {
     border-radius: var(--radius-lg);
     display: flex; flex-direction: row;
     box-shadow: 0 30px 60px rgba(0,0,0,0.7);
-    opacity: 0; transform: scale(0.95);
+    opacity: 0; transform: scale(calc(0.95 * min(var(--ui-scale, 1), (100vw - 48px) / 1100, (100vh - 48px) / 680)));
     transition: var(--transition);
     position: relative;
 }
 
-#bp-wrapper.visible { opacity: 1; transform: scale(1); }
+#bp-wrapper.visible { opacity: 1; transform: scale(min(var(--ui-scale, 1), (100vw - 48px) / 1100, (100vh - 48px) / 680)); }
 #bp-wrapper.hidden { display: none; }
 
 /* --- SIDEBAR --- */

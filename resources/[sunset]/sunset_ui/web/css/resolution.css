@@ -1,0 +1,10 @@
+/* Defaults before resolution-scale.js measures the viewport.
+   Do not put a document-wide transform here. Screen-space widgets
+   opt in from their own stylesheets using --ui-scale. */
+:root {
+    --ui-resolution-scale: 1;
+    --ui-user-scale: 1;
+    --ui-scale: 1;
+    --ui-ref-width: 1920;
+    --ui-ref-height: 1080;
+}

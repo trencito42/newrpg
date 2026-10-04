@@ -18,20 +18,21 @@
 
     /* Safe area: keeps job HUD clear of minimap (bottom-left), chat (left),
        speedometer (bottom-right) and the wanted banner (top-center). */
-    --safe-x: clamp(16px, 2vw, 56px);
-    --safe-top: clamp(76px, 10vh, 150px);
-    --safe-bottom: clamp(56px, 9vh, 130px);
+    --safe-x: clamp(16px, 2vw, calc(56px * var(--ui-scale, 1)));
+    --safe-top: clamp(76px, 10vh, calc(150px * var(--ui-scale, 1)));
+    --safe-bottom: clamp(56px, 9vh, calc(130px * var(--ui-scale, 1)));
 
-    /* Type scale (viewport driven, capped by height so 21:9 does not balloon) */
-    --fs-xs: clamp(11px, min(0.62vw, 1.15vh), 16px);
-    --fs-sm: clamp(12px, min(0.75vw, 1.35vh), 19px);
-    --fs-md: clamp(14px, min(0.92vw, 1.65vh), 23px);
-    --fs-lg: clamp(16px, min(1.15vw, 2.05vh), 29px);
-    --fs-key: clamp(12px, min(0.8vw, 1.45vh), 20px);
+    /* Type scale. The vw/vh term tracks the limiting axis; the max
+       follows --ui-scale so 4K is not stuck at the 1080p cap. */
+    --fs-xs: clamp(11px, min(0.62vw, 1.15vh), calc(16px * var(--ui-scale, 1)));
+    --fs-sm: clamp(12px, min(0.75vw, 1.35vh), calc(19px * var(--ui-scale, 1)));
+    --fs-md: clamp(14px, min(0.92vw, 1.65vh), calc(23px * var(--ui-scale, 1)));
+    --fs-lg: clamp(16px, min(1.15vw, 2.05vh), calc(29px * var(--ui-scale, 1)));
+    --fs-key: clamp(12px, min(0.8vw, 1.45vh), calc(20px * var(--ui-scale, 1)));
     --tracking-caps: 0.08em;
 
     /* Job HUD surface */
-    --jobhud-width: clamp(300px, min(30vw, 62vh), 560px);
+    --jobhud-width: clamp(300px, min(30vw, 62vh), calc(560px * var(--ui-scale, 1)));
     --jobhud-bg: rgba(10, 9, 8, 0.82);
     --jobhud-border: rgba(255, 255, 255, 0.10);
     --jobhud-accent: var(--color-primary);
@@ -39,8 +40,8 @@
     --jobhud-danger: var(--color-error);
     --jobhud-success: var(--color-success);
     --jobhud-track: rgba(255, 255, 255, 0.12);
-    --jobhud-pad: clamp(8px, min(0.7vw, 1.3vh), 16px);
-    --jobhud-gap: clamp(5px, min(0.4vw, 0.75vh), 10px);
+    --jobhud-pad: clamp(8px, min(0.7vw, 1.3vh), calc(16px * var(--ui-scale, 1)));
+    --jobhud-gap: clamp(5px, min(0.4vw, 0.75vh), calc(10px * var(--ui-scale, 1)));
 
     /* Elevation: small and flat on purpose (CEF repaint cost) */
     --shadow-hud: 0 2px 8px rgba(0, 0, 0, 0.55);

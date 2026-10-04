@@ -160,11 +160,14 @@ html, body {
     z-index: 10;
     display: flex;
     gap: 0;
-    height: 100%;
+    width: calc(100% / var(--ui-scale, 1));
+    height: calc(100% / var(--ui-scale, 1));
+    transform: scale(var(--ui-scale, 1));
+    transform-origin: top left;
     padding: var(--bar-h) 6vw;
     animation: bodyFade 0.9s cubic-bezier(0.19,1,0.22,1) 0.15s both;
 }
-@keyframes bodyFade { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes bodyFade { from { opacity: 0; transform: translateY(18px) scale(var(--ui-scale, 1)); } to { opacity: 1; transform: scale(var(--ui-scale, 1)); } }
 
 /* ── LEFT: product detail / preview ────────────────────── */
 .shop-detail {
