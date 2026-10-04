@@ -196,28 +196,58 @@ local function capture()
             capturing = false
             return
         end
+        -- A1: capture as WebP at quality 0.78; typical 1080p frame ≈ 200-600 KB,
+        -- well within the 3 MiB app limit. avatar/vehicle_preview use a separate
+        -- path (sunset_profile_media) and are NOT affected by this encoding change.
+        local captureEncoding = 'webp'
+        local captureQuality = 0.78
         local done = false
         exports['screenshot-basic']:requestScreenshotUpload(issued.uploadUrl or 'https://racket.cat/api/media/upload', 'files[]', {
             headers = {
                 ['X-Media-Token'] = issued.token,
                 ['X-Media-Type'] = 'phone_photo',
             },
+            encoding = captureEncoding,
+            quality = captureQuality,
         }, function(body)
             done = true
             CreateThread(function()
+                -- A5: log capture metadata (never token, never image data)
+                local respLen = type(body) == 'string' and #body or 0
                 local url = parseUpload(body)
                 local saved, saveErr = nil, nil
                 if url then
+                    -- A4: commit is ONLY called after a successful upload (url present)
                     saved, saveErr = Sunset.AwaitCallback('sunset:phoneMediaCommit', issued.token)
                 else
+                    -- A4: upload failed — commit is NOT called here
                     local snippet = type(body) == 'string' and body:gsub('[%c]', ' '):sub(1, 160) or ''
                     if snippet == '' then
-                        mediaLog('UPLOAD_RESPONSE_INVALID', 'media=phone_photo type=empty')
+                        mediaLog('UPLOAD_RESPONSE_INVALID', ('media=phone_photo encoding=%s quality=%.2f resp_len=0'):format(captureEncoding, captureQuality))
                     else
+                        -- A3: distinguish application 413 (oversized) from proxy 413
                         local decodedOk, decoded = pcall(json.decode, body)
-                        local code = decodedOk and type(decoded) == 'table' and tostring(decoded.code or decoded.error or '') or ''
-                        local stage = decodedOk and type(decoded) == 'table' and 'UPLOAD_HTTP_FAILED' or 'UPLOAD_RESPONSE_INVALID'
-                        mediaLog(stage, ('media=phone_photo type=%s bytes=%s code=%s'):format(type(body), #snippet, code:gsub('[%c]', ' '):sub(1, 80)))
+                        local logStage, logDetail
+                        if decodedOk and type(decoded) == 'table' then
+                            local appCode = tostring(decoded.code or decoded.error or '')
+                            if appCode == 'oversized' then
+                                logStage = 'APPLICATION_REJECTED_OVERSIZED'
+                            else
+                                logStage = 'UPLOAD_HTTP_FAILED'
+                            end
+                            logDetail = ('media=phone_photo encoding=%s quality=%.2f app_code=%s resp_len=%d'):format(
+                                captureEncoding, captureQuality, appCode:gsub('[%c]', ' '):sub(1, 80), respLen)
+                        else
+                            -- Non-JSON response: proxy-style 413 or unknown upstream error
+                            if snippet:find('413', 1, true) then
+                                logStage = 'PROXY_OR_UPSTREAM_413'
+                            else
+                                logStage = 'UPLOAD_RESPONSE_INVALID'
+                            end
+                            logDetail = ('media=phone_photo encoding=%s quality=%.2f resp_len=%d'):format(
+                                captureEncoding, captureQuality, respLen)
+                        end
+                        mediaLog(logStage, logDetail)
                     end
                 end
                 capturing = false
