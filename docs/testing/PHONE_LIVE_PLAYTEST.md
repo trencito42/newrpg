@@ -47,5 +47,20 @@ Static checks do not prove these. Run them in FiveM after deploy. Mark each LIVE
 | Clan tabs | Overview, Members, Management only when permitted | Clan manage callbacks unchanged | One endless page, empty management for members |
 | News rich asset | Ad text keeps the inline attachment; tap opens Asset Preview | Snapshot stays the public one | Chip missing, or a second detail implementation |
 | Account | Nickname, number, id, progression, phone toggles | Prefs and buy level unchanged | One undifferentiated stack |
+| Camera opens | Phone chrome leaves; rear camera frames the world in front of the ped | No freecam, no studio teleport | A screenshot of the phone UI, or a camera far from the player |
+| HUD hidden in the captured photo | Saved image has no money, minimap, chat, or shutter | `phone_media` row points at a racket.cat URL | Buttons or the HUD are baked into the photo |
+| Rear photo and selfie | Flip changes the camera; selfie shows the character | Mode is session-only and starts on rear | Selfie teleports the ped, or the rear camera flies |
+| Five sequential photos | Each shutter adds one gallery row | Five `phone_media` rows, no base64 | Double capture, stuck camera, or a data URL in NUI |
+| Gallery | Newest first, 30 per page, empty state, fullscreen viewer | Gallery is not loaded when the phone opens | All 250 photos arrive with the phone payload |
+| Delete photo | Owner gallery hides the photo | `phone_gallery.deleted_at` set; message still resolves the URL | The receiver's old SMS image breaks |
+| Send photo online and offline | Image bubble plus optional caption; unread works like text | `attachment_type = photo` and `attachment_id` | Client-supplied image URL is stored |
+| Save received photo | Save to gallery adds the same media id | No second binary row | A copied file or a foreign URL |
+| Failed photo retry | Not sent, Retry keeps the same photo | One message row after retry | The photo is dropped or sent twice |
+| Share current location | Card shows street and zone, not raw coordinates | Server ped coordinates, not the client's x/y | The receiver can keep tracking the sender |
+| Share map waypoint | Only when a waypoint exists | Finite coordinates inside world bounds | NaN or an unbounded coordinate is stored |
+| Recipient Set GPS | In-phone GPS set, GTA waypoint appears | Existing phone GPS path | A second waypoint implementation |
+| Camera cleanup | ESC returns to the phone; death, jail, and resource restart clear the cam | HUD, controls, and the phone prop recover | Stuck script cam, hidden HUD, or NUI focus |
+| Character switch | Character B has none of A's photos, draft, or camera | Gallery query is B's character id | A's photo stays attached to B's composer |
+| No base64 payload | NUI and MySQL store URLs only | `phone_messages` has no data URL | A screenshot blob in the message or gallery row |
 
 Do not mark a row live-verified from this document alone.
