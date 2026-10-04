@@ -11,7 +11,7 @@ Numbers are the current source values. Durations that are not coded are marked a
 | Garbage | 1 + driver | $48 per bin, $120 unload | job XP plus 2 respect | license | Below courier. |
 | Trucker | 1 + driver | $650–$900 by route and rank | job XP plus 2 respect, +4 on rank-up | fuel | Rank 1 routes exist. |
 | Bus | 4 + driver | $120 per stop + $35 per passenger | job XP plus 2 respect | license | Mid early job. |
-| Mechanic | 3 + driver | $200 per repair | job XP plus 2 respect | license | |
+| Mechanic | 3 + driver | $160 per repair (`payPerRepair` in `jobs_config.lua`) | job XP plus 2 respect | license | |
 | Diver | 6 | workplace payout in the job resource | job XP plus 2 respect | | |
 | Hunter | 10 + weapon + hunting + range quest | hide/meat sale prices | job XP plus 2 respect | licenses and a legal hunting weapon | |
 | Payday | any, 20 min played | bank payday minus 8% tax | +1 respect, and it advances license expiry | | Supplement, not the level engine. |

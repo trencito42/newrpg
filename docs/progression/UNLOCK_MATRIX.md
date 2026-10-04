@@ -11,4 +11,4 @@
 | 12 | | | | | | Robbery after a chop | |
 | 15 | | | | | | | Create for 500 RC. Turfs with an active clan. |
 
-Buying a level is `/buylevel` or the phone settings panel. The next level costs the current level times 4 respect and times $1,000.
+Buying a level is `/buylevel`, the M menu, or the phone settings panel. The next level costs the current level times 4 respect and times $1,000 (`LevelRespectMultiplier` and `LevelPriceBase` in `sunset_core/shared/config.lua`). Faction invite and accept call `sunset_quests:CanAccess` / `CanAccessCharacter`, which delegate to `sunset_core:CanAccess`. Staff admin level 3 or higher is the only intentional panel bypass.

@@ -17,4 +17,10 @@ This is a manual FiveM checklist. It was not executed in a GTA session.
 | Level 10 | Buy the level | Notification names factions, hunting prerequisites, criminal contacts, and clan join. |
 | Level 12 | Buy the level | Notification says robbery opens after a chop. |
 | Level 15 | Buy the level | Notification says clan creation is 500 RC and turfs need an active clan. |
-| Market | List and buy | A failed debit does not move the asset. An expired item listing returns the escrow once. |
+| Market | List and buy | A failed debit does not move the asset. An expired item listing returns the escrow once. Cancelling an item listing returns it immediately and the inventory UI updates without a relog. A vehicle buy without a driver license is rejected. A property buy below that house's `minimum_level` is rejected. |
+| Faction | At level 10 with the level-10 quest claimed, accept an invite | Membership saves. Before that, invite and accept are refused. A faction leader using the panel cannot add a level-1 character. Staff admin level 3 or higher still can. |
+| Auth | While the login screen is up, do not enter the world | The player stays in routing bucket 9999 until a spawn permit is accepted. |
+
+## Two-hour soak
+
+During one live session, rotate two jobs, open the phone (bank, garage, market), die once, reconnect once, and restart `sunset_phone` and `sunset_quests` while a character is loaded. Watch server hitch warnings, resmon on one client, and that cash, inventory, and the active quest match the database after reconnect. This checklist was not executed in this audit.

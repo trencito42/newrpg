@@ -1,6 +1,8 @@
 # New account progression audit
 
-Source of truth is the current server code. Character level stays at the schema default of **1**. This audit does not introduce level 0.
+Verified again on 2026-10-04 from `sunset_core/shared/config.lua` and the quest/faction code. Character level stays at **1**. Login username and public nickname remain separate fields. Faction entry is level 10 plus quest `life_reach_level10`, enforced by `sunset_quests:CanAccess` after that export was restored.
+
+Source of truth is the current server code. This audit does not introduce level 0.
 
 ## Stage 0 — account and character
 

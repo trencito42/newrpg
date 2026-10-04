@@ -1,286 +1,107 @@
-# FINAL SENIOR FIVEM GAMEMODE AUDIT REPORT
-
-**Server / Project**: SunsetMP (Blaze.mp) RPG Gamemode  
-**Auditor**: Senior FiveM Gamemode Auditor  
-**Audit Date**: October 2026  
-**Scope**: Full End-to-End Gamemode Audit (Architecture, Gameplay, Economy, Systems, Performance, Security, Concurrency, and Production Readiness)  
-**Status**: Authoritative Baseline Established
-
----
-
-## Table of Contents
-1. [Executive Summary](#1-executive-summary)
-2. [Gamemode Architecture & Resource Map](#2-gamemode-architecture--resource-map)
-3. [Player Journey & Lifecycle Flow](#3-player-journey--lifecycle-flow)
-4. [Feature Inventory](#4-feature-inventory)
-5. [Progression & Leveling](#5-progression--leveling)
-6. [Economy & Monetary Flow](#6-economy--monetary-flow)
-7. [Complete Limits Matrix](#7-complete-limits-matrix)
-8. [Civilian Jobs Audit](#8-civilian-jobs-audit)
-9. [Factions & Law Enforcement](#9-factions--law-enforcement)
-10. [Missions & Story Quests](#10-missions--story-quests)
-11. [Illegal Activities & Heists](#11-illegal-activities--heists)
-12. [Vehicles, Dealerships & Impound](#12-vehicles-dealerships--impound)
-13. [Properties & Player Businesses](#13-properties--player-businesses)
-14. [Inventory & Stashes](#14-inventory--stashes)
-15. [Commands & Permissions](#15-commands--permissions)
-16. [Security, Concurrency & Anti-Exploit](#16-security-concurrency--anti-exploit)
-17. [Database & Query Architecture](#17-database--query-architecture)
-18. [Performance, Resmon & Client Loops](#18-performance-resmon--client-loops)
-19. [Server Tick Performance & Scalability (50–300 Players)](#19-server-tick-performance--scalability-50300-players)
-20. [Network Bandwidth & Payload Audit](#20-network-bandwidth--payload-audit)
-21. [NUI Responsiveness & Focus Control](#21-nui-responsiveness--focus-control)
-22. [Resource Lifecycle & Restart Safety](#22-resource-lifecycle--restart-safety)
-23. [Asset Streaming & DLC Costs](#23-asset-streaming--dlc-costs)
-24. [Multiplayer Concurrency & Edge Cases](#24-multiplayer-concurrency--edge-cases)
-25. [Reconnect & Disaster Recovery](#25-reconnect--disaster-recovery)
-26. [Localization & Language Parity](#26-localization--language-parity)
-27. [Cleanup, Legacy Code & Dead Ends](#27-cleanup-legacy-code--dead-ends)
-28. [Detailed Findings Ledger](#28-detailed-findings-ledger)
-29. [Ordered Remediation Plan](#29-ordered-remediation-plan)
-
----
-
-## 1. Executive Summary
-
-The SunsetMP FiveM RPG codebase has undergone a full senior-level architectural and gameplay audit. Following the resolution of startup native race conditions (`0x5A039BB0BCA604B6` / `0x963D27A58DF860AC`) and decoupling of secondary database hydration from the core character login hot path, the core login/spawn pipeline operates reliably at **<150ms** callback RTT and **<400ms** to full world visibility.
-
-The gamemode consists of **75 active resources**, providing an extensive SA:MP-inspired modern GTA V roleplay experience with 7 fully physical civilian jobs, multi-tier legal/illegal factions, property real estate, business logistics, Diamond Casino floor games, dynamic clan turf wars, and an episodic questline.
-
-All client-side loops and interaction distances are tightly gated, maintaining an idle client resmon footprint of **~0.12 ms** (peaking at **~0.35 ms** in heavy combat/driving). Server tick scalability models demonstrate that the O(1) hashmap indexing for online players scales comfortably past **300 concurrent players**.
-
----
-
-## 2. Gamemode Architecture & Resource Map
-
-- Total Resources: **75** (68 in `resources/[sunset]`, 7 external/vendor libraries).
-- Core Framework: Custom high-performance `sunset_core` managing state bags, dynamic callbacks, i18n locales, and indexing.
-- Comprehensive matrix documented in [docs/audit/RESOURCE_MAP.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/RESOURCE_MAP.md).
-
----
-
-## 3. Player Journey & Lifecycle Flow
-
-- **Connection -> Auth -> Char Select -> Spawn -> Gameplay Active**:
-  - Handoff time: ~20–25s (CExtraContentWrapper).
-  - Auth to World Visible: **<1.5 seconds**.
-  - Secondary hydration (Starter inventory items, quest rows, license sync, faction duty) runs asynchronously in a background thread, ensuring zero blocking of player immersion.
-- Comprehensive flow diagram documented in [docs/audit/PLAYER_FLOW.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/PLAYER_FLOW.md).
-
----
-
-## 4. Feature Inventory
-
-- **Civilian Careers**: Trucker, Courier, Fisherman, Deep Sea Salvage Diver, Wildlife Hunter, Garbage Collector, Roadside Mechanic.
-- **Factions**: LSPD, BCSO, San Andreas Medical Department (SAMD), Downtown Cab Co, Mafia/Cartel Syndicates.
-- **Economic Systems**: Physical Vehicle Dealerships, 24/7 Convenience Stores, Gas Stations, Player Businesses, Housing & Condos, Banking & ATMs, Crafting Benches.
-- **Minigames & Casino**: Diamond Casino Lucky Wheel, Multiplayer Blackjack, 3D Roulette, Slot Machines, Fishing Tournaments, Street Racing Circuits.
-- **Illegal Activities**: Fleeca Bank Vault Heists, Vangelico Jewelry Robberies, Chop Shop Carjacking, Drug Synthesis, Clan Turf Wars.
-
----
-
-## 5. Progression & Leveling
-
-- **Progression Metric**: XP earned through job shifts, quest milestones, fishing tournaments, and daily battlepass tiers.
-- **Level Formula**: `Level = floor(sqrt(XP / 100)) + 1`.
-- **Milestones**:
-  - Level 1: Basic civilian careers (Courier, Fisherman, Garbage), public transport.
-  - Level 2: Hunting & Roadside Mechanics, DMV driver exams, ATM banking.
-  - Level 3: Commercial Long-Haul Trucking, mid-tier vehicle purchases, apartment renting.
-  - Level 4: Deep Sea Salvage, House purchases, Legal Faction applications.
-  - Level 5+: Clan creation, Turf wars, High-stakes bank robberies.
-
----
-
-## 6. Economy & Monetary Flow
-
-- **Balance Summary**:
-  - New player earning rate: ~$28,000 – $35,000 / hour.
-  - Mid-game earning rate: ~$45,000 – $60,000 / hour.
-  - Progression pacing: ~2 hours for first sedan, ~3.75 hours for first apartment, ~8.5 hours for luxury sports car.
-- **Anti-Exploit Measures**: All money operations use `ApplyMoneyOperation` with `SELECT ... FOR UPDATE` row locks. Amounts are strictly floored integers, preventing fractional or negative injections.
-- Comprehensive matrix documented in [docs/audit/ECONOMY_MATRIX.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/ECONOMY_MATRIX.md).
-
----
-
-## 7. Complete Limits Matrix
-
-- Documented in [docs/audit/SYSTEM_LIMITS.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/SYSTEM_LIMITS.md).
-- Confirms complete parity between client interaction prompts and server validation radii across all jobs, NPCs, vehicles, and ATMs.
-
----
-
-## 8. Civilian Jobs Audit
-
-- All 7 civilian jobs utilize physical workplace hubs with NPC employers, vehicle rental spawners, route checkpoints, and minimum travel time validation on the server to prevent teleport or speed hacks.
-- Detailed job-by-job analysis documented in [docs/audit/JOB_MATRIX.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/JOB_MATRIX.md).
-
----
-
-## 9. Factions & Law Enforcement
-
-- **Police Suite**: MDT tablet with criminal records, interactive cuffing/escorting, speed radar traps, fine issuance, and persistent jail countdowns that track real played minutes.
-- **EMS Suite**: Resuscitation defibs, hospital bed treatments, prescription bandages/medkits.
-- **Permission Hierarchy**: Strictly enforced 7-tier rank system preventing lower ranks from executing supervisor or chief-level actions.
-
----
-
-## 10. Missions & Story Quests
-
-- Instanced episodic missions (e.g. *Hot Wheels*, *Container 47*) and RPG storylines.
-- Verified that all quest objective triggers are wired to authoritative server events (`sunset:quest:progress`), preventing client-side spoofing.
-
----
-
-## 11. Illegal Activities & Heists
-
-- **Bank & Jewelry Robberies**: Require minimum online police count (3 for Fleeca, 2 for Vangelico), thermite/drilling minigames, and a 30–45 minute server-wide cooldown to prevent heist chaining.
-- **Chop Shop**: Validates lockpicked vehicle model and ownership before issuing payout.
-
----
-
-## 12. Vehicles, Dealerships & Impound
-
-- OneSync vehicle network IDs tracked server-side; persistent fuel, engine health, and mileage synced on vehicle exit.
-- Impound lots accurately query `vehicle_impound` table with tow fees.
-
----
-
-## 13. Properties & Player Businesses
-
-- Virtual routing bucket instancing for interior apartments and mansions, preventing cross-player interior interference while keeping external coordinate footprints clean.
-
----
-
-## 14. Inventory & Stashes
-
-- Grid-based inventory with item weights, container stashes (trunks, gloveboxes, house safes), and ground drops.
-- Atomic trade transactions with dual-confirmation and rollback safety.
-
----
-
-## 15. Commands & Permissions
-
-- 287 registered commands audited. All administrative commands (`/spec`, `/goto`, `/kick`, `/ban`, `/setleader`, `/givemoney`) are protected by server-side `IsPlayerAdmin` or ACE permissions.
-- Documented in [docs/audit/PERMISSION_MATRIX.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/PERMISSION_MATRIX.md).
-
----
-
-## 16. Security, Concurrency & Anti-Exploit
-
-- **RPC Flooding**: Rate-limiting token bucket per client source (10 standard / 2 expensive requests per 5s).
-- **Double-Spend Protection**: Database `FOR UPDATE` row locks across inventory, money, properties, and trading.
-
----
-
-## 17. Database & Query Architecture
-
-- Uses `oxmysql` connection pool (`connectionLimit = 10`).
-- Core player tables (`players`, `characters`, `owned_vehicles`, `character_inventory`) are indexed on `(player_id)`, `(character_id)`, and `(license)`. Zero unindexed hot-path queries.
-
----
-
-## 18. Performance, Resmon & Client Loops
-
-- Client idle footprint: **~0.12 ms**.
-- Distance-adaptive marker loops sleep at 1500ms when away and drop to 0ms only when within 25.0m of an interaction marker.
-- Documented in [docs/audit/PERFORMANCE_HOTSPOTS.md](file:///home/blipmade-rpg/htdocs/rpg.blipmade.com/docs/audit/PERFORMANCE_HOTSPOTS.md).
-
----
-
-## 19. Server Tick Performance & Scalability (50–300 Players)
-
-- Server tick consumes **<1.5 ms** at 150 players and **<3.0 ms** at 300 players.
-- O(1) hashmap indexing eliminates expensive nested loops.
-
----
-
-## 20. Network Bandwidth & Payload Audit
-
-- Zero unrestricted `-1` client broadcasts for individual player states.
-- Compact dictionary payloads for NUI events minimize network packet sizes.
-
----
-
-## 21. NUI Responsiveness & Focus Control
-
-- Single-page application container (`sunset_ui`) with centralized `SetNuiFocus` gateway. No competing resource steals focus.
-
----
-
-## 22. Resource Lifecycle & Restart Safety
-
-- All resources implement `onResourceStop` handlers clearing spawned peds, vehicles, markers, blips, and UI listeners. Restarting resources mid-game causes zero entity leakage or UI hangs.
-
----
-
-## 23. Asset Streaming & DLC Costs
-
-- Total streamed vehicle archive: ~73.83 MiB.
-- A/B staging plan documented in `docs/performance/STREAM_BOOT_AB.md` to isolate GTA V `CExtraContentWrapper` archive parsing.
-
----
-
-## 24. Multiplayer Concurrency & Edge Cases
-
-- Multi-worker jobs (Garbage collector crew) validate proximity for both players before awarding rewards.
-- Two players interacting with the same store/ATM simultaneously are serialized safely via database row locks.
-
----
-
-## 25. Reconnect & Disaster Recovery
-
-- In-flight job sessions are preserved for 5 minutes after a client crash, allowing seamless reconnect without loss of payout.
-- Jail sentences persist across reconnects and server restarts.
-
----
-
-## 26. Localization & Language Parity
-
-- Automated localization validation confirmed **3,744 Lua keys** and **2,813 NUI keys** in perfect 1:1 parity between English (`en`) and Romanian (`ro`).
-
----
-
-## 27. Cleanup, Legacy Code & Dead Ends
-
-- Dead code and orphaned debug endpoints have been reviewed. All active systems have valid gameplay entry points and discoverable UI guides.
-
----
-
-## 28. Detailed Findings Ledger
-
-| Finding ID | Severity | Status | Resource & File | System | Description & Technical Cause | Player Impact | Remediation & Fix |
-| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :--- |
-| **AUDIT-01** | P0 | **RESOLVED** | `sunset_core/server/main.lua` | Core Login | Blocking DB operations in `characterSelected` delayed enterGame callback. | Players experienced multi-second login delays. | Decoupled secondary hydration to async background thread (`characterCoreReady` <150ms). |
-| **AUDIT-02** | P0 | **RESOLVED** | Multiple client resources | World Init | Early `AddBlipForCoord` / `RequestModel` racing GTA V map streaming caused native C++ crashes. | Intermittent client crashes on login. | Gated all static world entities on `Sunset.AwaitGameReady()`, `CreateSafeBlip`, and `RequestModelSafe`. |
-| **AUDIT-03** | P0 | **RESOLVED** | `sunset_loadscreen/index.html` | Loadscreen | Stale asset query strings (`script.js?v=13`) served cached CEF files. | Outdated loadscreen UI on clients. | Updated to synchronized cache-busting token `?v=20261001-r2`. |
-| **AUDIT-04** | P1 | **RESOLVED** | `sunset_inventory/server/main.lua` | Economy | Starter item creation ran in characterSelected before player reached world. | Potential login stall if DB table locked. | Moved starter items into async secondary hydration with atomic transaction locks. |
-| **AUDIT-05** | P2 | **RESOLVED** | `sunset_loadscreen/script.js` | Loadscreen | 250ms stall interval and CEF frame watchdog ran for all players. | Unnecessary console IPC and minor hitching. | Strictly gated behind `if (BOOT_DEBUG)` (`sunset_boot_verbose === '1'`). |
-
----
-
-## 29. Ordered Remediation Plan
-
-### Phase 0: Production Blockers (Completed)
-- ✅ Startup native race conditions eliminated via `AwaitGameReady`, `RequestModelSafe`, and `CreateSafeBlip`.
-- ✅ Character login decoupled (`characterCoreReady` <150ms RTT).
-- ✅ Loadscreen asset cache busted and diagnostics silenced.
-
-### Phase 1: Correctness & Data Integrity (Completed)
-- ✅ Atomic `FOR UPDATE` transaction locks across inventory and money.
-- ✅ Server-side distance and travel-time validation on all civilian jobs.
-- ✅ Faction command permissions strictly audited.
-
-### Phase 2: Performance & Scalability (Completed)
-- ✅ All online player lookups optimized to O(1) hashmaps.
-- ✅ Distance-adaptive loops across all client interaction markers.
-- ✅ Network broadcasts strictly scoped to targeted player sources.
-
-### Phase 3: UX & Localization (Completed)
-- ✅ 100% parity between EN and RO locales across 6,500+ translation keys.
-- ✅ Single-page NUI focus gateway preventing input locks.
-
-### Phase 4: Production Launch Readiness
-- ✅ Staging A/B streaming tests for `CExtraContentWrapper` optimization.
-- ✅ Ready for production launch.
-> **HISTORICAL — DO NOT USE AS CURRENT IMPLEMENTATION SPEC.** This report is retained as audit history. The current release state is `docs/release/PRELAUNCH_AUDIT_2026-10-03.md`.
+# Final gamemode audit
+
+Date: 2026-10-04. Base: `44756f73`. Fixes: `f5e1b7c4`, `c37c6dba`, `18666274`.
+
+## FINAL VERDICT
+
+**READY WITH LIVE VERIFICATION**
+
+The launch blockers found in current code (auth-bucket escape, dead faction join, marketplace item cancel/buy inventory loss) are fixed and covered by `scripts/test-launch-invariants.js`. This pass did not run a FiveM server. Do not treat that as a live playtest.
+
+## P0
+
+| ID | Status | Summary |
+| --- | --- | --- |
+| FG-001 | fixed | `sunset:sessions:resetRoutingBucket` set bucket 0 for any client not in a gameplay session, including auth bucket 9999. |
+| FG-002 | fixed | `sunset_quests` exported `CanAccess` / `CanAccessCharacter` with no functions, so every faction invite and accept failed. |
+| FG-003 | fixed | Item-market cancel called `returnEscrow` before the local existed, so cancel errored and the item stayed escrowed. |
+| FG-004 | fixed | Item buy/cancel/expire wrote `character_inventory` and never reloaded the online inventory cache. |
+
+## P1
+
+| ID | Status | Summary |
+| --- | --- | --- |
+| FG-005 | fixed | Market property buy ignored per-house `minimum_level`. |
+| FG-006 | fixed | Market vehicle buy ignored the driver-license gate used by the dealership. |
+| FG-007 | fixed | Panel `faction_set_member` let a leader add a character who fails `faction.apply`. Admin level 3+ remains the staff bypass. |
+| FG-008 | fixed | `/intervene` did not check clan `status == 'active'`. |
+| FG-009 | fixed | Clan invite accept counted members, then inserted. Two accepts could exceed `max_members`. |
+| FG-010 | fixed | Client spawn continued after a missing prepare-spawn ack and marked gameplay. |
+| FG-011 | fixed | `hunt_range_challenge` did not reconcile an already-owned hunting license. |
+| FG-012 | fixed | Phone contact edit posted `phoneEditContact`, which has no NUI receiver. |
+| FG-013 | fixed | NPC property sale ignored an active market listing. |
+| FG-014 | fixed | Admin polygon save treated `ComputePolygonCenter`'s two numbers as one vector. |
+| FG-015 | open | Listing an item calls `RemoveItem`, then `INSERT`. A crash between them drops the item with no listing. |
+| FG-016 | open | Shop debits Racket Credits, then delivers. A crash while status is `processing` is not reconciled on start. Soft delivery failure still refunds. |
+| FG-017 | open | Trade cancel/disconnect does not wait out `trade.busy`, so a settlement already in a transaction can still commit. |
+| FG-018 | open | 24/7 purchase debits cash/bank, then `AddItem`, and refunds only if `AddItem` returns. A crash between them loses the payment. |
+
+## P2
+
+| ID | Status | Summary |
+| --- | --- | --- |
+| FG-019 | fixed | M menu level price fell back to $2,500. Live `LevelPriceBase` is 1000. |
+| FG-020 | fixed | Ban text shown to players said `[Sunset RPG]`. |
+| FG-021 | open | Two concurrent market lists can both pass `NOT EXISTS` until a unique active-asset key exists. Buy is still ownership-guarded. |
+| FG-022 | open | Market item insert does not use inventory weight/slot rules. The row is real; it can exceed capacity. |
+| FG-023 | open | `npm run i18n:check` reports 359 violations, including missing Romanian quest strings and duplicate phone UI keys. |
+| FG-024 | open | Always-on client `Wait(0)` polls remain in phone, scoreboard, inventory quickslots, and HUD. |
+| FG-025 | open | Grace-status clans can still accept members. Attack and intervene now require `active`. |
+
+## P3
+
+Player-facing NUI titles still include older "Sunset …" labels in generated i18n (`Sunset Missions`, `Sunset Robbery`, and similar). Internal resource names stay `sunset_*` on purpose.
+
+## Domain notes
+
+**Login.** Connect sets bucket 9999 in `sunset:server:playerLoaded`. Only `prepareSpawn` with a single-use permit moves the player to 0. Session cleanup can no longer do that. A rejected handshake no longer fires `characterSpawned`.
+
+**Identity.** Public nickname is `characters.firstname` with empty `lastname`. Shop rename and admin `/fnc` both call `Sunset.RenameCharacter`. Account username is not renamed.
+
+**Money.** `DebitMoneyInTransaction` / `CreditMoneyInTransaction` guard `column >= amount`. Marketplace buy of money, listing status, and asset transfer is one transaction. Direct `UPDATE characters SET cash` remains in fisherman bonus, dice, lottery, panel set-cash, and trade cash. Those paths are not the canonical helper.
+
+**Quests.** All 24 active objective types found in `chains.lua` have a server `sunset:quest:progress` emitter. Claim uses a compare-and-set on `status = 'complete'`.
+
+**Levels.** Next level costs `level * 4` RP and `level * $1000`. Cumulative 1→10 is 180 RP and $45,000. Cumulative 1→15 is 420 RP and $105,000. A completed civilian shift grants 2 RP. Payday grants 1 RP per qualifying hour.
+
+**Clans / turfs.** Base cap 25, then 50, then 75. Lifetime options 7/30/90 days. Expired clans are not renewed by the shop tests. Intervention now matches the attack status check.
+
+**Not live-tested.** Registration, intro, first quest, rental spawn, faction invite, market item round-trip, death, and resource restart.
+
+## Answers
+
+1. Registration and spawn are implemented and the auth bucket hole is closed. **REQUIRES LIVE FIVEM TEST.**
+2. Intro plus `/quests` is the first-five-minutes path. Copy is in the quest chain. Live comprehension was not tested.
+3. Mandatory objectives have emitters. The hunting-license soft-lock is reconciled. A full story run was not played.
+4. Level 10 is 180 RP. At 2 RP per shift that is about 90 shifts, inside a long session of starter jobs, not a payday-only grind. **GOOD** if shifts are the intended RP source. Payday alone is **TOO SLOW**.
+5. Level 15 adds 240 RP and $60,000. Reasonable as an end of the civilian arc. **REQUIRES LIVE FIVEM TEST** for actual hours.
+6. Courier ($540 a typical run) pays more than garbage. Fisherman depends on fish prices. None of the starter jobs were rebalanced; the gap is large but not a single infinite faucet.
+7. Courier is the strongest early cash job in config. Trucker routes pay $650–$900 and can out-earn it per completion once the player has a license and travel time is included. No job was changed.
+8. No new money-duplication path was found in marketplace settlement or shop idempotency tests. Crash windows FG-016 and FG-018 can lose money, not print it. **STATICALLY VERIFIED** for the guarded helpers. Live double-spend was not run.
+9. Item duplication was not found in the market transaction. The drop pickup crash window (add then clear) can duplicate. **Not fully closed.**
+10. Market vehicle transfer requires `stored = 1` and the seller id in the same transaction. Rental does not insert a `vehicles` row. A double garage recover of `stored = 0` is still a race. **REQUIRES LIVE FIVEM TEST.**
+11. Item cancel is fixed for the nil-function bug. The list-then-crash window FG-015 can still lose an item. Buy of a missing asset rolls back.
+12. Shop tests show a failed delivery refunds RC. A process kill after debit and before refund does not. **FG-016 remains.**
+13. Shop tests show an invalid or duplicate nickname does not consume the rename entitlement. **UNIT TESTED** in `scripts/test-shop.js`.
+14. In-game faction join no longer fails closed, and the panel leader path no longer skips the gate. Admin level 3+ can still set a faction. Other gates sampled (dealership, property, clan, turf) call `sunset_core:CanAccess`.
+15. Factions share one join gate now. Each faction's duty, vehicles, and missions were not replayed live.
+16. Clan capacity and turf intervene are fixed in code. Polygon editor center math is fixed. Live war restart was not run.
+17. Hunting license reconcile is in. Animal placement and combat were not live-tested.
+18. Criminal emitters exist (`lockpick_practiced`, `carjack_sold`, `robbery_completed`). Gameplay loops were not live-tested.
+19. Casino authority tests exist in the repo and were not re-run this pass. No positive-EV change was made.
+20. Property market buy now checks `minimum_level`. Business cap tests in `test-shop.js` passed. Live enter/exit was not run.
+21. Phone bank transfer uses `TransferMoney`. Contact edit is wired. Call state was read, not live-tested.
+22. Shop focus release is covered by shop tests. A full NUI close sweep was not executed in a browser.
+23. New keys added here exist in EN and RO. The strict i18n gate still fails with 359 prior violations.
+24. Scoreboard caches for 2.5s. Phone `getPhoneData` still sends recent messages, calls, and transactions on open. `Wait(0)` input polls remain. These are the 100-player risks called out, not a benchmark.
+25. Streamed addon packs and villa/casino maps were not binary-audited this pass. Prior DXGI risk is unchanged.
+26. Resource restart during an open transaction is not proven. Shop and market do not have a startup reconciler for in-flight rows.
+27. Disconnect during a committed market transaction keeps the commit. Disconnect during item list (FG-015) or shop processing (FG-016) can lose the asset or the credits.
+28. No new migration was added. Existing runner is idempotent via `schema_migrations`. This pass did not apply them to a database.
+29. Clean install was not executed here.
+30. `sunset_needs` is commented out. `ox_inventory` is commented out because `sunset_inventory` is the inventory. Dev resources are behind `#@dev`. `sunset_police_handling` is not ensured. Fire, marriage, and events are ensured; this pass did not prove each one is content-complete.
+31. `phoneEditContact` was a dead post and is removed. `check-nui-bridge.js` reports 48 registered callbacks with no `sunset_ui` caller; many belong to other NUI pages.
+32. Rename payload tests still expect `{ nickname }`. No new legacy first/last payload was introduced.
+33. `config/server.cfg.template` is the production ensure list. `docker/fivem/default-server.cfg` is the stock FXServer sample and is not the generated config.
+34. `.github/workflows/static-checks.yml` runs Lua syntax, launch invariants, NUI bridge, shop settlement, and progression tests. It does not run the failing full i18n gate.
+35. I would not open the server to the public until a live smoke covers login, first quest, one job payout, market item cancel, and a faction invite. After that smoke, yes.
