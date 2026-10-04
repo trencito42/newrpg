@@ -108,11 +108,13 @@ local function reconcileExistingProgress(source, char)
 
     -- 1. Check Driver License
     local hasDriverLicense = false
+    local hasHuntingLicense = false
     if GetResourceState('sunset_licenses') == 'started' then
         local lics = exports.sunset_licenses:GetLicenses(source)
         if type(lics) == 'table' then
             for _, l in ipairs(lics) do
-                if l.valid and l.license_type == 'driver' then hasDriverLicense = true break end
+                if l.valid and l.license_type == 'driver' then hasDriverLicense = true end
+                if l.valid and l.license_type == 'hunting' then hasHuntingLicense = true end
             end
         end
     end
@@ -122,6 +124,11 @@ local function reconcileExistingProgress(source, char)
         markCompleteIfSatisfied('onb_banking_atm', 'onboarding', true)
         markCompleteIfSatisfied('onb_jobcenter', 'onboarding', true)
         markCompleteIfSatisfied('drv_license', 'driving', true)
+    end
+    -- Hunting range progress is emitted only when the license is granted.
+    -- A license earned before the quest is active must still satisfy it.
+    if hasHuntingLicense then
+        markCompleteIfSatisfied('hunt_range_challenge', 'hunting', true)
     end
 
     -- 2. Check Owned Vehicles
@@ -370,5 +377,33 @@ AddEventHandler('sunset:quest:progress', function(charId, eventType, amount, ctx
         end
     end
 end)
+
+-- Faction (and the panel bridge) call these exports. They must return
+-- (allowed, reasonCode, detail), not the core gate table. A missing export
+-- made every in-game faction invite fail; returning the table would make
+-- every invite succeed because a table is truthy.
+local function gateTuple(access)
+    if type(access) ~= 'table' then
+        return false, 'progression_unavailable', nil
+    end
+    if access.allowed == false then
+        local missing = type(access.missing) == 'table' and access.missing[1] or nil
+        local reason = 'level_too_low'
+        if missing and missing.type == 'quest' then reason = 'quest_required' end
+        if missing and missing.type == 'license' then reason = 'license_required' end
+        return false, reason, missing
+    end
+    return true, nil, nil
+end
+
+function CanAccess(source, gateId)
+    return gateTuple(exports.sunset_core:CanAccess(source, gateId))
+end
+exports('CanAccess', CanAccess)
+
+function CanAccessCharacter(characterId, gateId)
+    return gateTuple(exports.sunset_core:CanAccessCharacter(characterId, gateId))
+end
+exports('CanAccessCharacter', CanAccessCharacter)
 
 print('^2[sunset_quests]^7 Racket RPG Canonical Progression Service Online')

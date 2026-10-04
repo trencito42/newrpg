@@ -5,7 +5,7 @@ function Sunset.GetLevelRespectCost(level)
 end
 
 function Sunset.GetLevelMoneyCost(level)
-    return math.max(1, tonumber(level) or 1) * (Sunset.Config.LevelPriceBase or 2500)
+    return math.max(1, tonumber(level) or 1) * (Sunset.Config.LevelPriceBase or 1000)
 end
 
 function Sunset.GetCharacterFaction(char)

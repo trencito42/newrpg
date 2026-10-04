@@ -141,6 +141,7 @@ Sunset.Locales['ro'] = {
     ['property.renter.not_active'] = 'Acest personaj nu este chirias activ la proprietate.',
     ['property.renter.removed']    = 'Chiriasul #{id} a fost evacuat.',
     ['property.sell.confirm']      = 'Aceasta actiune vinde definitiv {property} pentru {percent}% (${refund}). Confirma pentru a continua.',
+    ['property.sell.listed']       = 'Anuleaza anuntul din piata inainte sa vinzi proprietatea catre oras.',
     ['property.sell.success']      = 'Proprietatea a fost vanduta. ${refund} au fost depusi in contul bancar.',
     ['property.action.unknown']    = 'Actiune necunoscuta pentru proprietate.',
     ['property.update']            = 'Actualizare proprietate',
@@ -527,6 +528,7 @@ Sunset.Locales['ro'] = {
     ['dealership.message.vehicle_model_value_is_not_available_in_this_game'] = 'Modelul de vehicul „%s” nu este disponibil in aceasta versiune de joc.',
     ['dealership.message.your_character_is_not_loaded_reconnect_and_select_it'] = 'Personajul tau nu este incarcat. Reconectati-va si selectati-l din nou.',
     ['dealership.message.your_previous_purchase_is_still_being_processed'] = 'Achizitia dvs. anterioara este inca in curs de procesare.',
+    ['dealership.message.purchase_requires_driver_license'] = 'Ai nevoie de un permis de conducere valid ca sa cumperi un vehicul.',
     ['death.message.112_received_medic_police_dispatched_attacker_reported_for_murder'] = '112 primit — Medic & Police dispecerat! Atacatorul raportat pentru crima.',
     ['death.message.a_112_emergency_call_reported_your_crime_you_are'] = 'Un apel de urgenta 112 a raportat crima dvs.! Acum esti CADUT ★5 pentru crima.',
     ['death.message.no_character'] = 'Nici un caracter',
@@ -3826,8 +3828,8 @@ Sunset.Locales['ro'] = {
     ['missions.msg.resource_stopped'] = 'Resursa s-a oprit',
     ['missions.msg.mission_failed_you_died'] = 'Misiune esuata — ai murit',
     -- sunset_panel_bridge
-    ['panel_bridge.msg.sunset_rpg_banned_by'] = '[Sunset RPG] Ban de la {username}: {reason}',
-    ['panel_bridge.msg.sunset_rpg_auto_banned_24h_for'] = '[Sunset RPG] Ban automat 24h pentru acumularea a 3 avertismente. Ultimul: {reason}',
+    ['panel_bridge.msg.sunset_rpg_banned_by'] = '[RACKET] Ban de la {username}: {reason}',
+    ['panel_bridge.msg.sunset_rpg_auto_banned_24h_for'] = '[RACKET] Ban automat 24h pentru acumularea a 3 avertismente. Ultimul: {reason}',
     -- sunset_racing
     ['racing.msg.race_hub'] = 'Hub de curse',
     ['racing.msg.cp'] = "Punct {index}/{total}",

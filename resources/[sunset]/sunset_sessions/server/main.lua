@@ -354,9 +354,16 @@ RegisterNetEvent('sunset:sessions:resetRoutingBucket', function()
     -- [SEC2] a client may not drop out of a server-owned instance bucket while its session is live
     if not exports.sunset_core:RateLimit(src, 'resetBucket', 2000) then return end
     if GetSessionBySource(src) then return end
+    -- Auth isolation (bucket 9999) is released only by sunset:server:prepareSpawn
+    -- after a single-use spawn permit. This cleanup event must not be a bypass.
+    local AUTH_BUCKET = 9999
+    if GetPlayerRoutingBucket(src) == AUTH_BUCKET then return end
+    local player = exports.sunset_core:GetPlayer(src)
+    if not player or not player.character or not player.character.id then return end
     if GetResourceState('sunset_properties') == 'started' then
         pcall(function() exports.sunset_properties:LeaveProperty(src) end)
     end
+    if GetPlayerRoutingBucket(src) == AUTH_BUCKET then return end
     SetPlayerRoutingBucket(src, 0)
 end)
 

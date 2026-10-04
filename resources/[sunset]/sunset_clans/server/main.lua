@@ -1141,27 +1141,34 @@ local function acceptInvite(source)
         end
     end
 
-    local clanRow = MySQL.single.await('SELECT max_members, status FROM clans WHERE id = ?', { invite.clan_id })
-    if clanRow and clanRow.status == 'expired' then
-        return nil, exports.sunset_core:TFor(source, 'clans.err.clan_is_expired')
-    end
-
-    local count = clanMemberCount(invite.clan_id)
-    local maxMembers = tonumber(clanRow and clanRow.max_members) or SunsetClans.MaxMembers
-    if count >= maxMembers then
-        return nil, { localeKey = 'clans.message.that_clan_is_full' }
-    end
-
-    local insertOk, insertErr = pcall(function()
-        MySQL.insert.await('INSERT INTO clan_members (clan_id, character_id, rank) VALUES (?, ?, ?)', {
-            invite.clan_id, cid, 1,
-        })
+    -- oxmysql startTransaction returns only true/false (false rolls back).
+    -- Capacity is checked inside FOR UPDATE so two accepts cannot both pass.
+    local okJoin, committed = pcall(function()
+        return MySQL.startTransaction(function(query)
+            local rows = query.await('SELECT max_members, status FROM clans WHERE id = ? FOR UPDATE', { invite.clan_id })
+            local clan = rows and rows[1]
+            if not clan or clan.status == 'expired' then return false end
+            local counts = query.await('SELECT COUNT(*) AS n FROM clan_members WHERE clan_id = ?', { invite.clan_id })
+            local count = counts and counts[1] and tonumber(counts[1].n) or 0
+            local maxMembers = tonumber(clan.max_members) or SunsetClans.MaxMembers
+            if count >= maxMembers then return false end
+            query.await('INSERT INTO clan_members (clan_id, character_id, rank) VALUES (?, ?, 1)', { invite.clan_id, cid })
+            query.await('DELETE FROM clan_invites WHERE clan_id = ? AND character_id = ?', { invite.clan_id, cid })
+            return true
+        end)
     end)
-    if not insertOk then
-        print(('[sunset_clans] acceptInvite insert failed for %s: %s'):format(source, tostring(insertErr)))
+    if not okJoin or committed ~= true then
+        local clanRow = MySQL.single.await('SELECT max_members, status FROM clans WHERE id = ?', { invite.clan_id })
+        if not clanRow or clanRow.status == 'expired' then
+            return nil, exports.sunset_core:TFor(source, 'clans.err.clan_is_expired')
+        end
+        local count = clanMemberCount(invite.clan_id)
+        if count >= (tonumber(clanRow.max_members) or SunsetClans.MaxMembers) then
+            return nil, { localeKey = 'clans.message.that_clan_is_full' }
+        end
+        print(('[sunset_clans] acceptInvite insert failed for %s: %s'):format(source, tostring(committed)))
         return nil, { localeKey = 'clans.message.could_not_join_the_clan_ask_the_leader_to' }
     end
-    MySQL.update.await('DELETE FROM clan_invites WHERE clan_id = ? AND character_id = ?', { invite.clan_id, cid })
     PendingInvites[source] = nil
     ClanDisplay.sync(source)
     -- [QUESTS 7-9] clan chain: joining a clan drives quest progress.

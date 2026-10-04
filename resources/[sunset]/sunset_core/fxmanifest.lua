@@ -126,4 +126,5 @@ server_exports {
     'OnlinePlayerIds',
     'CommandListKeys',
     'CanAccess',
+    'CanAccessCharacter',
 }

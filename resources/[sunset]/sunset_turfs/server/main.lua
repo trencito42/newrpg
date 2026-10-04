@@ -604,12 +604,14 @@ exports.sunset_core:RegisterCallback('sunset:turfs:savePolygon', function(source
         }
     end
 
-    local center = SunsetTurfs.ComputePolygonCenter(cleanPoints)
-    local radius = SunsetTurfs.ComputePolygonRadius(cleanPoints, center)
+    local cx, cy = SunsetTurfs.ComputePolygonCenter(cleanPoints)
+    local radius = SunsetTurfs.ComputePolygonRadius(cleanPoints, cx, cy)
+    local cz = cleanPoints[1] and cleanPoints[1].z or 0.0
+    local center = vector3(cx, cy, cz)
     local jsonStr = json.encode(cleanPoints)
 
     MySQL.update.await('UPDATE turfs SET polygon = ?, x = ?, y = ?, z = ?, radius = ? WHERE id = ?', {
-        jsonStr, center.x, center.y, center.z, radius, turfId
+        jsonStr, cx, cy, cz, radius, turfId
     })
 
     -- Update normalized turf_points
@@ -764,6 +766,11 @@ local function runIntervene(source)
             TriggerClientEvent('sunset:client:notify', source, access.reason or exports.sunset_core:TFor(source, 'turfs.message.you_are_not_in_a_clan'), 'error')
             return
         end
+    end
+
+    if pClan.status and pClan.status ~= 'active' then
+        TriggerClientEvent('sunset:client:notify', source, exports.sunset_core:TFor(source, 'clans.err.clan_is_expired'), 'error')
+        return
     end
 
     if not canDeclareTurfAttack(pClan.rank) then

@@ -98,7 +98,7 @@ local function prepareSpawnBucket()
     local t0 = GetGameTimer()
     TriggerServerEvent('sunset:server:prepareSpawn', reqId)
 
-    SetTimeout(1000, function()
+    SetTimeout(4000, function()
         if pendingPrepareAck and pendingPrepareAck.id == reqId then
             pendingPrepareAck = nil
             p:resolve(nil)
@@ -110,9 +110,13 @@ local function prepareSpawnBucket()
     local rtt = GetGameTimer() - t0
     local totalElapsed = spawnFlowTimer and (GetGameTimer() - spawnFlowTimer) or rtt
     local oldBucket = res and res.oldBucket or 'unknown'
-    local newBucket = res and res.newBucket or '0'
+    local newBucket = res and res.newBucket
     print(('^2[LOGIN-PERF] BUCKET_PREPARED +%dms (rtt=%dms) | old=%s new=%s^7'):format(
         totalElapsed, rtt, tostring(oldBucket), tostring(newBucket)))
+    if not res or tonumber(newBucket) ~= 0 then
+        print('^1[SEC-PERMIT] prepareSpawnBucket rejected or timed out — spawn aborted^7')
+        return false
+    end
     return true, newBucket, oldBucket, rtt
 end
 
@@ -247,8 +251,12 @@ local function spawnPlayer(char, spawnPosition)
 
     FreezeEntityPosition(ped, true)
 
-    -- Routing bucket transition
-    prepareSpawnBucket()
+    -- Routing bucket transition. A missing ack used to continue into gameplay
+    -- while the player was still isolated in the auth bucket.
+    local bucketOk = prepareSpawnBucket()
+    if not bucketOk then
+        error('BUCKET_NOT_READY')
+    end
 
     LocalPlayer.state:set('spawnPhase', 'SPAWNING_WORLD', false)
 
@@ -295,6 +303,18 @@ AddEventHandler('sunset:client:spawnCharacter', function(char, spawnPosition)
     spawning = true
     CreateThread(function()
         local ok, err = pcall(spawnPlayer, char, spawnPosition)
+        if not ok and tostring(err):find('BUCKET_NOT_READY', 1, true) then
+            print('^1[SPAWN CRITICAL]^7 spawn permit was not accepted; player stays out of gameplay')
+            local livePed = PlayerPedId()
+            FreezeEntityPosition(livePed, false)
+            SetEntityVisible(livePed, true, false)
+            DoScreenFadeIn(300)
+            spawning = false
+            LocalPlayer.state:set('spawnPhase', 'SPAWN_REJECTED', false)
+            LocalPlayer.state:set('isSpawning', false, false)
+            spawnFlowTimer = nil
+            return
+        end
         if not ok then
             print(('^1[SPAWN CRITICAL]^7 spawnPlayer error: %s -> releasing player'):format(tostring(err)))
             local livePed = PlayerPedId()

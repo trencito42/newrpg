@@ -703,6 +703,11 @@ local function sellHouse(source,id,confirm)
     local owner,prop,err=ownedProperty(source,id)
     if not prop then return nil,err end
     local refund=math.floor((tonumber(prop.price) or 0)*0.7)
+    if GetResourceState('sunset_phone') == 'started' then
+        local listed = false
+        pcall(function() listed = exports.sunset_phone:MarketPropertyListed(prop.id) == true end)
+        if listed then return nil, t(source, 'property.sell.listed') end
+    end
     if not confirm then
         return false,t(source, 'property.sell.confirm', { property = prop.label, percent = 70, refund = refund })
     end

@@ -142,6 +142,7 @@ Sunset.Locales['en'] = {
     ['property.renter.not_active'] = 'That character is not an active tenant at this property.',
     ['property.renter.removed']    = 'Tenant #{id} was removed.',
     ['property.sell.confirm']      = 'This permanently sells {property} for {percent}% (${refund}). Confirm to proceed.',
+    ['property.sell.listed']       = 'Cancel the marketplace listing before selling this property to the city.',
     ['property.sell.success']      = 'Property sold. ${refund} was deposited in your bank.',
     ['property.action.unknown']    = 'Unknown property action.',
     ['property.update']            = 'Property update',
@@ -534,6 +535,7 @@ Sunset.Locales['en'] = {
     ['dealership.message.vehicle_model_value_is_not_available_in_this_game'] = 'Vehicle model "%s" is not available in this game build.',
     ['dealership.message.your_character_is_not_loaded_reconnect_and_select_it'] = 'Your character is not loaded. Reconnect and select it again.',
     ['dealership.message.your_previous_purchase_is_still_being_processed'] = 'Your previous purchase is still being processed.',
+    ['dealership.message.purchase_requires_driver_license'] = 'A valid driver license is required to buy a vehicle.',
     ['death.message.112_received_medic_police_dispatched_attacker_reported_for_murder'] = '112 received — Medic & Police dispatched! Attacker reported for murder.',
     ['death.message.a_112_emergency_call_reported_your_crime_you_are'] = 'A 112 emergency call reported your crime! You are now WANTED ★5 for murder.',
     ['death.message.no_character'] = 'No character',
@@ -3883,8 +3885,8 @@ Sunset.Locales['en'] = {
     ['missions.msg.resource_stopped'] = 'Resource stopped',
     ['missions.msg.mission_failed_you_died'] = 'Mission failed — you died',
     -- sunset_panel_bridge
-    ['panel_bridge.msg.sunset_rpg_banned_by'] = '[Sunset RPG] Banned by {username}: {reason}',
-    ['panel_bridge.msg.sunset_rpg_auto_banned_24h_for'] = '[Sunset RPG] Auto-banned 24h for accumulating 3 warnings. Last: {reason}',
+    ['panel_bridge.msg.sunset_rpg_banned_by'] = '[RACKET] Banned by {username}: {reason}',
+    ['panel_bridge.msg.sunset_rpg_auto_banned_24h_for'] = '[RACKET] Auto-banned 24h for accumulating 3 warnings. Last: {reason}',
     -- sunset_racing
     ['racing.msg.race_hub'] = 'Race Hub',
     ['racing.msg.cp'] = 'CP {index}/{total}',

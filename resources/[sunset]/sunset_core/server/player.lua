@@ -973,3 +973,61 @@ function Sunset.CanAccess(source, gateId)
 end
 exports('CanAccess', Sunset.CanAccess)
 
+-- Offline / by-character gate. Online characters use the live CanAccess path
+-- so license and quest caches stay authoritative. Used by faction panel joins
+-- and sunset_quests:CanAccessCharacter.
+function Sunset.CanAccessCharacter(characterId, gateId)
+    characterId = tonumber(characterId)
+    gateId = tostring(gateId or '')
+    if not characterId then
+        return { allowed = false, reason = 'No active character loaded.' }
+    end
+    for _, src in ipairs(GetPlayers()) do
+        local srcn = tonumber(src)
+        local live = srcn and Sunset.GetCharacter(srcn)
+        if live and tonumber(live.id) == characterId then
+            return Sunset.CanAccess(srcn, gateId)
+        end
+    end
+    local row = MySQL.single.await(
+        'SELECT id, level, paydays_received FROM characters WHERE id = ?',
+        { characterId }
+    )
+    if not row then
+        return { allowed = false, reason = 'No active character loaded.' }
+    end
+    local paydays = tonumber(row.paydays_received) or 0
+    local licensesMap = {}
+    local licRows = MySQL.query.await(
+        'SELECT license_type, expires_at_payday FROM character_licenses WHERE character_id = ?',
+        { characterId }
+    ) or {}
+    for _, lic in ipairs(licRows) do
+        local exp = tonumber(lic.expires_at_payday)
+        if not exp or paydays < exp then
+            licensesMap[tostring(lic.license_type)] = true
+        end
+    end
+    local completedQuestsMap = {}
+    local questRows = MySQL.query.await([[
+        SELECT quest_key FROM character_quests
+        WHERE character_id = ? AND status IN ('complete', 'claimed')
+    ]], { characterId }) or {}
+    for _, quest in ipairs(questRows) do
+        completedQuestsMap[quest.quest_key] = true
+    end
+    local clanData = nil
+    local mem = MySQL.single.await([[
+        SELECT c.id AS clan_id
+        FROM clan_members m
+        INNER JOIN clans c ON c.id = m.clan_id
+        WHERE m.character_id = ?
+        LIMIT 1
+    ]], { characterId })
+    if mem and mem.clan_id then
+        clanData = { clan_id = mem.clan_id }
+    end
+    return Sunset.EvaluateGate(gateId, { id = characterId, level = row.level }, licensesMap, completedQuestsMap, clanData)
+end
+exports('CanAccessCharacter', Sunset.CanAccessCharacter)
+

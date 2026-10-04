@@ -598,6 +598,16 @@ local function actionResult(row)
 
         if row.action == 'set_faction' or row.action == 'faction_set_member' then
             if factionId == 'none' or factionId == '' then factionId = nil; grade = 0 end
+            local currentFaction = targetChar.faction_id
+            local joining = factionId and currentFaction ~= factionId
+            if joining and actorAdminLevel < 3 and GetResourceState('sunset_quests') == 'started' then
+                local gateOk, allowed = pcall(function()
+                    return exports.sunset_quests:CanAccessCharacter(targetChar.id, 'faction.apply')
+                end)
+                if not gateOk or allowed ~= true then
+                    return false, 'faction_progression_required'
+                end
+            end
             if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) then
                 return false, 'faction_change_failed'
             end
