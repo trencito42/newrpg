@@ -36,6 +36,7 @@ server_exports {
     'SetItemMetadata', 'GetGasCanLiters', 'CountItem', 'TakeAllItems',
     'TryAddItem', 'RemoveItemById', 'ReloadInventory', 'SetCapacityBonus', 'SetWeaponAmmo',
     'ApplyOperation', 'RemoveStolenByRobbery', 'PurgeStolenLoot',
+    'IsAssetOfferedInTrade',
 }
 
 client_exports {

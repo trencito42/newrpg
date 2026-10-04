@@ -118,12 +118,27 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
         end
     end
 
+    local options = { vehicles = {}, items = {}, properties = {} }
+    pcall(function() options = exports.sunset_phone:MarketOptions(char.id) or options end)
+
     return {
         properties = properties,
         businesses = businesses,
         ads = ads,
         listings = listings,
+        options = options,
         mine = mine,
+        myListings = (function()
+            local ok, rows = pcall(function()
+                return MySQL.query.await([[
+                    SELECT id, listing_type, asset_id, asking_price, status
+                    FROM phone_market_listings
+                    WHERE seller_character_id = ?
+                    ORDER BY id DESC LIMIT 20
+                ]], { tonumber(char.id) })
+            end)
+            return ok and rows or {}
+        end)(),
     }
 end)
 

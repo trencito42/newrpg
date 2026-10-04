@@ -1,7 +1,9 @@
 -- Player marketplace. Vehicles, tradable items, and player-owned properties.
 -- Server-owned properties and CNN ads stay on their existing read-only queries.
 
-local FEE_NUM, FEE_DEN = 5, 100
+local function marketFeePercent()
+    return math.max(0, math.min(25, math.floor(tonumber(Sunset.Config and Sunset.Config.MarketFeePercent) or 5)))
+end
 local BLOCKED_ITEMS = { id_card = true, phone = true }
 
 local function charOf(source)
@@ -89,34 +91,36 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketBrowse', function(source
         LEFT JOIN properties p ON l.listing_type = 'property' AND p.id = CAST(l.asset_id AS UNSIGNED)
         WHERE l.status = 'active' AND (l.expires_at IS NULL OR l.expires_at > CURRENT_TIMESTAMP)
           AND (? = 'all' OR l.listing_type = ?)
+          AND (? = '' OR l.asset_id LIKE CONCAT('%', ?, '%')
+            OR IFNULL(v.model, '') LIKE CONCAT('%', ?, '%')
+            OR IFNULL(v.plate, '') LIKE CONCAT('%', ?, '%')
+            OR IFNULL(p.label, '') LIKE CONCAT('%', ?, '%'))
         ORDER BY l.id DESC
         LIMIT ? OFFSET ?
-    ]], { kind, kind, size, offset }) or {}
+    ]], { kind, kind, q, q, q, q, q, size, offset }) or {}
     local out = {}
     for _, row in ipairs(rows) do
         local title = row.listing_type == 'vehicle' and ((row.model or 'vehicle') .. ' ' .. (row.plate or ''))
             or row.listing_type == 'property' and (row.property_label or 'property')
             or (Sunset.Items[row.asset_id] and (Sunset.Items[row.asset_id].label or row.asset_id) or row.asset_id)
-        if q == '' or title:lower():find(q:lower(), 1, true) then
-            out[#out + 1] = {
-                id = tonumber(row.id),
-                listingId = tonumber(row.id),
-                category = row.listing_type == 'vehicle' and 'vehicles' or row.listing_type == 'item' and 'items' or 'player_properties',
-                title = title,
-                price = tonumber(row.asking_price) or 0,
-                quantity = tonumber(row.quantity) or 1,
-                seller = publicName(row.firstname, row.lastname),
-                phone = row.phone_number,
-                characterId = tonumber(row.seller_character_id),
-                kind = 'player',
-                model = row.model,
-            }
-        end
+        out[#out + 1] = {
+            id = tonumber(row.id),
+            listingId = tonumber(row.id),
+            category = row.listing_type == 'vehicle' and 'vehicles' or row.listing_type == 'item' and 'items' or 'player_properties',
+            title = title,
+            price = tonumber(row.asking_price) or 0,
+            quantity = tonumber(row.quantity) or 1,
+            seller = publicName(row.firstname, row.lastname),
+            phone = row.phone_number,
+            characterId = tonumber(row.seller_character_id),
+            kind = 'player',
+            model = row.model,
+        }
     end
     local mine = MySQL.query.await([[
         SELECT id, listing_type, asset_id, quantity, asking_price, status
         FROM phone_market_listings
-        WHERE seller_character_id = ? AND status = 'active'
+        WHERE seller_character_id = ?
         ORDER BY id DESC LIMIT 20
     ]], { char.id }) or {}
     return { rows = out, mine = mine, page = page }
@@ -145,6 +149,11 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListVehicle', function(s
         WHERE listing_type = 'vehicle' AND asset_id = ? AND status = 'active' LIMIT 1
     ]], { tostring(vehicleId) })
     if listed then return nil, { localeKey = 'phone.message.database_error_while_saving_contact' } end
+    if GetResourceState('sunset_inventory') == 'started' then
+        local busy = false
+        pcall(function() busy = exports.sunset_inventory:IsAssetOfferedInTrade('vehicle', vehicleId) end)
+        if busy then return nil, { localeKey = 'vehicles.message.vehicle_transfer_failed' } end
+    end
     local id = MySQL.insert.await([[
         INSERT INTO phone_market_listings
             (seller_character_id, listing_type, asset_id, quantity, asking_price, expires_at)
@@ -187,6 +196,8 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListProperty', function(
         return nil, { localeKey = 'phone.message.invalid_contact_id' }
     end
     local row = MySQL.single.await('SELECT id FROM properties WHERE id = ? AND owner_character_id = ? AND enabled = 1', { propertyId, char.id })
+    local renters = MySQL.scalar.await('SELECT COUNT(*) FROM property_rentals WHERE property_id = ? AND active = 1', { propertyId })
+    if tonumber(renters) and tonumber(renters) > 0 then return nil, { localeKey = 'phone.message.invalid_contact_id' } end
     if not row then return nil, { localeKey = 'phone.message.invalid_contact_id' } end
     local listed = MySQL.scalar.await([[
         SELECT id FROM phone_market_listings
@@ -201,6 +212,11 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListProperty', function(
     return { ok = true, id = id }
 end)
 
+local function mustOne(query, sql, params)
+    local changed = query.await(sql, params)
+    return tonumber(changed) == 1
+end
+
 local function finishBuy(source, listingId)
     local char = charOf(source)
     if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
@@ -214,40 +230,103 @@ local function finishBuy(source, listingId)
     if tonumber(row.seller_character_id) == tonumber(char.id) then
         return nil, { localeKey = 'phone.message.invalid_contact_id' }
     end
-    if not lockListing(listingId) then
-        return nil, { localeKey = 'phone.message.contact_not_found_or_already_deleted' }
-    end
-    local price = tonumber(row.asking_price) or 0
-    if not exports.sunset_core:RemoveMoney(source, 'bank', price, 'market_buy') then
-        reopen(listingId)
-        return nil, { localeKey = 'dealership.message.rental_payment_failed' }
-    end
-    local fee = math.floor(price * FEE_NUM / FEE_DEN)
-    local payout = price - fee
-    local ok = false
-    if row.listing_type == 'vehicle' then
-        if GetResourceState('sunset_vehicles') == 'started' then
-            ok = exports.sunset_vehicles:TransferVehicleOwnership(tonumber(row.asset_id), tonumber(row.seller_character_id), char.id) == true
+    if row.listing_type == 'item' then
+        local def = Sunset.Items[row.asset_id]
+        local weapon = def and def.weapon and string.upper(def.weapon)
+        local melee = weapon and ({
+            WEAPON_KNIFE = true, WEAPON_BAT = true, WEAPON_CROWBAR = true, WEAPON_HAMMER = true,
+            WEAPON_GOLFCLUB = true, WEAPON_BOTTLE = true, WEAPON_DAGGER = true, WEAPON_HATCHET = true,
+            WEAPON_KNUCKLE = true, WEAPON_MACHETE = true, WEAPON_WRENCH = true, WEAPON_POOLCUE = true,
+            WEAPON_BATTLEAXE = true, WEAPON_STONE_HATCHET = true, WEAPON_SWITCHBLADE = true,
+            WEAPON_FLASHLIGHT = true, WEAPON_NIGHTSTICK = true, WEAPON_FIREEXTINGUISHER = true,
+            WEAPON_PETROLCAN = true, WEAPON_UNARMED = true,
+        })[weapon]
+        if weapon and not melee and GetResourceState('sunset_licenses') == 'started' then
+            local allowed = exports.sunset_licenses:HasLicense(source, 'weapon')
+            if not allowed then return nil, { localeKey = 'inventory.message.value_cannot_receive_value_without_a_valid_firearm_license' } end
         end
-    elseif row.listing_type == 'item' then
-        ok = giveItem(char.id, row.asset_id, row.quantity)
     elseif row.listing_type == 'property' then
-        local changed = MySQL.update.await([[
-            UPDATE properties SET owner_character_id = ?, for_sale = 0
-            WHERE id = ? AND owner_character_id = ?
-        ]], { char.id, tonumber(row.asset_id), tonumber(row.seller_character_id) })
-        ok = tonumber(changed) == 1
+        local access = exports.sunset_core:CanAccess(source, 'property.buy')
+        if access and access.allowed == false then
+            return nil, { localeKey = 'phone.message.invalid_contact_id' }
+        end
     end
-    if not ok then
-        exports.sunset_core:AddMoney(source, 'bank', price, 'market_refund')
-        if row.listing_type == 'item' then giveItem(row.seller_character_id, row.asset_id, row.quantity) end
-        reopen(listingId)
+    local price = math.floor(tonumber(row.asking_price) or 0)
+    local fee = math.floor(price * marketFeePercent() / 100)
+    local sellerId = tonumber(row.seller_character_id)
+    local committed = MySQL.startTransaction(function(query)
+        if not mustOne(query, [[
+            UPDATE phone_market_listings
+            SET status = 'sold', buyer_character_id = ?, completed_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND status = 'active' AND seller_character_id <> ?
+              AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+        ]], { char.id, listingId, char.id }) then return false end
+        if not exports.sunset_core:DebitMoneyInTransaction(char.id, 'bank', price, query.await, 'market_buy') then
+            return false
+        end
+        local moved = false
+        if row.listing_type == 'vehicle' then
+            moved = mustOne(query, [[
+                UPDATE vehicles SET character_id = ?, stored = 1,
+                    parked_x = NULL, parked_y = NULL, parked_z = NULL, parked_h = NULL
+                WHERE id = ? AND character_id = ? AND stored = 1
+                  AND (destroyed IS NULL OR destroyed = 0)
+                  AND (garage IS NULL OR garage <> 'impound')
+            ]], { char.id, tonumber(row.asset_id), sellerId })
+        elseif row.listing_type == 'item' then
+            local inserted = query.await([[
+                INSERT INTO character_inventory (character_id, item, count, slot)
+                SELECT ?, ?, ?, COALESCE(m.s, 0) + 1
+                FROM (SELECT MAX(slot) AS s FROM character_inventory WHERE character_id = ?) m
+            ]], { char.id, row.asset_id, tonumber(row.quantity) or 1, char.id })
+            moved = tonumber(inserted) and tonumber(inserted) > 0
+        elseif row.listing_type == 'property' then
+            local renters = query.await(
+                'SELECT COUNT(*) AS total FROM property_rentals WHERE property_id = ? AND active = 1',
+                { tonumber(row.asset_id) })
+            local rented = renters and renters[1] and tonumber(renters[1].total) or 0
+            if rented > 0 then return false end
+            moved = mustOne(query, [[
+                UPDATE properties SET owner_character_id = ?, for_sale = 0
+                WHERE id = ? AND owner_character_id = ? AND enabled = 1
+            ]], { char.id, tonumber(row.asset_id), sellerId })
+            if moved then
+                query.await('UPDATE characters SET home_property_id = NULL WHERE id = ? AND home_property_id = ?',
+                    { sellerId, tonumber(row.asset_id) })
+            end
+        end
+        if not moved then return false end
+        if not exports.sunset_core:CreditMoneyInTransaction(sellerId, 'bank', price, query.await, 'market_sale') then
+            return false
+        end
+        if fee > 0 and not exports.sunset_core:DebitMoneyInTransaction(sellerId, 'bank', fee, query.await, 'market_fee') then
+            return false
+        end
+        return true
+    end)
+    if not committed then
         return nil, { localeKey = 'vehicles.message.vehicle_transfer_failed' }
     end
-    MySQL.update.await('UPDATE phone_market_listings SET buyer_character_id = ? WHERE id = ?', { char.id, listingId })
-    paySeller(row.seller_character_id, payout, 'market_sale')
+    if row.listing_type == 'vehicle' and GetResourceState('sunset_vehicles') == 'started' then
+        pcall(function()
+            local plate = MySQL.scalar.await('SELECT plate FROM vehicles WHERE id = ?', { tonumber(row.asset_id) })
+            if plate then exports.sunset_vehicles:ClearKeysForPlate(plate) end
+            exports.sunset_vehicles:DeleteVehicleEntity(tonumber(row.asset_id))
+        end)
+    elseif row.listing_type == 'property' then
+        TriggerClientEvent('sunset:client:propertiesChanged', -1)
+        local homeSrc = sellerOnline(sellerId)
+        if homeSrc then
+            local sellerChar = exports.sunset_core:GetCharacter(homeSrc)
+            if sellerChar and tonumber(sellerChar.home_property_id) == tonumber(row.asset_id) then
+                pcall(function() exports.sunset_core:SetHomeProperty(homeSrc, nil) end)
+            end
+        end
+    end
     exports.sunset_core:RefreshMoney(source)
-    return { ok = true, fee = fee }
+    local sellerSrc = sellerOnline(sellerId)
+    if sellerSrc then exports.sunset_core:RefreshMoney(sellerSrc) end
+    return { ok = true, fee = fee, price = price, net = price - fee }
 end
 
 exports.sunset_core:RegisterCallback('sunset:phoneMarketBuy', function(source, listingId)
@@ -262,16 +341,19 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketCancel', function(source
         'SELECT * FROM phone_market_listings WHERE id = ? AND seller_character_id = ? AND status = ?',
         { listingId, char.id, 'active' })
     if not row then return nil, { localeKey = 'phone.message.contact_not_found_or_already_deleted' } end
-    local changed = MySQL.update.await(
-        "UPDATE phone_market_listings SET status = 'cancelled', completed_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'active'",
-        { listingId })
-    if tonumber(changed) ~= 1 then return nil, { localeKey = 'phone.message.contact_not_found_or_already_deleted' } end
-    if row.listing_type == 'item' then
-        if not giveItem(char.id, row.asset_id, row.quantity) then
-            MySQL.update.await("UPDATE phone_market_listings SET status = 'active', completed_at = NULL WHERE id = ?", { listingId })
-            return nil, { localeKey = 'vehicles.message.vehicle_transfer_failed' }
+    local committed = MySQL.startTransaction(function(query)
+        if not mustOne(query, [[
+            UPDATE phone_market_listings
+            SET status = 'cancelled', completed_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND status = 'active' AND seller_character_id = ?
+        ]], { listingId, char.id }) then return false end
+        if row.listing_type == 'item' then
+            local inserted = returnEscrow(query, char.id, row.asset_id, tonumber(row.quantity) or 1)
+            if not tonumber(inserted) or tonumber(inserted) < 1 then return false end
         end
-    end
+        return true
+    end)
+    if not committed then return nil, { localeKey = 'vehicles.message.vehicle_transfer_failed' } end
     return { ok = true }
 end)
 
@@ -315,6 +397,80 @@ exports.sunset_core:RegisterCallback('sunset:phoneSaveSettings', function(source
     return { ok = true, ringtone = ring == 1, notifySound = sound == 1, compactNotes = compact == 1 }
 end)
 
+local function returnEscrow(query, characterId, item, quantity)
+    return query.await([[
+        INSERT INTO character_inventory (character_id, item, count, slot)
+        SELECT ?, ?, ?, COALESCE(m.s, 0) + 1
+        FROM (SELECT MAX(slot) AS s FROM character_inventory WHERE character_id = ?) m
+    ]], { characterId, item, quantity, characterId })
+end
+
+CreateThread(function()
+    while true do
+        Wait(60000)
+        local rows = MySQL.query.await([[
+            SELECT id, seller_character_id, asset_id, quantity, listing_type
+            FROM phone_market_listings
+            WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP
+            ORDER BY id ASC
+            LIMIT 25
+        ]]) or {}
+        for _, row in ipairs(rows) do
+            MySQL.startTransaction(function(query)
+                if not mustOne(query, [[
+                    UPDATE phone_market_listings
+                    SET status = 'expired', completed_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND status = 'active'
+                ]], { row.id }) then return false end
+                if row.listing_type == 'item' then
+                    local inserted = returnEscrow(query, tonumber(row.seller_character_id), row.asset_id, tonumber(row.quantity) or 1)
+                    if not tonumber(inserted) or tonumber(inserted) < 1 then return false end
+                end
+                return true
+            end)
+        end
+    end
+end)
+
+function MarketOptions(characterId)
+    characterId = tonumber(characterId)
+    local vehicles = MySQL.query.await([[
+        SELECT v.id, v.model, v.plate, v.garage
+        FROM vehicles v
+        WHERE v.character_id = ? AND v.stored = 1
+          AND (v.destroyed IS NULL OR v.destroyed = 0)
+          AND (v.garage IS NULL OR v.garage <> 'impound')
+          AND NOT EXISTS (
+            SELECT 1 FROM phone_market_listings l
+            WHERE l.listing_type = 'vehicle' AND l.asset_id = CAST(v.id AS CHAR) AND l.status = 'active'
+          )
+        ORDER BY v.id DESC LIMIT 20
+    ]], { characterId }) or {}
+    local items = MySQL.query.await([[
+        SELECT item, SUM(count) AS count FROM character_inventory
+        WHERE character_id = ? GROUP BY item ORDER BY item LIMIT 40
+    ]], { characterId }) or {}
+    local tradable = {}
+    for _, row in ipairs(items) do
+        local def = Sunset.Items[row.item]
+        if def and not def.weapon and row.item ~= 'id_card' and row.item ~= 'phone' then
+            tradable[#tradable + 1] = { item = row.item, label = def.label or row.item, count = tonumber(row.count) or 0 }
+        end
+    end
+    local properties = MySQL.query.await([[
+        SELECT p.id, p.label FROM properties p
+        WHERE p.owner_character_id = ? AND p.enabled = 1
+          AND NOT EXISTS (SELECT 1 FROM property_rentals r WHERE r.property_id = p.id AND r.active = 1)
+          AND NOT EXISTS (
+            SELECT 1 FROM phone_market_listings l
+            WHERE l.listing_type = 'property' AND l.asset_id = CAST(p.id AS CHAR) AND l.status = 'active'
+          )
+        ORDER BY p.id LIMIT 20
+    ]], { characterId }) or {}
+    return { vehicles = vehicles, items = tradable, properties = properties }
+end
+exports('MarketOptions', MarketOptions)
+
 function MarketVehicleListed(vehicleId)
     local id = MySQL.scalar.await([[
         SELECT id FROM phone_market_listings
@@ -323,3 +479,12 @@ function MarketVehicleListed(vehicleId)
     return id ~= nil
 end
 exports('MarketVehicleListed', MarketVehicleListed)
+
+function MarketPropertyListed(propertyId)
+    local id = MySQL.scalar.await([[
+        SELECT id FROM phone_market_listings
+        WHERE listing_type = 'property' AND asset_id = ? AND status = 'active' LIMIT 1
+    ]], { tostring(propertyId) })
+    return id ~= nil
+end
+exports('MarketPropertyListed', MarketPropertyListed)

@@ -22,6 +22,23 @@ function IsInventoryTradeLocked(source)
     return TradesByPlayer[tonumber(source)] ~= nil
 end
 
+function IsAssetOfferedInTrade(assetType, assetId)
+    assetId = tonumber(assetId)
+    if not assetType or not assetId then return false end
+    local seen = {}
+    for _, trade in pairs(TradesByPlayer) do
+        if type(trade) == 'table' and not seen[trade] then
+            seen[trade] = true
+            for _, owner in ipairs({ trade.a, trade.b }) do
+                local offered = (trade.assets and trade.assets[owner] and trade.assets[owner][assetType]) or nil
+                if offered and tonumber(offered.id) == assetId then return true end
+            end
+        end
+    end
+    return false
+end
+exports('IsAssetOfferedInTrade', IsAssetOfferedInTrade)
+
 local function character(source)
     return exports.sunset_core:GetCharacter(source)
 end
@@ -131,12 +148,24 @@ local function validateAssetOwnership(source, asset)
         if tonumber(row.stored) ~= 1 then
             return nil, { localeKey = 'inventory.message.only_garage_stored_vehicles_can_be_traded' }
         end
+        if GetResourceState('sunset_phone') == 'started' then
+            local listed = false
+            pcall(function() listed = exports.sunset_phone:MarketVehicleListed(assetId) end)
+            if listed then return nil, { localeKey = 'inventory.message.only_garage_stored_vehicles_can_be_traded' } end
+        end
     elseif asset.assetType == 'property' then
         local row = MySQL.single.await(
             'SELECT id FROM properties WHERE id = ? AND owner_character_id = ? AND enabled = 1',
             { assetId, char.id }
         )
         if not row then return nil, { localeKey = 'inventory.message.value_no_longer_owns_that_house', formatArgs = { displayName(source) } } end
+        if GetResourceState('sunset_phone') == 'started' then
+            local listed = false
+            pcall(function()
+                listed = exports.sunset_phone:MarketPropertyListed(assetId)
+            end)
+            if listed then return nil, { localeKey = 'inventory.message.value_no_longer_owns_that_house', formatArgs = { displayName(source) } } end
+        end
     elseif asset.assetType == 'business' then
         if GetResourceState('sunset_businesses') ~= 'started' then
             return nil, { localeKey = 'inventory.message.business_trading_is_unavailable' }

@@ -134,7 +134,7 @@ check(quests.includes("st.status == 'active'"), 'quest progress does not rerun a
 check(/claimed/.test(quests), 'claimed quests stay claimed');
 
 const market = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_phone/server/market.lua'), 'utf8');
-check(market.includes("SET status = 'sold'") && market.includes('TransferVehicleOwnership'), 'vehicle buy locks the listing then transfers ownership');
+check(market.includes("SET status = 'sold'") && market.includes('UPDATE vehicles SET character_id') && market.includes('startTransaction') && market.includes('CreditMoneyInTransaction'), 'vehicle buy locks the listing then transfers ownership inside one transaction');
 function claimListing(state) {
     if (state.status !== 'active') return false;
     state.status = 'sold';
