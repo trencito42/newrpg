@@ -2363,7 +2363,7 @@
                 layer.remove();
             }));
             layer.append(btn('btn-gold', t('phone.ui.close'), () => layer.remove()));
-            $('phone-device')?.append(layer);
+            ($('phone-device')?.querySelector('.phone-hardware') || $('phone-device'))?.append(layer);
         },
 
         renderCamera() {
