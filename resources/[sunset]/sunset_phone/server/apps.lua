@@ -67,6 +67,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
             publishedAt = row.published_at,
             kind = 'ad',
             attachment = attachment,
+            attachmentIndex = tonumber(row.attachment_index) or 0,
             listingStatus = listingStatus,
             listingId = tonumber(row.market_listing_id),
         }
@@ -74,7 +75,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
     local okAds, adRows = pcall(function()
         return MySQL.query.await([[
             SELECT a.id, a.character_id, a.player_name, a.phone_number, a.text, a.published_at,
-                   a.attachment_snapshot, a.market_listing_id,
+                   a.attachment_snapshot, a.attachment_index, a.market_listing_id,
                    l.status AS listing_status,
                    (l.expires_at IS NOT NULL AND l.expires_at <= CURRENT_TIMESTAMP) AS listing_expired
             FROM cnn_ads a

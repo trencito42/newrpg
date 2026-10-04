@@ -154,7 +154,7 @@ local function clientAttachment(raw)
     return { type = assetType, id = assetId }
 end
 
-RegisterNetEvent('sunset:chat:send', function(message, channel, attachment)
+RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, attachmentIndex)
     local src = source
     if not hasCharacter(src) then return end -- [SEC3]
     if checkMute(src) then return end
@@ -201,10 +201,11 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment)
         TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.rate_limited'), 'warning')
         return
     end
-    message = cleanChatText(message, 256)
-    if not message then return end
-
     if requested then
+        local text, index = NormalizeRichText(message, 250, attachmentIndex)
+        if not text then return end
+        message = text
+        attachmentIndex = index
         if GetResourceState('sunset_inventory') ~= 'started' then
             TriggerClientEvent('sunset:chat:system', src, t(src, 'inventory.message.invalid_trade_asset'), 'error')
             return
@@ -216,6 +217,10 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment)
             return
         end
         requested = snap
+    else
+        message = cleanChatText(message, 256)
+        attachmentIndex = nil
+        if not message then return end
     end
 
     local identity = chatIdentity(src)
@@ -230,6 +235,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment)
         time = os.date('%H:%M:%S'),
         type = isOoc and 'ooc' or 'say',
         attachment = requested,
+        attachmentIndex = attachmentIndex,
     }
     if isOoc then
         sendBroadcast(payload)
@@ -242,7 +248,7 @@ end)
 local function runMeCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    local msg = ResolveLinkedText(source, args, 0)
     if not msg then return end
     local identity = chatIdentity(source)
     sendNearby(source, {
@@ -384,7 +390,7 @@ end, false)
 local function runDoCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    local msg = ResolveLinkedText(source, args, 0)
     if not msg then return end
     local identity = chatIdentity(source)
     sendNearby(source, {
@@ -403,7 +409,7 @@ end
 local function runShoutCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    local msg = ResolveLinkedText(source, args, 0)
     if not msg then return end
     local identity = chatIdentity(source)
     sendNearby(source, {
@@ -446,14 +452,20 @@ local function runWhisperCommand(source, args)
         return
     end
 
-    local rawMsg = table.concat(args, ' ', 2)
-    local msg = cleanChatText(rawMsg, 256)
+    local msg = ResolveLinkedText(source, args, 1)
     if not msg then return end
+    local whisperAttachment, bodyIndex = PeekChatAttachment(source)
+    local function wrapped(src, key, name)
+        local rendered = t(src, key, { name = name, message = '\1' })
+        local at = string.find(rendered, '\1', 1, true)
+        local prefix = at and rendered:sub(1, at - 1) or ''
+        local points = utf8.len(prefix) or #prefix
+        return rendered:gsub('\1', msg, 1), (bodyIndex or 0) + points
+    end
 
     local senderIdent = chatIdentity(source)
     local targetIdent = chatIdentity(targetId)
-
-    local whisperAttachment = PeekChatAttachment(source)
+    local toText, toIndex = wrapped(source, 'chat.whisper.to', targetIdent.name)
 
     -- Message to sender
     TriggerClientEvent('sunset:chat:message', source, {
@@ -463,14 +475,16 @@ local function runWhisperCommand(source, args)
         clanTag = senderIdent.clanTag,
         clanTagColor = senderIdent.clanTagColor,
         clanTagStyle = senderIdent.clanTagStyle,
-        message = t(source, 'chat.whisper.to', { name = targetIdent.name, message = msg }),
+        message = toText,
         time = os.date('%H:%M:%S'),
         type = 'whisper',
         attachment = whisperAttachment,
+        attachmentIndex = toIndex,
     })
 
     -- Message to target
     if targetId ~= source then
+        local fromText, fromIndex = wrapped(targetId, 'chat.whisper.from', senderIdent.name)
         TriggerClientEvent('sunset:chat:message', targetId, {
             id = source,
             name = senderIdent.name,
@@ -478,10 +492,11 @@ local function runWhisperCommand(source, args)
             clanTag = senderIdent.clanTag,
             clanTagColor = senderIdent.clanTagColor,
             clanTagStyle = senderIdent.clanTagStyle,
-            message = t(targetId, 'chat.whisper.from', { name = senderIdent.name, message = msg }),
+            message = fromText,
             time = os.date('%H:%M:%S'),
             type = 'whisper',
             attachment = whisperAttachment,
+            attachmentIndex = fromIndex,
         })
     end
     ClearChatAttachment(source)
@@ -550,7 +565,7 @@ end
 local function runLowCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    local msg = ResolveLinkedText(source, args, 0)
     if not msg then return end
     local identity = chatIdentity(source)
     sendNearby(source, {
@@ -569,7 +584,7 @@ end
 local function runBCommand(source, args)
     if not hasCharacter(source) then return end -- [SEC3]
     if checkMute(source) then return end
-    local msg = cleanChatText(table.concat(args, ' '), 256)
+    local msg = ResolveLinkedText(source, args, 0)
     if not msg then return end
     local identity = chatIdentity(source)
     sendNearby(source, {

@@ -63,11 +63,14 @@ local function sendFactionChat(source, channel, args, filterFn)
         return FactionCore.notify(source, exports.sunset_core:TFor(source, 'clans.msg.slow_down_message_rate_limited'), 'error')
     end
 
-    local msg = table.concat(args, ' ')
-    if msg == '' then
+    local msg = GetResourceState('sunset_chat') == 'started'
+        and exports.sunset_chat:ResolveLinkedText(source, args, 0)
+        or table.concat(args, ' ')
+    if not msg or msg == '' then
         return FactionCore.notify(source, exports.sunset_core:TFor(source, 'factions.msg.usage_message', { channel = tostring(channel) }), 'error')
     end
-    if #msg > 256 then
+    local msgLen = utf8.len(msg) or #msg
+    if msgLen > 250 then
         return FactionCore.notify(source, exports.sunset_core:TFor(source, 'clans.msg.message_too_long'), 'error')
     end
 
@@ -123,6 +126,7 @@ local function sendFactionChat(source, channel, args, filterFn)
                 spyChannel = spyChannelLabel(channel),
             }, source, { setName = true })
             if payload.attachment then spyPayload.attachment = payload.attachment end
+            if payload.attachmentIndex then spyPayload.attachmentIndex = payload.attachmentIndex end
             TriggerClientEvent('sunset:chat:message', src, spyPayload)
         end
     end

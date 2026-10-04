@@ -29,7 +29,7 @@ server_scripts {
 
 server_exports {
     'BeginChatAttachment', 'QueueChatAttachment', 'PeekChatAttachment',
-    'ClearChatAttachment', 'ApplyChatAttachment',
+    'ClearChatAttachment', 'ApplyChatAttachment', 'NormalizeRichText', 'ResolveLinkedText',
 }
 
 dependencies { 'sunset_core', 'sunset_admin', 'sunset_factions', 'sunset_clans' }

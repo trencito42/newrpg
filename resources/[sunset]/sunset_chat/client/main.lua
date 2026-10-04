@@ -100,12 +100,19 @@ AddEventHandler('sunset:nui:chatSend', function(data)
     historyIndex = #chatHistory + 1
     local channel = tostring(data.channel or 'all'):lower()
     local attachment = channel ~= 'staff' and clientAttachment(data.attachment) or nil
+    local index = tonumber(data.attachmentIndex)
+    if index then
+        index = math.floor(index)
+        if index < 0 then index = 0 end
+        if index > 10000 then index = 10000 end
+    end
 
     if msg:sub(1, 1) == '/' then
         local command = msg:sub(2)
-        TriggerServerEvent('sunset:chat:runCommand', command, attachment)
+        if index then index = math.max(0, index - 1) end
+        TriggerServerEvent('sunset:chat:runCommand', command, attachment, index)
     else
-        TriggerServerEvent('sunset:chat:send', msg, channel, attachment)
+        TriggerServerEvent('sunset:chat:send', msg, channel, attachment, index)
     end
 end)
 

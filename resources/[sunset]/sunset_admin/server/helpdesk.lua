@@ -111,14 +111,48 @@ exports.sunset_core:RegisterCallback('sunset:helpdesk:panel', function(source)
         pcall(function()
             local q = exports.sunset_cnn:GetAdQueue() or {}
             cnnAds.pending = q
+            local function publicAd(row)
+                local attachment = nil
+                if type(row.attachment_snapshot) == 'string' and row.attachment_snapshot ~= ''
+                    and GetResourceState('sunset_inventory') == 'started' then
+                    local decodedOk, decoded = pcall(json.decode, row.attachment_snapshot)
+                    if decodedOk and type(decoded) == 'table' then
+                        local snapOk, snap = pcall(function()
+                            return exports.sunset_inventory:SanitizePublicAttachment(decoded)
+                        end)
+                        if snapOk and type(snap) == 'table' then attachment = snap end
+                    end
+                end
+                return {
+                    id = row.id,
+                    player_name = row.player_name,
+                    playerName = row.player_name,
+                    text = row.text,
+                    price_paid = row.price_paid,
+                    submitted_at = row.submitted_at,
+                    published_at = row.published_at,
+                    reject_reason = row.reject_reason,
+                    reviewed_by = row.reviewed_by,
+                    reviewed_at = row.reviewed_at,
+                    attachment = attachment,
+                    attachmentIndex = tonumber(row.attachment_index) or 0,
+                }
+            end
             local recPub = MySQL.query.await([[
-                SELECT id, player_name, text, price_paid, submitted_at, published_at FROM cnn_ads WHERE status = 'published' ORDER BY id DESC LIMIT 20
+                SELECT id, player_name, text, price_paid, submitted_at, published_at,
+                       attachment_type, attachment_id, market_listing_id, attachment_snapshot, attachment_index
+                FROM cnn_ads WHERE status = 'published' ORDER BY id DESC LIMIT 20
             ]]) or {}
             local recRej = MySQL.query.await([[
-                SELECT id, player_name, text, reject_reason, reviewed_by, reviewed_at FROM cnn_ads WHERE status = 'rejected' ORDER BY id DESC LIMIT 20
+                SELECT id, player_name, text, reject_reason, reviewed_by, reviewed_at,
+                       attachment_type, attachment_id, market_listing_id, attachment_snapshot, attachment_index
+                FROM cnn_ads WHERE status = 'rejected' ORDER BY id DESC LIMIT 20
             ]]) or {}
-            cnnAds.published = recPub
-            cnnAds.rejected = recRej
+            local published, rejected = {}, {}
+            for _, row in ipairs(recPub) do published[#published + 1] = publicAd(row) end
+            for _, row in ipairs(recRej) do rejected[#rejected + 1] = publicAd(row) end
+            cnnAds.published = published
+            cnnAds.rejected = rejected
         end)
     end
 

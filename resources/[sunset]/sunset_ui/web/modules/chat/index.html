@@ -9,7 +9,6 @@
             </div>
             <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-input-wrapper hidden" id="chat-input-wrap">
-                <div id="chat-attachment" class="chat-attachment hidden"></div>
                 <button type="button" class="chat-attach" id="chat-attach" data-i18n-aria="asset.attach" data-i18n-title="asset.choose" aria-label="Attach">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 11.6l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.5-8.5a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-2.8-2.8l7.8-7.8"></path></svg>
                 </button>
@@ -20,7 +19,7 @@
                     </div>
                     <div class="channel-dropdown" id="chat-channel-dropdown"></div>
                 </div>
-                <input type="text" class="chat-input" id="chat-input" placeholder="Type a message..." data-i18n-placeholder="chat.input.placeholder" maxlength="250" autocomplete="off">
+                <div class="chat-input" id="chat-input" contenteditable="true" role="textbox" aria-multiline="false" data-placeholder="Type a message..." data-i18n-placeholder="chat.input.placeholder" data-empty="1" spellcheck="false"></div>
                 <div class="chat-char-counter" id="chat-char-counter">0/250</div>
                 <div class="chat-suggestions hidden" id="chat-suggestions" aria-live="polite"></div>
             </div>

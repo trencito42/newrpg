@@ -369,7 +369,7 @@ const Helpdesk = {
                         <div class="hd-cnn-card__eta"><i class="ph-bold ph-clock"></i> <span class="hd-ad-countdown" data-ad-id="${ad.id}">${etaText}</span></div>
                         <div class="hd-cnn-card__status badge-${ad.status}">${this.esc(String(ad.status || 'pending').toUpperCase())}</div>
                     </div>
-                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                    <div class="hd-cnn-card__text"></div>
                     <div class="hd-cnn-card__actions">
                         ${canApprove ? `<button class="hd-btn tiny primary" data-hd-act="approveAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-check"></i> ${I18n.t('ui.helpdesk.approve')}</button>` : '<span class="approved-chip"><i class="ph-bold ph-check"></i> ' + I18n.t('ui.helpdesk.approved') + '</span>'}
                         <button class="hd-btn tiny danger" data-hd-act="rejectAd" data-hd-ad-id="${Number(ad.id)}"><i class="ph-bold ph-trash"></i> ${I18n.t('ui.helpdesk.reject_delete')}</button>
@@ -378,6 +378,7 @@ const Helpdesk = {
                         ${ad.src ? `<button class="hd-btn tiny danger" data-hd-act="adMute" data-hd-target="${Number(ad.src)}"><i class="ph-bold ph-speaker-slash"></i> ${I18n.t('ui.helpdesk.ad_mute')}</button>` : ''}
                     </div>
                 `;
+                this.fillCnnText(card, ad);
                 listContainer.appendChild(card);
             });
         } else if (this.cnnSubTab === 'published') {
@@ -395,8 +396,9 @@ const Helpdesk = {
                         <div class="hd-cnn-card__status badge-published"><i class="ph-bold ph-check-circle"></i> ${I18n.t('ui.helpdesk.published_caps')}</div>
                         <div class="hd-cnn-card__time">${this.esc(String(ad.published_at || '').slice(0, 16))}</div>
                     </div>
-                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                    <div class="hd-cnn-card__text"></div>
                 `;
+                this.fillCnnText(card, ad);
                 listContainer.appendChild(card);
             });
         } else if (this.cnnSubTab === 'rejected') {
@@ -415,12 +417,30 @@ const Helpdesk = {
                         <div class="hd-cnn-card__reviewer">${I18n.t('ui.helpdesk.by')}: <strong>${this.esc(ad.reviewed_by || I18n.t('chat.badge.staff'))}</strong></div>
                         <div class="hd-cnn-card__time">${this.esc(String(ad.reviewed_at || '').slice(0, 16))}</div>
                     </div>
-                    <div class="hd-cnn-card__text">"${this.esc(ad.text)}"</div>
+                    <div class="hd-cnn-card__text"></div>
                     <div class="hd-cnn-card__reason"><strong>${I18n.t('ui.helpdesk.reject_reason')}:</strong> ${this.esc(ad.reject_reason || I18n.t('ui.helpdesk.default_reject_reason'))}</div>
                 `;
+                this.fillCnnText(card, ad);
                 listContainer.appendChild(card);
             });
         }
+    },
+
+    fillCnnText(card, ad) {
+        const slot = card.querySelector('.hd-cnn-card__text');
+        if (!slot || !window.AssetPublic?.renderRichText) return;
+        const quote = document.createElement('span');
+        quote.textContent = '"';
+        const body = document.createElement('span');
+        const end = document.createElement('span');
+        end.textContent = '"';
+        window.AssetPublic.renderRichText(body, {
+            text: ad.text,
+            attachment: ad.attachment,
+            attachmentIndex: ad.attachmentIndex != null ? ad.attachmentIndex : ad.attachment_index,
+            onOpen: (asset, chip) => window.AssetPreview?.open?.(asset, chip),
+        });
+        slot.append(quote, body, end);
     },
 
     prompt(action, targetId, title, options = {}) {

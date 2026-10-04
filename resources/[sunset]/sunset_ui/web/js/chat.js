@@ -961,7 +961,9 @@ const Chat = {
         const input = $('#chat-input');
         const counter = $('#chat-char-counter');
         if (counter && input) {
-            counter.textContent = `${input.value.length}/250`;
+            const len = window.AssetPublic?.codePointLength?.(this.composerPlain()) ?? String(input.value || '').length;
+            counter.textContent = `${len}/250`;
+            input.dataset.empty = (!this.composerPlain() && !input.querySelector('.chat-composer-asset')) ? '1' : '0';
         }
     },
 
@@ -969,7 +971,10 @@ const Chat = {
         const type = String(m.type || 'say').toLowerCase().replace(/[^a-z0-9_]/g, '') || 'say';
         const rawName = String(m.name || I18n.t('common.player')).trim();
         const id = Number(m.id) || 0;
-        const msg = this.escapeHtml(String(m.message ?? ''));
+        const rich = window.AssetPublic?.sanitize?.(m.attachment);
+        const msg = rich
+            ? '<span class="chat-rich-slot"></span>'
+            : this.escapeHtml(String(m.message ?? ''));
         const time = this.formatTime(m);
         const timeHtml = time ? `<span class="chat-time">${this.escapeHtml(time)} </span>` : '';
         const who = (m.clanTag || m.factionId || m.adminDuty)
@@ -1155,7 +1160,15 @@ const Chat = {
 
         el.className = classes.join(' ');
         el.innerHTML = this.formatSampLine(m);
-        this.mountAttachment(el, m.attachment);
+        const slot = el.querySelector('.chat-rich-slot');
+        if (slot && window.AssetPublic?.renderRichText) {
+            window.AssetPublic.renderRichText(slot, {
+                text: m.message,
+                attachment: m.attachment,
+                attachmentIndex: m.attachmentIndex,
+                onOpen: (asset, chip) => window.AssetPreview?.open?.(asset, chip),
+            });
+        }
         if (!options.animate) el.style.animation = 'none';
         return el;
     },
@@ -1176,53 +1189,261 @@ const Chat = {
         el.appendChild(chip);
     },
 
-    setPendingAttachment(raw) {
-        const type = String(raw?.type || raw?.assetType || '');
-        const id = Number(raw?.id || raw?.assetId);
-        if (!['item', 'vehicle', 'property', 'business'].includes(type) || !Number.isFinite(id)) return;
-        this.pendingAttachment = {
-            type,
-            id,
-            label: window.AssetPublic?.chipText?.(raw) || String(raw?.label || ''),
-        };
-        this.renderPendingAttachment();
+    composerRoot() {
+        return document.getElementById('chat-input');
     },
 
-    clearPendingAttachment() {
-        this.pendingAttachment = null;
-        this.renderPendingAttachment();
+    composerState() {
+        const root = this.composerRoot();
+        const points = (value) => window.AssetPublic?.codePointLength?.(value) ?? Array.from(String(value || '')).length;
+        if (!root) return { text: '', attachment: null, index: 0 };
+        let text = '';
+        let index = 0;
+        let attachment = null;
+        let seenChip = false;
+        root.childNodes.forEach((node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const value = String(node.textContent || '').replace(/\u200b/g, '');
+                text += value;
+                if (!seenChip) index += points(value);
+                return;
+            }
+            if (node.classList?.contains('chat-composer-asset')) {
+                seenChip = true;
+                attachment = {
+                    type: node.dataset.type,
+                    id: Number(node.dataset.id),
+                    label: node.querySelector('.chat-composer-asset__label')?.textContent || '',
+                };
+                return;
+            }
+            if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'BR') {
+                const value = String(node.textContent || '').replace(/\u200b/g, '');
+                text += value;
+                if (!seenChip) index += points(value);
+            }
+        });
+        if (!attachment) index = points(text);
+        return { text, attachment, index };
     },
 
-    renderPendingAttachment() {
-        const slot = document.getElementById('chat-attachment');
-        if (!slot) return;
-        slot.textContent = '';
-        const pending = this.pendingAttachment;
-        if (!pending) {
-            slot.classList.add('hidden');
-            return;
+    composerPlain() {
+        return this.composerState().text;
+    },
+
+    composerCaretIndex() {
+        const root = this.composerRoot();
+        const points = (value) => window.AssetPublic?.codePointLength?.(value) ?? Array.from(String(value || '')).length;
+        const sel = window.getSelection?.();
+        if (!root || !sel || !sel.rangeCount || !root.contains(sel.anchorNode)) {
+            return points(this.composerPlain());
         }
-        slot.classList.remove('hidden');
-        const caption = document.createElement('span');
-        caption.textContent = window.I18n?.t?.('asset.attached') || 'Attached';
+        const node = sel.anchorNode;
+        const offset = sel.anchorOffset;
+        if (node === root) {
+            let count = 0;
+            for (let i = 0; i < offset && i < root.childNodes.length; i += 1) {
+                const child = root.childNodes[i];
+                if (child.classList?.contains('chat-composer-asset') || child.tagName === 'BR') continue;
+                count += points(child.textContent || '');
+            }
+            return count;
+        }
+        let count = 0;
+        const walk = (parent) => {
+            for (const child of parent.childNodes) {
+                if (child === node && node.nodeType === Node.TEXT_NODE) {
+                    count += points(String(node.textContent || '').slice(0, offset));
+                    return true;
+                }
+                if (child.nodeType === Node.TEXT_NODE) {
+                    count += points(String(child.textContent || '').replace(/\u200b/g, ''));
+                } else if (child.classList?.contains('chat-composer-asset')) {
+                    if (child.contains(node)) return true;
+                } else if (child.tagName !== 'BR' && walk(child)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        walk(root);
+        return count;
+    },
+
+    setComposerText(text) {
+        const root = this.composerRoot();
+        if (!root) return;
+        root.textContent = '';
+        if (text) root.appendChild(document.createTextNode(String(text)));
+        this.pendingAttachment = null;
+        this.updateCharCounter();
+    },
+
+    focusAfterChip() {
+        const root = this.composerRoot();
+        const chip = root?.querySelector('.chat-composer-asset');
+        if (!root) return;
+        root.focus({ preventScroll: true });
+        const sel = window.getSelection?.();
+        if (!sel) return;
+        const range = document.createRange();
+        if (chip) {
+            range.setStartAfter(chip);
+            range.collapse(true);
+        } else {
+            range.selectNodeContents(root);
+            range.collapse(false);
+        }
+        sel.removeAllRanges();
+        sel.addRange(range);
+    },
+
+    insertComposerChip(at, pending) {
+        const root = this.composerRoot();
+        if (!root || !window.AssetPublic?.splitAt) return;
+        const existing = root.querySelector('.chat-composer-asset');
+        let index = at;
+        if (existing) {
+            index = this.composerState().index;
+            existing.remove();
+        }
+        const plain = this.composerPlain();
+        const parts = window.AssetPublic.splitAt(plain, index);
+        root.textContent = '';
+        if (parts.before) root.appendChild(document.createTextNode(parts.before));
         const chip = document.createElement('span');
-        chip.className = 'chat-asset-chip';
-        chip.textContent = pending.label || pending.type;
+        chip.className = 'chat-composer-asset';
+        chip.contentEditable = 'false';
+        chip.dataset.type = pending.type;
+        chip.dataset.id = String(pending.id);
+        const label = document.createElement('span');
+        label.className = 'chat-composer-asset__label';
+        label.textContent = pending.label || pending.type;
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'chat-attachment-remove';
+        remove.className = 'chat-composer-asset__remove';
         remove.setAttribute('aria-label', window.I18n?.t?.('asset.remove') || 'Remove attachment');
         remove.textContent = '×';
+        remove.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
         remove.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
             this.clearPendingAttachment();
-            document.getElementById('chat-input')?.focus({ preventScroll: true });
+            root.focus({ preventScroll: true });
         });
-        slot.append(caption, chip, remove);
+        chip.append(label, remove);
+        root.appendChild(chip);
+        if (parts.after) root.appendChild(document.createTextNode(parts.after));
+        this.pendingAttachment = pending;
+        this.updateCharCounter();
+        requestAnimationFrame(() => this.focusAfterChip());
+    },
+
+    setPendingAttachment(raw) {
+        const type = String(raw?.type || raw?.assetType || '');
+        const id = Number(raw?.id || raw?.assetId);
+        if (!['item', 'vehicle', 'property', 'business'].includes(type) || !Number.isFinite(id)) return;
+        const pending = {
+            type,
+            id,
+            label: window.AssetPublic?.chipText?.(raw) || String(raw?.label || ''),
+        };
+        const index = this._savedCaret != null
+            ? this._savedCaret
+            : (window.AssetPublic?.codePointLength?.(this.composerPlain()) || 0);
+        this._savedCaret = null;
+        this.insertComposerChip(index, pending);
+    },
+
+    clearPendingAttachment() {
+        this.composerRoot()?.querySelector('.chat-composer-asset')?.remove();
+        this.pendingAttachment = null;
+        this.updateCharCounter();
+    },
+
+    handleComposerEditKeys(event) {
+        const root = this.composerRoot();
+        const sel = window.getSelection?.();
+        if (!root || !sel?.rangeCount || !sel.isCollapsed) return;
+        const range = sel.getRangeAt(0);
+        const before = range.startContainer === root
+            ? root.childNodes[range.startOffset - 1]
+            : (range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset === 0
+                ? range.startContainer.previousSibling
+                : null);
+        const after = range.startContainer === root
+            ? root.childNodes[range.startOffset]
+            : (range.startContainer.nodeType === Node.TEXT_NODE
+                && range.startOffset === (range.startContainer.textContent || '').length
+                ? range.startContainer.nextSibling
+                : null);
+        if (event.key === 'Backspace' && before?.classList?.contains('chat-composer-asset')) {
+            event.preventDefault();
+            this.clearPendingAttachment();
+        } else if (event.key === 'Delete' && after?.classList?.contains('chat-composer-asset')) {
+            event.preventDefault();
+            this.clearPendingAttachment();
+        }
+    },
+
+    copySelection() {
+        const sel = window.getSelection?.();
+        if (!sel?.rangeCount) return this.composerPlain();
+        const frag = sel.getRangeAt(0).cloneContents();
+        let out = '';
+        frag.childNodes.forEach((node) => {
+            if (node.classList?.contains('chat-composer-asset')) {
+                const label = node.querySelector('.chat-composer-asset__label')?.textContent || '';
+                out += `[${label}]`;
+            } else {
+                out += node.textContent || '';
+            }
+        });
+        return out;
+    },
+
+    bindComposer() {
+        const root = this.composerRoot();
+        if (!root || root._composerBound) return;
+        root._composerBound = true;
+        const chat = this;
+        Object.defineProperty(root, 'value', {
+            configurable: true,
+            get() { return chat.composerPlain(); },
+            set(next) { chat.setComposerText(next); },
+        });
+        const key = root.dataset.i18nPlaceholder;
+        if (key && window.I18n?.t) root.dataset.placeholder = window.I18n.t(key);
+        root.addEventListener('beforeinput', (event) => {
+            if (!String(event.inputType || '').startsWith('insert')) return;
+            const add = window.AssetPublic?.codePointLength?.(event.data || '') || 0;
+            const len = window.AssetPublic?.codePointLength?.(chat.composerPlain()) || 0;
+            if (len + add > 250) event.preventDefault();
+        });
+        root.addEventListener('paste', (event) => {
+            event.preventDefault();
+            const text = event.clipboardData?.getData('text/plain') || '';
+            const room = 250 - (window.AssetPublic?.codePointLength?.(chat.composerPlain()) || 0);
+            if (room <= 0 || !text) return;
+            const clipped = window.AssetPublic?.splitAt?.(text, room).before ?? text.slice(0, room);
+            document.execCommand('insertText', false, clipped);
+            chat.updateCharCounter();
+        });
+        root.addEventListener('copy', (event) => {
+            const sel = window.getSelection?.();
+            if (!sel || sel.isCollapsed || !root.contains(sel.anchorNode)) return;
+            event.preventDefault();
+            event.clipboardData?.setData('text/plain', chat.copySelection());
+        });
+        root.addEventListener('keydown', (event) => chat.handleComposerEditKeys(event));
+        root.addEventListener('input', () => chat.updateCharCounter());
     },
 
     async openAssetPicker() {
+        this._savedCaret = this.composerCaretIndex();
         const tradeOpen = document.getElementById('trade-window');
         if (tradeOpen && !tradeOpen.classList.contains('hidden')) return;
         if (window.ModuleLoader?.ensure) await ModuleLoader.ensure('trade');
@@ -1299,7 +1520,7 @@ const Chat = {
         const labelEl = $('#chat-channel-label');
         const input = $('#chat-input');
         if (labelEl) labelEl.textContent = label || this.channelLabel(row) || I18n.t('chat.channel.local');
-        if (input) input.placeholder = placeholder || this.channelPlaceholder(row);
+        if (input) input.dataset.placeholder = placeholder || this.channelPlaceholder(row);
         document.querySelectorAll('#chat-channel-dropdown .dropdown-item').forEach((item) => {
             item.classList.toggle('active', item.dataset.channel === this.channel);
         });
@@ -1414,30 +1635,41 @@ const Chat = {
         this.updateCharCounter();
         if (options.fromHistory) {
             input.focus({ preventScroll: true });
-            const end = input.value.length;
-            input.setSelectionRange(end, end);
+            this.focusAfterChip();
         }
     },
 
     send() {
         const input = $('#chat-input');
-        const raw = input.value.trim();
-        if (!raw) {
-            if (this.pendingAttachment) return;
+        const state = this.composerState();
+        const raw = state.text;
+        if (!raw.trim()) {
+            if (state.attachment) return;
             post('chatClose');
             return;
         }
         let msg = raw;
+        let attachmentIndex = state.index;
         if (!msg.startsWith('/')) {
             const prefix = this.channelPrefixes[this.channel];
-            if (prefix) msg = `${prefix}${msg}`;
+            if (prefix) {
+                msg = `${prefix}${msg}`;
+                if (state.attachment) {
+                    attachmentIndex += window.AssetPublic?.codePointLength?.(prefix) || prefix.length;
+                }
+            }
         }
         const channel = this.channel || 'all';
-        const pending = this.pendingAttachment;
+        const pending = state.attachment;
         const attachment = pending && channel !== 'staff'
             ? { type: pending.type, id: pending.id }
             : undefined;
-        post('chatSend', { message: msg, channel, attachment });
+        post('chatSend', {
+            message: msg,
+            channel,
+            attachment,
+            attachmentIndex: attachment ? attachmentIndex : undefined,
+        });
         input.value = '';
         this.clearPendingAttachment();
         this.updateCharCounter();
@@ -1457,6 +1689,8 @@ $('#chat-messages')?.addEventListener('mouseup', () => {
     Chat._pendingRender = false;
     Chat.render();
 });
+
+Chat.bindComposer();
 
 $('#chat-attach')?.addEventListener('click', (e) => {
     e.preventDefault();

@@ -65,6 +65,7 @@ local function ensureAttachmentColumns()
         { 'attachment_id', 'ALTER TABLE cnn_ads ADD COLUMN attachment_id VARCHAR(64) NULL' },
         { 'market_listing_id', 'ALTER TABLE cnn_ads ADD COLUMN market_listing_id INT NULL' },
         { 'attachment_snapshot', 'ALTER TABLE cnn_ads ADD COLUMN attachment_snapshot TEXT NULL' },
+        { 'attachment_index', 'ALTER TABLE cnn_ads ADD COLUMN attachment_index INT NULL' },
     }
     for _, alter in ipairs(alters) do
         if not columnExists(alter[1]) then MySQL.query.await(alter[2]) end
@@ -161,6 +162,7 @@ local function initDatabase()
             reviewedAt = row.reviewed_at,
             rejectReason = row.reject_reason,
             attachment = storedAttachment(row),
+            attachmentIndex = tonumber(row.attachment_index) or 0,
             src = nil,
         }
         AdQueue[#AdQueue + 1] = ad
@@ -327,6 +329,7 @@ local function publishAd(ad)
                 time = os.date('%H:%M:%S'),
                 type = 'ad',
                 attachment = attachment,
+                attachmentIndex = ad.attachmentIndex,
             })
         end
     end
@@ -495,7 +498,7 @@ local function isPlayerAtCnn(source)
     return false
 end
 
-local function submitAdLocked(source, text, attachment)
+local function submitAdLocked(source, text, attachment, attachmentIndex)
     local src = source
     if src == 0 then return false, { localeKey = 'cnn.message.must_be_used_in_game' } end
 
@@ -548,8 +551,13 @@ local function submitAdLocked(source, text, attachment)
     end
     print(('[CNN AD TRACE] 5 cooldown validated: ok player=%s'):format(src))
 
-    -- Clean & length check
-    local clean = cleanText(text, Config.CNN.maxLength or 140)
+    -- Clean & length check. Index is a Unicode code-point offset into the cleaned body.
+    local clean, richIndex = text, nil
+    if GetResourceState('sunset_chat') == 'started' then
+        clean, richIndex = exports.sunset_chat:NormalizeRichText(text, Config.CNN.maxLength or 140, attachmentIndex)
+    else
+        clean = cleanText(text, Config.CNN.maxLength or 140)
+    end
     local length = clean and utf8.len(clean)
     if not length or length < (Config.CNN.minLength or 5) or length > (Config.CNN.maxLength or 140) then
         print(('[CNN AD TRACE] 6 text validated FAILED: length=%s player=%s'):format(tostring(length), src))
@@ -615,12 +623,13 @@ local function submitAdLocked(source, text, attachment)
         insertId = query.await([[
             INSERT INTO cnn_ads (
                 character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at,
-                attachment_type, attachment_id, market_listing_id, attachment_snapshot
+                attachment_type, attachment_id, market_listing_id, attachment_snapshot, attachment_index
             )
-            VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?), ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?), ?, ?, ?, ?, ?)
         ]], {
             char.id, pName, phone, clean, price, scheduledAt,
             snap and snap.type or nil, snap and snap.assetId or nil, snap and snap.listingId or nil, snapshotJson,
+            snap and richIndex or nil,
         })
 
         print(('[CNN AD TRACE] 10 ad INSERT completed: insertId=%s player=%s'):format(tostring(insertId), src))
@@ -645,6 +654,7 @@ local function submitAdLocked(source, text, attachment)
         submittedAt = now,
         scheduledAt = scheduledAt,
         attachment = snap,
+        attachmentIndex = snap and richIndex or nil,
         src = src,
         queuePosition = #AdQueue + 1,
     }
@@ -722,10 +732,10 @@ exports.sunset_core:RegisterCallback('sunset:cnn:promoteListing', function(sourc
     return { ok = true, id = detail and detail.id or nil, price = GetAdPrice() }
 end)
 
-function SubmitAd(source, text, attachment)
+function SubmitAd(source, text, attachment, attachmentIndex)
     if SubmissionBusy then return false, { localeKey = 'cnn.message.submission_busy' } end
     SubmissionBusy = true
-    local ok, result, detail = xpcall(function() return submitAdLocked(source, text, attachment) end, debug.traceback)
+    local ok, result, detail = xpcall(function() return submitAdLocked(source, text, attachment, attachmentIndex) end, debug.traceback)
     SubmissionBusy = false
     if not ok then
         log(('submission failure player=%s error=%s'):format(source, tostring(result)))
@@ -748,6 +758,8 @@ function GetAdQueue()
             playerName = ad.playerName,
             phoneNumber = ad.phoneNumber,
             text = ad.text,
+            attachment = ad.attachment,
+            attachmentIndex = ad.attachmentIndex,
             status = ad.status,
             pricePaid = ad.pricePaid,
             queuePosition = idx,
@@ -983,11 +995,12 @@ function RunChatCommand(source, name, args)
             TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
             return true
         end
-        local pending = nil
+        local pending, richIndex = nil, nil
         if GetResourceState('sunset_chat') == 'started' then
-            pending = exports.sunset_chat:PeekChatAttachment(source)
+            text = exports.sunset_chat:ResolveLinkedText(source, args, 0) or text
+            pending, richIndex = exports.sunset_chat:PeekChatAttachment(source)
         end
-        local ok, err = SubmitAd(source, text, pending)
+        local ok, err = SubmitAd(source, text, pending, richIndex)
         if GetResourceState('sunset_chat') == 'started' then
             exports.sunset_chat:ClearChatAttachment(source)
         end

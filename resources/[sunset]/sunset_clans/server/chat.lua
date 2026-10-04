@@ -39,11 +39,14 @@ local function runClanChat(source, args)
         return notify(source, exports.sunset_core:TFor(source, 'clans.msg.slow_down_message_rate_limited'), 'error')
     end
 
-    local msg = table.concat(args, ' ')
-    if msg == '' then
+    local msg = GetResourceState('sunset_chat') == 'started'
+        and exports.sunset_chat:ResolveLinkedText(source, args, 0)
+        or table.concat(args, ' ')
+    if not msg or msg == '' then
         return notify(source, exports.sunset_core:TFor(source, 'clans.msg.usage_c_message'), 'error')
     end
-    if #msg > 256 then
+    local msgLen = utf8.len(msg) or #msg
+    if msgLen > 250 then
         return notify(source, exports.sunset_core:TFor(source, 'clans.msg.message_too_long'), 'error')
     end
 

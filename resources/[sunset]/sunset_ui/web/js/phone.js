@@ -1756,7 +1756,18 @@
             if (!ads.length) content.append(this.empty(t('phone.ui.news_empty')));
             ads.forEach((ad) => {
                 const card = el('div', 'panel');
-                card.append(text(ad.title || ''));
+                const title = el('div');
+                if (window.AssetPublic?.renderRichText) {
+                    window.AssetPublic.renderRichText(title, {
+                        text: ad.title || '',
+                        attachment: ad.attachment,
+                        attachmentIndex: ad.attachmentIndex,
+                        onOpen: (asset, chip) => window.AssetPreview?.open?.(asset, chip),
+                    });
+                } else {
+                    title.append(text(ad.title || ''));
+                }
+                card.append(title);
                 const meta = el('div', 'muted');
                 meta.append(text((ad.seller || '') + (ad.phone ? ' · ' + ad.phone : '') + (ad.publishedAt ? ' · ' + ad.publishedAt : '')));
                 card.append(meta);
@@ -1765,8 +1776,6 @@
                 })));
                 const asset = window.AssetPublic?.sanitize?.(ad.attachment);
                 if (asset) {
-                    const chip = btn('btn-ghost', window.AssetPublic.chipText(asset), () => window.AssetPreview?.open?.(asset));
-                    card.append(chip);
                     const banner = window.AssetPublic.listingBanner(asset.listingStatus);
                     if (asset.listingId && banner === 'active') {
                         card.append(btn('btn-gold', t('asset.view_market'), () => this.focusListing({ listingId: asset.listingId })));

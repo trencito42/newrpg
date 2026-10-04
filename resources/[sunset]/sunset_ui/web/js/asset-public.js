@@ -88,6 +88,62 @@
         return 'unavailable';
     }
 
+    function codePoints(text) {
+        return Array.from(String(text ?? ''));
+    }
+
+    function codePointLength(text) {
+        return codePoints(text).length;
+    }
+
+    function clampIndex(text, index) {
+        const len = codePointLength(text);
+        const n = Math.floor(Number(index));
+        if (!Number.isFinite(n) || n < 0) return 0;
+        return n > len ? len : n;
+    }
+
+    function splitAt(text, index) {
+        const chars = codePoints(text);
+        const at = clampIndex(text, index);
+        return { before: chars.slice(0, at).join(''), after: chars.slice(at).join('') };
+    }
+
+    function commandBody(text, index) {
+        const raw = String(text ?? '');
+        const match = raw.match(/^(\/\S+\s+)([\s\S]*)$/);
+        if (!match) return { text: raw, index: clampIndex(raw, index) };
+        const prefix = codePointLength(match[1]);
+        return {
+            text: match[2],
+            index: clampIndex(match[2], (Number(index) || 0) - prefix),
+        };
+    }
+
+    function renderRichText(parent, options) {
+        if (!parent || typeof document === 'undefined') return;
+        const spec = options || {};
+        const asset = sanitize(spec.attachment);
+        const label = chipText(asset);
+        const parts = splitAt(spec.text || '', spec.attachmentIndex);
+        parent.textContent = '';
+        parent.appendChild(document.createTextNode(parts.before));
+        if (asset && label) {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'chat-asset-chip';
+            chip.dataset.type = asset.type;
+            chip.textContent = label;
+            chip.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof spec.onOpen === 'function') spec.onOpen(asset, chip);
+            });
+            parent.appendChild(chip);
+        }
+        parent.appendChild(document.createTextNode(parts.after));
+    }
+
     function promotionAllowed(existing, nowSec, cooldownSec) {
         if (!existing) return true;
         if (existing.status === 'pending' || existing.status === 'approved') return false;
@@ -98,5 +154,8 @@
         return true;
     }
 
-    return { sanitize, chipText, listingBanner, promotionAllowed };
+    return {
+        sanitize, chipText, listingBanner, promotionAllowed,
+        codePointLength, clampIndex, splitAt, commandBody, renderRichText,
+    };
 });

@@ -88,8 +88,8 @@ test('business links use the owned-business export', () => {
 
 test('cnn text ads still submit and promotion does not touch listing rows', () => {
     const cnn = read('resources/[sunset]/sunset_cnn/server/main.lua');
-    assert.match(cnn, /function SubmitAd\(source, text, attachment\)/);
-    assert.match(cnn, /SubmitAd\(source, text, pending\)/);
+    assert.match(cnn, /function SubmitAd\(source, text, attachment, attachmentIndex\)/);
+    assert.match(cnn, /SubmitAd\(source, text, pending, richIndex\)/);
     assert.match(cnn, /listingPromotionBlocked/);
     assert.match(cnn, /promoteCooldown/);
     assert.doesNotMatch(cnn, /DELETE FROM phone_market_listings/);
@@ -107,7 +107,8 @@ test('picker has a single focus owner', () => {
     const preview = read('resources/[sunset]/sunset_ui/web/js/asset-preview.js');
     assert.doesNotMatch(preview, /innerHTML/);
     const chat = read('resources/[sunset]/sunset_ui/web/js/chat.js');
-    assert.match(chat, /chip\.textContent = label/);
+    const pub = read('resources/[sunset]/sunset_ui/web/js/asset-public.js');
+    assert.match(pub, /chip\.textContent = label/);
     assert.match(chat, /type: pending\.type, id: pending\.id/);
 });
 
@@ -141,6 +142,51 @@ test('lazy trade module binds the asset picker after mount', () => {
             `${rel} is lazy-loaded and must bind when the document is already ready`
         );
     }
+});
+
+test('inline attachment placement uses unicode code points', () => {
+    const placed = asset.splitAt('Vand  urgent', 5);
+    assert.equal(placed.before, 'Vand ');
+    assert.equal(placed.after, ' urgent');
+    assert.equal(asset.splitAt('vand azi', 0).before, '');
+    assert.equal(asset.splitAt('vand azi', 99).after, '');
+    const command = asset.commandBody('/ad Vand  urgent', 9);
+    assert.equal(command.text, 'Vand  urgent');
+    assert.equal(command.index, 5);
+    const romanian = 'Vând  mașină';
+    const at = asset.codePointLength('Vând ');
+    const words = asset.splitAt(romanian, at);
+    assert.equal(words.before, 'Vând ');
+    assert.equal(words.after, ' mașină');
+    const ad = asset.commandBody(`/ad ${romanian}`, asset.codePointLength('/ad ') + at);
+    assert.equal(ad.text, romanian);
+    assert.equal(ad.index, at);
+    assert.equal(asset.clampIndex('abc', -4), 0);
+    assert.equal(asset.clampIndex('abc', 99), 3);
+});
+
+test('chat composer and CNN moderation keep the attachment inline', () => {
+    const html = read('resources/[sunset]/sunset_ui/web/modules/chat/index.html');
+    const chat = read('resources/[sunset]/sunset_ui/web/js/chat.js');
+    const help = read('resources/[sunset]/sunset_ui/web/js/helpdesk.js');
+    const desk = read('resources/[sunset]/sunset_admin/server/helpdesk.lua');
+    const cnn = read('resources/[sunset]/sunset_cnn/server/main.lua');
+    const links = read('resources/[sunset]/sunset_chat/server/attachments.lua');
+    assert.match(html, /contenteditable="true"/);
+    assert.doesNotMatch(html, /id="chat-attachment"/);
+    assert.match(chat, /attachmentIndex/);
+    assert.match(chat, /renderRichText/);
+    assert.match(chat, /chat-composer-asset/);
+    assert.match(help, /fillCnnText/);
+    assert.match(help, /AssetPreview\?\.open/);
+    assert.match(desk, /attachment_snapshot/);
+    assert.match(desk, /attachment_index/);
+    assert.match(desk, /SanitizePublicAttachment/);
+    assert.match(cnn, /attachment_index/);
+    assert.match(cnn, /NormalizeRichText/);
+    assert.match(read('sql/87-cnn-ad-attachment-index.sql'), /attachment_index/);
+    assert.match(links, /utf8\.len/);
+    assert.match(links, /utf8\.offset/);
 });
 
 test('migration and locale keys exist in English and Romanian', () => {
