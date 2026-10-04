@@ -8,6 +8,8 @@
     "authority:check": "node scripts/test-critical-authority.js",
     "prelaunch:check": "node scripts/test-prelaunch-invariants.js",
     "shop:check": "node scripts/test-shop.js",
+    "vehicle-thumbs:check": "node scripts/check-vehicle-thumbs.js",
+    "progression:check": "node scripts/test-progression.js",
     "discover:vehicles": "node scripts/audit-server-vehicles.js --write",
     "generate:vehicles": "node scripts/generate-addon-profiles.js",
     "audit:vehicles": "node scripts/audit-server-vehicles.js --check && node scripts/generate-addon-profiles.js --check && node scripts/generate-vehicle-report.js --check && node scripts/audit-vehicle-physics.js && node scripts/validate-vehicle-dynamics.js && node scripts/check-lua-syntax.js resources/[sunset]/sunset_vehicle_dynamics resources/[sunset]/sunset_tuning"

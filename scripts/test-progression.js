@@ -60,6 +60,12 @@ if (fs.existsSync(graph)) {
     const parsed = JSON.parse(fs.readFileSync(graph, 'utf8'));
     check(Array.isArray(parsed.nodes) && parsed.nodes.length > 10, 'progression graph has nodes');
     check(parsed.characterLevelDefault === 1, 'graph records level default 1');
+const cfgText = fs.readFileSync(path.join(root, 'config/server.cfg.template'), 'utf8');
+check(/ensure sunset_intro/.test(cfgText), 'production template starts sunset_intro');
+check(/LevelPriceBase = 1000/.test(config) && /ShiftRespect = 2/.test(config), 'level money and shift respect match the 8-15 hour model');
+const market = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_phone/server/market.lua'), 'utf8');
+check(market.includes('startTransaction') && market.includes('DebitMoneyInTransaction') && market.includes("status = 'expired'"), 'marketplace buy and expiry are transactional');
+check(fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_jobs/server/core.lua'), 'utf8').includes('GrantRespect'), 'a completed shift grants respect');
 }
 
 console.log(failed ? '\n' + failed + ' failed' : '\nall passed');

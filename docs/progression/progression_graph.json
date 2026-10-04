@@ -6,8 +6,10 @@
   "spawn": [-1037.58, -2737.58, 20.17],
   "levelModel": "Character level is purchased with respect points and money. XP does not raise character level. Job XP is separate.",
   "levelRespectCost": "currentLevel * 4",
-  "levelMoneyCost": "currentLevel * 3000",
-  "respectSources": ["payday +1 per hour after 20 minutes played", "quest reward.rp"],
+  "levelMoneyCost": "currentLevel * 1000",
+  "shiftRespect": 2,
+  "jobRankRespect": 4,
+  "respectSources": ["completed shift +2", "job rank-up +4", "quest reward.rp", "payday +1 after 20 minutes played"],
   "nodes": [
     {"id": "stage0.account", "system": "Account", "stage": 0, "class": "always available", "entry": "register/login", "characterLevel": null},
     {"id": "stage0.character", "system": "Character", "stage": 0, "class": "always available", "entry": "sunset:createCharacter", "characterLevel": 1, "nickname": "firstname only, lastname empty"},
@@ -32,6 +34,11 @@
     {"id": "criminal.robbery", "system": "Robbery", "class": "progression gated", "characterLevel": 12, "quest": ["crim_chop"]},
     {"id": "clan.join", "system": "Clan join", "class": "clan gated", "characterLevel": 10},
     {"id": "clan.create", "system": "Clan create", "class": "clan gated", "characterLevel": 15, "moneyCost": "500 RC"},
-    {"id": "turf.participate", "system": "Turf war", "class": "clan gated", "characterLevel": 15, "clan": "active unexpired"}
+    {"id": "turf.participate", "system": "Turf war", "class": "clan gated", "characterLevel": 15, "clan": "active unexpired"},
+    {"id": "phone.market", "system": "Phone marketplace", "class": "always available", "characterLevel": 1, "note": "buy is one database transaction; 5 percent fee"},
+    {"id": "intro.account", "system": "sunset_intro", "class": "always available", "characterLevel": 1, "note": "once per account"},
+    {"id": "casino.floor", "system": "Casino", "class": "always available", "characterLevel": 1, "note": "optional; not a required income source"},
+    {"id": "wanted.jail", "system": "Wanted and jail", "class": "always available", "characterLevel": 1},
+    {"id": "death.hospital", "system": "Death and hospital", "class": "always available", "characterLevel": 1, "moneyCost": 400}
   ]
 }

@@ -95,6 +95,16 @@ No GTA session was played for this audit.
 - [ ] Apply to a faction only after that quest is claimed.
 - [ ] Disconnect after each claim and confirm the reward was not paid twice.
 
+The LSIA spawn is about 1.9 km from the driving school (240, -1379) and about 1.9 km from the dealership (-56, -1096). Walking that before a license is a long first trip. Taxi has no character-level gate, so the player can ride there before the exam. The spawn was left where it is.
+
+## Level timing after the respect change
+
+A completed shift grants 2 respect and does not count as a payday. A job rank-up grants 4. Payday stays +1. Buying the next level costs `level * 4` respect and `level * $1,000`.
+
+Reaching level 10 still costs 180 respect. Story rewards cover about 28. The other 152 are about 76 finished shifts. At roughly 10 minutes a shift that is about 13 hours of work, inside the 8–15 hour target. Level 3 is the early story plus a handful of shifts (about 1–2 hours). Level 5 is about 3–5 hours. Level 10 to 15 is about 240 more respect, about 20 hours of shifts.
+
+The money to buy those levels from 1 to 10 is $45,000. Courier income over those shifts is on the order of $40,000 before the starter car, so the car and the levels fit in the same stretch instead of a 150-payday wall.
+
 ## Verdict
 
 A new player can earn money as a fisherman before they have a license, then follow the story onto a licensed job. The main story no longer completes "reach level 10" early, and the first car is affordable if they claim the story rewards and work the early shifts. Level 10 systems are gated in one table and announced once. Level 15 clan creation is level-gated and credit-gated. The long part is character level itself: about 150 paydays after story RP, because level is purchased rather than granted by XP. Trading can still move items the gun store would refuse; that path was not closed in this pass.
