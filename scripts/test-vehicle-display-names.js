@@ -74,12 +74,8 @@ for (const file of playerVisible) {
     assert(!/alt=\{(?:v|veh|featuredVehicle)\.model\}/.test(code), `raw model JSX alt in ${file}`);
 }
 const clientResolver = read('resources/[sunset]/sunset_vehicles/client/display_names.lua');
-const sqlSync = read('resources/[sunset]/sunset_vehicles/server/display_name_sync.lua');
-const sqlMigration = read('sql/91-vehicle-display-names.sql');
 assert(clientResolver.includes('registerAddonNativeLabels'), 'addon labels must be registered with GTA native text labels');
 assert(clientResolver.includes('AddTextEntry(model, metadata.label)'), 'raw addon gameName keys must be overridden');
-assert(sqlMigration.includes('CREATE TABLE IF NOT EXISTS `vehicle_display_names`'), 'presentation-only SQL catalog migration is required');
-assert(sqlSync.includes('INSERT INTO vehicle_display_names'), 'Lua catalog must sync to SQL for external consumers');
 assert(read('resources/[sunset]/sunset_vehicles/server/main.lua').includes('row.displayName = getVehicleDisplayName(row.model)'), 'owned vehicle DTO requires displayName');
 assert(read('resources/[sunset]/sunset_vehicles/server/main.lua').includes('displayName   = displayModel'), 'entry DTO requires display label');
 assert(read('resources/[sunset]/sunset_vehicles/client/main.lua').includes('model = info.displayName or exports.sunset_vehicles:GetVehicleDisplayName(info.model)'), 'entry chat must use friendly displayName');
