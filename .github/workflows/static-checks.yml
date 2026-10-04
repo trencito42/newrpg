@@ -26,3 +26,5 @@ jobs:
         run: node scripts/test-progression.js
       - name: Asset links
         run: node --test scripts/test-asset-links.js
+      - name: Phone production invariants
+        run: node --test scripts/test-phone-e2e.js
