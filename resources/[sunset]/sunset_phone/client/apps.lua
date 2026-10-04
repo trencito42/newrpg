@@ -54,37 +54,61 @@ local function waypoint(x, y, message)
     return true
 end
 
+local function mapGroup(category)
+    if category == 'Services' or category == 'Shops' or category == 'News' then return 'services' end
+    if category == 'Jobs' then return 'jobs' end
+    if category == 'Garages' or category == 'Garage' then return 'vehicle' end
+    if category == 'Factions' then return 'government' end
+    if category == 'Popular' then return 'entertainment' end
+    return 'other'
+end
+
 local function destinationPins()
-    local data = Sunset.AwaitCallback('sunset:getTaxiAppData')
+    local data = Sunset.AwaitCallback('sunset:getPhoneMapLocations')
     local pins = {}
-    for _, dest in ipairs(data and data.destinations or {}) do
-        if dest.x and dest.y then
-            pins[#pins + 1] = {
-                id = dest.id,
-                label = dest.label,
-                category = dest.category or 'Other',
-                x = dest.x,
-                y = dest.y,
-            }
-        end
+    local seen = {}
+    local function add(pin)
+        if type(pin) ~= 'table' or not pin.x or not pin.y then return end
+        local id = tostring(pin.id or ('pin_' .. (#pins + 1)))
+        if seen[id] then return end
+        seen[id] = true
+        pins[#pins + 1] = {
+            id = id,
+            label = pin.label,
+            category = pin.category or 'Other',
+            group = pin.group or mapGroup(pin.category),
+            area = pin.area,
+            x = pin.x,
+            y = pin.y,
+        }
+    end
+    for _, dest in ipairs(data and data.pins or {}) do
+        add(dest)
     end
     if Config and Config.CNN and Config.CNN.locations then
         for i, loc in ipairs(Config.CNN.locations) do
             local coords = loc.coords
             if coords then
-                pins[#pins + 1] = {
-                    id = 'cnn_' .. i,
-                    label = 'Weazel / CNN',
-                    category = 'News',
-                    x = coords.x,
-                    y = coords.y,
-                }
+                add({ id = 'cnn_' .. i, label = 'Weazel / CNN', category = 'News', x = coords.x, y = coords.y })
             end
         end
     end
     if SunsetImpound and SunsetImpound.Config and SunsetImpound.Config.lot then
         local lot = SunsetImpound.Config.lot
-        pins[#pins + 1] = { id = 'impound', label = 'Impound', category = 'Garage', x = lot.x, y = lot.y }
+        add({ id = 'impound', label = 'Impound', category = 'Garage', x = lot.x, y = lot.y })
+    end
+    for jobId, place in pairs(Sunset.JobWorkplaces or {}) do
+        local coords = place.npc and place.npc.coords
+        if coords then
+            add({
+                id = 'work_' .. jobId,
+                label = place.jobLabel or place.locationLabel or jobId,
+                category = 'Jobs',
+                area = place.locationLabel or place.address,
+                x = coords.x,
+                y = coords.y,
+            })
+        end
     end
     return pins
 end
@@ -123,9 +147,12 @@ local function factionFleet(factionId, grade)
             }
         end
     end
+    local depotCoords = depot and depot.coords
     return {
-        x = hq and hq.x or (depot and depot.coords and depot.coords.x),
-        y = hq and hq.y or (depot and depot.coords and depot.coords.y),
+        x = hq and hq.x or (depotCoords and depotCoords.x),
+        y = hq and hq.y or (depotCoords and depotCoords.y),
+        depotX = depotCoords and depotCoords.x or nil,
+        depotY = depotCoords and depotCoords.y or nil,
         depotLabel = depot and depot.label or nil,
         vehicles = vehicles,
     }
@@ -440,6 +467,39 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
 
         if op == 'factionRank' then
             local res, err = Sunset.AwaitCallback('sunset:factionMemberRankDelta', tonumber(data.characterId), tonumber(data.delta) or 0)
+            notify(res and exports.sunset_core:Translate('phone.ui.rank_updated') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
+            if res then loadApp('faction', token) end
+            return
+        end
+
+        if op == 'factionWarn' then
+            local res, err = Sunset.AwaitCallback('sunset:factionMemberWarn', tonumber(data.characterId), tostring(data.reason or 'Warning'):sub(1, 120))
+            notify(res and exports.sunset_core:Translate('phone.ui.warn') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
+            if res then loadApp('faction', token) end
+            return
+        end
+
+        if op == 'factionResign' then
+            local res, err = Sunset.AwaitCallback('sunset:factionResignHandle', tonumber(data.resignationId), tostring(data.action or 'decline'))
+            notify(res and exports.sunset_core:Translate('phone.ui.rank_updated') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
+            if res then loadApp('faction', token) end
+            return
+        end
+
+        if op == 'factionPardon' then
+            local res, err = Sunset.AwaitCallback('sunset:factionPardonFP', tonumber(data.characterId))
+            notify(res and exports.sunset_core:Translate('phone.ui.pardon') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
+            if res then loadApp('faction', token) end
+            return
+        end
+
+        if op == 'factionRenameRank' then
+            local grade = tonumber(data.grade)
+            if not grade then
+                notify(exports.sunset_core:Translate('phone.ui.action_failed'), 'error')
+                return
+            end
+            local res, err = Sunset.AwaitCallback('sunset:factionSetGradeLabels', { [grade] = tostring(data.label or ''):sub(1, 64) })
             notify(res and exports.sunset_core:Translate('phone.ui.rank_updated') or (err or exports.sunset_core:Translate('phone.ui.action_failed')), res and 'success' or 'error')
             if res then loadApp('faction', token) end
             return

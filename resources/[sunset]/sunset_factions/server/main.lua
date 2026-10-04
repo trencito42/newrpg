@@ -742,11 +742,27 @@ exports.sunset_core:RegisterCallback('sunset:getFactionPanel', function(source)
     if not faction then
         local jobId = select(1, Sunset.GetCharacterJob(char))
         local job = Sunset.CivilianJobs[jobId]
+        local access = exports.sunset_core:CanAccess(source, 'faction.apply')
+        local requirements = {}
+        if type(access) == 'table' and type(access.missing) == 'table' then
+            for _, miss in ipairs(access.missing) do
+                requirements[#requirements + 1] = {
+                    type = miss.type,
+                    required = miss.required,
+                    license = miss.license,
+                    questKey = miss.questKey,
+                }
+            end
+        end
         return {
             job = jobId,
             label = job and job.label or exports.sunset_core:TFor(source, 'admin.word.unemployed'),
             onDuty = false,
             isFaction = false,
+            apply = {
+                allowed = not (type(access) == 'table' and access.allowed == false),
+                requirements = requirements,
+            },
         }
     end
     local gradeRow = Sunset.GetFactionGrade(factionId, grade)

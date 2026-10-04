@@ -129,6 +129,37 @@ test('bank reasons use canonical ids and never invent missing i18n keys', () => 
     assert.match(i18n, /function has\(key\)/);
 });
 
+test('phone apps keep inline layout and the data the backend already sends', () => {
+    const css = read('resources/[sunset]/sunset_ui/web/css/phone.css');
+    const jobs = read('resources/[sunset]/sunset_jobs/server/core.lua');
+    const taxi = read('resources/[sunset]/sunset_taxi/server/main.lua');
+    const pins = phoneApps.slice(phoneApps.indexOf('local function destinationPins'), phoneApps.indexOf('local function pinById'));
+    assert.match(css, /\.phone-app-page\s*\{[^}]*display:\s*flex/);
+    assert.match(css, /\.phone-chip-wrap\s*\{[^}]*column-gap:\s*6px[^}]*row-gap:\s*6px/);
+    assert.match(css, /\.pad button\s*\{[^}]*border-radius:\s*50%/);
+    assert.match(phoneJs, /phone-app-footer/);
+    assert.match(phoneJs, /phone-chip-wrap/);
+    assert.match(phoneJs, /phone\.ui\.all_jobs/);
+    assert.match(phoneJs, /data\.jobs \|\| \[\]/);
+    assert.match(phoneJs, /job\.access && job\.access\.allowed === false/);
+    assert.match(jobs, /row\.access = \{/);
+    assert.match(phoneJs, /dash\.report/);
+    assert.match(phoneJs, /dash\.societyBalance/);
+    assert.match(phoneJs, /dash\.pendingResignations/);
+    assert.match(phoneJs, /dash\.myFp/);
+    assert.match(phoneJs, /propertyTab/);
+    assert.match(phoneJs, /renderRichText/);
+    assert.doesNotMatch(phoneJs, /slice\(0,\s*40\)/);
+    assert.doesNotMatch(pins, /getTaxiAppData/);
+    assert.match(phoneApps, /sunset:getPhoneMapLocations/);
+    assert.match(taxi, /sunset:getPhoneMapLocations/);
+    assert.match(phoneJs, /d\.popular === true/);
+    const i18n = read('resources/[sunset]/sunset_ui/web/js/i18n.js');
+    for (const key of ['phone.ui.my_job', 'phone.ui.all_jobs', 'phone.ui.weekly_activity', 'phone.ui.map_services', 'phone.ui.ride_pending', 'phone.ui.req_level']) {
+        assert.equal(i18n.split(`'${key}'`).length - 1, 2, key);
+    }
+});
+
 test('locale keys used by the phone pass exist in English and Romanian', () => {
     for (const key of [
         'phone.message.request_timed_out',

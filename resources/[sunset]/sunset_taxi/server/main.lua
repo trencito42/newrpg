@@ -448,6 +448,34 @@ exports.sunset_core:RegisterCallback('sunset:getTaxiAppData', function(source)
     return buildAppData(source)
 end)
 
+local MAP_GROUP = {
+    Services = 'services',
+    Shops = 'services',
+    Jobs = 'jobs',
+    Garages = 'vehicle',
+    Factions = 'government',
+    Popular = 'entertainment',
+    News = 'services',
+}
+
+exports.sunset_core:RegisterCallback('sunset:getPhoneMapLocations', function(_source)
+    local pins = {}
+    for _, dest in ipairs(Sunset.Taxi.BuildAllDestinations()) do
+        local coords = dest.coords
+        if coords then
+            pins[#pins + 1] = {
+                id = dest.id,
+                label = dest.label,
+                category = dest.category or 'Other',
+                group = MAP_GROUP[dest.category or ''] or 'other',
+                x = coords.x + 0.0,
+                y = coords.y + 0.0,
+            }
+        end
+    end
+    return { pins = pins }
+end)
+
 local function startRide(source, pickup, destination, destLabel)
     local char = getChar(source)
     if not char then return nil, { localeKey = 'taxi.message.no_character' } end

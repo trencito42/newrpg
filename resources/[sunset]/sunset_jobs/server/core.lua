@@ -612,6 +612,22 @@ exports.sunset_core:RegisterCallback('sunset:jobs:getPanelData', function(source
             row.xp = prog.xp
             row.xpNext = prog.xpToNext or xpForLevel(prog.level)
         end
+        local access = exports.sunset_core:CanAccess(source, 'job.' .. row.id)
+        local requirements = {}
+        if type(access) == 'table' and type(access.missing) == 'table' then
+            for _, miss in ipairs(access.missing) do
+                requirements[#requirements + 1] = {
+                    type = miss.type,
+                    required = miss.required,
+                    license = miss.license,
+                    questKey = miss.questKey,
+                }
+            end
+        end
+        row.access = {
+            allowed = not (type(access) == 'table' and access.allowed == false),
+            requirements = requirements,
+        }
     end
 
     return {
