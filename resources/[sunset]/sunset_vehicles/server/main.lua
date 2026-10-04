@@ -12,6 +12,12 @@ local StoreRate = {}
 local StateSyncRate = {}
 local ParkRate = {}
 
+-- Fix 1: server-side runtime state cache for vehicles currently in the world.
+-- Keyed by vehicle DB id. Updated ONLY from trusted periodic syncs (sunset:syncOwnedVehicleState).
+-- Used in playerDropped so we never persist 0/garbage from a torn-down entity.
+-- { engine, body, fuel, updatedAt }
+local VehicleRuntimeState = {}
+
 local VehicleCatalog = {}
 local CatalogVersion = 0
 local UncataloguedModels = {}
@@ -56,6 +62,26 @@ end)
 MySQL.ready(function()
     local ok, err = pcall(refreshVehicleCatalog)
     if not ok then print(('[sunset_vehicles] catalog load failed: %s'):format(tostring(err))) end
+
+    -- Fix 3: Boot reconciliation — on a full FXServer restart the game world is
+    -- gone, so any vehicle that was left with stored=0 is orphaned. Mark them as
+    -- stored=1 (retrievable) WITHOUT modifying engine/body/fuel so players get
+    -- their car back in the condition it was last synced in.
+    -- Note: this runs on every resource start. On a resource-only restart the
+    -- vehicles still in the world will be re-acquired by players normally; the
+    -- stored=1 mark is overwritten when they next spawn the car.
+    local okReconcile, reconcileErr = pcall(function()
+        local affected = MySQL.update.await([[
+            UPDATE vehicles SET stored = 1
+            WHERE stored = 0
+        ]])
+        if affected and affected > 0 then
+            print(('[sunset_vehicles] Boot reconciliation: %d vehicle(s) with stored=0 set to stored=1 (engine/body unchanged)'):format(affected))
+        end
+    end)
+    if not okReconcile then
+        print(('[sunset_vehicles] Boot reconciliation failed: %s'):format(tostring(reconcileErr)))
+    end
 end)
 
 local function normalizePlate(plate)
@@ -764,6 +790,16 @@ exports.sunset_core:RegisterCallback('sunset:syncOwnedVehicleState', function(so
     props.odometer = math.min(requestedOdometer, previousOdometer + 8.0)
     MySQL.update.await('UPDATE vehicles SET fuel = ?, engine = ?, body = ?, props = ? WHERE id = ? AND character_id = ?',
         { fuelValue, engine, body, json.encode(props), row.id, char.id })
+
+    -- Fix 1: update the runtime state cache from this trusted periodic sync.
+    -- This is the only source of truth used by playerDropped.
+    VehicleRuntimeState[row.id] = { engine = engine, body = body, fuel = fuelValue, updatedAt = now }
+
+    if Sunset and Sunset.Config and Sunset.Config.VehiclePersistenceDebug then
+        print(('[VEH_PERSIST] SYNC id=%s engine=%.1f body=%.1f fuel=%.1f reason=periodic'):format(
+            tostring(row.id), engine, body, fuelValue))
+    end
+
     return true
 end)
 
@@ -772,6 +808,7 @@ AddEventHandler('playerDropped', function()
     StoreRate[src] = nil
     StateSyncRate[src] = nil
     ParkRate[src] = nil
+    -- VehicleRuntimeState entries are cleared per-vehicle inside the loop below.
 
     -- [AUDIT P6-03] Capture the character id SYNCHRONOUSLY: sunset_core's own
     -- playerDropped handler nils Players[src] and a deferred GetCharacter call
@@ -800,19 +837,56 @@ AddEventHandler('playerDropped', function()
                     -- position: /park is the only writer of parked_* coords, so
                     -- after reconnect the car respawns exactly where the player
                     -- parked it (garage spawn only when no park was ever set).
-                    MySQL.update.await([[
-                        UPDATE vehicles SET stored = 1,
-                            engine = ?, body = ?
-                        WHERE id = ? AND character_id = ?
-                    ]], {
-                        math.max(-4000, math.min(1000, GetVehicleEngineHealth(veh))),
-                        math.max(0, math.min(1000, GetVehicleBodyHealth(veh))),
-                        row.id, charId,
-                    })
+                    --
+                    -- Fix 1: prefer the VehicleRuntimeState cache over reading
+                    -- the entity directly. During server teardown, entities can
+                    -- already be destroyed and GetVehicleEngineHealth returns 0,
+                    -- which would then be persisted and the car would spawn wrecked.
+                    local cached = VehicleRuntimeState[row.id]
+                    local entityEngine = math.max(-4000, math.min(1000, GetVehicleEngineHealth(veh)))
+                    local entityBody   = math.max(0, math.min(1000, GetVehicleBodyHealth(veh)))
+                    local useEngine, useBody, useSource
+
+                    if cached and cached.engine and cached.engine > 0 then
+                        useEngine = cached.engine
+                        useBody   = cached.body or entityBody
+                        useSource = 'cache'
+                    elseif entityEngine > 0 then
+                        useEngine = entityEngine
+                        useBody   = entityBody
+                        useSource = 'entity'
+                    else
+                        -- Both entity and cache are 0/nil; this likely means
+                        -- the entity was torn down before we could read it.
+                        -- Leave DB unchanged (skip the engine/body write) so
+                        -- the last good periodic sync value is preserved.
+                        useEngine = nil
+                        useSource = 'skip'
+                    end
+
+                    if Sunset and Sunset.Config and Sunset.Config.VehiclePersistenceDebug then
+                        print(('[VEH_PERSIST] PLAYER_DROPPED id=%s plate=%s using=%s engine=%s body=%s'):format(
+                            tostring(row.id), tostring(row.plate), useSource,
+                            tostring(useEngine), tostring(useBody)))
+                    end
+
+                    if useEngine ~= nil then
+                        MySQL.update.await([[
+                            UPDATE vehicles SET stored = 1,
+                                engine = ?, body = ?
+                            WHERE id = ? AND character_id = ?
+                        ]], { useEngine, useBody, row.id, charId })
+                    else
+                        -- Only mark stored, don't touch health (preserve last good sync)
+                        MySQL.update.await('UPDATE vehicles SET stored = 1 WHERE id = ? AND character_id = ?',
+                            { row.id, charId })
+                    end
+                    VehicleRuntimeState[row.id] = nil
                     DeleteEntity(veh)
                 else
                     MySQL.update.await('UPDATE vehicles SET stored = 1 WHERE id = ? AND character_id = ?',
                         { row.id, charId })
+                    VehicleRuntimeState[row.id] = nil
                 end
                 TriggerClientEvent('sunset:client:cleanupOwnedVehicles', -1, { { plate = plate } })
             end
@@ -1349,6 +1423,32 @@ exports('DeleteVehicleRecord', function(vehicleId)
     if not vehicleId then return false end
     MySQL.update.await('DELETE FROM vehicles WHERE id = ?', { vehicleId })
     return true
+end)
+
+-- Fix 6: /vehstate debug command — server-side data callback.
+-- Only responds to admins (level 3+).
+exports.sunset_core:RegisterCallback('sunset:vehicles:getVehStateDebug', function(source, plate)
+    local okAdmin, isAdmin = pcall(function() return exports.sunset_admin:IsAdmin(source, 3) end)
+    if not okAdmin or not isAdmin then return nil, 'not_admin' end
+
+    plate = normalizePlate(plate)
+    if plate == '' then return nil, 'no_plate' end
+
+    local row = MySQL.single.await([[
+        SELECT id, plate, engine, body, fuel, stored, destroyed
+        FROM vehicles
+        WHERE REPLACE(UPPER(plate), ' ', '') = ?
+        LIMIT 1
+    ]], { plate })
+    if not row then return nil, 'not_found' end
+
+    local cached = VehicleRuntimeState[row.id]
+    if cached then
+        row.cache_engine = cached.engine
+        row.cache_body = cached.body
+        row.cache_fuel = cached.fuel
+    end
+    return row
 end)
 
 -- ── Vehicle entry information ─────────────────────────────────────────────

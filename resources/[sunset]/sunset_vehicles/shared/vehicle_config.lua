@@ -1,5 +1,11 @@
 Sunset = Sunset or {}
 
+-- Vehicle persistence debug logging (Fix 7).
+-- Set to true on a DEV server to log spawn/sync/drop lifecycle events.
+-- Never enable on live — it prints on every periodic sync (every 30 s per driver).
+Sunset.Config = Sunset.Config or {}
+Sunset.Config.VehiclePersistenceDebug = false
+
 -- Per vehicle-class tuning (GTA vehicle classes 0–22)
 Sunset.VehicleProfiles = {
     -- Fuel is consumed in liters/hour, then converted to a percentage of the

@@ -109,7 +109,9 @@ local function forEachTrackedOwned(fn)
 end
 local lastBodyHealth = 1000.0
 local lastVehSpeed = 0.0
-local spawnGraceUntil = 0
+-- Fix 4: per-vehicle grace table so spawning one vehicle doesn't reset
+-- the grace window for a vehicle that is still in its own grace period.
+local spawnGraceUntil = {}
 local engineEnabled = {}
 local lastEjectAt = 0
 local odometerKm = 0.0
@@ -479,7 +481,8 @@ local function computeFuelDrainPerSecond(veh)
 end
 
 local function applyCollisionDamage(veh)
-    if GetGameTimer() < spawnGraceUntil then
+    -- Fix 4: use per-vehicle grace table
+    if GetGameTimer() < (spawnGraceUntil[veh] or 0) then
         lastBodyHealth = GetVehicleBodyHealth(veh)
         lastVehSpeed = GetEntitySpeed(veh)
         return
@@ -644,6 +647,10 @@ end
 local function deleteVehicleEntity(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return end
     unmarkProtected(veh)
+    -- Fix 6 (B6): clean up per-entity state so GTA handle reuse doesn't bleed
+    -- the old vehicle's engineEnabled or spawn grace into a new entity.
+    engineEnabled[veh] = nil
+    spawnGraceUntil[veh] = nil
     SetEntityAsMissionEntity(veh, true, true)
     DeleteVehicle(veh)
     if DoesEntityExist(veh) then
@@ -718,7 +725,10 @@ local function normalizeVehicleStats(vehData)
     local body = tonumber(vehData.body)
     local isDestroyed = vehData.destroyed == 1 or vehData.destroyed == true or vehData.destroyed == '1'
 
-    if fuel == nil or fuel <= 0 then fuel = 100.0 end
+    -- Fix 5: fuel=0 is a valid empty tank. Only default to 100 when the value is
+    -- truly NULL/missing (nil). The old `fuel <= 0` check turned a legitimately
+    -- empty tank into a full one on every spawn, bypassing paid refuelling.
+    if fuel == nil then fuel = 100.0 end
 
     if isDestroyed then
         engine = 0.0
@@ -797,9 +807,9 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     local vehFuel, vehEngine, vehBody = normalizeVehicleStats(vehData)
     local sx, sy, sz, heading = getSpawnPoint(spawnOpts)
     RequestCollisionAtCoord(sx, sy, sz)
-    -- [FIX] Set spawn grace BEFORE creating the vehicle so ground-collision
-    -- damage during spawn placement doesn't damage the engine/body.
-    spawnGraceUntil = GetGameTimer() + 4000
+    -- Fix 4: grace is set per-vehicle; the placeholder 0 is replaced below once
+    -- the entity handle is known. A temporary guard is set on handle 0 (harmless).
+    spawnGraceUntil[0] = GetGameTimer() + 4000
 
     local vehicle = 0
     -- [ANTICHEAT] whitelist this spawn for the vehspawn ledger detector
@@ -860,7 +870,9 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     SetVehicleEngineHealth(vehicle, vehEngine)
     SetVehicleBodyHealth(vehicle, vehBody)
     writeFuelPercent(vehicle, vehFuel)
-    spawnGraceUntil = GetGameTimer() + 4000
+    -- Fix 4: per-vehicle grace — collision damage won't be recorded for 4 s after spawn
+    spawnGraceUntil[vehicle] = GetGameTimer() + 4000
+    spawnGraceUntil[0] = nil  -- clean up the placeholder guard
     lastBodyHealth = vehBody
     lastVehSpeed = 0.0
     engineEnabled[vehicle] = false
@@ -885,6 +897,22 @@ local function spawnOwnedVehicleEntity(vehData, spawnOpts)
     markProtected(vehicle)
     fuel = vehFuel
     currentVeh = 0
+
+    -- Fix 2 / Fix 7: diagnostic logging behind VehiclePersistenceDebug flag
+    if Sunset.Config and Sunset.Config.VehiclePersistenceDebug then
+        local readEngine = GetVehicleEngineHealth(vehicle)
+        local readBody   = GetVehicleBodyHealth(vehicle)
+        print(('[VEH_PERSIST] SPAWN id=%s plate=%s stored=%s dbEngine=%.1f dbBody=%.1f dbFuel=%.1f'):format(
+            tostring(vehData.id), tostring(vehData.plate), tostring(vehData.stored),
+            vehEngine, vehBody, vehFuel))
+        print(('[VEH_PERSIST] APPLIED id=%s entityEngine=%.1f entityBody=%.1f (diff engine=%.1f body=%.1f)'):format(
+            tostring(vehData.id), readEngine, readBody, readEngine - vehEngine, readBody - vehBody))
+        if math.abs(readEngine - vehEngine) > 5.0 or math.abs(readBody - vehBody) > 5.0 then
+            print(('[VEH_PERSIST] SPAWN_DRIFT id=%s plate=%s engine expected=%.1f got=%.1f body expected=%.1f got=%.1f'):format(
+                tostring(vehData.id), tostring(vehData.plate), vehEngine, readEngine, vehBody, readBody))
+        end
+    end
+
     notify(exports.sunset_core:Translate('vehicles.msg.vehicle_spawned_fuel', { plate = tostring(vehData.plate), veh_fuel = math.floor(tonumber(math.floor(vehFuel)) or 0) }), 'success')
     TriggerEvent('sunset:client:vehicleUpdated', { id = tonumber(vehData.id), plate = vehData.plate, stored = 0, inWorld = true })
     TriggerEvent('sunset:menu:refreshIfOpen')
@@ -1431,6 +1459,36 @@ CreateThread(function()
 end)
 
 exports('SetVehicleProp', SetVehicleProp)
+
+-- Fix 6: /vehstate debug command (admin only — server validates authority)
+RegisterCommand('vehstate', function()
+    local veh = getVeh()
+    if veh == 0 or not DoesEntityExist(veh) then
+        notify('You must be in a vehicle to use /vehstate.', 'error')
+        return
+    end
+    local plate = normalizePlate(GetVehicleNumberPlateText(veh))
+    local entityEngine = GetVehicleEngineHealth(veh)
+    local entityBody   = GetVehicleBodyHealth(veh)
+    local entityFuel   = readFuelPercent(veh)
+    CreateThread(function()
+        local row, err = Sunset.AwaitCallback('sunset:vehicles:getVehStateDebug', plate)
+        if not row then
+            notify(('vehstate: %s'):format(tostring(err or 'not your vehicle / not admin')), 'error')
+            return
+        end
+        local lines = {
+            ('^3[VehState]^7 plate=%s id=%s'):format(plate, tostring(row.id)),
+            ('  DB engine: ^2%.1f^7  Entity engine: ^2%.1f'):format(tonumber(row.engine) or -1, entityEngine),
+            ('  DB body:   ^2%.1f^7  Entity body:   ^2%.1f'):format(tonumber(row.body) or -1, entityBody),
+            ('  DB fuel:   ^2%.1f^7  Entity fuel:   ^2%.1f'):format(tonumber(row.fuel) or -1, entityFuel),
+            ('  stored: %s  destroyed: %s'):format(tostring(row.stored), tostring(row.destroyed)),
+        }
+        for _, line in ipairs(lines) do
+            TriggerEvent('chat:addMessage', { args = { line }, color = { 255, 255, 0 } })
+        end
+    end)
+end, false)
 
 RegisterNetEvent('sunset:client:vehicleStateChanged', function(data)
     TriggerEvent('sunset:client:vehicleUpdated', data and data.vehicle or {})
