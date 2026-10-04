@@ -63,6 +63,36 @@ local function giveItem(characterId, item, count)
     return id ~= nil
 end
 
+local function cnnPrice()
+    if GetResourceState('sunset_cnn') ~= 'started' then return nil end
+    local price = nil
+    pcall(function() price = exports.sunset_cnn:GetAdPrice() end)
+    price = tonumber(price)
+    if not price or price < 1 then return nil end
+    return math.floor(price)
+end
+
+local function listingIdOf(kind, assetKey, characterId)
+    return tonumber(MySQL.scalar.await([[
+        SELECT id FROM phone_market_listings
+        WHERE listing_type = ? AND asset_id = ? AND seller_character_id = ? AND status = 'active'
+        ORDER BY id DESC LIMIT 1
+    ]], { kind, tostring(assetKey), characterId }))
+end
+
+local function vehicleTitle(model, plate)
+    local name = tostring(model or '')
+    if GetResourceState('sunset_vehicles') == 'started' then
+        pcall(function()
+            local label = exports.sunset_vehicles:GetVehicleDisplayName(model)
+            if type(label) == 'string' and label ~= '' then name = label end
+        end)
+    end
+    plate = tostring(plate or ''):gsub('[%c]', '')
+    if plate ~= '' then return name .. ' · ' .. plate end
+    return name
+end
+
 local function tradable(item)
     local def = Sunset.Items[item]
     if not def or def.weapon or BLOCKED_ITEMS[item] then return false end
@@ -99,7 +129,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketBrowse', function(source
     local rows = MySQL.query.await([[
         SELECT l.id, l.listing_type, l.asset_id, l.quantity, l.asking_price, l.seller_character_id, l.created_at,
                c.firstname, c.lastname, c.phone_number,
-               v.model, v.plate, p.label AS property_label
+               v.model, v.plate, v.props, p.label AS property_label
         FROM phone_market_listings l
         JOIN characters c ON c.id = l.seller_character_id
         LEFT JOIN vehicles v ON l.listing_type = 'vehicle' AND v.id = CAST(l.asset_id AS UNSIGNED)
@@ -115,14 +145,25 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketBrowse', function(source
     ]], { kind, kind, q, q, q, q, q, size, offset }) or {}
     local out = {}
     for _, row in ipairs(rows) do
-        local title = row.listing_type == 'vehicle' and ((row.model or 'vehicle') .. ' ' .. (row.plate or ''))
+        local title = row.listing_type == 'vehicle' and vehicleTitle(row.model, row.plate)
             or row.listing_type == 'property' and (row.property_label or 'property')
             or (Sunset.Items[row.asset_id] and (Sunset.Items[row.asset_id].label or row.asset_id) or row.asset_id)
+        local mileage = nil
+        if row.listing_type == 'vehicle' and row.props then
+            local props = row.props
+            if type(props) == 'string' then
+                local okProps, decoded = pcall(json.decode, props)
+                props = okProps and decoded or nil
+            end
+            if type(props) == 'table' then mileage = tonumber(props.odometer) end
+        end
         out[#out + 1] = {
             id = tonumber(row.id),
             listingId = tonumber(row.id),
             category = row.listing_type == 'vehicle' and 'vehicles' or row.listing_type == 'item' and 'items' or 'player_properties',
             title = title,
+            plate = row.plate,
+            mileage = mileage and math.floor(mileage) or nil,
             price = tonumber(row.asking_price) or 0,
             quantity = tonumber(row.quantity) or 1,
             seller = publicName(row.firstname, row.lastname),
@@ -174,7 +215,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListVehicle', function(s
         )
     ]], { char.id, tostring(vehicleId), price, tostring(vehicleId) })
     if tonumber(inserted) ~= 1 then return nil, { localeKey = 'phone.message.database_error_while_saving_contact' } end
-    return { ok = true }
+    return { ok = true, id = listingIdOf('vehicle', vehicleId, char.id), cnnPrice = cnnPrice() }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneMarketListItem', function(source, item, quantity, price)
@@ -199,7 +240,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListItem', function(sour
         exports.sunset_inventory:AddItem(source, item, quantity)
         return nil, { localeKey = 'phone.message.database_error_while_saving_contact' }
     end
-    return { ok = true, id = id }
+    return { ok = true, id = id, cnnPrice = cnnPrice() }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneMarketListProperty', function(source, propertyId, price)
@@ -224,7 +265,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketListProperty', function(
         )
     ]], { char.id, tostring(propertyId), price, tostring(propertyId) })
     if tonumber(inserted) ~= 1 then return nil, { localeKey = 'phone.message.database_error_while_saving_contact' } end
-    return { ok = true }
+    return { ok = true, id = listingIdOf('property', propertyId, char.id), cnnPrice = cnnPrice() }
 end)
 
 local function mustOne(query, sql, params)

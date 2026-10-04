@@ -142,6 +142,35 @@
             const st = this.call && this.call.state;
             if (st === 'INCOMING_RINGING' || st === 'OUTGOING_RINGING') this.renderCall(true);
             else this.showView(this.stack[this.stack.length - 1] || 'home', false);
+            if (payload && payload.openListingId) this.focusListing({ listingId: payload.openListingId });
+        },
+
+        focusListing(payload) {
+            const listingId = Number(payload && payload.listingId);
+            if (!listingId) return;
+            this._focusListing = listingId;
+            this.openApp('market');
+        },
+
+        showPromote(payload) {
+            const listingId = Number(payload && payload.listingId);
+            const price = Number(payload && payload.price);
+            if (!listingId || !price) return;
+            document.getElementById('market-promote')?.remove();
+            const dialog = el('div', 'asset-preview');
+            dialog.id = 'market-promote';
+            const title = el('div', 'asset-preview__title');
+            title.append(text(t('asset.promote')));
+            const body = el('p', 'asset-preview__desc');
+            body.append(text(t('asset.promote_prompt', { price: window.I18n?.number?.(price) || String(price) })));
+            const actions = el('div', 'asset-preview__actions');
+            actions.append(btn('btn-ghost', t('asset.no_thanks'), () => dialog.remove()));
+            actions.append(btn('btn-gold', t('asset.promote'), () => {
+                dialog.remove();
+                post('marketPromote', { listingId });
+            }));
+            dialog.append(title, body, actions);
+            document.body.appendChild(dialog);
         },
 
         hide() {
@@ -1035,6 +1064,30 @@
                     price.append(text(money(row.price)));
                     info.append(price);
                 }
+                if (row.plate) {
+                    const plate = el('div', 'muted');
+                    plate.append(text(String(row.plate)));
+                    info.append(plate);
+                }
+                if (row.mileage != null) {
+                    const km = el('div', 'muted');
+                    km.append(text(`${window.I18n?.number?.(row.mileage) || row.mileage} km`));
+                    info.append(km);
+                }
+                if (row.quantity > 1) {
+                    const qty = el('div', 'muted');
+                    qty.append(text(`×${row.quantity}`));
+                    info.append(qty);
+                }
+                const model = String(row.model || '').toLowerCase();
+                if (/^[a-z0-9_]+$/.test(model)) {
+                    const img = document.createElement('img');
+                    img.className = 'asset-preview__thumb';
+                    img.alt = '';
+                    img.src = 'assets/vehicles/' + encodeURIComponent(model) + '.webp';
+                    img.addEventListener('error', () => img.remove());
+                    card.append(img);
+                }
                 card.append(fallback, info);
                 card.addEventListener('click', () => { this.detail = row; this.openApp('detail'); });
                 content.append(card);
@@ -1049,6 +1102,14 @@
                 this._marketPage = page + 1;
                 post('phoneAction', { op: 'marketBrowse', q: this._marketQuery || '', page: this._marketPage, kind: kindOf(this.marketFilter), token: this.token });
             }));
+            if (this._focusListing) {
+                const match = rows.find((row) => Number(row.listingId || row.id) === Number(this._focusListing));
+                this._focusListing = null;
+                if (match) {
+                    this.detail = match;
+                    this.openApp('detail');
+                }
+            }
             const owned = data.myListings || [];
             if (owned.length) {
                 const head = el('div', 'section-title');
@@ -1493,6 +1554,19 @@
                     this.thread = { peer: Number(ad.characterId) || 0, name: ad.seller || ad.phone, phone: ad.phone, messages: this.messagesWith(ad.characterId) };
                     this.openApp('conversation');
                 }));
+                const asset = window.AssetPublic?.sanitize?.(ad.attachment);
+                if (asset) {
+                    const chip = btn('btn-ghost', window.AssetPublic.chipText(asset), () => window.AssetPreview?.open?.(asset));
+                    card.append(chip);
+                    const banner = window.AssetPublic.listingBanner(asset.listingStatus);
+                    if (asset.listingId && banner === 'active') {
+                        card.append(btn('btn-gold', t('asset.view_market'), () => this.focusListing({ listingId: asset.listingId })));
+                    } else if (asset.listingId) {
+                        const note = el('div', 'muted');
+                        note.append(text(banner === 'sold' ? t('asset.listing_sold') : t('asset.listing_expired')));
+                        card.append(note);
+                    }
+                }
                 content.append(card);
             });
         },

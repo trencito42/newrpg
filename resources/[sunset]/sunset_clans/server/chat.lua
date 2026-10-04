@@ -66,9 +66,15 @@ local function runClanChat(source, args)
         clanTagColor = row.tag_color,
         clanTagStyle = row.tag_style,
     }
+    if GetResourceState('sunset_chat') == 'started' then
+        exports.sunset_chat:ApplyChatAttachment(source, payload)
+    end
 
     for _, src in ipairs(members) do
         TriggerClientEvent('sunset:chat:message', src, payload)
+    end
+    if GetResourceState('sunset_chat') == 'started' then
+        exports.sunset_chat:ClearChatAttachment(source)
     end
 end
 

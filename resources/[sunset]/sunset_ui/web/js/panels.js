@@ -133,6 +133,16 @@ const Panels = {
             const row = this._inventorySelected;
             if (row?.usable) post('inventoryUse', { item: row.item });
         });
+        $('#inventory-link-chat')?.addEventListener('click', () => {
+            const row = this._inventorySelected;
+            if (!row || this._inventoryTrade) return;
+            post('chatLinkAsset', {
+                type: 'item',
+                id: row.id,
+                label: row.label || row.item,
+                quantity: row.count,
+            });
+        });
         $('#inventory-drop-selected')?.addEventListener('click', () => {
             const row = this._inventorySelected;
             if (!row) return;
@@ -754,8 +764,10 @@ const Panels = {
         }
         const use = $('#inventory-use-selected');
         const drop = $('#inventory-drop-selected');
+        const link = $('#inventory-link-chat');
         if (use) use.disabled = !row?.usable;
         if (drop) drop.disabled = !row;
+        if (link) link.disabled = !row || !!this._inventoryTrade;
     },
 
     _tradeAssetTypeLabel(assetType) {

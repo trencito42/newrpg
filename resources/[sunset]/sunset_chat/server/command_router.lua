@@ -216,12 +216,13 @@ local function tryRunServerChatCommand(src, cmd, args)
     return false
 end
 
-RegisterNetEvent('sunset:chat:runCommand', function(line)
+RegisterNetEvent('sunset:chat:runCommand', function(line, attachment)
     local src = source
     if not checkCommandRateLimit(src, 'runCommand') then
         chatSystem(src, t(src, 'chat.command_rate_limited'), 'warning')
         return
     end
+    if BeginChatAttachment(src, line, attachment) == false then return end
     if type(line) ~= 'string' then return end
     if #line > 512 then return end -- [SEC3] bound client-supplied command line before tokenizing
 

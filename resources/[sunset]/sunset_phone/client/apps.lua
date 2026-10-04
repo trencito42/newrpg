@@ -167,6 +167,18 @@ local function loadApp(app, token)
     end
 end
 
+AddEventHandler('sunset:nui:marketPromote', function(data)
+    CreateThread(function()
+        local res, err = Sunset.AwaitCallback('sunset:cnn:promoteListing', tonumber(data and data.listingId))
+        if res then
+            notify(exports.sunset_core:Translate('asset.promote'), 'success')
+        else
+            local key = type(err) == 'table' and err.localeKey or nil
+            notify(key and exports.sunset_core:Translate(key) or exports.sunset_core:Translate('cnn.message.could_not_submit_ad'), 'error')
+        end
+    end)
+end)
+
 RegisterNetEvent('sunset:client:phoneCall', function(payload)
     payload = payload or {}
     callSnapshot = payload
@@ -234,13 +246,19 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             return
         end
         if op == 'marketListVehicle' then
-            Sunset.AwaitCallback('sunset:phoneMarketListVehicle', tonumber(data.vehicleId), tonumber(data.price))
+            local res = Sunset.AwaitCallback('sunset:phoneMarketListVehicle', tonumber(data.vehicleId), tonumber(data.price))
             loadApp('market', token)
+            if type(res) == 'table' and res.id and res.cnnPrice then
+                exports.sunset_ui:Send('marketPromotePrompt', { listingId = res.id, price = res.cnnPrice })
+            end
             return
         end
         if op == 'marketListItem' then
-            Sunset.AwaitCallback('sunset:phoneMarketListItem', tostring(data.item or ''), tonumber(data.quantity), tonumber(data.price))
+            local res = Sunset.AwaitCallback('sunset:phoneMarketListItem', tostring(data.item or ''), tonumber(data.quantity), tonumber(data.price))
             loadApp('market', token)
+            if type(res) == 'table' and res.id and res.cnnPrice then
+                exports.sunset_ui:Send('marketPromotePrompt', { listingId = res.id, price = res.cnnPrice })
+            end
             return
         end
         if op == 'marketBrowse' then
@@ -253,8 +271,11 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             return
         end
         if op == 'marketListProperty' then
-            Sunset.AwaitCallback('sunset:phoneMarketListProperty', tonumber(data.propertyId), tonumber(data.price))
+            local res = Sunset.AwaitCallback('sunset:phoneMarketListProperty', tonumber(data.propertyId), tonumber(data.price))
             loadApp('market', token)
+            if type(res) == 'table' and res.id and res.cnnPrice then
+                exports.sunset_ui:Send('marketPromotePrompt', { listingId = res.id, price = res.cnnPrice })
+            end
             return
         end
         if op == 'buyLevel' then

@@ -46,4 +46,6 @@ server_exports {
     'ApproveAd',
     'RejectAd',
     'AdMutePlayer',
+    'GetAdPrice',
+    'SubmitAd',
 }

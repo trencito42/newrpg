@@ -39,6 +39,7 @@ local function sendNearby(source, payload, range, eventName)
     if not origin then return end
     range = range or CHAT_RANGE
     eventName = eventName or 'sunset:chat:message'
+    ApplyChatAttachment(source, payload)
     for _, id in ipairs(GetPlayers()) do
         local src = tonumber(id)
         local dest = playerCoords(src)
@@ -46,6 +47,7 @@ local function sendNearby(source, payload, range, eventName)
             TriggerClientEvent(eventName, src, payload)
         end
     end
+    ClearChatAttachment(source)
 end
 
 
@@ -141,11 +143,24 @@ local function checkMute(source)
     return false
 end
 
-RegisterNetEvent('sunset:chat:send', function(message, channel)
+local function clientAttachment(raw)
+    if type(raw) ~= 'table' or type(raw[1]) == 'table' then return nil end
+    local assetType = tostring(raw.type or '')
+    local assetId = tonumber(raw.id)
+    if not assetId then return nil end
+    if assetType ~= 'item' and assetType ~= 'vehicle' and assetType ~= 'property' and assetType ~= 'business' then
+        return nil
+    end
+    return { type = assetType, id = assetId }
+end
+
+RegisterNetEvent('sunset:chat:send', function(message, channel, attachment)
     local src = source
     if not hasCharacter(src) then return end -- [SEC3]
     if checkMute(src) then return end
     channel = tostring(channel or 'all'):lower()
+    local requested = clientAttachment(attachment)
+    ClearChatAttachment(src)
 
     -- [STAFF CHAT] /a or STAFF channel — staff-only, level 1+
     if channel == 'staff' then
@@ -154,6 +169,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
             TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.staff_only'), 'error')
             return
         end
+        ClearChatAttachment(src)
         if not checkChatRateLimit(src, 'say', CHAT_COOLDOWN_MS) then
             TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.rate_limited'), 'warning')
             return
@@ -188,6 +204,20 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
     message = cleanChatText(message, 256)
     if not message then return end
 
+    if requested then
+        if GetResourceState('sunset_inventory') ~= 'started' then
+            TriggerClientEvent('sunset:chat:system', src, t(src, 'inventory.message.invalid_trade_asset'), 'error')
+            return
+        end
+        local snap, err = exports.sunset_inventory:ResolveChatAttachment(src, requested)
+        if not snap then
+            local key = type(err) == 'table' and err.localeKey or 'inventory.message.invalid_trade_asset'
+            TriggerClientEvent('sunset:chat:system', src, t(src, key), 'error')
+            return
+        end
+        requested = snap
+    end
+
     local identity = chatIdentity(src)
     local payload = {
         id = src,
@@ -199,9 +229,11 @@ RegisterNetEvent('sunset:chat:send', function(message, channel)
         message = message,
         time = os.date('%H:%M:%S'),
         type = isOoc and 'ooc' or 'say',
+        attachment = requested,
     }
     if isOoc then
         sendBroadcast(payload)
+        ClearChatAttachment(src)
     else
         sendNearby(src, payload)
     end
@@ -421,6 +453,8 @@ local function runWhisperCommand(source, args)
     local senderIdent = chatIdentity(source)
     local targetIdent = chatIdentity(targetId)
 
+    local whisperAttachment = PeekChatAttachment(source)
+
     -- Message to sender
     TriggerClientEvent('sunset:chat:message', source, {
         id = source,
@@ -432,6 +466,7 @@ local function runWhisperCommand(source, args)
         message = t(source, 'chat.whisper.to', { name = targetIdent.name, message = msg }),
         time = os.date('%H:%M:%S'),
         type = 'whisper',
+        attachment = whisperAttachment,
     })
 
     -- Message to target
@@ -446,8 +481,10 @@ local function runWhisperCommand(source, args)
             message = t(targetId, 'chat.whisper.from', { name = senderIdent.name, message = msg }),
             time = os.date('%H:%M:%S'),
             type = 'whisper',
+            attachment = whisperAttachment,
         })
     end
+    ClearChatAttachment(source)
 
     -- Proximity emote for bystanders within 2.2m
     local sCoords = GetEntityCoords(senderPed)

@@ -49,6 +49,44 @@ end
 --  DATABASE INITIALIZATION & STARTUP RESTORE
 -- ═══════════════════════════════════════════════════════════════
 
+local AttachmentReady = false
+
+local function columnExists(name)
+    local count = MySQL.scalar.await([[
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cnn_ads' AND COLUMN_NAME = ?
+    ]], { name })
+    return tonumber(count) and tonumber(count) > 0
+end
+
+local function ensureAttachmentColumns()
+    local alters = {
+        { 'attachment_type', 'ALTER TABLE cnn_ads ADD COLUMN attachment_type VARCHAR(16) NULL' },
+        { 'attachment_id', 'ALTER TABLE cnn_ads ADD COLUMN attachment_id VARCHAR(64) NULL' },
+        { 'market_listing_id', 'ALTER TABLE cnn_ads ADD COLUMN market_listing_id INT NULL' },
+        { 'attachment_snapshot', 'ALTER TABLE cnn_ads ADD COLUMN attachment_snapshot TEXT NULL' },
+    }
+    for _, alter in ipairs(alters) do
+        if not columnExists(alter[1]) then MySQL.query.await(alter[2]) end
+    end
+    AttachmentReady = columnExists('attachment_snapshot')
+end
+
+local function storedAttachment(row)
+    if type(row) ~= 'table' or type(row.attachment_snapshot) ~= 'string' or row.attachment_snapshot == '' then
+        return nil
+    end
+    local ok, decoded = pcall(json.decode, row.attachment_snapshot)
+    if not ok or type(decoded) ~= 'table' or GetResourceState('sunset_inventory') ~= 'started' then
+        return nil
+    end
+    local snapOk, snap = pcall(function()
+        return exports.sunset_inventory:SanitizePublicAttachment(decoded)
+    end)
+    if snapOk and type(snap) == 'table' then return snap end
+    return nil
+end
+
 local function initDatabase()
     MySQL.query.await([[
         CREATE TABLE IF NOT EXISTS `cnn_ads` (
@@ -70,6 +108,7 @@ local function initDatabase()
             INDEX `idx_scheduled` (`scheduled_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ]])
+    ensureAttachmentColumns()
 
     MySQL.query.await([[
         CREATE TABLE IF NOT EXISTS `cnn_ad_mutes` (
@@ -121,6 +160,7 @@ local function initDatabase()
             reviewedBy = row.reviewed_by,
             reviewedAt = row.reviewed_at,
             rejectReason = row.reject_reason,
+            attachment = storedAttachment(row),
             src = nil,
         }
         AdQueue[#AdQueue + 1] = ad
@@ -274,12 +314,19 @@ local function publishAd(ad)
     for _, id in ipairs(GetPlayers()) do
         local pid = tonumber(id)
         if pid then
+            local attachment = ad.attachment
+            if attachment and ad.phoneNumber then
+                attachment = {}
+                for key, value in pairs(ad.attachment) do attachment[key] = value end
+                attachment.contactPhone = ad.phoneNumber
+            end
             TriggerClientEvent('sunset:chat:message', pid, {
                 id = authorSrc or 0,
                 name = ad.playerName,
                 message = broadcastText,
                 time = os.date('%H:%M:%S'),
                 type = 'ad',
+                attachment = attachment,
             })
         end
     end
@@ -448,7 +495,7 @@ local function isPlayerAtCnn(source)
     return false
 end
 
-local function submitAdLocked(source, text)
+local function submitAdLocked(source, text, attachment)
     local src = source
     if src == 0 then return false, { localeKey = 'cnn.message.must_be_used_in_game' } end
 
@@ -512,6 +559,20 @@ local function submitAdLocked(source, text)
     end
     print(('[CNN AD TRACE] 6 text validated: len=%s clean="%s" player=%s'):format(length, clean, src))
 
+    local snap = nil
+    if type(attachment) == 'table' then
+        if not AttachmentReady or GetResourceState('sunset_inventory') ~= 'started' then
+            return false, { localeKey = 'cnn.message.could_not_submit_ad' }
+        end
+        local snapOk, sanitized = pcall(function()
+            return exports.sunset_inventory:SanitizePublicAttachment(attachment)
+        end)
+        if not snapOk or type(sanitized) ~= 'table' then
+            return false, { localeKey = 'inventory.message.invalid_trade_asset' }
+        end
+        snap = sanitized
+    end
+
     -- Price & Money check
     local price = Config.CNN.price or 500
     local cash = tonumber(char.cash) or 0
@@ -550,10 +611,17 @@ local function submitAdLocked(source, text)
         end
         print(('[CNN AD TRACE] 9 debit completed: ok player=%s char=%s account=%s price=%s'):format(src, char.id, account, price))
 
+        local snapshotJson = snap and json.encode(snap) or nil
         insertId = query.await([[
-            INSERT INTO cnn_ads (character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at)
-            VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?))
-        ]], { char.id, pName, phone, clean, price, scheduledAt })
+            INSERT INTO cnn_ads (
+                character_id, player_name, phone_number, text, status, price_paid, submitted_at, scheduled_at,
+                attachment_type, attachment_id, market_listing_id, attachment_snapshot
+            )
+            VALUES (?, ?, ?, ?, 'pending', ?, NOW(), FROM_UNIXTIME(?), ?, ?, ?, ?)
+        ]], {
+            char.id, pName, phone, clean, price, scheduledAt,
+            snap and snap.type or nil, snap and snap.assetId or nil, snap and snap.listingId or nil, snapshotJson,
+        })
 
         print(('[CNN AD TRACE] 10 ad INSERT completed: insertId=%s player=%s'):format(tostring(insertId), src))
         return tonumber(insertId) ~= nil and tonumber(insertId) > 0
@@ -576,6 +644,7 @@ local function submitAdLocked(source, text)
         pricePaid = price,
         submittedAt = now,
         scheduledAt = scheduledAt,
+        attachment = snap,
         src = src,
         queuePosition = #AdQueue + 1,
     }
@@ -610,10 +679,53 @@ local function submitAdLocked(source, text)
     return true, adObj
 end
 
-function SubmitAd(source, text)
+function GetAdPrice()
+    return tonumber(Config.CNN and Config.CNN.price) or 500
+end
+exports('GetAdPrice', GetAdPrice)
+
+local function listingPromotionBlocked(listingId)
+    local cooldown = tonumber(Config.CNN.promoteCooldown) or 3600
+    local row = MySQL.single.await([[
+        SELECT id FROM cnn_ads
+        WHERE market_listing_id = ?
+          AND (
+            status IN ('pending', 'approved')
+            OR (
+                status = 'published'
+                AND published_at IS NOT NULL
+                AND published_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
+            )
+          )
+        LIMIT 1
+    ]], { listingId, cooldown })
+    return row ~= nil
+end
+
+exports.sunset_core:RegisterCallback('sunset:cnn:promoteListing', function(source, listingId)
+    if not exports.sunset_core:RateLimit(source, 'cnnPromote', 1000) then
+        return nil, { localeKey = 'chat.rate_limited' }
+    end
+    if GetResourceState('sunset_inventory') ~= 'started' then
+        return nil, { localeKey = 'cnn.message.could_not_submit_ad' }
+    end
+    local snap, err = exports.sunset_inventory:ResolveMarketListing(source, listingId)
+    if not snap then return nil, err or { localeKey = 'cnn.message.promote_not_your_listing' } end
+    if listingPromotionBlocked(snap.listingId) then
+        return nil, { localeKey = 'cnn.message.promote_throttled' }
+    end
+    local label = snap.displayName or snap.label or 'Listing'
+    local plate = snap.plate and (' · ' .. snap.plate) or ''
+    local text = ('%s%s — $%s'):format(label, plate, tostring(snap.price or 0))
+    local ok, detail = SubmitAd(source, text, snap)
+    if not ok then return nil, detail end
+    return { ok = true, id = detail and detail.id or nil, price = GetAdPrice() }
+end)
+
+function SubmitAd(source, text, attachment)
     if SubmissionBusy then return false, { localeKey = 'cnn.message.submission_busy' } end
     SubmissionBusy = true
-    local ok, result, detail = xpcall(function() return submitAdLocked(source, text) end, debug.traceback)
+    local ok, result, detail = xpcall(function() return submitAdLocked(source, text, attachment) end, debug.traceback)
     SubmissionBusy = false
     if not ok then
         log(('submission failure player=%s error=%s'):format(source, tostring(result)))
@@ -871,7 +983,14 @@ function RunChatCommand(source, name, args)
             TriggerClientEvent('sunset:chat:system', source, exports.sunset_core:TFor(source, 'cnn.message.usage_ad'), 'warning')
             return true
         end
-        local ok, err = SubmitAd(source, text)
+        local pending = nil
+        if GetResourceState('sunset_chat') == 'started' then
+            pending = exports.sunset_chat:PeekChatAttachment(source)
+        end
+        local ok, err = SubmitAd(source, text, pending)
+        if GetResourceState('sunset_chat') == 'started' then
+            exports.sunset_chat:ClearChatAttachment(source)
+        end
         if not ok then
             TriggerClientEvent('sunset:chat:system', source, localizedError(source, err), 'error')
         end

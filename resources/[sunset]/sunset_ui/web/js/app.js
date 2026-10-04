@@ -112,6 +112,8 @@
         hideChat: 'chat',
         chatSettings: 'chat',
         chatClear: 'chat',
+        chatPendingAttachment: 'chat',
+        assetListingState: 'chat',
         chatUpdateSuggestions: 'chat',
         chatAddSuggestion: 'chat',
         chatRemoveSuggestion: 'chat',
@@ -149,6 +151,7 @@
         tradeHide: 'trade',
         tradeUpdate: 'trade',
         tradeInvitation: 'trade',
+        assetPickerOpen: 'trade',
 
         // Menu (M)
         menuShow: 'menu',
@@ -163,6 +166,8 @@
         phoneIncomingCall: 'phone',
         phoneCallState: 'phone',
         phoneMessage: 'phone',
+        marketPromotePrompt: 'phone',
+        phoneFocusListing: 'phone',
 
         // MDC Tablet
         mdcShow: 'mdc',
@@ -798,6 +803,8 @@
 
             if (action === 'chatToggle') { window.Chat?.toggle?.(payload.open, payload); return; }
             if (action === 'chatMessage') { window.Chat?.add?.(payload); return; }
+            if (action === 'chatPendingAttachment') { window.Chat?.setPendingAttachment?.(payload); return; }
+            if (action === 'assetListingState') { window.AssetPreview?.applyStatus?.(payload); return; }
             if (action === 'chatSetInput') {
                 window.Chat?.setInput?.(payload.text, { fromHistory: payload.history === true });
                 return;
@@ -834,6 +841,8 @@
             if (action === 'menuHide') { window.Menu?.hide?.(); return; }
 
             if (action === 'phoneShow') { window.Phone?.show?.(payload); return; }
+            if (action === 'marketPromotePrompt') { window.Phone?.showPromote?.(payload); return; }
+            if (action === 'phoneFocusListing') { window.Phone?.focusListing?.(payload); return; }
             if (action === 'phoneUpdate') { window.Phone?.update?.(payload); return; }
             if (action === 'phoneNewMessage') { window.Phone?.addMessage?.(payload); return; }
             if (action === 'phoneHide') { window.Phone?.hide?.(); return; }
@@ -919,6 +928,9 @@
                 case 'inventoryTradeState': window.Panels?.showInventoryTrade?.(payload); return;
                 case 'inventoryTradeEnded': window.Panels?.hideInventoryTrade?.(); return;
                 case 'inventoryTradeCatalog': window.Panels?.showTradeAssetPicker?.(payload); return;
+                case 'assetPickerOpen':
+                    window.TradeForza?.openSelector?.(payload.catalog || {}, payload.catalog?.items || [], 0, { mode: payload.mode || 'CHAT_LINK' });
+                    return;
                 case 'inventoryTradeInvite': window.TradeForza?.showInvite?.(payload); return;
                 case 'inventoryTradeInviteHide': window.TradeForza?.hideInvite?.(); return;
                 case 'inventoryTradeInviteHold': window.TradeForza?.setInviteHold?.(payload.key, payload.progress, payload.release); return;

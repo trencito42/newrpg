@@ -24,3 +24,5 @@ jobs:
         run: node scripts/test-shop.js
       - name: Progression invariants
         run: node scripts/test-progression.js
+      - name: Asset links
+        run: node --test scripts/test-asset-links.js

@@ -838,6 +838,22 @@ body.inventory-open .hotbar-container {
     border-color: #22c55e !important;
 }
 
+.inv-link-chat {
+    border: 1px solid rgba(215, 181, 88, 0.45);
+    background: transparent;
+    color: #f2efe8;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.inv-link-chat:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
 .premium-drag-ghost__cash {
     font-size: 28px;
     font-weight: 900;

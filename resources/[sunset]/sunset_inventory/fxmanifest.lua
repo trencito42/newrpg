@@ -18,6 +18,7 @@ server_scripts {
     'server/main.lua',
     'server/api.lua',
     'server/quickslots.lua',
+    'server/asset_catalog.lua',
     'server/trade.lua',
     'server/containers.lua',
 }
@@ -37,6 +38,8 @@ server_exports {
     'TryAddItem', 'RemoveItemById', 'ReloadInventory', 'SetCapacityBonus', 'SetWeaponAmmo',
     'ApplyOperation', 'RemoveStolenByRobbery', 'PurgeStolenLoot',
     'IsAssetOfferedInTrade',
+    'GetPlayerAssetCatalog', 'ResolvePublicAsset', 'ResolveChatAttachment',
+    'ResolveMarketListing', 'SanitizePublicAttachment',
 }
 
 client_exports {

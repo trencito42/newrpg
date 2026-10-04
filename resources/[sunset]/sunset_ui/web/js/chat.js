@@ -9,6 +9,7 @@ const Chat = {
     suggestions: [],
     suggestionPick: 0,
     _expiryTimer: null,
+    pendingAttachment: null,
     channelPrefixes: {
         me: '/me ',
         do: '/do ',
@@ -1154,8 +1155,78 @@ const Chat = {
 
         el.className = classes.join(' ');
         el.innerHTML = this.formatSampLine(m);
+        this.mountAttachment(el, m.attachment);
         if (!options.animate) el.style.animation = 'none';
         return el;
+    },
+
+    mountAttachment(el, raw) {
+        const asset = window.AssetPublic?.sanitize?.(raw);
+        const label = window.AssetPublic?.chipText?.(asset);
+        if (!asset || !label) return;
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chat-asset-chip';
+        chip.textContent = label;
+        chip.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.AssetPreview?.open?.(asset, chip);
+        });
+        el.appendChild(chip);
+    },
+
+    setPendingAttachment(raw) {
+        const type = String(raw?.type || raw?.assetType || '');
+        const id = Number(raw?.id || raw?.assetId);
+        if (!['item', 'vehicle', 'property', 'business'].includes(type) || !Number.isFinite(id)) return;
+        this.pendingAttachment = {
+            type,
+            id,
+            label: window.AssetPublic?.chipText?.(raw) || String(raw?.label || ''),
+        };
+        this.renderPendingAttachment();
+    },
+
+    clearPendingAttachment() {
+        this.pendingAttachment = null;
+        this.renderPendingAttachment();
+    },
+
+    renderPendingAttachment() {
+        const slot = document.getElementById('chat-attachment');
+        if (!slot) return;
+        slot.textContent = '';
+        const pending = this.pendingAttachment;
+        if (!pending) {
+            slot.classList.add('hidden');
+            return;
+        }
+        slot.classList.remove('hidden');
+        const caption = document.createElement('span');
+        caption.textContent = window.I18n?.t?.('asset.attached') || 'Attached';
+        const chip = document.createElement('span');
+        chip.className = 'chat-asset-chip';
+        chip.textContent = pending.label || pending.type;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'chat-attachment-remove';
+        remove.setAttribute('aria-label', window.I18n?.t?.('asset.remove') || 'Remove attachment');
+        remove.textContent = '×';
+        remove.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.clearPendingAttachment();
+            document.getElementById('chat-input')?.focus({ preventScroll: true });
+        });
+        slot.append(caption, chip, remove);
+    },
+
+    async openAssetPicker() {
+        const tradeOpen = document.getElementById('trade-window');
+        if (tradeOpen && !tradeOpen.classList.contains('hidden')) return;
+        if (window.ModuleLoader?.ensure) await ModuleLoader.ensure('trade');
+        post('assetCatalog', { mode: 'CHAT_LINK' });
     },
 
     isChatOpen() {
@@ -1351,14 +1422,24 @@ const Chat = {
     send() {
         const input = $('#chat-input');
         const raw = input.value.trim();
-        if (!raw) { post('chatClose'); return; }
+        if (!raw) {
+            if (this.pendingAttachment) return;
+            post('chatClose');
+            return;
+        }
         let msg = raw;
         if (!msg.startsWith('/')) {
             const prefix = this.channelPrefixes[this.channel];
             if (prefix) msg = `${prefix}${msg}`;
         }
-        post('chatSend', { message: msg, channel: this.channel || 'all' });
+        const channel = this.channel || 'all';
+        const pending = this.pendingAttachment;
+        const attachment = pending && channel !== 'staff'
+            ? { type: pending.type, id: pending.id }
+            : undefined;
+        post('chatSend', { message: msg, channel, attachment });
         input.value = '';
+        this.clearPendingAttachment();
         this.updateCharCounter();
         this.hideSuggestions();
     },
@@ -1375,6 +1456,12 @@ $('#chat-messages')?.addEventListener('mouseup', () => {
     if (!Chat._pendingRender) return;
     Chat._pendingRender = false;
     Chat.render();
+});
+
+$('#chat-attach')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    Chat.openAssetPicker();
 });
 
 $('#chat-settings-btn')?.addEventListener('click', (e) => {

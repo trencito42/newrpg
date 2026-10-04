@@ -223,59 +223,13 @@ end
 -- future misuse of the unsafe path.
 
 local function buildTradeCatalog(source)
-    local char = character(source)
-    if not char then return { vehicles = {}, properties = {}, businesses = {} } end
-    local trade = TradesByPlayer[source]
-    local offered = trade and assetsMap(trade, source) or {}
-
-    local vehicles = {}
-    local vehicleRows = MySQL.query.await([[
-        SELECT id, plate, model FROM vehicles
-        WHERE character_id = ? AND stored = 1 AND (destroyed IS NULL OR destroyed = 0)
-        ORDER BY model ASC, plate ASC
-    ]], { char.id }) or {}
-    for _, row in ipairs(vehicleRows) do
-        if not assetAlreadyOffered(trade, source, 'vehicle', row.id) then
-            vehicles[#vehicles + 1] = {
-                assetType = 'vehicle',
-                id = tonumber(row.id),
-                label = ('%s · %s'):format(exports.sunset_vehicles:GetVehicleDisplayName(row.model), row.plate or '?'),
-                detail = exports.sunset_core:TFor(source, 'inventory.ui.garage_stored'),
-            }
-        end
+    local catalog = GetPlayerAssetCatalog(source, 'TRADE')
+    if type(catalog) ~= 'table' then
+        return { vehicles = {}, properties = {}, businesses = {} }
     end
-
-    local properties = {}
-    local propertyRows = MySQL.query.await(
-        'SELECT id, label FROM properties WHERE owner_character_id = ? AND enabled = 1 ORDER BY label ASC',
-        { char.id }
-    ) or {}
-    for _, row in ipairs(propertyRows) do
-        if not assetAlreadyOffered(trade, source, 'property', row.id) then
-            properties[#properties + 1] = {
-                assetType = 'property',
-                id = tonumber(row.id),
-                label = row.label or exports.sunset_core:TFor(source, 'inventory.ui.house', { id = math.floor(tonumber(row.id) or 0) }),
-                detail = exports.sunset_core:TFor(source, 'inventory.ui.owned_property'),
-            }
-        end
-    end
-
-    local businesses = {}
-    if GetResourceState('sunset_businesses') == 'started' then
-        for _, row in ipairs(exports.sunset_businesses:GetOwnedBusinesses(source) or {}) do
-            if not assetAlreadyOffered(trade, source, 'business', row.id) then
-                businesses[#businesses + 1] = {
-                    assetType = 'business',
-                    id = tonumber(row.id),
-                    label = row.label or exports.sunset_core:TFor(source, 'inventory.ui.business', { id = math.floor(tonumber(row.id) or 0) }),
-                    detail = row.catalogKey or exports.sunset_core:TFor(source, 'inventory.ui.player_business'),
-                }
-            end
-        end
-    end
-
-    return { vehicles = vehicles, properties = properties, businesses = businesses }
+    catalog.items = nil
+    catalog.mode = nil
+    return catalog
 end
 
 local function otherParty(trade, source)

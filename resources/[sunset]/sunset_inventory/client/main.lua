@@ -313,6 +313,19 @@ AddEventHandler('sunset:nui:inventoryTradeRemoveCash', function()
     inventoryAction('sunset:inventory:tradeRemoveCash', {})
 end)
 
+AddEventHandler('sunset:nui:assetCatalog', function(data)
+    CreateThread(function()
+        local mode = type(data) == 'table' and data.mode or 'CHAT_LINK'
+        local catalog, err = Sunset.AwaitCallback('sunset:assetCatalog', { mode = mode })
+        if catalog then
+            exports.sunset_ui:Send('assetPickerOpen', { mode = mode, catalog = catalog })
+        else
+            local key = type(err) == 'table' and err.localeKey or nil
+            exports.sunset_ui:Notify(key and exports.sunset_core:Translate(key) or exports.sunset_core:Translate('inventory.msg.could_not_load_trade_assets'), 'error')
+        end
+    end)
+end)
+
 AddEventHandler('sunset:nui:inventoryTradeCatalog', function()
     CreateThread(function()
         local catalog, err = Sunset.AwaitCallback('sunset:inventory:tradeCatalog', {})

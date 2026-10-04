@@ -21,7 +21,10 @@ Config.CNN = {
     publishInterval = 45,      -- Spacing between successive ads in seconds
     maxQueueDelay = 300,       -- Maximum delay cap (seconds)
     playerCooldown = 120,      -- Seconds cooldown between ad submissions for the same player
+    promoteCooldown = 3600,    -- Seconds before the same marketplace listing can be promoted again
     maxPendingQueue = 50,      -- Maximum pending ads allowed in queue
+    -- Marketplace "Promote on CNN" uses this price and the same station, mute,
+    -- queue, and cooldown rules as /ad. It does not bypass the physical CNN location.
 
     -- Map Blip settings
     blip = {

@@ -79,6 +79,8 @@ local function playPhoneAnim(open)
     end
 end
 
+local focusListing = nil
+
 local function openPhone()
     if phoneOpen or phoneOpening then return end
     local okReady, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
@@ -119,6 +121,10 @@ local function openPhone()
                     Sunset.AwaitCallback('sunset:phoneSaveLayout', decoded.grid)
                 end
             end
+        end
+        if focusListing then
+            data.openListingId = focusListing
+            focusListing = nil
         end
         exports.sunset_ui:Send('phoneShow', data)
         exports.sunset_ui:SetFocus(true, true, false, 'phone')
@@ -424,5 +430,18 @@ AddEventHandler('sunset:nui:phoneAvatarCaptured', function(data)
 end)
 
 exports('Open', openPhone)
+
+function OpenListing(listingId)
+    listingId = tonumber(listingId)
+    if not listingId then return end
+    focusListing = listingId
+    if phoneOpen then
+        exports.sunset_ui:Send('phoneFocusListing', { listingId = listingId })
+        focusListing = nil
+        return
+    end
+    openPhone()
+end
+exports('OpenListing', OpenListing)
 exports('Close', closePhone)
 exports('IsOpen', function() return phoneOpen end)

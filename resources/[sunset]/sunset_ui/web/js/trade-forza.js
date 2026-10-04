@@ -238,34 +238,72 @@
         if (cashVal) cashVal.textContent = '0';
     },
 
-    openSelector(catalog = {}, inventoryItems = [], maxCash = 0) {
+    openSelector(catalog = {}, inventoryItems = [], maxCash = 0, options = {}) {
+        const mode = options.mode || 'TRADE';
+        const tradeWin = document.getElementById('trade-window');
+        const tradeOpen = tradeWin && !tradeWin.classList.contains('hidden');
+        if (this._pickerOwner && this._pickerOwner !== mode) return false;
+        if (tradeOpen && mode !== 'TRADE') return false;
+        this._pickerOwner = mode;
+        this._pickerMode = mode;
         this._catalog = catalog;
         this._maxCash = Math.max(0, Math.floor(Number(maxCash) || 0));
         this._resetSelectorState();
+        const items = mode === 'TRADE' ? inventoryItems : (catalog.items || []);
+        this._pickerItems = items;
 
         const balance = document.getElementById('trade-sc-balance');
         if (balance) {
             balance.innerHTML = `<span>${I18n.t('ui.trade.available')}</span> ${this.formatMoney(this._maxCash)}`;
         }
 
-        this._renderSelectorItems(inventoryItems);
+        this._renderSelectorItems(items);
         this._renderSelectorAssets('vehicles', catalog.vehicles || [], 'vehicle');
         this._renderSelectorAssets('properties', catalog.properties || [], 'property');
         this._renderSelectorAssets('businesses', catalog.businesses || [], 'business');
 
-        const firstTab = document.querySelector('#trade-selector-modal .cat-item.money');
-        this.switchSelectorTab('cash', firstTab);
+        document.querySelectorAll('#trade-selector-modal .cat-item').forEach((btn) => {
+            btn.hidden = false;
+        });
+        if (mode !== 'TRADE') {
+            const counts = {
+                items: items.length,
+                vehicles: (catalog.vehicles || []).length,
+                properties: (catalog.properties || []).length,
+                businesses: (catalog.businesses || []).length,
+            };
+            document.querySelectorAll('#trade-selector-modal .cat-item').forEach((btn) => {
+                const tab = btn.dataset.tab;
+                if (tab === 'cash' || (tab && counts[tab] === 0)) btn.hidden = true;
+            });
+        }
+        const confirmLabel = document.querySelector('#trade-selector-confirm span');
+        if (confirmLabel) {
+            confirmLabel.textContent = mode === 'TRADE' ? I18n.t('ui.trade.add_to_offer') : I18n.t('asset.attach');
+        }
+
+        const firstTab = document.querySelector('#trade-selector-modal .cat-item:not([hidden])');
+        this.switchSelectorTab(firstTab?.dataset.tab || 'cash', firstTab);
 
         const modal = document.getElementById('trade-selector-modal');
         modal?.classList.remove('hidden');
         modal?.setAttribute('aria-hidden', 'false');
+        return true;
     },
 
     hideSelector() {
         const modal = document.getElementById('trade-selector-modal');
         modal?.classList.add('hidden');
         modal?.setAttribute('aria-hidden', 'true');
+        this._pickerOwner = null;
+        this._pickerMode = 'TRADE';
+        const confirmLabel = document.querySelector('#trade-selector-confirm span');
+        if (confirmLabel) confirmLabel.textContent = I18n.t('ui.trade.add_to_offer');
+        document.querySelectorAll('#trade-selector-modal .cat-item').forEach((btn) => {
+            btn.hidden = false;
+        });
         this._resetSelectorState();
+        document.getElementById('chat-input')?.focus({ preventScroll: true });
     },
 
     addCashDraft(amount) {
@@ -347,13 +385,33 @@
                 grid.querySelectorAll('.asset-card').forEach((n) => n.classList.remove('selected'));
                 el.classList.add('selected');
                 this._selectedItems.clear();
-                this._selectedAsset = { assetType, id: asset.id };
+                this._selectedAsset = { assetType, id: asset.id, label: asset.label };
             });
             grid.appendChild(el);
         });
     },
 
     confirmSelector() {
+        if (this._pickerMode && this._pickerMode !== 'TRADE') {
+            let picked = null;
+            if (this._selectedAsset) {
+                picked = {
+                    type: this._selectedAsset.assetType,
+                    id: this._selectedAsset.id,
+                    label: this._selectedAsset.label,
+                };
+            } else if (this._selectedItems.size === 1) {
+                const rowId = [...this._selectedItems][0];
+                const row = (this._pickerItems || []).find((item) => item.id === rowId);
+                if (row) {
+                    picked = { type: 'item', id: row.id, label: row.label, quantity: row.count, item: row.item };
+                }
+            }
+            if (!picked) return;
+            window.Chat?.setPendingAttachment?.(picked);
+            this.hideSelector();
+            return;
+        }
         if (this._activeTab === 'cash' && this._cashDraft > 0) {
             post('inventoryTradeOfferCash', { amount: this._cashDraft });
             this.hideSelector();
@@ -405,10 +463,18 @@
             this._escBound = true;
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
+                const selector = document.getElementById('trade-selector-modal');
+                const selectorVisible = selector && !selector.classList.contains('hidden');
+                const tradeWin = document.getElementById('trade-window');
+                const tradeVisible = tradeWin && !tradeWin.classList.contains('hidden');
+                if (selectorVisible && !tradeVisible) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.hideSelector();
+                    return;
+                }
                 const overlay = document.getElementById('trade-countdown-screen');
-                const win = document.getElementById('trade-window');
                 const overlayVisible = overlay && !overlay.classList.contains('hidden');
-                const tradeVisible = win && !win.classList.contains('hidden');
                 if (overlayVisible || tradeVisible) {
                     e.preventDefault();
                     e.stopPropagation();

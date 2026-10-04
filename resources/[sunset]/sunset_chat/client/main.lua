@@ -79,6 +79,17 @@ RegisterCommand('sunset_chat_close', function()
 end, false)
 RegisterKeyMapping('sunset_chat_close', 'Close chat', 'keyboard', 'ESCAPE')
 
+local function clientAttachment(raw)
+    if type(raw) ~= 'table' then return nil end
+    local assetType = tostring(raw.type or '')
+    local assetId = tonumber(raw.id)
+    if not assetId then return nil end
+    if assetType ~= 'item' and assetType ~= 'vehicle' and assetType ~= 'property' and assetType ~= 'business' then
+        return nil
+    end
+    return { type = assetType, id = assetId }
+end
+
 AddEventHandler('sunset:nui:chatSend', function(data)
     closeChat()
 
@@ -87,14 +98,53 @@ AddEventHandler('sunset:nui:chatSend', function(data)
 
     chatHistory[#chatHistory + 1] = msg
     historyIndex = #chatHistory + 1
+    local channel = tostring(data.channel or 'all'):lower()
+    local attachment = channel ~= 'staff' and clientAttachment(data.attachment) or nil
 
     if msg:sub(1, 1) == '/' then
         local command = msg:sub(2)
-        TriggerServerEvent('sunset:chat:runCommand', command)
+        TriggerServerEvent('sunset:chat:runCommand', command, attachment)
     else
-        local channel = tostring(data.channel or 'all'):lower()
-        TriggerServerEvent('sunset:chat:send', msg, channel)
+        TriggerServerEvent('sunset:chat:send', msg, channel, attachment)
     end
+end)
+
+AddEventHandler('sunset:nui:chatLinkAsset', function(data)
+    if type(data) ~= 'table' then return end
+    local assetType = tostring(data.type or '')
+    local assetId = tonumber(data.id)
+    if not assetId then return end
+    if assetType ~= 'item' and assetType ~= 'vehicle' and assetType ~= 'property' and assetType ~= 'business' then
+        return
+    end
+    pcall(function() exports.sunset_inventory:Close() end)
+    local pill = {
+        type = assetType,
+        id = assetId,
+        label = tostring(data.label or ''):sub(1, 80),
+        quantity = tonumber(data.quantity),
+    }
+    if not chatOpen then openChat() end
+    exports.sunset_ui:Send('chatPendingAttachment', pill)
+end)
+
+AddEventHandler('sunset:nui:assetViewListing', function(data)
+    local listingId = tonumber(type(data) == 'table' and data.listingId)
+    if not listingId then return end
+    if chatOpen then closeChat() end
+    SetTimeout(300, function()
+        if GetResourceState('sunset_phone') ~= 'started' then return end
+        exports.sunset_phone:OpenListing(listingId)
+    end)
+end)
+
+AddEventHandler('sunset:nui:assetListingState', function(data)
+    CreateThread(function()
+        local listingId = tonumber(type(data) == 'table' and data.listingId)
+        if not listingId then return end
+        local res = Sunset.AwaitCallback('sunset:assetListingState', { listingId = listingId })
+        if type(res) == 'table' then exports.sunset_ui:Send('assetListingState', res) end
+    end)
 end)
 
 RegisterNetEvent('sunset:chat:executeCommand', function(command)

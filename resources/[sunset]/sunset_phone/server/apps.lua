@@ -57,14 +57,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
     end
 
     local ads = {}
-    local adRows = MySQL.query.await([[
-        SELECT id, character_id, player_name, phone_number, text, published_at, status
-        FROM cnn_ads
-        WHERE status = 'published'
-        ORDER BY id DESC
-        LIMIT 30
-    ]]) or {}
-    for _, row in ipairs(adRows) do
+    local function pushAd(row, attachment, listingStatus)
         ads[#ads + 1] = {
             id = tonumber(row.id),
             title = row.text,
@@ -73,7 +66,55 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
             characterId = tonumber(row.character_id),
             publishedAt = row.published_at,
             kind = 'ad',
+            attachment = attachment,
+            listingStatus = listingStatus,
+            listingId = tonumber(row.market_listing_id),
         }
+    end
+    local okAds, adRows = pcall(function()
+        return MySQL.query.await([[
+            SELECT a.id, a.character_id, a.player_name, a.phone_number, a.text, a.published_at,
+                   a.attachment_snapshot, a.market_listing_id,
+                   l.status AS listing_status,
+                   (l.expires_at IS NOT NULL AND l.expires_at <= CURRENT_TIMESTAMP) AS listing_expired
+            FROM cnn_ads a
+            LEFT JOIN phone_market_listings l ON l.id = a.market_listing_id
+            WHERE a.status = 'published'
+            ORDER BY a.id DESC
+            LIMIT 30
+        ]])
+    end)
+    if not okAds then
+        adRows = MySQL.query.await([[
+            SELECT id, character_id, player_name, phone_number, text, published_at
+            FROM cnn_ads
+            WHERE status = 'published'
+            ORDER BY id DESC
+            LIMIT 30
+        ]]) or {}
+    end
+    for _, row in ipairs(adRows or {}) do
+        local attachment = nil
+        if type(row.attachment_snapshot) == 'string' and row.attachment_snapshot ~= '' and GetResourceState('sunset_inventory') == 'started' then
+            local decodedOk, decoded = pcall(json.decode, row.attachment_snapshot)
+            if decodedOk and type(decoded) == 'table' then
+                local snapOk, snap = pcall(function()
+                    return exports.sunset_inventory:SanitizePublicAttachment(decoded)
+                end)
+                if snapOk and type(snap) == 'table' then
+                    attachment = snap
+                    if row.phone_number then
+                        attachment.contactPhone = tostring(row.phone_number):gsub('[%c]', ''):sub(1, 20)
+                    end
+                end
+            end
+        end
+        local listingStatus = row.listing_status
+        if listingStatus == 'active' and (row.listing_expired == 1 or row.listing_expired == true) then
+            listingStatus = 'expired'
+        end
+        if attachment and listingStatus then attachment.listingStatus = listingStatus end
+        pushAd(row, attachment, listingStatus)
     end
 
     local mine = MySQL.query.await([[
@@ -101,7 +142,22 @@ exports.sunset_core:RegisterCallback('sunset:phoneMarketplace', function(source)
     if okList and listRows then
         for _, row in ipairs(listRows) do
             local title = row.property_label or row.asset_id
-            if row.listing_type == 'vehicle' then title = (row.model or 'vehicle') .. ' ' .. (row.plate or '') end
+            if row.listing_type == 'vehicle' then
+                local name = tostring(row.model or 'vehicle')
+                if GetResourceState('sunset_vehicles') == 'started' then
+                    pcall(function()
+                        local label = exports.sunset_vehicles:GetVehicleDisplayName(row.model)
+                        if type(label) == 'string' and label ~= '' then name = label end
+                    end)
+                end
+                title = row.plate and (name .. ' · ' .. row.plate) or name
+            elseif row.listing_type == 'item' then
+                local def = Sunset.Items and Sunset.Items[row.asset_id]
+                title = (def and def.label) or row.asset_id
+                if tonumber(row.quantity) and tonumber(row.quantity) > 1 then
+                    title = title .. ' ×' .. tostring(row.quantity)
+                end
+            end
             listings[#listings + 1] = {
                 id = tonumber(row.id),
                 listingId = tonumber(row.id),

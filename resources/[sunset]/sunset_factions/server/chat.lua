@@ -88,6 +88,9 @@ local function sendFactionChat(source, channel, args, filterFn)
         factionLabel = label,
         rank = rank,
     }, source, { setName = true })
+    if GetResourceState('sunset_chat') == 'started' then
+        exports.sunset_chat:ApplyChatAttachment(source, payload)
+    end
 
     for _, src in ipairs(members) do
         local c = FactionCore.getChar(src)
@@ -119,8 +122,12 @@ local function sendFactionChat(source, channel, args, filterFn)
                 spy = true,
                 spyChannel = spyChannelLabel(channel),
             }, source, { setName = true })
+            if payload.attachment then spyPayload.attachment = payload.attachment end
             TriggerClientEvent('sunset:chat:message', src, spyPayload)
         end
+    end
+    if GetResourceState('sunset_chat') == 'started' then
+        exports.sunset_chat:ClearChatAttachment(source)
     end
 end
 
