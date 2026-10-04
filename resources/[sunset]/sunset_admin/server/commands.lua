@@ -2397,15 +2397,11 @@ local function handleFnc(source, args)
     local adminName = getDisplayName(source)
     local targetName = getDisplayName(target)
 
-    -- Case A: /fnc [id] [optional reason] -> FORCE player to change their name via modal
-    -- If extraArg is empty or looks like a reason (or no specific direct rename)
-    local isDirectRename = false
-    if extraArg ~= '' and #extraArg >= 3 and #extraArg <= 24 and extraArg:match('^[a-zA-Z0-9%._%-]+$') and not extraArg:find(' ') then
-        -- Could be direct rename if admin specifically typed a single valid nickname
-        isDirectRename = true
-    end
+    -- A single token is a direct rename. Anything with a space is the reason
+    -- that opens the player's nickname modal.
+    local directName = extraArg ~= '' and not extraArg:find(' ', 1, true) and extraArg or nil
 
-    if not isDirectRename then
+    if not directName then
         local reason = extraArg ~= '' and extraArg or 'Name violates server rules'
 
         FncPending[target] = os.time() + 1800
@@ -2426,54 +2422,13 @@ local function handleFnc(source, args)
         return
     end
 
-    -- Case B: /fnc [id] [NewName] -> Direct admin rename
-    local cleanName = extraArg:gsub('^%s*(.-)%s*$', '%1')
-    if #cleanName < 3 or #cleanName > 24 or not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.invalid_name_name_must_be_between'), 'error')
+    -- Case B: /fnc [id] [Nickname] -> Direct admin rename. One public nickname.
+    local renamed, renameErr = exports.sunset_core:RenameCharacter(target, directName, '')
+    if not renamed then
+        local key = type(renameErr) == 'table' and renameErr.localeKey or 'admin.msg.invalid_name_name_must_be_between'
+        return notify(source, exports.sunset_core:TFor(source, key), 'error')
     end
-
-    local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
-    if not first then
-        first = cleanName
-        last = ''
-    end
-
-    -- Check if name is taken
-    local existing = MySQL.single.await([[
-        SELECT id FROM characters
-        WHERE LOWER(firstname) = LOWER(?)
-           OR LOWER(CONCAT(firstname, '_', lastname)) = LOWER(?)
-           OR LOWER(CONCAT(firstname, ' ', lastname)) = LOWER(?)
-        LIMIT 1
-    ]], { cleanName, cleanName, cleanName })
-
-    if existing and tonumber(existing.id) ~= tonumber(targetChar.id) then
-        return notify(source, exports.sunset_core:TFor(source, 'admin.msg.this_name_is_already_taken_by'), 'error')
-    end
-
-    MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
-        first, last, targetChar.id
-    })
-
-    targetChar.firstname = first
-    targetChar.lastname = last
-    targetChar.name = cleanName
-
-    local pObj = exports.sunset_core:GetPlayer(target)
-    if pObj then pObj.name = cleanName end
-
-    local st = Player(target).state
-    st:set('sunsetName', cleanName, true)
-    st:set('name', cleanName, true)
-    st:set('sunsetDisplayName', cleanName, true)
-
-    if GetResourceState('sunset_clans') == 'started' then
-        pcall(function() exports.sunset_clans:SyncPlayerClan(target) end)
-    end
-
-    TriggerClientEvent('sunset:client:updateCharacter', target, targetChar)
-    TriggerClientEvent('sunset:client:onCharacterLoaded', target, targetChar)
-    TriggerClientEvent('sunset:client:onCharacterUpdated', target, targetChar)
+    local cleanName = directName
 
     local msg = ('^3[ADMIN] ^7Admin ^2%s^7 changed the name of ^1%s^7 to ^2%s^7 (/fnc).'):format(adminName, targetName, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 255, 204, 0 }, args = { 'ADMIN', msg } })
@@ -2495,62 +2450,16 @@ exports.sunset_core:RegisterCallback('sunset:admin:submitFncName', function(sour
         return false, { localeKey = 'admin.message.invalid_character' }
     end
 
-    local cleanName = tostring(newName or ''):gsub('^%s*(.-)%s*$', '%1')
-    if #cleanName < 3 or #cleanName > 24 then
-        return false, { localeKey = 'admin.message.name_must_be_between_3_and_24_characters' }
-    end
-
-    if not cleanName:match('^[a-zA-Z0-9%._%-]+$') then
-        return false, { localeKey = 'admin.message.name_may_only_contain_letters_digits_dots_and_hyphens' }
-    end
-
-    -- Check if name already exists in database
-    local existing = MySQL.single.await([[
-        SELECT id FROM characters
-        WHERE (LOWER(firstname) = LOWER(?) AND (lastname IS NULL OR lastname = ''))
-           OR LOWER(CONCAT(firstname, '_', lastname)) = LOWER(?)
-           OR LOWER(CONCAT(firstname, ' ', lastname)) = LOWER(?)
-           OR LOWER(firstname) = LOWER(?)
-        LIMIT 1
-    ]], { cleanName, cleanName, cleanName, cleanName })
-
-    if existing and tonumber(existing.id) ~= tonumber(char.id) then
-        return false, { localeKey = 'admin.message.this_name_is_already_taken_by_another_player_please' }
-    end
-
+    local cleanName = tostring(newName or ''):gsub('^%s+', ''):gsub('%s+$', '')
     local oldName = getDisplayName(source)
-    local first, last = cleanName:match('^([%a%d]+)[_%s]+([%a%d]+)$')
-    if not first then
-        first = cleanName
-        last = ''
+    local renamed, renameErr = exports.sunset_core:RenameCharacter(source, cleanName, '')
+    if not renamed then
+        if type(renameErr) == 'table' and renameErr.localeKey then return false, renameErr end
+        return false, { localeKey = 'admin.ui.failed_to_change_name' }
     end
+    cleanName = (cleanName:gsub('^%s+', ''):gsub('%s+$', ''))
 
     FncPending[source] = nil
-    -- Update database
-    MySQL.update.await('UPDATE characters SET firstname = ?, lastname = ? WHERE id = ?', {
-        first, last, char.id
-    })
-
-    char.firstname = first
-    char.lastname = last
-    char.name = cleanName
-
-    local pObj = exports.sunset_core:GetPlayer(source)
-    if pObj then pObj.name = cleanName end
-
-    -- Sync state bags and clan
-    local st = Player(source).state
-    st:set('sunsetName', cleanName, true)
-    st:set('name', cleanName, true)
-    st:set('sunsetDisplayName', cleanName, true)
-
-    if GetResourceState('sunset_clans') == 'started' then
-        pcall(function() exports.sunset_clans:SyncPlayerClan(source) end)
-    end
-
-    TriggerClientEvent('sunset:client:updateCharacter', source, char)
-    TriggerClientEvent('sunset:client:onCharacterLoaded', source, char)
-    TriggerClientEvent('sunset:client:onCharacterUpdated', source, char)
 
     local msg = ('^2[FNC] ^7Player ^3%s (#%d)^7 chose the new name ^2%s^7.'):format(oldName, source, cleanName)
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 180 }, args = { 'FNC', msg } })

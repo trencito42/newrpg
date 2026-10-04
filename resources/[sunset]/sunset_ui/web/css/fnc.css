@@ -1,6 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
-   SUNSETMP — FNC (Free Name Change) Modal
-   ═══════════════════════════════════════════════════════════════ */
+/* Forced nickname change. Same noir card as the Racket Shop rename modal. */
 
 .fnc-modal-wrapper {
     position: fixed;
@@ -9,222 +7,137 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: auto;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Montserrat', 'Chakra Petch', 'Segoe UI', sans-serif;
+    color: #f2efe8;
 }
 
-.fnc-modal-wrapper.hidden {
-    display: none !important;
-}
+.fnc-modal-wrapper.hidden { display: none !important; }
 
 .fnc-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(8, 10, 16, 0.78);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.72);
 }
 
 .fnc-card {
     position: relative;
-    width: 460px;
+    width: 420px;
     max-width: 90vw;
-    background: linear-gradient(135deg, rgba(20, 24, 36, 0.95), rgba(13, 16, 26, 0.98));
-    border: 1px solid rgba(0, 255, 204, 0.25);
-    border-radius: 14px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 204, 0.12);
-    padding: 24px;
-    color: #ffffff;
-    animation: fncPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fncPop {
-    from {
-        opacity: 0;
-        transform: scale(0.92) translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.fnc-header {
+    background: #0b0b0e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 32px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 14px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    animation: fncIn 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-.fnc-icon-badge {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: rgba(0, 255, 204, 0.12);
-    border: 1px solid rgba(0, 255, 204, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #00ffcc;
-    font-size: 24px;
+@keyframes fncIn {
+    from { transform: scale(0.93); opacity: 0; }
+    to { transform: none; opacity: 1; }
 }
 
 .fnc-title {
     margin: 0;
     font-size: 17px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    color: #ffffff;
+    font-weight: 900;
     text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #d7b558;
 }
 
 .fnc-subtitle {
-    margin: 3px 0 0 0;
+    margin: 0;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.55;
+    color: #f2efe8;
 }
 
-.fnc-body {
+.fnc-meta {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-}
-
-.fnc-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.04);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.fnc-label {
-    color: rgba(255, 255, 255, 0.55);
-}
-
-.fnc-val {
-    font-weight: 700;
-    color: #ffbe00;
-}
-
-.fnc-val--reason {
-    color: #ff5555;
-}
-
-.fnc-field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.fnc-input-label {
+    gap: 4px;
     font-size: 12px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(242, 239, 232, 0.5);
+}
+
+.fnc-meta strong { color: #f2efe8; font-weight: 700; }
+
+.fnc-reason { color: #c4554d; }
+
+.fnc-card label {
+    font-size: 10px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
-.fnc-input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.fnc-input-icon {
-    position: absolute;
-    left: 12px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: rgba(242, 239, 232, 0.5);
 }
 
 .fnc-input {
     width: 100%;
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 12px 14px 12px 38px;
-    color: #ffffff;
-    font-size: 15px;
-    font-weight: 600;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f2efe8;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
 }
 
-.fnc-input:focus {
-    border-color: #00ffcc;
-    box-shadow: 0 0 0 3px rgba(0, 255, 204, 0.18);
-}
+.fnc-input:focus { border-color: #d7b558; }
 
 .fnc-hint {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(242, 239, 232, 0.5);
     line-height: 1.4;
 }
 
 .fnc-error-msg {
-    background: rgba(255, 51, 102, 0.15);
-    border: 1px solid rgba(255, 51, 102, 0.4);
-    color: #ff6b8b;
+    color: #c4554d;
+    background: rgba(196, 85, 77, 0.10);
+    border-radius: 4px;
     padding: 8px 12px;
-    border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
-    margin-top: 4px;
 }
+
+.fnc-error-msg.hidden { display: none; }
 
 .fnc-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 10px;
-    margin-top: 22px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    justify-content: flex-end;
+    margin-top: 6px;
 }
 
 .fnc-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
+    border: 0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     cursor: pointer;
-    border: none;
-    transition: all 0.18s ease;
 }
 
 .fnc-btn-cancel {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(242, 239, 232, 0.5);
 }
 
-.fnc-btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-}
+.fnc-btn-cancel:hover { color: #f2efe8; background: rgba(255, 255, 255, 0.10); }
 
 .fnc-btn-confirm {
-    background: linear-gradient(135deg, #00ffcc, #00b386);
-    color: #0d1a16;
-    box-shadow: 0 4px 14px rgba(0, 255, 204, 0.28);
+    background: #e3c162;
+    color: #1a1408;
 }
 
-.fnc-btn-confirm:hover {
-    background: linear-gradient(135deg, #1affd3, #00cca0);
-    box-shadow: 0 6px 18px rgba(0, 255, 204, 0.4);
-    transform: translateY(-1px);
-}
+.fnc-btn-confirm:hover { background: #d7b558; }
 
-.fnc-btn-confirm:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
+.fnc-btn-confirm:disabled { opacity: 0.45; cursor: not-allowed; }

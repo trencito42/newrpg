@@ -956,17 +956,18 @@ AddEventHandler('sunset:nui:fncClose', function()
 end)
 
 AddEventHandler('sunset:nui:fncSubmit', function(payload)
-    local name = payload and payload.name
-    Sunset.Callback('sunset:admin:submitFncName', function(ok, result)
-        if ok then
-            exports.sunset_ui:Send('fncModalHide', {})
-            exports.sunset_ui:SetFocus(false, false)
-            exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.msg.your_name_has_been_updated', { result = tostring(result) }), 'success')
-            TriggerEvent('sunset:client:onCharacterUpdated', { name = result, firstname = result })
-        else
-            exports.sunset_ui:Send('fncModalError', { error = result or exports.sunset_core:Translate('admin.ui.failed_to_change_name') })
-        end
-    end, name)
+    local name = payload and (payload.nickname or payload.name)
+    local ok, result = Sunset.AwaitCallback('sunset:admin:submitFncName', name)
+    if ok then
+        exports.sunset_ui:Send('fncModalHide', {})
+        exports.sunset_ui:SetFocus(false, false)
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('admin.msg.your_name_has_been_updated', { result = tostring(result) }), 'success')
+        TriggerEvent('sunset:client:onCharacterUpdated', { name = result, firstname = result, lastname = '' })
+    else
+        local message = type(result) == 'string' and result ~= '' and result
+            or exports.sunset_core:Translate('admin.ui.failed_to_change_name')
+        exports.sunset_ui:Send('fncModalError', { error = message })
+    end
 end)
 
 -- [CLIENT_PERF_ENTITY_AUDIT] Resource-restart safety: never leave the local ped

@@ -18,38 +18,22 @@
             wrap.className = 'fnc-modal-wrapper hidden';
             wrap.innerHTML = `
                 <div class="fnc-backdrop"></div>
-                <div class="fnc-card">
-                    <div class="fnc-header">
-                        <div class="fnc-icon-badge"><i class="ph-fill ph-identification-card"></i></div>
-                        <div>
-                            <h2 class="fnc-title" id="fnc-modal-title">${I18n.t('ui.fnc.forced_title')}</h2>
-                            <p class="fnc-subtitle" id="fnc-modal-subtitle">${I18n.t('ui.fnc.requested_sub')}</p>
-                        </div>
+                <form class="fnc-card" id="fnc-form" autocomplete="off">
+                    <h2 class="fnc-title" id="fnc-modal-title">${I18n.t('ui.fnc.forced_title')}</h2>
+                    <p class="fnc-subtitle" id="fnc-modal-subtitle">${I18n.t('ui.fnc.requested_sub')}</p>
+                    <div class="fnc-meta">
+                        <span>${I18n.t('ui.fnc.current_name')} <strong id="fnc-current-name">${I18n.t('common.player')}</strong></span>
+                        <span id="fnc-reason-row" style="display:none;">${I18n.t('ui.fnc.admin_reason')} <strong class="fnc-reason" id="fnc-reason-text"></strong></span>
                     </div>
-                    <div class="fnc-body">
-                        <div class="fnc-info-row">
-                            <span class="fnc-label">${I18n.t('ui.fnc.current_name')}</span>
-                            <span class="fnc-val" id="fnc-current-name">${I18n.t('common.player')}</span>
-                        </div>
-                        <div class="fnc-info-row" id="fnc-reason-row" style="display:none;">
-                            <span class="fnc-label">${I18n.t('ui.fnc.admin_reason')}</span>
-                            <span class="fnc-val fnc-val--reason" id="fnc-reason-text">${I18n.t('ui.fnc.default_reason')}</span>
-                        </div>
-                        <div class="fnc-field-group">
-                            <label for="fnc-input-name" class="fnc-input-label">${I18n.t('ui.fnc.new_nickname')}</label>
-                            <div class="fnc-input-wrap">
-                                <i class="ph-bold ph-user fnc-input-icon"></i>
-                                <input type="text" id="fnc-input-name" class="fnc-input" placeholder="${I18n.t('ui.fnc.placeholder')}" maxlength="24" autocomplete="off" spellcheck="false" />
-                            </div>
-                            <div class="fnc-hint" id="fnc-hint-text">${I18n.t('ui.fnc.hint')}</div>
-                            <div class="fnc-error-msg hidden" id="fnc-error-box"></div>
-                        </div>
-                    </div>
+                    <label for="fnc-input-name">${I18n.t('ui.fnc.new_nickname')}</label>
+                    <input type="text" id="fnc-input-name" class="fnc-input" placeholder="${I18n.t('ui.fnc.placeholder')}" maxlength="24" autocomplete="off" spellcheck="false" />
+                    <div class="fnc-hint" id="fnc-hint-text">${I18n.t('ui.fnc.hint')}</div>
+                    <div class="fnc-error-msg hidden" id="fnc-error-box"></div>
                     <div class="fnc-actions">
-                        <button type="button" class="fnc-btn fnc-btn-cancel" id="fnc-btn-cancel"><i class="ph-bold ph-x"></i> ${I18n.t('common.cancel')}</button>
-                        <button type="button" class="fnc-btn fnc-btn-confirm" id="fnc-btn-submit"><i class="ph-bold ph-check"></i> ${I18n.t('ui.fnc.change_name')}</button>
+                        <button type="button" class="fnc-btn fnc-btn-cancel" id="fnc-btn-cancel">${I18n.t('common.cancel')}</button>
+                        <button type="submit" class="fnc-btn fnc-btn-confirm" id="fnc-btn-submit">${I18n.t('ui.fnc.change_name')}</button>
                     </div>
-                </div>
+                </form>
             `;
             document.body.appendChild(wrap);
 
@@ -63,35 +47,33 @@
             const submitBtn = document.getElementById('fnc-btn-submit');
             const inputField = document.getElementById('fnc-input-name');
 
+            const resetSubmit = () => {
+                if (!submitBtn) return;
+                submitBtn.disabled = false;
+                submitBtn.textContent = I18n.t('ui.fnc.change_name');
+            };
+            this.resetSubmit = resetSubmit;
+
             const doSubmit = () => {
                 const val = inputField?.value?.trim() || '';
-                if (!val || val.length < 3 || val.length > 24) {
-                    this.showError(I18n.t('dynamic.fnc.name_must_be_between_3_and_24_characters'));
-                    return;
-                }
-                if (!/^[a-zA-Z0-9._-]+$/.test(val)) {
-                    this.showError(I18n.t('dynamic.fnc.name_may_only_contain_letters_digits_dots_and_hyphens_e_g_diablo'));
+                if (val.length < 3 || val.length > 24 || !/^[A-Za-z][A-Za-z0-9 ]*$/.test(val) || /  /.test(val)) {
+                    this.showError(I18n.t('ui.fnc.hint'));
                     return;
                 }
                 this.clearError();
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = `<i class="ph-bold ph-spinner ph-spin"></i> ${I18n.t('ui.fnc.checking')}`;
+                    submitBtn.textContent = I18n.t('ui.fnc.checking');
                 }
-                post('fncSubmit', { name: val }).then(() => {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = `<i class="ph-bold ph-check"></i> ${I18n.t('ui.fnc.change_name')}`;
-                    }
-                });
+                post('fncSubmit', { nickname: val, name: val });
             };
 
-            submitBtn?.addEventListener('click', doSubmit);
+            document.getElementById('fnc-form')?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                doSubmit();
+            });
             inputField?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    doSubmit();
-                } else if (e.key === 'Escape') {
+                if (e.key === 'Escape') {
                     e.preventDefault();
                     if (!this.forced) this.hide();
                 }
@@ -135,6 +117,7 @@
                 inputField.value = '';
                 setTimeout(() => inputField.focus(), 80);
             }
+            if (this.resetSubmit) this.resetSubmit();
             this.clearError();
             root?.classList.remove('hidden');
         },
@@ -145,6 +128,7 @@
                 box.textContent = msg;
                 box.classList.remove('hidden');
             }
+            if (this.resetSubmit) this.resetSubmit();
         },
 
         clearError() {
