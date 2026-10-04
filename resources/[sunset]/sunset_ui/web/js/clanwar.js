@@ -158,15 +158,22 @@
             }
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
             set('war-att-name', data.attackerName || I18n.t('ui.clanwar.attackers'));
-            set('war-def-name', data.defenderName || I18n.t('ui.clanwar.defenders'));
             set('war-att-score', String(data.attackerScore || 0));
-            set('war-def-score', String(data.defenderScore || 0));
             const rem = Math.max(0, data.remainingSec || 0);
             set('war-timer', `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`);
             const label = data.scoreTarget
                 ? I18n.t('ui.clanwar.turf_with_target', { turf: data.turfName || '', target: data.scoreTarget })
                 : I18n.t('ui.clanwar.turf_named', { turf: data.turfName || '' });
             set('war-turf-label', label);
+            // [NEUTRAL FIX] For neutral captures show "CAPTURE PROGRESS" + X/target instead of "vs UNOWNED 0".
+            if (data.isNeutralCapture) {
+                set('war-def-name', I18n.t('ui.clanwar.capture_progress'));
+                const capTarget = data.captureTarget || 180;
+                set('war-def-score', `${data.attackerScore || 0} / ${capTarget}`);
+            } else {
+                set('war-def-name', data.defenderName || I18n.t('ui.clanwar.defenders'));
+                set('war-def-score', String(data.defenderScore || 0));
+            }
         },
 
         hideHud() {
@@ -270,33 +277,64 @@
             const screen = document.getElementById('war-end-screen');
             const banner = document.getElementById('war-end-banner');
             const title = document.getElementById('war-end-title');
-            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-            // "won" is relative to the local player's side (server sends attackerWon + myRole)
-            const won = data.myRole === 'attacker' ? !!data.attackerWon : !data.attackerWon;
-            banner?.classList.toggle('lost', !won);
-            if (title) {
-                // [WAR FIX] A defender who wins/ties KEPT the turf — show "DEFENDED",
-                // not "CONQUERED" (it was already theirs; tie goes to defender).
-                if (won && data.myRole !== 'attacker') {
-                    title.textContent = I18n.t('dynamic.clanwar.turf_defended');
-                } else {
-                    title.textContent = won ? I18n.t('ui.clanwar.turf_captured') : I18n.t('ui.clanwar.turf_lost');
-                }
-                title.style.color = won ? 'var(--war-accent, #00ffcc)' : 'var(--war-danger, #ff3366)';
-            }
-            set('war-end-turf', `${I18n.t('ui.clanwar.turf')} #${data.turfId || '?'} • ${data.turfName || ''}`);
-            set('war-end-att-name', data.attackerName || I18n.t('ui.clanwar.atk_short'));
-            set('war-end-def-name', data.defenderName || I18n.t('ui.clanwar.def_short'));
-            set('war-end-att-score', String(data.attackerScore || 0));
-            set('war-end-def-score', String(data.defenderScore || 0));
+            const sep = screen?.querySelector('.score-separator');
             const mvpBox = document.getElementById('war-mvp-box');
-            if (data.mvp) {
-                mvpBox?.style.setProperty('display', 'flex');
-                set('war-mvp-name', data.mvp.name);
-                set('war-mvp-kills', String(data.mvp.kills || 0));
-                set('war-mvp-deaths', String(data.mvp.deaths || 0));
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+            set('war-end-turf', `${I18n.t('ui.clanwar.turf')} #${data.turfId || '?'} • ${data.turfName || ''}`);
+
+            // [NEUTRAL FIX] Neutral captures use resultType — never show "vs Unowned".
+            if (data.resultType === 'neutral_captured' || data.resultType === 'neutral_capture_failed') {
+                const captured = data.resultType === 'neutral_captured';
+                banner?.classList.toggle('lost', !captured);
+                if (title) {
+                    title.textContent = captured
+                        ? I18n.t('dynamic.clanwar.neutral_captured')
+                        : I18n.t('dynamic.clanwar.neutral_capture_failed');
+                    title.style.color = captured ? 'var(--war-accent, #00ffcc)' : 'var(--war-danger, #ff3366)';
+                }
+                // Left slot = attacker name + score; right slot = capture target for progress
+                const capTarget = data.captureTarget || 180;
+                set('war-end-att-name', data.attackerName || I18n.t('ui.clanwar.atk_short'));
+                set('war-end-att-score', String(data.attackerScore || 0));
+                if (sep) sep.textContent = '/';
+                set('war-end-def-name', I18n.t('ui.clanwar.capture_progress'));
+                set('war-end-def-score', String(capTarget));
+                // MVP: only show when attackers actually had kills (no fake defender card)
+                if (data.mvp && (data.mvp.kills || 0) > 0) {
+                    mvpBox?.style.setProperty('display', 'flex');
+                    set('war-mvp-name', data.mvp.name);
+                    set('war-mvp-kills', String(data.mvp.kills || 0));
+                    set('war-mvp-deaths', String(data.mvp.deaths || 0));
+                } else {
+                    mvpBox?.style.setProperty('display', 'none');
+                }
             } else {
-                mvpBox?.style.setProperty('display', 'none');
+                // Normal clan vs clan war
+                const won = data.myRole === 'attacker' ? !!data.attackerWon : !data.attackerWon;
+                banner?.classList.toggle('lost', !won);
+                if (title) {
+                    // [WAR FIX] A defender who wins/ties KEPT the turf — show "DEFENDED".
+                    if (won && data.myRole !== 'attacker') {
+                        title.textContent = I18n.t('dynamic.clanwar.turf_defended');
+                    } else {
+                        title.textContent = won ? I18n.t('ui.clanwar.turf_captured') : I18n.t('ui.clanwar.turf_lost');
+                    }
+                    title.style.color = won ? 'var(--war-accent, #00ffcc)' : 'var(--war-danger, #ff3366)';
+                }
+                set('war-end-att-name', data.attackerName || I18n.t('ui.clanwar.atk_short'));
+                set('war-end-def-name', data.defenderName || I18n.t('ui.clanwar.def_short'));
+                set('war-end-att-score', String(data.attackerScore || 0));
+                set('war-end-def-score', String(data.defenderScore || 0));
+                if (sep) sep.textContent = I18n.t('ui.clanwar.versus');
+                if (data.mvp) {
+                    mvpBox?.style.setProperty('display', 'flex');
+                    set('war-mvp-name', data.mvp.name);
+                    set('war-mvp-kills', String(data.mvp.kills || 0));
+                    set('war-mvp-deaths', String(data.mvp.deaths || 0));
+                } else {
+                    mvpBox?.style.setProperty('display', 'none');
+                }
             }
             screen?.classList.add('active');
         },

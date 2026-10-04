@@ -258,6 +258,8 @@ RegisterNetEvent('sunset:turfs:warStart', function(war)
             scoreTarget = war.scoreTarget,
             turfName = war.turfName,
             remainingSec = war.remainingSec or 0,
+            isNeutralCapture = war.isNeutralCapture,
+            captureTarget = war.captureTarget,
         })
     end
     if war.isNeutralCapture then
@@ -306,6 +308,10 @@ RegisterNetEvent('sunset:turfs:warEnd', function(data)
             defenderScore = data.defenderScore,
             mvp = data.mvp,
             myRole = myRole,
+            resultType = data.resultType,
+            isNeutralCapture = data.isNeutralCapture,
+            captureTarget = data.captureTarget,
+            territoryRemainsFree = data.territoryRemainsFree,
         })
         exports.sunset_ui:SetFocus(true, true)
     end
@@ -558,6 +564,8 @@ RegisterNetEvent('sunset:turfs:warJoined', function(data)
             scoreTarget = ActiveWar.scoreTarget,
             turfName = ActiveWar.turfName,
             remainingSec = ActiveWar.remainingSec or 0,
+            isNeutralCapture = ActiveWar.isNeutralCapture,
+            captureTarget = ActiveWar.captureTarget,
         })
     end
     -- Auto-open the armory on first join so players discover the loadout menu.
@@ -778,6 +786,8 @@ CreateThread(function()
                 scoreTarget = ActiveWar.scoreTarget,
                 turfName = ActiveWar.turfName,
                 remainingSec = ActiveWar.remainingSec or 0,
+                isNeutralCapture = ActiveWar.isNeutralCapture,
+                captureTarget = ActiveWar.captureTarget,
             })
             Wait(250)
         else

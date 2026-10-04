@@ -248,17 +248,52 @@ local function endWar(turfId, reason)
     end
 
     local turf = Turfs[turfId]
-    local attackerWon
+    -- [NEUTRAL FIX] Explicit resultType — never assigns "Unowned (free turf)" as winner.
+    local resultType
+    local winnerClanId
+    local winnerName
+    local winnerTag
+    local attackerWon  -- kept for backward compatibility with existing client code
+
     if war.isNeutralCapture then
-        attackerWon = war.attackerScore >= (war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180)
+        local captureTarget = war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180
+        if war.attackerScore >= captureTarget then
+            resultType     = 'neutral_captured'
+            attackerWon    = true
+            winnerClanId   = war.attackerClanId
+            winnerName     = war.attackerName
+            winnerTag      = war.attackerTag
+        else
+            resultType     = 'neutral_capture_failed'
+            attackerWon    = false
+            winnerClanId   = nil   -- territory stays NULL; "Unowned" is never the winner
+            winnerName     = nil
+            winnerTag      = nil
+        end
     else
-        attackerWon = war.attackerScore > war.defenderScore
+        if war.attackerScore > war.defenderScore then
+            resultType     = 'attacker_win'
+            attackerWon    = true
+            winnerClanId   = war.attackerClanId
+            winnerName     = war.attackerName
+            winnerTag      = war.attackerTag
+        elseif war.defenderScore > war.attackerScore then
+            resultType     = 'defender_win'
+            attackerWon    = false
+            winnerClanId   = war.defenderClanId
+            winnerName     = war.defenderName
+            winnerTag      = war.defenderTag
+        else
+            resultType     = 'draw'
+            attackerWon    = false
+            winnerClanId   = war.defenderClanId  -- tie: defender keeps turf
+            winnerName     = war.defenderName
+            winnerTag      = war.defenderTag
+        end
     end
 
-    local winnerClanId = attackerWon and war.attackerClanId or war.defenderClanId
-    local winnerClanName = attackerWon and war.attackerName or war.defenderName
-    local winnerClanTag = attackerWon and war.attackerTag or war.defenderTag
-
+    -- Update DB ownership only for genuine captures / defender retentions.
+    -- neutral_capture_failed: leave owner_clan_id = NULL (territory stays free).
     if winnerClanId then
         MySQL.update.await('UPDATE turfs SET owner_clan_id = ? WHERE id = ?', { winnerClanId, turfId })
         local clanRow = MySQL.single.await('SELECT name, tag, tag_color FROM clans WHERE id = ?', { winnerClanId })
@@ -299,8 +334,9 @@ local function endWar(turfId, reason)
     TriggerClientEvent('sunset:turfs:warEnd', -1, {
         turfId = turfId,
         turfName = turf.name,
-        winnerName = winnerClanName,
-        winnerTag = winnerClanTag,
+        winnerName = winnerName,
+        winnerTag = winnerTag,
+        winnerClanId = winnerClanId,
         attackerName = war.attackerName,
         attackerTag = war.attackerTag,
         defenderName = war.defenderName,
@@ -312,19 +348,30 @@ local function endWar(turfId, reason)
         stats = stats,
         mvp = mvp,
         scoreTarget = war.scoreTarget,
+        resultType = resultType,
+        isNeutralCapture = war.isNeutralCapture,
+        captureTarget = war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180,
+        territoryRemainsFree = (resultType == 'neutral_capture_failed'),
     })
 
-    -- [WAR FIX] A defender who wins (or ties) KEEPS the turf they already owned;
-    -- the announcement must say "defended", not "conquered".
-    local winnerIsDefender = (not war.isNeutralCapture) and not attackerWon
+    -- [NEUTRAL FIX] Announcements use resultType — "Unowned (free turf)" is NEVER a winner.
     local announcement
-    if winnerIsDefender then
-        announcement = ('^2[TURF WAR] ^7The war for ^3%s^7 ended! ^2[%s] %s^7 defended the territory (%d vs %d points)!'):format(
-            turf.name, winnerClanTag or '--', winnerClanName or 'Unknown', war.defenderScore, war.attackerScore
+    if resultType == 'neutral_captured' then
+        announcement = ('^2[TURF WAR] ^7Clan ^3[%s] %s^7 captured ^2%s^7!'):format(
+            winnerTag or '--', winnerName or '?', turf.name
         )
-    else
+    elseif resultType == 'neutral_capture_failed' then
+        announcement = ('^1[TURF WAR] ^7Clan ^3[%s] %s^7 failed to capture ^2%s^7. The territory remains free.'):format(
+            war.attackerTag or '--', war.attackerName or '?', turf.name
+        )
+    elseif resultType == 'defender_win' or resultType == 'draw' then
+        -- [WAR FIX] A defender who wins (or ties) KEEPS the turf they already owned.
+        announcement = ('^2[TURF WAR] ^7The war for ^3%s^7 ended! ^2[%s] %s^7 defended the territory (%d vs %d points)!'):format(
+            turf.name, winnerTag or '--', winnerName or 'Unknown', war.defenderScore, war.attackerScore
+        )
+    else  -- attacker_win
         announcement = ('^2[TURF WAR] ^7The war for ^3%s^7 ended! ^2[%s] %s^7 captured the territory (%d vs %d points)!'):format(
-            turf.name, winnerClanTag or '--', winnerClanName or 'Unknown', war.attackerScore, war.defenderScore
+            turf.name, winnerTag or '--', winnerName or 'Unknown', war.attackerScore, war.defenderScore
         )
     end
     TriggerClientEvent('chat:addMessage', -1, { color = { 0, 255, 204 }, args = { 'WAR', announcement } })
