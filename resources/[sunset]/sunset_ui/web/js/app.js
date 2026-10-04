@@ -654,6 +654,7 @@
                 ModuleLoader.ensure('radar');
                 await this.nextFrame();
                 ModuleLoader.ensure('damage_indicators');
+                ModuleLoader.ensure('scoreboard');
             } catch (err) {
                 console.warn('[UI] Secondary modules load error (fail open):', err);
             }

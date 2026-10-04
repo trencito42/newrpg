@@ -8,13 +8,13 @@ asset_dir='resources/[sunset]/sunset_loadscreen'
 runtime_dir='/config/resources/[sunset]/sunset_loadscreen'
 
 attempt=0
-expected_script=$(sha256sum "$asset_dir/script.js" | cut -d ' ' -f 1)
+expected_index=$(sha256sum "$asset_dir/index.html" | cut -d ' ' -f 1)
 while :; do
-  actual_script=$(docker compose exec -T fivem sha256sum "$runtime_dir/script.js" 2>/dev/null | cut -d ' ' -f 1 || true)
-  if [ "$actual_script" = "$expected_script" ]; then break; fi
+  actual_index=$(docker compose exec -T fivem sha256sum "$runtime_dir/index.html" 2>/dev/null | cut -d ' ' -f 1 || true)
+  if [ "$actual_index" = "$expected_index" ]; then break; fi
   attempt=$((attempt + 1))
   if [ "$attempt" -ge 30 ]; then
-    echo "[loadscreen] runtime script did not match deployment input after 30 seconds (expected=$expected_script actual=${actual_script:-missing})" >&2
+    echo "[loadscreen] runtime index did not match deployment input after 30 seconds (expected=$expected_index actual=${actual_index:-missing})" >&2
     exit 1
   fi
   sleep 1

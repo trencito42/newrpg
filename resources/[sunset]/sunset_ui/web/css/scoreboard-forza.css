@@ -212,3 +212,105 @@
     border-top: 1px solid var(--sb-border-lighter);
     flex-shrink: 0;
 }
+
+.scoreboard-forza .sc-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--sb-border);
+}
+
+.scoreboard-forza .server-name {
+    margin: 0;
+    font: 800 18px/1 'Montserrat', sans-serif;
+    letter-spacing: 0.08em;
+    color: var(--sb-primary);
+}
+
+.scoreboard-forza .server-ip {
+    margin-top: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--sb-accent);
+}
+
+.scoreboard-forza .player-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--sb-primary);
+}
+
+.scoreboard-forza .player-count svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--sb-accent);
+    stroke-width: 2;
+}
+
+.scoreboard-forza .sc-columns,
+.scoreboard-forza .player-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 72px;
+    align-items: center;
+    padding: 8px 20px;
+}
+
+.scoreboard-forza .sc-columns {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--sb-text-muted);
+}
+
+.scoreboard-forza .sc-columns .col-right,
+.scoreboard-forza .player-row .p-ping { text-align: right; justify-content: flex-end; }
+.scoreboard-forza .sc-columns .col-center,
+.scoreboard-forza .player-row .p-id { text-align: center; }
+
+.scoreboard-forza .sc-list {
+    overflow: auto;
+    min-height: 0;
+}
+
+.scoreboard-forza .player-row {
+    border-bottom: 1px solid rgba(242, 239, 232, 0.02);
+}
+
+.scoreboard-forza .player-row.is-self {
+    background: rgba(215, 181, 88, 0.06);
+}
+
+.scoreboard-forza .p-id {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--sb-text-muted);
+}
+
+.scoreboard-forza .p-name {
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scoreboard-forza .p-ping {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.scoreboard-forza .ping-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}

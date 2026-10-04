@@ -2,6 +2,15 @@ local CachedScoreboard = nil
 local LastScoreboardBuild = 0
 local SCOREBOARD_CACHE_TTL_MS = 2500
 
+local function factionKind(factionId)
+    if not factionId then return 'civilian' end
+    if Sunset.FactionTypeMatches(factionId, 'law_enforcement') then return 'police' end
+    if Sunset.FactionTypeMatches(factionId, 'ems') or Sunset.FactionTypeMatches(factionId, 'fire_rescue') then return 'medic' end
+    if Sunset.FactionTypeMatches(factionId, 'mechanic') then return 'mechanic' end
+    if Sunset.FactionTypeMatches(factionId, 'criminal_org') then return 'mafia' end
+    return 'civilian'
+end
+
 local function buildScoreboardSnapshot()
     local list = {}
     local maxClients = GetConvarInt('sv_maxclients', 48)
@@ -52,6 +61,7 @@ local function buildScoreboardSnapshot()
                 ping = GetPlayerPing(src),
                 job = jobLabel,
                 factionId = factionId,
+                faction = factionKind(factionId),
                 factionLabel = factionLabel,
                 clanTag = clanTag,
                 clanTagColor = clanTagColor,
@@ -126,6 +136,7 @@ exports.sunset_core:RegisterCallback('sunset:getScoreboard', function(source)
             ping = GetPlayerPing(p.id) or p.ping,
             job = p.job,
             factionId = p.factionId,
+            faction = p.faction,
             factionLabel = p.factionLabel,
             clanTag = p.clanTag,
             clanTagColor = p.clanTagColor,

@@ -1,4 +1,5 @@
 local open = false
+local requestToken = 0
 
 -- [WAR FIX] During a turf war, Z belongs to the war scoreboard (sunset_turfs).
 -- Yield to it so the two scoreboards don't both open on the same key.
@@ -13,12 +14,17 @@ local function toggleScoreboard(show)
     if show and (IsPauseMenuActive() or IsNuiFocused()) then return end
     if show and inTurfWar() then return end
     open = show
+    requestToken = requestToken + 1
+    local token = requestToken
 
     if show then
         local ok, data = pcall(function()
             return Sunset.AwaitCallback('sunset:getScoreboard')
         end)
-        exports.sunset_ui:Send('showScoreboard', ok and data or { players = {}, count = 0, max = 48 })
+        if token ~= requestToken or not open then return end
+        if type(data) ~= 'table' then data = { players = {}, count = 0, max = 100 } end
+        data.myId = GetPlayerServerId(PlayerId())
+        exports.sunset_ui:Send('showScoreboard', data)
     else
         exports.sunset_ui:Send('hideScoreboard', {})
     end
