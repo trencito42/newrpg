@@ -65,10 +65,27 @@
         return state === 'ENDED' || state === 'FAILED' || state === 'BUSY' || state === 'DECLINED' || state === 'UNAVAILABLE';
     }
 
+    function resolveVoice(state, voiceAvailable, myVoiceEnabled, peerVoiceEnabled) {
+        const active = state === 'ACTIVE';
+        const available = active && voiceAvailable !== false;
+        return {
+            voiceAvailable: available,
+            myVoiceEnabled: available && myVoiceEnabled !== false,
+            peerVoiceEnabled: available && peerVoiceEnabled !== false,
+        };
+    }
+
+    function phoneDraftOnEnd(text, hasAttachment) {
+        const draft = String(text || '').trim();
+        if (draft.length > 0 || hasAttachment) return 'hold';
+        return 'clear';
+    }
+
     function applyCall(current, next) {
         const prev = current || { state: 'IDLE' };
         const incoming = next || { state: 'IDLE' };
         const sameActive = prev.state === 'ACTIVE' && incoming.state === 'ACTIVE' && prev.callId === incoming.callId;
+        const voice = resolveVoice(incoming.state, incoming.voiceAvailable, incoming.myVoiceEnabled, incoming.peerVoiceEnabled);
         return {
             callId: incoming.callId || null,
             state: incoming.state || 'IDLE',
@@ -80,6 +97,9 @@
             localStart: sameActive ? prev.localStart : (incoming.state === 'ACTIVE' ? Date.now() : null),
             runTimer: shouldRunTimer(incoming.state),
             connectVoice: shouldConnectVoice(incoming.state),
+            voiceAvailable: voice.voiceAvailable,
+            myVoiceEnabled: voice.myVoiceEnabled,
+            peerVoiceEnabled: voice.peerVoiceEnabled,
         };
     }
 
@@ -98,6 +118,8 @@
         shouldAutoLower: shouldAutoLower,
         callIsLive: callIsLive,
         routeLocalCallText: routeLocalCallText,
+        resolveVoice: resolveVoice,
+        phoneDraftOnEnd: phoneDraftOnEnd,
         nextPresentation: nextPresentation,
         terminalState: terminalState,
         applyCall: applyCall,

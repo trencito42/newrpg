@@ -68,12 +68,64 @@ local function voiceCallsEnabled(src)
     return tonumber(row.voice_calls) ~= 0
 end
 
-local function voiceSet(src, channel)
-    if GetResourceState('pma-voice') ~= 'started' then return end
-    if (tonumber(channel) or 0) ~= 0 and not voiceCallsEnabled(src) then return end
-    pcall(function()
+local function pmaUp()
+    return GetResourceState('pma-voice') == 'started'
+end
+
+local function setPmaCall(src, channel)
+    src = tonumber(src)
+    if not src or src < 1 or not pmaUp() then return false end
+    local ok = pcall(function()
         exports['pma-voice']:setPlayerCall(src, tonumber(channel) or 0)
     end)
+    return ok
+end
+
+local function voiceOn(call, src)
+    if not call or not src then return false end
+    if src == call.caller then return call.callerVoice == true end
+    if src == call.callee then return call.calleeVoice == true end
+    return false
+end
+
+local function setVoiceOn(call, src, enabled)
+    local on = enabled == true
+    if src == call.caller then call.callerVoice = on
+    elseif src == call.callee then call.calleeVoice = on end
+end
+
+local function syncParticipantVoice(call, src)
+    if not pmaUp() then
+        setVoiceOn(call, src, false)
+        return false
+    end
+    if voiceOn(call, src) then
+        if not setPmaCall(src, call.channel) then
+            setVoiceOn(call, src, false)
+            return false
+        end
+        return true
+    end
+    setPmaCall(src, 0)
+    return true
+end
+
+local function clearCallVoice(call)
+    setPmaCall(call.caller, 0)
+    setPmaCall(call.callee, 0)
+    call.callerVoice = false
+    call.calleeVoice = false
+end
+
+local function peerBound(call, peer, peerCharacterId)
+    peer = tonumber(peer)
+    if not peer or peer < 1 or not GetPlayerName(peer) then return false end
+    if PhoneCalls.bySource[peer] ~= call.id then return false end
+    local ok, char = pcall(function() return exports.sunset_core:GetCharacter(peer) end)
+    if ok and type(char) == 'table' and tonumber(char.id) and tonumber(char.id) ~= tonumber(peerCharacterId) then
+        return false
+    end
+    return true
 end
 
 function GetActiveCallContext(source)
@@ -86,7 +138,7 @@ function GetActiveCallContext(source)
     local peerName = call.caller == source and call.calleeName or call.callerName
     local peerPhone = call.caller == source and call.calleePhone or call.callerPhone
     local peerCharacterId = call.caller == source and call.calleeCharacterId or call.callerCharacterId
-    if not peer or not GetPlayerName(peer) then
+    if not peerBound(call, peer, peerCharacterId) then
         PhoneCalls.endForSource(source, 'disconnect')
         return { active = false, ended = true }
     end
@@ -119,6 +171,40 @@ local function payloadFor(call, src, state, reason)
     }
 end
 
+local function pushActive(call)
+    if not call or call.ended or call.state ~= 'active' then return end
+    local available = pmaUp()
+    if not available then
+        call.callerVoice = false
+        call.calleeVoice = false
+    end
+    local function one(src)
+        if not src then return end
+        local body = payloadFor(call, src, 'ACTIVE')
+        local peer = src == call.caller and call.callee or call.caller
+        body.voiceAvailable = available
+        body.myVoiceEnabled = available and voiceOn(call, src)
+        body.peerVoiceEnabled = available and voiceOn(call, peer)
+        push(src, body)
+    end
+    one(call.caller)
+    if call.callee ~= call.caller then one(call.callee) end
+end
+
+function PhoneCalls.applySavedVoice(src, enabled)
+    src = tonumber(src)
+    local id = src and PhoneCalls.bySource[src]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended or call.state ~= 'active' then return end
+    if not pmaUp() then
+        setVoiceOn(call, src, false)
+    else
+        setVoiceOn(call, src, enabled == true)
+        syncParticipantVoice(call, src)
+    end
+    pushActive(call)
+end
+
 local function logCall(call, status)
     pcall(function()
         MySQL.insert.await([[
@@ -144,8 +230,7 @@ function PhoneCalls.finish(call, status)
     PhoneCalls.byId[call.id] = nil
     if PhoneCalls.bySource[call.caller] == call.id then PhoneCalls.bySource[call.caller] = nil end
     if PhoneCalls.bySource[call.callee] == call.id then PhoneCalls.bySource[call.callee] = nil end
-    voiceSet(call.caller, 0)
-    voiceSet(call.callee, 0)
+    clearCallVoice(call)
 
     local callerState, calleeState = 'ENDED', 'ENDED'
     local reason = status
@@ -313,10 +398,16 @@ exports.sunset_core:RegisterCallback('sunset:phoneCallAnswer', function(source)
     end
     call.state = 'active'
     call.answeredAt = os.time()
-    voiceSet(call.caller, call.channel)
-    voiceSet(call.callee, call.channel)
-    push(call.caller, payloadFor(call, call.caller, 'ACTIVE'))
-    push(call.callee, payloadFor(call, call.callee, 'ACTIVE'))
+    call.callerVoice = voiceCallsEnabled(call.caller)
+    call.calleeVoice = voiceCallsEnabled(call.callee)
+    if pmaUp() then
+        syncParticipantVoice(call, call.caller)
+        syncParticipantVoice(call, call.callee)
+    else
+        call.callerVoice = false
+        call.calleeVoice = false
+    end
+    pushActive(call)
     TriggerClientEvent('sunset:chat:system', call.caller, exports.sunset_core:TFor(call.caller, 'chat.phone.connected', { name = call.calleeName or call.calleePhone or '' }), 'info')
     TriggerClientEvent('sunset:chat:system', call.callee, exports.sunset_core:TFor(call.callee, 'chat.phone.connected', { name = call.callerName or call.callerPhone or '' }), 'info')
     return { ok = true, state = 'ACTIVE', callId = call.id }
@@ -336,6 +427,26 @@ exports.sunset_core:RegisterCallback('sunset:phoneCallDecline', function(source)
     end
     PhoneCalls.finish(call, call.state == 'active' and 'answered' or 'cancelled')
     return { ok = true }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:phoneCallSetVoice', function(source, enabled)
+    if not exports.sunset_core:RateLimit(source, 'phoneCallSetVoice', 400) then
+        return nil, { localeKey = 'error.too_many_requests' }
+    end
+    local id = PhoneCalls.bySource[source]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended or call.state ~= 'active' or (call.caller ~= source and call.callee ~= source) then
+        return nil, { localeKey = 'phone.call.ended' }
+    end
+    if not pmaUp() then
+        setVoiceOn(call, source, false)
+        pushActive(call)
+        return { ok = true, voiceAvailable = false, myVoiceEnabled = false }
+    end
+    setVoiceOn(call, source, enabled == true)
+    syncParticipantVoice(call, source)
+    pushActive(call)
+    return { ok = true, voiceAvailable = pmaUp(), myVoiceEnabled = voiceOn(call, source) }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:phoneCallHangup', function(source)
@@ -371,6 +482,16 @@ AddEventHandler('sunset:server:characterSelected', function(src)
 end)
 
 AddEventHandler('onResourceStop', function(res)
+    if res == 'pma-voice' then
+        for _, call in pairs(PhoneCalls.byId) do
+            if call and not call.ended and call.state == 'active' then
+                call.callerVoice = false
+                call.calleeVoice = false
+                pushActive(call)
+            end
+        end
+        return
+    end
     if res ~= GetCurrentResourceName() then return end
     local pending = {}
     for _, call in pairs(PhoneCalls.byId) do pending[#pending + 1] = call end

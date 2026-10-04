@@ -310,6 +310,10 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             Sunset.AwaitCallback('sunset:phoneSaveLayout', data.grid)
             return
         end
+        if op == 'voice' then
+            Sunset.AwaitCallback('sunset:phoneCallSetVoice', data.enabled == true)
+            return
+        end
         if op == 'settings' then
             local res, err = Sunset.AwaitCallback('sunset:phoneSaveSettings', {
                 ringtone = data.ringtone ~= false,

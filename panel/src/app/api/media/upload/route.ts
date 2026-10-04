@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
 import fs from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 import { t } from "@/lib/i18n";
+import { detectPhoneImage, phonePhotoUrl, validPhoneToken } from "@/lib/phone-photo";
 
 
 export async function POST(req: NextRequest) {
@@ -14,7 +16,12 @@ export async function POST(req: NextRequest) {
     const mediaToken = req.headers.get("x-media-token") || "";
     const vehicleId = req.headers.get("x-vehicle-id");
 
-    const formData = await req.formData();
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch {
+      return NextResponse.json({ error: t(locale, "interface.no_file_provided") }, { status: 400 });
+    }
     const file = formData.get("files[]") as File | null;
 
     if (!file) {
@@ -65,6 +72,23 @@ export async function POST(req: NextRequest) {
       );
 
       return NextResponse.json({ success: true, url: previewUrl });
+    } else if (mediaType === "phone_photo") {
+      if (!validPhoneToken(mediaToken)) {
+        return NextResponse.json({ error: t(locale, "interface.invalid_upload_parameters") }, { status: 400 });
+      }
+      const image = detectPhoneImage(buffer);
+      if (!image) {
+        return NextResponse.json({ error: t(locale, "interface.invalid_file_size") }, { status: 400 });
+      }
+      const filename = `${crypto.randomBytes(16).toString("hex")}.${image.ext}`;
+      const url = phonePhotoUrl(filename);
+      if (!url) {
+        return NextResponse.json({ error: t(locale, "interface.invalid_upload_parameters") }, { status: 400 });
+      }
+      const dir = path.join(baseDir, "phone");
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, filename), buffer);
+      return NextResponse.json({ url, mime: image.mime, size: buffer.length });
     }
 
     return NextResponse.json({ error: t(locale, "interface.invalid_upload_parameters") }, { status: 400 });

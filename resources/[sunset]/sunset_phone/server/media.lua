@@ -109,7 +109,7 @@ exports.sunset_core:RegisterCallback('sunset:phoneMediaCommit', function(source,
         return nil, { localeKey = 'phone.message.photo_upload_failed' }
     end
     fileSize = tonumber(fileSize)
-    local maxBytes = (Config.PhoneMedia and Config.PhoneMedia.MaxUploadBytes) or 1800000
+    local maxBytes = (Config.PhoneMedia and Config.PhoneMedia.MaxUploadBytes) or 5242880
     if fileSize and (fileSize < 1 or fileSize > maxBytes) then
         return nil, { localeKey = 'phone.message.photo_upload_failed' }
     end

@@ -468,6 +468,9 @@ exports.sunset_core:RegisterCallback('sunset:phoneSaveSettings', function(source
         VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE ringtone = VALUES(ringtone), notify_sound = VALUES(notify_sound), compact_notes = VALUES(compact_notes), voice_calls = VALUES(voice_calls)
     ]], { char.id, ring, sound, compact, voice })
+    if PhoneCalls and PhoneCalls.applySavedVoice then
+        PhoneCalls.applySavedVoice(source, voice == 1)
+    end
     return { ok = true, ringtone = ring == 1, notifySound = sound == 1, compactNotes = compact == 1, voiceCalls = voice == 1 }
 end)
 

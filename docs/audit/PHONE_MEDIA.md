@@ -6,7 +6,7 @@
 
 Photos use stable `https://racket.cat/media/` URLs. The FiveM server accepts a URL only after it consumes a single-use token bound to the character and `media_type = phone_photo`. Other hosts, `data:` URLs, and `javascript:` URLs are rejected. The token is 48 random hex characters, lives in memory, and expires in 90 seconds.
 
-The racket.cat upload service is not in this repository. It should also check the token, expiry, media type, content type, and file size. Until that remote check exists, the game server is the authority that decides which URL may be stored.
+The upload route lives in `panel/src/app/api/media/upload/route.ts`. Phone photos are written under `public/media/phone/` and the JSON `url` is `https://racket.cat/media/phone/...`. The panel checks the 48-hex token shape, image magic bytes, and size. It does not share the FiveM in-memory token table. The game server still consumes that token and is the authority that decides which URL may be stored.
 
 ## Storage
 

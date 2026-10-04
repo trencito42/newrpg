@@ -7,7 +7,7 @@
 (function () {
     'use strict';
 
-    const MODULE_VERSION = '19';
+    const MODULE_VERSION = '20';
     const versioned = (url) => `${url}${url.includes('?') ? '&' : '?'}v=${MODULE_VERSION}`;
 
     const MODULE_REGISTRY = {

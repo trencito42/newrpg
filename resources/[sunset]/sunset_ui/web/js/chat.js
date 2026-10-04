@@ -1656,9 +1656,26 @@ const Chat = {
 
     applyPhoneContext(payload) {
         const active = !!(payload && payload.active);
-        this.phoneCall = active ? { peerName: String(payload.peerName || '') } : null;
-        this.phoneDraftHeld = !!(payload && payload.held);
+        if (active) {
+            this.phoneCall = { peerName: String(payload.peerName || '') };
+            this.phoneDraftHeld = false;
+            this.setChannel(this.channel || 'all');
+            return;
+        }
+        const draft = ($('#chat-input')?.value || '').trim();
+        const hold = !!(payload && payload.ended) && (draft.length > 0 || !!this.pendingAttachment);
+        this.phoneCall = null;
+        this.phoneDraftHeld = hold;
         this.setChannel(this.channel || 'all');
+        if (hold) {
+            this.appendMessage({
+                id: 0,
+                name: '',
+                message: I18n.t('ui.chat.call_not_sent'),
+                time: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+                type: 'command_warn',
+            });
+        }
     },
 
     send() {

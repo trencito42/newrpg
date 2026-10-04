@@ -110,5 +110,12 @@ SMS stays in Messages. Text typed with T during an ACTIVE call is live speech be
 - [ ] Enter leaves phone PEEK
 - [ ] ESC leaves phone PEEK
 - [ ] call ending while draft exists does not leak to local
+- [ ] empty composer when the call ends shows only "Call ended."
 - [ ] /hangup ends canonical call
 - [ ] P restores full call interface
+- [ ] Voice off during an ACTIVE call drops pma and keeps the timer and T chat
+- [ ] Voice on rejoins pma without a new call
+- [ ] Settings Voice calls off during a call applies immediately
+- [ ] Island shows a small mute mark only while your voice is off
+- [ ] Camera shutter during a call does not hang up
+- [ ] A saved photo opens from Gallery after upload

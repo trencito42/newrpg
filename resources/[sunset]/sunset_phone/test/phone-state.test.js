@@ -73,4 +73,40 @@ assert.strictEqual(state.terminalState('ACTIVE'), false);
 assert.strictEqual(state.safeText('<img src=x onerror=alert(1)>'), '<img src=x onerror=alert(1)>');
 assert.strictEqual(state.safeText(null), '');
 
+const bothOn = state.resolveVoice('ACTIVE', true, true, true);
+assert.deepStrictEqual(bothOn, { voiceAvailable: true, myVoiceEnabled: true, peerVoiceEnabled: true });
+const mineOff = state.resolveVoice('ACTIVE', true, false, true);
+assert.strictEqual(mineOff.myVoiceEnabled, false);
+assert.strictEqual(mineOff.peerVoiceEnabled, true);
+const peerOff = state.resolveVoice('ACTIVE', true, true, false);
+assert.strictEqual(peerOff.myVoiceEnabled, true);
+assert.strictEqual(peerOff.peerVoiceEnabled, false);
+const bothOff = state.resolveVoice('ACTIVE', true, false, false);
+assert.strictEqual(bothOff.myVoiceEnabled, false);
+assert.strictEqual(bothOff.peerVoiceEnabled, false);
+const down = state.resolveVoice('ACTIVE', false, true, true);
+assert.deepStrictEqual(down, { voiceAvailable: false, myVoiceEnabled: false, peerVoiceEnabled: false });
+const ringingVoice = state.resolveVoice('INCOMING_RINGING', true, true, true);
+assert.strictEqual(ringingVoice.voiceAvailable, false);
+const legacyOn = state.resolveVoice('ACTIVE', undefined, undefined, undefined);
+assert.strictEqual(legacyOn.myVoiceEnabled, true);
+
+const voiced = state.applyCall({ state: 'IDLE' }, {
+    state: 'ACTIVE', callId: 4, voiceAvailable: true, myVoiceEnabled: false, peerVoiceEnabled: true,
+});
+assert.strictEqual(voiced.myVoiceEnabled, false);
+assert.strictEqual(voiced.peerVoiceEnabled, true);
+assert.ok(voiced.localStart);
+const voicedAgain = state.applyCall(voiced, {
+    state: 'ACTIVE', callId: 4, voiceAvailable: true, myVoiceEnabled: true, peerVoiceEnabled: false,
+});
+assert.strictEqual(voicedAgain.localStart, voiced.localStart);
+assert.strictEqual(voicedAgain.myVoiceEnabled, true);
+assert.strictEqual(voicedAgain.peerVoiceEnabled, false);
+
+assert.strictEqual(state.phoneDraftOnEnd('', false), 'clear');
+assert.strictEqual(state.phoneDraftOnEnd('   ', false), 'clear');
+assert.strictEqual(state.phoneDraftOnEnd('vin acu', false), 'hold');
+assert.strictEqual(state.phoneDraftOnEnd('', true), 'hold');
+
 console.log('phone-state tests passed');

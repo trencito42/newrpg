@@ -159,22 +159,24 @@ local function isLocalChannel(channel)
 end
 
 local function deliverPhoneCall(src, payload, ctx)
+    if GetResourceState('sunset_phone') ~= 'started' or type(ctx) ~= 'table' or not ctx.active then return false end
+    local fresh = exports.sunset_phone:GetActiveCallContext(src)
+    if type(fresh) ~= 'table' or not fresh.active or fresh.callId ~= ctx.callId then return false end
+    if tonumber(fresh.peerSource) ~= tonumber(ctx.peerSource) then return false end
+    local peerView = exports.sunset_phone:GetActiveCallContext(fresh.peerSource)
+    if type(peerView) ~= 'table' or not peerView.active or peerView.callId ~= fresh.callId then return false end
+    if tonumber(peerView.peerSource) ~= tonumber(src) then return false end
+    if not GetPlayerName(src) or not GetPlayerName(fresh.peerSource) then return false end
     payload.type = 'phone_call'
     payload.id = 0
     local function emit(target, peerName)
-        if not target or not GetPlayerName(target) then return false end
         local copy = {}
         for key, value in pairs(payload) do copy[key] = value end
         copy.phonePeer = peerName
         TriggerClientEvent('sunset:chat:message', target, copy)
-        return true
     end
-    if not emit(src, ctx.peerName) then return false end
-    if ctx.peerSource ~= src then
-        if not GetPlayerName(ctx.peerSource) then return false end
-        local peerView = exports.sunset_phone:GetActiveCallContext(ctx.peerSource)
-        emit(ctx.peerSource, (peerView and peerView.peerName) or payload.name)
-    end
+    emit(src, fresh.peerName)
+    if fresh.peerSource ~= src then emit(fresh.peerSource, peerView.peerName or payload.name) end
     return true
 end
 

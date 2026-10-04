@@ -360,6 +360,8 @@
             const ringing = next.state === 'INCOMING_RINGING' || next.state === 'OUTGOING_RINGING';
             island.classList.toggle('call-active', active);
             island.classList.toggle('call-live', active || ringing);
+            const mute = $('phone-island-mute');
+            if (mute) mute.hidden = !(active && next.myVoiceEnabled === false);
             if (active || ringing) {
                 $('phone-island-name').textContent = this.peerLabel();
                 if (active) this.paintDuration();
@@ -731,6 +733,16 @@
                     actions.append(btn('btn-red', t('phone.ui.decline'), () => post('phoneAction', { op: 'decline' })));
                     actions.append(btn('btn-green', t('phone.ui.accept'), () => post('phoneAction', { op: 'answer' })));
                 } else {
+                    if (this.call.state === 'ACTIVE') {
+                        const voiceOn = this.call.myVoiceEnabled === true;
+                        const voiceLabel = this.call.voiceAvailable === false
+                            ? t('phone.ui.voice_unavailable')
+                            : (voiceOn ? t('phone.ui.voice_on') : t('phone.ui.voice_off'));
+                        actions.append(btn(voiceOn ? 'btn-green' : '', voiceLabel, () => {
+                            if (this.call.voiceAvailable === false) return;
+                            post('phoneAction', { op: 'voice', enabled: !this.call.myVoiceEnabled });
+                        }));
+                    }
                     actions.append(btn('btn-red call-end', t('phone.ui.hangup'), () => post('phoneAction', { op: 'hangup' })));
                 }
                 layer.append(actions);

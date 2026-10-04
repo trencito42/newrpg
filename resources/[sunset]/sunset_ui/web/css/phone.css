@@ -124,6 +124,7 @@
 @keyframes phone-wave { 50% { height: 14px; } }
 .di-caller { flex: 1; font-size: 10px; font-weight: 700; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .di-timer { font-size: 10px; font-weight: 800; color: var(--accent-green); }
+.di-mute { width: 6px; height: 6px; border-radius: 50%; background: #d4c4a8; flex: 0 0 auto; }
 
 .home-indicator {
     position: absolute;

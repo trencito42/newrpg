@@ -142,16 +142,7 @@ end)
 AddEventHandler('sunset:chat:phoneCallEnded', function()
     if not phoneComposer then return end
     phoneComposer = false
-    exports.sunset_ui:Send('chatPhoneContext', { active = false, held = chatOpen == true })
-    if chatOpen then
-        exports.sunset_ui:Send('chatMessage', {
-            id = 0,
-            name = exports.sunset_core:Translate('chat.system'),
-            message = exports.sunset_core:Translate('chat.phone.not_sent'),
-            time = string.format('%02d:%02d:%02d', GetClockHours(), GetClockMinutes(), GetClockSeconds()),
-            type = 'command_warn',
-        })
-    end
+    exports.sunset_ui:Send('chatPhoneContext', { active = false, ended = true })
 end)
 
 AddEventHandler('sunset:nui:chatLinkAsset', function(data)
