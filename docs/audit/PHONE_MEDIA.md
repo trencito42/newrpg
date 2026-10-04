@@ -4,9 +4,9 @@
 
 ## URL strategy
 
-Photos use stable `https://racket.cat/media/` URLs. The FiveM server accepts a URL only after it consumes a single-use token bound to the character and `media_type = phone_photo`. Other hosts, `data:` URLs, and `javascript:` URLs are rejected. The token is 48 random hex characters, lives in memory, and expires in 90 seconds.
+Photos use stable `https://racket.cat/media/` URLs. The raw upload token is 64 hex characters from MySQL `RANDOM_BYTES(32)`. Only `SHA2(token, 256)` is stored in `media_upload_tokens`. The same ledger covers `phone_photo`, `player_avatar`, and `vehicle_preview`. A token expires in about 90 seconds and can be uploaded once.
 
-The upload route lives in `panel/src/app/api/media/upload/route.ts`. Phone photos are written under `public/media/phone/` and the JSON `url` is `https://racket.cat/media/phone/...`. The panel checks the 48-hex token shape, image magic bytes, and size. It does not share the FiveM in-memory token table. The game server still consumes that token and is the authority that decides which URL may be stored.
+The upload route lives in `panel/src/app/api/media/upload/route.ts`. It hashes `X-Media-Token`, claims the ledger row atomically, checks image magic bytes, and writes an unpredictable filename. Phone photos go under `public/media/phone/` and the JSON `url` is `https://racket.cat/media/phone/...`. The game server commits from that ledger row. A client-supplied URL is not authority.
 
 ## Storage
 

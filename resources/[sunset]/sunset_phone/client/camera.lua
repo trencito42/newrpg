@@ -160,9 +160,15 @@ local function parseUpload(body)
     return url, decoded.mime or decoded.contentType, tonumber(decoded.size)
 end
 
+local function mediaLog(stage, detail)
+    local text = tostring(detail or ''):gsub('[%c]', ' '):sub(1, 180)
+    print(('[PHONE_MEDIA] %s %s'):format(stage, text))
+end
+
 local function capture()
     if not active or capturing then return end
     if GetResourceState('screenshot-basic') ~= 'started' then
+        mediaLog('UPLOAD_HTTP_FAILED', 'screenshot-basic stopped')
         notifyFail('phone.message.photo_upload_failed')
         return
     end
@@ -177,6 +183,11 @@ local function capture()
         if type(issued) ~= 'table' or not issued.token then
             capturing = false
             exports.sunset_ui:Send('phoneCamera', { open = true, chrome = true, mode = mode })
+            local stage = type(err) == 'table' and err.stage or nil
+            if not stage then
+                stage = type(err) == 'table' and err.localeKey == 'phone.message.gallery_full' and 'QUOTA_FULL' or 'TOKEN_FAILED'
+            end
+            mediaLog(stage, type(err) == 'table' and err.localeKey or 'token')
             notifyFail(type(err) == 'table' and err.localeKey or 'phone.message.photo_upload_failed')
             return
         end
@@ -194,10 +205,20 @@ local function capture()
         }, function(body)
             done = true
             CreateThread(function()
-                local url, mime, size = parseUpload(body)
+                local url = parseUpload(body)
                 local saved, saveErr = nil, nil
                 if url then
-                    saved, saveErr = Sunset.AwaitCallback('sunset:phoneMediaCommit', issued.token, url, mime or 'image/jpeg', size)
+                    saved, saveErr = Sunset.AwaitCallback('sunset:phoneMediaCommit', issued.token)
+                else
+                    local snippet = type(body) == 'string' and body:gsub('[%c]', ' '):sub(1, 160) or ''
+                    if snippet == '' then
+                        mediaLog('UPLOAD_RESPONSE_INVALID', 'media=phone_photo type=empty')
+                    else
+                        local decodedOk, decoded = pcall(json.decode, body)
+                        local code = decodedOk and type(decoded) == 'table' and tostring(decoded.code or decoded.error or '') or ''
+                        local stage = decodedOk and type(decoded) == 'table' and 'UPLOAD_HTTP_FAILED' or 'UPLOAD_RESPONSE_INVALID'
+                        mediaLog(stage, ('media=phone_photo type=%s bytes=%s code=%s'):format(type(body), #snippet, code:gsub('[%c]', ' '):sub(1, 80)))
+                    end
                 end
                 capturing = false
                 if not active then return end
@@ -209,6 +230,7 @@ local function capture()
                     exports.sunset_ui:Send('phoneCameraResult', { media = saved.media, returnTo = returnTo })
                     if returnTo then stopCamera(false) end
                 else
+                    mediaLog(type(saveErr) == 'table' and saveErr.stage or 'COMMIT_FAILED', type(saveErr) == 'table' and saveErr.localeKey or 'commit')
                     notifyFail(type(saveErr) == 'table' and saveErr.localeKey or 'phone.message.photo_upload_failed')
                 end
             end)
@@ -219,6 +241,7 @@ local function capture()
             capturing = false
             if active then
                 exports.sunset_ui:Send('phoneCamera', { open = true, chrome = true, mode = mode })
+                mediaLog('TIMEOUT', 'screenshot upload')
                 notifyFail('phone.message.photo_upload_failed')
             end
         end

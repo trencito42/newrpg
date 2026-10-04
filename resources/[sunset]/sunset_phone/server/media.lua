@@ -94,28 +94,29 @@ exports.sunset_core:RegisterCallback('sunset:phoneMediaToken', function(source)
     return issued
 end)
 
-exports.sunset_core:RegisterCallback('sunset:phoneMediaCommit', function(source, token, url, mime, fileSize)
+exports.sunset_core:RegisterCallback('sunset:phoneMediaCommit', function(source, token)
     local char = charOf(source)
-    if not char then return nil, { localeKey = 'phone.message.no_character_loaded' } end
+    if not char then return nil, { localeKey = 'phone.message.no_character_loaded', stage = 'COMMIT_FAILED' } end
     if GetResourceState('sunset_profile_media') ~= 'started' then
-        return nil, { localeKey = 'phone.message.photo_upload_failed' }
-    end
-    local consumed = exports.sunset_profile_media:ConsumeUploadToken(source, token, 'phone_photo')
-    if not consumed then return nil, { localeKey = 'phone.message.photo_upload_failed' } end
-    url = allowedMediaUrl(url)
-    if not url then return nil, { localeKey = 'phone.message.photo_upload_failed' } end
-    mime = tostring(mime or 'image/jpeg'):sub(1, 64)
-    if mime ~= 'image/jpeg' and mime ~= 'image/webp' and mime ~= 'image/png' then
-        return nil, { localeKey = 'phone.message.photo_upload_failed' }
-    end
-    fileSize = tonumber(fileSize)
-    local maxBytes = (Config.PhoneMedia and Config.PhoneMedia.MaxUploadBytes) or 5242880
-    if fileSize and (fileSize < 1 or fileSize > maxBytes) then
-        return nil, { localeKey = 'phone.message.photo_upload_failed' }
+        return nil, { localeKey = 'phone.message.photo_upload_failed', stage = 'COMMIT_FAILED' }
     end
     local characterId = tonumber(char.id)
     if galleryCount(characterId) >= photoLimit() then
-        return nil, { localeKey = 'phone.message.gallery_full' }
+        return nil, { localeKey = 'phone.message.gallery_full', stage = 'QUOTA_FULL' }
+    end
+    local consumed, err = exports.sunset_profile_media:ConsumeUploadToken(source, token, 'phone_photo')
+    if not consumed then
+        print(('[PHONE_MEDIA] COMMIT_FAILED reason=%s'):format(tostring(err or 'missing')))
+        return nil, { localeKey = 'phone.message.photo_upload_failed', stage = 'COMMIT_FAILED' }
+    end
+    local url = allowedMediaUrl(consumed.media_url)
+    local mime = tostring(consumed.mime_type or '')
+    local fileSize = tonumber(consumed.file_size)
+    local maxBytes = (Config.PhoneMedia and Config.PhoneMedia.MaxUploadBytes) or 1800000
+    if not url or (mime ~= 'image/jpeg' and mime ~= 'image/webp' and mime ~= 'image/png')
+        or not fileSize or fileSize < 1 or fileSize > maxBytes then
+        print('[PHONE_MEDIA] COMMIT_FAILED reason=ledger_row')
+        return nil, { localeKey = 'phone.message.photo_upload_failed', stage = 'COMMIT_FAILED' }
     end
     local mediaId = MySQL.insert.await([[
         INSERT INTO phone_media (character_id, media_type, url, thumbnail_url, mime_type, file_size)

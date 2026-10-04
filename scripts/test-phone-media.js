@@ -16,10 +16,15 @@ const send = read('resources/[sunset]/sunset_phone/server/main.lua');
 const clientSend = read('resources/[sunset]/sunset_phone/client/main.lua');
 
 test('upload tokens are random, single-use, and typed', () => {
-    assert.match(tokens, /for i = 1, 48 do/);
+    assert.match(tokens, /RANDOM_BYTES\(32\)/);
+    assert.match(tokens, /SHA2\(\?, 256\)/);
+    assert.doesNotMatch(tokens, /math\.random/);
     assert.doesNotMatch(tokens, /phone_photo_' \.\. account/);
-    assert.match(tokens, /UploadTokens\[token\] = nil/);
-    assert.match(tokens, /row\.mediaType ~= mediaType/);
+    assert.match(tokens, /uploaded_at IS NOT NULL/);
+    assert.match(tokens, /committed_at IS NULL/);
+    assert.match(media, /sunset:phoneMediaCommit', function\(source, token\)/);
+    assert.match(media, /allowedMediaUrl\(consumed\.media_url\)/);
+    assert.doesNotMatch(media, /phoneMediaCommit', function\(source, token, url/);
     assert.match(tokens, /phone_photo = true/);
 });
 

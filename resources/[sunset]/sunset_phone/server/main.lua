@@ -75,7 +75,8 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
     local messages = {}
     local ok, rows = pcall(function()
         return MySQL.query.await([[
-            SELECT m.id, m.message, m.created_at, m.read_at, m.sender_character_id, m.receiver_character_id,
+            SELECT m.id, m.message, m.created_at, UNIX_TIMESTAMP(m.created_at) AS created_at_unix,
+                   m.read_at, m.sender_character_id, m.receiver_character_id,
                    m.attachment_type, m.attachment_id, m.attachment_snapshot,
                    pm.url AS media_url, pm.thumbnail_url AS media_thumb,
                    TRIM(CONCAT(COALESCE(sc.firstname,''), ' ', COALESCE(sc.lastname,''))) AS sender_name,
@@ -418,7 +419,8 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
         sender_character_id = tonumber(char.id),
         receiver_character_id = targetCharacterId,
         message = message,
-        created_at = os.date('!%Y-%m-%dT%H:%M:%SZ'),
+        created_at = os.date('!%Y-%m-%d %H:%M:%S'),
+        created_at_unix = os.time(),
         sender_name = exports.sunset_core:GetPlayerBaseName(source),
         sender_phone = getCharacterPhoneNumber(char),
         attachment = resolvedAttachment and resolvedAttachment.public or nil,

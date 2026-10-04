@@ -88,12 +88,12 @@ export default async function FactionsPage() {
                     </span>
                   </div>
                   <span className="text-[11px] text-[#8F8B83] font-medium uppercase tracking-wider">
-                    {f.factionType}
+                    {t(locale, f.factionTypeKey)}
                   </span>
                 </div>
 
                 <p className="text-xs text-[#99958E] mt-2 line-clamp-2 leading-relaxed">
-                  {f.description}
+                  {t(locale, f.descriptionKey)}
                 </p>
               </div>
 

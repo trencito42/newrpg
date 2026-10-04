@@ -248,6 +248,18 @@ test('active calls route local chat as phone speech and commands stay commands',
     assert.match(ro, /chat\.phone\.not_sent/);
 });
 
+test('messages stay chronological and never print a raw epoch', () => {
+    const stateJs = read('resources/[sunset]/sunset_ui/web/js/phone-state.js');
+    assert.match(phoneServer, /ORDER BY m\.id DESC LIMIT 60/);
+    assert.match(phoneServer, /UNIX_TIMESTAMP\(m\.created_at\) AS created_at_unix/);
+    assert.match(stateJs, /function conversationMessages/);
+    assert.match(stateJs, /function formatBubbleTime/);
+    assert.match(phoneJs, /conversationMessages\(this\.data\.messages/);
+    assert.match(phoneJs, /formatBubbleTime/);
+    assert.match(phoneJs, /_logNearBottom/);
+    assert.match(read('resources/[sunset]/sunset_ui/web/js/i18n.js'), /phone\.ui\.yesterday/);
+});
+
 test('locale keys used by the phone pass exist in English and Romanian', () => {
     for (const key of [
         'phone.message.request_timed_out',

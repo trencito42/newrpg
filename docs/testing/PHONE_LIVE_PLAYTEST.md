@@ -119,3 +119,21 @@ SMS stays in Messages. Text typed with T during an ACTIVE call is live speech be
 - [ ] Island shows a small mute mark only while your voice is off
 - [ ] Camera shutter during a call does not hang up
 - [ ] A saved photo opens from Gallery after upload
+
+## Conversation order and camera retry
+
+- [ ] Oldest message is first, latest is at the bottom
+- [ ] Sending a message places the bubble at the bottom
+- [ ] An incoming SMS lands at the bottom when you are already there
+- [ ] Scrolling up does not jump back down when a new SMS arrives
+- [ ] No bubble shows a raw number like 1791182370000
+- [ ] Same-day bubbles show HH:mm only
+- [ ] A day change shows Today / Yesterday / a short date
+- [ ] Rear camera photo succeeds
+- [ ] Selfie succeeds
+- [ ] The new photo appears in Gallery immediately
+- [ ] The photo is still there after reopening the phone
+- [ ] An SMS photo sends and the receiver can open it
+- [ ] Player avatar upload still works
+- [ ] Vehicle preview upload still works
+- [ ] A missing, expired, or reused upload token is rejected

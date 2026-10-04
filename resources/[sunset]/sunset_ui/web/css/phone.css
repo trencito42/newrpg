@@ -125,6 +125,7 @@
 .di-caller { flex: 1; font-size: 10px; font-weight: 700; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .di-timer { font-size: 10px; font-weight: 800; color: var(--accent-green); }
 .di-mute { width: 6px; height: 6px; border-radius: 50%; background: #d4c4a8; flex: 0 0 auto; }
+.phone-day { align-self: center; margin: 8px 0 4px; font-size: 10px; color: var(--text-muted); letter-spacing: 0.04em; }
 
 .home-indicator {
     position: absolute;

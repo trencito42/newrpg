@@ -124,11 +124,11 @@ export default async function FactionDetailPage({
                 {faction.label}
               </h1>
               <span className="text-xs text-[#8F8B83] font-medium uppercase tracking-wider">
-                {faction.factionType}
+                {t(locale, faction.factionTypeKey)}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[#99958E] mt-1.5 max-w-2xl leading-relaxed">
-              {faction.description}
+              {t(locale, faction.descriptionKey)}
             </p>
           </div>
 

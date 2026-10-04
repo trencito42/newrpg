@@ -1,7 +1,4 @@
-local UploadTokens = {}
 local TokenCooldown = {}
-
-math.randomseed((os.time() % 2147483646) + 1)
 
 local ALLOWED_MEDIA = {
     player_avatar = true,
@@ -9,32 +6,25 @@ local ALLOWED_MEDIA = {
     phone_photo = true,
 }
 
-local function randomToken()
-    local alphabet = '0123456789abcdef'
-    local parts = {}
-    for i = 1, 48 do
-        local index = math.random(1, #alphabet)
-        parts[i] = alphabet:sub(index, index)
-    end
-    return table.concat(parts)
-end
-
-local function generateUploadToken(accountId, characterId, mediaType, entityId)
+local function issueLedgerToken(accountId, characterId, mediaType, entityId)
     mediaType = tostring(mediaType or '')
-    if not ALLOWED_MEDIA[mediaType] then return nil end
-    local token = randomToken()
+    if not ALLOWED_MEDIA[mediaType] then return nil, 'media_type' end
+    characterId = tonumber(characterId)
+    if not characterId then return nil, 'no_character' end
+    local token = MySQL.scalar.await('SELECT LOWER(HEX(RANDOM_BYTES(32)))')
+    if type(token) ~= 'string' or not token:match('^[0-9a-f]+$') or #token < 64 then
+        return nil, 'token'
+    end
     local ttl = (Config.PhoneMedia and Config.PhoneMedia.TokenTtlSec) or 90
-    UploadTokens[token] = {
-        accountId = accountId,
-        characterId = characterId,
-        mediaType = mediaType,
-        entityId = entityId,
-        expires = os.time() + ttl,
-    }
-    return token
+    MySQL.insert.await([[
+        INSERT INTO media_upload_tokens
+            (token_hash, account_id, character_id, media_type, entity_id, expires_at)
+        VALUES (SHA2(?, 256), ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? SECOND))
+    ]], { token, tonumber(accountId), characterId, mediaType, tonumber(entityId), ttl })
+    return token, os.time() + ttl
 end
 
-local function IssueUploadToken(source, mediaType)
+local function IssueUploadToken(source, mediaType, entityId)
     local player = exports.sunset_core:GetPlayer(source)
     local char = exports.sunset_core:GetCharacter(source)
     if not player or not char then return nil, 'no_character' end
@@ -47,25 +37,45 @@ local function IssueUploadToken(source, mediaType)
         return nil, 'cooldown'
     end
     TokenCooldown[key] = now
-    local token = generateUploadToken(tonumber(player.account_id), tonumber(char.id), mediaType, tonumber(char.id))
-    if not token then return nil, 'token' end
+    local boundEntity = tonumber(entityId)
+    if mediaType == 'player_avatar' then boundEntity = tonumber(player.account_id) end
+    if mediaType == 'phone_photo' then boundEntity = tonumber(char.id) end
+    local token, expires = issueLedgerToken(tonumber(player.account_id), tonumber(char.id), mediaType, boundEntity)
+    if not token then return nil, expires or 'token' end
     return {
         token = token,
         uploadUrl = Config.UploadEndpoint,
         mediaType = mediaType,
-        expires = UploadTokens[token].expires,
+        expires = expires,
     }
 end
 
+-- Marks an uploaded phone photo committed and returns the ledger URL.
+-- The client-supplied URL is ignored. Only one commit can win.
 local function ConsumeUploadToken(source, token, mediaType)
     token = tostring(token or '')
-    local row = UploadTokens[token]
-    UploadTokens[token] = nil
-    if not row then return nil, 'missing' end
-    if row.expires < os.time() then return nil, 'expired' end
-    if mediaType and row.mediaType ~= mediaType then return nil, 'media_type' end
+    if not token:match('^[0-9a-fA-F]+$') or #token < 64 then return nil, 'missing' end
+    mediaType = tostring(mediaType or 'phone_photo')
     local char = exports.sunset_core:GetCharacter(source)
-    if not char or tonumber(char.id) ~= tonumber(row.characterId) then return nil, 'character' end
+    if not char or not tonumber(char.id) then return nil, 'character' end
+    local changed = MySQL.update.await([[
+        UPDATE media_upload_tokens
+        SET committed_at = UTC_TIMESTAMP()
+        WHERE token_hash = SHA2(?, 256)
+          AND character_id = ?
+          AND media_type = ?
+          AND uploaded_at IS NOT NULL
+          AND committed_at IS NULL
+          AND expires_at > UTC_TIMESTAMP()
+    ]], { token, tonumber(char.id), mediaType })
+    if (tonumber(changed) or 0) < 1 then return nil, 'missing' end
+    local row = MySQL.single.await([[
+        SELECT media_url, mime_type, file_size, character_id, media_type
+        FROM media_upload_tokens
+        WHERE token_hash = SHA2(?, 256)
+        LIMIT 1
+    ]], { token })
+    if not row or not row.media_url then return nil, 'missing' end
     return row
 end
 
@@ -97,7 +107,8 @@ local function RequestAvatarCapture(source)
         return
     end
 
-    local token = generateUploadToken(accountId, characterId, 'player_avatar', accountId)
+    local token = issueLedgerToken(accountId, characterId, 'player_avatar', accountId)
+    if not token then return end
     TriggerClientEvent('sunset_profile_media:client:captureAvatar', source, {
         token = token,
         appearance = row.appearance,
@@ -125,7 +136,8 @@ local function RequestVehicleCapture(source, vehicleId, visualConfig)
         return
     end
 
-    local token = generateUploadToken(accountId, characterId, 'vehicle_preview', vehId)
+    local token = issueLedgerToken(accountId, characterId, 'vehicle_preview', vehId)
+    if not token then return end
     TriggerClientEvent('sunset_profile_media:client:captureVehicle', source, {
         token = token,
         vehicleId = vehId,

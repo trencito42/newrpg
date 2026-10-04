@@ -423,9 +423,7 @@
         },
 
         clockLabel(value) {
-            const raw = PS.safeText(value);
-            const match = raw.match(/(\d{2}):(\d{2})/);
-            return match ? (match[1] + ':' + match[2]) : raw;
+            return PS.formatBubbleTime(value);
         },
 
         updateClock() {
@@ -813,12 +811,13 @@
                 peer: characterId,
                 phone: phone,
                 name: this.labelFor({ characterId: characterId, phone: phone, displayName: peer.displayName }),
-                messages: characterId > 0 ? this.messagesWith(characterId) : [],
+                messages: characterId > 0 ? PS.conversationMessages(this.data.messages, this.myId(), characterId) : [],
             };
             if (!this._keepDraft) this._draftAttachment = null;
             this._keepDraft = false;
             this._compose = '';
             this._pendingBubble = null;
+            this._logNearBottom = true;
             this.openApp('conversation');
         },
 
@@ -982,13 +981,27 @@
                 if (Number(msg.receiver_character_id) === this.myId() && Number(msg.sender_character_id) === Number(row.peer)) msg.read_at = msg.read_at || 'read';
             });
             const log = el('div', 'chat-log phone-app-scroll');
-            row.messages.forEach((msg) => {
+            const ordered = PS.conversationMessages(this.data.messages, this.myId(), row.peer);
+            let lastDay = '';
+            ordered.forEach((msg) => {
+                const instant = PS.messageInstant(msg);
+                const key = instant ? PS.dayKey(instant) : '';
+                if (key && key !== lastDay) {
+                    const sep = el('div', 'phone-day');
+                    sep.append(text(PS.dateSeparator(instant, Date.now(), {
+                        today: t('phone.ui.today'),
+                        yesterday: t('phone.ui.yesterday'),
+                        locale: document.documentElement.lang || 'en',
+                    })));
+                    log.append(sep);
+                    lastDay = key;
+                }
                 const mine = Number(msg.sender_character_id) === this.myId();
                 const bubble = el('div', 'bubble ' + (mine ? 'out' : 'in'));
                 if (msg.message) bubble.append(text(msg.message));
                 this.appendMessageAttachment(bubble, msg.attachment);
                 const time = el('span', 'time');
-                time.append(text(this.clockLabel(msg.created_at)));
+                time.append(text(this.clockLabel(msg)));
                 bubble.append(time);
                 log.append(bubble);
             });
@@ -1050,6 +1063,7 @@
                 };
                 this._draftAttachment = null;
                 this._compose = '';
+                this._logNearBottom = true;
                 input.value = '';
                 post('phoneSend', {
                     targetCharacterId: this._pendingBubble.targetCharacterId,
@@ -1067,7 +1081,11 @@
             if (this._draftAttachment) foot.append(this.draftChip());
             foot.append(compose);
             page.append(log, foot);
-            log.scrollTop = log.scrollHeight;
+            const stick = this._logNearBottom !== false;
+            if (stick) log.scrollTop = log.scrollHeight;
+            log.addEventListener('scroll', () => {
+                this._logNearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 64;
+            });
         },
 
         renderContacts() {
