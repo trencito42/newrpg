@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { LikersTooltip } from "@/components/ui/LikersTooltip";
 
 interface ArticleReactionsProps {
   slug: string;
@@ -48,19 +49,21 @@ export function ArticleReactions({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <button
-        onClick={() => react("like")}
-        disabled={loading || !isLoggedIn}
-        title={isLoggedIn ? undefined : "Log in to react"}
-        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-          myReaction === "like"
-            ? "bg-emerald-950/70 text-emerald-400 border border-emerald-700/60"
-            : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-surface-border hover:border-emerald-800/50 disabled:opacity-40 disabled:cursor-not-allowed"
-        }`}
-      >
-        <ThumbsUp className="w-4 h-4" />
-        <span>{likes}</span>
-      </button>
+      <LikersTooltip count={likes} fetchUrl={`/api/updates/${slug}/likers`} disabled={!isLoggedIn}>
+        <button
+          onClick={() => react("like")}
+          disabled={loading || !isLoggedIn}
+          title={isLoggedIn ? undefined : "Log in to react"}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            myReaction === "like"
+              ? "bg-emerald-950/70 text-emerald-400 border border-emerald-700/60"
+              : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-surface-border hover:border-emerald-800/50 disabled:opacity-40 disabled:cursor-not-allowed"
+          }`}
+        >
+          <ThumbsUp className="w-4 h-4" />
+          <span>{likes}</span>
+        </button>
+      </LikersTooltip>
 
       <button
         onClick={() => react("dislike")}

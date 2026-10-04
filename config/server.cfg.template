@@ -114,6 +114,7 @@ ensure sunset_skins
 ensure sunset_businesses
 ensure sunset_emotes
 ensure sunset_clothing
+ensure sunset_social
 ensure sunset_phone
 ensure sunset_interactions
 ensure sunset_taxi

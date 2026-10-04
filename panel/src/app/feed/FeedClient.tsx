@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, MessageCircle, ImagePlus, Trash2, Send, ChevronDown, X, Check } from "lucide-react";
+import Link from "next/link";
+import { Heart, MessageCircle, ImagePlus, Trash2, Send, ChevronDown, X } from "lucide-react";
 import { Locale, t } from "@/lib/i18n";
 import { FeedPost } from "./page";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
+import { LikersTooltip } from "@/components/ui/LikersTooltip";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
 
 interface FeedClientProps {
   locale: Locale;
@@ -29,12 +33,45 @@ function relTime(raw: string): string {
   }
 }
 
-function Avatar({ name }: { name: string }) {
-  const parts = name.trim().split(" ");
-  const initials = (parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "");
+function PedAvatar({ skin, name }: { skin: string | null; name: string }) {
+  const [imgErr, setImgErr] = useState(false);
+  const initials = (() => {
+    const parts = name.trim().split(" ");
+    return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+  })();
+
+  if (!imgErr) {
+    return (
+      <div className="w-9 h-9 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] overflow-hidden flex-shrink-0">
+        <img
+          src={getPedAvatarUrl(skin)}
+          alt={name}
+          className="w-full h-full object-cover object-top"
+          onError={() => setImgErr(true)}
+        />
+      </div>
+    );
+  }
   return (
-    <div className="w-9 h-9 rounded-full bg-[rgba(215,181,88,0.15)] text-[#d7b558] flex items-center justify-center text-xs font-bold flex-shrink-0 select-none">
-      {initials.toUpperCase()}
+    <div className="w-9 h-9 rounded-lg bg-[rgba(215,181,88,0.15)] text-[#d7b558] flex items-center justify-center text-xs font-bold flex-shrink-0 select-none">
+      {initials}
+    </div>
+  );
+}
+
+function CommentAvatar({ skin, name }: { skin: string | null; name: string }) {
+  const [imgErr, setImgErr] = useState(false);
+  const initials = ((name[0] ?? "?")).toUpperCase();
+  if (!imgErr) {
+    return (
+      <div className="w-6 h-6 rounded-md bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.07)] overflow-hidden flex-shrink-0">
+        <img src={getPedAvatarUrl(skin)} alt="" className="w-full h-full object-cover object-top" onError={() => setImgErr(true)} />
+      </div>
+    );
+  }
+  return (
+    <div className="w-6 h-6 rounded-md bg-[rgba(215,181,88,0.1)] text-[#d7b558] flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+      {initials}
     </div>
   );
 }
@@ -117,8 +154,8 @@ function PostCard({ post, viewerCharId, isLoggedIn, locale, onDeleted }: PostCar
       });
       if (res.ok) {
         const data = await res.json();
-        setComments((prev) => [...prev, data.comment]);
-        setCommentCount(data.commentsCount);
+        if (data.comment) setComments((prev) => [...prev, data.comment]);
+        setCommentCount(data.commentsCount ?? commentCount + 1);
       }
     } catch {}
   };
@@ -132,13 +169,28 @@ function PostCard({ post, viewerCharId, isLoggedIn, locale, onDeleted }: PostCar
   };
 
   return (
-    <article className="py-4 border-b border-[rgba(255,255,255,0.07)]">
+    <article id={`post-${post.id}`} className="py-4 border-b border-[rgba(255,255,255,0.07)]">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
-        <Avatar name={authorName} />
+        <PedAvatar skin={post.author_skin} name={authorName} />
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold text-[#F2EFE8]">{authorName}</span>
-          <span className="text-[11px] text-[#8F8B83] ml-2">{relTime(post.created_at)}</span>
+          <PlayerIdentity
+            username={authorName}
+            factionId={post.faction_id}
+            clanTag={post.clan_tag}
+            clanColor={post.clan_color}
+            clanTagStyle={post.clan_tag_style}
+            href={`/players/${encodeURIComponent(authorName.trim().replace(/\s+/g, "_"))}`}
+            size="sm"
+          />
+          <span className="text-[#8F8B83] ml-2 inline-block">
+            <Link
+              href={`/feed#post-${post.id}`}
+              className="text-[11px] text-[#8F8B83] hover:text-[#D4CFC8] transition-colors"
+            >
+              {relTime(post.created_at)}
+            </Link>
+          </span>
           {post.updated_at && post.updated_at !== post.created_at && (
             <span className="text-[10px] text-[#8F8B83] ml-1 opacity-60">{t(locale, "feed.edited")}</span>
           )}
@@ -183,14 +235,20 @@ function PostCard({ post, viewerCharId, isLoggedIn, locale, onDeleted }: PostCar
 
       {/* Actions */}
       <div className="flex items-center gap-5">
-        <button
-          onClick={toggleLike}
+        <LikersTooltip
+          count={likes}
+          fetchUrl={`/api/feed/posts/${post.id}/likers`}
           disabled={!isLoggedIn}
-          className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-[#8F8B83] hover:text-[#D4CFC8]"} disabled:opacity-50`}
         >
-          <Heart size={15} fill={liked ? "currentColor" : "none"} />
-          <span>{likes}</span>
-        </button>
+          <button
+            onClick={toggleLike}
+            disabled={!isLoggedIn}
+            className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-[#8F8B83] hover:text-[#D4CFC8]"} disabled:opacity-50`}
+          >
+            <Heart size={15} fill={liked ? "currentColor" : "none"} />
+            <span>{likes}</span>
+          </button>
+        </LikersTooltip>
 
         <button
           onClick={toggleComments}
@@ -210,9 +268,7 @@ function PostCard({ post, viewerCharId, isLoggedIn, locale, onDeleted }: PostCar
               key={c.id}
               className={`flex gap-2 mb-3 ${c.parent_comment_id ? "ml-6" : ""}`}
             >
-              <div className="w-6 h-6 rounded-full bg-[rgba(215,181,88,0.1)] text-[#d7b558] flex items-center justify-center text-[9px] font-bold flex-shrink-0">
-                {((c.firstname?.[0] ?? "?") + (c.lastname?.[0] ?? "")).toUpperCase()}
-              </div>
+              <CommentAvatar skin={null} name={`${c.firstname ?? "?"}${c.lastname ?? ""}`} />
               <div className="flex-1">
                 <span className="text-xs font-semibold text-[#D4CFC8]">
                   {c.firstname} {c.lastname}
@@ -283,7 +339,6 @@ function GalleryPicker({
     }
   };
 
-  // Load immediately on mount
   if (photos === null && !loading) load();
 
   return (
@@ -392,7 +447,6 @@ function Composer({ locale, viewerCharName, onPosted }: { locale: Locale; viewer
           className="w-full bg-transparent text-sm text-[#F2EFE8] placeholder-[#8F8B83] outline-none resize-none"
         />
 
-        {/* Selected photo preview */}
         {selectedPhoto && (
           <div className="relative mt-2 w-fit">
             <img

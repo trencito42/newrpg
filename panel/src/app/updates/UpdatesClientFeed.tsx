@@ -23,6 +23,7 @@ import { PostUpdateModal } from "./PostUpdateModal";
 import { t, formatDate } from "@/lib/i18n";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
+import { LikersTooltip } from "@/components/ui/LikersTooltip";
 
 export interface UpdateItem {
   id: number;
@@ -56,7 +57,8 @@ interface ReactionState {
   my_reaction: string | null;
 }
 
-function ReactionBar({ item, isLoggedIn }: { item: UpdateItem; isLoggedIn: boolean }) {
+function ReactionBar({ item, isLoggedIn, slug }: { item: UpdateItem; isLoggedIn: boolean; slug?: string }) {
+  const resolvedSlug = slug ?? item.slug;
   const [rx, setRx] = useState<ReactionState>({
     likes_count: item.likes_count ?? 0,
     dislikes_count: item.dislikes_count ?? 0,
@@ -87,19 +89,21 @@ function ReactionBar({ item, isLoggedIn }: { item: UpdateItem; isLoggedIn: boole
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        onClick={() => react("like")}
-        disabled={loading || !isLoggedIn}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-          rx.my_reaction === "like"
-            ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
-            : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-transparent hover:border-emerald-800/40 disabled:opacity-40"
-        }`}
-        title={isLoggedIn ? undefined : "Log in to react"}
-      >
-        <ThumbsUp className="w-3 h-3" />
-        <span>{rx.likes_count}</span>
-      </button>
+      <LikersTooltip count={rx.likes_count} fetchUrl={`/api/updates/${resolvedSlug}/likers`} disabled={!isLoggedIn}>
+        <button
+          onClick={() => react("like")}
+          disabled={loading || !isLoggedIn}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+            rx.my_reaction === "like"
+              ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+              : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-transparent hover:border-emerald-800/40 disabled:opacity-40"
+          }`}
+          title={isLoggedIn ? undefined : "Log in to react"}
+        >
+          <ThumbsUp className="w-3 h-3" />
+          <span>{rx.likes_count}</span>
+        </button>
+      </LikersTooltip>
       <button
         onClick={() => react("dislike")}
         disabled={loading || !isLoggedIn}
