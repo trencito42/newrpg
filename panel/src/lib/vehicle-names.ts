@@ -152,7 +152,7 @@ tole36prb|Sentinel Classic RS
 tole36v|Sentinel Classic Safari
 tole6314|Zion V10
 tolevo9|Kuruma IX
-tolexor|Exor
+tolexor|Vigero ZX
 tolf360|Turismo 360
 tolf8spider|Furia Spider
 tolfxxk|Turismo XX
