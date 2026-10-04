@@ -462,12 +462,13 @@ exports.sunset_core:RegisterCallback('sunset:phoneSaveSettings', function(source
     local ring = prefs.ringtone == false and 0 or 1
     local sound = prefs.notifySound == false and 0 or 1
     local compact = prefs.compactNotes == true and 1 or 0
+    local voice = prefs.voiceCalls == false and 0 or 1
     MySQL.update.await([[
-        INSERT INTO phone_character_prefs (character_id, ringtone, notify_sound, compact_notes)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE ringtone = VALUES(ringtone), notify_sound = VALUES(notify_sound), compact_notes = VALUES(compact_notes)
-    ]], { char.id, ring, sound, compact })
-    return { ok = true, ringtone = ring == 1, notifySound = sound == 1, compactNotes = compact == 1 }
+        INSERT INTO phone_character_prefs (character_id, ringtone, notify_sound, compact_notes, voice_calls)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE ringtone = VALUES(ringtone), notify_sound = VALUES(notify_sound), compact_notes = VALUES(compact_notes), voice_calls = VALUES(voice_calls)
+    ]], { char.id, ring, sound, compact, voice })
+    return { ok = true, ringtone = ring == 1, notifySound = sound == 1, compactNotes = compact == 1, voiceCalls = voice == 1 }
 end)
 
 CreateThread(function()

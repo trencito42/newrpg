@@ -179,9 +179,9 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
         onlineByChar = onlineByChar,
         prefs = (function()
             local ok, row = pcall(function()
-                return MySQL.single.await('SELECT ringtone, notify_sound, compact_notes, layout FROM phone_character_prefs WHERE character_id = ?', { myCharId })
+                return MySQL.single.await('SELECT ringtone, notify_sound, compact_notes, voice_calls, layout FROM phone_character_prefs WHERE character_id = ?', { myCharId })
             end)
-            if not ok or not row then return { ringtone = 1, notifySound = 1, compactNotes = 0 } end
+            if not ok or not row then return { ringtone = 1, notifySound = 1, compactNotes = 0, voiceCalls = true } end
             local layout = nil
             if row.layout and row.layout ~= '' then
                 local decodedOk, decoded = pcall(json.decode, row.layout)
@@ -191,6 +191,7 @@ exports.sunset_core:RegisterCallback('sunset:getPhoneData', function(source)
                 ringtone = tonumber(row.ringtone) ~= 0,
                 notifySound = tonumber(row.notify_sound) ~= 0,
                 compactNotes = tonumber(row.compact_notes) == 1,
+                voiceCalls = row.voice_calls == nil or tonumber(row.voice_calls) ~= 0,
                 layout = layout,
             }
         end)(),

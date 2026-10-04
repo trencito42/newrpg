@@ -35,6 +35,17 @@
         return state === 'INCOMING_RINGING' || state === 'OUTGOING_RINGING' || state === 'ACTIVE';
     }
 
+    // LOCAL text during an ACTIVE call becomes phone speech. A phone-context
+    // send after the call has ended fails closed and never falls back to nearby chat.
+    function routeLocalCallText(channel, context, active) {
+        const name = String(channel || 'all').toLowerCase();
+        const local = name === 'all' || name === 'local' || name === 'say' || name === '';
+        if (!local) return 'explicit';
+        if (context === 'phone' && !active) return 'reject';
+        if (active) return 'phone_call';
+        return 'nearby';
+    }
+
     // Presentation is closed, full, or peek. It never changes the call.
     function nextPresentation(presentation, callState, intent) {
         const current = presentation === 'full' || presentation === 'peek' ? presentation : 'closed';
@@ -86,6 +97,7 @@
         shouldConnectVoice: shouldConnectVoice,
         shouldAutoLower: shouldAutoLower,
         callIsLive: callIsLive,
+        routeLocalCallText: routeLocalCallText,
         nextPresentation: nextPresentation,
         terminalState: terminalState,
         applyCall: applyCall,

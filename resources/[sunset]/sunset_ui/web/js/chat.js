@@ -1002,6 +1002,13 @@ const Chat = {
         if (type === 'say' || type === '') {
             return `${timeHtml}<span class="chat-color-say">${I18n.t('ui.chat.line_says', { who, msg })}</span>`;
         }
+        if (type === 'phone_call') {
+            const peer = this.escapeHtml(String(m.phonePeer || '').trim());
+            const line = peer
+                ? I18n.t('ui.chat.line_phone_peer', { who, msg, peer })
+                : I18n.t('ui.chat.line_phone', { who, msg });
+            return `${timeHtml}<span class="chat-color-phone">${line}</span>`;
+        }
 
         // 3. OOC (( ... ))
         if (type === 'ooc' || type === 'b') {
@@ -1517,6 +1524,12 @@ const Chat = {
     setChannel(channelId, label, placeholder) {
         const row = this.availableChannels.find((ch) => ch.id === channelId);
         this.channel = channelId || 'all';
+        const phoneLocal = this.phoneCall && (this.channel === 'all' || this.channel === 'local' || this.channel === 'say');
+        if (phoneLocal) {
+            const name = String(this.phoneCall.peerName || '').trim() || I18n.t('common.player');
+            label = I18n.t('chat.channel.phone');
+            placeholder = I18n.t('chat.placeholder.phone', { name });
+        }
         const labelEl = $('#chat-channel-label');
         const input = $('#chat-input');
         if (labelEl) labelEl.textContent = label || this.channelLabel(row) || I18n.t('chat.channel.local');
@@ -1586,6 +1599,8 @@ const Chat = {
         const backdrop = $('#chat-backdrop');
         if (open) {
             if (this._expiryTimer) { clearTimeout(this._expiryTimer); this._expiryTimer = null; }
+            this.phoneCall = data && data.phoneCall && data.phoneCall.active ? data.phoneCall : null;
+            this.phoneDraftHeld = false;
             this.setContext(data);
             ChatSettings.init();
             this.initChannelSelector();
@@ -1639,8 +1654,21 @@ const Chat = {
         }
     },
 
+    applyPhoneContext(payload) {
+        const active = !!(payload && payload.active);
+        this.phoneCall = active ? { peerName: String(payload.peerName || '') } : null;
+        this.phoneDraftHeld = !!(payload && payload.held);
+        this.setChannel(this.channel || 'all');
+    },
+
     send() {
         const input = $('#chat-input');
+        if (this.phoneDraftHeld) {
+            this.phoneDraftHeld = false;
+            this.phoneCall = null;
+            this.setChannel(this.channel || 'all');
+            return;
+        }
         const state = this.composerState();
         const raw = state.text;
         if (!raw.trim()) {
@@ -1664,11 +1692,13 @@ const Chat = {
         const attachment = pending && channel !== 'staff'
             ? { type: pending.type, id: pending.id }
             : undefined;
+        const phoneLocal = this.phoneCall && (channel === 'all' || channel === 'local' || channel === 'say') && !msg.startsWith('/');
         post('chatSend', {
             message: msg,
             channel,
             attachment,
             attachmentIndex: attachment ? attachmentIndex : undefined,
+            context: phoneLocal ? 'phone' : undefined,
         });
         input.value = '';
         this.clearPendingAttachment();

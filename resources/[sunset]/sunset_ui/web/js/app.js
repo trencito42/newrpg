@@ -106,6 +106,7 @@
         // Chat
         chatMessage: 'chat',
         chatToggle: 'chat',
+        chatPhoneContext: 'chat',
         chatSetInput: 'chat',
         chatSuggestions: 'chat',
         showChat: 'chat',
@@ -805,6 +806,7 @@
             }
 
             if (action === 'chatToggle') { window.Chat?.toggle?.(payload.open, payload); return; }
+            if (action === 'chatPhoneContext') { window.Chat?.applyPhoneContext?.(payload); return; }
             if (action === 'chatMessage') { window.Chat?.add?.(payload); return; }
             if (action === 'chatPendingAttachment') { window.Chat?.setPendingAttachment?.(payload); return; }
             if (action === 'assetListingState') { window.AssetPreview?.applyStatus?.(payload); return; }

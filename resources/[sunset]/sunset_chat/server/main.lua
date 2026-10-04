@@ -154,7 +154,31 @@ local function clientAttachment(raw)
     return { type = assetType, id = assetId }
 end
 
-RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, attachmentIndex)
+local function isLocalChannel(channel)
+    return channel == 'all' or channel == 'local' or channel == 'say' or channel == ''
+end
+
+local function deliverPhoneCall(src, payload, ctx)
+    payload.type = 'phone_call'
+    payload.id = 0
+    local function emit(target, peerName)
+        if not target or not GetPlayerName(target) then return false end
+        local copy = {}
+        for key, value in pairs(payload) do copy[key] = value end
+        copy.phonePeer = peerName
+        TriggerClientEvent('sunset:chat:message', target, copy)
+        return true
+    end
+    if not emit(src, ctx.peerName) then return false end
+    if ctx.peerSource ~= src then
+        if not GetPlayerName(ctx.peerSource) then return false end
+        local peerView = exports.sunset_phone:GetActiveCallContext(ctx.peerSource)
+        emit(ctx.peerSource, (peerView and peerView.peerName) or payload.name)
+    end
+    return true
+end
+
+RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, attachmentIndex, context)
     local src = source
     if not hasCharacter(src) then return end -- [SEC3]
     if checkMute(src) then return end
@@ -237,6 +261,36 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, atta
         attachment = requested,
         attachmentIndex = attachmentIndex,
     }
+    local phoneContext = tostring(context or '') == 'phone'
+    local callCtx = nil
+    if isLocalChannel(channel) and GetResourceState('sunset_phone') == 'started' then
+        local okCall, looked = pcall(function() return exports.sunset_phone:GetActiveCallContext(src) end)
+        if okCall and type(looked) == 'table' then callCtx = looked end
+    end
+    local route = 'nearby'
+    if not isLocalChannel(channel) then
+        route = 'explicit'
+    elseif phoneContext and not (callCtx and callCtx.active) then
+        route = 'reject'
+    elseif callCtx and callCtx.active then
+        route = 'phone_call'
+    elseif callCtx and callCtx.ended then
+        route = 'reject'
+    end
+
+    if route == 'reject' then
+        TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.phone.not_sent'), 'warning')
+        ClearChatAttachment(src)
+        return
+    end
+    if route == 'phone_call' then
+        if not deliverPhoneCall(src, payload, callCtx) then
+            TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.phone.not_sent'), 'warning')
+        end
+        ClearChatAttachment(src)
+        return
+    end
+
     if isOoc then
         sendBroadcast(payload)
         ClearChatAttachment(src)

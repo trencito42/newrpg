@@ -8,7 +8,7 @@ version '1.0.0'
 
 dependencies { 'sunset_core' }
 
-server_exports { 'MarketVehicleListed', 'MarketPropertyListed', 'MarketOptions' }
+server_exports { 'MarketVehicleListed', 'MarketPropertyListed', 'MarketOptions', 'GetActiveCallContext' }
 
 client_scripts {
     '@sunset_core/client/callbacks.lua',

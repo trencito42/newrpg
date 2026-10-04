@@ -2195,8 +2195,8 @@
             phoneHead.append(text(t('phone.ui.phone')));
             const toggles = el('div', 'panel');
             toggles.append(phoneHead);
-            const prefs = this.data.prefs || { ringtone: true, notifySound: true };
-            [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true]].forEach(([key, label, defaultOn]) => {
+            const prefs = this.data.prefs || { ringtone: true, notifySound: true, voiceCalls: true };
+            [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true], ['voiceCalls', 'phone.ui.voice_calls', true]].forEach(([key, label, defaultOn]) => {
                 const current = prefs[key] == null ? defaultOn : !!prefs[key];
                 const row = btn('phone-switch' + (current ? ' on' : ''), t(label), () => {
                     if (this.busy.settings) return;
@@ -2204,7 +2204,12 @@
                     prefs[key] = !current;
                     this.data.prefs = prefs;
                     this.busy.settings = true;
-                    post('phoneAction', { op: 'settings', ringtone: prefs.ringtone !== false, notifySound: prefs.notifySound !== false });
+                    post('phoneAction', {
+                        op: 'settings',
+                        ringtone: prefs.ringtone !== false,
+                        notifySound: prefs.notifySound !== false,
+                        voiceCalls: prefs.voiceCalls !== false,
+                    });
                     this.renderSettings();
                 });
                 const knob = el('i');

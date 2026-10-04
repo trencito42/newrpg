@@ -308,6 +308,20 @@ end
 
 local lastForceEndCallId = nil
 
+function PhoneIsCallActive()
+    return PhoneCallSnapshot and PhoneCallSnapshot.state == 'ACTIVE'
+end
+
+function PhoneCallPeerName()
+    return (PhoneCallSnapshot and PhoneCallSnapshot.peerName) or ''
+end
+
+function PhonePeekForChat()
+    if not PhoneIsCallActive() then return false end
+    if phonePresentation == 'full' then setPresentation('peek') end
+    return phonePresentation == 'peek'
+end
+
 function PhoneForceEndCall()
     if not callIsLive() then return false end
     local id = PhoneCallSnapshot and PhoneCallSnapshot.callId
@@ -389,6 +403,38 @@ function PhoneFeedback(message, kind, op, ok, extra)
         exports.sunset_ui:Notify(message, kind or (ok and 'success' or 'error'))
     end
 end
+
+RegisterCommand('call', function(_, args)
+    local phone = table.concat(args or {}, '')
+    if phone == '' then
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('chat.usage.call'), 'info')
+        return
+    end
+    CreateThread(function()
+        local res, err = Sunset.AwaitCallback('sunset:phoneCallStart', phone)
+        if res and res.special == '112' then
+            TriggerEvent('sunset:nui:phoneTrigger112')
+            return
+        end
+        if not res or res.ok == false then
+            local message = PhoneExplain(err, 'phone.call.invalid_number')
+            if type(res) == 'table' and res.state == 'UNAVAILABLE' then
+                message = exports.sunset_core:Translate('phone.call.unavailable')
+            elseif type(res) == 'table' and res.state == 'BUSY' then
+                message = exports.sunset_core:Translate('phone.call.busy')
+            end
+            exports.sunset_ui:Notify(message, 'error')
+            return
+        end
+        if phonePresentation == 'closed' then openPhone('manual') end
+    end)
+end, false)
+
+RegisterCommand('hangup', function()
+    CreateThread(function()
+        Sunset.AwaitCallback('sunset:phoneCallHangup')
+    end)
+end, false)
 
 RegisterCommand('phone', function()
     if IsPauseMenuActive() then
@@ -650,6 +696,9 @@ exports('Open', function()
     return openPhone('manual')
 end)
 exports('ForceEndCall', PhoneForceEndCall)
+exports('IsCallActive', PhoneIsCallActive)
+exports('CallPeerName', PhoneCallPeerName)
+exports('PeekForChat', PhonePeekForChat)
 
 function OpenListing(listingId)
     listingId = tonumber(listingId)

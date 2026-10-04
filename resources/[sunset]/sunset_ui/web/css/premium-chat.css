@@ -162,6 +162,7 @@
 .chat-color-ooc          { color: #B0BEC5; } /* Grey OOC (( ... )) */
 .chat-color-pm           { color: #FFFF00; } /* Bright Yellow DM / PM */
 .chat-color-sms          { color: #FF80BF; } /* Pink SMS */
+.chat-color-phone        { color: #d4c4a8; } /* Muted gold live phone speech */
 .chat-color-tweet        { color: #38A1F3; } /* Twitter Blue @Tweet */
 .chat-color-staff        { color: #FF8C00; } /* Orange [Staff] */
 .chat-color-admin        { color: #FF5722; } /* Red-Orange [Admin] */

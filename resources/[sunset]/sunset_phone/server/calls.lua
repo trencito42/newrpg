@@ -58,12 +58,48 @@ local function push(src, payload)
     TriggerClientEvent('sunset:client:phoneCall', src, payload)
 end
 
+local function voiceCallsEnabled(src)
+    local okChar, char = pcall(function() return exports.sunset_core:GetCharacter(src) end)
+    if not okChar or type(char) ~= 'table' or not char.id then return true end
+    local ok, row = pcall(function()
+        return MySQL.single.await('SELECT voice_calls FROM phone_character_prefs WHERE character_id = ?', { char.id })
+    end)
+    if not ok or not row or row.voice_calls == nil then return true end
+    return tonumber(row.voice_calls) ~= 0
+end
+
 local function voiceSet(src, channel)
     if GetResourceState('pma-voice') ~= 'started' then return end
+    if (tonumber(channel) or 0) ~= 0 and not voiceCallsEnabled(src) then return end
     pcall(function()
         exports['pma-voice']:setPlayerCall(src, tonumber(channel) or 0)
     end)
 end
+
+function GetActiveCallContext(source)
+    source = tonumber(source)
+    local id = source and PhoneCalls.bySource[source]
+    local call = id and PhoneCalls.byId[id]
+    if not call or call.ended or call.state ~= 'active' then return nil end
+    if call.caller ~= source and call.callee ~= source then return nil end
+    local peer = call.caller == source and call.callee or call.caller
+    local peerName = call.caller == source and call.calleeName or call.callerName
+    local peerPhone = call.caller == source and call.calleePhone or call.callerPhone
+    local peerCharacterId = call.caller == source and call.calleeCharacterId or call.callerCharacterId
+    if not peer or not GetPlayerName(peer) then
+        PhoneCalls.endForSource(source, 'disconnect')
+        return { active = false, ended = true }
+    end
+    return {
+        active = true,
+        callId = call.id,
+        peerSource = peer,
+        peerCharacterId = peerCharacterId,
+        peerName = peerName,
+        peerPhone = peerPhone,
+    }
+end
+exports('GetActiveCallContext', GetActiveCallContext)
 
 local function payloadFor(call, src, state, reason)
     local role = (src == call.caller) and 'caller' or 'callee'
@@ -99,6 +135,7 @@ end
 
 function PhoneCalls.finish(call, status)
     if not call or call.ended then return end
+    local wasActive = call.state == 'active'
     call.ended = true
     call.duration = 0
     if call.answeredAt then
@@ -134,6 +171,16 @@ function PhoneCalls.finish(call, status)
     end
     if call.callerCharacterId and call.calleeCharacterId then
         logCall(call, status)
+    end
+
+    if wasActive then
+        local ended = 'chat.phone.ended'
+        if call.caller then
+            TriggerClientEvent('sunset:chat:system', call.caller, exports.sunset_core:TFor(call.caller, ended), 'info')
+        end
+        if call.callee and call.callee ~= call.caller then
+            TriggerClientEvent('sunset:chat:system', call.callee, exports.sunset_core:TFor(call.callee, ended), 'info')
+        end
     end
 
     if status == 'missed' and call.callee then
@@ -270,6 +317,8 @@ exports.sunset_core:RegisterCallback('sunset:phoneCallAnswer', function(source)
     voiceSet(call.callee, call.channel)
     push(call.caller, payloadFor(call, call.caller, 'ACTIVE'))
     push(call.callee, payloadFor(call, call.callee, 'ACTIVE'))
+    TriggerClientEvent('sunset:chat:system', call.caller, exports.sunset_core:TFor(call.caller, 'chat.phone.connected', { name = call.calleeName or call.calleePhone or '' }), 'info')
+    TriggerClientEvent('sunset:chat:system', call.callee, exports.sunset_core:TFor(call.callee, 'chat.phone.connected', { name = call.callerName or call.callerPhone or '' }), 'info')
     return { ok = true, state = 'ACTIVE', callId = call.id }
 end)
 

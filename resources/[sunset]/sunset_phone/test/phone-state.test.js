@@ -42,6 +42,12 @@ assert.strictEqual(state.nextPresentation('peek', 'ACTIVE', 'open'), 'full');
 assert.strictEqual(state.nextPresentation('closed', 'ACTIVE', 'open'), 'full');
 assert.strictEqual(state.nextPresentation('full', 'IDLE', 'open'), 'full');
 
+assert.strictEqual(state.routeLocalCallText('all', null, false), 'nearby');
+assert.strictEqual(state.routeLocalCallText('all', null, true), 'phone_call');
+assert.strictEqual(state.routeLocalCallText('all', 'phone', false), 'reject');
+assert.strictEqual(state.routeLocalCallText('ooc', 'phone', true), 'explicit');
+assert.strictEqual(state.routeLocalCallText('all', null, false), 'nearby');
+
 const liveCall = { state: 'ACTIVE', callId: 9, peerName: 'Sarah' };
 assert.strictEqual(state.nextPresentation('full', liveCall.state, 'toggle'), 'peek');
 assert.strictEqual(liveCall.state, 'ACTIVE');

@@ -15,19 +15,36 @@ local function fetchChatChannels()
     return nil
 end
 
+local phoneComposer = false
+
 local function openChat()
     if chatOpen then return end
-    TriggerEvent('sunset:phone:forceClose')
+    local callActive = false
+    local peerName = ''
+    if GetResourceState('sunset_phone') == 'started' then
+        pcall(function() callActive = exports.sunset_phone:IsCallActive() == true end)
+        pcall(function() peerName = exports.sunset_phone:CallPeerName() or '' end)
+    end
+    if callActive then
+        pcall(function() exports.sunset_phone:PeekForChat() end)
+        phoneComposer = true
+    else
+        TriggerEvent('sunset:phone:forceClose')
+        phoneComposer = false
+    end
     chatOpen = true
     TriggerEvent('sunset:client:chatFocusChanged', true)
     local myId = GetPlayerServerId(PlayerId())
     local myName = LocalPlayer.state.sunsetName or GetPlayerName(PlayerId()) or 'Player'
     exports.sunset_ui:SetFocus(true, true, false, 'chat')
+    local phonePayload = nil
+    if callActive then phonePayload = { active = true, peerName = peerName } end
     exports.sunset_ui:Send('chatToggle', {
         open = true,
         playerId = myId,
         playerName = myName,
         channels = fetchChatChannels(),
+        phoneCall = phonePayload,
     })
     exports.sunset_chat:SyncChatSuggestions()
     SetTimeout(75, function()
@@ -112,7 +129,28 @@ AddEventHandler('sunset:nui:chatSend', function(data)
         if index then index = math.max(0, index - 1) end
         TriggerServerEvent('sunset:chat:runCommand', command, attachment, index)
     else
-        TriggerServerEvent('sunset:chat:send', msg, channel, attachment, index)
+        local sendContext = nil
+        if tostring(data.context or '') == 'phone' and (channel == 'all' or channel == 'local' or channel == 'say') then
+            sendContext = 'phone'
+        elseif phoneComposer and (channel == 'all' or channel == 'local' or channel == 'say') then
+            sendContext = 'phone'
+        end
+        TriggerServerEvent('sunset:chat:send', msg, channel, attachment, index, sendContext)
+    end
+end)
+
+AddEventHandler('sunset:chat:phoneCallEnded', function()
+    if not phoneComposer then return end
+    phoneComposer = false
+    exports.sunset_ui:Send('chatPhoneContext', { active = false, held = chatOpen == true })
+    if chatOpen then
+        exports.sunset_ui:Send('chatMessage', {
+            id = 0,
+            name = exports.sunset_core:Translate('chat.system'),
+            message = exports.sunset_core:Translate('chat.phone.not_sent'),
+            time = string.format('%02d:%02d:%02d', GetClockHours(), GetClockMinutes(), GetClockSeconds()),
+            type = 'command_warn',
+        })
     end
 end)
 
@@ -218,6 +256,7 @@ RegisterNetEvent('sunset:chat:message', function(payload)
     local id = tonumber(payload and payload.id)
     local text = tostring(payload and payload.message or '')
     if not id or id <= 0 or text == '' then return end
+    if msgType == 'phone_call' then return end
     if msgType == 'me' then
         text = '* ' .. text
     elseif msgType == 'do' then

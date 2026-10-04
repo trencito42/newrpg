@@ -220,9 +220,13 @@ end)
 
 RegisterNetEvent('sunset:client:phoneCall', function(payload)
     payload = payload or {}
+    local wasActive = callSnapshot and callSnapshot.state == 'ACTIVE'
     callSnapshot = payload
     PhoneCallSnapshot = payload
     local live = payload.state == 'INCOMING_RINGING' or payload.state == 'OUTGOING_RINGING' or payload.state == 'ACTIVE'
+    if wasActive and payload.state ~= 'ACTIVE' then
+        TriggerEvent('sunset:chat:phoneCallEnded')
+    end
     if live and PhoneCancelPresentationClose then PhoneCancelPresentationClose() end
     if payload.state == 'INCOMING_RINGING' then
         startRing()
@@ -310,6 +314,7 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             local res, err = Sunset.AwaitCallback('sunset:phoneSaveSettings', {
                 ringtone = data.ringtone ~= false,
                 notifySound = data.notifySound ~= false,
+                voiceCalls = data.voiceCalls ~= false,
             })
             if type(res) == 'table' and res.ok then
                 SetPhonePrefs(res)

@@ -217,6 +217,37 @@ test('P peeks a live call and never ends it', () => {
     assert.match(bridge, /IsPhoneInteractive/);
 });
 
+test('active calls route local chat as phone speech and commands stay commands', () => {
+    const phoneState = require(path.join(root, 'resources/[sunset]/sunset_ui/web/js/phone-state.js'));
+    const chatServer = read('resources/[sunset]/sunset_chat/server/main.lua');
+    const chatClient = read('resources/[sunset]/sunset_chat/client/main.lua');
+    const chatJs = read('resources/[sunset]/sunset_ui/web/js/chat.js');
+    const calls = read('resources/[sunset]/sunset_phone/server/calls.lua');
+    assert.equal(phoneState.routeLocalCallText('all', undefined, false), 'nearby');
+    assert.equal(phoneState.routeLocalCallText('local', undefined, true), 'phone_call');
+    assert.equal(phoneState.routeLocalCallText('all', 'phone', false), 'reject');
+    assert.equal(phoneState.routeLocalCallText('ooc', undefined, true), 'explicit');
+    assert.match(calls, /function GetActiveCallContext/);
+    assert.match(calls, /call\.state ~= 'active'/);
+    assert.doesNotMatch(calls, /phone_call_messages/);
+    assert.match(chatServer, /deliverPhoneCall/);
+    assert.match(chatServer, /type = 'phone_call'/);
+    assert.match(chatServer, /chat\.phone\.not_sent/);
+    const phoneRoute = chatServer.slice(chatServer.indexOf("if route == 'phone_call'"), chatServer.indexOf("if isOoc then"));
+    assert.doesNotMatch(phoneRoute, /sendNearby/);
+    assert.match(chatClient, /msgType == 'phone_call' then return/);
+    assert.match(chatClient, /PeekForChat/);
+    assert.match(chatClient, /sunset:chat:runCommand/);
+    assert.match(chatJs, /type === 'phone_call'/);
+    assert.match(phoneClient, /RegisterCommand\('call'/);
+    assert.match(phoneClient, /RegisterCommand\('hangup'/);
+    assert.match(phoneClient, /sunset:phoneCallStart/);
+    assert.match(phoneClient, /sunset:phoneCallHangup/);
+    assert.match(phoneClient, /function PhonePeekForChat/);
+    assert.match(en, /chat\.phone\.not_sent/);
+    assert.match(ro, /chat\.phone\.not_sent/);
+});
+
 test('locale keys used by the phone pass exist in English and Romanian', () => {
     for (const key of [
         'phone.message.request_timed_out',

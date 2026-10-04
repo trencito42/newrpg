@@ -90,3 +90,25 @@ Death asks the phone to end the live call before it hides the UI. Jail already d
 - [ ] Phone call survives entering vehicle
 - [ ] No focus steal while lowered
 - [ ] No stuck phone after death/jail/restart
+
+## Live phone chat
+
+SMS stays in Messages. Text typed with T during an ACTIVE call is live speech between the two participants. It is not stored.
+
+- [ ] /call number starts normal call
+- [ ] Answer from Phone
+- [ ] T during ACTIVE routes LOCAL through phone
+- [ ] Sender sees PHONE line
+- [ ] Receiver sees PHONE line
+- [ ] nearby third player does NOT see it
+- [ ] no 3D overhead
+- [ ] voice OFF + phone text works
+- [ ] voice ON + phone text works simultaneously
+- [ ] OOC still works during call
+- [ ] faction/radio/admin commands still work
+- [ ] T lowers FULL phone to PEEK
+- [ ] Enter leaves phone PEEK
+- [ ] ESC leaves phone PEEK
+- [ ] call ending while draft exists does not leak to local
+- [ ] /hangup ends canonical call
+- [ ] P restores full call interface
