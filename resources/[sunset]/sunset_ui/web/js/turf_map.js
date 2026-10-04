@@ -77,6 +77,8 @@
         },
 
         bindEvents() {
+            if (this._bound) return;
+            this._bound = true;
             const screen = document.getElementById('turf-map-screen');
             const viewport = document.getElementById('turf-map-viewport');
             const closeBtn = document.getElementById('turf-map-close-btn');
@@ -608,7 +610,9 @@
 
     window.TurfMap = TurfMap;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => TurfMap.init(), { once: true });
+    } else {
         TurfMap.init();
-    });
+    }
 })();

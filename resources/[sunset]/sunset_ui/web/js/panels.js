@@ -2100,9 +2100,14 @@ const Panels = {
 
 window.Panels = Panels;
 
-document.addEventListener('DOMContentLoaded', () => {
+function bindPanels() {
     Panels.init();
     if (window.AuthAccounts && typeof window.AuthAccounts.bind === 'function') {
         window.AuthAccounts.bind();
     }
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindPanels, { once: true });
+} else {
+    bindPanels();
+}

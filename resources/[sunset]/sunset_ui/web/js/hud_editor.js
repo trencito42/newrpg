@@ -131,5 +131,8 @@ const HudEditor = {
 
 window.HudEditor = HudEditor;
 
-// Init layout on load
-document.addEventListener('DOMContentLoaded', () => HudEditor.apply());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => HudEditor.apply(), { once: true });
+} else {
+    HudEditor.apply();
+}

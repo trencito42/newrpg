@@ -7,7 +7,7 @@
 (function () {
     'use strict';
 
-    const MODULE_VERSION = '9';
+    const MODULE_VERSION = '11';
     const versioned = (url) => `${url}${url.includes('?') ? '&' : '?'}v=${MODULE_VERSION}`;
 
     const MODULE_REGISTRY = {
@@ -378,8 +378,12 @@
                 // Explicit lifecycle hooks
                 if (name === 'chat') window.ChatSettings?.init?.();
                 if (name === 'hud_core') window.Hud?.init?.();
+                if (name === 'hud_editor') window.HudEditor?.apply?.();
                 if (name === 'mdc') window.MdcTablet?.init?.();
                 if (name === 'atm') window.AtmMachine?.init?.();
+                if (name === 'trade') window.TradeForza?.bind?.();
+                if (name === 'lockpick') window.LockpickGame?.bindClose?.();
+                if (name === 'turf_map') window.TurfMap?.init?.();
 
                 loadedModules.add(name);
                 const dt = Math.round(performance.now() - t0);

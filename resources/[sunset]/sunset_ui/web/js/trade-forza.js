@@ -303,7 +303,9 @@
             btn.hidden = false;
         });
         this._resetSelectorState();
-        document.getElementById('chat-input')?.focus({ preventScroll: true });
+        const tradeWin = document.getElementById('trade-window');
+        const tradeVisible = tradeWin && !tradeWin.classList.contains('hidden');
+        if (!tradeVisible) document.getElementById('chat-input')?.focus({ preventScroll: true });
     },
 
     addCashDraft(amount) {
@@ -469,7 +471,7 @@
                 const tradeVisible = tradeWin && !tradeWin.classList.contains('hidden');
                 if (selectorVisible && !tradeVisible) {
                     e.preventDefault();
-                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     this.hideSelector();
                     return;
                 }
@@ -503,4 +505,8 @@
 };
 
 window.TradeForza = TradeForza;
-document.addEventListener('DOMContentLoaded', () => TradeForza.bind());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => TradeForza.bind(), { once: true });
+} else {
+    TradeForza.bind();
+}

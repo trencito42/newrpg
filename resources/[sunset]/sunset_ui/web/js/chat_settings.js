@@ -129,4 +129,8 @@ const ChatSettings = {
 
 window.ChatSettings = ChatSettings;
 
-document.addEventListener('DOMContentLoaded', () => ChatSettings.init());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => ChatSettings.init(), { once: true });
+} else {
+    ChatSettings.init();
+}

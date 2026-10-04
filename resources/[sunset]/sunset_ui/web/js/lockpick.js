@@ -269,14 +269,22 @@ const LockpickGame = (() => {
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function bindClose() {
+        if (bindClose.done) return;
+        bindClose.done = true;
         const closeBtn = document.getElementById('lp-close-btn');
         if (closeBtn) closeBtn.addEventListener('click', () => close());
-    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindClose, { once: true });
+    } else {
+        bindClose();
+    }
 
     return {
         open,
         close,
+        bindClose,
     };
 })();
 

@@ -1524,6 +1524,8 @@ $('#chat-input')?.addEventListener('keydown', (e) => {
 
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    const selector = document.getElementById('trade-selector-modal');
+    if (selector && !selector.classList.contains('hidden')) return;
     const chat = $('#chat');
     if (!chat || !chat.classList.contains('chat-open')) return;
     e.preventDefault();

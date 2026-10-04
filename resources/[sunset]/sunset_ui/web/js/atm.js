@@ -626,5 +626,9 @@
     };
 
     window.AtmMachine = AtmMachine;
-    document.addEventListener('DOMContentLoaded', () => AtmMachine.init());
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => AtmMachine.init(), { once: true });
+    } else {
+        AtmMachine.init();
+    }
 })();

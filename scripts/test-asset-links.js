@@ -111,6 +111,38 @@ test('picker has a single focus owner', () => {
     assert.match(chat, /type: pending\.type, id: pending\.id/);
 });
 
+test('lazy trade module binds the asset picker after mount', () => {
+    const loader = read('resources/[sunset]/sunset_ui/web/js/module-loader.js');
+    const picker = read('resources/[sunset]/sunset_ui/web/js/trade-forza.js');
+    const chat = read('resources/[sunset]/sunset_ui/web/js/chat.js');
+    assert.match(loader, /if \(name === 'trade'\) window\.TradeForza\?\.bind\?\.\(\)/);
+    assert.match(picker, /if \(this\._bound\) return/);
+    assert.match(picker, /document\.readyState === 'loading'/);
+    assert.match(picker, /else \{\s*TradeForza\.bind\(\)/);
+    assert.match(picker, /trade-selector-confirm/);
+    assert.match(picker, /\.cat-item/);
+    assert.match(picker, /stopImmediatePropagation\(\)/);
+    assert.match(picker, /if \(!tradeVisible\) document\.getElementById\('chat-input'\)/);
+    assert.match(picker, /mode !== 'TRADE'/);
+    assert.match(picker, /tab === 'cash'/);
+    assert.match(picker, /I18n\.t\('asset\.attach'\)/);
+    assert.match(chat, /trade-selector-modal/);
+    assert.match(chat, /selector\.classList\.contains\('hidden'\)\) return/);
+
+    const registryFiles = [...loader.matchAll(/js:\s*\[([^\]]+)\]/g)]
+        .flatMap((match) => [...match[1].matchAll(/'([^']+\.js)'/g)].map((file) => file[1]));
+    assert.ok(registryFiles.includes('js/trade-forza.js'));
+    for (const rel of registryFiles) {
+        const source = read(`resources/[sunset]/sunset_ui/web/${rel}`);
+        if (!source.includes('DOMContentLoaded')) continue;
+        assert.match(
+            source,
+            /document\.readyState === 'loading'/,
+            `${rel} is lazy-loaded and must bind when the document is already ready`
+        );
+    }
+});
+
 test('migration and locale keys exist in English and Romanian', () => {
     const sql = read('sql/85-cnn-ad-attachments.sql');
     assert.match(sql, /attachment_type/);
