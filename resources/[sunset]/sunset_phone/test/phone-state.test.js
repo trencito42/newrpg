@@ -37,6 +37,10 @@ assert.strictEqual(state.nextPresentation('closed', 'ACTIVE', 'toggle'), 'full')
 assert.strictEqual(state.nextPresentation('peek', 'ENDED', 'terminal'), 'closed');
 assert.strictEqual(state.nextPresentation('full', 'ENDED', 'terminal'), 'full');
 assert.strictEqual(state.nextPresentation('peek', 'ACTIVE', 'forceClose'), 'closed');
+assert.strictEqual(state.nextPresentation('full', 'ACTIVE', 'open'), 'full');
+assert.strictEqual(state.nextPresentation('peek', 'ACTIVE', 'open'), 'full');
+assert.strictEqual(state.nextPresentation('closed', 'ACTIVE', 'open'), 'full');
+assert.strictEqual(state.nextPresentation('full', 'IDLE', 'open'), 'full');
 
 const liveCall = { state: 'ACTIVE', callId: 9, peerName: 'Sarah' };
 assert.strictEqual(state.nextPresentation('full', liveCall.state, 'toggle'), 'peek');

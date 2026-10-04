@@ -45,9 +45,8 @@
             if (intent === 'open') return 'full';
             return current;
         }
-        if (intent === 'toggle' || intent === 'open') {
-            return current === 'full' ? 'peek' : 'full';
-        }
+        if (intent === 'toggle') return current === 'full' ? 'peek' : 'full';
+        if (intent === 'open') return 'full';
         return current;
     }
 

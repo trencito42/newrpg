@@ -69,6 +69,10 @@ Do not mark a row live-verified from this document alone.
 
 P during a live call lowers the phone. It does not end the call.
 
+An incoming call closes chat, the menu, the properties panel, and a normal inventory, then opens the phone full. It does not interrupt login, character select, hacking, lockpick, casino, an active trade, or the drug lab and sale screens. If one of those is up, the phone keeps ringing and the incoming notification stays. P opens the phone after that screen is gone. A failed auto-open does not mark the phone as opened-for-call, so a later manual open stays open when the call ends.
+
+Death asks the phone to end the live call before it hides the UI. Jail already does the same. Ending twice for the same call is ignored.
+
 - [ ] Incoming call auto-opens full phone
 - [ ] P during ringing lowers phone
 - [ ] Ringing continues while lowered

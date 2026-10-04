@@ -177,6 +177,22 @@ test('P peeks a live call and never ends it', () => {
         assert.equal(phoneState.nextPresentation(presentation, callState, 'toggle'), expected);
     }
     assert.equal(phoneState.nextPresentation('peek', 'ENDED', 'terminal'), 'closed');
+    assert.equal(phoneState.nextPresentation('full', 'ACTIVE', 'open'), 'full');
+    assert.equal(phoneState.nextPresentation('peek', 'ACTIVE', 'open'), 'full');
+    assert.equal(phoneState.nextPresentation('closed', 'INCOMING_RINGING', 'open'), 'full');
+    const openFn = phoneClient.slice(phoneClient.indexOf('local function openPhone'), phoneClient.indexOf('local function closePhone'));
+    assert.match(openFn, /phonePresentation = 'full'\s+phoneOpenedForCall = openReason == 'incoming_call'/);
+    assert.match(openFn, /if reason == 'manual' then phoneOpenedForCall = false end/);
+    assert.doesNotMatch(openFn, /phoneOpenedForCall = true/);
+    const openForCall = phoneClient.slice(phoneClient.indexOf('function PhoneOpenForCall'), phoneClient.indexOf('function PhoneForceEndCall'));
+    assert.match(openForCall, /openPhone\('incoming_call'\)/);
+    assert.doesNotMatch(openForCall, /phoneOpenedForCall = true/);
+    assert.match(phoneClient, /phonePresentation == 'peek' or phoneOpenedForCall/);
+    const death = read('resources/[sunset]/sunset_death/client/main.lua');
+    const modal = death.slice(death.indexOf('local function closeAllModalUi'), death.indexOf('local function doRespawn'));
+    assert.ok(modal.indexOf('ForceEndCall') !== -1 && modal.indexOf('ForceEndCall') < modal.indexOf('forceClose'));
+    assert.match(phoneClient, /function PhoneForceEndCall/);
+    assert.match(phoneClient, /TriggerServerEvent\('sunset:phone:forceEnd'\)/);
     const call = phoneState.applyCall({ state: 'ACTIVE', callId: 3, peerName: 'Sarah', localStart: 10 }, { state: 'ACTIVE', callId: 3, peerName: 'Sarah' });
     assert.equal(phoneState.nextPresentation('peek', call.state, 'toggle'), 'full');
     assert.equal(call.state, 'ACTIVE');

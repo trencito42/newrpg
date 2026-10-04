@@ -85,14 +85,91 @@ end
 
 local focusListing = nil
 
-local function openPhone()
-    if phoneOpen or phoneOpening then return end
+-- Incoming calls may close ordinary panels (chat, menu, properties, inventory)
+-- and then open FULL. They do not cancel a trade, hack, lockpick, casino game,
+-- login, or character select. If the focused UI is not in that safe set, the
+-- call keeps ringing, the incoming notification stays, and P can open the phone
+-- once focus is free. phoneOpenedForCall becomes true only after that open
+-- actually reaches FULL, so a failed auto-open cannot close a later manual phone.
+local CRITICAL_FOCUS_OWNERS = {
+    auth = true,
+    entry = true,
+    lockpick = true,
+    casino = true,
+    trade = true,
+    hacking = true,
+    dispatch112 = true,
+    drugs_lab = true,
+    drugs_sale = true,
+}
+local CRITICAL_UI_SCREENS = {
+    auth = true,
+    characters = true,
+    spawn = true,
+    loading = true,
+    handoff = true,
+}
+
+local function uiFocusContext()
+    local owner, screen = nil, nil
+    if GetResourceState('sunset_ui') ~= 'started' then return owner, screen end
+    pcall(function() owner = exports.sunset_ui:GetFocusOwner() end)
+    pcall(function()
+        local snap = exports.sunset_ui:GetNuiDebugState()
+        if type(snap) == 'table' then screen = snap.currentScreen end
+    end)
+    return owner, screen
+end
+
+local function criticalUiBlocksPhone()
+    if GetResourceState('sunset_hacking') == 'started' then
+        local ok, active = pcall(function() return exports.sunset_hacking:IsHackingActive() end)
+        if ok and active == true then return true end
+    end
+    local owner, screen = uiFocusContext()
+    if screen and CRITICAL_UI_SCREENS[screen] then return true end
+    if owner and CRITICAL_FOCUS_OWNERS[owner] then return true end
+    return false
+end
+
+local function releaseOrdinaryUiForCall()
+    if criticalUiBlocksPhone() then return false end
+    if not IsNuiFocused() and not isChatOpen() then return true end
+
+    if isChatOpen() then TriggerEvent('sunset:nui:chatClose') end
+    if GetResourceState('sunset_menu') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_menu:IsMenuOpen() end)
+        if ok and open then pcall(function() exports.sunset_menu:CloseMenu() end) end
+    end
+    if GetResourceState('sunset_properties') == 'started' then
+        local ok, open = pcall(function() return exports.sunset_properties:IsPanelOpen() end)
+        if ok and open then TriggerEvent('sunset:nui:propertiesClose') end
+    end
+    local owner = uiFocusContext()
+    if owner ~= 'trade' then TriggerEvent('sunset:client:inventoryForceClose') end
+
+    if criticalUiBlocksPhone() then return false end
+    if IsNuiFocused() or isChatOpen() then return false end
+    return true
+end
+
+local function openPhone(reason)
+    reason = reason == 'incoming_call' and 'incoming_call' or 'manual'
+    if phoneOpen then
+        if reason == 'manual' then phoneOpenedForCall = false end
+        return false
+    end
+    if phoneOpening then return false end
     local okReady, ready = pcall(function() return exports.sunset_core:IsPlayerReady() end)
-    if okReady and not ready then return end -- no phone before login/spawn finished
-    if IsNuiFocused() or isChatOpen() then
-        return exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.close_the_current_menu_or_chat_before_opening_the'), 'info', 3500)
+    if okReady and not ready then return false end -- no phone before login/spawn finished
+    if reason == 'incoming_call' then
+        if not releaseOrdinaryUiForCall() then return false end
+    elseif IsNuiFocused() or isChatOpen() then
+        exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.close_the_current_menu_or_chat_before_opening_the'), 'info', 3500)
+        return false
     end
     phoneOpening = true
+    local openReason = reason
 
     CreateThread(function()
         local data, err = Sunset.AwaitCallback('sunset:getPhoneData')
@@ -102,9 +179,15 @@ local function openPhone()
             return
         end
 
-        -- Another UI may have opened while phone data was loading. Never steal
-        -- its focus after the asynchronous callback completes.
-        if IsNuiFocused() or isChatOpen() then
+        -- Another UI may have opened while phone data was loading. An incoming
+        -- call may dismiss ordinary panels again. A critical UI still wins.
+        if openReason == 'incoming_call' then
+            if not releaseOrdinaryUiForCall() then
+                phoneOpening = false
+                exports.sunset_ui:Notify(exports.sunset_core:Translate('phone.message.close_the_current_menu_or_chat_before_opening_the'), 'info', 3500)
+                return
+            end
+        elseif IsNuiFocused() or isChatOpen() then
             phoneOpening = false
             return
         end
@@ -112,6 +195,7 @@ local function openPhone()
         phoneOpen = true
         phoneOpening = false
         phonePresentation = 'full'
+        phoneOpenedForCall = openReason == 'incoming_call'
         DisablePlayerFiring(PlayerId(), true)
         playPhoneSound('open')
         playPhoneAnim(true)
@@ -136,6 +220,7 @@ local function openPhone()
         exports.sunset_ui:Send('phonePresentation', { mode = 'full' })
         exports.sunset_ui:SetFocus(true, true, false, 'phone')
     end)
+    return true
 end
 
 local function closePhone()
@@ -177,7 +262,7 @@ local function setPresentation(mode)
         return
     end
     if phonePresentation == 'closed' then
-        openPhone()
+        openPhone('manual')
         return
     end
     if mode == 'peek' then
@@ -217,9 +302,19 @@ function PhoneCancelPresentationClose()
 end
 
 function PhoneOpenForCall()
-    if phonePresentation ~= 'closed' then return end
-    phoneOpenedForCall = true
-    openPhone()
+    if phonePresentation ~= 'closed' then return false end
+    return openPhone('incoming_call')
+end
+
+local lastForceEndCallId = nil
+
+function PhoneForceEndCall()
+    if not callIsLive() then return false end
+    local id = PhoneCallSnapshot and PhoneCallSnapshot.callId
+    if id ~= nil and lastForceEndCallId == id then return false end
+    lastForceEndCallId = id
+    TriggerServerEvent('sunset:phone:forceEnd')
+    return true
 end
 
 local function togglePhone()
@@ -238,7 +333,7 @@ local function togglePhone()
     end
 
     if not callIsLive() then
-        if phonePresentation == 'closed' then openPhone() else closePhone() end
+        if phonePresentation == 'closed' then openPhone('manual') else closePhone() end
         return
     end
 
@@ -551,7 +646,10 @@ AddEventHandler('onResourceStop', function(res)
     end
 end)
 
-exports('Open', openPhone)
+exports('Open', function()
+    return openPhone('manual')
+end)
+exports('ForceEndCall', PhoneForceEndCall)
 
 function OpenListing(listingId)
     listingId = tonumber(listingId)

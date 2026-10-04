@@ -15,6 +15,9 @@ end
 -- Force-close every modal UI and release NUI focus across death transitions
 local function closeAllModalUi()
     pcall(function() TriggerEvent('sunset:client:inventoryForceClose') end)
+    if GetResourceState('sunset_phone') == 'started' then
+        pcall(function() exports.sunset_phone:ForceEndCall() end)
+    end
     pcall(function() TriggerEvent('sunset:phone:forceClose') end)
     pcall(function() TriggerEvent('sunset:ui:forceCloseAll') end)
     if GetResourceState('sunset_ui') == 'started' then
