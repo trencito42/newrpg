@@ -27,10 +27,11 @@ interface TokenRow extends RowDataPacket {
 }
 
 function fail(locale: "en" | "ro", status: number, code: string) {
-  const key = code === "empty_file" || code === "oversized" || code === "wrong_file_type"
-    ? "interface.invalid_file_size"
-    : code === "missing_token" || code === "unknown_token" || code === "expired_token" || code === "reused_token"
-      ? "interface.invalid_upload_parameters"
+  const auth = code === "missing_token" || code === "unknown_token" || code === "expired_token" || code === "reused_token";
+  const key = auth
+    ? "interface.authentication_required"
+    : code === "empty_file" || code === "oversized" || code === "wrong_file_type"
+      ? "interface.invalid_file_size"
       : "interface.invalid_upload_parameters";
   return NextResponse.json({ error: t(locale, key), code }, { status });
 }
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
     const mediaType = req.headers.get("x-media-type") || "";
     const mediaHash = (req.headers.get("x-media-hash") || "default").slice(0, 128);
     const mediaToken = (req.headers.get("x-media-token") || "").trim();
+    if (!mediaToken) return fail(locale, 401, "missing_token");
 
     let formData: FormData;
     try {
