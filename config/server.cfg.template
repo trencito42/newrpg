@@ -130,6 +130,7 @@ ensure sunset_scoreboard
 ensure sunset_menu
 ensure sunset_help
 ensure sunset_quests
+ensure sunset_intro
 ensure sunset_anticheat
 ensure sunset_jobs
 ensure sunset_carjack

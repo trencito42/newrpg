@@ -211,6 +211,14 @@
             this.apps[payload.app] = payload.data || {};
             const view = this.current();
             if (payload.app === 'garage' && view === 'garage') this.renderGarage();
+            if (payload.app === 'market' && payload.data && payload.data.browse) {
+                const prev = this.apps.market || {};
+                prev.listings = payload.data.listings || [];
+                prev.myListings = payload.data.myListings || prev.myListings || [];
+                this.apps.market = prev;
+                if (view === 'market' || view === 'detail') this.renderMarket();
+                return;
+            }
             if (payload.app === 'market' && (view === 'market' || view === 'detail')) this.renderMarket();
             if (payload.app === 'news' && view === 'news') this.renderNews();
             if (payload.app === 'jobs' && view === 'jobs') this.renderJobs();
@@ -972,24 +980,37 @@
             });
             const search = field(t('phone.ui.search'), this._marketQuery || '');
             search.input.dataset.focus = '1';
+            const kindOf = (key) => (key === 'vehicles' ? 'vehicle' : key === 'items' ? 'item' : (key === 'properties' || key === 'player_properties') ? 'property' : 'all');
             search.input.addEventListener('input', () => {
-                const caret = search.input.selectionStart;
                 this._marketQuery = search.input.value;
-                this.renderMarket();
-                const next = document.querySelector('#view-market input[data-focus="1"]');
-                if (next) { next.focus(); try { next.setSelectionRange(caret, caret); } catch (err) { /* ignore */ } }
+                this._marketPage = 1;
+                clearTimeout(this._marketTimer);
+                this._marketTimer = setTimeout(() => {
+                    post('phoneAction', { op: 'marketBrowse', q: this._marketQuery, page: 1, kind: kindOf(this.marketFilter), token: this.token });
+                }, 250);
             });
             content.append(tabs, search.wrap);
-            const listVeh = field(t('phone.ui.list_vehicle'));
-            const listPrice = field(t('phone.ui.price'));
-            content.append(listVeh.wrap, listPrice.wrap, btn('btn-ghost', t('phone.ui.list_vehicle'), () => {
-                post('phoneAction', { op: 'marketListVehicle', vehicleId: listVeh.input.value, price: listPrice.input.value, token: this.token });
-            }));
-            const listItem = field(t('phone.ui.list_item'));
-            const listQty = field(t('phone.ui.qty'));
-            content.append(listItem.wrap, listQty.wrap, btn('btn-ghost', t('phone.ui.list_item'), () => {
-                post('phoneAction', { op: 'marketListItem', item: listItem.input.value, quantity: listQty.input.value, price: listPrice.input.value, token: this.token });
-            }));
+            const options = data.options || {};
+            const price = field(t('phone.ui.price'), this._listPrice || '');
+            const qty = field(t('phone.ui.qty'), this._listQty || '1');
+            price.input.addEventListener('input', () => { this._listPrice = price.input.value; });
+            qty.input.addEventListener('input', () => { this._listQty = qty.input.value; });
+            content.append(price.wrap, qty.wrap);
+            (options.vehicles || []).forEach((vehicle) => {
+                content.append(btn('btn-ghost', (vehicle.label || vehicle.model) + ' · ' + (vehicle.plate || ''), () => {
+                    post('phoneAction', { op: 'marketListVehicle', vehicleId: vehicle.id, price: price.input.value, token: this.token });
+                }));
+            });
+            (options.items || []).forEach((item) => {
+                content.append(btn('btn-ghost', (item.label || item.item) + ' ×' + item.count, () => {
+                    post('phoneAction', { op: 'marketListItem', item: item.item, quantity: qty.input.value || 1, price: price.input.value, token: this.token });
+                }));
+            });
+            (options.properties || []).forEach((prop) => {
+                content.append(btn('btn-ghost', prop.label || ('#' + prop.id), () => {
+                    post('phoneAction', { op: 'marketListProperty', propertyId: prop.id, price: price.input.value, token: this.token });
+                }));
+            });
             const hint = el('div', 'muted');
             hint.style.marginBottom = '8px';
             hint.append(text(t('phone.ui.ad_hint')));
@@ -1018,6 +1039,36 @@
                 card.addEventListener('click', () => { this.detail = row; this.openApp('detail'); });
                 content.append(card);
             });
+            const page = this._marketPage || 1;
+            content.append(btn('btn-ghost', '←', () => {
+                if (page < 2) return;
+                this._marketPage = page - 1;
+                post('phoneAction', { op: 'marketBrowse', q: this._marketQuery || '', page: this._marketPage, kind: kindOf(this.marketFilter), token: this.token });
+            }));
+            content.append(btn('btn-ghost', '→', () => {
+                this._marketPage = page + 1;
+                post('phoneAction', { op: 'marketBrowse', q: this._marketQuery || '', page: this._marketPage, kind: kindOf(this.marketFilter), token: this.token });
+            }));
+            const owned = data.myListings || [];
+            if (owned.length) {
+                const head = el('div', 'section-title');
+                head.append(text(t('phone.ui.my_ads')));
+                content.append(head);
+                owned.forEach((listing) => {
+                    const line = el('div', 'list-item');
+                    const body = el('div', 'grow');
+                    const title = el('div', 'item-title');
+                    title.append(text((listing.listing_type || '') + ' · $' + (listing.asking_price || 0)));
+                    const sub = el('div', 'item-subtitle');
+                    sub.append(text(String(listing.status || '').toUpperCase()));
+                    body.append(title, sub);
+                    line.append(body);
+                    if (listing.status === 'active') {
+                        line.append(btn('btn-ghost', '×', () => post('phoneAction', { op: 'marketCancel', listingId: listing.id, token: this.token })));
+                    }
+                    content.append(line);
+                });
+            }
             if ((data.mine || []).length) {
                 const head = el('div', 'section-title');
                 head.append(text(t('phone.ui.my_ads')));
@@ -1463,6 +1514,17 @@
                 card.append(line);
             });
             content.append(card);
+            const level = Number(this.data.level) || 1;
+            const respect = Number(this.data.respect) || 0;
+            const needRp = level * 4;
+            const needMoney = level * 1000;
+            const prog = el('div', 'panel');
+            prog.append(text('Lv ' + level + ' · ' + respect + ' RP'));
+            const next = el('div', 'muted');
+            next.append(text('Next: ' + needRp + ' RP · $' + needMoney));
+            prog.append(next);
+            prog.append(btn('btn-gold', '/buylevel', () => post('phoneAction', { op: 'buyLevel' })));
+            content.append(prog);
             const prefs = this.data.prefs || { ringtone: true, notifySound: true, compactNotes: false };
             const toggles = el('div', 'panel');
             [['ringtone', 'phone.ui.ringtone', true], ['notifySound', 'phone.ui.notify_sound', true], ['compactNotes', 'phone.ui.compact_notes', false]].forEach(([key, label, defaultOn]) => {

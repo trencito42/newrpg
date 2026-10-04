@@ -243,6 +243,24 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             loadApp('market', token)
             return
         end
+        if op == 'marketBrowse' then
+            local res = Sunset.AwaitCallback('sunset:phoneMarketBrowse', {
+                page = tonumber(data.page) or 1,
+                q = tostring(data.q or ''),
+                type = tostring(data.kind or 'all'),
+            }) or {}
+            sendApp('market', { browse = true, listings = res.rows or {}, myListings = res.mine or {} }, token)
+            return
+        end
+        if op == 'marketListProperty' then
+            Sunset.AwaitCallback('sunset:phoneMarketListProperty', tonumber(data.propertyId), tonumber(data.price))
+            loadApp('market', token)
+            return
+        end
+        if op == 'buyLevel' then
+            Sunset.AwaitCallback('sunset:buyLevel')
+            return
+        end
         if op == 'propertiesMore' then
             local page = math.max(1, tonumber(data.page) or 1)
             local filter = data.filter == 'rented' and 'rented' or 'owned'

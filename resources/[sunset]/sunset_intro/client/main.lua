@@ -5,6 +5,7 @@
 local introOpen = false
 local introShown = false
 local checking = false
+local introRetries = 0
 
 local function openIntro()
     if introOpen or introShown then return end
@@ -34,8 +35,13 @@ local function considerIntro()
             introShown = true
             return
         end
-        if seen == false then
+        if seen == false and not IsPauseMenuActive() and not IsNuiFocused() then
             openIntro()
+        elseif seen == false and introRetries < 8 then
+            introRetries = introRetries + 1
+            SetTimeout(4000, function()
+                considerIntro()
+            end)
         end
     end)
 end
@@ -48,6 +54,7 @@ RegisterNUICallback('finishPresentation', function(_, cb)
             introShown = true
         end
         closeIntro()
+        TriggerEvent('sunset:client:notify', Sunset.T('core.message.intro_quests'), 'info', 8000)
     end)
 end)
 
