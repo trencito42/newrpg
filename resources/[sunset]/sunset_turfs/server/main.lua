@@ -256,8 +256,10 @@ local function endWar(turfId, reason)
     local attackerWon  -- kept for backward compatibility with existing client code
 
     if war.isNeutralCapture then
-        local captureTarget = war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180
-        if war.attackerScore >= captureTarget then
+        -- Majority hold: attacker wins if they held the zone for more than half the war duration.
+        local warDuration = war.warDuration or SunsetTurfs.WarDurationSec or 600
+        local holdTarget  = math.floor(warDuration / 2)
+        if war.attackerScore >= holdTarget then
             resultType     = 'neutral_captured'
             attackerWon    = true
             winnerClanId   = war.attackerClanId
@@ -350,7 +352,8 @@ local function endWar(turfId, reason)
         scoreTarget = war.scoreTarget,
         resultType = resultType,
         isNeutralCapture = war.isNeutralCapture,
-        captureTarget = war.captureTarget or SunsetTurfs.NeutralCaptureSec or 180,
+        warDuration = war.warDuration or SunsetTurfs.WarDurationSec or 600,
+        holdTarget = math.floor((war.warDuration or SunsetTurfs.WarDurationSec or 600) / 2),
         territoryRemainsFree = (resultType == 'neutral_capture_failed'),
     })
 
@@ -380,11 +383,8 @@ end
 local function startWar(turf, attackerClan, defenderClan)
     local turfId = turf.id
     local isNeutralCapture = not defenderClan
-    local captureTarget = isNeutralCapture and (SunsetTurfs.NeutralCaptureSec or 180) or nil
     local durationSec = SunsetTurfs.WarDurationSec
-    if isNeutralCapture then
-        durationSec = math.min(SunsetTurfs.WarDurationSec, (captureTarget or 180) + 90)
-    end
+    -- Neutral capture uses the full war duration; majority hold (>50%) decides winner.
 
     local warData = {
         turfId = turfId,
@@ -402,7 +402,7 @@ local function startWar(turf, attackerClan, defenderClan)
         defenderColor = defenderClan and defenderClan.tag_color or '#555555',
         defenderScore = 0,
         isNeutralCapture = isNeutralCapture,
-        captureTarget = captureTarget,
+        warDuration = durationSec,
         scoreTarget = isNeutralCapture and nil or SunsetTurfs.WarScoreTarget,
         participants = {},   -- [src] = { clanId, kills, deaths, name }
         startedAt = os.time(),
@@ -430,13 +430,11 @@ local function startWar(turf, attackerClan, defenderClan)
     end
     TriggerClientEvent('sunset:turfs:warStart', -1, warData)
 
-    -- [ANNOUNCE FIX] Duration was hardcoded "10 minutes" even for neutral
-    -- captures (3-minute hold). Announce the actual computed duration and,
-    -- for free turfs, the hold requirement.
     local durationMin = math.max(1, math.floor(durationSec / 60 + 0.5))
+    local holdMin = math.max(1, math.floor(durationSec / 2 / 60 + 0.5))
     local announcement
     if isNeutralCapture then
-        announcement = ('^1[TURF WAR] ^7Clan ^3[%s] %s^7 is capturing unowned territory ^2%s^7! Hold the zone for %d minutes to claim it.'):format(
+        announcement = ('^1[TURF WAR] ^7Clan ^3[%s] %s^7 is capturing unowned territory ^2%s^7! Hold the zone for the majority of %d minutes to claim it.'):format(
             attackerClan.tag, attackerClan.name, turf.name, durationMin
         )
     else
@@ -503,11 +501,7 @@ local function startWar(turf, attackerClan, defenderClan)
             end
             current.rallyRemaining = current.rallyUntil and math.max(0, current.rallyUntil - os.time()) or 0
 
-            if current.isNeutralCapture and attCount > 0
-                and current.attackerScore >= (current.captureTarget or SunsetTurfs.NeutralCaptureSec or 180) then
-                endWar(turfId, 'neutral_captured')
-                break
-            end
+            -- Majority hold: no early exit; result decided at timer expiry.
 
             -- [WAR REDESIGN] Instant win on score target (kill-based races).
             if not current.isNeutralCapture and current.scoreTarget then
@@ -867,7 +861,7 @@ local function runIntervene(source)
     targetWar.defenderTag = pClan.tag
     targetWar.defenderColor = pClan.tag_color or '#00ffcc'
     targetWar.isNeutralCapture = false
-    targetWar.captureTarget = nil
+    -- warDuration stays as-is; now a contested clan war (not neutral anymore)
     targetWar.scoreTarget = SunsetTurfs.WarScoreTarget
     targetWar.rallyUntil = nil
     targetWar.rallyRemaining = 0

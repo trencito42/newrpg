@@ -165,11 +165,11 @@
                 ? I18n.t('ui.clanwar.turf_with_target', { turf: data.turfName || '', target: data.scoreTarget })
                 : I18n.t('ui.clanwar.turf_named', { turf: data.turfName || '' });
             set('war-turf-label', label);
-            // [NEUTRAL FIX] For neutral captures show "CAPTURE PROGRESS" + X/target instead of "vs UNOWNED 0".
+            // Neutral capture: show "MAJORITY HOLD" progress — held/total seconds.
             if (data.isNeutralCapture) {
                 set('war-def-name', I18n.t('ui.clanwar.capture_progress'));
-                const capTarget = data.captureTarget || 180;
-                set('war-def-score', `${data.attackerScore || 0} / ${capTarget}`);
+                const warDur = data.warDuration || (data.holdTarget ? data.holdTarget * 2 : 600);
+                set('war-def-score', `${data.attackerScore || 0} / ${warDur}`);
             } else {
                 set('war-def-name', data.defenderName || I18n.t('ui.clanwar.defenders'));
                 set('war-def-score', String(data.defenderScore || 0));
@@ -293,13 +293,13 @@
                         : I18n.t('dynamic.clanwar.neutral_capture_failed');
                     title.style.color = captured ? 'var(--war-accent, #00ffcc)' : 'var(--war-danger, #ff3366)';
                 }
-                // Left slot = attacker name + score; right slot = capture target for progress
-                const capTarget = data.captureTarget || 180;
+                // Left: held seconds. Right: total war duration (majority = >50%).
+                const warDur = data.warDuration || (data.holdTarget ? data.holdTarget * 2 : 600);
                 set('war-end-att-name', data.attackerName || I18n.t('ui.clanwar.atk_short'));
                 set('war-end-att-score', String(data.attackerScore || 0));
                 if (sep) sep.textContent = '/';
                 set('war-end-def-name', I18n.t('ui.clanwar.capture_progress'));
-                set('war-end-def-score', String(capTarget));
+                set('war-end-def-score', String(warDur));
                 // MVP: only show when attackers actually had kills (no fake defender card)
                 if (data.mvp && (data.mvp.kills || 0) > 0) {
                     mvpBox?.style.setProperty('display', 'flex');
