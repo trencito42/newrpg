@@ -9,6 +9,17 @@ import { PollVoteForm } from "@/components/polls/PollVoteForm";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const pollId = Number(id);
+  if (!Number.isSafeInteger(pollId) || pollId < 1) notFound();
+  const poll = await dbQuerySingle<PollRow>("SELECT * FROM panel_polls WHERE id = ? LIMIT 1", [pollId]);
+  if (!poll) notFound();
+  return buildMetadata({ title: poll.title_en, description: poll.description_en || `Vote in the RACKET RPG poll: ${poll.title_en}.`, path: `/polls/${pollId}` });
+}
 
 interface PollRow extends RowDataPacket {
   id: number;

@@ -30,7 +30,7 @@ describe("phone photo upload contract", () => {
       expect(decision.ok).toBe(true);
       const filename = `${"cd".repeat(16)}.png`;
       const url = mediaPublicUrl(kind, filename);
-      expect(url).toBe(`https://racket.cat/media/${kind === "phone_photo" ? "phone" : kind === "player_avatar" ? "avatars" : "vehicles"}/${filename}`);
+      expect(url).toBe(`https://racket.cat/api/media/${kind === "phone_photo" ? "phone" : kind === "player_avatar" ? "avatars" : "vehicles"}/${filename}`);
       expect(url?.startsWith("https://racket.cat/")).toBe(true);
     }
   });

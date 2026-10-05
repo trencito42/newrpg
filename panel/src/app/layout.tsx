@@ -7,7 +7,9 @@ import { getServerStatus } from "@/lib/bridge";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Header } from "@/components/navigation/Header";
 import { MobileNav } from "@/components/navigation/MobileNav";
-import { buildRootMetadata } from "@/lib/seo/metadata";
+import { buildRootMetadata, getSiteUrl } from "@/lib/seo/metadata";
+import { safeJsonLd } from "@/lib/seo";
+import { panelBrand } from "@/lib/brand";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
 import { resolvePlayerIdentity } from "@/lib/player-identity";
@@ -33,16 +35,43 @@ export default async function RootLayout({
   ]);
   const viewerSession = toViewerSessionDTO(session);
   const viewerIdentity = viewerSession ? await resolvePlayerIdentity(viewerSession.username) : null;
+  const siteUrl = getSiteUrl("/");
+  const siteDescription =
+    `Official companion panel for ${panelBrand.name}. Players, factions, clans, forum, and server updates.`; // i18n-ignore: english-only seo
 
   return (
     <html lang={locale} className="dark">
       <head>
         <link rel="stylesheet" href="/fontawesome/css/all.min.css" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: safeJsonLd({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": `${siteUrl}#organization`,
+                  name: panelBrand.name,
+                  url: siteUrl,
+                  logo: `${siteUrl}/logo-3.png`,
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": `${siteUrl}#website`,
+                  name: panelBrand.name,
+                  url: siteUrl,
+                  description: siteDescription,
+                  publisher: { "@id": `${siteUrl}#organization` },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
         <LocaleProvider locale={locale}>
         <PlayerPreviewProvider>
-          {/* Mobile Navigation */}
           <MobileNav
             locale={locale}
             session={viewerSession}
@@ -50,7 +79,6 @@ export default async function RootLayout({
             playerCount={serverStatus.playerCount}
           />
 
-          {/* Desktop Sidebar */}
           <div className="hidden lg:flex flex-shrink-0 sticky top-0 h-screen">
             <Sidebar
               locale={locale}
@@ -61,7 +89,6 @@ export default async function RootLayout({
             />
           </div>
 
-          {/* Main Content Area */}
           <div className="flex-1 flex flex-col min-w-0">
             <Header locale={locale} session={viewerSession} identity={viewerIdentity} />
             <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1560px] w-full mx-auto">

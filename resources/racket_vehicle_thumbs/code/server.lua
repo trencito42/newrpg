@@ -56,13 +56,13 @@ local function refreshCustomCatalog()
     TriggerEvent('racket_thumbs:buildCustomCatalog')
 end
 
-AddEventHandler('racket_thumbs:customCatalogBuilt', function(models, byResource, errorMsg)
+AddEventHandler('racket_thumbs:customCatalogBuilt', function(models, byResource, stats, errorMsg)
     if errorMsg or not models then
         print('[racket_vehicle_thumbs] Custom catalog scan failed: ' .. tostring(errorMsg or 'unknown error'))
-        customCatalog = { models = {}, byResource = {}, count = 0 }
+        customCatalog = { models = {}, byResource = {}, count = 0, stats = {}, scanFailed = true }
         return
     end
-    customCatalog = { models = models, byResource = byResource, count = #models }
+    customCatalog = { models = models, byResource = byResource, count = #models, stats = stats or {} }
     print(('[racket_vehicle_thumbs] Custom catalog ready: %d vehicles'):format(#models))
 end)
 
@@ -229,6 +229,17 @@ RegisterCommand('vehthumbs', function(source, args)
             tell(source, ('custom detected: %d'):format(customCatalog.count))
             tell(source, ('custom thumbnails existing: %d'):format(customCatalog.count - missing))
             tell(source, ('custom thumbnails missing: %d'):format(missing))
+            local stats = customCatalog.stats or {}
+            tell(source, ('scan: %d started resources, %d vehicle resources, %d vehicles.meta files'):format(
+                tonumber(stats.startedResources) or 0,
+                tonumber(stats.vehicleResources) or 0,
+                tonumber(stats.metaFiles) or 0
+            ))
+            if customCatalog.scanFailed then
+                tell(source, 'custom catalog scan failed — run /vehthumbs refresh and check server logs', 'error')
+            elseif customCatalog.count == 0 then
+                tell(source, 'No custom vehicles were detected. Run /vehthumbs refresh and check detection logs.', 'error')
+            end
         else
             tell(source, 'custom catalog: not loaded — run /vehthumbs refresh')
         end
@@ -238,6 +249,10 @@ RegisterCommand('vehthumbs', function(source, args)
     if mode == 'listcustom' or mode == 'listcustommissing' then
         if not customCatalog then
             tell(source, 'Custom catalog not ready. Run /vehthumbs refresh.', 'error')
+            return
+        end
+        if customCatalog.count == 0 then
+            tell(source, 'No custom vehicles were detected. Run /vehthumbs refresh and check detection logs.', 'error')
             return
         end
         local list = {}
@@ -265,6 +280,10 @@ RegisterCommand('vehthumbs', function(source, args)
             tell(source, 'Custom catalog not ready. Run /vehthumbs refresh.', 'error')
             return
         end
+        if customCatalog.count == 0 then
+            tell(source, 'No custom vehicles were detected. Run /vehthumbs refresh and check detection logs.', 'error')
+            return
+        end
         if activeQueue or pendingCatalog then
             tell(source, 'A thumbnail batch is already running.', 'error')
             return
@@ -280,6 +299,10 @@ RegisterCommand('vehthumbs', function(source, args)
             else
                 items[#items + 1] = model
             end
+        end
+        if mode == 'custommissing' and #items == 0 then
+            tell(source, ('All %d custom vehicles already have thumbnails.'):format(customCatalog.count))
+            return
         end
         beginQueue(source, items, skipped)
         return

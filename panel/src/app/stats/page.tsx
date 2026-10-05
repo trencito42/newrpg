@@ -25,6 +25,9 @@ import {
   Activity,
   Heart
 } from "lucide-react";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Server statistics", description: "Live RACKET RPG server, economy, player, faction and clan statistics.", path: "/stats" });
 
 export const dynamic = "force-dynamic";
 

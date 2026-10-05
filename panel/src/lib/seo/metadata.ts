@@ -60,6 +60,13 @@ export function buildRootMetadata(): Metadata {
   return {
     metadataBase: new URL(SITE_URL),
     applicationName: panelBrand.name,
+    creator: panelBrand.name,
+    publisher: panelBrand.name,
+    icons: {
+      icon: [{ url: "/logo-3.png", type: "image/png" }],
+      apple: "/logo-3.png",
+    },
+    manifest: "/manifest.webmanifest",
     title: {
       default: `${panelBrand.name} — GTA V RPG Server`, // i18n-ignore: english-only seo
       template: `%s | ${panelBrand.name}`,

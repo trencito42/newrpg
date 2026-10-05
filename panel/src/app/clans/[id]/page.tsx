@@ -7,6 +7,8 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { Flag, Users, Shield, Map, CheckCircle, XCircle, Settings, Award } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
 
 interface Context {
@@ -23,6 +25,19 @@ const CLAN_RANKS = [
   "Co-Leader",
   "Leader",
 ];
+
+export async function generateMetadata({ params }: Context): Promise<Metadata> {
+  const { id } = await params;
+  const clanId = Number(id);
+  if (!Number.isSafeInteger(clanId) || clanId < 1) notFound();
+  const clan = await dbQuerySingle<RowDataPacket>(
+    `SELECT c.name, c.tag, c.description,
+            (SELECT COUNT(*) FROM clan_members cm WHERE cm.clan_id = c.id) AS member_count
+     FROM clans c WHERE c.id = ? LIMIT 1`, [clanId]
+  );
+  if (!clan) notFound();
+  return buildMetadata({ title: `[${clan.tag}] ${clan.name}`, description: clan.description || `${clan.member_count} members in the RACKET RPG clan ${clan.name}.`, path: `/clans/${clanId}` });
+}
 
 export default async function ClanDetailPage({ params }: Context) {
   const { id: idStr } = await params;

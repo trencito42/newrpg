@@ -8,6 +8,15 @@ import { RowDataPacket } from "mysql2";
 import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const faction = CANONICAL_FACTIONS[slug];
+  if (!faction) notFound();
+  return buildMetadata({ title: faction.label, description: `Members, applications, statistics and information for the RACKET RPG ${faction.label}.`, path: `/factions/${encodeURIComponent(slug)}` });
+}
 
 interface MemberRow extends RowDataPacket {
   id: number;

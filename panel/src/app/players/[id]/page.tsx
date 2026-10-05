@@ -13,6 +13,26 @@ import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
 import { vehicleDisplayName } from "@/lib/vehicle-names";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { CustomBadge } from "@/components/ui/CustomBadge";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const decoded = decodeURIComponent(id).trim();
+  const numericId = /^\d+$/.test(decoded) ? Number(decoded) : 0;
+  const player = await dbQuerySingle<RowDataPacket>(
+    `SELECT a.username, c.level, ${factionIdSql()} AS faction_id, cl.tag AS clan_tag
+     FROM accounts a JOIN players p ON p.account_id = a.id JOIN characters c ON c.player_id = p.id
+     LEFT JOIN clan_members cm ON cm.character_id = c.id LEFT JOIN clans cl ON cl.id = cm.clan_id
+     WHERE LOWER(a.username) = LOWER(?) OR (? > 0 AND c.id = ?) OR LOWER(c.firstname) = LOWER(?)
+     ORDER BY c.level DESC, c.slot ASC, c.id ASC LIMIT 1`, [decoded, numericId, numericId, decoded]
+  );
+  if (!player) notFound();
+  const details = [`Level ${player.level}`];
+  if (player.faction_id) details.push(getFactionLabel(player.faction_id));
+  if (player.clan_tag) details.push(`[${player.clan_tag}]`);
+  return buildMetadata({ title: player.username, description: details.join(" • "), path: `/players/${encodeURIComponent(player.username)}` });
+}
 
 interface AccountBadgeRow extends RowDataPacket {
   id: number;
@@ -141,6 +161,7 @@ export default async function PlayerProfilePage({
      WHERE LOWER(a.username) = LOWER(?)
         OR (? > 0 AND c.id = ?)
         OR LOWER(c.firstname) = LOWER(?)
+     ORDER BY c.level DESC, c.slot ASC, c.id ASC
      LIMIT 1`,
     [
       decoded,

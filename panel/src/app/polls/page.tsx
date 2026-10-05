@@ -2,13 +2,15 @@ import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { PollsClientView, PollItem } from "./PollsClientView";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Sondaje & Alegeri Primar • Racket RPG", // i18n-ignore: pre-existing
-  description: "Votați deciziile serverului și alegeți candidații pentru Primăria Los Santos.", // i18n-ignore: pre-existing
-};
+export const metadata = buildMetadata({
+  title: "Polls and elections", // i18n-ignore: english-only seo
+  description: "Public RACKET RPG community polls and Los Santos elections.", // i18n-ignore: english-only seo
+  path: "/polls",
+});
 
 export default async function PollsPage() {
   const [locale, session] = await Promise.all([

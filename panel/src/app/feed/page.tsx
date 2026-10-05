@@ -3,8 +3,10 @@ import { dbQuery } from "@/lib/db";
 import { t } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { FeedClient } from "./FeedClient";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata = buildMetadata({ title: "Community feed", path: "/feed", noIndex: true });
 
 export interface FeedPost {
   id: number;

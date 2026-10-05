@@ -1,5 +1,8 @@
 import { t, getDictionary } from "@/lib/i18n";
 import { getRequestLanguage } from "@/lib/auth";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Rules", description: "Official RACKET RPG community and roleplay rules.", path: "/rules" });
 
 export const dynamic = "force-dynamic";
 

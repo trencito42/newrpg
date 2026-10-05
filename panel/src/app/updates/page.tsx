@@ -2,14 +2,16 @@ import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { UpdatesClientFeed, UpdateItem } from "./UpdatesClientFeed";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
 
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Noutăți & Updates • Racket RPG", // i18n-ignore: pre-existing
-  description: "Actualizări, patch notes și anunțuri oficiale pentru serverul Racket RPG.", // i18n-ignore: pre-existing
-};
+export const metadata = buildMetadata({
+  title: "Updates", // i18n-ignore: english-only seo
+  description: "Official RACKET RPG updates, patch notes and announcements.", // i18n-ignore: english-only seo
+  path: "/updates",
+});
 
 interface RawUpdateRow extends RowDataPacket {
   id: number;

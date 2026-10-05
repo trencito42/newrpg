@@ -9,7 +9,7 @@
     "prelaunch:check": "node scripts/test-prelaunch-invariants.js",
     "launch:check": "node --test scripts/test-launch-invariants.js",
     "shop:check": "node scripts/test-shop.js",
-    "vehicle-thumbs:check": "node scripts/check-vehicle-thumbs.js",
+    "vehicle-thumbs:check": "node scripts/check-vehicle-thumbs.js && node scripts/test-vehicle-thumb-catalog.js",
     "progression:check": "node scripts/test-progression.js",
     "discover:vehicles": "node scripts/audit-server-vehicles.js --write",
     "generate:vehicles": "node scripts/generate-addon-profiles.js",
