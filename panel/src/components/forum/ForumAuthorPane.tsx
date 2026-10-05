@@ -27,9 +27,11 @@ export function ForumAuthorPane({
 }: ForumAuthorPaneProps) {
   const profileHref = `/players/${encodeURIComponent(identity.username.trim().replace(/\s+/g, "_"))}`;
   const avatarUrl = identity.skin ? getPedAvatarUrl(identity.skin) : null;
+  const showAdminBadge = (adminLevel ?? 0) >= 1;
+  const showHelperBadge = !showAdminBadge && (helperLevel ?? 0) >= 1;
 
   return (
-    <div className="w-full sm:w-44 flex-shrink-0 bg-surface-200 p-4 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-2 border-b sm:border-b-0 sm:border-r border-border">
+    <div className="w-full sm:w-44 flex-shrink-0 bg-surface-200 p-4 flex sm:flex-col items-center gap-3 sm:gap-2 border-b sm:border-b-0 sm:border-r border-border text-center">
       <Link href={profileHref} className="flex-shrink-0 rounded-full overflow-hidden ring-1 ring-border hover:ring-brand/50 transition-colors">
         {avatarUrl ? (
           <GTAImage src={avatarUrl} alt="" width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 object-cover object-top" />
@@ -41,7 +43,7 @@ export function ForumAuthorPane({
           </div>
         )}
       </Link>
-      <div className="flex-1 sm:flex-none min-w-0 w-full">
+      <div className="flex-1 sm:flex-none min-w-0 w-full flex flex-col items-center">
         <PlayerIdentity
           username={identity.username}
           factionId={identity.factionId}
@@ -51,20 +53,22 @@ export function ForumAuthorPane({
           clanTagStyle={identity.clanTagStyle}
           href={profileHref}
           size="sm"
-          className="truncate max-w-full"
+          className="truncate max-w-full justify-center"
         />
-        <div className="flex items-center gap-1 mt-1 flex-wrap">
-          {adminLevel >= 1 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-red-400 font-bold uppercase tracking-wide">
-              <Shield className="w-2.5 h-2.5" /> Admin
-            </span>
-          )}
-          {adminLevel === 0 && helperLevel >= 1 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-blue-400 font-bold uppercase tracking-wide">
-              <Wrench className="w-2.5 h-2.5" /> Helper
-            </span>
-          )}
-        </div>
+        {(showAdminBadge || showHelperBadge) ? (
+          <div className="flex items-center justify-center gap-1 mt-1 flex-wrap">
+            {showAdminBadge ? (
+              <span className="flex items-center gap-0.5 text-[10px] text-red-400 font-bold uppercase tracking-wide">
+                <Shield className="w-2.5 h-2.5" /> Admin
+              </span>
+            ) : null}
+            {showHelperBadge ? (
+              <span className="flex items-center gap-0.5 text-[10px] text-blue-400 font-bold uppercase tracking-wide">
+                <Wrench className="w-2.5 h-2.5" /> Helper
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         {identity.factionLabel && (
           <p className="text-[10px] text-muted-foreground mt-0.5 truncate" style={{ color: identity.factionColor || undefined }}>
             {identity.factionLabel}

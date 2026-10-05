@@ -321,12 +321,12 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
 
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-xl font-extrabold text-foreground tracking-tight">{topic.title}</h1>
-          {isMod && (
+          {Boolean(isMod) ? (
             <TopicActionsMenu
               topic={topicForClient}
               locale={locale}
             />
-          )}
+          ) : null}
         </div>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
@@ -355,12 +355,12 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
               <span className="text-yellow-400">{"locked"}</span>
             </>
           )}
-          {topic.deleted_at && isMod && (
+          {topic.deleted_at && Boolean(isMod) ? (
             <>
               <span>·</span>
               <span className="text-red-400">{"deleted"}</span>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
