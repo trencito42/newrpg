@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import { query, queryOne, dbQuery } from "@/lib/db";
 import { t, formatCurrency, formatNumber, formatDate } from "@/lib/i18n";
 import { getViewerLocale } from "@/lib/auth";

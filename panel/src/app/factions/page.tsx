@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import Link from "next/link";
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";

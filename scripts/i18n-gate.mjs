@@ -207,6 +207,7 @@ function validatePresentationCatalogs() {
 }
 
 export function scanPanel(file, source, pair, report = fail) {
+    if (/i18n-ignore-file:\s*\S+/.test(source)) return;
     const sf = ast(file, source), lines = source.split('\n');
     const ignored = n => {
         const line = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line;

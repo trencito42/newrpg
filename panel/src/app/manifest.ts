@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {

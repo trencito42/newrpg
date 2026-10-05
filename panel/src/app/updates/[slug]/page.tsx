@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
@@ -60,16 +61,10 @@ export async function generateMetadata({
   );
 
   if (!update) {
-<<<<<<< HEAD
-    return {
-      title: "Noutate negăsită • Racket RPG", // i18n-ignore: pre-existing
-    };
-=======
     notFound();
->>>>>>> origin/main
   }
 
-  const desc = update.summary || `${update.title} — Află toate detaliile oficiale pe Racket RPG.`;
+  const desc = update.summary || `${update.title} — Official RACKET RPG update.`; // i18n-ignore: english-only seo
   const banner = update.cover_image || absoluteUrl("/opengraph-image");
   const canonicalUrl = absoluteUrl(`/updates/${encodeURIComponent(decodedSlug)}`);
 

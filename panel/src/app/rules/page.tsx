@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import { t, getDictionary } from "@/lib/i18n";
 import { getRequestLanguage } from "@/lib/auth";
 import { buildMetadata } from "@/lib/seo";

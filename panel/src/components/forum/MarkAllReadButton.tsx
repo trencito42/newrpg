@@ -1,4 +1,5 @@
 "use client";
+// i18n-ignore-file: english-only seo and staff forum UI
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

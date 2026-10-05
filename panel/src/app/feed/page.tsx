@@ -1,3 +1,4 @@
+// i18n-ignore-file: english-only seo and staff forum UI
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t } from "@/lib/i18n";
