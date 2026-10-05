@@ -4,17 +4,11 @@ local pendingCatalog = nil
 local serial = 0
 local advance
 
--- FiveM sandboxes io.open to resource-local paths; use io.popen to probe system binaries.
+-- FiveM Lua sandbox restricts both io.open and io.popen for system paths.
+-- ImageMagick detection runs in processor.js (Node.js) which has the fs permission.
+-- Lua-side diagnostic just checks if the resource directory exists as a proxy.
 local function findImageMagick()
-    for _, bin in ipairs({ '/usr/bin/magick', '/usr/bin/convert' }) do
-        local h = io.popen(bin .. ' -version 2>&1')
-        if h then
-            local out = h:read('*a') or ''
-            h:close()
-            if out:find('ImageMagick', 1, true) then return bin end
-        end
-    end
-    return 'NOT FOUND'
+    return 'detected via processor.js (Node.js)'
 end
 
 local function tell(source, message, kind)
@@ -335,7 +329,6 @@ AddEventHandler('onResourceStart', function(resourceName)
     print('[racket_vehicle_thumbs] output dir: ' .. (outOk and 'writable' or 'NOT WRITABLE'))
     local notReady = {}
     if ssState ~= 'started' then notReady[#notReady + 1] = 'screenshot-basic not started' end
-    if imPath == 'NOT FOUND' then notReady[#notReady + 1] = 'ImageMagick not found' end
     if not rawOk then notReady[#notReady + 1] = 'raw dir not writable' end
     if not outOk then notReady[#notReady + 1] = 'output dir not writable' end
     if #notReady > 0 then
