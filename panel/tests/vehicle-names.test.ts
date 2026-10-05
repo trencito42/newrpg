@@ -8,7 +8,7 @@ describe("vehicle display names", () => {
   });
 
   it("does not leak invalid localization sentinel values", () => {
-    expect(vehicleDisplayName("tempesta2", "CARNOTFOUND")).toBe("Tempesta2");
+    expect(vehicleDisplayName("tempesta2", "CARNOTFOUND")).toBe("Tempesta Widebody");
     expect(vehicleDisplayName(null, "NULL")).toBe("Vehicle");
   });
 

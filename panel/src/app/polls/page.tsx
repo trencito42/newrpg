@@ -2,13 +2,11 @@ import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { PollsClientView, PollItem } from "./PollsClientView";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Sondaje & Alegeri Primar • Racket RPG",
-  description: "Votați deciziile serverului și alegeți candidații pentru Primăria Los Santos.",
-};
+export const metadata = buildMetadata({ title: "Polls and elections", description: "Public RACKET RPG community polls and Los Santos elections.", path: "/polls" });
 
 export default async function PollsPage() {
   const [locale, session] = await Promise.all([

@@ -330,7 +330,9 @@
       "your_answer": "Răspuns...",
       "fields_marked_with_red_are_mandatory": "* Câmpurile marcate cu roșu sunt obligatorii.",
       "submitting": "Se trimite...",
-      "submit_application": "Trimite Aplicația"
+      "submit_application": "Trimite Aplicația",
+      "text_8f8b83_hover_text_f2efe8": "bg-surface-200 text-[#f2efe8] shadow-sm",
+      "bg_surface_200_text_f2efe8_shadow_sm": "text-[#8f8b83] hover:text-[#f2efe8]"
     },
     "app_clans_id_manage_clanmanageclient": {
       "settings_saved_successfully": "Setări salvate cu succes!",
@@ -611,7 +613,8 @@
     "app_stats_page": {
       "top_10_wealthiest_players": "Top 10 Bogați",
       "civilian_jobs": "Joburi Civile",
-      "popular_vehicle_models": "Modele Populare"
+      "popular_vehicle_models": "Modele Populare",
+      "real_time_aggregates_leaderboards_and_economic_indicators_for_the_entire_se": "Agregate în timp real, clasamente și indicatori economici pentru întregul server."
     },
     "app_support_complaints_complaintform": {
       "submission_failed": "Eroare la trimitere.",
@@ -714,7 +717,10 @@
       "level_short": "NIV",
       "view_full_rankings_statistics": "Vezi clasamentul complet (Statistici)"
     },
-    "components_navigation_languagetoggle": {},
+    "components_navigation_languagetoggle": {
+      "bg_brand_text_08080a": "text-[#8f8b83] hover:text-[#f2efe8]",
+      "text_8f8b83_hover_text_f2efe8": "bg-brand text-[#08080a]"
+    },
     "components_navigation_mobilenav": {
       "updates_news": "Noutăți & Updates"
     },
@@ -1290,7 +1296,8 @@
     "the_content_must_contain_at_least_10_characters": "Conținutul trebuie să aibă cel puțin 10 caractere.",
     "update_not_found": "Actualizarea nu a fost găsită.",
     "you_do_not_have_permission_to_edit_this_post": "Nu ai permisiunea să editezi această postare.",
-    "you_do_not_have_permission_to_delete_this_post": "Nu ai permisiunea să ștergi această postare."
+    "you_do_not_have_permission_to_delete_this_post": "Nu ai permisiunea să ștergi această postare.",
+    "official_authors_creators": "Autori & Creatori Oficiali"
   },
   "updates": {
     "category": {

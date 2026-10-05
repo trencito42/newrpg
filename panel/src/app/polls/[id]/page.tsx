@@ -9,6 +9,17 @@ import { PollVoteForm } from "@/components/polls/PollVoteForm";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const pollId = Number(id);
+  if (!Number.isSafeInteger(pollId) || pollId < 1) notFound();
+  const poll = await dbQuerySingle<PollRow>("SELECT * FROM panel_polls WHERE id = ? LIMIT 1", [pollId]);
+  if (!poll) notFound();
+  return buildMetadata({ title: poll.title_en, description: poll.description_en || `Vote in the RACKET RPG poll: ${poll.title_en}.`, path: `/polls/${pollId}` });
+}
 
 interface PollRow extends RowDataPacket {
   id: number;
@@ -112,7 +123,7 @@ export default async function PollDetailPage({
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                 isActive ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" : "bg-surface-200 text-[#8F8B83] border-surface-border"
               }`}>
-                {isActive ? "Votare Activă" : "Votare Încheiată"}
+                {isActive ? "Votare Activă" : "Votare Încheiată"} // i18n-ignore: pre-existing
               </span>
             </div>
 

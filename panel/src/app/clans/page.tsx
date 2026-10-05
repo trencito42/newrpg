@@ -6,6 +6,9 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { Users, Flag, Shield, CheckCircle, XCircle } from "lucide-react";
 import { factionIdSql } from "@/lib/faction-sql";
 import { t } from "@/lib/i18n";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Clans", description: "Discover RACKET RPG clans, members, territories and recruitment.", path: "/clans" });
 
 
 interface ClanRow extends RowDataPacket {

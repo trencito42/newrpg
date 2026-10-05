@@ -2,6 +2,9 @@ import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t, formatCurrency } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Territories", description: "RACKET RPG clan territories, ownership and rewards.", path: "/turfs" });
 
 interface TurfRow extends RowDataPacket {
   id: number;

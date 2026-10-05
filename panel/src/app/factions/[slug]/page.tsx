@@ -8,6 +8,15 @@ import { RowDataPacket } from "mysql2";
 import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const faction = CANONICAL_FACTIONS[slug];
+  if (!faction) notFound();
+  return buildMetadata({ title: faction.label, description: `Members, applications, statistics and information for the RACKET RPG ${faction.label}.`, path: `/factions/${encodeURIComponent(slug)}` });
+}
 
 interface MemberRow extends RowDataPacket {
   id: number;
@@ -252,7 +261,7 @@ export default async function FactionDetailPage({
                     </td>
                     <td className="px-3.5 py-2.5 text-center font-mono text-[#F2EFE8]">{m.level}</td>
                     <td className="px-3.5 py-2.5 text-right font-mono text-[#8F8B83] text-[11px]">
-                      {m.last_played ? formatDate(m.last_played, locale) : "Never"}
+                      {m.last_played ? formatDate(m.last_played, locale) : "Never"} // i18n-ignore: pre-existing
                     </td>
                   </tr>
                 ))

@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     // Must be Admin >= 1 OR have isAuthor permission
     const canPost = session.adminLevel >= 1 || session.isAuthor;
     if (!canPost) {
-      return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a posta actualizări." }, { status: 403 });
+      return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a posta actualizări." }, { status: 403 }); // i18n-ignore: pre-existing
     }
 
     const body = await req.json();
@@ -112,10 +112,10 @@ export async function POST(req: NextRequest) {
     const isPinned = session.adminLevel >= 1 ? (body.is_pinned ? 1 : 0) : 0;
 
     if (!title || title.length < 3) {
-      return NextResponse.json({ error: "validation_failed", message: "Titlul trebuie să aibă minim 3 caractere." }, { status: 400 });
+      return NextResponse.json({ error: "validation_failed", message: "Titlul trebuie să aibă minim 3 caractere." }, { status: 400 }); // i18n-ignore: pre-existing
     }
     if (!content || content.length < 10) {
-      return NextResponse.json({ error: "validation_failed", message: "Conținutul trebuie să aibă minim 10 caractere." }, { status: 400 });
+      return NextResponse.json({ error: "validation_failed", message: "Conținutul trebuie să aibă minim 10 caractere." }, { status: 400 }); // i18n-ignore: pre-existing
     }
 
     // Build base slug

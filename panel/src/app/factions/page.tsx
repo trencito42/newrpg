@@ -7,6 +7,9 @@ import { CANONICAL_FACTIONS, getFactionColor } from "@/lib/factions";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
 import { factionIdSql } from "@/lib/faction-sql";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Factions", description: "Explore RACKET RPG factions, members, leaders and applications.", path: "/factions" });
 
 interface FactionMemberCountRow extends RowDataPacket {
   job: string;

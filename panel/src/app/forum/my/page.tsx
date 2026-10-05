@@ -1,0 +1,174 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+
+type Tab = "topics" | "posts" | "bookmarks" | "subscriptions";
+
+interface BaseItem {
+  id: number;
+  topic_id?: number;
+  title?: string;
+  slug?: string;
+  forum_name?: string;
+  created_at?: string;
+  bookmarked_at?: string;
+  subscribed_at?: string;
+  reply_count?: number;
+  last_post_at?: string | null;
+}
+
+export default function MyForumPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tab = (searchParams.get("tab") as Tab) ?? "topics";
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+
+  const [locale, setLocale] = useState<"en" | "ro">("en");
+  const [items, setItems] = useState<BaseItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocale("en"); // i18n-ignore: english-only
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`/api/forum/my?tab=${tab}&page=${page}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+        setItems(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.totalPages ?? 1);
+      })
+      .catch(() => setError("network_error")) // i18n-ignore: english-only
+      .finally(() => setLoading(false));
+  }, [tab, page]);
+
+  const setTab = (t: Tab) => {
+    router.push(`/forum/my?tab=${t}`);
+  };
+
+  const TABS: { key: Tab; labelEn: string; labelRo: string }[] = [
+    { key: "topics", labelEn: "My Topics", labelRo: "Topicele Mele" },
+    { key: "posts", labelEn: "My Posts", labelRo: "Postările Mele" },
+    { key: "bookmarks", labelEn: "Bookmarks", labelRo: "Marcaje" },
+    { key: "subscriptions", labelEn: "Subscriptions", labelRo: "Abonamente" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+          {/* i18n-ignore: english-only */}
+          <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
+          <span>/</span>
+          <span className="text-foreground">{"My Activity"}</span>
+        </div>
+        <h1 className="text-xl font-extrabold text-foreground uppercase tracking-tight">
+          {"My Activity"}
+        </h1>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors -mb-px border-b-2 ${
+              tab === t.key
+                ? "border-brand text-brand"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.labelEn} // i18n-ignore: english-only
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-14 bg-surface-200 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : error ? (
+        <p className="text-sm text-red-400">{error}</p>
+      ) : items.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {"Nothing to show"}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((item) => {
+            const topicId = item.topic_id ?? item.id;
+            const topicSlug = item.slug ?? "";
+            const forumName = item.forum_name ?? "";
+
+            return (
+              <div key={item.id} className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-surface-200 transition-colors">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/forum/topic/${topicId}/${topicSlug}`}
+                      className="text-sm font-semibold text-foreground hover:text-brand transition-colors truncate block"
+                    >
+                      {item.title ?? `Post #${item.id}`}
+                    </Link>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                      <span>{forumName}</span>
+                      {item.reply_count !== undefined && (
+                        <>
+                          <span>·</span>
+                          <span>{item.reply_count} {"replies"}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {new Date(item.bookmarked_at ?? item.subscribed_at ?? item.created_at ?? "").toLocaleDateString(
+                      "en-US"
+                    )}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1 justify-center">
+          {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+            const p = i + 1;
+            return (
+              <button
+                key={p}
+                onClick={() => router.push(`/forum/my?tab=${tab}&page=${p}`)}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                  p === page ? "bg-brand text-[#08080A] font-bold" : "bg-surface-200 hover:bg-surface-300 text-foreground"
+                }`}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

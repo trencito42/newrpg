@@ -9,6 +9,9 @@ import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 import { factionIdSql } from "@/lib/faction-sql";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({ title: "Players", description: "Browse public RACKET RPG player profiles, characters and achievements.", path: "/players" });
 
 interface PlayerListRow extends RowDataPacket {
   id: number;
