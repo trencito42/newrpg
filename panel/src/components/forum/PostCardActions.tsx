@@ -35,9 +35,6 @@ export function PostCardActions({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const hasMultiple =
-    canEdit || canDelete || canRestore || canReport;
-
   useEffect(() => {
     if (!menuOpen) return;
     const onDoc = (e: MouseEvent) => {
@@ -106,20 +103,6 @@ export function PostCardActions({
           </button>
         ) : null}
       </div>
-    );
-  }
-
-  /* Mobile: single overflow when more than copy alone, else one tap target */
-  if (!hasMultiple) {
-    return (
-      <button
-        type="button"
-        onClick={onCopyLink}
-        className="p-2 -mr-1 rounded-lg hover:bg-surface-300 text-muted-foreground active:bg-surface-300/80"
-        aria-label={"Copy link"} // i18n-ignore: english-only
-      >
-        <Copy className="w-5 h-5" />
-      </button>
     );
   }
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Shield, Wrench } from "lucide-react";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
@@ -22,32 +23,27 @@ function joinedYear(dateStr: string) {
 function StaffBadge({
   showAdminBadge,
   showHelperBadge,
-  compact,
+  inline,
 }: {
   showAdminBadge: boolean;
   showHelperBadge: boolean;
-  compact?: boolean;
+  inline?: boolean;
 }) {
   if (!showAdminBadge && !showHelperBadge) return null;
-  const text = compact ? "text-xs" : "text-[10px]";
-  const icon = compact ? "w-3 h-3" : "w-2.5 h-2.5";
+  const text = inline ? "text-[11px]" : "text-[10px]";
+  const icon = inline ? "w-3 h-3" : "w-2.5 h-2.5";
   return (
-    <div className={`flex items-center gap-1 flex-wrap ${compact ? "mt-0.5" : "mt-1 justify-center"}`}>
+    <span className={`inline-flex items-center gap-0.5 ${text} font-bold uppercase tracking-wide`}>
       {showAdminBadge ? (
-        <span
-          className={`flex items-center gap-0.5 ${text} text-red-400 font-bold uppercase tracking-wide`}
-        >
+        <span className="flex items-center gap-0.5 text-red-400">
           <Shield className={icon} /> Admin
         </span>
-      ) : null}
-      {showHelperBadge ? (
-        <span
-          className={`flex items-center gap-0.5 ${text} text-blue-400 font-bold uppercase tracking-wide`}
-        >
+      ) : (
+        <span className="flex items-center gap-0.5 text-blue-400">
           <Wrench className={icon} /> Helper
         </span>
-      ) : null}
-    </div>
+      )}
+    </span>
   );
 }
 
@@ -64,13 +60,37 @@ export function ForumAuthorPane({
   const showAdminBadge = (adminLevel ?? 0) >= 1;
   const showHelperBadge = !showAdminBadge && (helperLevel ?? 0) >= 1;
 
+  const metaParts: { key: string; node: ReactNode }[] = [];
+  if (showAdminBadge || showHelperBadge) {
+    metaParts.push({
+      key: "staff",
+      node: <StaffBadge showAdminBadge={showAdminBadge} showHelperBadge={showHelperBadge} inline />,
+    });
+  }
+  if (identity.factionLabel) {
+    metaParts.push({
+      key: "faction",
+      node: (
+        <span className="truncate max-w-[140px]" style={{ color: identity.factionColor || undefined }}>
+          {identity.factionLabel}
+        </span>
+      ),
+    });
+  }
+  if (identity.clanName) {
+    metaParts.push({
+      key: "clan",
+      node: <span className="truncate max-w-[160px]">{identity.clanName}</span>,
+    });
+  }
+
   if (variant === "mobile") {
     return (
-      <header className="bg-surface-200 px-4 py-3.5 max-sm:block sm:hidden">
+      <header className="bg-surface-200 px-4 py-3 max-sm:block sm:hidden border-b border-border/50">
         <div className="flex gap-3 items-start">
           <Link
             href={profileHref}
-            className="flex-shrink-0 rounded-full overflow-hidden ring-1 ring-border hover:ring-brand/50 transition-colors"
+            className="flex-shrink-0 rounded-full overflow-hidden ring-1 ring-border hover:ring-brand/50 transition-colors mt-0.5"
           >
             {avatarUrl ? (
               <GTAImage
@@ -78,17 +98,18 @@ export function ForumAuthorPane({
                 alt=""
                 width={48}
                 height={48}
-                className="w-11 h-11 object-cover object-top"
+                className="w-12 h-12 object-cover object-top"
               />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-surface-300 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-surface-300 flex items-center justify-center">
                 <span className="text-base font-extrabold text-brand">
                   {identity.username[0]?.toUpperCase() ?? "?"}
                 </span>
               </div>
             )}
           </Link>
-          <div className="flex-1 min-w-0 text-left">
+
+          <div className="flex-1 min-w-0 flex flex-col items-stretch text-left gap-1">
             <PlayerIdentity
               username={identity.username}
               factionId={identity.factionId}
@@ -98,46 +119,37 @@ export function ForumAuthorPane({
               clanTagStyle={identity.clanTagStyle}
               href={profileHref}
               size="md"
-              className="text-sm font-semibold truncate max-w-full"
+              className="!justify-start text-[15px] font-semibold truncate w-full"
             />
-            <StaffBadge
-              showAdminBadge={showAdminBadge}
-              showHelperBadge={showHelperBadge}
-              compact
-            />
-            {identity.factionLabel ? (
-              <p
-                className="text-xs text-muted-foreground mt-1 truncate"
-                style={{ color: identity.factionColor || undefined }}
-              >
-                {identity.factionLabel}
+
+            {metaParts.length > 0 ? (
+              <p className="text-xs text-muted-foreground leading-snug flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                {metaParts.map((part, i) => (
+                  <span key={part.key} className="inline-flex items-center gap-x-1.5 min-w-0">
+                    {i > 0 ? <span className="text-border/80 select-none">·</span> : null}
+                    {part.node}
+                  </span>
+                ))}
               </p>
             ) : null}
-            {identity.clanName && identity.clanTag ? (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{identity.clanName}</p>
-            ) : null}
+
+            <p className="text-xs text-muted-foreground pt-1">
+              <span className="text-foreground/90 font-medium tabular-nums">{postCount}</span>
+              {" posts"}
+              {joinedAt ? (
+                <>
+                  <span className="mx-1.5 text-border">·</span>
+                  {"Joined "}
+                  <span className="text-foreground/90 font-medium tabular-nums">{joinedYear(joinedAt)}</span>
+                </>
+              ) : null}
+            </p>
           </div>
         </div>
-        <div className="mt-2.5 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span>
-            <span className="text-foreground font-medium tabular-nums">{postCount}</span> {"posts"}
-          </span>
-          {joinedAt ? (
-            <>
-              <span className="text-border">·</span>
-              <span>
-                {"Joined"}{" "}
-                <span className="text-foreground font-medium tabular-nums">{joinedYear(joinedAt)}</span>
-              </span>
-            </>
-          ) : null}
-        </div>
-        <div className="mt-3 border-t border-border/60" aria-hidden="true" />
       </header>
     );
   }
 
-  /* Desktop — unchanged visual (≥600px sidebar column) */
   return (
     <aside
       className="hidden sm:flex w-44 flex-shrink-0 bg-surface-200 p-4 flex-col items-center gap-2 border-r border-border text-center"
@@ -174,7 +186,9 @@ export function ForumAuthorPane({
           size="sm"
           className="truncate max-w-full justify-center"
         />
-        <StaffBadge showAdminBadge={showAdminBadge} showHelperBadge={showHelperBadge} />
+        <div className="mt-1">
+          <StaffBadge showAdminBadge={showAdminBadge} showHelperBadge={showHelperBadge} />
+        </div>
         {identity.factionLabel ? (
           <p
             className="text-[10px] text-muted-foreground mt-0.5 truncate"

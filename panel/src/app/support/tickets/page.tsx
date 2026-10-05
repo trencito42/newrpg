@@ -18,13 +18,20 @@ interface TicketRow extends RowDataPacket {
   messages_count: number;
 }
 
-export default async function SupportTicketsPage() {
+export default async function SupportTicketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
   const session = await getCurrentSession();
   if (!session) {
     redirect("/login");
   }
 
   const locale = await getViewerLocale();
+  const { type } = await searchParams;
+  const isBugPreset = type === "bug";
+  const defaultDepartment = isBugPreset ? "bug" : "general";
 
   const tickets = await dbQuery<TicketRow>(
     `SELECT t.*,
@@ -63,16 +70,24 @@ export default async function SupportTicketsPage() {
     revalidatePath("/support/tickets");
   }
 
+  const messagePlaceholder = isBugPreset
+    ? t(locale, "support.bug_report_message_helper")
+    : t(locale, "interface.detailed_message");
+
   return (
     <div className="space-y-4">
       <div className="pb-3 border-b border-surface-border">
         <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.tickets")}
         </h1>
+        {isBugPreset ? (
+          <p className="text-xs text-[#8F8B83] mt-1.5 max-w-xl leading-relaxed">
+            {t(locale, "support.bug_report_intro")}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Create Ticket */}
         <div className="border border-surface-border rounded bg-surface-100 p-3.5 space-y-3 h-fit text-xs">
           <h2 className="text-xs font-semibold text-[#F2EFE8] uppercase tracking-wider">
             {t(locale, "support.create_ticket")}
@@ -83,7 +98,8 @@ export default async function SupportTicketsPage() {
               <label className="block text-[#8F8B83] mb-1">{t(locale, "support.department")}</label>
               <select
                 name="department"
-                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] text-xs focus:outline-none"
+                defaultValue={defaultDepartment}
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] text-xs focus:outline-none min-h-[40px]"
               >
                 <option value="general">{t(locale, "interface.general_support")}</option>
                 <option value="account">{t(locale, "interface.account_security")}</option>
@@ -99,8 +115,12 @@ export default async function SupportTicketsPage() {
                 type="text"
                 name="subject"
                 required
-                placeholder={t(locale, "interface.brief_subject")}
-                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none"
+                placeholder={
+                  isBugPreset
+                    ? t(locale, "support.bug_report_subject_placeholder")
+                    : t(locale, "interface.brief_subject")
+                }
+                className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none min-h-[40px]"
               />
             </div>
 
@@ -109,18 +129,18 @@ export default async function SupportTicketsPage() {
               <textarea
                 name="message"
                 required
-                rows={3}
-                placeholder={t(locale, "interface.detailed_message")}
+                rows={isBugPreset ? 5 : 3}
+                placeholder={messagePlaceholder}
                 className="w-full px-2.5 py-1.5 bg-surface-200 border border-surface-border rounded text-[#F2EFE8] placeholder-[#8F8B83] text-xs focus:outline-none resize-none"
               />
             </div>
 
-            <Button type="submit" size="sm" className="w-full mt-1">
-              {t(locale, "interface.submit_ticket")}</Button>
+            <Button type="submit" size="sm" className="w-full mt-1 min-h-[44px]">
+              {t(locale, "interface.submit_ticket")}
+            </Button>
           </form>
         </div>
 
-        {/* Tickets List */}
         <div className="lg:col-span-2 border border-surface-border rounded bg-surface-100 overflow-hidden">
           <div className="p-2.5 px-3 border-b border-surface-border flex items-center justify-between text-xs font-semibold text-[#F2EFE8]">
             <span>{t(locale, "nav.tickets")}</span>

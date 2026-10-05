@@ -95,6 +95,52 @@
     "likes_and_comments": "{likes} aprecieri · {comments} comentarii"
   },
   "home": {
+    "community_slider": {
+      "title": "Comunitate",
+      "subtitle": "Tot ce ține de RACKET, într-un singur loc.",
+      "scroll_prev": "Înapoi",
+      "scroll_next": "Înainte",
+      "cards": {
+        "bug": {
+          "title": "Raportează un bug",
+          "description": "Ceva nu funcționează? Spune-ne.",
+          "cta": "Raportează bug"
+        },
+        "forum": {
+          "title": "Forum comunitate",
+          "description": "Discuții, ghiduri, idei și comunitate.",
+          "cta": "Deschide forumul",
+          "hint": "Discuții recente"
+        },
+        "feed": {
+          "title": "Feed social",
+          "description": "Vezi ce se întâmplă în Los Santos.",
+          "cta": "Vezi feed-ul",
+          "hint": "Postări din comunitate"
+        },
+        "updates": {
+          "title": "Ultimele update-uri",
+          "description": "Știri, update-uri și patch notes de pe server.",
+          "cta": "Citește update-urile",
+          "hint": "Patch notes & știri"
+        },
+        "support": {
+          "title": "Suport",
+          "description": "Ai nevoie de ajutor? Deschide un ticket.",
+          "cta": "Contactează suportul"
+        },
+        "activity": {
+          "title": "Activitatea mea",
+          "description": "Topicurile, postările și abonările tale.",
+          "cta": "Vezi activitatea"
+        },
+        "profile": {
+          "title": "Profilul meu",
+          "description": "Personajul, statisticile și activitatea din comunitate.",
+          "cta": "Deschide profilul"
+        }
+      }
+    },
     "badge": "Panou",
     "title": "{serverName}",
     "subtitle": "Bine ai venit în comunitate.",
@@ -265,7 +311,10 @@
     "unban_title": "Cerere Debanare",
     "unban_desc": "Dacă ai contul banat, explică situația mai jos.",
     "appeal_reason": "Motivul cererii",
-    "submit_appeal": "Trimite Cererea"
+    "submit_appeal": "Trimite Cererea",
+    "bug_report_intro": "Ne ajută să rezolvăm mai repede. Spune ce s-a întâmplat, ce te așteptai și dacă poți reproduce problema.",
+    "bug_report_subject_placeholder": "Rezumat scurt al bug-ului",
+    "bug_report_message_helper": "Ce s-a întâmplat?\nCe te așteptai să se întâmple?\nPoți reproduce? (pași, loc, oră)"
   },
   "staff": {
     "title": "Staff",
@@ -777,6 +826,8 @@
     "toggle_navigation": "Deschide sau închide navigarea",
     "cash_bank": "Numerar + Bancă",
     "discord_community": "Comunitatea Discord",
+    "panel_footer_version": "Panou RACKET v{version}",
+    "panel_footer_stable": "Build de producție · pornește corect din prima",
     "pinned": "FIXAT",
     "police_department": "Departamentul de poliție",
     "recruitment_open": "Recrutări deschise",

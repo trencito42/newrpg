@@ -95,6 +95,52 @@
     "likes_and_comments": "{likes} likes · {comments} comments"
   },
   "home": {
+    "community_slider": {
+      "title": "Community",
+      "subtitle": "Everything around RACKET, in one place.",
+      "scroll_prev": "Previous",
+      "scroll_next": "Next",
+      "cards": {
+        "bug": {
+          "title": "Report a bug",
+          "description": "Found something broken? Tell us.",
+          "cta": "Report bug"
+        },
+        "forum": {
+          "title": "Community forum",
+          "description": "Discussions, guides, ideas and community.",
+          "cta": "Open forum",
+          "hint": "Latest discussions"
+        },
+        "feed": {
+          "title": "Social feed",
+          "description": "See what's happening around Los Santos.",
+          "cta": "View feed",
+          "hint": "Community posts"
+        },
+        "updates": {
+          "title": "Latest updates",
+          "description": "Server news, updates and patch notes.",
+          "cta": "Read updates",
+          "hint": "Patch notes & news"
+        },
+        "support": {
+          "title": "Support",
+          "description": "Need help? Open a support ticket.",
+          "cta": "Get support"
+        },
+        "activity": {
+          "title": "My activity",
+          "description": "Your topics, posts and subscriptions.",
+          "cta": "View activity"
+        },
+        "profile": {
+          "title": "My profile",
+          "description": "Your character, stats and community activity.",
+          "cta": "Open profile"
+        }
+      }
+    },
     "badge": "Panel",
     "title": "{serverName}",
     "subtitle": "Welcome to the community.",
@@ -265,7 +311,10 @@
     "unban_title": "Unban Appeal",
     "unban_desc": "If your account is banned, explain your case below.",
     "appeal_reason": "Reason for appeal",
-    "submit_appeal": "Submit Appeal"
+    "submit_appeal": "Submit Appeal",
+    "bug_report_intro": "Help us fix issues faster. Include what happened, what you expected, and whether you can reproduce it.",
+    "bug_report_subject_placeholder": "Short summary of the bug",
+    "bug_report_message_helper": "What happened?\nWhat did you expect to happen?\nCan you reproduce it? (steps, location, time)"
   },
   "staff": {
     "title": "Staff",
@@ -777,6 +826,8 @@
     "toggle_navigation": "Toggle navigation",
     "cash_bank": "Cash + Bank",
     "discord_community": "Discord Community",
+    "panel_footer_version": "RACKET Panel v{version}",
+    "panel_footer_stable": "Production build · ready on first start",
     "pinned": "PINNED",
     "police_department": "Police Department",
     "recruitment_open": "Recruitment open",

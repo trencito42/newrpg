@@ -10,6 +10,7 @@ import { MobileNav } from "@/components/navigation/MobileNav";
 import { buildRootMetadata, getSiteUrl } from "@/lib/seo/metadata";
 import { safeJsonLd } from "@/lib/seo";
 import { panelBrand } from "@/lib/brand";
+import { PanelSiteFooter } from "@/components/navigation/PanelSiteFooter";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
 import { resolvePlayerIdentity } from "@/lib/player-identity";
@@ -94,6 +95,7 @@ export default async function RootLayout({
             <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1560px] w-full mx-auto">
               {children}
             </main>
+            <PanelSiteFooter locale={locale} />
           </div>
         </PlayerPreviewProvider>
         </LocaleProvider>

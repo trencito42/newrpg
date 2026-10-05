@@ -1,7 +1,13 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const panelDir = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingRoot: panelDir,
   headers: async () => [
     {
       source: "/:path*",

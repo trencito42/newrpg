@@ -220,26 +220,23 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
         </div>
 
         {/* Mobile footer: timestamp + actions */}
-        <footer className="max-sm:flex sm:hidden items-end justify-between gap-3 px-4 py-3 border-t border-border/60 bg-surface-200/30">
-          <div className="flex flex-col gap-1 min-w-0 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-              <Link href={permalinkPath} className="hover:text-brand transition-colors">
-                <time dateTime={createdIso} className="text-sm text-foreground/90">
+        <footer className="max-sm:flex sm:hidden items-center justify-between gap-2 px-4 py-2.5 border-t border-border/60 bg-surface-200/25 min-h-[48px]">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
+              <Link href={permalinkPath} className="hover:text-brand transition-colors truncate">
+                <time dateTime={createdIso} className="text-sm text-foreground/90 font-medium">
                   {formatForumClock(post.created_at_unix ?? post.created_at, locale)}
                 </time>
               </Link>
             </div>
             {post.edited_at ? (
-              <p className="text-xs leading-snug pl-5">
+              <p className="text-[11px] leading-snug text-muted-foreground truncate pl-5">
                 {"edited by"} {post.edited_by_username ?? post.author_username}
-                {post.edit_reason ? ` · "${post.edit_reason}"` : ""}
               </p>
             ) : null}
           </div>
-          <div className="flex-shrink-0 self-center">
-            <PostCardActions layout="mobile" {...actionProps} />
-          </div>
+          <PostCardActions layout="mobile" {...actionProps} />
         </footer>
       </div>
 

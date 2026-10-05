@@ -26,6 +26,8 @@ import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { fetchSocialFeedPosts } from "@/lib/social-feed";
 import { fetchHomeForumActivity } from "@/lib/home-forum-activity";
 import { HomeCommunityHub } from "@/components/home/HomeCommunityHub";
+import { HomeCommunitySlider } from "@/components/home/HomeCommunitySlider";
+import { buildHomeCommunitySliderCards } from "@/lib/home-community-slider-cards";
 import { getServerStatus, getAggregatedServerStats } from "@/lib/bridge";
 import { t, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
@@ -262,6 +264,11 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
+
+      <HomeCommunitySlider
+        locale={locale}
+        cards={buildHomeCommunitySliderCards(session?.username ?? null)}
+      />
 
       {/* HORIZONTAL SCROLLABLE STATS STRIP ON MOBILE */}
       <div className="space-y-1">
