@@ -7,15 +7,9 @@ const { spawn } = require('node:child_process');
 const RESOURCE = 'racket_vehicle_thumbs';
 const resourcePath = typeof GetResourcePath === 'function' ? GetResourcePath(RESOURCE) : path.join(__dirname, '..');
 
-// Resolved lazily so fs is not called at module load time (FiveM Node.js permission
-// model gates filesystem access; querying /usr/bin before permissions are applied throws).
-let _binary = null;
-function getBinary() {
-  if (!_binary) {
-    _binary = fs.existsSync('/usr/bin/magick') ? '/usr/bin/magick' : '/usr/bin/convert';
-  }
-  return _binary;
-}
+// Hardcoded — FiveM's Node.js permission model blocks fs.existsSync on system paths
+// even with add_filesystem_permission. Alpine imagemagick always installs to /usr/bin/magick.
+const binary = '/usr/bin/magick';
 
 function validName(value) {
   return typeof value === 'string' && /^[a-z0-9_]{1,64}$/.test(value);
@@ -31,7 +25,7 @@ function validDirectory(value) {
 
 function runImageMagick(args, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
-    const child = spawn(getBinary(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     const stdout = [];
     let stderr = '';
     const timer = setTimeout(() => child.kill('SIGKILL'), timeoutMs);
@@ -89,7 +83,7 @@ async function processImage(token, model, options) {
       throw new Error(`Chroma backdrop missing at screenshot corner (${[...corner].join(',')})`);
     }
     const args = buildConvertArgs(rawPath, temporaryPath, chroma, fuzz, padding);
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${getBinary()} ${args.join(' ')}`);
+    if (options.debug) console.log(`[racket_vehicle_thumbs] ${binary} ${args.join(' ')}`);
     await runImageMagick(args);
     const size = (await runImageMagick([temporaryPath, '-format', '%w,%h', 'info:'])).toString().trim();
     const [width, height] = size.split(',').map(Number);
