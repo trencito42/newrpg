@@ -103,7 +103,7 @@ advance = function()
     queue.stage = 'prepare'
     tell(queue.source, ('[%d/%d] %s: preparing'):format(queue.index, #queue.items, model))
     TriggerClientEvent('racket_thumbs:begin', queue.source, token, model)
-    stageTimeout(queue, token, 'prepare', cfg.ModelLoadTimeoutMs + cfg.SettleMs + 8000)
+    stageTimeout(queue, token, 'prepare', cfg.ModelLoadTimeoutMs + cfg.SettleMs + cfg.BgSettleMs + 8000)
 end
 
 local function beginQueue(source, items, skipped)
@@ -196,7 +196,7 @@ RegisterCommand('vehthumbs', function(source, args)
         tell(source, 'resource: ready')
         tell(source, 'screenshot-basic: ' .. ssState)
         tell(source, 'ImageMagick: ' .. imPath)
-        tell(source, 'chroma mode: ' .. cfg.ChromaMode)
+        tell(source, 'capture mode: dual-pass alpha')
         tell(source, 'raw dir: ' .. rawDir .. ' — ' .. (rawOk and 'writable' or 'NOT WRITABLE'))
         tell(source, 'output dir: ' .. outDir .. ' — ' .. (outOk and 'writable' or 'NOT WRITABLE'))
         tell(source, 'batch: ' .. batchStatus)
@@ -259,7 +259,7 @@ RegisterNetEvent('racket_thumbs:catalogResponse', function(token, clientModels)
     beginQueue(source, items, skipped)
 end)
 
-RegisterNetEvent('racket_thumbs:prepared', function(token)
+RegisterNetEvent('racket_thumbs:blackReady', function(token)
     local source = source
     local queue = activeQueue
     if not queue or queue.source ~= source or queue.token ~= token or queue.stage ~= 'prepare' then return end
@@ -267,27 +267,55 @@ RegisterNetEvent('racket_thumbs:prepared', function(token)
         finishCurrent(false, 'screenshot-basic stopped')
         return
     end
-    queue.stage = 'capture'
-    stageTimeout(queue, token, 'capture', cfg.CaptureTimeoutMs)
-    local rawPath = ('%s/%s/%s.png'):format(GetResourcePath(GetCurrentResourceName()), cfg.RawDir, token)
+    queue.stage = 'captureBlack'
+    stageTimeout(queue, token, 'captureBlack', cfg.CaptureTimeoutMs)
+    local blackPath = ('%s/%s/%s_b.png'):format(GetResourcePath(GetCurrentResourceName()), cfg.RawDir, token)
     local ok, err = pcall(function()
         exports['screenshot-basic']:requestClientScreenshot(source, {
-            fileName = rawPath, encoding = 'png',
+            fileName = blackPath, encoding = 'png',
         }, function(captureError, savedPath)
-            if activeQueue ~= queue or queue.token ~= token or queue.stage ~= 'capture' then return end
+            if activeQueue ~= queue or queue.token ~= token or queue.stage ~= 'captureBlack' then return end
             if captureError or not savedPath then
-                finishCurrent(false, 'screenshot failed: ' .. tostring(captureError or 'empty result'))
+                finishCurrent(false, 'black capture failed: ' .. tostring(captureError or 'empty result'))
+                return
+            end
+            queue.stage = 'captureWhite'
+            stageTimeout(queue, token, 'captureWhite', cfg.CaptureTimeoutMs + cfg.BgSettleMs + 2000)
+            TriggerClientEvent('racket_thumbs:captureWhite', queue.source, token)
+        end)
+    end)
+    if not ok then finishCurrent(false, 'black screenshot error: ' .. tostring(err)) end
+end)
+
+RegisterNetEvent('racket_thumbs:whiteReady', function(token)
+    local source = source
+    local queue = activeQueue
+    if not queue or queue.source ~= source or queue.token ~= token or queue.stage ~= 'captureWhite' then return end
+    if GetResourceState('screenshot-basic') ~= 'started' then
+        finishCurrent(false, 'screenshot-basic stopped')
+        return
+    end
+    queue.stage = 'captureWhiteShot'
+    stageTimeout(queue, token, 'captureWhiteShot', cfg.CaptureTimeoutMs)
+    local whitePath = ('%s/%s/%s_w.png'):format(GetResourcePath(GetCurrentResourceName()), cfg.RawDir, token)
+    local ok, err = pcall(function()
+        exports['screenshot-basic']:requestClientScreenshot(source, {
+            fileName = whitePath, encoding = 'png',
+        }, function(captureError, savedPath)
+            if activeQueue ~= queue or queue.token ~= token or queue.stage ~= 'captureWhiteShot' then return end
+            if captureError or not savedPath then
+                finishCurrent(false, 'white capture failed: ' .. tostring(captureError or 'empty result'))
                 return
             end
             queue.stage = 'processing'
             stageTimeout(queue, token, 'processing', cfg.ProcessingTimeoutMs)
             TriggerEvent('racket_thumbs:process', token, queue.items[queue.index], {
-                rawDir = cfg.RawDir, outputDir = cfg.OutputDir, chromaMode = cfg.ChromaMode,
-                fuzz = cfg.AlphaFuzzPercent, padding = cfg.PaddingPixels, debug = cfg.Debug,
+                rawDir = cfg.RawDir, outputDir = cfg.OutputDir,
+                padding = cfg.PaddingPixels, debug = cfg.Debug,
             })
         end)
     end)
-    if not ok then finishCurrent(false, 'screenshot export error: ' .. tostring(err)) end
+    if not ok then finishCurrent(false, 'white screenshot error: ' .. tostring(err)) end
 end)
 
 RegisterNetEvent('racket_thumbs:clientFailed', function(token, reason)

@@ -3,11 +3,6 @@ RacketThumbs = {
     -- inside this resource because the FiveM filesystem sandbox blocks outside writes.
     OutputDir = 'output',
     RawDir = 'raw',
-    ChromaMode = 'magenta', -- 'green' or 'magenta'
-    ChromaColors = {
-        green = { 0, 255, 0 },
-        magenta = { 255, 0, 255 },
-    },
     Studio = vector3(0.0, 0.0, 900.0),
     StudioHalfSize = 40.0,
     StudioHeight = 32.0,
@@ -16,10 +11,10 @@ RacketThumbs = {
     CameraElevation = 0.27,
     CameraFill = 0.72,
     SettleMs = 2500,
+    BgSettleMs = 150,    -- wait after switching background color before capture
     ModelLoadTimeoutMs = 12000,
     CaptureTimeoutMs = 20000,
     ProcessingTimeoutMs = 20000,
-    AlphaFuzzPercent = 8,
     PaddingPixels = 24,
     MinAdminLevel = 5,
     Debug = false,

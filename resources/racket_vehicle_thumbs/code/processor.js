@@ -40,61 +40,81 @@ function runImageMagick(args, timeoutMs = 20000) {
   });
 }
 
-function buildConvertArgs(rawPath, temporaryPath, chroma, fuzz, padding) {
-  return [
-    rawPath,
-    '-alpha', 'on',
-    '-bordercolor', chroma, '-border', '1',
-    '-fuzz', `${fuzz}%`, '-fill', 'none', '-draw', 'color 0,0 floodfill',
-    '-shave', '1x1',
-    '-trim', '+repage',
-    '-bordercolor', 'none', '-border', `${padding}x${padding}`,
-    '-define', 'png:color-type=6', temporaryPath,
-  ];
-}
-
-function isChromaPixel(pixel, mode) {
-  if (pixel.length !== 3) return false;
-  const [red, green, blue] = pixel;
-  if (mode === 'magenta') return red > 95 && blue > 95 && red > green * 1.45 && blue > green * 1.45;
-  return green > 95 && green > red * 1.45 && green > blue * 1.45;
-}
-
+// Dual-pass alpha reconstruction from black and white background captures.
+//
+// Math:
+//   B = fg * alpha          (black bg: only vehicle contributes)
+//   W = fg * alpha + (1-alpha)   (white bg: vehicle + white bleeds through)
+//   alpha = 1 - (W - B)    (difference reveals how much white bled through)
+//   fg = B / alpha          (un-premultiply to recover true vehicle color)
+//
+// This handles semi-transparent glass correctly: no chroma contamination.
 async function processImage(token, model, options) {
   if (!validToken(token) || !validName(model)) throw new Error('Invalid capture identifier');
   if (!options || !validDirectory(options.rawDir) || !validDirectory(options.outputDir)) {
     throw new Error('Invalid thumbnail directories');
   }
-  const mode = options.chromaMode === 'magenta' ? 'magenta' : 'green';
-  const chroma = mode === 'magenta' ? '#ff00ff' : '#00ff00';
-  const fuzz = Math.max(0, Math.min(25, Math.round(Number(options.fuzz) || 0)));
   const padding = Math.max(0, Math.min(128, Math.round(Number(options.padding) || 0)));
-  const rawPath = path.join(resourcePath, options.rawDir, `${token}.png`);
+  const blackPath = path.join(resourcePath, options.rawDir, `${token}_b.png`);
+  const whitePath = path.join(resourcePath, options.rawDir, `${token}_w.png`);
   const outputPath = path.join(resourcePath, options.outputDir, `${model}.png`);
-  const temporaryPath = path.join(resourcePath, options.outputDir, `${model}.${token}.tmp.png`);
-  if (!fs.existsSync(rawPath)) throw new Error('Screenshot was not saved');
+  const tmpAlpha = path.join(resourcePath, options.outputDir, `${model}.${token}.alpha.png`);
+  const tmpRgb   = path.join(resourcePath, options.outputDir, `${model}.${token}.rgb.png`);
+  const tmpFinal = path.join(resourcePath, options.outputDir, `${model}.${token}.tmp.png`);
+
+  if (!fs.existsSync(blackPath)) throw new Error('Black capture not found');
+  if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
   if (!fs.existsSync(path.dirname(outputPath))) throw new Error('Output directory is not mounted');
 
   try {
-    // Fail closed if the studio backdrop did not render: never publish a PNG
-    // whose sky/world was accidentally flood-filled as the background.
-    const corner = await runImageMagick([rawPath, '-crop', '1x1+0+0', '-depth', '8', 'rgb:-']);
-    if (!isChromaPixel(corner, mode)) {
-      throw new Error(`Chroma backdrop missing at screenshot corner (${[...corner].join(',')})`);
-    }
-    const args = buildConvertArgs(rawPath, temporaryPath, chroma, fuzz, padding);
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${binary} ${args.join(' ')}`);
-    await runImageMagick(args);
-    const size = (await runImageMagick([temporaryPath, '-format', '%w,%h', 'info:'])).toString().trim();
+    // Step 1: alpha channel = 1 - (white - black), as grayscale
+    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 1 — reconstruct alpha`);
+    await runImageMagick([
+      whitePath, blackPath,
+      '-compose', 'Difference', '-composite',
+      '-colorspace', 'Gray', '-negate',
+      tmpAlpha,
+    ]);
+
+    // Step 2: recover foreground RGB — un-premultiply: fg = black / alpha
+    // DivideDst compose: dst / src = black / alpha
+    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 2 — un-premultiply RGB`);
+    await runImageMagick([
+      blackPath, tmpAlpha,
+      '-alpha', 'Off',
+      '-compose', 'DivideDst', '-composite',
+      tmpRgb,
+    ]);
+
+    // Step 3: merge RGB + alpha, trim transparent edges, add padding, export RGBA PNG
+    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 3 — compose, trim, pad`);
+    await runImageMagick([
+      tmpRgb, tmpAlpha,
+      '-compose', 'CopyOpacity', '-composite',
+      '-trim', '+repage',
+      '-bordercolor', 'none', '-border', `${padding}x${padding}`,
+      '-define', 'png:color-type=6',
+      tmpFinal,
+    ]);
+
+    const size = (await runImageMagick([tmpFinal, '-format', '%w,%h', 'info:'])).toString().trim();
     const [width, height] = size.split(',').map(Number);
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width < 120 || height < 80) {
-      throw new Error(`Transparent crop looks empty or incomplete (${size})`);
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width < 40 || height < 30) {
+      throw new Error(`Reconstructed image looks empty (${size})`);
     }
-    fs.renameSync(temporaryPath, outputPath);
-    if (!options.debug) fs.unlinkSync(rawPath);
+
+    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png`);
+    fs.renameSync(tmpFinal, outputPath);
     return `${model}.png`;
   } finally {
-    try { if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath); } catch (_) {}
+    for (const tmp of [tmpAlpha, tmpRgb, tmpFinal]) {
+      try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch (_) {}
+    }
+    if (!options.debug) {
+      for (const raw of [blackPath, whitePath]) {
+        try { if (fs.existsSync(raw)) fs.unlinkSync(raw); } catch (_) {}
+      }
+    }
   }
 }
 
@@ -110,4 +130,4 @@ if (typeof on === 'function') {
   });
 }
 
-module.exports = { validName, validToken, validDirectory, buildConvertArgs, isChromaPixel, processImage };
+module.exports = { validName, validToken, validDirectory, processImage };

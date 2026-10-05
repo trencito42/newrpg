@@ -13,7 +13,9 @@ local function drawStudio()
     local center = cfg.Studio
     local half = cfg.StudioHalfSize
     local low, high = center.z - 0.04, center.z + cfg.StudioHeight
-    local color = cfg.ChromaColors[cfg.ChromaMode] or cfg.ChromaColors.green
+    -- Dual-pass: black background by default, white after server triggers captureWhite.
+    local bg = current and current.bg
+    local color = bg == 'white' and { 255, 255, 255 } or { 0, 0, 0 }
     local function point(x, y, z) return vector3(center.x + x, center.y + y, z) end
     local nw, ne = point(-half, half, low), point(half, half, low)
     local sw, se = point(-half, -half, low), point(half, -half, low)
@@ -120,8 +122,9 @@ local function prepareVehicle(token, model)
         pcall(function() exports.sunset_ui:HideHudChrome() end)
     end
     Wait(cfg.SettleMs)
+    -- Black background already set at initialization; signal server to capture black pass.
     if current and current.token == token then
-        TriggerServerEvent('racket_thumbs:prepared', token)
+        TriggerServerEvent('racket_thumbs:blackReady', token)
     end
 end
 
@@ -129,10 +132,21 @@ RegisterNetEvent('racket_thumbs:begin', function(token, model)
     if type(token) ~= 'string' or type(model) ~= 'string' then return end
     cleanup()
     current = { token = token, vehicle = nil, camera = nil, ped = nil,
-        wasVisible = true, wasFrozen = false, wasRadar = true }
+        wasVisible = true, wasFrozen = false, wasRadar = true, bg = 'black' }
     CreateThread(function()
         local ok, reason = pcall(prepareVehicle, token, model)
         if not ok and current and current.token == token then fail(token, reason) end
+    end)
+end)
+
+RegisterNetEvent('racket_thumbs:captureWhite', function(token)
+    if not current or current.token ~= token then return end
+    current.bg = 'white'
+    CreateThread(function()
+        Wait(cfg.BgSettleMs)
+        if current and current.token == token then
+            TriggerServerEvent('racket_thumbs:whiteReady', token)
+        end
     end)
 end)
 
