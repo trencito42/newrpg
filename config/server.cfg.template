@@ -155,7 +155,8 @@ ensure screenshot-basic
 # Controlled independently via VEHICLE_THUMBS_ENABLED=1 (NOT tied to SUNSET_DEV).
 #@vehiclethumbs add_ace group.admin racket.thumbs allow
 #@vehiclethumbs add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
-#@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read /usr/bin
+#@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read /usr/bin/magick
+#@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read /usr/bin/convert
 #@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read racket_vehicle_thumbs
 #@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs write racket_vehicle_thumbs
 #@vehiclethumbs add_unsafe_child_process_permission racket_vehicle_thumbs
