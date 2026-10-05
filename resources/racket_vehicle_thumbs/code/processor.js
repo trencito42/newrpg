@@ -6,6 +6,7 @@ const { spawn } = require('node:child_process');
 
 const RESOURCE = 'racket_vehicle_thumbs';
 const resourcePath = typeof GetResourcePath === 'function' ? GetResourcePath(RESOURCE) : path.join(__dirname, '..');
+const vanillaModels = new Set(require('./vanilla_models.json'));
 
 // Hardcoded — FiveM's Node.js permission model blocks fs.existsSync on system paths
 // even with add_filesystem_permission. Alpine imagemagick always installs to /usr/bin/magick.
@@ -41,72 +42,146 @@ function runImageMagick(args, timeoutMs = 20000) {
 }
 
 // ─── Custom vehicle catalog scanner ──────────────────────────────────────────
-// Scans all vehicles.meta files under the resources root and extracts model names.
-// Returns only add-on vehicles — system resources (ox_lib, pma-voice, etc.) never
-// contain vehicles.meta, so the result is naturally free of vanilla GTA models.
+// Enumerating resources first is important: FiveM's Node sandbox can deny a
+// recursive read of /config/resources even though each started resource path is
+// readable. The old scanner swallowed that error and reported zero vehicles.
 
-function* walkForMeta(dir, depth) {
-  if (depth > 8) return;
+function* walkForMeta(resourceName, dir, depth, stats) {
+  if (depth > 12) return;
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return; }
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch (error) {
+    stats.scanErrors++;
+    console.warn(`[VEH THUMBS] WARN ${resourceName}: unable to inspect ${dir}: ${error.message}`);
+    return;
+  }
   for (const e of entries) {
     const full = path.join(dir, e.name);
-    if (e.isFile() && e.name === 'vehicles.meta') {
+    if (e.isFile() && e.name.toLowerCase() === 'vehicles.meta') {
       yield full;
     } else if (e.isDirectory()) {
-      yield* walkForMeta(full, depth + 1);
+      yield* walkForMeta(resourceName, full, depth + 1, stats);
     }
   }
 }
 
 function parseVehicleModels(filePath) {
-  let text;
-  try { text = fs.readFileSync(filePath, 'utf8'); } catch (_) { return null; }
+  const text = fs.readFileSync(filePath, 'utf8');
   const models = [];
-  for (const m of text.matchAll(/<modelName>\s*([^<\s]+)\s*<\/modelName>/g)) {
+  for (const m of text.matchAll(/<modelName>\s*([^<\s]+)\s*<\/modelName>/gi)) {
     const name = m[1].toLowerCase().trim();
     if (/^[a-z0-9_]{1,64}$/.test(name)) models.push(name);
   }
   return models;
 }
 
-function buildCustomCatalog() {
-  const resourcesRoot = path.dirname(resourcePath);
+function fiveMRuntime() {
+  if (typeof GetNumResources !== 'function' || typeof GetResourceByFindIndex !== 'function'
+      || typeof GetResourceState !== 'function' || typeof GetResourcePath !== 'function') {
+    throw new Error('FiveM resource enumeration natives are unavailable');
+  }
+  return {
+    count: () => GetNumResources(),
+    nameAt: (index) => GetResourceByFindIndex(index),
+    state: (name) => GetResourceState(name),
+    resourcePath: (name) => GetResourcePath(name),
+  };
+}
+
+function buildCustomCatalog(runtime = fiveMRuntime()) {
   const byResource = Object.create(null);
   const allModels = new Set();
-  let parseErrors = 0;
+  const stats = {
+    resourcesEnumerated: 0,
+    startedResources: 0,
+    vehicleResources: 0,
+    metaFiles: 0,
+    parsedModels: 0,
+    vanillaIgnored: 0,
+    duplicatesIgnored: 0,
+    parseErrors: 0,
+    scanErrors: 0,
+    customModels: 0,
+  };
+  const started = [];
 
-  console.log('[racket_vehicle_thumbs] Scanning custom vehicle resources...');
-  for (const metaFile of walkForMeta(resourcesRoot, 0)) {
-    // Skip files that live inside this resource
-    if (metaFile.startsWith(resourcePath + path.sep)) continue;
+  const count = Number(runtime.count()) || 0;
+  stats.resourcesEnumerated = count;
+  for (let index = 0; index < count; index++) {
+    const name = runtime.nameAt(index);
+    if (name && runtime.state(name) === 'started') started.push(name);
+  }
+  stats.startedResources = started.length;
+  console.log(`[VEH THUMBS] Scanning ${started.length} started resources...`);
 
-    const rel = path.relative(resourcesRoot, metaFile);
-    const parts = rel.split(path.sep);
-    // [group]/resource/... or resource/... — keep just the resource folder name
-    const resourceName = parts[0].startsWith('[') ? (parts[1] || parts[0]) : parts[0];
+  for (const resourceName of started) {
+    if (resourceName === RESOURCE) continue;
+    let currentPath;
+    try {
+      currentPath = runtime.resourcePath(resourceName);
+    } catch (error) {
+      stats.scanErrors++;
+      console.warn(`[VEH THUMBS] WARN ${resourceName}: unable to resolve resource path: ${error.message}`);
+      continue;
+    }
+    if (!currentPath) {
+      stats.scanErrors++;
+      console.warn(`[VEH THUMBS] WARN ${resourceName}: unable to resolve resource path`);
+      continue;
+    }
 
-    const models = parseVehicleModels(metaFile);
-    if (models === null) { parseErrors++; continue; }
-    if (models.length === 0) continue;
+    let resourceHasMetadata = false;
+    for (const metaFile of walkForMeta(resourceName, currentPath, 0, stats)) {
+      resourceHasMetadata = true;
+      stats.metaFiles++;
+      let models;
+      try {
+        models = parseVehicleModels(metaFile);
+      } catch (error) {
+        stats.parseErrors++;
+        console.warn(`[VEH THUMBS] WARN ${resourceName}: unable to parse vehicles.meta: ${error.message}`);
+        continue;
+      }
+      if (models.length === 0) {
+        stats.parseErrors++;
+        console.warn(`[VEH THUMBS] WARN ${resourceName}: unable to parse vehicles.meta: no valid modelName entries in ${metaFile}`);
+        continue;
+      }
 
-    if (!byResource[resourceName]) byResource[resourceName] = [];
-    for (const m of models) {
-      if (!allModels.has(m)) {
-        allModels.add(m);
-        byResource[resourceName].push(m);
+      if (!byResource[resourceName]) byResource[resourceName] = [];
+      for (const model of models) {
+        stats.parsedModels++;
+        if (vanillaModels.has(model)) {
+          stats.vanillaIgnored++;
+        } else if (allModels.has(model)) {
+          stats.duplicatesIgnored++;
+        } else {
+          allModels.add(model);
+          byResource[resourceName].push(model);
+        }
       }
     }
+    if (resourceHasMetadata) stats.vehicleResources++;
+    if (byResource[resourceName] && byResource[resourceName].length === 0) delete byResource[resourceName];
   }
 
-  for (const [res, models] of Object.entries(byResource)) {
-    console.log(`[racket_vehicle_thumbs] ${res}: ${models.length} model${models.length !== 1 ? 's' : ''}`);
+  const models = Array.from(allModels).sort();
+  stats.customModels = models.length;
+  for (const resourceModels of Object.values(byResource)) resourceModels.sort();
+  for (const [name, resourceModels] of Object.entries(byResource).sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(`[VEH THUMBS] ${name}: ${resourceModels.length} addon model${resourceModels.length === 1 ? '' : 's'}`);
   }
-  if (parseErrors > 0) {
-    console.warn(`[racket_vehicle_thumbs] Warning: ${parseErrors} vehicles.meta files could not be read`);
+  console.log(`[VEH THUMBS] Vehicle resources found: ${stats.vehicleResources}`);
+  console.log(`[VEH THUMBS] vehicles.meta files found: ${stats.metaFiles}`);
+  console.log(`[VEH THUMBS] addon models discovered: ${stats.parsedModels}`);
+  console.log(`[VEH THUMBS] vanilla models ignored: ${stats.vanillaIgnored}`);
+  console.log(`[VEH THUMBS] duplicate models ignored: ${stats.duplicatesIgnored}`);
+  console.log(`[VEH THUMBS] custom catalogue ready: ${stats.customModels}`);
+  if (stats.customModels === 0) {
+    console.warn(`[VEH THUMBS] WARN no custom vehicles detected (${stats.parseErrors} parse errors, ${stats.scanErrors} scan errors)`);
   }
-  console.log(`[racket_vehicle_thumbs] Custom catalog: ${allModels.size} unique vehicles`);
-  return { models: Array.from(allModels), byResource };
+  return { models, byResource, stats };
 }
 
 // ─── Dual-pass alpha reconstruction from black and white background captures.
@@ -204,11 +279,11 @@ if (typeof on === 'function') {
       result = buildCustomCatalog();
     } catch (e) {
       console.error(`[racket_vehicle_thumbs] Custom catalog scan failed: ${e.message}`);
-      emit('racket_thumbs:customCatalogBuilt', null, null, e.message);
+      emit('racket_thumbs:customCatalogBuilt', null, null, null, e.message);
       return;
     }
-    emit('racket_thumbs:customCatalogBuilt', result.models, result.byResource, null);
+    emit('racket_thumbs:customCatalogBuilt', result.models, result.byResource, result.stats, null);
   });
 }
 
-module.exports = { validName, validToken, validDirectory, processImage, buildCustomCatalog };
+module.exports = { validName, validToken, validDirectory, processImage, parseVehicleModels, buildCustomCatalog };

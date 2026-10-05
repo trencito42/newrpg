@@ -2315,11 +2315,11 @@
             } catch (_) { return ''; }
         },
 
-        _buildFeedCard(post, clickable) {
+        _buildFeedCard(feedPost, clickable) {
             const self = this;
             if (!this._feedLikes) this._feedLikes = {};
-            const postId = String(post.id);
-            const likeState = this._feedLikes[postId] || { likesCount: Number(post.likes_count) || 0, likedByViewer: !!Number(post.liked_by_viewer) };
+            const postId = String(feedPost.id);
+            const likeState = this._feedLikes[postId] || { likesCount: Number(feedPost.likes_count) || 0, likedByViewer: !!Number(feedPost.liked_by_viewer) };
             this._feedLikes[postId] = likeState;
 
             const card = el('div', 'feed-card');
@@ -2328,17 +2328,17 @@
             // Header
             const header = el('div', 'feed-card-header');
             const avatar = el('div', 'feed-avatar');
-            const initials = ((post.firstname || '?')[0] + (post.lastname || '?')[0]).toUpperCase();
+            const initials = ((feedPost.firstname || '?')[0] + (feedPost.lastname || '?')[0]).toUpperCase();
             avatar.append(text(initials));
             const authorWrap = el('div', 'feed-author-wrap');
             const authorName = el('div', 'feed-author-name');
-            authorName.append(text((post.firstname || '') + ' ' + (post.lastname || '')));
+            authorName.append(text((feedPost.firstname || '') + ' ' + (feedPost.lastname || '')));
             authorName.addEventListener('click', () => {
-                post.character_id && self.openFeedProfile(post.character_id);
+                feedPost.character_id && self.openFeedProfile(feedPost.character_id);
             });
             const ts = el('span', 'feed-ts');
-            ts.append(text(this._feedRelTime(post.created_at)));
-            if (post.updated_at && post.updated_at !== post.created_at) {
+            ts.append(text(this._feedRelTime(feedPost.created_at)));
+            if (feedPost.updated_at && feedPost.updated_at !== feedPost.created_at) {
                 const edited = el('span', 'feed-edited');
                 edited.append(text(' · ' + t('phone.ui.feed_edited')));
                 ts.append(edited);
@@ -2347,29 +2347,29 @@
             header.append(avatar, authorWrap);
 
             // Own post: delete
-            if (Number(post.character_id) === Number(this.data && this.data.myCharId)) {
+            if (Number(feedPost.character_id) === Number(this.data && this.data.myCharId)) {
                 const del = btn('feed-del-btn', '×', () => {
-                    post('phoneAction', { op: 'feedDeletePost', postId: post.id, token: self.token });
+                    post('phoneAction', { op: 'feedDeletePost', postId: feedPost.id, token: self.token });
                 });
                 header.append(del);
             }
             card.append(header);
 
             // Body text
-            if (post.body) {
+            if (feedPost.body) {
                 const body = el('div', 'feed-body');
-                body.append(text(post.body));
+                body.append(text(feedPost.body));
                 card.append(body);
             }
 
             // Photo
-            if (post.media_url) {
+            if (feedPost.media_url) {
                 const img = document.createElement('img');
-                img.src = post.media_url;
+                img.src = feedPost.media_url;
                 img.className = 'feed-photo';
                 img.loading = 'lazy';
                 img.addEventListener('click', () => {
-                    if (window.Phone && Phone.openMediaViewer) Phone.openMediaViewer(post.media_url);
+                    if (window.Phone && Phone.openMediaViewer) Phone.openMediaViewer(feedPost.media_url);
                 });
                 card.append(img);
             }
@@ -2387,7 +2387,7 @@
             likeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const isLiked = likeBtn.classList.contains('feed-liked');
-                post('phoneAction', { op: isLiked ? 'feedUnlike' : 'feedLike', postId: post.id, token: self.token });
+                post('phoneAction', { op: isLiked ? 'feedUnlike' : 'feedLike', postId: feedPost.id, token: self.token });
                 likeBtn.classList.toggle('feed-liked', !isLiked);
                 const cur = parseInt(likeCount.textContent) || 0;
                 likeCount.textContent = String(isLiked ? Math.max(0, cur - 1) : cur + 1);
@@ -2398,11 +2398,11 @@
             cmSvg.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
             const cmCount = el('span', 'feed-like-count');
             cmCount.dataset.feedCmcount = postId;
-            cmCount.append(text(String(Number(post.comments_count) || 0)));
+            cmCount.append(text(String(Number(feedPost.comments_count) || 0)));
             cmBtn.append(cmSvg, cmCount);
             cmBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                self.openFeedPost(post.id);
+                self.openFeedPost(feedPost.id);
             });
 
             actions.append(likeBtn, cmBtn);
@@ -2410,7 +2410,7 @@
 
             if (clickable) {
                 card.style.cursor = 'pointer';
-                card.addEventListener('click', () => self.openFeedPost(post.id));
+                card.addEventListener('click', () => self.openFeedPost(feedPost.id));
             }
 
             return card;
