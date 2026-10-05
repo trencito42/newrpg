@@ -3,6 +3,7 @@ local activeQueue = nil
 local pendingCatalog = nil
 local serial = 0
 local advance
+local customCatalog = nil  -- populated async by Node.js scanner on resource start
 
 -- FiveM Lua sandbox restricts both io.open and io.popen for system paths.
 -- ImageMagick detection runs in processor.js (Node.js) which has the fs permission.
@@ -49,6 +50,21 @@ local function outputExists(model)
     file:close()
     return true
 end
+
+local function refreshCustomCatalog()
+    customCatalog = nil
+    TriggerEvent('racket_thumbs:buildCustomCatalog')
+end
+
+AddEventHandler('racket_thumbs:customCatalogBuilt', function(models, byResource, errorMsg)
+    if errorMsg or not models then
+        print('[racket_vehicle_thumbs] Custom catalog scan failed: ' .. tostring(errorMsg or 'unknown error'))
+        customCatalog = { models = {}, byResource = {}, count = 0 }
+        return
+    end
+    customCatalog = { models = models, byResource = byResource, count = #models }
+    print(('[racket_vehicle_thumbs] Custom catalog ready: %d vehicles'):format(#models))
+end)
 
 local function clearQueue(message, kind)
     local queue = activeQueue
@@ -158,7 +174,7 @@ RegisterCommand('vehthumbs', function(source, args)
     end
     local mode = tostring(args[1] or ''):lower()
     if mode == '' then
-        tell(source, 'Usage: /vehthumbs missing | all | listmissing | status | stop')
+        tell(source, 'Usage: /vehthumbs missing | all | custom | custommissing | listmissing | listcustom | listcustommissing | refresh | status | stop')
         return
     end
     if mode == 'stop' then
@@ -170,6 +186,11 @@ RegisterCommand('vehthumbs', function(source, args)
         else
             tell(source, 'No batch owned by you is running.', 'error')
         end
+        return
+    end
+    if mode == 'refresh' then
+        refreshCustomCatalog()
+        tell(source, 'Rebuilding custom vehicle catalog...')
         return
     end
     if mode == 'status' then
@@ -200,10 +221,73 @@ RegisterCommand('vehthumbs', function(source, args)
         tell(source, 'raw dir: ' .. rawDir .. ' — ' .. (rawOk and 'writable' or 'NOT WRITABLE'))
         tell(source, 'output dir: ' .. outDir .. ' — ' .. (outOk and 'writable' or 'NOT WRITABLE'))
         tell(source, 'batch: ' .. batchStatus)
+        if customCatalog then
+            local missing = 0
+            for _, m in ipairs(customCatalog.models) do
+                if not outputExists(m) then missing = missing + 1 end
+            end
+            tell(source, ('custom detected: %d'):format(customCatalog.count))
+            tell(source, ('custom thumbnails existing: %d'):format(customCatalog.count - missing))
+            tell(source, ('custom thumbnails missing: %d'):format(missing))
+        else
+            tell(source, 'custom catalog: not loaded — run /vehthumbs refresh')
+        end
         return
     end
+    -- ── Custom catalog modes ──────────────────────────────────────────────────
+    if mode == 'listcustom' or mode == 'listcustommissing' then
+        if not customCatalog then
+            tell(source, 'Custom catalog not ready. Run /vehthumbs refresh.', 'error')
+            return
+        end
+        local list = {}
+        for _, m in ipairs(customCatalog.models) do
+            if mode == 'listcustom' or not outputExists(m) then
+                list[#list + 1] = m
+            end
+        end
+        table.sort(list)
+        if mode == 'listcustommissing' then
+            tell(source, ('Missing %d of %d custom vehicles.'):format(#list, customCatalog.count))
+        else
+            tell(source, ('Custom vehicles: %d total.'):format(#list))
+        end
+        for i = 1, math.min(30, #list) do tell(source, list[i]) end
+        if #list > 30 then
+            tell(source, ('...and %d more — see server console for full list.'):format(#list - 30))
+            print('[racket_vehicle_thumbs] Full list: ' .. table.concat(list, ', '))
+        end
+        return
+    end
+
+    if mode == 'custom' or mode == 'custommissing' then
+        if not customCatalog then
+            tell(source, 'Custom catalog not ready. Run /vehthumbs refresh.', 'error')
+            return
+        end
+        if activeQueue or pendingCatalog then
+            tell(source, 'A thumbnail batch is already running.', 'error')
+            return
+        end
+        if GetResourceState('screenshot-basic') ~= 'started' then
+            tell(source, 'screenshot-basic is not running.', 'error')
+            return
+        end
+        local items, skipped = {}, 0
+        for _, model in ipairs(customCatalog.models) do
+            if mode == 'custommissing' and outputExists(model) then
+                skipped = skipped + 1
+            else
+                items[#items + 1] = model
+            end
+        end
+        beginQueue(source, items, skipped)
+        return
+    end
+
+    -- ── All-catalog modes (missing / all / listmissing) ───────────────────────
     if mode ~= 'missing' and mode ~= 'all' and mode ~= 'listmissing' then
-        tell(source, 'Usage: /vehthumbs missing | all | listmissing | status | stop', 'error')
+        tell(source, 'Usage: /vehthumbs missing | all | custom | custommissing | listmissing | listcustom | listcustommissing | refresh | status | stop', 'error')
         return
     end
     if activeQueue or pendingCatalog then
@@ -364,6 +448,7 @@ AddEventHandler('onResourceStart', function(resourceName)
     else
         print('[racket_vehicle_thumbs] ready')
     end
+    refreshCustomCatalog()
 end)
 
 AddEventHandler('onResourceStop', function(resource)

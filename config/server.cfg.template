@@ -159,6 +159,7 @@ ensure screenshot-basic
 #@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read /usr/bin/convert
 #@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read racket_vehicle_thumbs
 #@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs write racket_vehicle_thumbs
+#@vehiclethumbs add_filesystem_permission racket_vehicle_thumbs read /config/resources
 #@vehiclethumbs add_unsafe_child_process_permission racket_vehicle_thumbs
 #@vehiclethumbs ensure racket_vehicle_thumbs
 

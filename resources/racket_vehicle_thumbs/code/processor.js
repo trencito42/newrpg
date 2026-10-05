@@ -40,7 +40,76 @@ function runImageMagick(args, timeoutMs = 20000) {
   });
 }
 
-// Dual-pass alpha reconstruction from black and white background captures.
+// ─── Custom vehicle catalog scanner ──────────────────────────────────────────
+// Scans all vehicles.meta files under the resources root and extracts model names.
+// Returns only add-on vehicles — system resources (ox_lib, pma-voice, etc.) never
+// contain vehicles.meta, so the result is naturally free of vanilla GTA models.
+
+function* walkForMeta(dir, depth) {
+  if (depth > 8) return;
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return; }
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isFile() && e.name === 'vehicles.meta') {
+      yield full;
+    } else if (e.isDirectory()) {
+      yield* walkForMeta(full, depth + 1);
+    }
+  }
+}
+
+function parseVehicleModels(filePath) {
+  let text;
+  try { text = fs.readFileSync(filePath, 'utf8'); } catch (_) { return null; }
+  const models = [];
+  for (const m of text.matchAll(/<modelName>\s*([^<\s]+)\s*<\/modelName>/g)) {
+    const name = m[1].toLowerCase().trim();
+    if (/^[a-z0-9_]{1,64}$/.test(name)) models.push(name);
+  }
+  return models;
+}
+
+function buildCustomCatalog() {
+  const resourcesRoot = path.dirname(resourcePath);
+  const byResource = Object.create(null);
+  const allModels = new Set();
+  let parseErrors = 0;
+
+  console.log('[racket_vehicle_thumbs] Scanning custom vehicle resources...');
+  for (const metaFile of walkForMeta(resourcesRoot, 0)) {
+    // Skip files that live inside this resource
+    if (metaFile.startsWith(resourcePath + path.sep)) continue;
+
+    const rel = path.relative(resourcesRoot, metaFile);
+    const parts = rel.split(path.sep);
+    // [group]/resource/... or resource/... — keep just the resource folder name
+    const resourceName = parts[0].startsWith('[') ? (parts[1] || parts[0]) : parts[0];
+
+    const models = parseVehicleModels(metaFile);
+    if (models === null) { parseErrors++; continue; }
+    if (models.length === 0) continue;
+
+    if (!byResource[resourceName]) byResource[resourceName] = [];
+    for (const m of models) {
+      if (!allModels.has(m)) {
+        allModels.add(m);
+        byResource[resourceName].push(m);
+      }
+    }
+  }
+
+  for (const [res, models] of Object.entries(byResource)) {
+    console.log(`[racket_vehicle_thumbs] ${res}: ${models.length} model${models.length !== 1 ? 's' : ''}`);
+  }
+  if (parseErrors > 0) {
+    console.warn(`[racket_vehicle_thumbs] Warning: ${parseErrors} vehicles.meta files could not be read`);
+  }
+  console.log(`[racket_vehicle_thumbs] Custom catalog: ${allModels.size} unique vehicles`);
+  return { models: Array.from(allModels), byResource };
+}
+
+// ─── Dual-pass alpha reconstruction from black and white background captures.
 //
 // Math:
 //   B = fg * alpha          (black bg: only vehicle contributes)
@@ -128,6 +197,18 @@ if (typeof on === 'function') {
       }
     );
   });
+
+  on('racket_thumbs:buildCustomCatalog', () => {
+    let result;
+    try {
+      result = buildCustomCatalog();
+    } catch (e) {
+      console.error(`[racket_vehicle_thumbs] Custom catalog scan failed: ${e.message}`);
+      emit('racket_thumbs:customCatalogBuilt', null, null, e.message);
+      return;
+    }
+    emit('racket_thumbs:customCatalogBuilt', result.models, result.byResource, null);
+  });
 }
 
-module.exports = { validName, validToken, validDirectory, processImage };
+module.exports = { validName, validToken, validDirectory, processImage, buildCustomCatalog };
