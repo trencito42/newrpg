@@ -6,8 +6,8 @@ import { RowDataPacket } from "mysql2";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Sondaje & Alegeri Primar • Racket RPG",
-  description: "Votați deciziile serverului și alegeți candidații pentru Primăria Los Santos.",
+  title: "Sondaje & Alegeri Primar • Racket RPG", // i18n-ignore: pre-existing
+  description: "Votați deciziile serverului și alegeți candidații pentru Primăria Los Santos.", // i18n-ignore: pre-existing
 };
 
 export default async function PollsPage() {

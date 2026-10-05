@@ -330,7 +330,9 @@
       "your_answer": "Your answer...",
       "fields_marked_with_red_are_mandatory": "* Fields marked with red are mandatory.",
       "submitting": "Submitting...",
-      "submit_application": "Submit Application"
+      "submit_application": "Submit Application",
+      "text_8f8b83_hover_text_f2efe8": "text-[#8f8b83] hover:text-[#f2efe8]",
+      "bg_surface_200_text_f2efe8_shadow_sm": "bg-surface-200 text-[#f2efe8] shadow-sm"
     },
     "app_clans_id_manage_clanmanageclient": {
       "settings_saved_successfully": "Settings saved successfully!",
@@ -611,7 +613,8 @@
     "app_stats_page": {
       "top_10_wealthiest_players": "Top 10 Wealthiest Players",
       "civilian_jobs": "Civilian Jobs",
-      "popular_vehicle_models": "Popular Vehicle Models"
+      "popular_vehicle_models": "Popular Vehicle Models",
+      "real_time_aggregates_leaderboards_and_economic_indicators_for_the_entire_se": "Real-time aggregates, leaderboards and economic indicators for the entire server."
     },
     "app_support_complaints_complaintform": {
       "submission_failed": "Submission failed.",
@@ -714,7 +717,10 @@
       "level_short": "LVL",
       "view_full_rankings_statistics": "View full rankings (Statistics)"
     },
-    "components_navigation_languagetoggle": {},
+    "components_navigation_languagetoggle": {
+      "bg_brand_text_08080a": "bg-brand text-[#08080a]",
+      "text_8f8b83_hover_text_f2efe8": "text-[#8f8b83] hover:text-[#f2efe8]"
+    },
     "components_navigation_mobilenav": {
       "updates_news": "Updates & News"
     },
@@ -1290,7 +1296,8 @@
     "the_content_must_contain_at_least_10_characters": "The content must contain at least 10 characters.",
     "update_not_found": "Update not found.",
     "you_do_not_have_permission_to_edit_this_post": "You do not have permission to edit this post.",
-    "you_do_not_have_permission_to_delete_this_post": "You do not have permission to delete this post."
+    "you_do_not_have_permission_to_delete_this_post": "You do not have permission to delete this post.",
+    "official_authors_creators": "Official Authors & Creators"
   },
   "updates": {
     "category": {

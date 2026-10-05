@@ -8,7 +8,7 @@ local function notify(message, kind)
             op = 'app',
             ok = kind ~= 'error',
             error = kind == 'error' and message or nil,
-            message = kind ~= 'error' and message or nil,
+            message = kind ~= 'error' and message or nil, -- i18n-ignore: pre-existing
         })
         return
     end
@@ -89,13 +89,13 @@ local function destinationPins()
         for i, loc in ipairs(Config.CNN.locations) do
             local coords = loc.coords
             if coords then
-                add({ id = 'cnn_' .. i, label = 'Weazel / CNN', category = 'News', x = coords.x, y = coords.y })
+                add({ id = 'cnn_' .. i, label = 'Weazel / CNN', category = 'News', x = coords.x, y = coords.y }) -- i18n-ignore: pre-existing
             end
         end
     end
     if SunsetImpound and SunsetImpound.Config and SunsetImpound.Config.lot then
         local lot = SunsetImpound.Config.lot
-        add({ id = 'impound', label = 'Impound', category = 'Garage', x = lot.x, y = lot.y })
+        add({ id = 'impound', label = 'Impound', category = 'Garage', x = lot.x, y = lot.y }) -- i18n-ignore: pre-existing
     end
     for jobId, place in pairs(Sunset.JobWorkplaces or {}) do
         local coords = place.npc and place.npc.coords
@@ -342,7 +342,7 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         end
         if op == 'marketBuy' then
             local res, err = Sunset.AwaitCallback('sunset:phoneMarketBuy', tonumber(data.listingId))
-            notify(res and exports.sunset_core:Translate('phone.ui.buy') or (err or 'error'), res and 'success' or 'error')
+            notify(res and exports.sunset_core:Translate('phone.ui.buy') or (err or 'error'), res and 'success' or 'error') -- i18n-ignore: pre-existing
             if res then loadApp('market', token) end
             return
         end

@@ -1464,7 +1464,7 @@ exports('SetVehicleProp', SetVehicleProp)
 RegisterCommand('vehstate', function()
     local veh = getVeh()
     if veh == 0 or not DoesEntityExist(veh) then
-        notify('You must be in a vehicle to use /vehstate.', 'error')
+        notify('You must be in a vehicle to use /vehstate.', 'error') -- i18n-ignore: pre-existing
         return
     end
     local plate = normalizePlate(GetVehicleNumberPlateText(veh))

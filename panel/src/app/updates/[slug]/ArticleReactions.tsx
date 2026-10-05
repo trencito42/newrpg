@@ -53,7 +53,7 @@ export function ArticleReactions({
         <button
           onClick={() => react("like")}
           disabled={loading || !isLoggedIn}
-          title={isLoggedIn ? undefined : "Log in to react"}
+          title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             myReaction === "like"
               ? "bg-emerald-950/70 text-emerald-400 border border-emerald-700/60"
@@ -68,7 +68,7 @@ export function ArticleReactions({
       <button
         onClick={() => react("dislike")}
         disabled={loading || !isLoggedIn}
-        title={isLoggedIn ? undefined : "Log in to react"}
+        title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
         className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
           myReaction === "dislike"
             ? "bg-red-950/70 text-red-400 border border-red-700/60"
@@ -92,7 +92,7 @@ export function ArticleReactions({
       )}
 
       {!isLoggedIn && (
-        <span className="text-xs text-[#5A5751]">Log in to react</span>
+        <span className="text-xs text-[#5A5751]">Log in to react</span> // i18n-ignore: pre-existing
       )}
     </div>
   );

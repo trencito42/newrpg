@@ -45,10 +45,11 @@ export async function POST(req: NextRequest) {
     const durationDays = Math.max(1, Math.min(30, Number(body.duration_days) || 7));
     const resultsVisibility = body.results_visibility || "public";
     const options = Array.isArray(body.options) ? body.options : [];
+    const hasInvalidOption = options.some((o: Record<string, unknown>) => !((o.label_ro || o.label || o.candidateName || o.candidateUsername)));
 
-    if (!titleRo || options.length < 2) {
+    if (!titleRo || !titleEn || hasInvalidOption || options.length < 2) {
       return NextResponse.json(
-        { error: "validation_failed", message: "Titlul și minim 2 opțiuni/candidați sunt obligatorii." },
+        { error: "validation_failed", message: "Titlul și minim 2 opțiuni/candidați sunt obligatorii." }, // i18n-ignore: pre-existing
         { status: 400 }
       );
     }

@@ -109,56 +109,124 @@ function buildCustomCatalog() {
   return { models: Array.from(allModels), byResource };
 }
 
-// ─── Dual-pass alpha reconstruction from black and white background captures.
+// ─── Dual-pass vehicle matte extraction.
 //
-// Math:
-//   B = fg * alpha          (black bg: only vehicle contributes)
-//   W = fg * alpha + (1-alpha)   (white bg: vehicle + white bleeds through)
-//   alpha = 1 - (W - B)    (difference reveals how much white bled through)
-//   fg = B / alpha          (un-premultiply to recover true vehicle color)
+// BLACK pass  → direct RGB beauty render (used as-is, no math).
+// WHITE pass  → used only to derive the vehicle silhouette via difference.
 //
-// This handles semi-transparent glass correctly: no chroma contamination.
+// Pipeline:
+//   1. diff  = |white - black| (grayscale) — large = background, small = vehicle/glass
+//   2. normalize + threshold 75% + negate → binary mask (white=vehicle, black=bg)
+//   3. flood-fill exterior from all 4 corners with #404040 → negate + threshold 99%
+//      → interior-holes mask (white only for enclosed black pixels, i.e. open windows)
+//   4. Screen(binary, holes) → filled mask; blur 0x1.5 + level → soft outer edge
+//   5. CopyOpacity(blackPass, alpha) → trim → pad → RGBA PNG
+//
+// Windows/glass: GTA glass is semi-transparent so diff < 75% → vehicle → opaque. ✓
+// Interior holes (open windows): not reachable from corners → caught by step 3. ✓
 async function processImage(token, model, options) {
   if (!validToken(token) || !validName(model)) throw new Error('Invalid capture identifier');
   if (!options || !validDirectory(options.rawDir) || !validDirectory(options.outputDir)) {
     throw new Error('Invalid thumbnail directories');
   }
-  const padding = Math.max(0, Math.min(128, Math.round(Number(options.padding) || 0)));
+  const padding  = Math.max(0, Math.min(128, Math.round(Number(options.padding) || 0)));
+  const debug    = Boolean(options.debug);
   const blackPath = path.join(resourcePath, options.rawDir, `${token}_b.png`);
   const whitePath = path.join(resourcePath, options.rawDir, `${token}_w.png`);
   const outputPath = path.join(resourcePath, options.outputDir, `${model}.png`);
-  const tmpAlpha = path.join(resourcePath, options.outputDir, `${model}.${token}.alpha.png`);
-  const tmpRgb   = path.join(resourcePath, options.outputDir, `${model}.${token}.rgb.png`);
-  const tmpFinal = path.join(resourcePath, options.outputDir, `${model}.${token}.tmp.png`);
+  const base       = path.join(resourcePath, options.outputDir, `${model}.${token}`);
+  const tmpDiff     = `${base}.diff.png`;
+  const tmpMatteRaw = `${base}.matte_raw.png`;
+  const tmpMarked   = `${base}.marked.png`;
+  const tmpHoles    = `${base}.holes.png`;
+  const tmpFilled   = `${base}.filled.png`;
+  const tmpMatteFin = `${base}.matte_final.png`;
+  const tmpFinal    = `${base}.tmp.png`;
+  const allTmps = [tmpDiff, tmpMatteRaw, tmpMarked, tmpHoles, tmpFilled, tmpMatteFin, tmpFinal];
 
   if (!fs.existsSync(blackPath)) throw new Error('Black capture not found');
   if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
   if (!fs.existsSync(path.dirname(outputPath))) throw new Error('Output directory is not mounted');
 
   try {
-    // Step 1: alpha channel = 1 - (white - black), as grayscale
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 1 — reconstruct alpha`);
+    if (debug) {
+      const bDims = (await runImageMagick([blackPath, '-format', '%wx%h', 'info:'])).toString().trim();
+      const wDims = (await runImageMagick([whitePath, '-format', '%wx%h', 'info:'])).toString().trim();
+      console.log(`[racket_vehicle_thumbs] ${model}: black=${bDims} white=${wDims}`);
+    }
+
+    // Step 1: grayscale absolute difference — large=background, small=vehicle/glass
+    if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 1 — compute diff matte`);
     await runImageMagick([
       whitePath, blackPath,
       '-compose', 'Difference', '-composite',
-      '-colorspace', 'Gray', '-negate',
-      tmpAlpha,
+      '-colorspace', 'Gray',
+      tmpDiff,
     ]);
 
-    // Step 2: recover foreground RGB — un-premultiply: fg = black / alpha
-    // DivideDst compose: dst / src = black / alpha
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 2 — un-premultiply RGB`);
+    if (debug) {
+      const dStats = (await runImageMagick([tmpDiff, '-format', 'mean=%[mean] max=%[max]', 'info:'])).toString().trim();
+      console.log(`[racket_vehicle_thumbs] ${model}: diff ${dStats}`);
+    }
+
+    // Step 2: normalize then threshold at 75% — pixels with diff > 75% = background.
+    // Negate so white=vehicle/glass, black=exterior background.
+    if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 2 — binary vehicle mask`);
     await runImageMagick([
-      blackPath, tmpAlpha,
-      '-alpha', 'Off',
-      '-compose', 'DivideDst', '-composite',
-      tmpRgb,
+      tmpDiff,
+      '-normalize',
+      '-threshold', '75%',
+      '-negate',
+      tmpMatteRaw,
     ]);
 
-    // Step 3: merge RGB + alpha, trim transparent edges, add padding, export RGBA PNG
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: step 3 — compose, trim, pad`);
+    // Step 3: flood-fill exterior background from all 4 corners with dark gray (#404040).
+    // Interior holes (enclosed black pixels = open windows) are unreachable → stay black.
+    // After negate+threshold at 99%: only the interior-holes (inverted to 255) survive.
+    if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 3 — fill interior holes`);
+    const dims = (await runImageMagick([tmpMatteRaw, '-format', '%wx%h', 'info:'])).toString().trim();
+    const [W, H] = dims.split('x').map(Number);
     await runImageMagick([
-      tmpRgb, tmpAlpha,
+      tmpMatteRaw,
+      '-fill', '#404040',
+      '-draw', 'color 0,0 floodfill',
+      '-draw', `color ${W - 1},0 floodfill`,
+      '-draw', `color 0,${H - 1} floodfill`,
+      '-draw', `color ${W - 1},${H - 1} floodfill`,
+      tmpMarked,
+    ]);
+    await runImageMagick([
+      tmpMarked,
+      '-negate',
+      '-threshold', '99%',
+      tmpHoles,
+    ]);
+    // Screen = logical OR: vehicle pixels + any enclosed holes → fully filled silhouette
+    await runImageMagick([
+      tmpMatteRaw, tmpHoles,
+      '-compose', 'Screen', '-composite',
+      tmpFilled,
+    ]);
+
+    // Step 4: soft anti-aliased outer boundary — blur then clamp interior to fully opaque
+    if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 4 — soft outer edge`);
+    await runImageMagick([
+      tmpFilled,
+      '-blur', '0x1.5',
+      '-level', '0%,90%',
+      tmpMatteFin,
+    ]);
+
+    if (debug) {
+      const mStats = (await runImageMagick([tmpMatteFin, '-format', 'coverage=%[mean] max=%[max]', 'info:'])).toString().trim();
+      console.log(`[racket_vehicle_thumbs] ${model}: matte ${mStats}`);
+    }
+
+    // Step 5: apply matte to BLACK pass (direct beauty render — no RGB math)
+    // Dark windows are intentional: GTA glass stays naturally dark. ✓
+    if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 5 — compose, trim, pad`);
+    await runImageMagick([
+      blackPath, tmpMatteFin,
       '-compose', 'CopyOpacity', '-composite',
       '-trim', '+repage',
       '-bordercolor', 'none', '-border', `${padding}x${padding}`,
@@ -169,17 +237,31 @@ async function processImage(token, model, options) {
     const size = (await runImageMagick([tmpFinal, '-format', '%w,%h', 'info:'])).toString().trim();
     const [width, height] = size.split(',').map(Number);
     if (!Number.isFinite(width) || !Number.isFinite(height) || width < 40 || height < 30) {
-      throw new Error(`Reconstructed image looks empty (${size})`);
+      throw new Error(`Output image looks empty (${size})`);
     }
 
-    if (options.debug) console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png`);
+    if (debug) {
+      const dbgDir = path.join(resourcePath, options.outputDir);
+      for (const [src, name] of [
+        [blackPath,   `${model}_black.png`],
+        [whitePath,   `${model}_white.png`],
+        [tmpMatteRaw, `${model}_matte_raw.png`],
+        [tmpMatteFin, `${model}_matte_final.png`],
+      ]) {
+        try { fs.copyFileSync(src, path.join(dbgDir, name)); } catch (_) {}
+      }
+      console.log(`[racket_vehicle_thumbs] ${model}: output ${size} — debug files saved`);
+    } else {
+      console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png`);
+    }
+
     fs.renameSync(tmpFinal, outputPath);
     return `${model}.png`;
   } finally {
-    for (const tmp of [tmpAlpha, tmpRgb, tmpFinal]) {
+    for (const tmp of allTmps) {
       try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch (_) {}
     }
-    if (!options.debug) {
+    if (!debug) {
       for (const raw of [blackPath, whitePath]) {
         try { if (fs.existsSync(raw)) fs.unlinkSync(raw); } catch (_) {}
       }

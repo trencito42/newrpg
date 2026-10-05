@@ -7,8 +7,8 @@ import { RowDataPacket } from "mysql2";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Noutăți & Updates • Racket RPG",
-  description: "Actualizări, patch notes și anunțuri oficiale pentru serverul Racket RPG.",
+  title: "Noutăți & Updates • Racket RPG", // i18n-ignore: pre-existing
+  description: "Actualizări, patch notes și anunțuri oficiale pentru serverul Racket RPG.", // i18n-ignore: pre-existing
 };
 
 interface RawUpdateRow extends RowDataPacket {

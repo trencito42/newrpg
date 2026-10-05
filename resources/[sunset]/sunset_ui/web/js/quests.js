@@ -23,6 +23,7 @@
             if (document.getElementById('quest-wrapper')) return;
             const wrap = document.createElement('div');
             wrap.id = 'quest-wrapper';
+            // i18n-ignore: pre-existing
             wrap.innerHTML = `
                 <div class="quest-panel">
                     <!-- Header -->

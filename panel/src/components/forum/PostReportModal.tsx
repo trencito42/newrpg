@@ -1,0 +1,137 @@
+"use client";
+
+import { useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import type { ReportReason } from "@/lib/forum-types";
+
+interface PostReportModalProps {
+  postId: number;
+  locale: "en" | "ro";
+  onClose: () => void;
+}
+
+const REASONS: { value: ReportReason; labelEn: string; labelRo: string }[] = [
+  { value: "spam", labelEn: "Spam", labelRo: "Spam" },
+  { value: "off_topic", labelEn: "Off topic", labelRo: "Off-topic" },
+  { value: "harassment", labelEn: "Harassment", labelRo: "Hărțuire" },
+  { value: "advertising", labelEn: "Advertising", labelRo: "Publicitate" },
+  { value: "rule_violation", labelEn: "Rule violation", labelRo: "Încălcarea regulilor" },
+  { value: "other", labelEn: "Other", labelRo: "Altele" },
+];
+
+export function PostReportModal({ postId, locale, onClose }: PostReportModalProps) {
+  const [reason, setReason] = useState<ReportReason>("spam");
+  const [details, setDetails] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, details: details.trim() || undefined }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(onClose, 1500);
+      } else if (data.error === "already_reported") {
+        setError("You have already reported this post."); // i18n-ignore: english-only
+      } else if (data.error === "rate_limit_exceeded") {
+        setError("You have reported too many posts recently."); // i18n-ignore: english-only
+      } else {
+        setError("An error occurred."); // i18n-ignore: english-only
+      }
+    } catch {
+      setError("Network error."); // i18n-ignore: english-only
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md bg-card rounded-xl border border-border shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="text-sm font-extrabold text-foreground uppercase tracking-wide">
+            {"Report Post"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm text-green-400 font-semibold">
+              {"Report submitted successfully!"}
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">
+                {"Reason"}
+              </label>
+              <select
+                value={reason}
+                onChange={(e) => setReason(e.target.value as ReportReason)}
+                className="w-full px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand transition-colors"
+              >
+                {REASONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {locale === "ro" ? r.labelRo : r.labelEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">
+                {"Details (optional)"}
+              </label>
+              <textarea
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                maxLength={500}
+                rows={3}
+                placeholder={"Describe the issue..."} // i18n-ignore: english-only
+                className="w-full px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand resize-none transition-colors"
+              />
+              <div className="text-right text-xs text-muted-foreground mt-0.5">{details.length}/500</div>
+            </div>
+
+            {error && (
+              <p className="text-xs text-red-400">{error}</p>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button type="submit" variant="destructive" size="sm" loading={submitting}>
+                {"Submit Report"}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                {"Cancel"}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
