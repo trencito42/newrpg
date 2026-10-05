@@ -19,6 +19,7 @@ sync_tree() {
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete \
       --exclude '.env' --exclude '.env.persist' \
+      --exclude 'panel/node_modules' --exclude 'panel/.next' --exclude 'panel/.npm-cache' \
       "${src}/" "${DIR}/"
   else
     rm -rf /tmp/blazed-deploy
@@ -166,5 +167,10 @@ sh scripts/apply-migrations.sh "$DIR"
 docker compose up -d --remove-orphans
 docker compose up -d --force-recreate fivem
 sh scripts/check-loadscreen-copy.sh
+
+if [ -x scripts/deploy-panel.sh ]; then
+  echo "[deploy] panel build + pm2..."
+  sh scripts/deploy-panel.sh || echo "[deploy] WARN: panel deploy failed (FiveM deploy finished)" >&2
+fi
 
 echo "Done. Connect: F8 -> connect $(curl -s ifconfig.me 2>/dev/null || echo YOUR_IP):30120"

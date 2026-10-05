@@ -4,9 +4,17 @@ set -e
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$DIR/panel"
 
-echo "[panel] installing deps (if needed)..."
-if [ -f package-lock.json ]; then
-  npm ci 2>/dev/null || npm install
+export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE:-$(pwd)/.npm-cache}"
+mkdir -p "$NPM_CONFIG_CACHE"
+
+if [ -s "${HOME}/.nvm/nvm.sh" ]; then
+  # shellcheck source=/dev/null
+  . "${HOME}/.nvm/nvm.sh"
+fi
+
+if [ ! -d node_modules/next ]; then
+  echo "[panel] installing deps..."
+  npm ci
 fi
 
 echo "[panel] production build..."
