@@ -22,7 +22,10 @@ import {
   Award,
   Zap
 } from "lucide-react";
-import { getViewerLocale } from "@/lib/auth";
+import { getCurrentSession, getViewerLocale } from "@/lib/auth";
+import { fetchSocialFeedPosts } from "@/lib/social-feed";
+import { fetchHomeForumActivity } from "@/lib/home-forum-activity";
+import { HomeCommunityHub } from "@/components/home/HomeCommunityHub";
 import { getServerStatus, getAggregatedServerStats } from "@/lib/bridge";
 import { t, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
@@ -91,10 +94,17 @@ interface ClanLeaderRow extends RowDataPacket {
 }
 
 export default async function HomePage() {
-  const [locale, serverStatus, stats] = await Promise.all([
+  const [locale, session, serverStatus, stats] = await Promise.all([
     getViewerLocale(),
+    getCurrentSession(),
     getServerStatus(),
     getAggregatedServerStats(),
+  ]);
+
+  const viewerCharId = session?.selectedCharacterId ?? null;
+  const [homeFeedPosts, homeForumActivity] = await Promise.all([
+    fetchSocialFeedPosts({ limit: 8, viewerCharId }),
+    fetchHomeForumActivity(session, 8),
   ]);
 
   // Load featured active poll
@@ -396,6 +406,14 @@ export default async function HomePage() {
           ))}
         </div>
       </div>
+
+      <HomeCommunityHub
+        locale={locale}
+        feedPosts={homeFeedPosts}
+        forumItems={homeForumActivity}
+        isLoggedIn={!!session}
+        viewerCharId={viewerCharId}
+      />
 
       {/* TWO COLUMNS: FEATURED POLL / MAYOR ELECTION + LEADERBOARD */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

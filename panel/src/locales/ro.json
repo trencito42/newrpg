@@ -71,7 +71,28 @@
     "logout": "Deconectare",
     "select_character": "Alege Personaj",
     "feed": "Feed",
+    "forum": "Forumul",
     "gallery": "Galerie"
+  },
+  "community": {
+    "section_title": "Comunitate",
+    "view_all_feed": "Vezi tot",
+    "view_all_forum": "Vezi tot",
+    "no_forum_activity": "Nicio activitate recentă pe forum.",
+    "started_topic": "A deschis un topic",
+    "replied": "A răspuns",
+    "replies": "răspunsuri",
+    "activity_title": "Activitate",
+    "overview": "Prezentare",
+    "filter_all": "Tot",
+    "feed_posts": "postări feed",
+    "forum_posts": "postări forum",
+    "topics": "topicuri",
+    "no_activity": "Încă nu există activitate în comunitate.",
+    "feed_post": "Postare feed",
+    "view_post": "Vezi postarea",
+    "comments_label": "comentarii",
+    "likes_and_comments": "{likes} aprecieri · {comments} comentarii"
   },
   "home": {
     "badge": "Panou",

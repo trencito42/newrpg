@@ -71,7 +71,28 @@
     "logout": "Logout",
     "select_character": "Select Character",
     "feed": "Feed",
+    "forum": "Forum",
     "gallery": "Gallery"
+  },
+  "community": {
+    "section_title": "Community",
+    "view_all_feed": "View all",
+    "view_all_forum": "View all",
+    "no_forum_activity": "No recent forum activity.",
+    "started_topic": "Started a topic",
+    "replied": "Replied",
+    "replies": "replies",
+    "activity_title": "Activity",
+    "overview": "Overview",
+    "filter_all": "All",
+    "feed_posts": "feed posts",
+    "forum_posts": "forum posts",
+    "topics": "topics",
+    "no_activity": "No community activity yet.",
+    "feed_post": "Feed post",
+    "view_post": "View post",
+    "comments_label": "comments",
+    "likes_and_comments": "{likes} likes · {comments} comments"
   },
   "home": {
     "badge": "Panel",

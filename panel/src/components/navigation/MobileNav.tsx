@@ -30,6 +30,7 @@ import {
   Sparkles,
   Rss,
   ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -68,6 +69,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
   const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
     { href: "/feed", label: t(locale, "nav.feed"), icon: Rss },
+    { href: "/forum", label: t(locale, "nav.forum"), icon: MessageSquare },
     { href: "/updates", label: t(locale, "copy.components_navigation_mobilenav.updates_news"), icon: Sparkles },
     { href: "/players", label: t(locale, "nav.players"), icon: Users },
     { href: "/factions", label: t(locale, "nav.factions"), icon: Shield },

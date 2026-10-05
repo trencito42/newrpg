@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ForumMarkdownRenderer } from "./ForumMarkdownRenderer";
 import { PostReportModal } from "./PostReportModal";
 import { ForumAuthorPane } from "./ForumAuthorPane";
-import { Edit3, Trash2, Flag, RotateCcw, Copy, Clock } from "lucide-react";
+import { PostCardActions } from "./PostCardActions";
+import { Clock } from "lucide-react";
 import type { ForumPostItem } from "@/lib/forum-types";
 import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 import { formatForumClock } from "@/lib/forum-time";
@@ -40,6 +41,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
     (isOwner && !post.deleted_at && Date.now() - new Date(post.created_at).getTime() < EDIT_WINDOW_MS);
   const canDelete = isMod || (isOwner && !post.deleted_at);
   const canRestore = isMod && localDeleted;
+  const canReport = currentAccountId > 0 && !isOwner;
 
   const handleDelete = async () => {
     const reason = isMod ? prompt("Delete reason:") ?? undefined : undefined;
@@ -80,7 +82,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
       });
       const data = await res.json();
       if (res.ok) {
-        setLocalContent(editContent); // will re-render — note: content is raw here, not re-rendered
+        setLocalContent(editContent);
         setEditing(false);
       } else {
         setEditError(data.error ?? "error");
@@ -93,7 +95,6 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
   };
 
   const startEdit = () => {
-    // Strip HTML tags for editing — post.content is HTML from server
     const div = typeof document !== "undefined" ? document.createElement("div") : null;
     if (div) {
       div.innerHTML = localContent;
@@ -109,93 +110,65 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
     typeof window !== "undefined" ? `${window.location.origin}${permalinkPath}` : permalinkPath;
   const createdIso = post.created_at;
 
+  const copyLink = () => {
+    if (typeof navigator !== "undefined") {
+      navigator.clipboard.writeText(permalink).catch(() => {});
+    }
+  };
+
+  const authorPaneProps = {
+    identity: authorIdentity,
+    postCount: post.author_post_count ?? 0,
+    joinedAt: post.author_joined_at,
+    adminLevel: post.author_admin_level ?? 0,
+    helperLevel: post.author_helper_level ?? 0,
+    locale,
+  };
+
+  const actionProps = {
+    canEdit,
+    canDelete,
+    canRestore,
+    canReport,
+    deleting,
+    restoring,
+    onCopyLink: copyLink,
+    onEdit: startEdit,
+    onDelete: handleDelete,
+    onRestore: handleRestore,
+    onReport: () => setShowReport(true),
+  };
+
   return (
-    <div
+    <article
       id={`post-${post.id}`}
       className={`flex flex-col sm:flex-row gap-0 rounded-xl border border-border overflow-hidden ${localDeleted ? "opacity-60" : ""}`}
     >
-      <ForumAuthorPane
-        identity={authorIdentity}
-        postCount={post.author_post_count ?? 0}
-        joinedAt={post.author_joined_at}
-        adminLevel={post.author_admin_level ?? 0}
-        helperLevel={post.author_helper_level ?? 0}
-        locale={locale}
-      />
+      <ForumAuthorPane {...authorPaneProps} variant="mobile" />
 
-      {/* Content column */}
+      <ForumAuthorPane {...authorPaneProps} variant="desktop" />
+
       <div className="flex-1 min-w-0 bg-card flex flex-col">
-        {/* Post header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-200/40">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {/* Desktop post meta header */}
+        <div className="hidden sm:flex items-center justify-between px-4 py-2 border-b border-border bg-surface-200/40">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
             <Clock className="w-3 h-3 flex-shrink-0" />
-            <Link href={permalinkPath} className="hover:text-brand transition-colors">
+            <Link href={permalinkPath} className="hover:text-brand transition-colors truncate">
               <time dateTime={createdIso}>{formatForumClock(post.created_at_unix ?? post.created_at, locale)}</time>
             </Link>
-            {post.edited_at && (
-              <span className="italic">
+            {post.edited_at ? (
+              <span className="italic truncate">
                 · {"edited by"} {post.edited_by_username ?? post.author_username}
                 {post.edit_reason && ` · "${post.edit_reason}"`}
               </span>
-            )}
+            ) : null}
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                if (typeof navigator !== "undefined") {
-                  navigator.clipboard.writeText(permalink).catch(() => {});
-                }
-              }}
-              className="p-1 rounded hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors"
-              title={"Copy link"} // i18n-ignore: english-only
-            >
-              <Copy className="w-3 h-3" />
-            </button>
-            {canEdit && (
-              <button
-                onClick={startEdit}
-                className="p-1 rounded hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors"
-                title={"Edit"} // i18n-ignore: english-only
-              >
-                <Edit3 className="w-3 h-3" />
-              </button>
-            )}
-            {canDelete && !localDeleted && (
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="p-1 rounded hover:bg-surface-300 text-muted-foreground hover:text-red-400 transition-colors"
-                title={"Delete"} // i18n-ignore: english-only
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
-            {canRestore && (
-              <button
-                onClick={handleRestore}
-                disabled={restoring}
-                className="p-1 rounded hover:bg-surface-300 text-muted-foreground hover:text-green-400 transition-colors"
-                title={"Restore"} // i18n-ignore: english-only
-              >
-                <RotateCcw className="w-3 h-3" />
-              </button>
-            )}
-            {currentAccountId > 0 && !isOwner && (
-              <button
-                onClick={() => setShowReport(true)}
-                className="p-1 rounded hover:bg-surface-300 text-muted-foreground hover:text-yellow-400 transition-colors"
-                title={"Report"} // i18n-ignore: english-only
-              >
-                <Flag className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+          <PostCardActions layout="desktop" {...actionProps} />
         </div>
 
-        {/* Post body */}
-        <div className="px-4 py-3 flex-1">
+        <div className="px-4 py-3 max-sm:px-4 max-sm:py-3.5 flex-1 min-w-0">
           {localDeleted ? (
-            <div className="text-xs text-muted-foreground italic">
+            <div className="text-sm max-sm:text-sm text-muted-foreground italic">
               {isMod ? (
                 <span>
                   {"Deleted by"}{" "}
@@ -229,8 +202,8 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
                   className="px-3 py-1.5 bg-brand text-[#08080A] text-xs font-bold uppercase rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {editSubmitting
-                    ? ("Saving...")
-                    : ("Save")}
+                    ? ("Saving...") // i18n-ignore: english-only
+                    : ("Save")} // i18n-ignore: english-only
                 </button>
                 <button
                   type="button"
@@ -245,16 +218,34 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
             <ForumMarkdownRenderer content={localContent} />
           )}
         </div>
+
+        {/* Mobile footer: timestamp + actions */}
+        <footer className="max-sm:flex sm:hidden items-end justify-between gap-3 px-4 py-3 border-t border-border/60 bg-surface-200/30">
+          <div className="flex flex-col gap-1 min-w-0 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+              <Link href={permalinkPath} className="hover:text-brand transition-colors">
+                <time dateTime={createdIso} className="text-sm text-foreground/90">
+                  {formatForumClock(post.created_at_unix ?? post.created_at, locale)}
+                </time>
+              </Link>
+            </div>
+            {post.edited_at ? (
+              <p className="text-xs leading-snug pl-5">
+                {"edited by"} {post.edited_by_username ?? post.author_username}
+                {post.edit_reason ? ` · "${post.edit_reason}"` : ""}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex-shrink-0 self-center">
+            <PostCardActions layout="mobile" {...actionProps} />
+          </div>
+        </footer>
       </div>
 
-      {/* Report modal */}
-      {showReport && (
-        <PostReportModal
-          postId={post.id}
-          locale={locale}
-          onClose={() => setShowReport(false)}
-        />
-      )}
-    </div>
+      {showReport ? (
+        <PostReportModal postId={post.id} locale={locale} onClose={() => setShowReport(false)} />
+      ) : null}
+    </article>
   );
 }

@@ -15,6 +15,9 @@ import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { CustomBadge } from "@/components/ui/CustomBadge";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
+import { fetchCharacterCommunityActivity } from "@/lib/community-activity";
+import { PlayerCommunityActivity } from "@/components/players/PlayerCommunityActivity";
+import { PlayerProfileLayout } from "@/components/players/PlayerProfileLayout";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -194,6 +197,7 @@ export default async function PlayerProfilePage({
     licenses,
     sanctionCountRow,
     customBadges,
+    communityData,
   ] = await Promise.all([
     canViewFinancials
       ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
@@ -240,6 +244,10 @@ export default async function PlayerProfilePage({
       "SELECT id, badge_key, title, description, icon, color, bg_color FROM account_badges WHERE account_id = ? ORDER BY id ASC",
       [char.account_id]
     ),
+    fetchCharacterCommunityActivity(characterId, session, {
+      limit: 12,
+      viewerCharId: session?.selectedCharacterId ?? null,
+    }),
   ]);
 
   const hasFaction = isFaction(char.faction_id);
@@ -446,6 +454,20 @@ export default async function PlayerProfilePage({
         </div>
       </div>
 
+      <PlayerProfileLayout
+        locale={locale}
+        community={
+          <PlayerCommunityActivity
+            locale={locale}
+            entries={communityData.entries}
+            feedPosts={communityData.feedPosts}
+            counts={communityData.counts}
+            isLoggedIn={!!session}
+            viewerCharId={session?.selectedCharacterId ?? null}
+          />
+        }
+        overview={
+          <>
       {/* Horizontal Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
         <div className="p-3.5 bg-[#0E0E10] rounded-xl">
@@ -641,6 +663,9 @@ export default async function PlayerProfilePage({
           )}
         </div>
       </div>
+          </>
+        }
+      />
     </div>
   );
 }
