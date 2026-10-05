@@ -151,11 +151,12 @@ ensure sunset_missions
 ensure sunset_panel_bridge
 ensure sunset_profile_media
 ensure screenshot-basic
-# Vehicle thumbnail generation invokes a local image processor and is dev-only.
-#@dev add_ace group.admin racket.thumbs allow
-#@dev add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
-#@dev add_unsafe_child_process_permission racket_vehicle_thumbs
-#@dev ensure racket_vehicle_thumbs
+# Vehicle thumbnail generation invokes a local image processor.
+# Controlled independently via VEHICLE_THUMBS_ENABLED=1 (NOT tied to SUNSET_DEV).
+#@vehiclethumbs add_ace group.admin racket.thumbs allow
+#@vehiclethumbs add_filesystem_permission screenshot-basic write racket_vehicle_thumbs
+#@vehiclethumbs add_unsafe_child_process_permission racket_vehicle_thumbs
+#@vehiclethumbs ensure racket_vehicle_thumbs
 
 ensure villa_island
 

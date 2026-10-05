@@ -46,8 +46,9 @@ for (const callback of ['blackjackStart', 'slotsSpin', 'rouletteSpin', 'wheelSpi
   must(!casino.includes(`sunset:casino:${callback}`), `casino hub reintroduced duplicate ${callback} owner`);
 }
 must(!missions.includes('data.escaped == true'), 'mission escape bonus trusts client input');
-must(cfg.includes('#@dev add_unsafe_child_process_permission racket_vehicle_thumbs'), 'thumbnail child process permission is not dev-only');
-must(!/^add_unsafe_child_process_permission racket_vehicle_thumbs$/m.test(cfg), 'thumbnail child process permission is enabled in production');
+must(cfg.includes('#@vehiclethumbs add_unsafe_child_process_permission racket_vehicle_thumbs'), 'thumbnail child process permission is not under #@vehiclethumbs gate');
+must(!/^add_unsafe_child_process_permission racket_vehicle_thumbs$/m.test(cfg), 'thumbnail child process permission is enabled unconditionally in production');
+must(!cfg.includes('#@dev add_unsafe_child_process_permission racket_vehicle_thumbs'), 'thumbnail child process permission must use #@vehiclethumbs gate, not #@dev');
 must(/^# ensure sunset_needs$/m.test(cfg), 'legacy survival drain is enabled in production');
 must(brand.includes("DisplayName = 'Racket RPG'") && brand.includes("CurrencyShort = 'RC'"), 'canonical Racket brand config drifted');
 

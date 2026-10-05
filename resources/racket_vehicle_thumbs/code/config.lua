@@ -3,7 +3,7 @@ RacketThumbs = {
     -- inside this resource because the FiveM filesystem sandbox blocks outside writes.
     OutputDir = 'output',
     RawDir = 'raw',
-    ChromaMode = 'green', -- 'green' or 'magenta'
+    ChromaMode = 'magenta', -- 'green' or 'magenta'
     ChromaColors = {
         green = { 0, 255, 0 },
         magenta = { 255, 0, 255 },

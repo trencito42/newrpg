@@ -132,7 +132,10 @@ local function fetchCatalogModels()
 end
 
 RegisterCommand('vehthumb', function(source, args)
-    if not allowed(source) then return end
+    if not allowed(source) then
+        TriggerClientEvent('chat:addMessage', source, {args = {'VEH THUMBS: No permission. Requires admin level 5 or racket.thumbs ACE.'}})
+        return
+    end
     local model = cleanModel(args[1])
     if not model then
         tell(source, 'Usage: /vehthumb <spawnname>', 'error')
@@ -142,8 +145,15 @@ RegisterCommand('vehthumb', function(source, args)
 end, false)
 
 RegisterCommand('vehthumbs', function(source, args)
-    if not allowed(source) then return end
+    if not allowed(source) then
+        TriggerClientEvent('chat:addMessage', source, {args = {'VEH THUMBS: No permission. Requires admin level 5 or racket.thumbs ACE.'}})
+        return
+    end
     local mode = tostring(args[1] or ''):lower()
+    if mode == '' then
+        tell(source, 'Usage: /vehthumbs missing | all | listmissing | status | stop')
+        return
+    end
     if mode == 'stop' then
         if activeQueue and activeQueue.source == source then
             clearQueue('Thumbnail batch stopped.')
@@ -155,8 +165,44 @@ RegisterCommand('vehthumbs', function(source, args)
         end
         return
     end
+    if mode == 'status' then
+        local res = GetCurrentResourceName()
+        local resPath = GetResourcePath(res)
+        local ssState = GetResourceState('screenshot-basic')
+        local imPath = 'NOT FOUND'
+        local f = io.open('/usr/bin/magick', 'r')
+        if f then f:close() imPath = '/usr/bin/magick'
+        else
+            f = io.open('/usr/bin/convert', 'r')
+            if f then f:close() imPath = '/usr/bin/convert' end
+        end
+        local rawDir = resPath .. '/' .. cfg.RawDir
+        local outDir = resPath .. '/' .. cfg.OutputDir
+        local rawOk = false
+        local fw = io.open(rawDir .. '/.wtest', 'w')
+        if fw then fw:close() os.remove(rawDir .. '/.wtest') rawOk = true end
+        local outOk = false
+        local fo = io.open(outDir .. '/.wtest', 'w')
+        if fo then fo:close() os.remove(outDir .. '/.wtest') outOk = true end
+        local batchStatus
+        if activeQueue then
+            batchStatus = ('running (%d total, %d done, %d failed)'):format(
+                #activeQueue.items, activeQueue.index - 1, activeQueue.failed
+            )
+        else
+            batchStatus = 'idle'
+        end
+        tell(source, 'resource: ready')
+        tell(source, 'screenshot-basic: ' .. ssState)
+        tell(source, 'ImageMagick: ' .. imPath)
+        tell(source, 'chroma mode: ' .. cfg.ChromaMode)
+        tell(source, 'raw dir: ' .. rawDir .. ' — ' .. (rawOk and 'writable' or 'NOT WRITABLE'))
+        tell(source, 'output dir: ' .. outDir .. ' — ' .. (outOk and 'writable' or 'NOT WRITABLE'))
+        tell(source, 'batch: ' .. batchStatus)
+        return
+    end
     if mode ~= 'missing' and mode ~= 'all' and mode ~= 'listmissing' then
-        tell(source, 'Usage: /vehthumbs missing | all | listmissing | stop', 'error')
+        tell(source, 'Usage: /vehthumbs missing | all | listmissing | status | stop', 'error')
         return
     end
     if activeQueue or pendingCatalog then
@@ -259,6 +305,43 @@ end)
 AddEventHandler('playerDropped', function()
     if activeQueue and activeQueue.source == source then activeQueue = nil end
     if pendingCatalog and pendingCatalog.source == source then pendingCatalog = nil end
+end)
+
+AddEventHandler('onResourceStart', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    local res = GetCurrentResourceName()
+    local resPath = GetResourcePath(res)
+    print('[racket_vehicle_thumbs] starting')
+    local ssState = GetResourceState('screenshot-basic')
+    print('[racket_vehicle_thumbs] screenshot-basic: ' .. ssState)
+    local imPath = 'NOT FOUND'
+    local f = io.open('/usr/bin/magick', 'r')
+    if f then f:close() imPath = '/usr/bin/magick'
+    else
+        f = io.open('/usr/bin/convert', 'r')
+        if f then f:close() imPath = '/usr/bin/convert' end
+    end
+    print('[racket_vehicle_thumbs] ImageMagick: ' .. imPath)
+    local rawDir = resPath .. '/' .. cfg.RawDir
+    local outDir = resPath .. '/' .. cfg.OutputDir
+    local rawOk = false
+    local fw = io.open(rawDir .. '/.wtest', 'w')
+    if fw then fw:close() os.remove(rawDir .. '/.wtest') rawOk = true end
+    print('[racket_vehicle_thumbs] raw dir: ' .. (rawOk and 'writable' or 'NOT WRITABLE'))
+    local outOk = false
+    local fo = io.open(outDir .. '/.wtest', 'w')
+    if fo then fo:close() os.remove(outDir .. '/.wtest') outOk = true end
+    print('[racket_vehicle_thumbs] output dir: ' .. (outOk and 'writable' or 'NOT WRITABLE'))
+    local notReady = {}
+    if ssState ~= 'started' then notReady[#notReady + 1] = 'screenshot-basic not started' end
+    if imPath == 'NOT FOUND' then notReady[#notReady + 1] = 'ImageMagick not found' end
+    if not rawOk then notReady[#notReady + 1] = 'raw dir not writable' end
+    if not outOk then notReady[#notReady + 1] = 'output dir not writable' end
+    if #notReady > 0 then
+        print('[racket_vehicle_thumbs] NOT READY: ' .. table.concat(notReady, '; '))
+    else
+        print('[racket_vehicle_thumbs] ready')
+    end
 end)
 
 AddEventHandler('onResourceStop', function(resource)

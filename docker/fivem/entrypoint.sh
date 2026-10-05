@@ -29,6 +29,14 @@ if [ -f /config-mount/server.cfg.template ]; then
           continue
         fi
         ;;
+      "#@vehiclethumbs "*)
+        # Vehicle-thumbs lines are activated only when VEHICLE_THUMBS_ENABLED=1; otherwise dropped.
+        if [ "${VEHICLE_THUMBS_ENABLED:-0}" = "1" ]; then
+          line="${line#\#@vehiclethumbs }"
+        else
+          continue
+        fi
+        ;;
     esac
     case "$line" in
       *__SUNSET_DEV__*)
