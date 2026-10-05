@@ -4,6 +4,19 @@ local pendingCatalog = nil
 local serial = 0
 local advance
 
+-- FiveM sandboxes io.open to resource-local paths; use io.popen to probe system binaries.
+local function findImageMagick()
+    for _, bin in ipairs({ '/usr/bin/magick', '/usr/bin/convert' }) do
+        local h = io.popen(bin .. ' -version 2>&1')
+        if h then
+            local out = h:read('*a') or ''
+            h:close()
+            if out:find('ImageMagick', 1, true) then return bin end
+        end
+    end
+    return 'NOT FOUND'
+end
+
 local function tell(source, message, kind)
     print(('[racket_vehicle_thumbs] %s'):format(message))
     if source and source > 0 and GetPlayerPing(source) > 0 then
@@ -169,13 +182,7 @@ RegisterCommand('vehthumbs', function(source, args)
         local res = GetCurrentResourceName()
         local resPath = GetResourcePath(res)
         local ssState = GetResourceState('screenshot-basic')
-        local imPath = 'NOT FOUND'
-        local f = io.open('/usr/bin/magick', 'r')
-        if f then f:close() imPath = '/usr/bin/magick'
-        else
-            f = io.open('/usr/bin/convert', 'r')
-            if f then f:close() imPath = '/usr/bin/convert' end
-        end
+        local imPath = findImageMagick()
         local rawDir = resPath .. '/' .. cfg.RawDir
         local outDir = resPath .. '/' .. cfg.OutputDir
         local rawOk = false
@@ -314,13 +321,7 @@ AddEventHandler('onResourceStart', function(resourceName)
     print('[racket_vehicle_thumbs] starting')
     local ssState = GetResourceState('screenshot-basic')
     print('[racket_vehicle_thumbs] screenshot-basic: ' .. ssState)
-    local imPath = 'NOT FOUND'
-    local f = io.open('/usr/bin/magick', 'r')
-    if f then f:close() imPath = '/usr/bin/magick'
-    else
-        f = io.open('/usr/bin/convert', 'r')
-        if f then f:close() imPath = '/usr/bin/convert' end
-    end
+    local imPath = findImageMagick()
     print('[racket_vehicle_thumbs] ImageMagick: ' .. imPath)
     local rawDir = resPath .. '/' .. cfg.RawDir
     local outDir = resPath .. '/' .. cfg.OutputDir
