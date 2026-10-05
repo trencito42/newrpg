@@ -1,5 +1,5 @@
 import { dbQuery } from "./db";
-import { factionIdSql } from "./faction-sql";
+import { factionGradeSql, factionIdSql } from "./faction-sql";
 import { CANONICAL_FACTIONS, getFactionColor, getFactionLabel } from "./factions";
 import type { ResolvedPlayerIdentity } from "./player-identity";
 import type { RowDataPacket } from "mysql2";
@@ -85,13 +85,12 @@ export async function resolveForumAuthorIdentities(
     const rows = await dbQuery<IdentityCharRow>(
       `SELECT c.id AS character_id, a.username, c.firstname, c.lastname, c.metadata,
               ${factionIdSql()} AS job,
-              fm.grade AS faction_grade,
+              ${factionGradeSql()} AS faction_grade,
               cl.id AS clan_id, cl.name AS clan_name, cl.tag AS clan_tag,
               cl.tag_color AS clan_tag_color, cl.tag_style AS clan_tag_style
        FROM characters c
        INNER JOIN players p ON p.id = c.player_id
        INNER JOIN accounts a ON a.id = p.account_id
-       LEFT JOIN faction_membership fm ON fm.character_id = c.id
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
        WHERE c.id IN (${placeholders})`,
@@ -116,7 +115,7 @@ export async function resolveForumAuthorIdentities(
     const rows = await dbQuery<IdentityCharRow>(
       `SELECT c.id AS character_id, a.id AS account_id, a.username, c.firstname, c.lastname, c.metadata,
               ${factionIdSql()} AS job,
-              fm.grade AS faction_grade,
+              ${factionGradeSql()} AS faction_grade,
               cl.id AS clan_id, cl.name AS clan_name, cl.tag AS clan_tag,
               cl.tag_color AS clan_tag_color, cl.tag_style AS clan_tag_style
        FROM accounts a
@@ -127,7 +126,6 @@ export async function resolveForumAuthorIdentities(
          ORDER BY c2.id DESC
          LIMIT 1
        )
-       LEFT JOIN faction_membership fm ON fm.character_id = c.id
        LEFT JOIN clan_members cm ON cm.character_id = c.id
        LEFT JOIN clans cl ON cl.id = cm.clan_id
        WHERE a.id IN (${placeholders})`,
