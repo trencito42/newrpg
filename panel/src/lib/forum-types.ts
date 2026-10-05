@@ -49,6 +49,7 @@ export interface ForumTopic {
   id: number;
   forum_id: number;
   account_id: number;
+  author_character_id?: number | null;
   author_username: string;
   title: string;
   slug: string;
@@ -63,6 +64,7 @@ export interface ForumTopic {
   has_poll: boolean;
   template_data: Record<string, unknown> | null;
   created_at: string;
+  created_at_unix?: number | null;
   deleted_at: string | null;
   deleted_by_account_id: number | null;
   delete_reason: string | null;
@@ -71,6 +73,7 @@ export interface ForumTopic {
 export interface ForumTopicListItem extends ForumTopic {
   is_unread?: boolean;
   last_read_post_id?: number | null;
+  first_unread_post_id?: number | null;
 }
 
 export interface ForumPost {
@@ -78,6 +81,7 @@ export interface ForumPost {
   topic_id: number;
   forum_id: number;
   account_id: number;
+  author_character_id?: number | null;
   author_username: string;
   content: string;
   is_first_post: boolean;
@@ -85,6 +89,7 @@ export interface ForumPost {
   edited_by_account_id: number | null;
   edit_reason: string | null;
   created_at: string;
+  created_at_unix?: number | null;
   deleted_at: string | null;
   deleted_by_account_id: number | null;
   delete_reason: string | null;

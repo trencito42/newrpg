@@ -11,10 +11,50 @@ interface CountRow extends RowDataPacket {
   cnt: number;
 }
 
-/**
- * Check whether the account has a character in the given faction.
- */
-async function hasFactionAccess(accountId: number, factionId: string): Promise<boolean> {
+export interface ForumViewerContext {
+  session: UserSession | null;
+  accountId: number;
+  characterId: number | null;
+  isStaff: boolean;
+  isAdmin: boolean;
+}
+
+export function getForumViewerContext(session: UserSession | null): ForumViewerContext {
+  const isAdmin = session !== null && session.adminLevel >= 1;
+  const isStaff = isAdmin || (session?.helperLevel ?? 0) >= 1;
+  return {
+    session,
+    accountId: session?.accountId ?? 0,
+    characterId: session?.selectedCharacterId ?? null,
+    isStaff,
+    isAdmin,
+  };
+}
+
+async function characterInFaction(characterId: number, factionId: string): Promise<boolean> {
+  const row = await dbQuerySingle<CountRow>(
+    `SELECT COUNT(*) AS cnt
+     FROM faction_membership fm
+     WHERE fm.character_id = ? AND fm.faction_id = ?
+     LIMIT 1`,
+    [characterId, factionId]
+  );
+  return (row?.cnt ?? 0) > 0;
+}
+
+async function characterInClan(characterId: number, clanId: number): Promise<boolean> {
+  const row = await dbQuerySingle<CountRow>(
+    `SELECT COUNT(*) AS cnt
+     FROM clan_members cm
+     INNER JOIN clans c ON c.id = cm.clan_id
+     WHERE cm.character_id = ? AND cm.clan_id = ? AND c.status <> 'expired'
+     LIMIT 1`,
+    [characterId, clanId]
+  );
+  return (row?.cnt ?? 0) > 0;
+}
+
+async function accountHasCharacterInFaction(accountId: number, factionId: string): Promise<boolean> {
   const row = await dbQuerySingle<CountRow>(
     `SELECT COUNT(*) AS cnt
      FROM faction_membership fm
@@ -27,18 +67,16 @@ async function hasFactionAccess(accountId: number, factionId: string): Promise<b
   return (row?.cnt ?? 0) > 0;
 }
 
-/**
- * Check whether the account has any character that is a clan member.
- */
-async function hasClanAccess(accountId: number): Promise<boolean> {
+async function accountHasCharacterInClan(accountId: number, clanId: number): Promise<boolean> {
   const row = await dbQuerySingle<CountRow>(
     `SELECT COUNT(*) AS cnt
      FROM clan_members cm
      JOIN characters c ON c.id = cm.character_id
      JOIN players p ON p.id = c.player_id
-     WHERE p.account_id = ?
+     JOIN clans cl ON cl.id = cm.clan_id
+     WHERE p.account_id = ? AND cm.clan_id = ? AND cl.status <> 'expired'
      LIMIT 1`,
-    [accountId]
+    [accountId, clanId]
   );
   return (row?.cnt ?? 0) > 0;
 }
@@ -50,9 +88,10 @@ export async function canAccessForum(
   session: UserSession | null,
   forum: Forum
 ): Promise<boolean> {
+  const viewer = getForumViewerContext(session);
+
   if (!forum.is_visible) {
-    // Hidden forums are only accessible to staff
-    return (session?.adminLevel ?? 0) >= 1 || (session?.helperLevel ?? 0) >= 1;
+    return viewer.isStaff;
   }
 
   switch (forum.access_type) {
@@ -60,53 +99,57 @@ export async function canAccessForum(
       return true;
 
     case "registered":
-      return session !== null;
+      return viewer.session !== null;
 
     case "staff":
-      if (!session) return false;
-      return session.adminLevel >= 1 || session.helperLevel >= 1;
+      return viewer.isStaff;
 
-    case "faction":
-      if (!session) return false;
-      // Staff bypass faction restriction
-      if (session.adminLevel >= 1 || session.helperLevel >= 1) return true;
-      if (!forum.access_target) return false;
-      return hasFactionAccess(session.accountId, forum.access_target);
+    case "faction": {
+      if (!viewer.session) return false;
+      if (viewer.isStaff) return true;
+      const target = (forum.access_target || "").trim();
+      if (!target) return false;
+      if (viewer.characterId) {
+        return characterInFaction(viewer.characterId, target);
+      }
+      return accountHasCharacterInFaction(viewer.accountId, target);
+    }
 
-    case "clan":
-      if (!session) return false;
-      if (session.adminLevel >= 1 || session.helperLevel >= 1) return true;
-      return hasClanAccess(session.accountId);
+    case "clan": {
+      if (!viewer.session) return false;
+      if (viewer.isStaff) return true;
+      const clanId = parseInt(forum.access_target || "", 10);
+      if (!Number.isFinite(clanId) || clanId <= 0) return false;
+      if (viewer.characterId) {
+        return characterInClan(viewer.characterId, clanId);
+      }
+      return accountHasCharacterInClan(viewer.accountId, clanId);
+    }
 
     case "custom":
-      if (!session) return false;
-      return session.adminLevel >= 1 || session.helperLevel >= 1;
+      return viewer.isStaff;
 
     default:
       return false;
   }
 }
 
+export const canViewForum = canAccessForum;
+
 /**
  * Compute all permissions for the current session on the given forum.
- * Does NOT check topic-level lock status — callers must do that additionally.
  */
 export async function getForumPermissions(
   session: UserSession | null,
   forum: Forum
 ): Promise<ForumPermissions> {
-  const isModerator = session !== null && (session.adminLevel >= 1 || session.helperLevel >= 1);
-  const isAdmin = session !== null && session.adminLevel >= 1;
+  const viewer = getForumViewerContext(session);
   const canView = await canAccessForum(session, forum);
 
-  const canCreateTopic =
-    canView &&
-    session !== null &&
-    !forum.is_locked;
+  const canCreateTopic = canView && viewer.session !== null && !forum.is_locked;
+  const canReply = canCreateTopic;
 
-  const canReply = canCreateTopic; // topic-level lock checked separately
-
-  const canEditOwn = canView && session !== null;
+  const canEditOwn = canView && viewer.session !== null;
   const canDeleteOwn = canEditOwn;
 
   return {
@@ -115,13 +158,13 @@ export async function getForumPermissions(
     canReply,
     canEditOwn,
     canDeleteOwn,
-    canModerate: isModerator,
-    canModDeletePost: isModerator,
-    canModLockTopic: isModerator,
-    canModPinTopic: isModerator,
-    canModMoveTopic: isModerator,
-    canModRestorePost: isModerator,
-    canAdminManageForum: isAdmin,
-    canAdminManageCategory: isAdmin,
+    canModerate: viewer.isStaff,
+    canModDeletePost: viewer.isStaff,
+    canModLockTopic: viewer.isStaff,
+    canModPinTopic: viewer.isStaff,
+    canModMoveTopic: viewer.isStaff,
+    canModRestorePost: viewer.isStaff,
+    canAdminManageForum: viewer.isAdmin,
+    canAdminManageCategory: viewer.isAdmin,
   };
 }

@@ -1,11 +1,15 @@
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuerySingle, dbQuery } from "@/lib/db";
 import { canAccessForum } from "@/lib/forum-permissions";
+import { forumAuthorKey, resolveForumAuthorIdentities } from "@/lib/forum-author-identity";
+import { buildMetadata } from "@/lib/seo/metadata";
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Forum, ForumTopicListItem } from "@/lib/forum-types";
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
-import { Lock, Pin, Megaphone, Globe, MessageSquare, Eye, Clock, PenLine } from "lucide-react";
+import { MessageSquare, PenLine } from "lucide-react";
+import { TopicListItem } from "@/components/forum/TopicListItem";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +20,7 @@ interface TopicRow extends RowDataPacket {
   id: number;
   forum_id: number;
   account_id: number;
+  author_character_id: number | null;
   author_username: string;
   title: string;
   slug: string;
@@ -26,34 +31,41 @@ interface TopicRow extends RowDataPacket {
   last_post_at: string | null;
   last_post_username: string | null;
   last_post_id: number | null;
+  last_post_account_id: number | null;
   has_poll: number;
   created_at: string;
   deleted_at: string | null;
+  deleted_by_account_id: number | null;
+  delete_reason: string | null;
+  template_data: Record<string, unknown> | null;
   last_read_post_id: number | null;
-}
-
-function TopicTypeIcon({ type, status }: { type: string; status: string }) {
-  if (status === "locked") return <Lock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />;
-  if (type === "global") return <Globe className="w-3.5 h-3.5 text-brand flex-shrink-0" />;
-  if (type === "announcement") return <Megaphone className="w-3.5 h-3.5 text-brand flex-shrink-0" />;
-  if (type === "pinned") return <Pin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />;
-  return <MessageSquare className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />;
-}
-
-function formatTime(date: string | null, locale: "en" | "ro") {
-  if (!date) return "";
-  const d = new Date(date);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+  first_unread_post_id: number | null;
 }
 
 interface PageProps {
   params: Promise<{ forumSlug: string }>;
   searchParams: Promise<{ page?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { forumSlug } = await params;
+  const session = await getCurrentSession();
+  const forum = await dbQuerySingle<ForumRow>(
+    `SELECT * FROM panel_forums WHERE slug = ? LIMIT 1`,
+    [forumSlug]
+  );
+  if (!forum) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+  if (!(await canAccessForum(session, forum))) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+  return buildMetadata({
+    title: forum.name,
+    description:
+      forum.description || `Discussion in ${forum.name} on RACKET RPG.`, // i18n-ignore: english-only seo
+    path: `/forum/${forum.slug}`,
+  });
 }
 
 export default async function ForumPage({ params, searchParams }: PageProps) {
@@ -81,7 +93,10 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
   const accountId = session?.accountId ?? 0;
 
   const topics = await dbQuery<TopicRow>(
-    `SELECT t.*, tr.last_read_post_id
+    `SELECT t.*, tr.last_read_post_id,
+            (SELECT MIN(p.id) FROM panel_forum_posts p
+             WHERE p.topic_id = t.id AND p.deleted_at IS NULL
+               AND p.id > COALESCE(tr.last_read_post_id, 0)) AS first_unread_post_id
      FROM panel_forum_topics t
      LEFT JOIN panel_forum_topic_reads tr ON tr.topic_id = t.id AND tr.account_id = ?
      WHERE t.forum_id = ?
@@ -90,6 +105,25 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
      LIMIT ? OFFSET ?`,
     [accountId, forum.id, PAGE_SIZE, offset]
   );
+
+  const identityRefs = topics.flatMap((t) => {
+    const refs = [
+      {
+        accountId: t.account_id,
+        characterId: t.author_character_id,
+        username: t.author_username,
+      },
+    ];
+    if (t.last_post_username && t.last_post_account_id) {
+      refs.push({
+        accountId: t.last_post_account_id,
+        characterId: null,
+        username: t.last_post_username,
+      });
+    }
+    return refs;
+  });
+  const identityMap = await resolveForumAuthorIdentities(identityRefs);
 
   interface CountRow extends RowDataPacket { total: number }
   const countRow = await dbQuerySingle<CountRow>(
@@ -141,66 +175,45 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden">
-          {topics.map((topic, idx) => {
+        <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+          {topics.map((topic) => {
             const isUnread =
               accountId > 0 &&
               topic.last_post_id != null &&
               (topic.last_read_post_id ?? 0) < (topic.last_post_id ?? 0);
-
             return (
-              <div
+              <TopicListItem
                 key={topic.id}
-                className={`flex items-center gap-3 px-4 py-3 bg-card hover:bg-surface-200 transition-colors ${idx > 0 ? "border-t border-border" : ""} ${topic.deleted_at ? "opacity-50" : ""}`}
-              >
-                <TopicTypeIcon type={topic.type} status={topic.status} />
-
-                {/* Unread dot */}
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isUnread ? "bg-brand" : "bg-transparent"}`} />
-
-                {/* Title area */}
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/forum/topic/${topic.id}/${topic.slug}`}
-                    className="text-sm font-semibold text-foreground hover:text-brand transition-colors truncate block"
-                  >
-                    {topic.title}
-                  </Link>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span>{topic.author_username}</span>
-                    <span>·</span>
-                    <span>{formatTime(topic.created_at, locale)}</span>
-                    {topic.deleted_at && (
-                      <span className="text-red-400">{"[deleted]"}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" />
-                    <span>{topic.reply_count}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    <span>{topic.view_count}</span>
-                  </div>
-                </div>
-
-                {/* Last post */}
-                <div className="hidden md:flex flex-col items-end text-xs text-muted-foreground flex-shrink-0 min-w-[80px]">
-                  {topic.last_post_at && (
-                    <>
-                      <span className="text-foreground">{topic.last_post_username}</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-2.5 h-2.5" />
-                        <span>{formatTime(topic.last_post_at, locale)}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                topic={{
+                  ...topic,
+                  type: topic.type as ForumTopicListItem["type"],
+                  status: topic.status as ForumTopicListItem["status"],
+                  has_poll: Boolean(topic.has_poll),
+                  is_unread: isUnread,
+                  last_read_post_id: topic.last_read_post_id,
+                  first_unread_post_id: topic.first_unread_post_id,
+                }}
+                locale={locale}
+                firstUnreadPostId={topic.first_unread_post_id}
+                authorIdentity={identityMap.get(
+                  forumAuthorKey({
+                    accountId: topic.account_id,
+                    characterId: topic.author_character_id,
+                    username: topic.author_username,
+                  })
+                )}
+                lastPosterIdentity={
+                  topic.last_post_account_id && topic.last_post_username
+                    ? identityMap.get(
+                        forumAuthorKey({
+                          accountId: topic.last_post_account_id,
+                          characterId: null,
+                          username: topic.last_post_username,
+                        })
+                      )
+                    : undefined
+                }
+              />
             );
           })}
         </div>

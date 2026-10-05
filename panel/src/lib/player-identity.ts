@@ -9,10 +9,13 @@ export interface ResolvedPlayerIdentity {
   skin?: string | null;
   factionId: string | null;
   factionColor: string | null;
+  factionLabel?: string | null;
+  factionGrade?: number | null;
   clanId: number | null;
   clanTag: string | null;
   clanColor: string | null;
   clanTagStyle?: string | null;
+  clanName?: string | null;
 }
 
 interface IdentityDbRow extends RowDataPacket {
@@ -52,7 +55,12 @@ export async function resolvePlayerIdentities(
       cl.tag_style as clan_tag_style
     FROM accounts a
     LEFT JOIN players p ON p.account_id = a.id
-    LEFT JOIN characters c ON c.player_id = p.id
+    LEFT JOIN characters c ON c.id = (
+      SELECT c2.id FROM characters c2
+      WHERE c2.player_id = p.id
+      ORDER BY c2.id DESC
+      LIMIT 1
+    )
     LEFT JOIN clan_members cm ON cm.character_id = c.id
     LEFT JOIN clans cl ON cl.id = cm.clan_id
     WHERE a.username IN (${placeholders})

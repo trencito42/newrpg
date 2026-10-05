@@ -7,15 +7,12 @@ import { getServerStatus } from "@/lib/bridge";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Header } from "@/components/navigation/Header";
 import { MobileNav } from "@/components/navigation/MobileNav";
-import { panelBrand } from "@/lib/brand";
+import { buildRootMetadata } from "@/lib/seo/metadata";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
 import { resolvePlayerIdentity } from "@/lib/player-identity";
 
-export const metadata: Metadata = {
-  title: `${panelBrand.name} — Companion Panel`,
-  description: `Companion panel for ${panelBrand.name}. Characters, factions, and community polls.`,
-};
+export const metadata: Metadata = buildRootMetadata();
 
 export const viewport: Viewport = {
   width: "device-width",

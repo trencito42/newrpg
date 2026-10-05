@@ -1,6 +1,8 @@
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { canAccessForum } from "@/lib/forum-permissions";
+import { forumAuthorKey, resolveForumAuthorIdentities } from "@/lib/forum-author-identity";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import type { Forum, ForumCategory, ForumCategoryWithForums } from "@/lib/forum-types";
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
@@ -65,13 +67,41 @@ export default async function ForumIndexPage() {
       is_visible: Boolean(x.forum.is_visible),
     }));
 
-  const categoryList: ForumCategoryWithForums[] = categories.map((cat) => ({
-    ...cat,
-    is_visible: Boolean(cat.is_visible),
-    forums: accessibleForums.filter(
-      (f) => f.category_id === cat.id && f.parent_forum_id === null
-    ),
-  }));
+  const categoryList: ForumCategoryWithForums[] = categories
+    .map((cat) => ({
+      ...cat,
+      is_visible: Boolean(cat.is_visible),
+      forums: accessibleForums.filter(
+        (f) => f.category_id === cat.id && f.parent_forum_id === null
+      ),
+    }))
+    .filter((cat) => cat.forums.length > 0);
+
+  const lastTopicIds = accessibleForums
+    .map((f) => f.last_topic_id)
+    .filter((id): id is number => typeof id === "number" && id > 0);
+  let topicSlugById = new Map<number, string>();
+  if (lastTopicIds.length > 0) {
+    const placeholders = lastTopicIds.map(() => "?").join(",");
+    interface SlugRow extends RowDataPacket {
+      id: number;
+      slug: string;
+    }
+    const slugRows = await dbQuery<SlugRow>(
+      `SELECT id, slug FROM panel_forum_topics WHERE id IN (${placeholders})`,
+      lastTopicIds
+    );
+    topicSlugById = new Map(slugRows.map((r) => [r.id, r.slug]));
+  }
+
+  const lastPosterRefs = accessibleForums
+    .filter((f) => f.last_post_account_id && f.last_post_username)
+    .map((f) => ({
+      accountId: f.last_post_account_id!,
+      characterId: null,
+      username: f.last_post_username!,
+    }));
+  const lastPosterMap = await resolveForumAuthorIdentities(lastPosterRefs);
 
   return (
     <div className="space-y-8">
@@ -153,11 +183,36 @@ export default async function ForumIndexPage() {
 
                   {/* Last post */}
                   <div className="hidden md:flex flex-col items-end text-xs text-muted-foreground flex-shrink-0 min-w-[120px]">
-                    {forum.last_post_at ? (
+                    {forum.last_post_at && forum.last_topic_id ? (
                       <>
-                        <span className="text-foreground truncate max-w-[120px]">{forum.last_topic_title}</span>
-                        <span className="text-muted-foreground">
-                          {forum.last_post_username} · {formatLastPost(forum, locale)}
+                        <Link
+                          href={`/forum/topic/${forum.last_topic_id}/${topicSlugById.get(forum.last_topic_id!) || "topic"}`}
+                          className="text-foreground truncate max-w-[120px] hover:text-brand transition-colors"
+                        >
+                          {forum.last_topic_title}
+                        </Link>
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          {forum.last_post_username && forum.last_post_account_id ? (
+                            <PlayerIdentity
+                              {...(lastPosterMap.get(
+                                forumAuthorKey({
+                                  accountId: forum.last_post_account_id,
+                                  characterId: null,
+                                  username: forum.last_post_username,
+                                })
+                              ) || {
+                                username: forum.last_post_username,
+                                factionId: null,
+                                factionColor: null,
+                                clanId: null,
+                                clanTag: null,
+                                clanColor: null,
+                              })}
+                              size="sm"
+                            />
+                          ) : null}
+                          <span>·</span>
+                          <span>{formatLastPost(forum, locale)}</span>
                         </span>
                       </>
                     ) : (

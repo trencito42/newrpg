@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Lock, Pin, Megaphone, Globe, MessageSquare, Eye, Clock } from "lucide-react";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import type { ForumTopicListItem } from "@/lib/forum-types";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface TopicListItemProps {
   topic: ForumTopicListItem;
@@ -8,6 +10,9 @@ interface TopicListItemProps {
   showForum?: boolean;
   forumName?: string;
   forumSlug?: string;
+  authorIdentity?: ResolvedPlayerIdentity;
+  lastPosterIdentity?: ResolvedPlayerIdentity;
+  firstUnreadPostId?: number | null;
 }
 
 function formatRelative(dateStr: string | null, locale: "en" | "ro"): string {
@@ -29,28 +34,57 @@ function TypeIcon({ type, status }: { type: string; status: string }) {
   return <MessageSquare className={`${cls} text-muted-foreground`} />;
 }
 
-export function TopicListItem({ topic, locale, showForum, forumName, forumSlug }: TopicListItemProps) {
+function identityProps(identity: ResolvedPlayerIdentity | undefined, username: string) {
+  if (identity) return identity;
+  return {
+    username,
+    factionId: null,
+    factionColor: null,
+    clanId: null,
+    clanTag: null,
+    clanColor: null,
+  };
+}
+
+export function TopicListItem({
+  topic,
+  locale,
+  showForum,
+  forumName,
+  forumSlug,
+  authorIdentity,
+  lastPosterIdentity,
+  firstUnreadPostId,
+}: TopicListItemProps) {
+  const topicBase = `/forum/topic/${topic.id}/${topic.slug}`;
+  const topicHref =
+    topic.is_unread && firstUnreadPostId
+      ? `${topicBase}#post-${firstUnreadPostId}`
+      : topicBase;
+  const lastPostHref =
+    topic.last_post_id != null ? `${topicBase}#post-${topic.last_post_id}` : topicBase;
+
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 bg-card hover:bg-surface-200 transition-colors ${topic.deleted_at ? "opacity-60" : ""}`}>
+    <div
+      className={`flex items-center gap-3 px-4 py-3 bg-card hover:bg-surface-200 transition-colors ${topic.deleted_at ? "opacity-60" : ""}`}
+    >
       <TypeIcon type={topic.type} status={topic.status} />
 
-      {/* Unread dot */}
       <div
         className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
           topic.is_unread ? "bg-brand" : "bg-transparent"
         }`}
       />
 
-      {/* Title area */}
       <div className="flex-1 min-w-0">
         <Link
-          href={`/forum/topic/${topic.id}/${topic.slug}`}
+          href={topicHref}
           className="text-sm font-semibold text-foreground hover:text-brand transition-colors truncate block"
         >
           {topic.title}
         </Link>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <span>{topic.author_username}</span>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+          <PlayerIdentity {...identityProps(authorIdentity, topic.author_username)} size="sm" />
           {showForum && forumName && forumSlug && (
             <>
               <span>·</span>
@@ -68,7 +102,6 @@ export function TopicListItem({ topic, locale, showForum, forumName, forumSlug }
         </div>
       </div>
 
-      {/* Stats */}
       <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground flex-shrink-0">
         <div className="flex items-center gap-1">
           <MessageSquare className="w-3 h-3" />
@@ -80,15 +113,23 @@ export function TopicListItem({ topic, locale, showForum, forumName, forumSlug }
         </div>
       </div>
 
-      {/* Last post */}
       <div className="hidden md:flex flex-col items-end text-xs text-muted-foreground flex-shrink-0 min-w-[80px]">
-        {topic.last_post_at && (
+        {topic.last_post_at && topic.last_post_username && (
           <>
-            <span className="text-foreground truncate max-w-[80px]">{topic.last_post_username}</span>
-            <div className="flex items-center gap-1">
+            <PlayerIdentity
+              {...identityProps(lastPosterIdentity, topic.last_post_username)}
+              size="sm"
+              className="truncate max-w-[100px]"
+            />
+            <Link
+              href={lastPostHref}
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
               <Clock className="w-2.5 h-2.5" />
-              <span>{formatRelative(topic.last_post_at, locale)}</span>
-            </div>
+              <time dateTime={new Date(topic.last_post_at).toISOString()}>
+                {formatRelative(topic.last_post_at, locale)}
+              </time>
+            </Link>
           </>
         )}
       </div>

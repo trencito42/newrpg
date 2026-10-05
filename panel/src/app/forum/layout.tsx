@@ -1,10 +1,12 @@
 import React from "react";
 import { ForumBreadcrumb } from "@/components/forum/ForumBreadcrumb";
+import { buildMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
-  title: "Forum • RACKET RPG", // i18n-ignore: english-only
-  description: "Community forum for RACKET RPG players", // i18n-ignore: english-only
-};
+export const metadata = buildMetadata({
+  title: "Forum", // i18n-ignore: english-only seo
+  description: "Community forum for RACKET RPG players.", // i18n-ignore: english-only seo
+  path: "/forum",
+});
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   return (

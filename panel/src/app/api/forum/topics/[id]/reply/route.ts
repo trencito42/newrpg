@@ -88,9 +88,16 @@ export async function POST(
     const postId = await dbTransaction(async (conn) => {
       const [postResult] = await conn.execute<ResultSetHeader>(
         `INSERT INTO panel_forum_posts
-           (topic_id, forum_id, account_id, author_username, content, is_first_post, created_at)
-         VALUES (?, ?, ?, ?, ?, 0, NOW())`,
-        [topicId, topic.forum_id, session.accountId, session.username, renderedContent]
+           (topic_id, forum_id, account_id, author_character_id, author_username, content, is_first_post, created_at, created_at_unix)
+         VALUES (?, ?, ?, ?, ?, ?, 0, NOW(), UNIX_TIMESTAMP())`,
+        [
+          topicId,
+          topic.forum_id,
+          session.accountId,
+          session.selectedCharacterId ?? null,
+          session.username,
+          renderedContent,
+        ]
       );
       const newPostId = postResult.insertId;
 

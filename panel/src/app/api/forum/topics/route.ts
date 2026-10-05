@@ -94,18 +94,34 @@ export async function POST(req: NextRequest) {
       // Insert topic
       const [topicResult] = await conn.execute<ResultSetHeader>(
         `INSERT INTO panel_forum_topics
-           (forum_id, account_id, author_username, title, slug, type, status, has_poll, created_at, last_post_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'open', ?, NOW(), NOW())`,
-        [data.forumId, session.accountId, session.username, data.title, slug, topicType, hasPoll]
+           (forum_id, account_id, author_character_id, author_username, title, slug, type, status, has_poll, created_at, created_at_unix, last_post_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, NOW(), UNIX_TIMESTAMP(), NOW())`,
+        [
+          data.forumId,
+          session.accountId,
+          session.selectedCharacterId ?? null,
+          session.username,
+          data.title,
+          slug,
+          topicType,
+          hasPoll,
+        ]
       );
       const topicId = topicResult.insertId;
 
       // Insert first post
       const [postResult] = await conn.execute<ResultSetHeader>(
         `INSERT INTO panel_forum_posts
-           (topic_id, forum_id, account_id, author_username, content, is_first_post, created_at)
-         VALUES (?, ?, ?, ?, ?, 1, NOW())`,
-        [topicId, data.forumId, session.accountId, session.username, renderedContent]
+           (topic_id, forum_id, account_id, author_character_id, author_username, content, is_first_post, created_at, created_at_unix)
+         VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), UNIX_TIMESTAMP())`,
+        [
+          topicId,
+          data.forumId,
+          session.accountId,
+          session.selectedCharacterId ?? null,
+          session.username,
+          renderedContent,
+        ]
       );
       const postId = postResult.insertId;
 

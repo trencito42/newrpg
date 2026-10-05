@@ -1,7 +1,11 @@
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuerySingle, dbQuery } from "@/lib/db";
 import { canAccessForum } from "@/lib/forum-permissions";
+import { forumAuthorKey, resolveForumAuthorIdentities } from "@/lib/forum-author-identity";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Forum, ForumTopic, ForumPostItem, ForumPoll } from "@/lib/forum-types";
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
@@ -9,6 +13,7 @@ import { PostCard } from "@/components/forum/PostCard";
 import { TopicActionsMenu } from "@/components/forum/TopicActionsMenu";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 import { PollDisplay } from "@/components/forum/PollDisplay";
+import { PostHashScroll } from "@/components/forum/PostHashScroll";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +49,7 @@ interface PostRow extends RowDataPacket {
   topic_id: number;
   forum_id: number;
   account_id: number;
+  author_character_id: number | null;
   author_username: string;
   content: string;
   is_first_post: number;
@@ -67,8 +73,43 @@ interface PageProps {
   searchParams: Promise<{ page?: string; postId?: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id: idStr, slug } = await params;
+  const topicId = parseInt(idStr, 10);
+  if (!Number.isFinite(topicId)) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+
+  const session = await getCurrentSession();
+  const topic = await dbQuerySingle<TopicRow>(
+    `SELECT id, title, slug, forum_id, deleted_at FROM panel_forum_topics WHERE id = ? LIMIT 1`,
+    [topicId]
+  );
+  if (!topic || topic.deleted_at) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+
+  const forum = await dbQuerySingle<ForumRow>(`SELECT * FROM panel_forums WHERE id = ? LIMIT 1`, [
+    topic.forum_id,
+  ]);
+  if (!forum) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+  const accessible = await canAccessForum(session, forum);
+  if (!accessible) {
+    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+  }
+
+  return buildMetadata({
+    title: topic.title,
+    description: `${forum.name} — discussion on ${topic.title}`,
+    path: `/forum/topic/${topic.id}/${topic.slug || slug}`,
+    type: "article",
+  });
+}
+
 export default async function TopicPage({ params, searchParams }: PageProps) {
-  const { id: idStr } = await params;
+  const { id: idStr, slug: urlSlug } = await params;
   const { page: pageParam, postId: postIdParam } = await searchParams;
 
   const topicId = parseInt(idStr, 10);
@@ -97,6 +138,11 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
   if (!accessible) {
     if (!session) redirect("/account/login");
     notFound();
+  }
+
+  if (urlSlug !== topic.slug) {
+    const qs = pageParam ? `?page=${pageParam}` : "";
+    redirect(`/forum/topic/${topicId}/${topic.slug}${qs}`);
   }
 
   // Resolve page from postId
@@ -200,11 +246,24 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
     }
   }
 
+  const authorRefs = posts.map((p) => ({
+    accountId: p.account_id,
+    characterId: p.author_character_id,
+    username: p.author_username,
+  }));
+  authorRefs.push({
+    accountId: topic.account_id,
+    characterId: (topic as TopicRow & { author_character_id?: number | null }).author_character_id ?? null,
+    username: topic.author_username,
+  });
+  const identityMap = await resolveForumAuthorIdentities(authorRefs);
+
   const postItems: ForumPostItem[] = posts.map((p) => ({
     id: p.id,
     topic_id: p.topic_id,
     forum_id: p.forum_id,
     account_id: p.account_id,
+    author_character_id: p.author_character_id,
     author_username: p.author_username,
     content: p.deleted_at && !isMod ? "" : p.content,
     is_first_post: Boolean(p.is_first_post),
@@ -212,6 +271,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
     edited_by_account_id: p.edited_by_account_id,
     edit_reason: p.edit_reason,
     created_at: p.created_at,
+    created_at_unix: (p as PostRow & { created_at_unix?: number | null }).created_at_unix ?? null,
     deleted_at: p.deleted_at,
     deleted_by_account_id: p.deleted_by_account_id,
     delete_reason: isMod ? p.delete_reason : null,
@@ -244,6 +304,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="space-y-4">
+      <PostHashScroll />
       {/* Topic header */}
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
@@ -269,7 +330,21 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-          <span>{"by"} <span className="text-foreground">{topic.author_username}</span></span>
+          <span className="inline-flex items-center gap-1">
+            {"by"}
+            <PlayerIdentity
+              {...(identityMap.get(
+                forumAuthorKey({
+                  accountId: topic.account_id,
+                  characterId:
+                    (topic as TopicRow & { author_character_id?: number | null }).author_character_id ??
+                    null,
+                  username: topic.author_username,
+                })
+              ) || { username: topic.author_username, factionId: null, factionColor: null, clanId: null, clanTag: null, clanColor: null })}
+              size="sm"
+            />
+          </span>
           <span>·</span>
           <span>{topic.reply_count} {"replies"}</span>
           <span>·</span>
@@ -300,6 +375,22 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
           <PostCard
             key={post.id}
             post={post}
+            authorIdentity={
+              identityMap.get(
+                forumAuthorKey({
+                  accountId: post.account_id,
+                  characterId: post.author_character_id ?? null,
+                  username: post.author_username,
+                })
+              ) || {
+                username: post.author_username,
+                factionId: null,
+                factionColor: null,
+                clanId: null,
+                clanTag: null,
+                clanColor: null,
+              }
+            }
             isMod={Boolean(isMod)}
             currentAccountId={accountId}
             locale={locale}
