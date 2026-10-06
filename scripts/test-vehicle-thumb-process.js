@@ -4,7 +4,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { processImage, isVoidBlackCapture } = require('../resources/racket_vehicle_thumbs/code/processor');
+const { processImage, isStudioWallCapture } = require('../resources/racket_vehicle_thumbs/code/processor');
 
 const root = path.resolve(__dirname, '..');
 const sampleBlack = path.join(root, 'vehicle_thumbs_raw/6ac50fce-f5570-1c_b.png');
@@ -31,7 +31,7 @@ fs.copyFileSync(sampleBlack, blackPath);
 if (!fs.existsSync(whitePath)) fs.copyFileSync(sampleBlack, whitePath);
 
 (async () => {
-  assert.equal(await isVoidBlackCapture(blackPath), true);
+  assert.equal(await isStudioWallCapture(blackPath, whitePath), false);
   await processImage(token, 'fixture_car', { rawDir, outputDir: outDir, padding: 24, debug: false });
   const png = path.join(outPath, 'fixture_car.png');
   assert(fs.existsSync(png));

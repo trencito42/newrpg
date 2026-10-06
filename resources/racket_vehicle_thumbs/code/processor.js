@@ -206,15 +206,29 @@ async function cornerMeanLuminance(filePath, width, height, corner) {
   return Number.isFinite(mean) ? mean / 65535 : 1;
 }
 
-/** Screenshot-basic usually renders void + vehicle (corners stay black), not DrawPoly studio walls. */
-async function isVoidBlackCapture(blackPath) {
+/** DrawPoly studio walls are not in screenshot-basic frames — dual-pass only when white walls are visible. */
+async function isStudioWallCapture(blackPath, whitePath) {
   const { width, height } = await imageSize(blackPath);
   if (!Number.isFinite(width) || !Number.isFinite(height) || width < 64 || height < 64) return false;
-  let darkCorners = 0;
+  let whiteBright = 0;
+  let blackDark = 0;
   for (const corner of ['tl', 'tr', 'bl', 'br']) {
-    if ((await cornerMeanLuminance(blackPath, width, height, corner)) < 0.12) darkCorners++;
+    if ((await cornerMeanLuminance(whitePath, width, height, corner)) > 0.55) whiteBright++;
+    if ((await cornerMeanLuminance(blackPath, width, height, corner)) < 0.18) blackDark++;
   }
-  return darkCorners >= 3;
+  return whiteBright >= 3 && blackDark >= 3;
+}
+
+async function writeVoidBlackKey(blackPath, tmpFinal, padding) {
+  await runImageMagick([
+    blackPath,
+    '-fuzz', '3%',
+    '-transparent', 'black',
+    '-trim', '+repage',
+    '-bordercolor', 'none', '-border', `${padding}x${padding}`,
+    '-define', 'png:color-type=6',
+    tmpFinal,
+  ]);
 }
 
 async function finalizePng(tmpFinal, outputPath, padding) {
@@ -265,24 +279,14 @@ async function processImage(token, model, options) {
   if (!fs.existsSync(path.dirname(outputPath))) throw new Error('Output directory is not mounted');
 
   try {
-    const voidBlack = await isVoidBlackCapture(blackPath);
-    if (voidBlack) {
-      if (debug) console.log(`[racket_vehicle_thumbs] ${model}: void-black capture — chroma key`);
-      await runImageMagick([
-        blackPath,
-        '-fuzz', '3%',
-        '-transparent', 'black',
-        '-trim', '+repage',
-        '-bordercolor', 'none', '-border', `${padding}x${padding}`,
-        '-define', 'png:color-type=6',
-        tmpFinal,
-      ]);
+    const useDualPass = fs.existsSync(whitePath) && await isStudioWallCapture(blackPath, whitePath);
+    if (!useDualPass) {
+      if (debug) console.log(`[racket_vehicle_thumbs] ${model}: screenshot-basic void — chroma key`);
+      await writeVoidBlackKey(blackPath, tmpFinal, padding);
       const { size } = await finalizePng(tmpFinal, outputPath, padding);
       console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png (void-black)`);
       return `${model}.png`;
     }
-
-    if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
 
     if (debug) {
       const bDims = (await runImageMagick([blackPath, '-format', '%wx%h', 'info:'])).toString().trim();
@@ -424,5 +428,6 @@ if (typeof on === 'function') {
 
 module.exports = {
   validName, validToken, validDirectory, processImage, parseVehicleModels, buildCustomCatalog,
-  isVoidBlackCapture,
+  isStudioWallCapture,
+  writeVoidBlackKey,
 };
