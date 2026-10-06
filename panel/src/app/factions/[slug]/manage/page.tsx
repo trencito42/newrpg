@@ -6,6 +6,7 @@ import { CANONICAL_FACTIONS } from "@/lib/factions";
 import { FactionManageClient } from "./FactionManageClient";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
+import { getOrgProfile } from "@/lib/org-profile";
 
 interface Context {
   params: Promise<{ slug: string }>;
@@ -148,6 +149,8 @@ export default async function FactionManagePage({ params }: Context) {
      ORDER BY fal.id DESC LIMIT 40`,
     [slug]
   );
+  const orgProfile = await getOrgProfile("faction", slug);
+
   const identities = Object.fromEntries(await resolvePlayerIdentities([
     ...members.map((m) => m.username),
     ...applications.flatMap((a) => [a.applicant_username, a.reviewer_username]),
@@ -169,6 +172,13 @@ export default async function FactionManagePage({ params }: Context) {
       isLeader={isLeader}
       isSubLeader={isSubLeader}
       locale={locale}
+      orgProfileInitial={{
+        coverImage: orgProfile?.cover_image ?? "",
+        descriptionEn: orgProfile?.description_en ?? "",
+        descriptionRo: orgProfile?.description_ro ?? "",
+        rulesEn: orgProfile?.rules_en ?? "",
+        rulesRo: orgProfile?.rules_ro ?? "",
+      }}
     />
   );
 }

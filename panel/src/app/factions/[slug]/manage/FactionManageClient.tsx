@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { t, type Locale } from "@/lib/i18n";
+import { OrganizationProfileEditor } from "@/components/organizations/OrganizationProfileEditor";
 
 
 interface Props {
@@ -37,6 +38,13 @@ interface Props {
   isLeader: boolean;
   isSubLeader: boolean;
   locale: Locale;
+  orgProfileInitial: {
+    coverImage: string;
+    descriptionEn: string;
+    descriptionRo: string;
+    rulesEn: string;
+    rulesRo: string;
+  };
 }
 
 export function FactionManageClient({
@@ -52,10 +60,13 @@ export function FactionManageClient({
   isLeader,
   isSubLeader,
   locale,
+  orgProfileInitial,
 }: Props) {
   const router = useRouter();
   const identityFor = (username: string) => identities[username?.toLowerCase()] || { username: username || "Unknown" };
-  const [tab, setTab] = useState<"overview" | "applications" | "members" | "requests" | "history" | "settings">("overview");
+  const [tab, setTab] = useState<
+    "overview" | "applications" | "members" | "requests" | "history" | "settings" | "profile"
+  >("overview");
 
   // Settings state (Leader only)
   const [appsOpen, setAppsOpen] = useState(Boolean(initialSettings.applications_open));
@@ -374,6 +385,20 @@ export function FactionManageClient({
         >
           {t(locale, "copy.app_clans_id_manage_clanmanageclient.audit_history")}
         </button>
+
+        {(isLeader || isSubLeader) && (
+          <button
+            onClick={() => setTab("profile")}
+            className={cn(
+              "px-3 py-2 border-b-2 font-medium transition-colors whitespace-nowrap",
+              tab === "profile"
+                ? "border-brand text-brand"
+                : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
+            )}
+          >
+            {t(locale, "orgUi.tab_profile")}
+          </button>
+        )}
 
         {isLeader && (
           <button
@@ -699,6 +724,15 @@ export function FactionManageClient({
             </table>
           </div>
         </div>
+      )}
+
+      {tab === "profile" && (isLeader || isSubLeader) && (
+        <OrganizationProfileEditor
+          locale={locale}
+          orgType="faction"
+          orgId={slug}
+          initial={orgProfileInitial}
+        />
       )}
 
       {/* TAB: SETTINGS (Leader only) */}

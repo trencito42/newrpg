@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { t, type Locale } from "@/lib/i18n";
+import { OrganizationProfileEditor } from "@/components/organizations/OrganizationProfileEditor";
 
 
 const CLAN_RANKS = [
@@ -46,6 +47,13 @@ interface Props {
   isLeader: boolean;
   isCoLeader: boolean;
   locale: Locale;
+  orgProfileInitial: {
+    coverImage: string;
+    descriptionEn: string;
+    descriptionRo: string;
+    rulesEn: string;
+    rulesRo: string;
+  };
 }
 
 export function ClanManageClient({
@@ -58,10 +66,11 @@ export function ClanManageClient({
   isLeader,
   isCoLeader,
   locale,
+  orgProfileInitial,
 }: Props) {
   const router = useRouter();
   const identityFor = (username: string) => identities[username?.toLowerCase()] || { username: username || "Unknown" };
-  const [tab, setTab] = useState<"overview" | "applications" | "members" | "history" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "applications" | "members" | "history" | "settings" | "profile">("overview");
 
   // State
   const [appsOpen, setAppsOpen] = useState(Boolean(clan.applications_open));
@@ -323,6 +332,20 @@ export function ClanManageClient({
         >
           {t(locale, "copy.app_clans_id_manage_clanmanageclient.audit_history")}
         </button>
+        {(isLeader || isCoLeader) && (
+          <button
+            onClick={() => setTab("profile")}
+            className={cn(
+              "px-3 py-2 border-b-2 font-medium transition-colors whitespace-nowrap",
+              tab === "profile"
+                ? "border-brand text-brand"
+                : "border-transparent text-[#8F8B83] hover:text-[#B4AFA4]"
+            )}
+          >
+            {t(locale, "orgUi.tab_profile")}
+          </button>
+        )}
+
         {isLeader && (
           <button
             onClick={() => setTab("settings")}
@@ -560,6 +583,15 @@ export function ClanManageClient({
       )}
 
       {/* TAB: SETTINGS (Leader only) */}
+      {tab === "profile" && (isLeader || isCoLeader) && (
+        <OrganizationProfileEditor
+          locale={locale}
+          orgType="clan"
+          orgId={String(clan.id)}
+          initial={orgProfileInitial}
+        />
+      )}
+
       {tab === "settings" && isLeader && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* General Criteria */}

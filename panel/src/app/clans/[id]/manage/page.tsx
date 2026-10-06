@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ClanManageClient } from "./ClanManageClient";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
+import { getOrgProfile } from "@/lib/org-profile";
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -136,6 +137,8 @@ export default async function ClanManagePage({ params }: Context) {
      ORDER BY cal.id DESC LIMIT 40`,
     [clanId]
   );
+  const orgProfile = await getOrgProfile("clan", String(clanId));
+
   const identities = Object.fromEntries(await resolvePlayerIdentities([
     ...members.map((m) => m.username),
     ...applications.flatMap((a) => [a.applicant_username, a.reviewer_username]),
@@ -153,6 +156,13 @@ export default async function ClanManagePage({ params }: Context) {
       isLeader={isLeader}
       isCoLeader={isCoLeader}
       locale={locale}
+      orgProfileInitial={{
+        coverImage: orgProfile?.cover_image ?? "",
+        descriptionEn: orgProfile?.description_en ?? "",
+        descriptionRo: orgProfile?.description_ro ?? "",
+        rulesEn: orgProfile?.rules_en ?? "",
+        rulesRo: orgProfile?.rules_ro ?? "",
+      }}
     />
   );
 }
