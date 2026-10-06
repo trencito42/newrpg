@@ -106,7 +106,8 @@ export default function NewTopicPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-4">
+      <div className="max-w-3xl space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {/* i18n-ignore: english-only */}
@@ -279,6 +280,7 @@ export default function NewTopicPage() {
           )}
         </div>
       </form>
+      </div>
     </div>
   );
 }

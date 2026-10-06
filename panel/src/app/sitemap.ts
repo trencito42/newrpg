@@ -20,6 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: getSiteUrl("/"), changeFrequency: "daily", priority: 1 },
     { url: getSiteUrl("/forum"), changeFrequency: "hourly", priority: 0.9 },
+    { url: getSiteUrl("/wiki"), changeFrequency: "daily", priority: 0.75 },
+    { url: getSiteUrl("/rules"), changeFrequency: "weekly", priority: 0.65 },
+    { url: getSiteUrl("/terms"), changeFrequency: "monthly", priority: 0.4 },
+    { url: getSiteUrl("/privacy"), changeFrequency: "monthly", priority: 0.4 },
+    { url: getSiteUrl("/refund"), changeFrequency: "monthly", priority: 0.4 },
+    { url: getSiteUrl("/cookies"), changeFrequency: "monthly", priority: 0.4 },
     { url: getSiteUrl("/players"), changeFrequency: "daily", priority: 0.7 },
     { url: getSiteUrl("/factions"), changeFrequency: "weekly", priority: 0.6 },
     { url: getSiteUrl("/clans"), changeFrequency: "weekly", priority: 0.6 },
@@ -27,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let forumRoutes: MetadataRoute.Sitemap = [];
   let topicRoutes: MetadataRoute.Sitemap = [];
+  let wikiRoutes: MetadataRoute.Sitemap = [];
 
   try {
     const forums = await dbQuery<SlugRow>(
@@ -52,9 +59,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.6,
     }));
+    const wikiArticles = await dbQuery<SlugRow>(
+      `SELECT slug, updated_at FROM panel_wiki_articles WHERE status = 'published'`
+    );
+    wikiRoutes = wikiArticles.map((a) => ({
+      url: getSiteUrl(`/wiki/${a.slug}`),
+      lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
+      changeFrequency: "weekly",
+      priority: 0.55,
+    }));
   } catch {
     /* DB unavailable during build — static routes only */
   }
 
-  return [...staticRoutes, ...forumRoutes, ...topicRoutes];
+  return [...staticRoutes, ...forumRoutes, ...topicRoutes, ...wikiRoutes];
 }

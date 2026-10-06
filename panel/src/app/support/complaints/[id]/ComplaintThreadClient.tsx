@@ -264,7 +264,7 @@ export function ComplaintThreadClient({
   const isClosed = complaint.status === "action_taken" || complaint.status === "dismissed";
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
+    <div className="space-y-4 w-full">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-surface-border">
         <div className="flex items-center gap-3">

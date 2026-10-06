@@ -29,6 +29,7 @@ import {
   Building,
   History,
   AlertOctagon,
+  LayoutGrid,
   Sparkles,
   Rss,
   ImageIcon,
@@ -69,7 +70,8 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
     { href: "/staff", label: t(locale, "nav.staff"), icon: Award },
     { href: "/stats", label: t(locale, "nav.stats"), icon: BarChart3 },
     { href: "/polls", label: t(locale, "nav.polls"), icon: Vote },
-    { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
+    { href: "/wiki", label: t(locale, "nav.wiki"), icon: BookOpen },
+    { href: "/rules", label: t(locale, "nav.rules"), icon: FileText },
     { href: "/shop", label: t(locale, "nav.shop"), icon: Coins },
   ];
 
@@ -102,6 +104,8 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
         { href: "/staff/players", label: t(locale, "players.directory_title"), icon: Users },
         ...(isAdmin
           ? [
+              { href: "/staff/content", label: t(locale, "nav.staff_content"), icon: LayoutGrid },
+              { href: "/staff/forum", label: t(locale, "nav.staff_forum"), icon: MessageSquare },
               { href: "/staff/team", label: t(locale, "copy.components_navigation_sidebar.staff_team"), icon: UserCheck },
               { href: "/staff/factions", label: t(locale, "factions.title"), icon: Shield },
               { href: "/staff/clans", label: t(locale, "clans.title"), icon: Flag },

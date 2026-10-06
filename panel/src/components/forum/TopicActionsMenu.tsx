@@ -1,7 +1,7 @@
 "use client";
 import { t, type Locale } from "@/lib/i18n";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MoreVertical, Lock, Unlock, Pin, PinOff, Megaphone, Globe, Trash2, ArrowRight, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -30,7 +30,18 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
   const [loading, setLoading] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [targetForumId, setTargetForumId] = useState("");
+  const [destinations, setDestinations] = useState<
+    { id: number; name: string; categoryNameEn: string; categoryNameRo: string }[]
+  >([]);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!moveOpen) return;
+    void fetch("/api/forum/mod/destinations", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { forums: [] }))
+      .then((data) => setDestinations(data.forums || []))
+      .catch(() => setDestinations([]));
+  }, [moveOpen]);
 
   const doAction = async (action: string, extra?: Record<string, unknown>) => {
     setLoading(true);
@@ -134,14 +145,20 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
               {t(locale, "forumUi.move_topic")}
             </h3>
             <label className="block text-xs text-muted-foreground">
-              {t(locale, "forumUi.target_forum_id")}
-              <input
-                type="number"
+              {t(locale, "forumUi.target_forum")}
+              <select
                 value={targetForumId}
                 onChange={(e) => setTargetForumId(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-lg bg-surface-200 border border-border text-sm"
                 required
-              />
+              >
+                <option value="">{t(locale, "forumUi.select_forum")}</option>
+                {destinations.map((forum) => (
+                  <option key={forum.id} value={String(forum.id)}>
+                    {locale === "ro" ? forum.categoryNameRo : forum.categoryNameEn} — {forum.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className="flex gap-2 justify-end">
               <button

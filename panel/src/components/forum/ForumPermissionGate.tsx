@@ -37,7 +37,7 @@ export function ForumPermissionGate({ reason, locale = "en" }: ForumPermissionGa
       <p className="text-sm text-muted-foreground">{message}</p>
       {reason === "unauthenticated" && (
         <Link
-          href="/account/login"
+          href="/login"
           className="inline-block mt-4 px-4 py-2 bg-brand text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg hover:opacity-90 transition-opacity"
         >
           {t(locale, "forumUi.log_in")}

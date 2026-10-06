@@ -137,7 +137,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
 
   const accessible = await canAccessForum(session, forum);
   if (!accessible) {
-    if (!session) redirect("/account/login");
+    if (!session) redirect("/login");
     notFound();
   }
 
@@ -456,7 +456,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
       {!session && (
         <div className="pt-4 border-t border-border text-center">
           <p className="text-xs text-muted-foreground">
-            <Link href="/account/login" className="text-brand hover:underline">
+            <Link href="/login" className="text-brand hover:underline">
               {t(locale, "forumUi.login")}
             </Link>
             {t(locale, "forumUi.login_to_reply")}

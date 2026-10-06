@@ -107,7 +107,7 @@ export default function ClanApplyPage() {
 
   if (success) {
     return (
-      <div className="max-w-xl mx-auto border border-surface-border rounded-xl bg-[#0E0E10] p-8 text-center space-y-4 shadow-xl">
+      <div className="max-w-xl border border-surface-border rounded-xl bg-[#0E0E10] p-8 text-center space-y-4 shadow-xl">
         <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
           <CheckCircle2 className="w-6 h-6" />
         </div>
@@ -130,7 +130,8 @@ export default function ClanApplyPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="w-full space-y-5">
+      <div className="max-w-2xl space-y-5">
       {/* Header & Language Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
         <div className="flex items-center gap-2.5">
@@ -266,6 +267,7 @@ export default function ClanApplyPage() {
           </div>
         </div>
       </form>
+      </div>
     </div>
   );
 }

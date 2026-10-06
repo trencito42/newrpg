@@ -35,7 +35,7 @@ interface ModlogRow extends RowDataPacket {
 export default async function ModPage() {
   const [session, locale] = await Promise.all([getCurrentSession(), getViewerLocale()]);
 
-  if (!session) redirect("/account/login");
+  if (!session) redirect("/login");
   const isMod = session.adminLevel >= 1 || session.helperLevel >= 1;
   if (!isMod) redirect("/forum");
 

@@ -146,7 +146,7 @@ export default async function ClanApplicationsPage({ params, searchParams }: Pro
   };
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-4 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-surface-border gap-3">
         <div className="flex items-center gap-3">

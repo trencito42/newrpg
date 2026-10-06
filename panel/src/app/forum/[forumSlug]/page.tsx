@@ -86,7 +86,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
 
   const accessible = await canAccessForum(session, forum);
   if (!accessible) {
-    if (!session) redirect("/account/login");
+    if (!session) redirect("/login");
     notFound();
   }
 

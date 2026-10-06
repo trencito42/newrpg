@@ -49,18 +49,22 @@ export default async function FeedPage() {
   const nextContacts = contactsPosts.length === 20 ? contactsPosts[contactsPosts.length - 1].id : null;
 
   return (
-    <div className="max-w-[680px] mx-auto">
-      <h1 className="text-xl font-bold text-[#F2EFE8] mb-6">{t(locale, "nav.feed")}</h1>
-      <FeedClient
-        locale={locale}
-        initialGlobal={globalPosts}
-        initialContacts={contactsPosts}
-        nextGlobalCursor={nextGlobal}
-        nextContactsCursor={nextContacts}
-        isLoggedIn={!!session}
-        viewerCharId={charId}
-        viewerCharName={session?.selectedCharacterName ?? null}
-      />
+    <div className="space-y-4 w-full">
+      <div className="pb-2">
+        <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{t(locale, "nav.feed")}</h1>
+      </div>
+      <div className="max-w-[680px]">
+        <FeedClient
+          locale={locale}
+          initialGlobal={globalPosts}
+          initialContacts={contactsPosts}
+          nextGlobalCursor={nextGlobal}
+          nextContactsCursor={nextContacts}
+          isLoggedIn={!!session}
+          viewerCharId={charId}
+          viewerCharName={session?.selectedCharacterName ?? null}
+        />
+      </div>
     </div>
   );
 }

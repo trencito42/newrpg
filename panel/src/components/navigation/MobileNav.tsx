@@ -32,6 +32,11 @@ import {
   ImageIcon,
   MessageSquare,
   Coins,
+  LayoutGrid,
+  Flag as FlagIcon,
+  UserCheck,
+  History,
+  AlertOctagon,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -66,6 +71,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
   }, [open]);
 
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
+  const isAdmin = session && session.adminLevel >= 1;
 
   const serverLinks = [
     { href: "/", label: t(locale, "nav.home"), icon: Home },
@@ -78,7 +84,8 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
     { href: "/staff", label: t(locale, "nav.staff"), icon: Award },
     { href: "/stats", label: t(locale, "nav.stats"), icon: BarChart3 },
     { href: "/polls", label: t(locale, "nav.polls"), icon: Vote },
-    { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
+    { href: "/wiki", label: t(locale, "nav.wiki"), icon: BookOpen },
+    { href: "/rules", label: t(locale, "nav.rules"), icon: FileText },
     { href: "/shop", label: t(locale, "nav.shop"), icon: Coins },
   ];
 
@@ -227,13 +234,35 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
               {isStaffMember && (
                 <NavSection id="mobile-staff-links" label={t(locale, "nav.staff")} active={pathname.startsWith("/staff/")}>
                   <div className="space-y-0.5">
-                    <Link
-                      href="/staff/dashboard"
-                      className="flex items-center space-x-2 px-2 py-1.5 rounded text-[#F2EFE8] hover:bg-surface-100"
-                    >
-                      <Radio className="w-3.5 h-3.5 text-[#8F8B83]" />
-                      <span>{t(locale, "nav.staff_dashboard")}</span>
-                    </Link>
+                    {[
+                      { href: "/staff/dashboard", label: t(locale, "nav.staff_dashboard"), icon: Radio },
+                      { href: "/staff/players", label: t(locale, "players.directory_title"), icon: Users },
+                      ...(isAdmin
+                        ? [
+                            { href: "/staff/content", label: t(locale, "nav.staff_content"), icon: LayoutGrid },
+                            { href: "/staff/forum", label: t(locale, "nav.staff_forum"), icon: MessageSquare },
+                            { href: "/staff/team", label: t(locale, "copy.components_navigation_sidebar.staff_team"), icon: UserCheck },
+                            { href: "/staff/factions", label: t(locale, "factions.title"), icon: Shield },
+                            { href: "/staff/clans", label: t(locale, "clans.title"), icon: FlagIcon },
+                            { href: "/staff/sanctions", label: t(locale, "copy.components_navigation_sidebar.sanctions"), icon: AlertOctagon },
+                            { href: "/staff/audit", label: t(locale, "copy.components_navigation_sidebar.audit_log"), icon: History },
+                          ]
+                        : []),
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center space-x-2 px-2 py-1.5 rounded transition-colors",
+                          pathname === item.href || pathname.startsWith(`${item.href}/`)
+                            ? "bg-brand/10 text-brand"
+                            : "text-[#B4AFA4] hover:bg-surface-100 hover:text-[#F2EFE8]"
+                        )}
+                      >
+                        <item.icon className="w-3.5 h-3.5 text-[#8F8B83]" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
                   </div>
                 </NavSection>
               )}

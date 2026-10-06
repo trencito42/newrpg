@@ -102,9 +102,9 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
-      <div className="pb-3 border-b border-surface-border">
-        <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
+    <div className="space-y-4 w-full">
+      <div className="pb-2">
+        <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "account.title")}
         </h1>
       </div>

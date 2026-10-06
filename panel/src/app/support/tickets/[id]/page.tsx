@@ -101,7 +101,7 @@ export default async function TicketDetailPage({
   const isOpen = ticket.status === "open" || ticket.status === "in_progress";
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 w-full">
       <Link
         href="/support/tickets"
         className="inline-flex items-center space-x-1 text-xs text-[#8F8B83] hover:text-[#F2EFE8] transition-colors mb-1"

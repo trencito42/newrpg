@@ -42,7 +42,7 @@ export default async function MyLicensesPage() {
   );
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 w-full">
       <div className="pb-3 border-b border-surface-border">
         <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
           {t(locale, "nav.licenses")}

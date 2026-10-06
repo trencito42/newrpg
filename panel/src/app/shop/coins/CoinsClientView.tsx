@@ -39,7 +39,7 @@ export function CoinsClientView({
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 w-full">
       <div className="pb-2">
         <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{t(locale, "shop.coins.title")}</h1>
         <p className="mt-1 text-xs text-[#99958E] leading-relaxed">{t(locale, "shop.coins.subtitle")}</p>
@@ -54,7 +54,7 @@ export function CoinsClientView({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 max-w-3xl">
         {packages.map((pkg) => {
           const priceLine =
             pkg.priceLabel ?? (pkg.available ? t(locale, "shop.coins.price_unknown") : null);
