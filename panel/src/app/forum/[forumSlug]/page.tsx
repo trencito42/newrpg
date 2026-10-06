@@ -10,6 +10,7 @@ import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
 import { MessageSquare, PenLine } from "lucide-react";
 import { TopicListItem } from "@/components/forum/TopicListItem";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -143,7 +144,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
         <div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <Link href="/forum" className="hover:text-foreground transition-colors">
-              {"Forum"}
+              {t(locale, "forumUi.title")}
             </Link>
             <span>/</span>
             <span className="text-foreground">{forum.name}</span>
@@ -161,7 +162,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
             className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-300 text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors"
           >
             <PenLine className="w-3.5 h-3.5" />
-            {"New Topic"}
+            {t(locale, "forumUi.new_topic")}
           </Link>
         )}
       </div>
@@ -171,7 +172,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
         <div className="rounded-xl border border-border bg-card p-8 text-center">
           <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
-            {"No topics yet"}
+            {t(locale, "forumUi.no_topics")}
           </p>
         </div>
       ) : (
@@ -227,7 +228,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
               href={`/forum/${forumSlug}?page=${page - 1}`}
               className="px-3 py-1.5 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
             >
-              {"Prev"}
+              {t(locale, "forumUi.prev")}
             </Link>
           )}
           {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -247,7 +248,7 @@ export default async function ForumPage({ params, searchParams }: PageProps) {
               href={`/forum/${forumSlug}?page=${page + 1}`}
               className="px-3 py-1.5 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
             >
-              {"Next"}
+              {t(locale, "forumUi.next")}
             </Link>
           )}
         </div>

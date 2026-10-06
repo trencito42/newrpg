@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import Link from "next/link";
 import { Lock, LogIn, ShieldOff } from "lucide-react";
@@ -51,7 +52,7 @@ export function ForumPermissionGate({ reason, locale = "en" }: ForumPermissionGa
           href="/account/login"
           className="inline-block mt-4 px-4 py-2 bg-brand text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg hover:opacity-90 transition-opacity"
         >
-          {"Log In"}
+          {t(locale, "forumUi.log_in")}
         </Link>
       )}
     </div>

@@ -280,7 +280,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             </div>
             <div className="flex justify-between">
               <span className="text-[#8F8B83]">{t(locale, "interface.premium_points")}</span>
-              <span className="font-mono text-amber-400 font-bold">{player.premium_points || 0} PP</span>
+              <span className="font-mono text-amber-400 font-bold">{player.premium_points || 0} RC</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#8F8B83]">{t(locale, "interface.registered")}</span>

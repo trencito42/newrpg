@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
 import { X } from "lucide-react";
@@ -44,14 +45,14 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
         setSuccess(true);
         setTimeout(onClose, 1500);
       } else if (data.error === "already_reported") {
-        setError("You have already reported this post."); // i18n-ignore: english-only
+        setError(t(locale, "forumUi.error_already_reported"));
       } else if (data.error === "rate_limit_exceeded") {
-        setError("You have reported too many posts recently."); // i18n-ignore: english-only
+        setError(t(locale, "forumUi.error_report_rate_limit"));
       } else {
-        setError("An error occurred."); // i18n-ignore: english-only
+        setError(t(locale, "forumUi.error_generic"));
       }
     } catch {
-      setError("Network error."); // i18n-ignore: english-only
+      setError(t(locale, "forumUi.error_network"));
     } finally {
       setSubmitting(false);
     }
@@ -67,7 +68,7 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
       <div className="w-full max-w-md bg-card rounded-xl border border-border shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h3 className="text-sm font-extrabold text-foreground uppercase tracking-wide">
-            {"Report Post"}
+            {t(locale, "forumUi.report_post")}
           </h3>
           <button
             onClick={onClose}
@@ -80,14 +81,14 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
         {success ? (
           <div className="px-5 py-8 text-center">
             <p className="text-sm text-green-400 font-semibold">
-              {"Report submitted successfully!"}
+              {t(locale, "forumUi.report_success")}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
             <div>
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">
-                {"Reason"}
+                {t(locale, "forumUi.reason")}
               </label>
               <select
                 value={reason}
@@ -104,7 +105,7 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
 
             <div>
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">
-                {"Details (optional)"}
+                {t(locale, "forumUi.details_optional")}
               </label>
               <textarea
                 value={details}
@@ -123,10 +124,10 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
 
             <div className="flex items-center gap-2 pt-1">
               <Button type="submit" variant="destructive" size="sm" loading={submitting}>
-                {"Submit Report"}
+                {t(locale, "forumUi.submit_report")}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-                {"Cancel"}
+                {t(locale, "forumUi.cancel")}
               </Button>
             </div>
           </form>

@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
 import { MoreVertical, Lock, Unlock, Pin, PinOff, Megaphone, Globe, Trash2, RotateCcw, ArrowRight, ChevronDown } from "lucide-react";
@@ -126,11 +127,11 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
             className="w-80 bg-card rounded-xl border border-border p-5 space-y-3 shadow-2xl"
           >
             <h3 className="text-sm font-extrabold text-foreground uppercase">
-              {"Move Topic"}
+              {t(locale, "forumUi.move_topic")}
             </h3>
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
-                {"Target Forum ID:"}
+                {t(locale, "forumUi.target_forum_id")}
               </label>
               <input
                 type="number"
@@ -145,14 +146,14 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
                 type="submit"
                 className="flex-1 py-2 bg-brand text-[#08080A] text-xs font-extrabold uppercase rounded-lg hover:opacity-90 transition-opacity"
               >
-                {"Move"}
+                {t(locale, "forumUi.move")}
               </button>
               <button
                 type="button"
                 onClick={() => setMoveOpen(false)}
                 className="flex-1 py-2 bg-surface-200 text-foreground text-xs font-extrabold uppercase rounded-lg hover:bg-surface-300 transition-colors"
               >
-                {"Cancel"}
+                {t(locale, "forumUi.cancel")}
               </button>
             </div>
           </form>

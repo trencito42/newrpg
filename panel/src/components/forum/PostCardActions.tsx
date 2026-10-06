@@ -1,10 +1,12 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useEffect, useRef, useState } from "react";
 import { Copy, Edit3, Flag, MoreVertical, RotateCcw, Trash2 } from "lucide-react";
 
 export interface PostCardActionsProps {
   layout: "desktop" | "mobile";
+  locale: Locale;
   canEdit: boolean;
   canDelete: boolean;
   canRestore: boolean;
@@ -20,6 +22,7 @@ export interface PostCardActionsProps {
 
 export function PostCardActions({
   layout,
+  locale,
   canEdit,
   canDelete,
   canRestore,
@@ -56,7 +59,7 @@ export function PostCardActions({
           type="button"
           onClick={onCopyLink}
           className={iconBtn}
-          title={"Copy link"} // i18n-ignore: english-only
+          title={t(locale, "forumUi.copy_link")} // i18n-ignore: english-only
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
@@ -65,7 +68,7 @@ export function PostCardActions({
             type="button"
             onClick={onEdit}
             className={iconBtn}
-            title={"Edit"} // i18n-ignore: english-only
+            title={t(locale, "forumUi.edit")} // i18n-ignore: english-only
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
@@ -76,7 +79,7 @@ export function PostCardActions({
             onClick={onDelete}
             disabled={deleting}
             className={`${iconBtn} hover:text-red-400`}
-            title={"Delete"} // i18n-ignore: english-only
+            title={t(locale, "forumUi.delete")} // i18n-ignore: english-only
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -87,7 +90,7 @@ export function PostCardActions({
             onClick={onRestore}
             disabled={restoring}
             className={`${iconBtn} hover:text-green-400`}
-            title={"Restore"} // i18n-ignore: english-only
+            title={t(locale, "forumUi.restore")} // i18n-ignore: english-only
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -97,7 +100,7 @@ export function PostCardActions({
             type="button"
             onClick={onReport}
             className={`${iconBtn} hover:text-yellow-400`}
-            title={"Report"} // i18n-ignore: english-only
+            title={t(locale, "forumUi.report")} // i18n-ignore: english-only
           >
             <Flag className="w-3.5 h-3.5" />
           </button>
@@ -133,7 +136,7 @@ export function PostCardActions({
             }}
           >
             <Copy className="w-4 h-4 text-muted-foreground" />
-            {"Copy link"}
+            {t(locale, "forumUi.copy_link")}
           </button>
           {canEdit ? (
             <button
@@ -146,7 +149,7 @@ export function PostCardActions({
               }}
             >
               <Edit3 className="w-4 h-4 text-muted-foreground" />
-              {"Edit"}
+              {t(locale, "forumUi.edit")}
             </button>
           ) : null}
           {canDelete ? (
@@ -161,7 +164,7 @@ export function PostCardActions({
               }}
             >
               <Trash2 className="w-4 h-4" />
-              {"Delete"}
+              {t(locale, "forumUi.delete")}
             </button>
           ) : null}
           {canRestore ? (
@@ -176,7 +179,7 @@ export function PostCardActions({
               }}
             >
               <RotateCcw className="w-4 h-4" />
-              {"Restore"}
+              {t(locale, "forumUi.restore")}
             </button>
           ) : null}
           {canReport ? (
@@ -190,7 +193,7 @@ export function PostCardActions({
               }}
             >
               <Flag className="w-4 h-4 text-muted-foreground" />
-              {"Report"}
+              {t(locale, "forumUi.report")}
             </button>
           ) : null}
         </div>

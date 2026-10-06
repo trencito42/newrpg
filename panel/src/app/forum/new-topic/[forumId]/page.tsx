@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -120,19 +121,19 @@ export default function NewTopicPage() {
           </>
         )}
         <span className="text-foreground">
-          {"New Topic"}
+          {t(locale, "forumUi.new_topic")}
         </span>
       </div>
 
       <h1 className="text-xl font-extrabold text-foreground uppercase tracking-tight">
-        {"New Topic"}
+        {t(locale, "forumUi.new_topic")}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Title */}
         <div>
           <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-1.5">
-            {"Title"}
+            {t(locale, "forumUi.title_label")}
           </label>
           <input
             type="text"
@@ -150,7 +151,7 @@ export default function NewTopicPage() {
         {/* Content Editor */}
         <div>
           <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-1.5">
-            {"Content"}
+            {t(locale, "forumUi.content_label")}
           </label>
           <ForumEditor value={content} onChange={setContent} locale={locale} />
         </div>
@@ -165,7 +166,7 @@ export default function NewTopicPage() {
               className="w-4 h-4 accent-brand"
             />
             <span className="text-sm text-foreground">
-              {"Add a poll"}
+              {t(locale, "forumUi.add_poll")}
             </span>
           </label>
         </div>
@@ -173,12 +174,12 @@ export default function NewTopicPage() {
         {hasPoll && (
           <div className="space-y-3 p-4 bg-surface-200 rounded-xl border border-border">
             <h3 className="text-sm font-bold text-foreground">
-              {"Poll"}
+              {t(locale, "forumUi.poll")}
             </h3>
 
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
-                {"Question"}
+                {t(locale, "forumUi.poll_question")}
               </label>
               <input
                 type="text"
@@ -192,7 +193,7 @@ export default function NewTopicPage() {
 
             <div className="space-y-2">
               <label className="block text-xs text-muted-foreground">
-                {"Options"}
+                {t(locale, "forumUi.poll_options")}
               </label>
               {pollOptions.map((opt, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -226,14 +227,14 @@ export default function NewTopicPage() {
                   className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  {"Add option"}
+                  {t(locale, "forumUi.add_option")}
                 </button>
               )}
             </div>
 
             <div className="flex items-center gap-4">
               <label className="text-xs text-muted-foreground">
-                {"Max selections:"}
+                {t(locale, "forumUi.max_selections")}
               </label>
               <input
                 type="number"
@@ -252,7 +253,7 @@ export default function NewTopicPage() {
                   className="w-3.5 h-3.5 accent-brand"
                 />
                 <span className="text-xs text-muted-foreground">
-                  {"Allow vote change"}
+                  {t(locale, "forumUi.allow_vote_change")}
                 </span>
               </label>
             </div>
@@ -267,12 +268,12 @@ export default function NewTopicPage() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" variant="primary" loading={submitting} disabled={!title.trim() || !content.trim()}>
-            {"Post Topic"}
+            {t(locale, "forumUi.post_topic")}
           </Button>
           {forum && (
             <Link href={`/forum/${forum.slug}`}>
               <Button type="button" variant="ghost">
-                {"Cancel"}
+                {t(locale, "forumUi.cancel")}
               </Button>
             </Link>
           )}

@@ -5,6 +5,7 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
+import { t } from "@/lib/i18n";
 
 export interface ForumAuthorPaneProps {
   identity: ResolvedPlayerIdentity;
@@ -53,6 +54,7 @@ export function ForumAuthorPane({
   joinedAt,
   adminLevel = 0,
   helperLevel = 0,
+  locale,
   variant = "desktop",
 }: ForumAuthorPaneProps) {
   const profileHref = `/players/${encodeURIComponent(identity.username.trim().replace(/\s+/g, "_"))}`;
@@ -135,11 +137,11 @@ export function ForumAuthorPane({
 
             <p className="text-xs text-muted-foreground pt-1">
               <span className="text-foreground/90 font-medium tabular-nums">{postCount}</span>
-              {" posts"}
+              {t(locale, "forumUi.posts_suffix")}
               {joinedAt ? (
                 <>
                   <span className="mx-1.5 text-border">·</span>
-                  {"Joined "}
+                  {t(locale, "forumUi.joined_prefix")}
                   <span className="text-foreground/90 font-medium tabular-nums">{joinedYear(joinedAt)}</span>
                 </>
               ) : null}
@@ -201,11 +203,11 @@ export function ForumAuthorPane({
           <p className="text-[10px] text-muted-foreground truncate">{identity.clanName}</p>
         ) : null}
         <p className="text-[10px] text-muted-foreground mt-1">
-          {postCount} {"posts"}
+          {postCount} {t(locale, "forumUi.posts")}
         </p>
         {joinedAt ? (
           <p className="text-[10px] text-muted-foreground">
-            {"Joined"} {joinedYear(joinedAt)}
+            {t(locale, "forumUi.joined")} {joinedYear(joinedAt)}
           </p>
         ) : null}
       </div>

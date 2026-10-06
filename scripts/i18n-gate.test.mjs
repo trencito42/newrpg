@@ -21,6 +21,10 @@ test('AST keeps content expressions and style classes unchanged', () => {
     assert.equal(scan('const view = <div className="bg-brand text-white">{player.name}{message.body}</div>;').length, 0);
     assert.equal(scan('const format = locale === "ro" ? "ro-RO" : "en-US";').length, 0);
 });
+test('AST flags JSX expression string literals', () => {
+    assert.ok(scan('const view = <h1>{"Forum"}</h1>;').length);
+    assert.equal(scan('const view = <h1>{t(locale, "forumUi.title")}</h1>;').length, 0);
+});
 test('ignore requires an adjacent explanation', () => {
     assert.equal(scan('// i18n-ignore: product brand\nconst view = <h1>ExampleBrand</h1>;').length, 0);
     assert.ok(scan('// i18n-ignore\nconst view = <h1>Hello</h1>;').length);

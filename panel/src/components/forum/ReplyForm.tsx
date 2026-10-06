@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -75,7 +76,7 @@ export function ReplyForm({ topicId, topicSlug, locale }: ReplyFormProps) {
           loading={submitting}
           disabled={content.trim().length < 2}
         >
-          {"Post Reply"}
+          {t(locale, "forumUi.post_reply")}
         </Button>
         {content.trim().length > 0 && (
           <button
@@ -83,7 +84,7 @@ export function ReplyForm({ topicId, topicSlug, locale }: ReplyFormProps) {
             onClick={() => setContent("")}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            {"Clear"}
+            {t(locale, "forumUi.clear")}
           </button>
         )}
       </div>

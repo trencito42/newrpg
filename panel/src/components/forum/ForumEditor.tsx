@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState, useRef, useCallback } from "react";
 import {
@@ -126,8 +127,8 @@ export function ForumEditor({
     [value, onChange, locale]
   );
 
-  const handleTabSwitch = async (t: Tab) => {
-    if (t === "preview" && tab !== "preview") {
+  const handleTabSwitch = async (nextTab: Tab) => {
+    if (nextTab === "preview" && tab !== "preview") {
       setLoadingPreview(true);
       try {
         // Use marked client-side for preview
@@ -137,26 +138,26 @@ export function ForumEditor({
         const raw = await marked.parse(value, { gfm: true, breaks: true });
         setPreviewHtml(sanitizeHtml(raw, FORUM_SANITIZE_OPTIONS));
       } catch {
-        setPreviewHtml("<p>Preview unavailable</p>");
+        setPreviewHtml(`<p>${t(locale, "forumUi.preview_unavailable")}</p>`);
       } finally {
         setLoadingPreview(false);
       }
     }
-    setTab(t);
+    setTab(nextTab);
   };
 
   const tools = [
-    { id: "bold", icon: Bold, title: "Bold" }, // i18n-ignore: english-only
-    { id: "italic", icon: Italic, title: "Italic" }, // i18n-ignore: english-only
-    { id: "underline", icon: Underline, title: "Underline" }, // i18n-ignore: english-only
-    { id: "h2", icon: Heading2, title: "Heading" }, // i18n-ignore: english-only
-    { id: "code", icon: Code, title: "Inline Code" }, // i18n-ignore: english-only
-    { id: "codeblock", icon: Code2, title: "Code Block" }, // i18n-ignore: english-only
-    { id: "quote", icon: Quote, title: "Quote" }, // i18n-ignore: english-only
-    { id: "list", icon: List, title: "Unordered List" }, // i18n-ignore: english-only
-    { id: "ordered", icon: ListOrdered, title: "Ordered List" }, // i18n-ignore: english-only
-    { id: "link", icon: Link2, title: "Link" }, // i18n-ignore: english-only
-    { id: "image", icon: Image, title: "Image" }, // i18n-ignore: english-only
+    { id: "bold", icon: Bold, titleKey: "forumUi.editor_bold" },
+    { id: "italic", icon: Italic, titleKey: "forumUi.editor_italic" },
+    { id: "underline", icon: Underline, titleKey: "forumUi.editor_underline" },
+    { id: "h2", icon: Heading2, titleKey: "forumUi.editor_heading" },
+    { id: "code", icon: Code, titleKey: "forumUi.editor_inline_code" },
+    { id: "codeblock", icon: Code2, titleKey: "forumUi.editor_code_block" },
+    { id: "quote", icon: Quote, titleKey: "forumUi.editor_quote" },
+    { id: "list", icon: List, titleKey: "forumUi.editor_unordered_list" },
+    { id: "ordered", icon: ListOrdered, titleKey: "forumUi.editor_ordered_list" },
+    { id: "link", icon: Link2, titleKey: "forumUi.editor_link" },
+    { id: "image", icon: Image, titleKey: "forumUi.editor_image" },
   ];
 
   return (
@@ -168,7 +169,7 @@ export function ForumEditor({
             <button
               key={tool.id}
               type="button"
-              title={tool.title}
+              title={t(locale, tool.titleKey as "forumUi.editor_bold")}
               onClick={() => applyFormatting(tool.id)}
               className="p-1.5 rounded hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -184,7 +185,7 @@ export function ForumEditor({
             className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${tab === "write" ? "bg-brand text-[#08080A] font-bold" : "text-muted-foreground hover:text-foreground"}`}
           >
             <Edit3 className="w-3 h-3" />
-            {"Write"}
+            {t(locale, "forumUi.write")}
           </button>
           <button
             type="button"
@@ -192,7 +193,7 @@ export function ForumEditor({
             className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${tab === "preview" ? "bg-brand text-[#08080A] font-bold" : "text-muted-foreground hover:text-foreground"}`}
           >
             <Eye className="w-3 h-3" />
-            {"Preview"}
+            {t(locale, "forumUi.preview")}
           </button>
         </div>
       </div>
@@ -212,7 +213,7 @@ export function ForumEditor({
         <div style={{ minHeight }} className="px-4 py-3">
           {loadingPreview ? (
             <div className="text-xs text-muted-foreground animate-pulse">
-              {"Loading preview..."}
+              {t(locale, "forumUi.loading_preview")}
             </div>
           ) : previewHtml ? (
             <div
@@ -221,7 +222,7 @@ export function ForumEditor({
             />
           ) : (
             <p className="text-xs text-muted-foreground italic">
-              {"Nothing to preview"}
+              {t(locale, "forumUi.nothing_to_preview")}
             </p>
           )}
         </div>

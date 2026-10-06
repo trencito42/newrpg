@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -126,6 +127,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
   };
 
   const actionProps = {
+    locale,
     canEdit,
     canDelete,
     canRestore,
@@ -158,7 +160,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
             </Link>
             {post.edited_at ? (
               <span className="italic truncate">
-                · {"edited by"} {post.edited_by_username ?? post.author_username}
+                · {t(locale, "forumUi.edited_by")} {post.edited_by_username ?? post.author_username}
                 {post.edit_reason && ` · "${post.edit_reason}"`}
               </span>
             ) : null}
@@ -171,12 +173,12 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
             <div className="text-sm max-sm:text-sm text-muted-foreground italic">
               {isMod ? (
                 <span>
-                  {"Deleted by"}{" "}
+                  {t(locale, "forumUi.deleted_by")}{" "}
                   {post.deleted_by_username ?? "unknown"} // i18n-ignore: english-only
-                  {post.delete_reason && ` · ${"Reason"}: ${post.delete_reason}`}
+                  {post.delete_reason && ` · ${t(locale, "forumUi.reason")}: ${post.delete_reason}`}
                 </span>
               ) : (
-                <span>{"[post deleted]"}</span>
+                <span>{t(locale, "forumUi.post_deleted")}</span>
               )}
             </div>
           ) : editing ? (
@@ -210,7 +212,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
                   onClick={() => setEditing(false)}
                   className="px-3 py-1.5 bg-surface-200 text-foreground text-xs font-bold uppercase rounded-lg hover:bg-surface-300 transition-colors"
                 >
-                  {"Cancel"}
+                  {t(locale, "forumUi.cancel")}
                 </button>
               </div>
             </form>
@@ -232,7 +234,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
             </div>
             {post.edited_at ? (
               <p className="text-[11px] leading-snug text-muted-foreground truncate pl-5">
-                {"edited by"} {post.edited_by_username ?? post.author_username}
+                {t(locale, "forumUi.edited_by")} {post.edited_by_username ?? post.author_username}
               </p>
             ) : null}
           </div>

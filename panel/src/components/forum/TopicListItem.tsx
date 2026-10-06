@@ -3,6 +3,7 @@ import { Lock, Pin, Megaphone, Globe, MessageSquare, Eye, Clock } from "lucide-r
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import type { ForumTopicListItem } from "@/lib/forum-types";
 import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
+import { t } from "@/lib/i18n";
 
 interface TopicListItemProps {
   topic: ForumTopicListItem;
@@ -96,7 +97,7 @@ export function TopicListItem({
           {topic.deleted_at && (
             <>
               <span>·</span>
-              <span className="text-red-400">{"[deleted]"}</span>
+              <span className="text-red-400">{t(locale, "forumUi.deleted_short")}</span>
             </>
           )}
         </div>

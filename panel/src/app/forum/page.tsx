@@ -6,6 +6,7 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import type { Forum, ForumCategory, ForumCategoryWithForums } from "@/lib/forum-types";
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
+import { t, formatRelativeTime } from "@/lib/i18n";
 import { MessageSquare, Lock, Megaphone, Newspaper, BookOpen, MessageCircle, Camera, Lightbulb, HelpCircle, Bug, Flag, Shield, Heart, Users, Car, Building2, Home, Package } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -25,17 +26,12 @@ function formatLastPost(forum: Forum, locale: "en" | "ro") {
   const date = new Date(forum.last_post_at);
   const now = new Date();
   const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diff < 60) return "just now";
-  if (diff < 3600) {
-    const m = Math.floor(diff / 60);
-    return locale === "ro" ? `acum ${m} min` : `${m}m ago`;
-  }
-  if (diff < 86400) {
-    const h = Math.floor(diff / 3600);
-    return locale === "ro" ? `acum ${h}h` : `${h}h ago`;
-  }
-  return date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+  if (diff < 60) return t(locale, "forumUi.just_now");
+  if (diff < 86400 * 7) return formatRelativeTime(date, locale);
+  return date.toLocaleDateString(locale === "ro" ? "ro-RO" : "en-US", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 interface CategoryRow extends RowDataPacket, ForumCategory {}
@@ -108,10 +104,10 @@ export default async function ForumIndexPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-foreground tracking-tight uppercase">
-            {"Forum"}
+            {t(locale, "forumUi.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {"RACKET RPG Community"}
+            {t(locale, "forumUi.community_subtitle")}
           </p>
         </div>
         {session && (
@@ -119,7 +115,7 @@ export default async function ForumIndexPage() {
             href="/forum/my"
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            {"My activity"}
+            {t(locale, "forumUi.my_activity")}
           </Link>
         )}
       </div>
@@ -135,7 +131,7 @@ export default async function ForumIndexPage() {
 
           {cat.forums.length === 0 ? (
             <p className="text-xs text-muted-foreground pl-2">
-              {"No forums available"}
+              {t(locale, "forumUi.no_forums")}
             </p>
           ) : (
             <div className="rounded-xl border border-border overflow-hidden">
@@ -173,11 +169,11 @@ export default async function ForumIndexPage() {
                   <div className="hidden sm:flex items-center gap-6 text-xs text-muted-foreground flex-shrink-0">
                     <div className="text-center">
                       <div className="font-semibold text-foreground">{forum.topic_count.toLocaleString()}</div>
-                      <div>{"topics"}</div>
+                      <div>{t(locale, "forumUi.topics")}</div>
                     </div>
                     <div className="text-center">
                       <div className="font-semibold text-foreground">{forum.post_count.toLocaleString()}</div>
-                      <div>{"posts"}</div>
+                      <div>{t(locale, "forumUi.posts")}</div>
                     </div>
                   </div>
 
@@ -216,7 +212,7 @@ export default async function ForumIndexPage() {
                         </span>
                       </>
                     ) : (
-                      <span>{"No posts"}</span>
+                      <span>{t(locale, "forumUi.no_posts")}</span>
                     )}
                   </div>
                 </div>
@@ -229,14 +225,14 @@ export default async function ForumIndexPage() {
       {/* Footer actions */}
       <div className="flex items-center justify-between pt-2 border-t border-border text-xs text-muted-foreground">
         <Link href="/forum/search" className="hover:text-foreground transition-colors">
-          {"Search forum"}
+          {t(locale, "forumUi.search_forum")}
         </Link>
         {session && (
           <button
             onClick={undefined}
             className="hover:text-foreground transition-colors cursor-default"
           >
-            {"Mark all as read"}
+            {t(locale, "forumUi.mark_all_read")}
           </button>
         )}
       </div>

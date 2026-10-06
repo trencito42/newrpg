@@ -3,6 +3,7 @@ import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { RowDataPacket } from "mysql2";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -70,10 +71,10 @@ export default async function ModPage() {
           {/* i18n-ignore: english-only */}
           <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
           <span>/</span>
-          <span className="text-foreground">{"Moderation"}</span>
+          <span className="text-foreground">{t(locale, "forumUi.moderation")}</span>
         </div>
         <h1 className="text-xl font-extrabold text-foreground uppercase tracking-tight">
-          {"Moderation Panel"}
+          {t(locale, "forumUi.moderation_panel")}
         </h1>
       </div>
 
@@ -82,7 +83,7 @@ export default async function ModPage() {
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="text-2xl font-extrabold text-brand">{openReportsCount?.total ?? 0}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {"Open reports"}
+            {t(locale, "forumUi.open_reports")}
           </div>
         </div>
       </div>
@@ -90,12 +91,12 @@ export default async function ModPage() {
       {/* Open Reports */}
       <div>
         <h2 className="text-sm font-extrabold text-foreground uppercase tracking-wider mb-3">
-          {"Open Reports"}
+          {t(locale, "forumUi.open_reports_title")}
         </h2>
         {openReports.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {"No open reports"}
+              {t(locale, "forumUi.no_open_reports")}
             </p>
           </div>
         ) : (
@@ -111,7 +112,7 @@ export default async function ModPage() {
                       <span className="text-xs font-bold text-red-400 uppercase">{report.reason.replace("_", " ")}</span>
                       <span className="text-xs text-muted-foreground">·</span>
                       <span className="text-xs text-muted-foreground">
-                        {"Reported by"} {report.reporter_username}
+                        {t(locale, "forumUi.reported_by")} {report.reporter_username}
                       </span>
                     </div>
                     <Link
@@ -144,12 +145,12 @@ export default async function ModPage() {
       {/* Recent Mod Actions */}
       <div>
         <h2 className="text-sm font-extrabold text-foreground uppercase tracking-wider mb-3">
-          {"Recent Actions"}
+          {t(locale, "forumUi.recent_actions")}
         </h2>
         {recentLogs.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {"No actions"}
+              {t(locale, "forumUi.no_actions")}
             </p>
           </div>
         ) : (

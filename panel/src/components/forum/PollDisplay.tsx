@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -73,13 +74,13 @@ export function PollDisplay({ poll, topicId, locale }: PollDisplayProps) {
       <div>
         <h3 className="text-sm font-extrabold text-foreground">{poll.question}</h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-          <span>{totalVotes} {"votes"}</span>
+          <span>{totalVotes} {t(locale, "forumUi.votes")}</span>
           {isClosed && (
-            <span className="text-yellow-400">{"· Closed"}</span>
+            <span className="text-yellow-400">{t(locale, "forumUi.poll_closed")}</span>
           )}
           {poll.closes_at && !isClosed && (
             <span>
-              · {"Closes"}{" "}
+              · {t(locale, "forumUi.closes")}{" "}
               {new Date(poll.closes_at).toLocaleDateString("en-US")}
             </span>
           )}

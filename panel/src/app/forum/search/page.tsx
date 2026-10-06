@@ -4,6 +4,7 @@ import { canAccessForum } from "@/lib/forum-permissions";
 import type { Forum } from "@/lib/forum-types";
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -164,13 +165,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
           <Link href="/forum" className="hover:text-foreground transition-colors">
-            {"Forum"}
+            {t(locale, "forumUi.title")}
           </Link>
           <span>/</span>
-          <span className="text-foreground">{"Search"}</span>
+          <span className="text-foreground">{t(locale, "forumUi.search")}</span>
         </div>
         <h1 className="text-xl font-extrabold text-foreground uppercase tracking-tight">
-          {"Forum Search"}
+          {t(locale, "forumUi.search_title")}
         </h1>
       </div>
 
@@ -188,7 +189,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             type="submit"
             className="px-4 py-2 bg-brand hover:bg-brand-300 text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors"
           >
-            {"Search"}
+            {t(locale, "forumUi.search")}
           </button>
         </div>
 
@@ -223,13 +224,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           ) : results.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {"No results found"}
+                {t(locale, "forumUi.no_results")}
               </p>
             </div>
           ) : (
             <>
               <p className="text-xs text-muted-foreground mb-3">
-                {total} {"results"}
+                {total} {t(locale, "forumUi.results")}
               </p>
               <div className="space-y-2">
                 {results.map((result) => (

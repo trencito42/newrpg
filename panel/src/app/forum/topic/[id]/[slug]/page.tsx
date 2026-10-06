@@ -14,6 +14,7 @@ import { TopicActionsMenu } from "@/components/forum/TopicActionsMenu";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 import { PollDisplay } from "@/components/forum/PollDisplay";
 import { PostHashScroll } from "@/components/forum/PostHashScroll";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -309,7 +310,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
           <Link href="/forum" className="hover:text-foreground transition-colors">
-            {"Forum"}
+            {t(locale, "forumUi.title")}
           </Link>
           <span>/</span>
           <Link href={`/forum/${forumSlug}`} className="hover:text-foreground transition-colors">
@@ -331,7 +332,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
           <span className="inline-flex items-center gap-1">
-            {"by"}
+            {t(locale, "forumUi.by")}
             <PlayerIdentity
               {...(identityMap.get(
                 forumAuthorKey({
@@ -346,19 +347,19 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
             />
           </span>
           <span>·</span>
-          <span>{topic.reply_count} {"replies"}</span>
+          <span>{topic.reply_count} {t(locale, "forumUi.replies")}</span>
           <span>·</span>
-          <span>{topic.view_count} {"views"}</span>
+          <span>{topic.view_count} {t(locale, "forumUi.views")}</span>
           {topic.status === "locked" && (
             <>
               <span>·</span>
-              <span className="text-yellow-400">{"locked"}</span>
+              <span className="text-yellow-400">{t(locale, "forumUi.locked")}</span>
             </>
           )}
           {topic.deleted_at && Boolean(isMod) ? (
             <>
               <span>·</span>
-              <span className="text-red-400">{"deleted"}</span>
+              <span className="text-red-400">{t(locale, "forumUi.deleted")}</span>
             </>
           ) : null}
         </div>
@@ -408,7 +409,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
               href={`/forum/topic/${topicId}/${topic.slug}?page=${page - 1}`}
               className="px-3 py-1.5 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
             >
-              {"Prev"}
+              {t(locale, "forumUi.prev")}
             </Link>
           )}
           {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -428,7 +429,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
               href={`/forum/topic/${topicId}/${topic.slug}?page=${page + 1}`}
               className="px-3 py-1.5 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
             >
-              {"Next"}
+              {t(locale, "forumUi.next")}
             </Link>
           )}
         </div>
@@ -438,7 +439,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
       {userCanReply && (
         <div className="pt-4 border-t border-border">
           <h3 className="text-sm font-bold text-foreground mb-3">
-            {"Reply"}
+            {t(locale, "forumUi.reply")}
           </h3>
           <ReplyForm topicId={topicId} topicSlug={topic.slug} locale={locale} />
         </div>
@@ -447,7 +448,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
       {!userCanReply && session && (topic.status === "locked" || forum.is_locked) && (
         <div className="pt-4 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
-            {"This topic is locked."}
+            {t(locale, "forumUi.topic_locked")}
           </p>
         </div>
       )}
@@ -456,9 +457,9 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
         <div className="pt-4 border-t border-border text-center">
           <p className="text-xs text-muted-foreground">
             <Link href="/account/login" className="text-brand hover:underline">
-              {"Log in"}
+              {t(locale, "forumUi.login")}
             </Link>
-            {" to reply"}
+            {t(locale, "forumUi.login_to_reply")}
           </p>
         </div>
       )}

@@ -1,4 +1,5 @@
 "use client";
+import { t, type Locale } from "@/lib/i18n";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -33,7 +34,8 @@ export default function MyForumPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLocale("en"); // i18n-ignore: english-only
+    const cookie = document.cookie.match(/(?:^|; )racket_locale=(en|ro)/);
+    setLocale(cookie?.[1] === "ro" ? "ro" : "en");
   }, []);
 
   useEffect(() => {
@@ -58,11 +60,11 @@ export default function MyForumPage() {
     router.push(`/forum/my?tab=${t}`);
   };
 
-  const TABS: { key: Tab; labelEn: string; labelRo: string }[] = [
-    { key: "topics", labelEn: "My Topics", labelRo: "Topicele Mele" },
-    { key: "posts", labelEn: "My Posts", labelRo: "Postările Mele" },
-    { key: "bookmarks", labelEn: "Bookmarks", labelRo: "Marcaje" },
-    { key: "subscriptions", labelEn: "Subscriptions", labelRo: "Abonamente" },
+  const TABS: { key: Tab; labelKey: "forumUi.tab_my_topics" | "forumUi.tab_my_posts" | "forumUi.tab_bookmarks" | "forumUi.tab_subscriptions" }[] = [
+    { key: "topics", labelKey: "forumUi.tab_my_topics" },
+    { key: "posts", labelKey: "forumUi.tab_my_posts" },
+    { key: "bookmarks", labelKey: "forumUi.tab_bookmarks" },
+    { key: "subscriptions", labelKey: "forumUi.tab_subscriptions" },
   ];
 
   return (
@@ -70,28 +72,28 @@ export default function MyForumPage() {
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
           {/* i18n-ignore: english-only */}
-          <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
+          <Link href="/forum" className="hover:text-foreground transition-colors">{t(locale, "forumUi.title")}</Link>
           <span>/</span>
-          <span className="text-foreground">{"My Activity"}</span>
+          <span className="text-foreground">{t(locale, "forumUi.my_activity_title")}</span>
         </div>
         <h1 className="text-xl font-extrabold text-foreground uppercase tracking-tight">
-          {"My Activity"}
+          {t(locale, "forumUi.my_activity_title")}
         </h1>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
-        {TABS.map((t) => (
+        {TABS.map((tabItem) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tabItem.key}
+            onClick={() => setTab(tabItem.key)}
             className={`px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors -mb-px border-b-2 ${
-              tab === t.key
+              tab === tabItem.key
                 ? "border-brand text-brand"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.labelEn} // i18n-ignore: english-only
+            {t(locale, tabItem.labelKey)}
           </button>
         ))}
       </div>
@@ -108,7 +110,7 @@ export default function MyForumPage() {
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {"Nothing to show"}
+            {t(locale, "forumUi.nothing_to_show")}
           </p>
         </div>
       ) : (
@@ -133,7 +135,7 @@ export default function MyForumPage() {
                       {item.reply_count !== undefined && (
                         <>
                           <span>·</span>
-                          <span>{item.reply_count} {"replies"}</span>
+                          <span>{item.reply_count} {t(locale, "forumUi.replies")}</span>
                         </>
                       )}
                     </div>

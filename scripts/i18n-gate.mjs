@@ -230,6 +230,7 @@ export function scanPanel(file, source, pair, report = fail) {
     };
     visit(sf, n => {
         if (ts.isJsxText(n) && visible(n.text.trim())) hit(n, 'JSX visible text');
+        if (ts.isJsxExpression(n) && literal(n.expression) && visibleJsxExpression(n)) hit(n, 'JSX expression literal');
         if (ts.isJsxAttribute(n) && /^(title|placeholder|aria-label|alt)$/.test(n.name.text)) {
             if (literal(n.initializer) || ts.isJsxExpression(n.initializer || sf) && literal(n.initializer.expression)) hit(n, 'visible attribute');
         }
