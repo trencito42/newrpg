@@ -187,18 +187,57 @@ function buildCustomCatalog(runtime = fiveMRuntime()) {
   return { models, byResource, stats };
 }
 
-// ─── Dual-pass vehicle matte extraction.
+async function imageSize(filePath) {
+  const dims = (await runImageMagick([filePath, '-format', '%w %h', 'info:'])).toString().trim().split(/\s+/);
+  return { width: Number(dims[0]), height: Number(dims[1]) };
+}
+
+async function cornerMeanLuminance(filePath, width, height, corner) {
+  const patch = Math.min(32, Math.floor(width / 8), Math.floor(height / 8));
+  const geometry = {
+    tl: `${patch}x${patch}+0+0`,
+    tr: `${patch}x${patch}+${width - patch}+0`,
+    bl: `${patch}x${patch}+0+${height - patch}`,
+    br: `${patch}x${patch}+${width - patch}+${height - patch}`,
+  }[corner];
+  const mean = Number((await runImageMagick([
+    filePath, '-colorspace', 'Gray', '-crop', geometry, '+repage', '-format', '%[mean]', 'info:',
+  ])).toString().trim());
+  return Number.isFinite(mean) ? mean / 65535 : 1;
+}
+
+/** Screenshot-basic usually renders void + vehicle (corners stay black), not DrawPoly studio walls. */
+async function isVoidBlackCapture(blackPath) {
+  const { width, height } = await imageSize(blackPath);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width < 64 || height < 64) return false;
+  let darkCorners = 0;
+  for (const corner of ['tl', 'tr', 'bl', 'br']) {
+    if ((await cornerMeanLuminance(blackPath, width, height, corner)) < 0.12) darkCorners++;
+  }
+  return darkCorners >= 3;
+}
+
+async function finalizePng(tmpFinal, outputPath, padding) {
+  const size = (await runImageMagick([tmpFinal, '-format', '%w,%h', 'info:'])).toString().trim();
+  const [width, height] = size.split(',').map(Number);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width < 40 || height < 30) {
+    throw new Error(`Output image looks empty (${size})`);
+  }
+  fs.renameSync(tmpFinal, outputPath);
+  return { width, height, size };
+}
+
+// ─── Dual-pass vehicle matte extraction (when studio walls appear in both captures).
 //
-// BLACK + WHITE passes → difference matte; RGB from the lighter of the two captures.
+// VOID mode: black screenshot + transparent black (most FiveM captures).
 //
-// Pipeline:
+// Pipeline (dual):
 //   1. diff  = |white - black| (grayscale) — large = background, small = vehicle/glass
 //   2. normalize + threshold 75% + negate → binary mask (white=vehicle, black=bg)
 //   3. flood-fill exterior from all 4 corners with #404040 → negate + threshold 99%
 //      → interior-holes mask (white only for enclosed black pixels, i.e. open windows)
 //   4. Screen(binary, holes) → filled mask; blur 0x1.5 + level → soft outer edge
-//   5. CopyOpacity(whitePass, alpha) → trim → pad → RGBA PNG
-//      (white pass holds paint; black pass often loses addon PBR on a black studio)
+//   5. CopyOpacity(blackPass, alpha) → trim → pad → RGBA PNG
 //
 // Windows/glass: GTA glass is semi-transparent so diff < 75% → vehicle → opaque. ✓
 // Interior holes (open windows): not reachable from corners → caught by step 3. ✓
@@ -219,19 +258,36 @@ async function processImage(token, model, options) {
   const tmpHoles    = `${base}.holes.png`;
   const tmpFilled   = `${base}.filled.png`;
   const tmpMatteFin = `${base}.matte_final.png`;
-  const tmpColor    = `${base}.color.png`;
   const tmpFinal    = `${base}.tmp.png`;
-  const allTmps = [tmpDiff, tmpMatteRaw, tmpMarked, tmpHoles, tmpFilled, tmpMatteFin, tmpColor, tmpFinal];
+  const allTmps = [tmpDiff, tmpMatteRaw, tmpMarked, tmpHoles, tmpFilled, tmpMatteFin, tmpFinal];
 
   if (!fs.existsSync(blackPath)) throw new Error('Black capture not found');
-  if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
   if (!fs.existsSync(path.dirname(outputPath))) throw new Error('Output directory is not mounted');
 
   try {
+    const voidBlack = await isVoidBlackCapture(blackPath);
+    if (voidBlack) {
+      if (debug) console.log(`[racket_vehicle_thumbs] ${model}: void-black capture — chroma key`);
+      await runImageMagick([
+        blackPath,
+        '-fuzz', '3%',
+        '-transparent', 'black',
+        '-trim', '+repage',
+        '-bordercolor', 'none', '-border', `${padding}x${padding}`,
+        '-define', 'png:color-type=6',
+        tmpFinal,
+      ]);
+      const { size } = await finalizePng(tmpFinal, outputPath, padding);
+      console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png (void-black)`);
+      return `${model}.png`;
+    }
+
+    if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
+
     if (debug) {
       const bDims = (await runImageMagick([blackPath, '-format', '%wx%h', 'info:'])).toString().trim();
       const wDims = (await runImageMagick([whitePath, '-format', '%wx%h', 'info:'])).toString().trim();
-      console.log(`[racket_vehicle_thumbs] ${model}: black=${bDims} white=${wDims}`);
+      console.log(`[racket_vehicle_thumbs] ${model}: dual-pass black=${bDims} white=${wDims}`);
     }
 
     // Step 1: grayscale absolute difference — large=background, small=vehicle/glass
@@ -301,11 +357,10 @@ async function processImage(token, model, options) {
       console.log(`[racket_vehicle_thumbs] ${model}: matte ${mStats}`);
     }
 
-    // Step 5: per-channel max(black, white) keeps whichever pass carried paint, then apply matte.
+    // Step 5: black pass keeps in-game paint; matte removes the studio backdrop.
     if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 5 — compose, trim, pad`);
-    await runImageMagick([blackPath, whitePath, '-compose', 'Lighten', '-composite', tmpColor]);
     await runImageMagick([
-      tmpColor, tmpMatteFin,
+      blackPath, tmpMatteFin,
       '-compose', 'CopyOpacity', '-composite',
       '-trim', '+repage',
       '-bordercolor', 'none', '-border', `${padding}x${padding}`,
@@ -313,11 +368,7 @@ async function processImage(token, model, options) {
       tmpFinal,
     ]);
 
-    const size = (await runImageMagick([tmpFinal, '-format', '%w,%h', 'info:'])).toString().trim();
-    const [width, height] = size.split(',').map(Number);
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width < 40 || height < 30) {
-      throw new Error(`Output image looks empty (${size})`);
-    }
+    const { size } = await finalizePng(tmpFinal, outputPath, padding);
 
     if (debug) {
       const dbgDir = path.join(resourcePath, options.outputDir);
@@ -331,10 +382,9 @@ async function processImage(token, model, options) {
       }
       console.log(`[racket_vehicle_thumbs] ${model}: output ${size} — debug files saved`);
     } else {
-      console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png`);
+      console.log(`[racket_vehicle_thumbs] ${model}: output ${size} → ${model}.png (dual-pass)`);
     }
 
-    fs.renameSync(tmpFinal, outputPath);
     return `${model}.png`;
   } finally {
     for (const tmp of allTmps) {
@@ -372,4 +422,7 @@ if (typeof on === 'function') {
   });
 }
 
-module.exports = { validName, validToken, validDirectory, processImage, parseVehicleModels, buildCustomCatalog };
+module.exports = {
+  validName, validToken, validDirectory, processImage, parseVehicleModels, buildCustomCatalog,
+  isVoidBlackCapture,
+};
