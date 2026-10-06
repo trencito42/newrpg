@@ -189,8 +189,7 @@ function buildCustomCatalog(runtime = fiveMRuntime()) {
 
 // ─── Dual-pass vehicle matte extraction.
 //
-// BLACK pass  → direct RGB beauty render (used as-is, no math).
-// WHITE pass  → used only to derive the vehicle silhouette via difference.
+// BLACK + WHITE passes → difference matte; RGB from the lighter of the two captures.
 //
 // Pipeline:
 //   1. diff  = |white - black| (grayscale) — large = background, small = vehicle/glass
@@ -198,7 +197,8 @@ function buildCustomCatalog(runtime = fiveMRuntime()) {
 //   3. flood-fill exterior from all 4 corners with #404040 → negate + threshold 99%
 //      → interior-holes mask (white only for enclosed black pixels, i.e. open windows)
 //   4. Screen(binary, holes) → filled mask; blur 0x1.5 + level → soft outer edge
-//   5. CopyOpacity(blackPass, alpha) → trim → pad → RGBA PNG
+//   5. CopyOpacity(whitePass, alpha) → trim → pad → RGBA PNG
+//      (white pass holds paint; black pass often loses addon PBR on a black studio)
 //
 // Windows/glass: GTA glass is semi-transparent so diff < 75% → vehicle → opaque. ✓
 // Interior holes (open windows): not reachable from corners → caught by step 3. ✓
@@ -219,8 +219,9 @@ async function processImage(token, model, options) {
   const tmpHoles    = `${base}.holes.png`;
   const tmpFilled   = `${base}.filled.png`;
   const tmpMatteFin = `${base}.matte_final.png`;
+  const tmpColor    = `${base}.color.png`;
   const tmpFinal    = `${base}.tmp.png`;
-  const allTmps = [tmpDiff, tmpMatteRaw, tmpMarked, tmpHoles, tmpFilled, tmpMatteFin, tmpFinal];
+  const allTmps = [tmpDiff, tmpMatteRaw, tmpMarked, tmpHoles, tmpFilled, tmpMatteFin, tmpColor, tmpFinal];
 
   if (!fs.existsSync(blackPath)) throw new Error('Black capture not found');
   if (!fs.existsSync(whitePath)) throw new Error('White capture not found');
@@ -300,11 +301,11 @@ async function processImage(token, model, options) {
       console.log(`[racket_vehicle_thumbs] ${model}: matte ${mStats}`);
     }
 
-    // Step 5: apply matte to BLACK pass (direct beauty render — no RGB math)
-    // Dark windows are intentional: GTA glass stays naturally dark. ✓
+    // Step 5: per-channel max(black, white) keeps whichever pass carried paint, then apply matte.
     if (debug) console.log(`[racket_vehicle_thumbs] ${model}: step 5 — compose, trim, pad`);
+    await runImageMagick([blackPath, whitePath, '-compose', 'Lighten', '-composite', tmpColor]);
     await runImageMagick([
-      blackPath, tmpMatteFin,
+      tmpColor, tmpMatteFin,
       '-compose', 'CopyOpacity', '-composite',
       '-trim', '+repage',
       '-bordercolor', 'none', '-border', `${padding}x${padding}`,

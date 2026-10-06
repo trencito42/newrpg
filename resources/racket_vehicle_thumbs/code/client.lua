@@ -9,6 +9,17 @@ local function drawQuad(a, b, c, d, color)
     DrawPoly(d.x, d.y, d.z, c.x, c.y, c.z, a.x, a.y, a.z, color[1], color[2], color[3], 255)
 end
 
+local function drawStudioLights(center)
+    -- Addon PBR often reads as a flat black blob without extra fill lights.
+    DrawLightWithRange(center.x + 14.0, center.y + 12.0, center.z + 10.0, 255, 255, 255, 32.0, 9.0)
+    DrawLightWithRange(center.x - 12.0, center.y - 10.0, center.z + 8.0, 255, 248, 240, 26.0, 7.0)
+    DrawSpotLight(
+        center.x - 18.0, center.y + 22.0, center.z + 16.0,
+        0.35, -0.55, -0.25,
+        255, 255, 255, 48.0, 2.0, 10.0, 18.0, 1.0
+    )
+end
+
 local function drawStudio()
     local center = cfg.Studio
     local half = cfg.StudioHalfSize
@@ -84,7 +95,9 @@ local function prepareVehicle(token, model)
     SetEntityCollision(vehicle, false, false)
     SetVehicleDirtLevel(vehicle, 0.0)
     SetVehicleEngineOn(vehicle, false, true, true)
-    SetVehicleLights(vehicle, 0)
+    SetVehicleLights(vehicle, 2)
+    pcall(function() SetVehicleLightMultiplier(vehicle, 4.0) end)
+    SetEntityLodDist(vehicle, 1000)
 
     local aspect = GetAspectRatio(false)
     if not aspect or aspect < 1.0 then aspect = 16.0 / 9.0 end
@@ -120,6 +133,11 @@ local function prepareVehicle(token, model)
     SetOverrideWeather('CLEAR')
     if GetResourceState('sunset_ui') == 'started' then
         pcall(function() exports.sunset_ui:HideHudChrome() end)
+    end
+    local textureDeadline = GetGameTimer() + 1500
+    while GetGameTimer() < textureDeadline do
+        if not current or current.token ~= token then return end
+        Wait(50)
     end
     Wait(cfg.SettleMs)
     -- Black background already set at initialization; signal server to capture black pass.
@@ -168,6 +186,7 @@ CreateThread(function()
             DisplayHud(false)
             DisplayRadar(false)
             drawStudio()
+            drawStudioLights(cfg.Studio)
             Wait(0)
         else
             Wait(250)
