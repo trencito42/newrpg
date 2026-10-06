@@ -18,6 +18,15 @@ import type { Metadata } from "next";
 import { fetchCharacterCommunityActivity } from "@/lib/community-activity";
 import { PlayerCommunityActivity } from "@/components/players/PlayerCommunityActivity";
 import { PlayerProfileLayout } from "@/components/players/PlayerProfileLayout";
+import { FeaturedVehicleTrigger } from "@/components/players/FeaturedVehicleTrigger";
+import { PlayerVehiclesSection } from "@/components/players/PlayerVehiclesSection";
+import {
+  buildVehicleProfileDetails,
+  MIN_RELIABLE_GENERATED_THUMB_BYTES,
+  type PublicVehicleCardData,
+} from "@/lib/vehicle-profile";
+import fs from "node:fs";
+import path from "node:path";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -99,6 +108,33 @@ interface VehicleRow extends RowDataPacket {
   insurance_level: number;
   destroyed: number;
   preview_url: string | null;
+  props: string | null;
+}
+
+function hasReliableGeneratedThumbnail(model: string): boolean {
+  try {
+    const file = path.join(process.cwd(), "public", "vehicles", `${model.toLowerCase()}.png`);
+    const stat = fs.statSync(file);
+    return stat.size >= MIN_RELIABLE_GENERATED_THUMB_BYTES;
+  } catch {
+    return false;
+  }
+}
+
+function toPublicVehicleCard(v: VehicleRow): PublicVehicleCardData {
+  const displayName = vehicleDisplayName(v.model, v.catalog_label);
+  return {
+    id: v.id,
+    model: v.model.toLowerCase(),
+    displayName,
+    plate: v.plate,
+    stored: Boolean(v.stored),
+    destroyed: Boolean(v.destroyed),
+    insuranceLevel: v.insurance_level || 1,
+    previewUrl: getVehiclePreviewUrl(v.model, v.preview_url),
+    addonThumbnail: !v.preview_url && hasReliableGeneratedThumbnail(v.model),
+    details: buildVehicleProfileDetails(v.props),
+  };
 }
 interface PropertyRow extends RowDataPacket { id: number; label: string; interior: string; description: string | null }
 
@@ -203,7 +239,7 @@ export default async function PlayerProfilePage({
       ? dbQuerySingle<BalanceRow>("SELECT cash, bank FROM characters WHERE id = ?", [characterId])
       : null,
     dbQuery<VehicleRow>(
-      `SELECT v.id, v.model, dv.label AS catalog_label, v.plate, v.stored, v.insurance_level, v.destroyed, vm.preview_url
+      `SELECT v.id, v.model, dv.label AS catalog_label, v.plate, v.stored, v.insurance_level, v.destroyed, v.props, vm.preview_url
        FROM vehicles v
        LEFT JOIN dealership_vehicles dv ON LOWER(dv.model) = LOWER(v.model)
        LEFT JOIN panel_vehicle_media vm ON vm.vehicle_id = v.id
@@ -253,7 +289,11 @@ export default async function PlayerProfilePage({
   const hasFaction = isFaction(char.faction_id);
   const factionLabel = hasFaction ? getFactionLabel(char.faction_id) : null;
   const warningsCount = sanctionCountRow?.count || 0;
-  const featuredVehicle = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
+  const publicVehicles = vehicles.map(toPublicVehicleCard);
+  const featuredVehicleRow = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
+  const featuredVehicle = featuredVehicleRow
+    ? publicVehicles.find((pv) => pv.id === featuredVehicleRow.id) ?? null
+    : null;
 
   // Derive role badges
   const roleBadges: { label: string; color: string; tooltip: string; icon?: string; href?: string }[] = [];
@@ -435,21 +475,7 @@ export default async function PlayerProfilePage({
 
           {/* Right: Featured Vehicle Preview */}
           {featuredVehicle && (
-            <div className="flex items-center gap-3 p-3 bg-[#121214] rounded-xl lg:max-w-xs w-full">
-              <div className="w-16 h-12 bg-[#18181B] rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                <GTAImage
-                  src={getVehiclePreviewUrl(featuredVehicle.model, featuredVehicle.preview_url)}
-                  alt={vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}
-                  fallbackText="GTA V"
-                  className="w-full h-full object-contain p-1"
-                />
-              </div>
-              <div className="min-w-0 text-xs">
-                <span className="text-[10px] text-[#8F8B83] uppercase tracking-wider block font-semibold">{t(locale, "interface.featured_vehicle")}</span>
-                <span className="font-bold text-[#F2EFE8] truncate block">{vehicleDisplayName(featuredVehicle.model, featuredVehicle.catalog_label)}</span>
-                <span className="font-mono text-[11px] text-[#99958E] block">{featuredVehicle.plate}</span>
-              </div>
-            </div>
+            <FeaturedVehicleTrigger locale={locale} vehicle={featuredVehicle} />
           )}
         </div>
       </div>
@@ -512,52 +538,7 @@ export default async function PlayerProfilePage({
 
       {/* Main Sections: Vehicles, Properties, Jobs, Licenses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        {/* Vehicles */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
-              {t(locale, "interface.vehicles_2")} ({vehicles.length})
-            </h2>
-          </div>
-
-          {vehicles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {vehicles.map((v) => (
-                <div key={v.id} className="p-3 bg-[#0E0E10] rounded-xl flex gap-3 items-center">
-                  <div className="w-14 h-11 bg-[#141416] rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                    <GTAImage
-                      src={getVehiclePreviewUrl(v.model, v.preview_url)}
-                      alt={vehicleDisplayName(v.model, v.catalog_label)}
-                      fallbackText="GTA V"
-                      className="w-full h-full object-contain p-0.5"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1 text-xs">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-[#F2EFE8] truncate">{vehicleDisplayName(v.model, v.catalog_label)}</span>
-                      {v.destroyed ? (
-                        <span className="text-[10px] text-red-400 font-mono shrink-0">{t(locale, "interface.destroyed")}</span>
-                      ) : v.stored ? (
-                        <span className="text-[10px] text-[#8F8B83] font-mono shrink-0">{t(locale, "interface.garage")}</span>
-                      ) : (
-                        <span className="text-[10px] text-emerald-400 font-mono shrink-0">{t(locale, "common.active")}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-[#99958E] mt-0.5 font-mono">
-                      <span>{v.plate}</span>
-                      <span>•</span>
-                      <span>{t(locale, "interface.insurance_level")} {v.insurance_level || 1}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-[#8F8B83] p-4 rounded-xl bg-[#0E0E10]">
-              {t(locale, "interface.no_vehicles_registered")}
-            </p>
-          )}
-        </div>
+        <PlayerVehiclesSection locale={locale} vehicles={publicVehicles} />
 
         {/* Properties */}
         <div>
