@@ -16,3 +16,8 @@ server_scripts {
 }
 
 dependencies { 'oxmysql', 'sunset_admin', 'sunset_ui', 'screenshot-basic' }
+
+-- FiveM Node sandbox only exposes paths listed here; processor.js require() needs this.
+files {
+    'code/vanilla_models.json',
+}

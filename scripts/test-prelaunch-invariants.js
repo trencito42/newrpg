@@ -49,6 +49,8 @@ must(!missions.includes('data.escaped == true'), 'mission escape bonus trusts cl
 must(cfg.includes('#@vehiclethumbs add_unsafe_child_process_permission racket_vehicle_thumbs'), 'thumbnail child process permission is not under #@vehiclethumbs gate');
 must(!/^add_unsafe_child_process_permission racket_vehicle_thumbs$/m.test(cfg), 'thumbnail child process permission is enabled unconditionally in production');
 must(!cfg.includes('#@dev add_unsafe_child_process_permission racket_vehicle_thumbs'), 'thumbnail child process permission must use #@vehiclethumbs gate, not #@dev');
+const vehThumbsManifest = read('resources/racket_vehicle_thumbs/fxmanifest.lua');
+must(vehThumbsManifest.includes("'code/vanilla_models.json'"), 'racket_vehicle_thumbs must list vanilla_models.json in files{} for FiveM Node require()');
 must(/^# ensure sunset_needs$/m.test(cfg), 'legacy survival drain is enabled in production');
 must(brand.includes("DisplayName = 'Racket RPG'") && brand.includes("CurrencyShort = 'RC'"), 'canonical Racket brand config drifted');
 
