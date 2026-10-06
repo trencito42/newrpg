@@ -6,7 +6,10 @@ const { spawn } = require('node:child_process');
 
 const RESOURCE = 'racket_vehicle_thumbs';
 const resourcePath = typeof GetResourcePath === 'function' ? GetResourcePath(RESOURCE) : path.join(__dirname, '..');
-const vanillaModels = new Set(require('./vanilla_models.json'));
+// FiveM resolves require() from the resource root (dummy.js), not this file's directory.
+const vanillaModels = new Set(
+  JSON.parse(fs.readFileSync(path.join(resourcePath, 'code', 'vanilla_models.json'), 'utf8')),
+);
 
 // Hardcoded — FiveM's Node.js permission model blocks fs.existsSync on system paths
 // even with add_filesystem_permission. Alpine imagemagick always installs to /usr/bin/magick.
