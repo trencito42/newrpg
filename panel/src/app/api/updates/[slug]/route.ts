@@ -81,7 +81,7 @@ export async function PUT(
     }
 
     const isAuthor = existing.author_account_id === session.accountId;
-    const isAdmin = session.adminLevel >= 3;
+    const isAdmin = session.adminLevel >= 1;
     if (!isAuthor && !isAdmin) {
       return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a edita această postare." }, { status: 403 }); // i18n-ignore: pre-existing
     }
@@ -138,7 +138,7 @@ export async function DELETE(
     }
 
     const isAuthor = existing.author_account_id === session.accountId;
-    const isAdmin = session.adminLevel >= 3;
+    const isAdmin = session.adminLevel >= 1;
     if (!isAuthor && !isAdmin) {
       return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a șterge această postare." }, { status: 403 }); // i18n-ignore: pre-existing
     }

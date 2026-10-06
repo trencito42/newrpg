@@ -11,6 +11,7 @@ import { buildRootMetadata, getSiteUrl } from "@/lib/seo/metadata";
 import { safeJsonLd } from "@/lib/seo";
 import { panelBrand } from "@/lib/brand";
 import { PanelSiteFooter } from "@/components/navigation/PanelSiteFooter";
+import { RouteScrollReset } from "@/components/navigation/RouteScrollReset";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
 import { resolvePlayerIdentity } from "@/lib/player-identity";
@@ -72,6 +73,7 @@ export default async function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
         <LocaleProvider locale={locale}>
+        <RouteScrollReset />
         <PlayerPreviewProvider>
           <MobileNav
             locale={locale}

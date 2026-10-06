@@ -41,7 +41,7 @@ function LightboxModal({
         <img
           src={item.url}
           alt=""
-          className="w-full max-h-[80vh] object-contain rounded-lg"
+          className="w-full max-h-[80dvh] object-contain rounded-lg"
         />
         <div className="mt-3 flex gap-2 justify-end">
           <button

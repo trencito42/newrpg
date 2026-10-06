@@ -177,41 +177,41 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       {/* Search form */}
       <form method="GET" className="space-y-3">
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="text"
             name="q"
             defaultValue={q}
             placeholder={t(locale, "forumUi.search_placeholder")}
-            className="flex-1 px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
+            className="w-full min-w-0 flex-1 px-3 py-2.5 sm:py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-brand hover:bg-brand-300 text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 bg-brand hover:bg-brand-300 text-[#08080A] text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors shrink-0"
           >
             {t(locale, "forumUi.search")}
           </button>
         </div>
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <input
             type="text"
             name="authorUsername"
             defaultValue={sp.authorUsername ?? ""}
             placeholder={t(locale, "forumUi.author_placeholder")}
-            className="px-3 py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
+            className="w-full min-w-0 px-3 py-2 sm:py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <input
             type="date"
             name="dateFrom"
             defaultValue={sp.dateFrom ?? ""}
-            className="px-3 py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-brand transition-colors"
+            className="w-full min-w-0 px-3 py-2 sm:py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <input
             type="date"
             name="dateTo"
             defaultValue={sp.dateTo ?? ""}
-            className="px-3 py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-brand transition-colors"
+            className="w-full min-w-0 px-3 py-2 sm:py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-brand transition-colors"
           />
         </div>
       </form>

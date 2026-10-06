@@ -52,6 +52,11 @@
 }
 ::selection { background: rgba(215, 181, 88, .3); color: #f2efe8; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body {
   margin: 0;
@@ -61,6 +66,7 @@ body {
   font-family: "Racket Montserrat", Montserrat, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
+  min-height: 100dvh;
   padding-top: env(safe-area-inset-top, 0);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -87,7 +93,28 @@ body {
 /* Mobile responsive table card container */
 .responsive-table-wrapper {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * iOS Safari auto-zooms focused inputs below ~16px computed font-size.
+ * Desktop keeps compact Tailwind text-* on controls; phones get 16px editable text only.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Intentional horizontal scroll regions must not expand the page (carousels, tab strips). */
+[data-scroll-x="local"] {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 

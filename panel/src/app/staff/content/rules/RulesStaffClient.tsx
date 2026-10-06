@@ -64,6 +64,19 @@ export function RulesStaffClient({
     setRuleDraft(found ? { ...found } : null);
   };
 
+  const deleteRule = async () => {
+    if (!selectedRuleId || selectedRuleId === "new") return;
+    if (!window.confirm(t(locale, "cmsUi.confirm_delete"))) return;
+    setStatus(t(locale, "cmsUi.saving"));
+    const res = await fetch(`/api/staff/cms/rules/${selectedRuleId}`, { method: "DELETE" });
+    setStatus(res.ok ? t(locale, "cmsUi.deleted") : t(locale, "cmsUi.save_failed"));
+    if (res.ok) {
+      setSelectedRuleId(null);
+      setRuleDraft(null);
+      router.refresh();
+    }
+  };
+
   const saveRule = async () => {
     if (!ruleDraft) return;
     setStatus(t(locale, "cmsUi.saving"));
@@ -123,7 +136,7 @@ export function RulesStaffClient({
         </div>
 
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between min-w-0">
             <h2 className="text-xs font-bold uppercase text-[#8F8B83]">{t(locale, "cmsUi.rules")}</h2>
             <button
               type="button"
@@ -182,10 +195,21 @@ export function RulesStaffClient({
               placeholder={t(locale, "cmsUi.description_ro_placeholder")}
               className="w-full rounded border border-surface-border bg-surface-200 px-2 py-1"
             />
-            <button type="button" onClick={() => void saveRule()} className="rounded bg-brand px-3 py-1.5 font-bold text-[#08080A]">
-              {t(locale, "cmsUi.save")}
-            </button>
-            <span className="text-[#8F8B83] ml-2">{status}</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <button type="button" onClick={() => void saveRule()} className="rounded bg-brand px-3 py-1.5 font-bold text-[#08080A]">
+                {t(locale, "cmsUi.save")}
+              </button>
+              {selectedRuleId !== "new" ? (
+                <button
+                  type="button"
+                  onClick={() => void deleteRule()}
+                  className="rounded border border-red-800/50 px-3 py-1.5 font-bold text-red-400"
+                >
+                  {t(locale, "cmsUi.delete")}
+                </button>
+              ) : null}
+              <span className="text-[#8F8B83]">{status}</span>
+            </div>
           </div>
         ) : selectedSectionId ? (
           <div className="text-xs text-[#8F8B83]">

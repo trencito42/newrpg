@@ -80,20 +80,20 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
         </div>
 
         {/* Search */}
-        <form method="GET" className="flex items-center gap-2">
-          <div className="relative">
+        <form method="GET" className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <div className="relative w-full min-w-0 sm:w-64">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8F8B83]" />
             <input
               type="text"
               name="search"
               defaultValue={search}
               placeholder={t(locale, "copy.app_staff_players_page.search_username")}
-              className="pl-8 pr-3 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
+              className="w-full pl-8 pr-3 py-2 sm:py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:outline-none focus:border-[#B4AFA4]"
             />
           </div>
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
+            className="px-3 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8] font-medium transition-colors"
           >
             {t(locale, "common.search")}
           </button>

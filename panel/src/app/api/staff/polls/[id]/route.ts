@@ -45,7 +45,7 @@ export async function DELETE(
   }
 
   const session = await getCurrentSession();
-  if (!session || session.adminLevel < 3) {
+  if (!session || session.adminLevel < 1) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

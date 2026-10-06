@@ -81,17 +81,17 @@ export default async function ClansPage({
         </div>
 
         {/* Search */}
-        <form method="GET" className="flex items-center gap-2">
+        <form method="GET" className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <input
             type="text"
             name="search"
             defaultValue={search}
             placeholder={t(locale, "copy.app_clans_page.search_clan_or_tag")}
-            className="px-3 py-1.5 bg-[#0E0E10] rounded-lg text-xs text-[#F2EFE8] placeholder:text-[#5A5852] focus:outline-none focus:ring-1 focus:ring-[#D7B558]"
+            className="w-full min-w-0 px-3 py-2 sm:py-1.5 bg-[#0E0E10] rounded-lg text-xs text-[#F2EFE8] placeholder:text-[#5A5852] focus:outline-none focus:ring-1 focus:ring-[#D7B558]"
           />
           <button
             type="submit"
-            className="px-3.5 py-1.5 bg-[#18181B] hover:bg-[#222226] rounded-lg text-xs text-[#F2EFE8] font-medium transition-colors"
+            className="px-3.5 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-[#18181B] hover:bg-[#222226] rounded-lg text-xs text-[#F2EFE8] font-medium transition-colors"
           >
             {t(locale, "common.search")}
           </button>

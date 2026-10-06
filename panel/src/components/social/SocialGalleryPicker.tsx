@@ -48,7 +48,7 @@ export function SocialGalleryPicker({
       onClick={onClose}
     >
       <div
-        className="bg-[#0e0e10] border border-[rgba(255,255,255,0.1)] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+        className="bg-[#0e0e10] border border-[rgba(255,255,255,0.1)] rounded-2xl w-full max-w-lg max-h-[80dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.08)]">

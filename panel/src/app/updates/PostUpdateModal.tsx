@@ -87,7 +87,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-3xl bg-[#111114] border border-surface-border rounded-xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="w-full max-w-3xl bg-[#111114] border border-surface-border rounded-xl shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border bg-surface-100/50">
           <div className="flex items-center space-x-2.5">

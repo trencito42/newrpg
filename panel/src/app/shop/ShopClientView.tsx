@@ -182,7 +182,7 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 max-w-full" data-scroll-x="local">
         {state.catalog.categories.map((cat) => {
           const count = state.catalog.products.filter((p) => p.category === cat.id).length;
           const active = category === cat.id;

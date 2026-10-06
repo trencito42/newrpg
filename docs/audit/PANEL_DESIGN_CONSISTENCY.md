@@ -68,3 +68,11 @@ Scope: `panel/src/app/**` layout width, padding, headers (visual alignment pass)
 After changes, remaining `max-w-*` on `panel/src/app/**/page.tsx` are inner columns or auth/success flows only.
 
 Build: run `npm --prefix panel run build` before deploy.
+
+## Page header component
+
+For new pages, prefer `PanelPageHeader` (`panel/src/components/ui/PanelPageHeader.tsx`): title/description stack on mobile; actions full-width column below `sm`, row aligned on desktop.
+
+## Mobile responsiveness
+
+See `docs/audit/PANEL_MOBILE_RESPONSIVENESS.md` for iOS input zoom, overflow, modals, and acceptance criteria.

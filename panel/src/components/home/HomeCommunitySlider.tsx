@@ -118,7 +118,8 @@ export function HomeCommunitySlider({
           ref={scrollerRef}
           onScroll={updateScrollHints}
           onWheel={onWheel}
-          className="flex overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain touch-pan-x"
+          className="flex overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain touch-pan-x max-w-full"
+          data-scroll-x="local"
         >
           {cards.map((card) => {
             const Icon = ICONS[card.icon] ?? MessageSquare;

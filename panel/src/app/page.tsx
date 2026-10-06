@@ -276,7 +276,7 @@ export default async function HomePage() {
           <span>{t(locale, "copy.app_page.swipe_for_more_stats")}</span>
         </div>
 
-        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 max-w-full" data-scroll-x="local">
           {/* Online Players */}
           <div className="snap-start shrink-0 w-[240px] sm:w-auto p-4 rounded-xl bg-[#0E0E10]">
             <div className="flex items-center justify-between">
@@ -374,7 +374,7 @@ export default async function HomePage() {
         </div>
 
         {/* Updates Horizontal Scroll on Mobile, Grid on Desktop */}
-        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-4 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-4 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 max-w-full" data-scroll-x="local">
           {latestUpdates.map((update) => (
             <Link
               key={update.id}

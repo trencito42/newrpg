@@ -77,21 +77,21 @@ export default async function StaffAuditPage({ searchParams }: Props) {
         </div>
 
         {/* Search */}
-        <form method="GET" className="flex items-center gap-2">
+        <form method="GET" className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <input type="hidden" name="category" value={category} />
-          <div className="relative">
+          <div className="relative w-full min-w-0 sm:w-60">
             <Search className="w-3.5 h-3.5 text-[#8F8B83] absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               name="search"
               defaultValue={search}
               placeholder={t(locale, "copy.app_staff_audit_page.search_admin_player_or_action")}
-              className="pl-8 pr-2.5 py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] w-60 focus:border-[#D7B558] focus:outline-none"
+              className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 bg-[#101012] border border-surface-border rounded text-xs text-[#F2EFE8] focus:border-[#D7B558] focus:outline-none"
             />
           </div>
           <button
             type="submit"
-            className="px-3 py-1.5 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
+            className="px-3 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-[#211D18] hover:bg-[#302A1E] border border-surface-border rounded text-xs text-[#F2EFE8]"
           >
             {t(locale, "copy.app_staff_audit_page.filter")}
           </button>
@@ -99,7 +99,7 @@ export default async function StaffAuditPage({ searchParams }: Props) {
       </div>
 
       {/* Category Pills Filter */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs max-w-full" data-scroll-x="local">
         <Link
           href={`/staff/audit?category=all${search ? `&search=${encodeURIComponent(search)}` : ""}`}
           className={`px-3 py-1 rounded-full border transition-colors ${

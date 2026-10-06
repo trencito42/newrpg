@@ -178,7 +178,7 @@ export default async function UpdateArticlePage({
   const authorIdentity = authorIdentities.get(playerIdentityKey(update.author_account_id));
 
   const canManage = Boolean(
-    session && (session.accountId === update.author_account_id || session.adminLevel >= 3)
+    session && (session.accountId === update.author_account_id || session.adminLevel >= 1)
   );
 
   const catBadge = getCategoryBadge(update.category);

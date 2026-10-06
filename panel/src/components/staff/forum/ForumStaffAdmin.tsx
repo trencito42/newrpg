@@ -187,7 +187,7 @@ export function ForumStaffAdmin({ locale = "en" }: { locale?: Locale }) {
   return (
     <section className="space-y-4">
       <div className="grid gap-4 border-b border-surface-border pb-4 lg:grid-cols-2">
-        <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <input
             value={newCategory.name_en}
             onChange={(e) => setNewCategory((v) => ({ ...v, name_en: e.target.value }))}
@@ -206,11 +206,15 @@ export function ForumStaffAdmin({ locale = "en" }: { locale?: Locale }) {
             placeholder={t(locale, "cmsUi.slug_placeholder")}
             className="rounded-lg border border-surface-border bg-surface-200 px-2 py-2 text-xs"
           />
-          <button type="button" onClick={() => void createCategory()} className="rounded-lg bg-surface-200 px-3 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => void createCategory()}
+            className="rounded-lg bg-surface-200 px-3 py-2.5 text-xs font-bold w-full sm:w-auto xl:w-auto min-h-[44px]"
+          >
             {t(locale, "cmsUi.create_category")}
           </button>
         </div>
-        <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <select
             value={newForum.categoryId}
             onChange={(e) => setNewForum((v) => ({ ...v, categoryId: Number(e.target.value) }))}
@@ -235,7 +239,11 @@ export function ForumStaffAdmin({ locale = "en" }: { locale?: Locale }) {
             placeholder={t(locale, "cmsUi.slug_placeholder")}
             className="rounded-lg border border-surface-border bg-surface-200 px-2 py-2 text-xs"
           />
-          <button type="button" onClick={() => void createForum()} className="rounded-lg bg-surface-200 px-3 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => void createForum()}
+            className="rounded-lg bg-surface-200 px-3 py-2.5 text-xs font-bold w-full sm:w-auto xl:w-auto min-h-[44px]"
+          >
             {t(locale, "cmsUi.create_forum")}
           </button>
         </div>

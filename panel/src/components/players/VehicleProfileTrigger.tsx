@@ -129,7 +129,7 @@ export function VehicleProfileTrigger({
           ref={popoverRef}
           role="dialog"
           aria-labelledby={titleId}
-          className="hidden sm:block fixed z-[80] w-[min(360px,calc(100vw-16px))] p-3.5 rounded-xl border border-white/[0.08] bg-[#121214] shadow-xl max-h-[min(85vh,520px)] overflow-y-auto"
+          className="hidden sm:block fixed z-[80] w-[min(360px,calc(100%-16px))] p-3.5 rounded-xl border border-white/[0.08] bg-[#121214] shadow-xl max-h-[min(85dvh,520px)] overflow-y-auto"
           style={{ top: coords.top, left: coords.left }}
           onMouseEnter={() => {
             if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -155,7 +155,7 @@ export function VehicleProfileTrigger({
           <div
             role="dialog"
             aria-labelledby={titleId}
-            className="relative max-h-[88vh] overflow-y-auto rounded-t-2xl border-t border-white/[0.08] bg-[#121214] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            className="relative max-h-[88dvh] overflow-y-auto rounded-t-2xl border-t border-white/[0.08] bg-[#121214] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
           >
             <div className="flex items-center justify-between mb-3">
               <span id={titleId} className="text-sm font-semibold text-[#F2EFE8]">

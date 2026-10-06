@@ -178,7 +178,7 @@ export function PlayerAdminManage({
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl bg-[#101012] border border-surface-border rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl bg-[#101012] border border-surface-border rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border bg-[#0E0E10]">
               <div className="flex items-center gap-2.5">

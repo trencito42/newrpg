@@ -119,7 +119,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           <button
             onClick={() => setOpen(!open)}
             aria-label={t(locale, "interface.toggle_navigation")}
-            className="p-2 rounded-lg bg-surface-200 text-[#B4AFA4] hover:text-[#F2EFE8]"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg bg-surface-200 text-[#B4AFA4] hover:text-[#F2EFE8]"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -162,7 +162,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
               <Link href="/" aria-label={t(locale, "interface.racket_home")}><img src="/logo-3.svg" alt="Racket" className="block h-auto w-[138px]" /></Link>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1 text-[#8F8B83] hover:text-[#F2EFE8]"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8F8B83] hover:text-[#F2EFE8]"
               >
                 <X className="w-4 h-4" />
               </button>

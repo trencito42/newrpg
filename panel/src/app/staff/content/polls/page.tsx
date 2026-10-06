@@ -3,7 +3,8 @@ import { dbQuery } from "@/lib/db";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { RowDataPacket } from "mysql2";
-import { t, formatDate } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { StaffPollsClient } from "./StaffPollsClient";
 
 export const dynamic = "force-dynamic";
 
@@ -44,23 +45,15 @@ export default async function StaffContentPollsPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-surface-border overflow-hidden text-xs">
-        {polls.map((p, idx) => (
-          <Link
-            key={p.id}
-            href={`/polls/${p.id}`}
-            className={`block px-4 py-3 hover:bg-surface-200 ${idx > 0 ? "border-t border-surface-border" : ""}`}
-          >
-            <div className="font-semibold text-[#F2EFE8]">{p.title_en}</div>
-            <div className="text-[10px] text-[#8F8B83] mt-1">
-              {p.status} · {t(locale, "cmsUi.ends")} {formatDate(p.ends_at, locale)}
-            </div>
-          </Link>
-        ))}
-        {polls.length === 0 ? (
-          <p className="p-4 text-[#8F8B83]">{t(locale, "cmsUi.no_polls")}</p>
-        ) : null}
-      </div>
+      <StaffPollsClient
+        locale={locale}
+        polls={polls.map((p) => ({
+          id: p.id,
+          title_en: p.title_en,
+          status: p.status,
+          ends_at: p.ends_at,
+        }))}
+      />
     </div>
   );
 }
