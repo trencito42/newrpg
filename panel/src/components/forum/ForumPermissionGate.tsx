@@ -8,40 +8,28 @@ type Reason = "unauthenticated" | "private" | "locked" | "faction" | "clan";
 
 interface ForumPermissionGateProps {
   reason: Reason;
-  locale?: "en" | "ro";
+  locale?: Locale;
 }
 
-const messages: Record<Reason, { en: string; ro: string; icon: React.ComponentType<{ className?: string }> }> = {
-  unauthenticated: {
-    en: "You must be logged in to view this forum.",
-    ro: "Trebuie să fii autentificat pentru a vedea acest forum.",
-    icon: LogIn,
-  },
-  private: {
-    en: "This is a private forum. You do not have access.",
-    ro: "Acesta este un forum privat. Nu ai acces.",
-    icon: ShieldOff,
-  },
-  locked: {
-    en: "This forum is currently locked. No new topics can be created.",
-    ro: "Acest forum este blocat momentan. Nu se pot crea topice noi.",
-    icon: Lock,
-  },
-  faction: {
-    en: "This forum is restricted to members of a specific faction.",
-    ro: "Acest forum este restricționat membrilor unei facțiuni specifice.",
-    icon: ShieldOff,
-  },
-  clan: {
-    en: "This forum is restricted to clan members.",
-    ro: "Acest forum este restricționat membrilor de clan.",
-    icon: ShieldOff,
-  },
+const GATE_KEY: Record<Reason, string> = {
+  unauthenticated: "forumUi.gate_unauthenticated",
+  private: "forumUi.gate_private",
+  locked: "forumUi.gate_locked",
+  faction: "forumUi.gate_faction",
+  clan: "forumUi.gate_clan",
+};
+
+const ICON: Record<Reason, React.ComponentType<{ className?: string }>> = {
+  unauthenticated: LogIn,
+  private: ShieldOff,
+  locked: Lock,
+  faction: ShieldOff,
+  clan: ShieldOff,
 };
 
 export function ForumPermissionGate({ reason, locale = "en" }: ForumPermissionGateProps) {
-  const { en, ro, icon: Icon } = messages[reason];
-  const message = locale === "ro" ? ro : en;
+  const Icon = ICON[reason];
+  const message = t(locale, GATE_KEY[reason] as never);
 
   return (
     <div className="rounded-xl border border-border bg-card p-8 text-center">

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { getFactionColor } from "@/lib/factions";
 import { formatClanTag } from "@/lib/clan-tag";
+import { t, type Locale } from "@/lib/i18n";
 
 interface Liker {
   display_name?: string;
@@ -21,9 +22,10 @@ interface LikersTooltipProps {
   fetchUrl: string;
   children: React.ReactNode;
   disabled?: boolean;
+  locale?: Locale;
 }
 
-export function LikersTooltip({ count, fetchUrl, children, disabled }: LikersTooltipProps) {
+export function LikersTooltip({ count, fetchUrl, children, disabled, locale = "en" }: LikersTooltipProps) {
   const [open, setOpen] = useState(false);
   const [likers, setLikers] = useState<Liker[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +71,8 @@ export function LikersTooltip({ count, fetchUrl, children, disabled }: LikersToo
       {open && count > 0 && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 min-w-[160px] max-w-[220px] bg-[#111113] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl p-2 text-xs">
           <div className="text-[10px] text-[#8F8B83] font-semibold uppercase tracking-wider mb-1.5 px-1">
-            {count} {count === 1 ? "like" : "likes"} // i18n-ignore: pre-existing
+            {count}{" "}
+            {count === 1 ? t(locale, "socialUi.likes_one") : t(locale, "socialUi.likes_other")}
           </div>
           {loading && <p className="text-[#8F8B83] px-1 py-1">...</p>}
           {likers && likers.length === 0 && (

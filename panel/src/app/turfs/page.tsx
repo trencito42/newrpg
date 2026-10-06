@@ -46,49 +46,42 @@ export default async function TurfsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-border">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2">
         <div>
-          <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
-            {t(locale, "turfs.title")}
-          </h1>
-          <p className="text-xs text-[#99958E] mt-0.5">
-            {t(locale, "interface.18_contested_territories_across_san_andreas")}</p>
+          <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{t(locale, "turfs.title")}</h1>
+          <p className="text-xs text-[#99958E] mt-1">
+            {t(locale, "interface.18_contested_territories_across_san_andreas")}
+          </p>
         </div>
-
-        <span className="font-mono text-xs text-[#B4AFA4] bg-surface-100 border border-surface-border px-2.5 py-1 rounded w-fit">
-          {controlledCount} / {turfs.length} {t(locale, "interface.controlled")}</span>
+        <span className="font-mono text-xs text-[#B4AFA4] bg-[#0E0E10] px-3 py-1.5 rounded-lg w-fit">
+          {controlledCount} / {turfs.length} {t(locale, "interface.controlled")}
+        </span>
       </div>
 
-      {/* Grid of Turf Territories */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {turfs.map((turf) => {
           const isControlled = turf.owner_clan_id !== null;
           return (
             <div
               key={turf.id}
-              className="p-3 bg-surface-100 border border-surface-border rounded flex flex-col justify-between"
+              className="p-4 bg-[#0E0E10] rounded-xl flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-[#8F8B83]">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-[#8F8B83] uppercase tracking-wider">
                     {t(locale, "interface.territory")}{turf.id}
                   </span>
-                  <span className="font-mono text-xs text-[#F2EFE8]">
-                    {formatCurrency(turf.payout)} {t(locale, "interface.hr")}</span>
+                  <span className="font-mono text-xs text-[#D7B558]">
+                    {formatCurrency(turf.payout)} {t(locale, "interface.hr")}
+                  </span>
                 </div>
-                <h3 className="text-sm font-semibold text-[#F2EFE8] mt-1">
-                  {turf.name}
-                </h3>
+                <h3 className="text-sm font-bold text-[#F2EFE8] mt-2">{turf.name}</h3>
               </div>
 
-              <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between text-xs text-[#8F8B83]">
+              <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs text-[#8F8B83]">
                 <span>{t(locale, "interface.clan")}</span>
                 {isControlled ? (
-                  <span
-                    className="font-semibold"
-                    style={{ color: turf.clan_color || "#F2EFE8" }}
-                  >
+                  <span className="font-semibold" style={{ color: turf.clan_color || "#F2EFE8" }}>
                     [{turf.clan_tag || turf.clan_name}]
                   </span>
                 ) : (

@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { t, Locale } from "@/lib/i18n";
-
-type PackageRow = { id: string; coins: number; labelKey: string; available: boolean };
+import { t, Locale, formatNumber } from "@/lib/i18n";
+import type { RcPackageDisplay } from "@/lib/shop/rc-stripe-prices";
 
 export function CoinsClientView({
   locale,
@@ -13,7 +12,7 @@ export function CoinsClientView({
   authenticated,
 }: {
   locale: Locale;
-  packages: PackageRow[];
+  packages: RcPackageDisplay[];
   balance: number | null;
   authenticated: boolean;
 }) {
@@ -40,46 +39,62 @@ export function CoinsClientView({
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <header className="border border-[#2a2824] bg-[#0c0c0e] p-5">
-        <h1 className="text-xl font-black uppercase text-[#F2EFE8]">{t(locale, "shop.coins.title")}</h1>
-        <p className="mt-2 text-sm text-[#8F8B83]">{t(locale, "shop.coins.subtitle")}</p>
+    <div className="space-y-4 max-w-3xl">
+      <div className="pb-2">
+        <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{t(locale, "shop.coins.title")}</h1>
+        <p className="mt-1 text-xs text-[#99958E] leading-relaxed">{t(locale, "shop.coins.subtitle")}</p>
         {authenticated && balance != null ? (
-          <p className="mt-3 font-mono text-[#D7B558]">
-            {t(locale, "shop.coins.balance", { amount: balance.toLocaleString("en-US") })}
+          <p className="mt-2 text-sm font-mono text-[#D7B558]">
+            {t(locale, "shop.coins.balance", { amount: formatNumber(balance, locale) })}
           </p>
         ) : (
-          <Link href="/login" className="mt-3 inline-block text-sm font-semibold text-[#D7B558]">
+          <Link href="/login" className="mt-2 inline-block text-sm font-medium text-[#D7B558] hover:underline">
             {t(locale, "shop.login_to_buy")}
           </Link>
         )}
-      </header>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {packages.map((pkg) => (
-          <div key={pkg.id} className="border border-[#2a2824] bg-[#0c0c0e] p-4">
-            <div className="flex items-center gap-2">
-              <img src="/racket-coin.svg" alt="" className="h-8 w-8" />
-              <div>
-                <div className="text-lg font-black text-[#F2EFE8]">
-                  {t(locale, pkg.labelKey as never)}
+        {packages.map((pkg) => {
+          const priceLine =
+            pkg.priceLabel ?? (pkg.available ? t(locale, "shop.coins.price_unknown") : null);
+          const buttonLabel =
+            busy === pkg.id
+              ? t(locale, "shop.processing")
+              : priceLine && pkg.priceLabel
+                ? t(locale, "shop.coins.checkout_for_price", { price: pkg.priceLabel })
+                : t(locale, "shop.coins.buy");
+
+          return (
+            <div key={pkg.id} className="flex flex-col rounded-xl bg-[#0E0E10] p-4">
+              <div className="flex items-start gap-3">
+                <img src="/racket-coin.svg" alt="" className="mt-0.5 h-10 w-10 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-[#F2EFE8]">{t(locale, pkg.labelKey as never)}</div>
+                  <div className="mt-1 text-xs text-[#99958E]">
+                    {t(locale, "shop.coins.coins_amount", {
+                      amount: formatNumber(pkg.coins, locale),
+                    })}
+                  </div>
+                  {priceLine ? (
+                    <div className="mt-2 text-xl font-semibold tabular-nums text-[#D7B558]">{priceLine}</div>
+                  ) : null}
                 </div>
-                <div className="text-xs text-[#8F8B83]">{pkg.coins.toLocaleString("en-US")} RC</div>
               </div>
+              <button
+                type="button"
+                disabled={!authenticated || !pkg.available || busy === pkg.id}
+                onClick={() => checkout(pkg.id)}
+                className="mt-4 w-full rounded-lg bg-[#D7B558] py-2.5 text-sm font-semibold text-[#08080a] hover:bg-[#e5c46a] disabled:opacity-40 transition-colors"
+              >
+                {buttonLabel}
+              </button>
+              {!pkg.available ? (
+                <p className="mt-2 text-[10px] text-amber-500/90">{t(locale, "shop.coins.unavailable")}</p>
+              ) : null}
             </div>
-            <button
-              type="button"
-              disabled={!authenticated || !pkg.available || busy === pkg.id}
-              onClick={() => checkout(pkg.id)}
-              className="mt-4 w-full rounded bg-[#D7B558] py-3 text-xs font-bold uppercase text-[#08080a] disabled:opacity-40"
-            >
-              {busy === pkg.id ? t(locale, "shop.processing") : t(locale, "shop.coins.buy")}
-            </button>
-            {!pkg.available ? (
-              <p className="mt-2 text-[10px] text-amber-500">{t(locale, "shop.coins.unavailable")}</p>
-            ) : null}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}

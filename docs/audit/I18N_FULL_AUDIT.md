@@ -1,95 +1,60 @@
 # I18N Full Audit — RACKET (newrpg)
 
 Date: 2026-10-06  
-Scope: FiveM game (Lua + NUI), loadscreen, web panel (`racket.cat`), static i18n gates.
+Scope: FiveM (Lua + NUI), loadscreen, web panel (`racket.cat`), static gates + manual surface review.
 
-## BEFORE (baseline, pre-remediation)
+## BEFORE (this remediation pass — baseline at start)
+
+All authoritative gates already passed; the work targeted **hidden debt** (ignores, locale ternaries, branding, SEO metadata).
 
 | Command | Result |
 |---------|--------|
-| `npm run i18n:check` (`i18n-gate.mjs --strict`) | **PASS** (0 violations) on dictionaries — but gate **did not scan** JSX expression literals `{"Forum"}`. |
-| `node scripts/check-locales.js` | PASS — EN/RO parity on authoritative locale files. |
-| `node scripts/check-locale-usage.js` | PASS — 0 hardcoded Lua/NUI literals flagged. |
-| `node scripts/audit-localization.js` | PASS |
-| `node scripts/audit-localization-deep.js` | Informational — naive parser reports **RO 5114 vs EN 5119** (false gap; `check-locales.js` is authoritative). |
-| `node --test scripts/i18n-gate.test.mjs` | PASS (4 tests; no JSX-expression regression yet). |
-| `npm --prefix panel run i18n:check` | Same as root gate. |
-| `npm --prefix panel run build` | **FAIL** (not run at baseline; forum migration incomplete). |
+| `npm run i18n:check` | **PASS** — 0 violations |
+| `node scripts/check-locales.js` | **PASS** — GAME 5119/5119, NUI 3617/3617, PANEL 1548/1548 |
+| `node scripts/check-locale-usage.js` | **PASS** — 0 hardcoded literals in 726 files |
+| `node scripts/audit-localization.js` | **PASS** |
+| `node scripts/audit-localization-deep.js` | Informational — naive RO count 5114 vs EN 5119 (not authoritative) |
+| `node --test scripts/i18n-gate.test.mjs` | **PASS** 5/5 |
+| `npm --prefix panel run i18n:check` | **PASS** |
 
-### Systemic gaps (root causes)
+### Systemic gaps identified (not caught by gate alone)
 
-1. **Panel AST gap** — `scanPanel` treated `{"literal"}` in JSX as non-visible; ~90 forum strings bypassed the gate.
-2. **Forum panel copy** — Hardcoded English in forum routes/components; manual `locale === "ro" ?` for relative time; `i18n-ignore` on many player-facing controls.
-3. **Branding drift** — Staff UI showed “Premium Points / PP” instead of **Racket Coins / RC**.
-4. **Type/prop wiring** — Bulk `t(locale, …)` migration left missing `locale` props (`ForumAuthorPane`, `PostCardActions`) and shadowed `t` in `ForumEditor`.
-5. **Locale mechanics** — `forum-time.ts` used `en-GB` (gate only allows `en-US` paired with `ro-RO` for formatting ternaries).
-
-### Game / NUI / loadscreen (baseline)
-
-- Lua `en.lua` / `ro.lua`: **5119** keys each (gate).
-- NUI `i18n.js` + generated: **3617** keys each.
-- Loadscreen `LOADSCREEN_LOCALES`: **17** keys each.
-- `check-locale-usage.js`: **0** hardcoded player-facing hits across 726 scanned files.
-- Commands: **280** translated `chat.suggestion.*` pairs (EN/RO).
+1. **Panel `i18n-ignore` / `i18n-ignore-file`** — ~40 files still using ignores for player-facing copy (forum editor placeholders, staff player page RO-only strings, updates modals, polls, GlobalSearch, etc.).
+2. **Banking transaction titles** — `BankingClientView` used inline EN/RO `reasonMap` + `locale === "ro"` ternary (~45 strings).
+3. **Forum permission gate** — duplicate EN/RO object + language ternary instead of `t()`.
+4. **SEO metadata** — `/shop`, `/shop/coins`, `/forum` used English-only static `metadata` exports.
+5. **Branding** — `Sunset.Brand.CurrencyName` = “Racket Credits”; clan create fallback English hardcode; pass config fallback labels “Racket Credits”.
+6. **Command suggestions** — 313 `RegisterCommand` literals vs 280 `chat.suggestion.*` pairs (33 commands without translated help; gate does not fail on this).
 
 ---
 
-## FIXES
+## FIXES (this pass)
 
-### Validator
+### Panel locales
 
-- **`scripts/i18n-gate.mjs`**: Flag visible JSX expression string literals (`<h1>{"Forum"}</h1>`).
-- **`scripts/i18n-gate.test.mjs`**: Regression test for JSX expression literals.
+- Added **`forumUi.*`** gate messages, confirm/save/edit placeholders, search placeholders, forum errors.
+- Added **`bankingTx.*`** (45 keys) — bank transaction reason labels EN/RO.
+- Added **`seo.*`** for forum, shop, shop/coins, updates, polls metadata.
+- Added **`socialUi.likes_one` / `likes_other`** for liker tooltips.
 
-### Panel — forum (primary remediation)
+### Panel code
 
-- Added **`forumUi.*`** section (~100+ keys) in `panel/src/locales/en.json` and `ro.json`.
-- Migrated forum pages and components to `t(locale, "forumUi.*")` including moderation, search, topic view, editor tooltips, reports, polls, pagination.
-- **`panel/src/lib/forum-time.ts`**: `t()` for today/yesterday; `Intl` with `ro-RO` / `en-US`; fixed clock locale pair for gate.
-- **`scripts/fix-forum-panel-i18n.mjs`**: One-off bulk replacement helper (forum JSX literals → keys).
-- Fixed build blockers: `locale` destructuring/props, `ForumEditor` `nextTab` vs `t()` shadowing.
+- **`BankingClientView.tsx`** — `t(locale, "bankingTx.*")`; removed locale ternary map.
+- **`ForumPermissionGate.tsx`** — `t()` only.
+- **`MarkAllReadButton.tsx`** — localized; removed file-level ignore.
+- **Forum** — `PostCard`, `ReplyForm`, `PostReportModal`, `search/page` migrated off hardcoded English.
+- **`LikersTooltip.tsx`** + **`SocialPostCard.tsx`** — locale-aware like labels.
+- **`shop/page.tsx`**, **`shop/coins/page.tsx`**, **`forum/layout.tsx`** — `generateMetadata()` + `t(locale, "seo.*")`.
 
-### Panel — branding
+### Game
 
-- Staff locales: `premium_points` → **Racket Coins**; display **RC** on player staff page.
+- **`sunset_core/shared/config.lua`** — `CurrencyName` → **Racket Coins**.
+- **`clans.err.create_failed_no_message`** EN/RO + client uses `Translate()`.
+- **`sunset_pass/shared/config.lua`** — fallback labels → Racket Coins.
 
-### Other touched files
+### UI redesign (same release window)
 
-- `docs/audit/localization_audit_raw.json` (regenerated by audit script).
-- `resources/[sunset]/sunset_loadscreen/index.html` — minor/incidental (verify in diff if unrelated).
-
-### Panel sweep (2026-10-06, continued)
-
-- **`statsPage.*`**: full EN/RO for `/stats` aggregates and leaderboards (removed file-level ignore).
-- **`updatesUi.*` + `updates.category.*`**: `/updates` feed tabs, badges, reaction tooltips.
-- **Forum**: report reasons + topic action menu via `forumUi.*` (no `labelEn`/`labelRo` ternaries).
-- **Banking**: transfer titles via `transfer_sent_to` / `transfer_received_from`.
-- **Staff**: `PlayerAdminManage` success toast via `copy.components_staff_playeractions.action_executed_success`.
-- **`seo.*`**: localized `generateMetadata()` for players, clans, factions, feed, rules, stats, turfs.
-- Removed blanket **`i18n-ignore-file`** from the above list pages.
-
-### Not expanded in this pass (documented exceptions / follow-up)
-
-Files still using **`i18n-ignore-file`** (player-facing copy may remain English until migrated):
-
-- `panel/src/app/feed/page.tsx` (page body OK; only metadata was the issue — now localized)
-- `panel/src/app/updates/**` (several)
-- `panel/src/app/rules/page.tsx`, `turfs/page.tsx`, `players/page.tsx`, `clans/page.tsx`, `factions/page.tsx`
-- `panel/src/app/forum/my/layout.tsx`, `forum/new-topic/layout.tsx`
-- `panel/src/components/forum/MarkAllReadButton.tsx`, `ForumAdminPanel.tsx`, `ResolveReportButton.tsx`
-- `panel/src/app/manifest.ts` (PWA manifest strings)
-
-**Acceptable locale ternaries** (bilingual DB fields, not copy branching):
-
-- `title_ro` / `title_en`, poll options, forum categories, notifications, `PollsClientView`, homepage featured poll, `ApplicationThreadClient` question labels.
-
-**Remaining copy ternaries to migrate** (gate may pass via ignores):
-
-- `BankingClientView.tsx` — transfer notification titles.
-- `PlayerAdminManage.tsx` — success toast.
-- `PostReportModal.tsx` / `TopicActionsMenu.tsx` — `labelEn` / `labelRo` pairs (should become `reasonKey` + `t()`).
-
-**`audit-localization-deep.js` RO key count** — legacy naive Lua table parser; do not use for release gating. Use `check-locales.js` + `i18n-gate.mjs`.
+- Shop / rules / turfs / shop coins panel pages aligned to modern card layout (not i18n-specific).
 
 ---
 
@@ -99,46 +64,71 @@ Files still using **`i18n-ignore-file`** (player-facing copy may remain English 
 |---------|--------|
 | `npm run i18n:check` | **PASS** — 0 localization violations |
 | `node scripts/check-locales.js` | **PASS** — 0 missing, 0 empty, 0 placeholder mismatches, 0 duplicates |
-| `node scripts/check-locale-usage.js` | **PASS** — 0 hardcoded strings |
+| `node scripts/check-locale-usage.js` | **PASS** |
 | `node scripts/audit-localization.js` | **PASS** |
-| `node scripts/audit-localization-deep.js` | **PASS** (informational key-count warning only) |
-| `node --test scripts/i18n-gate.test.mjs` | **PASS** — 5/5 tests |
-| `node scripts/check-lua-syntax.js` | **PASS** — 485/485 OK |
+| `node scripts/audit-localization-deep.js` | Informational key-count delta only |
+| `node --test scripts/i18n-gate.test.mjs` | **PASS** 5/5 |
+| `node scripts/check-lua-syntax.js` | **PASS** 485/485 |
 | `node scripts/check-nui-bridge.js` | **PASS** |
 | `node scripts/check-nui-modules.js` | **PASS** |
 | `npm --prefix panel run i18n:check` | **PASS** |
 | `npm --prefix panel run build` | **PASS** |
 
-Dictionary counts (gate): **GAME 5119**, **NUI 3617**, **PANEL 1488**, **LOADSCREEN 17** (EN = RO each).
+Dictionary counts (gate):
+
+| Surface | EN | RO |
+|---------|----|----|
+| GAME LUA | 5120 | 5120 |
+| NUI | 3617 | 3617 |
+| PANEL | 1624 | 1624 |
+| LOADSCREEN | 17 | 17 |
 
 ---
 
-## RUNTIME MATRIX (manual QA recommended)
+## RUNTIME MATRIX (manual QA)
 
 | Flow | EN | RO | Notes |
 |------|----|----|-------|
-| Login / character / spawn | Gate clean | Gate clean | Live switch via game settings |
-| `/help`, chat suggestions | OK | OK | 280 suggestion keys |
-| M menu, HUD, inventory | OK | OK | NUI keys paired |
-| `/v`, garage, shop in-game | OK | OK | Racket Coins terminology in locales |
-| Panel forum (index, topic, mod, search, my) | OK | **OK** | Migrated `forumUi` |
-| Panel feed, stats, updates | Partial | Partial | `i18n-ignore-file` pages |
-| Panel shop / RC top-up | OK | OK | Branding aligned |
-| Loadscreen | OK | OK | `LOADSCREEN_LOCALES` only |
+| Login / character / spawn | Gate clean | Gate clean | Game `locale` convar + panel cookie |
+| `/help`, chat suggestions | Gate clean | Gate clean | 33 commands still lack `chat.suggestion.*` |
+| Banking panel | Migrated | Migrated | Verify rare DB reason strings fallback formatting |
+| Forum read/reply/report | Improved | Improved | Staff admin panel + new-topic still English-heavy |
+| Shop / RC panel | SEO localized | SEO localized | Purchase still requires in-game character |
+| Feed / social likes | Localized tooltip | Localized tooltip | Updates likers tooltip may need `locale` prop on other parents |
+| NUI HUD / phone / inventory | Gate clean | Gate clean | Live locale switch: verify open panels refresh |
 
 ---
 
-## KNOWN EXCEPTIONS
+## KNOWN EXCEPTIONS / FOLLOW-UP
 
-| Location | Reason |
-|----------|--------|
-| `i18n-ignore-file` pages listed above | Technical debt: English-only until next panel sweep; not gate violations. |
-| User-generated content (forum posts, feed, tickets) | Intentionally not translated. |
-| `audit-localization-deep.js` EN vs RO key delta | Parser limitation; not a product defect. |
-| Overflow review (33 strings) | RO longer than EN; non-fatal UI length check. |
+Documented individually — **not** waived via allowlist weakening.
+
+| Area | Reason |
+|------|--------|
+| `panel/src/app/manifest.ts` | PWA manifest; English-only until dynamic manifest by locale |
+| `panel/src/lib/seo/metadata.ts`, root `layout.tsx` | Default OG strings English; partial `seo.*` coverage on inner pages |
+| `panel/src/app/staff/**` | Large staff-only surfaces with mixed RO hardcode + `i18n-ignore: pre-existing` |
+| `panel/src/app/updates/**`, `PostUpdateModal.tsx` | Author/staff tooling; many ignores remain |
+| `panel/src/components/navigation/GlobalSearch.tsx` | Placeholders + suggestions need `search.*` keys |
+| `panel/src/components/forum/ForumAdminPanel.tsx` | Staff forum ACL UI; `i18n-ignore-file` |
+| `sunset_devtools/**` | `SUNSET_DEV=1` only; English by design |
+| `sunset_hacking/shared/puzzles.lua` | Machine validation codes |
+| Bilingual DB fields (`title_en`/`title_ro`, polls, forum categories) | **Acceptable** — not copy ternaries |
+| `audit-localization-deep.js` RO count | Legacy parser; use `check-locales.js` for release |
+| Command help gap (33) | Add `chat.suggestion.<cmd>` in `en.lua`/`ro.lua` + registry wiring |
 
 ---
 
-## Commit
+## ZERO-ERROR TARGET (static)
 
-`fix(i18n): complete EN/RO localization across game and panel`
+| Check | Status |
+|-------|--------|
+| Missing EN/RO keys (authoritative) | **0** |
+| Empty values | **0** |
+| Placeholder mismatches | **0** |
+| Duplicate keys (authoritative) | **0** |
+| Gate violations (`--strict`) | **0** |
+| `check-locale-usage` hardcoded literals | **0** |
+| Stale `i18n.generated.js` | Regenerate via existing pipeline when NUI keys change |
+
+Remaining **panel `i18n-ignore` comments** (~100+ line-level) are tracked above; removing them is the next panel sweep, not gate failures.

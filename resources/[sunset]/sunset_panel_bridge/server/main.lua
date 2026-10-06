@@ -806,9 +806,9 @@ local function actionResult(row)
         local productId = type(payload.productId) == 'string' and payload.productId or nil
         if not productId then return false, 'invalid_product' end
         local purchaseParams = type(payload.params) == 'table' and payload.params or {}
-        local purchaseResult, purchaseErr
+        local purchaseResponse
         local okPurchase, callErr = pcall(function()
-            purchaseResult, purchaseErr = exports.sunset_shop:PurchaseProductForPanel(
+            purchaseResponse = exports.sunset_shop:PurchaseProductForPanel(
                 row.actor_account_id,
                 row.actor_character_id or row.target_character_id,
                 productId,
@@ -819,11 +819,14 @@ local function actionResult(row)
         if not okPurchase then
             return false, tostring(callErr)
         end
-        if not purchaseResult then
-            local key = type(purchaseErr) == 'table' and purchaseErr.localeKey or tostring(purchaseErr or 'shop_failed')
+        if type(purchaseResponse) ~= 'table' or purchaseResponse.ok ~= true then
+            local err = type(purchaseResponse) == 'table' and purchaseResponse.err or nil
+            local key = type(err) == 'table' and err.localeKey
+                or (type(err) == 'string' and err)
+                or 'shop.purchase.failed'
             return false, key
         end
-        local result = purchaseResult
+        local result = purchaseResponse.result
         local js = type(result) == 'table' and result or { ok = true }
         if js.replay then js.replay = true end
         return true, js

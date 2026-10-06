@@ -182,7 +182,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             type="text"
             name="q"
             defaultValue={q}
-            placeholder={"Search forum..."} // i18n-ignore: english-only
+            placeholder={t(locale, "forumUi.search_placeholder")}
             className="flex-1 px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <button
@@ -198,7 +198,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             type="text"
             name="authorUsername"
             defaultValue={sp.authorUsername ?? ""}
-            placeholder={"Author..."} // i18n-ignore: english-only
+            placeholder={t(locale, "forumUi.author_placeholder")}
             className="px-3 py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <input

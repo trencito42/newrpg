@@ -112,7 +112,7 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
                 onChange={(e) => setDetails(e.target.value)}
                 maxLength={500}
                 rows={3}
-                placeholder={"Describe the issue..."} // i18n-ignore: english-only
+                placeholder={t(locale, "forumUi.error_details_placeholder")}
                 className="w-full px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand resize-none transition-colors"
               />
               <div className="text-right text-xs text-muted-foreground mt-0.5">{details.length}/500</div>

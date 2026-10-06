@@ -5218,6 +5218,7 @@ Sunset.Locales['en'] = {
     ["shop.clan.broadcast_color"] = "changed the clan color to {value}",
     ["shop.clan.broadcast_slots"] = "raised the clan capacity to {value} members",
     ["shop.clan.broadcast_renew"] = "extended the clan lifetime by {value} days",
+    ["clans.err.create_failed_no_message"] = "Creation failed with no message from the server. Check the name/tag (min 3 letters, no special characters) and that you have 500 Racket Coins.",
     ["clans.err.level_required"] = "You need character level {level} for this.",
     ["clans.err.clan_is_expired"] = "This clan has expired. Contact staff to restore it.",
     ["clans.msg.extended_clan_lifetime"] = "extended the clan lifetime by {days} days",

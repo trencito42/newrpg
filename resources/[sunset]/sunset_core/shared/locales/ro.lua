@@ -5202,6 +5202,7 @@ Sunset.Locales['ro'] = {
     ["shop.clan.broadcast_color"] = "a schimbat culoarea clanului în {value}",
     ["shop.clan.broadcast_slots"] = "a crescut capacitatea clanului la {value} membri",
     ["shop.clan.broadcast_renew"] = "a prelungit durata clanului cu {value} zile",
+    ["clans.err.create_failed_no_message"] = "Crearea a eșuat fără mesaj de la server. Verifică numele/tag-ul (minim 3 litere, fără caractere speciale) și că ai 500 Racket Coins.",
     ["clans.err.level_required"] = "Ai nevoie de nivelul {level} al personajului pentru asta.",
     ["clans.err.clan_is_expired"] = "Acest clan a expirat. Contactează staff-ul pentru restaurare.",
     ["clans.msg.extended_clan_lifetime"] = "a prelungit durata clanului cu {days} zile",

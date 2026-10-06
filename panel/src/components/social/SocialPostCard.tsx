@@ -153,6 +153,7 @@ export function SocialPostCard({
           count={likes}
           fetchUrl={`/api/feed/posts/${post.id}/likers`}
           disabled={!isLoggedIn}
+          locale={locale}
         >
           <button
             type="button"

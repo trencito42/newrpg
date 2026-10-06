@@ -8,14 +8,19 @@ import {
 } from "@/lib/shop/panel-state";
 import { ShopClientView } from "./ShopClientView";
 import { buildMetadata } from "@/lib/seo";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = buildMetadata({
-  title: "Racket Shop", // i18n-ignore: english-only seo
-  description: "Official RACKET Shop — same catalog and Racket Coins prices as in-game.", // i18n-ignore: english-only seo
-  path: "/shop",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.shop_title"),
+    description: t(locale, "seo.shop_description"),
+    path: "/shop",
+  });
+}
 
 export default async function ShopPage() {
   const [locale, session] = await Promise.all([getViewerLocale(), getCurrentSession()]);

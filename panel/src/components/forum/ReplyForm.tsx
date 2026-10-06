@@ -39,15 +39,15 @@ export function ReplyForm({ topicId, topicSlug, locale }: ReplyFormProps) {
         router.refresh();
       } else {
         const errors: Record<string, string> = {
-          topic_locked: "Topic is locked.",
-          forum_locked: "Forum is locked.",
-          unauthorized: "You must be logged in.",
-          forbidden: "Access denied.",
+          topic_locked: t(locale, "forumUi.topic_locked"),
+          forum_locked: t(locale, "forumUi.error_forum_locked"),
+          unauthorized: t(locale, "forumUi.error_unauthorized"),
+          forbidden: t(locale, "forumUi.error_forbidden"),
         };
-        setError(errors[data.error] ?? ("An error occurred."));
+        setError(errors[data.error] ?? t(locale, "forumUi.error_generic"));
       }
     } catch {
-      setError("Network error."); // i18n-ignore: english-only
+      setError(t(locale, "forumUi.error_network"));
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +59,7 @@ export function ReplyForm({ topicId, topicSlug, locale }: ReplyFormProps) {
         value={content}
         onChange={setContent}
         locale={locale}
-        placeholder={"Write your reply..."} // i18n-ignore: english-only
+        placeholder={t(locale, "forumUi.write_reply_placeholder")}
         minHeight={150}
       />
 

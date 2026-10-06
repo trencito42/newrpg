@@ -45,8 +45,8 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
   const canReport = currentAccountId > 0 && !isOwner;
 
   const handleDelete = async () => {
-    const reason = isMod ? prompt("Delete reason:") ?? undefined : undefined;
-    if (!confirm("Are you sure?")) return; // i18n-ignore: english-only
+    const reason = isMod ? prompt(t(locale, "forumUi.delete_reason_prompt")) ?? undefined : undefined;
+    if (!confirm(t(locale, "forumUi.confirm_delete"))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/forum/posts/${post.id}`, {
@@ -174,7 +174,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
               {isMod ? (
                 <span>
                   {t(locale, "forumUi.deleted_by")}{" "}
-                  {post.deleted_by_username ?? "unknown"} // i18n-ignore: english-only
+                  {post.deleted_by_username ?? t(locale, "forumUi.unknown_user")}
                   {post.delete_reason && ` · ${t(locale, "forumUi.reason")}: ${post.delete_reason}`}
                 </span>
               ) : (
@@ -193,7 +193,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
                 type="text"
                 value={editReason}
                 onChange={(e) => setEditReason(e.target.value)}
-                placeholder={"Edit reason (optional)..."} // i18n-ignore: english-only
+                placeholder={t(locale, "forumUi.edit_reason_optional")}
                 className="w-full px-3 py-1.5 bg-surface-200 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-brand"
               />
               {editError && <p className="text-xs text-red-400">{editError}</p>}
@@ -203,9 +203,7 @@ export function PostCard({ post, authorIdentity, isMod, currentAccountId, locale
                   disabled={editSubmitting}
                   className="px-3 py-1.5 bg-brand text-[#08080A] text-xs font-bold uppercase rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  {editSubmitting
-                    ? ("Saving...") // i18n-ignore: english-only
-                    : ("Save")} // i18n-ignore: english-only
+                  {editSubmitting ? t(locale, "forumUi.saving") : t(locale, "forumUi.save")}
                 </button>
                 <button
                   type="button"

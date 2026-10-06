@@ -4,7 +4,7 @@ Sunset.Brand = {
     ServerName = 'racket.cat',
     DisplayName = 'Racket RPG',
     CurrencyShort = 'RC',
-    CurrencyName = 'Racket Credits',
+    CurrencyName = 'Racket Coins',
     PassName = 'Racket Pass',
     SecurityName = 'Racket Shield',
 }

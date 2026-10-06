@@ -1,12 +1,18 @@
 import React from "react";
 import { ForumBreadcrumb } from "@/components/forum/ForumBreadcrumb";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { getViewerLocale } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({
-  title: "Forum", // i18n-ignore: english-only seo
-  description: "Community forum for RACKET RPG players.", // i18n-ignore: english-only seo
-  path: "/forum",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.forum_title"),
+    description: t(locale, "seo.forum_description"),
+    path: "/forum",
+  });
+}
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   return (

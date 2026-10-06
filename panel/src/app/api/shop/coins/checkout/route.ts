@@ -58,25 +58,39 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(secret);
   const origin = panelOrigin();
 
-  const checkout = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [{ price: pkg.stripePriceId!, quantity: 1 }],
-    success_url: `${origin}/shop/coins/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/shop/coins`,
-    client_reference_id: String(topupId),
-    metadata: {
-      account_id: String(session.accountId),
-      topup_id: String(topupId),
-      package_id: pkg.id,
-    },
-  });
+  try {
+    const sessionParams: Stripe.Checkout.SessionCreateParams & {
+      managed_payments?: { enabled: boolean };
+    } = {
+      mode: "payment",
+      line_items: [{ price: pkg.stripePriceId!, quantity: 1 }],
+      success_url: `${origin}/shop/coins/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/shop/coins`,
+      client_reference_id: String(topupId),
+      metadata: {
+        account_id: String(session.accountId),
+        topup_id: String(topupId),
+        package_id: pkg.id,
+      },
+      // Virtual currency: Stripe Managed Payments needs a product tax_code on each Price otherwise.
+      managed_payments: { enabled: false },
+    };
+    const checkout = await stripe.checkout.sessions.create(sessionParams);
 
-  await dbExecute(
-    `UPDATE racket_coin_topups
-     SET status = 'checkout_created', stripe_checkout_session_id = ?
-     WHERE id = ? AND account_id = ?`,
-    [checkout.id, topupId, session.accountId]
-  );
+    await dbExecute(
+      `UPDATE racket_coin_topups
+       SET status = 'checkout_created', stripe_checkout_session_id = ?
+       WHERE id = ? AND account_id = ?`,
+      [checkout.id, topupId, session.accountId]
+    );
 
-  return NextResponse.json({ url: checkout.url, topupId });
+    return NextResponse.json({ url: checkout.url, topupId });
+  } catch (err) {
+    console.error("[shop/coins/checkout] Stripe session create failed:", err);
+    await dbExecute(
+      `UPDATE racket_coin_topups SET status = 'failed' WHERE id = ? AND account_id = ?`,
+      [topupId, session.accountId]
+    ).catch(() => undefined);
+    return NextResponse.json({ error: "checkout_failed" }, { status: 502 });
+  }
 }

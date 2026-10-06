@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { t, Locale } from "@/lib/i18n";
+import { t, Locale, formatNumber } from "@/lib/i18n";
 import { shopGameT } from "@/generated/shop-game-locales";
 import { cn } from "@/lib/utils";
 import type { ShopClanContext } from "@/lib/shop/panel-state";
@@ -44,6 +44,16 @@ type ShopState = {
 
 function gameT(locale: Locale, key: string): string {
   return shopGameT(locale, key);
+}
+
+function formatPurchaseError(locale: Locale, code: string | null | undefined): string {
+  if (!code) return t(locale, "shop.purchase_failed");
+  if (code === "shop_failed") return gameT(locale, "shop.purchase.failed");
+  if (code.includes(".")) {
+    const translated = gameT(locale, code);
+    if (translated && translated !== code) return translated;
+  }
+  return t(locale, "shop.purchase_failed");
 }
 
 export function ShopClientView({ locale, initial }: { locale: Locale; initial: ShopState }) {
@@ -133,7 +143,7 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
         return;
       }
       setPurchasePhase("failed");
-      setPurchaseError(body.error || t(locale, "shop.purchase_failed"));
+      setPurchaseError(formatPurchaseError(locale, body.error));
       return;
     }
     setPurchasePhase("failed");
@@ -141,155 +151,163 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 border border-[#2a2824] bg-[#0c0c0e] p-5 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between pb-2">
         <div>
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#F2EFE8]">
-            {gameT(locale, "shop.title")}
-          </h1>
-          <p className="mt-1 text-sm text-[#8F8B83]">{t(locale, "shop.subtitle")}</p>
+          <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{gameT(locale, "shop.title")}</h1>
+          <p className="mt-1 text-xs text-[#99958E] leading-relaxed max-w-xl">{t(locale, "shop.subtitle")}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {state.authenticated ? (
-            <div className="flex items-center gap-2 rounded border border-[#D7B558]/40 bg-[#141416] px-3 py-2">
-              <img src="/racket-coin.svg" alt="" className="h-6 w-6" aria-hidden />
+            <div className="flex items-center gap-2 rounded-lg bg-[#0E0E10] px-3 py-2">
+              <img src="/racket-coin.svg" alt="" className="h-7 w-7" aria-hidden />
               <div>
-                <div className="text-[10px] font-bold uppercase text-[#8F8B83]">
-                  {gameT(locale, "shop.currency.rc")}
-                </div>
-                <div className="font-mono text-lg font-bold text-[#D7B558]">
-                  {(state.balance ?? 0).toLocaleString("en-US")} RC
+                <div className="text-[10px] font-medium text-[#8F8B83]">{gameT(locale, "shop.currency.rc")}</div>
+                <div className="font-mono text-base font-semibold text-[#D7B558]">
+                  {formatNumber(state.balance ?? 0, locale)}
                 </div>
               </div>
             </div>
           ) : (
-            <Link href="/login" className="text-sm font-semibold text-[#D7B558] hover:underline">
+            <Link href="/login" className="text-sm font-medium text-[#D7B558] hover:underline">
               {t(locale, "shop.login_to_buy")}
             </Link>
           )}
           <Link
             href="/shop/coins"
-            className="rounded bg-[#D7B558] px-4 py-2 text-xs font-bold uppercase text-[#08080a] hover:bg-[#e5c46a]"
+            className="rounded-lg bg-[#D7B558] px-3.5 py-2 text-xs font-semibold text-[#08080a] hover:bg-[#e5c46a] transition-colors"
           >
             {t(locale, "shop.top_up")}
           </Link>
         </div>
-      </header>
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[220px_1fr_320px]">
-        <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-          {state.catalog.categories.map((cat) => {
-            const count = state.catalog.products.filter((p) => p.category === cat.id).length;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setCategory(cat.id)}
-                className={cn(
-                  "whitespace-nowrap rounded border px-3 py-2 text-left text-xs font-bold uppercase tracking-wide",
-                  category === cat.id
-                    ? "border-[#D7B558] bg-[#D7B558] text-[#08080a]"
-                    : "border-[#2a2824] bg-[#0c0c0e] text-[#8F8B83] hover:border-[#D7B558]/50"
-                )}
-              >
-                {gameT(locale, cat.labelKey)} ({count})
-              </button>
-            );
-          })}
-        </nav>
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {state.catalog.categories.map((cat) => {
+          const count = state.catalog.products.filter((p) => p.category === cat.id).length;
+          const active = category === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategory(cat.id)}
+              className={cn(
+                "whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                active
+                  ? "bg-[#D7B558]/15 text-[#D7B558]"
+                  : "bg-[#0E0E10] text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-[#141417]"
+              )}
+            >
+              {gameT(locale, cat.labelKey)}
+              <span className="ml-1 font-mono text-[#8F8B83]">{count}</span>
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="space-y-2 border border-[#2a2824] bg-[#0c0c0e] p-3">
+      <div className="grid gap-3 lg:grid-cols-5">
+        <div className="lg:col-span-2 rounded-xl bg-[#0E0E10] p-2 min-h-[280px]">
           {productsInCategory.length === 0 ? (
             <p className="p-4 text-sm text-[#8F8B83]">{t(locale, "shop.empty_category")}</p>
           ) : (
-            productsInCategory.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setSelectedId(p.id)}
-                className={cn(
-                  "flex w-full items-center justify-between rounded border px-3 py-3 text-left transition-colors",
-                  selectedId === p.id
-                    ? "border-[#D7B558] bg-[#141416]"
-                    : "border-transparent hover:bg-[#141416]/60"
-                )}
-              >
-                <span className="text-sm font-semibold text-[#F2EFE8]">{gameT(locale, p.labelKey)}</span>
-                <span className="font-mono text-sm text-[#D7B558]">{p.price} RC</span>
-              </button>
-            ))
+            <ul className="space-y-0.5">
+              {productsInCategory.map((p) => {
+                const active = selectedId === p.id;
+                return (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(p.id)}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left transition-colors",
+                        active ? "bg-[#141417]" : "hover:bg-[#141417]/70"
+                      )}
+                    >
+                      <span className="text-sm font-medium text-[#F2EFE8] truncate">
+                        {gameT(locale, p.labelKey)}
+                      </span>
+                      <span className="font-mono text-xs text-[#D7B558] shrink-0">{p.price} RC</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
-        <aside className="border border-[#2a2824] bg-[#0c0c0e] p-4">
+        <div className="lg:col-span-3 rounded-xl bg-[#0E0E10] p-4 min-h-[280px] flex flex-col">
           {!selected ? (
-            <p className="text-sm text-[#8F8B83]">{gameT(locale, "shop.ui.select_product")}</p>
+            <p className="text-sm text-[#8F8B83] m-auto">{gameT(locale, "shop.ui.select_product")}</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1">
               <div>
-                <h2 className="text-lg font-black uppercase text-[#F2EFE8]">{gameT(locale, selected.labelKey)}</h2>
-                <p className="mt-2 text-sm text-[#8F8B83]">{gameT(locale, selected.descriptionKey)}</p>
+                <h2 className="text-base font-bold text-[#F2EFE8]">{gameT(locale, selected.labelKey)}</h2>
+                <p className="mt-2 text-sm text-[#99958E] leading-relaxed">
+                  {gameT(locale, selected.descriptionKey)}
+                </p>
               </div>
               {selected.bankAmount ? (
                 <p className="text-xs font-mono text-[#D7B558]">
-                  {t(locale, "shop.bank_reward", { amount: selected.bankAmount.toLocaleString("en-US") })}
+                  {t(locale, "shop.bank_reward", { amount: formatNumber(selected.bankAmount, locale) })}
                 </p>
               ) : null}
               {selected.input === "tag" ? (
-                <label className="block text-xs font-bold uppercase text-[#8F8B83]">
+                <label className="block text-xs font-medium text-[#8F8B83]">
                   {gameT(locale, "shop.ui.tag_input")}
                   <input
                     value={tag}
                     onChange={(e) => setTag(e.target.value)}
                     maxLength={6}
-                    className="mt-1 w-full rounded border border-[#2a2824] bg-[#08080a] px-2 py-2 text-sm text-[#F2EFE8]"
+                    className="mt-1.5 w-full rounded-lg bg-[#141417] px-3 py-2 text-sm text-[#F2EFE8] placeholder-[#5A5751] focus:outline-none focus:ring-1 focus:ring-[#D7B558]/40"
                   />
                 </label>
               ) : null}
               {selected.input === "color" ? (
-                <label className="block text-xs font-bold uppercase text-[#8F8B83]">
+                <label className="block text-xs font-medium text-[#8F8B83]">
                   {gameT(locale, "shop.ui.color_input")}
                   <input
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
-                    className="mt-1 w-full rounded border border-[#2a2824] bg-[#08080a] px-2 py-2 text-sm text-[#F2EFE8]"
+                    className="mt-1.5 w-full rounded-lg bg-[#141417] px-3 py-2 text-sm text-[#F2EFE8] focus:outline-none focus:ring-1 focus:ring-[#D7B558]/40"
                   />
                 </label>
               ) : null}
               {blockReason(selected) ? (
-                <p className="text-xs text-amber-400">{blockReason(selected)}</p>
+                <p className="text-xs text-amber-400/90">{blockReason(selected)}</p>
               ) : null}
-              <button
-                type="button"
-                disabled={!state.authenticated || purchasePhase === "pending"}
-                onClick={confirmPurchase}
-                className="w-full rounded bg-[#D7B558] py-3 text-xs font-bold uppercase text-[#08080a] disabled:opacity-40"
-              >
-                {purchasePhase === "pending"
-                  ? t(locale, "shop.processing")
-                  : t(locale, "shop.buy_for", { price: selected.price })}
-              </button>
-              {purchasePhase === "completed" ? (
-                <p className="text-sm text-emerald-400">{gameT(locale, "shop.purchase.success")}</p>
-              ) : null}
-              {purchasePhase === "failed" && purchaseError ? (
-                <p className="text-sm text-red-400">{purchaseError}</p>
-              ) : null}
+              <div className="mt-auto pt-2 space-y-2">
+                <button
+                  type="button"
+                  disabled={!state.authenticated || purchasePhase === "pending"}
+                  onClick={confirmPurchase}
+                  className="w-full rounded-lg bg-[#D7B558] py-2.5 text-sm font-semibold text-[#08080a] hover:bg-[#e5c46a] disabled:opacity-40 transition-colors"
+                >
+                  {purchasePhase === "pending"
+                    ? t(locale, "shop.processing")
+                    : t(locale, "shop.buy_for", { price: selected.price })}
+                </button>
+                {purchasePhase === "completed" ? (
+                  <p className="text-sm text-emerald-400">{gameT(locale, "shop.purchase.success")}</p>
+                ) : null}
+                {purchasePhase === "failed" && purchaseError ? (
+                  <p className="text-sm text-red-400">{purchaseError}</p>
+                ) : null}
+              </div>
             </div>
           )}
-        </aside>
+        </div>
       </div>
 
       {state.authenticated && state.history && state.history.length > 0 ? (
-        <section className="border border-[#2a2824] bg-[#0c0c0e] p-4">
-          <h3 className="text-sm font-bold uppercase text-[#D7B558]">{gameT(locale, "shop.history.title")}</h3>
-          <ul className="mt-3 divide-y divide-[#2a2824]">
+        <section className="rounded-xl bg-[#0E0E10] p-4">
+          <h3 className="text-sm font-bold text-[#F2EFE8]">{gameT(locale, "shop.history.title")}</h3>
+          <ul className="mt-3 divide-y divide-white/[0.04]">
             {state.history.slice(0, 10).map((row) => (
-              <li key={row.id} className="flex items-center justify-between py-2 text-xs">
-                <span className="text-[#F2EFE8]">
+              <li key={row.id} className="flex items-center justify-between gap-3 py-2.5 text-xs first:pt-0">
+                <span className="text-[#F2EFE8] truncate">
                   {row.labelKey ? gameT(locale, row.labelKey) : row.productId}
                 </span>
-                <span className="font-mono text-[#8F8B83]">
+                <span className="font-mono text-[#8F8B83] shrink-0">
                   {row.price} RC · {row.status}
                 </span>
               </li>

@@ -304,23 +304,27 @@ end)
 
 -- Panel queue settlement: same engine path as in-game, requires the account to be
 -- online on the selected character (no parallel financial logic in Next.js).
+-- Single table return: FiveM exports drop secondary return values (panel would see shop_failed).
 exports('PurchaseProductForPanel', function(accountId, characterId, productId, requestId, params)
     accountId = tonumber(accountId)
     characterId = tonumber(characterId)
     if not accountId or not characterId then
-        return nil, { localeKey = 'shop.purchase.invalid_request' }
+        return { ok = false, err = { localeKey = 'shop.purchase.invalid_request' } }
     end
     local source = exports.sunset_core:GetSourceByAccountId(accountId)
     if not source or source <= 0 then
-        return nil, { localeKey = 'shop.purchase.not_online' }
+        return { ok = false, err = { localeKey = 'shop.purchase.not_online' } }
     end
     local ctx = getContext(source)
     if not ctx or tonumber(ctx.accountId) ~= accountId or tonumber(ctx.characterId) ~= characterId then
-        return nil, { localeKey = 'shop.purchase.character_mismatch' }
+        return { ok = false, err = { localeKey = 'shop.purchase.character_mismatch' } }
     end
     params = type(params) == 'table' and params or {}
     local result, err = purchase(source, productId, requestId, { tag = params.tag, color = params.color })
-    return result, err
+    if result then
+        return { ok = true, result = result }
+    end
+    return { ok = false, err = err or { localeKey = 'shop.purchase.failed' } }
 end)
 
 exports('GetProductPrice', function(productId)
