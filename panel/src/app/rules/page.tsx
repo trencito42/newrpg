@@ -1,9 +1,17 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import { t, getDictionary } from "@/lib/i18n";
 import { getRequestLanguage } from "@/lib/auth";
 import { buildMetadata } from "@/lib/seo";
+import { getViewerLocale } from "@/lib/auth";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Rules", description: "Official RACKET RPG community and roleplay rules.", path: "/rules" });
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.rules_title"),
+    description: t(locale, "seo.rules_description"),
+    path: "/rules",
+  });
+}
 
 export const dynamic = "force-dynamic";
 

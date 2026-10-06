@@ -1,11 +1,18 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t, formatCurrency } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
 import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Territories", description: "RACKET RPG clan territories, ownership and rewards.", path: "/turfs" });
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.turfs_title"),
+    description: t(locale, "seo.turfs_description"),
+    path: "/turfs",
+  });
+}
 
 interface TurfRow extends RowDataPacket {
   id: number;

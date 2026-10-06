@@ -2,7 +2,7 @@
 import { t, type Locale } from "@/lib/i18n";
 
 import { useState } from "react";
-import { MoreVertical, Lock, Unlock, Pin, PinOff, Megaphone, Globe, Trash2, RotateCcw, ArrowRight, ChevronDown } from "lucide-react";
+import { MoreVertical, Lock, Unlock, Pin, PinOff, Megaphone, Globe, Trash2, ArrowRight, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface TopicActionsMenuProps {
@@ -15,8 +15,15 @@ interface TopicActionsMenuProps {
     type: string;
     status: string;
   };
-  locale: "en" | "ro";
+  locale: Locale;
 }
+
+type ActionItem = {
+  id: string;
+  icon: typeof Lock;
+  labelKey: string;
+  danger?: boolean;
+};
 
 export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
   const [open, setOpen] = useState(false);
@@ -43,7 +50,7 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
   };
 
   const handleDelete = async () => {
-    const reason = prompt("Delete reason:");
+    const reason = prompt(t(locale, "forumUi.delete_reason_prompt"));
     if (reason === null) return;
     await doAction("delete", { reason });
   };
@@ -56,21 +63,21 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
     setMoveOpen(false);
   };
 
-  const actions = [
+  const actions: ActionItem[] = [
     topic.status === "open"
-      ? { id: "lock", icon: Lock, labelEn: "Lock topic", labelRo: "Blochează topicul" }
-      : { id: "unlock", icon: Unlock, labelEn: "Unlock topic", labelRo: "Deblochează topicul" },
+      ? { id: "lock", icon: Lock, labelKey: "forumUi.topic_action_lock" }
+      : { id: "unlock", icon: Unlock, labelKey: "forumUi.topic_action_unlock" },
     topic.type !== "pinned"
-      ? { id: "pin", icon: Pin, labelEn: "Pin topic", labelRo: "Fixează topicul" }
-      : { id: "unpin", icon: PinOff, labelEn: "Unpin topic", labelRo: "Dezfixează topicul" },
+      ? { id: "pin", icon: Pin, labelKey: "forumUi.topic_action_pin" }
+      : { id: "unpin", icon: PinOff, labelKey: "forumUi.topic_action_unpin" },
     topic.type !== "announcement"
-      ? { id: "announce", icon: Megaphone, labelEn: "Set as announcement", labelRo: "Setează ca anunț" }
-      : { id: "normal", icon: ChevronDown, labelEn: "Set as normal", labelRo: "Setează ca normal" },
+      ? { id: "announce", icon: Megaphone, labelKey: "forumUi.topic_action_announce" }
+      : { id: "normal", icon: ChevronDown, labelKey: "forumUi.topic_action_normal" },
     topic.type !== "global"
-      ? { id: "global", icon: Globe, labelEn: "Set as global", labelRo: "Setează ca global" }
-      : { id: "normal", icon: ChevronDown, labelEn: "Set as normal", labelRo: "Setează ca normal" },
-    { id: "move", icon: ArrowRight, labelEn: "Move topic", labelRo: "Mută topicul" },
-    { id: "delete", icon: Trash2, labelEn: "Delete topic", labelRo: "Șterge topicul", danger: true },
+      ? { id: "global", icon: Globe, labelKey: "forumUi.topic_action_global" }
+      : { id: "normal", icon: ChevronDown, labelKey: "forumUi.topic_action_normal" },
+    { id: "move", icon: ArrowRight, labelKey: "forumUi.topic_action_move" },
+    { id: "delete", icon: Trash2, labelKey: "forumUi.topic_action_delete", danger: true },
   ];
 
   return (
@@ -79,7 +86,7 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
         onClick={() => setOpen(!open)}
         disabled={loading}
         className="p-2 rounded-lg bg-surface-200 hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-        aria-label="Topic actions" // i18n-ignore: english-only
+        aria-label={t(locale, "forumUi.topic_actions_aria")}
       >
         <MoreVertical className="w-4 h-4" />
       </button>
@@ -103,20 +110,17 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
                   }
                 }}
                 className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-left transition-colors hover:bg-surface-200 ${
-                  (action as { danger?: boolean }).danger
-                    ? "text-red-400 hover:text-red-300"
-                    : "text-foreground"
+                  action.danger ? "text-red-400 hover:text-red-300" : "text-foreground"
                 } ${i > 0 ? "border-t border-border" : ""}`}
               >
                 <action.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                {locale === "ro" ? action.labelRo : action.labelEn}
+                {t(locale, action.labelKey)}
               </button>
             ))}
           </div>
         </>
       )}
 
-      {/* Move dialog */}
       {moveOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -129,31 +133,26 @@ export function TopicActionsMenu({ topic, locale }: TopicActionsMenuProps) {
             <h3 className="text-sm font-extrabold text-foreground uppercase">
               {t(locale, "forumUi.move_topic")}
             </h3>
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">
-                {t(locale, "forumUi.target_forum_id")}
-              </label>
+            <label className="block text-xs text-muted-foreground">
+              {t(locale, "forumUi.target_forum_id")}
               <input
                 type="number"
                 value={targetForumId}
                 onChange={(e) => setTargetForumId(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-surface-200 border border-border text-sm"
                 required
-                className="w-full px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-brand"
               />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="flex-1 py-2 bg-brand text-[#08080A] text-xs font-extrabold uppercase rounded-lg hover:opacity-90 transition-opacity"
-              >
-                {t(locale, "forumUi.move")}
-              </button>
+            </label>
+            <div className="flex gap-2 justify-end">
               <button
                 type="button"
                 onClick={() => setMoveOpen(false)}
-                className="flex-1 py-2 bg-surface-200 text-foreground text-xs font-extrabold uppercase rounded-lg hover:bg-surface-300 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg border border-border"
               >
                 {t(locale, "forumUi.cancel")}
+              </button>
+              <button type="submit" className="px-3 py-1.5 text-xs rounded-lg bg-brand text-brand-foreground font-bold">
+                {t(locale, "forumUi.move")}
               </button>
             </div>
           </form>

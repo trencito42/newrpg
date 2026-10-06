@@ -1,4 +1,3 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { t } from "@/lib/i18n";
@@ -8,7 +7,15 @@ import { buildMetadata } from "@/lib/seo";
 import { fetchSocialFeedPosts } from "@/lib/social-feed";
 
 export const dynamic = "force-dynamic";
-export const metadata = buildMetadata({ title: "Community feed", path: "/feed", noIndex: true });
+
+export async function generateMetadata() {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.feed_title"),
+    path: "/feed",
+    noIndex: true,
+  });
+}
 
 export type { FeedPost } from "@/lib/social-feed";
 

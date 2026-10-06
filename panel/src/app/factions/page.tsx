@@ -1,4 +1,3 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import Link from "next/link";
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
@@ -9,8 +8,16 @@ import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
 import { factionIdSql } from "@/lib/faction-sql";
 import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Factions", description: "Explore RACKET RPG factions, members, leaders and applications.", path: "/factions" });
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.factions_title"),
+    description: t(locale, "seo.factions_description"),
+    path: "/factions",
+  });
+}
 
 interface FactionMemberCountRow extends RowDataPacket {
   job: string;

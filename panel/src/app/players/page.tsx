@@ -1,4 +1,3 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import Link from "next/link";
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
@@ -11,8 +10,16 @@ import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { getFactionLabel, isFaction } from "@/lib/factions";
 import { factionIdSql } from "@/lib/faction-sql";
 import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Players", description: "Browse public RACKET RPG player profiles, characters and achievements.", path: "/players" });
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.players_title"),
+    description: t(locale, "seo.players_description"),
+    path: "/players",
+  });
+}
 
 interface PlayerListRow extends RowDataPacket {
   id: number;

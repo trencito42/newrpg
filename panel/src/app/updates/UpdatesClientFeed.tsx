@@ -57,7 +57,17 @@ interface ReactionState {
   my_reaction: string | null;
 }
 
-function ReactionBar({ item, isLoggedIn, slug }: { item: UpdateItem; isLoggedIn: boolean; slug?: string }) {
+function ReactionBar({
+  item,
+  isLoggedIn,
+  slug,
+  locale,
+}: {
+  item: UpdateItem;
+  isLoggedIn: boolean;
+  slug?: string;
+  locale: "en" | "ro";
+}) {
   const resolvedSlug = slug ?? item.slug;
   const [rx, setRx] = useState<ReactionState>({
     likes_count: item.likes_count ?? 0,
@@ -98,7 +108,7 @@ function ReactionBar({ item, isLoggedIn, slug }: { item: UpdateItem; isLoggedIn:
               ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
               : "bg-[#141417] text-[#8F8B83] hover:text-emerald-400 border border-transparent hover:border-emerald-800/40 disabled:opacity-40"
           }`}
-          title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
+          title={isLoggedIn ? undefined : t(locale, "updatesUi.log_in_to_react")}
         >
           <ThumbsUp className="w-3 h-3" />
           <span>{rx.likes_count}</span>
@@ -112,40 +122,42 @@ function ReactionBar({ item, isLoggedIn, slug }: { item: UpdateItem; isLoggedIn:
             ? "bg-red-950/60 text-red-400 border border-red-800/40"
             : "bg-[#141417] text-[#8F8B83] hover:text-red-400 border border-transparent hover:border-red-800/40 disabled:opacity-40"
         }`}
-        title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
+        title={isLoggedIn ? undefined : t(locale, "updatesUi.log_in_to_react")}
       >
         <ThumbsDown className="w-3 h-3" />
         <span>{rx.dislikes_count}</span>
       </button>
       {likeRatio !== null && (
-        <span className="text-[10px] text-[#8F8B83] font-mono">{likeRatio}% positive</span> // i18n-ignore: pre-existing
+        <span className="text-[10px] text-[#8F8B83] font-mono">
+          {t(locale, "updatesUi.positive_ratio", { percent: likeRatio })}
+        </span>
       )}
     </div>
   );
 }
 
-const CATEGORY_TABS = [
-  { id: "all", label: "Toate" }, // i18n-ignore: pre-existing
-  { id: "update", label: "Updates" }, // i18n-ignore: pre-existing
-  { id: "patch-notes", label: "Patch Notes" }, // i18n-ignore: pre-existing
-  { id: "anunt", label: "Anunțuri" }, // i18n-ignore: pre-existing
-  { id: "eveniment", label: "Evenimente" }, // i18n-ignore: pre-existing
-  { id: "ghid", label: "Ghiduri" }, // i18n-ignore: pre-existing
-];
+const CATEGORY_TAB_IDS = ["all", "update", "patch-notes", "anunt", "eveniment", "ghid"] as const;
 
-function getCategoryBadge(category: string) {
-  switch (category.toLowerCase()) {
+function categoryLabel(locale: "en" | "ro", id: string): string {
+  const key = id === "all" ? "all" : id;
+  return t(locale, `updates.category.${key}` as "updates.category.all");
+}
+
+function getCategoryBadge(category: string, locale: "en" | "ro") {
+  const id = category.toLowerCase();
+  const label = categoryLabel(locale, id === "patch-notes" ? "patch-notes" : id);
+  switch (id) {
     case "patch-notes":
-      return { label: "Patch Notes", bg: "bg-blue-950/60 text-blue-400 border-blue-800/40" }; // i18n-ignore: pre-existing
+      return { label, bg: "bg-blue-950/60 text-blue-400 border-blue-800/40" };
     case "anunt":
-      return { label: "Anunț", bg: "bg-amber-950/60 text-amber-400 border-amber-800/40" }; // i18n-ignore: pre-existing
+      return { label, bg: "bg-amber-950/60 text-amber-400 border-amber-800/40" };
     case "eveniment":
-      return { label: "Eveniment", bg: "bg-purple-950/60 text-purple-400 border-purple-800/40" }; // i18n-ignore: pre-existing
+      return { label, bg: "bg-purple-950/60 text-purple-400 border-purple-800/40" };
     case "ghid":
-      return { label: "Ghid", bg: "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" }; // i18n-ignore: pre-existing
+      return { label, bg: "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" };
     case "update":
     default:
-      return { label: "Update", bg: "bg-[#D7B558]/10 text-[#D7B558] border-[#D7B558]/30" }; // i18n-ignore: pre-existing
+      return { label: categoryLabel(locale, "update"), bg: "bg-[#D7B558]/10 text-[#D7B558] border-[#D7B558]/30" };
   }
 }
 
@@ -216,19 +228,19 @@ export function UpdatesClientFeed({
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-[#0E0E10] p-3 rounded-xl">
         {/* Category Tabs */}
         <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {CATEGORY_TABS.map((cat) => {
-            const isActive = selectedCategory === cat.id;
+          {CATEGORY_TAB_IDS.map((catId) => {
+            const isActive = selectedCategory === catId;
             return (
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                key={catId}
+                onClick={() => setSelectedCategory(catId)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   isActive
                     ? "bg-[#D7B558] text-[#08080A]"
                     : "text-[#B4AFA4] hover:text-[#F2EFE8] hover:bg-[#18181B]"
                 }`}
               >
-                {cat.label}
+                {categoryLabel(locale, catId)}
               </button>
             );
           })}
@@ -257,7 +269,7 @@ export function UpdatesClientFeed({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pinnedUpdates.map((item) => {
-              const catBadge = getCategoryBadge(item.category);
+              const catBadge = getCategoryBadge(item.category, locale);
               const avatarUrl = getPedAvatarUrl(item.author_skin);
 
               return (
@@ -307,7 +319,7 @@ export function UpdatesClientFeed({
                     </div>
 
                     <div className="flex items-center space-x-3">
-                      <ReactionBar item={item} isLoggedIn={isLoggedIn} />
+                      <ReactionBar item={item} isLoggedIn={isLoggedIn} locale={locale} />
                       <span className="flex items-center space-x-1">
                         <Eye className="w-3 h-3" />
                         <span>{item.views_count}</span>
@@ -352,7 +364,7 @@ export function UpdatesClientFeed({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {regularUpdates.map((item) => {
-              const catBadge = getCategoryBadge(item.category);
+              const catBadge = getCategoryBadge(item.category, locale);
               const avatarUrl = getPedAvatarUrl(item.author_skin);
 
               return (
@@ -393,7 +405,7 @@ export function UpdatesClientFeed({
                   </div>
 
                   <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-surface-border/60 text-[11px] text-[#8F8B83]">
-                    <ReactionBar item={item} isLoggedIn={isLoggedIn} />
+                    <ReactionBar item={item} isLoggedIn={isLoggedIn} locale={locale} />
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 font-medium text-[#B4AFA4]">
                         <div className="w-5 h-5 rounded-full bg-[#1A1A1E] overflow-hidden flex items-center justify-center shrink-0">

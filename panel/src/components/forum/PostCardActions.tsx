@@ -117,7 +117,7 @@ export function PostCardActions({
         className="p-2 -mr-1 rounded-lg hover:bg-surface-300 text-muted-foreground active:bg-surface-300/80"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        aria-label={"Post actions"} // i18n-ignore: english-only
+        aria-label={t(locale, "forumUi.post_actions_aria")}
       >
         <MoreVertical className="w-5 h-5" />
       </button>

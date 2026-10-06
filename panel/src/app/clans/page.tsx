@@ -1,4 +1,3 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import { getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -8,8 +7,16 @@ import { Users, Flag, Shield, CheckCircle, XCircle } from "lucide-react";
 import { factionIdSql } from "@/lib/faction-sql";
 import { t } from "@/lib/i18n";
 import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Clans", description: "Discover RACKET RPG clans, members, territories and recruitment.", path: "/clans" });
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.clans_title"),
+    description: t(locale, "seo.clans_description"),
+    path: "/clans",
+  });
+}
 
 
 interface ClanRow extends RowDataPacket {

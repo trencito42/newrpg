@@ -52,18 +52,18 @@ export function formatTransactionReason(reason: string, locale: Locale = "ro"): 
   // Custom Transfer regex (e.g., "Transfer -> PlayerName" or "Transfer <- PlayerName" or "player_transfer")
   if (r.startsWith("Transfer ->") || r.startsWith("Transfer către")) {
     const target = r.replace(/^Transfer (->|către)\s*/i, "");
-    return { 
-      title: locale === "ro" ? `Transfer trimis către ${target}` : `Transfer sent to ${target}`, 
-      category: "transfer", 
-      icon: "transfer_out" 
+    return {
+      title: t(locale, "copy.app_my_character_banking_bankingclientview.transfer_sent_to", { name: target }),
+      category: "transfer",
+      icon: "transfer_out",
     };
   }
   if (r.startsWith("Transfer <-") || r.startsWith("Transfer de la")) {
     const from = r.replace(/^Transfer (<-|de la)\s*/i, "");
-    return { 
-      title: locale === "ro" ? `Transfer primit de la ${from}` : `Transfer received from ${from}`, 
-      category: "transfer", 
-      icon: "transfer_in" 
+    return {
+      title: t(locale, "copy.app_my_character_banking_bankingclientview.transfer_received_from", { name: from }),
+      category: "transfer",
+      icon: "transfer_in",
     };
   }
 

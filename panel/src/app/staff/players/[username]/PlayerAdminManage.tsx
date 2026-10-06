@@ -135,7 +135,7 @@ export function PlayerAdminManage({
       if (res.ok) {
         setMessage({
           type: "success",
-          text: locale === "ro" ? `Acțiune (${actionType}) executată cu succes!` : `Action (${actionType}) executed successfully!`,
+          text: t(locale, "copy.components_staff_playeractions.action_executed_success", { action: actionType }),
         });
         setReason("");
         setNewPassword("");

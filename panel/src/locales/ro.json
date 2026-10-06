@@ -236,7 +236,52 @@
     "tab_my_topics": "Topicele mele",
     "tab_my_posts": "Postările mele",
     "tab_bookmarks": "Marcaje",
-    "tab_subscriptions": "Abonamente"
+    "tab_subscriptions": "Abonamente",
+    "report_reason_spam": "Mesaje nedorite (spam)",
+    "report_reason_off_topic": "Off-topic",
+    "report_reason_harassment": "Hărțuire",
+    "report_reason_advertising": "Publicitate",
+    "report_reason_rule_violation": "Încălcarea regulilor",
+    "report_reason_other": "Altele",
+    "topic_action_lock": "Blochează topicul",
+    "topic_action_unlock": "Deblochează topicul",
+    "topic_action_pin": "Fixează topicul",
+    "topic_action_unpin": "Dezfixează topicul",
+    "topic_action_announce": "Setează ca anunț",
+    "topic_action_normal": "Setează ca normal",
+    "topic_action_global": "Setează ca global",
+    "topic_action_move": "Mută topicul",
+    "topic_action_delete": "Șterge topicul",
+    "delete_reason_prompt": "Motiv ștergere:",
+    "topic_actions_aria": "Acțiuni topic",
+    "post_actions_aria": "Acțiuni postare"
+  },
+  "statsPage": {
+    "economy_total": "Economie totală",
+    "cash_sub": "Cash: {amount}",
+    "citizens": "Cetățeni",
+    "registered_accounts": "{count} conturi înregistrate",
+    "registered_vehicles": "Vehicule înregistrate",
+    "across_citizens": "La toți cetățenii",
+    "properties_owned": "Proprietăți deținute",
+    "active_clans": "{count} clanuri active",
+    "net_worth": "Avere netă",
+    "top_experience": "Experiență și ore jucate",
+    "hours_played": "Ore jucate",
+    "level_short": "Niv. {level}",
+    "hours_short": "{hours} ore",
+    "top_clans": "Top clanuri",
+    "turfs_short": "{count} teritorii",
+    "members_short": "{count} membri",
+    "job_progress": "Progres joburi",
+    "active_workers": "{count} muncitori activi",
+    "tasks_short": "{count} sarcini",
+    "popular_vehicles": "Vehicule populare",
+    "registered_short": "{count} înregistrate"
+  },
+  "updatesUi": {
+    "log_in_to_react": "Autentifică-te pentru a reacționa",
+    "positive_ratio": "{percent}% pozitiv"
   },
   "home": {
     "community_slider": {
@@ -711,7 +756,9 @@
       "details_description": "Descriere Detaliată & Motiv",
       "date_time": "Dată & Oră",
       "no_transactions_found_matching_your_criteria": "Nu au fost găsite tranzacții.",
-      "try_adjusting_your_search_terms_or_filters": "Încearcă să schimbi filtrele sau termenul de căutare."
+      "try_adjusting_your_search_terms_or_filters": "Încearcă să schimbi filtrele sau termenul de căutare.",
+      "transfer_sent_to": "Transfer trimis către {name}",
+      "transfer_received_from": "Transfer primit de la {name}"
     },
     "app_my_character_banking_page": {
       "finances_transactions": "Finanțe & Tranzacții",
@@ -999,6 +1046,7 @@
     },
     "components_staff_playeractions": {
       "the_server_executed_the_action": "Acțiunea a fost executată de server.",
+      "action_executed_success": "Acțiunea ({action}) a fost executată cu succes!",
       "action_failed": "Acțiunea a eșuat.",
       "confirm_this_administrative_action": "Confirmi acțiunea administrativă?",
       "queued_waiting_for_fivem_confirmation": "Cererea a intrat în coadă; aștept confirmarea FiveM.",
@@ -1581,6 +1629,21 @@
     "editor": {
       "placeholder": "Scrie postarea folosind Markdown…"
     }
+  },
+  "seo": {
+    "players_title": "Jucători",
+    "players_description": "Explorează profilurile publice, personajele și realizările jucătorilor RACKET RPG.",
+    "clans_title": "Clanuri",
+    "clans_description": "Descoperă clanurile RACKET RPG, membrii, teritoriile și recrutarea.",
+    "factions_title": "Facțiuni",
+    "factions_description": "Explorează facțiunile RACKET RPG, membrii, liderii și aplicațiile.",
+    "feed_title": "Feed comunitate",
+    "rules_title": "Regulament",
+    "rules_description": "Regulamentul oficial al comunității și roleplay-ului RACKET RPG.",
+    "stats_title": "Statistici server",
+    "stats_description": "Statistici live despre economie, jucători, facțiuni și clanuri pe RACKET RPG.",
+    "turfs_title": "Teritorii",
+    "turfs_description": "Teritoriile clanurilor RACKET RPG, proprietatea și recompensele."
   },
   "search": {
     "suggested_players": "Jucători sugerați",

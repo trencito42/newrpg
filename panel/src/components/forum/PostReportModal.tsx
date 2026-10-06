@@ -12,13 +12,13 @@ interface PostReportModalProps {
   onClose: () => void;
 }
 
-const REASONS: { value: ReportReason; labelEn: string; labelRo: string }[] = [
-  { value: "spam", labelEn: "Spam", labelRo: "Spam" },
-  { value: "off_topic", labelEn: "Off topic", labelRo: "Off-topic" },
-  { value: "harassment", labelEn: "Harassment", labelRo: "Hărțuire" },
-  { value: "advertising", labelEn: "Advertising", labelRo: "Publicitate" },
-  { value: "rule_violation", labelEn: "Rule violation", labelRo: "Încălcarea regulilor" },
-  { value: "other", labelEn: "Other", labelRo: "Altele" },
+const REASONS: { value: ReportReason; labelKey: string }[] = [
+  { value: "spam", labelKey: "forumUi.report_reason_spam" },
+  { value: "off_topic", labelKey: "forumUi.report_reason_off_topic" },
+  { value: "harassment", labelKey: "forumUi.report_reason_harassment" },
+  { value: "advertising", labelKey: "forumUi.report_reason_advertising" },
+  { value: "rule_violation", labelKey: "forumUi.report_reason_rule_violation" },
+  { value: "other", labelKey: "forumUi.report_reason_other" },
 ];
 
 export function PostReportModal({ postId, locale, onClose }: PostReportModalProps) {
@@ -97,7 +97,7 @@ export function PostReportModal({ postId, locale, onClose }: PostReportModalProp
               >
                 {REASONS.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {locale === "ro" ? r.labelRo : r.labelEn}
+                    {t(locale, r.labelKey)}
                   </option>
                 ))}
               </select>

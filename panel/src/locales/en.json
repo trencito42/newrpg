@@ -236,7 +236,52 @@
     "tab_my_topics": "My Topics",
     "tab_my_posts": "My Posts",
     "tab_bookmarks": "Bookmarks",
-    "tab_subscriptions": "Subscriptions"
+    "tab_subscriptions": "Subscriptions",
+    "report_reason_spam": "Spam",
+    "report_reason_off_topic": "Off topic",
+    "report_reason_harassment": "Harassment",
+    "report_reason_advertising": "Advertising",
+    "report_reason_rule_violation": "Rule violation",
+    "report_reason_other": "Other",
+    "topic_action_lock": "Lock topic",
+    "topic_action_unlock": "Unlock topic",
+    "topic_action_pin": "Pin topic",
+    "topic_action_unpin": "Unpin topic",
+    "topic_action_announce": "Set as announcement",
+    "topic_action_normal": "Set as normal",
+    "topic_action_global": "Set as global",
+    "topic_action_move": "Move topic",
+    "topic_action_delete": "Delete topic",
+    "delete_reason_prompt": "Delete reason:",
+    "topic_actions_aria": "Topic actions",
+    "post_actions_aria": "Post actions"
+  },
+  "statsPage": {
+    "economy_total": "Economy Total",
+    "cash_sub": "Cash: {amount}",
+    "citizens": "Citizens",
+    "registered_accounts": "{count} registered accounts",
+    "registered_vehicles": "Registered Vehicles",
+    "across_citizens": "Across all citizens",
+    "properties_owned": "Properties Owned",
+    "active_clans": "{count} active clans",
+    "net_worth": "Net Worth",
+    "top_experience": "Top Experience & Hours",
+    "hours_played": "Hours Played",
+    "level_short": "Lvl {level}",
+    "hours_short": "{hours} hrs",
+    "top_clans": "Top Clans",
+    "turfs_short": "{count} turfs",
+    "members_short": "{count} mem",
+    "job_progress": "Job Progress",
+    "active_workers": "{count} active workers",
+    "tasks_short": "{count} tasks",
+    "popular_vehicles": "Popular Vehicles",
+    "registered_short": "{count} registered"
+  },
+  "updatesUi": {
+    "log_in_to_react": "Log in to react",
+    "positive_ratio": "{percent}% positive"
   },
   "home": {
     "community_slider": {
@@ -711,7 +756,9 @@
       "details_description": "Details & Description",
       "date_time": "Date & Time",
       "no_transactions_found_matching_your_criteria": "No transactions found matching your criteria.",
-      "try_adjusting_your_search_terms_or_filters": "Try adjusting your search terms or filters."
+      "try_adjusting_your_search_terms_or_filters": "Try adjusting your search terms or filters.",
+      "transfer_sent_to": "Transfer sent to {name}",
+      "transfer_received_from": "Transfer received from {name}"
     },
     "app_my_character_banking_page": {
       "finances_transactions": "Finances & Transactions",
@@ -999,6 +1046,7 @@
     },
     "components_staff_playeractions": {
       "the_server_executed_the_action": "The server executed the action.",
+      "action_executed_success": "Action ({action}) executed successfully!",
       "action_failed": "Action failed.",
       "confirm_this_administrative_action": "Confirm this administrative action?",
       "queued_waiting_for_fivem_confirmation": "Queued; waiting for FiveM confirmation.",
@@ -1581,6 +1629,21 @@
     "editor": {
       "placeholder": "Write your post using Markdown…"
     }
+  },
+  "seo": {
+    "players_title": "Players",
+    "players_description": "Browse public RACKET RPG player profiles, characters and achievements.",
+    "clans_title": "Clans",
+    "clans_description": "Discover RACKET RPG clans, members, territories and recruitment.",
+    "factions_title": "Factions",
+    "factions_description": "Explore RACKET RPG factions, members, leaders and applications.",
+    "feed_title": "Community feed",
+    "rules_title": "Rules",
+    "rules_description": "Official RACKET RPG community and roleplay rules.",
+    "stats_title": "Server statistics",
+    "stats_description": "Live RACKET RPG server, economy, player, faction and clan statistics.",
+    "turfs_title": "Territories",
+    "turfs_description": "RACKET RPG clan territories, ownership and rewards."
   },
   "search": {
     "suggested_players": "Suggested players",
