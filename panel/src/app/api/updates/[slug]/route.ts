@@ -37,7 +37,7 @@ export async function GET(
     );
 
     if (!update) {
-      return NextResponse.json({ error: "not_found", message: "Actualizarea nu a fost găsită." }, { status: 404 }); // i18n-ignore: pre-existing
+      return NextResponse.json({ error: "update_not_found" }, { status: 404 });
     }
 
     // Increment views async
@@ -83,7 +83,7 @@ export async function PUT(
     const isAuthor = existing.author_account_id === session.accountId;
     const isAdmin = session.adminLevel >= 1;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a edita această postare." }, { status: 403 }); // i18n-ignore: pre-existing
+      return NextResponse.json({ error: "update_edit_forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -95,7 +95,7 @@ export async function PUT(
     const isPinned = session.adminLevel >= 1 ? (body.is_pinned ? 1 : 0) : 0;
 
     if (!title || !content) {
-      return NextResponse.json({ error: "validation_failed", message: "Titlul și conținutul sunt obligatorii." }, { status: 400 }); // i18n-ignore: pre-existing
+      return NextResponse.json({ error: "update_fields_required" }, { status: 400 });
     }
 
     await dbExecute(
@@ -140,7 +140,7 @@ export async function DELETE(
     const isAuthor = existing.author_account_id === session.accountId;
     const isAdmin = session.adminLevel >= 1;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "forbidden", message: "Nu ai permisiunea de a șterge această postare." }, { status: 403 }); // i18n-ignore: pre-existing
+      return NextResponse.json({ error: "update_delete_forbidden" }, { status: 403 });
     }
 
     await dbExecute("DELETE FROM panel_updates WHERE id = ?", [existing.id]);

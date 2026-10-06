@@ -1,4 +1,3 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
@@ -7,7 +6,7 @@ import { dbQuerySingle, dbExecute } from "@/lib/db";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { UpdateArticleActions } from "./UpdateArticleActions";
 import { ArticleReactions } from "./ArticleReactions";
-import { t, formatDate } from "@/lib/i18n";
+import { t, formatDate, type Locale } from "@/lib/i18n";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { CustomBadge } from "@/components/ui/CustomBadge";
@@ -64,7 +63,8 @@ export async function generateMetadata({
     notFound();
   }
 
-  const desc = update.summary || `${update.title} — Official RACKET RPG update.`; // i18n-ignore: english-only seo
+  const locale = await getViewerLocale();
+  const desc = update.summary || t(locale, "seo.update_fallback_description", { title: update.title });
   const banner = update.cover_image || absoluteUrl("/opengraph-image");
   const canonicalUrl = absoluteUrl(`/updates/${encodeURIComponent(decodedSlug)}`);
 
@@ -103,19 +103,19 @@ export async function generateMetadata({
   };
 }
 
-function getCategoryBadge(category: string) {
+function getCategoryBadge(locale: Locale, category: string) {
   switch (category.toLowerCase()) {
     case "patch-notes":
-      return { label: "Patch Notes", bg: "bg-blue-950/60 text-blue-400 border-blue-800/40" }; // i18n-ignore: pre-existing
+      return { label: t(locale, "updateUi.category_patch_notes"), bg: "bg-blue-950/60 text-blue-400 border-blue-800/40" };
     case "anunt":
-      return { label: "Anunț", bg: "bg-amber-950/60 text-amber-400 border-amber-800/40" }; // i18n-ignore: pre-existing
+      return { label: t(locale, "updateUi.category_announcement"), bg: "bg-amber-950/60 text-amber-400 border-amber-800/40" };
     case "eveniment":
-      return { label: "Eveniment", bg: "bg-purple-950/60 text-purple-400 border-purple-800/40" }; // i18n-ignore: pre-existing
+      return { label: t(locale, "updateUi.category_event"), bg: "bg-purple-950/60 text-purple-400 border-purple-800/40" };
     case "ghid":
-      return { label: "Ghid", bg: "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" }; // i18n-ignore: pre-existing
+      return { label: t(locale, "updateUi.category_guide"), bg: "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" };
     case "update":
     default:
-      return { label: "Update", bg: "bg-brand/10 text-brand border-brand/30" }; // i18n-ignore: pre-existing
+      return { label: t(locale, "updateUi.category_update"), bg: "bg-brand/10 text-brand border-brand/30" };
   }
 }
 
@@ -181,7 +181,7 @@ export default async function UpdateArticlePage({
     session && (session.accountId === update.author_account_id || session.adminLevel >= 1)
   );
 
-  const catBadge = getCategoryBadge(update.category);
+  const catBadge = getCategoryBadge(locale, update.category);
   const wordCount = update.content.trim().split(/\s+/).length;
   const readTimeMin = Math.max(1, Math.ceil(wordCount / 200));
 

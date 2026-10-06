@@ -50,23 +50,24 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { forumSlug } = await params;
-  const session = await getCurrentSession();
+  const [session, locale] = await Promise.all([getCurrentSession(), getViewerLocale()]);
   const forum = await dbQuerySingle<ForumRow>(
     `SELECT * FROM panel_forums WHERE slug = ? LIMIT 1`,
     [forumSlug]
   );
+  const forumTitle = t(locale, "seo.forum_generic");
   if (!forum) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
   if (!(await canAccessForum(session, forum))) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
   return buildMetadata({
     title: forum.name,
     description:
-      forum.description || `Discussion in ${forum.name} on RACKET RPG.`, // i18n-ignore: english-only seo
+      forum.description || t(locale, "seo.forum_discussion_description", { name: forum.name }),
     path: `/forum/${forum.slug}`,
-  });
+  }, locale);
 }
 
 export default async function ForumPage({ params, searchParams }: PageProps) {

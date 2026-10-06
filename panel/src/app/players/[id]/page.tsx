@@ -454,7 +454,7 @@ export default async function PlayerProfilePage({
                   </span>
                 ) : (
                   <span>
-                    {t(locale, "interface.job_2")} <span className="text-[#B4AFA4] capitalize">{char.job ? char.job.replace(/_/g, " ") : "Civilian"}</span> // i18n-ignore: pre-existing
+                    {t(locale, "interface.job_2")} <span className="text-[#B4AFA4] capitalize">{char.job ? char.job.replace(/_/g, " ") : t(locale, "pollUi.civilian")}</span>
                   </span>
                 )}
 

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     if (!titleRo || !titleEn || hasInvalidOption || options.length < 2) {
       return NextResponse.json(
-        { error: "validation_failed", message: "Titlul și minim 2 opțiuni/candidați sunt obligatorii." }, // i18n-ignore: pre-existing
+        { error: "poll_validation" },
         { status: 400 }
       );
     }

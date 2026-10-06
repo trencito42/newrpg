@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
 
 interface BreadcrumbItem {
   label: string;
@@ -7,15 +8,15 @@ interface BreadcrumbItem {
 }
 
 interface ForumBreadcrumbProps {
+  locale: Locale;
   items: BreadcrumbItem[];
 }
 
-export function ForumBreadcrumb({ items }: ForumBreadcrumbProps) {
-  return ( // i18n-ignore: english-only
-    <nav className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="Breadcrumb">
+export function ForumBreadcrumb({ locale, items }: ForumBreadcrumbProps) {
+  return (
+    <nav className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-label={t(locale, "forumUi.breadcrumb_aria")}>
       <Link href="/forum" className="hover:text-foreground transition-colors">
-        {/* i18n-ignore: english-only */}
-        Forum
+        {t(locale, "forumUi.title")}
       </Link>
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1.5">

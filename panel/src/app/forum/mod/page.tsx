@@ -68,8 +68,7 @@ export default async function ModPage() {
     <div className="space-y-8">
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          {/* i18n-ignore: english-only */}
-          <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
+          <Link href="/forum" className="hover:text-foreground transition-colors">{t(locale, "forumUi.title")}</Link>
           <span>/</span>
           <span className="text-foreground">{t(locale, "forumUi.moderation")}</span>
         </div>

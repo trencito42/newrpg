@@ -3,6 +3,7 @@ import { dbQuerySingle, dbQuery } from "@/lib/db";
 import { canAccessForum } from "@/lib/forum-permissions";
 import { forumAuthorKey, resolveForumAuthorIdentities } from "@/lib/forum-author-identity";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { t } from "@/lib/i18n";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -14,7 +15,6 @@ import { TopicActionsMenu } from "@/components/forum/TopicActionsMenu";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 import { PollDisplay } from "@/components/forum/PollDisplay";
 import { PostHashScroll } from "@/components/forum/PostHashScroll";
-import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -77,8 +77,10 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id: idStr, slug } = await params;
   const topicId = parseInt(idStr, 10);
+  const locale = await getViewerLocale();
+  const forumTitle = t(locale, "seo.forum_generic");
   if (!Number.isFinite(topicId)) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
 
   const session = await getCurrentSession();
@@ -87,26 +89,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     [topicId]
   );
   if (!topic || topic.deleted_at) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
 
   const forum = await dbQuerySingle<ForumRow>(`SELECT * FROM panel_forums WHERE id = ? LIMIT 1`, [
     topic.forum_id,
   ]);
   if (!forum) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
   const accessible = await canAccessForum(session, forum);
   if (!accessible) {
-    return buildMetadata({ title: "Forum", noIndex: true }); // i18n-ignore: english-only seo
+    return buildMetadata({ title: forumTitle, noIndex: true }, locale);
   }
 
   return buildMetadata({
     title: topic.title,
-    description: `${forum.name} — discussion on ${topic.title}`,
+    description: t(locale, "seo.forum_discussion_description", { name: forum.name }),
     path: `/forum/topic/${topic.id}/${topic.slug || slug}`,
     type: "article",
-  });
+  }, locale);
 }
 
 export default async function TopicPage({ params, searchParams }: PageProps) {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { panelBrand } from "../brand";
+import { t, type Locale } from "../i18n";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://racket.cat").replace(/\/$/, "");
 
@@ -19,13 +20,13 @@ export type BuildMetadataInput = {
   type?: "website" | "article";
 };
 
-export function buildMetadata(input: BuildMetadataInput): Metadata {
+export function buildMetadata(input: BuildMetadataInput, locale?: Locale): Metadata {
   const title = input.title.includes(panelBrand.name)
     ? input.title
     : `${input.title} | ${panelBrand.name}`;
   const description =
     input.description ||
-    `Companion panel for ${panelBrand.name}. Characters, factions, clans, and community.`; // i18n-ignore: english-only seo
+    (locale ? t(locale, "seo.default_description") : t("en", "seo.default_description"));
   const canonical = input.path ? getSiteUrl(input.path) : SITE_URL;
   const imageUrl = input.image ? (input.image.startsWith("http") ? input.image : getSiteUrl(input.image)) : getSiteUrl(DEFAULT_OG);
 
@@ -51,24 +52,26 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
   };
 }
 
-export function buildRootMetadata(): Metadata {
+export function buildRootMetadata(locale: Locale): Metadata {
+  const rootTitle = t(locale, "seo.root_title").replace("RACKET", panelBrand.name);
+  const rootDescription = t(locale, "seo.root_description").replace(/RACKET/g, panelBrand.name);
   const base = buildMetadata({
-    title: `${panelBrand.name} — GTA V RPG Server`, // i18n-ignore: english-only seo
-    description: `Official companion panel for ${panelBrand.name}. Players, factions, clans, forum, and server updates.`, // i18n-ignore: english-only seo
+    title: rootTitle,
+    description: rootDescription,
     path: "/",
-  });
+  }, locale);
   return {
     metadataBase: new URL(SITE_URL),
     applicationName: panelBrand.name,
     creator: panelBrand.name,
     publisher: panelBrand.name,
     icons: {
-      icon: [{ url: "/logo-3.png", type: "image/png" }],
-      apple: "/logo-3.png",
+      icon: [{ url: "/favicon.png", type: "image/png" }],
+      apple: "/favicon.png",
     },
     manifest: "/manifest.webmanifest",
     title: {
-      default: `${panelBrand.name} — GTA V RPG Server`, // i18n-ignore: english-only seo
+      default: rootTitle,
       template: `%s | ${panelBrand.name}`,
     },
     ...base,

@@ -343,7 +343,7 @@ export function CreatePollModal({ isOpen, onClose, locale }: CreatePollModalProp
                             <span className="font-bold text-[#F2EFE8] group-hover:text-brand block">
                               {p.characterName ? `${p.characterName} (${p.username})` : p.username}
                             </span>
-                            <span className="text-[10px] text-[#8F8B83]">{t(locale, "common.level")} {p.level} • {p.factionId || "Civil"}</span> // i18n-ignore: pre-existing
+                            <span className="text-[10px] text-[#8F8B83]">{t(locale, "common.level")} {p.level} • {p.factionId || t(locale, "pollUi.civilian")}</span>
                           </div>
                         </div>
 
@@ -382,7 +382,7 @@ export function CreatePollModal({ isOpen, onClose, locale }: CreatePollModalProp
                               {c.characterName ? `${c.characterName} (${c.username})` : c.username}
                             </span>
                           </div>
-                          <span className="text-[10px] text-[#8F8B83]">{t(locale, "common.level")} {c.level} • {c.factionId || "Civil"}</span> // i18n-ignore: pre-existing
+                          <span className="text-[10px] text-[#8F8B83]">{t(locale, "common.level")} {c.level} • {c.factionId || t(locale, "pollUi.civilian")}</span>
                         </div>
                       </div>
 
@@ -512,7 +512,7 @@ export function CreatePollModal({ isOpen, onClose, locale }: CreatePollModalProp
             className="flex items-center space-x-1.5 px-5 py-2 bg-brand hover:bg-brand-300 disabled:opacity-50 text-[#08080A] font-extrabold uppercase text-xs rounded-lg transition-all shadow-md"
           >
             <Vote className="w-3.5 h-3.5" />
-            <span>{loading ? "Se creează..." : "Lansează Votul"}</span> // i18n-ignore: pre-existing
+            <span>{loading ? t(locale, "pollUi.creating") : t(locale, "pollUi.launch_poll")}</span>
           </button>
         </div>
       </div>

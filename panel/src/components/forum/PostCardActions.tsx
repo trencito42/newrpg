@@ -59,8 +59,7 @@ export function PostCardActions({
           type="button"
           onClick={onCopyLink}
           className={iconBtn}
-          title={t(locale, "forumUi.copy_link")} // i18n-ignore: english-only
-        >
+          title={t(locale, "forumUi.copy_link")}        >
           <Copy className="w-3.5 h-3.5" />
         </button>
         {canEdit ? (
@@ -68,8 +67,7 @@ export function PostCardActions({
             type="button"
             onClick={onEdit}
             className={iconBtn}
-            title={t(locale, "forumUi.edit")} // i18n-ignore: english-only
-          >
+            title={t(locale, "forumUi.edit")}          >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
         ) : null}
@@ -79,8 +77,7 @@ export function PostCardActions({
             onClick={onDelete}
             disabled={deleting}
             className={`${iconBtn} hover:text-red-400`}
-            title={t(locale, "forumUi.delete")} // i18n-ignore: english-only
-          >
+            title={t(locale, "forumUi.delete")}          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         ) : null}
@@ -90,8 +87,7 @@ export function PostCardActions({
             onClick={onRestore}
             disabled={restoring}
             className={`${iconBtn} hover:text-green-400`}
-            title={t(locale, "forumUi.restore")} // i18n-ignore: english-only
-          >
+            title={t(locale, "forumUi.restore")}          >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         ) : null}
@@ -100,8 +96,7 @@ export function PostCardActions({
             type="button"
             onClick={onReport}
             className={`${iconBtn} hover:text-yellow-400`}
-            title={t(locale, "forumUi.report")} // i18n-ignore: english-only
-          >
+            title={t(locale, "forumUi.report")}          >
             <Flag className="w-3.5 h-3.5" />
           </button>
         ) : null}

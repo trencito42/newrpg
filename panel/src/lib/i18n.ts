@@ -9,6 +9,22 @@ export function getDictionary(locale: Locale = "en") {
   return dictionaries[locale] || dictionaries.en;
 }
 
+/** Maps API `error` snake_case codes to `apiErrors.*` copy when present. */
+export function translateApiError(locale: Locale, code: string): string {
+  if (!code) return t(locale, "common.error");
+  const key = `apiErrors.${code}`;
+  const direct = lookupTranslation(locale, key);
+  if (direct) return direct;
+  return t(locale, "common.error");
+}
+
+function lookupTranslation(locale: Locale, key: string): string | null {
+  const value = key.split(".").reduce<unknown>((acc, part) =>
+    acc && typeof acc === "object" && Object.prototype.hasOwnProperty.call(acc, part)
+      ? (acc as Record<string, unknown>)[part] : undefined, dictionaries[locale]);
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
 /**
  * Returns a translated string given a dot-notated key (e.g. 'nav.home').
  * Supports variable interpolation: {variable}.

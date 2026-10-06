@@ -1,5 +1,17 @@
-// i18n-ignore-file: english-only seo and staff forum UI
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { getViewerLocale } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
-export const metadata = buildMetadata({ title: "Create forum topic", path: "/forum/new-topic", noIndex: true });
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "forumUi.new_topic"),
+    path: "/forum/new-topic",
+    noIndex: true,
+  }, locale);
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
+}

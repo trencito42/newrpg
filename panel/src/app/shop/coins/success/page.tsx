@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { CoinsSuccessClient } from "./CoinsSuccessClient";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = buildMetadata({
-  title: "Racket Coins payment", // i18n-ignore: english-only seo
-  description: "Racket Coins top-up status", // i18n-ignore: english-only seo
-  path: "/shop/coins/success",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.shop_coins_success_title"),
+    description: t(locale, "seo.shop_coins_success_description"),
+    path: "/shop/coins/success",
+  }, locale);
+}
 
 export default async function CoinsSuccessPage({
   searchParams,

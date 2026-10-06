@@ -10,13 +10,17 @@ import { MobileNav } from "@/components/navigation/MobileNav";
 import { buildRootMetadata, getSiteUrl } from "@/lib/seo/metadata";
 import { safeJsonLd } from "@/lib/seo";
 import { panelBrand } from "@/lib/brand";
+import { t } from "@/lib/i18n";
 import { PanelSiteFooter } from "@/components/navigation/PanelSiteFooter";
 import { RouteScrollReset } from "@/components/navigation/RouteScrollReset";
 
 import { PlayerPreviewProvider } from "@/components/ui/PlayerPreviewProvider";
 import { resolvePlayerIdentity } from "@/lib/player-identity";
 
-export const metadata: Metadata = buildRootMetadata();
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildRootMetadata(locale);
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,8 +42,7 @@ export default async function RootLayout({
   const viewerSession = toViewerSessionDTO(session);
   const viewerIdentity = viewerSession ? await resolvePlayerIdentity(viewerSession.username) : null;
   const siteUrl = getSiteUrl("/");
-  const siteDescription =
-    `Official companion panel for ${panelBrand.name}. Players, factions, clans, forum, and server updates.`; // i18n-ignore: english-only seo
+  const siteDescription = t(locale, "seo.root_description").replace(/RACKET/g, panelBrand.name);
 
   return (
     <html lang={locale} className="dark">

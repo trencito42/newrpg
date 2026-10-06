@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, AlertTriangle, Languages, Sparkles } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { useViewerLocale } from "@/components/LocaleProvider";
 
 
 interface Question {
@@ -19,7 +20,7 @@ export default function FactionApplyPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const [lang, setLang] = useState<"ro" | "en">("ro");
+  const lang = useViewerLocale();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -28,14 +29,6 @@ export default function FactionApplyPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Check cookie for preferred locale
-    if (typeof document !== "undefined") {
-      const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]*)/);
-      if (match && (match[1] === "en" || match[1] === "ro")) {
-        setLang(match[1] as "ro" | "en");
-      }
-    }
-
     async function loadQuestions() {
       try {
         const res = await fetch(`/api/organizations/faction/${slug}/questions`);
@@ -152,30 +145,6 @@ export default function FactionApplyPage() {
               {t(lang, "copy.app_factions_slug_apply_page.fill_in_all_mandatory_fields_to_apply")}
             </p>
           </div>
-        </div>
-
-        {/* Language Switcher */}
-        <div className="flex items-center bg-[#141417] p-0.5 rounded-lg border border-surface-border text-xs self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setLang("ro")}
-            className={`px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
-              t(lang, "copy.app_clans_id_apply_page.text_8f8b83_hover_text_f2efe8")
-            }`}
-          >
-            <span>🇷🇴</span>
-            <span>Română</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang("en")}
-            className={`px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
-              t(lang, "copy.app_clans_id_apply_page.bg_surface_200_text_f2efe8_shadow_sm")
-            }`}
-          >
-            <span>🇬🇧</span>
-            <span>English</span>
-          </button>
         </div>
       </div>
 

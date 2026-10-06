@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
 
 interface PaginationControlsProps {
   page: number;
   totalPages: number;
   buildHref: (page: number) => string;
-  locale?: "en" | "ro";
+  locale?: Locale;
 }
 
 export function PaginationControls({ page, totalPages, buildHref, locale = "en" }: PaginationControlsProps) {
@@ -15,7 +16,6 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
 
   if (totalPages <= 1) return null;
 
-  // Compute page window
   const WINDOW = 5;
   let start = Math.max(1, page - Math.floor(WINDOW / 2));
   const end = Math.min(totalPages, start + WINDOW - 1);
@@ -24,12 +24,13 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
   const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
   return (
-    <nav className="flex items-center justify-center gap-1" aria-label="Pagination"> // i18n-ignore: english-only
+    <nav className="flex items-center justify-center gap-1" aria-label={t(locale, "pagination.aria")}>
       {page > 1 && (
         <button
+          type="button"
           onClick={() => router.push(buildHref(page - 1))}
           className="p-1.5 rounded-lg bg-surface-200 hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label={"Previous"} // i18n-ignore: english-only
+          aria-label={t(locale, "pagination.previous")}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -38,6 +39,7 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
       {start > 1 && (
         <>
           <button
+            type="button"
             onClick={() => router.push(buildHref(1))}
             className="px-2.5 py-1 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
           >
@@ -50,6 +52,7 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
       {pages.map((p) => (
         <button
           key={p}
+          type="button"
           onClick={() => router.push(buildHref(p))}
           className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${
             p === page
@@ -66,6 +69,7 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
         <>
           {end < totalPages - 1 && <span className="text-xs text-muted-foreground px-1">…</span>}
           <button
+            type="button"
             onClick={() => router.push(buildHref(totalPages))}
             className="px-2.5 py-1 text-xs rounded-lg bg-surface-200 hover:bg-surface-300 text-foreground transition-colors"
           >
@@ -76,9 +80,10 @@ export function PaginationControls({ page, totalPages, buildHref, locale = "en" 
 
       {page < totalPages && (
         <button
+          type="button"
           onClick={() => router.push(buildHref(page + 1))}
           className="p-1.5 rounded-lg bg-surface-200 hover:bg-surface-300 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label={"Next"} // i18n-ignore: english-only
+          aria-label={t(locale, "pagination.next")}
         >
           <ChevronRight className="w-4 h-4" />
         </button>

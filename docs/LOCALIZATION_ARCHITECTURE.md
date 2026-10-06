@@ -65,3 +65,17 @@ Missing keys visibly render as `[?key]` and warn in the NUI console. Production 
 ## Plurals
 
 Lua uses `Sunset.TPlural(locale, 'property.tenant_count', count, params)` and keys ending in `.one` / `.other`. NUI uses `I18n.plural`. English and Romanian currently use the same one/other rule; add a locale-specific rule before introducing a language that needs more plural categories.
+
+## Panel (racket.cat)
+
+The companion panel uses the same per-account language as FiveM:
+
+- **Source of truth:** `accounts.language` (`en` | `ro`), migration `sql/62-account-language.sql`.
+- **Authenticated users:** `getViewerLocale()` in `panel/src/lib/auth.ts` reads `session.language` from the joined account row. The `sunset_panel_locale` cookie does **not** override the account.
+- **Anonymous visitors:** `getViewerLocale()` reads the `sunset_panel_locale` cookie (`panel/src/lib/constants.ts`), then defaults to `en`.
+- **Navbar:** `LanguageToggle` is the only language control. Logged-in users call `POST /api/account/language`, which updates `accounts.language` for the session account and refreshes the UI. Guests only set the cookie.
+- **Login:** `createSession()` sets `sunset_panel_locale` from `accounts.language` so a stale anonymous cookie cannot win after login.
+- **Game → panel:** When the player changes language in-game (`sunset:setLocale` / `Sunset.SetPlayerLocale`), the DB row updates; the panel picks it up on the next request via `getCurrentSession()`.
+- **Panel → game:** A navbar change writes the same `accounts.language` value. There is no separate panel-only field. An online player sees the new language on the next in-game locale initialization (reconnect or the normal player-ready path); we do not push live locale over HTTP from the panel.
+
+Pure resolution logic for tests lives in `panel/src/lib/locale.ts` (`resolveViewerLocale`).

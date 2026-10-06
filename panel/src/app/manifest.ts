@@ -1,15 +1,17 @@
-// i18n-ignore-file: english-only seo and staff forum UI
 import type { MetadataRoute } from "next";
+import { getViewerLocale } from "@/lib/auth";
+import { t } from "@/lib/i18n";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const locale = await getViewerLocale();
   return {
-    name: "RACKET RPG",
-    short_name: "RACKET",
-    description: "RACKET RPG companion panel and community.",
+    name: t(locale, "manifest.name"),
+    short_name: t(locale, "manifest.short_name"),
+    description: t(locale, "manifest.description"),
     start_url: "/",
     display: "standalone",
     background_color: "#08080a",
     theme_color: "#08080a",
-    icons: [{ src: "/logo-3.png", sizes: "600x135", type: "image/png", purpose: "any" }],
+    icons: [{ src: "/favicon.png", sizes: "800x800", type: "image/png", purpose: "any" }],
   };
 }

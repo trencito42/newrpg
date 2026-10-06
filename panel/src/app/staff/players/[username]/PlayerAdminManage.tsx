@@ -465,7 +465,7 @@ export function PlayerAdminManage({
                     onClick={() => handleExecute(modAction, { durationMin })}
                     className="w-full mt-2 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs transition-colors"
                   >
-                    {loading ? "Se procesează..." : `Execută ${modAction.toUpperCase()} pe Server`} // i18n-ignore: pre-existing
+                    {loading ? t(locale, "staffPlayerUi.processing") : t(locale, "staffPlayerUi.execute_mod", { action: modAction.toUpperCase() })}
                   </button>
                 </div>
               )}
@@ -577,7 +577,7 @@ export function PlayerAdminManage({
                           onClick={() => handleExecute("set_fp", { fp: fpAmount })}
                           className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs"
                         >
-                          {fpAmount === 0 ? "Șterge FP" : "Setează FP"} // i18n-ignore: pre-existing
+                          {fpAmount === 0 ? t(locale, "staffPlayerUi.clear_fp") : t(locale, "staffPlayerUi.set_fp")}
                         </button>
                       </div>
                     </div>
@@ -901,7 +901,7 @@ export function PlayerAdminManage({
                           {t(locale, "interface.allow_the_player_to_publish_panel_updates_and_give_them_the_author_profile_badge")}</span>
                       </div>
                       <CustomBadge
-                        title={player.is_author ? "AUTOR ACTIV" : "FĂRĂ ACCES"} // i18n-ignore: pre-existing
+                        title={player.is_author ? t(locale, "staffPlayerUi.author_active") : t(locale, "staffPlayerUi.no_author_access")}
                         color={player.is_author ? "#A855F7" : "#8F8B83"}
                         icon={player.is_author ? "fa-feather" : "fa-ban"}
                       />
@@ -917,7 +917,7 @@ export function PlayerAdminManage({
                           : "bg-purple-600 hover:bg-purple-500 text-white"
                       }`}
                     >
-                      {player.is_author ? "Revocă Statutul de Autor" : "Acordă Permisiune de Autor (Blogger)"} // i18n-ignore: pre-existing
+                      {player.is_author ? t(locale, "staffPlayerUi.revoke_author") : t(locale, "staffPlayerUi.grant_author")}
                     </button>
                   </div>
 

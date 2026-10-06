@@ -123,7 +123,7 @@ export default async function PollDetailPage({
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                 isActive ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/40" : "bg-surface-200 text-[#8F8B83] border-surface-border"
               }`}>
-                {isActive ? "Votare Activă" : "Votare Încheiată"} // i18n-ignore: pre-existing
+                {isActive ? t(locale, "updateUi.voting_active") : t(locale, "updateUi.voting_closed")}
               </span>
             </div>
 

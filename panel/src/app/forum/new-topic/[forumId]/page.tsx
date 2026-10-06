@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ForumEditor } from "@/components/forum/ForumEditor";
 import { Button } from "@/components/ui/Button";
 import { Plus, Trash2 } from "lucide-react";
+import { useViewerLocale } from "@/components/LocaleProvider";
 
 interface Forum {
   id: number;
@@ -31,7 +32,7 @@ export default function NewTopicPage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [locale, setLocale] = useState<"en" | "ro">("en");
+  const locale = useViewerLocale();
 
   const [hasPoll, setHasPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -40,18 +41,15 @@ export default function NewTopicPage() {
   const [pollAllowsChange, setPollAllowsChange] = useState(false);
 
   useEffect(() => {
-    const lang = document.documentElement.lang;
-    setLocale("en");
-
     fetch(`/api/forum/forums/${forumId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.forum) setForum(data.forum);
-        else setError("Forum not found"); // i18n-ignore: english-only
+        else setError(t(locale, "forumUi.error_forum_not_found"));
       })
-      .catch(() => setError("Failed to load")) // i18n-ignore: english-only
+      .catch(() => setError(t(locale, "forumUi.error_load_failed")))
       .finally(() => setLoading(false));
-  }, [forumId]);
+  }, [forumId, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,10 +84,10 @@ export default function NewTopicPage() {
       if (res.ok && data.topicId) {
         router.push(`/forum/topic/${data.topicId}/${data.slug}`);
       } else {
-        setError(data.error ?? ("Something went wrong"));
+        setError(data.error ?? t(locale, "forumUi.error_generic"));
       }
     } catch {
-      setError("Network error"); // i18n-ignore: english-only
+      setError(t(locale, "forumUi.error_network"));
     } finally {
       setSubmitting(false);
     }
@@ -110,8 +108,7 @@ export default function NewTopicPage() {
       <div className="max-w-3xl space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {/* i18n-ignore: english-only */}
-        <Link href="/forum" className="hover:text-foreground transition-colors">Forum</Link>
+        <Link href="/forum" className="hover:text-foreground transition-colors">{t(locale, "forumUi.title")}</Link>
         <span>/</span>
         {forum && (
           <>
@@ -143,7 +140,7 @@ export default function NewTopicPage() {
             maxLength={200}
             required
             minLength={5}
-            placeholder={"Topic title..."} // i18n-ignore: english-only
+            placeholder={t(locale, "forumUi.error_topic_title_placeholder")}
             className="w-full px-3 py-2 bg-surface-200 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
           />
           <div className="text-right text-xs text-muted-foreground mt-1">{title.length}/200</div>
@@ -187,7 +184,7 @@ export default function NewTopicPage() {
                 value={pollQuestion}
                 onChange={(e) => setPollQuestion(e.target.value)}
                 maxLength={255}
-                placeholder={"Poll question..."} // i18n-ignore: english-only
+                placeholder={t(locale, "forumUi.error_poll_question_placeholder")}
                 className="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand transition-colors"
               />
             </div>

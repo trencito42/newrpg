@@ -1,10 +1,12 @@
 "use client";
-// i18n-ignore-file: english-only seo and staff forum UI
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t } from "@/lib/i18n";
 
 export function ResolveReportButton({ reportId, action }: { reportId: number; action: "resolve" | "dismiss" }) {
+  const locale = useViewerLocale();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   return (
@@ -21,7 +23,7 @@ export function ResolveReportButton({ reportId, action }: { reportId: number; ac
       }}
       className={`px-2 py-1 text-xs rounded font-bold uppercase transition-colors disabled:opacity-50 ${action === "resolve" ? "bg-green-700/20 hover:bg-green-700/40 text-green-400" : "bg-surface-300 hover:bg-surface-200 text-muted-foreground"}`}
     >
-      {action === "resolve" ? "Resolve" : "Dismiss"}
+      {action === "resolve" ? t(locale, "forumUi.resolve") : t(locale, "forumUi.dismiss")}
     </button>
   );
 }

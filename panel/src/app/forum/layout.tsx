@@ -11,14 +11,15 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t(locale, "seo.forum_title"),
     description: t(locale, "seo.forum_description"),
     path: "/forum",
-  });
+  }, locale);
 }
 
-export default function ForumLayout({ children }: { children: React.ReactNode }) {
+export default async function ForumLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getViewerLocale();
   return (
     <div className="w-full pb-8">
       <div className="pb-2 mb-2">
-        <ForumBreadcrumb items={[]} />
+        <ForumBreadcrumb locale={locale} items={[]} />
       </div>
       {children}
     </div>

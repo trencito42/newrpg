@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { LikersTooltip } from "@/components/ui/LikersTooltip";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t } from "@/lib/i18n";
 
 interface ArticleReactionsProps {
   slug: string;
@@ -19,10 +21,13 @@ export function ArticleReactions({
   initialMyReaction,
   isLoggedIn,
 }: ArticleReactionsProps) {
+  const locale = useViewerLocale();
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
   const [myReaction, setMyReaction] = useState<string | null>(initialMyReaction);
   const [loading, setLoading] = useState(false);
+
+  const loginHint = t(locale, "updateUi.log_in_to_react");
 
   const react = async (reaction: "like" | "dislike") => {
     if (loading || !isLoggedIn) return;
@@ -51,9 +56,10 @@ export function ArticleReactions({
     <div className="flex flex-wrap items-center gap-3">
       <LikersTooltip count={likes} fetchUrl={`/api/updates/${slug}/likers`} disabled={!isLoggedIn}>
         <button
+          type="button"
           onClick={() => react("like")}
           disabled={loading || !isLoggedIn}
-          title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
+          title={isLoggedIn ? undefined : loginHint}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             myReaction === "like"
               ? "bg-emerald-950/70 text-emerald-400 border border-emerald-700/60"
@@ -66,9 +72,10 @@ export function ArticleReactions({
       </LikersTooltip>
 
       <button
+        type="button"
         onClick={() => react("dislike")}
         disabled={loading || !isLoggedIn}
-        title={isLoggedIn ? undefined : "Log in to react"} // i18n-ignore: pre-existing
+        title={isLoggedIn ? undefined : loginHint}
         className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
           myReaction === "dislike"
             ? "bg-red-950/70 text-red-400 border border-red-700/60"
@@ -92,7 +99,7 @@ export function ArticleReactions({
       )}
 
       {!isLoggedIn && (
-        <span className="text-xs text-[#5A5751]">Log in to react</span> // i18n-ignore: pre-existing
+        <span className="text-xs text-[#5A5751]">{loginHint}</span>
       )}
     </div>
   );

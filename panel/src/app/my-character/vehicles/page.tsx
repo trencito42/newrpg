@@ -103,7 +103,7 @@ export default async function MyVehiclesPage() {
                         {vehicleDisplayName(veh.model, veh.catalog_label)}
                       </h3>
                       <p className="text-xs text-[#99958E] mt-0.5 truncate">
-                        {t(locale, "interface.garage_2")} <span className="text-[#B4AFA4] capitalize">{veh.garage || "default"}</span> // i18n-ignore: pre-existing
+                        {t(locale, "interface.garage_2")} <span className="text-[#B4AFA4] capitalize">{veh.garage || t(locale, "interface.default_garage")}</span>
                       </p>
                     </div>
                   </div>

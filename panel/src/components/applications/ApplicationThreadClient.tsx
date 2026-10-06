@@ -371,7 +371,7 @@ export function ApplicationThreadClient({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-[#F2EFE8] tracking-tight">
-                {orgType === "faction" ? "Faction" : "Clan"} {t(locale, "interface.application")}{app.id} // i18n-ignore: pre-existing
+                {t(locale, orgType === "faction" ? "applicationUi.org_faction" : "applicationUi.org_clan")} {t(locale, "applicationUi.application_id", { id: app.id })}
               </h1>
               {getStatusBadge(app.status)}
             </div>
@@ -465,7 +465,7 @@ export function ApplicationThreadClient({
               onClick={handleLeadershipDecision}
               className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-[#F2EFE8] rounded text-xs font-semibold transition-colors disabled:opacity-50"
             >
-              {submittingDecision ? "Submitting..." : "Confirm Decision"} // i18n-ignore: pre-existing
+              {submittingDecision ? t(locale, "applicationUi.submitting_decision") : t(locale, "applicationUi.confirm_decision")}
             </button>
           </div>
         </div>
@@ -498,7 +498,7 @@ export function ApplicationThreadClient({
               {t(locale, "copy.components_applications_applicationthreadclient.current_faction")}
             </span>
             <span className="text-[#E1DCCF] capitalize">
-              {app.applicant_faction || "Civilian"} // i18n-ignore: pre-existing
+              {app.applicant_faction || t(locale, "applicationUi.civilian")}
             </span>
           </div>
 
@@ -811,9 +811,9 @@ export function ApplicationThreadClient({
               </span>
             ) : (
               <span>
-                {locale === "ro"
-                  ? `Doar membrii activi ai acestei ${orgType === "faction" ? "facțiuni" : "clan"} pot comenta.` // i18n-ignore: pre-existing
-                  : `Only active members of this ${orgType} may participate in discussions.`}
+                {orgType === "faction"
+                  ? t(locale, "applicationUi.comment_restricted_faction")
+                  : t(locale, "applicationUi.comment_restricted_clan")}
               </span>
             )}
           </div>

@@ -56,14 +56,17 @@ export function PollDisplay({ poll, topicId, locale }: PollDisplayProps) {
         setHasVoted(true);
         router.refresh();
       } else {
-        const msgs: Record<string, string> = {
-          already_voted: "You have already voted.",
-          poll_closed: "Poll is closed.",
-        };
-        setError(msgs[data.error] ?? ("Error."));
+        const code = String(data.error || "");
+        const msg =
+          code === "already_voted"
+            ? t(locale, "polls.already_voted")
+            : code === "poll_closed"
+              ? t(locale, "forumUi.poll_closed")
+              : t(locale, "forumUi.error_generic");
+        setError(msg);
       }
     } catch {
-      setError("Network error."); // i18n-ignore: english-only
+      setError(t(locale, "forumUi.error_network"));
     } finally {
       setSubmitting(false);
     }

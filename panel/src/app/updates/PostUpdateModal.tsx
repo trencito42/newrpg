@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { X, Sparkles, Eye, Edit3, Image as ImageIcon, Send, AlertCircle, HelpCircle } from "lucide-react";
+import { X, Sparkles, Eye, Edit3, Image as ImageIcon, Send, AlertCircle } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t, translateApiError } from "@/lib/i18n";
 
 interface PostUpdateModalProps {
   isOpen: boolean;
@@ -11,17 +13,20 @@ interface PostUpdateModalProps {
   isAdmin: boolean;
 }
 
-const CATEGORIES = [
-  { id: "update", label: "Update" }, // i18n-ignore: pre-existing
-  { id: "patch-notes", label: "Patch Notes" }, // i18n-ignore: pre-existing
-  { id: "anunt", label: "Anunț" }, // i18n-ignore: pre-existing
-  { id: "eveniment", label: "Eveniment" }, // i18n-ignore: pre-existing
-  { id: "ghid", label: "Ghid" }, // i18n-ignore: pre-existing
-];
+const CATEGORY_IDS = ["update", "patch-notes", "anunt", "eveniment", "ghid"] as const;
+
+const CATEGORY_LABEL_KEYS: Record<(typeof CATEGORY_IDS)[number], string> = {
+  update: "updateUi.category_update",
+  "patch-notes": "updateUi.category_patch_notes",
+  anunt: "updateUi.category_announcement",
+  eveniment: "updateUi.category_event",
+  ghid: "updateUi.category_guide",
+};
 
 export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpdateModalProps) {
+  const locale = useViewerLocale();
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("update");
+  const [category, setCategory] = useState<string>("update");
   const [coverImage, setCoverImage] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
@@ -51,7 +56,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
-      setError("Titlul și conținutul sunt obligatorii."); // i18n-ignore: pre-existing
+      setError(t(locale, "updateUi.title_required"));
       return;
     }
 
@@ -74,12 +79,13 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || data.error || "Eroare la salvarea postării.");
+        throw new Error(translateApiError(locale, String(data.error || "")));
       }
 
       onSuccess(data.slug);
-    } catch (err: any) {
-      setError(err.message || "A apărut o problemă.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      setError(message || t(locale, "updateUi.save_error"));
     } finally {
       setLoading(false);
     }
@@ -88,20 +94,18 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-3xl bg-[#111114] border border-surface-border rounded-xl shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border bg-surface-100/50">
           <div className="flex items-center space-x-2.5">
             <div className="p-1.5 rounded-lg bg-brand/10 text-brand">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              {/* i18n-ignore: pre-existing */}
-              <h2 className="text-sm font-bold text-[#F2EFE8]">Postează Update / Noutate</h2>
-              {/* i18n-ignore: pre-existing */}
-              <p className="text-[11px] text-[#8F8B83]">Suport complet Markdown cu previzualizare live</p>
+              <h2 className="text-sm font-bold text-[#F2EFE8]">{t(locale, "updateUi.modal_title")}</h2>
+              <p className="text-[11px] text-[#8F8B83]">{t(locale, "updateUi.modal_subtitle_markdown")}</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-surface-200 transition-colors"
           >
@@ -109,7 +113,6 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
           </button>
         </div>
 
-        {/* Content Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           {error && (
             <div className="flex items-center space-x-2 p-3 bg-red-950/40 border border-red-800/50 rounded-lg text-red-300 text-xs">
@@ -118,44 +121,39 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
             </div>
           )}
 
-          {/* Title & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2 space-y-1.5">
-              {/* i18n-ignore: pre-existing */}
-              <label className="text-xs font-semibold text-[#B4AFA4]">Titlu Postare *</label>
+              <label className="text-xs font-semibold text-[#B4AFA4]">{t(locale, "updateUi.field_title")} *</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="ex: Update v2.5 — Sistem Nou de Garaje & Tuning" // i18n-ignore: pre-existing
+                placeholder={t(locale, "updateUi.title_placeholder")}
                 className="w-full px-3 py-2 bg-[#0A0A0C] border border-surface-border rounded-lg text-sm text-[#F2EFE8] placeholder-[#5A5751] focus:outline-none focus:border-brand"
               />
             </div>
             <div className="space-y-1.5">
-              {/* i18n-ignore: pre-existing */}
-              <label className="text-xs font-semibold text-[#B4AFA4]">Categorie</label>
+              <label className="text-xs font-semibold text-[#B4AFA4]">{t(locale, "updateUi.field_category")}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-3 py-2 bg-[#0A0A0C] border border-surface-border rounded-lg text-sm text-[#F2EFE8] focus:outline-none focus:border-brand"
               >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
+                {CATEGORY_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t(locale, CATEGORY_LABEL_KEYS[id])}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Cover Image & Pinned */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2 space-y-1.5">
               <label className="text-xs font-semibold text-[#B4AFA4] flex items-center gap-1.5">
                 <ImageIcon className="w-3.5 h-3.5" />
-                {/* i18n-ignore: pre-existing */}
-                <span>Imagine de Copertă (URL opțional)</span>
+                <span>{t(locale, "updateUi.cover_image_label")}</span>
               </label>
               <input
                 type="url"
@@ -174,38 +172,32 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                     onChange={(e) => setIsPinned(e.target.checked)}
                     className="w-4 h-4 rounded border-surface-border text-brand focus:ring-0 bg-[#0A0A0C]"
                   />
-                  {/* i18n-ignore: pre-existing */}
-                  <span>Fixează în top (Pinned)</span>
+                  <span>{t(locale, "updateUi.pin_label")}</span>
                 </label>
               </div>
             )}
           </div>
 
-          {/* Excerpt / Summary */}
           <div className="space-y-1.5">
-            {/* i18n-ignore: pre-existing */}
-            <label className="text-xs font-semibold text-[#B4AFA4]">Rezumat scurt (Card feed - opțional)</label>
+            <label className="text-xs font-semibold text-[#B4AFA4]">{t(locale, "updateUi.field_summary")}</label>
             <input
               type="text"
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
-              placeholder="O scurtă descriere pentru previzualizarea din lista de noutăți..." // i18n-ignore: pre-existing
+              placeholder={t(locale, "updateUi.summary_placeholder")}
               maxLength={300}
               className="w-full px-3 py-2 bg-[#0A0A0C] border border-surface-border rounded-lg text-xs text-[#F2EFE8] placeholder-[#5A5751] focus:outline-none focus:border-brand"
             />
           </div>
 
-          {/* Markdown Content Editor / Preview Tabs */}
           <div className="space-y-2 border border-surface-border rounded-lg bg-[#0A0A0C] overflow-hidden">
-            {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-surface-border bg-surface-100/70">
-              {/* Quick inserts */}
               <div className="flex items-center space-x-1">
                 <button
                   type="button"
                   onClick={() => insertMarkdown("### ")}
                   className="px-2 py-1 text-[11px] font-bold bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Heading 3" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_h3")}
                 >
                   H3
                 </button>
@@ -213,7 +205,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                   type="button"
                   onClick={() => insertMarkdown("**", "**")}
                   className="px-2 py-1 text-[11px] font-bold bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Bold" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_bold")}
                 >
                   B
                 </button>
@@ -221,7 +213,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                   type="button"
                   onClick={() => insertMarkdown("*", "*")}
                   className="px-2 py-1 text-[11px] italic bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Italic" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_italic")}
                 >
                   I
                 </button>
@@ -229,41 +221,36 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                   type="button"
                   onClick={() => insertMarkdown("- ")}
                   className="px-2 py-1 text-[11px] bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="List Item" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_list")}
                 >
-                  {/* i18n-ignore: pre-existing */}
-                  • List
+                  {t(locale, "updateUi.toolbar_list_text")}
                 </button>
                 <button
                   type="button"
                   onClick={() => insertMarkdown("`", "`")}
                   className="px-2 py-1 text-[11px] font-mono bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Inline Code" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_code")}
                 >
-                  {/* i18n-ignore: pre-existing */}
-                  Code
+                  {t(locale, "updateUi.toolbar_code_text")}
                 </button>
                 <button
                   type="button"
                   onClick={() => insertMarkdown("> ")}
                   className="px-2 py-1 text-[11px] bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Quote" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_quote")}
                 >
-                  {/* i18n-ignore: pre-existing */}
-                  Quote
+                  {t(locale, "updateUi.toolbar_quote_text")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertMarkdown("[Nume Link](", ")")}
+                  onClick={() => insertMarkdown("[", "](url)")}
                   className="px-2 py-1 text-[11px] bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] rounded"
-                  title="Link" // i18n-ignore: pre-existing
+                  title={t(locale, "updateUi.toolbar_link")}
                 >
-                  {/* i18n-ignore: pre-existing */}
-                  Link
+                  {t(locale, "updateUi.toolbar_link_text")}
                 </button>
               </div>
 
-              {/* Write vs Preview Toggle */}
               <div className="flex items-center space-x-1 bg-surface-200 p-0.5 rounded-lg">
                 <button
                   type="button"
@@ -273,8 +260,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                   }`}
                 >
                   <Edit3 className="w-3.5 h-3.5" />
-                  {/* i18n-ignore: pre-existing */}
-                  <span>Editor</span>
+                  <span>{t(locale, "forumUi.write")}</span>
                 </button>
                 <button
                   type="button"
@@ -284,13 +270,11 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  {/* i18n-ignore: pre-existing */}
-                  <span>Previzualizare</span>
+                  <span>{t(locale, "forumUi.preview")}</span>
                 </button>
               </div>
             </div>
 
-            {/* Input vs Render */}
             {activeTab === "write" ? (
               <textarea
                 id="post-markdown-editor"
@@ -298,15 +282,7 @@ export function PostUpdateModal({ isOpen, onClose, onSuccess, isAdmin }: PostUpd
                 rows={12}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Scrie conținutul folosind Markdown... // i18n-ignore: pre-existing
-## Noutăți & Schimbări
-- Am adăugat sistemul nou de inventar
-- Optimizări majore de performanță
-
-```lua
--- Exemplu configurare
-Config.MaxSlots = 30
-```"
+                placeholder={t(locale, "updateUi.content_placeholder")}
                 className="w-full p-3 bg-transparent text-[#F2EFE8] placeholder-[#5A5751] text-xs font-mono focus:outline-none resize-y min-h-[260px]"
               />
             ) : (
@@ -314,18 +290,16 @@ Config.MaxSlots = 30
                 {content.trim() ? (
                   <MarkdownRenderer content={content} />
                 ) : (
-                  <p className="text-xs text-[#8F8B83] italic">Scrie ceva în editor pentru a vedea previzualizarea.</p> // i18n-ignore: pre-existing
+                  <p className="text-xs text-[#8F8B83] italic">{t(locale, "updateUi.preview_empty")}</p>
                 )}
               </div>
             )}
           </div>
         </form>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-surface-border bg-surface-100/50">
           <span className="text-[11px] text-[#8F8B83] font-mono">
-            {/* i18n-ignore: pre-existing */}
-            {content.length} caractere
+            {t(locale, "updateUi.char_count", { count: content.length })}
           </span>
           <div className="flex items-center space-x-2">
             <button
@@ -333,8 +307,7 @@ Config.MaxSlots = 30
               onClick={onClose}
               className="px-4 py-2 bg-surface-200 hover:bg-surface-300 text-[#B4AFA4] hover:text-[#F2EFE8] font-bold text-xs rounded-lg transition-colors"
             >
-              {/* i18n-ignore: pre-existing */}
-              Anulează
+              {t(locale, "common.cancel")}
             </button>
             <button
               type="button"
@@ -343,7 +316,7 @@ Config.MaxSlots = 30
               className="flex items-center space-x-1.5 px-5 py-2 bg-brand hover:bg-brand-300 disabled:opacity-50 text-[#08080A] font-extrabold uppercase text-xs rounded-lg transition-all shadow-md"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{loading ? "Se publică..." : "Publică Update"}</span> // i18n-ignore: pre-existing
+              <span>{loading ? t(locale, "updateUi.publishing") : t(locale, "updateUi.publish")}</span>
             </button>
           </div>
         </div>

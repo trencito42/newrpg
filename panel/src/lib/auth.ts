@@ -6,6 +6,12 @@ import { generateRandomToken, hashTokenSha256 } from "./crypto";
 import { UserSession } from "./types";
 import { RowDataPacket } from "mysql2";
 import { SESSION_COOKIE_NAME, LOCALE_COOKIE_NAME, SESSION_DURATION_DAYS } from "./constants";
+import {
+  LOCALE_COOKIE_MAX_AGE_SECONDS,
+  parsePanelLocale,
+  resolveViewerLocale,
+  type PanelLocale,
+} from "./locale";
 
 export { SESSION_COOKIE_NAME, LOCALE_COOKIE_NAME, SESSION_DURATION_DAYS };
 
@@ -170,6 +176,46 @@ export async function createSession(accountId: number): Promise<void> {
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
   });
 
+  interface LanguageRow extends RowDataPacket {
+    language: string;
+  }
+  const accountLang = await dbQuerySingle<LanguageRow>(
+    "SELECT language FROM accounts WHERE id = ? LIMIT 1",
+    [accountId]
+  );
+  const locale = parsePanelLocale(accountLang?.language) ?? "en";
+  setPanelLocaleCookie(cookieStore, locale);
+}
+
+/** Non-HttpOnly cookie used only for anonymous visitors; synced from account on login. */
+export function setPanelLocaleCookie(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+  locale: PanelLocale
+): void {
+  cookieStore.set(LOCALE_COOKIE_NAME, locale, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
+  });
+}
+
+/**
+ * Persists language to accounts.language for the authenticated session account.
+ * Does not accept account id from the client.
+ */
+export async function updateAccountLanguage(
+  locale: PanelLocale
+): Promise<{ success: true } | { success: false; error: "unauthorized" }> {
+  const session = await getCurrentSession();
+  if (!session) {
+    return { success: false, error: "unauthorized" };
+  }
+
+  await dbExecute("UPDATE accounts SET language = ? WHERE id = ?", [locale, session.accountId]);
+  setPanelLocaleCookie(await cookies(), locale);
+  return { success: true };
 }
 
 /**
@@ -227,24 +273,16 @@ export async function switchSelectedCharacter(
 }
 
 /**
- * Returns current viewer locale ('en' or 'ro'), resolved from:
- * 1. Authenticated user preference
- * 2. Cookie override
- * 3. Default: 'en'
+ * Viewer locale for panel rendering.
+ * Logged-in: accounts.language (via session). Anonymous: sunset_panel_locale cookie, else EN.
  */
-export async function getViewerLocale(): Promise<"en" | "ro"> {
-  const cookieStore = await cookies();
+export async function getViewerLocale(): Promise<PanelLocale> {
+  const [session, cookieStore] = await Promise.all([getCurrentSession(), cookies()]);
   const cookieLang = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
-  if (cookieLang === "ro" || cookieLang === "en") {
-    return cookieLang;
+  if (session) {
+    return resolveViewerLocale(session.language, null);
   }
-
-  const session = await getCurrentSession();
-  if (session && (session.language === "ro" || session.language === "en")) {
-    return session.language;
-  }
-
-  return "en";
+  return resolveViewerLocale(null, cookieLang);
 }
 
 /**

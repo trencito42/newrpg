@@ -68,22 +68,6 @@ export default async function AccountPage() {
     [currentTokenHash, session.accountId]
   );
 
-  async function updateLanguage(formData: FormData) {
-    "use server";
-    const newLang = formData.get("language") as string;
-    if (newLang !== "en" && newLang !== "ro") return;
-
-    const curSession = await getCurrentSession();
-    if (!curSession) return;
-
-    await dbExecute("UPDATE accounts SET language = ? WHERE id = ?", [
-      newLang,
-      curSession.accountId,
-    ]);
-
-    revalidatePath("/account");
-  }
-
   async function revokeOtherSessions() {
     "use server";
     const curSession = await getCurrentSession();
@@ -135,24 +119,6 @@ export default async function AccountPage() {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-surface-border/60">
-            <form action={updateLanguage} className="flex items-center justify-between">
-              <span className="text-[#8F8B83]">{t(locale, "account.language")}</span>
-              <div className="flex items-center space-x-1.5">
-                <select
-                  name="language"
-                  defaultValue={session.language}
-                  className="text-xs bg-surface-200 border border-surface-border rounded px-2 py-1 text-[#F2EFE8] focus:outline-none"
-                >
-                  <option value="en">English</option>
-                  <option value="ro">Română</option>
-                </select>
-                <Button type="submit" size="sm" variant="secondary">
-                  {t(locale, "common.save")}
-                </Button>
-              </div>
-            </form>
-          </div>
         </div>
 
         {/* Player Profile Summary */}

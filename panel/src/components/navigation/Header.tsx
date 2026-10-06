@@ -24,7 +24,7 @@ export async function Header({ locale, session, identity }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-3">
-        <LanguageToggle currentLocale={locale} />
+        <LanguageToggle currentLocale={locale} isAuthenticated={Boolean(session)} />
 
         {session ? (
           <div className="flex items-center space-x-2.5 pl-2">

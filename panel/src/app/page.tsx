@@ -582,7 +582,6 @@ export default async function HomePage() {
                 href="/factions/tow"
                 className="p-3 rounded-lg bg-[#121214] hover:bg-[#18181D] transition-colors text-center space-y-1 group"
               >
-                {/* i18n-ignore: pre-existing */}
                 <span className="text-[10px] font-mono uppercase font-bold text-emerald-400 block">TOW</span>
                 <span className="text-xs font-semibold text-[#F2EFE8] group-hover:text-emerald-300 transition-colors block">{t(locale, "interface.towing_service")}</span>
                 <span className="text-[10px] text-[#8F8B83] block">{t(locale, "interface.recruitment_open")}</span>

@@ -6,6 +6,8 @@ import { Search, Loader2, User, Shield, Flag, Newspaper, ArrowRight } from "luci
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t } from "@/lib/i18n";
 
 interface PlayerResult {
   type: "player";
@@ -32,6 +34,7 @@ interface GenericResult {
 }
 
 export function GlobalSearch({ placeholder }: { placeholder: string }) {
+  const locale = useViewerLocale();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [players, setPlayers] = useState<PlayerResult[]>([]);
@@ -121,8 +124,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
         <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#111114] border border-surface-border rounded-xl shadow-2xl py-2 z-50 max-h-96 overflow-y-auto space-y-2 divide-y divide-surface-border/40">
           {totalResults === 0 ? (
             <div className="px-4 py-3 text-xs text-[#8F8B83] text-center">
-              {/* i18n-ignore: pre-existing */}
-              Niciun rezultat găsit pentru „{query}”
+              {t(locale, "searchUi.no_results", { query })}
             </div>
           ) : (
             <>
@@ -131,8 +133,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                 <div className="space-y-0.5">
                   <div className="px-3 py-1 text-[10px] font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
                     <User className="w-3 h-3" />
-                    {/* i18n-ignore: pre-existing */}
-                    <span>Jucători ({players.length})</span>
+                    <span>{t(locale, "searchUi.players_section", { count: players.length })}</span>
                   </div>
 
                   {players.map((p) => (
@@ -185,8 +186,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                 <div className="pt-2 space-y-0.5">
                   <div className="px-3 py-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Shield className="w-3 h-3" />
-                    {/* i18n-ignore: pre-existing */}
-                    <span>Facțiuni ({factions.length})</span>
+                    <span>{t(locale, "searchUi.factions_section", { count: factions.length })}</span>
                   </div>
 
                   {factions.map((f) => (
@@ -210,8 +210,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                 <div className="pt-2 space-y-0.5">
                   <div className="px-3 py-1 text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Flag className="w-3 h-3" />
-                    {/* i18n-ignore: pre-existing */}
-                    <span>Clanuri ({clans.length})</span>
+                    <span>{t(locale, "searchUi.clans_section", { count: clans.length })}</span>
                   </div>
 
                   {clans.map((c) => (
@@ -235,8 +234,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                 <div className="pt-2 space-y-0.5">
                   <div className="px-3 py-1 text-[10px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Newspaper className="w-3 h-3" />
-                    {/* i18n-ignore: pre-existing */}
-                    <span>Noutăți & Updates ({updates.length})</span>
+                    <span>{t(locale, "searchUi.updates_section", { count: updates.length })}</span>
                   </div>
 
                   {updates.map((u) => (
@@ -264,8 +262,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                   }}
                   className="text-[11px] font-bold text-brand hover:underline"
                 >
-                  {/* i18n-ignore: pre-existing */}
-                  Vezi toate rezultatele detaliate →
+                  {t(locale, "searchUi.view_all")}
                 </button>
               </div>
             </>

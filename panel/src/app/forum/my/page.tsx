@@ -2,6 +2,7 @@
 import { t, type Locale } from "@/lib/i18n";
 
 import { useState, useEffect } from "react";
+import { useViewerLocale } from "@/components/LocaleProvider";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -26,17 +27,12 @@ export default function MyForumPage() {
   const tab = (searchParams.get("tab") as Tab) ?? "topics";
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
 
-  const [locale, setLocale] = useState<"en" | "ro">("en");
+  const locale = useViewerLocale();
   const [items, setItems] = useState<BaseItem[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const cookie = document.cookie.match(/(?:^|; )racket_locale=(en|ro)/);
-    setLocale(cookie?.[1] === "ro" ? "ro" : "en");
-  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -52,7 +48,7 @@ export default function MyForumPage() {
         setTotal(data.total ?? 0);
         setTotalPages(data.totalPages ?? 1);
       })
-      .catch(() => setError("network_error")) // i18n-ignore: english-only
+      .catch(() => setError(t(locale, "forumUi.error_network")))
       .finally(() => setLoading(false));
   }, [tab, page]);
 
@@ -71,7 +67,6 @@ export default function MyForumPage() {
     <div className="space-y-5">
       <div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          {/* i18n-ignore: english-only */}
           <Link href="/forum" className="hover:text-foreground transition-colors">{t(locale, "forumUi.title")}</Link>
           <span>/</span>
           <span className="text-foreground">{t(locale, "forumUi.my_activity_title")}</span>

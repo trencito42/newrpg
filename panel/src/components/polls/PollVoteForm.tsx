@@ -6,6 +6,8 @@ import { Vote, CheckCircle2, AlertCircle, Loader2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
+import { useViewerLocale } from "@/components/LocaleProvider";
+import { t, translateApiError } from "@/lib/i18n";
 
 export interface PollOptionItem {
   id: number;
@@ -34,6 +36,7 @@ export function PollVoteForm({
   minLevel: number;
   minHours: number;
 }) {
+  const locale = useViewerLocale();
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<number | null>(
     userVotedOptionId
@@ -59,7 +62,7 @@ export function PollVoteForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Votul nu a putut fi înregistrat.");
+        setError(translateApiError(locale, String(data.error || "")) || t(locale, "pollUi.vote_failed"));
         setLoading(false);
         return;
       }
@@ -67,7 +70,7 @@ export function PollVoteForm({
       setSuccess(true);
       router.refresh();
     } catch {
-      setError("A apărut o eroare de rețea."); // i18n-ignore: pre-existing
+      setError(t(locale, "pollUi.network_error"));
     } finally {
       setLoading(false);
     }
@@ -76,15 +79,13 @@ export function PollVoteForm({
   if (!isLoggedIn) {
     return (
       <div className="p-4 rounded-xl bg-surface-100 border border-surface-border text-center text-xs text-[#8F8B83] space-y-2">
-        {/* i18n-ignore: pre-existing */}
-        <p>Autentifică-te pentru a putea vota în acest sondaj.</p>
+        <p>{t(locale, "interface.log_in_to_vote_in_this_poll")}</p>
         <a
           href="/login"
           className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand text-[#08080A] font-extrabold uppercase rounded-lg text-xs transition-colors hover:bg-brand-300"
         >
           <Vote className="w-3.5 h-3.5" />
-          {/* i18n-ignore: pre-existing */}
-          <span>Autentificare</span>
+          <span>{t(locale, "forumUi.log_in")}</span>
         </a>
       </div>
     );
@@ -94,8 +95,7 @@ export function PollVoteForm({
     return (
       <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 text-xs flex items-center space-x-2.5">
         <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-        {/* i18n-ignore: pre-existing */}
-        <span className="font-semibold">Votul tău a fost înregistrat cu succes!</span>
+        <span className="font-semibold">{t(locale, "pollUi.vote_recorded")}</span>
       </div>
     );
   }
@@ -165,8 +165,7 @@ export function PollVoteForm({
 
       <div className="flex items-center justify-between pt-2 border-t border-surface-border">
         <span className="text-[11px] text-[#8F8B83] font-mono">
-          {/* i18n-ignore: pre-existing */}
-          Cerințe: Nivel {minLevel} • {minHours}h
+          {t(locale, "pollUi.requirements", { level: minLevel, hours: minHours })}
         </span>
         <button
           type="submit"
@@ -178,7 +177,7 @@ export function PollVoteForm({
           ) : (
             <Vote className="w-3.5 h-3.5" />
           )}
-          <span>{loading ? "Se votează..." : "Trimite Votul"}</span> // i18n-ignore: pre-existing
+          <span>{loading ? t(locale, "pollUi.submitting") : t(locale, "pollUi.submit_vote")}</span>
         </button>
       </div>
     </form>

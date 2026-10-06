@@ -2,16 +2,20 @@ import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { UpdatesClientFeed, UpdateItem } from "./UpdatesClientFeed";
 import { RowDataPacket } from "mysql2";
-import { buildMetadata } from "@/lib/seo";
-
+import { buildMetadata } from "@/lib/seo/metadata";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = buildMetadata({
-  title: "Updates", // i18n-ignore: english-only seo
-  description: "Official RACKET RPG updates, patch notes and announcements.", // i18n-ignore: english-only seo
-  path: "/updates",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.updates_title"),
+    description: t(locale, "seo.updates_description"),
+    path: "/updates",
+  }, locale);
+}
 
 interface RawUpdateRow extends RowDataPacket {
   id: number;

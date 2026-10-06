@@ -2,15 +2,20 @@ import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery } from "@/lib/db";
 import { PollsClientView, PollItem } from "./PollsClientView";
 import { RowDataPacket } from "mysql2";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = buildMetadata({
-  title: "Polls and elections", // i18n-ignore: english-only seo
-  description: "Public RACKET RPG community polls and Los Santos elections.", // i18n-ignore: english-only seo
-  path: "/polls",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getViewerLocale();
+  return buildMetadata({
+    title: t(locale, "seo.polls_title"),
+    description: t(locale, "seo.polls_description"),
+    path: "/polls",
+  }, locale);
+}
 
 export default async function PollsPage() {
   const [locale, session] = await Promise.all([
