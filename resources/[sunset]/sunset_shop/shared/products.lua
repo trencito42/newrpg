@@ -1,242 +1,38 @@
 -- ═══════════════════════════════════════════════════════════════
 --  sunset_shop — shared/products.lua
---  THE canonical Racket Shop product registry. Every price, reward and
---  product rule lives here and ONLY here; server handlers read from this
---  table and never accept a price, amount or definition from the client.
+--  Loads THE canonical catalog from shared/catalog.json (single source
+--  for FiveM + racket.cat via scripts/sync-shop-catalog.mjs).
 --
---  Visible currency: "Racket Credits" (RC). Internal storage remains
---  accounts.premium_points (kept for compatibility).
---
---  Product fields:
---    id, category, labelKey, descriptionKey, currency ('rc'), price (RC),
---    enabled, repeatable, cooldown (seconds, 0 = none), entitlement,
---    icon, handler ('character' | 'clan' | 'economy'),
---    plus handler-specific fields:
---      clanAction = 'name' | 'tag' | 'color' | 'slots' | 'renew'
---      slots      = target clan member capacity (clanAction 'slots')
---      days       = lifetime extension in days   (clanAction 'renew')
---      bankAmount = bank dollars granted          (economy cash packs)
---      input      = purchase-time input the UI collects ('tag' | 'color')
---      requiresLeader = product needs the buyer to lead a clan
+--  Visible currency: Racket Coins (RC). Internal: accounts.premium_points.
 -- ═══════════════════════════════════════════════════════════════
 
-ShopConfig = {
-    Currency = 'rc',
-    -- Minimum gap between two purchase attempts by the same player.
-    PurchaseCooldownMs = 1500,
-    HistoryLimit = 25,
-    RequestIdMinLength = 8,
-    RequestIdMaxLength = 64,
-    NameChange = {
-        MinLength = 2,
-        MaxLength = 32,
-    },
-}
+local RESOURCE = 'sunset_shop'
 
-ShopCategories = {
-    { id = 'character', labelKey = 'shop.category.character', icon = 'user', order = 1 },
-    { id = 'clan', labelKey = 'shop.category.clan', icon = 'shield', order = 2 },
-    { id = 'economy', labelKey = 'shop.category.economy', icon = 'coins', order = 3 },
-    { id = 'vehicle', labelKey = 'shop.category.vehicle', icon = 'car', order = 4 },
-    { id = 'qol', labelKey = 'shop.category.qol', icon = 'star', order = 5 },
-}
+local function loadCatalogRaw()
+    if type(LoadResourceFile) == 'function' and type(GetCurrentResourceName) == 'function' then
+        return LoadResourceFile(GetCurrentResourceName(), 'shared/catalog.json')
+    end
+    if type(LoadResourceFile) == 'function' then
+        return LoadResourceFile(RESOURCE, 'shared/catalog.json')
+    end
+    return nil
+end
 
-ShopProducts = {
-    -- ═══ CHARACTER ═══
-    char_name_change = {
-        id = 'char_name_change',
-        category = 'character',
-        labelKey = 'shop.product.char_name_change.label',
-        descriptionKey = 'shop.product.char_name_change.desc',
-        currency = 'rc',
-        price = 500,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        entitlement = 'char_name_change',
-        icon = 'user-edit',
-        handler = 'character',
-    },
+local function decodeCatalog(raw)
+    if type(raw) ~= 'string' or raw == '' then return nil end
+    local ok, decoded = pcall(json.decode, raw)
+    if not ok or type(decoded) ~= 'table' then return nil end
+    return decoded
+end
 
-    -- ═══ CLAN ═══
-    clan_name_change = {
-        id = 'clan_name_change',
-        category = 'clan',
-        labelKey = 'shop.product.clan_name_change.label',
-        descriptionKey = 'shop.product.clan_name_change.desc',
-        currency = 'rc',
-        price = 300,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        entitlement = 'clan_name_change',
-        icon = 'shield-edit',
-        handler = 'clan',
-        clanAction = 'name',
-        requiresLeader = true,
-    },
-    clan_tag_change = {
-        id = 'clan_tag_change',
-        category = 'clan',
-        labelKey = 'shop.product.clan_tag_change.label',
-        descriptionKey = 'shop.product.clan_tag_change.desc',
-        currency = 'rc',
-        price = 200,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'tag',
-        handler = 'clan',
-        clanAction = 'tag',
-        input = 'tag',
-        requiresLeader = true,
-    },
-    clan_color_change = {
-        id = 'clan_color_change',
-        category = 'clan',
-        labelKey = 'shop.product.clan_color_change.label',
-        descriptionKey = 'shop.product.clan_color_change.desc',
-        currency = 'rc',
-        price = 150,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'palette',
-        handler = 'clan',
-        clanAction = 'color',
-        input = 'color',
-        requiresLeader = true,
-    },
-    clan_slots_50 = {
-        id = 'clan_slots_50',
-        category = 'clan',
-        labelKey = 'shop.product.clan_slots_50.label',
-        descriptionKey = 'shop.product.clan_slots_50.desc',
-        currency = 'rc',
-        price = 2500,
-        enabled = true,
-        repeatable = false,
-        cooldown = 0,
-        icon = 'users',
-        handler = 'clan',
-        clanAction = 'slots',
-        slots = 50,
-        requiresLeader = true,
-    },
-    clan_slots_75 = {
-        id = 'clan_slots_75',
-        category = 'clan',
-        labelKey = 'shop.product.clan_slots_75.label',
-        descriptionKey = 'shop.product.clan_slots_75.desc',
-        currency = 'rc',
-        price = 5000,
-        enabled = true,
-        repeatable = false,
-        cooldown = 0,
-        icon = 'users',
-        handler = 'clan',
-        clanAction = 'slots',
-        slots = 75,
-        requiresLeader = true,
-    },
-    clan_renew_7 = {
-        id = 'clan_renew_7',
-        category = 'clan',
-        labelKey = 'shop.product.clan_renew_7.label',
-        descriptionKey = 'shop.product.clan_renew_7.desc',
-        currency = 'rc',
-        price = 100,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'clock',
-        handler = 'clan',
-        clanAction = 'renew',
-        days = 7,
-        requiresLeader = true,
-    },
-    clan_renew_30 = {
-        id = 'clan_renew_30',
-        category = 'clan',
-        labelKey = 'shop.product.clan_renew_30.label',
-        descriptionKey = 'shop.product.clan_renew_30.desc',
-        currency = 'rc',
-        price = 350,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'clock',
-        handler = 'clan',
-        clanAction = 'renew',
-        days = 30,
-        requiresLeader = true,
-    },
-    clan_renew_90 = {
-        id = 'clan_renew_90',
-        category = 'clan',
-        labelKey = 'shop.product.clan_renew_90.label',
-        descriptionKey = 'shop.product.clan_renew_90.desc',
-        currency = 'rc',
-        price = 900,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'clock',
-        handler = 'clan',
-        clanAction = 'renew',
-        days = 90,
-        requiresLeader = true,
-    },
+local catalog = decodeCatalog(loadCatalogRaw())
+if not catalog then
+    error('[sunset_shop] failed to load shared/catalog.json')
+end
 
-    -- ═══ ECONOMY ═══
-    cash_pack_s = {
-        id = 'cash_pack_s',
-        category = 'economy',
-        labelKey = 'shop.product.cash_pack_s.label',
-        descriptionKey = 'shop.product.cash_pack_s.desc',
-        currency = 'rc',
-        price = 100,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'cash',
-        handler = 'economy',
-        bankAmount = 25000,
-    },
-    cash_pack_m = {
-        id = 'cash_pack_m',
-        category = 'economy',
-        labelKey = 'shop.product.cash_pack_m.label',
-        descriptionKey = 'shop.product.cash_pack_m.desc',
-        currency = 'rc',
-        price = 250,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'cash',
-        handler = 'economy',
-        bankAmount = 70000,
-    },
-    cash_pack_l = {
-        id = 'cash_pack_l',
-        category = 'economy',
-        labelKey = 'shop.product.cash_pack_l.label',
-        descriptionKey = 'shop.product.cash_pack_l.desc',
-        currency = 'rc',
-        price = 500,
-        enabled = true,
-        repeatable = true,
-        cooldown = 0,
-        icon = 'cash',
-        handler = 'economy',
-        bankAmount = 150000,
-    },
-
-    -- ═══ VEHICLE ═══
-    -- No RC vehicle products: vanity plates are already sold for cash at the
-    -- tuning shop (sunset_tuning, in-transaction plate uniqueness). The
-    -- category stays visible with an empty state until a product ships.
-}
+ShopConfig = catalog.config or {}
+ShopCategories = catalog.categories or {}
+ShopProducts = catalog.products or {}
 
 local function categoryOrder(categoryId)
     for _, category in ipairs(ShopCategories) do
@@ -245,7 +41,6 @@ local function categoryOrder(categoryId)
     return 99
 end
 
--- Returns the product definition only when it exists AND is enabled.
 function ShopGetProduct(productId)
     if type(productId) ~= 'string' then return nil end
     local product = ShopProducts[productId]
@@ -253,7 +48,6 @@ function ShopGetProduct(productId)
     return product
 end
 
--- Client-safe, sorted copy of the enabled catalog (no handler internals).
 function ShopPublicProducts()
     local out = {}
     for id, product in pairs(ShopProducts) do
@@ -286,7 +80,6 @@ function ShopPublicProducts()
     return out
 end
 
--- Static catalog sanity check (run on resource start and by scripts/test-shop.js).
 function ShopValidateCatalog()
     local problems = {}
     local validCategory = {}

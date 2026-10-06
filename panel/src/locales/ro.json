@@ -72,7 +72,41 @@
     "select_character": "Alege Personaj",
     "feed": "Feed",
     "forum": "Forumul",
-    "gallery": "Galerie"
+    "gallery": "Galerie",
+    "shop": "Magazin Racket"
+  },
+  "shop": {
+    "subtitle": "Același catalog și aceleași prețuri RC ca în Magazinul Racket din joc.",
+    "login_required": "Autentifică-te pentru a cumpăra.",
+    "login_to_buy": "Autentifică-te pentru a cumpăra",
+    "character_required": "Selectează un personaj în cont înainte de achiziție.",
+    "top_up": "Cumpără RC",
+    "empty_category": "Niciun produs în această categorie momentan.",
+    "processing": "Se procesează…",
+    "buy_for": "Cumpără pentru {price} RC",
+    "bank_reward": "+${amount} în bancă",
+    "purchase_failed": "Achiziția nu a putut fi finalizată.",
+    "purchase_pending": "Achiziția este în așteptare — intră pe server dacă cumperi obiecte de gameplay.",
+    "back_to_shop": "Înapoi la Magazinul Racket",
+    "coins": {
+      "title": "Cumpără Racket Coins",
+      "subtitle": "Racket Coins (RC) sunt singura monedă pentru Magazinul Racket. Plățile sunt procesate securizat prin Stripe.",
+      "balance": "Sold: {amount} RC",
+      "buy": "Plătește",
+      "unavailable": "Indisponibil până când prețurile Stripe sunt configurate pe server.",
+      "checkout_error": "Checkout-ul nu a putut fi inițiat.",
+      "stripe_notice": "Plățile cu cardul se fac doar pe racket.cat — niciodată în FiveM.",
+      "success_title": "Plată primită",
+      "success_processing": "Se procesează Racket Coins…",
+      "success_fulfilled": "Racket Coins au fost adăugate în cont.",
+      "new_balance": "Sold nou: {amount} RC",
+      "package": {
+        "rc_500": "Pachet starter",
+        "rc_1200": "Pachet standard",
+        "rc_2500": "Pachet plus",
+        "rc_6000": "Pachet elite"
+      }
+    }
   },
   "community": {
     "section_title": "Comunitate",

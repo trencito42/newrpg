@@ -302,6 +302,27 @@ exports('PurchaseProduct', function(source, productId, requestId, params)
     return purchase(source, productId, requestId, params)
 end)
 
+-- Panel queue settlement: same engine path as in-game, requires the account to be
+-- online on the selected character (no parallel financial logic in Next.js).
+exports('PurchaseProductForPanel', function(accountId, characterId, productId, requestId, params)
+    accountId = tonumber(accountId)
+    characterId = tonumber(characterId)
+    if not accountId or not characterId then
+        return nil, { localeKey = 'shop.purchase.invalid_request' }
+    end
+    local source = exports.sunset_core:GetSourceByAccountId(accountId)
+    if not source or source <= 0 then
+        return nil, { localeKey = 'shop.purchase.not_online' }
+    end
+    local ctx = getContext(source)
+    if not ctx or tonumber(ctx.accountId) ~= accountId or tonumber(ctx.characterId) ~= characterId then
+        return nil, { localeKey = 'shop.purchase.character_mismatch' }
+    end
+    params = type(params) == 'table' and params or {}
+    local result, err = purchase(source, productId, requestId, { tag = params.tag, color = params.color })
+    return result, err
+end)
+
 exports('GetProductPrice', function(productId)
     local product = ShopGetProduct(productId)
     return product and product.price or nil

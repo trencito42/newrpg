@@ -72,7 +72,41 @@
     "select_character": "Select Character",
     "feed": "Feed",
     "forum": "Forum",
-    "gallery": "Gallery"
+    "gallery": "Gallery",
+    "shop": "Racket Shop"
+  },
+  "shop": {
+    "subtitle": "Same catalog and RC prices as the in-game Racket Shop.",
+    "login_required": "Log in to purchase.",
+    "login_to_buy": "Log in to buy",
+    "character_required": "Select a character on your account page before purchasing.",
+    "top_up": "Top up RC",
+    "empty_category": "No products in this category yet.",
+    "processing": "Processing…",
+    "buy_for": "Buy for {price} RC",
+    "bank_reward": "+${amount} bank",
+    "purchase_failed": "Purchase could not be completed.",
+    "purchase_pending": "Purchase is still pending — join the server if you are buying gameplay items.",
+    "back_to_shop": "Back to Racket Shop",
+    "coins": {
+      "title": "Buy Racket Coins",
+      "subtitle": "Racket Coins (RC) are the only currency for the Racket Shop. Payments are processed securely by Stripe.",
+      "balance": "Balance: {amount} RC",
+      "buy": "Checkout",
+      "unavailable": "Not available until Stripe pricing is configured on the server.",
+      "checkout_error": "Checkout could not be started.",
+      "stripe_notice": "Card payments happen only on racket.cat — never inside FiveM.",
+      "success_title": "Payment received",
+      "success_processing": "Processing your Racket Coins…",
+      "success_fulfilled": "Racket Coins added to your account.",
+      "new_balance": "New balance: {amount} RC",
+      "package": {
+        "rc_500": "Starter pack",
+        "rc_1200": "Standard pack",
+        "rc_2500": "Plus pack",
+        "rc_6000": "Elite pack"
+      }
+    }
   },
   "community": {
     "section_title": "Community",

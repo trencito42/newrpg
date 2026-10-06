@@ -195,14 +195,15 @@
 /* ── List items (simple: model + plate only) ───────────────── */
 
 #menu-vehicle-grid .v-item {
-    padding: 14px 20px;
+    padding: 12px 16px;
     border-left: none;
     border-bottom: 1px solid rgba(242, 239, 232, 0.04);
     cursor: pointer;
     transition: background-color 0.1s;
     display: flex;
-    flex-direction: column;
-    gap: 3px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     background: none;
     border-top: none;
     border-right: none;
@@ -220,10 +221,33 @@
     border-bottom-color: #D7B558;
 }
 
-/* Hide car icon in list items */
-#menu-vehicle-grid .vi-icon { display: none; }
+#menu-vehicle-grid .vi-thumb-wrap {
+    flex-shrink: 0;
+    width: 76px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
 
-/* Status badge hidden in list */
+#menu-vehicle-grid .vi-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+}
+
+#menu-vehicle-grid .vi-icon {
+    font-size: 28px;
+    color: rgba(242, 239, 232, 0.35);
+}
+
+#menu-vehicle-grid .vi-icon--fallback { display: none; }
+
+#menu-vehicle-grid .vi-icon--fallback:not(.hidden) { display: block; }
+
 #menu-vehicle-grid .vi-status { display: none; }
 
 #menu-vehicle-grid .vi-info {
@@ -248,7 +272,46 @@
     margin-top: 0;
 }
 
+#menu-vehicle-grid .vi-status-line {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(242, 239, 232, 0.45);
+    margin-top: 2px;
+}
+
+#menu-vehicle-grid .vi-status-line.garage { color: #7fa364; }
+#menu-vehicle-grid .vi-status-line.out { color: #d7b558; }
+#menu-vehicle-grid .vi-status-line.impound { color: #c4554d; }
+
 #menu-vehicle-grid .v-item.active .vi-plate { color: rgba(8, 8, 10, 0.65); }
+#menu-vehicle-grid .v-item.active .vi-status-line { color: rgba(8, 8, 10, 0.55); }
+
+#menu-vehicle-grid .vd-hero-thumb {
+    width: 100%;
+    max-height: 220px;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+#menu-vehicle-grid .vd-hero-img {
+    max-width: 92%;
+    max-height: 220px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
+}
+
+#menu-vehicle-grid .vd-hero-fallback {
+    font-size: 64px;
+    color: rgba(242, 239, 232, 0.2);
+}
 
 /* ── Detail panel ──────────────────────────────────────────── */
 

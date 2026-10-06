@@ -170,8 +170,13 @@ const Menu = {
     },
 
     vehicleImage(model) {
-        const m = (model || 'sultan').toLowerCase().replace(/[^a-z0-9_]/g, '');
-        return `assets/vehicles/${m}.webp`;
+        const m = String(model || 'sultan').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 64);
+        if (!m) return 'assets/vehicles/sultan.webp';
+        return `https://racket.cat/api/vehicle-thumbnails/${encodeURIComponent(m)}`;
+    },
+
+    vehicleImageFallbackHtml() {
+        return '<i class="ph-fill ph-car-profile vi-icon vi-icon--fallback" aria-hidden="true"></i>';
     },
 
     formatEcuBlock(info, vehicleId) {
@@ -383,13 +388,19 @@ const Menu = {
             const name = this.escape(v.displayName || v.label || this.t('common.vehicle'));
             const plate = this.escape(v.plate || '—');
             const isSelected = String(v.id) === String(this.selectedVehicleId);
+            const modelKey = String(v.model || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 64);
+            const thumb = this.vehicleImage(modelKey || v.model);
             return `<button type="button" class="v-item ${isSelected ? 'active' : ''}" data-v-select="${Number(v.id) || 0}">
-                <i class="ph-fill ph-car-profile vi-icon"></i>
+                <span class="vi-thumb-wrap">
+                    <img class="vi-thumb" src="${thumb}" alt="" loading="lazy" decoding="async"
+                        onerror="this.classList.add('hidden');var n=this.nextElementSibling;if(n)n.classList.remove('hidden');">
+                    ${this.vehicleImageFallbackHtml()}
+                </span>
                 <div class="vi-info">
                     <div class="vi-name">${name}</div>
                     <div class="vi-plate">${plate}</div>
+                    <div class="vi-status-line ${tag.cls}">${tag.label}</div>
                 </div>
-                <div class="vi-status ${tag.cls}">${tag.label}</div>
             </button>`;
         }).join('');
 
@@ -458,6 +469,12 @@ const Menu = {
                         <div class="vd-plate-state">${this.t('ui.mdc.san_andreas')}</div>
                         <div class="vd-plate-text">${plate}</div>
                     </div>
+                </div>
+                <div class="vd-hero-thumb">
+                    <img class="vd-hero-img" src="${this.vehicleImage(selected.model)}" alt=""
+                        loading="eager" decoding="async"
+                        onerror="this.classList.add('hidden');var n=this.nextElementSibling;if(n)n.classList.remove('hidden');">
+                    <div class="vd-hero-fallback hidden">${this.vehicleImageFallbackHtml()}</div>
                 </div>
                 <div class="vd-body">
                     <div class="vd-bars-box">

@@ -122,6 +122,18 @@ function createShopEnv(opts = {}) {
     };
     vm.setGlobal('ShopServices', toLua(services));
 
+    const catalogRaw = read(res('sunset_shop/shared/catalog.json'));
+    vm.setGlobal('json', toLua({
+        decode: luaFn((raw) => JSON.parse(String(toJs(raw) || ''))),
+    }));
+    vm.setGlobal('GetCurrentResourceName', luaFn(() => 'sunset_shop'));
+    vm.setGlobal('LoadResourceFile', luaFn((resourceName, filePath) => {
+        if (String(toJs(resourceName)) === 'sunset_shop' && String(toJs(filePath)) === 'shared/catalog.json') {
+            return catalogRaw;
+        }
+        return '';
+    }));
+
     for (const file of ['sunset_shop/shared/products.lua', 'sunset_shop/shared/validation.lua', 'sunset_shop/server/settlement.lua',
         'sunset_shop/server/handlers/character.lua', 'sunset_shop/server/handlers/clan.lua', 'sunset_shop/server/handlers/economy.lua']) {
         vm.run(read(res(file)), file);
@@ -669,7 +681,7 @@ group('server boundary (static)');
 
     // NUI keys used by the shop page exist in both languages.
     const html = read(res('sunset_shop/web/index.html'));
-    const keys = new Set([...html.matchAll(/data-i18n(?:-[a-z]+)?="([^"]+)"/g)].map((m) => m[1]));
+    const keys = new Set([...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]));
     for (const m of js.matchAll(/\bt\('([a-z][\w.]*)'/g)) keys.add(m[1]);
     for (const s of ['pending', 'processing', 'completed', 'refunded', 'failed']) keys.add(`shop.ui.status.${s}`);
     const missingNui = [...keys].filter((k) => !nuiHas('en', k) || !nuiHas('ro', k));

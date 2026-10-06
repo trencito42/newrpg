@@ -793,6 +793,42 @@ local function actionResult(row)
         end
     end
 
+    -- ═══════════════════════════════════════════════════════════════
+    -- 8. RACKET SHOP (panel → sunset_shop settlement)
+    -- ═══════════════════════════════════════════════════════════════
+    if row.action == 'shop_purchase' then
+        if tonumber(row.actor_account_id) ~= tonumber(row.target_account_id) then
+            return false, 'invalid_target'
+        end
+        if GetResourceState('sunset_shop') ~= 'started' then
+            return false, 'shop_unavailable'
+        end
+        local productId = type(payload.productId) == 'string' and payload.productId or nil
+        if not productId then return false, 'invalid_product' end
+        local purchaseParams = type(payload.params) == 'table' and payload.params or {}
+        local purchaseResult, purchaseErr
+        local okPurchase, callErr = pcall(function()
+            purchaseResult, purchaseErr = exports.sunset_shop:PurchaseProductForPanel(
+                row.actor_account_id,
+                row.actor_character_id or row.target_character_id,
+                productId,
+                row.request_id,
+                { tag = purchaseParams.tag, color = purchaseParams.color }
+            )
+        end)
+        if not okPurchase then
+            return false, tostring(callErr)
+        end
+        if not purchaseResult then
+            local key = type(purchaseErr) == 'table' and purchaseErr.localeKey or tostring(purchaseErr or 'shop_failed')
+            return false, key
+        end
+        local result = purchaseResult
+        local js = type(result) == 'table' and result or { ok = true }
+        if js.replay then js.replay = true end
+        return true, js
+    end
+
     return false, 'unsupported_action'
 end
 

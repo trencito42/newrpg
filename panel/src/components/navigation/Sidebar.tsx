@@ -33,6 +33,7 @@ import {
   Rss,
   ImageIcon,
   MessageSquare,
+  Coins,
 } from "lucide-react";
 import { t, Locale } from "@/lib/i18n";
 import { ViewerSessionDTO } from "@/lib/types";
@@ -69,6 +70,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
     { href: "/stats", label: t(locale, "nav.stats"), icon: BarChart3 },
     { href: "/polls", label: t(locale, "nav.polls"), icon: Vote },
     { href: "/rules", label: t(locale, "nav.rules"), icon: BookOpen },
+    { href: "/shop", label: t(locale, "nav.shop"), icon: Coins },
   ];
 
   const profileHref = session ? `/players/${encodeURIComponent(session.username)}` : "/login";
@@ -83,6 +85,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
         { href: "/my-character/jobs", label: t(locale, "nav.jobs"), icon: Briefcase },
         { href: "/my-character/licenses", label: t(locale, "nav.licenses"), icon: FileCheck },
         { href: "/my-character/missions", label: t(locale, "nav.missions"), icon: Target },
+        { href: "/shop", label: t(locale, "nav.shop"), icon: Coins },
         { href: "/account", label: t(locale, "nav.account"), icon: Lock },
       ]
     : [];

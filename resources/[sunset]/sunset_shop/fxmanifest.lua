@@ -31,6 +31,7 @@ server_scripts {
 }
 
 files {
+    'shared/catalog.json',
     'web/index.html',
     'web/css/shop.css',
     'web/js/shop.js',
@@ -50,6 +51,7 @@ exports {
 
 server_exports {
     'PurchaseProduct',
+    'PurchaseProductForPanel',
     'GetProductPrice',
     'GetRacketCredits',
     'TrySpendRacketCredits',

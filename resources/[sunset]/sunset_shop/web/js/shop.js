@@ -434,7 +434,31 @@
         if (!closeModals()) requestClose();
     });
 
+    function openTopUpUrl() {
+        const url = 'https://racket.cat/shop/coins';
+        post('shopOpenTopUp', { url }).then((res) => {
+            const target = (res && res.url) || url;
+            if (typeof window.invokeNative === 'function') {
+                window.invokeNative('openUrl', target);
+                return;
+            }
+            const fb = $('#shop-topup-fallback');
+            if (fb) {
+                fb.classList.remove('hidden');
+                fb.textContent = target.replace(/^https?:\/\//, '');
+            }
+        }).catch(() => {
+            const fb = $('#shop-topup-fallback');
+            if (fb) {
+                fb.classList.remove('hidden');
+                fb.textContent = t('shop.topup.url');
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+        const topupBtn = $('#shop-topup-btn');
+        if (topupBtn) topupBtn.addEventListener('click', openTopUpUrl);
         $('#shop-close-btn').addEventListener('click', requestClose);
         $('#shop-history-btn').addEventListener('click', openHistory);
         $('#shop-history-close').addEventListener('click', () => show($('#shop-history'), false));

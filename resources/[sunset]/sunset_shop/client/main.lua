@@ -112,6 +112,15 @@ RegisterNUICallback('shopPurchase', function(data, cb)
     cb({ ok = true, result = result })
 end)
 
+RegisterNUICallback('shopOpenTopUp', function(data, cb)
+    data = type(data) == 'table' and data or {}
+    local url = 'https://racket.cat/shop/coins'
+    if type(data.url) == 'string' and data.url:match('^https://racket%.cat/') then
+        url = data.url
+    end
+    cb({ ok = true, url = url })
+end)
+
 RegisterNUICallback('shopGetHistory', function(_, cb)
     local rows, err = Sunset.AwaitCallback('sunset:shop:getHistory')
     if not rows then

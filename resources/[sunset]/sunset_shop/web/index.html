@@ -41,6 +41,7 @@
                     <strong class="shop-balance-pill__val" id="shop-balance">0</strong>
                 </div>
             </div>
+            <button type="button" class="shop-hbtn shop-hbtn--topup" id="shop-topup-btn" data-i18n="shop.topup.button">Top up RC</button>
             <button type="button" class="shop-hbtn" id="shop-history-btn" data-i18n="shop.history.title">History</button>
             <button type="button" class="shop-hbtn shop-hbtn--close" id="shop-close-btn" aria-label="Close" data-i18n-ignore="pre-existing">&times;</button>
         </div>
@@ -49,6 +50,10 @@
     <!-- ── Letterbox bottom ─────────────────────────────── -->
     <div class="shop-letterbox shop-letterbox--bot">
         <span data-i18n="shop.ui.esc_hint">Press ESC to close</span>
+        <span class="shop-topup-hint" data-i18n="shop.topup.hint">Racket Coins are purchased securely on racket.cat.</span>
+    </div>
+    <div class="shop-topup-fallback hidden" id="shop-topup-fallback" role="status">
+        <span data-i18n="shop.topup.url">racket.cat/shop/coins</span>
     </div>
 
     <!-- ── Main body ────────────────────────────────────── -->
