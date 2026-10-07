@@ -1465,13 +1465,13 @@
   },
   {
     "model": "tolap2",
-    "handlingId": "emerus",
-    "nativeDonorHandlingId": "EMERUS",
+    "handlingId": "t20",
+    "nativeDonorHandlingId": "T20",
     "gameName": "tolap2",
     "vehicleClass": "VC_SPORT",
     "rawHandling": {
       "nativeDonor": true,
-      "handlingName": "EMERUS"
+      "handlingName": "T20"
     },
     "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
   },
@@ -1909,13 +1909,13 @@
   },
   {
     "model": "tolrrmansory",
-    "handlingId": "windsor2",
-    "nativeDonorHandlingId": "WINDSOR2",
+    "handlingId": "windsor",
+    "nativeDonorHandlingId": "WINDSOR",
     "gameName": "tolrrmansory",
     "vehicleClass": "VC_COUPE",
     "rawHandling": {
       "nativeDonor": true,
-      "handlingName": "WINDSOR2"
+      "handlingName": "WINDSOR"
     },
     "source": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
   },

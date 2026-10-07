@@ -6,10 +6,27 @@ STC.modelBaselines = STC.modelBaselines or {}
 -- Set while tuning intentionally reapplies canonical baseline (prevents ECU restore loop).
 STC._internalBaselineRestore = false
 
+local function usesNativeDonorHandling(veh)
+    if GetResourceState('sunset_vehicle_dynamics') ~= 'started' then return false end
+    local modelHash = veh and veh ~= 0 and GetEntityModel(veh)
+    if not modelHash then return false end
+    local ok, result = pcall(function()
+        return exports.sunset_vehicle_dynamics:UsesNativeDonorHandling(modelHash, veh)
+    end)
+    return ok and result == true
+end
+
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'sunset_vehicle_dynamics' then
+    if resourceName == 'sunset_vehicle_dynamics' or resourceName == 'sunset_tuning' then
         STC.modelBaselines = {}
     end
+end)
+
+AddEventHandler('sunset:vehicleDynamics:legacyPoisonHandling', function(veh)
+    if not veh or veh == 0 then return end
+    local modelHash = GetEntityModel(veh)
+    STC.modelBaselines[modelHash] = nil
+    STC.appliedVehicles[veh] = nil
 end)
 
 local function copyTable(value)
@@ -33,7 +50,14 @@ exports('CaptureModelBaseline', CaptureModelBaseline)
 function STC.captureModelBaseline(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return nil end
     local modelHash = STC.getModelHash(veh)
-    local handlingBaseline = STC.modelBaselines[modelHash]
+    local nativeDonor = usesNativeDonorHandling(veh)
+    if nativeDonor then
+        STC.modelBaselines[modelHash] = nil
+    end
+    local handlingBaseline = nil
+    if not nativeDonor then
+        handlingBaseline = STC.modelBaselines[modelHash]
+    end
 
     if not handlingBaseline then
         handlingBaseline = {}
@@ -57,7 +81,9 @@ function STC.captureModelBaseline(veh)
             end
         end
 
-        STC.modelBaselines[modelHash] = copyTable(handlingBaseline)
+        if not nativeDonor then
+            STC.modelBaselines[modelHash] = copyTable(handlingBaseline)
+        end
     end
 
     local baseline = copyTable(handlingBaseline)
@@ -83,8 +109,9 @@ end
 function STC.restoreBaselineHandling(veh, baseline)
     if not veh or not DoesEntityExist(veh) then return end
 
-    -- Re-apply canonical baseline from sunset_vehicle_dynamics if running
-    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
+    if usesNativeDonorHandling(veh) then
+        STC.modelBaselines[GetEntityModel(veh)] = nil
+    elseif GetResourceState('sunset_vehicle_dynamics') == 'started' then
         STC._internalBaselineRestore = true
         local ok, err = pcall(function()
             exports.sunset_vehicle_dynamics:ApplyVehicleDynamics(veh, true)

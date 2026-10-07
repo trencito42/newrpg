@@ -61,6 +61,14 @@ end
 function ApplyTune(veh, tune, persist, modelName)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return false end
 
+    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
+        local poison = false
+        pcall(function()
+            poison = exports.sunset_vehicle_dynamics:HasLegacyAddonPoisonHandling(veh)
+        end)
+        if poison then return false end
+    end
+
     local classId = GetVehicleClass(veh)
     if not modelName or modelName == '' then
         modelName = GetDisplayNameFromVehicleModel(GetEntityModel(veh))

@@ -4302,7 +4302,7 @@
     <Item>
       <modelName>tolrrmansory</modelName>
       <txdName>tolrrmansory</txdName>
-      <handlingId>WINDSOR2</handlingId>
+      <handlingId>WINDSOR</handlingId>
       <gameName>tolrrmansory</gameName>
       <vehicleMakeName>RollsRoyce</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
@@ -5097,7 +5097,7 @@
     <Item>
       <modelName>tolap2</modelName>
       <txdName>tolap2</txdName>
-      <handlingId>EMERUS</handlingId>
+      <handlingId>T20</handlingId>
       <gameName>tolap2</gameName>
       <vehicleMakeName>HONDA</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

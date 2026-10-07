@@ -69,7 +69,17 @@ function SVD.ApplyVehicleDynamics(veh, force)
 
     local success = true
     if profile.handlingMode == 'native_donor' then
-        -- Stock physics come from vehicles.meta handlingId (GTA donor). Only reset gameplay multipliers.
+        if SVD.HasLegacyAddonPoisonHandling(veh) then
+            SVD.NotifyLegacyPoisonHandling(veh, profile.model, profile.nativeDonorHandlingId)
+            TriggerEvent('sunset:vehicleDynamics:legacyPoisonHandling', veh, profile.model)
+            SVD.appliedEntities[veh] = stateKey
+            return false
+        end
+        -- Stock physics: vehicles.meta donor only. Routine enter must not touch natives or ECU stack.
+        if not force then
+            SVD.appliedEntities[veh] = stateKey
+            return true
+        end
         local liveGears = GetVehicleHandlingInt(veh, 'CHandlingData', 'nInitialDriveGears')
         SVD.FinalizeBaselineNatives(veh, { nInitialDriveGears = liveGears })
     else

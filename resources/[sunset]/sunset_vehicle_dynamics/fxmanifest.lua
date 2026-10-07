@@ -21,6 +21,7 @@ shared_scripts {
 
 client_scripts {
     'client/baseline.lua',
+    'client/handling_guard.lua',
     'client/apply.lua',
     'client/lifecycle.lua',
     'client/diagnostics.lua',
@@ -39,6 +40,7 @@ client_exports {
     'GetCanonicalBaseline',
     'GetVehicleDynamicsProfile',
     'ApplyVehicleDynamics',
+    'HasLegacyAddonPoisonHandling',
     'IsVehicleManaged',
 }
 

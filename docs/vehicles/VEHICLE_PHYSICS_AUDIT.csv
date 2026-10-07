@@ -1,6 +1,6 @@
 model,identity,manufacturer,category,archetype,tier,drivetrain,massKg,driveForce,maxFlatVel,targetKmh,drag,tractionMax,tractionMin,brake,antiRoll,rollFront,rollRear,confidence,source
 "elegy2","Annis Elegy RH8","Annis","sports","sports_awd","sport_high","awd_rear","1620","0.37","193.2","255","6.2","2.7","2.51","1.1","1.32","0.25","0.265","confirmed","gta5"
-"tolap2","Apollo hypercar","Apollo","hypercar","hypercar_rwd","hyper","rwd","1350","EMERUS","","296","","","","","","","","inferred","resources/[cars]/pitd_tol_car_pack_a"
+"tolap2","Apollo hypercar","Apollo","hypercar","hypercar_rwd","hyper","rwd","1350","T20","","296","","","","","","","","inferred","resources/[cars]/pitd_tol_car_pack_a"
 "tola6","Audi A6","Audi","sedan","sedan_awd","warm","awd_rear","1800","JACKAL","","212","","","","","","","","confirmed","resources/[cars]/pitd_tol_car_pack_a"
 "tolaudidy","Audi performance concept","Audi","sports","sports_awd","sport_high","awd_rear","1750","PARIAH","","256","","","","","","","","inferred","resources/[cars]/pitd_tol_car_pack_a"
 "tolr8c","Audi R8","Audi","super","super_awd","super","awd_rear","1560","ZENTORNO","","295","","","","","","","","confirmed","resources/[cars]/pitd_tol_car_pack_a"
@@ -129,7 +129,7 @@ model,identity,manufacturer,category,archetype,tier,drivetrain,massKg,driveForce
 "neonvenm","Pfister Neon Venuum","Pfister","sports","sports_awd","sport_high","awd_balanced","1950","ELEGY2","","242","","","","","","","","confirmed","resources/[cars]/showcasecars/data/neonvenm"
 "turisgt3","Pfister sports derivative","Pfister","sports","sports_rwd","sport_high","rwd","1480","ELEGY","","255","","","","","","","","inferred","resources/[cars]/showcasecars/data/turisgt3"
 "t20","Progen T20","Progen","hypercar","hypercar_awd","hyper","awd_rear","1390","0.445","227.3","300","5.15","3","2.82","1.3","1.75","0.175","0.19","confirmed","gta5"
-"tolrrmansory","Rolls-Royce Mansory","Rolls-Royce","grand_tourer","luxury_gt","sport_high","awd_rear","2550","WINDSOR2","","245","","","","","","","","inferred","resources/[cars]/pitd_tol_car_pack_a"
+"tolrrmansory","Rolls-Royce Mansory","Rolls-Royce","grand_tourer","luxury_gt","sport_high","awd_rear","2550","WINDSOR","","245","","","","","","","","inferred","resources/[cars]/pitd_tol_car_pack_a"
 "adder","Truffade Adder","Truffade","hypercar","hypercar_awd","hyper","awd_rear","1888","0.445","227.3","300","5.15","3","2.82","1.28","1.72","0.175","0.19","confirmed","gta5"
 "cyphx","Übermacht performance sedan","Übermacht","performance_sedan","performance_sedan_rwd","performance_sedan","rwd","1850","SENTINEL3","","265","","","","","","","","inferred","resources/[cars]/showcasecars2/data/cyphx"
 "d7cyp","Übermacht performance sedan","Übermacht","performance_sedan","performance_sedan_rwd","performance_sedan","rwd","1850","CYCLONE","","265","","","","","","","","inferred","resources/[sunset]/sunset_addon_vehicles"

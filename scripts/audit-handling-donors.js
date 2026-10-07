@@ -37,9 +37,9 @@ fail(applyLua.includes("profile.handlingMode == 'native_donor'"), 'apply.lua mus
 fail(baselineLua.includes('readLiveHandlingBaseline'), 'baseline.lua must read live handling for native donors');
 fail(baselineLua.includes('UsesNativeDonorHandling'), 'baseline.lua must export UsesNativeDonorHandling');
 
-fail(byModel.get('tolap2')?.nativeDonorHandlingId === 'EMERUS', 'tolap2 donor must be EMERUS');
-fail(byModel.get('tolrrmansory')?.nativeDonorHandlingId === 'WINDSOR2', 'tolrrmansory donor must be WINDSOR2');
-fail(EXPLICIT_DONORS.tolap2.donorId === 'EMERUS', 'explicit donor map tolap2');
+fail(byModel.get('tolap2')?.nativeDonorHandlingId === 'T20', 'tolap2 donor must be T20');
+fail(byModel.get('tolrrmansory')?.nativeDonorHandlingId === 'WINDSOR', 'tolrrmansory donor must be WINDSOR');
+fail(EXPLICIT_DONORS.tolap2.donorId === 'T20', 'explicit donor map tolap2');
 
 const vanillaProfiles = all.profiles.filter((p) => p.handlingMode !== 'native_donor');
 fail(vanillaProfiles.length >= 60, 'vanilla canonical profiles must remain for managed GTA vehicles');

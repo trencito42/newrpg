@@ -5,14 +5,14 @@ const { isVanillaHandlingId, normalizeHandlingId } = require('./gta-vanilla-hand
 /** Manual overrides (highest priority). confidence: confirmed | inferred | needs_drive_test */
 const EXPLICIT_DONORS = {
   tolrrmansory: {
-    donorId: 'WINDSOR2',
+    donorId: 'WINDSOR',
     confidence: 'confirmed',
-    note: 'Enus Windsor Drop — luxury convertible GT; replaces unstable TOL handling.meta',
+    note: 'Enus Windsor coupe — planted luxury GT (avoid Windsor Drop on tall RR shell)',
   },
   tolap2: {
-    donorId: 'EMERUS',
+    donorId: 'T20',
     confidence: 'confirmed',
-    note: 'Progen Emerus — low-slung RWD hyper; replaces canonical hypercar_rwd override',
+    note: 'Progen T20 — planted AWD hyper baseline for low-shell addons',
   },
   schlagenstr: {
     donorId: 'SCHLAGEN',

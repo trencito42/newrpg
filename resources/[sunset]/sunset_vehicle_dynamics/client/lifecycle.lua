@@ -34,7 +34,11 @@ AddEventHandler('gameEventTriggered', function(name, args)
         local veh = args[2]
         if playerPed == PlayerPedId() and veh and DoesEntityExist(veh) then
             if not SVD.appliedEntities[veh] then
-                SVD.ApplyVehicleDynamics(veh, false)
+                SetTimeout(800, function()
+                    if DoesEntityExist(veh) and GetVehiclePedIsIn(PlayerPedId(), false) == veh then
+                        SVD.ApplyVehicleDynamics(veh, false)
+                    end
+                end)
             end
         end
     end

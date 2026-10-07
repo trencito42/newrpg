@@ -160,9 +160,7 @@ function SunsetVehicleDynamics.Resolve(modelIdentifier, classId)
         resolved.isFallback = true
         source = 'fallback_' .. fallbackArchetypeKey
 
-        if SunsetVehicleDynamics.Config.Debug then
-            print(string.format('^3[vehicle_dynamics] Missing explicit profile for %s, using fallback archetype: %s^7', resolved.model, fallbackArchetypeKey))
-        end
+        print(string.format('^1[vehicle_dynamics] WARNING: No explicit profile for %s — applying generated fallback %s (addon vehicles must be native_donor)^7', resolved.model, fallbackArchetypeKey))
     end
 
     if resolved.archetype and SunsetVehicleDynamics.Archetypes[resolved.archetype] then

@@ -58,8 +58,8 @@ const tierAverage = (tier, field) => {
 };
 fail(tierAverage('super', (p) => p.targetTopSpeedKmh) > tierAverage('economy', (p) => p.targetTopSpeedKmh) + 75, 'supercar hierarchy collapsed toward economy cars');
 fail(tierAverage('performance_sedan', (p) => p.targetTopSpeedKmh) > tierAverage('civilian', (p) => p.targetTopSpeedKmh) + 50, 'performance sedan hierarchy collapsed');
-fail(byModel.get('tolap2')?.handlingMode === 'native_donor' && byModel.get('tolap2')?.nativeDonorHandlingId === 'EMERUS', 'tolap2 must use EMERUS native donor');
-fail(byModel.get('tolrrmansory')?.handlingMode === 'native_donor' && byModel.get('tolrrmansory')?.nativeDonorHandlingId === 'WINDSOR2', 'tolrrmansory must use WINDSOR2 native donor');
+fail(byModel.get('tolap2')?.handlingMode === 'native_donor' && byModel.get('tolap2')?.nativeDonorHandlingId === 'T20', 'tolap2 must use T20 native donor');
+fail(byModel.get('tolrrmansory')?.handlingMode === 'native_donor' && byModel.get('tolrrmansory')?.nativeDonorHandlingId === 'WINDSOR', 'tolrrmansory must use WINDSOR native donor');
 fail(byModel.get('tol22m5')?.handlingMode === 'native_donor', 'tol22m5 addon must not receive canonical override');
 fail(byModel.get('zentorno').handling.vecCentreOfMassOffset.z <= -0.17 && byModel.get('zentorno').handling.fAntiRollBarForce >= 1.65, 'Zentorno rollover fix regressed');
 fail(byModel.get('toldemon')?.drivetrain === 'rwd', 'Demon identity drivetrain');
