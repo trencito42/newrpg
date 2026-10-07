@@ -124,7 +124,10 @@ function FactionRoster.adjustGrade(source, characterId, delta)
 
     local label = FactionLabels.get(factionId, newGrade)
     local auditAction = delta > 0 and 'rank_up' or 'rank_down'
-    FactionCore.auditLog(factionId, char.id, auditAction, characterId, { grade = newGrade })
+    FactionCore.auditLog(factionId, char.id, auditAction, characterId, {
+        grade = newGrade,
+        previousGrade = member.grade,
+    })
     local targetName = FactionCore.memberDisplayName(characterId)
     FactionCore.broadcastManagement(factionId, source,
         { localeKey = delta > 0 and 'factions.msg.promoted_target_to' or 'factions.msg.demoted_target_to', params = { target_name = tostring(targetName), label = tostring(label) } })

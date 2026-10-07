@@ -1995,6 +1995,16 @@ registerServerCommand('report', function(source, args)
 
     notify(source, exports.sunset_core:TFor(source, 'admin.msg.your_report_has_been_sent_to'), 'success')
 
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = text,
+                channelType = 'report',
+            })
+        end)
+    end
+
     -- Sent in RED to all on-duty admins (or all admins if none on duty)
     local sentCount = 0
     for _, pid in ipairs(GetPlayers()) do
@@ -2219,6 +2229,17 @@ local function handleNewbieQuestion(source, args, cmdName)
 
     notify(source, exports.sunset_core:TFor(source, 'admin.msg.your_question_has_been_sent_to'), 'success')
 
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = text,
+                channelType = 'newbie_q',
+                metadata = { command = cmdName },
+            })
+        end)
+    end
+
     -- Sent in DARK GREEN to asking player so they see their question confirmed in chat
     TriggerClientEvent('sunset:chat:message', source, {
         id = source,
@@ -2318,6 +2339,16 @@ local function handleNewbieAnswer(source, args)
         time = os.date('%H:%M:%S'),
         type = 'newbie_qa',
     })
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = answer,
+                channelType = 'newbie_qa',
+                metadata = { question = q.text, asker_character_source = q.src, asker_name = q.name },
+            })
+        end)
+    end
     notify(source, exports.sunset_core:TFor(source, 'admin.msg.ai_raspuns_la_intrebarea_lui', { name = tostring(q.name) }), 'success')
 end
 

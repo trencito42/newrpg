@@ -22,6 +22,7 @@ client_scripts {
 }
 server_scripts {
     'server/attachments.lua',
+    'server/chat_log.lua',
     'server/main.lua',
     'server/command_router.lua',
     'server/connect_motd.lua',
@@ -30,6 +31,7 @@ server_scripts {
 server_exports {
     'BeginChatAttachment', 'QueueChatAttachment', 'PeekChatAttachment',
     'ClearChatAttachment', 'ApplyChatAttachment', 'NormalizeRichText', 'ResolveLinkedText',
+    'LogChatMessage',
 }
 
 dependencies { 'sunset_core', 'sunset_admin', 'sunset_factions', 'sunset_clans' }

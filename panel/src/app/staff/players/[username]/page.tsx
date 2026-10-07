@@ -6,7 +6,10 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 import { factionGradeSql, factionIdSql } from "@/lib/faction-sql";
-import { PlayerAdminManage } from "./PlayerAdminManage";
+import { Suspense } from "react";
+import { PlayerManageTrigger } from "@/components/player-management/PlayerManageTrigger";
+import type { PlayerManagementSanction } from "@/lib/player-management/types";
+import { StaffPlayerProfileTabs } from "@/components/player-management/StaffPlayerProfileTabs";
 import {
   ArrowLeft,
   Shield,
@@ -33,6 +36,8 @@ import {
 import { CANONICAL_FACTIONS } from "@/lib/factions";
 import { formatAuditDetails } from "@/lib/audit-details";
 import { resolvePlayerIdentities } from "@/lib/player-identity";
+import { canViewChatLogs } from "@/lib/staff-chat-logs";
+import { PlayerChatLogsTab } from "./PlayerChatLogsTab";
 
 interface Context {
   params: Promise<{ username: string }>;
@@ -184,6 +189,7 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
     [player.account_id]
   );
   const isOnline = Boolean(runtimeSnapshot);
+  const showChatLogs = canViewChatLogs(session) && Boolean(player.character_id);
 
   const sanctionIdentities = await resolvePlayerIdentities(
     sanctions.map((s) => s.admin_name).concat(auditLogs.map((a) => a.actor_username)).filter(Boolean)
@@ -234,12 +240,15 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         </div>
 
         {/* Global Action Button */}
-        <PlayerAdminManage
-          player={player}
+        <PlayerManageTrigger
+          player={{
+            ...(player as unknown as Record<string, unknown>),
+            is_online: isOnline,
+          }}
           sessionAdminLevel={session.adminLevel}
           sessionHelperLevel={session.helperLevel}
           locale={locale}
-          sanctionsList={sanctions}
+          sanctionsList={sanctions as unknown as PlayerManagementSanction[]}
           badges={badges}
         />
       </div>
@@ -259,6 +268,8 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
         </div>
       )}
 
+      <Suspense fallback={null}>
+        <StaffPlayerProfileTabs locale={locale}>
       {/* Grid: Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Card 1: Account Info */}
@@ -511,6 +522,28 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
             </div>
           </div>
 
+          {showChatLogs && (
+            <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-surface-border">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#F2EFE8]">
+                  <FileText className="w-4 h-4 text-[#D7B558]" />
+                  <span>{t(locale, "staffChatLogs.player_tab_title")}</span>
+                </div>
+                <Link
+                  href="/staff/chat-logs"
+                  className="text-[10px] text-[#D7B558] hover:underline"
+                >
+                  {t(locale, "staffChatLogs.open_global")}
+                </Link>
+              </div>
+              <PlayerChatLogsTab
+                locale={locale}
+                playerUsername={String(player.username)}
+                characterId={player.character_id ? Number(player.character_id) : null}
+              />
+            </div>
+          )}
+
           {/* Sanctions History */}
           <div className="border border-surface-border rounded bg-[#0E0E10] p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
@@ -593,6 +626,8 @@ export default async function StaffPlayerDetailPage({ params }: Context) {
           </div>
         </div>
       </div>
+        </StaffPlayerProfileTabs>
+      </Suspense>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased min-h-screen flex flex-col lg:flex-row">
+      <body className="bg-background text-foreground antialiased min-h-[100dvh] flex flex-col lg:flex-row overflow-x-hidden">
         <LocaleProvider locale={locale}>
         <RouteScrollReset />
         <PlayerPreviewProvider>
@@ -85,7 +85,7 @@ export default async function RootLayout({
             playerCount={serverStatus.playerCount}
           />
 
-          <div className="hidden lg:flex flex-shrink-0 sticky top-0 h-screen">
+          <div className="hidden lg:flex flex-shrink-0 sticky top-0 h-[100dvh] max-h-[100dvh] self-start">
             <Sidebar
               locale={locale}
               session={viewerSession}
@@ -95,7 +95,7 @@ export default async function RootLayout({
             />
           </div>
 
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 lg:max-h-[100dvh] lg:overflow-y-auto">
             <Header locale={locale} session={viewerSession} identity={viewerIdentity} />
             <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1560px] w-full mx-auto [--panel-gutter:1rem] sm:[--panel-gutter:1.5rem]">
               {children}

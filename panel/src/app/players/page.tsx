@@ -11,6 +11,9 @@ import { getFactionLabel, isFaction } from "@/lib/factions";
 import { factionIdSql } from "@/lib/faction-sql";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
+import { fetchOnlinePlayersPayload } from "@/lib/online-players";
+import { PlayersDirectoryTabs } from "@/components/players/PlayersDirectoryTabs";
+import { PlayersOnlineTab } from "@/components/players/PlayersOnlineTab";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getViewerLocale();
@@ -40,18 +43,39 @@ interface CountRow extends RowDataPacket {
   total: number;
 }
 
+type PlayersTab = "all" | "online";
+
+function parsePlayersTab(raw: string | undefined): PlayersTab {
+  return raw === "online" ? "online" : "all";
+}
+
+function playersDirectoryHref(opts: { tab: PlayersTab; q?: string; page?: number }) {
+  const parts = new URLSearchParams();
+  parts.set("tab", opts.tab);
+  const q = opts.q?.trim();
+  if (q) parts.set("q", q);
+  if (opts.tab === "all" && opts.page && opts.page > 1) {
+    parts.set("page", String(opts.page));
+  }
+  return `/players?${parts.toString()}`;
+}
+
 export default async function PlayersDirectoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; sort?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; sort?: string; tab?: string }>;
 }) {
   const params = await searchParams;
   const locale = await getViewerLocale();
+  const tab = parsePlayersTab(params.tab);
 
   const q = params.q?.trim() || "";
   const page = Math.max(1, Number(params.page) || 1);
   const limit = 20;
   const offset = (page - 1) * limit;
+
+  const onlineSnapshot = await fetchOnlinePlayersPayload();
+  const initialOnlineCount = onlineSnapshot.fresh ? onlineSnapshot.playerCount : 0;
 
   let whereClause = "";
   const queryParams: any[] = [];
@@ -62,40 +86,44 @@ export default async function PlayersDirectoryPage({
     queryParams.push(pattern);
   }
 
-  // Count total matching
-  const countRow = await dbQuerySingle<CountRow>(
-    `SELECT COUNT(*) AS total 
-     FROM accounts a
-     JOIN players p ON p.account_id = a.id
-     JOIN characters c ON c.player_id = p.id
-     ${whereClause}`,
-    queryParams
-  );
-  const totalCount = countRow?.total || 0;
-  const totalPages = Math.ceil(totalCount / limit);
+  let totalCount = 0;
+  let totalPages = 0;
+  let players: PlayerListRow[] = [];
 
-  // Fetch paginated players with clan information
-  const players = await dbQuery<PlayerListRow>(
-    `SELECT 
-       a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job,
-       c.metadata,
-       ${factionIdSql()} AS faction_id, c.last_played,
-       cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
-     FROM accounts a
-     JOIN players p ON p.account_id = a.id
-     JOIN characters c ON c.player_id = p.id
-     LEFT JOIN clan_members cm ON cm.character_id = c.id
-     LEFT JOIN clans cl ON cl.id = cm.clan_id
-     ${whereClause}
-     ORDER BY c.level DESC, c.respect_points DESC, a.id ASC
-     LIMIT ? OFFSET ?`,
-    [...queryParams, limit, offset]
-  );
+  if (tab === "all") {
+    const countRow = await dbQuerySingle<CountRow>(
+      `SELECT COUNT(*) AS total 
+       FROM accounts a
+       JOIN players p ON p.account_id = a.id
+       JOIN characters c ON c.player_id = p.id
+       ${whereClause}`,
+      queryParams,
+    );
+    totalCount = countRow?.total || 0;
+    totalPages = Math.ceil(totalCount / limit);
+
+    players = await dbQuery<PlayerListRow>(
+      `SELECT 
+         a.username, c.id, c.level, c.respect_points, c.paydays_received, c.job,
+         c.metadata,
+         ${factionIdSql()} AS faction_id, c.last_played,
+         cl.tag as clan_tag, cl.tag_color as clan_tag_color, cl.tag_style as clan_tag_style
+       FROM accounts a
+       JOIN players p ON p.account_id = a.id
+       JOIN characters c ON c.player_id = p.id
+       LEFT JOIN clan_members cm ON cm.character_id = c.id
+       LEFT JOIN clans cl ON cl.id = cm.clan_id
+       ${whereClause}
+       ORDER BY c.level DESC, c.respect_points DESC, a.id ASC
+       LIMIT ? OFFSET ?`,
+      [...queryParams, limit, offset],
+    );
+  }
 
   return (
     <div className="space-y-4">
       {/* Top Search & Filter Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "players.directory_title")}
@@ -103,6 +131,7 @@ export default async function PlayersDirectoryPage({
         </div>
 
         <form method="GET" className="relative w-full sm:w-64">
+          <input type="hidden" name="tab" value={tab} />
           <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[#8F8B83] pointer-events-none" />
           <input
             type="text"
@@ -114,7 +143,16 @@ export default async function PlayersDirectoryPage({
         </form>
       </div>
 
-      {/* Players Table */}
+      <PlayersDirectoryTabs
+        activeTab={tab}
+        locale={locale}
+        initialOnlineCount={initialOnlineCount}
+        initialOnlineFresh={onlineSnapshot.fresh}
+      />
+
+      {tab === "online" ? (
+        <PlayersOnlineTab query={q} />
+      ) : (
       <div className="rounded-xl bg-surface-100 overflow-hidden">
         <div className="p-2.5 px-3 flex items-center justify-between text-xs text-[#99958E]">
           <span>{t(locale, "players.found_count", { count: totalCount })}</span>
@@ -218,7 +256,7 @@ export default async function PlayersDirectoryPage({
             <div className="flex items-center space-x-1">
               {page > 1 ? (
                 <Link
-                  href={`/players?q=${encodeURIComponent(q)}&page=${page - 1}`}
+                  href={playersDirectoryHref({ tab: "all", q, page: page - 1 })}
                   className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] flex items-center space-x-1 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
@@ -233,7 +271,7 @@ export default async function PlayersDirectoryPage({
 
               {page < totalPages ? (
                 <Link
-                  href={`/players?q=${encodeURIComponent(q)}&page=${page + 1}`}
+                  href={playersDirectoryHref({ tab: "all", q, page: page + 1 })}
                   className="p-1 px-2 border border-surface-border rounded bg-surface-200 hover:bg-surface-300 text-[#F2EFE8] flex items-center space-x-1 transition-colors"
                 >
                   <span>{t(locale, "common.next")}</span>
@@ -249,6 +287,7 @@ export default async function PlayersDirectoryPage({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

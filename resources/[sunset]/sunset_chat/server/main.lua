@@ -127,7 +127,7 @@ local function hasCharacter(source)
     return ok and type(char) == 'table' and char.id ~= nil
 end
 
-local function checkMute(source)
+local function checkMute(source, blockedContext)
     if GetResourceState('sunset_admin') == 'started' then
         local ok, isMuted, remainingMin, reason = pcall(function()
             return exports.sunset_admin:IsMuted(source)
@@ -137,10 +137,38 @@ local function checkMute(source)
                 minutes = remainingMin or 1,
                 reason = reason or t(source, 'chat.default_mute_reason'),
             }), 'error')
+            if type(blockedContext) == 'table' and blockedContext.message and blockedContext.channelType then
+                pcall(function()
+                    ChatLog.record({
+                        source = source,
+                        message = blockedContext.message,
+                        channelType = blockedContext.channelType,
+                        status = 'blocked',
+                        metadata = { reason = 'muted', mute_reason = reason },
+                    })
+                end)
+            end
             return true
         end
     end
     return false
+end
+
+local function logChatSent(source, message, channelType, extra)
+    if type(message) ~= 'string' or message == '' then return end
+    pcall(function()
+        ChatLog.record({
+            source = source,
+            message = message,
+            channelType = channelType,
+            status = 'sent',
+            metadata = extra,
+            targetCharacterId = extra and extra.targetCharacterId,
+            targetName = extra and extra.targetName,
+            factionId = extra and extra.factionId,
+            clanId = extra and extra.clanId,
+        })
+    end)
 end
 
 local function clientAttachment(raw)
@@ -177,14 +205,21 @@ local function deliverPhoneCall(src, payload, ctx)
     end
     emit(src, fresh.peerName)
     if fresh.peerSource ~= src then emit(fresh.peerSource, peerView.peerName or payload.name) end
+    local peerChar = exports.sunset_core:GetCharacter(fresh.peerSource)
+    logChatSent(src, payload.message, 'phone_call', {
+        targetCharacterId = peerChar and tonumber(peerChar.id) or nil,
+        targetName = fresh.peerName,
+    })
     return true
 end
 
 RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, attachmentIndex, context)
     local src = source
     if not hasCharacter(src) then return end -- [SEC3]
-    if checkMute(src) then return end
     channel = tostring(channel or 'all'):lower()
+    local previewMsg = type(message) == 'string' and message:sub(1, 256) or ''
+    local previewChannel = (channel == 'ooc') and 'ooc' or (channel == 'staff') and 'staff_chat' or 'say'
+    if checkMute(src, { message = previewMsg, channelType = previewChannel }) then return end
     local requested = clientAttachment(attachment)
     ClearChatAttachment(src)
 
@@ -193,6 +228,17 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, atta
         local ok, isStaff = pcall(function() return exports.sunset_admin:IsStaff(src) end)
         if not ok or isStaff ~= true then
             TriggerClientEvent('sunset:chat:system', src, t(src, 'chat.staff_only'), 'error')
+            if message and cleanChatText(message, 256) then
+                pcall(function()
+                    ChatLog.record({
+                        source = src,
+                        message = cleanChatText(message, 256),
+                        channelType = 'staff_chat',
+                        status = 'blocked',
+                        metadata = { reason = 'not_staff' },
+                    })
+                end)
+            end
             return
         end
         ClearChatAttachment(src)
@@ -218,6 +264,7 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, atta
                 })
             end
         end
+        logChatSent(src, message, 'staff_chat')
         return
     end
 
@@ -295,9 +342,12 @@ RegisterNetEvent('sunset:chat:send', function(message, channel, attachment, atta
 
     if isOoc then
         sendBroadcast(payload)
+        logChatSent(src, message, 'ooc', { factionId = identity.factionId })
         ClearChatAttachment(src)
     else
         sendNearby(src, payload)
+        logChatSent(src, message, 'say', { factionId = identity.factionId })
+        ClearChatAttachment(src)
     end
 end)
 
@@ -318,6 +368,7 @@ local function runMeCommand(source, args)
         time = os.date('%H:%M:%S'),
         type = 'me',
     })
+    logChatSent(source, msg, 'me', { factionId = identity.factionId })
 end
 
 -- /a [message] — admin chat (Admin Level 1+)
@@ -349,6 +400,7 @@ RegisterCommand('a', function(source, args)
             })
         end
     end
+    logChatSent(source, msg, 'admin_chat')
 end, false)
 
 -- /e [message] — admin & helper staff chat
@@ -380,6 +432,7 @@ RegisterCommand('e', function(source, args)
             })
         end
     end
+    logChatSent(source, msg, 'staff_chat')
 end, false)
 
 local function runLeaderChatCommand(source, args)
@@ -437,6 +490,7 @@ local function runLeaderChatCommand(source, args)
             })
         end
     end
+    logChatSent(source, msg, 'leader_chat')
 end
 
 RegisterCommand('lc', function(source, args)
@@ -460,6 +514,7 @@ local function runDoCommand(source, args)
         time = os.date('%H:%M:%S'),
         type = 'do',
     })
+    logChatSent(source, msg, 'do', { factionId = identity.factionId })
 end
 
 local function runShoutCommand(source, args)
@@ -479,6 +534,7 @@ local function runShoutCommand(source, args)
         time = os.date('%H:%M:%S'),
         type = 'shout',
     }, 45.0)
+    logChatSent(source, msg, 'shout', { factionId = identity.factionId })
 end
 
 local function runWhisperCommand(source, args)
@@ -510,6 +566,8 @@ local function runWhisperCommand(source, args)
 
     local msg = ResolveLinkedText(source, args, 1)
     if not msg then return end
+    local targetChar = exports.sunset_core:GetCharacter(targetId)
+    local targetCharacterId = targetChar and tonumber(targetChar.id) or nil
     local whisperAttachment, bodyIndex = PeekChatAttachment(source)
     local function wrapped(src, key, name)
         local rendered = t(src, key, { name = name, message = '\1' })
@@ -556,6 +614,11 @@ local function runWhisperCommand(source, args)
         })
     end
     ClearChatAttachment(source)
+    logChatSent(source, msg, 'whisper', {
+        targetCharacterId = targetCharacterId,
+        targetName = targetIdent.name,
+        factionId = senderIdent.factionId,
+    })
 
     -- Proximity emote for bystanders within 2.2m
     local sCoords = GetEntityCoords(senderPed)
@@ -616,6 +679,7 @@ local function runCarWhisperCommand(source, args)
             end
         end
     end
+    logChatSent(source, msg, 'car_whisper', { factionId = senderIdent.factionId })
 end
 
 local function runLowCommand(source, args)
@@ -635,6 +699,7 @@ local function runLowCommand(source, args)
         time = os.date('%H:%M:%S'),
         type = 'low',
     }, 6.0)
+    logChatSent(source, msg, 'low', { factionId = identity.factionId })
 end
 
 local function runBCommand(source, args)
@@ -654,6 +719,7 @@ local function runBCommand(source, args)
         time = os.date('%H:%M:%S'),
         type = 'b',
     }, 22.0)
+    logChatSent(source, msg, 'b', { factionId = identity.factionId })
 end
 
 RegisterCommand('me', function(source, args)

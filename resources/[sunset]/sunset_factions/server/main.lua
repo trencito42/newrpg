@@ -347,7 +347,10 @@ exports.sunset_core:RegisterCallback('sunset:factionPromote', function(source, t
 
     exports.sunset_core:SetFaction(targetId, myFaction, newGrade)
     local gradeLabel = FactionLabels.get(myFaction, newGrade)
-    FactionCore.auditLog(myFaction, char.id, 'promote', target.id, { grade = newGrade })
+    FactionCore.auditLog(myFaction, char.id, 'promote', target.id, {
+        grade = newGrade,
+        previousGrade = tonumber(targetGrade) or 0,
+    })
     FactionCore.broadcastManagement(myFaction, source,
         { localeKey = 'factions.msg.promoted_to', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), grade_label = tostring(gradeLabel) } })
     TriggerClientEvent('sunset:client:notify', targetId, exports.sunset_core:TFor(targetId, 'factions.message.promoted_to_value', gradeLabel), 'success')
@@ -876,7 +879,7 @@ exports.sunset_core:RegisterCallback('sunset:factionDashboard', function(source)
     if motdRow then motd = tostring(motdRow.message or '') end
     local activityOk, activity = pcall(function()
         return MySQL.single.await([[
-            SELECT COUNT(*) AS total FROM faction_audit_log
+            SELECT COUNT(*) AS total FROM faction_logs
             WHERE faction_id = ? AND actor_character_id = ?
               AND created_at >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
         ]], { factionId, char.id })

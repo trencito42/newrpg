@@ -135,10 +135,10 @@ export default async function FactionManagePage({ params }: Context) {
   // Fetch audit log
   const auditLogs = await dbQuery<RowDataPacket>(
     `SELECT 
-      fal.id, fal.faction_id, fal.actor_character_id, fal.action, fal.details, fal.created_at,
+      fal.id, fal.faction_id, fal.actor_character_id, fal.event_type AS action, fal.metadata AS details, fal.created_at,
       actor_acc.username as actor_username,
       target_acc.username as target_username
-     FROM faction_audit_log fal
+     FROM faction_logs fal
      LEFT JOIN characters ac ON ac.id = fal.actor_character_id
      LEFT JOIN players ap ON ap.id = ac.player_id
      LEFT JOIN accounts actor_acc ON actor_acc.id = ap.account_id

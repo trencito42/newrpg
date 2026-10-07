@@ -192,14 +192,11 @@ test("staff can queue actions, citizen cannot spoof actor or inspect another que
   await page.goto("/staff/dashboard");
   await expect(page.getByRole("heading", { name: "Staff Panel" })).toBeVisible();
   await page.goto("/players/E2E_Citizen");
-  await expect(page.getByText("Staff actions")).toBeVisible();
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByPlaceholder("Reason (required)").fill("Isolated test warning request");
-  await page.getByRole("button", { name: "Send to FiveM" }).click();
-  const status = page.getByRole("status").filter({ hasText: "Queued" });
-  await expect(status).toBeVisible();
-  const queueId = Number((await status.innerText()).match(/#(\d+)/)?.[1]);
-  expect(queueId).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Manage Player" }).click();
+  await page.getByRole("button", { name: "Warn" }).click();
+  await page.getByPlaceholder(/Reason|Motiv/i).fill("Isolated test warning request");
+  await page.getByRole("button", { name: /Execute WARN|Warn/i }).click();
+  await expect(page.getByRole("status").filter({ hasText: /success|completed/i })).toBeVisible({ timeout: 30000 });
 
   for (const action of ["ban", "mute", "unban", "set_faction"] as const) {
     const requestId = randomUUID();

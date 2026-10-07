@@ -101,6 +101,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
     ? [
         { href: "/staff/dashboard", label: t(locale, "copy.components_navigation_sidebar.staff_panel"), icon: Radio },
         { href: "/staff/players", label: t(locale, "players.directory_title"), icon: Users },
+        { href: "/staff/chat-logs", label: t(locale, "staffChatLogs.nav"), icon: MessageSquare },
         ...(isAdmin
           ? [
               { href: "/staff/content", label: t(locale, "nav.staff_content"), icon: LayoutGrid },
@@ -123,7 +124,7 @@ export function Sidebar({ locale, session, identity }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-surface-100 flex flex-col flex-shrink-0 h-screen overflow-hidden text-[#B4AFA4]">
+    <aside className="w-64 bg-surface-100 flex flex-col flex-shrink-0 h-full min-h-0 max-h-[100dvh] overflow-hidden text-[#B4AFA4]">
       {/* Brand Header */}
       <div className="px-4 py-5 shrink-0">
         <Link href="/" aria-label={t(locale, "interface.racket_home")} className="block w-full">

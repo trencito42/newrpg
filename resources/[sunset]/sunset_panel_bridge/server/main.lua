@@ -26,6 +26,13 @@ local function broadcastAdmBot(msgRo, msgEn, msgType)
     })
 end
 
+local function writeFactionLog(factionId, actorCharId, action, targetCharId, details)
+    if GetResourceState('sunset_factions') ~= 'started' then return end
+    pcall(function()
+        exports.sunset_factions:WriteFactionLog(factionId, actorCharId, action, targetCharId, details or {})
+    end)
+end
+
 local function notifyTarget(targetSrc, msgRo, msgEn, kind)
     if targetSrc and targetSrc > 0 then
         local text = msgRo
@@ -622,10 +629,15 @@ local function actionResult(row)
                 MySQL.update.await('DELETE FROM faction_membership WHERE character_id = ?', { targetChar.id })
             end
 
-            MySQL.insert.await([[
-                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-                VALUES (?, ?, 'panel_set_faction', ?, ?)
-            ]], { factionId or 'none', actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
+            local logFactionId = factionId or currentFaction or 'none'
+            local auditAction = row.action == 'faction_set_member' and 'faction_set_member' or 'panel_set_faction'
+            writeFactionLog(logFactionId, actorCharId, auditAction, targetChar.id, {
+                grade = grade,
+                reason = row.reason,
+                previousFaction = currentFaction,
+                previousGrade = tonumber(targetChar.faction_grade or 0) or 0,
+                joining = joining,
+            })
 
             if targetSrc then
                 notifyTarget(targetSrc, factionId and ('Ai fost setat in factiunea %s (Rank %d)'):format(factionId, grade) or 'Ai fost scos din factiune.', 'info')
@@ -638,10 +650,11 @@ local function actionResult(row)
             if not exports.sunset_core:SetFactionByCharacterId(targetChar.id, factionId, grade) then
                 return false, 'faction_change_failed'
             end
-            MySQL.insert.await([[
-                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-                VALUES (?, ?, 'panel_set_rank', ?, ?)
-            ]], { factionId, actorCharId, targetChar.id, json.encode({ grade = grade, reason = row.reason }) })
+            writeFactionLog(factionId, actorCharId, 'panel_set_rank', targetChar.id, {
+                grade = grade,
+                reason = row.reason,
+                previousGrade = tonumber(targetChar.faction_grade or 0) or 0,
+            })
             return true, { grade = grade }
         end
 
@@ -650,10 +663,7 @@ local function actionResult(row)
                 INSERT INTO faction_warnings (faction_id, character_id, issued_by, reason)
                 VALUES (?, ?, ?, ?)
             ]], { factionId, targetChar.id, actorCharId or 0, row.reason })
-            MySQL.insert.await([[
-                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-                VALUES (?, ?, 'panel_warn', ?, ?)
-            ]], { factionId, actorCharId, targetChar.id, json.encode({ reason = row.reason }) })
+            writeFactionLog(factionId, actorCharId, 'panel_warn', targetChar.id, { reason = row.reason })
             if targetSrc then
                 notifyTarget(targetSrc, ('Ai primit un Faction Warning (FW) in %s: %s'):format(factionId, row.reason), 'warning')
             end
@@ -674,10 +684,7 @@ local function actionResult(row)
                     ON DUPLICATE KEY UPDATE fp = VALUES(fp), reason = VALUES(reason), set_by_character_id = VALUES(set_by_character_id)
                 ]], { targetChar.id, fp, row.reason, actorCharId })
             end
-            MySQL.insert.await([[
-                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-                VALUES (?, ?, ?, ?, ?)
-            ]], { factionId, actorCharId, row.action, targetChar.id, json.encode({ reason = row.reason, fp = fp }) })
+            writeFactionLog(factionId, actorCharId, row.action, targetChar.id, { reason = row.reason, fp = fp })
 
             if targetSrc then
                 notifyTarget(targetSrc, ('Ai fost demis din factiunea %s%s. Motiv: %s'):format(
@@ -689,10 +696,7 @@ local function actionResult(row)
         if row.action == 'faction_pardon_fp' then
             if actorAdminLevel < 3 and not actorIsLeader then return false, 'faction_permission_denied' end
             MySQL.update.await('DELETE FROM faction_punish WHERE character_id = ?', { targetChar.id })
-            MySQL.insert.await([[
-                INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-                VALUES (?, ?, 'panel_pardon_fp', ?, ?)
-            ]], { factionId, actorCharId, targetChar.id, json.encode({ reason = row.reason }) })
+            writeFactionLog(factionId, actorCharId, 'panel_pardon_fp', targetChar.id, { reason = row.reason })
             return true, { fp = 0 }
         end
 
@@ -712,6 +716,11 @@ local function actionResult(row)
                 ON DUPLICATE KEY UPDATE joined_at = IF(faction_id = VALUES(faction_id), joined_at, NOW()),
                     faction_id = VALUES(faction_id)
             ]], { targetChar.id, factionId })
+
+            writeFactionLog(factionId, actorCharId, 'setleader', targetChar.id, {
+                reason = row.reason,
+                assignedBy = actorAccount.username,
+            })
 
             broadcastAdmBot(('Admin %s l-a numit pe %s ca Lider al factiunii %s!'):format(
                 actorAccount.username, targetAccount.username, factionId), 'success')

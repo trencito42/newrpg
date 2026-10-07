@@ -250,7 +250,10 @@ exports.sunset_core:RegisterCallback('sunset:factionGiveRank', function(source, 
 
     exports.sunset_core:SetFaction(targetId, factionId, newGrade)
     local gradeLabel = FactionLabels.get(factionId, newGrade)
-    FactionCore.auditLog(factionId, char.id, 'giverank', target.id, { grade = newGrade })
+    FactionCore.auditLog(factionId, char.id, 'giverank', target.id, {
+        grade = newGrade,
+        previousGrade = tonumber(targetGrade) or 0,
+    })
     FactionCore.broadcastManagement(factionId, source,
         { localeKey = 'factions.msg.set_s_rank_to', params = { player_display_name = tostring(exports.sunset_core:GetPlayerDisplayName(targetId)), grade_label = tostring(gradeLabel) } })
     FactionCore.notify(targetId, exports.sunset_core:TFor(targetId, 'factions.msg.rank_set_to', { grade_label = tostring(gradeLabel) }), 'success')

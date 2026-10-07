@@ -36,6 +36,7 @@ client_exports {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/core.lua',
+    'server/faction_log.lua',
     'server/faction_labels.lua',
     'server/management.lua',
     'server/detention.lua',
@@ -49,4 +50,4 @@ server_scripts {
     'server/friendlyfire.lua',
 }
 
-exports { 'IsOnDuty', 'GetDutyState', 'IsFactionLeader', 'GetLeaderHqSpawn', 'HasFactionPerm', 'IsCuffed', 'GetWantedState', 'IsJailed', 'GetDetentionState', 'AddWantedCharge', 'ExecutePlayerCommand', 'RunChatCommand', 'RunFactionMotdCommand', 'RunFactionInviteCommand', 'RunFactionAcceptInviteCommand', 'RunFactionDeclineInviteCommand', 'GetConnectMotd' }
+exports { 'IsOnDuty', 'GetDutyState', 'IsFactionLeader', 'GetLeaderHqSpawn', 'HasFactionPerm', 'IsCuffed', 'GetWantedState', 'IsJailed', 'GetDetentionState', 'AddWantedCharge', 'ExecutePlayerCommand', 'RunChatCommand', 'RunFactionMotdCommand', 'RunFactionInviteCommand', 'RunFactionAcceptInviteCommand', 'RunFactionDeclineInviteCommand', 'GetConnectMotd', 'WriteFactionLog' }

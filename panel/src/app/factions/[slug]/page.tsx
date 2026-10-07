@@ -21,7 +21,9 @@ import { OrganizationHero } from "@/components/organizations/OrganizationHero";
 import { OrganizationTabs } from "@/components/organizations/OrganizationTabs";
 import { OrganizationApplicationsPanel } from "@/components/organizations/OrganizationApplicationsPanel";
 import { OrganizationRulesPanel } from "@/components/organizations/OrganizationRulesPanel";
+import { OrganizationFactionLogsPanel } from "@/components/organizations/OrganizationFactionLogsPanel";
 import { parseFactionTab } from "@/lib/org-tabs";
+import { getFactionAccess } from "@/lib/faction-access";
 
 interface MemberRow extends RowDataPacket {
   id: number;
@@ -143,12 +145,14 @@ export default async function FactionDetailPage({
   ]);
 
   const canManage = await canManageOrganization(session, "faction", slug);
+  const viewerFactionAccess = session ? await getFactionAccess(session.accountId, slug) : null;
+  const canViewLogs = Boolean(session && (session.adminLevel >= 3 || viewerFactionAccess));
   const descriptionOverride =
     locale === "ro" ? profile?.description_ro || null : profile?.description_en || null;
   const description = descriptionOverride || t(locale, faction.descriptionKey);
   const rulesMarkdown = (locale === "ro" ? profile?.rules_ro : profile?.rules_en) ?? null;
   const includeRanks = gradeLabels.length > 0;
-  const tab = parseFactionTab(tabRaw, includeRanks);
+  const tab = parseFactionTab(tabRaw, includeRanks, canViewLogs);
 
   const isMember = session
     ? members.some((m) => m.username.toLowerCase() === session.username.toLowerCase())
@@ -163,6 +167,7 @@ export default async function FactionDetailPage({
     { id: "applications", label: t(locale, "applications.title") },
     { id: "rules", label: t(locale, "orgUi.tab_rules") },
     ...(includeRanks ? [{ id: "ranks", label: t(locale, "orgUi.tab_ranks") }] : []),
+    ...(canViewLogs ? [{ id: "logs", label: t(locale, "orgUi.tab_logs") }] : []),
   ];
 
   const statsRow = (
@@ -337,6 +342,11 @@ export default async function FactionDetailPage({
       )}
       {tab === "rules" && (
         <OrganizationRulesPanel locale={locale} rulesMarkdown={rulesMarkdown} orgKind="faction" />
+      )}
+      {tab === "logs" && canViewLogs && (
+        <div className="rounded-xl bg-[#0E0E10] p-4 sm:p-5">
+          <OrganizationFactionLogsPanel locale={locale} factionSlug={slug} factionColor={factionColor} />
+        </div>
       )}
       {tab === "ranks" && includeRanks && (
         <div className="rounded-xl bg-[#0E0E10] overflow-hidden max-w-lg">

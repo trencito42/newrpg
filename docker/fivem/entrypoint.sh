@@ -60,6 +60,9 @@ if [ -f /config-mount/server.cfg.template ]; then
       *__TEST_AGENT_TOKEN__*)
         line="${line//__TEST_AGENT_TOKEN__/${TEST_AGENT_TOKEN:-}}"
         ;;
+      *__CHAT_LOG_RETENTION_DAYS__*)
+        line="${line//__CHAT_LOG_RETENTION_DAYS__/${CHAT_LOG_RETENTION_DAYS:-90}}"
+        ;;
     esac
     printf '%s\n' "$line"
   done < /config-mount/server.cfg.template > /config/server.cfg

@@ -26,7 +26,7 @@ interface OnlinePlayersListProps {
 export function OnlinePlayersList({ locale, players, loading }: OnlinePlayersListProps) {
   if (loading && players.length === 0) {
     return (
-      <div className="space-y-2 p-3" aria-busy="true" aria-label={t(locale, "home.online_players_title")}>
+      <div className="space-y-2 p-3" aria-busy="true" aria-label={t(locale, "players.tab_online_label")}>
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-12 rounded-lg bg-surface-200/40 animate-pulse" />
         ))}
@@ -105,7 +105,7 @@ export function OnlinePlayersList({ locale, players, loading }: OnlinePlayersLis
         </table>
       </div>
 
-      <ul className="md:hidden divide-y divide-surface-border/80 max-h-[min(70dvh,520px)] overflow-y-auto">
+      <ul className="md:hidden divide-y divide-surface-border/80">
         {players.map((p) => {
           const hasFaction = isFaction(p.factionId);
           const factionLabel = hasFaction ? getFactionLabel(p.factionId) : null;

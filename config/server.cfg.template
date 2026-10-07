@@ -7,6 +7,8 @@ endpoint_add_udp "0.0.0.0:30120"
 
 # ── Authoritative version: change ONE value here ─────────────────────────────
 set racket_version "0.8.0-alpha"
+# Chat log retention (days); purged rows are not recoverable (see sunset_chat/server/chat_log.lua).
+set CHAT_LOG_RETENTION_DAYS "__CHAT_LOG_RETENTION_DAYS__"
 
 # sv_hostname is set dynamically at startup from racket_version (see sunset_core).
 # The static fallback below is overridden immediately; it exists only so FiveM

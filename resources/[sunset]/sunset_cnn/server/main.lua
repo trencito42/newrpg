@@ -340,6 +340,18 @@ local function publishAd(ad)
             t(authorSrc, 'cnn.message.published', { id = ad.id }), 'success')
     end
 
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                characterId = ad.character_id,
+                playerName = ad.playerName,
+                message = broadcastText,
+                channelType = 'ad',
+                metadata = { ad_id = ad.id },
+            })
+        end)
+    end
+
     log(('Published CNN ad #%d by %s: "%s"'):format(ad.id, ad.playerName, ad.text))
 end
 

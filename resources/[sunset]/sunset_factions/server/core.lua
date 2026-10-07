@@ -386,21 +386,6 @@ function FactionCore.broadcastManagement(factionId, actorSource, message, opts)
     end
 end
 
-function FactionCore.auditLog(factionId, actorCharId, action, targetCharId, details)
-    pcall(function()
-        MySQL.insert.await([[
-            INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-            VALUES (?, ?, ?, ?, ?)
-        ]], {
-            factionId,
-            actorCharId,
-            action,
-            targetCharId,
-            details and json.encode(details) or nil,
-        })
-    end)
-end
-
 function FactionCore.checkPromotionEligibility(factionId, characterId, newGrade)
     if factionId ~= 'lssi' then return true end
     if GetResourceState('sunset_licenses') ~= 'started' then
@@ -437,7 +422,7 @@ end)
 -- [PERF 2026-10-01] Retention: bounded batched purge of old audit/log rows (see sql/64-retention-indexes.sql).
 CreateThread(function()
     Wait(120000)
-    local purges = { { 'faction_audit_log', 180 } }
+    local purges = { { 'faction_logs', 180 } }
     while true do
         for _, p in ipairs(purges) do
             for _ = 1, 20 do

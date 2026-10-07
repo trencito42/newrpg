@@ -4,10 +4,12 @@ import { getCurrentSession, getViewerLocale, isStaff } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import { RowDataPacket } from "mysql2";
-import { PlayerActions } from "@/components/staff/PlayerActions";
+import { PlayerProfileStaffManage } from "@/components/player-management/PlayerProfileStaffManage";
 import { PlayerName } from "@/components/ui/PlayerName";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
-import { getFactionLabel, isFaction } from "@/lib/factions";
+import { getFactionColor, getFactionLabel, isFaction } from "@/lib/factions";
+import { getFactionAccess } from "@/lib/faction-access";
+import { OrganizationFactionLogsPanel } from "@/components/organizations/OrganizationFactionLogsPanel";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getVehiclePreviewUrl, getPedAvatarUrl } from "@/lib/gta-assets";
 import { vehicleDisplayName } from "@/lib/vehicle-names";
@@ -288,6 +290,15 @@ export default async function PlayerProfilePage({
 
   const hasFaction = isFaction(char.faction_id);
   const factionLabel = hasFaction ? getFactionLabel(char.faction_id) : null;
+  let canViewFactionHistory = false;
+  if (session && hasFaction && char.faction_id) {
+    if (session.adminLevel >= 3) {
+      canViewFactionHistory = true;
+    } else {
+      const viewerAccess = await getFactionAccess(session.accountId, char.faction_id);
+      canViewFactionHistory = Boolean(viewerAccess);
+    }
+  }
   const warningsCount = sanctionCountRow?.count || 0;
   const publicVehicles = vehicles.map(toPublicVehicleCard);
   const featuredVehicleRow = vehicles.find((v) => v.id === char.featured_vehicle_id) || vehicles[0] || null;
@@ -369,11 +380,6 @@ export default async function PlayerProfilePage({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Staff Actions if Admin */}
-      {session && session.adminLevel >= 1 && session.accountId !== char.account_id && (
-        <PlayerActions accountId={char.account_id} characterId={char.id} adminLevel={session.adminLevel} locale={locale} />
-      )}
-
       {/* Main Profile Header Card */}
       <div className="p-4 sm:p-6 bg-[#0E0E10] rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
@@ -473,10 +479,32 @@ export default async function PlayerProfilePage({
             </div>
           </div>
 
-          {/* Right: Featured Vehicle Preview */}
-          {featuredVehicle && (
-            <FeaturedVehicleTrigger locale={locale} vehicle={featuredVehicle} />
-          )}
+          {/* Right: staff manage + featured vehicle */}
+          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+            {session &&
+              session.accountId !== char.account_id &&
+              (session.adminLevel >= 1 || session.helperLevel >= 1) && (
+                <PlayerProfileStaffManage
+                  locale={locale}
+                  sessionAdminLevel={session.adminLevel}
+                  sessionHelperLevel={session.helperLevel}
+                  player={{
+                    account_id: char.account_id,
+                    character_id: char.id,
+                    username: char.account_username,
+                    level: char.level,
+                    is_online: Boolean(char.is_online),
+                    last_played: char.last_played,
+                    faction_id: char.faction_id,
+                    clan_tag: char.clan_tag,
+                    clan_tag_color: char.clan_tag_color,
+                    clan_tag_style: char.clan_tag_style,
+                    avatar_skin: characterSkin,
+                  }}
+                />
+              )}
+            {featuredVehicle && <FeaturedVehicleTrigger locale={locale} vehicle={featuredVehicle} />}
+          </div>
         </div>
       </div>
 
@@ -516,6 +544,23 @@ export default async function PlayerProfilePage({
           <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{warningsCount} / 3</span>
         </div>
       </div>
+
+      {hasFaction && canViewFactionHistory && char.faction_id && (
+        <div>
+          <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider mb-2">
+            {t(locale, "factionLogs.history_title")}
+          </h2>
+          <div className="rounded-xl bg-[#0E0E10] p-4">
+            <OrganizationFactionLogsPanel
+              locale={locale}
+              factionSlug={char.faction_id}
+              factionColor={getFactionColor(char.faction_id) || "#F2EFE8"}
+              targetCharacterId={characterId}
+              compact
+            />
+          </div>
+        </div>
+      )}
 
       {/* Money (Only shown if character owner or staff) */}
       {balance && (

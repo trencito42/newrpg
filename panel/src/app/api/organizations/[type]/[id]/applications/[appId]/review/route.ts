@@ -7,6 +7,7 @@ import { RowDataPacket } from "mysql2";
 import crypto from "crypto";
 import { getFactionAccess } from "@/lib/faction-access";
 import { getFactionApplicationAccess } from "@/lib/progression-access";
+import { writeFactionLogFromPanel } from "@/lib/faction-log-write";
 
 interface Context {
   params: Promise<{ type: string; id: string; appId: string }>;
@@ -258,6 +259,34 @@ export async function POST(req: NextRequest, { params }: Context) {
       );
     }
   });
+
+  if (type === "faction" && (finalStatus === "accepted" || finalStatus === "rejected")) {
+    const applicant = await dbQuerySingle<RowDataPacket>(
+      `SELECT a.username, app.character_id
+       FROM panel_org_applications app
+       JOIN accounts a ON a.id = app.account_id
+       WHERE app.id = ? LIMIT 1`,
+      [appId]
+    );
+    const eventType =
+      finalStatus === "accepted"
+        ? decision === "accepted_add_member"
+          ? "application_accepted"
+          : "application_accepted"
+        : "application_rejected";
+    if (decision !== "accepted_add_member") {
+      await writeFactionLogFromPanel({
+        factionId: orgId,
+        eventType,
+        actorCharacterId: session.selectedCharacterId ?? null,
+        targetCharacterId: applicant?.character_id ? Number(applicant.character_id) : null,
+        actorUsername: session.username,
+        targetUsername: applicant?.username ?? null,
+        reason: reason || null,
+        metadata: { applicationId: appId, decision, source: "panel" },
+      });
+    }
+  }
 
   return NextResponse.json({ success: true, status: finalStatus });
 }

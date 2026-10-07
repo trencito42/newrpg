@@ -132,6 +132,14 @@ local function sendFactionChat(source, channel, args, filterFn)
     end
     if GetResourceState('sunset_chat') == 'started' then
         exports.sunset_chat:ClearChatAttachment(source)
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = msg,
+                channelType = channel,
+                factionId = factionId,
+            })
+        end)
     end
 end
 
@@ -263,6 +271,16 @@ local function runGovAnnouncement(source, args)
     for _, id in ipairs(GetPlayers()) do
         TriggerClientEvent('sunset:chat:message', tonumber(id), payload)
     end
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = msg,
+                channelType = 'gov',
+                factionId = factionId,
+            })
+        end)
+    end
 end
 
 RegisterCommand('gov', runGovAnnouncement, false)
@@ -292,6 +310,15 @@ local function runMegaphone(source, args)
             }, source, { setName = true })
             TriggerClientEvent('sunset:chat:message', src, payload)
         end
+    end
+    if GetResourceState('sunset_chat') == 'started' then
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = msg,
+                channelType = 'megaphone',
+            })
+        end)
     end
 end
 

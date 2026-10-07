@@ -78,6 +78,14 @@ local function runClanChat(source, args)
     end
     if GetResourceState('sunset_chat') == 'started' then
         exports.sunset_chat:ClearChatAttachment(source)
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = msg,
+                channelType = 'c',
+                clanId = clanId,
+            })
+        end)
     end
 end
 

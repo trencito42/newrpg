@@ -50,11 +50,9 @@ local function cleanNotes(value)
 end
 
 local function writeFactionAudit(actorId, action, targetId, details)
+    if GetResourceState('sunset_factions') ~= 'started' then return end
     pcall(function()
-        MySQL.insert.await([[
-            INSERT INTO faction_audit_log (faction_id, actor_character_id, action, target_character_id, details)
-            VALUES ('lssi', ?, ?, ?, ?)
-        ]], { actorId, action, targetId, json.encode(details or {}) })
+        exports.sunset_factions:WriteFactionLog('lssi', actorId, action, targetId, details or {})
     end)
 end
 

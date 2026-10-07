@@ -440,6 +440,23 @@ exports.sunset_core:RegisterCallback('sunset:phoneSend', function(source, target
     end
     TriggerClientEvent('sunset:client:phoneNewMessage', source, msgPayload)
 
+    if GetResourceState('sunset_chat') == 'started' then
+        local targetName = MySQL.scalar.await(
+            'SELECT CONCAT(firstname, " ", lastname) FROM characters WHERE id = ? LIMIT 1',
+            { targetCharacterId }
+        )
+        pcall(function()
+            exports.sunset_chat:LogChatMessage({
+                source = source,
+                message = message ~= '' and message or ('[%s attachment]'):format(resolvedAttachment and resolvedAttachment.type or 'media'),
+                channelType = 'pm',
+                targetCharacterId = targetCharacterId,
+                targetName = targetName,
+                metadata = resolvedAttachment and { attachment_type = resolvedAttachment.type } or nil,
+            })
+        end)
+    end
+
     return { ok = true, message = msgPayload }
 end)
 

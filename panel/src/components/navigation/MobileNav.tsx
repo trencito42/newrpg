@@ -236,6 +236,7 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
                     {[
                       { href: "/staff/dashboard", label: t(locale, "nav.staff_dashboard"), icon: Radio },
                       { href: "/staff/players", label: t(locale, "players.directory_title"), icon: Users },
+                      { href: "/staff/chat-logs", label: t(locale, "staffChatLogs.nav"), icon: FileText },
                       ...(isAdmin
                         ? [
                             { href: "/staff/content", label: t(locale, "nav.staff_content"), icon: LayoutGrid },
