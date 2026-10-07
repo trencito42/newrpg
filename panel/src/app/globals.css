@@ -2,16 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n400-latin.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n400-latinext.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n600-latin.woff2") format("woff2"); font-style: normal; font-weight: 600; font-display: swap; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n600-latinext.woff2") format("woff2"); font-style: normal; font-weight: 600; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n700-latin.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n700-latinext.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n900-latin.woff2") format("woff2"); font-style: normal; font-weight: 900; font-display: swap; }
-@font-face { font-family: "Racket Montserrat"; src: url("../../../resources/[sunset]/sunset_ui/web/assets/fonts/montserrat-n900-latinext.woff2") format("woff2"); font-style: normal; font-weight: 900; font-display: swap; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F; }
+@font-face {
+  font-family: "Vito";
+  src:
+    url("/fonts/1/wf/f6f2a961c6a16aac8e6c37f84b65caf0.woff2") format("woff2"),
+    url("/fonts/1/wf/f6f2a961c6a16aac8e6c37f84b65caf0.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 
 :root {
+  --panel-gutter: 1rem;
+  --racket-hscroll-peek: 2.75rem;
   --background: #08080a;
   --foreground: #f2efe8;
   --surface-1: #0e0e10;
@@ -63,7 +66,7 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: "Racket Montserrat", Montserrat, sans-serif;
+  font-family: "Vito", system-ui, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
@@ -110,12 +113,60 @@ body {
   }
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Intentional horizontal scroll regions must not expand the page (carousels, tab strips). */
 [data-scroll-x="local"] {
   max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Mobile horizontal card strips: bleed into main padding, scroll track uses the same gutter
+ * as page content (16px on phones). Desktop grid layouts disable this via sm: overrides.
+ */
+@media (max-width: 639px) {
+  .racket-hscroll-outer {
+    margin-inline: calc(-1 * var(--panel-gutter, 1rem));
+    overflow: visible;
+    max-width: none;
+  }
+
+  .racket-hscroll-track {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scroll-padding-inline: var(--panel-gutter, 1rem);
+    padding-inline: var(--panel-gutter, 1rem);
+    scroll-snap-type: x mandatory;
+  }
+
+  .racket-hscroll-slide {
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 640px) {
+  .racket-hscroll-outer {
+    margin-inline: 0;
+    overflow: visible;
+  }
+
+  .racket-hscroll-track {
+    scroll-padding-inline: 0;
+    padding-inline: 0;
+  }
+
 }
 
 /* Shared typography and controls across public, account, and staff views. */
@@ -125,7 +176,7 @@ h2, h3 { font-weight: 700; }
 main h1 { font-size: clamp(1.35rem, 1.5vw, 1.75rem) !important; line-height: 1.2; letter-spacing: .07em; }
 main h2 { letter-spacing: .05em; }
 label { color: var(--racket-label); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.font-mono { font-family: "Racket Montserrat", Montserrat, sans-serif !important; font-variant-numeric: tabular-nums; }
+.font-mono { font-family: "Vito", system-ui, sans-serif !important; font-variant-numeric: tabular-nums; }
 table th { color: var(--racket-label); font-size: 10px; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
 table td { border-color: var(--border); }
 .divide-y > :not([hidden]) ~ :not([hidden]),

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { t, Locale, formatNumber } from "@/lib/i18n";
 import { shopGameT } from "@/generated/shop-game-locales";
 import { cn } from "@/lib/utils";
+import { HorizontalCardScroller } from "@/components/ui/HorizontalCardScroller";
 import type { ShopClanContext } from "@/lib/shop/panel-state";
 
 type CatalogProduct = {
@@ -182,7 +183,7 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 max-w-full" data-scroll-x="local">
+      <HorizontalCardScroller gap="sm" trackClassName="gap-2 pb-1 sm:overflow-visible sm:snap-none">
         {state.catalog.categories.map((cat) => {
           const count = state.catalog.products.filter((p) => p.category === cat.id).length;
           const active = category === cat.id;
@@ -192,7 +193,7 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
               type="button"
               onClick={() => setCategory(cat.id)}
               className={cn(
-                "whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                "shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
                 active
                   ? "bg-[#D7B558]/15 text-[#D7B558]"
                   : "bg-[#0E0E10] text-[#8F8B83] hover:text-[#F2EFE8] hover:bg-[#141417]"
@@ -203,7 +204,7 @@ export function ShopClientView({ locale, initial }: { locale: Locale; initial: S
             </button>
           );
         })}
-      </div>
+      </HorizontalCardScroller>
 
       <div className="grid gap-3 lg:grid-cols-5">
         <div className="lg:col-span-2 rounded-xl bg-[#0E0E10] p-2 min-h-[280px]">

@@ -37,6 +37,10 @@ import { panelBrand } from "@/lib/brand";
 import { HomeCopyButton } from "@/components/home/HomeCopyButton";
 import { HomeLeaderboardTabs, RichestPlayerItem, LeveledPlayerItem } from "@/components/home/HomeLeaderboardTabs";
 import { GTAImage } from "@/components/ui/GTAImage";
+import {
+  HorizontalCardScroller,
+  horizontalCardSlideClass,
+} from "@/components/ui/HorizontalCardScroller";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 
 interface PollRow extends RowDataPacket {
@@ -276,9 +280,11 @@ export default async function HomePage() {
           <span>{t(locale, "copy.app_page.swipe_for_more_stats")}</span>
         </div>
 
-        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 max-w-full" data-scroll-x="local">
+        <HorizontalCardScroller trackClassName="sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:snap-none">
           {/* Online Players */}
-          <div className="snap-start shrink-0 w-[240px] sm:w-auto p-4 rounded-xl bg-[#0E0E10]">
+          <div
+            className={`${horizontalCardSlideClass} max-sm:w-[min(240px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto p-4 rounded-xl bg-[#0E0E10]`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
                 {t(locale, "home.players_online")}
@@ -299,7 +305,9 @@ export default async function HomePage() {
           </div>
 
           {/* Total Economy */}
-          <div className="snap-start shrink-0 w-[240px] sm:w-auto p-4 rounded-xl bg-[#0E0E10]">
+          <div
+            className={`${horizontalCardSlideClass} max-sm:w-[min(240px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto p-4 rounded-xl bg-[#0E0E10]`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
                 {t(locale, "copy.app_page.economy_in_circulation")}
@@ -318,7 +326,9 @@ export default async function HomePage() {
           </div>
 
           {/* Registered Accounts */}
-          <div className="snap-start shrink-0 w-[240px] sm:w-auto p-4 rounded-xl bg-[#0E0E10]">
+          <div
+            className={`${horizontalCardSlideClass} max-sm:w-[min(240px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto p-4 rounded-xl bg-[#0E0E10]`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
                 {t(locale, "copy.app_page.registered_accounts")}
@@ -336,7 +346,9 @@ export default async function HomePage() {
           </div>
 
           {/* Controlled Turfs */}
-          <div className="snap-start shrink-0 w-[240px] sm:w-auto p-4 rounded-xl bg-[#0E0E10]">
+          <div
+            className={`${horizontalCardSlideClass} max-sm:w-[min(240px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto p-4 rounded-xl bg-[#0E0E10]`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
                 {t(locale, "copy.app_page.active_turfs")}
@@ -352,7 +364,7 @@ export default async function HomePage() {
               <span>{t(locale, "copy.app_page.weekly_wars")}</span>
             </div>
           </div>
-        </div>
+        </HorizontalCardScroller>
       </div>
 
       {/* LATEST UPDATES & PATCH NOTES SECTION */}
@@ -374,12 +386,12 @@ export default async function HomePage() {
         </div>
 
         {/* Updates Horizontal Scroll on Mobile, Grid on Desktop */}
-        <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory gap-4 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 max-w-full" data-scroll-x="local">
+        <HorizontalCardScroller gap="md" trackClassName="sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible sm:snap-none">
           {latestUpdates.map((update) => (
             <Link
               key={update.id}
               href={`/updates/${update.slug}`}
-              className="snap-start shrink-0 w-[280px] sm:w-auto flex flex-col justify-between p-4 rounded-xl bg-[#0E0E10] hover:bg-[#141418] transition-colors group"
+              className={`${horizontalCardSlideClass} max-sm:w-[min(280px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto flex flex-col justify-between p-4 rounded-xl bg-[#0E0E10] hover:bg-[#141418] transition-colors group`}
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
@@ -411,7 +423,7 @@ export default async function HomePage() {
               </div>
             </Link>
           ))}
-        </div>
+        </HorizontalCardScroller>
       </div>
 
       <HomeCommunityHub

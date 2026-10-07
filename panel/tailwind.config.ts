@@ -52,7 +52,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Racket Montserrat", "Montserrat", "sans-serif"],
+        sans: ["Vito", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
       },
       borderRadius: {

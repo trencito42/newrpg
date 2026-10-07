@@ -15,6 +15,10 @@ import {
   User,
 } from "lucide-react";
 import { Locale, t } from "@/lib/i18n";
+import {
+  HorizontalCardScroller,
+  horizontalCardSlideClass,
+} from "@/components/ui/HorizontalCardScroller";
 
 const ICONS: Record<string, LucideIcon> = {
   bug: Bug,
@@ -81,7 +85,7 @@ export function HomeCommunitySlider({
 
   return (
     <section className="space-y-2.5" aria-labelledby="home-community-slider-title">
-      <div className="px-0.5">
+      <div>
         <h2
           id="home-community-slider-title"
           className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider"
@@ -93,7 +97,7 @@ export function HomeCommunitySlider({
         </p>
       </div>
 
-      <div className="relative">
+      <div className="relative max-sm:overflow-visible">
         <button
           type="button"
           onClick={() => scrollByCard(-1)}
@@ -114,12 +118,11 @@ export function HomeCommunitySlider({
           <ChevronRight className="w-4 h-4" />
         </button>
 
-        <div
+        <HorizontalCardScroller
           ref={scrollerRef}
           onScroll={updateScrollHints}
           onWheel={onWheel}
-          className="flex overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth snap-x snap-mandatory gap-3 py-1 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain touch-pan-x max-w-full"
-          data-scroll-x="local"
+          trackClassName="overscroll-x-contain touch-pan-x sm:overflow-visible sm:snap-none"
         >
           {cards.map((card) => {
             const Icon = ICONS[card.icon] ?? MessageSquare;
@@ -128,7 +131,7 @@ export function HomeCommunitySlider({
                 key={card.id}
                 href={card.href}
                 data-community-card
-                className="snap-start shrink-0 w-[86vw] max-w-[320px] sm:w-[min(300px,calc(33.33%-8px))] md:w-[min(280px,calc(25%-9px))] min-h-[168px] flex flex-col p-4 rounded-xl bg-[#0E0E10] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(215,181,88,0.35)] hover:bg-[#121214] transition-colors active:scale-[0.99]"
+                className={`${horizontalCardSlideClass} max-sm:w-[min(320px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-[min(300px,calc(33.33%-8px))] md:w-[min(280px,calc(25%-9px))] min-h-[168px] flex flex-col p-4 rounded-xl bg-[#0E0E10] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(215,181,88,0.35)] hover:bg-[#121214] transition-colors active:scale-[0.99]`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg bg-[#121214] border border-[rgba(255,255,255,0.06)] flex items-center justify-center mb-3 ${card.iconClassName}`}
@@ -155,7 +158,7 @@ export function HomeCommunitySlider({
               </Link>
             );
           })}
-        </div>
+        </HorizontalCardScroller>
       </div>
     </section>
   );
