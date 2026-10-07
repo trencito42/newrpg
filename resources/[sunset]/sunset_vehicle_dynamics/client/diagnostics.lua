@@ -69,7 +69,8 @@ local function showHandlingInfo()
     print(string.format('  Traction Max:   Canon: %.2f      | Live: %.2f', canon.fTractionCurveMax or 0, liveTractionMax))
     print(string.format('  Traction Min:   Canon: %.2f      | Live: %.2f', canon.fTractionCurveMin or 0, liveTractionMin))
     print(string.format('  Steering Lock:  Canon: %.1f deg  | Live: %.1f deg', canon.fSteeringLock or 0, liveSteerLock))
-    print(string.format('  Gears:          Canon: %d        | Live: %d', canon.nInitialDriveGears or 0, liveGears))
+    local liveHighGear = GetVehicleHighGear(veh)
+    print(string.format('  Gears:          Canon: %d        | Live: %d (high gear native: %d)', canon.nInitialDriveGears or 0, liveGears, liveHighGear or 0))
     print(string.format('  Drag:           Canon: %.2f      | Live: %.2f', canon.fInitialDragCoeff or 0, liveDrag))
     print(string.format('  Suspension:     Canon: %.2f      | Live: %.2f', canon.fSuspensionForce or 0, liveSuspension))
     print(string.format('  Anti-roll:      Canon: %.2f      | Live: %.2f', canon.fAntiRollBarForce or 0, liveAntiRoll))
@@ -125,6 +126,10 @@ end, false)
 RegisterNetEvent('sunset:vehicleDynamics:reapply', reapplyHandling)
 
 local isTesting = false
+RegisterCommand('vehbenchmark', function()
+    ExecuteCommand('handlingtest')
+end, false)
+
 RegisterCommand('handlingtest', function()
     if not SunsetVehicleDynamics.Config.Debug then
         return

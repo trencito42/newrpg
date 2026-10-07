@@ -29,7 +29,7 @@ for (const p of all.profiles) {
   fail(TIERS[p.performanceTier], `${p.model}: invalid tier ${p.performanceTier}`);
   fail(h.fDriveBiasFront === expectedBias, `${p.model}: ${p.drivetrain} contradicts drive bias ${h.fDriveBiasFront}`);
   fail(h.fMass >= 120 && h.fMass <= 12000, `${p.model}: absurd mass ${h.fMass}`);
-  fail(h.fInitialDriveForce >= 0.16 && h.fInitialDriveForce <= 0.48, `${p.model}: unsafe drive force ${h.fInitialDriveForce}`);
+  fail(h.fInitialDriveForce >= 0.16 && h.fInitialDriveForce <= 0.52, `${p.model}: unsafe drive force ${h.fInitialDriveForce}`);
   fail(h.fInitialDriveMaxFlatVel >= 90 && h.fInitialDriveMaxFlatVel <= 240, `${p.model}: top-speed parameter outlier ${h.fInitialDriveMaxFlatVel}`);
   fail(h.fInitialDragCoeff >= 4.5 && h.fInitialDragCoeff <= 12, `${p.model}: drag outlier ${h.fInitialDragCoeff}`);
   fail(h.fBrakeForce >= 0.55 && h.fBrakeForce <= 1.4, `${p.model}: brake force outlier ${h.fBrakeForce}`);
@@ -56,6 +56,13 @@ fail(tierAverage('performance_sedan', (p) => p.targetTopSpeedKmh) > tierAverage(
 fail(byModel.get('tol22m5').drivetrain === 'awd_rear' && byModel.get('tol22m5').handling.fDriveBiasFront === 0.32, 'BMW M5 drivetrain regression');
 fail(byModel.get('zentorno').handling.vecCentreOfMassOffset.z <= -0.17 && byModel.get('zentorno').handling.fAntiRollBarForce >= 1.65, 'Zentorno rollover fix regressed');
 fail(byModel.get('toldemon').drivetrain === 'rwd' && byModel.get('toldemon').handling.fLowSpeedTractionLossMult >= 1.5, 'Demon lost RWD muscle character');
+fail(byModel.get('hycsedan').performanceTier === 'performance_sedan' && byModel.get('hycsedan').handling.fInitialDriveForce >= 0.38, 'hycsedan downgraded to economy sedan tier');
+fail(byModel.get('dubmono').handling.fInitialDriveForce >= 0.38, 'dubmono lost SUV performance calibration');
+fail(byModel.get('neonvenm').handling.nInitialDriveGears === 1, 'neonvenm must stay single-speed EV');
+fail(byModel.get('tol22m5').handling.fInitialDriveForce >= byModel.get('tailgater').handling.fInitialDriveForce + 0.08, 'M5 must out-accelerate civilian sedans');
+
+const applyLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/client/apply.lua'), 'utf8');
+fail(applyLua.includes('SetVehicleHighGear') && applyLua.includes('FinalizeBaselineNatives'), 'runtime pipeline missing transmission native sync');
 
 const raw = require('./discovered_addon_vehicles.json');
 for (const item of raw) {

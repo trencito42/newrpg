@@ -1844,7 +1844,7 @@ SunsetVehicleDynamics.VanillaProfiles = {
             vecCentreOfMassOffset = { x = 0.0, y = 0.0, z = -0.12 },
             vecInertiaMultiplier = { x = 1.0, y = 1.5, z = 1.58 },
             fDriveBiasFront = 0.5,
-            nInitialDriveGears = 7.0,
+            nInitialDriveGears = 1.0,
             fInitialDriveForce = 0.37,
             fDriveInertia = 1.0,
             fClutchChangeRateScaleUpShift = 2.75,

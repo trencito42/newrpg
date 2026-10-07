@@ -36,6 +36,33 @@ function biasFor(drivetrain) {
   return ({ rwd: 0.0, fwd: 1.0, awd_rear: 0.32, awd_balanced: 0.5, awd_front: 0.62 })[drivetrain];
 }
 
+/** Blend tier targets with addon handling.meta when the author clearly intended more power. */
+function calibratePowerFromSource(record, driveForce, targetKmh, maxFlatVel) {
+  const raw = record.rawHandling;
+  if (!raw || record.sourceResource === 'gta5') {
+    return { driveForce, targetKmh, maxFlatVel };
+  }
+
+  const srcForce = Number(raw.fInitialDriveForce);
+  const srcVel = Number(raw.fInitialDriveMaxFlatVel);
+  let outForce = driveForce;
+  let outTarget = targetKmh;
+  let outVel = maxFlatVel;
+
+  if (Number.isFinite(srcForce) && srcForce > outForce * 1.08) {
+    outForce = Math.min(0.52, Math.max(outForce, round(srcForce * 0.92, 3)));
+  }
+  if (Number.isFinite(srcVel) && srcVel > 0) {
+    const impliedKmh = srcVel * 1.32;
+    if (impliedKmh > outTarget * 1.04) {
+      outTarget = Math.round(Math.min(impliedKmh, outTarget + 40));
+      outVel = round(outTarget / 1.32, 1);
+    }
+  }
+
+  return { driveForce: outForce, targetKmh: outTarget, maxFlatVel: outVel };
+}
+
 function buildProfile(record) {
   const identity = record.identity;
   const arch = ARCHETYPES[identity.archetype];
@@ -45,8 +72,9 @@ function buildProfile(record) {
 
   // Fully deterministic — no hash/random variation.
   // All differentiation comes from explicit catalog metadata.
-  const targetKmh = Math.round(identity.targetKmh || tier.targetKmh);
+  let targetKmh = Math.round(identity.targetKmh || tier.targetKmh);
   const drivetrain = identity.drivetrain || arch.drivetrain;
+  const isElectric = (identity.propulsion || '') === 'electric';
   const driveBias = biasFor(drivetrain);
   if (driveBias === undefined) throw new Error(`${record.model}: unsupported drivetrain ${drivetrain}`);
   const mass = Math.round(identity.mass || arch.mass);
@@ -109,6 +137,15 @@ function buildProfile(record) {
   const effectiveRollCF = identity.rollFront || rollCF;
   const effectiveRollCR = identity.rollRear || rollCR;
 
+  let driveForce = round(identity.driveForce || tier.driveForce, 3);
+  let maxFlatVel = round(targetKmh / 1.32, 1);
+  const calibrated = calibratePowerFromSource(record, driveForce, targetKmh, maxFlatVel);
+  driveForce = calibrated.driveForce;
+  targetKmh = calibrated.targetKmh;
+  maxFlatVel = calibrated.maxFlatVel;
+
+  const gearCount = isElectric ? 1 : (identity.gears || tier.gears);
+
   return {
     model: record.model,
     displayName: identity.identity,
@@ -135,12 +172,12 @@ function buildProfile(record) {
       vecCentreOfMassOffset: { x: 0.0, y: round(comY, 3), z: round(effectiveComZ, 3) },
       vecInertiaMultiplier: { x: inertiaX, y: inertiaY, z: inertiaZ },
       fDriveBiasFront: driveBias,
-      nInitialDriveGears: identity.gears || tier.gears,
-      fInitialDriveForce: round(identity.driveForce || tier.driveForce, 3),
+      nInitialDriveGears: gearCount,
+      fInitialDriveForce: driveForce,
       fDriveInertia: round(driveInertia, 2),
       fClutchChangeRateScaleUpShift: round(clutchUp, 2),
       fClutchChangeRateScaleDownShift: round(clutchDown, 2),
-      fInitialDriveMaxFlatVel: round(targetKmh / 1.32, 1),
+      fInitialDriveMaxFlatVel: maxFlatVel,
       fBrakeForce: round(brakeForce, 2),
       fBrakeBiasFront: round(brakeBias, 2),
       fHandBrakeForce: round(handBrake, 2),

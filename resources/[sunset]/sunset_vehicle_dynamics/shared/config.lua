@@ -75,7 +75,7 @@ SunsetVehicleDynamics.Config = {
         vecInertiaMultiplier = { min = 0.5, max = 3.0, type = 'vector' },
         fDriveBiasFront = { min = 0.0, max = 1.0, default = 0.0 },
         nInitialDriveGears = { min = 1, max = 10, default = 6 },
-        fInitialDriveForce = { min = 0.10, max = 0.60, default = 0.30 },
+        fInitialDriveForce = { min = 0.10, max = 0.55, default = 0.30 },
         fDriveInertia = { min = 0.5, max = 2.0, default = 1.0 },
         fClutchChangeRateScaleUpShift = { min = 0.5, max = 6.0, default = 2.0 },
         fClutchChangeRateScaleDownShift = { min = 0.5, max = 6.0, default = 2.0 },

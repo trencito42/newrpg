@@ -14,13 +14,13 @@ Generated deterministically from `scripts/vehicle-physics/catalog.js` and reposi
 - commercial: 16
 - economy: 3
 - civilian: 15
-- warm: 27
+- warm: 24
 - sport: 19
 - sport_high: 54
-- performance_sedan: 20
+- performance_sedan: 22
 - super: 25
 - hyper: 7
-- performance_suv: 15
+- performance_suv: 16
 - offroad: 10
 - pursuit: 29
 - pursuit_suv: 14
@@ -31,8 +31,8 @@ Generated deterministically from `scripts/vehicle-physics/catalog.js` and reposi
 - `clubr`: Unidentified addon road vehicle; source `resources/[cars]/showcasecars/data/clubr`.
 - `clubrhyc`: Unidentified addon road vehicle; source `resources/[cars]/showcasecars/data/clubrhyc`.
 - `clubrpd`: Unidentified addon road vehicle emergency fleet variant; source `resources/[cars]/showcasecars2/data/clubrpd`.
-- `dubmono`: Unidentified addon SUV; source `resources/[cars]/showcasecars/data/dubmono`.
 - `parawmark`: Unidentified addon road vehicle emergency fleet variant; source `resources/[cars]/showcasecars/data/parawmark`.
+- `sedanwid`: Unidentified addon road vehicle; source `resources/[cars]/showcasecars/data/sedanwid`.
 - `srhatpd`: Unidentified addon road vehicle emergency fleet variant; source `resources/[cars]/showcasecars2/data/srhatpd`.
 - `str`: Unidentified addon sports car; source `resources/[cars]/showcasecars/data/str`.
 - `strman`: Unidentified addon sports car; source `resources/[cars]/showcasecars/data/strman`.

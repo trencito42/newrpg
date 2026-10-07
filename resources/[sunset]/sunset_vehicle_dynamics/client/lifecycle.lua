@@ -7,6 +7,19 @@
 SunsetVehicleDynamicsClient = SunsetVehicleDynamicsClient or {}
 local SVD = SunsetVehicleDynamicsClient
 
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    SVD.appliedEntities = {}
+    Wait(500)
+    local ped = PlayerPedId()
+    if IsPedInAnyVehicle(ped, false) then
+        local veh = GetVehiclePedIsIn(ped, false)
+        if veh ~= 0 and DoesEntityExist(veh) then
+            SVD.ApplyVehicleDynamics(veh, true)
+        end
+    end
+end)
+
 -- Clean up cached entity tracking when entity is removed from world
 AddEventHandler('entityRemoved', function(entity)
     if SVD.appliedEntities[entity] then

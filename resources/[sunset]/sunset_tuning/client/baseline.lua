@@ -4,6 +4,12 @@ local TC = SunsetTuning.TuneCalculator
 
 STC.modelBaselines = STC.modelBaselines or {}
 
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'sunset_vehicle_dynamics' then
+        STC.modelBaselines = {}
+    end
+end)
+
 local function copyTable(value)
     if type(value) ~= 'table' then return value end
     local result = {}

@@ -32,6 +32,22 @@ function SVD.ApplyHandling(veh, profile)
     return true
 end
 
+--- Reset gameplay multipliers and sync transmission natives after handling floats are written.
+function SVD.FinalizeBaselineNatives(veh, handling)
+    if not veh or not DoesEntityExist(veh) or type(handling) ~= 'table' then return end
+
+    local gears = handling.nInitialDriveGears
+    if type(gears) == 'number' and gears >= 1 then
+        SetVehicleHighGear(veh, math.floor(gears))
+    end
+
+    -- Baseline apply clears temporary engine/top-speed modifiers; tuning re-applies its own mods afterward.
+    SetVehicleEnginePowerMultiplier(veh, 0.0)
+    SetVehicleEngineTorqueMultiplier(veh, 1.0)
+    ModifyVehicleTopSpeed(veh, 0.0)
+    SetVehicleTurboPressure(veh, 0.0)
+end
+
 function SVD.ApplyVehicleDynamics(veh, force)
     if not veh or not DoesEntityExist(veh) then return false end
 
@@ -53,6 +69,7 @@ function SVD.ApplyVehicleDynamics(veh, force)
 
     local success = SVD.ApplyHandling(veh, profile)
     if success then
+        SVD.FinalizeBaselineNatives(veh, profile.handling)
         SVD.appliedEntities[veh] = stateKey
         if SunsetVehicleDynamics.Config.Debug then
             print(string.format('^2[vehicle_dynamics] Applied baseline to veh %d (model: %s, source: %s)^7', veh, profile.model, profile.source))
