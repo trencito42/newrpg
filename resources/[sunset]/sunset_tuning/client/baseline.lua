@@ -3,6 +3,8 @@ local STC = SunsetTuningClient
 local TC = SunsetTuning.TuneCalculator
 
 STC.modelBaselines = STC.modelBaselines or {}
+-- Set while tuning intentionally reapplies canonical baseline (prevents ECU restore loop).
+STC._internalBaselineRestore = false
 
 AddEventHandler('onClientResourceStart', function(resourceName)
     if resourceName == 'sunset_vehicle_dynamics' then
@@ -83,9 +85,14 @@ function STC.restoreBaselineHandling(veh, baseline)
 
     -- Re-apply canonical baseline from sunset_vehicle_dynamics if running
     if GetResourceState('sunset_vehicle_dynamics') == 'started' then
-        pcall(function()
+        STC._internalBaselineRestore = true
+        local ok, err = pcall(function()
             exports.sunset_vehicle_dynamics:ApplyVehicleDynamics(veh, true)
         end)
+        STC._internalBaselineRestore = false
+        if not ok then
+            print(('^1[sunset_tuning] ApplyVehicleDynamics failed during baseline restore: %s^7'):format(tostring(err)))
+        end
     elseif baseline then
         for field, value in pairs(baseline) do
             if type(field) == 'string' and field:sub(1, 1) == 'f' and type(value) == 'number' then

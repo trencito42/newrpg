@@ -47,12 +47,26 @@ local function runValidation()
         validCount = validCount + 1
     end
 
+    -- Runtime resolver mass: motorcycles must not be clamped to car minimum (400kg).
+    local batiResolved = SunsetVehicleDynamics.Resolve('bati', 8)
+    if batiResolved and batiResolved.handling and batiResolved.handling.fMass then
+        if batiResolved.handling.fMass > 300.0 then
+            table.insert(errors, string.format('[bati] motorcycle fMass clamped to car minimum: %.0f', batiResolved.handling.fMass))
+        end
+    else
+        table.insert(errors, '[bati] resolver returned no profile for motorcycle regression check')
+    end
+
     print(string.format('^2[vehicle_dynamics_test] Validated %d profiles. Errors: %d, Warnings: %d^7', validCount, #errors, #warnings))
     for _, err in ipairs(errors) do
         print('^1  ERROR: ' .. err .. '^7')
     end
     for _, warn in ipairs(warnings) do
         print('^3  WARN:  ' .. warn .. '^7')
+    end
+
+    if #errors > 0 then
+        error('[vehicle_dynamics_test] validation failed')
     end
 end
 

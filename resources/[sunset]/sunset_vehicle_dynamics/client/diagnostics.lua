@@ -98,17 +98,7 @@ local function reapplyHandling()
         local veh = GetVehiclePedIsIn(ped, false)
         SVD.appliedEntities[veh] = nil
         SVD.ApplyVehicleDynamics(veh, true)
-
-        -- If vehicle is tuned in sunset_tuning, reapply the active tune over the fresh baseline
-        if GetResourceState('sunset_tuning') == 'started' then
-            pcall(function()
-                local plate = GetVehicleNumberPlateText(veh)
-                local tune = exports.sunset_tuning:GetTuneForPlate(plate)
-                if tune and tune.stage and tune.stage ~= 'stock' then
-                    exports.sunset_tuning:ApplyTune(veh, tune, false)
-                end
-            end)
-        end
+        -- Persisted ECU restored via sunset:vehicleDynamics:baselineRestored
     end
 
     print('^2[vehicle_dynamics] Handling profile re-applied successfully!^7')
@@ -125,117 +115,10 @@ end, false)
 
 RegisterNetEvent('sunset:vehicleDynamics:reapply', reapplyHandling)
 
-local isTesting = false
 RegisterCommand('vehbenchmark', function()
-    ExecuteCommand('handlingtest')
+    SVD.RunVehicleBenchmark()
 end, false)
 
 RegisterCommand('handlingtest', function()
-    if not SunsetVehicleDynamics.Config.Debug then
-        return
-    end
-
-    local ped = PlayerPedId()
-    if not IsPedInAnyVehicle(ped, false) then
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 80, 80 },
-            multiline = false,
-            args = { 'Dynamics Test', 'You must be in a vehicle.' }
-        })
-        return
-    end
-
-    if isTesting then
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 200, 50 },
-            multiline = false,
-            args = { 'Dynamics Test', 'Test already in progress. Stop vehicle to abort.' }
-        })
-        return
-    end
-
-    local veh = GetVehiclePedIsIn(ped, false)
-    if GetPedInVehicleSeat(veh, -1) ~= ped then
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 80, 80 },
-            multiline = false,
-            args = { 'Dynamics Test', 'You must be in the driver seat.' }
-        })
-        return
-    end
-
-    CreateThread(function()
-        isTesting = true
-        TriggerEvent('chat:addMessage', {
-            color = { 100, 240, 100 },
-            multiline = false,
-            args = { 'Dynamics Test', 'Bring car to complete stop to initiate benchmark...' }
-        })
-
-        while isTesting do
-            local speedKmh = GetEntitySpeed(veh) * 3.6
-            if speedKmh < 1.0 then break end
-            Wait(100)
-        end
-
-        TriggerEvent('chat:addMessage', {
-            color = { 50, 200, 255 },
-            multiline = false,
-            args = { 'Dynamics Test', 'READY! Accelerate at full throttle now!' }
-        })
-
-        while isTesting do
-            local speedKmh = GetEntitySpeed(veh) * 3.6
-            if speedKmh > 2.0 then break end
-            Wait(10)
-        end
-
-        local startTime = GetGameTimer()
-        local time0to100 = nil
-        local maxSpeed = 0.0
-
-        while isTesting do
-            local speedKmh = GetEntitySpeed(veh) * 3.6
-            if speedKmh > maxSpeed then maxSpeed = speedKmh end
-            if not time0to100 and speedKmh >= 100.0 then
-                time0to100 = (GetGameTimer() - startTime) / 1000.0
-                TriggerEvent('chat:addMessage', {
-                    color = { 100, 255, 100 },
-                    multiline = false,
-                    args = { 'Dynamics Test', string.format('Measured 0-100 km/h: %.2f s! Slam brakes now for 100-0 measurement!', time0to100) }
-                })
-                break
-            end
-            Wait(10)
-        end
-
-        if time0to100 then
-            local brakeStartPos = nil
-            local brakeDistance = nil
-
-            while isTesting do
-                local speedKmh = GetEntitySpeed(veh) * 3.6
-                local isBraking = IsControlPressed(0, 72) or IsControlPressed(0, 76)
-                if isBraking and not brakeStartPos and speedKmh >= 90.0 then
-                    brakeStartPos = GetEntityCoords(veh)
-                end
-                if brakeStartPos and speedKmh < 1.0 then
-                    local stopPos = GetEntityCoords(veh)
-                    brakeDistance = #(brakeStartPos - stopPos)
-                    break
-                end
-                Wait(10)
-            end
-
-            if brakeDistance then
-                TriggerEvent('chat:addMessage', {
-                    color = { 255, 220, 50 },
-                    multiline = false,
-                    args = { 'Dynamics Test', string.format('Measured 100-0 km/h Braking Distance: %.1f meters (Peak Speed: %.1f km/h).', brakeDistance, maxSpeed) }
-                })
-            end
-        end
-
-        isTesting = false
-    end)
+    SVD.RunVehicleBenchmark()
 end, false)

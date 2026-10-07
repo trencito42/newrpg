@@ -220,6 +220,7 @@ const ADDON = {
   sen5tourhyc: v('Übermacht Sentinel 5 Touring Hycade', 'Übermacht', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1890, { driveForce: 0.40, targetKmh: 264, gears: 8 }),
   neonvenm: v('Pfister Neon Venuum', 'Pfister', 'sports_awd', 'sport_high', 'awd_balanced', 1950, { propulsion: 'electric', gears: 1, driveForce: 0.38, targetKmh: 242 }),
   hweevil: v('BF Weevil custom', 'BF', 'hot_hatch_fwd', 'warm', 'fwd', 1240, { driveForce: 0.34, targetKmh: 205 }),
+  hycadetail: v('Tailgater Hycade', 'Obey', 'performance_sedan_awd', 'performance_sedan', 'awd_rear', 1880, { inspiration: 'Obey Tailgater widebody', driveForce: 0.40, targetKmh: 258, gears: 8 }),
 };
 
 const FAMILY_RULES = [
@@ -231,7 +232,7 @@ const FAMILY_RULES = [
   { re: /(tailgater|tailst|tailsr|hyctail|sent5|sen5|sentinel|d7cyp|cyph)/, identity: 'Übermacht performance sedan', manufacturer: 'Übermacht', archetype: 'performance_sedan_rwd', tier: 'performance_sedan', drivetrain: 'rwd', mass: 1850 },
   { re: /(schlag|strcoupe|draft|paragon|paraw|deity|dawn)/, identity: 'Luxury performance grand tourer', archetype: 'luxury_gt', tier: 'sport_high', drivetrain: 'rwd', mass: 1900 },
   { re: /(rsx|kurx|komt|omnven|flashgrs|evo)/, identity: 'AWD sport derivative', archetype: 'sports_awd', tier: 'sport_high', drivetrain: 'awd_rear', mass: 1600 },
-  { re: /(tempesta|temphyc|temptwins|zent|ignus|thrax|enty|hycadetail|tenf|sitavenm|jestvenm)/, identity: 'Modern supercar derivative', archetype: 'super_awd', tier: 'super', drivetrain: 'awd_rear', mass: 1500 },
+  { re: /(tempesta|temphyc|temptwins|zent|ignus|thrax|enty|tenf|sitavenm|jestvenm)/, identity: 'Modern supercar derivative', archetype: 'super_awd', tier: 'super', drivetrain: 'awd_rear', mass: 1500 },
   { re: /(ball|jub|shenron|sr8|toros|taurion|xls|rebla|trag|curus)/, identity: 'Performance SUV derivative', archetype: 'performance_suv', tier: 'performance_suv', drivetrain: 'awd_rear', mass: 2250 },
   { re: /(r300|zr350|remus|rt3000|rt3k|uranus|240sx)/, identity: 'Lightweight RWD tuner', archetype: 'lightweight_sports', tier: 'sport', drivetrain: 'rwd', mass: 1280 },
   { re: /(pargn|strwag|srspback|rwag|wagen|^a6$)/, identity: 'Sport sedan / wagon derivative', archetype: 'sedan_awd', tier: 'warm', drivetrain: 'awd_rear', mass: 1780 },

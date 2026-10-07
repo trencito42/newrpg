@@ -56,14 +56,3 @@ CreateThread(function()
     end
 end)
 
--- Initial sweep on resource start
-CreateThread(function()
-    Wait(500)
-    local ped = PlayerPedId()
-    if IsPedInAnyVehicle(ped, false) then
-        local veh = GetVehiclePedIsIn(ped, false)
-        if veh ~= 0 and DoesEntityExist(veh) then
-            SVD.ApplyVehicleDynamics(veh, false)
-        end
-    end
-end)

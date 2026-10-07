@@ -21,8 +21,27 @@ local function deepCopy(orig)
     return copy
 end
 
-local function sanitizeValue(field, val, modelName)
-    local limits = SunsetVehicleDynamics.Config.HandlingLimits[field]
+local function massLimitsForProfile(profile)
+    if not profile then
+        return SunsetVehicleDynamics.Config.HandlingLimits.fMass
+    end
+    if profile.archetype == 'motorcycle_sport'
+        or profile.category == 'motorcycle'
+        or profile.bodyStyle == 'motorcycle' then
+        return { min = 120.0, max = 450.0, default = 210.0 }
+    end
+    return SunsetVehicleDynamics.Config.HandlingLimits.fMass
+end
+
+local function limitsForField(field, profile)
+    if field == 'fMass' then
+        return massLimitsForProfile(profile)
+    end
+    return SunsetVehicleDynamics.Config.HandlingLimits[field]
+end
+
+local function sanitizeValue(field, val, modelName, profile)
+    local limits = limitsForField(field, profile)
     if not limits then return val end
 
     if type(val) == 'number' then
@@ -63,7 +82,7 @@ local function validateAndNormalizeProfile(profile, modelName)
     -- Sanitize all configured handling properties using central HandledProperties schema
     for _, prop in ipairs(SunsetVehicleDynamics.Config.HandledProperties) do
         if h[prop.name] ~= nil then
-            h[prop.name] = sanitizeValue(prop.name, h[prop.name], modelName)
+            h[prop.name] = sanitizeValue(prop.name, h[prop.name], modelName, profile)
         end
     end
 
@@ -135,6 +154,11 @@ function SunsetVehicleDynamics.Resolve(modelIdentifier, classId)
         if SunsetVehicleDynamics.Config.Debug then
             print(string.format('^3[vehicle_dynamics] Missing explicit profile for %s, using fallback archetype: %s^7', resolved.model, fallbackArchetypeKey))
         end
+    end
+
+    if resolved.archetype and SunsetVehicleDynamics.Archetypes[resolved.archetype] then
+        local archMeta = SunsetVehicleDynamics.Archetypes[resolved.archetype]
+        resolved.category = resolved.category or archMeta.category
     end
 
     resolved.source = source

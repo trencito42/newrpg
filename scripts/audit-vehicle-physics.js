@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildAll, biasFor } = require('./generate-addon-profiles');
 const { ARCHETYPES, TIERS } = require('./vehicle-physics/catalog');
+const { sanitizeMass, sanitizeProfileMass, MOTORCYCLE_MASS_LIMITS } = require('./vehicle-physics/runtime-sanitize');
 
 const root = path.resolve(__dirname, '..');
 const all = buildAll();
@@ -62,7 +63,30 @@ fail(byModel.get('neonvenm').handling.nInitialDriveGears === 1, 'neonvenm must s
 fail(byModel.get('tol22m5').handling.fInitialDriveForce >= byModel.get('tailgater').handling.fInitialDriveForce + 0.08, 'M5 must out-accelerate civilian sedans');
 
 const applyLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/client/apply.lua'), 'utf8');
-fail(applyLua.includes('SetVehicleHighGear') && applyLua.includes('FinalizeBaselineNatives'), 'runtime pipeline missing transmission native sync');
+const resolverLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/shared/resolver.lua'), 'utf8');
+const nitrousLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/nitrous.lua'), 'utf8');
+const benchmarkLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/client/benchmark.lua'), 'utf8');
+const tuningApply = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/apply.lua'), 'utf8');
+
+fail(applyLua.includes('baselineRestored'), 'apply.lua must emit baselineRestored on every successful apply (forced or not)');
+fail(!applyLua.includes('vehicleDynamics:applied'), 'legacy vehicleDynamics:applied event must not remain');
+fail(resolverLua.includes('massLimitsForProfile') && resolverLua.includes('120.0'), 'resolver must apply motorcycle-specific mass floor');
+fail(tuningApply.includes('baselineRestored') && tuningApply.includes('_internalBaselineRestore'), 'tuning must listen for baselineRestored with loop guard');
+fail(nitrousLua.includes('getAppliedEngineMultipliers'), 'nitrous must restore ECU engine multipliers not stage.power defaults');
+fail(benchmarkLua.includes('0-200') && benchmarkLua.includes('vmaxWindowSec'), 'benchmark must measure 0-200 and vmax window');
+
+fail(sanitizeMass({ archetype: 'motorcycle_sport', category: 'motorcycle' }, 205) === 205, 'runtime sanitize: motorcycle 205kg must not clamp to 400');
+fail(sanitizeMass({ archetype: 'motorcycle_sport', category: 'motorcycle' }, 80) === MOTORCYCLE_MASS_LIMITS.min, 'runtime sanitize: ultra-light motorcycle clamped to 120kg min');
+fail(sanitizeMass({ archetype: 'sedan_rwd', category: 'sedan' }, 250) === 400, 'runtime sanitize: light car still uses 400kg floor');
+
+const bati = byModel.get('bati');
+if (bati) {
+  const runtimeBati = sanitizeProfileMass({ ...bati, category: 'motorcycle', bodyStyle: 'motorcycle' });
+  fail(runtimeBati.handling.fMass <= 300, `bati runtime mass regression (${runtimeBati.handling.fMass})`);
+}
+fail(byModel.get('hycadetail')?.performanceTier === 'performance_sedan', 'hycadetail must be performance sedan not generic super');
+fail(byModel.get('hycadetail')?.archetype === 'performance_sedan_awd', 'hycadetail archetype must match Tailgater Hycade');
+fail(byModel.get('neonvenm')?.handling.nInitialDriveGears === 1, 'neonvenm EV gear count');
 
 const raw = require('./discovered_addon_vehicles.json');
 for (const item of raw) {
@@ -71,7 +95,6 @@ for (const item of raw) {
 }
 
 const tuningBaseline = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/baseline.lua'), 'utf8');
-const tuningApply = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/apply.lua'), 'utf8');
 fail(tuningBaseline.includes('GetCanonicalBaseline') && tuningBaseline.includes('ApplyVehicleDynamics(veh, true)'), 'tuning no longer captures/restores canonical baseline');
 fail(tuningApply.includes('STC.restoreBaselineHandling(veh, baseline)') && tuningApply.indexOf('STC.restoreBaselineHandling(veh, baseline)') < tuningApply.indexOf('TC.Compute(baseline, tune, caps)'), 'tuning application compounds instead of restoring baseline first');
 

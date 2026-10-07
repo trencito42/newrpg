@@ -43,6 +43,7 @@ const requiredFiles = [
   'client/apply.lua',
   'client/lifecycle.lua',
   'client/diagnostics.lua',
+  'client/benchmark.lua',
   'server/main.lua'
 ];
 
@@ -216,8 +217,10 @@ assert(tuningBaseline.includes('GetCanonicalBaseline'), 'sunset_tuning queries G
 assert(tuningBaseline.includes('ApplyVehicleDynamics'), 'sunset_tuning calls ApplyVehicleDynamics on stock reset.');
 assert(tuningBaseline.includes('STC.modelBaselines[modelHash] = copyTable(handlingBaseline)'), 'Model baseline cache contains handling only, isolated from entity hardware.');
 assert(tuningApply.includes('priorState.modelHash == modelHash'), 'Repeated tuning reuses the original entity baseline without stacking.');
-assert(tuningApply.includes("AddEventHandler('sunset:vehicleDynamics:applied'"), 'Persisted tunes are restored after canonical dynamics reapplication.');
-assert(applyContent.includes("TriggerEvent('sunset:vehicleDynamics:applied'"), 'Dynamics application publishes the tuning integration event.');
+assert(tuningApply.includes("AddEventHandler('sunset:vehicleDynamics:baselineRestored'"), 'Persisted tunes restore on baselineRestored (including forced apply).');
+assert(tuningApply.includes('STC._internalBaselineRestore'), 'Tuning suppresses ECU restore during its own baseline reset.');
+assert(applyContent.includes("TriggerEvent('sunset:vehicleDynamics:baselineRestored'"), 'Dynamics publishes baselineRestored after every successful apply.');
+assert(!applyContent.includes('vehicleDynamics:applied'), 'Legacy applied event removed to avoid missed forced restores.');
 
 // -------------------------------------------------------------
 // Test 8: Server Startup Order
@@ -230,8 +233,11 @@ assert(vdPos !== -1 && tuningPos !== -1 && vdPos < tuningPos, 'sunset_vehicle_dy
 // -------------------------------------------------------------
 // Test 9: Diagnostic Security Gating
 // -------------------------------------------------------------
-const diagContent = fs.readFileSync(path.join(vdDir, 'client/diagnostics.lua'), 'utf8');
-assert(diagContent.includes('if not SunsetVehicleDynamics.Config.Debug then'), 'Developer benchmark command is gated by Config.Debug.');
+const benchmarkContent = fs.readFileSync(path.join(vdDir, 'client/benchmark.lua'), 'utf8');
+assert(
+  benchmarkContent.includes('if not SunsetVehicleDynamics.Config.Debug then'),
+  'Developer benchmark command is gated by Config.Debug.',
+);
 assert(serverContent.includes("exports.sunset_admin:IsAdmin(source, 2)"), 'Production diagnostic commands require sunset_admin level 2.');
 assert(serverContent.includes("RegisterCommand('vehphysics'") && serverContent.includes("RegisterCommand('reapplyhandling'"), 'Admin vehicle diagnostic and reapply commands are registered server-side.');
 

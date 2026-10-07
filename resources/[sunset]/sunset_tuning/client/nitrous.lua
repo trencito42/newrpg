@@ -33,6 +33,15 @@ local BOOST_TIERS = {
     [3] = { power = 1.55, torque = 1.50 },
 }
 
+-- ECU uses enginePowerMult 0.0 + handling deltas; NOS layers torque on that baseline (not stage.power).
+local function getAppliedEngineMultipliers(veh)
+    local state = STC.appliedVehicles[veh]
+    if state and state.calculated then
+        return state.calculated.enginePowerMult or 0.0, state.calculated.engineTorqueMult or 1.0
+    end
+    return 0.0, 1.0
+end
+
 local function clearLocalPtfx()
     for _, handle in ipairs(activePtfx) do
         if DoesParticleFxLoopedExist(handle) then
@@ -107,10 +116,7 @@ local function stopLocalNos(veh, tune)
     stopLocalNosSound()
 
     if veh and veh ~= 0 and DoesEntityExist(veh) then
-        local state = STC.appliedVehicles[veh]
-        local mult = state and state.mult or (tune and STC.getStageMultipliers(tune))
-        local baseP = mult and mult.power or 1.0
-        local baseT = mult and mult.torque or 1.0
+        local baseP, baseT = getAppliedEngineMultipliers(veh)
         SetVehicleEnginePowerMultiplier(veh, baseP)
         SetVehicleEngineTorqueMultiplier(veh, baseT)
 
@@ -233,12 +239,9 @@ CreateThread(function()
 
         -- Apply progressive engine multipliers
         if rampFactor > 0.001 then
-            local mult = state and state.mult or STC.getStageMultipliers(tune)
-            local baseP = mult and mult.power or 1.0
-            local baseT = mult and mult.torque or 1.0
-            local effP = baseP * (1.0 + (boostSpec.power - 1.0) * rampFactor)
+            local baseP, baseT = getAppliedEngineMultipliers(veh)
             local effT = baseT * (1.0 + (boostSpec.torque - 1.0) * rampFactor)
-            SetVehicleEnginePowerMultiplier(veh, effP)
+            SetVehicleEnginePowerMultiplier(veh, baseP)
             SetVehicleEngineTorqueMultiplier(veh, effT)
 
             -- Light illumination behind exhaust tips
@@ -365,8 +368,9 @@ AddEventHandler('onResourceStop', function(resName)
     clearLocalPtfx()
     stopLocalNosSound()
     if currentVeh and currentVeh ~= 0 and DoesEntityExist(currentVeh) then
-        SetVehicleEnginePowerMultiplier(currentVeh, 1.0)
-        SetVehicleEngineTorqueMultiplier(currentVeh, 1.0)
+        local baseP, baseT = getAppliedEngineMultipliers(currentVeh)
+        SetVehicleEnginePowerMultiplier(currentVeh, baseP)
+        SetVehicleEngineTorqueMultiplier(currentVeh, baseT)
     end
     for _, remote in pairs(remoteVehicles) do
         for _, handle in ipairs(remote.ptfx or {}) do

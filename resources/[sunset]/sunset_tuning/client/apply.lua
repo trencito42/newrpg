@@ -185,15 +185,16 @@ RegisterNetEvent('sunset:tuning:client:loadPlateTune', function(plate, tune, per
     end
 end)
 
--- The dynamics resource can intentionally restore its canonical handling (resource
--- restart or admin reapply). Put a persisted non-stock tune back on top exactly once.
-AddEventHandler('sunset:vehicleDynamics:applied', function(veh)
+-- Canonical baseline restored (enter vehicle, resource restart, admin reapply).
+-- Re-layer persisted ECU + hardware; skip when tuning itself triggered the baseline restore.
+AddEventHandler('sunset:vehicleDynamics:baselineRestored', function(veh, _modelName, _meta)
+    if STC._internalBaselineRestore then return end
     if not veh or veh == 0 or not DoesEntityExist(veh) then return end
     local plate = STC.plateOf(veh)
-    local tune = plate ~= '' and STC.persistedPlates[plate] and STC.plateTunes[plate] or nil
-    if tune and not SunsetTuning.IsStockTune(tune) then
-        ApplyTune(veh, tune, false, STC.plateModels[plate])
-    end
+    if plate == '' or not STC.persistedPlates[plate] then return end
+    local tune = STC.plateTunes[plate]
+    if not tune or SunsetTuning.IsStockTune(tune) then return end
+    ApplyTune(veh, tune, false, STC.plateModels[plate])
 end)
 
 AddEventHandler('entityRemoved', function(entity)

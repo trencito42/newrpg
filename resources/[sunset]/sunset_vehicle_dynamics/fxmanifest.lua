@@ -24,6 +24,7 @@ client_scripts {
     'client/apply.lua',
     'client/lifecycle.lua',
     'client/diagnostics.lua',
+    'client/benchmark.lua',
 }
 
 server_scripts {

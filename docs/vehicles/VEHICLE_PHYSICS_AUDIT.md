@@ -17,8 +17,8 @@ Generated deterministically from `scripts/vehicle-physics/catalog.js` and reposi
 - warm: 24
 - sport: 19
 - sport_high: 54
-- performance_sedan: 22
-- super: 25
+- performance_sedan: 23
+- super: 24
 - hyper: 7
 - performance_suv: 16
 - offroad: 10
