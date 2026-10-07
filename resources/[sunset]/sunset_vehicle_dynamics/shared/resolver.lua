@@ -70,8 +70,15 @@ local function sanitizeValue(field, val, modelName, profile)
     return val
 end
 
+local function isNativeDonorProfile(profile)
+    return profile and profile.handlingMode == 'native_donor'
+end
+
 local function validateAndNormalizeProfile(profile, modelName)
     if not profile or type(profile) ~= 'table' then return nil end
+    if isNativeDonorProfile(profile) then
+        return profile
+    end
     local h = profile.handling or {}
 
     -- Ensure traction curve consistency: Min <= Max
@@ -129,8 +136,10 @@ function SunsetVehicleDynamics.Resolve(modelIdentifier, classId)
 
     if explicitProfile then
         resolved = deepCopy(explicitProfile)
-        -- If profile specifies archetype inheritance, merge with archetype baseline
-        if resolved.archetype and SunsetVehicleDynamics.Archetypes[resolved.archetype] then
+        -- Native donor vehicles keep Rockstar handling from vehicles.meta; never merge archetype physics.
+        if isNativeDonorProfile(resolved) then
+            resolved.source = 'native_donor'
+        elseif resolved.archetype and SunsetVehicleDynamics.Archetypes[resolved.archetype] then
             local base = deepCopy(SunsetVehicleDynamics.Archetypes[resolved.archetype])
             local baseHandling = base.handling or {}
             local explicitHandling = resolved.handling or {}

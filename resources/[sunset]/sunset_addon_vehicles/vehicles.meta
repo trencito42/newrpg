@@ -6,7 +6,7 @@
 <Item>
       <modelName>tempesta2</modelName>
       <txdName>tempesta2</txdName>
-      <handlingId>tempesta2</handlingId>
+      <handlingId>TEMPESTA</handlingId>
       <gameName>tempesta2</gameName>
       <vehicleMakeName>PEGASSI</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
@@ -114,7 +114,7 @@
 <Item>
 		<modelName>sentinel_rts</modelName>
 		<txdName>sentinel_rts</txdName>
-		<handlingId>sentinel_rts</handlingId>
+		<handlingId>SENTINEL3</handlingId>
 		<gameName>sentinel_rts</gameName>
 		<vehicleMakeName>UBERMACHT</vehicleMakeName>
 		<expressionDictName>SENTINEL RTS</expressionDictName>
@@ -237,7 +237,7 @@
 <Item>
       <modelName>d7cyp</modelName>
       <txdName>d7cyp</txdName>
-      <handlingId>d7cyp</handlingId>
+      <handlingId>CYCLONE</handlingId>
       <gameName>Seraph S</gameName>
       <vehicleMakeName>Ubermacht</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
@@ -346,7 +346,7 @@
 <Item>
       <modelName>schlagenstr</modelName>
       <txdName>schlagenstr</txdName>
-      <handlingId>SCHLAGENSTR</handlingId>
+      <handlingId>SCHLAGEN</handlingId>
       <gameName>SCHLAGENSTR</gameName>
       <vehicleMakeName>BENEFACTOR</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
@@ -450,7 +450,7 @@
 <Item>
       <modelName>cometcup</modelName>
       <txdName>cometcup</txdName>
-      <handlingId>cometcup</handlingId>
+      <handlingId>COMET3</handlingId>
       <gameName>COMETCUP</gameName>
       <vehicleMakeName>PFISTER</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
@@ -553,7 +553,7 @@
 <Item>
       <modelName>H4RxST2</modelName>
       <txdName>H4RxST2</txdName>
-      <handlingId>H4RxST2</handlingId>
+      <handlingId>ELEGY2</handlingId>
       <gameName>h4rxst2</gameName>
       <vehicleMakeName>Pfister</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

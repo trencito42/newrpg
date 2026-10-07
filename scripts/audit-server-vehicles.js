@@ -7,6 +7,7 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const resourcesDir = path.join(root, 'resources');
 const outputPath = path.join(__dirname, 'discovered_addon_vehicles.json');
+const { isVanillaHandlingId, normalizeHandlingId } = require('./vehicle-physics/gta-vanilla-handling-index');
 const numericHandlingFields = [
   'fMass', 'fInitialDriveForce', 'fDriveBiasFront', 'fInitialDriveMaxFlatVel',
   'nInitialDriveGears', 'fBrakeForce', 'fTractionCurveMax', 'fTractionCurveMin',
@@ -69,13 +70,18 @@ function discover() {
     for (const segment of segmentsFromTag(xml, 'modelName')) {
       const model = tag(segment, 'modelName').toLowerCase();
       if (!model) continue;
-      const handlingId = tag(segment, 'handlingId').toLowerCase();
+      const handlingIdRaw = tag(segment, 'handlingId');
+      const handlingId = handlingIdRaw.toLowerCase();
+      const vanillaDonor = isVanillaHandlingId(handlingIdRaw);
       const record = {
         model,
         handlingId,
+        nativeDonorHandlingId: vanillaDonor ? normalizeHandlingId(handlingIdRaw) : null,
         gameName: tag(segment, 'gameName'),
         vehicleClass: tag(segment, 'vehicleClass'),
-        rawHandling: handling.get(handlingId) || null,
+        rawHandling: vanillaDonor
+          ? { nativeDonor: true, handlingName: normalizeHandlingId(handlingIdRaw) }
+          : (handling.get(handlingId) || null),
         source: sourcePath(file),
       };
       if (vehicles.has(model)) duplicateModels.push(model);
@@ -97,7 +103,7 @@ function discover() {
 
 const { inventory, vehicleFiles, handlingFiles } = discover();
 const rendered = `${JSON.stringify(inventory, null, 2)}\n`;
-const missingHandling = inventory.filter((vehicle) => !vehicle.rawHandling);
+const missingHandling = inventory.filter((vehicle) => !vehicle.rawHandling && !vehicle.nativeDonorHandlingId);
 
 if (process.argv.includes('--write')) {
   fs.writeFileSync(outputPath, rendered);

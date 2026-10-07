@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { TIERS, ARCHETYPES, VANILLA, resolveIdentity } = require('./vehicle-physics/catalog');
 const { ROCKSTAR_BASELINES } = require('./vehicle-physics/rockstar-baselines');
+const { resolveDonor } = require('./vehicle-physics/handling-donors');
 
 const root = path.resolve(__dirname, '..');
 const dynamicsDir = path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics');
@@ -63,7 +64,53 @@ function calibratePowerFromSource(record, driveForce, targetKmh, maxFlatVel) {
   return { driveForce: outForce, targetKmh: outTarget, maxFlatVel: outVel };
 }
 
+function buildNativeDonorProfile(record, donor) {
+  const identity = record.identity;
+  const arch = ARCHETYPES[identity.archetype];
+  const tier = TIERS[identity.tier || arch.tier];
+  if (!arch) throw new Error(`${record.model}: unknown archetype ${identity.archetype}`);
+  if (!tier) throw new Error(`${record.model}: unknown tier ${identity.tier}`);
+
+  const targetKmh = Math.round(identity.targetKmh || tier.targetKmh);
+  const drivetrain = identity.drivetrain || arch.drivetrain;
+  const mass = Math.round(identity.mass || arch.mass);
+
+  return {
+    model: record.model,
+    displayName: identity.identity,
+    manufacturer: identity.manufacturer || 'Unknown',
+    inspiration: identity.inspiration,
+    generation: identity.generation,
+    bodyStyle: identity.body || arch.body,
+    engineType: identity.propulsion || 'combustion',
+    archetype: identity.archetype,
+    performanceTier: identity.tier || arch.tier,
+    drivetrain,
+    identityConfidence: identity.confidence || 'uncertain',
+    intendedRole: identity.intendedRole || (record.emergency ? 'emergency fleet' : arch.category),
+    sourceResource: record.sourceResource,
+    sourceHandlingId: donor.donorId,
+    sourceVehicleClass: record.vehicleClass || '',
+    targetTopSpeedKmh: targetKmh,
+    expectedZeroTo100: identity.zeroTo100 || tier.zeroTo100,
+    weightKg: mass,
+    handlingMode: 'native_donor',
+    nativeDonorHandlingId: donor.donorId,
+    donorConfidence: donor.confidence,
+    donorNote: donor.note || '',
+    handling: null,
+  };
+}
+
 function buildProfile(record) {
+  const useNativeDonor = record.sourceResource !== 'gta5'
+    && record.sourceResource !== 'sunset_vehicle_dynamics'
+    && !record.forceCanonicalProfile;
+  if (useNativeDonor) {
+    const donor = record.donor || resolveDonor(record.model, record.identity, { emergency: record.emergency });
+    return buildNativeDonorProfile(record, donor);
+  }
+
   const identity = record.identity;
   const arch = ARCHETYPES[identity.archetype];
   const tier = TIERS[identity.tier || arch.tier];
@@ -239,10 +286,17 @@ function generateProfileLua(profiles, tableName, group, title) {
       ['targetTopSpeedKmh', profile.targetTopSpeedKmh], ['expectedZeroTo100', profile.expectedZeroTo100],
       ['identityConfidence', profile.identityConfidence], ['intendedRole', profile.intendedRole],
       ['sourceResource', profile.sourceResource], ['sourceHandlingId', profile.sourceHandlingId],
-    ]) if (value !== undefined) lines.push(`        ${key} = ${luaValue(value)},`);
-    lines.push('        handling = {');
-    for (const key of HANDLING_ORDER) lines.push(`            ${key} = ${luaValue(profile.handling[key])},`);
-    lines.push('        },', '    },');
+      ['handlingMode', profile.handlingMode], ['nativeDonorHandlingId', profile.nativeDonorHandlingId],
+      ['donorConfidence', profile.donorConfidence],
+    ]) if (value !== undefined && value !== null && value !== '') lines.push(`        ${key} = ${luaValue(value)},`);
+    if (profile.handlingMode === 'native_donor') {
+      lines.push('        handling = nil,');
+    } else {
+      lines.push('        handling = {');
+      for (const key of HANDLING_ORDER) lines.push(`            ${key} = ${luaValue(profile.handling[key])},`);
+      lines.push('        },');
+    }
+    lines.push('    },');
   }
   lines.push('}', '', `SunsetVehicleDynamics.RegisterBatch(SunsetVehicleDynamics.${tableName}, '${group}')`, '');
   return lines.join('\n');
@@ -256,7 +310,10 @@ function generateArchetypesLua() {
   ];
   for (const [name, arch] of Object.entries(ARCHETYPES).sort(([a], [b]) => a.localeCompare(b))) {
     const identity = { identity: `Fallback ${name}`, manufacturer: 'Canonical fallback', archetype: name, tier: arch.tier, drivetrain: arch.drivetrain, mass: arch.mass, confidence: 'fallback' };
-    const profile = buildProfile({ model: `fallback_${name}`, identity, sourceResource: 'sunset_vehicle_dynamics', vehicleClass: '', rawHandling: null });
+    const profile = buildProfile({
+      model: `fallback_${name}`, identity, sourceResource: 'sunset_vehicle_dynamics',
+      vehicleClass: '', rawHandling: null, forceCanonicalProfile: true,
+    });
     lines.push(`    ['${name}'] = { category = '${arch.category}', drivetrain = '${profile.drivetrain}', weightKg = ${profile.weightKg}, performanceTier = '${profile.performanceTier}', handling = {`);
     for (const key of HANDLING_ORDER) lines.push(`        ${key} = ${luaValue(profile.handling[key])},`);
     lines.push('    } },');
@@ -301,12 +358,14 @@ function buildAll() {
   //   4. Overridden by explicit catalog metadata — explicit entries already have
   //      distinct masses or targetKmh, so they never enter the same group
   function sigOf(p) {
+    if (p.handlingMode === 'native_donor') return `native:${p.nativeDonorHandlingId}`;
     const h = p.handling;
     return [h.fMass, h.fInitialDriveForce, h.fInitialDriveMaxFlatVel,
             h.fDriveBiasFront, h.fTractionCurveMax, h.fAntiRollBarForce].join('|');
   }
   const sigGroups = new Map();
   for (const p of profiles) {
+    if (p.handlingMode === 'native_donor') continue;
     const sig = sigOf(p);
     const g = sigGroups.get(sig) || [];
     g.push(p); sigGroups.set(sig, g);
@@ -343,7 +402,9 @@ function inventoryJson(all) {
     bodyStyle: p.bodyStyle, engineType: p.engineType, drivetrain: p.drivetrain, massKg: p.weightKg,
     category: ARCHETYPES[p.archetype].category, performanceTier: p.performanceTier, expectedZeroTo100: p.expectedZeroTo100, targetTopSpeedKmh: p.targetTopSpeedKmh,
     intendedRole: p.intendedRole, sourceHandlingId: p.sourceHandlingId, archetype: p.archetype,
-    identityConfidence: p.identityConfidence, handling: p.handling,
+    identityConfidence: p.identityConfidence, handlingMode: p.handlingMode || 'canonical',
+    nativeDonorHandlingId: p.nativeDonorHandlingId || null, donorConfidence: p.donorConfidence || null,
+    handling: p.handling,
   })), null, 2) + '\n';
 }
 
@@ -351,8 +412,9 @@ function auditCsv(profiles) {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const header = ['model','identity','manufacturer','category','archetype','tier','drivetrain','massKg','driveForce','maxFlatVel','targetKmh','drag','tractionMax','tractionMin','brake','antiRoll','rollFront','rollRear','confidence','source'];
   const rows = profiles.slice().sort((a,b) => a.manufacturer.localeCompare(b.manufacturer) || a.model.localeCompare(b.model)).map((p) => {
-    const h = p.handling;
-    return [p.model,p.displayName,p.manufacturer,ARCHETYPES[p.archetype].category,p.archetype,p.performanceTier,p.drivetrain,p.weightKg,h.fInitialDriveForce,h.fInitialDriveMaxFlatVel,p.targetTopSpeedKmh,h.fInitialDragCoeff,h.fTractionCurveMax,h.fTractionCurveMin,h.fBrakeForce,h.fAntiRollBarForce,h.fRollCentreHeightFront,h.fRollCentreHeightRear,p.identityConfidence,p.sourceResource].map(esc).join(',');
+    const h = p.handling || {};
+    const mode = p.handlingMode === 'native_donor' ? p.nativeDonorHandlingId : 'canonical';
+    return [p.model,p.displayName,p.manufacturer,ARCHETYPES[p.archetype].category,p.archetype,p.performanceTier,p.drivetrain,p.weightKg,h.fInitialDriveForce || mode,h.fInitialDriveMaxFlatVel || '',p.targetTopSpeedKmh,h.fInitialDragCoeff || '',h.fTractionCurveMax || '',h.fTractionCurveMin || '',h.fBrakeForce || '',h.fAntiRollBarForce || '',h.fRollCentreHeightFront || '',h.fRollCentreHeightRear || '',p.identityConfidence,p.sourceResource].map(esc).join(',');
   });
   return [header.join(','), ...rows].join('\n') + '\n';
 }

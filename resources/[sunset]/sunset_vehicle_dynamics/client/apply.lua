@@ -67,9 +67,19 @@ function SVD.ApplyVehicleDynamics(veh, force)
     local profile = SunsetVehicleDynamics.Resolve(modelHash, classId)
     if not profile then return false end
 
-    local success = SVD.ApplyHandling(veh, profile)
+    local success = true
+    if profile.handlingMode == 'native_donor' then
+        -- Stock physics come from vehicles.meta handlingId (GTA donor). Only reset gameplay multipliers.
+        local liveGears = GetVehicleHandlingInt(veh, 'CHandlingData', 'nInitialDriveGears')
+        SVD.FinalizeBaselineNatives(veh, { nInitialDriveGears = liveGears })
+    else
+        success = SVD.ApplyHandling(veh, profile)
+        if success then
+            SVD.FinalizeBaselineNatives(veh, profile.handling)
+        end
+    end
+
     if success then
-        SVD.FinalizeBaselineNatives(veh, profile.handling)
         SVD.appliedEntities[veh] = stateKey
         if SunsetVehicleDynamics.Config.Debug then
             print(string.format('^2[vehicle_dynamics] Applied baseline to veh %d (model: %s, source: %s)^7', veh, profile.model, profile.source))

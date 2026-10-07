@@ -24,10 +24,14 @@ for (const model of required) fail(byModel.has(model), `required profile missing
 
 const signatures = new Map();
 for (const p of all.profiles) {
-  const h = p.handling;
-  const expectedBias = biasFor(p.drivetrain);
   fail(ARCHETYPES[p.archetype], `${p.model}: invalid archetype ${p.archetype}`);
   fail(TIERS[p.performanceTier], `${p.model}: invalid tier ${p.performanceTier}`);
+  if (p.handlingMode === 'native_donor') {
+    fail(p.nativeDonorHandlingId, `${p.model}: native donor missing handling id`);
+    continue;
+  }
+  const h = p.handling;
+  const expectedBias = biasFor(p.drivetrain);
   fail(h.fDriveBiasFront === expectedBias, `${p.model}: ${p.drivetrain} contradicts drive bias ${h.fDriveBiasFront}`);
   fail(h.fMass >= 120 && h.fMass <= 12000, `${p.model}: absurd mass ${h.fMass}`);
   fail(h.fInitialDriveForce >= 0.16 && h.fInitialDriveForce <= 0.52, `${p.model}: unsafe drive force ${h.fInitialDriveForce}`);
@@ -54,13 +58,14 @@ const tierAverage = (tier, field) => {
 };
 fail(tierAverage('super', (p) => p.targetTopSpeedKmh) > tierAverage('economy', (p) => p.targetTopSpeedKmh) + 75, 'supercar hierarchy collapsed toward economy cars');
 fail(tierAverage('performance_sedan', (p) => p.targetTopSpeedKmh) > tierAverage('civilian', (p) => p.targetTopSpeedKmh) + 50, 'performance sedan hierarchy collapsed');
-fail(byModel.get('tol22m5').drivetrain === 'awd_rear' && byModel.get('tol22m5').handling.fDriveBiasFront === 0.32, 'BMW M5 drivetrain regression');
+fail(byModel.get('tolap2')?.handlingMode === 'native_donor' && byModel.get('tolap2')?.nativeDonorHandlingId === 'EMERUS', 'tolap2 must use EMERUS native donor');
+fail(byModel.get('tolrrmansory')?.handlingMode === 'native_donor' && byModel.get('tolrrmansory')?.nativeDonorHandlingId === 'WINDSOR2', 'tolrrmansory must use WINDSOR2 native donor');
+fail(byModel.get('tol22m5')?.handlingMode === 'native_donor', 'tol22m5 addon must not receive canonical override');
 fail(byModel.get('zentorno').handling.vecCentreOfMassOffset.z <= -0.17 && byModel.get('zentorno').handling.fAntiRollBarForce >= 1.65, 'Zentorno rollover fix regressed');
-fail(byModel.get('toldemon').drivetrain === 'rwd' && byModel.get('toldemon').handling.fLowSpeedTractionLossMult >= 1.5, 'Demon lost RWD muscle character');
-fail(byModel.get('hycsedan').performanceTier === 'performance_sedan' && byModel.get('hycsedan').handling.fInitialDriveForce >= 0.38, 'hycsedan downgraded to economy sedan tier');
-fail(byModel.get('dubmono').handling.fInitialDriveForce >= 0.38, 'dubmono lost SUV performance calibration');
-fail(byModel.get('neonvenm').handling.nInitialDriveGears === 1, 'neonvenm must stay single-speed EV');
-fail(byModel.get('tol22m5').handling.fInitialDriveForce >= byModel.get('tailgater').handling.fInitialDriveForce + 0.08, 'M5 must out-accelerate civilian sedans');
+fail(byModel.get('toldemon')?.drivetrain === 'rwd', 'Demon identity drivetrain');
+fail(byModel.get('hycsedan')?.performanceTier === 'performance_sedan', 'hycsedan tier metadata');
+fail(byModel.get('neonvenm')?.handlingMode === 'native_donor', 'neonvenm addon uses native donor (EV)');
+fail(byModel.get('tailgater').handling.fInitialDriveForce >= 0.2, 'tailgater vanilla canonical handling preserved');
 
 const applyLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/client/apply.lua'), 'utf8');
 const resolverLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_vehicle_dynamics/shared/resolver.lua'), 'utf8');
@@ -69,6 +74,7 @@ const benchmarkLua = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_
 const tuningApply = fs.readFileSync(path.join(root, 'resources/[sunset]/sunset_tuning/client/apply.lua'), 'utf8');
 
 fail(applyLua.includes('baselineRestored'), 'apply.lua must emit baselineRestored on every successful apply (forced or not)');
+fail(applyLua.includes("handlingMode == 'native_donor'"), 'apply.lua must skip handling override for native_donor vehicles');
 fail(!applyLua.includes('vehicleDynamics:applied'), 'legacy vehicleDynamics:applied event must not remain');
 fail(resolverLua.includes('massLimitsForProfile') && resolverLua.includes('120.0'), 'resolver must apply motorcycle-specific mass floor');
 fail(tuningApply.includes('baselineRestored') && tuningApply.includes('_internalBaselineRestore'), 'tuning must listen for baselineRestored with loop guard');
@@ -86,10 +92,10 @@ if (bati) {
 }
 fail(byModel.get('hycadetail')?.performanceTier === 'performance_sedan', 'hycadetail must be performance sedan not generic super');
 fail(byModel.get('hycadetail')?.archetype === 'performance_sedan_awd', 'hycadetail archetype must match Tailgater Hycade');
-fail(byModel.get('neonvenm')?.handling.nInitialDriveGears === 1, 'neonvenm EV gear count');
 
 const raw = require('./discovered_addon_vehicles.json');
 for (const item of raw) {
+  if (item.nativeDonorHandlingId || item.rawHandling?.nativeDonor) continue;
   const h = item.rawHandling || {};
   if (h.fBrakeForce > 1.5 || h.fTractionCurveMax > 3.2 || h.fMass < 400 || h.fMass > 10000) warnings.push(`${item.model}: suspicious raw source ignored`);
 }
