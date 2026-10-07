@@ -6,7 +6,6 @@ import {
   Sparkles, 
   Newspaper, 
   Shield, 
-  Users, 
   MapPin, 
   Car, 
   Building, 
@@ -35,6 +34,7 @@ import { RowDataPacket } from "mysql2";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { panelBrand } from "@/lib/brand";
 import { HomeCopyButton } from "@/components/home/HomeCopyButton";
+import { HomePlayersOnlineCard } from "@/components/home/HomePlayersOnlineCard";
 import { HomeLeaderboardTabs, RichestPlayerItem, LeveledPlayerItem } from "@/components/home/HomeLeaderboardTabs";
 import { GTAImage } from "@/components/ui/GTAImage";
 import {
@@ -281,28 +281,11 @@ export default async function HomePage() {
         </div>
 
         <HorizontalCardScroller trackClassName="sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:snap-none">
-          {/* Online Players */}
-          <div
-            className={`${horizontalCardSlideClass} max-sm:w-[min(240px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto p-4 rounded-xl bg-[#0E0E10]`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
-                {t(locale, "home.players_online")}
-              </span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                <Users className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="mt-2 text-xl font-bold font-mono text-[#F2EFE8]">
-              {serverStatus.playerCount} <span className="text-xs text-[#8F8B83] font-normal">/ {serverStatus.maxPlayers}</span>
-            </div>
-            <div className="mt-2 w-full bg-[#1A1A1E] rounded-full h-1 overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, Math.round((serverStatus.playerCount / (serverStatus.maxPlayers || 64)) * 100))}%` }}
-              />
-            </div>
-          </div>
+          <HomePlayersOnlineCard
+            initialCount={serverStatus.playerCount}
+            initialMax={serverStatus.maxPlayers}
+            initialFresh={serverStatus.online}
+          />
 
           {/* Total Economy */}
           <div

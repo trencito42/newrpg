@@ -945,19 +945,94 @@ CreateThread(function()
     end
 end)
 
+local function collectOnlineRoster()
+    local roster = {}
+    for _, srcStr in ipairs(GetPlayers()) do
+        local src = tonumber(srcStr)
+        if not src or src <= 0 then goto continue end
+        local char = exports.sunset_core:GetCharacter(src)
+        local player = exports.sunset_core:GetPlayer(src)
+        if not char or not player then goto continue end
+        local charId = tonumber(char.id)
+        if not charId or charId <= 0 then goto continue end
+
+        local meta = char.metadata
+        if type(meta) == 'string' then
+            meta = json.decode(meta) or {}
+        elseif type(meta) ~= 'table' then
+            meta = {}
+        end
+
+        local factionId = meta.faction
+        if type(factionId) ~= 'string' or factionId == '' then factionId = nil end
+
+        local skin = meta.skin and tostring(meta.skin) or nil
+        local username = player.name
+        if type(username) ~= 'string' or username == '' then
+            username = ('Player%d'):format(src)
+        end
+        if #username > 64 then username = username:sub(1, 64) end
+
+        local job = char.job
+        if type(job) ~= 'string' or job == '' then job = 'unemployed' end
+        if #job > 64 then job = job:sub(1, 64) end
+
+        roster[#roster + 1] = {
+            character_id = charId,
+            username = username,
+            level = math.max(1, math.floor(tonumber(char.level) or 1)),
+            job = job,
+            faction_id = factionId,
+            paydays_received = math.max(0, math.floor(tonumber(char.paydays_received) or 0)),
+            skin = skin and (#skin <= 64 and skin or skin:sub(1, 64)) or nil,
+        }
+        ::continue::
+    end
+
+    table.sort(roster, function(a, b)
+        if a.level ~= b.level then return a.level > b.level end
+        return a.username:lower() < b.username:lower()
+    end)
+    return roster
+end
+
+local function syncOnlineRosterSnapshot()
+    local roster = collectOnlineRoster()
+    local maxClients = GetConvarInt('sv_maxclients', 64)
+    local version = GetResourceMetadata(GetCurrentResourceName(), 'version', 0) or 'unknown'
+
+    MySQL.update.await('DELETE FROM panel_online_roster')
+
+    for _, row in ipairs(roster) do
+        MySQL.insert.await([[
+            INSERT INTO panel_online_roster
+                (character_id, username, level, job, faction_id, paydays_received, skin)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ]], {
+            row.character_id,
+            row.username,
+            row.level,
+            row.job,
+            row.faction_id,
+            row.paydays_received,
+            row.skin,
+        })
+    end
+
+    MySQL.update.await([[
+        INSERT INTO panel_runtime_snapshot (id, player_count, max_players, resource_version, updated_at)
+        VALUES (1, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE player_count = VALUES(player_count),
+            max_players = VALUES(max_players),
+            resource_version = VALUES(resource_version), updated_at = NOW()
+    ]], { #roster, maxClients, version })
+end
+
 CreateThread(function()
     local interval = math.max(5, GetConvarInt('panel_snapshot_seconds', 15)) * 1000
     local lastFailure = false
     while true do
-        local ok, err = pcall(function()
-            MySQL.update.await([[
-                INSERT INTO panel_runtime_snapshot (id, player_count, max_players, resource_version, updated_at)
-                VALUES (1, ?, ?, ?, NOW())
-                ON DUPLICATE KEY UPDATE player_count = VALUES(player_count),
-                    max_players = VALUES(max_players),
-                    resource_version = VALUES(resource_version), updated_at = NOW()
-            ]], { #GetPlayers(), GetConvarInt('sv_maxclients', 64), GetResourceMetadata(GetCurrentResourceName(), 'version', 0) or 'unknown' })
-        end)
+        local ok, err = pcall(syncOnlineRosterSnapshot)
         if not ok and not lastFailure then
             print(('^1[sunset_panel_bridge] Snapshot unavailable: %s^7'):format(tostring(err)))
         end
