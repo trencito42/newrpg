@@ -1,34 +1,25 @@
 import Link from "next/link";
-import { 
-  Radio, 
-  ExternalLink, 
-  Vote, 
-  Sparkles, 
-  Newspaper, 
-  Shield, 
-  MapPin, 
-  Car, 
-  Building, 
-  Coins, 
-  TrendingUp, 
-  ChevronRight, 
-  Crown, 
-  Clock, 
-  Flame, 
-  BookOpen, 
-  LifeBuoy, 
-  ShieldCheck, 
-  Award,
-  Zap
+import {
+  ExternalLink,
+  Vote,
+  Shield,
+  MapPin,
+  Coins,
+  TrendingUp,
+  ChevronRight,
+  Crown,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { getCurrentSession, getViewerLocale } from "@/lib/auth";
 import { fetchSocialFeedPosts } from "@/lib/social-feed";
 import { fetchHomeForumActivity } from "@/lib/home-forum-activity";
 import { HomeCommunityHub } from "@/components/home/HomeCommunityHub";
-import { HomeCommunitySlider } from "@/components/home/HomeCommunitySlider";
-import { buildHomeCommunitySliderCards } from "@/lib/home-community-slider-cards";
+import { HomeQuickLinks } from "@/components/home/HomeQuickLinks";
+import { HomeLatestUpdate } from "@/components/home/HomeLatestUpdate";
+import { filterForumItemsDuplicatingUpdate } from "@/lib/home-content-dedupe";
 import { getServerStatus, getAggregatedServerStats } from "@/lib/bridge";
-import { t, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
+import { t, formatNumber, formatCurrency } from "@/lib/i18n";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 import { PollCountdown } from "@/components/polls/PollCountdown";
@@ -108,8 +99,8 @@ export default async function HomePage() {
   ]);
 
   const viewerCharId = session?.selectedCharacterId ?? null;
-  const [homeFeedPosts, homeForumActivity] = await Promise.all([
-    fetchSocialFeedPosts({ limit: 8, viewerCharId }),
+  const [homeFeedPosts, homeForumActivityRaw] = await Promise.all([
+    fetchSocialFeedPosts({ limit: 4, viewerCharId }),
     fetchHomeForumActivity(session, 8),
   ]);
 
@@ -152,11 +143,19 @@ export default async function HomePage() {
   }
 
   // Load latest updates & patch notes
-  const latestUpdates = await dbQuery<UpdatePostRow>(
+  const latestUpdateRow = await dbQuerySingle<UpdatePostRow>(
     `SELECT id, slug, title, summary, category, cover_image, author_name, is_pinned, views_count, created_at
      FROM panel_updates
      ORDER BY is_pinned DESC, id DESC
-     LIMIT 4`
+     LIMIT 1`
+  );
+
+  const homeForumActivity = filterForumItemsDuplicatingUpdate(
+    homeForumActivityRaw,
+    latestUpdateRow
+      ? { title: latestUpdateRow.title, slug: latestUpdateRow.slug }
+      : null,
+    6
   );
 
   // Load top richest characters (excluding test characters)
@@ -225,9 +224,9 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-[1280px] mx-auto w-full">
       {/* Hero Live Server Header */}
-      <div className="rounded-2xl bg-[#0E0E10] p-6">
+      <div className="rounded-xl bg-[#0E0E10] border border-[rgba(255,255,255,0.06)] p-4 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           {/* Left: Server Identity & Status */}
           <div className="space-y-2">
@@ -269,10 +268,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <HomeCommunitySlider
-        locale={locale}
-        cards={buildHomeCommunitySliderCards(session?.username ?? null)}
-      />
+      <HomeQuickLinks locale={locale} />
 
       {/* HORIZONTAL SCROLLABLE STATS STRIP ON MOBILE */}
       <div className="space-y-1">
@@ -350,64 +346,7 @@ export default async function HomePage() {
         </HorizontalCardScroller>
       </div>
 
-      {/* LATEST UPDATES & PATCH NOTES SECTION */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Newspaper className="w-4 h-4 text-[#D7B558]" />
-            <h2 className="text-sm font-bold text-[#F2EFE8] uppercase tracking-wider">
-              {t(locale, "copy.app_page.official_updates_patch_notes")}
-            </h2>
-          </div>
-          <Link
-            href="/updates"
-            className="text-xs text-[#D7B558] hover:text-[#E3C572] font-semibold flex items-center gap-1 transition-colors"
-          >
-            <span>{t(locale, "copy.app_page.view_all_updates")}</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {/* Updates Horizontal Scroll on Mobile, Grid on Desktop */}
-        <HorizontalCardScroller gap="md" trackClassName="sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible sm:snap-none">
-          {latestUpdates.map((update) => (
-            <Link
-              key={update.id}
-              href={`/updates/${update.slug}`}
-              className={`${horizontalCardSlideClass} max-sm:w-[min(280px,calc(100vw-2*var(--panel-gutter)-var(--racket-hscroll-peek)))] sm:w-auto flex flex-col justify-between p-4 rounded-xl bg-[#0E0E10] hover:bg-[#141418] transition-colors group`}
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-[#D7B558]/10 text-[#D7B558]">
-                    {update.category}
-                  </span>
-                  {update.is_pinned === 1 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      <Flame className="w-2.5 h-2.5" />
-                      <span>{t(locale, "interface.pinned")}</span>
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="text-sm font-bold text-[#F2EFE8] group-hover:text-[#D7B558] transition-colors line-clamp-2">
-                  {update.title}
-                </h3>
-
-                <p className="text-xs text-[#99958E] line-clamp-3 leading-relaxed">
-                  {update.summary}
-                </p>
-              </div>
-
-              <div className="pt-3 mt-3 border-t border-surface-border/60 flex items-center justify-between text-[11px] text-[#8F8B83]">
-                <div className="flex items-center gap-1.5 font-medium text-[#B4AFA4]">
-                  <span>{update.author_name}</span>
-                </div>
-                <span className="font-mono">{formatDate(update.created_at, locale)}</span>
-              </div>
-            </Link>
-          ))}
-        </HorizontalCardScroller>
-      </div>
+      <HomeLatestUpdate locale={locale} update={latestUpdateRow} />
 
       <HomeCommunityHub
         locale={locale}
@@ -645,47 +584,6 @@ export default async function HomePage() {
                   {t(locale, "copy.app_page.no_clans_registered_yet")}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Quick Helpful Resources */}
-          <div className="rounded-xl bg-[#0E0E10] p-4 space-y-2">
-            <h3 className="text-xs font-bold text-[#F2EFE8] uppercase tracking-wider pb-2 border-b border-surface-border">
-              {t(locale, "copy.app_page.quick_links_help")}
-            </h3>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <Link
-                href="/rules"
-                className="p-2.5 rounded-lg bg-[#121214] hover:bg-[#18181C] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors flex items-center gap-2"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-[#D7B558]" />
-                <span>{t(locale, "nav.rules")}</span>
-              </Link>
-
-              <Link
-                href="/turfs"
-                className="p-2.5 rounded-lg bg-[#121214] hover:bg-[#18181C] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors flex items-center gap-2"
-              >
-                <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                <span>{t(locale, "interface.territory_map")}</span>
-              </Link>
-
-              <Link
-                href="/support/complaints"
-                className="p-2.5 rounded-lg bg-[#121214] hover:bg-[#18181C] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors flex items-center gap-2"
-              >
-                <Shield className="w-3.5 h-3.5 text-sky-400" />
-                <span>{t(locale, "nav.complaints")}</span>
-              </Link>
-
-              <Link
-                href="/support/tickets"
-                className="p-2.5 rounded-lg bg-[#121214] hover:bg-[#18181C] text-[#B4AFA4] hover:text-[#F2EFE8] transition-colors flex items-center gap-2"
-              >
-                <LifeBuoy className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{t(locale, "interface.support_tickets")}</span>
-              </Link>
             </div>
           </div>
         </div>

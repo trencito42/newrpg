@@ -79,7 +79,7 @@ function FeedPanel({
   viewerCharId: number | null;
   isLoggedIn: boolean;
 }) {
-  const [localPosts, setLocalPosts] = useState(posts);
+  const [localPosts, setLocalPosts] = useState(posts.slice(0, 4));
 
   return (
     <div className="min-w-0 flex flex-col">
@@ -109,7 +109,7 @@ function FeedPanel({
           posts={localPosts}
           viewerCharId={viewerCharId}
           isLoggedIn={isLoggedIn}
-          variant="profile"
+          variant="home"
           showLoadMore={false}
           onPostsChange={setLocalPosts}
         />

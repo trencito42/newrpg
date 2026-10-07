@@ -11,7 +11,7 @@ import { SocialPedAvatar } from "./SocialPedAvatar";
 import { socialRelativeTime } from "./social-time";
 import { SocialComments } from "./SocialComments";
 
-export type SocialPostVariant = "full" | "compact" | "profile";
+export type SocialPostVariant = "full" | "compact" | "profile" | "home";
 
 export function SocialPostCard({
   post,
@@ -74,11 +74,14 @@ export function SocialPostCard({
     }
   };
 
-  const compact = variant === "compact" || variant === "profile";
-  const mediaMaxH = variant === "compact" ? "max-h-[220px]" : "max-h-[400px]";
+  const compact = variant === "compact" || variant === "profile" || variant === "home";
+  const mediaMaxH =
+    variant === "compact" || variant === "home" || variant === "profile"
+      ? "max-h-[220px]"
+      : "max-h-[400px]";
 
   const wrapperClass =
-    variant === "profile"
+    variant === "profile" || variant === "home"
       ? "py-3 border-b border-[rgba(255,255,255,0.07)] last:border-0"
       : "py-4 border-b border-[rgba(255,255,255,0.07)]";
 
