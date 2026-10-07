@@ -93,7 +93,7 @@
     height: 100%;
     min-height: 0;
     filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Vito', 'Montserrat', sans-serif;
     color: #F2EFE8;
     opacity: 0;
     pointer-events: none;
@@ -229,9 +229,12 @@
     align-items: center;
     justify-content: center;
     position: relative;
+    overflow: hidden;
 }
 
 #menu-vehicle-grid .vi-thumb {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -244,9 +247,20 @@
     color: rgba(242, 239, 232, 0.35);
 }
 
-#menu-vehicle-grid .vi-icon--fallback { display: none; }
+#menu-vehicle-grid .vi-icon--fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    pointer-events: none;
+}
 
-#menu-vehicle-grid .vi-icon--fallback:not(.hidden) { display: block; }
+#menu-vehicle-grid .vi-icon--fallback.hidden {
+    display: none !important;
+}
 
 #menu-vehicle-grid .vi-status { display: none; }
 
@@ -254,7 +268,9 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
 }
 
 #menu-vehicle-grid .vi-name {
@@ -262,6 +278,9 @@
     font-weight: 800;
     color: inherit;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #menu-vehicle-grid .vi-plate {
@@ -270,6 +289,9 @@
     font-weight: 700;
     color: rgba(242, 239, 232, 0.55);
     margin-top: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #menu-vehicle-grid .vi-status-line {
@@ -775,7 +797,7 @@
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Vito', 'Montserrat', sans-serif;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 2px;

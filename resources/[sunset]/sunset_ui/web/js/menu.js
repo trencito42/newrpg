@@ -176,7 +176,7 @@ const Menu = {
     },
 
     vehicleImageFallbackHtml() {
-        return '<i class="ph-fill ph-car-profile vi-icon vi-icon--fallback" aria-hidden="true"></i>';
+        return '<i class="ph-fill ph-car-profile vi-icon vi-icon--fallback hidden" aria-hidden="true"></i>';
     },
 
     formatEcuBlock(info, vehicleId) {

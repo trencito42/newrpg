@@ -122,7 +122,7 @@ export function HomeCommunitySlider({
           ref={scrollerRef}
           onScroll={updateScrollHints}
           onWheel={onWheel}
-          trackClassName="overscroll-x-contain touch-pan-x sm:overflow-visible sm:snap-none"
+          trackClassName="overscroll-x-contain sm:overflow-visible sm:snap-none"
         >
           {cards.map((card) => {
             const Icon = ICONS[card.icon] ?? MessageSquare;
