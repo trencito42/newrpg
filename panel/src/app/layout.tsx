@@ -1,6 +1,14 @@
 import { LocaleProvider } from "@/components/LocaleProvider";
 import type { Metadata, Viewport } from "next";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
+
+const montserrat = Montserrat({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-heading",
+  display: "swap",
+  weight: ["500", "600", "700", "800", "900"],
+});
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { toViewerSessionDTO } from "@/lib/session-dto";
 import { getServerStatus } from "@/lib/bridge";
@@ -45,7 +53,7 @@ export default async function RootLayout({
   const siteDescription = t(locale, "seo.root_description").replace(/RACKET/g, panelBrand.name);
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} className={`dark ${montserrat.variable}`}>
       <head>
         <link rel="stylesheet" href="/fontawesome/css/all.min.css" />
         <script
@@ -74,7 +82,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased min-h-[100dvh] flex flex-col lg:flex-row overflow-x-hidden">
+      <body className="font-sans bg-background text-foreground antialiased min-h-[100dvh] flex flex-col lg:flex-row overflow-x-hidden">
         <LocaleProvider locale={locale}>
         <RouteScrollReset />
         <PlayerPreviewProvider>
