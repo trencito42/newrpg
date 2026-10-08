@@ -6,7 +6,7 @@
     <Item>
       <modelName>cyphx</modelName>
       <txdName>cyphx</txdName>
-      <handlingId>SENTINEL3</handlingId>
+      <handlingId>cyphx</handlingId>
       <gameName>Cyph x</gameName>
       <vehicleMakeName>UBERMACHT</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

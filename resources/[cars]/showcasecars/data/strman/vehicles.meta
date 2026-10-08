@@ -6,7 +6,7 @@
     <Item>
       <modelName>strman</modelName>
       <txdName>strman</txdName>
-      <handlingId>COMET2</handlingId>
+      <handlingId>strman</handlingId>
       <gameName>strman</gameName>
       <vehicleMakeName>BENEFACTOR</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

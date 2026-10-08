@@ -6,7 +6,7 @@
     <Item>
       <modelName>dawnpd</modelName>
       <txdName>dawnpd</txdName>
-      <handlingId>POLICE2</handlingId>
+      <handlingId>dawnpd</handlingId>
       <gameName>dawnpd</gameName>
       <vehicleMakeName>MAIBATSU</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

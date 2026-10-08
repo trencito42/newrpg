@@ -61,14 +61,6 @@ end
 function ApplyTune(veh, tune, persist, modelName)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return false end
 
-    if GetResourceState('sunset_vehicle_dynamics') == 'started' then
-        local poison = false
-        pcall(function()
-            poison = exports.sunset_vehicle_dynamics:HasLegacyAddonPoisonHandling(veh)
-        end)
-        if poison then return false end
-    end
-
     local classId = GetVehicleClass(veh)
     if not modelName or modelName == '' then
         modelName = GetDisplayNameFromVehicleModel(GetEntityModel(veh))
@@ -85,8 +77,10 @@ function ApplyTune(veh, tune, persist, modelName)
         or STC.captureModelBaseline(veh)
     if not baseline then return false end
 
-    -- Idempotent: always restore stock baseline before applying tune
-    STC.restoreBaselineHandling(veh, baseline)
+    local hadTune = priorState and priorState.modelHash == modelHash and priorState.calculated
+        and not priorState.calculated.isStock
+
+    STC.restoreBaselineHandling(veh, baseline, { restoreHandling = hadTune })
 
     local calculated = TC.Compute(baseline, tune, caps)
     if not calculated.isStock then
@@ -186,23 +180,11 @@ RegisterNetEvent('sunset:tuning:client:loadPlateTune', function(plate, tune, per
             if STC.plateOf(veh) == plate then
                 local state = STC.appliedVehicles[veh]
                 local baseline = state and state.baseline or STC.captureModelBaseline(veh)
-                STC.restoreBaselineHandling(veh, baseline)
+                STC.restoreBaselineHandling(veh, baseline, { restoreHandling = true })
                 STC.appliedVehicles[veh] = nil
             end
         end
     end
-end)
-
--- Canonical baseline restored (enter vehicle, resource restart, admin reapply).
--- Re-layer persisted ECU + hardware; skip when tuning itself triggered the baseline restore.
-AddEventHandler('sunset:vehicleDynamics:baselineRestored', function(veh, _modelName, _meta)
-    if STC._internalBaselineRestore then return end
-    if not veh or veh == 0 or not DoesEntityExist(veh) then return end
-    local plate = STC.plateOf(veh)
-    if plate == '' or not STC.persistedPlates[plate] then return end
-    local tune = STC.plateTunes[plate]
-    if not tune or SunsetTuning.IsStockTune(tune) then return end
-    ApplyTune(veh, tune, false, STC.plateModels[plate])
 end)
 
 AddEventHandler('entityRemoved', function(entity)

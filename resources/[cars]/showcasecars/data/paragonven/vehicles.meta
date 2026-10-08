@@ -6,7 +6,7 @@
 	<Item>
       <modelName>paragonven</modelName>
       <txdName>paragonven</txdName>
-      <handlingId>WINDSOR2</handlingId>
+      <handlingId>paragonven</handlingId>
       <gameName>Paragon Venuum</gameName>
       <vehicleMakeName>ENUS</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

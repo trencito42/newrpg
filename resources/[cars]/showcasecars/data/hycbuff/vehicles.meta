@@ -6,7 +6,7 @@
     <Item>
       <modelName>hycbuff</modelName>
       <txdName>hycbuff</txdName>
-      <handlingId>VIGERO</handlingId>
+      <handlingId>hycbuff</handlingId>
       <gameName>Buffalo Hycade</gameName>
       <vehicleMakeName>BRAVADO</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

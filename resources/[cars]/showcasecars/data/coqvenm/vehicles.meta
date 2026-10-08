@@ -6,7 +6,7 @@
     <Item>
       <modelName>coqvenm</modelName>
       <txdName>coqvenm</txdName>
-      <handlingId>CARBONIZZARE</handlingId>
+      <handlingId>coqvenm</handlingId>
       <gameName>Coquette Venuum</gameName>
       <vehicleMakeName>INVERTO</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

@@ -6,7 +6,7 @@
     <Item>
       <modelName>jubven</modelName>
       <txdName>jubven</txdName>
-      <handlingId>JUBILEE</handlingId>
+      <handlingId>jubven</handlingId>
       <gameName>Jubilee Venuum</gameName>
       <vehicleMakeName>ENUS</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

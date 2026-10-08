@@ -6,7 +6,7 @@
     <Item>
       <modelName>abfbuff</modelName>
       <txdName>abfbuff</txdName>
-      <handlingId>GAUNTLET</handlingId>
+      <handlingId>abfbuff</handlingId>
       <gameName>Buffalo Wide</gameName>
       <vehicleMakeName>BRAVADO</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

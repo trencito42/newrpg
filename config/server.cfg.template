@@ -109,7 +109,8 @@ ensure sunset_addon_vehicles
 ensure showcasecars
 ensure showcasecars2
 ensure pitd_tol_car_pack_a
-ensure sunset_vehicle_dynamics
+# sunset_vehicle_dynamics — disabled: stock GTA / pack handling.meta only (no runtime overrides)
+# ensure sunset_vehicle_dynamics
 ensure sunset_tuning
 ensure sunset_properties
 ensure sunset_skins

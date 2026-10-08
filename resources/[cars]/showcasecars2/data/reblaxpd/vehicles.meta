@@ -6,7 +6,7 @@
     <Item>
       <modelName>reblaxpd</modelName>
       <txdName>reblaxpd</txdName>
-      <handlingId>GRANGER</handlingId>
+      <handlingId>reblaxpd</handlingId>
       <gameName>reblaxpd</gameName>
       <vehicleMakeName>UBERMACHT</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

@@ -6,7 +6,7 @@
     <Item>
       <modelName>cometven</modelName>
       <txdName>cometven</txdName>
-      <handlingId>CARBONIZZARE</handlingId>
+      <handlingId>cometven</handlingId>
       <gameName>Comet Venuum</gameName>
       <vehicleMakeName>PFISTER</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

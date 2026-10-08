@@ -6,7 +6,7 @@
 	<Item>
       <modelName>flashgrs</modelName>
       <txdName>flashgrs</txdName>
-      <handlingId>SULTANRS</handlingId>
+      <handlingId>flashgrs</handlingId>
       <gameName>Flash GRS</gameName>
       <vehicleMakeName>VAPID</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

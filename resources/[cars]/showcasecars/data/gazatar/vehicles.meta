@@ -6,7 +6,7 @@
     <Item>
       <modelName>gazatar</modelName>
       <txdName>gazatar</txdName>
-      <handlingId>CLUB</handlingId>
+      <handlingId>gazatar</handlingId>
       <gameName>Gazer Wide</gameName>
       <vehicleMakeName>BENEFAC</vehicleMakeName>
        <expressionDictName>null</expressionDictName>

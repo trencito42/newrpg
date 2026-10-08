@@ -6,7 +6,7 @@
     <Item>
       <modelName>flattruckm</modelName>
       <txdName>flattruckm</txdName>
-      <handlingId>MULE</handlingId>
+      <handlingId>flattruckm</handlingId>
       <gameName>Flat Truck</gameName>
       <vehicleMakeName>MTL</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

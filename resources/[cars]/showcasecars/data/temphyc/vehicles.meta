@@ -6,7 +6,7 @@
     <Item>
       <modelName>temphyc</modelName>
       <txdName>temphyc</txdName>
-      <handlingId>OSIRIS</handlingId>
+      <handlingId>temphyc</handlingId>
       <gameName>Tempesta Hycade</gameName>
       <vehicleMakeName>PEGASSI</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

@@ -6,7 +6,7 @@
 	<Item>
      <modelName>sedanwid</modelName>
       <txdName>sedanwid</txdName>
-      <handlingId>TAILGATER</handlingId>
+      <handlingId>sedanwid</handlingId>
       <gameName>Rhine Sed Wider</gameName>
       <vehicleMakeName>UBERMACHT</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

@@ -6,7 +6,7 @@
    <Item>
       <modelName>parawide</modelName>
       <txdName>parawide</txdName>
-      <handlingId>SUPERD</handlingId>
+      <handlingId>parawide</handlingId>
       <gameName>Paragon X</gameName>
       <vehicleMakeName>ENUS</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

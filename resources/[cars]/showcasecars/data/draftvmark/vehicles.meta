@@ -6,7 +6,7 @@
     <Item>
       <modelName>draftvmark</modelName>
       <txdName>draftvmark</txdName>
-      <handlingId>SHERIFF</handlingId>
+      <handlingId>draftvmark</handlingId>
       <gameName>PD Drafter</gameName>
       <vehicleMakeName>OBEY</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

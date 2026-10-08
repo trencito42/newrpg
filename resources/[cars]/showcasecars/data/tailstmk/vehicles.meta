@@ -6,7 +6,7 @@
     <Item>
       <modelName>tailstmk</modelName>
       <txdName>tailstmk</txdName>
-      <handlingId>FBI</handlingId>
+      <handlingId>tailstmk</handlingId>
       <gameName>PD tailgater</gameName>
       <vehicleMakeName>OBEY</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

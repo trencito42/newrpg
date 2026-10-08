@@ -6,7 +6,7 @@
 	    <Item>
       <modelName>verusreg</modelName>
       <txdName>verusreg</txdName>
-      <handlingId>KAMACHO</handlingId>
+      <handlingId>verusreg</handlingId>
       <gameName>Verus Regen</gameName>
       <vehicleMakeName>verus2</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

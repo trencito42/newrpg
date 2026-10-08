@@ -1,0 +1,2151 @@
+{
+  "generatedAt": "2026-10-08T20:19:14.970Z",
+  "inventory": [
+    {
+      "model": "tol22m5",
+      "handlingId": "tol22m5",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tol240sx",
+      "handlingId": "tol240sx",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolc7",
+      "handlingId": "tolc7",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolcharger2",
+      "handlingId": "tolcharger2",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolcurus",
+      "handlingId": "tolcurus",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "toldemon",
+      "handlingId": "toldemon",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "toldurus",
+      "handlingId": "toldurus",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tole36prb",
+      "handlingId": "tole36prb",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tole36v",
+      "handlingId": "tole36v",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tole6314",
+      "handlingId": "tole6314",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolevo9",
+      "handlingId": "tolevo9",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tol3j50",
+      "handlingId": "tol3j50",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolexor",
+      "handlingId": "tolexor",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolf360",
+      "handlingId": "tolf360",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolf8spider",
+      "handlingId": "tolf8spider",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolfxxk",
+      "handlingId": "tolfxxk",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolgtam21",
+      "handlingId": "tolgtam21",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolgtr",
+      "handlingId": "tolgtr",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolgtrlw",
+      "handlingId": "tolgtrlw",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolka",
+      "handlingId": "tolka",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tollam2",
+      "handlingId": "tollam2",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tollwalk458",
+      "handlingId": "tollwalk458",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tol675ltsp",
+      "handlingId": "tol675ltsp",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolm5cs22",
+      "handlingId": "tolm5cs22",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolm5e60",
+      "handlingId": "tolm5e60",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolm6x6",
+      "handlingId": "tolm6x6",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolmig",
+      "handlingId": "tolmig",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolmm6x6",
+      "handlingId": "tolmm6x6",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolmus2",
+      "handlingId": "tolmus2",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolmustan",
+      "handlingId": "tolmustan",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolmustang",
+      "handlingId": "tolmustang",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolpeigerzen",
+      "handlingId": "tolpeigerzen",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolr33",
+      "handlingId": "tolr33",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tol700",
+      "handlingId": "tol700",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolr8c",
+      "handlingId": "tolr8c",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolr8v10",
+      "handlingId": "tolr8v10",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolraid",
+      "handlingId": "tolraid",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolraptorv2",
+      "handlingId": "tolraptorV2",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolrrmansory",
+      "handlingId": "tolrrmansory",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolrs5",
+      "handlingId": "tolrs5",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolrs6",
+      "handlingId": "tolrs6",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolrs7c821",
+      "handlingId": "tolrs7c821",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolrsurus",
+      "handlingId": "tolrsurus",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tols63amg",
+      "handlingId": "tols63amg",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tola6",
+      "handlingId": "tola6",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolap2",
+      "handlingId": "tolap2",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolaudidy",
+      "handlingId": "tolaudidy",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolbt62r",
+      "handlingId": "tolbt62r",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tolc63",
+      "handlingId": "tolc63",
+      "vehiclesMeta": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "abfbuff",
+      "handlingId": "abfbuff",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/abfbuff/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "ballvenm",
+      "handlingId": "ballvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/ballvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "ballvmark",
+      "handlingId": "ballvmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/ballvmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "briosoav",
+      "handlingId": "briosoav",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/briosoav/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cazador",
+      "handlingId": "cazador",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/cazador/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cazadortcr",
+      "handlingId": "cazadortcr",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/cazadortcr/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "clubc",
+      "handlingId": "clubc",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/clubc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "clubp",
+      "handlingId": "clubp",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/clubp/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "clubr",
+      "handlingId": "clubr",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/clubr/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "clubrhyc",
+      "handlingId": "clubrhyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/clubrhyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cometnor",
+      "handlingId": "cometnor",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/cometnor/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cometven",
+      "handlingId": "cometven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/cometven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "coquettepiston",
+      "handlingId": "coquettepiston",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/coquettepiston/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "coqvenm",
+      "handlingId": "coqvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/coqvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "dawn",
+      "handlingId": "dawn",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/dawn/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "drafthyc",
+      "handlingId": "drafthyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/drafthyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "draftven",
+      "handlingId": "draftven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/draftven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "draftvmark",
+      "handlingId": "draftvmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/draftvmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "dubmono",
+      "handlingId": "dubmono",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/dubmono/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "elegyxa19",
+      "handlingId": "elegyxa19",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/elegyxa19/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "elegyxa19ven",
+      "handlingId": "elegyxa19ven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/elegyxa19ven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "flashgrs",
+      "handlingId": "flashgrs",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/flashgrs/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "flattruckm",
+      "handlingId": "flattruckm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/flattruckm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "gaterback",
+      "handlingId": "gaterback",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/gaterback/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "gazatar",
+      "handlingId": "gazatar",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/gazatar/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hweevil",
+      "handlingId": "hweevil",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hweevil/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycadetail",
+      "handlingId": "hycadetail",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycadetail/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycbansh",
+      "handlingId": "hycbansh",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycbansh/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycbuff",
+      "handlingId": "hycbuff",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycbuff/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycdeity",
+      "handlingId": "hycdeity",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycdeity/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycenty",
+      "handlingId": "hycenty",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycenty/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycgaunt",
+      "handlingId": "hycgaunt",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycgaunt/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycignus",
+      "handlingId": "hycignus",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycignus/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycpargn",
+      "handlingId": "hycpargn",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycpargn/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycr300",
+      "handlingId": "hycr300",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycr300/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycsedan",
+      "handlingId": "hycsedan",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycsedan/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hycwagen",
+      "handlingId": "hycwagen",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hycwagen/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hyczr350",
+      "handlingId": "hyczr350",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/hyczr350/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "issiwider",
+      "handlingId": "issiwider",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/issiwider/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "jestvenm",
+      "handlingId": "jestvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/jestvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "jubven",
+      "handlingId": "jubven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/jubven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "kcjub",
+      "handlingId": "kcjub",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/kcjub/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "komtmark",
+      "handlingId": "komtmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/komtmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "komtour",
+      "handlingId": "komtour",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/komtour/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "kurxa19",
+      "handlingId": "kurxa19",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/kurxa19/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "kurxmark",
+      "handlingId": "kurxmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/kurxmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "neonvenm",
+      "handlingId": "neonvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/neonvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "paragonven",
+      "handlingId": "paragonven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/paragonven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "parawide",
+      "handlingId": "parawide",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/parawide/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "parawmark",
+      "handlingId": "parawmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/parawmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "remusx",
+      "handlingId": "remusx",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/remusx/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rhinea19x",
+      "handlingId": "rhinea19x",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/rhinea19x/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rsxven",
+      "handlingId": "rsxven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/rsxven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rt3000varis",
+      "handlingId": "rt3000varis",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/rt3000varis/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rt3kavan",
+      "handlingId": "rt3kavan",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/rt3kavan/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rwagvenm",
+      "handlingId": "rwagvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/rwagvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "schlag",
+      "handlingId": "schlag",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/schlag/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sedanwid",
+      "handlingId": "sedanwid",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/sedanwid/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "shenron",
+      "handlingId": "shenron",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/shenron/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sitavenm",
+      "handlingId": "sitavenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/sitavenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sr8",
+      "handlingId": "sr8",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/sr8/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sr8elem",
+      "handlingId": "sr8elem",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/sr8elem/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "srspback",
+      "handlingId": "srspback",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/srspback/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "str",
+      "handlingId": "str",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/str/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strcoupe",
+      "handlingId": "strcoupe",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/strcoupe/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strman",
+      "handlingId": "strman",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/strman/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strmark",
+      "handlingId": "strmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/strmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strwag",
+      "handlingId": "strwag",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/strwag/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strwagmark",
+      "handlingId": "strwagmark",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/strwagmark/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sultlong",
+      "handlingId": "sultlong",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/sultlong/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tailgatersr",
+      "handlingId": "tailgatersr",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tailgatersr/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tailsr66",
+      "handlingId": "tailsr66",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tailsr66/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tailstmk",
+      "handlingId": "tailstmk",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tailstmk/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "temphyc",
+      "handlingId": "temphyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/temphyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "temptwins",
+      "handlingId": "temptwins",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/temptwins/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tenfhyc",
+      "handlingId": "tenfhyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tenfhyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tenfvenm",
+      "handlingId": "tenfvenm",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tenfvenm/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "thraxven",
+      "handlingId": "thraxven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/thraxven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "toroslbwk",
+      "handlingId": "toroslbwk",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/toroslbwk/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "torosven",
+      "handlingId": "torosven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/torosven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tragambo",
+      "handlingId": "tragambo",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tragambo/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "trager",
+      "handlingId": "trager",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/trager/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tragmech",
+      "handlingId": "tragmech",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tragmech/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tragpd",
+      "handlingId": "tragpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/tragpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "turisgt3",
+      "handlingId": "turisgt3",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/turisgt3/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "verusreg",
+      "handlingId": "verusreg",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/verusreg/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "xlsstr",
+      "handlingId": "xlsstr",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/xlsstr/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "zentven",
+      "handlingId": "zentven",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/zentven/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "zr350piston",
+      "handlingId": "zr350piston",
+      "vehiclesMeta": "resources/[cars]/showcasecars/data/zr350piston/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "briosoxpd",
+      "handlingId": "briosoxpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/briosoxpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "carrion",
+      "handlingId": "carrion",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/carrion/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "carrionmech",
+      "handlingId": "carrionmech",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/carrionmech/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "carrionpd",
+      "handlingId": "carrionpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/carrionpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cazadorpd",
+      "handlingId": "cazadorpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/cazadorpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "clubrpd",
+      "handlingId": "clubrpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/clubrpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cyphx",
+      "handlingId": "cyphx",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/cyphx/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "dawnpd",
+      "handlingId": "dawnpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/dawnpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "flashgrspd",
+      "handlingId": "flashgrspd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/flashgrspd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "hyctailpd",
+      "handlingId": "hyctailpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/hyctailpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "jubvenpd",
+      "handlingId": "jubvenpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/jubvenpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "kanjoep4",
+      "handlingId": "kanjoep4",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/kanjoep4/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "kanjox",
+      "handlingId": "kanjox",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/kanjox/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "omnvenpd",
+      "handlingId": "omnvenpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/omnvenpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "reblax",
+      "handlingId": "reblax",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/reblax/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "reblaxpd",
+      "handlingId": "reblaxpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/reblaxpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "rhinea19xpd",
+      "handlingId": "rhinea19xpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/rhinea19xpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "schlagpd",
+      "handlingId": "schlagpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/schlagpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sen5tour",
+      "handlingId": "sen5tour",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sen5tour/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sen5tourhyc",
+      "handlingId": "sen5tourhyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sen5tourhyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sent5bxane",
+      "handlingId": "sent5bxane",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sent5bxane/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sent5hyc",
+      "handlingId": "sent5hyc",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sent5hyc/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sent5wide",
+      "handlingId": "sent5wide",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sent5wide/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "shenronpd",
+      "handlingId": "shenronpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/shenronpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sr8pd",
+      "handlingId": "sr8pd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sr8pd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "srhatpd",
+      "handlingId": "srhatpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/srhatpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "strcoupepd",
+      "handlingId": "strcoupepd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/strcoupepd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sultlpd",
+      "handlingId": "sultlpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/sultlpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "taurion",
+      "handlingId": "taurion",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/taurion/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "taurionpd",
+      "handlingId": "taurionpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/taurionpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tenfhycpd",
+      "handlingId": "tenfhycpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/tenfhycpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "uranusx",
+      "handlingId": "uranusx",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/uranusx/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "varx",
+      "handlingId": "varx",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/varx/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "xlsstrpd",
+      "handlingId": "xlsstrpd",
+      "vehiclesMeta": "resources/[cars]/showcasecars2/data/xlsstrpd/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "tempesta2",
+      "handlingId": "tempesta2",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "sentinel_rts",
+      "handlingId": "sentinel_rts",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "d7cyp",
+      "handlingId": "d7cyp",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "schlagenstr",
+      "handlingId": "SCHLAGENSTR",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "cometcup",
+      "handlingId": "cometcup",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    },
+    {
+      "model": "h4rxst2",
+      "handlingId": "H4RxST2",
+      "vehiclesMeta": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta",
+      "source": "pack_handling.meta"
+    }
+  ],
+  "missing": [
+    {
+      "model": "sugoix",
+      "currentHandlingId": "BRIOSO",
+      "file": "resources/[cars]/showcasecars/data/sugoix/vehicles.meta",
+      "note": "no matching handlingName in pack handling.meta"
+    }
+  ],
+  "changes": [
+    {
+      "model": "tol22m5",
+      "from": "KOMODA",
+      "to": "tol22m5",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tol240sx",
+      "from": "BLISTA2",
+      "to": "tol240sx",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolc7",
+      "from": "ELEGY",
+      "to": "tolc7",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolcharger2",
+      "from": "SCHAFTER3",
+      "to": "tolcharger2",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolcurus",
+      "from": "TOROS",
+      "to": "tolcurus",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "toldemon",
+      "from": "DUKES",
+      "to": "toldemon",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "toldurus",
+      "from": "ROCOTO",
+      "to": "toldurus",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tole36prb",
+      "from": "GB200",
+      "to": "tole36prb",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tole36v",
+      "from": "HELLION",
+      "to": "tole36v",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tole6314",
+      "from": "WINDSOR",
+      "to": "tole6314",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolevo9",
+      "from": "JESTER",
+      "to": "tolevo9",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tol3j50",
+      "from": "BULLET",
+      "to": "tol3j50",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolexor",
+      "from": "CARBONIZZARE",
+      "to": "tolexor",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolf360",
+      "from": "VACCA",
+      "to": "tolf360",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolf8spider",
+      "from": "INFERNUS",
+      "to": "tolf8spider",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolfxxk",
+      "from": "T20",
+      "to": "tolfxxk",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolgtam21",
+      "from": "SUPERD",
+      "to": "tolgtam21",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolgtr",
+      "from": "JESTER",
+      "to": "tolgtr",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolgtrlw",
+      "from": "ELEGY2",
+      "to": "tolgtrlw",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolka",
+      "from": "T20",
+      "to": "tolka",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tollam2",
+      "from": "TURISMOR",
+      "to": "tollam2",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tollwalk458",
+      "from": "VACCA",
+      "to": "tollwalk458",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tol675ltsp",
+      "from": "BULLET",
+      "to": "tol675ltsp",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolm5cs22",
+      "from": "JUGULAR",
+      "to": "tolm5cs22",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolm5e60",
+      "from": "SENTINEL3",
+      "to": "tolm5e60",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolm6x6",
+      "from": "BFINJECTION",
+      "to": "tolm6x6",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolmig",
+      "from": "FELTZER2",
+      "to": "tolmig",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolmm6x6",
+      "from": "HELLION",
+      "to": "tolmm6x6",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolmus2",
+      "from": "DOMINATOR",
+      "to": "tolmus2",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolmustan",
+      "from": "DOMINATOR",
+      "to": "tolmustan",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolmustang",
+      "from": "DUKES",
+      "to": "tolmustang",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolpeigerzen",
+      "from": "ENTITYXF",
+      "to": "tolpeigerzen",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolr33",
+      "from": "MASSACRO2",
+      "to": "tolr33",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tol700",
+      "from": "BULLET",
+      "to": "tol700",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolr8c",
+      "from": "ZENTORNO",
+      "to": "tolr8c",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolr8v10",
+      "from": "TURISMOR",
+      "to": "tolr8v10",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolraid",
+      "from": "MESA",
+      "to": "tolraid",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolraptorv2",
+      "from": "REBEL",
+      "to": "tolraptorV2",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolrrmansory",
+      "from": "WINDSOR",
+      "to": "tolrrmansory",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolrs5",
+      "from": "KOMODA",
+      "to": "tolrs5",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolrs6",
+      "from": "RHINEHART",
+      "to": "tolrs6",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolrs7c821",
+      "from": "KOMODA",
+      "to": "tolrs7c821",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolrsurus",
+      "from": "HUNTLEY",
+      "to": "tolrsurus",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tols63amg",
+      "from": "SCHAFTER3",
+      "to": "tols63amg",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tola6",
+      "from": "JACKAL",
+      "to": "tola6",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolap2",
+      "from": "T20",
+      "to": "tolap2",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolaudidy",
+      "from": "PARIAH",
+      "to": "tolaudidy",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolbt62r",
+      "from": "TYRUS",
+      "to": "tolbt62r",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "tolc63",
+      "from": "SCHWARZER",
+      "to": "tolc63",
+      "file": "resources/[cars]/pitd_tol_car_pack_a/vehicles.meta"
+    },
+    {
+      "model": "abfbuff",
+      "from": "GAUNTLET",
+      "to": "abfbuff",
+      "file": "resources/[cars]/showcasecars/data/abfbuff/vehicles.meta"
+    },
+    {
+      "model": "ballvenm",
+      "from": "GRESLEY",
+      "to": "ballvenm",
+      "file": "resources/[cars]/showcasecars/data/ballvenm/vehicles.meta"
+    },
+    {
+      "model": "ballvmark",
+      "from": "FBI2",
+      "to": "ballvmark",
+      "file": "resources/[cars]/showcasecars/data/ballvmark/vehicles.meta"
+    },
+    {
+      "model": "briosoav",
+      "from": "PRAIRIE",
+      "to": "briosoav",
+      "file": "resources/[cars]/showcasecars/data/briosoav/vehicles.meta"
+    },
+    {
+      "model": "cazador",
+      "from": "COQUETTE",
+      "to": "cazador",
+      "file": "resources/[cars]/showcasecars/data/cazador/vehicles.meta"
+    },
+    {
+      "model": "cazadortcr",
+      "from": "COMET2",
+      "to": "cazadortcr",
+      "file": "resources/[cars]/showcasecars/data/cazadortcr/vehicles.meta"
+    },
+    {
+      "model": "clubc",
+      "from": "BRIOSO",
+      "to": "clubc",
+      "file": "resources/[cars]/showcasecars/data/clubc/vehicles.meta"
+    },
+    {
+      "model": "clubp",
+      "from": "CLUB",
+      "to": "clubp",
+      "file": "resources/[cars]/showcasecars/data/clubp/vehicles.meta"
+    },
+    {
+      "model": "clubr",
+      "from": "SCHAFTER2",
+      "to": "clubr",
+      "file": "resources/[cars]/showcasecars/data/clubr/vehicles.meta"
+    },
+    {
+      "model": "clubrhyc",
+      "from": "FUGITIVE",
+      "to": "clubrhyc",
+      "file": "resources/[cars]/showcasecars/data/clubrhyc/vehicles.meta"
+    },
+    {
+      "model": "cometnor",
+      "from": "COMET2",
+      "to": "cometnor",
+      "file": "resources/[cars]/showcasecars/data/cometnor/vehicles.meta"
+    },
+    {
+      "model": "cometven",
+      "from": "CARBONIZZARE",
+      "to": "cometven",
+      "file": "resources/[cars]/showcasecars/data/cometven/vehicles.meta"
+    },
+    {
+      "model": "coquettepiston",
+      "from": "COMET2",
+      "to": "coquettepiston",
+      "file": "resources/[cars]/showcasecars/data/coquettepiston/vehicles.meta"
+    },
+    {
+      "model": "coqvenm",
+      "from": "CARBONIZZARE",
+      "to": "coqvenm",
+      "file": "resources/[cars]/showcasecars/data/coqvenm/vehicles.meta"
+    },
+    {
+      "model": "dawn",
+      "from": "COGCABRIO",
+      "to": "dawn",
+      "file": "resources/[cars]/showcasecars/data/dawn/vehicles.meta"
+    },
+    {
+      "model": "drafthyc",
+      "from": "SUPERD",
+      "to": "drafthyc",
+      "file": "resources/[cars]/showcasecars/data/drafthyc/vehicles.meta"
+    },
+    {
+      "model": "draftven",
+      "from": "SUPERD",
+      "to": "draftven",
+      "file": "resources/[cars]/showcasecars/data/draftven/vehicles.meta"
+    },
+    {
+      "model": "draftvmark",
+      "from": "SHERIFF",
+      "to": "draftvmark",
+      "file": "resources/[cars]/showcasecars/data/draftvmark/vehicles.meta"
+    },
+    {
+      "model": "dubmono",
+      "from": "TOROS",
+      "to": "dubmono",
+      "file": "resources/[cars]/showcasecars/data/dubmono/vehicles.meta"
+    },
+    {
+      "model": "elegyxa19",
+      "from": "JESTER",
+      "to": "elegyxa19",
+      "file": "resources/[cars]/showcasecars/data/elegyxa19/vehicles.meta"
+    },
+    {
+      "model": "elegyxa19ven",
+      "from": "SULTANRS",
+      "to": "elegyxa19ven",
+      "file": "resources/[cars]/showcasecars/data/elegyxa19ven/vehicles.meta"
+    },
+    {
+      "model": "flashgrs",
+      "from": "SULTANRS",
+      "to": "flashgrs",
+      "file": "resources/[cars]/showcasecars/data/flashgrs/vehicles.meta"
+    },
+    {
+      "model": "flattruckm",
+      "from": "MULE",
+      "to": "flattruckm",
+      "file": "resources/[cars]/showcasecars/data/flattruckm/vehicles.meta"
+    },
+    {
+      "model": "gaterback",
+      "from": "GAUNTLET",
+      "to": "gaterback",
+      "file": "resources/[cars]/showcasecars/data/gaterback/vehicles.meta"
+    },
+    {
+      "model": "gazatar",
+      "from": "CLUB",
+      "to": "gazatar",
+      "file": "resources/[cars]/showcasecars/data/gazatar/vehicles.meta"
+    },
+    {
+      "model": "hweevil",
+      "from": "BLISTA2",
+      "to": "hweevil",
+      "file": "resources/[cars]/showcasecars/data/hweevil/vehicles.meta"
+    },
+    {
+      "model": "hycadetail",
+      "from": "RHINEHART",
+      "to": "hycadetail",
+      "file": "resources/[cars]/showcasecars/data/hycadetail/vehicles.meta"
+    },
+    {
+      "model": "hycbansh",
+      "from": "COQUETTE",
+      "to": "hycbansh",
+      "file": "resources/[cars]/showcasecars/data/hycbansh/vehicles.meta"
+    },
+    {
+      "model": "hycbuff",
+      "from": "VIGERO",
+      "to": "hycbuff",
+      "file": "resources/[cars]/showcasecars/data/hycbuff/vehicles.meta"
+    },
+    {
+      "model": "hycdeity",
+      "from": "WINDSOR2",
+      "to": "hycdeity",
+      "file": "resources/[cars]/showcasecars/data/hycdeity/vehicles.meta"
+    },
+    {
+      "model": "hycenty",
+      "from": "ZENTORNO",
+      "to": "hycenty",
+      "file": "resources/[cars]/showcasecars/data/hycenty/vehicles.meta"
+    },
+    {
+      "model": "hycgaunt",
+      "from": "DUKES",
+      "to": "hycgaunt",
+      "file": "resources/[cars]/showcasecars/data/hycgaunt/vehicles.meta"
+    },
+    {
+      "model": "hycignus",
+      "from": "ZENTORNO",
+      "to": "hycignus",
+      "file": "resources/[cars]/showcasecars/data/hycignus/vehicles.meta"
+    },
+    {
+      "model": "hycpargn",
+      "from": "RHINEHART",
+      "to": "hycpargn",
+      "file": "resources/[cars]/showcasecars/data/hycpargn/vehicles.meta"
+    },
+    {
+      "model": "hycr300",
+      "from": "FUTO",
+      "to": "hycr300",
+      "file": "resources/[cars]/showcasecars/data/hycr300/vehicles.meta"
+    },
+    {
+      "model": "hycsedan",
+      "from": "KOMODA",
+      "to": "hycsedan",
+      "file": "resources/[cars]/showcasecars/data/hycsedan/vehicles.meta"
+    },
+    {
+      "model": "hycwagen",
+      "from": "JACKAL",
+      "to": "hycwagen",
+      "file": "resources/[cars]/showcasecars/data/hycwagen/vehicles.meta"
+    },
+    {
+      "model": "hyczr350",
+      "from": "BLISTA2",
+      "to": "hyczr350",
+      "file": "resources/[cars]/showcasecars/data/hyczr350/vehicles.meta"
+    },
+    {
+      "model": "issiwider",
+      "from": "PRAIRIE",
+      "to": "issiwider",
+      "file": "resources/[cars]/showcasecars/data/issiwider/vehicles.meta"
+    },
+    {
+      "model": "jestvenm",
+      "from": "T20",
+      "to": "jestvenm",
+      "file": "resources/[cars]/showcasecars/data/jestvenm/vehicles.meta"
+    },
+    {
+      "model": "jubven",
+      "from": "JUBILEE",
+      "to": "jubven",
+      "file": "resources/[cars]/showcasecars/data/jubven/vehicles.meta"
+    },
+    {
+      "model": "kcjub",
+      "from": "TOROS",
+      "to": "kcjub",
+      "file": "resources/[cars]/showcasecars/data/kcjub/vehicles.meta"
+    },
+    {
+      "model": "komtmark",
+      "from": "FBI",
+      "to": "komtmark",
+      "file": "resources/[cars]/showcasecars/data/komtmark/vehicles.meta"
+    },
+    {
+      "model": "komtour",
+      "from": "MASSACRO2",
+      "to": "komtour",
+      "file": "resources/[cars]/showcasecars/data/komtour/vehicles.meta"
+    },
+    {
+      "model": "kurxa19",
+      "from": "ELEGY2",
+      "to": "kurxa19",
+      "file": "resources/[cars]/showcasecars/data/kurxa19/vehicles.meta"
+    },
+    {
+      "model": "kurxmark",
+      "from": "POLICE3",
+      "to": "kurxmark",
+      "file": "resources/[cars]/showcasecars/data/kurxmark/vehicles.meta"
+    },
+    {
+      "model": "neonvenm",
+      "from": "ELEGY2",
+      "to": "neonvenm",
+      "file": "resources/[cars]/showcasecars/data/neonvenm/vehicles.meta"
+    },
+    {
+      "model": "paragonven",
+      "from": "WINDSOR2",
+      "to": "paragonven",
+      "file": "resources/[cars]/showcasecars/data/paragonven/vehicles.meta"
+    },
+    {
+      "model": "parawide",
+      "from": "SUPERD",
+      "to": "parawide",
+      "file": "resources/[cars]/showcasecars/data/parawide/vehicles.meta"
+    },
+    {
+      "model": "parawmark",
+      "from": "SHERIFF",
+      "to": "parawmark",
+      "file": "resources/[cars]/showcasecars/data/parawmark/vehicles.meta"
+    },
+    {
+      "model": "remusx",
+      "from": "BLISTA2",
+      "to": "remusx",
+      "file": "resources/[cars]/showcasecars/data/remusx/vehicles.meta"
+    },
+    {
+      "model": "rhinea19x",
+      "from": "ELEGY2",
+      "to": "rhinea19x",
+      "file": "resources/[cars]/showcasecars/data/rhinea19x/vehicles.meta"
+    },
+    {
+      "model": "rsxven",
+      "from": "MASSACRO2",
+      "to": "rsxven",
+      "file": "resources/[cars]/showcasecars/data/rsxven/vehicles.meta"
+    },
+    {
+      "model": "rt3000varis",
+      "from": "BLISTA2",
+      "to": "rt3000varis",
+      "file": "resources/[cars]/showcasecars/data/rt3000varis/vehicles.meta"
+    },
+    {
+      "model": "rt3kavan",
+      "from": "BLISTA2",
+      "to": "rt3kavan",
+      "file": "resources/[cars]/showcasecars/data/rt3kavan/vehicles.meta"
+    },
+    {
+      "model": "rwagvenm",
+      "from": "SCHAFTER2",
+      "to": "rwagvenm",
+      "file": "resources/[cars]/showcasecars/data/rwagvenm/vehicles.meta"
+    },
+    {
+      "model": "schlag",
+      "from": "COGCABRIO",
+      "to": "schlag",
+      "file": "resources/[cars]/showcasecars/data/schlag/vehicles.meta"
+    },
+    {
+      "model": "sedanwid",
+      "from": "TAILGATER",
+      "to": "sedanwid",
+      "file": "resources/[cars]/showcasecars/data/sedanwid/vehicles.meta"
+    },
+    {
+      "model": "shenron",
+      "from": "JUBILEE",
+      "to": "shenron",
+      "file": "resources/[cars]/showcasecars/data/shenron/vehicles.meta"
+    },
+    {
+      "model": "sitavenm",
+      "from": "VAGNER",
+      "to": "sitavenm",
+      "file": "resources/[cars]/showcasecars/data/sitavenm/vehicles.meta"
+    },
+    {
+      "model": "sr8",
+      "from": "HUNTLEY",
+      "to": "sr8",
+      "file": "resources/[cars]/showcasecars/data/sr8/vehicles.meta"
+    },
+    {
+      "model": "sr8elem",
+      "from": "JUBILEE",
+      "to": "sr8elem",
+      "file": "resources/[cars]/showcasecars/data/sr8elem/vehicles.meta"
+    },
+    {
+      "model": "srspback",
+      "from": "SULTAN",
+      "to": "srspback",
+      "file": "resources/[cars]/showcasecars/data/srspback/vehicles.meta"
+    },
+    {
+      "model": "str",
+      "from": "ELEGY",
+      "to": "str",
+      "file": "resources/[cars]/showcasecars/data/str/vehicles.meta"
+    },
+    {
+      "model": "strcoupe",
+      "from": "SUPERD",
+      "to": "strcoupe",
+      "file": "resources/[cars]/showcasecars/data/strcoupe/vehicles.meta"
+    },
+    {
+      "model": "strman",
+      "from": "COMET2",
+      "to": "strman",
+      "file": "resources/[cars]/showcasecars/data/strman/vehicles.meta"
+    },
+    {
+      "model": "strmark",
+      "from": "FBI",
+      "to": "strmark",
+      "file": "resources/[cars]/showcasecars/data/strmark/vehicles.meta"
+    },
+    {
+      "model": "strwag",
+      "from": "KURUMA",
+      "to": "strwag",
+      "file": "resources/[cars]/showcasecars/data/strwag/vehicles.meta"
+    },
+    {
+      "model": "strwagmark",
+      "from": "POLICE2",
+      "to": "strwagmark",
+      "file": "resources/[cars]/showcasecars/data/strwagmark/vehicles.meta"
+    },
+    {
+      "model": "sultlong",
+      "from": "PARIAH",
+      "to": "sultlong",
+      "file": "resources/[cars]/showcasecars/data/sultlong/vehicles.meta"
+    },
+    {
+      "model": "tailgatersr",
+      "from": "SENTINEL3",
+      "to": "tailgatersr",
+      "file": "resources/[cars]/showcasecars/data/tailgatersr/vehicles.meta"
+    },
+    {
+      "model": "tailsr66",
+      "from": "SCHWARZER",
+      "to": "tailsr66",
+      "file": "resources/[cars]/showcasecars/data/tailsr66/vehicles.meta"
+    },
+    {
+      "model": "tailstmk",
+      "from": "FBI",
+      "to": "tailstmk",
+      "file": "resources/[cars]/showcasecars/data/tailstmk/vehicles.meta"
+    },
+    {
+      "model": "temphyc",
+      "from": "OSIRIS",
+      "to": "temphyc",
+      "file": "resources/[cars]/showcasecars/data/temphyc/vehicles.meta"
+    },
+    {
+      "model": "temptwins",
+      "from": "T20",
+      "to": "temptwins",
+      "file": "resources/[cars]/showcasecars/data/temptwins/vehicles.meta"
+    },
+    {
+      "model": "tenfhyc",
+      "from": "T20",
+      "to": "tenfhyc",
+      "file": "resources/[cars]/showcasecars/data/tenfhyc/vehicles.meta"
+    },
+    {
+      "model": "tenfvenm",
+      "from": "TURISMOR",
+      "to": "tenfvenm",
+      "file": "resources/[cars]/showcasecars/data/tenfvenm/vehicles.meta"
+    },
+    {
+      "model": "thraxven",
+      "from": "VAGNER",
+      "to": "thraxven",
+      "file": "resources/[cars]/showcasecars/data/thraxven/vehicles.meta"
+    },
+    {
+      "model": "toroslbwk",
+      "from": "GRESLEY",
+      "to": "toroslbwk",
+      "file": "resources/[cars]/showcasecars/data/toroslbwk/vehicles.meta"
+    },
+    {
+      "model": "torosven",
+      "from": "HUNTLEY",
+      "to": "torosven",
+      "file": "resources/[cars]/showcasecars/data/torosven/vehicles.meta"
+    },
+    {
+      "model": "tragambo",
+      "from": "GRANGER",
+      "to": "tragambo",
+      "file": "resources/[cars]/showcasecars/data/tragambo/vehicles.meta"
+    },
+    {
+      "model": "trager",
+      "from": "JUBILEE",
+      "to": "trager",
+      "file": "resources/[cars]/showcasecars/data/trager/vehicles.meta"
+    },
+    {
+      "model": "tragmech",
+      "from": "PATRIOT",
+      "to": "tragmech",
+      "file": "resources/[cars]/showcasecars/data/tragmech/vehicles.meta"
+    },
+    {
+      "model": "tragpd",
+      "from": "PATRIOT",
+      "to": "tragpd",
+      "file": "resources/[cars]/showcasecars/data/tragpd/vehicles.meta"
+    },
+    {
+      "model": "turisgt3",
+      "from": "ELEGY",
+      "to": "turisgt3",
+      "file": "resources/[cars]/showcasecars/data/turisgt3/vehicles.meta"
+    },
+    {
+      "model": "verusreg",
+      "from": "KAMACHO",
+      "to": "verusreg",
+      "file": "resources/[cars]/showcasecars/data/verusreg/vehicles.meta"
+    },
+    {
+      "model": "xlsstr",
+      "from": "JUBILEE",
+      "to": "xlsstr",
+      "file": "resources/[cars]/showcasecars/data/xlsstr/vehicles.meta"
+    },
+    {
+      "model": "zentven",
+      "from": "VAGNER",
+      "to": "zentven",
+      "file": "resources/[cars]/showcasecars/data/zentven/vehicles.meta"
+    },
+    {
+      "model": "zr350piston",
+      "from": "GB200",
+      "to": "zr350piston",
+      "file": "resources/[cars]/showcasecars/data/zr350piston/vehicles.meta"
+    },
+    {
+      "model": "briosoxpd",
+      "from": "FBI",
+      "to": "briosoxpd",
+      "file": "resources/[cars]/showcasecars2/data/briosoxpd/vehicles.meta"
+    },
+    {
+      "model": "carrion",
+      "from": "MASSACRO",
+      "to": "carrion",
+      "file": "resources/[cars]/showcasecars2/data/carrion/vehicles.meta"
+    },
+    {
+      "model": "carrionmech",
+      "from": "POLICE2",
+      "to": "carrionmech",
+      "file": "resources/[cars]/showcasecars2/data/carrionmech/vehicles.meta"
+    },
+    {
+      "model": "carrionpd",
+      "from": "SHERIFF",
+      "to": "carrionpd",
+      "file": "resources/[cars]/showcasecars2/data/carrionpd/vehicles.meta"
+    },
+    {
+      "model": "cazadorpd",
+      "from": "FBI",
+      "to": "cazadorpd",
+      "file": "resources/[cars]/showcasecars2/data/cazadorpd/vehicles.meta"
+    },
+    {
+      "model": "clubrpd",
+      "from": "FBI",
+      "to": "clubrpd",
+      "file": "resources/[cars]/showcasecars2/data/clubrpd/vehicles.meta"
+    },
+    {
+      "model": "cyphx",
+      "from": "SENTINEL3",
+      "to": "cyphx",
+      "file": "resources/[cars]/showcasecars2/data/cyphx/vehicles.meta"
+    },
+    {
+      "model": "dawnpd",
+      "from": "POLICE2",
+      "to": "dawnpd",
+      "file": "resources/[cars]/showcasecars2/data/dawnpd/vehicles.meta"
+    },
+    {
+      "model": "flashgrspd",
+      "from": "FBI",
+      "to": "flashgrspd",
+      "file": "resources/[cars]/showcasecars2/data/flashgrspd/vehicles.meta"
+    },
+    {
+      "model": "hyctailpd",
+      "from": "POLICE3",
+      "to": "hyctailpd",
+      "file": "resources/[cars]/showcasecars2/data/hyctailpd/vehicles.meta"
+    },
+    {
+      "model": "jubvenpd",
+      "from": "FBI2",
+      "to": "jubvenpd",
+      "file": "resources/[cars]/showcasecars2/data/jubvenpd/vehicles.meta"
+    },
+    {
+      "model": "kanjoep4",
+      "from": "BLISTA2",
+      "to": "kanjoep4",
+      "file": "resources/[cars]/showcasecars2/data/kanjoep4/vehicles.meta"
+    },
+    {
+      "model": "kanjox",
+      "from": "BRIOSO",
+      "to": "kanjox",
+      "file": "resources/[cars]/showcasecars2/data/kanjox/vehicles.meta"
+    },
+    {
+      "model": "omnvenpd",
+      "from": "POLICE2",
+      "to": "omnvenpd",
+      "file": "resources/[cars]/showcasecars2/data/omnvenpd/vehicles.meta"
+    },
+    {
+      "model": "reblax",
+      "from": "JUBILEE",
+      "to": "reblax",
+      "file": "resources/[cars]/showcasecars2/data/reblax/vehicles.meta"
+    },
+    {
+      "model": "reblaxpd",
+      "from": "GRANGER",
+      "to": "reblaxpd",
+      "file": "resources/[cars]/showcasecars2/data/reblaxpd/vehicles.meta"
+    },
+    {
+      "model": "rhinea19xpd",
+      "from": "POLICE3",
+      "to": "rhinea19xpd",
+      "file": "resources/[cars]/showcasecars2/data/rhinea19xpd/vehicles.meta"
+    },
+    {
+      "model": "schlagpd",
+      "from": "SHERIFF",
+      "to": "schlagpd",
+      "file": "resources/[cars]/showcasecars2/data/schlagpd/vehicles.meta"
+    },
+    {
+      "model": "sen5tour",
+      "from": "KOMODA",
+      "to": "sen5tour",
+      "file": "resources/[cars]/showcasecars2/data/sen5tour/vehicles.meta"
+    },
+    {
+      "model": "sen5tourhyc",
+      "from": "KOMODA",
+      "to": "sen5tourhyc",
+      "file": "resources/[cars]/showcasecars2/data/sen5tourhyc/vehicles.meta"
+    },
+    {
+      "model": "sent5bxane",
+      "from": "SCHWARZER",
+      "to": "sent5bxane",
+      "file": "resources/[cars]/showcasecars2/data/sent5bxane/vehicles.meta"
+    },
+    {
+      "model": "sent5hyc",
+      "from": "SCHWARZER",
+      "to": "sent5hyc",
+      "file": "resources/[cars]/showcasecars2/data/sent5hyc/vehicles.meta"
+    },
+    {
+      "model": "sent5wide",
+      "from": "BUFFALO2",
+      "to": "sent5wide",
+      "file": "resources/[cars]/showcasecars2/data/sent5wide/vehicles.meta"
+    },
+    {
+      "model": "shenronpd",
+      "from": "FBI2",
+      "to": "shenronpd",
+      "file": "resources/[cars]/showcasecars2/data/shenronpd/vehicles.meta"
+    },
+    {
+      "model": "sr8pd",
+      "from": "SHERIFF2",
+      "to": "sr8pd",
+      "file": "resources/[cars]/showcasecars2/data/sr8pd/vehicles.meta"
+    },
+    {
+      "model": "srhatpd",
+      "from": "POLICE3",
+      "to": "srhatpd",
+      "file": "resources/[cars]/showcasecars2/data/srhatpd/vehicles.meta"
+    },
+    {
+      "model": "strcoupepd",
+      "from": "POLICE2",
+      "to": "strcoupepd",
+      "file": "resources/[cars]/showcasecars2/data/strcoupepd/vehicles.meta"
+    },
+    {
+      "model": "sultlpd",
+      "from": "POLICE",
+      "to": "sultlpd",
+      "file": "resources/[cars]/showcasecars2/data/sultlpd/vehicles.meta"
+    },
+    {
+      "model": "taurion",
+      "from": "GRESLEY",
+      "to": "taurion",
+      "file": "resources/[cars]/showcasecars2/data/taurion/vehicles.meta"
+    },
+    {
+      "model": "taurionpd",
+      "from": "POLICE4",
+      "to": "taurionpd",
+      "file": "resources/[cars]/showcasecars2/data/taurionpd/vehicles.meta"
+    },
+    {
+      "model": "tenfhycpd",
+      "from": "POLICE3",
+      "to": "tenfhycpd",
+      "file": "resources/[cars]/showcasecars2/data/tenfhycpd/vehicles.meta"
+    },
+    {
+      "model": "uranusx",
+      "from": "MICHELLI",
+      "to": "uranusx",
+      "file": "resources/[cars]/showcasecars2/data/uranusx/vehicles.meta"
+    },
+    {
+      "model": "varx",
+      "from": "DOUBLE",
+      "to": "varx",
+      "file": "resources/[cars]/showcasecars2/data/varx/vehicles.meta"
+    },
+    {
+      "model": "xlsstrpd",
+      "from": "POLICE4",
+      "to": "xlsstrpd",
+      "file": "resources/[cars]/showcasecars2/data/xlsstrpd/vehicles.meta"
+    },
+    {
+      "model": "tempesta2",
+      "from": "TEMPESTA",
+      "to": "tempesta2",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    },
+    {
+      "model": "sentinel_rts",
+      "from": "SENTINEL3",
+      "to": "sentinel_rts",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    },
+    {
+      "model": "d7cyp",
+      "from": "CYCLONE",
+      "to": "d7cyp",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    },
+    {
+      "model": "schlagenstr",
+      "from": "SCHLAGEN",
+      "to": "SCHLAGENSTR",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    },
+    {
+      "model": "cometcup",
+      "from": "COMET3",
+      "to": "cometcup",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    },
+    {
+      "model": "h4rxst2",
+      "from": "ELEGY2",
+      "to": "H4RxST2",
+      "file": "resources/[sunset]/sunset_addon_vehicles/vehicles.meta"
+    }
+  ]
+}

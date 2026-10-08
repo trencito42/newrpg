@@ -7,7 +7,7 @@
     <Item>
       <modelName>varx</modelName>
       <txdName>varx</txdName>
-      <handlingId>DOUBLE</handlingId>
+      <handlingId>varx</handlingId>
       <gameName>varx</gameName>
       <vehicleMakeName>SANCHEZ</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

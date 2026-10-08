@@ -2,31 +2,12 @@ SunsetTuningClient = SunsetTuningClient or {}
 local STC = SunsetTuningClient
 local TC = SunsetTuning.TuneCalculator
 
-STC.modelBaselines = STC.modelBaselines or {}
--- Set while tuning intentionally reapplies canonical baseline (prevents ECU restore loop).
 STC._internalBaselineRestore = false
 
-local function usesNativeDonorHandling(veh)
-    if GetResourceState('sunset_vehicle_dynamics') ~= 'started' then return false end
-    local modelHash = veh and veh ~= 0 and GetEntityModel(veh)
-    if not modelHash then return false end
-    local ok, result = pcall(function()
-        return exports.sunset_vehicle_dynamics:UsesNativeDonorHandling(modelHash, veh)
-    end)
-    return ok and result == true
-end
-
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'sunset_vehicle_dynamics' or resourceName == 'sunset_tuning' then
-        STC.modelBaselines = {}
+    if resourceName == 'sunset_tuning' then
+        STC.appliedVehicles = STC.appliedVehicles or {}
     end
-end)
-
-AddEventHandler('sunset:vehicleDynamics:legacyPoisonHandling', function(veh)
-    if not veh or veh == 0 then return end
-    local modelHash = GetEntityModel(veh)
-    STC.modelBaselines[modelHash] = nil
-    STC.appliedVehicles[veh] = nil
 end)
 
 local function copyTable(value)
@@ -49,45 +30,13 @@ exports('CaptureModelBaseline', CaptureModelBaseline)
 
 function STC.captureModelBaseline(veh)
     if not veh or veh == 0 or not DoesEntityExist(veh) then return nil end
-    local modelHash = STC.getModelHash(veh)
-    local nativeDonor = usesNativeDonorHandling(veh)
-    if nativeDonor then
-        STC.modelBaselines[modelHash] = nil
-    end
-    local handlingBaseline = nil
-    if not nativeDonor then
-        handlingBaseline = STC.modelBaselines[modelHash]
-    end
 
-    if not handlingBaseline then
-        handlingBaseline = {}
-
-        -- Cache only model-level handling. Hardware is entity-specific and must never
-        -- leak between two vehicles that share the same model hash.
-        local canonical = nil
-        if GetResourceState('sunset_vehicle_dynamics') == 'started' then
-            pcall(function()
-                canonical = exports.sunset_vehicle_dynamics:GetCanonicalBaseline(modelHash, veh)
-            end)
-        end
-
-        if canonical and type(canonical) == 'table' then
-            for _, field in ipairs(TC.GetBaselineFields()) do
-                handlingBaseline[field] = canonical[field] or GetVehicleHandlingFloat(veh, 'CHandlingData', field)
-            end
-        else
-            for _, field in ipairs(TC.GetBaselineFields()) do
-                handlingBaseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
-            end
-        end
-
-        if not nativeDonor then
-            STC.modelBaselines[modelHash] = copyTable(handlingBaseline)
-        end
+    local handlingBaseline = {}
+    for _, field in ipairs(TC.GetBaselineFields()) do
+        handlingBaseline[field] = GetVehicleHandlingFloat(veh, 'CHandlingData', field)
     end
 
     local baseline = copyTable(handlingBaseline)
-
     baseline.mods = {}
     SetVehicleModKit(veh, 0)
     for key, slot in pairs(SunsetTuning.HardwareSlots or {}) do
@@ -106,21 +55,13 @@ function STC.getVehicleCapabilities(veh)
     return SunsetTuning.ProfileResolver.Resolve(modelName, classId)
 end
 
-function STC.restoreBaselineHandling(veh, baseline)
+--- Restore ECU/hardware state. Handling floats are restored only when reverting a non-stock tune.
+function STC.restoreBaselineHandling(veh, baseline, opts)
     if not veh or not DoesEntityExist(veh) then return end
+    opts = opts or {}
+    local restoreHandling = opts.restoreHandling == true
 
-    if usesNativeDonorHandling(veh) then
-        STC.modelBaselines[GetEntityModel(veh)] = nil
-    elseif GetResourceState('sunset_vehicle_dynamics') == 'started' then
-        STC._internalBaselineRestore = true
-        local ok, err = pcall(function()
-            exports.sunset_vehicle_dynamics:ApplyVehicleDynamics(veh, true)
-        end)
-        STC._internalBaselineRestore = false
-        if not ok then
-            print(('^1[sunset_tuning] ApplyVehicleDynamics failed during baseline restore: %s^7'):format(tostring(err)))
-        end
-    elseif baseline then
+    if restoreHandling and baseline then
         for field, value in pairs(baseline) do
             if type(field) == 'string' and field:sub(1, 1) == 'f' and type(value) == 'number' then
                 SetVehicleHandlingFloat(veh, 'CHandlingData', field, value)
@@ -137,6 +78,7 @@ function STC.restoreBaselineHandling(veh, baseline)
     if baseline then
         ToggleVehicleMod(veh, 18, baseline.turbo == true)
     end
+
     SetVehicleEnginePowerMultiplier(veh, 0.0)
     SetVehicleEngineTorqueMultiplier(veh, 1.0)
     ModifyVehicleTopSpeed(veh, 0.0)

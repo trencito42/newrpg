@@ -6,7 +6,7 @@
    <Item>
       <modelName>strcoupe</modelName>
       <txdName>strcoupe</txdName>
-      <handlingId>SUPERD</handlingId>
+      <handlingId>strcoupe</handlingId>
       <gameName>strcoupe</gameName>
       <vehicleMakeName>BENEFACTOR</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

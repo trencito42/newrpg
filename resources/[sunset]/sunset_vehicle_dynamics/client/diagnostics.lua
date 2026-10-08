@@ -93,19 +93,10 @@ end, false)
 RegisterNetEvent('sunset:vehicleDynamics:diagnose', showHandlingInfo)
 
 local function reapplyHandling()
-    local ped = PlayerPedId()
-    if IsPedInAnyVehicle(ped, false) then
-        local veh = GetVehiclePedIsIn(ped, false)
-        SVD.appliedEntities[veh] = nil
-        SVD.ApplyVehicleDynamics(veh, true)
-        -- Persisted ECU restored via sunset:vehicleDynamics:baselineRestored
-    end
-
-    print('^2[vehicle_dynamics] Handling profile re-applied successfully!^7')
     TriggerEvent('chat:addMessage', {
-        color = { 100, 240, 100 },
+        color = { 200, 200, 120 },
         multiline = false,
-        args = { 'Dynamics', 'Vehicle dynamics profile reloaded and synchronized with active tuning.' }
+        args = { 'Dynamics', 'Runtime dynamics are disabled. Re-enter the vehicle or use tuning to refresh ECU.' }
     })
 end
 

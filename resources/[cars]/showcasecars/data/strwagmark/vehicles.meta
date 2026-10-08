@@ -6,7 +6,7 @@
     <Item>
       <modelName>strwagmark</modelName>
       <txdName>strwagmark</txdName>
-      <handlingId>POLICE2</handlingId>
+      <handlingId>strwagmark</handlingId>
       <gameName>PD STR WAG</gameName>
       <vehicleMakeName>LAMPADATI</vehicleMakeName>
       <expressionDictName>null</expressionDictName>

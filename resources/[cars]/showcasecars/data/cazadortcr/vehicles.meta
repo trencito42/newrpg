@@ -6,7 +6,7 @@
     <Item>
       <modelName>cazadortcr</modelName>
       <txdName>cazadortcr</txdName>
-      <handlingId>COMET2</handlingId>
+      <handlingId>cazadortcr</handlingId>
       <gameName>cazador tcr</gameName>
       <vehicleMakeName>BF</vehicleMakeName>
       <expressionDictName>null</expressionDictName>
