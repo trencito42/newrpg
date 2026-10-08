@@ -2122,13 +2122,22 @@
   },
   {
     "model": "sugoix",
-    "handlingId": "brioso",
-    "nativeDonorHandlingId": "BRIOSO",
+    "handlingId": "sugoimug",
+    "nativeDonorHandlingId": null,
     "gameName": "sugoi x",
     "vehicleClass": "VC_SPORT",
     "rawHandling": {
-      "nativeDonor": true,
-      "handlingName": "BRIOSO"
+      "handlingName": "sugoimug",
+      "fMass": 1800,
+      "fInitialDriveForce": 0.32,
+      "fDriveBiasFront": 0.2,
+      "fInitialDriveMaxFlatVel": 160,
+      "nInitialDriveGears": 6,
+      "fBrakeForce": 1,
+      "fTractionCurveMax": 2.5,
+      "fTractionCurveMin": 2.38,
+      "fSteeringLock": 42,
+      "source": "resources/[cars]/showcasecars/data/sugoix/handling.meta"
     },
     "source": "resources/[cars]/showcasecars/data/sugoix/vehicles.meta"
   },

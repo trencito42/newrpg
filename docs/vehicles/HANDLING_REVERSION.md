@@ -21,9 +21,9 @@ Obsolete donor pipeline (`apply-handling-donor-meta.js`, `audit-handling-donors.
 
 After restore, see `docs/vehicles/PACK_HANDLING_ID_INVENTORY.json` for per-model `handlingId` and models without a pack `handlingName`.
 
-## Known gaps (not auto-fixed)
+## Pack-specific handling names
 
-- **sugoix** (`showcasecars`): `handlingId=BRIOSO` — no `sugoix` entry in pack `handling.meta`; needs author original or manual fix.
+Some models use a `handlingName` that differs from `modelName` (e.g. **sugoix** → **sugoimug** via sibling `data/sugoix/handling.meta`). Resolution uses sibling `handling.meta` first, then resource-wide `handlingName` matching `modelName`.
 
 ## In-game verification (required)
 

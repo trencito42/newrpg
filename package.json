@@ -13,7 +13,8 @@
     "progression:check": "node scripts/test-progression.js",
     "discover:vehicles": "node scripts/audit-server-vehicles.js --write",
     "restore:pack-handling": "node scripts/restore-pack-handling-ids.js",
-    "audit:vehicles": "node scripts/audit-server-vehicles.js --check && node scripts/restore-pack-handling-ids.js --check && node scripts/audit-handling-reversion.js && node scripts/check-lua-syntax.js resources/[sunset]/sunset_vehicle_dynamics resources/[sunset]/sunset_tuning"
+    "audit:vehicles": "node scripts/audit-server-vehicles.js --check && node scripts/restore-pack-handling-ids.js --check && node scripts/audit-handling-reversion.js && node scripts/check-lua-syntax.js resources/[sunset]/sunset_vehicle_dynamics resources/[sunset]/sunset_tuning",
+    "verify:pack-handling": "node scripts/verify-pack-handling-refs.js"
   },
   "devDependencies": {
     "luaparse": "^0.3.1",

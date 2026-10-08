@@ -71,6 +71,7 @@ function ApplyTune(veh, tune, persist, modelName)
     if not caps.supported then return false end
 
     tune = SunsetTuning.SanitizeTune(tune, caps)
+    local stockRequest = SunsetTuning.IsStockTune(tune)
     local modelHash = GetEntityModel(veh)
     local priorState = STC.appliedVehicles[veh]
     local baseline = priorState and priorState.modelHash == modelHash and priorState.baseline
@@ -80,7 +81,9 @@ function ApplyTune(veh, tune, persist, modelName)
     local hadTune = priorState and priorState.modelHash == modelHash and priorState.calculated
         and not priorState.calculated.isStock
 
-    STC.restoreBaselineHandling(veh, baseline, { restoreHandling = hadTune })
+    if hadTune or not stockRequest then
+        STC.restoreBaselineHandling(veh, baseline, { restoreHandling = hadTune })
+    end
 
     local calculated = TC.Compute(baseline, tune, caps)
     if not calculated.isStock then
