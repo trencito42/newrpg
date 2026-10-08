@@ -93,7 +93,7 @@
     height: 100%;
     min-height: 0;
     filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
-    font-family: 'Vito', 'Montserrat', sans-serif;
+    font-family: var(--font-heading);
     color: #F2EFE8;
     opacity: 0;
     pointer-events: none;
@@ -797,7 +797,7 @@
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    font-family: 'Vito', 'Montserrat', sans-serif;
+    font-family: var(--font-heading);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 2px;
