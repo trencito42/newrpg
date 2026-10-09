@@ -213,11 +213,15 @@ function OpenClandestineLab(labIndex)
     end
 
     exports.sunset_ui:Send('openLab', {
-        token = labData.token,
         inventory = labData.inventory,
         recipes = labData.recipes,
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_lab')
+end
+
+local function onStartLabAttempt(data, cb)
+    local res = Sunset.AwaitCallback('sunset:drugs:startLabAttempt', data.type)
+    if cb then cb(res or { success = false }) end
 end
 
 local function onProcessSuccess(data, cb)
@@ -232,16 +236,26 @@ end
 
 local function onCloseLabMenu(data, cb)
     labOpen = false
+    Sunset.AwaitCallback('sunset:drugs:closeLab')
     exports.sunset_ui:SetFocus(false, false, false, 'drugs_lab')
     if cb then cb({ ok = true }) end
 end
 
+local function onBeginSaleNegotiation(data, cb)
+    local res = Sunset.AwaitCallback('sunset:drugs:beginSaleNegotiation', data.token)
+    if cb then cb(res or { success = false }) end
+end
+
+RegisterNUICallback('startLabAttempt', onStartLabAttempt)
 RegisterNUICallback('processSuccess', onProcessSuccess)
 RegisterNUICallback('processFail', onProcessFail)
+RegisterNUICallback('beginSaleNegotiation', onBeginSaleNegotiation)
 RegisterNUICallback('closeMenu', onCloseLabMenu)
 RegisterNUICallback('drugsCloseMenu', onCloseLabMenu)
+AddEventHandler('sunset:nui:startLabAttempt', function(data) onStartLabAttempt(data, function() end) end)
 AddEventHandler('sunset:nui:processSuccess', function(data) onProcessSuccess(data, function() end) end)
 AddEventHandler('sunset:nui:processFail', function(data) onProcessFail(data, function() end) end)
+AddEventHandler('sunset:nui:beginSaleNegotiation', function(data) onBeginSaleNegotiation(data, function() end) end)
 AddEventHandler('sunset:nui:drugsCloseMenu', function(data) onCloseLabMenu(data, function() end) end)
 AddEventHandler('sunset:nui:drugsClose', function(data) onCloseLabMenu(data, function() end) end)
 
@@ -649,6 +663,7 @@ function DoWholesaleDelivery(dropoff)
         price = offer.price,
         risk = offer.risk,
         token = offer.token,
+        negotiation = offer.negotiation,
     })
     exports.sunset_ui:SetFocus(true, true, false, 'drugs_sale')
 end

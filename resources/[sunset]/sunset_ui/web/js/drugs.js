@@ -197,7 +197,9 @@ const Drugs = {
     // ─────────────────────────────────────────────────────────────
     lab: {
         visible: false,
-        sessionToken: null,
+        attemptToken: null,
+        startingAttempt: false,
+        awaitingServer: false,
         inventory: {},
         recipes: {},
         selectedRecipeKey: null,
@@ -211,9 +213,17 @@ const Drugs = {
         isHeating: false,
         animFrame: null,
 
+        applyInventory(snapshot) {
+            if (snapshot && typeof snapshot === 'object') {
+                this.inventory = { ...snapshot };
+            }
+        },
+
         open(data) {
             this.visible = true;
-            this.sessionToken = data.token || null;
+            this.attemptToken = null;
+            this.startingAttempt = false;
+            this.awaitingServer = false;
             this.inventory = data.inventory || {};
             this.recipes = data.recipes || {
                 weed: {
@@ -266,13 +276,17 @@ const Drugs = {
             this.visible = false;
             this.isPlayingMinigame = false;
             this.isHeating = false;
+            this.attemptToken = null;
+            this.startingAttempt = false;
             if (this.animFrame) cancelAnimationFrame(this.animFrame);
 
             const wrap = document.getElementById('lab-wrapper');
             if (wrap) wrap.classList.remove('visible');
 
-            postToResource('closeMenu', {});
-            postToResource('drugsCloseMenu', {});
+            if (!this.awaitingServer) {
+                postToResource('closeMenu', {});
+                postToResource('drugsCloseMenu', {});
+            }
         },
 
         showEmptyState() {
@@ -422,12 +436,9 @@ const Drugs = {
             }
 
             if (btnStart) {
-                btnStart.disabled = !isReady;
+                const blocked = !isReady || this.startingAttempt || this.isPlayingMinigame || this.awaitingServer;
+                btnStart.disabled = blocked;
                 btnStart.innerText = isReady ? I18n.t('interface.start_processing') : I18n.t('ui.drugs.insufficient_raw_material');
-                btnStart.onclick = (e) => {
-                    e.preventDefault();
-                    if (isReady) this.startMinigame();
-                };
             }
 
 
@@ -483,10 +494,34 @@ const Drugs = {
             }
         },
 
-        startMinigame() {
+        async startMinigame() {
             const recipe = this.recipes[this.selectedRecipeKey];
             if (!recipe || !this.checkHasMaterials(recipe)) return;
+            if (this.startingAttempt || this.isPlayingMinigame || this.awaitingServer) return;
 
+            this.startingAttempt = true;
+            const btnStart = document.getElementById('btn-lab-start');
+            if (btnStart) btnStart.disabled = true;
+
+            const startRes = await postToResource('startLabAttempt', { type: this.selectedRecipeKey });
+            this.startingAttempt = false;
+
+            if (!startRes?.success || !startRes.attemptToken) {
+                this.applyInventory(startRes?.inventory);
+                this.renderRecipeList();
+                this.renderDetailsView(recipe);
+                const statusText = document.getElementById('lab-status-text');
+                if (statusText) {
+                    statusText.innerText = startRes?.err === 'Missing materials'
+                        ? I18n.t('ui.drugs.materials_missing')
+                        : I18n.t('interface.failed');
+                    statusText.style.color = 'var(--drug-bad)';
+                }
+                return;
+            }
+
+            this.applyInventory(startRes.inventory);
+            this.attemptToken = startRes.attemptToken;
             this.isPlayingMinigame = true;
             this.temp = 10;
             this.progress = 0;
@@ -567,7 +602,7 @@ const Drugs = {
             this.animFrame = requestAnimationFrame(() => this.minigameLoop());
         },
 
-        endMinigame(success) {
+        async endMinigame(success) {
             this.isPlayingMinigame = false;
             this.isHeating = false;
             if (this.animFrame) cancelAnimationFrame(this.animFrame);
@@ -577,35 +612,49 @@ const Drugs = {
             const resTitle = document.getElementById('lab-res-title');
             const resDesc = document.getElementById('lab-res-desc');
             const recipe = this.recipes[this.selectedRecipeKey];
+            const attemptToken = this.attemptToken;
+            const recipeKey = this.selectedRecipeKey;
+
+            if (!attemptToken || !recipeKey) {
+                if (overlay) overlay.style.display = 'flex';
+                if (resIcon) { resIcon.innerText = '✕'; resIcon.className = 'overlay-icon fail'; }
+                if (resTitle) { resTitle.innerText = I18n.t('interface.failed'); resTitle.className = 'overlay-title fail'; }
+                if (resDesc) resDesc.innerText = I18n.t('interface.failed');
+                return;
+            }
+
+            this.awaitingServer = true;
+            const result = success
+                ? await postToResource('processSuccess', { token: attemptToken, type: recipeKey })
+                : await postToResource('processFail', { token: attemptToken, type: recipeKey });
+            this.awaitingServer = false;
+            this.attemptToken = null;
+
+            this.applyInventory(result?.inventory);
 
             if (overlay) overlay.style.display = 'flex';
 
-            if (success && recipe) {
+            const serverOk = result?.success === true;
+            const showSuccess = success && serverOk;
+
+            if (showSuccess && recipe) {
                 if (resIcon) { resIcon.innerText = '✓'; resIcon.className = 'overlay-icon'; }
                 if (resTitle) { resTitle.innerText = I18n.t('interface.success'); resTitle.className = 'overlay-title'; }
                 if (resDesc) resDesc.innerText = I18n.t('ui.drugs.synthesis_success', { item: recipe.label });
-
-                // Update local inventory state
-                this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - recipe.rawCount);
-                if (recipe.secondaryItem && recipe.secondaryCount > 0) {
-                    this.inventory[recipe.secondaryItem] = Math.max(0, (this.inventory[recipe.secondaryItem] || 0) - recipe.secondaryCount);
-                }
-                this.inventory[recipe.productItem] = (this.inventory[recipe.productItem] || 0) + (recipe.productCount || 1);
-
-                postToResource('processSuccess', { token: this.sessionToken, type: this.selectedRecipeKey });
             } else {
                 if (resIcon) { resIcon.innerText = '✕'; resIcon.className = 'overlay-icon fail'; }
                 if (resTitle) { resTitle.innerText = I18n.t('interface.failed'); resTitle.className = 'overlay-title fail'; }
-                if (resDesc) resDesc.innerText = I18n.t('interface.the_chemical_reaction_failed_due_to_unstable_temperature');
-
-                if (recipe) {
-                    this.inventory[recipe.rawItem] = Math.max(0, (this.inventory[recipe.rawItem] || 0) - 1);
+                if (resDesc) {
+                    resDesc.innerText = success
+                        ? (result?.err === 'INVENTORY_FULL' || result?.err === 'INVENTORY_FULL'
+                            ? I18n.t('interface.failed')
+                            : I18n.t('interface.failed'))
+                        : I18n.t('interface.the_chemical_reaction_failed_due_to_unstable_temperature');
                 }
-
-                postToResource('processFail', { token: this.sessionToken, type: this.selectedRecipeKey });
             }
 
             this.renderRecipeList();
+            if (recipe) this.renderDetailsView(recipe);
         }
     },
 
@@ -727,20 +776,34 @@ const Drugs = {
             this.close();
         },
 
-        startNegotiation() {
-            if (this.hasNegotiated) return;
-            this.isNegotiating = true;
+        async startNegotiation() {
+            if (this.hasNegotiated || this.isNegotiating) return;
 
             const actionsEl = document.getElementById('sale-actions');
             const negoBox = document.getElementById('sale-nego-box');
             const targetZoneEl = document.getElementById('sale-target-zone');
             const statusMsg = document.getElementById('sale-status-msg');
 
+            let challenge = this.negotiationChallenge;
+            if (!challenge?.token || !Number.isFinite(Number(challenge?.targetPos))) {
+                const res = await postToResource('beginSaleNegotiation', { token: this.sessionToken });
+                if (res?.success && res.negotiation) {
+                    challenge = res.negotiation;
+                    this.negotiationChallenge = challenge;
+                }
+            }
+
+            this.isNegotiating = true;
+
             if (actionsEl) actionsEl.style.display = 'none';
             if (negoBox) negoBox.style.display = 'flex';
+            if (statusMsg) {
+                statusMsg.style.display = 'none';
+                statusMsg.className = '';
+            }
 
-            this.targetWidth = Number(this.negotiationChallenge?.targetWidth) || 20;
-            this.targetPos = Number(this.negotiationChallenge?.targetPos);
+            this.targetWidth = Number(challenge?.targetWidth) || 20;
+            this.targetPos = Number(challenge?.targetPos);
             if (!Number.isFinite(this.targetPos)) {
                 this.isNegotiating = false;
                 if (actionsEl) actionsEl.style.display = 'flex';

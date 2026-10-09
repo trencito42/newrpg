@@ -397,6 +397,62 @@ function ConvertItems(source, removeItem, removeCount, addItem, addCount)
     return ok, err
 end
 
+local CraftLocks = {} -- [source] = true while CraftRecipe is in flight
+
+-- Multi-ingredient craft: remove all inputs, then add product; rollback all removals on add failure.
+function CraftRecipe(source, removals, productItem, productCount)
+    if CraftLocks[source] then
+        return false, 'CRAFT_BUSY'
+    end
+    CraftLocks[source] = true
+
+    local removed = {}
+    local ok, err = (function()
+        productCount = math.floor(tonumber(productCount) or 0)
+        if productCount < 1 then return false, 'INVALID_PRODUCT_COUNT' end
+        if type(productItem) ~= 'string' or not Sunset.Items[productItem] then
+            return false, 'UNKNOWN_PRODUCT'
+        end
+        if type(removals) ~= 'table' or #removals == 0 then
+            return false, 'INVALID_REMOVALS'
+        end
+
+        for _, entry in ipairs(removals) do
+            local item = entry.item
+            local count = math.floor(tonumber(entry.count) or 0)
+            if count < 1 or type(item) ~= 'string' or not Sunset.Items[item] then
+                return false, 'INVALID_REMOVAL'
+            end
+            if not HasItem(source, item, count) then
+                return false, 'NOT_ENOUGH_MATERIALS'
+            end
+        end
+
+        for _, entry in ipairs(removals) do
+            if not RemoveItem(source, entry.item, entry.count) then
+                return false, 'REMOVE_FAILED'
+            end
+            removed[#removed + 1] = { item = entry.item, count = entry.count }
+        end
+
+        if AddItem(source, productItem, productCount) then
+            return true
+        end
+
+        for i = #removed, 1, -1 do
+            local entry = removed[i]
+            if not AddItem(source, entry.item, entry.count) then
+                print(('^1[sunset_inventory]^7 CraftRecipe COMPENSATION FAILED src=%s item=%s x%d'):format(
+                    tostring(source), tostring(entry.item), entry.count))
+            end
+        end
+        return false, 'INVENTORY_FULL'
+    end)()
+
+    CraftLocks[source] = nil
+    return ok, err
+end
+
 function CountItem(source, item)
     local total = 0
     for _, row in ipairs(GetInventory(source)) do
@@ -598,6 +654,7 @@ exports('SetItemMetadata', SetItemMetadata)
 exports('SetWeaponAmmo', SetWeaponAmmo)
 exports('CountItem', CountItem)
 exports('ConvertItems', ConvertItems)
+exports('CraftRecipe', CraftRecipe)
 exports('TakeAllItems', TakeAllItems)
 exports('GetGasCanLiters', function(source)
     return getGasCanLiters(findInventoryRow(source, 'gas_can'))
@@ -744,6 +801,7 @@ AddEventHandler('playerDropped', function()
     if char then Inventories[char.id] = nil end
     CapacityBonus[source] = nil -- [DUFFEL BAG] never leak the bonus
     ConvertLocks[source] = nil  -- [ATOMIC CONVERT] never leak the lock
+    CraftLocks[source] = nil
 end)
 
 -- [AMMO PERSIST] Client reports live ammo counts for inventory-synced weapons

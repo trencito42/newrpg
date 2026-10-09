@@ -28,8 +28,10 @@ assert.doesNotMatch(robberyClient, /TriggerServerEvent\('sunset:robbery:hackComp
 
 assert.match(drugs, /elapsed < \(Cfg\.process\.minProcessDurationMs/,
     'drug processing must enforce minimum elapsed time');
-assert.match(drugs, /LabSessions\[source\] = nil -- one-shot|LabSessions\[source\] = nil\n\n    -- Verify player/,
-    'drug process token must be consumed before economic mutation');
+assert.match(drugs, /LabAttempts\[source\] = nil\n\n    local removals/,
+    'drug lab attempt token must be consumed before economic mutation');
+assert.match(drugs, /sunset:drugs:startLabAttempt/,
+    'drug lab must issue a per-attempt token before minigame');
 assert.match(drugs, /validateStreetPed\(source, pedNetId\)/,
     'street sale must validate the supplied network ped');
 assert.match(drugs, /session\.negotiation\.verified == true/,

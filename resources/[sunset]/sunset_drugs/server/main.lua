@@ -8,7 +8,8 @@ local Cfg = SunsetDrugs.Config
 
 -- Security State Tables
 local HarvestSessions = {}   -- [source] = { token, spotIndex, drugType, lastHitMs, count }
-local LabSessions = {}       -- [source] = { token, labIndex, startedAt, recipe }
+local LabOpen = {}           -- [source] = { labIndex, openedAt }
+local LabAttempts = {}       -- [source] = { token, recipeType, labIndex, startedAt, completing }
 local SaleSessions = {}      -- [source] = { token, netPed, drugType, qty, basePrice, risk, startedAt }
 local PedCooldowns = {}      -- [pedNetId] = expiryTime
 
@@ -44,6 +45,40 @@ end
 
 local function generateToken()
     return tostring(GetGameTimer()) .. '_' .. tostring(math.random(100000, 999999))
+end
+
+local LAB_SNAPSHOT_ITEMS = {
+    'weed_leaf', 'coke_leaf', 'meth_chemical', 'chemicals',
+    'weed_brick', 'coke_brick', 'meth_bag',
+}
+
+local function labInventorySnapshot(source)
+    local inventorySnap = {}
+    for _, itemKey in ipairs(LAB_SNAPSHOT_ITEMS) do
+        pcall(function()
+            inventorySnap[itemKey] = exports.sunset_inventory:CountItem(source, itemKey) or 0
+        end)
+    end
+    return inventorySnap
+end
+
+local function newSaleNegotiation()
+    return {
+        token = generateToken(),
+        targetPos = math.random(8, 72),
+        targetWidth = 20,
+        resolved = false,
+        verified = false,
+    }
+end
+
+local function negotiationPayload(challenge)
+    if not challenge then return nil end
+    return {
+        token = challenge.token,
+        targetPos = challenge.targetPos,
+        targetWidth = challenge.targetWidth,
+    }
 end
 
 local function validateStreetPed(source, pedNetId)
@@ -180,104 +215,153 @@ exports.sunset_core:RegisterCallback('sunset:drugs:openLab', function(source, la
     local near = nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 2.0)
     if not near then return nil, { localeKey = 'drugs.message.you_must_be_at_a_processing_lab' } end
 
-    local inventorySnap = {}
-    for _, itemKey in ipairs({ 'weed_leaf', 'coke_leaf', 'meth_chemical', 'chemicals', 'weed_brick', 'coke_brick', 'meth_bag' }) do
-        pcall(function()
-            inventorySnap[itemKey] = exports.sunset_inventory:CountItem(source, itemKey) or 0
-        end)
-    end
-
-    local token = generateToken()
-    LabSessions[source] = {
-        token = token,
+    LabOpen[source] = {
         labIndex = labIndex,
-        startedAt = GetGameTimer(),
+        openedAt = GetGameTimer(),
     }
+    LabAttempts[source] = nil
 
     return {
-        token = token,
-        inventory = inventorySnap,
+        inventory = labInventorySnapshot(source),
         recipes = Cfg.process.recipes,
     }
 end)
 
-exports.sunset_core:RegisterCallback('sunset:drugs:processSuccess', function(source, token, recipeType)
+exports.sunset_core:RegisterCallback('sunset:drugs:closeLab', function(source)
+    LabOpen[source] = nil
+    LabAttempts[source] = nil
+    return { ok = true }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:startLabAttempt', function(source, recipeType)
     if not hasChar(source) then return { success = false, err = 'No character' } end
-    local session = LabSessions[source]
-    if not session or session.token ~= token then
-        return { success = false, err = 'Invalid lab session' }
-    end
+    local open = LabOpen[source]
+    if not open then return { success = false, err = 'Lab not open' } end
 
     local recipe = Cfg.process.recipes[recipeType]
     if not recipe then return { success = false, err = 'Invalid recipe' } end
 
-    local elapsed = GetGameTimer() - (session.startedAt or GetGameTimer())
-    if elapsed < (Cfg.process.minProcessDurationMs or 3500) then
-        return { success = false, err = 'PROCESS_TOO_FAST' }
+    local attempt = LabAttempts[source]
+    if attempt and not attempt.completing then
+        return { success = false, err = 'ATTEMPT_IN_PROGRESS' }
     end
 
-    local lab = Cfg.process.labs[session.labIndex]
+    local lab = Cfg.process.labs[open.labIndex]
     local coords = pedCoords(source)
     if not lab or not nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 3.0) then
         return { success = false, err = 'Left lab area' }
     end
 
-    -- One-shot before any inventory operation can yield.
-    LabSessions[source] = nil
-
-    -- Verify player has required items
     local hasRaw = exports.sunset_inventory:HasItem(source, recipe.rawItem, recipe.rawCount) == true
     local hasSecondary = true
     if recipe.secondaryItem and recipe.secondaryCount > 0 then
         hasSecondary = exports.sunset_inventory:HasItem(source, recipe.secondaryItem, recipe.secondaryCount) == true
     end
-
     if not hasRaw or not hasSecondary then
-        return { success = false, err = 'Missing materials' }
+        return { success = false, err = 'Missing materials', inventory = labInventorySnapshot(source) }
     end
 
-    -- Atomic consumption and reward
-    local removeRawOk = exports.sunset_inventory:RemoveItem(source, recipe.rawItem, recipe.rawCount)
-    if not removeRawOk then return { success = false, err = 'Failed to consume raw item' } end
+    local token = generateToken()
+    LabAttempts[source] = {
+        token = token,
+        recipeType = recipeType,
+        labIndex = open.labIndex,
+        startedAt = GetGameTimer(),
+        completing = false,
+    }
 
+    return {
+        success = true,
+        attemptToken = token,
+        minDurationMs = Cfg.process.minProcessDurationMs or 3500,
+        inventory = labInventorySnapshot(source),
+    }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:processSuccess', function(source, token, recipeType)
+    if not hasChar(source) then return { success = false, err = 'No character' } end
+    local attempt = LabAttempts[source]
+    if not attempt or attempt.token ~= token or attempt.recipeType ~= recipeType then
+        return { success = false, err = 'Invalid lab attempt', inventory = labInventorySnapshot(source) }
+    end
+    if attempt.completing then
+        return { success = false, err = 'DUPLICATE_SUBMIT', inventory = labInventorySnapshot(source) }
+    end
+    attempt.completing = true
+
+    local open = LabOpen[source]
+    if not open or open.labIndex ~= attempt.labIndex then
+        LabAttempts[source] = nil
+        return { success = false, err = 'Lab closed', inventory = labInventorySnapshot(source) }
+    end
+
+    local recipe = Cfg.process.recipes[recipeType]
+    if not recipe then
+        LabAttempts[source] = nil
+        return { success = false, err = 'Invalid recipe', inventory = labInventorySnapshot(source) }
+    end
+
+    local elapsed = GetGameTimer() - (attempt.startedAt or GetGameTimer())
+    if elapsed < (Cfg.process.minProcessDurationMs or 3500) then
+        LabAttempts[source] = nil
+        return { success = false, err = 'PROCESS_TOO_FAST', inventory = labInventorySnapshot(source) }
+    end
+
+    local lab = Cfg.process.labs[attempt.labIndex]
+    local coords = pedCoords(source)
+    if not lab or not nearAny(coords, { lab.coords }, (Cfg.process.labRadius or 5.0) + 3.0) then
+        LabAttempts[source] = nil
+        return { success = false, err = 'Left lab area', inventory = labInventorySnapshot(source) }
+    end
+
+    -- One-shot before any inventory operation can yield.
+    LabAttempts[source] = nil
+
+    local removals = { { item = recipe.rawItem, count = recipe.rawCount } }
     if recipe.secondaryItem and recipe.secondaryCount > 0 then
-        local removeSecOk = exports.sunset_inventory:RemoveItem(source, recipe.secondaryItem, recipe.secondaryCount)
-        if not removeSecOk then
-            -- Compensate raw item
-            exports.sunset_inventory:AddItem(source, recipe.rawItem, recipe.rawCount)
-            return { success = false, err = 'Failed to consume secondary item' }
-        end
+        removals[#removals + 1] = { item = recipe.secondaryItem, count = recipe.secondaryCount }
     end
 
-    -- Add product
-    local addOk = exports.sunset_inventory:AddItem(source, recipe.productItem, recipe.productCount or 1)
-    if not addOk then
-        -- Compensate
-        exports.sunset_inventory:AddItem(source, recipe.rawItem, recipe.rawCount)
-        if recipe.secondaryItem and recipe.secondaryCount > 0 then
-            exports.sunset_inventory:AddItem(source, recipe.secondaryItem, recipe.secondaryCount)
-        end
-        return { success = false, err = 'Inventory full' }
+    local crafted, craftErr = exports.sunset_inventory:CraftRecipe(
+        source,
+        removals,
+        recipe.productItem,
+        recipe.productCount or 1
+    )
+    if not crafted then
+        return {
+            success = false,
+            err = craftErr or 'CRAFT_FAILED',
+            inventory = labInventorySnapshot(source),
+        }
     end
 
     notify(source, ('Ai produs cu succes 1x %s!'):format(recipe.label), 'success')
     dlog(('Process complete for src=%d recipe=%s -> 1x %s'):format(source, recipeType, recipe.productItem))
-    return { success = true, product = recipe.productItem }
+    return {
+        success = true,
+        product = recipe.productItem,
+        inventory = labInventorySnapshot(source),
+    }
 end)
 
 exports.sunset_core:RegisterCallback('sunset:drugs:processFail', function(source, token, recipeType)
-    local session = LabSessions[source]
-    if not session or session.token ~= token then return { success = false } end
-
-    LabSessions[source] = nil
+    local attempt = LabAttempts[source]
+    if not attempt or attempt.token ~= token or attempt.recipeType ~= recipeType then
+        return { success = false, err = 'Invalid lab attempt', inventory = labInventorySnapshot(source) }
+    end
+    if attempt.completing then
+        return { success = false, err = 'DUPLICATE_SUBMIT', inventory = labInventorySnapshot(source) }
+    end
+    attempt.completing = true
+    LabAttempts[source] = nil
 
     local recipe = Cfg.process.recipes[recipeType]
     if recipe then
-        -- Realistic loss: 1 raw material burned/ruined
         exports.sunset_inventory:RemoveItem(source, recipe.rawItem, 1)
         notify(source, exports.sunset_core:TFor(source, 'drugs.message.temperature_out_of_control'), 'error')
     end
-    return { success = true }
+    return { success = true, inventory = labInventorySnapshot(source) }
 end)
 
 -- ═══════════════════════════════════════════════════════════════
@@ -338,13 +422,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
         basePrice = basePrice,
         risk = risk,
         startedAt = now,
-        negotiation = {
-            token = generateToken(),
-            targetPos = math.random(8, 72),
-            targetWidth = 20,
-            resolved = false,
-            verified = false,
-        },
+        negotiation = newSaleNegotiation(),
     }
 
     dlog(('Street offer created src=%d ped=%d drug=%s qty=%d price=$%d risk=%s'):format(
@@ -356,11 +434,21 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestStreetOffer', function
         qty = qty,
         price = basePrice,
         risk = risk,
-        negotiation = {
-            token = SaleSessions[source].negotiation.token,
-            targetPos = SaleSessions[source].negotiation.targetPos,
-            targetWidth = SaleSessions[source].negotiation.targetWidth,
-        },
+        negotiation = negotiationPayload(SaleSessions[source].negotiation),
+    }
+end)
+
+exports.sunset_core:RegisterCallback('sunset:drugs:beginSaleNegotiation', function(source, saleToken)
+    local session = SaleSessions[source]
+    if not session or session.token ~= saleToken then
+        return { success = false, err = 'INVALID_SALE_SESSION' }
+    end
+    if not session.negotiation or session.negotiation.resolved then
+        session.negotiation = newSaleNegotiation()
+    end
+    return {
+        success = true,
+        negotiation = negotiationPayload(session.negotiation),
     }
 end)
 
@@ -543,6 +631,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', functi
         risk = risk,
         startedAt = GetGameTimer(),
         isWholesale = true,
+        negotiation = newSaleNegotiation(),
     }
 
     dlog(('Wholesale offer created src=%d dropoff=%d drug=%s qty=%d price=$%d rank=%d'):format(
@@ -556,6 +645,7 @@ exports.sunset_core:RegisterCallback('sunset:drugs:requestDeliveryOffer', functi
         risk = risk,
         dealerName = dropoff.dealerLabel,
         rankBadge = dropoff.rankBadge,
+        negotiation = negotiationPayload(SaleSessions[source].negotiation),
     }
 end)
 
@@ -568,14 +658,16 @@ end)
 AddEventHandler('playerDropped', function()
     local src = source
     HarvestSessions[src] = nil
-    LabSessions[src] = nil
+    LabOpen[src] = nil
+    LabAttempts[src] = nil
     SaleSessions[src] = nil
 end)
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     HarvestSessions = {}
-    LabSessions = {}
+    LabOpen = {}
+    LabAttempts = {}
     SaleSessions = {}
     PedCooldowns = {}
 end)
