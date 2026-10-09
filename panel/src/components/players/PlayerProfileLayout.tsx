@@ -20,8 +20,8 @@ export function PlayerProfileLayout({
     <>
       {/* Desktop: community then overview */}
       <div className="hidden md:block space-y-4 sm:space-y-5">
-        {showCommunityOnDesktop && community}
         {overview}
+        {showCommunityOnDesktop && community}
       </div>
 
       {/* Mobile: Overview | Activity */}

@@ -10,6 +10,8 @@ import { socialRelativeTime } from "@/components/social/social-time";
 
 type Filter = "all" | "feed" | "forum";
 
+const PROFILE_ACTIVITY_PREVIEW = 6;
+
 export function PlayerCommunityActivity({
   locale,
   entries,
@@ -33,6 +35,12 @@ export function PlayerCommunityActivity({
     return entries;
   }, [entries, filter]);
 
+  const previewFeed = useMemo(() => feedPosts.slice(0, PROFILE_ACTIVITY_PREVIEW), [feedPosts]);
+  const previewFiltered = useMemo(
+    () => filtered.slice(0, PROFILE_ACTIVITY_PREVIEW),
+    [filtered]
+  );
+
   const tabs: { id: Filter; label: string }[] = [
     { id: "all", label: t(locale, "community.filter_all") },
     { id: "feed", label: t(locale, "nav.feed") },
@@ -40,13 +48,13 @@ export function PlayerCommunityActivity({
   ];
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-2.5">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
           <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
             {t(locale, "community.activity_title")}
           </h2>
-          <p className="text-[11px] text-[#8F8B83] mt-1">
+          <p className="text-[10px] text-[#8F8B83] mt-0.5">
             {counts.feedPosts} {t(locale, "community.feed_posts")} · {counts.forumPosts}{" "}
             {t(locale, "community.forum_posts")} · {counts.forumTopics} {t(locale, "community.topics")}
           </p>
@@ -67,47 +75,50 @@ export function PlayerCommunityActivity({
         </div>
       </div>
 
-      <div className="rounded-xl bg-[#0E0E10] p-4">
+      <div className="rounded-lg bg-[#0E0E10] border border-white/[0.04] px-3 py-2">
         {filter === "feed" ? (
-          feedPosts.length === 0 ? (
-            <p className="text-sm text-[#8F8B83] text-center py-8">{t(locale, "community.no_activity")}</p>
+          previewFeed.length === 0 ? (
+            <p className="text-xs text-[#8F8B83] text-center py-6">{t(locale, "community.no_activity")}</p>
           ) : (
-            feedPosts.map((p) => (
+            <div className="divide-y divide-white/[0.04]">
+            {previewFeed.map((p) => (
+              <div key={p.id} className="py-2 first:pt-1 last:pb-1">
               <SocialPostCard
-                key={p.id}
                 post={p}
                 locale={locale}
                 isLoggedIn={isLoggedIn}
                 viewerCharId={viewerCharId}
                 variant="profile"
               />
-            ))
+              </div>
+            ))}
+            </div>
           )
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-[#8F8B83] text-center py-8">{t(locale, "community.no_activity")}</p>
+        ) : previewFiltered.length === 0 ? (
+          <p className="text-xs text-[#8F8B83] text-center py-6">{t(locale, "community.no_activity")}</p>
         ) : (
           <div className="space-y-0">
-            {filtered.map((entry) => {
+            {previewFiltered.map((entry) => {
               if (entry.type === "social_post" && entry.socialPost) {
                 const p = entry.socialPost;
                 return (
                   <Link
                     key={`s-${entry.id}`}
                     href={entry.href}
-                    className="block py-3 border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] -mx-2 px-2 rounded-lg"
+                    className="block py-2 border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] -mx-1 px-1 rounded-md"
                   >
-                    <p className="text-[10px] uppercase text-[#D7B558] font-semibold mb-1">
+                    <p className="text-[9px] uppercase text-[#D7B558] font-semibold mb-0.5">
                       {t(locale, "community.feed_post")}
                     </p>
-                    {p.body && <p className="text-sm text-[#D4CFC8] line-clamp-2">{p.body}</p>}
+                    {p.body && <p className="text-xs text-[#D4CFC8] line-clamp-2">{p.body}</p>}
                     {p.thumbnail_url && (
                       <img
                         src={p.thumbnail_url}
                         alt=""
-                        className="mt-2 h-16 w-auto rounded object-cover"
+                        className="mt-1.5 h-12 w-auto max-w-full rounded object-cover"
                       />
                     )}
-                    <p className="text-[11px] text-[#8F8B83] mt-2">
+                    <p className="text-[10px] text-[#8F8B83] mt-1">
                       {t(locale, "community.likes_and_comments", {
                         likes: String(Number(p.likes_count)),
                         comments: String(Number(p.comments_count)),
@@ -122,19 +133,19 @@ export function PlayerCommunityActivity({
                 <Link
                   key={`f-${entry.id}`}
                   href={entry.href}
-                  className="block py-3 border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] -mx-2 px-2 rounded-lg"
+                  className="block py-2 border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] -mx-1 px-1 rounded-md"
                 >
-                  <p className="text-[10px] uppercase text-[#D7B558] font-semibold mb-1">
+                  <p className="text-[9px] uppercase text-[#D7B558] font-semibold mb-0.5">
                     {entry.type === "forum_topic"
                       ? t(locale, "community.started_topic")
                       : t(locale, "community.replied")}
                     {entry.forumName ? ` · ${entry.forumName}` : ""}
                   </p>
-                  <p className="text-sm font-semibold text-[#F2EFE8] line-clamp-2">{entry.forumTopicTitle}</p>
+                  <p className="text-xs font-semibold text-[#F2EFE8] line-clamp-2">{entry.forumTopicTitle}</p>
                   {entry.forumExcerpt && (
-                    <p className="text-xs text-[#99958E] mt-1 line-clamp-2">{entry.forumExcerpt}</p>
+                    <p className="text-[11px] text-[#99958E] mt-0.5 line-clamp-2">{entry.forumExcerpt}</p>
                   )}
-                  <p className="text-[11px] text-[#8F8B83] mt-2">{socialRelativeTime(entry.createdAt)}</p>
+                  <p className="text-[10px] text-[#8F8B83] mt-1">{socialRelativeTime(entry.createdAt)}</p>
                 </Link>
               );
             })}

@@ -2228,6 +2228,9 @@
     "system_actor": "System",
     "prev_page": "Previous",
     "next_page": "Next",
+    "pagination": "Faction log pages",
+    "showing_range": "Showing {from}–{to} of {total} events",
+    "retry": "Try again",
     "view_all": "View full faction log",
     "history_title": "Faction history",
     "events": {

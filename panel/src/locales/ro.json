@@ -2228,6 +2228,9 @@
     "system_actor": "Sistem",
     "prev_page": "Inapoi",
     "next_page": "Inainte",
+    "pagination": "Pagini jurnal factiune",
+    "showing_range": "Afisare {from}–{to} din {total} evenimente",
+    "retry": "Incearca din nou",
     "view_all": "Vezi jurnalul complet",
     "history_title": "Istoric factiune",
     "events": {

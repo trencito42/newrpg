@@ -283,7 +283,7 @@ export default async function PlayerProfilePage({
       [char.account_id]
     ),
     fetchCharacterCommunityActivity(characterId, session, {
-      limit: 12,
+      limit: 8,
       viewerCharId: session?.selectedCharacterId ?? null,
     }),
   ]);
@@ -381,11 +381,10 @@ export default async function PlayerProfilePage({
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Main Profile Header Card */}
-      <div className="p-4 sm:p-6 bg-[#0E0E10] rounded-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          {/* Left: Avatar + Identity + Metadata */}
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-[#141416] shrink-0 overflow-hidden flex items-center justify-center">
+      <div className="p-4 sm:p-5 bg-[#0E0E10] rounded-xl border border-white/[0.04]">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-14 h-14 sm:w-[4.5rem] sm:h-[4.5rem] rounded-lg bg-[#141416] shrink-0 overflow-hidden flex items-center justify-center">
               <GTAImage
                 src={getPedAvatarUrl(characterSkin)}
                 alt={char.account_username}
@@ -394,9 +393,9 @@ export default async function PlayerProfilePage({
               />
             </div>
 
-            <div className="space-y-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+            <div className="space-y-1 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight min-w-0 max-w-full truncate">
                   <PlayerIdentity
                     username={char.account_username}
                     factionId={char.faction_id}
@@ -423,7 +422,7 @@ export default async function PlayerProfilePage({
 
               {/* Role & Custom Badges */}
               {(roleBadges.length > 0 || customBadges.length > 0) && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <div className="flex flex-wrap items-center gap-1 max-w-full pt-0.5">
                   {roleBadges.map((b, idx) => (
                     <CustomBadge
                       key={`role-${idx}`}
@@ -523,44 +522,27 @@ export default async function PlayerProfilePage({
         overview={
           <>
       {/* Horizontal Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="p-3 bg-[#0E0E10] rounded-lg border border-white/[0.04]">
           <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "common.level")}</span>
           <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{char.level}</span>
         </div>
 
-        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+        <div className="p-3 bg-[#0E0E10] rounded-lg border border-white/[0.04]">
           <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.time_played")}</span>
           <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{Math.floor(char.paydays_received || 0)} {t(locale, "interface.hours")}</span>
         </div>
 
-        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+        <div className="p-3 bg-[#0E0E10] rounded-lg border border-white/[0.04]">
           <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "interface.respect_points")}</span>
           <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{formatNumber(char.respect_points, locale)} RP</span>
         </div>
 
-        <div className="p-3.5 bg-[#0E0E10] rounded-xl">
+        <div className="p-3 bg-[#0E0E10] rounded-lg border border-white/[0.04]">
           <span className="text-[11px] text-[#8F8B83] uppercase tracking-wider block font-medium">{t(locale, "players.sanctions_history")}</span>
           <span className="text-lg font-bold text-[#F2EFE8] font-mono mt-1 block">{warningsCount} / 3</span>
         </div>
       </div>
-
-      {hasFaction && canViewFactionHistory && char.faction_id && (
-        <div>
-          <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider mb-2">
-            {t(locale, "factionLogs.history_title")}
-          </h2>
-          <div className="rounded-xl bg-[#0E0E10] p-4">
-            <OrganizationFactionLogsPanel
-              locale={locale}
-              factionSlug={char.faction_id}
-              factionColor={getFactionColor(char.faction_id) || "#F2EFE8"}
-              targetCharacterId={characterId}
-              compact
-            />
-          </div>
-        </div>
-      )}
 
       {/* Money (Only shown if character owner or staff) */}
       {balance && (
@@ -581,8 +563,7 @@ export default async function PlayerProfilePage({
         </div>
       )}
 
-      {/* Main Sections: Vehicles, Properties, Jobs, Licenses */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <PlayerVehiclesSection locale={locale} vehicles={publicVehicles} />
 
         {/* Properties */}
@@ -689,6 +670,22 @@ export default async function PlayerProfilePage({
           )}
         </div>
       </div>
+
+      {hasFaction && canViewFactionHistory && char.faction_id && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
+            {t(locale, "factionLogs.history_title")}
+          </h2>
+          <OrganizationFactionLogsPanel
+            locale={locale}
+            factionSlug={char.faction_id}
+            factionColor={getFactionColor(char.faction_id) || "#F2EFE8"}
+            targetCharacterId={characterId}
+            compact
+            fullHistoryHref={`/factions/${char.faction_id}?tab=logs`}
+          />
+        </section>
+      )}
           </>
         }
       />

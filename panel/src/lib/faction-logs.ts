@@ -1,6 +1,8 @@
 export type FactionLogCategory = "all" | "members" | "ranks" | "warnings" | "leadership" | "applications";
 
-export const FACTION_LOG_PAGE_SIZES = [25, 50] as const;
+export const FACTION_LOG_PAGE_SIZES = [5, 10, 25, 50] as const;
+
+export const FACTION_LOG_PROFILE_PAGE_SIZE = 5;
 
 const LEGACY_ACTION_TO_EVENT: Record<string, string> = {
   invite_sent: "member_invited",
