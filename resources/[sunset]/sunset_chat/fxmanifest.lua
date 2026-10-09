@@ -21,6 +21,7 @@ client_scripts {
     'client/main.lua',
 }
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
     'server/attachments.lua',
     'server/chat_log.lua',
     'server/main.lua',
@@ -34,6 +35,6 @@ server_exports {
     'LogChatMessage',
 }
 
-dependencies { 'sunset_core', 'sunset_admin', 'sunset_factions', 'sunset_clans' }
+dependencies { 'oxmysql', 'sunset_core', 'sunset_admin', 'sunset_factions', 'sunset_clans' }
 
 exports { 'IsChatOpen', 'GetChatSuggestions', 'SyncChatSuggestions' }

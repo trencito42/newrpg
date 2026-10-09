@@ -107,7 +107,7 @@ function ChatLog.record(sourceOrOpts, message, channelType, status, extra)
 
     local metadataJson = encodeMetadata(meta)
     CreateThread(function()
-        pcall(function()
+        local ok, err = pcall(function()
             MySQL.insert.await([[
                 INSERT INTO chat_logs
                     (character_id, account_id, player_name_snapshot, message, channel_type,
@@ -127,6 +127,9 @@ function ChatLog.record(sourceOrOpts, message, channelType, status, extra)
                 metadataJson,
             })
         end)
+        if not ok and GetConvar('sv_sunset_chat_debug', '0') == '1' then
+            print(('[sunset_chat] chat_log insert failed: %s'):format(tostring(err)))
+        end
     end)
 end
 
