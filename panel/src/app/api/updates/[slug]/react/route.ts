@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbExecute, dbQuerySingle } from "@/lib/db";
 import { clearCharacterUpdateReactionsForAccount } from "@/lib/update-reaction-sync";
+import { fetchUpdateReactionCounts } from "@/lib/update-reaction-counts";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 
@@ -75,20 +76,13 @@ export async function POST(
       );
     }
 
-    const counts = await dbQuerySingle<Counts>(
-      `SELECT
-         COALESCE(SUM(reaction = 'like'),    0) AS likes_count,
-         COALESCE(SUM(reaction = 'dislike'), 0) AS dislikes_count
-       FROM panel_update_reactions
-       WHERE update_id = ?`,
-      [update.id]
-    );
+    const counts = await fetchUpdateReactionCounts(update.id);
 
     return NextResponse.json({
       ok: true,
       my_reaction: existing?.reaction === reaction ? null : reaction,
-      likes_count: Number(counts?.likes_count ?? 0),
-      dislikes_count: Number(counts?.dislikes_count ?? 0),
+      likes_count: counts.likes_count,
+      dislikes_count: counts.dislikes_count,
     });
   } catch (err: any) {
     console.error("[updates/react POST]", err);

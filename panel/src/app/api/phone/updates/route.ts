@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbQuery } from "@/lib/db";
+import { updateReactionCountSubquery } from "@/lib/update-reaction-counts";
 import { RowDataPacket } from "mysql2";
 
 interface UpdateRow extends RowDataPacket {
@@ -26,15 +27,21 @@ export async function GET(req: NextRequest) {
       `SELECT
          u.id, u.slug, u.title, u.summary, u.category,
          u.author_name, u.is_pinned, u.created_at,
-         COALESCE(SUM(r.reaction = 'like'),    0) AS likes_count,
-         COALESCE(SUM(r.reaction = 'dislike'), 0) AS dislikes_count,
-         MAX(CASE WHEN r.reactor_type = 'character' AND r.reactor_id = ? THEN r.reaction END) AS my_reaction
+         ${updateReactionCountSubquery("u.id", "like")} AS likes_count,
+         ${updateReactionCountSubquery("u.id", "dislike")} AS dislikes_count,
+         (
+           SELECT r.reaction
+           FROM panel_update_reactions r
+           WHERE r.update_id = u.id
+             AND r.reactor_type = 'character'
+             AND r.reactor_id = ?
+           ORDER BY r.created_at DESC
+           LIMIT 1
+         ) AS my_reaction
        FROM panel_updates u
-       LEFT JOIN panel_update_reactions r ON r.update_id = u.id
-       GROUP BY u.id
        ORDER BY u.is_pinned DESC, u.created_at DESC
        LIMIT 30`,
-      [validCharId]
+      [validCharId ?? 0]
     );
 
     return NextResponse.json({ updates });

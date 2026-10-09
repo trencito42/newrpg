@@ -14,6 +14,10 @@ import { ArrowLeft, Calendar, Eye, User, Pin, Clock, Sparkles, Shield, Share2 } 
 import { RowDataPacket } from "mysql2";
 import { absoluteUrl, safeJsonLd } from "@/lib/seo";
 import { playerIdentityKey, resolvePlayerIdentitiesByRefs } from "@/lib/player-identity";
+import {
+  updateMyReactionSubquery,
+  updateReactionCountSubquery,
+} from "@/lib/update-reaction-counts";
 import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 
 export const dynamic = "force-dynamic";
@@ -136,15 +140,13 @@ export default async function UpdateArticlePage({
 
   const update = await dbQuerySingle<UpdateDbRow>(
     `SELECT u.id, u.slug, u.title, u.summary, u.content, u.category, u.cover_image, u.author_account_id, u.author_name, u.is_pinned, u.views_count, u.created_at, u.updated_at,
-            COALESCE(SUM(r.reaction = 'like'),    0) AS likes_count,
-            COALESCE(SUM(r.reaction = 'dislike'), 0) AS dislikes_count,
-            MAX(CASE WHEN r.reactor_type = 'account' AND r.reactor_id = ? THEN r.reaction END) AS my_reaction
+            ${updateReactionCountSubquery("u.id", "like")} AS likes_count,
+            ${updateReactionCountSubquery("u.id", "dislike")} AS dislikes_count,
+            ${updateMyReactionSubquery("u.id")} AS my_reaction
      FROM panel_updates u
-     LEFT JOIN panel_update_reactions r ON r.update_id = u.id
      WHERE u.slug = ?
-     GROUP BY u.id
      LIMIT 1`,
-    [accountId, decodedSlug]
+    [accountId ?? 0, accountId ?? 0, decodedSlug]
   );
 
   if (!update) {

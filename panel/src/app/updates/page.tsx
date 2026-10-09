@@ -5,6 +5,10 @@ import { RowDataPacket } from "mysql2";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { t } from "@/lib/i18n";
 import { playerIdentityKey, resolvePlayerIdentitiesByRefs } from "@/lib/player-identity";
+import {
+  updateMyReactionSubquery,
+  updateReactionCountSubquery,
+} from "@/lib/update-reaction-counts";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -50,17 +54,20 @@ export default async function UpdatesPage() {
   const rawUpdates = await dbQuery<RawUpdateRow>(
     `SELECT u.id, u.slug, u.title, u.summary, u.category, u.cover_image, u.author_account_id, u.author_name, u.is_pinned, u.views_count, u.created_at,
             c.metadata as author_metadata,
-            COALESCE(SUM(r.reaction = 'like'),    0) AS likes_count,
-            COALESCE(SUM(r.reaction = 'dislike'), 0) AS dislikes_count,
-            MAX(CASE WHEN r.reactor_type = 'account' AND r.reactor_id = ? THEN r.reaction END) AS my_reaction
+            ${updateReactionCountSubquery("u.id", "like")} AS likes_count,
+            ${updateReactionCountSubquery("u.id", "dislike")} AS dislikes_count,
+            ${updateMyReactionSubquery("u.id")} AS my_reaction
      FROM panel_updates u
      LEFT JOIN players p ON p.account_id = u.author_account_id
-     LEFT JOIN characters c ON c.player_id = p.id
-     LEFT JOIN panel_update_reactions r ON r.update_id = u.id
-     GROUP BY u.id
+     LEFT JOIN characters c ON c.id = (
+       SELECT c2.id FROM characters c2
+       WHERE c2.player_id = p.id
+       ORDER BY c2.level DESC, c2.slot ASC, c2.id DESC
+       LIMIT 1
+     )
      ORDER BY u.is_pinned DESC, u.created_at DESC
      LIMIT 50`,
-    [accountId]
+    [accountId ?? 0, accountId ?? 0]
   );
 
   const authorIdentities = await resolvePlayerIdentitiesByRefs(
